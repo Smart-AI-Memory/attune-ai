@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Security Audit approaches — comparison</title>
-  <meta name="description" content="Attune offers two ways to scan your codebase for security vulnerabilities — eval/exec usage, path traversal, hardcoded secrets, and injection risks. Choosing the right one depends on how much orchestr" />
-  <meta property="og:title" content="Comparison: Security Audit approaches — comparison" />
-  <meta property="og:description" content="Attune offers two ways to scan your codebase for security vulnerabilities — eval/exec usage, path traversal, hardcoded secrets, and injection risks. Choosing the right one depends on how much orchestr" />
+  <title>Audit code for vulnerabilities with four Agent SDK subagents — comparison</title>
+  <meta name="description" content="Security-audit and **bug-predict** are sibling SDK-native workflows — both scan the same codebase through Agent SDK subagents, both reached with `attune workflow run &lt;name&gt;`, both predictive (LLM judg" />
+  <meta property="og:title" content="Audit code for vulnerabilities with four Agent SDK subagents — comparison" />
+  <meta property="og:description" content="Security-audit and **bug-predict** are sibling SDK-native workflows — both scan the same codebase through Agent SDK subagents, both reached with `attune workflow run &lt;name&gt;`, both predictive (LLM judg" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/security-audit/comparison" />
   <style>
@@ -272,86 +272,53 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Security Audit approaches</h1>
-<h2>Context</h2>
-<p>Attune offers two ways to scan your codebase for security vulnerabilities — eval/exec usage, path traversal, hardcoded secrets, and injection risks. Choosing the right one depends on how much orchestration you need and where you want results delivered.</p>
+<h1>Audit code for vulnerabilities with four Agent SDK subagents</h1>
+<h2>Comparison</h2>
+<p>Security-audit and <strong>bug-predict</strong> are sibling SDK-native
+workflows — both scan the same codebase through Agent SDK
+subagents, both reached with <code>attune workflow run &lt;name&gt;</code>, both
+predictive (LLM judgment) — but they answer different questions.</p>
 <table>
 <thead>
 <tr>
 <th></th>
-<th><code>SecurityAuditWorkflow</code> (SDK)</th>
-<th><code>/security-audit</code> skill (CLI)</th>
+<th><code>security-audit</code></th>
+<th><code>bug-predict</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Entry point</strong></td>
-<td><code>SecurityAuditWorkflow.execute(**kwargs)</code></td>
-<td><code>attune workflow run security-audit --path &quot;src/&quot;</code></td>
+<td><strong>Question answered</strong></td>
+<td>&quot;Where are the security vulnerabilities?&quot;</td>
+<td>&quot;Where are bugs most likely to be?&quot;</td>
 </tr>
 <tr>
 <td><strong>Subagents</strong></td>
-<td>Four specialized subagents: <code>vuln-scanner</code>, <code>secret-detector</code>, <code>auth-reviewer</code>, <code>remediation-planner</code></td>
-<td>Single-pass pattern scan</td>
+<td>Four: vuln-scanner, secret-detector, auth-reviewer, remediation-planner</td>
+<td>Three: pattern-scanner, risk-correlator, prevention-advisor</td>
 </tr>
 <tr>
-<td><strong>Output</strong></td>
-<td>Unified report: Summary, Security (by severity), Suggestions (by priority)</td>
-<td>Severity-grouped findings with CWE identifiers in your terminal</td>
+<td><strong>Focus</strong></td>
+<td>Injection, secrets, auth/access control, path traversal</td>
+<td>Correctness-risk hotspots: null refs, type mismatches, race conditions, resource leaks</td>
 </tr>
 <tr>
-<td><strong>Depth</strong></td>
-<td>Multi-pass; maps findings to OWASP categories with fix suggestions</td>
-<td>Surface-to-standard scan; ~30 s (quick) to ~2 min (standard)</td>
+<td><strong>Severity scale</strong></td>
+<td>CRITICAL / HIGH / MEDIUM / LOW</td>
+<td>HIGH / MEDIUM / LOW</td>
 </tr>
 <tr>
-<td><strong>Customizable prompt</strong></td>
-<td>Yes — via <code>system_prompt_suffix</code> in <code>__init__</code></td>
-<td>No</td>
-</tr>
-<tr>
-<td><strong>Secrets detection</strong></td>
-<td><code>secret-detector</code> subagent backed by <code>SecretsDetector</code> / <code>detect_secrets</code></td>
-<td>Yes, as part of pattern matching</td>
-</tr>
-<tr>
-<td><strong>PII detection</strong></td>
-<td>Available via <code>PIIScrubber</code> / <code>PIIDetection</code> in <code>security</code> module</td>
-<td>Not exposed</td>
-</tr>
-<tr>
-<td><strong>Integration with alerts</strong></td>
-<td>Pair with <code>AlertEngine</code> to trigger on findings</td>
-<td>Not directly wired to alert system</td>
-</tr>
-<tr>
-<td><strong>Best for</strong></td>
-<td>Pre-release audits, CI gates, deep OWASP reviews</td>
-<td>Quick scans during development, ad-hoc checks in Claude Code</td>
+<td><strong>Slug</strong></td>
+<td><code>attune workflow run security-audit</code></td>
+<td><code>attune workflow run bug-predict</code></td>
 </tr>
 </tbody>
 </table>
-<h2>Feature-by-feature breakdown</h2>
-<h3>Vulnerability coverage</h3>
-<p>Both approaches detect the same core vulnerability classes — code injection (<code>eval</code>, <code>exec</code>, <code>compile</code>), path traversal, hardcoded secrets, SQL/command injection, SSRF, and weak cryptography. The <code>SecurityAuditWorkflow</code> assigns each class to a dedicated subagent, so <code>auth-reviewer</code> focuses exclusively on authentication logic while <code>vuln-scanner</code> handles injection patterns. The CLI skill applies all checks in a single pass.</p>
-<h3>Depth and report structure</h3>
-<p><code>SecurityAuditWorkflow</code> synthesizes subagent output into three sections: a scored executive summary (0–100 security score), consolidated findings organized by severity (<code>CRITICAL</code>, <code>HIGH</code>, <code>MEDIUM</code>, <code>LOW</code>), and prioritized remediation steps with effort estimates. The CLI skill produces severity-grouped findings with CWE identifiers — useful for a quick triage but without the remediation roadmap.</p>
-<h3>Secret and PII handling</h3>
-<p>The <code>security</code> module exposes <code>SecretsDetector</code>, <code>SecretType</code>, <code>PIIScrubber</code>, and <code>PIIDetection</code> directly. <code>SecurityAuditWorkflow</code> routes secret detection through its dedicated <code>secret-detector</code> subagent. If you need to scrub PII from telemetry logs <em>before</em> they reach a <code>TelemetryBackend</code>, use <code>PIIScrubber</code> independently — neither audit surface handles that automatically.</p>
-<h3>Alert integration</h3>
-<p>Neither audit surface fires alerts on its own. If you want threshold-based notifications when findings exceed a severity level, wire <code>AlertEngine.add_alert()</code> with an appropriate <code>AlertMetric</code> and <code>AlertSeverity</code>, then call <code>AlertEngine.check_and_trigger()</code> after a workflow run. Notifications can be delivered via <code>deliver_webhook</code>, <code>deliver_email</code>, or <code>deliver_stdout</code>.</p>
-<h2>Use X when…</h2>
-<p><strong>Use <code>SecurityAuditWorkflow</code></strong> when you need a comprehensive audit with actionable remediation steps — before releasing a new version, after adding code that handles files or user input, when integrating a new dependency, or as a CI gate on pull requests. Its four-subagent architecture produces findings that cite file paths and line numbers, and its <code>system_prompt_suffix</code> parameter lets you restrict scope (for example, to a single package or vulnerability class).</p>
-<p><strong>Use the <code>/security-audit</code> skill or <code>attune workflow run security-audit</code></strong> when you want a fast, no-configuration scan during active development. A quick scan takes roughly 30 seconds and delivers results directly in your terminal or Claude Code conversation — ideal for a sanity check before committing, not for a pre-release sign-off.</p>
-<p><strong>Use the <code>security</code> module directly</strong> (<code>SecretsDetector</code>, <code>PIIScrubber</code>, <code>AuditLogger</code>) when you need to integrate detection into your own pipeline — for example, scrubbing secrets from telemetry records before they reach <code>MultiBackend</code> or <code>OTELBackend</code>.</p>
-<p>The <code>SecurityAuditWorkflow</code> is the stronger choice for thoroughness; the CLI skill wins on speed and zero setup. If you are unsure, run the CLI skill first — if it surfaces anything in the <code>CRITICAL</code> or <code>HIGH</code> range, follow up with <code>SecurityAuditWorkflow</code> for the full remediation plan.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/security_audit.py</code></li>
-<li><code>src/attune/security/**</code></li>
-<li><code>src/attune/monitoring/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>security</code>, <code>audit</code>, <code>owasp</code>, <code>scanning</code>, <code>cve</code></p>
+<p>Reach for <strong>security-audit</strong> when the concern is a vulnerability
+surface — secrets, injection, access control; reach for
+<strong>bug-predict</strong> for a broad correctness-risk triage. They overlap
+on <code>eval</code>/<code>exec</code> (both flag it) and pair well on a pre-release
+sweep.</p>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot security audit — troubleshooting</title>
-  <meta name="description" content="The `security-audit` feature scans your codebase for vulnerabilities including `eval`/`exec` usage, path traversal, hardcoded secrets, and injection risks. Use this page when `attune workflow run secu" />
-  <meta property="og:title" content="Troubleshoot security audit — troubleshooting" />
-  <meta property="og:description" content="The `security-audit` feature scans your codebase for vulnerabilities including `eval`/`exec` usage, path traversal, hardcoded secrets, and injection risks. Use this page when `attune workflow run secu" />
+  <title>Audit code for vulnerabilities with four Agent SDK subagents — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;SecurityAuditWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` " />
+  <meta property="og:title" content="Audit code for vulnerabilities with four Agent SDK subagents — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;SecurityAuditWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/security-audit/troubleshooting" />
   <style>
@@ -272,125 +272,87 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot security audit</h1>
-<p>The <code>security-audit</code> feature scans your codebase for vulnerabilities including <code>eval</code>/<code>exec</code> usage, path traversal, hardcoded secrets, and injection risks. Use this page when <code>attune workflow run security-audit</code> produces an error, returns unexpected results, or behaves differently than described in the quickstart.</p>
-<h2>Symptom table</h2>
+<h1>Audit code for vulnerabilities with four Agent SDK subagents</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>SecurityViolation</code> raised unexpectedly</td>
-<td>Confirm the path argument points to a readable directory; check <code>_validate_file_path</code> for path constraints</td>
-</tr>
-<tr>
-<td>Audit completes but reports no findings</td>
-<td>Verify <code>--path</code> resolves to the directory you intend — a typo silently scans an empty tree</td>
-</tr>
-<tr>
-<td><code>detect_secrets</code> returns false negatives</td>
-<td>Confirm <code>SecretsDetector</code> is initialized; check whether the <code>SecretType</code> patterns cover your secret format</td>
-</tr>
-<tr>
-<td>PII scrubbing strips data you need</td>
-<td>Review <code>PIIPattern</code> configuration — an overly broad pattern can match legitimate content</td>
-</tr>
-<tr>
-<td><code>SecurityAuditWorkflow.execute()</code> hangs</td>
-<td>One of the four subagents (<code>vuln-scanner</code>, <code>secret-detector</code>, <code>auth-reviewer</code>, <code>remediation-planner</code>) may be blocked waiting for the LLM; check network connectivity and API key validity</td>
-</tr>
-<tr>
-<td>Output missing CRITICAL/HIGH severity section</td>
-<td>The orchestrator prompt requires findings grouped by severity — if the LLM response is truncated, the synthesis step may silently drop sections</td>
-</tr>
-<tr>
-<td>Intermittent <code>AuditLogger</code> failures</td>
-<td>Check for file-locking conflicts if multiple processes write audit events concurrently</td>
-</tr>
-</tbody>
-</table>
-<h2>Diagnose the problem</h2>
-<p>Work through these checks in order — each step is cheaper than the next.</p>
-<h3>1. Reproduce with a minimal path</h3>
-<p>Run the audit against a single small file before pointing it at a full directory:</p>
-<pre><code class="language-bash">attune workflow run security-audit --path &quot;src/your_module.py&quot;
-</code></pre>
-<p>If that succeeds, the issue is scope-related (large directory, binary files, or symlinks). Narrow or widen from there.</p>
-<h3>2. Confirm the workflow reaches all four subagents</h3>
-<p><code>SecurityAuditWorkflow</code> coordinates four subagents: <code>vuln-scanner</code>, <code>secret-detector</code>, <code>auth-reviewer</code>, and <code>remediation-planner</code>. If the final report is missing an entire category (for example, no secret findings at all), one subagent may have failed silently. Re-run and check whether the Summary section mentions all four domains.</p>
-<h3>3. Check metrics and alert history</h3>
-<p>If you have alerts configured, verify current telemetry values before assuming a code defect:</p>
-<pre><code class="language-bash">attune alerts metrics
-attune alerts history --limit 20
-</code></pre>
-<p>A spike in error rate or latency visible in <code>metrics</code> output often explains why a workflow behaves unexpectedly.</p>
-<h3>4. Verify secret detection directly</h3>
-<p>Call <code>detect_secrets</code> in isolation to confirm whether the detection layer itself is at fault:</p>
-<pre><code class="language-python">from security import detect_secrets
-
-findings = detect_secrets(&quot;path/to/file.py&quot;)
-print(findings)
-</code></pre>
-<p>If this returns results when the full workflow does not, the issue is in the <code>SecurityAuditWorkflow</code> orchestration layer, not in <code>SecretsDetector</code>.</p>
-<h3>5. Inspect <code>AuditLogger</code> output</h3>
-<p><code>AuditLogger</code> records <code>AuditEvent</code> entries as the workflow runs. If the workflow exits without error but results look wrong, review the audit log for events that completed versus those that did not. A missing <code>AuditEvent</code> for a subagent indicates it was never invoked.</p>
-<h3>6. Run the related tests</h3>
-<pre><code class="language-bash">pytest -k &quot;security_audit&quot; -v
-</code></pre>
-<p>A failing test that exercises your path confirms the bug is reproducible and gives you a fixture to work against.</p>
-<h2>Common fixes</h2>
-<p><strong>Wrong or unreadable path</strong>
-<code>_validate_file_path</code> raises if the path is outside the allowed scope. Make sure the path you pass to <code>--path</code> exists and is readable by the process running attune:</p>
-<pre><code class="language-bash">ls -la src/          # confirm the directory exists and is accessible
-attune workflow run security-audit --path &quot;src/&quot;
-</code></pre>
-<p><strong>Subagent blocked on LLM call</strong>
-If <code>SecurityAuditWorkflow.execute()</code> hangs, the most likely cause is a missing or expired API key. Confirm your environment variable is set and valid, then re-run. You do not need to change any workflow code.</p>
-<p><strong><code>detect_secrets</code> misses a secret type</strong>
-<code>SecretsDetector</code> matches against <code>SecretType</code> patterns. If a secret format in your codebase is not covered, you need to extend the pattern set — this requires a change outside the workflow itself, in the <code>security</code> module configuration.</p>
-<p><strong>PII scrubbing removes too much</strong>
-<code>PIIScrubber</code> applies <code>PIIPattern</code> rules broadly. If legitimate content is being stripped, review the active patterns. Narrowing a <code>PIIPattern</code> regex is a change to the <code>security</code> module, not to <code>SecurityAuditWorkflow</code>.</p>
-<p><strong>Report sections missing after a large scan</strong>
-The orchestrator synthesizes findings from all four subagents into a single report with Summary, Security, and Suggestions sections. If the LLM response is truncated due to token limits, later sections are dropped first. Reduce the scan scope with a more specific <code>--path</code> argument:</p>
-<pre><code class="language-bash">attune workflow run security-audit --path &quot;src/api/&quot;   # scope to one package
-</code></pre>
-<p><strong>Stale alert configuration</strong>
-If <code>attune alerts watch</code> is triggering unexpectedly during a security audit run, check whether an alert threshold is set too low for the metrics generated by a deep scan:</p>
-<pre><code class="language-bash">attune alerts list
-attune alerts disable &lt;alert_id&gt;   # temporarily disable while investigating
-</code></pre>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/security_audit.py</code> — <code>SecurityAuditWorkflow</code> and subagent orchestration</li>
-<li><code>src/attune/security/</code> — <code>AuditLogger</code>, <code>AuditEvent</code>, <code>SecretsDetector</code>, <code>PIIScrubber</code>, <code>SecurityViolation</code>, <code>Severity</code></li>
-<li><code>src/attune/monitoring/</code> — <code>AlertEngine</code>, <code>AlertConfig</code>, <code>AlertEvent</code>, telemetry collection</li>
-</ul>
-<p><strong>Tags:</strong> <code>security</code>, <code>audit</code>, <code>owasp</code>, <code>scanning</code>, <code>cve</code></p>
-<h2>Unresolved references</h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>Location</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
 <th>Severity</th>
-<th>Issue</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Line 60 (code fence)</td>
-<td>error</td>
-<td><code>from security import …</code> — module not importable</td>
+<td><code>RuntimeWarning: coroutine 'SecurityAuditWorkflow.execute' was never awaited</code></td>
+<td><code>execute</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>WorkflowResult.success</code> is <code>False</code>, <code>error</code> is <code>&quot;path argument is required&quot;</code></td>
+<td><code>execute</code> called with empty or missing <code>path</code></td>
+<td>Pass a non-empty <code>path</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK unavailable: ...&quot;</code></td>
+<td><code>claude_agent_sdk</code> is not importable</td>
+<td>Install the Agent SDK dependency for the environment</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK connection failed: ...&quot;</code></td>
+<td>A <code>ConnectionError</code> / <code>TimeoutError</code> reaching the SDK</td>
+<td>Check connectivity / retry; <code>transient</code> is set when a retry is reasonable</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Audit stops early / partial report</td>
+<td>The depth's agent-turn or budget cap was reached</td>
+<td>Use a shallower path or accept a deeper (costlier) run</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>metadata[&quot;subagent_transcripts&quot;]</code> is empty</td>
+<td>The session transcript could not be recovered for this run</td>
+<td>The synthesized <code>final_output</code> is still authoritative; transcripts are a supplement</td>
+<td>low</td>
+</tr>
+<tr>
+<td>A finding looks like a false positive</td>
+<td>Findings are LLM predictions, not verified exploits</td>
+<td>Confirm against the cited file/line before acting</td>
+<td>medium</td>
 </tr>
 </tbody>
 </table>
+<h3>Risk areas</h3>
+<ul>
+<li><strong>The async call is easy to get wrong.</strong> <code>execute</code> is the only
+public method and it is a coroutine. Forgetting to <code>await</code> it is
+the single most common mistake.</li>
+<li><strong>Findings are predictions, not proofs.</strong> The four subagents
+apply LLM judgment; a CRITICAL finding means &quot;audit this first,&quot;
+not &quot;this is a confirmed vulnerability.&quot; Verify before acting —
+and never treat a clean report as a security guarantee.</li>
+<li><strong>Deep audits cost more.</strong> <code>deep</code> engages extended thinking and
+a larger budget; reserve it for high-risk areas rather than
+whole-repo sweeps.</li>
+</ul>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm you are awaiting: <code>result = await workflow.execute( path=&quot;src/&quot;)</code> inside an <code>async def</code> or <code>asyncio.run</code>.</li>
+<li>Check <code>result.success</code>; if <code>False</code>, read <code>result.error</code> and
+<code>result.error_type</code>.</li>
+<li>On an SDK error, inspect <code>result.metadata</code> for the captured
+<code>sdk_stderr</code> / SDK error kind.</li>
+<li>Confirm the scope: <code>result.metadata</code> echoes the <code>path</code>,
+<code>depth</code>, and <code>max_turns</code> actually used.</li>
+<li>Cross-check findings against <code>metadata[&quot;subagent_transcripts&quot;]</code>
+to see which subagent surfaced each.</li>
+</ol>
 
   </article>
   <footer>

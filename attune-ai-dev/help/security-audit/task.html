@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Run a security audit — task</title>
-  <meta name="description" content="Use `SecurityAuditWorkflow` when you want to scan a codebase for vulnerabilities — including `eval`/`exec` usage, path traversal, hardcoded secrets, and injection risks — and receive a severity-groupe" />
-  <meta property="og:title" content="Run a security audit — task" />
-  <meta property="og:description" content="Use `SecurityAuditWorkflow` when you want to scan a codebase for vulnerabilities — including `eval`/`exec` usage, path traversal, hardcoded secrets, and injection risks — and receive a severity-groupe" />
+  <title>Audit code for vulnerabilities with four Agent SDK subagents — task</title>
+  <meta name="description" content="**Goal:** run a one-off audit over a directory without writing any Python." />
+  <meta property="og:title" content="Audit code for vulnerabilities with four Agent SDK subagents — task" />
+  <meta property="og:description" content="**Goal:** run a one-off audit over a directory without writing any Python." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/security-audit/task" />
   <style>
@@ -272,55 +272,84 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Run a security audit</h1>
-<p>Use <code>SecurityAuditWorkflow</code> when you want to scan a codebase for vulnerabilities — including <code>eval</code>/<code>exec</code> usage, path traversal, hardcoded secrets, and injection risks — and receive a severity-grouped report with actionable remediation steps.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>Access to the project source code you want to scan</li>
-<li>The <code>attune</code> package installed with the <code>workflows</code> and <code>security</code> modules available</li>
-</ul>
-<h2>Run the audit</h2>
-<ol>
-<li>
-<p><strong>Import and instantiate <code>SecurityAuditWorkflow</code>.</strong></p>
-<pre><code class="language-python">from attune.workflows.security_audit import SecurityAuditWorkflow
+<h1>Audit code for vulnerabilities with four Agent SDK subagents</h1>
+<h2>Tasks</h2>
+<h3>Audit a path from the CLI</h3>
+<p><strong>Goal:</strong> run a one-off audit over a directory without writing any
+Python.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-bash"># Default depth (standard) over a directory:
+attune workflow run security-audit --path src/
 
-workflow = SecurityAuditWorkflow()
+# Deep audit (extended thinking), JSON output for a CI gate:
+attune workflow run security-audit --path src/ --depth deep --json
+
+# Cost-saving pass (unpinned subagents run on Haiku):
+attune workflow run security-audit --path src/ --cheap
 </code></pre>
-<p>Pass <code>system_prompt_suffix</code> if you want to append additional instructions to the orchestrator prompt:</p>
-<pre><code class="language-python">workflow = SecurityAuditWorkflow(system_prompt_suffix=&quot;Focus on authentication code only.&quot;)
+<p><strong>Verify:</strong> <code>--path</code> / <code>-p</code> defaults to the current directory;
+<code>--depth</code> accepts <code>quick</code>, <code>standard</code>, or <code>deep</code>; <code>--json</code> / <code>-j</code>
+emits machine-readable output; <code>--cheap</code> forces every subagent
+without an explicit model onto Haiku for that run. Use
+<code>attune workflow info security-audit</code> to confirm registration, and
+<code>attune workflow list</code> to see it alongside the other workflows.</p>
+<h3>Call the audit from Python</h3>
+<p><strong>Goal:</strong> drive security-audit from a hook or CI gate and act on
+the result.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import SecurityAuditWorkflow
+
+
+async def main() -&gt; None:
+    workflow = SecurityAuditWorkflow()
+    result = await workflow.execute(path=&quot;src/api/&quot;, depth=&quot;deep&quot;)
+
+    if not result.success:
+        print(&quot;audit failed:&quot;, result.error)
+        return
+
+    print(result.final_output)
+    for action in result.suggestions:
+        print(action)
+
+
+asyncio.run(main())
 </code></pre>
-</li>
-<li>
-<p><strong>Call <code>execute()</code> with the path to scan.</strong></p>
-<pre><code class="language-python">result = workflow.execute(path=&quot;src/&quot;)
+<p><strong>Verify:</strong> <code>execute</code> is a coroutine — <code>await</code> it. A completed
+audit returns <code>success=True</code> with the report in <code>final_output</code>;
+a failure returns <code>success=False</code> with a populated <code>error</code> and
+<code>error_type</code>. <code>metadata</code> echoes the <code>path</code>, <code>depth</code>, and
+<code>max_turns</code> used, plus the recovered <code>subagent_transcripts</code>.</p>
+<h3>Focus the audit with a prompt suffix</h3>
+<p><strong>Goal:</strong> steer the audit toward a concern without replacing the
+built-in orchestrator behavior.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import SecurityAuditWorkflow
+
+
+async def main() -&gt; None:
+    workflow = SecurityAuditWorkflow(
+        system_prompt_suffix=(
+            &quot;Prioritize authentication and secret-handling code. &quot;
+            &quot;Call out anything touching the login flow.&quot;
+        ),
+    )
+    result = await workflow.execute(path=&quot;src/auth/&quot;)
+    print(result.final_output)
+
+
+asyncio.run(main())
 </code></pre>
-<p>The workflow coordinates four specialized subagents — <code>vuln-scanner</code>, <code>secret-detector</code>, <code>auth-reviewer</code>, and <code>remediation-planner</code> — and synthesizes their output into a single report.</p>
-</li>
-<li>
-<p><strong>Inspect the returned <code>WorkflowResult</code>.</strong></p>
-<p>The report contains three sections:</p>
-<ul>
-<li><strong>Summary</strong> — an overall security score (0–100) and a brief executive summary</li>
-<li><strong>Security</strong> — consolidated findings grouped by severity (<code>CRITICAL</code>, <code>HIGH</code>, <code>MEDIUM</code>, <code>LOW</code>)</li>
-<li><strong>Suggestions</strong> — prioritized remediation steps with estimated effort per fix</li>
-</ul>
-</li>
-<li>
-<p><strong>Run the audit from the CLI</strong> (alternative to the Python API).</p>
-<pre><code>attune workflow run security-audit --path &quot;src/&quot;
-</code></pre>
-<p>The CLI produces the same severity-grouped findings with CWE identifiers.</p>
-</li>
-</ol>
-<h2>Verify success</h2>
-<p>The audit completed successfully when <code>WorkflowResult</code> contains all three report sections — <strong>Summary</strong>, <strong>Security</strong>, and <strong>Suggestions</strong> — and the <strong>Summary</strong> section includes a numeric security score. If findings exist, they appear under <strong>Security</strong> with at least one severity label (<code>CRITICAL</code>, <code>HIGH</code>, <code>MEDIUM</code>, or <code>LOW</code>).</p>
-<h2>Key files</h2>
-<ul>
-<li><code>src/attune/workflows/security_audit.py</code> — <code>SecurityAuditWorkflow</code> and its four subagent definitions</li>
-<li><code>src/attune/security/</code> — <code>SecretsDetector</code>, <code>PIIScrubber</code>, <code>AuditLogger</code>, and related detection primitives</li>
-<li><code>src/attune/monitoring/alerts_cli.py</code> — CLI commands (<code>watch</code>, <code>history</code>, <code>metrics</code>) for monitoring audit-related telemetry thresholds</li>
-</ul>
+<p><strong>Verify:</strong> <code>system_prompt_suffix</code> is a keyword-only constructor
+argument appended to the orchestrator's system prompt. The four
+subagents still run their normal analysis; the suffix only steers
+the orchestrator. The empty-string default leaves behavior
+unchanged (this is the hook discovery-sweep's <code>SecurityAuditSource</code>
+uses to augment the prompt per instance).</p>
 
   </article>
   <footer>

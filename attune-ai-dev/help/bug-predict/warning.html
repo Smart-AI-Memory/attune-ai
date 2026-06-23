@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Bug Predict Cautions — warning</title>
-  <meta name="description" content="Bug prediction coordinates three subagents (`pattern-scanner`, `risk-correlator`, `prevention-advisor`) and merges their output into a single report. Most surprises come from how that synthesis behave" />
-  <meta property="og:title" content="Bug Predict Cautions — warning" />
-  <meta property="og:description" content="Bug prediction coordinates three subagents (`pattern-scanner`, `risk-correlator`, `prevention-advisor`) and merges their output into a single report. Most surprises come from how that synthesis behave" />
+  <title>Predict likely bug hotspots with three Agent SDK subagents — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BugPredictionWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` " />
+  <meta property="og:title" content="Predict likely bug hotspots with three Agent SDK subagents — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BugPredictionWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/bug-predict/warning" />
   <style>
@@ -272,42 +272,86 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Bug Predict Cautions</h1>
-<h2>What to watch for</h2>
-<p>Bug prediction coordinates three subagents (<code>pattern-scanner</code>, <code>risk-correlator</code>, <code>prevention-advisor</code>) and merges their output into a single report. Most surprises come from how that synthesis behaves at the edges — not from the pattern matching itself.</p>
-<h2>Risk areas</h2>
-<h3>False-negative suppression removes real findings</h3>
-<p>The scanner automatically filters out patterns it considers safe — including <code>eval()</code> inside test fixture strings, <code>regex.exec()</code> calls, and broad exceptions annotated with <code># INTENTIONAL:</code> or <code># noqa: BLE001</code>. It also skips any file whose name matches <code>_SCANNER_TEST_PATTERNS</code> (e.g. <code>test_bug_predict</code>, <code>test_scanner</code>, <code>test_security_scan</code>).</p>
-<p>If a high-severity pattern like <code>dangerous_eval</code> disappears from your report after renaming or restructuring a file, check whether the new filename matches one of those test-file patterns. Production code in a file named <code>test_*</code> will be silently skipped.</p>
-<h3><code>format_bug_predict_report()</code> expects a specific result shape</h3>
-<p><code>format_bug_predict_report(result: dict, input_data: dict)</code> formats the final output from <code>BugPredictionWorkflow.execute()</code>. It does not validate that <code>result</code> conforms to the expected structure — missing keys (such as <code>Summary</code>, <code>Bugs</code>, or <code>Suggestions</code> sections) produce incomplete or blank output rather than an error. If you pass a partial result, the report will appear to succeed but will omit findings silently.</p>
-<p>Always pass the unmodified <code>WorkflowResult</code> from <code>execute()</code> rather than a hand-constructed dict unless you can confirm your dict includes every expected section.</p>
-<h3><code>system_prompt_suffix</code> appended without a separator</h3>
-<p><code>BugPredictionWorkflow.__init__</code> accepts a <code>system_prompt_suffix</code> keyword argument that is appended directly to <code>_SYSTEM_PROMPT</code>. There is no newline or separator injected between the base prompt and your suffix. A suffix that begins mid-sentence or contains conflicting instructions can degrade the orchestrator's output quality in ways that are difficult to trace in the report.</p>
-<p>Start <code>system_prompt_suffix</code> with a newline and a clear directive so it reads as a distinct instruction rather than a run-on continuation.</p>
-<h3>Private subagent names can change without notice</h3>
-<p>The subagent identifiers in <code>_SUBAGENT_NAMES</code> (<code>pattern-scanner</code>, <code>risk-correlator</code>, <code>prevention-advisor</code>) are module-level private constants. If your code references them directly — for example, to filter or re-route subagent output — a refactor can break that logic silently. Depend only on the public interface: <code>BugPredictionWorkflow</code> and <code>format_bug_predict_report</code>.</p>
-<h2>How to avoid problems</h2>
-<ol>
-<li>
-<p><strong>Verify suppression rules don't apply to your target.</strong> Before concluding a file is clean, confirm it isn't being excluded by a test-file pattern match or an <code># INTENTIONAL:</code> annotation that was added without review.</p>
-</li>
-<li>
-<p><strong>Pass <code>execute()</code> output directly to <code>format_bug_predict_report()</code>.</strong> Avoid reshaping the <code>WorkflowResult</code> before formatting. If you need to filter findings, do so after formatting, not before.</p>
-</li>
-<li>
-<p><strong>Prefix <code>system_prompt_suffix</code> with a newline.</strong> This keeps your additions structurally separate from the base orchestrator prompt and reduces the chance of malformed instruction sequences.</p>
-</li>
-<li>
-<p><strong>Use only the public API.</strong> <code>BugPredictionWorkflow</code> and <code>format_bug_predict_report</code> are the stable surface. Private helpers and constants — anything prefixed with <code>_</code> — can change between releases without a deprecation notice.</p>
-</li>
-</ol>
-<h2>Source files</h2>
+<h1>Predict likely bug hotspots with three Agent SDK subagents</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'BugPredictionWorkflow.execute' was never awaited</code></td>
+<td><code>execute</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>WorkflowResult.success</code> is <code>False</code>, <code>error</code> is <code>&quot;path argument is required&quot;</code></td>
+<td><code>execute</code> called with empty or missing <code>path</code></td>
+<td>Pass a non-empty <code>path</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK unavailable: ...&quot;</code></td>
+<td><code>claude_agent_sdk</code> is not importable</td>
+<td>Install the Agent SDK dependency for the environment</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK connection failed: ...&quot;</code></td>
+<td>A <code>ConnectionError</code> / <code>TimeoutError</code> reaching the SDK</td>
+<td>Check connectivity / retry; <code>transient</code> is set when a retry is reasonable</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Scan stops early / partial report</td>
+<td>The depth's agent-turn or <code>max_budget_usd</code> budget was reached</td>
+<td>Use a shallower path or raise depth deliberately (cost rises)</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>format_bug_predict_report(result, ...)</code> raises / prints nothing useful</td>
+<td>It expects the pre-v4.2.0 dict shape, <strong>not</strong> the <code>WorkflowResult</code> <code>execute</code> returns</td>
+<td>Read <code>result.final_output</code> / <code>result.summary</code> directly</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Editing <code>./attune.config.yml</code>'s <code>bug_predict</code> block changes nothing</td>
+<td>That block configures the internal static pattern helpers, which the live SDK workflow does not run</td>
+<td>Steer the scan with <code>system_prompt_suffix</code> (or a deeper <code>depth</code>) instead</td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/workflows/bug_predict.py</code></li>
-<li><code>src/attune/workflows/bug_predict_report.py</code></li>
+<li><strong>The async call is easy to get wrong.</strong> <code>execute</code> is the only
+public method and it is a coroutine. Forgetting to <code>await</code> it
+is the single most common bug-predict mistake.</li>
+<li><strong>Findings are predictions, not proofs.</strong> The subagents apply
+LLM judgment; a HIGH finding means &quot;investigate first,&quot; not
+&quot;this is definitely a bug.&quot; Confirm before acting.</li>
+<li><strong>The static helpers are not the live scanner.</strong> The regex
+detectors in <code>bug_predict_patterns.py</code> and the
+<code>./attune.config.yml</code> <code>bug_predict</code> settings are a separate
+layer; they do not change what the three subagents do.</li>
 </ul>
-<p><strong>Tags:</strong> <code>bugs</code>, <code>prediction</code>, <code>scanning</code>, <code>race-condition</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm you are awaiting: <code>result = await workflow.execute( path=&quot;src/&quot;)</code> inside an <code>async def</code> or <code>asyncio.run</code>.</li>
+<li>Check <code>result.success</code>; if <code>False</code>, read <code>result.error</code> and
+<code>result.error_type</code>.</li>
+<li>On an SDK error, inspect <code>result.metadata</code> for the captured
+<code>sdk_stderr</code> / SDK error kind.</li>
+<li>Confirm the scope: <code>result.metadata</code> echoes the <code>path</code>,
+<code>depth</code>, and <code>max_turns</code> actually used.</li>
+<li>Run the related tests: <code>pytest -k bug_predict -v</code>.</li>
+</ol>
 
   </article>
   <footer>

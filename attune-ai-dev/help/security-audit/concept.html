@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Security Audit — concept</title>
-  <meta name="description" content="Security audit is a workflow that scans your codebase for vulnerabilities that are easy to introduce and hard to spot in code review — things like `eval()` on untrusted input, file paths built without" />
-  <meta property="og:title" content="Security Audit — concept" />
-  <meta property="og:description" content="Security audit is a workflow that scans your codebase for vulnerabilities that are easy to introduce and hard to spot in code review — things like `eval()` on untrusted input, file paths built without" />
+  <title>Audit code for vulnerabilities with four Agent SDK subagents — concept</title>
+  <meta name="description" content="Security-audit scans a codebase for vulnerabilities and reports them by severity with prioritized remediation. It is **SDK-native**: `SecurityAuditWorkflow` delegates the analysis to four specialized " />
+  <meta property="og:title" content="Audit code for vulnerabilities with four Agent SDK subagents — concept" />
+  <meta property="og:description" content="Security-audit scans a codebase for vulnerabilities and reports them by severity with prioritized remediation. It is **SDK-native**: `SecurityAuditWorkflow` delegates the analysis to four specialized " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/security-audit/concept" />
   <style>
@@ -272,86 +272,133 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Security Audit</h1>
-<p>Security audit is a workflow that scans your codebase for vulnerabilities that are easy to introduce and hard to spot in code review — things like <code>eval()</code> on untrusted input, file paths built without validation, API keys committed to source control, and injection risks in queries or shell commands.</p>
-<h2>How it works</h2>
-<p><code>SecurityAuditWorkflow</code> coordinates four specialized subagents — <code>vuln-scanner</code>, <code>secret-detector</code>, <code>auth-reviewer</code>, and <code>remediation-planner</code> — each focused on a distinct domain. After all four finish, the workflow synthesizes their output into a single report structured around three sections:</p>
+<h1>Audit code for vulnerabilities with four Agent SDK subagents</h1>
+<h2>Overview</h2>
+<p>Security-audit scans a codebase for vulnerabilities and reports
+them by severity with prioritized remediation. It is <strong>SDK-native</strong>:
+<code>SecurityAuditWorkflow</code> delegates the analysis to four specialized
+Claude Agent SDK subagents and synthesizes their findings into one
+report — an overall security score, findings grouped CRITICAL /
+HIGH / MEDIUM / LOW, and an effort-ranked remediation plan.</p>
+<p>Like its sibling bug-predict, it <strong>predicts</strong> rather than proves:
+the four subagents apply LLM judgment over the code (via Read /
+Glob / Grep), so a finding is a lead to verify, not a confirmed
+exploit. Treat a CRITICAL finding as &quot;audit this first,&quot; not &quot;this
+is definitely exploitable.&quot;</p>
+<p>You reach security-audit four ways, all of which run the same
+workflow:</p>
 <ul>
-<li><strong>Summary</strong> — an overall security score (0–100) and a short executive summary of your security posture</li>
-<li><strong>Security</strong> — consolidated findings organized by severity (<code>CRITICAL</code>, <code>HIGH</code>, <code>MEDIUM</code>, <code>LOW</code>)</li>
-<li><strong>Suggestions</strong> — actionable remediation steps ordered by priority, with estimated effort for each fix</li>
+<li>the <strong><code>/security-audit</code></strong> skill, inside a Claude Code
+conversation;</li>
+<li>the CLI — <strong><code>attune workflow run security-audit</code></strong>;</li>
+<li>the <strong><code>security_audit</code></strong> MCP tool (one required <code>path</code>
+argument);</li>
+<li>the Python API — <code>await SecurityAuditWorkflow().execute(...)</code>,
+documented here for wiring an audit into a hook, a CI gate, or a
+custom tool.</li>
 </ul>
-<p>Findings cite file paths and line numbers where possible.</p>
-<p>On the security side, the <code>security</code> module exposes <code>SecretsDetector</code>, <code>PIIScrubber</code>, and <code>AuditLogger</code> as the underlying detection primitives. <code>detect_secrets</code> and <code>_validate_file_path</code> are the functions most likely to appear in scan results. <code>SecurityViolation</code> and <code>Severity</code> carry individual finding details through the pipeline.</p>
-<h2>What the scan covers</h2>
+<p>The audit workflow is self-contained — it owns scanning and
+report synthesis only. Alerting, telemetry storage, and
+monitoring live in a <strong>separate</strong> subsystem (<code>attune.monitoring</code>)
+and are not part of this feature.</p>
+<h2>Concepts</h2>
+<h3>Four subagents, one synthesized report</h3>
+<p><code>SecurityAuditWorkflow.execute</code> issues a single
+<code>claude_agent_sdk.query</code> whose options define four subagents, each
+scoped to <code>Read</code> / <code>Glob</code> / <code>Grep</code>:</p>
 <table>
 <thead>
 <tr>
-<th>Category</th>
-<th>What to look for</th>
+<th>Subagent</th>
+<th>What it looks for</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Code injection</strong></td>
-<td><code>eval()</code>, <code>exec()</code>, and <code>compile()</code> on untrusted input</td>
+<td><code>vuln-scanner</code></td>
+<td><code>eval</code>/<code>exec</code> usage, SQL injection, XSS, path traversal, command injection, and insecure deserialization. Reports file, line, severity, and remediation advice.</td>
 </tr>
 <tr>
-<td><strong>Path traversal</strong></td>
-<td>File operations that don't validate the path first</td>
+<td><code>secret-detector</code></td>
+<td>Hardcoded API keys, passwords, tokens, private keys, database credentials, and sensitive environment variables committed to source — plus how to externalize each.</td>
 </tr>
 <tr>
-<td><strong>Hardcoded secrets</strong></td>
-<td>API keys, tokens, and passwords committed to source</td>
+<td><code>auth-reviewer</code></td>
+<td>Missing auth checks, broken access control, insecure session management, weak password policies, and privilege-escalation risks.</td>
 </tr>
 <tr>
-<td><strong>SQL/command injection</strong></td>
-<td>String concatenation in queries or shell commands</td>
-</tr>
-<tr>
-<td><strong>PII exposure</strong></td>
-<td>Personal data handled without scrubbing (<code>PIIScrubber</code>, <code>PIIPattern</code>)</td>
-</tr>
-<tr>
-<td><strong>Weak cryptography</strong></td>
-<td>MD5/SHA1 for security purposes, hardcoded IVs</td>
+<td><code>remediation-planner</code></td>
+<td>Reviews all findings and builds a prioritized fix plan, grouped by effort (quick wins / medium / major refactors), with time estimates and inter-fix dependencies.</td>
 </tr>
 </tbody>
 </table>
-<h2>How security audit relates to monitoring</h2>
-<p>Security audit findings feed into the broader monitoring system. <code>AuditEvent</code> records are what the <code>AuditLogger</code> writes; those records can drive <code>AlertEngine</code> thresholds. An <code>AlertConfig</code> ties a specific <code>AlertMetric</code> to a <code>threshold</code> float and an <code>AlertChannel</code> (webhook, email, or stdout). When <code>AlertEngine.check_and_trigger()</code> finds a metric above its threshold, it produces an <code>AlertEvent</code> — a snapshot containing <code>current_value</code>, <code>threshold</code>, <code>severity</code>, and <code>triggered_at</code> — and delivers it via <code>deliver_notification</code>.</p>
-<p>The <code>cooldown_seconds</code> field on <code>AlertConfig</code> (default <code>3600</code>) prevents alert storms: once an alert fires, it won't fire again until the cooldown expires.</p>
-<h2>Entry points</h2>
+<p>The orchestrator then synthesizes all four into one report with
+three sections — <strong>Summary</strong> (an overall 0–100 security score plus
+a 2–3 sentence posture summary), <strong>Security</strong> (consolidated
+findings grouped CRITICAL / HIGH / MEDIUM / LOW), and
+<strong>Suggestions</strong> (remediation steps ordered by priority, each with
+an effort estimate).</p>
+<h3>Depth controls the budget — and deep engages extended thinking</h3>
+<p><code>execute</code> takes a <code>depth</code> of <code>&quot;quick&quot;</code>, <code>&quot;standard&quot;</code> (default),
+or <code>&quot;deep&quot;</code>. Depth maps to the maximum agent turns and a per-run
+cost cap:</p>
 <table>
 <thead>
 <tr>
-<th>Surface</th>
-<th>How you reach it</th>
+<th>Depth</th>
+<th>Max agent turns</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>SecurityAuditWorkflow.execute(**kwargs)</code></td>
-<td>SDK — run the four-subagent workflow programmatically</td>
+<td><code>quick</code></td>
+<td>10</td>
 </tr>
 <tr>
-<td><code>attune workflow run security-audit --path &quot;src/&quot;</code></td>
-<td>CLI — scan a directory and get severity-grouped findings</td>
+<td><code>standard</code></td>
+<td>20</td>
 </tr>
 <tr>
-<td><code>/security-audit &lt;path&gt;</code></td>
-<td>Claude Code skill — structured results in your conversation</td>
-</tr>
-<tr>
-<td><code>detect_secrets(...)</code></td>
-<td>Python API — call the secret-detection primitive directly</td>
-</tr>
-<tr>
-<td><code>AuditLogger</code></td>
-<td>Python API — write <code>AuditEvent</code> records from your own code</td>
+<td><code>deep</code></td>
+<td>40</td>
 </tr>
 </tbody>
 </table>
+<p>An unrecognized depth falls back to the standard budget (20
+turns). A <code>deep</code> audit additionally engages a token-aware task
+budget and <strong>extended thinking</strong> (with high reasoning effort), so
+the remediation-planner and architecture-level reasoning get more
+room — at higher cost.</p>
+<h3>Findings survive synthesis</h3>
+<p>Two mechanisms keep findings from being lost in the
+orchestrator's synthesis step:</p>
+<ul>
+<li>the query runs with a structured <code>output_format</code>, so findings
+parse into categories reliably rather than depending on prose
+formatting; and</li>
+<li>after the run, the per-subagent transcripts are recovered from
+the session and appended to the report under a
+<strong>&quot;## Subagent findings&quot;</strong> heading — so a finding a subagent
+surfaced is preserved even if the synthesis under-reports it.
+The raw transcripts are also attached to the result's
+<code>metadata[&quot;subagent_transcripts&quot;]</code>.</li>
+</ul>
+<h3><code>execute</code> is async, and honors only <code>path</code> and <code>depth</code></h3>
+<p><code>execute</code> is a coroutine — <code>await</code> it (or drive it with
+<code>asyncio.run</code>). Calling it without awaiting is the most common
+mistake.</p>
+<p>It reads exactly two keyword arguments: <code>path</code> (required) and
+<code>depth</code> (default <code>&quot;standard&quot;</code>). Any other keyword is ignored. An
+empty or missing <code>path</code> returns a failed <code>WorkflowResult</code> rather
+than raising.</p>
+<h3>The result is a <code>WorkflowResult</code></h3>
+<p><code>execute</code> returns a <code>WorkflowResult</code> (from <code>attune.workflows</code>).
+The synthesized report lands in <code>final_output</code> — a serialized
+report when the findings parse, or the raw markdown otherwise —
+with a short <code>summary</code>, a <code>suggestions</code> list, the <code>cost_report</code>,
+the <code>provider</code>, and a <code>metadata</code> dict echoing <code>path</code>, <code>depth</code>,
+<code>max_turns</code>, and the recovered <code>subagent_transcripts</code>. On failure,
+<code>success</code> is <code>False</code> and <code>error</code> / <code>error_type</code> carry the reason.</p>
 
   </article>
   <footer>

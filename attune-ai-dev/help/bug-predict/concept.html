@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Bug Prediction — concept</title>
-  <meta name="description" content="Bug prediction scans your codebase for code patterns and complexity signals that correlate with production failures, so you can act before bugs surface at runtime." />
-  <meta property="og:title" content="Bug Prediction — concept" />
-  <meta property="og:description" content="Bug prediction scans your codebase for code patterns and complexity signals that correlate with production failures, so you can act before bugs surface at runtime." />
+  <title>Predict likely bug hotspots with three Agent SDK subagents — concept</title>
+  <meta name="description" content="Bug-predict scans a codebase and predicts where bugs are most likely to hide. It is **SDK-native**: `BugPredictionWorkflow` delegates the analysis to three specialized Claude Agent SDK subagents and s" />
+  <meta property="og:title" content="Predict likely bug hotspots with three Agent SDK subagents — concept" />
+  <meta property="og:description" content="Bug-predict scans a codebase and predicts where bugs are most likely to hide. It is **SDK-native**: `BugPredictionWorkflow` delegates the analysis to three specialized Claude Agent SDK subagents and s" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/bug-predict/concept" />
   <style>
@@ -272,52 +272,114 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Bug Prediction</h1>
-<p>Bug prediction scans your codebase for code patterns and complexity signals that correlate with production failures, so you can act before bugs surface at runtime.</p>
-<h2>How it works</h2>
-<p><code>BugPredictionWorkflow</code> orchestrates three specialized subagents — <code>pattern-scanner</code>, <code>risk-correlator</code>, and <code>prevention-advisor</code> — that each focus on a distinct domain and report structured findings. After all three finish, the workflow synthesizes their output into a single report with three sections:</p>
+<h1>Predict likely bug hotspots with three Agent SDK subagents</h1>
+<h2>Overview</h2>
+<p>Bug-predict scans a codebase and predicts where bugs are most
+likely to hide. It is <strong>SDK-native</strong>: <code>BugPredictionWorkflow</code>
+delegates the analysis to three specialized Claude Agent SDK
+subagents and synthesizes their findings into a single report
+with an overall risk score, per-finding file/line locations, and
+prioritized prevention advice.</p>
+<p>It <strong>predicts</strong> — it does not prove. The three subagents apply
+LLM judgment over the code (via Read / Glob / Grep), so findings
+are risk hypotheses to triage, not the deterministic output of a
+linter. Treat a HIGH finding as &quot;look here first,&quot; not &quot;this line
+is definitely broken.&quot;</p>
+<p>You reach bug-predict four ways, all of which run the same
+workflow:</p>
 <ul>
-<li><strong>Summary</strong> — an overall risk score (0–100) and a brief executive summary of predicted hotspots</li>
-<li><strong>Bugs</strong> — findings organized by severity (HIGH, MEDIUM, LOW), each with a file path, line number, pattern type, and plain-English description</li>
-<li><strong>Suggestions</strong> — prioritized prevention strategies, including specific refactoring advice and testing recommendations</li>
+<li>the <strong><code>/bug-predict</code></strong> skill, inside a Claude Code conversation;</li>
+<li>the CLI — <strong><code>attune workflow run bug-predict</code></strong>;</li>
+<li>the <strong><code>bug_predict</code></strong> MCP tool (one required <code>path</code> argument);</li>
+<li>the Python API — <code>await BugPredictionWorkflow().execute(...)</code>,
+documented here for wiring bug-predict into a hook, a CI step,
+or a custom tool.</li>
 </ul>
-<p>The orchestrator prompt instructs the workflow to cite file paths and line numbers wherever possible, so findings are immediately actionable rather than vague.</p>
-<h2>The three-subagent pipeline</h2>
-<p>Each subagent handles one slice of the analysis:</p>
+<p>A separate set of regex/string pattern helpers also lives in the
+module (<code>bug_predict_patterns.py</code>). They are an internal,
+lower-level utility layer — <strong>not</strong> what the live workflow runs.
+The &quot;Notes &amp; tips&quot; and &quot;Design &amp; extension&quot; sections below say
+exactly what they do and do not affect.</p>
+<h2>Concepts</h2>
+<h3>Three subagents, one synthesized report</h3>
+<p><code>BugPredictionWorkflow.execute</code> issues a single
+<code>claude_agent_sdk.query</code> whose options define three subagents,
+each scoped to <code>Read</code> / <code>Glob</code> / <code>Grep</code>:</p>
 <table>
 <thead>
 <tr>
 <th>Subagent</th>
-<th>Role</th>
+<th>What it looks for</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>pattern-scanner</code></td>
-<td>Detects dangerous code patterns such as <code>eval()</code> on user input, bare <code>except:</code> clauses, and TODO/FIXME markers</td>
+<td>Null references, type mismatches, race conditions, <code>eval</code>/<code>exec</code> usage, broad exception handlers, resource leaks, off-by-one errors. Reports file path, line number, pattern type, and severity.</td>
 </tr>
 <tr>
 <td><code>risk-correlator</code></td>
-<td>Weighs contextual signals — cyclomatic complexity, change frequency, and code smells — to rank which findings matter most</td>
+<td>Correlates the scanner's findings with file complexity, change frequency, and historical bug density; assigns a per-file risk score and names the highest-risk modules.</td>
 </tr>
 <tr>
 <td><code>prevention-advisor</code></td>
-<td>Translates ranked findings into concrete refactoring and testing recommendations</td>
+<td>Reviews the correlated risks, ranks them by impact, and proposes specific fixes: refactoring, added tests, type annotations, error-handling, and architectural changes.</td>
 </tr>
 </tbody>
 </table>
-<p>This division keeps each subagent focused, which improves both precision and the quality of the final synthesized report.</p>
-<h2>Report formatting</h2>
-<p><code>format_bug_predict_report(result, input_data)</code> converts the raw workflow output into the human-readable report you see in your conversation. The same formatting logic powers <code>main()</code>, the CLI entry point, so the report looks identical whether you invoke bug prediction through Claude Code or directly from the command line.</p>
-<h2>False-positive suppression</h2>
-<p>Not every pattern match represents a real bug. The scanner automatically ignores known-safe cases — for example, code marked with intentional keywords such as <code>fallback</code>, <code>graceful</code>, or <code>intentional</code>, and test files matched by patterns like <code>test_bug_predict</code> and <code>test_scanner</code>. This filtering happens before findings reach the risk-correlator, so your report reflects genuine risk rather than noise.</p>
-<h2>When bug prediction matters</h2>
-<ul>
-<li><strong>Before merging a large PR</strong> — surface patterns that slip through manual review</li>
-<li><strong>After onboarding unfamiliar code</strong> — quickly map risk hotspots in a new module</li>
-<li><strong>Before a release</strong> — confirm no new HIGH-severity patterns crept into high-churn files</li>
-<li><strong>As a periodic health check</strong> — track whether risk scores improve or drift over time</li>
-</ul>
+<p>The orchestrator then synthesizes all three into one report with
+three sections — <strong>Summary</strong> (an overall 0–100 risk score plus a
+2–3 sentence executive summary), <strong>Bugs</strong> (grouped HIGH /
+MEDIUM / LOW, each with file, line, pattern, and description), and
+<strong>Suggestions</strong> (prioritized prevention strategies).</p>
+<h3>Depth controls the agent-turn budget</h3>
+<p><code>execute</code> takes a <code>depth</code> of <code>&quot;quick&quot;</code>, <code>&quot;standard&quot;</code> (default),
+or <code>&quot;deep&quot;</code>. Depth maps to the maximum number of agent turns the
+SDK query may take, and to a per-run cost cap:</p>
+<table>
+<thead>
+<tr>
+<th>Depth</th>
+<th>Max agent turns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quick</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>20</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+</tr>
+</tbody>
+</table>
+<p>An unrecognized depth falls back to the standard budget (20
+turns). Deeper scans let the subagents read more files and reason
+longer, at higher cost — the run is bounded by a <code>max_budget_usd</code>
+derived from the depth.</p>
+<h3><code>execute</code> is async, and honors only <code>path</code> and <code>depth</code></h3>
+<p><code>execute</code> is a coroutine — <code>await</code> it (or drive it with
+<code>asyncio.run</code>). Calling it without awaiting is the most common
+bug-predict mistake.</p>
+<p>It reads exactly two keyword arguments from <code>**kwargs</code>: <code>path</code>
+(required) and <code>depth</code> (default <code>&quot;standard&quot;</code>). Any other keyword
+is silently ignored — there is no <code>file_types</code>, <code>exclude</code>, or
+<code>depth=...</code> shorthand beyond those two. An empty or missing
+<code>path</code> returns a failed <code>WorkflowResult</code> rather than raising.</p>
+<h3>The result is a <code>WorkflowResult</code></h3>
+<p><code>execute</code> returns a <code>WorkflowResult</code> (from
+<code>attune.workflows</code>). The synthesized report lands in
+<code>final_output</code> — a serialized <code>WorkflowReport</code> when the findings
+parse into categories, or the raw markdown text otherwise — with
+a short <code>summary</code>, a <code>suggestions</code> list, the <code>cost_report</code>, the
+<code>provider</code>, and a <code>metadata</code> dict echoing back <code>path</code>, <code>depth</code>,
+and <code>max_turns</code>. On failure, <code>success</code> is <code>False</code> and <code>error</code> /
+<code>error_type</code> carry the reason.</p>
 
   </article>
   <footer>

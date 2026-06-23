@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: Run the security audit before you ship, not after — tip</title>
-  <meta name="description" content="Run `attune workflow run security-audit --path &quot;src/&quot;` as a pre-release gate, not a one-off check." />
-  <meta property="og:title" content="Tip: Run the security audit before you ship, not after — tip" />
-  <meta property="og:description" content="Run `attune workflow run security-audit --path &quot;src/&quot;` as a pre-release gate, not a one-off check." />
+  <title>Audit code for vulnerabilities with four Agent SDK subagents — tip</title>
+  <meta name="description" content="- **Depend on the documented public surface.** The supported API is `SecurityAuditWorkflow` (its constructor and async `execute`) plus the `WorkflowResult` it returns. Names with a leading underscore " />
+  <meta property="og:title" content="Audit code for vulnerabilities with four Agent SDK subagents — tip" />
+  <meta property="og:description" content="- **Depend on the documented public surface.** The supported API is `SecurityAuditWorkflow` (its constructor and async `execute`) plus the `WorkflowResult` it returns. Names with a leading underscore " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/security-audit/tip" />
   <style>
@@ -272,12 +272,27 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: Run the security audit before you ship, not after</h1>
-<p>Run <code>attune workflow run security-audit --path &quot;src/&quot;</code> as a pre-release gate, not a one-off check.</p>
-<p><strong>Why:</strong> <code>SecurityAuditWorkflow</code> coordinates four subagents — <code>vuln-scanner</code>, <code>secret-detector</code>, <code>auth-reviewer</code>, and <code>remediation-planner</code> — in parallel. Catching a hardcoded secret or an unvalidated file path costs seconds at audit time and hours in an incident.</p>
-<p><strong>How:</strong> The workflow's <code>execute()</code> method returns findings grouped by severity (CRITICAL, HIGH, MEDIUM, LOW) with file paths, line numbers, and prioritized remediation steps. Treat any CRITICAL finding as a release blocker.</p>
-<p><strong>Tradeoff:</strong> A full multi-pass audit takes roughly five minutes. If you run it only on changed paths rather than the whole codebase, you may miss vulnerabilities introduced by transitive effects — a utility function used in a new, riskier context, for example.</p>
-<p><strong>Tags:</strong> <code>security</code>, <code>audit</code>, <code>owasp</code>, <code>scanning</code>, <code>cve</code></p>
+<h1>Audit code for vulnerabilities with four Agent SDK subagents</h1>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Depend on the documented public surface.</strong> The supported API
+is <code>SecurityAuditWorkflow</code> (its constructor and async <code>execute</code>)
+plus the <code>WorkflowResult</code> it returns. Names with a leading
+underscore — <code>_run_agent_audit</code>, <code>_SUBAGENT_NAMES</code> — are
+internal and may change.</li>
+<li><strong>Use <code>metadata[&quot;subagent_transcripts&quot;]</code> to attribute findings.</strong>
+The synthesized report is the headline; the recovered transcripts
+show which of the four subagents raised each finding, which helps
+when triaging.</li>
+<li><strong>Start shallow, then go deep on the hot spots.</strong> Run <code>standard</code>
+broadly, and spend a <code>deep</code> (extended-thinking) audit only on the
+modules that came back risky.</li>
+<li><strong>Use <code>--cheap</code> for routine CLI runs.</strong> It forces unpinned
+subagents onto Haiku, trading some depth for cost.</li>
+<li><strong>Monitoring is a separate subsystem.</strong> Alerting and telemetry
+storage live in <code>attune.monitoring</code>, not here — this feature is
+the audit workflow only.</li>
+</ul>
 
   </article>
   <footer>

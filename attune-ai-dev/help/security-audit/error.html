@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Security Audit errors — error</title>
-  <meta name="description" content="Failures in `SecurityAuditWorkflow` typically fall into three categories:" />
-  <meta property="og:title" content="Security Audit errors — error" />
-  <meta property="og:description" content="Failures in `SecurityAuditWorkflow` typically fall into three categories:" />
+  <title>Audit code for vulnerabilities with four Agent SDK subagents — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;SecurityAuditWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` " />
+  <meta property="og:title" content="Audit code for vulnerabilities with four Agent SDK subagents — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;SecurityAuditWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/security-audit/error" />
   <style>
@@ -272,39 +272,87 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Security Audit errors</h1>
-<h2>Common error signatures</h2>
-<p>Failures in <code>SecurityAuditWorkflow</code> typically fall into three categories:</p>
+<h1>Audit code for vulnerabilities with four Agent SDK subagents</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'SecurityAuditWorkflow.execute' was never awaited</code></td>
+<td><code>execute</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>WorkflowResult.success</code> is <code>False</code>, <code>error</code> is <code>&quot;path argument is required&quot;</code></td>
+<td><code>execute</code> called with empty or missing <code>path</code></td>
+<td>Pass a non-empty <code>path</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK unavailable: ...&quot;</code></td>
+<td><code>claude_agent_sdk</code> is not importable</td>
+<td>Install the Agent SDK dependency for the environment</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK connection failed: ...&quot;</code></td>
+<td>A <code>ConnectionError</code> / <code>TimeoutError</code> reaching the SDK</td>
+<td>Check connectivity / retry; <code>transient</code> is set when a retry is reasonable</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Audit stops early / partial report</td>
+<td>The depth's agent-turn or budget cap was reached</td>
+<td>Use a shallower path or accept a deeper (costlier) run</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>metadata[&quot;subagent_transcripts&quot;]</code> is empty</td>
+<td>The session transcript could not be recovered for this run</td>
+<td>The synthesized <code>final_output</code> is still authoritative; transcripts are a supplement</td>
+<td>low</td>
+</tr>
+<tr>
+<td>A finding looks like a false positive</td>
+<td>Findings are LLM predictions, not verified exploits</td>
+<td>Confirm against the cited file/line before acting</td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><strong>Input and path errors</strong> — <code>_validate_file_path</code> raises when the target path is missing, outside the working directory, or not readable. You'll see this before any subagent (<code>vuln-scanner</code>, <code>secret-detector</code>, <code>auth-reviewer</code>, <code>remediation-planner</code>) starts work.</li>
-<li><strong>Secret and PII detection errors</strong> — <code>SecretsDetector</code> and <code>PIIScrubber</code> raise <code>SecurityViolation</code> when a file cannot be read or a pattern match produces an unexpected result. <code>detect_secrets</code> can also surface these if the file path fails <code>_validate_file_path</code>.</li>
-<li><strong>Notification and webhook errors</strong> — <code>_validate_webhook_url</code> raises when an <code>AlertConfig.webhook_url</code> is malformed. <code>deliver_webhook</code> and <code>deliver_email</code> can fail silently (returning <code>False</code>) or raise if the downstream channel is unreachable.</li>
+<li><strong>The async call is easy to get wrong.</strong> <code>execute</code> is the only
+public method and it is a coroutine. Forgetting to <code>await</code> it is
+the single most common mistake.</li>
+<li><strong>Findings are predictions, not proofs.</strong> The four subagents
+apply LLM judgment; a CRITICAL finding means &quot;audit this first,&quot;
+not &quot;this is a confirmed vulnerability.&quot; Verify before acting —
+and never treat a clean report as a security guarantee.</li>
+<li><strong>Deep audits cost more.</strong> <code>deep</code> engages extended thinking and
+a larger budget; reserve it for high-risk areas rather than
+whole-repo sweeps.</li>
 </ul>
-<h2>How to diagnose</h2>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Check whether the failure is pre-scan or mid-scan.</strong> An error before any subagent output points to path validation (<code>_validate_file_path</code>) or workflow initialization (<code>SecurityAuditWorkflow.__init__</code>). An error after partial output points to a subagent — check which of the four names (<code>vuln-scanner</code>, <code>secret-detector</code>, <code>auth-reviewer</code>, <code>remediation-planner</code>) last appeared in the report.</p>
-</li>
-<li>
-<p><strong>Inspect the <code>SecurityViolation</code> and <code>Severity</code> fields.</strong> The <code>security</code> module exports <code>SecurityViolation</code> and <code>Severity</code> directly. If you catch a <code>SecurityViolation</code>, its severity level tells you whether the audit halted on a policy violation or logged and continued.</p>
-</li>
-<li>
-<p><strong>Verify the alert engine database.</strong> <code>AlertEngine</code> defaults to <code>.attune/alerts.db</code>. If that path is not writable, <code>get_alert_engine()</code> fails on first call. Run <code>attune alerts metrics</code> to confirm the engine can read telemetry; a failure here means the SQLite file is missing or locked.</p>
-</li>
-<li>
-<p><strong>Check for failed notification backends.</strong> After <code>check_and_trigger()</code> fires, call <code>MultiBackend.get_failed_backends()</code> to see which backends did not accept the <code>AlertEvent</code>. A non-empty list means at least one <code>deliver_webhook</code> or <code>deliver_email</code> call returned <code>False</code>.</p>
-</li>
-<li>
-<p><strong>Validate webhook URLs before adding alerts.</strong> <code>_validate_webhook_url</code> is called inside <code>AlertEngine.add_alert</code>. If <code>init</code> fails with a validation error, re-run with explicit flags (<code>--webhook-url</code>, <code>--email</code>, <code>--channel</code>) to isolate which field is rejected.</p>
-</li>
+<li>Confirm you are awaiting: <code>result = await workflow.execute( path=&quot;src/&quot;)</code> inside an <code>async def</code> or <code>asyncio.run</code>.</li>
+<li>Check <code>result.success</code>; if <code>False</code>, read <code>result.error</code> and
+<code>result.error_type</code>.</li>
+<li>On an SDK error, inspect <code>result.metadata</code> for the captured
+<code>sdk_stderr</code> / SDK error kind.</li>
+<li>Confirm the scope: <code>result.metadata</code> echoes the <code>path</code>,
+<code>depth</code>, and <code>max_turns</code> actually used.</li>
+<li>Cross-check findings against <code>metadata[&quot;subagent_transcripts&quot;]</code>
+to see which subagent surfaced each.</li>
 </ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/security_audit.py</code></li>
-<li><code>src/attune/security/**</code></li>
-<li><code>src/attune/monitoring/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>security</code>, <code>audit</code>, <code>owasp</code>, <code>scanning</code>, <code>cve</code></p>
 
   </article>
   <footer>

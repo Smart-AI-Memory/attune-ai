@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot bug predict — troubleshooting</title>
-  <meta name="description" content="Bug prediction scans your codebase for patterns that historically cause production incidents — `dangerous_eval`, `broad_exception`, and `incomplete_code` — and returns a risk report scored 0–100. The " />
-  <meta property="og:title" content="Troubleshoot bug predict — troubleshooting" />
-  <meta property="og:description" content="Bug prediction scans your codebase for patterns that historically cause production incidents — `dangerous_eval`, `broad_exception`, and `incomplete_code` — and returns a risk report scored 0–100. The " />
+  <title>Predict likely bug hotspots with three Agent SDK subagents — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BugPredictionWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` " />
+  <meta property="og:title" content="Predict likely bug hotspots with three Agent SDK subagents — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BugPredictionWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/bug-predict/troubleshooting" />
   <style>
@@ -272,121 +272,86 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot bug predict</h1>
-<h2>Before you start</h2>
-<p>Bug prediction scans your codebase for patterns that historically cause production incidents — <code>dangerous_eval</code>, <code>broad_exception</code>, and <code>incomplete_code</code> — and returns a risk report scored 0–100. The workflow coordinates three subagents (<code>pattern-scanner</code>, <code>risk-correlator</code>, <code>prevention-advisor</code>) and formats output through <code>format_bug_predict_report()</code>. Failures can occur at the workflow, subagent, or report-formatting layer.</p>
-<h2>Symptom table</h2>
+<h1>Predict likely bug hotspots with three Agent SDK subagents</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>BugPredictionWorkflow.execute()</code> raises an exception</td>
-<td>Read the full traceback — it names the file and line. Check whether the <code>path</code> argument resolves to a real directory before calling <code>execute()</code>.</td>
+<td><code>RuntimeWarning: coroutine 'BugPredictionWorkflow.execute' was never awaited</code></td>
+<td><code>execute</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td>The report is empty or shows 0 findings on a path that should have issues</td>
-<td>Confirm the scanned path contains <code>.py</code> files. If it does, check whether all findings are being suppressed by the false-positive filter (look for <code># INTENTIONAL:</code>, <code># noqa: BLE001</code>, or <code>_INTENTIONAL_KEYWORDS</code> matches).</td>
+<td><code>WorkflowResult.success</code> is <code>False</code>, <code>error</code> is <code>&quot;path argument is required&quot;</code></td>
+<td><code>execute</code> called with empty or missing <code>path</code></td>
+<td>Pass a non-empty <code>path</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td><code>format_bug_predict_report()</code> returns garbled or incomplete output</td>
-<td>Verify that the <code>result</code> dict passed to <code>format_bug_predict_report(result, input_data)</code> is the unmodified return value of <code>execute()</code>. A partial or manually constructed dict can omit required keys.</td>
+<td><code>error</code> reads <code>&quot;Agent SDK unavailable: ...&quot;</code></td>
+<td><code>claude_agent_sdk</code> is not importable</td>
+<td>Install the Agent SDK dependency for the environment</td>
+<td>high</td>
 </tr>
 <tr>
-<td>The CLI entry point (<code>main()</code>) exits without output</td>
-<td>Run with a path argument and check stderr for an error message. <code>main()</code> is the CLI entry point — it does not return a value, so silent exit usually means the path was not found or was empty.</td>
+<td><code>error</code> reads <code>&quot;Agent SDK connection failed: ...&quot;</code></td>
+<td>A <code>ConnectionError</code> / <code>TimeoutError</code> reaching the SDK</td>
+<td>Check connectivity / retry; <code>transient</code> is set when a retry is reasonable</td>
+<td>medium</td>
 </tr>
 <tr>
-<td>Risk score is unexpectedly low despite known risky patterns</td>
-<td>Check whether the flagged files match any of the test-file patterns (<code>test_bug_predict</code>, <code>test_scanner</code>, <code>test_security_scan</code>). Test files are excluded from scoring.</td>
+<td>Scan stops early / partial report</td>
+<td>The depth's agent-turn or <code>max_budget_usd</code> budget was reached</td>
+<td>Use a shallower path or raise depth deliberately (cost rises)</td>
+<td>medium</td>
 </tr>
 <tr>
-<td>Behavior differs between two runs on the same code</td>
-<td>Look for environment drift: changed files, a dependency upgrade, or a different working directory affecting relative path resolution.</td>
+<td><code>format_bug_predict_report(result, ...)</code> raises / prints nothing useful</td>
+<td>It expects the pre-v4.2.0 dict shape, <strong>not</strong> the <code>WorkflowResult</code> <code>execute</code> returns</td>
+<td>Read <code>result.final_output</code> / <code>result.summary</code> directly</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Editing <code>./attune.config.yml</code>'s <code>bug_predict</code> block changes nothing</td>
+<td>That block configures the internal static pattern helpers, which the live SDK workflow does not run</td>
+<td>Steer the scan with <code>system_prompt_suffix</code> (or a deeper <code>depth</code>) instead</td>
+<td>medium</td>
 </tr>
 </tbody>
 </table>
-<h2>Step-by-step diagnosis</h2>
-<p>Work from cheapest to most invasive. Stop as soon as you find the cause.</p>
+<h3>Risk areas</h3>
+<ul>
+<li><strong>The async call is easy to get wrong.</strong> <code>execute</code> is the only
+public method and it is a coroutine. Forgetting to <code>await</code> it
+is the single most common bug-predict mistake.</li>
+<li><strong>Findings are predictions, not proofs.</strong> The subagents apply
+LLM judgment; a HIGH finding means &quot;investigate first,&quot; not
+&quot;this is definitely a bug.&quot; Confirm before acting.</li>
+<li><strong>The static helpers are not the live scanner.</strong> The regex
+detectors in <code>bug_predict_patterns.py</code> and the
+<code>./attune.config.yml</code> <code>bug_predict</code> settings are a separate
+layer; they do not change what the three subagents do.</li>
+</ul>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Reproduce against a minimal path.</strong>
-Call <code>/bug-predict</code> on a single file you control — for example, a file you know contains a bare <code>except:</code>. If the expected finding appears, the scanner is working and the issue is specific to your target path or environment.</p>
-<pre><code>/bug-predict src/api/webhook.py
-</code></pre>
-</li>
-<li>
-<p><strong>Verify the path is reachable.</strong>
-Relative paths resolve from the working directory at the time <code>execute()</code> is called. Print or log the resolved path before passing it to <code>BugPredictionWorkflow.execute()</code> to rule out a working-directory mismatch.</p>
-</li>
-<li>
-<p><strong>Check false-positive suppression.</strong>
-If findings disappear unexpectedly, review the code under scan for any of the suppression markers the scanner honors:</p>
-<ul>
-<li><code># INTENTIONAL:</code> comments on broad-exception blocks</li>
-<li><code># noqa: BLE001</code> markers</li>
-<li>Keywords from <code>_INTENTIONAL_KEYWORDS</code>: <code>fallback</code>, <code>ignore</code>, <code>optional</code>, <code>best effort</code>, <code>graceful</code>, <code>intentional</code></li>
-</ul>
-<p>These are intentional suppressions — remove the marker if the suppression is wrong, not the pattern check.</p>
-</li>
-<li>
-<p><strong>Run the related test suite.</strong></p>
-<pre><code>pytest -k &quot;bug_predict&quot; -v
-</code></pre>
-<p>If a test exercises the failing path, its fixtures show you the expected input shape for <code>BugPredictionWorkflow</code> and <code>format_bug_predict_report()</code>.</p>
-</li>
-<li>
-<p><strong>Inspect <code>format_bug_predict_report()</code> inputs directly.</strong>
-If the report output is wrong but <code>execute()</code> succeeds, call <code>format_bug_predict_report(result, input_data)</code> in isolation with the raw <code>result</code> dict to confirm the formatting layer is the source. A malformed <code>result</code> dict is the most common cause of garbled report output.</p>
-</li>
-<li>
-<p><strong>Check subagent completion.</strong>
-<code>BugPredictionWorkflow</code> coordinates three subagents: <code>pattern-scanner</code>, <code>risk-correlator</code>, and <code>prevention-advisor</code>. If the returned report is missing a section (Summary, Bugs, or Suggestions), one subagent likely did not complete. Look for timeout or error signals in the <code>WorkflowResult</code> before the report is formatted.</p>
-</li>
+<li>Confirm you are awaiting: <code>result = await workflow.execute( path=&quot;src/&quot;)</code> inside an <code>async def</code> or <code>asyncio.run</code>.</li>
+<li>Check <code>result.success</code>; if <code>False</code>, read <code>result.error</code> and
+<code>result.error_type</code>.</li>
+<li>On an SDK error, inspect <code>result.metadata</code> for the captured
+<code>sdk_stderr</code> / SDK error kind.</li>
+<li>Confirm the scope: <code>result.metadata</code> echoes the <code>path</code>,
+<code>depth</code>, and <code>max_turns</code> actually used.</li>
+<li>Run the related tests: <code>pytest -k bug_predict -v</code>.</li>
 </ol>
-<h2>Common fixes</h2>
-<ul>
-<li>
-<p><strong>Path does not exist or is empty.</strong>
-Pass an absolute path or confirm your working directory before calling <code>execute()</code>:</p>
-<pre><code class="language-python">import os
-from workflows.bug_predict import BugPredictionWorkflow
-
-wf = BugPredictionWorkflow()
-result = wf.execute(path=os.path.abspath(&quot;src/&quot;))
-</code></pre>
-</li>
-<li>
-<p><strong>All findings suppressed by false-positive filter.</strong>
-If every match in a file carries a suppression marker and the suppression is wrong, remove the marker from the source file. Do not disable the filter globally — it exists to reduce noise from safe patterns like <code>regex.exec()</code> and test fixture strings.</p>
-</li>
-<li>
-<p><strong><code>format_bug_predict_report()</code> receives a partial dict.</strong>
-Always pass the unmodified return value of <code>execute()</code> as the <code>result</code> argument:</p>
-<pre><code class="language-python">from workflows.bug_predict_report import format_bug_predict_report
-
-report = format_bug_predict_report(result=wf.execute(path=&quot;src/&quot;), input_data={&quot;path&quot;: &quot;src/&quot;})
-</code></pre>
-</li>
-<li>
-<p><strong>Dependency version mismatch.</strong>
-A dependency upgrade can change pattern-matching behavior. Run <code>pip show &lt;dep&gt;</code> to confirm installed versions match your lockfile. This is a change outside the feature itself — align your environment before rerunning.</p>
-</li>
-<li>
-<p><strong>Test files excluded from results.</strong>
-Files whose names match <code>test_bug_predict</code>, <code>test_scanner</code>, or <code>test_security_scan</code> are excluded from scoring. If you are scanning a test directory and seeing no results, this is expected behavior.</p>
-</li>
-</ul>
-<h2>Source files</h2>
-<ul>
-<li><code>workflows/bug_predict.py</code> — <code>BugPredictionWorkflow</code> class and subagent orchestration</li>
-<li><code>workflows/bug_predict_report.py</code> — <code>format_bug_predict_report()</code> and <code>main()</code> CLI entry point</li>
-</ul>
-<p><strong>Tags:</strong> <code>bugs</code>, <code>prediction</code>, <code>scanning</code></p>
 
   </article>
   <footer>

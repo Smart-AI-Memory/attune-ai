@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Note: bug-predict internals — note</title>
-  <meta name="description" content="`BugPredictionWorkflow` (in `workflows/bug_predict`) is an SDK-native orchestrator that coordinates three specialized subagents: `pattern-scanner`, `risk-correlator`, and `prevention-advisor`. Each su" />
-  <meta property="og:title" content="Note: bug-predict internals — note" />
-  <meta property="og:description" content="`BugPredictionWorkflow` (in `workflows/bug_predict`) is an SDK-native orchestrator that coordinates three specialized subagents: `pattern-scanner`, `risk-correlator`, and `prevention-advisor`. Each su" />
+  <title>Predict likely bug hotspots with three Agent SDK subagents — note</title>
+  <meta name="description" content="Bug-predict scans a codebase and predicts where bugs are most likely to hide. It is **SDK-native**: `BugPredictionWorkflow` delegates the analysis to three specialized Claude Agent SDK subagents and s" />
+  <meta property="og:title" content="Predict likely bug hotspots with three Agent SDK subagents — note" />
+  <meta property="og:description" content="Bug-predict scans a codebase and predicts where bugs are most likely to hide. It is **SDK-native**: `BugPredictionWorkflow` delegates the analysis to three specialized Claude Agent SDK subagents and s" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/bug-predict/note" />
   <style>
@@ -272,20 +272,133 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Note: bug-predict internals</h1>
-<h2>How the workflow is structured</h2>
-<p><code>BugPredictionWorkflow</code> (in <code>workflows/bug_predict</code>) is an SDK-native orchestrator that coordinates three specialized subagents: <code>pattern-scanner</code>, <code>risk-correlator</code>, and <code>prevention-advisor</code>. Each subagent focuses on a distinct domain — detection, scoring, and remediation advice — and reports findings as structured markdown. The orchestrator synthesizes those findings into a single report with a <strong>Summary</strong>, <strong>Bugs</strong>, and <strong>Suggestions</strong> section.</p>
-<p>The <code>system_prompt_suffix</code> parameter on <code>BugPredictionWorkflow.__init__</code> lets callers append instructions to the default orchestrator prompt without replacing it.</p>
-<h2>Report formatting</h2>
-<p><code>format_bug_predict_report(result, input_data)</code> in <code>workflows/bug_predict_report</code> takes the raw <code>dict</code> returned by <code>BugPredictionWorkflow.execute()</code> and renders it as a human-readable string. The <code>main()</code> function in the same module is the CLI entry point that wires these two together for standalone use.</p>
-<h2>False-positive suppression</h2>
-<p>The scanner skips matches that contain any of the following keywords in surrounding context: <code>fallback</code>, <code>ignore</code>, <code>optional</code>, <code>best effort</code>, <code>graceful</code>, <code>intentional</code>. It also ignores results originating from test files matched by the patterns <code>test_bug_predict</code>, <code>test_scanner</code>, and <code>test_security_scan</code>.</p>
-<h2>Source files</h2>
+<h1>Predict likely bug hotspots with three Agent SDK subagents</h1>
+<h2>Overview</h2>
+<p>Bug-predict scans a codebase and predicts where bugs are most
+likely to hide. It is <strong>SDK-native</strong>: <code>BugPredictionWorkflow</code>
+delegates the analysis to three specialized Claude Agent SDK
+subagents and synthesizes their findings into a single report
+with an overall risk score, per-finding file/line locations, and
+prioritized prevention advice.</p>
+<p>It <strong>predicts</strong> — it does not prove. The three subagents apply
+LLM judgment over the code (via Read / Glob / Grep), so findings
+are risk hypotheses to triage, not the deterministic output of a
+linter. Treat a HIGH finding as &quot;look here first,&quot; not &quot;this line
+is definitely broken.&quot;</p>
+<p>You reach bug-predict four ways, all of which run the same
+workflow:</p>
 <ul>
-<li><code>workflows/bug_predict.py</code> — <code>BugPredictionWorkflow</code> and subagent orchestration</li>
-<li><code>workflows/bug_predict_report.py</code> — <code>format_bug_predict_report()</code> and <code>main()</code></li>
+<li>the <strong><code>/bug-predict</code></strong> skill, inside a Claude Code conversation;</li>
+<li>the CLI — <strong><code>attune workflow run bug-predict</code></strong>;</li>
+<li>the <strong><code>bug_predict</code></strong> MCP tool (one required <code>path</code> argument);</li>
+<li>the Python API — <code>await BugPredictionWorkflow().execute(...)</code>,
+documented here for wiring bug-predict into a hook, a CI step,
+or a custom tool.</li>
 </ul>
-<p><strong>Tags:</strong> <code>bugs</code>, <code>prediction</code>, <code>scanning</code></p>
+<p>A separate set of regex/string pattern helpers also lives in the
+module (<code>bug_predict_patterns.py</code>). They are an internal,
+lower-level utility layer — <strong>not</strong> what the live workflow runs.
+The &quot;Notes &amp; tips&quot; and &quot;Design &amp; extension&quot; sections below say
+exactly what they do and do not affect.</p>
+<h2>Concepts</h2>
+<h3>Three subagents, one synthesized report</h3>
+<p><code>BugPredictionWorkflow.execute</code> issues a single
+<code>claude_agent_sdk.query</code> whose options define three subagents,
+each scoped to <code>Read</code> / <code>Glob</code> / <code>Grep</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Subagent</th>
+<th>What it looks for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pattern-scanner</code></td>
+<td>Null references, type mismatches, race conditions, <code>eval</code>/<code>exec</code> usage, broad exception handlers, resource leaks, off-by-one errors. Reports file path, line number, pattern type, and severity.</td>
+</tr>
+<tr>
+<td><code>risk-correlator</code></td>
+<td>Correlates the scanner's findings with file complexity, change frequency, and historical bug density; assigns a per-file risk score and names the highest-risk modules.</td>
+</tr>
+<tr>
+<td><code>prevention-advisor</code></td>
+<td>Reviews the correlated risks, ranks them by impact, and proposes specific fixes: refactoring, added tests, type annotations, error-handling, and architectural changes.</td>
+</tr>
+</tbody>
+</table>
+<p>The orchestrator then synthesizes all three into one report with
+three sections — <strong>Summary</strong> (an overall 0–100 risk score plus a
+2–3 sentence executive summary), <strong>Bugs</strong> (grouped HIGH /
+MEDIUM / LOW, each with file, line, pattern, and description), and
+<strong>Suggestions</strong> (prioritized prevention strategies).</p>
+<h3>Depth controls the agent-turn budget</h3>
+<p><code>execute</code> takes a <code>depth</code> of <code>&quot;quick&quot;</code>, <code>&quot;standard&quot;</code> (default),
+or <code>&quot;deep&quot;</code>. Depth maps to the maximum number of agent turns the
+SDK query may take, and to a per-run cost cap:</p>
+<table>
+<thead>
+<tr>
+<th>Depth</th>
+<th>Max agent turns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quick</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>20</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+</tr>
+</tbody>
+</table>
+<p>An unrecognized depth falls back to the standard budget (20
+turns). Deeper scans let the subagents read more files and reason
+longer, at higher cost — the run is bounded by a <code>max_budget_usd</code>
+derived from the depth.</p>
+<h3><code>execute</code> is async, and honors only <code>path</code> and <code>depth</code></h3>
+<p><code>execute</code> is a coroutine — <code>await</code> it (or drive it with
+<code>asyncio.run</code>). Calling it without awaiting is the most common
+bug-predict mistake.</p>
+<p>It reads exactly two keyword arguments from <code>**kwargs</code>: <code>path</code>
+(required) and <code>depth</code> (default <code>&quot;standard&quot;</code>). Any other keyword
+is silently ignored — there is no <code>file_types</code>, <code>exclude</code>, or
+<code>depth=...</code> shorthand beyond those two. An empty or missing
+<code>path</code> returns a failed <code>WorkflowResult</code> rather than raising.</p>
+<h3>The result is a <code>WorkflowResult</code></h3>
+<p><code>execute</code> returns a <code>WorkflowResult</code> (from
+<code>attune.workflows</code>). The synthesized report lands in
+<code>final_output</code> — a serialized <code>WorkflowReport</code> when the findings
+parse into categories, or the raw markdown text otherwise — with
+a short <code>summary</code>, a <code>suggestions</code> list, the <code>cost_report</code>, the
+<code>provider</code>, and a <code>metadata</code> dict echoing back <code>path</code>, <code>depth</code>,
+and <code>max_turns</code>. On failure, <code>success</code> is <code>False</code> and <code>error</code> /
+<code>error_type</code> carry the reason.</p>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Depend on the documented public surface.</strong> The supported API
+is <code>BugPredictionWorkflow</code> (its constructor and async
+<code>execute</code>) plus the <code>WorkflowResult</code> it returns. Names with a
+leading underscore — the pattern helpers in
+<code>bug_predict_patterns.py</code> and <code>_run_agent_predict</code> — are
+internal and may change.</li>
+<li><strong><code>format_bug_predict_report</code> and <code>main</code> are legacy.</strong>
+<code>format_bug_predict_report(result, input_data)</code> consumes the
+pre-v4.2.0 dict pipeline shape (<code>overall_risk_score</code>,
+<code>patterns_found</code>, …), not the <code>WorkflowResult</code> that <code>execute</code>
+returns; do not feed it <code>execute</code>'s output. Read
+<code>result.final_output</code> and <code>result.summary</code> directly instead.</li>
+<li><strong>Start shallow, then deepen.</strong> Run <code>quick</code> to triage, and only
+spend a <code>deep</code> budget on the modules that came back hot.</li>
+<li><strong>Use <code>--cheap</code> for routine CLI runs.</strong> It forces unpinned
+subagents onto Haiku, trading some depth for cost.</li>
+</ul>
 
   </article>
   <footer>

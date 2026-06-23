@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Security Audit cautions — warning</title>
-  <meta name="description" content="`SecurityAuditWorkflow` coordinates four specialized subagents (`vuln-scanner`, `secret-detector`, `auth-reviewer`, `remediation-planner`) and synthesizes their output into a single report. The risks " />
-  <meta property="og:title" content="Security Audit cautions — warning" />
-  <meta property="og:description" content="`SecurityAuditWorkflow` coordinates four specialized subagents (`vuln-scanner`, `secret-detector`, `auth-reviewer`, `remediation-planner`) and synthesizes their output into a single report. The risks " />
+  <title>Audit code for vulnerabilities with four Agent SDK subagents — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;SecurityAuditWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` " />
+  <meta property="og:title" content="Audit code for vulnerabilities with four Agent SDK subagents — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;SecurityAuditWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/security-audit/warning" />
   <style>
@@ -272,66 +272,87 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Security Audit cautions</h1>
-<h2>What to watch for</h2>
-<p><code>SecurityAuditWorkflow</code> coordinates four specialized subagents (<code>vuln-scanner</code>, <code>secret-detector</code>, <code>auth-reviewer</code>, <code>remediation-planner</code>) and synthesizes their output into a single report. The risks below apply to how you configure the scan, handle its findings, and act on its alerts.</p>
-<h2>Risk areas</h2>
-<h3>Secrets detected during a scan may appear in telemetry</h3>
-<p><code>SecretDetection</code> findings flow through the same <code>LLMCallRecord</code> and <code>WorkflowRunRecord</code> pipeline as all other telemetry. If you have configured an <code>OTELBackend</code> or a webhook-channel <code>AlertConfig</code>, raw finding data — including matched secret strings — can reach external endpoints. Before running a scan in an environment with telemetry backends enabled, verify that <code>MultiBackend.get_active_backends()</code> returns only backends you trust with sensitive content. Use <code>MultiBackend.remove_backend()</code> to detach any backend you don't want receiving findings.</p>
-<h3><code>detect_secrets</code> operates on the literal file content it is given</h3>
-<p><code>detect_secrets</code> from <code>security.__init__</code> does not follow symlinks or resolve <code>..</code> path components on its own. If you pass a path built from user input without first calling <code>_validate_file_path</code>, a traversal can silently scan files outside your intended scope. Always validate paths before passing them to the scan.</p>
-<h3>Alert <code>cooldown_seconds</code> can suppress repeated findings</h3>
-<p><code>AlertConfig.cooldown_seconds</code> defaults to <code>3600</code>. If the same threshold is breached multiple times within an hour — for example, a high error-rate metric that stays elevated — <code>AlertEngine.check_and_trigger()</code> fires only once per cooldown window. You will not receive a second <code>AlertEvent</code> until the window expires, even if <code>current_value</code> keeps climbing. Reduce <code>cooldown_seconds</code> when you need per-occurrence visibility, or poll <code>AlertEngine.get_metrics()</code> directly for the live value.</p>
-<h3>Deleting an alert also removes its history</h3>
-<p><code>AlertEngine.delete_alert()</code> removes the <code>AlertConfig</code> and its associated <code>AlertEvent</code> rows from the SQLite database at <code>.attune/alerts.db</code>. Call <code>AlertEngine.get_alert_history()</code> and export the results before deleting any alert you may need for an audit trail.</p>
-<h3><code>PIIScrubber</code> runs separately from <code>SecretsDetector</code></h3>
-<p><code>PIIScrubber</code> and <code>SecretsDetector</code> are independent classes in <code>security.__init__</code>. Running one does not invoke the other. If you need both PII redaction and secret detection in a pipeline, you must call each explicitly — relying on <code>detect_secrets</code> alone leaves PII patterns unexamined.</p>
-<h2>How to avoid problems</h2>
-<ol>
-<li>
-<p><strong>Audit active telemetry backends before scanning.</strong> Call <code>MultiBackend.get_active_backends()</code> and confirm that no backend will forward finding data to an unintended destination. If in doubt, call <code>MultiBackend.flush()</code> then <code>MultiBackend.remove_backend()</code> for any backend that should not receive security findings.</p>
-</li>
-<li>
-<p><strong>Validate file paths before passing them to the workflow.</strong> Use <code>_validate_file_path</code> (exported from <code>security.__init__</code>) on any path derived from user input before invoking <code>SecurityAuditWorkflow.execute()</code>.</p>
-</li>
-<li>
-<p><strong>Check alert history before deleting an alert.</strong> Run <code>attune alerts history --alert-id &lt;id&gt;</code> (or call <code>AlertEngine.get_alert_history(alert_id=..., limit=100)</code>) and save the output before calling <code>delete_alert()</code>.</p>
-</li>
-<li>
-<p><strong>Treat <code>_validate_webhook_url</code> and <code>_validate_file_path</code> as internal.</strong> Both are exported in <code>__all__</code> for convenience, but names starting with <code>_</code> are not covered by the public API stability guarantee. Wrap them rather than depending on their signatures directly.</p>
-</li>
-<li>
-<p><strong>Pair <code>PIIScrubber</code> with <code>SecretsDetector</code> explicitly.</strong> In any pipeline that processes user-generated content, instantiate both classes and run both checks. Do not assume one covers the other's detection patterns.</p>
-</li>
-</ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/security_audit.py</code></li>
-<li><code>src/attune/security/**</code></li>
-<li><code>src/attune/monitoring/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>security</code>, <code>audit</code>, <code>owasp</code>, <code>scanning</code>, <code>cve</code></p>
-<h2>Unresolved references</h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
+<h1>Audit code for vulnerabilities with four Agent SDK subagents</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>Location</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
 <th>Severity</th>
-<th>Issue</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Line 45</td>
-<td>error</td>
-<td><code>attune alerts history</code> — subcommand not found  Detected against attune 5.10.0 (installed in active venv). If you are regenerating against a different version, verify the flag exists in that version's <code>attune --help</code>. To override:   - One-off:  attune-author generate FEATURE --skip-check check_cli_refs   - Per file: [tool.attune-author.fact-check.skip]               &quot;.help/templates/security-audit/warning.md&quot; = [&quot;check_cli_refs&quot;]</td>
+<td><code>RuntimeWarning: coroutine 'SecurityAuditWorkflow.execute' was never awaited</code></td>
+<td><code>execute</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>WorkflowResult.success</code> is <code>False</code>, <code>error</code> is <code>&quot;path argument is required&quot;</code></td>
+<td><code>execute</code> called with empty or missing <code>path</code></td>
+<td>Pass a non-empty <code>path</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK unavailable: ...&quot;</code></td>
+<td><code>claude_agent_sdk</code> is not importable</td>
+<td>Install the Agent SDK dependency for the environment</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK connection failed: ...&quot;</code></td>
+<td>A <code>ConnectionError</code> / <code>TimeoutError</code> reaching the SDK</td>
+<td>Check connectivity / retry; <code>transient</code> is set when a retry is reasonable</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Audit stops early / partial report</td>
+<td>The depth's agent-turn or budget cap was reached</td>
+<td>Use a shallower path or accept a deeper (costlier) run</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>metadata[&quot;subagent_transcripts&quot;]</code> is empty</td>
+<td>The session transcript could not be recovered for this run</td>
+<td>The synthesized <code>final_output</code> is still authoritative; transcripts are a supplement</td>
+<td>low</td>
+</tr>
+<tr>
+<td>A finding looks like a false positive</td>
+<td>Findings are LLM predictions, not verified exploits</td>
+<td>Confirm against the cited file/line before acting</td>
+<td>medium</td>
 </tr>
 </tbody>
 </table>
+<h3>Risk areas</h3>
+<ul>
+<li><strong>The async call is easy to get wrong.</strong> <code>execute</code> is the only
+public method and it is a coroutine. Forgetting to <code>await</code> it is
+the single most common mistake.</li>
+<li><strong>Findings are predictions, not proofs.</strong> The four subagents
+apply LLM judgment; a CRITICAL finding means &quot;audit this first,&quot;
+not &quot;this is a confirmed vulnerability.&quot; Verify before acting —
+and never treat a clean report as a security guarantee.</li>
+<li><strong>Deep audits cost more.</strong> <code>deep</code> engages extended thinking and
+a larger budget; reserve it for high-risk areas rather than
+whole-repo sweeps.</li>
+</ul>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm you are awaiting: <code>result = await workflow.execute( path=&quot;src/&quot;)</code> inside an <code>async def</code> or <code>asyncio.run</code>.</li>
+<li>Check <code>result.success</code>; if <code>False</code>, read <code>result.error</code> and
+<code>result.error_type</code>.</li>
+<li>On an SDK error, inspect <code>result.metadata</code> for the captured
+<code>sdk_stderr</code> / SDK error kind.</li>
+<li>Confirm the scope: <code>result.metadata</code> echoes the <code>path</code>,
+<code>depth</code>, and <code>max_turns</code> actually used.</li>
+<li>Cross-check findings against <code>metadata[&quot;subagent_transcripts&quot;]</code>
+to see which subagent surfaced each.</li>
+</ol>
 
   </article>
   <footer>

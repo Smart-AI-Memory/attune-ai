@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Bug Predict reference — reference</title>
-  <meta name="description" content="Predict likely bug locations based on code patterns and complexity." />
-  <meta property="og:title" content="Bug Predict reference — reference" />
-  <meta property="og:description" content="Predict likely bug locations based on code patterns and complexity." />
+  <title>Predict likely bug hotspots with three Agent SDK subagents — reference</title>
+  <meta name="description" content="Bug-predict&#x27;s public surface is the `BugPredictionWorkflow` class, re-exported from `attune.workflows`. `WorkflowResult` comes from `attune.workflows` as well." />
+  <meta property="og:title" content="Predict likely bug hotspots with three Agent SDK subagents — reference" />
+  <meta property="og:description" content="Bug-predict&#x27;s public surface is the `BugPredictionWorkflow` class, re-exported from `attune.workflows`. `WorkflowResult` comes from `attune.workflows` as well." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/bug-predict/reference" />
   <style>
@@ -272,127 +272,144 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Bug Predict reference</h1>
-<p>Predict likely bug locations based on code patterns and complexity.</p>
-<h2>Classes</h2>
+<h1>Predict likely bug hotspots with three Agent SDK subagents</h1>
+<h2>Reference</h2>
+<p>Bug-predict's public surface is the <code>BugPredictionWorkflow</code> class,
+re-exported from <code>attune.workflows</code>. <code>WorkflowResult</code> comes from
+<code>attune.workflows</code> as well.</p>
+<h3><code>BugPredictionWorkflow</code> — <code>attune.workflows.bug_predict</code></h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>BugPredictionWorkflow</code></td>
-<td>SDK-native bug prediction with three specialized subagents.</td>
+<td><code>BugPredictionWorkflow(*, system_prompt_suffix=&quot;&quot;, **kwargs)</code></td>
+<td>Construct the workflow. <code>system_prompt_suffix</code> (keyword-only) is appended to the orchestrator's system prompt; the empty default preserves stock behavior. Other kwargs pass to <code>BaseWorkflow</code>.</td>
+</tr>
+<tr>
+<td><code>BugPredictionWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Run the prediction. Honors <code>path</code> (str, required) and <code>depth</code> (<code>&quot;quick&quot;</code> / <code>&quot;standard&quot;</code> / <code>&quot;deep&quot;</code>, default <code>&quot;standard&quot;</code>); other kwargs are ignored. Returns a <code>WorkflowResult</code>.</td>
+</tr>
+<tr>
+<td><code>BugPredictionWorkflow.name</code></td>
+<td>The registered slug, <code>&quot;bug-predict&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>BugPredictionWorkflow.stages</code></td>
+<td><code>[&quot;agent-predict&quot;]</code>; the stage runs at the <code>CAPABLE</code> model tier.</td>
 </tr>
 </tbody>
 </table>
-<h3><code>BugPredictionWorkflow</code></h3>
-<h4>Constructor</h4>
+<h3>Depth → agent-turn budget</h3>
 <table>
 <thead>
 <tr>
-<th>Parameters</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Use when</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>system_prompt_suffix</code></td>
-<td><code>str</code></td>
-<td><code>''</code></td>
-<td>Text appended to the orchestrator system prompt.</td>
+<td><code>quick</code></td>
+<td>10</td>
+<td>A fast first pass on a small path.</td>
 </tr>
 <tr>
-<td><code>**kwargs</code></td>
+<td><code>standard</code></td>
+<td>20</td>
+<td>The default — balanced coverage and cost.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+<td>A thorough scan of a large or high-risk area.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>WorkflowResult</code> fields read after a scan</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the scan completed.</td>
+</tr>
+<tr>
+<td><code>final_output</code></td>
 <td><code>Any</code></td>
-<td>—</td>
-<td>Forwarded to the parent workflow class.</td>
+<td>The synthesized report — a serialized <code>WorkflowReport</code> when findings parse, else the raw markdown.</td>
 </tr>
-</tbody>
-</table>
-<h4>Methods</h4>
-<table>
-<thead>
 <tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
+<td><code>summary</code></td>
+<td><code>str | None</code></td>
+<td>Short executive summary of the run.</td>
 </tr>
-</thead>
-<tbody>
 <tr>
-<td><code>execute</code></td>
-<td><code>**kwargs: Any</code></td>
-<td><code>WorkflowResult</code></td>
-<td>Run the bug prediction workflow and return structured results.</td>
+<td><code>suggestions</code></td>
+<td><code>list[NextAction]</code></td>
+<td>Prioritized next actions.</td>
 </tr>
-</tbody>
-</table>
-<h2>Functions</h2>
-<table>
-<thead>
 <tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
+<td><code>cost_report</code></td>
+<td><code>CostReport</code></td>
+<td>Cost / usage for the run.</td>
 </tr>
-</thead>
-<tbody>
 <tr>
-<td><code>format_bug_predict_report</code></td>
-<td><code>result: dict, input_data: dict</code></td>
+<td><code>provider</code></td>
 <td><code>str</code></td>
-<td>Format bug prediction output as a human-readable report.</td>
+<td>The provider that served the run.</td>
 </tr>
 <tr>
-<td><code>main</code></td>
-<td>—</td>
-<td>—</td>
-<td>CLI entry point for the bug prediction workflow.</td>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td>Echoes <code>path</code>, <code>depth</code>, and <code>max_turns</code>; carries SDK error fields on failure.</td>
+</tr>
+<tr>
+<td><code>error</code> / <code>error_type</code></td>
+<td><code>str | None</code></td>
+<td>Failure reason and category (<code>&quot;config&quot;</code> / <code>&quot;runtime&quot;</code> / <code>&quot;provider&quot;</code> / <code>&quot;timeout&quot;</code> / <code>&quot;validation&quot;</code>).</td>
 </tr>
 </tbody>
 </table>
-<h2>Constants</h2>
+<h3>Entry points</h3>
 <table>
 <thead>
 <tr>
-<th>Constant</th>
-<th>Type</th>
-<th>Members</th>
+<th>Surface</th>
+<th>Invocation</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>_SUBAGENT_NAMES</code></td>
-<td><code>list</code></td>
-<td><code>'pattern-scanner'</code>, <code>'risk-correlator'</code>, <code>'prevention-advisor'</code></td>
+<td>Skill</td>
+<td><code>/bug-predict</code> in a Claude Code conversation.</td>
 </tr>
 <tr>
-<td><code>_INTENTIONAL_KEYWORDS</code></td>
-<td><code>list</code></td>
-<td><code>'fallback'</code>, <code>'ignore'</code>, <code>'optional'</code>, <code>'best effort'</code>, <code>'graceful'</code>, <code>'intentional'</code></td>
+<td>CLI</td>
+<td><code>attune workflow run bug-predict --path &lt;p&gt; [--depth quick|standard|deep] [--json] [--cheap]</code>.</td>
 </tr>
 <tr>
-<td><code>_SCANNER_TEST_PATTERNS</code></td>
-<td><code>list</code></td>
-<td><code>'test_bug_predict'</code>, <code>'test_scanner'</code>, <code>'test_security_scan'</code></td>
+<td>MCP tool</td>
+<td><code>bug_predict</code> — one required <code>path</code> argument; runs at standard depth (the handler does not pass <code>depth</code>).</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>await BugPredictionWorkflow().execute(path=&lt;p&gt;, depth=&lt;d&gt;)</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/bug_predict.py</code></li>
-<li><code>src/attune/workflows/bug_predict_report.py</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>bugs</code>, <code>prediction</code>, <code>scanning</code></p>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Bug Prediction vs. Related Scanning Approaches — comparison</title>
-  <meta name="description" content="Bug prediction finds *where* failures are likely to happen before they do — by analyzing code patterns, complexity, and change frequency. This page helps you decide when to use `BugPredictionWorkflow`" />
-  <meta property="og:title" content="Bug Prediction vs. Related Scanning Approaches — comparison" />
-  <meta property="og:description" content="Bug prediction finds *where* failures are likely to happen before they do — by analyzing code patterns, complexity, and change frequency. This page helps you decide when to use `BugPredictionWorkflow`" />
+  <title>Predict likely bug hotspots with three Agent SDK subagents — comparison</title>
+  <meta name="description" content="Bug-predict and **security-audit** both scan the same codebase through Agent SDK subagents and are both reached with `attune workflow run &lt;name&gt;`, but they answer different questions." />
+  <meta property="og:title" content="Predict likely bug hotspots with three Agent SDK subagents — comparison" />
+  <meta property="og:description" content="Bug-predict and **security-audit** both scan the same codebase through Agent SDK subagents and are both reached with `attune workflow run &lt;name&gt;`, but they answer different questions." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/bug-predict/comparison" />
   <style>
@@ -272,122 +272,53 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Bug Prediction vs. Related Scanning Approaches</h1>
-<p>Bug prediction finds <em>where</em> failures are likely to happen before they do — by analyzing code patterns, complexity, and change frequency. This page helps you decide when to use <code>BugPredictionWorkflow</code> directly, when to use the CLI entry point, and when a different tool is the better fit.</p>
-<h2>How the approaches compare</h2>
+<h1>Predict likely bug hotspots with three Agent SDK subagents</h1>
+<h2>Comparison</h2>
+<p>Bug-predict and <strong>security-audit</strong> both scan the same codebase
+through Agent SDK subagents and are both reached with
+<code>attune workflow run &lt;name&gt;</code>, but they answer different
+questions.</p>
 <table>
 <thead>
 <tr>
 <th></th>
-<th><strong><code>BugPredictionWorkflow</code> (SDK)</strong></th>
-<th><strong><code>main()</code> CLI entry point</strong></th>
-<th><strong>Security audit / code quality scan</strong></th>
+<th><code>bug-predict</code></th>
+<th><code>security-audit</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Primary use</strong></td>
-<td>Embed bug prediction in agent pipelines or automated tooling</td>
-<td>Run a one-off scan from the terminal or a script</td>
-<td>Vulnerability scanning or broad style enforcement</td>
+<td><strong>Question answered</strong></td>
+<td>&quot;Where are bugs most likely to be?&quot;</td>
+<td>&quot;Where are the security vulnerabilities?&quot;</td>
+</tr>
+<tr>
+<td><strong>Focus</strong></td>
+<td>Correctness-risk hotspots: null refs, type mismatches, race conditions, broad excepts, resource leaks, off-by-one</td>
+<td>Security issues: <code>eval</code>/<code>exec</code>, path traversal, injection, hardcoded secrets</td>
 </tr>
 <tr>
 <td><strong>Output</strong></td>
-<td><code>WorkflowResult</code> — structured, machine-readable</td>
-<td>Human-readable report via <code>format_bug_predict_report()</code></td>
-<td>Varies by tool</td>
+<td>Overall risk score + bugs by severity + prevention advice</td>
+<td>Vulnerability findings by severity</td>
 </tr>
 <tr>
-<td><strong>Customization</strong></td>
-<td><code>system_prompt_suffix</code> parameter lets you extend orchestrator behavior</td>
-<td>Fixed prompt; no runtime customization</td>
-<td>Depends on tool</td>
+<td><strong>Slug</strong></td>
+<td><code>attune workflow run bug-predict</code></td>
+<td><code>attune workflow run security-audit</code></td>
 </tr>
 <tr>
-<td><strong>Subagent coordination</strong></td>
-<td>Yes — orchestrates <code>pattern-scanner</code>, <code>risk-correlator</code>, and <code>prevention-advisor</code> automatically</td>
-<td>Yes — same three subagents under the hood</td>
-<td>Not applicable</td>
-</tr>
-<tr>
-<td><strong>False-positive filtering</strong></td>
-<td>Built in — suppresses known-safe patterns (test fixtures, <code>regex.exec()</code>, <code># INTENTIONAL:</code> comments, <code># noqa: BLE001</code>)</td>
-<td>Same filtering</td>
-<td>Not guaranteed</td>
-</tr>
-<tr>
-<td><strong>Severity triage</strong></td>
-<td>HIGH / MEDIUM / LOW with file path and line number</td>
-<td>Same, formatted as readable report</td>
-<td>Varies</td>
-</tr>
-<tr>
-<td><strong>Best for</strong></td>
-<td>CI pipelines, agent workflows, programmatic consumers</td>
-<td>Interactive use, quick pre-commit checks</td>
-<td>Compliance scanning, style linting</td>
+<td><strong>Nature</strong></td>
+<td>Predictive (LLM judgment), not a deterministic linter</td>
+<td>Predictive (LLM judgment), not a deterministic linter</td>
 </tr>
 </tbody>
 </table>
-<h2>What bug prediction detects — and what it doesn't</h2>
-<p><code>BugPredictionWorkflow</code> targets three specific pattern categories:</p>
-<table>
-<thead>
-<tr>
-<th>Pattern</th>
-<th>Severity</th>
-<th>Examples caught</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>dangerous_eval</code></td>
-<td>HIGH</td>
-<td><code>eval()</code> or <code>exec()</code> on user input, <code>compile()</code> on external data</td>
-</tr>
-<tr>
-<td><code>broad_exception</code></td>
-<td>MEDIUM</td>
-<td>Bare <code>except:</code>, unlogged <code>except Exception:</code></td>
-</tr>
-<tr>
-<td><code>incomplete_code</code></td>
-<td>LOW</td>
-<td>TODO, FIXME, HACK, XXX comments in code paths</td>
-</tr>
-</tbody>
-</table>
-<p>It also weighs cyclomatic complexity, change frequency (&quot;hot&quot; files), and code smells (functions over 50 lines, duplicated logic). It does <strong>not</strong> replace a dedicated security audit for vulnerability scanning (e.g., dependency CVEs, injection flaws beyond <code>eval</code>) or a linter for style enforcement. Those tools answer different questions.</p>
-<h2>Tradeoffs in depth</h2>
-<p><strong><code>BugPredictionWorkflow</code> vs. <code>main()</code></strong></p>
-<p>Both use the same three subagents and the same false-positive suppression logic. The difference is in how you consume the output:</p>
-<ul>
-<li><code>BugPredictionWorkflow.execute()</code> returns a <code>WorkflowResult</code> you can inspect programmatically. Use <code>system_prompt_suffix</code> to steer the orchestrator toward a specific concern (e.g., focusing synthesis on auth-related findings).</li>
-<li><code>main()</code> calls <code>format_bug_predict_report(result, input_data)</code> and prints directly to stdout. There is no runtime customization — it is optimized for human readers, not downstream code.</li>
-</ul>
-<p><strong>Bug prediction vs. security audit</strong></p>
-<p>Bug prediction is proactive and pattern-based: it tells you <em>where</em> bugs are statistically likely. A security audit is reactive and rules-based: it tells you <em>what</em> known vulnerability classes are present. If you need both, run them independently — they don't overlap enough to substitute for each other.</p>
-<h2>Use bug prediction when…</h2>
-<ul>
-<li><strong>You're about to merge a large PR</strong> and want to catch <code>dangerous_eval</code> or silent exception swallowing before code review.</li>
-<li><strong>You're onboarding to unfamiliar code</strong> and need a risk map of the hottest files fast.</li>
-<li><strong>You're building an agent pipeline</strong> that needs structured bug-likelihood data — use <code>BugPredictionWorkflow</code> and consume <code>WorkflowResult</code> directly.</li>
-<li><strong>You want a quick pre-release check</strong> — run <code>main()</code> to get a formatted report with risk score, file links, and line numbers in seconds.</li>
-<li><strong>You need to customize orchestration</strong> — pass <code>system_prompt_suffix</code> to <code>BugPredictionWorkflow.__init__()</code> to extend the orchestrator's default behavior without touching internals.</li>
-</ul>
-<h2>Skip bug prediction when…</h2>
-<ul>
-<li>Your concern is <strong>known CVEs or dependency vulnerabilities</strong> — use a dedicated security audit instead.</li>
-<li>You need <strong>style or formatting enforcement</strong> — a linter is the right tool.</li>
-<li>You're doing <strong>a single throwaway check</strong> on one function — the three-subagent workflow is heavier than necessary; a direct code review question is faster.</li>
-<li>The files you want to scan match the internal test patterns (<code>test_bug_predict</code>, <code>test_scanner</code>, <code>test_security_scan</code>) — the scanner intentionally skips these to avoid false positives in its own test suite.</li>
-</ul>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/bug_predict.py</code></li>
-<li><code>src/attune/workflows/bug_predict_report.py</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>bugs</code>, <code>prediction</code>, <code>scanning</code>, <code>race-condition</code></p>
+<p>Reach for <strong>bug-predict</strong> when you want a broad correctness-risk
+triage of a module; reach for <strong>security-audit</strong> when the concern
+is specifically a vulnerability surface. They overlap on
+<code>eval</code>/<code>exec</code> (both flag it) and complement each other on a
+pre-release sweep.</p>
 
   </article>
   <footer>

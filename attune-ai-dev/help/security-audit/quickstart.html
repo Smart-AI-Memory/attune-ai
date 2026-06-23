@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: Run a security audit — quickstart</title>
-  <meta name="description" content="Scan your codebase for vulnerabilities — eval/exec usage, path traversal, hardcoded secrets, and injection risks — using four specialized subagents coordinated by `SecurityAuditWorkflow`." />
-  <meta property="og:title" content="Quickstart: Run a security audit — quickstart" />
-  <meta property="og:description" content="Scan your codebase for vulnerabilities — eval/exec usage, path traversal, hardcoded secrets, and injection risks — using four specialized subagents coordinated by `SecurityAuditWorkflow`." />
+  <title>Audit code for vulnerabilities with four Agent SDK subagents — quickstart</title>
+  <meta name="description" content="Audit a directory and print the synthesized report. `SecurityAuditWorkflow.execute` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
+  <meta property="og:title" content="Audit code for vulnerabilities with four Agent SDK subagents — quickstart" />
+  <meta property="og:description" content="Audit a directory and print the synthesized report. `SecurityAuditWorkflow.execute` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/security-audit/quickstart" />
   <style>
@@ -272,34 +272,30 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: Run a security audit</h1>
-<p>Scan your codebase for vulnerabilities — eval/exec usage, path traversal, hardcoded secrets, and injection risks — using four specialized subagents coordinated by <code>SecurityAuditWorkflow</code>.</p>
-<pre><code class="language-python">from attune.workflows.security_audit import SecurityAuditWorkflow
+<h1>Audit code for vulnerabilities with four Agent SDK subagents</h1>
+<h2>Quickstart</h2>
+<p>Audit a directory and print the synthesized report.
+<code>SecurityAuditWorkflow.execute</code> is an async coroutine, so drive it
+with <code>asyncio.run</code> (or <code>await</code> it inside an existing event loop):</p>
+<pre><code class="language-python">import asyncio
 
-result = SecurityAuditWorkflow().execute(path=&quot;src/&quot;)
-print(result)
-</code></pre>
-<p><strong>Result:</strong> A unified report with three sections — <strong>Summary</strong> (security score 0–100 and executive summary), <strong>Security</strong> (findings grouped by severity: CRITICAL, HIGH, MEDIUM, LOW), and <strong>Suggestions</strong> (prioritized remediation steps with estimated effort).</p>
-<h2>Steps</h2>
-<h3>1. Install and verify the package</h3>
-<p>Confirm the <code>security</code> module is available:</p>
-<pre><code class="language-python">from attune.security import detect_secrets, SecretsDetector, AuditLogger
-</code></pre>
-<p>If this import fails, check that the package is installed in your current environment.</p>
-<h3>2. Run the audit</h3>
-<p>Pass the path you want to scan to <code>SecurityAuditWorkflow.execute()</code>:</p>
-<pre><code class="language-python">from attune.workflows.security_audit import SecurityAuditWorkflow
+from attune.workflows import SecurityAuditWorkflow
 
-workflow = SecurityAuditWorkflow()
-result = workflow.execute(path=&quot;src/&quot;)
-print(result)
+
+async def main() -&gt; None:
+    workflow = SecurityAuditWorkflow()
+    result = await workflow.execute(path=&quot;src/&quot;, depth=&quot;standard&quot;)
+
+    print(result.success)          # True on a completed audit
+    print(result.summary)          # short posture summary
+    print(result.final_output)     # the full synthesized report
+
+
+asyncio.run(main())
 </code></pre>
-<p>The workflow coordinates four subagents — <code>vuln-scanner</code>, <code>secret-detector</code>, <code>auth-reviewer</code>, and <code>remediation-planner</code> — and synthesizes their output into a single report.</p>
-<h3>3. Review findings by severity</h3>
-<p>The <strong>Security</strong> section of the report lists findings under <code>CRITICAL</code>, <code>HIGH</code>, <code>MEDIUM</code>, and <code>LOW</code> headings, each with file paths and line numbers where available. Address <code>CRITICAL</code> and <code>HIGH</code> findings first.</p>
-<h3>4. Apply remediation steps</h3>
-<p>The <strong>Suggestions</strong> section lists actionable fixes ordered by priority, with an estimated effort for each. Work through them top to bottom.</p>
-<p><strong>Next:</strong> After resolving critical issues, run <code>attune workflow run test-gen</code> to generate tests for the affected code paths.</p>
+<p><code>depth</code> defaults to <code>&quot;standard&quot;</code>, so <code>execute(path=&quot;src/&quot;)</code> is
+equivalent. Use <code>&quot;quick&quot;</code> for a fast pass or <code>&quot;deep&quot;</code> for a
+longer, extended-thinking audit.</p>
 
   </article>
   <footer>
