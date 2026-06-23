@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: RAG-grounded code generation vs alternatives — comparison</title>
-  <meta name="description" content="`RagCodeGenWorkflow` retrieves attune-help context, feeds citation-forced prompts to Claude, and emits answers with source provenance. Every claim in the output traces back to a real attune API, workf" />
-  <meta property="og:title" content="Comparison: RAG-grounded code generation vs alternatives — comparison" />
-  <meta property="og:description" content="`RagCodeGenWorkflow` retrieves attune-help context, feeds citation-forced prompts to Claude, and emits answers with source provenance. Every claim in the output traces back to a real attune API, workf" />
+  <title>RAG-grounded code generation — retrieves attune context and emits answers with source citations — comparison</title>
+  <meta name="description" content="RAG grounding is the **citation-forced generation** workflow. It is distinct from a plain code-generation call and from documentation retrieval:" />
+  <meta property="og:title" content="RAG-grounded code generation — retrieves attune context and emits answers with source citations — comparison" />
+  <meta property="og:description" content="RAG grounding is the **citation-forced generation** workflow. It is distinct from a plain code-generation call and from documentation retrieval:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/rag-grounding/comparison" />
   <style>
@@ -272,81 +272,36 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: RAG-grounded code generation vs alternatives</h1>
-<h2>What RAG grounding does</h2>
-<p><code>RagCodeGenWorkflow</code> retrieves attune-help context, feeds citation-forced prompts to Claude, and emits answers with source provenance. Every claim in the output traces back to a real attune API, workflow name, or CLI command — the system prompt explicitly forbids inventing attune features.</p>
-<p>That design makes it the right choice for some problems and the wrong choice for others.</p>
-<h2>Feature comparison</h2>
+<h1>RAG-grounded code generation — retrieves attune context and emits answers with source citations</h1>
+<h2>Comparison</h2>
+<p>RAG grounding is the <strong>citation-forced generation</strong> workflow. It is
+distinct from a plain code-generation call and from documentation
+retrieval:</p>
 <table>
 <thead>
 <tr>
-<th>Capability</th>
-<th><code>RagCodeGenWorkflow</code></th>
-<th>Direct LLM call (no RAG)</th>
-<th>Throwaway script</th>
+<th>Tool</th>
+<th>Role</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Cites real attune APIs and workflow names</td>
-<td>✅ Always — citation is enforced by the system prompt</td>
-<td>❌ Model may hallucinate feature names</td>
-<td>❌ N/A</td>
+<td><code>rag-grounding</code> (this feature, slug <code>rag-code-gen</code>)</td>
+<td>Retrieve attune context, then generate a cited answer.</td>
 </tr>
 <tr>
-<td>Output grounded in attune-help documentation</td>
-<td>✅ Retrieved at call time</td>
-<td>❌ Depends on training data cutoff</td>
-<td>❌ N/A</td>
+<td><code>doc-gen</code></td>
+<td>Generate documentation from your source code (no RAG retrieval).</td>
 </tr>
 <tr>
-<td>Resists prompt injection in retrieved passages</td>
-<td>✅ <code>&lt;passage&gt;</code> content is treated as data, not instructions</td>
-<td>❌ No such boundary</td>
-<td>❌ N/A</td>
-</tr>
-<tr>
-<td>Setup overhead</td>
-<td>Medium — <code>RagCodeGenWorkflow.__init__</code> accepts config via <code>**kwargs</code></td>
-<td>Low — one API call</td>
-<td>None</td>
-</tr>
-<tr>
-<td>Useful for one-off exploration</td>
-<td>No — wiring up the workflow adds ceremony with little benefit</td>
-<td>Maybe</td>
-<td>✅ Best fit</td>
-</tr>
-<tr>
-<td>Returns structured <code>WorkflowResult</code></td>
-<td>✅</td>
-<td>❌</td>
-<td>❌</td>
+<td><code>rag_knowledge_query</code> (MCP)</td>
+<td>Query the attune-help corpus directly, without an LLM generation step.</td>
 </tr>
 </tbody>
 </table>
-<h2>Tradeoffs to know before choosing</h2>
-<p><strong><code>RagCodeGenWorkflow</code> is the right default when faithfulness matters.</strong> The citation-forced prompt means the model cannot silently invent an attune workflow or API name. That guarantee costs you retrieval latency and the overhead of calling <code>execute(**kwargs)</code> through the workflow interface — a direct LLM call will be faster when you do not need grounding.</p>
-<p><strong>A direct LLM call is faster but unsafe for attune-specific output.</strong> If you ask an ungrounded model to generate code that references attune internals, it will produce plausible-looking but potentially fictional names. Use an ungrounded call only when the task is generic enough that attune-specific accuracy is not required.</p>
-<p><strong>A throwaway script beats both when you are still exploring.</strong> The workflow is purpose-built for production-quality, cited answers. If you are spiking an idea and do not yet know whether attune-help context is relevant, a plain script avoids the overhead of configuring <code>RagCodeGenWorkflow</code> for a single use.</p>
-<h2>Use <code>RagCodeGenWorkflow</code> when…</h2>
-<ul>
-<li>You need generated code or explanations that cite real attune APIs, workflow names, or CLI commands — not plausible inventions.</li>
-<li>Downstream consumers of the output need to verify claims against source documentation.</li>
-<li>You want injection-safe handling of retrieved documentation (the system prompt ignores directives inside <code>&lt;passage&gt;</code> tags).</li>
-<li>You are working within the attune SDK and want a structured <code>WorkflowResult</code> back rather than raw model output.</li>
-</ul>
-<h2>Do not use <code>RagCodeGenWorkflow</code> when…</h2>
-<ul>
-<li>Your task is generic (not attune-specific) and grounding adds latency with no accuracy benefit — a direct LLM call is simpler.</li>
-<li>You are doing early exploratory work where the shape of the problem is still unclear — wire up the workflow once you know you need cited output.</li>
-<li>You need behavior the <code>execute</code> method does not expose — do not patch internals; propose an extension point instead.</li>
-</ul>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/rag_code_gen.py</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>rag</code>, <code>retrieval</code>, <code>grounding</code>, <code>faithfulness</code>, <code>citation</code></p>
+<p>Reach for <strong>rag-grounding</strong> when you want a generated answer that cites
+real attune APIs/CLI/workflows; reach for <code>rag_knowledge_query</code> when
+you just want the retrieved passages.</p>
 
   </article>
   <footer>

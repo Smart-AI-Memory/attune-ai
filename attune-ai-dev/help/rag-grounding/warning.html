@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>RAG Grounding Cautions — warning</title>
-  <meta name="description" content="`RagCodeGenWorkflow` retrieves attune-help context, feeds citation-forced prompts to Claude, and returns answers with provenance. Because the workflow couples retrieval, prompting, and code generation" />
-  <meta property="og:title" content="RAG Grounding Cautions — warning" />
-  <meta property="og:description" content="`RagCodeGenWorkflow` retrieves attune-help context, feeds citation-forced prompts to Claude, and returns answers with provenance. Because the workflow couples retrieval, prompting, and code generation" />
+  <title>RAG-grounded code generation — retrieves attune context and emits answers with source citations — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;RagCodeGenWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` it " />
+  <meta property="og:title" content="RAG-grounded code generation — retrieves attune context and emits answers with source citations — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;RagCodeGenWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` it " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/rag-grounding/warning" />
   <style>
@@ -272,26 +272,79 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>RAG Grounding Cautions</h1>
-<p><code>RagCodeGenWorkflow</code> retrieves attune-help context, feeds citation-forced prompts to Claude, and returns answers with provenance. Because the workflow couples retrieval, prompting, and code generation in a single call chain, a misstep in any one layer can silently degrade faithfulness without raising an exception.</p>
-<h2>Risk areas</h2>
-<h3>Hallucinated attune features in generated code</h3>
-<p>The system prompt instructs the model never to invent attune features, but that guarantee depends on the retrieved context actually covering the topic being asked about. If the RAG retrieval returns thin or off-topic passages, the model may fill gaps with plausible-sounding but non-existent API names, workflow names, or CLI commands. The generated code compiles and looks reasonable — there is no runtime signal that anything is wrong.</p>
-<p><strong>Mitigation:</strong> Review generated code against the public API before using it. Any class, method, or CLI flag not present in the attune public API surface should be treated as a hallucination.</p>
-<h3>Prompt-injection via retrieved passages</h3>
-<p>The system prompt explicitly guards against instructions embedded in <code>&lt;passage&gt;...&lt;/passage&gt;</code> content — text that appears to be a directive or attempts to break out of the wrapping is treated as documentation, not as a command. However, this boundary is only as strong as the retrieval pipeline's ability to keep adversarial content out of the context window in the first place.</p>
-<p><strong>Mitigation:</strong> Treat the passage content fed to <code>RagCodeGenWorkflow.execute()</code> as untrusted input. Do not retrieve passages from sources you do not control without reviewing them first.</p>
-<h3><code>**kwargs</code> interfaces obscure required inputs</h3>
-<p>Both <code>RagCodeGenWorkflow.__init__</code> and <code>RagCodeGenWorkflow.execute</code> accept <code>**kwargs</code>. This means missing or misspelled arguments fail silently or produce degraded output rather than a <code>TypeError</code>. You will not get an error if you omit a required retrieval parameter — you will get a response grounded in no context at all.</p>
-<p><strong>Mitigation:</strong> Check the <code>WorkflowResult</code> returned by <code>execute</code> for provenance and citation fields before trusting the output. An empty or missing citation set is a signal that the retrieval step did not receive the inputs it needed.</p>
-<h3>Private helpers can change without notice</h3>
-<p>The <code>_SYSTEM_PROMPT</code> constant and any other underscore-prefixed names in <code>rag_code_gen</code> are internal implementation details. If you copy or override <code>_SYSTEM_PROMPT</code> to customize behavior, your copy will silently diverge from the upstream prompt — including any future security or faithfulness fixes applied to it.</p>
-<p><strong>Mitigation:</strong> Depend only on <code>RagCodeGenWorkflow</code> and <code>execute</code> from the public API. If you need to customize prompting behavior, pass parameters through <code>execute(**kwargs)</code> rather than patching internal constants.</p>
-<h2>Source files</h2>
+<h1>RAG-grounded code generation — retrieves attune context and emits answers with source citations</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'RagCodeGenWorkflow.execute' was never awaited</code></td>
+<td><code>execute</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> is <code>&quot;query argument is required&quot;</code></td>
+<td><code>execute</code> called with an empty/missing <code>query</code></td>
+<td>Pass a non-empty <code>query</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>RuntimeError: ... needs the attune-rag package ...</code></td>
+<td><code>attune-rag</code> (a core dependency) is not installed</td>
+<td><code>pip install attune-rag</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> is <code>&quot;RAG retrieval failed: ...&quot;</code></td>
+<td>The pipeline raised (corpus I/O, connection, timeout, bad variant)</td>
+<td>Check corpus availability / connectivity; retry</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>error</code> is <code>&quot;k argument must be an integer ...&quot;</code></td>
+<td><code>k</code> wasn't an int (e.g. <code>k=&quot;bad&quot;</code>)</td>
+<td>Pass an integer <code>k</code></td>
+<td>low</td>
+</tr>
+<tr>
+<td><code>error</code> is <code>&quot;unknown model ...&quot;</code></td>
+<td><code>model</code> isn't in <code>MODEL_REGISTRY</code></td>
+<td>Use a registered model id, or omit <code>model</code></td>
+<td>low</td>
+</tr>
+<tr>
+<td><code>DeprecationWarning</code> about <code>cwd=</code></td>
+<td>Passing the deprecated <code>cwd</code> alias</td>
+<td>Use <code>path=</code> instead</td>
+<td>low</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/workflows/rag_code_gen.py</code></li>
+<li><strong>The async call is easy to get wrong.</strong> <code>execute</code> is a coroutine;
+forgetting to <code>await</code> it is the most common mistake.</li>
+<li><strong><code>attune-rag</code> must be installed.</strong> It's a core dependency, not an
+optional extra — the workflow can't retrieve without it.</li>
+<li><strong>Slug vs. feature name.</strong> The CLI slug is <code>rag-code-gen</code>; the
+feature/help topic is <code>rag-grounding</code>.</li>
 </ul>
-<p><strong>Tags:</strong> <code>rag</code>, <code>retrieval</code>, <code>grounding</code>, <code>faithfulness</code>, <code>citation</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm you are awaiting: <code>await workflow.execute(query=&quot;...&quot;)</code>.</li>
+<li>Check <code>result.success</code>; if <code>False</code>, read <code>result.error</code>.</li>
+<li>If the error mentions attune-rag, <code>pip install attune-rag</code>.</li>
+<li>For a retrieval failure, check corpus availability and connectivity.</li>
+<li>Inspect <code>result.metadata[&quot;citation&quot;]</code> to see what was retrieved.</li>
+</ol>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>RAG Grounding — concept</title>
-  <meta name="description" content="RAG grounding is a technique that anchors generated code and explanations to retrieved attune-help documentation, so every response cites real APIs, workflow names, and CLI commands rather than invent" />
-  <meta property="og:title" content="RAG Grounding — concept" />
-  <meta property="og:description" content="RAG grounding is a technique that anchors generated code and explanations to retrieved attune-help documentation, so every response cites real APIs, workflow names, and CLI commands rather than invent" />
+  <title>RAG-grounded code generation — retrieves attune context and emits answers with source citations — concept</title>
+  <meta name="description" content="RAG grounding anchors generated code and explanations to **retrieved attune documentation**, so every answer cites real APIs, workflow names, and CLI commands instead of inventing them. The workflow r" />
+  <meta property="og:title" content="RAG-grounded code generation — retrieves attune context and emits answers with source citations — concept" />
+  <meta property="og:description" content="RAG grounding anchors generated code and explanations to **retrieved attune documentation**, so every answer cites real APIs, workflow names, and CLI commands instead of inventing them. The workflow r" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/rag-grounding/concept" />
   <style>
@@ -272,47 +272,150 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>RAG Grounding</h1>
-<p>RAG grounding is a technique that anchors generated code and explanations to retrieved attune-help documentation, so every response cites real APIs, workflow names, and CLI commands rather than inventing them.</p>
-<h2>How the pieces fit together</h2>
-<p>When you invoke <code>RagCodeGenWorkflow</code>, it runs a two-stage pipeline:</p>
+<h1>RAG-grounded code generation — retrieves attune context and emits answers with source citations</h1>
+<h2>Overview</h2>
+<p>RAG grounding anchors generated code and explanations to <strong>retrieved
+attune documentation</strong>, so every answer cites real APIs, workflow
+names, and CLI commands instead of inventing them. The workflow
+retrieves context from a RAG corpus (attune-help by default), feeds a
+citation-forced prompt to a single Claude Agent SDK call, and returns a
+<code>WorkflowResult</code> whose output ends with a markdown <code>## Sources</code> block
+for provenance.</p>
+<p>The class is <strong><code>RagCodeGenWorkflow</code></strong>. Note the naming: the <strong>feature</strong>
+(and this help topic) is <code>rag-grounding</code>, while the <strong>workflow slug</strong>
+registered for the CLI is <code>rag-code-gen</code> — both name the same
+<code>RagCodeGenWorkflow</code>.</p>
+<p>Two things distinguish it from the other SDK workflows:</p>
+<ul>
+<li><strong>Retrieval happens before the LLM call.</strong> A synchronous
+<code>attune_rag.RagPipeline</code> fetches grounding passages first; the single
+agent then generates against them. There are no subagents.</li>
+<li><strong>Faithfulness is enforced.</strong> The system prompt forbids inventing
+attune features and wraps retrieved passages in <code>&lt;passage&gt;</code> sentinels
+as prompt-injection defense.</li>
+</ul>
+<p>You reach it these ways:</p>
+<ul>
+<li>the Python API — <code>from attune.workflows import RagCodeGenWorkflow</code>;</li>
+<li>the CLI — <strong><code>attune workflow run rag-code-gen</code></strong>;</li>
+<li>the <strong><code>/rag-code-gen</code></strong> skill, inside a Claude Code conversation.</li>
+</ul>
+<p><code>execute</code> is async — <code>await</code> it.</p>
+<h2>Concepts</h2>
+<h3>Retrieve, then generate</h3>
+<p><code>RagCodeGenWorkflow</code> runs two stages — <code>retrieve</code> (zero-LLM,
+tagged <code>CHEAP</code>) and <code>generate</code> (<code>CAPABLE</code>):</p>
 <ol>
-<li><strong>Retrieval.</strong> The workflow queries attune-rag to fetch relevant documentation passages. These arrive wrapped in <code>&lt;passage&gt;...&lt;/passage&gt;</code> tags.</li>
-<li><strong>Grounded generation.</strong> Those passages are injected into a citation-forced system prompt that instructs the model to reference only what the retrieved context attests — never to invent attune features — and to note the source file for any pattern it references.</li>
+<li><strong>Retrieve.</strong> <code>attune_rag.RagPipeline().run(query, k=k, prompt_variant=&quot;citation&quot;)</code> fetches <code>k</code> grounding passages and
+builds an augmented prompt. Passages arrive wrapped in
+<code>&lt;passage&gt;...&lt;/passage&gt;</code> tags.</li>
+<li><strong>Generate.</strong> A single Claude Agent SDK call (the <code>rag-generator</code>
+agent, tools <code>Read</code> / <code>Glob</code> / <code>Grep</code>) generates against the
+augmented prompt. The result text is concatenated with a markdown
+citations block.</li>
 </ol>
-<p>The result is a <code>WorkflowResult</code> that carries both the generated output and its provenance.</p>
-<h2>Why grounding matters here</h2>
-<p>Without retrieval, a code-generation model can hallucinate plausible-sounding but nonexistent attune APIs. Grounding enforces faithfulness: the system prompt explicitly prohibits the model from referencing anything outside the supplied passages, and the source-file citations let you verify each claim against the real codebase.</p>
-<h2>Prompt injection hardening</h2>
-<p>Because user-supplied content arrives inside <code>&lt;passage&gt;</code> tags, the system prompt treats everything inside those tags as documentation, not as instructions. Any text inside a passage that looks like a directive — including a literal <code>&lt;/passage&gt;</code> escape — is interpreted as content <em>about</em> that technique, not as a command to the model. This prevents retrieved content from hijacking the generation step.</p>
-<h2><code>RagCodeGenWorkflow</code> at a glance</h2>
-<p><code>RagCodeGenWorkflow</code> is the single entry point for RAG-grounded code generation. You construct it with keyword arguments and call <code>execute(**kwargs)</code> to run the full retrieve-then-generate cycle and receive a <code>WorkflowResult</code>.</p>
-<pre><code class="language-python">from workflows.rag_code_gen import RagCodeGenWorkflow
-
-workflow = RagCodeGenWorkflow(**init_kwargs)
-result = workflow.execute(**run_kwargs)
-</code></pre>
-<h2>Unresolved references</h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
+<h3>Faithfulness and prompt-injection defense</h3>
+<p>The system prompt instructs the model to cite only what the retrieved
+context attests and never to invent attune features. Because retrieved
+content arrives inside <code>&lt;passage&gt;</code> tags, the prompt treats everything
+inside them as documentation — even a literal <code>&lt;/passage&gt;</code> escape is
+read as content, not a command. Claim hallucination and prompt
+injection are separate threat models; the workflow guards both.</p>
+<h3><code>execute</code> is async and <code>query</code> is required</h3>
+<p><code>execute(**kwargs)</code> is a coroutine — <code>await</code> it (or use <code>asyncio.run</code>).
+<code>query</code> is required; an empty/whitespace query returns a failed
+<code>WorkflowResult</code> (&quot;query argument is required&quot;) rather than raising.
+The supported kwargs:</p>
 <table>
 <thead>
 <tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
+<th>kwarg</th>
+<th>Default</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Line 36 (code fence)</td>
-<td>error</td>
-<td><code>from workflows.rag_code_gen import …</code> — module not importable</td>
+<td><code>query</code></td>
+<td>— (required)</td>
+<td>The coding request to ground and answer.</td>
+</tr>
+<tr>
+<td><code>k</code></td>
+<td><code>3</code></td>
+<td>Number of grounding passages to retrieve.</td>
+</tr>
+<tr>
+<td><code>depth</code></td>
+<td><code>&quot;standard&quot;</code></td>
+<td><code>&quot;quick&quot;</code> / <code>&quot;standard&quot;</code> / <code>&quot;deep&quot;</code> — sets max turns and budget.</td>
+</tr>
+<tr>
+<td><code>feedback</code></td>
+<td><code>None</code></td>
+<td><code>&quot;good&quot;</code> / <code>&quot;bad&quot;</code> — records feedback on every cited template.</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td><code>None</code></td>
+<td>Optional generation model override (allowlisted against <code>MODEL_REGISTRY</code>).</td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td><code>os.getcwd()</code></td>
+<td>Working directory scoping the agent's <code>Read</code>/<code>Glob</code>/<code>Grep</code> tools.</td>
+</tr>
+<tr>
+<td><code>cwd</code></td>
+<td>—</td>
+<td><strong>Deprecated</strong> alias for <code>path</code> (emits <code>DeprecationWarning</code>).</td>
 </tr>
 </tbody>
 </table>
+<p>A non-integer <code>k</code> or an unknown <code>model</code> returns a failed
+<code>WorkflowResult</code> rather than crashing.</p>
+<h3>Depth controls turns and budget</h3>
+<table>
+<thead>
+<tr>
+<th>Depth</th>
+<th>Max agent turns</th>
+<th>Budget cap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quick</code></td>
+<td>6</td>
+<td>$2</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>12</td>
+<td>$10</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>24</td>
+<td>$25</td>
+</tr>
+</tbody>
+</table>
+<p>An unrecognized depth falls back to the standard budget (12 turns).
+<code>deep</code> additionally enables extended thinking. Override the cap with
+<code>ATTUNE_MAX_BUDGET_USD</code>.</p>
+<h3>attune-rag is a core dependency</h3>
+<p>Retrieval needs the <code>attune-rag</code> package — a <strong>core</strong> dependency (the
+legacy <code>[rag]</code> extra is an empty back-compat placeholder). If it's
+missing, the first <code>execute</code> raises a <code>RuntimeError</code> pointing at
+<code>pip install attune-rag</code>.</p>
+<h3>Output carries its provenance</h3>
+<p>The generated text is followed by a markdown <code>## Sources</code> block (built
+by <code>attune_rag.provenance.format_citations_markdown</code>) with clickable
+links to the cited attune-help templates. <code>metadata</code> carries a
+structured <code>citation</code> dict (query, retriever, hits with
+<code>template_path</code> / <code>category</code> / <code>score</code>), plus <code>fallback_used</code>,
+<code>confidence</code>, and <code>retrieval_ms</code>.</p>
 
   </article>
   <footer>

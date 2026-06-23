@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: Use `execute()` as your entry point into `RagCodeGenWorkflow` — tip</title>
-  <meta name="description" content="Instantiate `RagCodeGenWorkflow` and call `execute(**kwargs)` directly — don&#x27;t subclass it or reconstruct its internals." />
-  <meta property="og:title" content="Tip: Use `execute()` as your entry point into `RagCodeGenWorkflow` — tip" />
-  <meta property="og:description" content="Instantiate `RagCodeGenWorkflow` and call `execute(**kwargs)` directly — don&#x27;t subclass it or reconstruct its internals." />
+  <title>RAG-grounded code generation — retrieves attune context and emits answers with source citations — tip</title>
+  <meta name="description" content="- **Depend on the documented public surface.** The supported API is `RagCodeGenWorkflow` and its async `execute`, and the `WorkflowResult` it returns. Names with a leading underscore — `_get_pipeline`" />
+  <meta property="og:title" content="RAG-grounded code generation — retrieves attune context and emits answers with source citations — tip" />
+  <meta property="og:description" content="- **Depend on the documented public surface.** The supported API is `RagCodeGenWorkflow` and its async `execute`, and the `WorkflowResult` it returns. Names with a leading underscore — `_get_pipeline`" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/rag-grounding/tip" />
   <style>
@@ -272,11 +272,22 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: Use <code>execute()</code> as your entry point into <code>RagCodeGenWorkflow</code></h1>
-<p>Instantiate <code>RagCodeGenWorkflow</code> and call <code>execute(**kwargs)</code> directly — don't subclass it or reconstruct its internals.</p>
-<p><strong>Why:</strong> The workflow is designed around a single call boundary. Bypassing <code>execute()</code> skips the retrieval-and-citation pipeline, so generated code loses its grounding in real attune APIs.</p>
-<p><strong>Tradeoff:</strong> All customization must go through the <code>**kwargs</code> you pass to <code>__init__</code> and <code>execute</code>. If you need behavior that neither accepts, you are working outside the intended surface — and that gap is worth filing as a feature request rather than papering over with a subclass.</p>
-<p><strong>Tags:</strong> <code>rag</code>, <code>retrieval</code>, <code>grounding</code>, <code>faithfulness</code>, <code>citation</code></p>
+<h1>RAG-grounded code generation — retrieves attune context and emits answers with source citations</h1>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Depend on the documented public surface.</strong> The supported API is
+<code>RagCodeGenWorkflow</code> and its async <code>execute</code>, and the
+<code>WorkflowResult</code> it returns. Names with a leading underscore —
+<code>_get_pipeline</code>, <code>_run_agent_generate</code>, <code>_record_feedback</code> — are
+internal.</li>
+<li><strong>Prefer <code>path</code> over <code>cwd</code>.</strong> <code>cwd</code> is a deprecated alias kept for
+back-compat; pass <code>path=</code> to scope the agent's file tools.</li>
+<li><strong>Use <code>k</code> and <code>depth</code> to tune cost.</strong> Fewer passages and a shallower
+depth make a cheaper, faster run.</li>
+<li><strong>Read the citations.</strong> The <code>## Sources</code> block and
+<code>metadata[&quot;citation&quot;]</code> let you verify each claim against the real
+attune-help template.</li>
+</ul>
 
   </article>
   <footer>

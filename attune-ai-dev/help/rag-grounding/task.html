@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Generate grounded code with RAG — task</title>
-  <meta name="description" content="Use `RagCodeGenWorkflow` when you need to generate code that cites real attune APIs, workflow names, and CLI commands — retrieved from attune-help context and verified against actual source documentat" />
-  <meta property="og:title" content="Generate grounded code with RAG — task" />
-  <meta property="og:description" content="Use `RagCodeGenWorkflow` when you need to generate code that cites real attune APIs, workflow names, and CLI commands — retrieved from attune-help context and verified against actual source documentat" />
+  <title>RAG-grounded code generation — retrieves attune context and emits answers with source citations — task</title>
+  <meta name="description" content="**Goal:** answer a coding question grounded in attune docs, with citations." />
+  <meta property="og:title" content="RAG-grounded code generation — retrieves attune context and emits answers with source citations — task" />
+  <meta property="og:description" content="**Goal:** answer a coding question grounded in attune docs, with citations." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/rag-grounding/task" />
   <style>
@@ -272,49 +272,67 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Generate grounded code with RAG</h1>
-<p>Use <code>RagCodeGenWorkflow</code> when you need to generate code that cites real attune APIs, workflow names, and CLI commands — retrieved from attune-help context and verified against actual source documentation.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>Read access to <code>src/attune/workflows/rag_code_gen.py</code></li>
-<li>A Python environment where you can import from <code>workflows.rag_code_gen</code></li>
-</ul>
-<h2>Instantiate and execute the workflow</h2>
-<ol>
-<li>
-<p><strong>Import <code>RagCodeGenWorkflow</code>.</strong>
-Add the following import to your module:</p>
-<pre><code class="language-python">from workflows.rag_code_gen import RagCodeGenWorkflow
+<h1>RAG-grounded code generation — retrieves attune context and emits answers with source citations</h1>
+<h2>Tasks</h2>
+<h3>Generate a grounded answer from Python</h3>
+<p><strong>Goal:</strong> answer a coding question grounded in attune docs, with
+citations.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import RagCodeGenWorkflow
+
+
+async def main() -&gt; None:
+    workflow = RagCodeGenWorkflow()
+    result = await workflow.execute(query=&quot;How do I customize release gates?&quot;, k=5)
+
+    if not result.success:
+        print(&quot;generation failed:&quot;, result.error)
+        return
+
+    print(result.final_output)               # answer + ## Sources
+    print(result.metadata[&quot;citation&quot;])       # structured provenance
+
+
+asyncio.run(main())
 </code></pre>
-</li>
-<li>
-<p><strong>Instantiate the workflow.</strong>
-Pass any configuration as keyword arguments to <code>__init__</code>:</p>
-<pre><code class="language-python">workflow = RagCodeGenWorkflow(**your_kwargs)
+<p><strong>Verify:</strong> <code>execute</code> is a coroutine — <code>await</code> it. <code>k</code> controls how
+many passages are retrieved. The output ends with a <code>## Sources</code> block;
+<code>metadata[&quot;citation&quot;][&quot;hits&quot;]</code> lists each cited template with its
+<code>template_path</code>, <code>category</code>, and <code>score</code>.</p>
+<h3>Run it from the CLI</h3>
+<p><strong>Goal:</strong> get a grounded answer without writing Python.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-bash"># query is passed as JSON input; the workflow slug is rag-code-gen:
+attune workflow run rag-code-gen --input '{&quot;query&quot;: &quot;how do I run a security audit?&quot;}'
+
+# deeper run, JSON output:
+attune workflow run rag-code-gen --input '{&quot;query&quot;: &quot;...&quot;, &quot;k&quot;: 5}' --depth deep --json
 </code></pre>
-</li>
-<li>
-<p><strong>Call <code>execute</code> to run the workflow.</strong>
-Pass your generation parameters as keyword arguments. The method returns a <code>WorkflowResult</code>:</p>
-<pre><code class="language-python">result = workflow.execute(**your_kwargs)
+<p><strong>Verify:</strong> the slug is <code>rag-code-gen</code> (not <code>rag-grounding</code>, which is
+the feature/help name). <code>--input</code> / <code>-i</code> takes JSON carrying <code>query</code>
+(and optional <code>k</code>); <code>--depth</code> accepts <code>quick</code> / <code>standard</code> / <code>deep</code>;
+<code>--json</code> / <code>-j</code> emits machine-readable output.</p>
+<h3>Tune retrieval breadth and cost</h3>
+<p><strong>Goal:</strong> trade grounding breadth against speed and cost.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import RagCodeGenWorkflow
+
+
+async def main() -&gt; None:
+    workflow = RagCodeGenWorkflow()
+    result = await workflow.execute(query=&quot;explain the memory tiers&quot;, k=2, depth=&quot;quick&quot;)
+    print(result.final_output)
+
+
+asyncio.run(main())
 </code></pre>
-</li>
-<li>
-<p><strong>Inspect the result for provenance.</strong>
-The <code>WorkflowResult</code> includes citations sourced from retrieved attune-help passages. Verify that any referenced APIs, workflow names, and CLI commands appear in those citations — the workflow is designed never to invent attune features.</p>
-</li>
-<li>
-<p><strong>Run the related tests</strong> to confirm your usage is correct:</p>
-<pre><code class="language-shell">pytest -k &quot;rag-grounding&quot;
-</code></pre>
-</li>
-</ol>
-<h2>Verify success</h2>
-<p>Your call succeeded when <code>execute</code> returns a <code>WorkflowResult</code> without raising an exception and the result contains citations that trace back to real attune-help source files. If the output references an attune feature that does not appear in the cited passages, the grounding has failed and you should review the context retrieval step.</p>
-<h2>Key files</h2>
-<ul>
-<li><code>src/attune/workflows/rag_code_gen.py</code> — defines <code>RagCodeGenWorkflow</code> and its <code>execute</code> method</li>
-</ul>
+<p><strong>Verify:</strong> lower <code>k</code> retrieves fewer passages (faster, narrower
+grounding); <code>quick</code> uses the smallest turn budget (6) and lowest cap
+($2). <code>metadata[&quot;retrieval_ms&quot;]</code> reports retrieval time.</p>
 
   </article>
   <footer>

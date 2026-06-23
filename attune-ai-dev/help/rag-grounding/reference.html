@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>RAG grounding reference — reference</title>
-  <meta name="description" content="Retrieve attune-help context, feed citation-forced prompts to Claude, and emit answers with provenance." />
-  <meta property="og:title" content="RAG grounding reference — reference" />
-  <meta property="og:description" content="Retrieve attune-help context, feed citation-forced prompts to Claude, and emit answers with provenance." />
+  <title>RAG-grounded code generation — retrieves attune context and emits answers with source citations — reference</title>
+  <meta name="description" content="The public surface is `RagCodeGenWorkflow`, re-exported from `attune.workflows`." />
+  <meta property="og:title" content="RAG-grounded code generation — retrieves attune context and emits answers with source citations — reference" />
+  <meta property="og:description" content="The public surface is `RagCodeGenWorkflow`, re-exported from `attune.workflows`." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/rag-grounding/reference" />
   <style>
@@ -272,72 +272,129 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>RAG grounding reference</h1>
-<p>Retrieve attune-help context, feed citation-forced prompts to Claude, and emit answers with provenance.</p>
-<h2>Classes</h2>
+<h1>RAG-grounded code generation — retrieves attune context and emits answers with source citations</h1>
+<h2>Reference</h2>
+<p>The public surface is <code>RagCodeGenWorkflow</code>, re-exported from
+<code>attune.workflows</code>.</p>
+<h3><code>RagCodeGenWorkflow</code> — <code>attune.workflows.rag_code_gen</code></h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>RagCodeGenWorkflow</code></td>
-<td>SDK-native RAG-grounded code generation workflow.</td>
+<td><code>RagCodeGenWorkflow(**kwargs)</code></td>
+<td>Construct the workflow (pipeline is lazily initialized on first <code>execute</code>).</td>
+</tr>
+<tr>
+<td><code>RagCodeGenWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Retrieve + generate. Honors <code>query</code> (required), <code>k</code>, <code>depth</code>, <code>feedback</code>, <code>model</code>, <code>path</code> (and deprecated <code>cwd</code>). Returns a <code>WorkflowResult</code>.</td>
+</tr>
+<tr>
+<td><code>RagCodeGenWorkflow.name</code></td>
+<td>The registered CLI slug, <code>&quot;rag-code-gen&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>RagCodeGenWorkflow.stages</code></td>
+<td><code>[&quot;retrieve&quot;, &quot;generate&quot;]</code> — retrieve at <code>CHEAP</code> (zero-LLM), generate at <code>CAPABLE</code>.</td>
 </tr>
 </tbody>
 </table>
-<h3><code>RagCodeGenWorkflow</code></h3>
-<p><strong>Module:</strong> <code>workflows.rag_code_gen</code></p>
+<h3>Depth → turns and budget</h3>
 <table>
 <thead>
 <tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Budget cap</th>
+<th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>__init__</code></td>
-<td><code>**kwargs: Any</code></td>
-<td><code>None</code></td>
-<td>Initializes the workflow.</td>
+<td><code>quick</code></td>
+<td>6</td>
+<td>$2</td>
+<td>Narrowest, cheapest.</td>
 </tr>
 <tr>
-<td><code>execute</code></td>
-<td><code>**kwargs: Any</code></td>
-<td><code>WorkflowResult</code></td>
-<td>Runs the RAG-grounded code generation workflow.</td>
+<td><code>standard</code></td>
+<td>12</td>
+<td>$10</td>
+<td>Default.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>24</td>
+<td>$25</td>
+<td>Enables extended thinking.</td>
 </tr>
 </tbody>
 </table>
-<h2>Constants</h2>
+<h3><code>WorkflowResult</code> fields read after a run</h3>
 <table>
 <thead>
 <tr>
-<th>Constant</th>
+<th>Field</th>
 <th>Type</th>
-<th>Description</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>_SYSTEM_PROMPT</code></td>
-<td><code>str</code></td>
-<td>System prompt that grounds code generation in the attune ecosystem. Instructs the model to cite real APIs, workflow names, and CLI commands; prohibits inventing attune features; treats content inside <code>&lt;passage&gt;…&lt;/passage&gt;</code> tags as retrieved documentation, never as directives.</td>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the run completed.</td>
+</tr>
+<tr>
+<td><code>final_output</code></td>
+<td><code>Any</code></td>
+<td>Generated answer followed by a <code>## Sources</code> citations block.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str | None</code></td>
+<td>Short overview.</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td><code>query</code>, <code>depth</code>, <code>max_turns</code>, <code>citation</code> (structured provenance), <code>fallback_used</code>, <code>confidence</code>, <code>retrieval_ms</code>, <code>feedback_recorded</code>.</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td><code>str | None</code></td>
+<td>Failure reason (e.g. missing <code>query</code>, bad <code>k</code>, unknown <code>model</code>, RAG retrieval failure).</td>
 </tr>
 </tbody>
 </table>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/rag_code_gen.py</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>rag</code>, <code>retrieval</code>, <code>grounding</code>, <code>faithfulness</code>, <code>citation</code></p>
+<h3>Entry points</h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Invocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python</td>
+<td><code>await RagCodeGenWorkflow().execute(query=&lt;q&gt;, k=&lt;n&gt;, depth=&lt;d&gt;)</code>.</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>attune workflow run rag-code-gen --input '{&quot;query&quot;: &quot;&lt;q&gt;&quot;}' [--depth ...] [--json]</code>.</td>
+</tr>
+<tr>
+<td>Skill</td>
+<td><code>/rag-code-gen</code> in a Claude Code conversation.</td>
+</tr>
+</tbody>
+</table>
+<p>There is no dedicated MCP tool for this workflow.</p>
 
   </article>
   <footer>
