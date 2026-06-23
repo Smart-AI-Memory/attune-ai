@@ -103,7 +103,7 @@ class TestGetWorkflowTools:
             "code_review",
             "test_generation",
             "performance_audit",
-            "release_prep",
+            "release_notes",
             "deep_review",
         }
         assert expected.issubset(tools.keys())
