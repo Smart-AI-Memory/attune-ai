@@ -3,23 +3,24 @@ type: tip
 name: memory-tip
 feature: memory
 depth: tip
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 7d6a88f7e825fe56e3b06e3bce6dd904fe6a75cd1c13a3a134e4b44138df245e
+generated_at: 2026-06-23T21:52:16.487778+00:00
+source_hash: 544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b
 status: generated
 ---
 
-# Tip: working effectively with memory
+# Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security
 
-Call `is_redis_available()` before you instantiate any Redis-backed component.
+## Notes & tips
 
-This single guard prevents import-time failures in environments where Redis is not installed — the function checks availability without importing the Redis subsystem at all. Skipping it means a missing dependency surfaces as a confusing runtime error instead of a clear unavailability signal.
-
-**Why it works:** `is_redis_available()` is specifically designed for this pre-flight check, so you pay no import cost regardless of the result.
-
-**Tradeoff:** You still need to handle the `False` case explicitly — the function tells you Redis is unavailable but does not fall back to a mock automatically. Use `get_redis_memory(use_mock=True)` if you want an automatic fallback.
-
-## Source files
-
-- `src/attune/memory/**`
-
-**Tags:** `memory`, `storage`
+- **Depend on the documented public surface.** The supported API is
+  `UnifiedMemory`, `MemoryConfig`, and the security/loader classes
+  re-exported from `attune.memory`, plus the `MemoryBackend` /
+  `SearchableMemoryBackend` protocols from `attune.memory.backend`.
+  Submodule internals (`mixins/`, `short_term/`, `long_term_*`) may
+  change.
+- **Let classification run.** Keep `auto_classify=True` unless you have
+  a reason to set the level yourself.
+- **Check capabilities, don't assume.** Use `get_capabilities()` /
+  `supports_*()` before relying on real-time or cross-process behavior.
+- **Close when done.** Call `close()` (or `save()`) to flush and
+  release the backend.

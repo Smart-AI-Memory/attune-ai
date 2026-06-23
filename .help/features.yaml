@@ -176,18 +176,25 @@ features:
     doc_paths:
       - docs/how-to/help-system-maintenance.md
 
+  # memory is single-sourced (status: manual) from
+  # content/features/memory.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/memory/*.md. The entry is marked `status: manual`
+  # — WITHOUT `files:` — so topic resolution routes here while
+  # staleness/maintenance never runs `attune-author generate memory
+  # --all-kinds` to overwrite the projected content with LLM output
+  # (DD5, help-docs-single-source decision, 2026-06-23). The retained
+  # faq.md stays on disk frozen until the four-channel FAQ Generator
+  # (D6/D7) replaces that path. The cross-cutting hand-authored
+  # docs/how-to/memory-graph.md and docs/how-to/unified-memory-system.md
+  # remain as-is (they are not projected feature pages). Description and
+  # tags are unchanged to preserve golden-query resolution (mem-002
+  # "storage"; rg-003 relies on memory using "lookup" not "retrieval").
+  # See docs/specs/help-docs-single-source/.
   memory:
     description: Memory subsystem — storage, lookup, and security
-    files:
-      - src/attune/memory/**
     tags: [memory, storage]
-    doc_paths:
-      - docs/how-to/memory-graph.md
-      - docs/how-to/unified-memory-system.md
-      - docs/how-to/context-management.md
-      - docs/how-to/learning-and-patterns.md
-      - docs/reference/pattern-library.md
-      - docs/reference/persistence.md
+    status: manual
 
   agents:
     description: Release agents, state persistence, and recovery
