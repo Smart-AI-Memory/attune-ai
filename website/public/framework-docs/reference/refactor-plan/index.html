@@ -25,7 +25,7 @@
     
     
       
-        <title>Refactor Plan CLI Reference - Attune AI</title>
+        <title>Refactor Plan - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#refactor-plan-cli-reference" class="md-skip">
+        <a href="#refactor-plan" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Refactor Plan CLI Reference
+              Refactor Plan
             
           </span>
         </div>
@@ -3896,6 +3896,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../features/refactor-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Refactor Plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../features/security-audit/" class="md-nav__link">
         
   
@@ -4007,68 +4035,74 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
+  <a href="#reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Description
+        Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#refactorplanworkflow-attuneworkflowsrefactor_plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RefactorPlanWorkflow — attune.workflows.refactor_plan
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#depth-agent-turn-budget" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage
+        Depth → agent-turn budget
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#the-three-passes" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Options
+        The three passes
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#output" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#workflowresult-fields-read-after-a-run" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Output
+        WorkflowResult fields read after a run
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#exit-codes" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#entry-points" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exit codes
+        Entry points
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#related-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related commands
-      
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -4092,91 +4126,168 @@
   
 
 
-<h1 id="refactor-plan-cli-reference">Refactor Plan CLI Reference<a class="headerlink" href="#refactor-plan-cli-reference" title="Permanent link">&para;</a></h1>
-<p>Detect code smells and generate a prioritized refactoring roadmap.</p>
-<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<p><code>refactor-plan</code> runs the <code>RefactorPlanWorkflow</code>, which coordinates three specialized subagents (<code>debt-scanner</code>, <code>impact-analyzer</code>, and <code>plan-generator</code>) to analyze a codebase and produce a unified refactoring roadmap. It writes a human-readable report to stdout, scoring overall tech debt and listing prioritized refactoring opportunities with effort estimates and risk levels.</p>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>refactor-plan [OPTIONS] PATH
-</code></pre></div>
-<h2 id="options">Options<a class="headerlink" href="#options" title="Permanent link">&para;</a></h2>
+<h1 id="refactor-plan">Refactor Plan<a class="headerlink" href="#refactor-plan" title="Permanent link">&para;</a></h1>
+<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<p>Refactor-plan's public surface is the <code>RefactorPlanWorkflow</code> class,
+re-exported from <code>attune.workflows</code>. <code>WorkflowResult</code> comes from
+<code>attune.workflows</code> as well.</p>
+<h3 id="refactorplanworkflow-attuneworkflowsrefactor_plan"><code>RefactorPlanWorkflow</code> — <code>attune.workflows.refactor_plan</code><a class="headerlink" href="#refactorplanworkflow-attuneworkflowsrefactor_plan" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Default</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--help</code></td>
-<td>—</td>
-<td>Show this help message and exit</td>
+<td><code>RefactorPlanWorkflow()</code></td>
+<td>Construct the workflow. Takes no special constructor arguments.</td>
+</tr>
+<tr>
+<td><code>RefactorPlanWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Run the analysis. Honors <code>path</code> (str, required) and <code>depth</code> (<code>"quick"</code> / <code>"standard"</code> / <code>"deep"</code>, default <code>"standard"</code>). No <code>focus</code>. Returns a <code>WorkflowResult</code>.</td>
+</tr>
+<tr>
+<td><code>RefactorPlanWorkflow.name</code></td>
+<td>The registered slug, <code>"refactor-plan"</code>.</td>
+</tr>
+<tr>
+<td><code>RefactorPlanWorkflow.stages</code></td>
+<td><code>["agent-plan"]</code>; the stage runs at the <code>CAPABLE</code> model tier.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h2>
-<p>On success, the command prints a formatted report with three sections:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>## Summary
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Overall tech debt score (0-100) and a 2–3 sentence executive summary
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>of the refactoring opportunities found.
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>## Refactoring
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Prioritized list of refactoring opportunities with effort estimates
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>(small/medium/large) and risk levels (low/medium/high) for each item.
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>## Suggestions
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>Actionable next steps ordered by priority, including quick wins and
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>longer-term improvements.
-</code></pre></div>
-<p>A realistic excerpt:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>## Summary
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Score: 64/100
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>Three high-priority issues were found in src/engine.py and src/utils.py.
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>Structural complexity and duplicated logic are the dominant sources of debt.
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>## Refactoring
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>1. [High Impact / Low Effort / Risk: Medium]
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>   src/engine.py:45 — God class with 14 responsibilities
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>   Fix: Split into Engine + Parser + Validator
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>2. [High Impact / Low Effort / Risk: Low]
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>   src/utils.py:89 — Logic duplicated in 4 places
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>   Fix: Extract to shared helper
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>## Suggestions
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>- Start with src/utils.py deduplication (~30 min, low risk)
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>- Refactor src/engine.py god class before adding new features
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>- Add tests for src/engine.py before making structural changes
-</code></pre></div>
-<h2 id="exit-codes">Exit codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
+<h3 id="depth-agent-turn-budget">Depth → agent-turn budget<a class="headerlink" href="#depth-agent-turn-budget" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Code</th>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Use when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quick</code></td>
+<td>10</td>
+<td>A fast pass on a small path.</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>20</td>
+<td>The default — balanced coverage and cost.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+<td>The fullest roadmap of a large or legacy area.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-three-passes">The three passes<a class="headerlink" href="#the-three-passes" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Subagent</th>
+<th>Domain</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>debt-scanner</code></td>
+<td>Code smells, duplication, complex conditionals, dead code, long functions, deep nesting.</td>
+</tr>
+<tr>
+<td><code>impact-analyzer</code></td>
+<td>Test coverage, dependency chains, API-surface changes, downstream consumers.</td>
+</tr>
+<tr>
+<td><code>plan-generator</code></td>
+<td>Prioritized plan: effort (small/medium/large), risk (low/medium/high), benefit, order.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="workflowresult-fields-read-after-a-run"><code>WorkflowResult</code> fields read after a run<a class="headerlink" href="#workflowresult-fields-read-after-a-run" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
 <th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>0</code></td>
-<td>Workflow completed and report written successfully</td>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the analysis completed.</td>
 </tr>
 <tr>
-<td><code>1</code></td>
-<td>Workflow failed — invalid path, subagent error, or unhandled exception</td>
+<td><code>final_output</code></td>
+<td><code>Any</code></td>
+<td>The roadmap — a serialized report when findings parse, else the raw markdown.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str \| None</code></td>
+<td>Short tech-debt summary.</td>
+</tr>
+<tr>
+<td><code>suggestions</code></td>
+<td><code>list[NextAction]</code></td>
+<td>Prioritized next actions.</td>
+</tr>
+<tr>
+<td><code>cost_report</code></td>
+<td><code>CostReport</code></td>
+<td>Cost / usage for the run.</td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>str</code></td>
+<td>The provider that served the run (<code>"anthropic"</code>).</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td>Echoes <code>path</code>, <code>depth</code>, and <code>max_turns</code>; carries SDK error fields on failure.</td>
+</tr>
+<tr>
+<td><code>error</code> / <code>error_type</code></td>
+<td><code>str \| None</code></td>
+<td>Failure reason and category (<code>"config"</code> / <code>"runtime"</code> / <code>"provider"</code> / <code>"timeout"</code> / <code>"validation"</code>).</td>
 </tr>
 </tbody>
 </table>
-<h2 id="related-commands">Related commands<a class="headerlink" href="#related-commands" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>/refactor-plan</code> — Claude Code skill that invokes this workflow interactively</li>
-<li><code>code-review</code> — run a general code quality review instead of a refactoring roadmap</li>
-<li><code>security-audit</code> — scan for vulnerabilities rather than structural debt</li>
-</ul>
-<!-- attune-generated: source_hash=048ea0ef75e8eaeda7382792e46947bba2ddef4a450bb9395be4c8ba0c1d1f38 feature=refactor-plan kind=cli-reference generated_at=2026-06-02 -->
+<h3 id="entry-points">Entry points<a class="headerlink" href="#entry-points" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Invocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Skill</td>
+<td><code>/refactor</code> in a Claude Code conversation — full analysis routes to refactor-plan; a complexity-only pass routes to simplify-code.</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>attune workflow run refactor-plan --path &lt;p&gt; [--depth quick\|standard\|deep] [--json]</code>.</td>
+</tr>
+<tr>
+<td>MCP tool</td>
+<td><code>refactor_plan</code> — optional <code>path</code> (defaults to the current directory), validated against the workspace root.</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>await RefactorPlanWorkflow().execute(path=&lt;p&gt;, depth=&lt;d&gt;)</code>.</td>
+</tr>
+</tbody>
+</table>
+<!-- attune-generated: source_hash=198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb feature=refactor-plan kind=reference generated_at=2026-06-23 -->
 
 
 

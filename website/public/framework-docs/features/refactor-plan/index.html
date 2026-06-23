@@ -12,9 +12,13 @@
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/blog/discord-project-foundations/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/features/refactor-plan/">
       
       
+        <link rel="prev" href="../models/">
+      
+      
+        <link rel="next" href="../security-audit/">
       
       
         
@@ -25,7 +29,7 @@
     
     
       
-        <title>Discord Post: Your Code Is Already the Documentation - Attune AI</title>
+        <title>Refactor Plan - Attune AI</title>
       
     
     
@@ -81,7 +85,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#discord-post-your-code-is-already-the-documentation" class="md-skip">
+        <a href="#refactor-plan" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Discord Post: Your Code Is Already the Documentation
+              Refactor Plan
             
           </span>
         </div>
@@ -404,11 +408,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../features/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -3671,28 +3677,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10" >
-        
-          
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
             
   
   
@@ -3710,7 +3719,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3728,7 +3737,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -3756,7 +3765,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/bug-predict/" class="md-nav__link">
+      <a href="../bug-predict/" class="md-nav__link">
         
   
   
@@ -3784,7 +3793,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/code-quality/" class="md-nav__link">
+      <a href="../code-quality/" class="md-nav__link">
         
   
   
@@ -3812,7 +3821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/deep-review/" class="md-nav__link">
+      <a href="../deep-review/" class="md-nav__link">
         
   
   
@@ -3840,7 +3849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/fix-test/" class="md-nav__link">
+      <a href="../fix-test/" class="md-nav__link">
         
   
   
@@ -3868,7 +3877,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/models/" class="md-nav__link">
+      <a href="../models/" class="md-nav__link">
         
   
   
@@ -3893,10 +3902,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../features/refactor-plan/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3912,6 +3930,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -3924,7 +3943,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/security-audit/" class="md-nav__link">
+      <a href="../security-audit/" class="md-nav__link">
         
   
   
@@ -3952,7 +3971,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/smart-test/" class="md-nav__link">
+      <a href="../smart-test/" class="md-nav__link">
         
   
   
@@ -3980,7 +3999,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/spec-engine/" class="md-nav__link">
+      <a href="../spec-engine/" class="md-nav__link">
         
   
   
@@ -4046,56 +4065,28 @@
   
 
 
-<h1 id="discord-post-your-code-is-already-the-documentation">Discord Post: Your Code Is Already the Documentation<a class="headerlink" href="#discord-post-your-code-is-already-the-documentation" title="Permanent link">&para;</a></h1>
-<p><strong>Part 2: The five source types that make living docs
-possible</strong></p>
-<p>If you follow standard coding conventions, your code
-already contains the documentation. You just need to
-treat it that way.</p>
-<p>Five source types that serve double duty — runtime
-behavior AND help system input:</p>
-<ol>
+<h1 id="refactor-plan">Refactor Plan<a class="headerlink" href="#refactor-plan" title="Permanent link">&para;</a></h1>
+<p>Prioritize tech debt — scan for code smells and generate a refactoring roadmap</p>
+<div class="admonition tip">
+<p class="admonition-title">Start here</p>
+<p><a href="../../how-to/refactor-plan/">How-to guide</a> — task recipes for common goals.</p>
+</div>
+<div class="grid cards">
+<ul>
 <li>
-<p><strong>Google-style docstrings</strong> — Args, Returns, Raises
-   sections are machine-parseable. A generator walks the
-   structure and produces parameter docs, return
-   descriptions, and troubleshooting entries.</p>
+<p><strong>Reference</strong></p>
+<hr />
+<p>The full API and option reference.</p>
+<p><a href="../../reference/refactor-plan/">Open the reference</a></p>
 </li>
 <li>
-<p><strong>Type hints</strong> — <code>input_tokens: int</code> is documentation
-   you can't lie about. Generators get the "what" for
-   free; docstrings provide the "why."</p>
+<p><strong>Architecture</strong></p>
+<hr />
+<p>How it works and how to extend it.</p>
+<p><a href="../../architecture/refactor-plan/">Open the architecture</a></p>
 </li>
-<li>
-<p><strong>YAML frontmatter</strong> — Skills and templates carry
-   structured metadata (name, description, triggers) that
-   parsers read without touching the content body.</p>
-</li>
-<li>
-<p><strong>Class attributes</strong> — Workflow metadata as literal
-   class values (<code>name = "security-audit"</code>) is
-   inspectable at import time. Change the attribute,
-   the docs update.</p>
-</li>
-<li>
-<p><strong>CLI help strings</strong> — argparse/typer help text
-   already appears in <code>--help</code> output. Same sentence
-   works in a reference template.</p>
-</li>
-</ol>
-<p>The principle: metadata embedded in code structure means
-no sync step, no "update the docs" ticket, no drift.</p>
-<p>Attune AI uses all five to generate 557 help templates
-for itself. Install the plugin and say "tell me more"
-to see the result:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>claude plugin marketplace add Smart-AI-Memory/attune-ai
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>claude plugin install attune-ai@attune-ai
-</code></pre></div>
-<p>Runs on your Claude subscription — no API key required.</p>
-<p>This is part 2 of a series on building knowledge bases,
-help systems, and context-aware docs with Claude Code.
-If you find it useful, a star on the repo goes a long
-way: https://github.com/Smart-AI-Memory/attune-ai</p>
+</ul>
+</div>
 
 
 
