@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Deep Review — concept</title>
-  <meta name="description" content="`DeepReviewAgentSDKWorkflow` is a multi-pass code review workflow that dispatches three specialized subagents in parallel and consolidates their findings into a single structured report." />
-  <meta property="og:title" content="Deep Review — concept" />
-  <meta property="og:description" content="`DeepReviewAgentSDKWorkflow` is a multi-pass code review workflow that dispatches three specialized subagents in parallel and consolidates their findings into a single structured report." />
+  <title>Multi-pass code review across security, quality, and test gaps — concept</title>
+  <meta name="description" content="Deep-review runs a multi-pass code review in one call. It is **SDK-native**: `DeepReviewAgentSDKWorkflow` delegates to three specialized Claude Agent SDK subagents — one each for security, code qualit" />
+  <meta property="og:title" content="Multi-pass code review across security, quality, and test gaps — concept" />
+  <meta property="og:description" content="Deep-review runs a multi-pass code review in one call. It is **SDK-native**: `DeepReviewAgentSDKWorkflow` delegates to three specialized Claude Agent SDK subagents — one each for security, code qualit" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/deep-review/concept" />
   <style>
@@ -272,38 +272,126 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Deep Review</h1>
-<p><code>DeepReviewAgentSDKWorkflow</code> is a multi-pass code review workflow that dispatches three specialized subagents in parallel and consolidates their findings into a single structured report.</p>
-<h2>How the review works</h2>
-<p>A single call to <code>DeepReviewAgentSDKWorkflow.execute()</code> coordinates three subagents, each focused on a distinct domain:</p>
+<h1>Multi-pass code review across security, quality, and test gaps</h1>
+<h2>Overview</h2>
+<p>Deep-review runs a multi-pass code review in one call. It is
+<strong>SDK-native</strong>: <code>DeepReviewAgentSDKWorkflow</code> delegates to three
+specialized Claude Agent SDK subagents — one each for security,
+code quality, and test gaps — and synthesizes their findings into
+a single consolidated report with an overall health score,
+severity-ordered findings per domain, and a prioritized list of
+next steps.</p>
+<p>It is the <strong>breadth</strong> option among the analysis workflows: where
+security-audit goes deep on vulnerabilities alone, deep-review
+covers three concerns in one pass and lets you narrow to a subset
+with <code>focus</code>. Like the others it <strong>predicts</strong> rather than proves —
+the subagents apply LLM judgment over the code (via Read / Glob /
+Grep), so a finding is a lead to verify, not a confirmed defect.</p>
+<p>You reach deep-review four ways, all of which run the same
+workflow:</p>
+<ul>
+<li>the <strong><code>/deep-review</code></strong> skill, inside a Claude Code conversation;</li>
+<li>the CLI — <strong><code>attune workflow run deep-review</code></strong>;</li>
+<li>the <strong><code>deep_review</code></strong> MCP tool (one required <code>path</code> argument);</li>
+<li>the Python API — <code>await DeepReviewAgentSDKWorkflow().execute(...)</code>,
+documented here for wiring a review into a hook, a pre-merge
+gate, or a custom tool.</li>
+</ul>
+<h2>Concepts</h2>
+<h3>Three review passes, one consolidated report</h3>
+<p><code>DeepReviewAgentSDKWorkflow.execute</code> issues a single
+<code>claude_agent_sdk.query</code> whose options define three subagents,
+each scoped to <code>Read</code> / <code>Glob</code> / <code>Grep</code>:</p>
 <table>
 <thead>
 <tr>
 <th>Subagent</th>
-<th>Domain</th>
+<th>Pass</th>
+<th>What it looks for</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>security-reviewer</code></td>
-<td>Vulnerabilities and security risk</td>
+<td>Security</td>
+<td><code>eval</code>/<code>exec</code> and injection vectors, path traversal, hardcoded secrets, SQL/command injection, unsafe deserialization, auth/authz flaws, OWASP Top 10. Reports under a <code>## Security</code> heading.</td>
 </tr>
 <tr>
 <td><code>quality-reviewer</code></td>
-<td>Code structure, style, and maintainability</td>
+<td>Quality</td>
+<td>Excessive complexity (&gt;10 per function), broad exception handling, dead code and unused imports, poor naming, duplication, missing type hints / docstrings on public APIs, functions over 50 lines. Reports under <code>## Quality</code>.</td>
 </tr>
 <tr>
 <td><code>test-gap-reviewer</code></td>
-<td>Missing or insufficient test coverage</td>
+<td>Test gaps</td>
+<td>Public functions with no coverage, untested error paths, missing edge cases (empty / None / boundaries), missing integration tests, mocks that hide bugs, weak assertions. Reports under <code>## Test Gaps</code>.</td>
 </tr>
 </tbody>
 </table>
-<p>Each subagent reports independently. After all three finish, the orchestrator synthesizes their findings into a consolidated report with five sections: <strong>Summary</strong>, <strong>Security</strong>, <strong>Quality</strong>, <strong>Test Gaps</strong>, and <strong>Suggestions</strong>.</p>
-<p>The Summary section includes an overall code health score from 0–100, a short executive summary, and finding counts by severity. The Suggestions section closes the report with the top 5–10 actionable next steps, each linked back to the specific finding it addresses.</p>
-<h2>When to use it</h2>
-<p>Deep review is suited for situations where a quick diff scan is not enough — for example, before merging a large refactor, auditing a module you didn't write, or establishing a health baseline for a legacy codebase. Because the three subagents run over the same codebase independently, findings that appear across multiple domains (say, an untested function that also has a security smell) surface in both the relevant section and the Suggestions rollup.</p>
-<h2>The consolidated report as a mental model</h2>
-<p>Think of <code>DeepReviewAgentSDKWorkflow</code> as a review committee rather than a single reviewer. The orchestrator acts as chair: it hands the same codebase path to each specialist, waits for their independent reports, then writes the meeting minutes. You get one artifact instead of three, with severity ordering within each section so the most critical findings appear first.</p>
+<p>The orchestrator then synthesizes the passes into one report with
+five sections — <strong>Summary</strong> (an overall 0–100 health score plus a
+2–3 sentence summary and finding counts by severity), then
+<strong>Security</strong>, <strong>Quality</strong>, and <strong>Test Gaps</strong> (each domain's
+findings, ordered by severity / priority), and <strong>Suggestions</strong>
+(the top 5–10 next steps, each referencing the finding it
+addresses).</p>
+<h3><code>focus</code> narrows the review to a subset of passes</h3>
+<p>By default all three passes run. Pass <code>focus</code> — a list of any of
+<code>&quot;security&quot;</code>, <code>&quot;quality&quot;</code>, <code>&quot;test-gaps&quot;</code> — to run only those
+passes:</p>
+<ul>
+<li><code>focus=[&quot;security&quot;]</code> runs the security pass alone;</li>
+<li><code>focus=[&quot;security&quot;, &quot;quality&quot;]</code> skips the test-gap pass;</li>
+<li>an empty or all-invalid <code>focus</code> returns a failed
+<code>WorkflowResult</code> (&quot;Invalid focus values&quot;).</li>
+</ul>
+<p>This is deep-review's own knob — it has no <code>system_prompt_suffix</code>
+(unlike bug-predict / security-audit). Note the spelling:
+<code>&quot;test-gaps&quot;</code> (hyphen), not <code>&quot;test-gap&quot;</code>.</p>
+<h3>Depth controls the agent-turn budget</h3>
+<p><code>execute</code> takes a <code>depth</code> of <code>&quot;quick&quot;</code>, <code>&quot;standard&quot;</code> (default),
+or <code>&quot;deep&quot;</code>. Depth maps to the maximum agent turns and a per-run
+cost cap. Deep-review's budgets are higher than the single-domain
+workflows', since it covers three passes:</p>
+<table>
+<thead>
+<tr>
+<th>Depth</th>
+<th>Max agent turns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quick</code></td>
+<td>15</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>30</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>50</td>
+</tr>
+</tbody>
+</table>
+<p>An unrecognized depth falls back to the standard budget (30
+turns).</p>
+<h3><code>execute</code> is async</h3>
+<p><code>execute</code> is a coroutine — <code>await</code> it (or drive it with
+<code>asyncio.run</code>). Calling it without awaiting is the most common
+mistake. It reads three keyword arguments: <code>path</code> (required),
+<code>depth</code> (default <code>&quot;standard&quot;</code>), and <code>focus</code> (optional). An empty
+or missing <code>path</code> returns a failed <code>WorkflowResult</code> rather than
+raising.</p>
+<h3>The result is a <code>WorkflowResult</code></h3>
+<p><code>execute</code> returns a <code>WorkflowResult</code> (from <code>attune.workflows</code>).
+The consolidated report lands in <code>final_output</code> — a serialized
+report when the findings parse, or the raw markdown otherwise —
+with a short <code>summary</code>, a <code>suggestions</code> list, the <code>cost_report</code>,
+the <code>provider</code>, and a <code>metadata</code> dict echoing <code>path</code>, <code>depth</code>,
+<code>max_turns</code>, the active <code>focus</code>, and <code>workflow</code>. On failure,
+<code>success</code> is <code>False</code> and <code>error</code> / <code>error_type</code> carry the reason.</p>
 
   </article>
   <footer>

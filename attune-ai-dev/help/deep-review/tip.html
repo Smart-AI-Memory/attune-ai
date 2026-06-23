@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: Working effectively with deep review — tip</title>
-  <meta name="description" content="Run `deep_review` when you want security, quality, and test-gap findings in a single pass — not as three separate workflow calls." />
-  <meta property="og:title" content="Tip: Working effectively with deep review — tip" />
-  <meta property="og:description" content="Run `deep_review` when you want security, quality, and test-gap findings in a single pass — not as three separate workflow calls." />
+  <title>Multi-pass code review across security, quality, and test gaps — tip</title>
+  <meta name="description" content="- **Depend on the documented public surface.** The supported API is `DeepReviewAgentSDKWorkflow` and its async `execute`, plus the `WorkflowResult` it returns. Names with a leading underscore — `_run_" />
+  <meta property="og:title" content="Multi-pass code review across security, quality, and test gaps — tip" />
+  <meta property="og:description" content="- **Depend on the documented public surface.** The supported API is `DeepReviewAgentSDKWorkflow` and its async `execute`, plus the `WorkflowResult` it returns. Names with a leading underscore — `_run_" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/deep-review/tip" />
   <style>
@@ -272,19 +272,23 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: Working effectively with deep review</h1>
-<h2>Recommendation</h2>
-<p>Run <code>deep_review</code> when you want security, quality, and test-gap findings in a single pass — not as three separate workflow calls.</p>
-<p><code>DeepReviewAgentSDKWorkflow.execute()</code> internally coordinates three specialized subagents (<code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code>) and synthesizes their output into one consolidated report. Calling each underlying workflow individually loses the cross-domain synthesis step.</p>
-<h2>Why</h2>
-<p>The orchestrator's final synthesis pass — not the subagent findings themselves — is where the prioritized, cross-domain <strong>Suggestions</strong> section is generated. Bypassing it means you never get the top 5–10 actionable next steps ordered by impact.</p>
-<h2>Tradeoff</h2>
-<p>A full deep-review run is slower than a single-domain review because all three subagents complete before synthesis begins. If you only need one dimension (for example, just security), prefer <code>security-audit</code> directly rather than filtering deep-review output after the fact.</p>
-<h2>Source files</h2>
+<h1>Multi-pass code review across security, quality, and test gaps</h1>
+<h2>Notes &amp; tips</h2>
 <ul>
-<li><code>src/attune/workflows/deep_review.py</code></li>
+<li><strong>Depend on the documented public surface.</strong> The supported API
+is <code>DeepReviewAgentSDKWorkflow</code> and its async <code>execute</code>, plus the
+<code>WorkflowResult</code> it returns. Names with a leading underscore —
+<code>_run_deep_review</code>, <code>_SUBAGENT_DEFS</code> — are internal and may
+change.</li>
+<li><strong>Use <code>focus</code> to keep runs cheap.</strong> A <code>focus=[&quot;security&quot;]</code> pass
+is faster and cheaper than the full three-domain review; reserve
+the full <code>deep</code> run for pre-merge or release gates.</li>
+<li><strong>Read <code>metadata[&quot;focus&quot;]</code> to confirm scope.</strong> It records which
+passes actually ran, which is handy when a caller built the
+focus list dynamically.</li>
+<li><strong>Start shallow, then deepen.</strong> Run <code>standard</code> broadly and spend
+a <code>deep</code> run only on the modules that came back risky.</li>
 </ul>
-<p><strong>Tags:</strong> <code>review</code>, <code>security</code>, <code>quality</code>, <code>tests</code>, <code>comprehensive-review</code></p>
 
   </article>
   <footer>

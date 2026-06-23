@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Deep Review vs alternatives — comparison</title>
-  <meta name="description" content="`deep_review` runs a multi-pass code review by coordinating three specialized subagents — `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer` — in parallel, then synthesizes their finding" />
-  <meta property="og:title" content="Comparison: Deep Review vs alternatives — comparison" />
-  <meta property="og:description" content="`deep_review` runs a multi-pass code review by coordinating three specialized subagents — `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer` — in parallel, then synthesizes their finding" />
+  <title>Multi-pass code review across security, quality, and test gaps — comparison</title>
+  <meta name="description" content="Deep-review and **security-audit** are both SDK-native review workflows reached with `attune workflow run &lt;name&gt;`, both predictive (LLM judgment), but they trade breadth against depth." />
+  <meta property="og:title" content="Multi-pass code review across security, quality, and test gaps — comparison" />
+  <meta property="og:description" content="Deep-review and **security-audit** are both SDK-native review workflows reached with `attune workflow run &lt;name&gt;`, both predictive (LLM judgment), but they trade breadth against depth." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/deep-review/comparison" />
   <style>
@@ -272,123 +272,59 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Deep Review vs alternatives</h1>
-<h2>What deep review does</h2>
-<p><code>deep_review</code> runs a multi-pass code review by coordinating three specialized subagents — <code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code> — in parallel, then synthesizes their findings into a single consolidated report. The report includes an overall health score (0–100), severity-ordered findings per domain, and up to ten prioritized next steps tied back to specific findings.</p>
-<p>The entry point is <code>DeepReviewAgentSDKWorkflow.execute(**kwargs)</code> from <code>workflows.deep_review</code>.</p>
-<h2>Feature comparison</h2>
+<h1>Multi-pass code review across security, quality, and test gaps</h1>
+<h2>Comparison</h2>
+<p>Deep-review and <strong>security-audit</strong> are both SDK-native review
+workflows reached with <code>attune workflow run &lt;name&gt;</code>, both
+predictive (LLM judgment), but they trade breadth against depth.</p>
 <table>
 <thead>
 <tr>
-<th>Criterion</th>
-<th><code>deep_review</code></th>
-<th><code>code_review</code></th>
-<th><code>security_audit</code></th>
-<th><code>bug_predict</code></th>
+<th></th>
+<th><code>deep-review</code></th>
+<th><code>security-audit</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Passes</strong></td>
-<td>3 (security, quality, test gaps)</td>
-<td>1</td>
-<td>1 (security only)</td>
-<td>1 (bug patterns only)</td>
+<td><strong>Scope</strong></td>
+<td>Three domains in one pass: security, quality, test gaps</td>
+<td>Security only</td>
 </tr>
 <tr>
-<td><strong>Security findings</strong></td>
-<td>✅ Included</td>
-<td>⚠️ Surface-level</td>
-<td>✅ Primary focus</td>
-<td>❌</td>
+<td><strong>Subagents</strong></td>
+<td>Three: security / quality / test-gap reviewers</td>
+<td>Four: vuln-scanner, secret-detector, auth-reviewer, remediation-planner</td>
 </tr>
 <tr>
-<td><strong>Code quality findings</strong></td>
-<td>✅ Included</td>
-<td>✅ Primary focus</td>
-<td>❌</td>
-<td>❌</td>
+<td><strong>Narrowing</strong></td>
+<td><code>focus</code> selects a subset of passes</td>
+<td>Always the full security sweep</td>
 </tr>
 <tr>
-<td><strong>Test gap analysis</strong></td>
-<td>✅ Included</td>
-<td>❌</td>
-<td>❌</td>
-<td>❌</td>
+<td><strong>Turn budget</strong></td>
+<td>15 / 30 / 50 (quick / standard / deep)</td>
+<td>10 / 20 / 40</td>
 </tr>
 <tr>
-<td><strong>Consolidated report</strong></td>
-<td>✅ Single synthesized output</td>
-<td>❌ Per-pass output</td>
-<td>❌ Per-pass output</td>
-<td>❌ Per-pass output</td>
+<td><strong>Report sections</strong></td>
+<td>Summary / Security / Quality / Test Gaps / Suggestions</td>
+<td>Summary / Security / Suggestions</td>
 </tr>
 <tr>
-<td><strong>Health score (0–100)</strong></td>
-<td>✅</td>
-<td>❌</td>
-<td>❌</td>
-<td>❌</td>
-</tr>
-<tr>
-<td><strong>Relative cost</strong></td>
-<td>Higher — three subagents run per invocation</td>
-<td>Lower</td>
-<td>Lower</td>
-<td>Lower</td>
-</tr>
-<tr>
-<td><strong>Best for</strong></td>
-<td>Pre-merge / release gates</td>
-<td>Iterative development</td>
-<td>Targeted security triage</td>
-<td>Predicting regression risk</td>
+<td><strong>Slug</strong></td>
+<td><code>attune workflow run deep-review</code></td>
+<td><code>attune workflow run security-audit</code></td>
 </tr>
 </tbody>
 </table>
-<h2>Tradeoffs</h2>
-<p><strong><code>deep_review</code> wins when completeness matters.</strong> Running all three subagents in one call means you get cross-domain findings in a single report, with the orchestrator citing file paths and line numbers across all domains. You don't have to reconcile the output of three separate tool calls yourself.</p>
-<p><strong><code>deep_review</code> costs more per call.</strong> Because <code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code> all run for every invocation, using <code>deep_review</code> in a tight feedback loop (e.g., after every file save) is significantly more expensive than calling <code>code_review</code> alone. For quick, iterative checks during development, <code>code_review</code> is the better fit.</p>
-<p><strong><code>security_audit</code> is sharper for targeted security triage.</strong> If you already have quality and test coverage under control and need the deepest possible security analysis, <code>security_audit</code> focuses all available capacity on that one domain instead of splitting it three ways.</p>
-<p><strong><code>bug_predict</code> solves a different problem entirely.</strong> It analyzes code patterns to predict where bugs are likely to appear — a forward-looking signal, not a review of current state. It does not overlap with <code>deep_review</code>'s output.</p>
-<h2>Use <code>deep_review</code> when…</h2>
-<ul>
-<li>You are preparing a PR for merge and need a single authoritative report covering security, quality, and test gaps.</li>
-<li>Your team or CI pipeline requires a health score and a prioritized action list before a release.</li>
-<li>You want one consolidated output rather than manually correlating results from multiple tools.</li>
-</ul>
-<h2>Use an alternative when…</h2>
-<table>
-<thead>
-<tr>
-<th>Situation</th>
-<th>Better choice</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Fast feedback during active development</td>
-<td><code>code_review</code></td>
-</tr>
-<tr>
-<td>Focused investigation of a potential vulnerability</td>
-<td><code>security_audit</code></td>
-</tr>
-<tr>
-<td>Estimating regression risk before a refactor</td>
-<td><code>bug_predict</code></td>
-</tr>
-<tr>
-<td>Exploratory work or a throwaway script</td>
-<td>None — a direct inspection is faster than wiring up any workflow tool</td>
-</tr>
-</tbody>
-</table>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/deep_review.py</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>review</code>, <code>security</code>, <code>quality</code>, <code>tests</code>, <code>comprehensive-review</code></p>
+<p>Reach for <strong>deep-review</strong> when you want one consolidated
+pre-merge read across correctness, maintainability, and test
+coverage; reach for <strong>security-audit</strong> when the concern is
+specifically the vulnerability surface and you want the deeper,
+four-subagent security treatment. Run deep-review with
+<code>focus=[&quot;security&quot;]</code> for a quick security-only pass, or
+security-audit for the thorough one.</p>
 
   </article>
   <footer>

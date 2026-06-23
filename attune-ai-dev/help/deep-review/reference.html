@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Deep Review reference — reference</title>
-  <meta name="description" content="Multi-pass deep code review: security, quality, and test gap analysis with prioritized findings." />
-  <meta property="og:title" content="Deep Review reference — reference" />
-  <meta property="og:description" content="Multi-pass deep code review: security, quality, and test gap analysis with prioritized findings." />
+  <title>Multi-pass code review across security, quality, and test gaps — reference</title>
+  <meta name="description" content="Deep-review&#x27;s public surface is the `DeepReviewAgentSDKWorkflow` class, re-exported from `attune.workflows`. `WorkflowResult` comes from `attune.workflows` as well." />
+  <meta property="og:title" content="Multi-pass code review across security, quality, and test gaps — reference" />
+  <meta property="og:description" content="Deep-review&#x27;s public surface is the `DeepReviewAgentSDKWorkflow` class, re-exported from `attune.workflows`. `WorkflowResult` comes from `attune.workflows` as well." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/deep-review/reference" />
   <style>
@@ -272,105 +272,171 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Deep Review reference</h1>
-<p>Multi-pass deep code review: security, quality, and test gap analysis with prioritized findings.</p>
-<h2>Classes</h2>
+<h1>Multi-pass code review across security, quality, and test gaps</h1>
+<h2>Reference</h2>
+<p>Deep-review's public surface is the <code>DeepReviewAgentSDKWorkflow</code>
+class, re-exported from <code>attune.workflows</code>. <code>WorkflowResult</code> comes
+from <code>attune.workflows</code> as well.</p>
+<h3><code>DeepReviewAgentSDKWorkflow</code> — <code>attune.workflows.deep_review</code></h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>DeepReviewAgentSDKWorkflow</code></td>
-<td>Orchestrates a multi-pass deep code review using Claude Agent SDK subagents: <code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code>.</td>
+<td><code>DeepReviewAgentSDKWorkflow()</code></td>
+<td>Construct the workflow. Takes no special constructor arguments (no <code>system_prompt_suffix</code>).</td>
+</tr>
+<tr>
+<td><code>DeepReviewAgentSDKWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Run the review. Honors <code>path</code> (str, required), <code>depth</code> (<code>&quot;quick&quot;</code> / <code>&quot;standard&quot;</code> / <code>&quot;deep&quot;</code>, default <code>&quot;standard&quot;</code>), and <code>focus</code> (list of <code>&quot;security&quot;</code> / <code>&quot;quality&quot;</code> / <code>&quot;test-gaps&quot;</code>, default all three). Returns a <code>WorkflowResult</code>.</td>
+</tr>
+<tr>
+<td><code>DeepReviewAgentSDKWorkflow.name</code></td>
+<td>The registered slug, <code>&quot;deep-review&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>DeepReviewAgentSDKWorkflow.stages</code></td>
+<td><code>[&quot;deep-review&quot;]</code>; the stage runs at the <code>CAPABLE</code> model tier.</td>
 </tr>
 </tbody>
 </table>
-<h3><code>DeepReviewAgentSDKWorkflow</code></h3>
-<h4>Methods</h4>
+<h3>Depth → agent-turn budget</h3>
 <table>
 <thead>
 <tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Use when</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>execute</code></td>
-<td><code>**kwargs: Any</code></td>
-<td><code>WorkflowResult</code></td>
-<td>Runs the three specialized subagents and synthesizes their findings into a consolidated review report.</td>
+<td><code>quick</code></td>
+<td>15</td>
+<td>A fast pass on a small path.</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>30</td>
+<td>The default — balanced coverage and cost.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>50</td>
+<td>The fullest review of a large or critical area.</td>
 </tr>
 </tbody>
 </table>
-<h2>Subagents</h2>
-<p>The workflow coordinates three subagents. Each reports findings independently; the orchestrator then synthesizes results into a single report.</p>
+<h3>The three passes</h3>
 <table>
 <thead>
 <tr>
-<th>Name</th>
+<th><code>focus</code> value</th>
+<th>Subagent</th>
 <th>Domain</th>
 </tr>
 </thead>
 <tbody>
 <tr>
+<td><code>security</code></td>
 <td><code>security-reviewer</code></td>
-<td>Security vulnerabilities and risk findings</td>
+<td>Injection, secrets, path traversal, auth, OWASP Top 10.</td>
 </tr>
 <tr>
+<td><code>quality</code></td>
 <td><code>quality-reviewer</code></td>
-<td>Code quality findings</td>
+<td>Complexity, broad excepts, dead code, naming, duplication, type hints, docstrings, long functions.</td>
 </tr>
 <tr>
+<td><code>test-gaps</code></td>
 <td><code>test-gap-reviewer</code></td>
-<td>Test coverage gaps</td>
+<td>Untested paths, missing edge cases, weak assertions, mocks hiding bugs.</td>
 </tr>
 </tbody>
 </table>
-<h2>Consolidated report structure</h2>
-<p>The synthesized output contains the following sections:</p>
+<h3><code>WorkflowResult</code> fields read after a review</h3>
 <table>
 <thead>
 <tr>
-<th>Section</th>
-<th>Content</th>
+<th>Field</th>
+<th>Type</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>## Summary</code></td>
-<td>Overall code health score (0–100), a 2–3 sentence executive summary, and finding counts by severity.</td>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the review completed.</td>
 </tr>
 <tr>
-<td><code>## Security</code></td>
-<td>Findings from the security reviewer, ordered by severity.</td>
+<td><code>final_output</code></td>
+<td><code>Any</code></td>
+<td>The consolidated report — a serialized report when findings parse, else the raw markdown.</td>
 </tr>
 <tr>
-<td><code>## Quality</code></td>
-<td>Findings from the quality reviewer, ordered by severity.</td>
+<td><code>summary</code></td>
+<td><code>str | None</code></td>
+<td>Short health summary.</td>
 </tr>
 <tr>
-<td><code>## Test Gaps</code></td>
-<td>Findings from the test gap reviewer, ordered by priority.</td>
+<td><code>suggestions</code></td>
+<td><code>list[NextAction]</code></td>
+<td>Prioritized next actions.</td>
 </tr>
 <tr>
-<td><code>## Suggestions</code></td>
-<td>Top 5–10 actionable next steps ordered by impact, each referencing the specific finding it addresses.</td>
+<td><code>cost_report</code></td>
+<td><code>CostReport</code></td>
+<td>Cost / usage for the run.</td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>str</code></td>
+<td>The provider that served the run.</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td>Echoes <code>path</code>, <code>depth</code>, <code>max_turns</code>, <code>focus</code>, and <code>workflow</code>; carries SDK error fields on failure.</td>
+</tr>
+<tr>
+<td><code>error</code> / <code>error_type</code></td>
+<td><code>str | None</code></td>
+<td>Failure reason and category (<code>&quot;config&quot;</code> / <code>&quot;runtime&quot;</code> / <code>&quot;provider&quot;</code> / <code>&quot;timeout&quot;</code> / <code>&quot;validation&quot;</code>).</td>
 </tr>
 </tbody>
 </table>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/deep_review.py</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>review</code>, <code>security</code>, <code>quality</code>, <code>tests</code>, <code>comprehensive-review</code></p>
+<h3>Entry points</h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Invocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Skill</td>
+<td><code>/deep-review</code> in a Claude Code conversation.</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>attune workflow run deep-review --path &lt;p&gt; [--depth quick|standard|deep] [--json] [--input '{&quot;focus&quot;: [...]}']</code>.</td>
+</tr>
+<tr>
+<td>MCP tool</td>
+<td><code>deep_review</code> — one required <code>path</code> argument; runs all three passes at standard depth (the handler does not pass <code>depth</code> or <code>focus</code>).</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>await DeepReviewAgentSDKWorkflow().execute(path=&lt;p&gt;, depth=&lt;d&gt;, focus=[...])</code>.</td>
+</tr>
+</tbody>
+</table>
 
   </article>
   <footer>

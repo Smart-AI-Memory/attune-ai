@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Run a deep review — task</title>
-  <meta name="description" content="Use `DeepReviewAgentSDKWorkflow` when you want to run a structured, multi-pass code review that covers security vulnerabilities, code quality, and test gaps in a single consolidated report." />
-  <meta property="og:title" content="Run a deep review — task" />
-  <meta property="og:description" content="Use `DeepReviewAgentSDKWorkflow` when you want to run a structured, multi-pass code review that covers security vulnerabilities, code quality, and test gaps in a single consolidated report." />
+  <title>Multi-pass code review across security, quality, and test gaps — task</title>
+  <meta name="description" content="**Goal:** run a one-off review over a directory without writing any Python." />
+  <meta property="og:title" content="Multi-pass code review across security, quality, and test gaps — task" />
+  <meta property="og:description" content="**Goal:** run a one-off review over a directory without writing any Python." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/deep-review/task" />
   <style>
@@ -272,80 +272,86 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Run a deep review</h1>
-<p>Use <code>DeepReviewAgentSDKWorkflow</code> when you want to run a structured, multi-pass code review that covers security vulnerabilities, code quality, and test gaps in a single consolidated report.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>Access to the codebase you want to review</li>
-<li><code>DeepReviewAgentSDKWorkflow</code> importable from <code>workflows.deep_review</code></li>
-</ul>
-<h2>Run a deep review</h2>
-<ol>
-<li>
-<p><strong>Import the workflow class.</strong></p>
-<pre><code class="language-python">from workflows.deep_review import DeepReviewAgentSDKWorkflow
-</code></pre>
-</li>
-<li>
-<p><strong>Instantiate the workflow.</strong></p>
-<pre><code class="language-python">workflow = DeepReviewAgentSDKWorkflow()
-</code></pre>
-</li>
-<li>
-<p><strong>Call <code>execute</code> with the path to your codebase.</strong></p>
-<p>Pass the <code>path</code> keyword argument pointing to the directory you want reviewed:</p>
-<pre><code class="language-python">result = workflow.execute(path=&quot;/path/to/your/codebase&quot;)
-</code></pre>
-<p>Internally, <code>execute</code> coordinates three specialized subagents — <code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code> — each reporting findings independently before the orchestrator synthesizes them.</p>
-</li>
-<li>
-<p><strong>Inspect the result.</strong></p>
-<p>The returned <code>WorkflowResult</code> contains a consolidated report with the following sections:</p>
-<ul>
-<li><strong>Summary</strong> — overall code health score (0–100) and a brief executive summary with finding counts by severity</li>
-<li><strong>Security</strong> — findings from <code>security-reviewer</code>, ordered by severity</li>
-<li><strong>Quality</strong> — findings from <code>quality-reviewer</code>, ordered by severity</li>
-<li><strong>Test Gaps</strong> — findings from <code>test-gap-reviewer</code>, ordered by priority</li>
-<li><strong>Suggestions</strong> — the top 5–10 actionable next steps ordered by impact, each referencing the specific finding it addresses</li>
-</ul>
-</li>
-</ol>
-<h2>Extend the workflow</h2>
-<p>If you need to customize review behavior, subclass <code>DeepReviewAgentSDKWorkflow</code> and override <code>execute</code> rather than modifying the base class directly:</p>
-<pre><code class="language-python">from workflows.deep_review import DeepReviewAgentSDKWorkflow
+<h1>Multi-pass code review across security, quality, and test gaps</h1>
+<h2>Tasks</h2>
+<h3>Review a path from the CLI</h3>
+<p><strong>Goal:</strong> run a one-off review over a directory without writing
+any Python.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-bash"># Default depth (standard) over a directory:
+attune workflow run deep-review --path src/
 
-class MyCustomReviewWorkflow(DeepReviewAgentSDKWorkflow):
-    def execute(self, **kwargs):
-        # pre-processing or custom argument injection
-        return super().execute(**kwargs)
+# Deep review, JSON output for a pre-merge gate:
+attune workflow run deep-review --path src/ --depth deep --json
+
+# Narrow to the security pass via JSON input:
+attune workflow run deep-review --path src/ --input '{&quot;focus&quot;: [&quot;security&quot;]}'
 </code></pre>
-<h2>Verify the task worked</h2>
-<p>A successful run returns a <code>WorkflowResult</code> whose report includes all four sections (Summary, Security, Quality, Test Gaps, and Suggestions) and a numeric health score between 0 and 100. If the result is missing any section or the score is absent, check that the <code>path</code> argument resolves to a readable directory and that all three subagents completed without error.</p>
-<h2>Key files</h2>
-<ul>
-<li><code>src/attune/workflows/deep_review.py</code></li>
-</ul>
-<h2>Unresolved references</h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Line 58 (code fence)</td>
-<td>error</td>
-<td><code>from workflows.deep_review import …</code> — module not importable</td>
-</tr>
-</tbody>
-</table>
+<p><strong>Verify:</strong> <code>--path</code> / <code>-p</code> defaults to the current directory;
+<code>--depth</code> accepts <code>quick</code>, <code>standard</code>, or <code>deep</code>; <code>--json</code> / <code>-j</code>
+emits machine-readable output. There is no dedicated <code>--focus</code>
+flag — pass <code>focus</code> through <code>--input</code> as JSON. Use
+<code>attune workflow info deep-review</code> to confirm registration and
+<code>attune workflow list</code> to see it alongside the other workflows.</p>
+<h3>Call the review from Python</h3>
+<p><strong>Goal:</strong> drive deep-review from a hook or pre-merge gate and act
+on the result.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import DeepReviewAgentSDKWorkflow
+
+
+async def main() -&gt; None:
+    workflow = DeepReviewAgentSDKWorkflow()
+    result = await workflow.execute(path=&quot;src/api/&quot;, depth=&quot;deep&quot;)
+
+    if not result.success:
+        print(&quot;review failed:&quot;, result.error)
+        return
+
+    print(result.final_output)
+    for action in result.suggestions:
+        print(action)
+
+
+asyncio.run(main())
+</code></pre>
+<p><strong>Verify:</strong> <code>execute</code> is a coroutine — <code>await</code> it. A completed
+review returns <code>success=True</code> with the report in <code>final_output</code>;
+a failure returns <code>success=False</code> with a populated <code>error</code> and
+<code>error_type</code>. <code>metadata</code> echoes the <code>path</code>, <code>depth</code>, <code>max_turns</code>,
+and active <code>focus</code>.</p>
+<h3>Run only the passes you need</h3>
+<p><strong>Goal:</strong> scope the review to one or two domains instead of all
+three.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import DeepReviewAgentSDKWorkflow
+
+
+async def main() -&gt; None:
+    workflow = DeepReviewAgentSDKWorkflow()
+
+    # Security pass only:
+    sec = await workflow.execute(path=&quot;src/auth/&quot;, focus=[&quot;security&quot;])
+    print(sec.final_output)
+
+    # Security + quality, skip test gaps:
+    both = await workflow.execute(
+        path=&quot;src/auth/&quot;, focus=[&quot;security&quot;, &quot;quality&quot;]
+    )
+    print(both.final_output)
+
+
+asyncio.run(main())
+</code></pre>
+<p><strong>Verify:</strong> <code>focus</code> accepts any subset of <code>&quot;security&quot;</code>,
+<code>&quot;quality&quot;</code>, <code>&quot;test-gaps&quot;</code>. Only the named passes run, and
+<code>metadata[&quot;focus&quot;]</code> reflects the active set. An all-invalid
+<code>focus</code> returns <code>success=False</code> with an &quot;Invalid focus values&quot;
+error naming the valid options.</p>
 
   </article>
   <footer>

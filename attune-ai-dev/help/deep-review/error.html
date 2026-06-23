@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Deep Review errors — error</title>
-  <meta name="description" content="Failures in `deep_review` typically fall into three categories, corresponding to the three subagents the workflow coordinates:" />
-  <meta property="og:title" content="Deep Review errors — error" />
-  <meta property="og:description" content="Failures in `deep_review` typically fall into three categories, corresponding to the three subagents the workflow coordinates:" />
+  <title>Multi-pass code review across security, quality, and test gaps — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;DeepReviewAgentSDKWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `aw" />
+  <meta property="og:title" content="Multi-pass code review across security, quality, and test gaps — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;DeepReviewAgentSDKWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `aw" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/deep-review/error" />
   <style>
@@ -272,37 +272,86 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Deep Review errors</h1>
-<h2>Common error signatures</h2>
-<p>Failures in <code>deep_review</code> typically fall into three categories, corresponding to the three subagents the workflow coordinates:</p>
+<h1>Multi-pass code review across security, quality, and test gaps</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'DeepReviewAgentSDKWorkflow.execute' was never awaited</code></td>
+<td><code>execute</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>WorkflowResult.success</code> is <code>False</code>, <code>error</code> is <code>&quot;path argument is required&quot;</code></td>
+<td><code>execute</code> called with empty or missing <code>path</code></td>
+<td>Pass a non-empty <code>path</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Invalid focus values. Valid: ...&quot;</code></td>
+<td><code>focus</code> contained only unrecognized values</td>
+<td>Use a subset of <code>&quot;security&quot;</code>, <code>&quot;quality&quot;</code>, <code>&quot;test-gaps&quot;</code> (note the hyphen in <code>test-gaps</code>)</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK unavailable: ...&quot;</code></td>
+<td><code>claude_agent_sdk</code> is not importable</td>
+<td>Install the Agent SDK dependency for the environment</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK connection failed: ...&quot;</code></td>
+<td>A <code>ConnectionError</code> / <code>TimeoutError</code> reaching the SDK</td>
+<td>Check connectivity / retry; <code>transient</code> is set when a retry is reasonable</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Review stops early / partial report</td>
+<td>The depth's agent-turn or budget cap was reached</td>
+<td>Use a shallower path, narrow with <code>focus</code>, or accept a deeper (costlier) run</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>A finding looks like a false positive</td>
+<td>Findings are LLM predictions, not verified defects</td>
+<td>Confirm against the cited file/line before acting</td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><strong>Input errors</strong> — <code>execute()</code> receives a <code>path</code> argument that is missing, empty, or points to a location the process cannot read. These fail early, before any subagent is launched.</li>
-<li><strong>Subagent coordination errors</strong> — one or more of the <code>security-reviewer</code>, <code>quality-reviewer</code>, or <code>test-gap-reviewer</code> subagents fails to return findings. The consolidated report may be incomplete or the workflow may raise an exception during synthesis.</li>
-<li><strong>Result errors</strong> — <code>execute()</code> returns a <code>WorkflowResult</code> that is missing expected sections (<code>Security</code>, <code>Quality</code>, <code>Test Gaps</code>, <code>Suggestions</code>, <code>Summary</code>), which indicates a failure during the final consolidation step.</li>
+<li><strong>The async call is easy to get wrong.</strong> <code>execute</code> is the only
+public method and it is a coroutine. Forgetting to <code>await</code> it is
+the single most common mistake.</li>
+<li><strong><code>focus</code> spelling matters.</strong> The valid values are <code>&quot;security&quot;</code>,
+<code>&quot;quality&quot;</code>, and <code>&quot;test-gaps&quot;</code> — <code>&quot;test-gap&quot;</code> (no <code>s</code>) is
+silently dropped, and an all-invalid <code>focus</code> fails the run.</li>
+<li><strong>Findings are predictions, not proofs.</strong> A CRITICAL or HIGH
+finding means &quot;look here first,&quot; not a confirmed defect — and a
+clean review is not a guarantee. Verify before acting.</li>
 </ul>
-<h2>Where errors originate</h2>
-<p>All errors originate in <code>DeepReviewAgentSDKWorkflow.execute()</code>, defined in <code>src/attune/workflows/deep_review.py</code>. The method orchestrates three subagents sequentially and then synthesizes their output. A failure in any subagent propagates through <code>execute()</code> to the caller.</p>
-<p>When you read a traceback, locate the frame inside <code>execute()</code> first — it tells you whether the failure occurred during subagent dispatch or during consolidation.</p>
-<h2>How to diagnose</h2>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Identify which subagent failed.</strong> The workflow runs <code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code> as distinct passes. A traceback that names one of these subagent identifiers points to a domain-specific failure rather than a setup problem.</p>
-</li>
-<li>
-<p><strong>Verify the <code>path</code> argument.</strong> <code>execute()</code> takes <code>path</code> as a keyword argument. Confirm the path exists, is readable, and resolves to the directory or file you intend to review. An unreadable or nonexistent path will prevent all three subagents from producing findings.</p>
-</li>
-<li>
-<p><strong>Check whether the report is partially populated.</strong> If <code>execute()</code> returns a <code>WorkflowResult</code> but sections are empty or absent, one subagent completed while another did not. Compare which of <code>Security</code>, <code>Quality</code>, and <code>Test Gaps</code> are present to narrow down which subagent produced no output.</p>
-</li>
-<li>
-<p><strong>Enable <code>DEBUG</code>-level logging before re-running.</strong> The orchestrator logs state transitions between subagent passes. Raising the log level to <code>DEBUG</code> shows you the findings each subagent returned before consolidation, making it possible to see where the output diverges from what you expect.</p>
-</li>
+<li>Confirm you are awaiting: <code>result = await workflow.execute( path=&quot;src/&quot;)</code> inside an <code>async def</code> or <code>asyncio.run</code>.</li>
+<li>Check <code>result.success</code>; if <code>False</code>, read <code>result.error</code> and
+<code>result.error_type</code>.</li>
+<li>For a focus error, confirm the values are a subset of
+<code>security</code> / <code>quality</code> / <code>test-gaps</code>.</li>
+<li>On an SDK error, inspect <code>result.metadata</code> for the captured
+<code>sdk_stderr</code> / SDK error kind.</li>
+<li>Confirm the scope: <code>result.metadata</code> echoes the <code>path</code>,
+<code>depth</code>, <code>max_turns</code>, and active <code>focus</code>.</li>
 </ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/deep_review.py</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>review</code>, <code>security</code>, <code>quality</code>, <code>tests</code>, <code>comprehensive-review</code></p>
 
   </article>
   <footer>

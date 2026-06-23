@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Deep Review Cautions — warning</title>
-  <meta name="description" content="`deep_review` coordinates three specialized subagents — `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer` — and synthesizes their findings into a single report. Because results depend o" />
-  <meta property="og:title" content="Deep Review Cautions — warning" />
-  <meta property="og:description" content="`deep_review` coordinates three specialized subagents — `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer` — and synthesizes their findings into a single report. Because results depend o" />
+  <title>Multi-pass code review across security, quality, and test gaps — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;DeepReviewAgentSDKWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `aw" />
+  <meta property="og:title" content="Multi-pass code review across security, quality, and test gaps — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;DeepReviewAgentSDKWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `aw" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/deep-review/warning" />
   <style>
@@ -272,35 +272,86 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Deep Review Cautions</h1>
-<p><code>deep_review</code> coordinates three specialized subagents — <code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code> — and synthesizes their findings into a single report. Because results depend on all three subagents completing successfully, a failure or misconfiguration in any one of them affects the entire consolidated output.</p>
-<h2>Risk areas</h2>
-<h3>Incomplete synthesis when a subagent produces no findings</h3>
-<p><code>DeepReviewAgentSDKWorkflow.execute()</code> relies on each subagent reporting independently before the orchestrator synthesizes results. If a subagent returns empty output — due to a scoped <code>path</code> argument that excludes relevant files, a timeout, or a permissions issue — the consolidated report silently omits that domain. A clean <strong>Security</strong> or <strong>Test Gaps</strong> section does not necessarily mean no issues exist; it may mean the subagent had nothing to analyze.</p>
-<p><strong>Mitigation:</strong> Verify that the <code>path</code> you pass to <code>deep_review(path=&quot;...&quot;)</code> covers the full scope you intend to review. Spot-check individual section counts in the <strong>Summary</strong> (overall findings by severity) against what you expect for your codebase size.</p>
-<h3>Private subagent names and prompt templates can change without notice</h3>
-<p>The subagent identifiers (<code>security-reviewer</code>, <code>quality-reviewer</code>, <code>test-gap-reviewer</code>) and the task prompt are defined in module-level private constants (<code>_SUBAGENT_NAMES</code>, <code>_TASK_PROMPT_TEMPLATE</code>). Any code that references or patches these constants directly — for example, to override prompts or redirect subagents — will break silently when those constants change, because private names carry no stability guarantee.</p>
-<p><strong>Mitigation:</strong> Interact with <code>deep_review</code> exclusively through its public interface: <code>DeepReviewAgentSDKWorkflow.execute(**kwargs)</code> and the <code>deep_review(path=&quot;...&quot;)</code> tool call. Do not import or monkey-patch <code>_SUBAGENT_NAMES</code> or <code>_TASK_PROMPT_TEMPLATE</code>.</p>
-<h3>Path scoping produces misleading scores</h3>
-<p>The workflow reports an overall code health score (0–100) calibrated to the files it actually analyzed. Passing a narrow <code>path</code> — a single subdirectory or file — produces a score and finding counts that reflect only that scope. Treating a partial-scope score as a whole-project health indicator leads to incorrect conclusions.</p>
-<p><strong>Mitigation:</strong> When you need a whole-project assessment, pass the repository root as <code>path</code>. When you intentionally scope to a subdirectory, note the scope explicitly when sharing or acting on the report.</p>
-<h2>How to avoid problems</h2>
-<ol>
-<li>
-<p><strong>Use the public API only.</strong> <code>DeepReviewAgentSDKWorkflow.execute(**kwargs)</code> is the supported entry point. Subclassing <code>DeepReviewAgentSDKWorkflow</code> or overriding internal methods may appear to work but will break as the orchestration logic evolves.</p>
-</li>
-<li>
-<p><strong>Treat an empty section as unverified, not clear.</strong> The consolidated report separates findings into <strong>Security</strong>, <strong>Quality</strong>, and <strong>Test Gaps</strong> sections. An empty section means that subagent reported nothing for the given path — not that the code is free of issues in that domain.</p>
-</li>
-<li>
-<p><strong>Check file paths and line numbers in findings.</strong> The orchestrator's system prompt instructs subagents to cite file paths and line numbers. If a finding lacks that detail, treat it as lower confidence and verify manually before acting on it.</p>
-</li>
-</ol>
-<h2>Source files</h2>
+<h1>Multi-pass code review across security, quality, and test gaps</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'DeepReviewAgentSDKWorkflow.execute' was never awaited</code></td>
+<td><code>execute</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>WorkflowResult.success</code> is <code>False</code>, <code>error</code> is <code>&quot;path argument is required&quot;</code></td>
+<td><code>execute</code> called with empty or missing <code>path</code></td>
+<td>Pass a non-empty <code>path</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Invalid focus values. Valid: ...&quot;</code></td>
+<td><code>focus</code> contained only unrecognized values</td>
+<td>Use a subset of <code>&quot;security&quot;</code>, <code>&quot;quality&quot;</code>, <code>&quot;test-gaps&quot;</code> (note the hyphen in <code>test-gaps</code>)</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK unavailable: ...&quot;</code></td>
+<td><code>claude_agent_sdk</code> is not importable</td>
+<td>Install the Agent SDK dependency for the environment</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK connection failed: ...&quot;</code></td>
+<td>A <code>ConnectionError</code> / <code>TimeoutError</code> reaching the SDK</td>
+<td>Check connectivity / retry; <code>transient</code> is set when a retry is reasonable</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Review stops early / partial report</td>
+<td>The depth's agent-turn or budget cap was reached</td>
+<td>Use a shallower path, narrow with <code>focus</code>, or accept a deeper (costlier) run</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>A finding looks like a false positive</td>
+<td>Findings are LLM predictions, not verified defects</td>
+<td>Confirm against the cited file/line before acting</td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/workflows/deep_review.py</code></li>
+<li><strong>The async call is easy to get wrong.</strong> <code>execute</code> is the only
+public method and it is a coroutine. Forgetting to <code>await</code> it is
+the single most common mistake.</li>
+<li><strong><code>focus</code> spelling matters.</strong> The valid values are <code>&quot;security&quot;</code>,
+<code>&quot;quality&quot;</code>, and <code>&quot;test-gaps&quot;</code> — <code>&quot;test-gap&quot;</code> (no <code>s</code>) is
+silently dropped, and an all-invalid <code>focus</code> fails the run.</li>
+<li><strong>Findings are predictions, not proofs.</strong> A CRITICAL or HIGH
+finding means &quot;look here first,&quot; not a confirmed defect — and a
+clean review is not a guarantee. Verify before acting.</li>
 </ul>
-<p><strong>Tags:</strong> <code>review</code>, <code>security</code>, <code>quality</code>, <code>tests</code>, <code>comprehensive-review</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm you are awaiting: <code>result = await workflow.execute( path=&quot;src/&quot;)</code> inside an <code>async def</code> or <code>asyncio.run</code>.</li>
+<li>Check <code>result.success</code>; if <code>False</code>, read <code>result.error</code> and
+<code>result.error_type</code>.</li>
+<li>For a focus error, confirm the values are a subset of
+<code>security</code> / <code>quality</code> / <code>test-gaps</code>.</li>
+<li>On an SDK error, inspect <code>result.metadata</code> for the captured
+<code>sdk_stderr</code> / SDK error kind.</li>
+<li>Confirm the scope: <code>result.metadata</code> echoes the <code>path</code>,
+<code>depth</code>, <code>max_turns</code>, and active <code>focus</code>.</li>
+</ol>
 
   </article>
   <footer>

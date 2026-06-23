@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: Deep review — quickstart</title>
-  <meta name="description" content="Run a multi-pass code review that covers security, quality, and test gaps in one consolidated report." />
-  <meta property="og:title" content="Quickstart: Deep review — quickstart" />
-  <meta property="og:description" content="Run a multi-pass code review that covers security, quality, and test gaps in one consolidated report." />
+  <title>Multi-pass code review across security, quality, and test gaps — quickstart</title>
+  <meta name="description" content="Review a directory and print the consolidated report. `DeepReviewAgentSDKWorkflow.execute` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
+  <meta property="og:title" content="Multi-pass code review across security, quality, and test gaps — quickstart" />
+  <meta property="og:description" content="Review a directory and print the consolidated report. `DeepReviewAgentSDKWorkflow.execute` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/deep-review/quickstart" />
   <style>
@@ -272,47 +272,31 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: Deep review</h1>
-<p>Run a multi-pass code review that covers security, quality, and test gaps in one consolidated report.</p>
-<pre><code class="language-python">from attune.workflows.deep_review import DeepReviewAgentSDKWorkflow
+<h1>Multi-pass code review across security, quality, and test gaps</h1>
+<h2>Quickstart</h2>
+<p>Review a directory and print the consolidated report.
+<code>DeepReviewAgentSDKWorkflow.execute</code> is an async coroutine, so
+drive it with <code>asyncio.run</code> (or <code>await</code> it inside an existing
+event loop):</p>
+<pre><code class="language-python">import asyncio
 
-result = DeepReviewAgentSDKWorkflow().execute(path=&quot;src/&quot;)
-print(result)
+from attune.workflows import DeepReviewAgentSDKWorkflow
+
+
+async def main() -&gt; None:
+    workflow = DeepReviewAgentSDKWorkflow()
+    result = await workflow.execute(path=&quot;src/&quot;, depth=&quot;standard&quot;)
+
+    print(result.success)          # True on a completed review
+    print(result.summary)          # short health summary
+    print(result.final_output)     # the full consolidated report
+
+
+asyncio.run(main())
 </code></pre>
-<p><strong>Result:</strong> A consolidated report with an overall health score (0–100), security findings, quality findings, test gap findings, and up to ten prioritized suggestions — each tied to a specific finding.</p>
-<h2>Steps</h2>
-<p><strong>1. Import and instantiate</strong></p>
-<pre><code class="language-python">from attune.workflows.deep_review import DeepReviewAgentSDKWorkflow
-
-workflow = DeepReviewAgentSDKWorkflow()
-</code></pre>
-<p><strong>2. Run the review against your codebase</strong></p>
-<p>Pass the path you want reviewed:</p>
-<pre><code class="language-python">result = workflow.execute(path=&quot;src/&quot;)
-</code></pre>
-<p>The workflow coordinates three specialized subagents — <code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code> — then synthesizes their findings.</p>
-<p><strong>3. Read the report</strong></p>
-<pre><code class="language-python">print(result)
-</code></pre>
-<p>Your output will be structured as:</p>
-<pre><code>## Summary
-Overall code health score (0-100) ...
-
-## Security
-...
-
-## Quality
-...
-
-## Test Gaps
-...
-
-## Suggestions
-...
-</code></pre>
-<p>If you see all five sections, the review completed successfully.</p>
-<hr />
-<p><strong>Next:</strong> Run <code>attune workflow run code-review --path &quot;src/&quot;</code> for a faster, single-pass quality check you can use on every commit.</p>
+<p><code>depth</code> defaults to <code>&quot;standard&quot;</code>, so <code>execute(path=&quot;src/&quot;)</code> is
+equivalent. Use <code>&quot;quick&quot;</code> for a fast pass or <code>&quot;deep&quot;</code> for the
+fullest review.</p>
 
   </article>
   <footer>

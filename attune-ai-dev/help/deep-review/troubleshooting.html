@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot deep review — troubleshooting</title>
-  <meta name="description" content="`deep_review` runs a multi-pass review by coordinating three subagents — `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer` — then synthesizes their findings into a single consolidated r" />
-  <meta property="og:title" content="Troubleshoot deep review — troubleshooting" />
-  <meta property="og:description" content="`deep_review` runs a multi-pass review by coordinating three subagents — `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer` — then synthesizes their findings into a single consolidated r" />
+  <title>Multi-pass code review across security, quality, and test gaps — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;DeepReviewAgentSDKWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `aw" />
+  <meta property="og:title" content="Multi-pass code review across security, quality, and test gaps — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;DeepReviewAgentSDKWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `aw" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/deep-review/troubleshooting" />
   <style>
@@ -272,98 +272,86 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot deep review</h1>
-<h2>Before you start</h2>
-<p><code>deep_review</code> runs a multi-pass review by coordinating three subagents — <code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code> — then synthesizes their findings into a single consolidated report. Most failures trace to one of three causes: a bad <code>path</code> argument, a subagent that didn't complete, or a synthesis step that produced an incomplete report.</p>
-<h2>Symptom table</h2>
+<h1>Multi-pass code review across security, quality, and test gaps</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>deep_review</code> raises an exception immediately</td>
-<td>Whether <code>path</code> resolves to a real directory or file on disk</td>
+<td><code>RuntimeWarning: coroutine 'DeepReviewAgentSDKWorkflow.execute' was never awaited</code></td>
+<td><code>execute</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td>Report is missing a section (Security, Quality, or Test Gaps)</td>
-<td>Which subagent produced that section — one of <code>security-reviewer</code>, <code>quality-reviewer</code>, or <code>test-gap-reviewer</code> may have failed silently</td>
+<td><code>WorkflowResult.success</code> is <code>False</code>, <code>error</code> is <code>&quot;path argument is required&quot;</code></td>
+<td><code>execute</code> called with empty or missing <code>path</code></td>
+<td>Pass a non-empty <code>path</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td>Overall code health score is absent from the Summary</td>
-<td>Whether <code>DeepReviewAgentSDKWorkflow.execute()</code> returned a complete <code>WorkflowResult</code> or an early partial result</td>
+<td><code>error</code> reads <code>&quot;Invalid focus values. Valid: ...&quot;</code></td>
+<td><code>focus</code> contained only unrecognized values</td>
+<td>Use a subset of <code>&quot;security&quot;</code>, <code>&quot;quality&quot;</code>, <code>&quot;test-gaps&quot;</code> (note the hyphen in <code>test-gaps</code>)</td>
+<td>medium</td>
 </tr>
 <tr>
-<td>Review completes but findings appear empty or generic</td>
-<td>Whether <code>path</code> pointed at the intended target — a wrong path yields a valid but content-free report</td>
+<td><code>error</code> reads <code>&quot;Agent SDK unavailable: ...&quot;</code></td>
+<td><code>claude_agent_sdk</code> is not importable</td>
+<td>Install the Agent SDK dependency for the environment</td>
+<td>high</td>
 </tr>
 <tr>
-<td>Execution is much slower than expected</td>
-<td>Whether <code>path</code> targets a very large directory; the three subagents run across the full tree</td>
+<td><code>error</code> reads <code>&quot;Agent SDK connection failed: ...&quot;</code></td>
+<td>A <code>ConnectionError</code> / <code>TimeoutError</code> reaching the SDK</td>
+<td>Check connectivity / retry; <code>transient</code> is set when a retry is reasonable</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Review stops early / partial report</td>
+<td>The depth's agent-turn or budget cap was reached</td>
+<td>Use a shallower path, narrow with <code>focus</code>, or accept a deeper (costlier) run</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>A finding looks like a false positive</td>
+<td>Findings are LLM predictions, not verified defects</td>
+<td>Confirm against the cited file/line before acting</td>
+<td>medium</td>
 </tr>
 </tbody>
 </table>
-<h2>Diagnosis steps</h2>
+<h3>Risk areas</h3>
+<ul>
+<li><strong>The async call is easy to get wrong.</strong> <code>execute</code> is the only
+public method and it is a coroutine. Forgetting to <code>await</code> it is
+the single most common mistake.</li>
+<li><strong><code>focus</code> spelling matters.</strong> The valid values are <code>&quot;security&quot;</code>,
+<code>&quot;quality&quot;</code>, and <code>&quot;test-gaps&quot;</code> — <code>&quot;test-gap&quot;</code> (no <code>s</code>) is
+silently dropped, and an all-invalid <code>focus</code> fails the run.</li>
+<li><strong>Findings are predictions, not proofs.</strong> A CRITICAL or HIGH
+finding means &quot;look here first,&quot; not a confirmed defect — and a
+clean review is not a guarantee. Verify before acting.</li>
+</ul>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Confirm the path argument is valid.</strong>
-Run <code>ls &lt;path&gt;</code> (or <code>dir &lt;path&gt;</code> on Windows) before invoking <code>deep_review</code>. An inaccessible or misspelled path is the most common cause of immediate failure and costs nothing to check.</p>
-</li>
-<li>
-<p><strong>Reproduce with the minimal call.</strong>
-Strip the invocation down to its required argument:</p>
-<pre><code class="language-python">from workflows.deep_review import DeepReviewAgentSDKWorkflow
-result = DeepReviewAgentSDKWorkflow().execute(path=&quot;&lt;your-path&gt;&quot;)
-print(result)
-</code></pre>
-<p>Confirm the failure occurs outside any surrounding orchestration before investigating further.</p>
-</li>
-<li>
-<p><strong>Check which subagents completed.</strong>
-The three subagents are <code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code>. If the consolidated report is missing one of the corresponding sections (Security, Quality, or Test Gaps), the matching subagent is the likely failure point. Review any exception or truncated output associated with that agent.</p>
-</li>
-<li>
-<p><strong>Run the related tests.</strong></p>
-<pre><code>pytest -k &quot;deep_review&quot; -v
-</code></pre>
-<p>A failing test that exercises your code path will surface the exact input and fixture state that triggers the bug.</p>
-</li>
-<li>
-<p><strong>Inspect the <code>WorkflowResult</code> directly.</strong>
-If the call returns without raising but the report looks wrong, print the raw <code>WorkflowResult</code> returned by <code>execute()</code>. A partial or malformed result indicates the synthesis step — which runs after all three subagents finish — did not receive complete input.</p>
-</li>
+<li>Confirm you are awaiting: <code>result = await workflow.execute( path=&quot;src/&quot;)</code> inside an <code>async def</code> or <code>asyncio.run</code>.</li>
+<li>Check <code>result.success</code>; if <code>False</code>, read <code>result.error</code> and
+<code>result.error_type</code>.</li>
+<li>For a focus error, confirm the values are a subset of
+<code>security</code> / <code>quality</code> / <code>test-gaps</code>.</li>
+<li>On an SDK error, inspect <code>result.metadata</code> for the captured
+<code>sdk_stderr</code> / SDK error kind.</li>
+<li>Confirm the scope: <code>result.metadata</code> echoes the <code>path</code>,
+<code>depth</code>, <code>max_turns</code>, and active <code>focus</code>.</li>
 </ol>
-<h2>Common fixes</h2>
-<ul>
-<li>
-<p><strong>Wrong or inaccessible path.</strong> Pass an absolute path to rule out working-directory ambiguity:</p>
-<pre><code class="language-python">import os
-result = DeepReviewAgentSDKWorkflow().execute(path=os.path.abspath(&quot;relative/path&quot;))
-</code></pre>
-</li>
-<li>
-<p><strong>Subagent failure causing a missing report section.</strong> If one subagent fails, the synthesis step may still run but produce an incomplete report. Re-run with a smaller, isolated subtree to confirm which subagent is failing:</p>
-<pre><code class="language-python">result = DeepReviewAgentSDKWorkflow().execute(path=&quot;/path/to/single/module&quot;)
-</code></pre>
-</li>
-<li>
-<p><strong>Dependency or environment mismatch.</strong> A changed environment can cause subagent behavior to differ from expectations. Verify your installed packages match your lockfile:</p>
-<pre><code>pip show attune
-</code></pre>
-<p>This fix requires changes outside <code>deep_review</code> itself — align your environment before re-running.</p>
-</li>
-<li>
-<p><strong>Unexpectedly large scope.</strong> If execution is slow, narrow <code>path</code> to a subdirectory. All three subagents traverse the full path, so pointing at a large monorepo root multiplies the cost.</p>
-</li>
-</ul>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/deep_review.py</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>review</code>, <code>security</code>, <code>quality</code>, <code>tests</code>, <code>comprehensive-review</code></p>
 
   </article>
   <footer>
