@@ -3,77 +3,113 @@ type: task
 name: smart-test-task
 feature: smart-test
 depth: task
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: b1325f36412cbd67b36481e0f150de834b91392f8fa17c843f8aecd357d18b07
+generated_at: 2026-06-23T15:57:46.208360+00:00
+source_hash: d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe
 status: generated
 ---
 
-# Work with smart test
+# Find untested code with a coverage audit, then generate pytest tests to close the gaps
 
-Use smart test when you need to audit test coverage, extend gap-detection logic, or change how pytest tests are generated for uncovered functions and classes.
+## Tasks
 
-## Prerequisites
+### Find coverage gaps from the CLI
 
-- Access to the project source code
-- Familiarity with the files under `src/attune/workflows/test_gen/` and `src/attune/workflows/test_audit/`
+**Goal:** audit a directory for untested code without writing any
+Python.
 
-## Steps
+**Steps:**
 
-1. **Identify the function that owns the behavior you want to change.**
+```bash
+# Audit a source tree at the default (standard) depth:
+attune workflow run test-audit --path src/
 
-   The smart-test feature is split across two workflow packages. Locate your entry point in the table below:
+# Deep audit, JSON output for a CI gate:
+attune workflow run test-audit --path src/ --depth deep --json
+```
 
-   | Function | File | Responsibility |
-   |---|---|---|
-   | `parse_coverage_json()` | `test_audit/coverage_parser.py` | Parse pytest-cov's `coverage.json` output into `ModuleCoverage` objects |
-   | `prioritize_modules()` | `test_audit/coverage_parser.py` | Sort modules by priority score and drop those below the coverage threshold |
-   | `group_into_batches()` | `test_audit/coverage_parser.py` | Group modules into batches by subsystem (package path) |
-   | `format_test_gen_report()` | `test_gen/report_formatter.py` | Format test generation output as a human-readable report |
-   | `generate_test_for_function()` | `test_gen/test_templates.py` | Generate executable pytest tests for a function using AST analysis |
-   | `generate_test_for_class()` | `test_gen/test_templates.py` | Generate an executable test class using AST analysis |
-   | `generate_test_cases_for_params()` | `test_gen/test_templates.py` | Generate test cases based on parameter types |
-   | `get_type_assertion()` | `test_gen/test_templates.py` | Generate a return-type assertion for a function |
-   | `get_param_test_values()` | `test_gen/test_templates.py` | Return test values for a parameter based on its type hint |
+**Verify:** the audit slug is `test-audit`. `--path` / `-p`
+defaults to the current directory; `--depth` accepts `quick`,
+`standard`, or `deep`; `--json` / `-j` emits machine-readable
+output. Use `attune workflow info test-audit` to confirm
+registration.
 
-   Read the function's docstring, parameters, and return type to confirm it owns the behavior you need.
+### Generate tests for a module from the CLI
 
-2. **Check which workflow class calls your target function.**
+**Goal:** write pytest tests for a module that came back
+under-covered.
 
-   - `TestAuditWorkflow` — coordinates the coverage audit using three subagents (`coverage-auditor`, `gap-analyzer`, `test-planner`) and produces a structured report.
-   - `TestGenerationWorkflow` — coordinates test generation using three subagents (`function-identifier`, `test-designer`, `test-writer`).
-   - `ParallelTestGenerationWorkflow` — discovers low-coverage modules and generates behavioral tests in parallel batches.
+**Steps:**
 
-   If your change affects orchestration rather than a single function, edit the relevant `execute()` method directly.
+```bash
+# Generate tests for a single module:
+attune workflow run test-gen --path src/attune/config.py
 
-3. **Make your change.**
+# A deeper generation pass:
+attune workflow run test-gen --path src/attune/config.py --depth deep
+```
 
-   Key details to keep consistent:
-   - `parse_coverage_json()` raises `FileNotFoundError` when the coverage file is missing and `ValueError` when the JSON structure is invalid or the `files` key is absent. Preserve these error types and messages if you touch the parser.
-   - `prioritize_modules()` filters out modules below `min_threshold` (default `50.0`). If you change the threshold logic, update the default parameter value rather than hardcoding a number inside the function body.
-   - `get_param_test_values()` returns `"test_value"` as the string literal for unrecognized types. Keep this fallback in place so test generation never produces empty parameter lists.
-   - `DEFAULT_SKIP_PATTERNS` controls which directories `ParallelTestGenerationWorkflow` ignores during module discovery. Add new patterns to this constant rather than filtering inline.
+**Verify:** the generation slug is `test-gen`. It takes the same
+`--path` / `--depth` / `--json` flags as the audit. Review and run
+the generated tests before committing them — generation is a
+starting point, not guaranteed-passing code.
 
-4. **Run the related tests.**
+### Audit then generate from Python
 
-   ```
-   pytest -k "smart_test or test_audit or test_gen" -v
-   ```
+**Goal:** drive the find-then-fill loop from a script.
 
-   Fix any failures before moving on.
+**Steps:**
 
-5. **Verify end-to-end output.**
+```python
+import asyncio
 
-   Run the full audit workflow against a known directory and confirm the report contains the expected sections:
+from attune.workflows import TestAuditWorkflow, TestGenerationWorkflow
 
-   ```
-   /smart-test src/<your-module>/
-   ```
 
-   The output should include a **Summary** with a test health score, a **Coverage** section with line and function metrics, a **Test Gaps** section listing untested functions by priority, and a **Suggestions** section with a prioritized test plan.
+async def main() -> None:
+    audit = await TestAuditWorkflow().execute(path="src/api/")
+    if not audit.success:
+        print("audit failed:", audit.error)
+        return
+    print(audit.final_output)
 
-## Key files
+    gen = await TestGenerationWorkflow().execute(path="src/api/")
+    print(gen.final_output)
+    for action in gen.suggestions:
+        print(action)
 
-- `src/attune/workflows/test_audit/coverage_parser.py`
-- `src/attune/workflows/test_gen/report_formatter.py`
-- `src/attune/workflows/test_gen/test_templates.py`
-- `src/attune/workflows/test_gen_parallel.py`
+
+asyncio.run(main())
+```
+
+**Verify:** both `execute` calls are coroutines — `await` them. A
+completed run returns `success=True` with the report in
+`final_output`; a failure returns `success=False` with a populated
+`error` and `error_type`.
+
+### Batch-generate across the lowest-coverage modules
+
+**Goal:** generate tests for many under-covered modules at once.
+
+**Steps:**
+
+```python
+import asyncio
+
+from attune.workflows import ParallelTestGenerationWorkflow
+
+
+async def main() -> None:
+    workflow = ParallelTestGenerationWorkflow()
+    result = await workflow.execute(top=10, batch_size=5)
+    print(result.success)
+    print(result.final_output)
+
+
+asyncio.run(main())
+```
+
+**Verify:** `execute` takes `top` (default `200`), `batch_size`
+(default `10`), and `output_dir` (default
+`tests/behavioral/generated`). It writes generated test files to
+`output_dir` and returns their paths in the result. This is also
+the workflow behind the `test_gen_parallel` MCP tool.

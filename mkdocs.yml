@@ -51,7 +51,6 @@ exclude_docs: |
   architecture/plugin-system.md
   architecture/refactor-plan.md
   architecture/release-prep.md
-  architecture/smart-test.md
   architecture/rag-grounding.md
   development-logs/
   development/
