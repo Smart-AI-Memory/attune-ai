@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Work with MCP server — task</title>
-  <meta name="description" content="Use the MCP server when you need to implement or modify Model Context Protocol tool handlers for Attune AI workflows." />
-  <meta property="og:title" content="Work with MCP server — task" />
-  <meta property="og:description" content="Use the MCP server when you need to implement or modify Model Context Protocol tool handlers for Attune AI workflows." />
+  <title>The Model Context Protocol server that exposes attune workflows, help, and memory as tools — task</title>
+  <meta name="description" content="**Goal:** see the registered tools, resources, and prompts without a client." />
+  <meta property="og:title" content="The Model Context Protocol server that exposes attune workflows, help, and memory as tools — task" />
+  <meta property="og:description" content="**Goal:** see the registered tools, resources, and prompts without a client." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/mcp-server/task" />
   <style>
@@ -272,70 +272,52 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Work with MCP server</h1>
-<p>Use the MCP server when you need to implement or modify Model Context Protocol tool handlers for Attune AI workflows.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>Access to the project source code</li>
-<li>Familiarity with the files under <code>src/attune/mcp/</code></li>
-<li>Understanding of MCP (Model Context Protocol) concepts</li>
-</ul>
-<h2>Steps</h2>
-<ol>
-<li>
-<p><strong>Identify the server component to modify</strong></p>
-<p>Determine which part of the MCP server handles your use case:</p>
-<ul>
-<li><strong>Prompts</strong>: Use <code>src/attune/mcp/prompts.py</code> for prompt templates</li>
-<li><strong>Tools</strong>: Use <code>src/attune/mcp/tool_schemas.py</code> for tool definitions</li>
-<li><strong>Server core</strong>: Use <code>src/attune/mcp/server.py</code> for server lifecycle</li>
-<li><strong>Memory handlers</strong>: Use <code>src/attune/mcp/memory_handlers.py</code> for memory operations</li>
-<li><strong>Rate limiting</strong>: Use <code>src/attune/mcp/rate_limiter.py</code> for call throttling</li>
-</ul>
-</li>
-<li>
-<p><strong>Review the existing implementation</strong></p>
-<p>Open the relevant file and examine:</p>
-<ul>
-<li>The function signature and docstring</li>
-<li>Input parameters and return types</li>
-<li>Error handling patterns</li>
-<li>Integration with other components</li>
-</ul>
-</li>
-<li>
-<p><strong>Create your MCP server instance</strong></p>
-<p>If working with a new server instance:</p>
-<pre><code class="language-python">from attune.mcp.server import create_server
+<h1>The Model Context Protocol server that exposes attune workflows, help, and memory as tools</h1>
+<h2>Tasks</h2>
+<h3>Inspect the server's surface from Python</h3>
+<p><strong>Goal:</strong> see the registered tools, resources, and prompts without a
+client.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">from attune.mcp import create_server
+
 server = create_server()
+print(len(server.tools), &quot;tools&quot;)
+print([r[&quot;uri&quot;] for r in server.get_resource_list()])
+print([p[&quot;name&quot;] for p in server.get_prompt_list()])
 </code></pre>
-</li>
-<li>
-<p><strong>Modify the appropriate handler</strong></p>
-<p>Make your changes following the established patterns:</p>
-<ul>
-<li>Tool functions return <code>dict[str, Any]</code> with structured responses</li>
-<li>Use the rate limiter for external API calls</li>
-<li>Follow the naming convention for new tools</li>
-<li>Include proper error handling with meaningful messages</li>
-</ul>
-</li>
-<li>
-<p><strong>Test your changes</strong></p>
-<p>Run the MCP server tests to verify your implementation:</p>
-<pre><code class="language-bash">pytest -k &quot;mcp&quot; --verbose
+<p><strong>Verify:</strong> <code>create_server()</code> returns a ready <code>EmpathyMCPServer</code>.
+<code>server.tools</code> is the merged registry — the 41 built-in tools plus any
+registered by installed plugins (e.g. attune-redis adds five <code>redis_*</code>
+tools), so the printed count is ≥ 41. <code>get_resource_list()</code> returns the
+three <code>attune://…</code> resources; <code>get_prompt_list()</code> returns
+<code>security-scan</code> / <code>test-gen</code> / <code>cost-report</code>.</p>
+<h3>Call a tool programmatically</h3>
+<p><strong>Goal:</strong> dispatch a tool the way the MCP client would.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.mcp import create_server
+
+
+async def main() -&gt; None:
+    server = create_server()
+    result = await server.call_tool(&quot;auth_status&quot;, {})
+    print(result)
+
+
+asyncio.run(main())
 </code></pre>
-</li>
-</ol>
-<h2>Verify success</h2>
-<p>Your implementation is working when:</p>
-<ul>
-<li>The MCP server starts without errors using <code>main()</code></li>
-<li>Your tool appears in the tool list from <code>get_tool_list()</code></li>
-<li>Tool calls return the expected response format</li>
-<li>Rate limiting prevents excessive API usage</li>
-<li>All existing tests continue to pass</li>
-</ul>
+<p><strong>Verify:</strong> <code>call_tool(name, arguments)</code> is a coroutine — <code>await</code> it.
+It looks the handler up in the dispatch table and returns the tool's
+result dict. Rate limiting applies (60 calls / 60 s by default).</p>
+<h3>Register the server with a client</h3>
+<p><strong>Goal:</strong> make the tools available in Claude Code.</p>
+<p><strong>Steps:</strong> add an <code>mcpServers</code> entry that runs <code>python -m attune.mcp.server</code> (see Quickstart). The plugin's bundled <code>.mcp.json</code>
+uses <code>uvx --from attune-ai python -m attune.mcp.server</code>; a local
+checkout uses <code>uv run python -m attune.mcp.server</code>.</p>
+<p><strong>Verify:</strong> after connecting, the attune tools appear in the client.
+Server logs land in <code>&lt;tmp&gt;/attune/attune-mcp.log</code> if you need to
+debug the connection.</p>
 
   </article>
   <footer>

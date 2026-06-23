@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MCP Server vs direct API calls — comparison</title>
-  <meta name="description" content="The Attune AI MCP Server provides a structured interface for Claude Code and other MCP clients to access workflows, help, memory, and authentication tools. You can also call these capabilities directl" />
-  <meta property="og:title" content="MCP Server vs direct API calls — comparison" />
-  <meta property="og:description" content="The Attune AI MCP Server provides a structured interface for Claude Code and other MCP clients to access workflows, help, memory, and authentication tools. You can also call these capabilities directl" />
+  <title>The Model Context Protocol server that exposes attune workflows, help, and memory as tools — comparison</title>
+  <meta name="description" content="The MCP server is the **delivery surface** for attune&#x27;s tools, not a workflow itself:" />
+  <meta property="og:title" content="The Model Context Protocol server that exposes attune workflows, help, and memory as tools — comparison" />
+  <meta property="og:description" content="The MCP server is the **delivery surface** for attune&#x27;s tools, not a workflow itself:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/mcp-server/comparison" />
   <style>
@@ -272,82 +272,43 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>MCP Server vs direct API calls</h1>
-<p>The Attune AI MCP Server provides a structured interface for Claude Code and other MCP clients to access workflows, help, memory, and authentication tools. You can also call these capabilities directly through Python imports, but each approach has distinct tradeoffs.</p>
-<h2>Feature comparison</h2>
+<h1>The Model Context Protocol server that exposes attune workflows, help, and memory as tools</h1>
+<h2>Comparison</h2>
+<p>The MCP server is the <strong>delivery surface</strong> for attune's tools, not a
+workflow itself:</p>
 <table>
 <thead>
 <tr>
-<th>Aspect</th>
-<th>MCP Server</th>
-<th>Direct API calls</th>
+<th></th>
+<th>mcp-server</th>
+<th>A workflow (e.g. security-audit)</th>
+<th>ops-dashboard</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Client support</strong></td>
-<td>Any MCP-compatible client (Claude Code, others)</td>
-<td>Python code only</td>
+<td>Role</td>
+<td>Exposes tools/resources/prompts to an MCP client</td>
+<td>One analysis the server can run</td>
+<td>Local web UI for running workflows</td>
 </tr>
 <tr>
-<td><strong>Setup overhead</strong></td>
-<td>Requires <code>.mcp.json</code> configuration</td>
-<td>Import statements</td>
+<td>Transport</td>
+<td>MCP over stdio</td>
+<td>n/a (invoked via a tool/CLI)</td>
+<td>HTTP</td>
 </tr>
 <tr>
-<td><strong>Rate limiting</strong></td>
-<td>Built-in sliding window (60 calls/min)</td>
-<td>Manual implementation needed</td>
-</tr>
-<tr>
-<td><strong>Tool discovery</strong></td>
-<td>Automatic via <code>get_tool_list()</code></td>
-<td>Must know function signatures</td>
-</tr>
-<tr>
-<td><strong>Authentication</strong></td>
-<td>Handled by server instance</td>
-<td>Manual credential management</td>
-</tr>
-<tr>
-<td><strong>Error handling</strong></td>
-<td>Standardized MCP error responses</td>
-<td>Raw Python exceptions</td>
-</tr>
-<tr>
-<td><strong>Session state</strong></td>
-<td>Persistent across tool calls</td>
-<td>Manual state management</td>
-</tr>
-<tr>
-<td><strong>Progress feedback</strong></td>
-<td>Structured status updates</td>
-<td>Print statements or logging</td>
+<td>Entry</td>
+<td><code>python -m attune.mcp.server</code> + <code>.mcp.json</code></td>
+<td><code>attune workflow run &lt;slug&gt;</code> / its MCP tool</td>
+<td><code>python -m attune.ops</code></td>
 </tr>
 </tbody>
 </table>
-<h2>Performance characteristics</h2>
-<p><strong>MCP Server</strong> adds ~50ms overhead per tool call due to JSON serialization and protocol handling, but provides automatic caching for prompts and tool definitions. The rate limiter prevents runaway API costs.</p>
-<p><strong>Direct API calls</strong> have minimal overhead (~5ms) but require you to implement your own caching, rate limiting, and error recovery. For batch operations processing hundreds of files, direct calls can be 10x faster.</p>
-<h2>Use MCP Server when...</h2>
-<ul>
-<li>Working in Claude Code or other MCP clients</li>
-<li>You need the help system (<code>help_lookup</code>, <code>help_maintain</code>)</li>
-<li>Building interactive workflows that benefit from session state</li>
-<li>Rate limiting and cost protection are important</li>
-<li>You want standardized error handling across tools</li>
-</ul>
-<h2>Use direct API calls when...</h2>
-<ul>
-<li>Writing Python scripts or applications</li>
-<li>Performance is critical (batch processing, CLI tools)</li>
-<li>You need capabilities not exposed through MCP tools</li>
-<li>Building automation that runs without human interaction</li>
-<li>You're already managing authentication and state elsewhere</li>
-</ul>
-<h2>Getting started</h2>
-<p><strong>MCP Server</strong>: Create <code>.mcp.json</code> in your project root with <code>uv run python -m attune.mcp.server</code> as the command. Test with <code>ps aux | grep attune</code> to verify it's running.</p>
-<p><strong>Direct API</strong>: Import from <code>attune.workflows</code>, <code>attune.auth</code>, or <code>attune.help</code> modules. Check the reference documentation for specific function signatures.</p>
+<p>The server is how the <em>conversational</em> surface reaches every feature;
+the CLI (<code>attune workflow run</code>) and the ops dashboard are the other two
+front doors.</p>
 
   </article>
   <footer>

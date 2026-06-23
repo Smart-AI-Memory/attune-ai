@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MCP Server — concept</title>
-  <meta name="description" content="The Attune AI MCP Server is a Model Context Protocol implementation that exposes AI workflows, help documentation, memory systems, and utility functions as structured tools for AI clients." />
-  <meta property="og:title" content="MCP Server — concept" />
-  <meta property="og:description" content="The Attune AI MCP Server is a Model Context Protocol implementation that exposes AI workflows, help documentation, memory systems, and utility functions as structured tools for AI clients." />
+  <title>The Model Context Protocol server that exposes attune workflows, help, and memory as tools — concept</title>
+  <meta name="description" content="The MCP server is attune&#x27;s **Model Context Protocol** implementation — it exposes attune&#x27;s workflows, help system, and memory as structured **tools**, **resources**, and **prompts** that an MCP client" />
+  <meta property="og:title" content="The Model Context Protocol server that exposes attune workflows, help, and memory as tools — concept" />
+  <meta property="og:description" content="The MCP server is attune&#x27;s **Model Context Protocol** implementation — it exposes attune&#x27;s workflows, help system, and memory as structured **tools**, **resources**, and **prompts** that an MCP client" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/mcp-server/concept" />
   <style>
@@ -272,62 +272,113 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>MCP Server</h1>
-<p>The Attune AI MCP Server is a Model Context Protocol implementation that exposes AI workflows, help documentation, memory systems, and utility functions as structured tools for AI clients.</p>
-<h2>Server architecture</h2>
-<p>The server uses a modular design where handler mixins provide different categories of functionality to the main <code>EmpathyMCPServer</code> class:</p>
+<h1>The Model Context Protocol server that exposes attune workflows, help, and memory as tools</h1>
+<h2>Overview</h2>
+<p>The MCP server is attune's <strong>Model Context Protocol</strong> implementation —
+it exposes attune's workflows, help system, and memory as structured
+<strong>tools</strong>, <strong>resources</strong>, and <strong>prompts</strong> that an MCP client (Claude
+Code) can call. The server class is <strong><code>EmpathyMCPServer</code></strong>; it speaks
+MCP over <strong>stdio</strong> and is launched with <code>python -m attune.mcp.server</code>.</p>
+<p>It is how every other attune feature reaches a conversation: the
+<code>code_review</code>, <code>security_audit</code>, <code>memory_store</code>, <code>help_lookup</code>, … tools
+you call in Claude Code are registered and dispatched here. This page
+documents the <strong>server itself</strong> — its architecture, how to run and
+register it, and the tool/resource/prompt surface — not each individual
+tool (those belong to their own features).</p>
+<p>You reach it these ways:</p>
 <ul>
-<li><strong><code>EmpathyMCPServer</code></strong> — Core MCP protocol implementation that coordinates prompts, tools, and resources</li>
-<li><strong><code>MemoryHandlersMixin</code></strong> — Cross-session memory storage and retrieval for decisions, patterns, and troubleshooting findings</li>
-<li><strong><code>WorkflowHandlersMixin</code></strong> — Execution interface for Attune AI automation workflows</li>
-<li><strong><code>RateLimiter</code></strong> — Sliding-window protection against excessive tool calls</li>
+<li><strong>registration</strong> — a <code>.mcp.json</code> entry runs <code>python -m attune.mcp.server</code> (the plugin ships one); Claude Code connects over
+stdio;</li>
+<li>the Python API — <code>from attune.mcp import create_server, EmpathyMCPServer</code>, for embedding or testing the server.</li>
 </ul>
-<h2>Tool categories</h2>
-<p>The server exposes five distinct tool groups through MCP:</p>
+<h2>Concepts</h2>
+<h3><code>EmpathyMCPServer</code> and its mixins</h3>
+<p><code>EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin)</code> is the
+core server. The mixins supply handler groups: <code>WorkflowHandlersMixin</code>
+runs the analysis workflows, <code>MemoryHandlersMixin</code> handles
+cross-session memory. A <code>RateLimiter</code> guards against tool-call floods.
+<code>create_server()</code> builds a ready instance.</p>
+<h3>The tool surface — 41 built-in tools in 5 categories</h3>
+<p>At startup the server merges five built-in tool-schema groups (from
+<code>attune.mcp.tool_schemas</code>) into one registry, then lets installed
+plugins register more (<code>_register_plugin_tools</code> — e.g. attune-redis
+adds its <code>redis_*</code> tools), so <code>server.tools</code> can hold more than these
+41:</p>
 <table>
 <thead>
 <tr>
 <th>Category</th>
-<th>Tools</th>
-<th>Purpose</th>
+<th>Function</th>
+<th>Count</th>
+<th>Examples</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Workflow execution</strong></td>
+<td>Workflow</td>
 <td><code>get_workflow_tools()</code></td>
-<td>Run code reviews, security audits, refactoring, and other AI-assisted workflows</td>
+<td>21</td>
+<td><code>code_review</code>, <code>security_audit</code>, <code>test_generation</code>, <code>release_notes</code>, <code>rag_knowledge_query</code></td>
 </tr>
 <tr>
-<td><strong>Documentation system</strong></td>
-<td><code>get_help_tools()</code></td>
-<td>Progressive help lookup, template maintenance, and project help initialization</td>
-</tr>
-<tr>
-<td><strong>Session utilities</strong></td>
+<td>Utility</td>
 <td><code>get_utility_tools()</code></td>
-<td>Authentication status, telemetry stats, interaction level control, context management</td>
+<td>7</td>
+<td><code>auth_status</code>, <code>telemetry_stats</code>, <code>attune_set_level</code>, <code>context_get</code></td>
 </tr>
 <tr>
-<td><strong>Personal memory</strong></td>
-<td><code>get_personal_memory_tools()</code></td>
-<td>Store and recall decisions across sessions in <code>~/.attune/memory/</code></td>
+<td>Help</td>
+<td><code>get_help_tools()</code></td>
+<td>5</td>
+<td><code>help_lookup</code>, <code>help_update</code>, <code>help_status</code></td>
 </tr>
 <tr>
-<td><strong>Structured memory</strong></td>
+<td>Memory</td>
 <td><code>get_memory_tools()</code></td>
-<td>Pattern storage and cross-agent coordination through the attune-ai memory module</td>
+<td>4</td>
+<td><code>memory_store</code>, <code>memory_retrieve</code>, <code>memory_search</code></td>
+</tr>
+<tr>
+<td>Personal memory</td>
+<td><code>get_personal_memory_tools()</code></td>
+<td>4</td>
+<td><code>personal_memory_capture</code>, <code>personal_memory_recall</code></td>
 </tr>
 </tbody>
 </table>
-<h2>Protocol compliance</h2>
-<p>The server implements standard MCP resource types:</p>
-<ul>
-<li><strong>Workflows resource</strong> (<code>attune://workflows</code>) — JSON list of available automation workflows</li>
-<li><strong>Authentication config</strong> (<code>attune://auth/config</code>) — Current auth strategy and subscription tier</li>
-<li><strong>Telemetry data</strong> (<code>attune://telemetry</code>) — Cost tracking and performance metrics</li>
-</ul>
-<p>Rate limiting protects against tool abuse with configurable call windows, defaulting to 60 calls per 60-second window.</p>
+<p>A <code>_build_dispatch_table()</code> maps each tool name to the handler method
+that runs it; <code>call_tool(name, arguments)</code> is the async dispatch entry.</p>
+<h3>Resources and prompts</h3>
+<p>Beyond tools, the server publishes three <strong>resources</strong> (read-only
+data) and three <strong>prompts</strong> (reusable prompt templates):</p>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Names</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Resources</td>
+<td><code>attune://workflows</code>, <code>attune://auth/config</code>, <code>attune://telemetry</code></td>
+</tr>
+<tr>
+<td>Prompts</td>
+<td><code>security-scan</code>, <code>test-gen</code>, <code>cost-report</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>get_resource_list()</code> and <code>get_prompt_list()</code> return them.</p>
+<h3>Rate limiting</h3>
+<p>A sliding-window <code>RateLimiter(max_calls=60, window_seconds=60.0)</code>
+caps tool calls — by default <strong>60 calls per 60-second window</strong> — so a
+runaway client can't flood the server.</p>
+<h3>Transport and launch</h3>
+<p>The server runs over <strong>stdio</strong>: <code>main()</code> calls
+<code>asyncio.run(_run_stdio())</code>. Launch it with <code>python -m attune.mcp.server</code>. It logs to a temp file (<code>attune-mcp.log</code>) and loads
+<code>.env</code> so an <code>ANTHROPIC_API_KEY</code> is available to tools that need it
+(e.g. the help polish pass).</p>
 
   </article>
   <footer>

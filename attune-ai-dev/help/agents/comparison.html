@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Agent framework adapters — comparison</title>
-  <meta name="description" content="Attune&#x27;s agent factory supports four external frameworks — AutoGen, Haystack, LangChain, and LangGraph — plus a lightweight native path that wraps an existing wizard directly. Each option exposes the " />
-  <meta property="og:title" content="Comparison: Agent framework adapters — comparison" />
-  <meta property="og:description" content="Attune&#x27;s agent factory supports four external frameworks — AutoGen, Haystack, LangChain, and LangGraph — plus a lightweight native path that wraps an existing wizard directly. Each option exposes the " />
+  <title>Universal Agent Factory — create, run, and orchestrate AI agents across frameworks — comparison</title>
+  <meta name="description" content="The Agent Factory is the **build-your-own-agent** surface, distinct from the packaged workflows and from wizards:" />
+  <meta property="og:title" content="Universal Agent Factory — create, run, and orchestrate AI agents across frameworks — comparison" />
+  <meta property="og:description" content="The Agent Factory is the **build-your-own-agent** surface, distinct from the packaged workflows and from wizards:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/comparison" />
   <style>
@@ -272,157 +272,44 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Agent framework adapters</h1>
-<h2>Overview</h2>
-<p>Attune's agent factory supports four external frameworks — AutoGen, Haystack, LangChain, and LangGraph — plus a lightweight native path that wraps an existing wizard directly. Each option exposes the same <code>BaseAgent</code> interface, but the underlying frameworks have meaningfully different strengths. This page helps you pick the right adapter for your use case.</p>
-<h2>Feature comparison</h2>
+<h1>Universal Agent Factory — create, run, and orchestrate AI agents across frameworks</h1>
+<h2>Comparison</h2>
+<p>The Agent Factory is the <strong>build-your-own-agent</strong> surface, distinct
+from the packaged workflows and from wizards:</p>
 <table>
 <thead>
 <tr>
-<th>Capability</th>
-<th>AutoGen (<code>AutoGenAdapter</code>)</th>
-<th>Haystack (<code>HaystackAdapter</code>)</th>
-<th>LangChain (<code>LangChainAdapter</code>)</th>
-<th>LangGraph (<code>LangGraphAgent</code>)</th>
-<th>Native (<code>wrap_wizard</code>)</th>
+<th></th>
+<th>agents (Factory)</th>
+<th>workflows</th>
+<th>wizards</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Agent class</strong></td>
-<td><code>AutoGenAgent</code></td>
-<td><code>HaystackAgent</code></td>
-<td><code>LangChainAgent</code></td>
-<td><code>LangGraphAgent</code></td>
-<td><code>WizardAgent</code></td>
+<td>What</td>
+<td>Create/run/orchestrate custom agents across frameworks</td>
+<td>Pre-built analysis pipelines (security, review, …)</td>
+<td>Interactive multi-step guided flows</td>
 </tr>
 <tr>
-<td><strong>Workflow class</strong></td>
-<td><code>AutoGenWorkflow</code> (GroupChat)</td>
-<td><code>HaystackWorkflow</code> (Pipeline)</td>
-<td><code>LangChainWorkflow</code> (SequentialChain / custom routing)</td>
-<td>—</td>
-<td>—</td>
+<td>Entry</td>
+<td><code>AgentFactory(...)</code> + <code>await invoke/run</code></td>
+<td><code>attune workflow run &lt;slug&gt;</code></td>
+<td><code>/wizard</code> skill + <code>await run()</code></td>
 </tr>
 <tr>
-<td><strong>Multi-agent coordination</strong></td>
-<td>✅ GroupChat built in</td>
-<td>❌ Single pipeline</td>
-<td>⚠️ Custom routing only</td>
-<td>✅ Node/runnable graph</td>
-<td>❌ Single agent</td>
-</tr>
-<tr>
-<td><strong>Document store support</strong></td>
-<td>❌</td>
-<td>✅ <code>create_document_store()</code></td>
-<td>❌</td>
-<td>❌</td>
-<td>❌</td>
-</tr>
-<tr>
-<td><strong>Streaming</strong></td>
-<td>✅ <code>stream()</code></td>
-<td>✅ <code>stream()</code></td>
-<td>✅ <code>stream()</code></td>
-<td>✅ <code>stream()</code></td>
-<td>❌</td>
-</tr>
-<tr>
-<td><strong>Tool creation</strong></td>
-<td>✅ <code>create_tool()</code> returns <code>dict</code></td>
-<td>✅ <code>create_tool()</code> returns <code>dict</code></td>
-<td>✅ <code>create_tool()</code> returns <code>Any</code></td>
-<td>—</td>
-<td>—</td>
-</tr>
-<tr>
-<td><strong>Lazy import</strong></td>
-<td>✅ <code>get_autogen_adapter()</code></td>
-<td>✅ <code>get_haystack_adapter()</code></td>
-<td>✅ <code>get_langchain_adapter()</code></td>
-<td>✅ <code>get_langgraph_adapter()</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><strong>Wraps existing object</strong></td>
-<td>AssistantAgent or UserProxyAgent</td>
-<td>Pipeline or Component</td>
-<td>Chain or AgentExecutor</td>
-<td>Node or Runnable</td>
-<td>Wizard directly via <code>wrap_wizard()</code></td>
-</tr>
-<tr>
-<td><strong>Extra setup</strong></td>
-<td><code>autogen</code> package required</td>
-<td><code>haystack-ai</code> package required</td>
-<td><code>langchain</code> package required</td>
-<td><code>langgraph</code> package required</td>
-<td>None — uses Attune internals</td>
-</tr>
-<tr>
-<td><strong>Best for</strong></td>
-<td>Multi-agent group conversations</td>
-<td>RAG / document-retrieval pipelines</td>
-<td>Sequential chains, broad ecosystem</td>
-<td>Stateful graph workflows</td>
-<td>Quickly promoting a wizard to an agent</td>
+<td>Frameworks</td>
+<td>native / langchain / langgraph / autogen / haystack</td>
+<td>n/a</td>
+<td>n/a</td>
 </tr>
 </tbody>
 </table>
-<h2>Tradeoffs in detail</h2>
-<h3>AutoGen — best for group conversations</h3>
-<p><code>AutoGenAdapter</code> wraps Microsoft AutoGen's GroupChat, making it the only adapter with native multi-agent coordination. Use it when you need several agents to deliberate, vote, or hand off tasks to each other. The tradeoff is that AutoGen has no document store support and its tool schema returns a plain <code>dict</code>, so you own the serialization.</p>
-<h3>Haystack — best for document retrieval</h3>
-<p><code>HaystackAdapter</code> is the only adapter that exposes <code>create_document_store()</code>, making it the clear choice for RAG pipelines and any workflow that needs to index or query documents. It does not support multi-agent coordination; <code>HaystackWorkflow</code> runs a single Pipeline end to end.</p>
-<h3>LangChain — best for ecosystem breadth</h3>
-<p><code>LangChainAdapter</code> supports <code>SequentialChain</code> and custom routing, giving you access to LangChain's large ecosystem of integrations. <code>create_tool()</code> returns <code>Any</code> rather than a typed <code>dict</code>, which gives you flexibility but less predictability than the AutoGen or Haystack equivalents. Choose LangChain when an existing LangChain chain or <code>AgentExecutor</code> is already part of your stack.</p>
-<h3>LangGraph — best for stateful graph workflows</h3>
-<p><code>LangGraphAgent</code> wraps a node or runnable inside a graph, supporting stateful multi-step flows without the GroupChat model. Unlike the other adapters, LangGraph does not have a corresponding workflow class or <code>create_tool()</code> method in the current API, so it works best as a single stateful node rather than a coordinating layer.</p>
-<h3><code>wrap_wizard</code> — best for zero-dependency promotion</h3>
-<p><code>wrap_wizard(wizard, name, model_tier)</code> converts an existing Attune wizard into a <code>WizardAgent</code> without importing any external framework. It does not support streaming, tools, or multi-agent workflows. It is the lowest-friction option when you already have a working wizard and want it to participate in an agent pipeline.</p>
-<h2>Use X when...</h2>
-<table>
-<thead>
-<tr>
-<th>You need…</th>
-<th>Use this</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Multiple agents debating or handing off tasks</td>
-<td><code>AutoGenAdapter</code> → <code>AutoGenWorkflow</code></td>
-</tr>
-<tr>
-<td>RAG or document-retrieval pipelines</td>
-<td><code>HaystackAdapter</code> → <code>HaystackWorkflow</code> with <code>create_document_store()</code></td>
-</tr>
-<tr>
-<td>An existing LangChain chain or broad ecosystem integrations</td>
-<td><code>LangChainAdapter</code> → <code>LangChainWorkflow</code></td>
-</tr>
-<tr>
-<td>A stateful graph where each node holds its own state</td>
-<td><code>LangGraphAgent</code> via <code>get_langgraph_adapter()</code></td>
-</tr>
-<tr>
-<td>Minimal setup, no external packages, existing wizard in hand</td>
-<td><code>wrap_wizard()</code> → <code>WizardAgent</code></td>
-</tr>
-<tr>
-<td>Release pipeline automation (<code>ReleaseAgent</code>, <code>ReleasePrepTeam</code>)</td>
-<td>Whichever adapter matches your existing stack; the agent classes are framework-agnostic</td>
-</tr>
-</tbody>
-</table>
-<p>If you are unsure, <strong>AutoGen</strong> is the strongest default for multi-agent scenarios and <strong>Haystack</strong> is the strongest default for document-heavy workloads. For everything else with an existing LangChain investment, stay with <strong>LangChain</strong>.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/agents/**</code></li>
-<li><code>src/attune/agent_factory/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>agents</code>, <code>ai</code>, <code>release</code></p>
+<p>Reach for the <strong>Factory</strong> when you need bespoke agents or want
+framework portability; reach for <strong>workflows</strong> when a packaged pipeline
+already does the job; reach for <strong>wizards</strong> for an interactive,
+user-in-the-loop task.</p>
 
   </article>
   <footer>

@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Agents FAQ — faq</title>
-  <meta name="description" content="It provides release agents, state persistence, and recovery. This includes a universal agent factory, framework adapters for AutoGen, Haystack, LangChain, and LangGraph, and built-in tooling for track" />
+  <meta name="description" content="`AgentFactory` is one interface to create, run, and orchestrate AI agents across frameworks — native (the default), LangChain, LangGraph, AutoGen, and Haystack — without rewriting code when you switch" />
   <meta property="og:title" content="Agents FAQ — faq" />
-  <meta property="og:description" content="It provides release agents, state persistence, and recovery. This includes a universal agent factory, framework adapters for AutoGen, Haystack, LangChain, and LangGraph, and built-in tooling for track" />
+  <meta property="og:description" content="`AgentFactory` is one interface to create, run, and orchestrate AI agents across frameworks — native (the default), LangChain, LangGraph, AutoGen, and Haystack — without rewriting code when you switch" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/faq" />
   <style>
@@ -273,34 +273,58 @@
   </nav>
   <article class="markdown-body">
 <h1>Agents FAQ</h1>
-<h2>What does the agents feature do?</h2>
-<p>It provides release agents, state persistence, and recovery. This includes a universal agent factory, framework adapters for AutoGen, Haystack, LangChain, and LangGraph, and built-in tooling for tracking agent execution and recovering from failures.</p>
-<h2>Which frameworks does agents support?</h2>
-<p>AutoGen, Haystack, LangChain, and LangGraph. Each has a dedicated adapter class (<code>AutoGenAdapter</code>, <code>HaystackAdapter</code>, <code>LangChainAdapter</code>) and a corresponding lazy-import helper (<code>get_autogen_adapter()</code>, <code>get_haystack_adapter()</code>, <code>get_langchain_adapter()</code>, <code>get_langgraph_adapter()</code>).</p>
-<h2>How do I get an adapter for my framework?</h2>
-<p>Call the lazy-import helper for your framework. For example, call <code>get_langchain_adapter()</code> to get a <code>LangChainAdapter</code>, then use <code>create_agent(config)</code> or <code>create_workflow(config, agents)</code> on it. All adapters accept a <code>provider</code> and an optional <code>api_key</code> in their constructors.</p>
-<h2>How do I create an agent?</h2>
-<p>Call <code>create_agent(config)</code> on an adapter instance, passing an <code>AgentConfig</code>. The method returns a framework-specific agent — for example, <code>LangChainAgent</code> or <code>AutoGenAgent</code> — that exposes <code>invoke()</code> and <code>stream()</code> methods.</p>
-<h2>How do I run a multi-agent workflow?</h2>
-<p>Call <code>create_workflow(config, agents)</code> on an adapter, passing a <code>WorkflowConfig</code> and a list of <code>BaseAgent</code> instances. Then call <code>run()</code> or <code>stream()</code> on the returned workflow object.</p>
-<h2>Can I wrap an existing wizard as an agent?</h2>
-<p>Yes. Call <code>wrap_wizard(wizard, name, model_tier)</code> to get back a <code>WizardAgent</code>. The <code>model_tier</code> parameter defaults to <code>'capable'</code>.</p>
-<h2>How do I add retry logic to an agent operation?</h2>
-<p>Decorate your function with <code>retry_on_failure(max_attempts, delay, backoff, exceptions)</code>. It retries with exponential backoff and re-raises the last exception if all attempts fail.</p>
-<h2>How do I guard against unexpected errors in an agent operation?</h2>
-<p>Apply the <code>safe_agent_operation(operation_name)</code> decorator. It adds logging and error handling and raises <code>AgentOperationError</code> on failure.</p>
-<h2>How do I track which inputs are required before calling an agent?</h2>
-<p>Use the <code>validate_input(required_fields)</code> decorator. It raises <code>ValueError</code> if the input is not a dict or if any field in <code>required_fields</code> is missing.</p>
-<h2>How do I track API costs?</h2>
-<p>Decorate your function with <code>with_cost_tracking(operation_type)</code>. The <code>operation_type</code> parameter defaults to <code>'agent_call'</code>.</p>
-<h2>How do I debug a failing agent call?</h2>
-<p>Run <code>pytest -k &quot;agents&quot; -v</code> first. If the tests pass but your code still fails, add a <code>logger.debug</code> statement at the suspected failure point and re-run with logging enabled. For symptom-based diagnosis, see the troubleshooting page for this feature.</p>
-<h2>Where does the agents source code live?</h2>
-<ul>
-<li><code>src/attune/agents/**</code> — release agents, state persistence, and recovery</li>
-<li><code>src/attune/agent_factory/**</code> — universal agent factory and framework adapters</li>
-</ul>
-<p><strong>Tags:</strong> <code>agents</code>, <code>ai</code>, <code>release</code></p>
+<h2>What is the Agent Factory?</h2>
+<p><code>AgentFactory</code> is one interface to create, run, and orchestrate AI
+agents across frameworks — native (the default), LangChain, LangGraph,
+AutoGen, and Haystack — without rewriting code when you switch. Its
+<code>create_agent</code> / <code>create_workflow</code> methods return <code>BaseAgent</code> /
+<code>BaseWorkflow</code> objects with a uniform interface.</p>
+<h2>How do I create and run an agent?</h2>
+<p>Build it with the factory, then <code>await</code> its async <code>invoke</code>:</p>
+<pre><code class="language-python">import asyncio
+
+from attune.agent_factory import AgentFactory
+
+
+async def main() -&gt; None:
+    factory = AgentFactory()                  # native framework
+    agent = factory.create_agent(name=&quot;helper&quot;)
+    print(await agent.invoke(&quot;Hello&quot;))
+
+
+asyncio.run(main())
+</code></pre>
+<p>There is no <code>attune agent</code> CLI command and no MCP tool — use the
+Python API or the <code>/agent</code> skill.</p>
+<h2>Are the calls async?</h2>
+<p>Yes — <code>BaseAgent.invoke</code> / <code>stream</code> and <code>BaseWorkflow.run</code> / <code>stream</code>
+are coroutines (<code>await</code> them). The factory's <code>create_*</code> builders are
+synchronous.</p>
+<h2>Which frameworks are supported?</h2>
+<p><code>native</code> (default, no extra deps), <code>langchain</code>, <code>langgraph</code>, <code>autogen</code>,
+<code>haystack</code>. The non-native ones are optional dependencies loaded
+lazily — <code>AgentFactory.list_frameworks(installed_only=True)</code> shows
+what's installed, and <code>recommend_framework(use_case)</code> suggests one.
+Switch with <code>switch_framework(...)</code>.</p>
+<h2>How do I coordinate multiple agents?</h2>
+<p>Create the agents, then <code>create_workflow(name, agents, mode=...)</code> and
+<code>await workflow.run(...)</code>. For ready-made teams use
+<code>create_code_review_pipeline()</code> or
+<code>create_research_pipeline(topic)</code>. Role-preset shortcuts
+(<code>create_researcher</code>, <code>create_writer</code>, <code>create_reviewer</code>,
+<code>create_coordinator</code>, <code>create_debugger</code>) return <code>BaseAgent</code>s.</p>
+<h2>Is this the same as the release-prep agents?</h2>
+<p>No. This feature is the framework-agnostic <strong>Agent Factory</strong>
+(<code>src/attune/agent_factory/</code>). The release-readiness agent team
+(<code>src/attune/agents/release/</code>) is documented under <strong>release-prep</strong>,
+and its state/recovery store (<code>src/attune/agents/state/</code>) is that
+team's persistence layer.</p>
+<h2>What's the public API surface?</h2>
+<p><code>AgentFactory</code>, <code>Framework</code>, <code>BaseAdapter</code>, <code>BaseAgent</code>, <code>AgentConfig</code>,
+<code>WorkflowConfig</code>, <code>AgentRole</code>, and <code>AgentCapability</code> — all from
+<code>attune.agent_factory</code>. Framework-specific adapter/agent classes are
+internal.</p>
+<p><strong>Tags:</strong> <code>agents</code>, <code>ai</code></p>
 
   </article>
   <footer>

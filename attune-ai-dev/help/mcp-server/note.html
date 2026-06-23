@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Note: MCP server — note</title>
-  <meta name="description" content="Attune AI&#x27;s Model Context Protocol (MCP) server provides Claude Code with access to workflows, memory, help system, authentication, and telemetry through a structured tool interface. The server implem" />
-  <meta property="og:title" content="Note: MCP server — note" />
-  <meta property="og:description" content="Attune AI&#x27;s Model Context Protocol (MCP) server provides Claude Code with access to workflows, memory, help system, authentication, and telemetry through a structured tool interface. The server implem" />
+  <title>The Model Context Protocol server that exposes attune workflows, help, and memory as tools — note</title>
+  <meta name="description" content="The MCP server is attune&#x27;s **Model Context Protocol** implementation — it exposes attune&#x27;s workflows, help system, and memory as structured **tools**, **resources**, and **prompts** that an MCP client" />
+  <meta property="og:title" content="The Model Context Protocol server that exposes attune workflows, help, and memory as tools — note" />
+  <meta property="og:description" content="The MCP server is attune&#x27;s **Model Context Protocol** implementation — it exposes attune&#x27;s workflows, help system, and memory as structured **tools**, **resources**, and **prompts** that an MCP client" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/mcp-server/note" />
   <style>
@@ -272,35 +272,124 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Note: MCP server</h1>
-<h2>Context</h2>
-<p>Attune AI's Model Context Protocol (MCP) server provides Claude Code with access to workflows, memory, help system, authentication, and telemetry through a structured tool interface. The server implements the MCP specification to expose Attune's capabilities as callable tools within Claude environments.</p>
-<h2>Architecture</h2>
-<p>The MCP server uses a mixin-based design around the core <code>EmpathyMCPServer</code> class:</p>
+<h1>The Model Context Protocol server that exposes attune workflows, help, and memory as tools</h1>
+<h2>Overview</h2>
+<p>The MCP server is attune's <strong>Model Context Protocol</strong> implementation —
+it exposes attune's workflows, help system, and memory as structured
+<strong>tools</strong>, <strong>resources</strong>, and <strong>prompts</strong> that an MCP client (Claude
+Code) can call. The server class is <strong><code>EmpathyMCPServer</code></strong>; it speaks
+MCP over <strong>stdio</strong> and is launched with <code>python -m attune.mcp.server</code>.</p>
+<p>It is how every other attune feature reaches a conversation: the
+<code>code_review</code>, <code>security_audit</code>, <code>memory_store</code>, <code>help_lookup</code>, … tools
+you call in Claude Code are registered and dispatched here. This page
+documents the <strong>server itself</strong> — its architecture, how to run and
+register it, and the tool/resource/prompt surface — not each individual
+tool (those belong to their own features).</p>
+<p>You reach it these ways:</p>
 <ul>
-<li><strong>EmpathyMCPServer</strong> — Main server implementation handling MCP protocol, tool routing, and rate limiting</li>
-<li><strong>MemoryHandlersMixin</strong> — Provides memory store/retrieve/search/forget tools for cross-session data persistence</li>
-<li><strong>WorkflowHandlersMixin</strong> — Exposes workflow execution tools for running Attune AI automation</li>
+<li><strong>registration</strong> — a <code>.mcp.json</code> entry runs <code>python -m attune.mcp.server</code> (the plugin ships one); Claude Code connects over
+stdio;</li>
+<li>the Python API — <code>from attune.mcp import create_server, EmpathyMCPServer</code>, for embedding or testing the server.</li>
 </ul>
-<p>The server exposes five tool categories:</p>
-<ol>
-<li><strong>Workflow tools</strong> — Execute Attune workflows directly from Claude</li>
-<li><strong>Utility tools</strong> — Authentication status, telemetry stats, session context management</li>
-<li><strong>Help tools</strong> — Progressive documentation lookup, template maintenance, project bootstrapping</li>
-<li><strong>Memory tools</strong> — Persistent storage for patterns, preferences, and cross-agent coordination</li>
-<li><strong>Rate limiting</strong> — Sliding-window limiter preventing API abuse</li>
-</ol>
-<h2>Integration patterns</h2>
-<p>Claude Code discovers the server through <code>.mcp.json</code> configuration files in project roots. The server must run as <code>uv run python -m attune.mcp.server</code> to ensure correct package resolution and avoid Python environment conflicts that prevent tool availability.</p>
-<p>Rate limiting applies per-tool with a default 60 calls per 60-second window. Voice interfaces skip memory and session tools (defined in <code>_VOICE_SKIP_TOOLS</code>) to avoid interrupting conversational flow.</p>
-<h2>Source files</h2>
+<h2>Concepts</h2>
+<h3><code>EmpathyMCPServer</code> and its mixins</h3>
+<p><code>EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin)</code> is the
+core server. The mixins supply handler groups: <code>WorkflowHandlersMixin</code>
+runs the analysis workflows, <code>MemoryHandlersMixin</code> handles
+cross-session memory. A <code>RateLimiter</code> guards against tool-call floods.
+<code>create_server()</code> builds a ready instance.</p>
+<h3>The tool surface — 41 built-in tools in 5 categories</h3>
+<p>At startup the server merges five built-in tool-schema groups (from
+<code>attune.mcp.tool_schemas</code>) into one registry, then lets installed
+plugins register more (<code>_register_plugin_tools</code> — e.g. attune-redis
+adds its <code>redis_*</code> tools), so <code>server.tools</code> can hold more than these
+41:</p>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Function</th>
+<th>Count</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Workflow</td>
+<td><code>get_workflow_tools()</code></td>
+<td>21</td>
+<td><code>code_review</code>, <code>security_audit</code>, <code>test_generation</code>, <code>release_notes</code>, <code>rag_knowledge_query</code></td>
+</tr>
+<tr>
+<td>Utility</td>
+<td><code>get_utility_tools()</code></td>
+<td>7</td>
+<td><code>auth_status</code>, <code>telemetry_stats</code>, <code>attune_set_level</code>, <code>context_get</code></td>
+</tr>
+<tr>
+<td>Help</td>
+<td><code>get_help_tools()</code></td>
+<td>5</td>
+<td><code>help_lookup</code>, <code>help_update</code>, <code>help_status</code></td>
+</tr>
+<tr>
+<td>Memory</td>
+<td><code>get_memory_tools()</code></td>
+<td>4</td>
+<td><code>memory_store</code>, <code>memory_retrieve</code>, <code>memory_search</code></td>
+</tr>
+<tr>
+<td>Personal memory</td>
+<td><code>get_personal_memory_tools()</code></td>
+<td>4</td>
+<td><code>personal_memory_capture</code>, <code>personal_memory_recall</code></td>
+</tr>
+</tbody>
+</table>
+<p>A <code>_build_dispatch_table()</code> maps each tool name to the handler method
+that runs it; <code>call_tool(name, arguments)</code> is the async dispatch entry.</p>
+<h3>Resources and prompts</h3>
+<p>Beyond tools, the server publishes three <strong>resources</strong> (read-only
+data) and three <strong>prompts</strong> (reusable prompt templates):</p>
+<table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>Names</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Resources</td>
+<td><code>attune://workflows</code>, <code>attune://auth/config</code>, <code>attune://telemetry</code></td>
+</tr>
+<tr>
+<td>Prompts</td>
+<td><code>security-scan</code>, <code>test-gen</code>, <code>cost-report</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>get_resource_list()</code> and <code>get_prompt_list()</code> return them.</p>
+<h3>Rate limiting</h3>
+<p>A sliding-window <code>RateLimiter(max_calls=60, window_seconds=60.0)</code>
+caps tool calls — by default <strong>60 calls per 60-second window</strong> — so a
+runaway client can't flood the server.</p>
+<h3>Transport and launch</h3>
+<p>The server runs over <strong>stdio</strong>: <code>main()</code> calls
+<code>asyncio.run(_run_stdio())</code>. Launch it with <code>python -m attune.mcp.server</code>. It logs to a temp file (<code>attune-mcp.log</code>) and loads
+<code>.env</code> so an <code>ANTHROPIC_API_KEY</code> is available to tools that need it
+(e.g. the help polish pass).</p>
+<h2>Notes &amp; tips</h2>
 <ul>
-<li><code>src/attune/mcp/server.py</code> — Core server and entry point</li>
-<li><code>src/attune/mcp/memory_handlers.py</code> — Memory tool implementations</li>
-<li><code>src/attune/mcp/workflow_handlers.py</code> — Workflow tool implementations</li>
-<li><code>src/attune/mcp/prompts.py</code> — MCP prompt definitions</li>
-<li><code>src/attune/mcp/tool_schemas.py</code> — Tool schema definitions</li>
-<li><code>src/attune/mcp/rate_limiter.py</code> — Rate limiting implementation</li>
+<li><strong>Depend on the documented public surface.</strong> The supported API is
+<code>create_server</code> and <code>EmpathyMCPServer</code> from <code>attune.mcp</code>; the
+tool-schema group functions live in <code>attune.mcp.tool_schemas</code>.
+Handler methods and the dispatch table are internal.</li>
+<li><strong><code>await</code> <code>call_tool</code>.</strong> It's the one async entry; the inspection
+helpers are sync.</li>
+<li><strong>Read the log file to debug.</strong> stdout is reserved for the protocol.</li>
+<li><strong>Tool contracts live with their features.</strong> This page covers the
+server; each tool's inputs are documented on its own feature page.</li>
 </ul>
 
   </article>

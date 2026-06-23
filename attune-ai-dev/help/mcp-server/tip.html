@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: Use the EmpathyMCPServer class for MCP integration — tip</title>
-  <meta name="description" content="Use `create_server()` to get a pre-configured MCP server instance rather than instantiating `EmpathyMCPServer` directly. The factory function handles workspace root detection, user ID resolution, and " />
-  <meta property="og:title" content="Tip: Use the EmpathyMCPServer class for MCP integration — tip" />
-  <meta property="og:description" content="Use `create_server()` to get a pre-configured MCP server instance rather than instantiating `EmpathyMCPServer` directly. The factory function handles workspace root detection, user ID resolution, and " />
+  <title>The Model Context Protocol server that exposes attune workflows, help, and memory as tools — tip</title>
+  <meta name="description" content="- **Depend on the documented public surface.** The supported API is `create_server` and `EmpathyMCPServer` from `attune.mcp`; the tool-schema group functions live in `attune.mcp.tool_schemas`. Handler" />
+  <meta property="og:title" content="The Model Context Protocol server that exposes attune workflows, help, and memory as tools — tip" />
+  <meta property="og:description" content="- **Depend on the documented public surface.** The supported API is `create_server` and `EmpathyMCPServer` from `attune.mcp`; the tool-schema group functions live in `attune.mcp.tool_schemas`. Handler" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/mcp-server/tip" />
   <style>
@@ -272,13 +272,19 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: Use the EmpathyMCPServer class for MCP integration</h1>
-<p>Use <code>create_server()</code> to get a pre-configured MCP server instance rather than instantiating <code>EmpathyMCPServer</code> directly. The factory function handles workspace root detection, user ID resolution, and mixin initialization automatically.</p>
-<h2>Why</h2>
-<p>MCP server configuration is surprisingly error-prone — workspace paths need validation, handler mixins must be initialized in the right order, and rate limiting requires careful setup. The factory function encapsulates these details and reduces setup bugs by 80%.</p>
-<h2>Tradeoff</h2>
-<p>You lose fine-grained control over server initialization. If you need custom workspace detection or specialized handler mixins, you'll need to subclass <code>EmpathyMCPServer</code> instead.</p>
-<p><strong>Tags:</strong> <code>mcp</code>, <code>tools</code>, <code>server</code></p>
+<h1>The Model Context Protocol server that exposes attune workflows, help, and memory as tools</h1>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Depend on the documented public surface.</strong> The supported API is
+<code>create_server</code> and <code>EmpathyMCPServer</code> from <code>attune.mcp</code>; the
+tool-schema group functions live in <code>attune.mcp.tool_schemas</code>.
+Handler methods and the dispatch table are internal.</li>
+<li><strong><code>await</code> <code>call_tool</code>.</strong> It's the one async entry; the inspection
+helpers are sync.</li>
+<li><strong>Read the log file to debug.</strong> stdout is reserved for the protocol.</li>
+<li><strong>Tool contracts live with their features.</strong> This page covers the
+server; each tool's inputs are documented on its own feature page.</li>
+</ul>
 
   </article>
   <footer>

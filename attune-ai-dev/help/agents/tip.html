@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: Working effectively with agents — tip</title>
-  <meta name="description" content="Use the lazy-import getter functions — `get_langchain_adapter()`, `get_autogen_adapter()`, `get_haystack_adapter()`, and `get_langgraph_adapter()` — instead of importing adapter classes directly. Thes" />
-  <meta property="og:title" content="Tip: Working effectively with agents — tip" />
-  <meta property="og:description" content="Use the lazy-import getter functions — `get_langchain_adapter()`, `get_autogen_adapter()`, `get_haystack_adapter()`, and `get_langgraph_adapter()` — instead of importing adapter classes directly. Thes" />
+  <title>Universal Agent Factory — create, run, and orchestrate AI agents across frameworks — tip</title>
+  <meta name="description" content="- **Depend on the documented public surface.** The supported API is `AgentFactory`, `Framework`, `BaseAdapter`, `BaseAgent`, `AgentConfig`, `WorkflowConfig`, `AgentRole`, and `AgentCapability` from `a" />
+  <meta property="og:title" content="Universal Agent Factory — create, run, and orchestrate AI agents across frameworks — tip" />
+  <meta property="og:description" content="- **Depend on the documented public surface.** The supported API is `AgentFactory`, `Framework`, `BaseAdapter`, `BaseAgent`, `AgentConfig`, `WorkflowConfig`, `AgentRole`, and `AgentCapability` from `a" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/tip" />
   <style>
@@ -272,17 +272,22 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: Working effectively with agents</h1>
-<p>Use the lazy-import getter functions — <code>get_langchain_adapter()</code>, <code>get_autogen_adapter()</code>, <code>get_haystack_adapter()</code>, and <code>get_langgraph_adapter()</code> — instead of importing adapter classes directly. These functions defer the underlying framework import until the moment you need it, so frameworks you don't use don't slow down startup or pollute your environment.</p>
-<p><strong>Why it's worth it:</strong> Each adapter's framework dependency (LangChain, AutoGen, Haystack, LangGraph) is heavy. Importing them eagerly at module load couples your code to every framework at once, even when you're only using one.</p>
-<p><strong>Tradeoff:</strong> The getter functions return a framework-specific adapter instance, not a raw class, so you can't subclass the result directly. If you need a custom adapter subclass, instantiate the class (for example, <code>LangChainAdapter</code>) explicitly — but accept that you then own the import.</p>
-<p>If you need to wrap an existing wizard quickly without building a full adapter, <code>wrap_wizard()</code> is the fastest path: it returns a <code>WizardAgent</code> ready for <code>invoke()</code> or <code>stream()</code> calls without any framework configuration.</p>
-<h2>Source files</h2>
+<h1>Universal Agent Factory — create, run, and orchestrate AI agents across frameworks</h1>
+<h2>Notes &amp; tips</h2>
 <ul>
-<li><code>src/attune/agent_factory/adapters/__init__.py</code></li>
-<li><code>src/attune/agent_factory/adapters/wizard_adapter.py</code></li>
+<li><strong>Depend on the documented public surface.</strong> The supported API is
+<code>AgentFactory</code>, <code>Framework</code>, <code>BaseAdapter</code>, <code>BaseAgent</code>,
+<code>AgentConfig</code>, <code>WorkflowConfig</code>, <code>AgentRole</code>, and <code>AgentCapability</code>
+from <code>attune.agent_factory</code>. Framework-specific adapter/agent classes
+are internal.</li>
+<li><strong><code>await</code> the run methods.</strong> Only <code>invoke</code> / <code>run</code> / <code>stream</code> are
+async; the <code>create_*</code> builders are sync.</li>
+<li><strong>Start native.</strong> The <code>native</code> framework needs no extra deps; reach
+for LangChain/LangGraph/AutoGen/Haystack when you need their
+features.</li>
+<li><strong>Use role presets and pipelines.</strong> <code>create_researcher()</code> /
+<code>create_research_pipeline()</code> are faster than wiring configs by hand.</li>
 </ul>
-<p><strong>Tags:</strong> <code>agents</code>, <code>ai</code>, <code>release</code></p>
 
   </article>
   <footer>

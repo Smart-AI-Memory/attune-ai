@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MCP Server cautions — warning</title>
-  <meta name="description" content="The `RateLimiter` class uses a sliding window with a 60-call default limit. When you exceed this limit, `check()` returns `False` but doesn&#x27;t raise an exception. Tool calls fail silently, which can ma" />
-  <meta property="og:title" content="MCP Server cautions — warning" />
-  <meta property="og:description" content="The `RateLimiter` class uses a sliding window with a 60-call default limit. When you exceed this limit, `check()` returns `False` but doesn&#x27;t raise an exception. Tool calls fail silently, which can ma" />
+  <title>The Model Context Protocol server that exposes attune workflows, help, and memory as tools — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | Tools don&#x27;t appear in Claude Code | The `.mcp.json` entry is missing or the command can&#x27;t launch | Add/repair the `mcpServers` entry; confirm `" />
+  <meta property="og:title" content="The Model Context Protocol server that exposes attune workflows, help, and memory as tools — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | Tools don&#x27;t appear in Claude Code | The `.mcp.json` entry is missing or the command can&#x27;t launch | Add/repair the `mcpServers` entry; confirm `" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/mcp-server/warning" />
   <style>
@@ -272,22 +272,68 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>MCP Server cautions</h1>
-<h2>Rate limiting can silently drop calls</h2>
-<p>The <code>RateLimiter</code> class uses a sliding window with a 60-call default limit. When you exceed this limit, <code>check()</code> returns <code>False</code> but doesn't raise an exception. Tool calls fail silently, which can make debugging difficult.</p>
-<p><strong>Avoid this:</strong> Check the rate limiter's return value before making tool calls, especially in loops or batch operations. Consider increasing the limit for heavy workflows using <code>RateLimiter(max_calls=200)</code>.</p>
-<h2>Missing prompts cause runtime failures</h2>
-<p>The <code>get_prompt_messages()</code> function raises <code>ValueError</code> for unknown prompt names, but only at runtime. If you reference a prompt that doesn't exist in the prompt registry, you won't discover the problem until the tool is called.</p>
-<p><strong>Avoid this:</strong> Validate prompt names against <code>get_prompt_list()</code> during initialization. Test all prompt references in your integration tests.</p>
-<h2>Tool schema validation is deferred</h2>
-<p>The MCP server defines tool schemas but doesn't validate arguments until <code>call_tool()</code> executes. Invalid arguments reach your tool handlers, where they may cause unexpected behavior or crashes.</p>
-<p><strong>Avoid this:</strong> Add explicit validation at the start of your tool handlers. Use the input schema patterns from <code>get_utility_tools()</code> and <code>get_help_tools()</code> as templates for required field checking.</p>
-<h2>Memory tools fail without attune-ai package</h2>
-<p>Memory-related tools (<code>memory_store</code>, <code>memory_retrieve</code>, etc.) import the <code>attune-ai</code> package dynamically. If the package isn't installed, these tools fail at runtime with an import error rather than being disabled gracefully.</p>
-<p><strong>Avoid this:</strong> Check for the attune-ai dependency during server initialization. Consider making memory tools optional in your MCP client configuration.</p>
-<h2>Workspace isolation can break file operations</h2>
-<p>The <code>EmpathyMCPServer</code> accepts a <code>workspace_root</code> parameter that scopes file operations. If you pass relative paths to tools that expect absolute paths, operations may target the wrong files or fail silently.</p>
-<p><strong>Avoid this:</strong> Always resolve relative paths against the workspace root before passing them to file-based tools. Use <code>os.path.abspath()</code> to convert relative paths in tool arguments.</p>
+<h1>The Model Context Protocol server that exposes attune workflows, help, and memory as tools</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tools don't appear in Claude Code</td>
+<td>The <code>.mcp.json</code> entry is missing or the command can't launch</td>
+<td>Add/repair the <code>mcpServers</code> entry; confirm <code>python -m attune.mcp.server</code> runs</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>RuntimeWarning: coroutine 'EmpathyMCPServer.call_tool' was never awaited</code></td>
+<td><code>call_tool</code> invoked without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td>Tool calls start getting rejected under load</td>
+<td>The rate limiter tripped (60 calls / 60 s)</td>
+<td>Slow the call rate, or construct with a higher <code>max_calls</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td>A tool returns a &quot;path/argument required&quot; error</td>
+<td>The tool's own input contract wasn't met</td>
+<td>See that tool's feature page; the server just dispatches</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Can't tell why the connection failed</td>
+<td>Logs aren't on stdout (stdio is the protocol channel)</td>
+<td>Read <code>&lt;tmp&gt;/attune/attune-mcp.log</code></td>
+<td>low</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
+<ul>
+<li><strong><code>call_tool</code> is async.</strong> Dispatching without <code>await</code> is the common
+mistake when driving the server from Python.</li>
+<li><strong>stdio is the protocol channel.</strong> Don't print to stdout from a
+handler — logs go to the temp log file, not the console.</li>
+<li><strong>The server dispatches; tools own their contracts.</strong> A tool-level
+error (bad args) is the tool's, not the server's.</li>
+</ul>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm the server launches: <code>python -m attune.mcp.server</code>.</li>
+<li>Confirm registration: the <code>.mcp.json</code> <code>mcpServers</code> entry.</li>
+<li>From Python, <code>create_server().tools</code> / <code>get_resource_list()</code> to
+confirm the surface.</li>
+<li>For a connection problem, read <code>&lt;tmp&gt;/attune/attune-mcp.log</code>.</li>
+<li>For a single tool failing, consult that tool's feature page.</li>
+</ol>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot agents — troubleshooting</title>
-  <meta name="description" content="This guide covers issues with release agents, state persistence, and recovery. It applies to the adapter layer (`AutoGenAdapter`, `HaystackAdapter`, `LangChainAdapter`) and the agent lifecycle classes" />
-  <meta property="og:title" content="Troubleshoot agents — troubleshooting" />
-  <meta property="og:description" content="This guide covers issues with release agents, state persistence, and recovery. It applies to the adapter layer (`AutoGenAdapter`, `HaystackAdapter`, `LangChainAdapter`) and the agent lifecycle classes" />
+  <title>Universal Agent Factory — create, run, and orchestrate AI agents across frameworks — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BaseAgent.invoke&#x27; was never awaited` | `invoke` / `run` called without `await` | They are coroutines — `await` them" />
+  <meta property="og:title" content="Universal Agent Factory — create, run, and orchestrate AI agents across frameworks — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BaseAgent.invoke&#x27; was never awaited` | `invoke` / `run` called without `await` | They are coroutines — `await` them" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/troubleshooting" />
   <style>
@@ -272,117 +272,69 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot agents</h1>
-<h2>Before you start</h2>
-<p>This guide covers issues with release agents, state persistence, and recovery. It applies to the adapter layer (<code>AutoGenAdapter</code>, <code>HaystackAdapter</code>, <code>LangChainAdapter</code>) and the agent lifecycle classes (<code>BaseAgent</code>, <code>AgentFactory</code>, <code>AgentStateStore</code>, <code>AgentRecoveryManager</code>).</p>
-<h2>Symptom table</h2>
+<h1>Universal Agent Factory — create, run, and orchestrate AI agents across frameworks</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>AgentOperationError</code> raised</td>
-<td>The operation wrapped by <code>@safe_agent_operation</code> — the decorator logs the failure before re-raising; check <code>DEBUG</code>-level logs for the operation name</td>
+<td><code>RuntimeWarning: coroutine 'BaseAgent.invoke' was never awaited</code></td>
+<td><code>invoke</code> / <code>run</code> called without <code>await</code></td>
+<td>They are coroutines — <code>await</code> them or use <code>asyncio.run</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td><code>ValueError: Missing required fields</code></td>
-<td>The fields your <code>invoke()</code> or <code>run()</code> call passes against the list in <code>@validate_input</code> — the error message names the missing keys</td>
+<td>Constructing a non-native factory raises / <code>is_available()</code> is <code>False</code></td>
+<td>The framework's optional dependency isn't installed</td>
+<td>Install the framework extra, or use <code>native</code>; check <code>list_frameworks(installed_only=True)</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td><code>ValueError: Input must be a dict</code></td>
-<td>The type of <code>input_data</code> passed to <code>invoke()</code> or <code>run()</code> — these methods expect <code>str | dict</code>, not a list or other type</td>
+<td><code>recommend_framework</code> / <code>list_frameworks</code> &quot;needs an instance&quot; error</td>
+<td>Called as if instance-only</td>
+<td>They are callable on the class; call <code>AgentFactory.list_frameworks()</code></td>
+<td>low</td>
 </tr>
 <tr>
-<td>Adapter returns <code>None</code> or raises <code>ImportError</code></td>
-<td>Whether the framework is installed — call <code>adapter.is_available()</code> before <code>create_agent()</code> or <code>create_workflow()</code></td>
+<td><code>get_agent(name)</code> returns <code>None</code></td>
+<td>No agent with that name was created on this factory</td>
+<td>Check <code>list_agents()</code>; names are per-factory</td>
+<td>low</td>
 </tr>
 <tr>
-<td>Operation retried unexpectedly or silently swallowed</td>
-<td>The <code>max_attempts</code>, <code>delay</code>, and <code>backoff</code> values on <code>@retry_on_failure</code> — defaults are 3 attempts, 1.0 s delay, 2.0 backoff</td>
-</tr>
-<tr>
-<td>Slow agent call with no apparent error</td>
-<td>The <code>threshold_seconds</code> on <code>@log_performance</code> — at <code>DEBUG</code> level, the decorator logs calls that exceed the threshold</td>
-</tr>
-<tr>
-<td>Intermittent failure across runs</td>
-<td>State held in <code>AgentStateStore</code> from a previous run — inspect or clear stored <code>AgentStateRecord</code> entries</td>
+<td>A tool isn't used by the agent</td>
+<td>Tool not added / wrong schema</td>
+<td>Build it with <code>create_tool(...)</code> and pass it via <code>tools=</code> or <code>add_tool(...)</code></td>
+<td>medium</td>
 </tr>
 </tbody>
 </table>
-<h2>Diagnosis steps</h2>
-<p>Work through these in order — each step is cheaper than the one that follows.</p>
-<h3>1. Reproduce in isolation</h3>
-<p>Reduce your call to the minimum required arguments. For example, to isolate an adapter issue:</p>
-<pre><code class="language-python">from attune.agent_factory.adapters import get_langchain_adapter
-
-adapter = get_langchain_adapter()
-print(adapter.is_available())          # False means the framework is not installed
-print(adapter.framework_name)          # confirms which adapter you actually got
-</code></pre>
-<p>Replace <code>get_langchain_adapter</code> with <code>get_autogen_adapter</code>, <code>get_haystack_adapter</code>, or <code>get_langgraph_adapter</code> as appropriate. If <code>is_available()</code> returns <code>False</code>, install the missing framework before continuing.</p>
-<h3>2. Enable DEBUG logging</h3>
-<p>Set your log level to <code>DEBUG</code> and re-run. The <code>@safe_agent_operation</code> decorator logs each operation name and any caught exception before re-raising as <code>AgentOperationError</code>. The <code>@log_performance</code> decorator logs calls that exceed <code>threshold_seconds</code>. Both write at <code>DEBUG</code> level and are silent otherwise.</p>
-<pre><code class="language-python">import logging
-logging.basicConfig(level=logging.DEBUG)
-</code></pre>
-<h3>3. Validate inputs explicitly</h3>
-<p>Call the entry point with a known-good <code>dict</code> that satisfies <code>@validate_input</code>. If you are getting <code>ValueError: Input must be a dict</code> or <code>ValueError: Missing required fields</code>, the problem is upstream of the agent, not inside it:</p>
+<h3>Risk areas</h3>
 <ul>
-<li><code>invoke(input_data, context)</code> on <code>AutoGenAgent</code>, <code>HaystackAgent</code>, or <code>LangChainAgent</code> — <code>input_data</code> must be <code>str | dict</code></li>
-<li><code>run(input_data, initial_state)</code> on <code>AutoGenWorkflow</code>, <code>HaystackWorkflow</code>, or <code>LangChainWorkflow</code> — same constraint</li>
+<li><strong>The run methods are async.</strong> <code>invoke</code>, <code>run</code>, and <code>stream</code> are
+coroutines — forgetting to <code>await</code> is the most common mistake.</li>
+<li><strong>Non-native frameworks are optional.</strong> They load lazily; check
+<code>is_available()</code> / <code>list_frameworks(installed_only=True)</code> before
+selecting one.</li>
+<li><strong>Scope.</strong> This feature is the Factory; the release agent team and
+its state store live under release-prep, not here.</li>
 </ul>
-<h3>4. Check adapter and framework availability</h3>
-<p>Each adapter exposes <code>is_available()</code>. Call it explicitly if you are seeing <code>ImportError</code> or unexpected <code>None</code> returns:</p>
-<pre><code class="language-python">from attune.agent_factory.adapters import (
-    get_autogen_adapter,
-    get_haystack_adapter,
-    get_langchain_adapter,
-)
-
-for getter in [get_autogen_adapter, get_haystack_adapter, get_langchain_adapter]:
-    a = getter()
-    print(a.framework_name, a.is_available())
-</code></pre>
-<h3>5. Inspect agent state and recovery records</h3>
-<p>If failures are intermittent and tied to a specific agent identity, check <code>AgentStateStore</code> for stale <code>AgentStateRecord</code> entries and <code>AgentRecoveryManager</code> for unresolved <code>AgentExecutionRecord</code> entries from prior runs. Stale state from a previous failed run can cause an otherwise-healthy agent to behave incorrectly.</p>
-<h3>6. Run the test suite</h3>
-<pre><code class="language-bash">pytest -k &quot;agents&quot; -v
-</code></pre>
-<p>If a test exercises the failing path, use its fixtures as a baseline for your own reproduction. A failing test here confirms the bug is in the library; a passing test suite with a failing integration points to environment or configuration drift.</p>
-<h2>Common fixes</h2>
-<p><strong>Framework not installed</strong>
-<code>is_available()</code> returns <code>False</code> when the underlying framework package is absent. Install the framework your adapter requires:</p>
-<pre><code class="language-bash">pip install langchain          # for LangChainAdapter / LangChainAgent
-pip install pyautogen          # for AutoGenAdapter / AutoGenAgent
-pip install haystack-ai        # for HaystackAdapter / HaystackAgent
-</code></pre>
-<p>This change is outside the <code>attune</code> library itself — the adapter will not work until the dependency is present.</p>
-<p><strong>Missing required fields in <code>input_data</code></strong>
-<code>@validate_input</code> raises <code>ValueError: Missing required fields: {...}</code> and names the missing keys. Add those keys to the <code>dict</code> you pass to <code>invoke()</code> or <code>run()</code>.</p>
-<p><strong>Stale state across runs</strong>
-If the agent worked in a previous session and now behaves incorrectly without a code change, clear or reset the <code>AgentStateStore</code> entries for that agent. Cached <code>AgentStateRecord</code> values from a failed run can cause downstream methods to branch incorrectly.</p>
-<p><strong>Retry loop exhausted</strong>
-<code>@retry_on_failure</code> re-raises the last exception after <code>max_attempts</code> retries (default: 3). If you are hitting this, the root cause is in the exception itself — check <code>DEBUG</code> logs for the full traceback from the first attempt. You can increase <code>max_attempts</code> or narrow the <code>exceptions</code> tuple to avoid masking unrelated errors.</p>
-<p><strong>Version mismatch in a framework dependency</strong>
-A framework upgrade can silently change <code>invoke()</code> or <code>run()</code> call signatures. Confirm the installed version:</p>
-<pre><code class="language-bash">pip show langchain
-pip show pyautogen
-pip show haystack-ai
-</code></pre>
-<p>Pin the version in your requirements file if the adapter was tested against a specific release.</p>
-<p><strong><code>wrap_wizard()</code> producing unexpected behavior</strong>
-<code>wrap_wizard(wizard, name, model_tier)</code> defaults to <code>model_tier='capable'</code>. If the wrapped <code>WizardAgent</code> is behaving differently than the underlying wizard, check that <code>model_tier</code> matches what the wizard expects and that <code>name</code> is set explicitly when you need a stable identifier.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/agents/**</code></li>
-<li><code>src/attune/agent_factory/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>agents</code>, <code>ai</code>, <code>release</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm you are awaiting: <code>await agent.invoke(...)</code> /
+<code>await workflow.run(...)</code>.</li>
+<li>Confirm the framework is installed: <code>AgentFactory.list_frameworks( installed_only=True)</code>.</li>
+<li>For a missing agent, check <code>list_agents()</code>.</li>
+<li>For tool issues, confirm the tool was built with <code>create_tool</code> and
+attached.</li>
+</ol>
 
   </article>
   <footer>

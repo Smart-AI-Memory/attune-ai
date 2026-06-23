@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot MCP server — troubleshooting</title>
-  <meta name="description" content="The Attune AI MCP server provides tool handlers, prompts, and resources for Model Context Protocol clients like Claude Code. Common issues include server startup failures, tool call timeouts, and auth" />
-  <meta property="og:title" content="Troubleshoot MCP server — troubleshooting" />
-  <meta property="og:description" content="The Attune AI MCP server provides tool handlers, prompts, and resources for Model Context Protocol clients like Claude Code. Common issues include server startup failures, tool call timeouts, and auth" />
+  <title>The Model Context Protocol server that exposes attune workflows, help, and memory as tools — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | Tools don&#x27;t appear in Claude Code | The `.mcp.json` entry is missing or the command can&#x27;t launch | Add/repair the `mcpServers` entry; confirm `" />
+  <meta property="og:title" content="The Model Context Protocol server that exposes attune workflows, help, and memory as tools — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | Tools don&#x27;t appear in Claude Code | The `.mcp.json` entry is missing or the command can&#x27;t launch | Add/repair the `mcpServers` entry; confirm `" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/mcp-server/troubleshooting" />
   <style>
@@ -272,93 +272,68 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot MCP server</h1>
-<h2>Before you start</h2>
-<p>The Attune AI MCP server provides tool handlers, prompts, and resources for Model Context Protocol clients like Claude Code. Common issues include server startup failures, tool call timeouts, and authentication problems.</p>
-<h2>Symptom table</h2>
+<h1>The Model Context Protocol server that exposes attune workflows, help, and memory as tools</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Server won't start or exits immediately</td>
-<td>Process logs and <code>.mcp.json</code> configuration</td>
+<td>Tools don't appear in Claude Code</td>
+<td>The <code>.mcp.json</code> entry is missing or the command can't launch</td>
+<td>Add/repair the <code>mcpServers</code> entry; confirm <code>python -m attune.mcp.server</code> runs</td>
+<td>high</td>
 </tr>
 <tr>
-<td>Tool calls timeout or hang</td>
-<td>Rate limiter state and tool handler exceptions</td>
+<td><code>RuntimeWarning: coroutine 'EmpathyMCPServer.call_tool' was never awaited</code></td>
+<td><code>call_tool</code> invoked without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td>Authentication errors</td>
-<td>User ID setup and workspace root permissions</td>
+<td>Tool calls start getting rejected under load</td>
+<td>The rate limiter tripped (60 calls / 60 s)</td>
+<td>Slow the call rate, or construct with a higher <code>max_calls</code></td>
+<td>medium</td>
 </tr>
 <tr>
-<td>Missing tools in client</td>
-<td>Tool schema registration and server handshake</td>
+<td>A tool returns a &quot;path/argument required&quot; error</td>
+<td>The tool's own input contract wasn't met</td>
+<td>See that tool's feature page; the server just dispatches</td>
+<td>medium</td>
 </tr>
 <tr>
-<td>Memory operations fail</td>
-<td>Memory module installation and database access</td>
+<td>Can't tell why the connection failed</td>
+<td>Logs aren't on stdout (stdio is the protocol channel)</td>
+<td>Read <code>&lt;tmp&gt;/attune/attune-mcp.log</code></td>
+<td>low</td>
 </tr>
 </tbody>
 </table>
-<h2>Step-by-step diagnosis</h2>
+<h3>Risk areas</h3>
+<ul>
+<li><strong><code>call_tool</code> is async.</strong> Dispatching without <code>await</code> is the common
+mistake when driving the server from Python.</li>
+<li><strong>stdio is the protocol channel.</strong> Don't print to stdout from a
+handler — logs go to the temp log file, not the console.</li>
+<li><strong>The server dispatches; tools own their contracts.</strong> A tool-level
+error (bad args) is the tool's, not the server's.</li>
+</ul>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Verify server startup</strong>
-Test the server directly: <code>uv run python -m attune.mcp.server</code>
-Check for import errors, missing dependencies, or configuration issues.</p>
-</li>
-<li>
-<p><strong>Check MCP configuration</strong>
-Ensure <code>.mcp.json</code> exists in your project root with correct command syntax:</p>
-<pre><code class="language-json">{
-  &quot;mcpServers&quot;: {
-    &quot;attune&quot;: {
-      &quot;command&quot;: &quot;uv&quot;,
-      &quot;args&quot;: [&quot;run&quot;, &quot;--from&quot;, &quot;attune-ai&quot;, &quot;python&quot;, &quot;-m&quot;, &quot;attune.mcp.server&quot;]
-    }
-  }
-}
-</code></pre>
-</li>
-<li>
-<p><strong>Test tool registration</strong>
-Call <code>EmpathyMCPServer().get_tool_list()</code> to verify tools are properly registered.
-Missing tools indicate schema loading failures or import problems.</p>
-</li>
-<li>
-<p><strong>Examine rate limiting</strong>
-The <code>RateLimiter</code> (60 calls per 60 seconds) may be blocking requests.
-Check recent call patterns and consider if you've exceeded limits.</p>
-</li>
-<li>
-<p><strong>Validate workspace setup</strong>
-Confirm the server can access your workspace root and has proper file permissions.
-Memory tools require write access to store session data.</p>
-</li>
+<li>Confirm the server launches: <code>python -m attune.mcp.server</code>.</li>
+<li>Confirm registration: the <code>.mcp.json</code> <code>mcpServers</code> entry.</li>
+<li>From Python, <code>create_server().tools</code> / <code>get_resource_list()</code> to
+confirm the surface.</li>
+<li>For a connection problem, read <code>&lt;tmp&gt;/attune/attune-mcp.log</code>.</li>
+<li>For a single tool failing, consult that tool's feature page.</li>
 </ol>
-<h2>Common fixes</h2>
-<ul>
-<li><strong>Missing dependencies:</strong> Install the memory module with <code>pip install attune-ai[memory]</code> if memory tools fail</li>
-<li><strong>Permission errors:</strong> Ensure the server process can read/write in the workspace directory</li>
-<li><strong>Rate limit exceeded:</strong> Wait for the sliding window to reset or restart the server to clear limits</li>
-<li><strong>Stale processes:</strong> Kill existing MCP server processes with <code>pkill -f &quot;attune.mcp.server&quot;</code> before restarting</li>
-<li><strong>Configuration mismatch:</strong> Use <code>uv run --from attune-ai</code> in <code>.mcp.json</code> to ensure correct package resolution</li>
-</ul>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/mcp/server.py</code> — Main server implementation and entry point</li>
-<li><code>src/attune/mcp/tool_schemas.py</code> — Tool definitions and handlers</li>
-<li><code>src/attune/mcp/prompts.py</code> — Prompt handling and message generation</li>
-<li><code>src/attune/mcp/rate_limiter.py</code> — Request rate limiting</li>
-<li><code>src/attune/mcp/memory_handlers.py</code> — Memory tool implementations</li>
-</ul>
-<p><strong>Tags:</strong> <code>mcp</code>, <code>tools</code>, <code>server</code></p>
 
   </article>
   <footer>

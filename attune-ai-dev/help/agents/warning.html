@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Agents cautions — warning</title>
-  <meta name="description" content="The agents feature spans release automation, state persistence, and multi-framework adapters. The risks below are most likely to surface during integration work and production rollouts." />
-  <meta property="og:title" content="Agents cautions — warning" />
-  <meta property="og:description" content="The agents feature spans release automation, state persistence, and multi-framework adapters. The risks below are most likely to surface during integration work and production rollouts." />
+  <title>Universal Agent Factory — create, run, and orchestrate AI agents across frameworks — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BaseAgent.invoke&#x27; was never awaited` | `invoke` / `run` called without `await` | They are coroutines — `await` them" />
+  <meta property="og:title" content="Universal Agent Factory — create, run, and orchestrate AI agents across frameworks — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BaseAgent.invoke&#x27; was never awaited` | `invoke` / `run` called without `await` | They are coroutines — `await` them" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/warning" />
   <style>
@@ -272,46 +272,69 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Agents cautions</h1>
-<h2>What to watch for</h2>
-<p>The agents feature spans release automation, state persistence, and multi-framework adapters. The risks below are most likely to surface during integration work and production rollouts.</p>
-<h2>Risk areas</h2>
-<h3>Lazy adapter imports can silently return <code>None</code></h3>
-<p><code>get_langchain_adapter()</code>, <code>get_langgraph_adapter()</code>, <code>get_autogen_adapter()</code>, and <code>get_haystack_adapter()</code> all use lazy imports. If the underlying framework package is not installed, <code>is_available()</code> returns <code>False</code> and the adapter may not be usable. Call <code>is_available()</code> on the adapter before invoking <code>create_agent()</code> or <code>create_workflow()</code>, otherwise you will get a runtime failure at the point of first use rather than at startup.</p>
-<h3><code>wrap_wizard()</code> silently applies a default model tier</h3>
-<p><code>wrap_wizard(wizard, name, model_tier='capable')</code> defaults <code>model_tier</code> to <code>'capable'</code>. If you intend to run the wrapped agent under a cost-constrained tier, you must pass <code>model_tier</code> explicitly. Omitting it will not raise an error, so cost overruns from unintended tier selection can go unnoticed until billing review.</p>
-<h3><code>safe_agent_operation</code> swallows errors as <code>AgentOperationError</code></h3>
-<p>The <code>@safe_agent_operation</code> decorator catches exceptions and re-raises them as <code>AgentOperationError</code>. If you nest decorated operations, the original exception type is lost at each layer. Preserve the original error in your exception handling and log the full chain before it is wrapped.</p>
-<h3><code>retry_on_failure</code> can multiply API costs</h3>
-<p><code>retry_on_failure(max_attempts=3, delay=1.0, backoff=2.0)</code> retries on any exception in the <code>exceptions</code> tuple. If you include broad exception types such as <code>Exception</code>, transient network errors and genuine model errors both trigger retries — up to three billable API calls per invocation. Scope the <code>exceptions</code> tuple to the specific retriable error types your framework raises.</p>
-<h3><code>validate_input</code> rejects non-dict inputs without a framework-specific message</h3>
-<p><code>@validate_input(required_fields)</code> raises <code>ValueError</code> with the message <code>'Input must be a dict, got {...}'</code> when <code>input_data</code> is a string. The <code>invoke()</code> methods on <code>AutoGenAgent</code>, <code>HaystackAgent</code>, and <code>LangChainAgent</code> accept <code>str | dict</code>, but the decorator does not. If you apply <code>validate_input</code> to a method that advertises string input, callers will hit an undocumented <code>ValueError</code>.</p>
-<h3>Agent state records are not automatically recovered</h3>
-<p><code>AgentStateStore</code> and <code>AgentRecoveryManager</code> persist execution state, but recovery is not triggered automatically on agent restart. If a release workflow exits mid-run, you must explicitly invoke recovery through <code>AgentRecoveryManager</code> before re-running. Skipping this step can cause <code>ReleasePrepTeamWorkflow</code> to reprocess completed stages or miss state that was recorded before the failure.</p>
-<h2>How to avoid problems</h2>
-<ol>
-<li>
-<p><strong>Check adapter availability at startup.</strong> Call <code>is_available()</code> immediately after obtaining an adapter from any of the <code>get_*_adapter()</code> functions. Fail fast with a clear message rather than letting the error surface during a workflow run.</p>
-</li>
-<li>
-<p><strong>Be explicit with <code>wrap_wizard()</code> model tier.</strong> Always pass <code>model_tier</code> by name — for example, <code>wrap_wizard(wizard, name=&quot;my-agent&quot;, model_tier=&quot;efficient&quot;)</code> — so the tier is visible at the call site and not hidden in a default.</p>
-</li>
-<li>
-<p><strong>Narrow the <code>exceptions</code> tuple in <code>retry_on_failure</code>.</strong> Restrict retries to the specific exception classes that represent transient failures in your framework, rather than catching <code>Exception</code> broadly.</p>
-</li>
-<li>
-<p><strong>Run recovery before re-executing interrupted workflows.</strong> After any unclean shutdown, use <code>AgentRecoveryManager</code> to inspect and restore state from <code>AgentStateStore</code> before calling <code>ReleasePrepTeamWorkflow.run()</code> again.</p>
-</li>
-<li>
-<p><strong>Avoid depending on private helpers.</strong> Functions and methods prefixed with <code>_</code> (such as <code>_run_command</code>) are not part of the public API and can change without notice. Use only the names exported in <code>__all__</code>.</p>
-</li>
-</ol>
-<h2>Source files</h2>
+<h1>Universal Agent Factory — create, run, and orchestrate AI agents across frameworks</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'BaseAgent.invoke' was never awaited</code></td>
+<td><code>invoke</code> / <code>run</code> called without <code>await</code></td>
+<td>They are coroutines — <code>await</code> them or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td>Constructing a non-native factory raises / <code>is_available()</code> is <code>False</code></td>
+<td>The framework's optional dependency isn't installed</td>
+<td>Install the framework extra, or use <code>native</code>; check <code>list_frameworks(installed_only=True)</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>recommend_framework</code> / <code>list_frameworks</code> &quot;needs an instance&quot; error</td>
+<td>Called as if instance-only</td>
+<td>They are callable on the class; call <code>AgentFactory.list_frameworks()</code></td>
+<td>low</td>
+</tr>
+<tr>
+<td><code>get_agent(name)</code> returns <code>None</code></td>
+<td>No agent with that name was created on this factory</td>
+<td>Check <code>list_agents()</code>; names are per-factory</td>
+<td>low</td>
+</tr>
+<tr>
+<td>A tool isn't used by the agent</td>
+<td>Tool not added / wrong schema</td>
+<td>Build it with <code>create_tool(...)</code> and pass it via <code>tools=</code> or <code>add_tool(...)</code></td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/agents/**</code></li>
-<li><code>src/attune/agent_factory/**</code></li>
+<li><strong>The run methods are async.</strong> <code>invoke</code>, <code>run</code>, and <code>stream</code> are
+coroutines — forgetting to <code>await</code> is the most common mistake.</li>
+<li><strong>Non-native frameworks are optional.</strong> They load lazily; check
+<code>is_available()</code> / <code>list_frameworks(installed_only=True)</code> before
+selecting one.</li>
+<li><strong>Scope.</strong> This feature is the Factory; the release agent team and
+its state store live under release-prep, not here.</li>
 </ul>
-<p><strong>Tags:</strong> <code>agents</code>, <code>ai</code>, <code>release</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm you are awaiting: <code>await agent.invoke(...)</code> /
+<code>await workflow.run(...)</code>.</li>
+<li>Confirm the framework is installed: <code>AgentFactory.list_frameworks( installed_only=True)</code>.</li>
+<li>For a missing agent, check <code>list_agents()</code>.</li>
+<li>For tool issues, confirm the tool was built with <code>create_tool</code> and
+attached.</li>
+</ol>
 
   </article>
   <footer>

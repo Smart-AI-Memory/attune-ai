@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Agents errors — error</title>
-  <meta name="description" content="Failures in the agents feature fall into three categories: input validation errors, framework adapter initialization errors, and agent operation errors." />
-  <meta property="og:title" content="Agents errors — error" />
-  <meta property="og:description" content="Failures in the agents feature fall into three categories: input validation errors, framework adapter initialization errors, and agent operation errors." />
+  <title>Universal Agent Factory — create, run, and orchestrate AI agents across frameworks — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BaseAgent.invoke&#x27; was never awaited` | `invoke` / `run` called without `await` | They are coroutines — `await` them" />
+  <meta property="og:title" content="Universal Agent Factory — create, run, and orchestrate AI agents across frameworks — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BaseAgent.invoke&#x27; was never awaited` | `invoke` / `run` called without `await` | They are coroutines — `await` them" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/error" />
   <style>
@@ -272,47 +272,69 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Agents errors</h1>
-<h2>Common error signatures</h2>
-<p>Failures in the agents feature fall into three categories: input validation errors, framework adapter initialization errors, and agent operation errors.</p>
+<h1>Universal Agent Factory — create, run, and orchestrate AI agents across frameworks</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'BaseAgent.invoke' was never awaited</code></td>
+<td><code>invoke</code> / <code>run</code> called without <code>await</code></td>
+<td>They are coroutines — <code>await</code> them or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td>Constructing a non-native factory raises / <code>is_available()</code> is <code>False</code></td>
+<td>The framework's optional dependency isn't installed</td>
+<td>Install the framework extra, or use <code>native</code>; check <code>list_frameworks(installed_only=True)</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>recommend_framework</code> / <code>list_frameworks</code> &quot;needs an instance&quot; error</td>
+<td>Called as if instance-only</td>
+<td>They are callable on the class; call <code>AgentFactory.list_frameworks()</code></td>
+<td>low</td>
+</tr>
+<tr>
+<td><code>get_agent(name)</code> returns <code>None</code></td>
+<td>No agent with that name was created on this factory</td>
+<td>Check <code>list_agents()</code>; names are per-factory</td>
+<td>low</td>
+</tr>
+<tr>
+<td>A tool isn't used by the agent</td>
+<td>Tool not added / wrong schema</td>
+<td>Build it with <code>create_tool(...)</code> and pass it via <code>tools=</code> or <code>add_tool(...)</code></td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>ValueError: Input must be a dict, got {...}</code> — raised by <code>validate_input</code> when an <code>invoke()</code> or <code>run()</code> call receives a non-dict argument.</li>
-<li><code>ValueError: Missing required fields: {...}</code> — raised by <code>validate_input</code> when a required field is absent from the input dict passed to <code>invoke()</code> or <code>run()</code>.</li>
-<li><code>AgentOperationError</code> — raised by <code>safe_agent_operation</code> when a decorated agent method fails. The decorator logs the failure before re-raising, so the log output will describe the operation that failed.</li>
-<li>Framework unavailability — <code>is_available()</code> returning <code>False</code> on <code>AutoGenAdapter</code>, <code>HaystackAdapter</code>, or <code>LangChainAdapter</code> indicates the optional framework dependency is not installed. Any subsequent call to <code>create_agent()</code> or <code>create_workflow()</code> on that adapter will fail.</li>
-<li>Retry exhaustion — <code>retry_on_failure</code> re-raises the last exception after <code>max_attempts</code> attempts. When you see a repeated exception logged multiple times in quick succession, the cause is usually a transient failure that exceeded the retry budget.</li>
+<li><strong>The run methods are async.</strong> <code>invoke</code>, <code>run</code>, and <code>stream</code> are
+coroutines — forgetting to <code>await</code> is the most common mistake.</li>
+<li><strong>Non-native frameworks are optional.</strong> They load lazily; check
+<code>is_available()</code> / <code>list_frameworks(installed_only=True)</code> before
+selecting one.</li>
+<li><strong>Scope.</strong> This feature is the Factory; the release agent team and
+its state store live under release-prep, not here.</li>
 </ul>
-<h2>Where errors originate</h2>
-<p>Errors typically arise at one of the following call sites:</p>
-<ul>
-<li><code>get_langchain_adapter()</code>, <code>get_langgraph_adapter()</code>, <code>get_autogen_adapter()</code>, <code>get_haystack_adapter()</code> — these lazy-import functions fail at call time if the corresponding framework is not installed, not at import time.</li>
-<li><code>wrap_wizard()</code> — wraps a wizard as a <code>WizardAgent</code>; fails if the wizard argument is incompatible with <code>AgentConfig</code> expectations.</li>
-<li><code>AgentRecoveryManager</code> — manages recovery for failed agent executions; errors here affect <code>AgentExecutionRecord</code> and <code>AgentStateStore</code> persistence.</li>
-</ul>
-<h2>How to diagnose</h2>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Check whether the framework adapter is available.</strong> Call <code>is_available()</code> on the relevant adapter (<code>AutoGenAdapter</code>, <code>HaystackAdapter</code>, or <code>LangChainAdapter</code>) before calling <code>create_agent()</code> or <code>create_workflow()</code>. A <code>False</code> return means the optional dependency is missing — install it first.</p>
-</li>
-<li>
-<p><strong>Read the <code>AgentOperationError</code> message.</strong> The <code>safe_agent_operation</code> decorator logs the operation name and exception details before raising <code>AgentOperationError</code>. Check your log output at <code>ERROR</code> level for the decorated operation name; it identifies which agent method failed and the underlying cause.</p>
-</li>
-<li>
-<p><strong>Identify which <code>validate_input</code> field is missing.</strong> When you see <code>ValueError: Missing required fields: {...}</code>, the set in the message names the exact keys absent from your input dict. Ensure the dict passed to <code>invoke()</code> or <code>run()</code> includes every field declared in <code>required_fields</code> for that decorator.</p>
-</li>
-<li>
-<p><strong>Check for retry exhaustion.</strong> If <code>retry_on_failure</code> has re-raised, you will see the same exception logged <code>max_attempts</code> times. Confirm whether the underlying cause is a transient issue (network, rate limit) or a persistent misconfiguration — the latter will not resolve with more retries.</p>
-</li>
-<li>
-<p><strong>Enable <code>DEBUG</code> logging.</strong> The agents module uses Python's <code>logging</code> facility. Set the log level to <code>DEBUG</code> and re-run the failing scenario. <code>safe_agent_operation</code> and <code>log_performance</code> both emit structured log entries that trace execution state before and after each operation.</p>
-</li>
+<li>Confirm you are awaiting: <code>await agent.invoke(...)</code> /
+<code>await workflow.run(...)</code>.</li>
+<li>Confirm the framework is installed: <code>AgentFactory.list_frameworks( installed_only=True)</code>.</li>
+<li>For a missing agent, check <code>list_agents()</code>.</li>
+<li>For tool issues, confirm the tool was built with <code>create_tool</code> and
+attached.</li>
 </ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/agents/**</code></li>
-<li><code>src/attune/agent_factory/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>agents</code>, <code>ai</code>, <code>release</code></p>
 
   </article>
   <footer>

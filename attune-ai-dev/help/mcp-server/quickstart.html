@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: Run the MCP Server — quickstart</title>
-  <meta name="description" content="Start Attune&#x27;s Model Context Protocol server and make your first tool call." />
-  <meta property="og:title" content="Quickstart: Run the MCP Server — quickstart" />
-  <meta property="og:description" content="Start Attune&#x27;s Model Context Protocol server and make your first tool call." />
+  <title>The Model Context Protocol server that exposes attune workflows, help, and memory as tools — quickstart</title>
+  <meta name="description" content="Register the server with Claude Code via `.mcp.json` (the plugin ships this) so the tools appear in your conversation:" />
+  <meta property="og:title" content="The Model Context Protocol server that exposes attune workflows, help, and memory as tools — quickstart" />
+  <meta property="og:description" content="Register the server with Claude Code via `.mcp.json` (the plugin ships this) so the tools appear in your conversation:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/mcp-server/quickstart" />
   <style>
@@ -272,51 +272,24 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: Run the MCP Server</h1>
-<p>Start Attune's Model Context Protocol server and make your first tool call.</p>
-<pre><code class="language-python">from attune.mcp.server import create_server
-
-# Create and start the MCP server
-server = create_server()
-
-# Get available tools
-tools = server.get_tool_list()
-print(f&quot;Available tools: {[tool['name'] for tool in tools]}&quot;)
-
-# Make your first tool call
-result = server.call_tool('auth_status', {})
-print(f&quot;Auth status: {result}&quot;)
+<h1>The Model Context Protocol server that exposes attune workflows, help, and memory as tools</h1>
+<h2>Quickstart</h2>
+<p>Register the server with Claude Code via <code>.mcp.json</code> (the plugin ships
+this) so the tools appear in your conversation:</p>
+<pre><code class="language-json">{
+  &quot;mcpServers&quot;: {
+    &quot;attune-ai&quot;: {
+      &quot;command&quot;: &quot;uv&quot;,
+      &quot;args&quot;: [&quot;run&quot;, &quot;python&quot;, &quot;-m&quot;, &quot;attune.mcp.server&quot;]
+    }
+  }
+}
 </code></pre>
-<p>Expected output:</p>
-<pre><code>Available tools: ['auth_status', 'help_lookup', 'memory_store', ...]
-Auth status: {'status': 'configured', 'tier': 'free', 'mode': 'hybrid'}
+<p>Once connected, the built-in tools (<code>code_review</code>, <code>help_lookup</code>,
+<code>memory_store</code>, …) — plus any registered by installed plugins — are
+callable from the conversation. To run the server directly for testing:</p>
+<pre><code class="language-bash">python -m attune.mcp.server
 </code></pre>
-<h2>Next steps</h2>
-<ol>
-<li>
-<p><strong>Try a help lookup</strong></p>
-<pre><code class="language-python">help_result = server.call_tool('help_lookup', {'topic': 'security-audit'})
-print(help_result)
-</code></pre>
-</li>
-<li>
-<p><strong>Run a prompt</strong></p>
-<pre><code class="language-python">prompts = server.get_prompt_list()
-messages = server.get_prompt_messages('security-scan', {'path': '.'})
-</code></pre>
-</li>
-<li>
-<p><strong>Check available resources</strong></p>
-<pre><code class="language-python">resources = server.get_resource_list()
-for resource in resources:
-    print(f&quot;{resource['name']}: {resource['description']}&quot;)
-</code></pre>
-</li>
-</ol>
-<h2>What you just did</h2>
-<p>You created an MCP server instance that provides 20+ tools for workflow execution, help lookup, memory management, and authentication. The server handles rate limiting, user context, and progressive help automatically.</p>
-<h2>Next</h2>
-<p>Say <strong>&quot;show me MCP server tools&quot;</strong> to see the complete tool reference with all parameters and return types.</p>
 
   </article>
   <footer>
