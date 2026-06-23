@@ -56,7 +56,7 @@ Based on the answer, route to the appropriate workflow.
 
 | Workflow | MCP Tool | What It Does |
 | -------- | -------- | ------------ |
-| Release Prep | `release_prep` | Health checks, changelog, dependency audits |
+| Release Notes | `release_notes` | Changelog draft + go/no-go advisory |
 
 ## Execution
 
