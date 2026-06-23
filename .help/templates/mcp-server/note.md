@@ -1,44 +1,101 @@
 ---
 type: note
+name: mcp-server-note
 feature: mcp-server
 depth: note
-generated_at: 2026-04-20T01:22:10.978597+00:00
-source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
+generated_at: 2026-06-23T22:52:03.357140+00:00
+source_hash: 08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f
 status: generated
 ---
 
-# Note: MCP server
+# The Model Context Protocol server that exposes attune workflows, help, and memory as tools
 
-## Context
+## Overview
 
-Attune AI's Model Context Protocol (MCP) server provides Claude Code with access to workflows, memory, help system, authentication, and telemetry through a structured tool interface. The server implements the MCP specification to expose Attune's capabilities as callable tools within Claude environments.
+The MCP server is attune's **Model Context Protocol** implementation —
+it exposes attune's workflows, help system, and memory as structured
+**tools**, **resources**, and **prompts** that an MCP client (Claude
+Code) can call. The server class is **`EmpathyMCPServer`**; it speaks
+MCP over **stdio** and is launched with `python -m attune.mcp.server`.
 
-## Architecture
+It is how every other attune feature reaches a conversation: the
+`code_review`, `security_audit`, `memory_store`, `help_lookup`, … tools
+you call in Claude Code are registered and dispatched here. This page
+documents the **server itself** — its architecture, how to run and
+register it, and the tool/resource/prompt surface — not each individual
+tool (those belong to their own features).
 
-The MCP server uses a mixin-based design around the core `EmpathyMCPServer` class:
+You reach it these ways:
 
-- **EmpathyMCPServer** — Main server implementation handling MCP protocol, tool routing, and rate limiting
-- **MemoryHandlersMixin** — Provides memory store/retrieve/search/forget tools for cross-session data persistence
-- **WorkflowHandlersMixin** — Exposes workflow execution tools for running Attune AI automation
+- **registration** — a `.mcp.json` entry runs `python -m
+  attune.mcp.server` (the plugin ships one); Claude Code connects over
+  stdio;
+- the Python API — `from attune.mcp import create_server,
+  EmpathyMCPServer`, for embedding or testing the server.
 
-The server exposes five tool categories:
-1. **Workflow tools** — Execute Attune workflows directly from Claude
-2. **Utility tools** — Authentication status, telemetry stats, session context management
-3. **Help tools** — Progressive documentation lookup, template maintenance, project bootstrapping
-4. **Memory tools** — Persistent storage for patterns, preferences, and cross-agent coordination
-5. **Rate limiting** — Sliding-window limiter preventing API abuse
+## Concepts
 
-## Integration patterns
+### `EmpathyMCPServer` and its mixins
 
-Claude Code discovers the server through `.mcp.json` configuration files in project roots. The server must run as `uv run python -m attune.mcp.server` to ensure correct package resolution and avoid Python environment conflicts that prevent tool availability.
+`EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin)` is the
+core server. The mixins supply handler groups: `WorkflowHandlersMixin`
+runs the analysis workflows, `MemoryHandlersMixin` handles
+cross-session memory. A `RateLimiter` guards against tool-call floods.
+`create_server()` builds a ready instance.
 
-Rate limiting applies per-tool with a default 60 calls per 60-second window. Voice interfaces skip memory and session tools (defined in `_VOICE_SKIP_TOOLS`) to avoid interrupting conversational flow.
+### The tool surface — 41 built-in tools in 5 categories
 
-## Source files
+At startup the server merges five built-in tool-schema groups (from
+`attune.mcp.tool_schemas`) into one registry, then lets installed
+plugins register more (`_register_plugin_tools` — e.g. attune-redis
+adds its `redis_*` tools), so `server.tools` can hold more than these
+41:
 
-- `src/attune/mcp/server.py` — Core server and entry point
-- `src/attune/mcp/memory_handlers.py` — Memory tool implementations
-- `src/attune/mcp/workflow_handlers.py` — Workflow tool implementations
-- `src/attune/mcp/prompts.py` — MCP prompt definitions
-- `src/attune/mcp/tool_schemas.py` — Tool schema definitions
-- `src/attune/mcp/rate_limiter.py` — Rate limiting implementation
+| Category | Function | Count | Examples |
+|----------|----------|-------|----------|
+| Workflow | `get_workflow_tools()` | 21 | `code_review`, `security_audit`, `test_generation`, `release_notes`, `rag_knowledge_query` |
+| Utility | `get_utility_tools()` | 7 | `auth_status`, `telemetry_stats`, `attune_set_level`, `context_get` |
+| Help | `get_help_tools()` | 5 | `help_lookup`, `help_update`, `help_status` |
+| Memory | `get_memory_tools()` | 4 | `memory_store`, `memory_retrieve`, `memory_search` |
+| Personal memory | `get_personal_memory_tools()` | 4 | `personal_memory_capture`, `personal_memory_recall` |
+
+A `_build_dispatch_table()` maps each tool name to the handler method
+that runs it; `call_tool(name, arguments)` is the async dispatch entry.
+
+### Resources and prompts
+
+Beyond tools, the server publishes three **resources** (read-only
+data) and three **prompts** (reusable prompt templates):
+
+| Kind | Names |
+|------|-------|
+| Resources | `attune://workflows`, `attune://auth/config`, `attune://telemetry` |
+| Prompts | `security-scan`, `test-gen`, `cost-report` |
+
+`get_resource_list()` and `get_prompt_list()` return them.
+
+### Rate limiting
+
+A sliding-window `RateLimiter(max_calls=60, window_seconds=60.0)`
+caps tool calls — by default **60 calls per 60-second window** — so a
+runaway client can't flood the server.
+
+### Transport and launch
+
+The server runs over **stdio**: `main()` calls
+`asyncio.run(_run_stdio())`. Launch it with `python -m
+attune.mcp.server`. It logs to a temp file (`attune-mcp.log`) and loads
+`.env` so an `ANTHROPIC_API_KEY` is available to tools that need it
+(e.g. the help polish pass).
+
+## Notes & tips
+
+- **Depend on the documented public surface.** The supported API is
+  `create_server` and `EmpathyMCPServer` from `attune.mcp`; the
+  tool-schema group functions live in `attune.mcp.tool_schemas`.
+  Handler methods and the dispatch table are internal.
+- **`await` `call_tool`.** It's the one async entry; the inspection
+  helpers are sync.
+- **Read the log file to debug.** stdout is reserved for the protocol.
+- **Tool contracts live with their features.** This page covers the
+  server; each tool's inputs are documented on its own feature page.

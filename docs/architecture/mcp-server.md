@@ -1,14 +1,4 @@
----
-type: concept
-name: mcp-server-concept
-feature: mcp-server
-depth: concept
-generated_at: 2026-06-23T22:52:03.357140+00:00
-source_hash: 08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f
-status: generated
----
-
-# The Model Context Protocol server that exposes attune workflows, help, and memory as tools
+# Mcp Server
 
 ## Overview
 
@@ -87,3 +77,34 @@ The server runs over **stdio**: `main()` calls
 attune.mcp.server`. It logs to a temp file (`attune-mcp.log`) and loads
 `.env` so an `ANTHROPIC_API_KEY` is available to tools that need it
 (e.g. the help polish pass).
+
+## Design & extension
+
+### Design decisions
+
+- **Mixins by domain.** `EmpathyMCPServer` composes
+  `WorkflowHandlersMixin` and `MemoryHandlersMixin` so handler groups
+  stay cohesive and the server class stays a thin coordinator.
+- **Schemas separate from handlers.** Tool *schemas* live in
+  `tool_schemas.py` (the five `get_*_tools` groups + resources +
+  prompts); *handlers* live in the mixins; a dispatch table binds name
+  → handler. Adding a tool touches both, deliberately.
+- **stdio transport.** The server speaks MCP over stdio (the standard
+  local-client channel), so stdout is the protocol and logs go to a
+  file.
+- **Rate-limited by default.** A 60-call/60-second sliding window
+  protects against runaway clients without per-tool configuration.
+
+### Extension points
+
+- **Add a tool:** add its schema to the right `get_*_tools` group in
+  `tool_schemas.py`, add a handler method, and register it in
+  `_build_dispatch_table()`.
+- **Add a resource or prompt:** extend `get_resources()` /
+  `get_prompts()`.
+- **Tune rate limiting:** construct the server's `RateLimiter` with a
+  different `max_calls` / `window_seconds`.
+- **Embed the server:** `create_server()` returns an instance you can
+  drive directly (e.g. in tests via `await call_tool(...)`).
+
+<!-- attune-generated: source_hash=08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f feature=mcp-server kind=architecture generated_at=2026-06-23 -->

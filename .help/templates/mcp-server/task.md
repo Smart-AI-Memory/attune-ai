@@ -1,69 +1,74 @@
 ---
 type: task
+name: mcp-server-task
 feature: mcp-server
 depth: task
-generated_at: 2026-06-22T10:00:48.764701+00:00
-source_hash: 9e36c58165bf28d2d017a183ce57a5f54f8bf32c3d68cd05d5d762a3eb741ae4
+generated_at: 2026-06-23T22:52:03.357140+00:00
+source_hash: 08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f
 status: generated
 ---
 
-# Work with MCP server
+# The Model Context Protocol server that exposes attune workflows, help, and memory as tools
 
-Use the MCP server when you need to implement or modify Model Context Protocol tool handlers for Attune AI workflows.
+## Tasks
 
-## Prerequisites
+### Inspect the server's surface from Python
 
-- Access to the project source code
-- Familiarity with the files under `src/attune/mcp/`
-- Understanding of MCP (Model Context Protocol) concepts
+**Goal:** see the registered tools, resources, and prompts without a
+client.
 
-## Steps
+**Steps:**
 
-1. **Identify the server component to modify**
+```python
+from attune.mcp import create_server
 
-   Determine which part of the MCP server handles your use case:
-   - **Prompts**: Use `src/attune/mcp/prompts.py` for prompt templates
-   - **Tools**: Use `src/attune/mcp/tool_schemas.py` for tool definitions
-   - **Server core**: Use `src/attune/mcp/server.py` for server lifecycle
-   - **Memory handlers**: Use `src/attune/mcp/memory_handlers.py` for memory operations
-   - **Rate limiting**: Use `src/attune/mcp/rate_limiter.py` for call throttling
+server = create_server()
+print(len(server.tools), "tools")
+print([r["uri"] for r in server.get_resource_list()])
+print([p["name"] for p in server.get_prompt_list()])
+```
 
-2. **Review the existing implementation**
+**Verify:** `create_server()` returns a ready `EmpathyMCPServer`.
+`server.tools` is the merged registry — the 41 built-in tools plus any
+registered by installed plugins (e.g. attune-redis adds five `redis_*`
+tools), so the printed count is ≥ 41. `get_resource_list()` returns the
+three `attune://…` resources; `get_prompt_list()` returns
+`security-scan` / `test-gen` / `cost-report`.
 
-   Open the relevant file and examine:
-   - The function signature and docstring
-   - Input parameters and return types
-   - Error handling patterns
-   - Integration with other components
+### Call a tool programmatically
 
-3. **Create your MCP server instance**
+**Goal:** dispatch a tool the way the MCP client would.
 
-   If working with a new server instance:
-   ```python
-   from attune.mcp.server import create_server
-   server = create_server()
-   ```
+**Steps:**
 
-4. **Modify the appropriate handler**
+```python
+import asyncio
 
-   Make your changes following the established patterns:
-   - Tool functions return `dict[str, Any]` with structured responses
-   - Use the rate limiter for external API calls
-   - Follow the naming convention for new tools
-   - Include proper error handling with meaningful messages
+from attune.mcp import create_server
 
-5. **Test your changes**
 
-   Run the MCP server tests to verify your implementation:
-   ```bash
-   pytest -k "mcp" --verbose
-   ```
+async def main() -> None:
+    server = create_server()
+    result = await server.call_tool("auth_status", {})
+    print(result)
 
-## Verify success
 
-Your implementation is working when:
-- The MCP server starts without errors using `main()`
-- Your tool appears in the tool list from `get_tool_list()`
-- Tool calls return the expected response format
-- Rate limiting prevents excessive API usage
-- All existing tests continue to pass
+asyncio.run(main())
+```
+
+**Verify:** `call_tool(name, arguments)` is a coroutine — `await` it.
+It looks the handler up in the dispatch table and returns the tool's
+result dict. Rate limiting applies (60 calls / 60 s by default).
+
+### Register the server with a client
+
+**Goal:** make the tools available in Claude Code.
+
+**Steps:** add an `mcpServers` entry that runs `python -m
+attune.mcp.server` (see Quickstart). The plugin's bundled `.mcp.json`
+uses `uvx --from attune-ai python -m attune.mcp.server`; a local
+checkout uses `uv run python -m attune.mcp.server`.
+
+**Verify:** after connecting, the attune tools appear in the client.
+Server logs land in `<tmp>/attune/attune-mcp.log` if you need to
+debug the connection.
