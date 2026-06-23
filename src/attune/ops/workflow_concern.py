@@ -89,6 +89,8 @@ _WORKFLOW_CONCERNS: dict[str, Concern] = {
     "dependency-check": "audit",
     # meta
     "release-prep": "meta",
+    "release-gate": "meta",
+    "release-notes": "meta",
     "secure-release": "meta",
     "orchestrated-health-check": "meta",
     "health-check": "meta",

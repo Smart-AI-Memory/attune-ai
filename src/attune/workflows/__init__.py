@@ -302,8 +302,14 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "secure-release": "SecureReleasePipeline",
     # Meta-orchestration workflows (v4.0.0)
     "orchestrated-health-check": "OrchestratedHealthCheckWorkflow",
-    # Release preparation (v5.2 — agent team is canonical)
+    # Release preparation. Two distinct workflows:
+    #   release-prep  — deterministic gate (real bandit/ruff/pytest + hard
+    #                   thresholds), the agent team (canonical). `release-gate`
+    #                   is a first-class synonym for the same class.
+    #   release-notes — advisory: drafts a changelog + LLM go/no-go (SDK).
     "release-prep": "ReleasePrepTeamWorkflow",
+    "release-gate": "ReleasePrepTeamWorkflow",
+    "release-notes": "ReleasePreparationWorkflow",
     # Research and synthesis workflows
     "research-synthesis": "ResearchSynthesisWorkflow",
     # code-review-sdk: Merged into code-review (v4.2.0)

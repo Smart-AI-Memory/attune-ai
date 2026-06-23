@@ -90,12 +90,18 @@ that must be resolved before release.\
 
 
 class ReleasePreparationWorkflow(BaseWorkflow):
-    """Pre-release quality gate workflow powered by Agent SDK subagents.
+    """Release-notes draft + readiness advisory, powered by Agent SDK subagents.
 
     Delegates all analysis to four Agent SDK subagents rather than
     using the mixin stage system. Each subagent focuses on a specific
-    release-readiness domain (health, security, changelog, assessment).
-    The orchestrator synthesizes findings into a unified report.
+    release-readiness domain (health, security, changelog, assessment),
+    and the orchestrator synthesizes a draft changelog plus an LLM
+    go/no-go recommendation.
+
+    This is the *advisory* release workflow — it predicts and drafts; it
+    does not enforce hard quality gates. The deterministic gate (real
+    bandit/ruff/pytest with pass/fail thresholds) is the separate
+    ``release-prep`` agent team (``ReleasePrepTeamWorkflow``).
 
     Usage::
 
@@ -103,8 +109,8 @@ class ReleasePreparationWorkflow(BaseWorkflow):
         result = await workflow.execute(path=".", depth="standard")
     """
 
-    name = "release-prep"
-    description = "Pre-release quality gate with Agent SDK subagents"
+    name = "release-notes"
+    description = "Draft release notes + LLM readiness advice (Agent SDK subagents)"
     stages = ["agent-prep"]
     tier_map = {"agent-prep": ModelTier.CAPABLE}
 
