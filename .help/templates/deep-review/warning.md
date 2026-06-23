@@ -3,45 +3,46 @@ type: warning
 name: deep-review-warning
 feature: deep-review
 depth: warning
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 0166eb83fb8436c203cdd073439a7339645f40e53cdfe39db4fbed0559eac81d
+generated_at: 2026-06-23T15:11:33.648986+00:00
+source_hash: 5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083
 status: generated
 ---
 
-# Deep Review Cautions
+# Multi-pass code review across security, quality, and test gaps
 
-`deep_review` coordinates three specialized subagents — `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer` — and synthesizes their findings into a single report. Because results depend on all three subagents completing successfully, a failure or misconfiguration in any one of them affects the entire consolidated output.
+## Failure modes
 
-## Risk areas
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'DeepReviewAgentSDKWorkflow.execute' was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `WorkflowResult.success` is `False`, `error` is `"path argument is required"` | `execute` called with empty or missing `path` | Pass a non-empty `path` | high |
+| `error` reads `"Invalid focus values. Valid: ..."` | `focus` contained only unrecognized values | Use a subset of `"security"`, `"quality"`, `"test-gaps"` (note the hyphen in `test-gaps`) | medium |
+| `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
+| `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry; `transient` is set when a retry is reasonable | medium |
+| Review stops early / partial report | The depth's agent-turn or budget cap was reached | Use a shallower path, narrow with `focus`, or accept a deeper (costlier) run | medium |
+| A finding looks like a false positive | Findings are LLM predictions, not verified defects | Confirm against the cited file/line before acting | medium |
 
-### Incomplete synthesis when a subagent produces no findings
+### Risk areas
 
-`DeepReviewAgentSDKWorkflow.execute()` relies on each subagent reporting independently before the orchestrator synthesizes results. If a subagent returns empty output — due to a scoped `path` argument that excludes relevant files, a timeout, or a permissions issue — the consolidated report silently omits that domain. A clean **Security** or **Test Gaps** section does not necessarily mean no issues exist; it may mean the subagent had nothing to analyze.
+- **The async call is easy to get wrong.** `execute` is the only
+  public method and it is a coroutine. Forgetting to `await` it is
+  the single most common mistake.
+- **`focus` spelling matters.** The valid values are `"security"`,
+  `"quality"`, and `"test-gaps"` — `"test-gap"` (no `s`) is
+  silently dropped, and an all-invalid `focus` fails the run.
+- **Findings are predictions, not proofs.** A CRITICAL or HIGH
+  finding means "look here first," not a confirmed defect — and a
+  clean review is not a guarantee. Verify before acting.
 
-**Mitigation:** Verify that the `path` you pass to `deep_review(path="...")` covers the full scope you intend to review. Spot-check individual section counts in the **Summary** (overall findings by severity) against what you expect for your codebase size.
+### Diagnosis order
 
-### Private subagent names and prompt templates can change without notice
-
-The subagent identifiers (`security-reviewer`, `quality-reviewer`, `test-gap-reviewer`) and the task prompt are defined in module-level private constants (`_SUBAGENT_NAMES`, `_TASK_PROMPT_TEMPLATE`). Any code that references or patches these constants directly — for example, to override prompts or redirect subagents — will break silently when those constants change, because private names carry no stability guarantee.
-
-**Mitigation:** Interact with `deep_review` exclusively through its public interface: `DeepReviewAgentSDKWorkflow.execute(**kwargs)` and the `deep_review(path="...")` tool call. Do not import or monkey-patch `_SUBAGENT_NAMES` or `_TASK_PROMPT_TEMPLATE`.
-
-### Path scoping produces misleading scores
-
-The workflow reports an overall code health score (0–100) calibrated to the files it actually analyzed. Passing a narrow `path` — a single subdirectory or file — produces a score and finding counts that reflect only that scope. Treating a partial-scope score as a whole-project health indicator leads to incorrect conclusions.
-
-**Mitigation:** When you need a whole-project assessment, pass the repository root as `path`. When you intentionally scope to a subdirectory, note the scope explicitly when sharing or acting on the report.
-
-## How to avoid problems
-
-1. **Use the public API only.** `DeepReviewAgentSDKWorkflow.execute(**kwargs)` is the supported entry point. Subclassing `DeepReviewAgentSDKWorkflow` or overriding internal methods may appear to work but will break as the orchestration logic evolves.
-
-2. **Treat an empty section as unverified, not clear.** The consolidated report separates findings into **Security**, **Quality**, and **Test Gaps** sections. An empty section means that subagent reported nothing for the given path — not that the code is free of issues in that domain.
-
-3. **Check file paths and line numbers in findings.** The orchestrator's system prompt instructs subagents to cite file paths and line numbers. If a finding lacks that detail, treat it as lower confidence and verify manually before acting on it.
-
-## Source files
-
-- `src/attune/workflows/deep_review.py`
-
-**Tags:** `review`, `security`, `quality`, `tests`, `comprehensive-review`
+1. Confirm you are awaiting: `result = await workflow.execute(
+   path="src/")` inside an `async def` or `asyncio.run`.
+2. Check `result.success`; if `False`, read `result.error` and
+   `result.error_type`.
+3. For a focus error, confirm the values are a subset of
+   `security` / `quality` / `test-gaps`.
+4. On an SDK error, inspect `result.metadata` for the captured
+   `sdk_stderr` / SDK error kind.
+5. Confirm the scope: `result.metadata` echoes the `path`,
+   `depth`, `max_turns`, and active `focus`.

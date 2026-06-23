@@ -3,71 +3,38 @@ type: quickstart
 name: deep-review-quickstart
 feature: deep-review
 depth: quickstart
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 0166eb83fb8436c203cdd073439a7339645f40e53cdfe39db4fbed0559eac81d
+generated_at: 2026-06-23T15:11:33.648986+00:00
+source_hash: 5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083
 status: generated
 ---
 
-# Quickstart: Deep review
+# Multi-pass code review across security, quality, and test gaps
 
-Run a multi-pass code review that covers security, quality, and test gaps in one consolidated report.
+## Quickstart
 
-```python
-from attune.workflows.deep_review import DeepReviewAgentSDKWorkflow
-
-result = DeepReviewAgentSDKWorkflow().execute(path="src/")
-print(result)
-```
-
-**Result:** A consolidated report with an overall health score (0–100), security findings, quality findings, test gap findings, and up to ten prioritized suggestions — each tied to a specific finding.
-
-## Steps
-
-**1. Import and instantiate**
+Review a directory and print the consolidated report.
+`DeepReviewAgentSDKWorkflow.execute` is an async coroutine, so
+drive it with `asyncio.run` (or `await` it inside an existing
+event loop):
 
 ```python
-from attune.workflows.deep_review import DeepReviewAgentSDKWorkflow
+import asyncio
 
-workflow = DeepReviewAgentSDKWorkflow()
+from attune.workflows import DeepReviewAgentSDKWorkflow
+
+
+async def main() -> None:
+    workflow = DeepReviewAgentSDKWorkflow()
+    result = await workflow.execute(path="src/", depth="standard")
+
+    print(result.success)          # True on a completed review
+    print(result.summary)          # short health summary
+    print(result.final_output)     # the full consolidated report
+
+
+asyncio.run(main())
 ```
 
-**2. Run the review against your codebase**
-
-Pass the path you want reviewed:
-
-```python
-result = workflow.execute(path="src/")
-```
-
-The workflow coordinates three specialized subagents — `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer` — then synthesizes their findings.
-
-**3. Read the report**
-
-```python
-print(result)
-```
-
-Your output will be structured as:
-
-```
-## Summary
-Overall code health score (0-100) ...
-
-## Security
-...
-
-## Quality
-...
-
-## Test Gaps
-...
-
-## Suggestions
-...
-```
-
-If you see all five sections, the review completed successfully.
-
----
-
-**Next:** Run `attune workflow run code-review --path "src/"` for a faster, single-pass quality check you can use on every commit.
+`depth` defaults to `"standard"`, so `execute(path="src/")` is
+equivalent. Use `"quick"` for a fast pass or `"deep"` for the
+fullest review.

@@ -3,76 +3,46 @@ type: troubleshooting
 name: deep-review-troubleshooting
 feature: deep-review
 depth: troubleshooting
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 0166eb83fb8436c203cdd073439a7339645f40e53cdfe39db4fbed0559eac81d
+generated_at: 2026-06-23T15:11:33.648986+00:00
+source_hash: 5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083
 status: generated
 ---
 
-# Troubleshoot deep review
+# Multi-pass code review across security, quality, and test gaps
 
-## Before you start
+## Failure modes
 
-`deep_review` runs a multi-pass review by coordinating three subagents — `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer` — then synthesizes their findings into a single consolidated report. Most failures trace to one of three causes: a bad `path` argument, a subagent that didn't complete, or a synthesis step that produced an incomplete report.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'DeepReviewAgentSDKWorkflow.execute' was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `WorkflowResult.success` is `False`, `error` is `"path argument is required"` | `execute` called with empty or missing `path` | Pass a non-empty `path` | high |
+| `error` reads `"Invalid focus values. Valid: ..."` | `focus` contained only unrecognized values | Use a subset of `"security"`, `"quality"`, `"test-gaps"` (note the hyphen in `test-gaps`) | medium |
+| `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
+| `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry; `transient` is set when a retry is reasonable | medium |
+| Review stops early / partial report | The depth's agent-turn or budget cap was reached | Use a shallower path, narrow with `focus`, or accept a deeper (costlier) run | medium |
+| A finding looks like a false positive | Findings are LLM predictions, not verified defects | Confirm against the cited file/line before acting | medium |
 
-## Symptom table
+### Risk areas
 
-| If you observe | Check |
-|----------------|-------|
-| `deep_review` raises an exception immediately | Whether `path` resolves to a real directory or file on disk |
-| Report is missing a section (Security, Quality, or Test Gaps) | Which subagent produced that section — one of `security-reviewer`, `quality-reviewer`, or `test-gap-reviewer` may have failed silently |
-| Overall code health score is absent from the Summary | Whether `DeepReviewAgentSDKWorkflow.execute()` returned a complete `WorkflowResult` or an early partial result |
-| Review completes but findings appear empty or generic | Whether `path` pointed at the intended target — a wrong path yields a valid but content-free report |
-| Execution is much slower than expected | Whether `path` targets a very large directory; the three subagents run across the full tree |
+- **The async call is easy to get wrong.** `execute` is the only
+  public method and it is a coroutine. Forgetting to `await` it is
+  the single most common mistake.
+- **`focus` spelling matters.** The valid values are `"security"`,
+  `"quality"`, and `"test-gaps"` — `"test-gap"` (no `s`) is
+  silently dropped, and an all-invalid `focus` fails the run.
+- **Findings are predictions, not proofs.** A CRITICAL or HIGH
+  finding means "look here first," not a confirmed defect — and a
+  clean review is not a guarantee. Verify before acting.
 
-## Diagnosis steps
+### Diagnosis order
 
-1. **Confirm the path argument is valid.**
-   Run `ls <path>` (or `dir <path>` on Windows) before invoking `deep_review`. An inaccessible or misspelled path is the most common cause of immediate failure and costs nothing to check.
-
-2. **Reproduce with the minimal call.**
-   Strip the invocation down to its required argument:
-   ```python
-   from workflows.deep_review import DeepReviewAgentSDKWorkflow
-   result = DeepReviewAgentSDKWorkflow().execute(path="<your-path>")
-   print(result)
-   ```
-   Confirm the failure occurs outside any surrounding orchestration before investigating further.
-
-3. **Check which subagents completed.**
-   The three subagents are `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer`. If the consolidated report is missing one of the corresponding sections (Security, Quality, or Test Gaps), the matching subagent is the likely failure point. Review any exception or truncated output associated with that agent.
-
-4. **Run the related tests.**
-   ```
-   pytest -k "deep_review" -v
-   ```
-   A failing test that exercises your code path will surface the exact input and fixture state that triggers the bug.
-
-5. **Inspect the `WorkflowResult` directly.**
-   If the call returns without raising but the report looks wrong, print the raw `WorkflowResult` returned by `execute()`. A partial or malformed result indicates the synthesis step — which runs after all three subagents finish — did not receive complete input.
-
-## Common fixes
-
-- **Wrong or inaccessible path.** Pass an absolute path to rule out working-directory ambiguity:
-  ```python
-  import os
-  result = DeepReviewAgentSDKWorkflow().execute(path=os.path.abspath("relative/path"))
-  ```
-
-- **Subagent failure causing a missing report section.** If one subagent fails, the synthesis step may still run but produce an incomplete report. Re-run with a smaller, isolated subtree to confirm which subagent is failing:
-  ```python
-  result = DeepReviewAgentSDKWorkflow().execute(path="/path/to/single/module")
-  ```
-
-- **Dependency or environment mismatch.** A changed environment can cause subagent behavior to differ from expectations. Verify your installed packages match your lockfile:
-  ```
-  pip show attune
-  ```
-  This fix requires changes outside `deep_review` itself — align your environment before re-running.
-
-- **Unexpectedly large scope.** If execution is slow, narrow `path` to a subdirectory. All three subagents traverse the full path, so pointing at a large monorepo root multiplies the cost.
-
-## Source files
-
-- `src/attune/workflows/deep_review.py`
-
-**Tags:** `review`, `security`, `quality`, `tests`, `comprehensive-review`
+1. Confirm you are awaiting: `result = await workflow.execute(
+   path="src/")` inside an `async def` or `asyncio.run`.
+2. Check `result.success`; if `False`, read `result.error` and
+   `result.error_type`.
+3. For a focus error, confirm the values are a subset of
+   `security` / `quality` / `test-gaps`.
+4. On an SDK error, inspect `result.metadata` for the captured
+   `sdk_stderr` / SDK error kind.
+5. Confirm the scope: `result.metadata` echoes the `path`,
+   `depth`, `max_turns`, and active `focus`.

@@ -1,64 +1,136 @@
-# Deep Review Architecture
+# Deep Review
 
-Multi-pass deep code review — security, quality, and test gap analysis.
+## Overview
 
-## Purpose
+Deep-review runs a multi-pass code review in one call. It is
+**SDK-native**: `DeepReviewAgentSDKWorkflow` delegates to three
+specialized Claude Agent SDK subagents — one each for security,
+code quality, and test gaps — and synthesizes their findings into
+a single consolidated report with an overall health score,
+severity-ordered findings per domain, and a prioritized list of
+next steps.
 
-`workflows.deep_review` orchestrates a multi-pass code review by dispatching three specialized subagents — `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer` — and synthesizing their independent findings into a single consolidated report. It is not responsible for file I/O, static analysis, or any individual check logic; those concerns belong to the subagents it coordinates.
+It is the **breadth** option among the analysis workflows: where
+security-audit goes deep on vulnerabilities alone, deep-review
+covers three concerns in one pass and lets you narrow to a subset
+with `focus`. Like the others it **predicts** rather than proves —
+the subagents apply LLM judgment over the code (via Read / Glob /
+Grep), so a finding is a lead to verify, not a confirmed defect.
 
-## Key classes
+You reach deep-review four ways, all of which run the same
+workflow:
 
-| Class | Responsibility | File |
-|-------|---------------|------|
-| `DeepReviewAgentSDKWorkflow` | Dispatches three domain-specific subagents in parallel, then synthesizes their findings into a scored, sectioned report. | `src/attune/workflows/deep_review.py` |
+- the **`/deep-review`** skill, inside a Claude Code conversation;
+- the CLI — **`attune workflow run deep-review`**;
+- the **`deep_review`** MCP tool (one required `path` argument);
+- the Python API — `await DeepReviewAgentSDKWorkflow().execute(...)`,
+  documented here for wiring a review into a hook, a pre-merge
+  gate, or a custom tool.
 
-## Data flow
+## Concepts
 
-```
-caller
-  │
-  └─▶ DeepReviewAgentSDKWorkflow.execute(path=...)
-            │
-            │  dispatches concurrently
-            ├─▶ security-reviewer  ──▶ security findings
-            ├─▶ quality-reviewer   ──▶ quality findings
-            └─▶ test-gap-reviewer  ──▶ test gap findings
-                        │
-                        │  orchestrator synthesizes
-                        ▼
-              consolidated WorkflowResult
-              ┌──────────────────────────┐
-              │ ## Summary  (score 0-100)│
-              │ ## Security              │
-              │ ## Quality               │
-              │ ## Test Gaps             │
-              │ ## Suggestions (top 5-10)│
-              └──────────────────────────┘
-```
+### Three review passes, one consolidated report
 
-Each subagent reports independently. The orchestrator — guided by `_SYSTEM_PROMPT` and `_TASK_PROMPT_TEMPLATE` — runs after all three finish and orders findings by severity within each section.
+`DeepReviewAgentSDKWorkflow.execute` issues a single
+`claude_agent_sdk.query` whose options define three subagents,
+each scoped to `Read` / `Glob` / `Grep`:
 
-## Design decisions
+| Subagent | Pass | What it looks for |
+|----------|------|-------------------|
+| `security-reviewer` | Security | `eval`/`exec` and injection vectors, path traversal, hardcoded secrets, SQL/command injection, unsafe deserialization, auth/authz flaws, OWASP Top 10. Reports under a `## Security` heading. |
+| `quality-reviewer` | Quality | Excessive complexity (>10 per function), broad exception handling, dead code and unused imports, poor naming, duplication, missing type hints / docstrings on public APIs, functions over 50 lines. Reports under `## Quality`. |
+| `test-gap-reviewer` | Test gaps | Public functions with no coverage, untested error paths, missing edge cases (empty / None / boundaries), missing integration tests, mocks that hide bugs, weak assertions. Reports under `## Test Gaps`. |
 
-**Fan-out to named subagents rather than a single monolithic pass.** The three subagents in `_SUBAGENT_NAMES` (`security-reviewer`, `quality-reviewer`, `test-gap-reviewer`) each focus on a single domain. A single-pass design was rejected because domain concerns (e.g., CWE classification vs. structural metrics vs. coverage gaps) require different framing; mixing them degrades result quality and makes prompt tuning for one domain bleed into others.
+The orchestrator then synthesizes the passes into one report with
+five sections — **Summary** (an overall 0–100 health score plus a
+2–3 sentence summary and finding counts by severity), then
+**Security**, **Quality**, and **Test Gaps** (each domain's
+findings, ordered by severity / priority), and **Suggestions**
+(the top 5–10 next steps, each referencing the finding it
+addresses).
 
-**Synthesis as a separate orchestrator step.** Rather than having each subagent emit a partial final report, the orchestrator collects all findings and produces the `## Summary`, `## Suggestions`, and cross-domain prioritization in one step. This keeps cross-cutting concerns (overall health score, top actionable suggestions) out of the individual reviewers, which only know their own domain.
+### `focus` narrows the review to a subset of passes
 
-## Extension points
+By default all three passes run. Pass `focus` — a list of any of
+`"security"`, `"quality"`, `"test-gaps"` — to run only those
+passes:
 
-- **Add a new review domain** by adding a name to `_SUBAGENT_NAMES` and updating `_TASK_PROMPT_TEMPLATE` to include a corresponding section in the consolidated report. No changes to `DeepReviewAgentSDKWorkflow.execute` are required if the orchestrator prompt already instructs synthesis of all listed subagents.
-- **Change synthesis behavior** (scoring weights, output sections, citation format) by modifying `_TASK_PROMPT_TEMPLATE`. The orchestrator's behavior is entirely prompt-driven; `_SYSTEM_PROMPT` controls its role framing and `_TASK_PROMPT_TEMPLATE` controls report structure.
-- **Wrap the workflow** by calling `DeepReviewAgentSDKWorkflow.execute(**kwargs)` inside your own class and post-processing the returned `WorkflowResult`. This is the correct approach for adding filtering, caching, or routing logic without modifying the core orchestration.
+- `focus=["security"]` runs the security pass alone;
+- `focus=["security", "quality"]` skips the test-gap pass;
+- an empty or all-invalid `focus` returns a failed
+  `WorkflowResult` ("Invalid focus values").
 
-For usage details, see `src/attune/workflows/deep_review.py` directly.
+This is deep-review's own knob — it has no `system_prompt_suffix`
+(unlike bug-predict / security-audit). Note the spelling:
+`"test-gaps"` (hyphen), not `"test-gap"`.
 
-<!-- attune-generated: source_hash=e32648187b67c25e74699fc7a341857694ff7edd49f5c3d2fd4b545c1bdf65e4 feature=deep-review kind=architecture generated_at=2026-06-02 -->
+### Depth controls the agent-turn budget
 
-## Unresolved references
+`execute` takes a `depth` of `"quick"`, `"standard"` (default),
+or `"deep"`. Depth maps to the maximum agent turns and a per-run
+cost cap. Deep-review's budgets are higher than the single-domain
+workflows', since it covers three passes:
 
-> Auto-generated by attune-author fact-check. Review and either
-> fix the source code, fix this doc, or add an override.
+| Depth | Max agent turns |
+|-------|-----------------|
+| `quick` | 15 |
+| `standard` | 30 |
+| `deep` | 50 |
 
-| Location | Severity | Issue |
-|---|---|---|
-| Line 53 | error | `[tool reference](references/tool-deep-review.md)` — target does not exist |
+An unrecognized depth falls back to the standard budget (30
+turns).
+
+### `execute` is async
+
+`execute` is a coroutine — `await` it (or drive it with
+`asyncio.run`). Calling it without awaiting is the most common
+mistake. It reads three keyword arguments: `path` (required),
+`depth` (default `"standard"`), and `focus` (optional). An empty
+or missing `path` returns a failed `WorkflowResult` rather than
+raising.
+
+### The result is a `WorkflowResult`
+
+`execute` returns a `WorkflowResult` (from `attune.workflows`).
+The consolidated report lands in `final_output` — a serialized
+report when the findings parse, or the raw markdown otherwise —
+with a short `summary`, a `suggestions` list, the `cost_report`,
+the `provider`, and a `metadata` dict echoing `path`, `depth`,
+`max_turns`, the active `focus`, and `workflow`. On failure,
+`success` is `False` and `error` / `error_type` carry the reason.
+
+## Design & extension
+
+### Design decisions
+
+- **SDK-native, three review passes.** Deep-review is a single
+  `claude_agent_sdk.query` with three subagents — a
+  `security-reviewer`, a `quality-reviewer`, and a
+  `test-gap-reviewer` — each writing under its own report heading.
+  Splitting the passes keeps each subagent's context focused; the
+  orchestrator merges them into one consolidated report.
+- **Breadth with an opt-in narrowing.** Where security-audit goes
+  deep on one domain, deep-review covers three by default and lets
+  `focus` trim the set — so one workflow serves both the broad
+  pre-merge read and a targeted single-domain pass.
+- **Prediction, not certification, is the contract.** The workflow
+  returns LLM-judged findings; it trades a linter's precision for
+  breadth and a prioritized next-step list. Findings are leads to
+  verify, never a guarantee.
+- **The result is data, not print output.** `execute` returns a
+  `WorkflowResult` (report in `final_output`, plus `summary`,
+  `suggestions`, `cost_report`, and `metadata`); the CLI, MCP, and
+  Python surfaces all render that same result.
+
+### Extension points
+
+- **Change the budget:** choose `depth` (`quick` / `standard` /
+  `deep`) to trade coverage against cost.
+- **Scope the run:** pass `focus` to run a subset of the three
+  passes.
+- **Add a review pass:** the subagent definitions live in a
+  module-level `_SUBAGENT_DEFS` map and the names in
+  `_SUBAGENT_NAMES`; a new pass is a new entry plus a synthesis
+  section in the task template in `deep_review.py`.
+
+<!-- attune-generated: source_hash=5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083 feature=deep-review kind=architecture generated_at=2026-06-23 -->

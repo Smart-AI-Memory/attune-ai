@@ -3,33 +3,108 @@ type: concept
 name: deep-review-concept
 feature: deep-review
 depth: concept
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 0166eb83fb8436c203cdd073439a7339645f40e53cdfe39db4fbed0559eac81d
+generated_at: 2026-06-23T15:11:33.648986+00:00
+source_hash: 5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083
 status: generated
 ---
 
-# Deep Review
+# Multi-pass code review across security, quality, and test gaps
 
-`DeepReviewAgentSDKWorkflow` is a multi-pass code review workflow that dispatches three specialized subagents in parallel and consolidates their findings into a single structured report.
+## Overview
 
-## How the review works
+Deep-review runs a multi-pass code review in one call. It is
+**SDK-native**: `DeepReviewAgentSDKWorkflow` delegates to three
+specialized Claude Agent SDK subagents — one each for security,
+code quality, and test gaps — and synthesizes their findings into
+a single consolidated report with an overall health score,
+severity-ordered findings per domain, and a prioritized list of
+next steps.
 
-A single call to `DeepReviewAgentSDKWorkflow.execute()` coordinates three subagents, each focused on a distinct domain:
+It is the **breadth** option among the analysis workflows: where
+security-audit goes deep on vulnerabilities alone, deep-review
+covers three concerns in one pass and lets you narrow to a subset
+with `focus`. Like the others it **predicts** rather than proves —
+the subagents apply LLM judgment over the code (via Read / Glob /
+Grep), so a finding is a lead to verify, not a confirmed defect.
 
-| Subagent | Domain |
-|---|---|
-| `security-reviewer` | Vulnerabilities and security risk |
-| `quality-reviewer` | Code structure, style, and maintainability |
-| `test-gap-reviewer` | Missing or insufficient test coverage |
+You reach deep-review four ways, all of which run the same
+workflow:
 
-Each subagent reports independently. After all three finish, the orchestrator synthesizes their findings into a consolidated report with five sections: **Summary**, **Security**, **Quality**, **Test Gaps**, and **Suggestions**.
+- the **`/deep-review`** skill, inside a Claude Code conversation;
+- the CLI — **`attune workflow run deep-review`**;
+- the **`deep_review`** MCP tool (one required `path` argument);
+- the Python API — `await DeepReviewAgentSDKWorkflow().execute(...)`,
+  documented here for wiring a review into a hook, a pre-merge
+  gate, or a custom tool.
 
-The Summary section includes an overall code health score from 0–100, a short executive summary, and finding counts by severity. The Suggestions section closes the report with the top 5–10 actionable next steps, each linked back to the specific finding it addresses.
+## Concepts
 
-## When to use it
+### Three review passes, one consolidated report
 
-Deep review is suited for situations where a quick diff scan is not enough — for example, before merging a large refactor, auditing a module you didn't write, or establishing a health baseline for a legacy codebase. Because the three subagents run over the same codebase independently, findings that appear across multiple domains (say, an untested function that also has a security smell) surface in both the relevant section and the Suggestions rollup.
+`DeepReviewAgentSDKWorkflow.execute` issues a single
+`claude_agent_sdk.query` whose options define three subagents,
+each scoped to `Read` / `Glob` / `Grep`:
 
-## The consolidated report as a mental model
+| Subagent | Pass | What it looks for |
+|----------|------|-------------------|
+| `security-reviewer` | Security | `eval`/`exec` and injection vectors, path traversal, hardcoded secrets, SQL/command injection, unsafe deserialization, auth/authz flaws, OWASP Top 10. Reports under a `## Security` heading. |
+| `quality-reviewer` | Quality | Excessive complexity (>10 per function), broad exception handling, dead code and unused imports, poor naming, duplication, missing type hints / docstrings on public APIs, functions over 50 lines. Reports under `## Quality`. |
+| `test-gap-reviewer` | Test gaps | Public functions with no coverage, untested error paths, missing edge cases (empty / None / boundaries), missing integration tests, mocks that hide bugs, weak assertions. Reports under `## Test Gaps`. |
 
-Think of `DeepReviewAgentSDKWorkflow` as a review committee rather than a single reviewer. The orchestrator acts as chair: it hands the same codebase path to each specialist, waits for their independent reports, then writes the meeting minutes. You get one artifact instead of three, with severity ordering within each section so the most critical findings appear first.
+The orchestrator then synthesizes the passes into one report with
+five sections — **Summary** (an overall 0–100 health score plus a
+2–3 sentence summary and finding counts by severity), then
+**Security**, **Quality**, and **Test Gaps** (each domain's
+findings, ordered by severity / priority), and **Suggestions**
+(the top 5–10 next steps, each referencing the finding it
+addresses).
+
+### `focus` narrows the review to a subset of passes
+
+By default all three passes run. Pass `focus` — a list of any of
+`"security"`, `"quality"`, `"test-gaps"` — to run only those
+passes:
+
+- `focus=["security"]` runs the security pass alone;
+- `focus=["security", "quality"]` skips the test-gap pass;
+- an empty or all-invalid `focus` returns a failed
+  `WorkflowResult` ("Invalid focus values").
+
+This is deep-review's own knob — it has no `system_prompt_suffix`
+(unlike bug-predict / security-audit). Note the spelling:
+`"test-gaps"` (hyphen), not `"test-gap"`.
+
+### Depth controls the agent-turn budget
+
+`execute` takes a `depth` of `"quick"`, `"standard"` (default),
+or `"deep"`. Depth maps to the maximum agent turns and a per-run
+cost cap. Deep-review's budgets are higher than the single-domain
+workflows', since it covers three passes:
+
+| Depth | Max agent turns |
+|-------|-----------------|
+| `quick` | 15 |
+| `standard` | 30 |
+| `deep` | 50 |
+
+An unrecognized depth falls back to the standard budget (30
+turns).
+
+### `execute` is async
+
+`execute` is a coroutine — `await` it (or drive it with
+`asyncio.run`). Calling it without awaiting is the most common
+mistake. It reads three keyword arguments: `path` (required),
+`depth` (default `"standard"`), and `focus` (optional). An empty
+or missing `path` returns a failed `WorkflowResult` rather than
+raising.
+
+### The result is a `WorkflowResult`
+
+`execute` returns a `WorkflowResult` (from `attune.workflows`).
+The consolidated report lands in `final_output` — a serialized
+report when the findings parse, or the raw markdown otherwise —
+with a short `summary`, a `suggestions` list, the `cost_report`,
+the `provider`, and a `metadata` dict echoing `path`, `depth`,
+`max_turns`, the active `focus`, and `workflow`. On failure,
+`success` is `False` and `error` / `error_type` carry the reason.

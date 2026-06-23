@@ -3,55 +3,62 @@ type: reference
 name: deep-review-reference
 feature: deep-review
 depth: reference
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 0166eb83fb8436c203cdd073439a7339645f40e53cdfe39db4fbed0559eac81d
+generated_at: 2026-06-23T15:11:33.648986+00:00
+source_hash: 5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083
 status: generated
 ---
 
-# Deep Review reference
+# Multi-pass code review across security, quality, and test gaps
 
-Multi-pass deep code review: security, quality, and test gap analysis with prioritized findings.
+## Reference
 
-## Classes
+Deep-review's public surface is the `DeepReviewAgentSDKWorkflow`
+class, re-exported from `attune.workflows`. `WorkflowResult` comes
+from `attune.workflows` as well.
 
-| Class | Description |
-|-------|-------------|
-| `DeepReviewAgentSDKWorkflow` | Orchestrates a multi-pass deep code review using Claude Agent SDK subagents: `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer`. |
+### `DeepReviewAgentSDKWorkflow` — `attune.workflows.deep_review`
 
-### `DeepReviewAgentSDKWorkflow`
+| Symbol | Purpose |
+|--------|---------|
+| `DeepReviewAgentSDKWorkflow()` | Construct the workflow. Takes no special constructor arguments (no `system_prompt_suffix`). |
+| `DeepReviewAgentSDKWorkflow.execute(**kwargs)` | **Async.** Run the review. Honors `path` (str, required), `depth` (`"quick"` / `"standard"` / `"deep"`, default `"standard"`), and `focus` (list of `"security"` / `"quality"` / `"test-gaps"`, default all three). Returns a `WorkflowResult`. |
+| `DeepReviewAgentSDKWorkflow.name` | The registered slug, `"deep-review"`. |
+| `DeepReviewAgentSDKWorkflow.stages` | `["deep-review"]`; the stage runs at the `CAPABLE` model tier. |
 
-#### Methods
+### Depth → agent-turn budget
 
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `execute` | `**kwargs: Any` | `WorkflowResult` | Runs the three specialized subagents and synthesizes their findings into a consolidated review report. |
+| Depth | Max turns | Use when |
+|-------|-----------|----------|
+| `quick` | 15 | A fast pass on a small path. |
+| `standard` | 30 | The default — balanced coverage and cost. |
+| `deep` | 50 | The fullest review of a large or critical area. |
 
-## Subagents
+### The three passes
 
-The workflow coordinates three subagents. Each reports findings independently; the orchestrator then synthesizes results into a single report.
+| `focus` value | Subagent | Domain |
+|---------------|----------|--------|
+| `security` | `security-reviewer` | Injection, secrets, path traversal, auth, OWASP Top 10. |
+| `quality` | `quality-reviewer` | Complexity, broad excepts, dead code, naming, duplication, type hints, docstrings, long functions. |
+| `test-gaps` | `test-gap-reviewer` | Untested paths, missing edge cases, weak assertions, mocks hiding bugs. |
 
-| Name | Domain |
-|------|--------|
-| `security-reviewer` | Security vulnerabilities and risk findings |
-| `quality-reviewer` | Code quality findings |
-| `test-gap-reviewer` | Test coverage gaps |
+### `WorkflowResult` fields read after a review
 
-## Consolidated report structure
+| Field | Type | Meaning |
+|-------|------|---------|
+| `success` | `bool` | Whether the review completed. |
+| `final_output` | `Any` | The consolidated report — a serialized report when findings parse, else the raw markdown. |
+| `summary` | `str \| None` | Short health summary. |
+| `suggestions` | `list[NextAction]` | Prioritized next actions. |
+| `cost_report` | `CostReport` | Cost / usage for the run. |
+| `provider` | `str` | The provider that served the run. |
+| `metadata` | `dict` | Echoes `path`, `depth`, `max_turns`, `focus`, and `workflow`; carries SDK error fields on failure. |
+| `error` / `error_type` | `str \| None` | Failure reason and category (`"config"` / `"runtime"` / `"provider"` / `"timeout"` / `"validation"`). |
 
-The synthesized output contains the following sections:
+### Entry points
 
-| Section | Content |
-|---------|---------|
-| `## Summary` | Overall code health score (0–100), a 2–3 sentence executive summary, and finding counts by severity. |
-| `## Security` | Findings from the security reviewer, ordered by severity. |
-| `## Quality` | Findings from the quality reviewer, ordered by severity. |
-| `## Test Gaps` | Findings from the test gap reviewer, ordered by priority. |
-| `## Suggestions` | Top 5–10 actionable next steps ordered by impact, each referencing the specific finding it addresses. |
-
-## Source files
-
-- `src/attune/workflows/deep_review.py`
-
-## Tags
-
-`review`, `security`, `quality`, `tests`, `comprehensive-review`
+| Surface | Invocation |
+|---------|------------|
+| Skill | `/deep-review` in a Claude Code conversation. |
+| CLI | `attune workflow run deep-review --path <p> [--depth quick\|standard\|deep] [--json] [--input '{"focus": [...]}']`. |
+| MCP tool | `deep_review` — one required `path` argument; runs all three passes at standard depth (the handler does not pass `depth` or `focus`). |
+| Python | `await DeepReviewAgentSDKWorkflow().execute(path=<p>, depth=<d>, focus=[...])`. |
