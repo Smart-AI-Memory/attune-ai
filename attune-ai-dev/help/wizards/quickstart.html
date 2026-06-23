@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: wizards — quickstart</title>
-  <meta name="description" content="Run a built-in interactive wizard to guide you through common development tasks." />
-  <meta property="og:title" content="Quickstart: wizards — quickstart" />
-  <meta property="og:description" content="Run a built-in interactive wizard to guide you through common development tasks." />
+  <title>Multi-step guided interactive workflows that walk users through complex tasks — quickstart</title>
+  <meta name="description" content="List the built-in wizards, then run one. `run()` is a coroutine, so drive it with `asyncio.run`:" />
+  <meta property="og:title" content="Multi-step guided interactive workflows that walk users through complex tasks — quickstart" />
+  <meta property="og:description" content="List the built-in wizards, then run one. `run()` is a coroutine, so drive it with `asyncio.run`:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/wizards/quickstart" />
   <style>
@@ -272,46 +272,29 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: wizards</h1>
-<p>Run a built-in interactive wizard to guide you through common development tasks.</p>
-<pre><code class="language-python">from attune.wizards import DebugWizard
+<h1>Multi-step guided interactive workflows that walk users through complex tasks</h1>
+<h2>Quickstart</h2>
+<p>List the built-in wizards, then run one. <code>run()</code> is a coroutine, so
+drive it with <code>asyncio.run</code>:</p>
+<pre><code class="language-python">import asyncio
 
-wizard = DebugWizard()
-result = wizard.run({&quot;error_message&quot;: &quot;ImportError: No module named 'requests'&quot;})
-print(f&quot;Debugging complete: {result.success}&quot;)
-</code></pre>
-<h2>Prerequisites</h2>
-<ul>
-<li>Attune AI installed locally</li>
-<li>Python environment with the attune package available</li>
-</ul>
-<h2>Run your first wizard</h2>
-<ol>
-<li><strong>Choose a built-in wizard.</strong> Start with <code>DebugWizard</code> for troubleshooting errors:</li>
-</ol>
-<pre><code class="language-python">from attune.wizards import DebugWizard
+from attune.wizards import get_wizard, list_wizards
 
-wizard = DebugWizard()
+
+async def main() -&gt; None:
+    for cfg in list_wizards():
+        print(cfg.wizard_id, &quot;-&quot;, cfg.name)
+
+    wizard_cls = get_wizard(&quot;debug&quot;)
+    if wizard_cls is not None:
+        result = await wizard_cls().run()
+        print(result.success, result.wizard_id)
+
+
+asyncio.run(main())
 </code></pre>
-<ol start="2">
-<li><strong>Run the wizard with context.</strong> Provide an initial context like an error message or code snippet:</li>
-</ol>
-<pre><code class="language-python">result = wizard.run({&quot;error_message&quot;: &quot;ModuleNotFoundError: No module named 'pandas'&quot;})
-</code></pre>
-<ol start="3">
-<li><strong>Check the results.</strong> The wizard returns a <code>WizardResult</code> with guidance and next steps:</li>
-</ol>
-<pre><code class="language-python">print(f&quot;Success: {result.success}&quot;)
-print(f&quot;Generated guidance: {result.generated_output}&quot;)
-print(f&quot;Steps completed: {result.steps_completed}&quot;)
-</code></pre>
-<p>Expected output:</p>
-<pre><code>Success: True
-Generated guidance: Install pandas using: pip install pandas
-Steps completed: ['analyze_error', 'suggest_fix', 'verify_solution']
-</code></pre>
-<h2>Next steps</h2>
-<p><strong>Next:</strong> Browse available wizards with <code>list_wizards()</code> to see RefactorWizard, SecurityWizard, and TestGenWizard options.</p>
+<p><code>get_wizard</code> returns the wizard class (or <code>None</code> if the id is
+unknown); instantiate it and <code>await run()</code>.</p>
 
   </article>
   <footer>

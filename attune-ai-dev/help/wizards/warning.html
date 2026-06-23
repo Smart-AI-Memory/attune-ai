@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Wizards cautions — warning</title>
-  <meta name="description" content="The wizards framework provides multi-step guided workflows that can accumulate significant LLM costs and execute long-running operations. Several design patterns in the framework can lead to unexpecte" />
-  <meta property="og:title" content="Wizards cautions — warning" />
-  <meta property="og:description" content="The wizards framework provides multi-step guided workflows that can accumulate significant LLM costs and execute long-running operations. Several design patterns in the framework can lead to unexpecte" />
+  <title>Multi-step guided interactive workflows that walk users through complex tasks — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BaseWizard.run&#x27; was never awaited` | `run()` called without `await` | It is a coroutine — `await` it or use `asynci" />
+  <meta property="og:title" content="Multi-step guided interactive workflows that walk users through complex tasks — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BaseWizard.run&#x27; was never awaited` | `run()` called without `await` | It is a coroutine — `await` it or use `asynci" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/wizards/warning" />
   <style>
@@ -272,43 +272,67 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Wizards cautions</h1>
-<h2>What to watch for</h2>
-<p>The wizards framework provides multi-step guided workflows that can accumulate significant LLM costs and execute long-running operations. Several design patterns in the framework can lead to unexpected behavior if not handled carefully.</p>
-<h2>Risk areas</h2>
-<h3>Cost accumulation in wizard runs</h3>
-<p>The <code>BaseWizard.run()</code> method executes multiple LLM calls across wizard steps, but cost tracking happens per step rather than with upfront validation. A wizard with many steps or high <code>max_tokens</code> values can exceed your budget before completion. Check the <code>estimated_cost_range</code> in <code>WizardConfig</code> before starting expensive wizards, and monitor <code>total_cost</code> in partial results.</p>
-<h3>Step condition evaluation timing</h3>
-<p>The <code>condition</code> field in <code>WizardStep</code> gets evaluated during wizard execution, not at registration time. If your condition function depends on external state (file existence, network connectivity), it can cause steps to be skipped unexpectedly when that state changes between wizard initialization and step execution.</p>
-<h3>Custom wizard persistence edge cases</h3>
-<p><code>save_custom_wizard()</code> overwrites existing files without confirmation and can raise <code>ValueError</code> for filesystem issues that aren't obvious from the error message. The function creates the wizard directory if it doesn't exist, but won't create intermediate parent directories. Always verify the base directory structure exists before saving.</p>
-<h3>Registry state inconsistency</h3>
-<p>The wizard registry is module-global state. Calling <code>register_wizard()</code> multiple times with the same <code>wizard_id</code> silently overwrites the previous registration. In test environments, this can cause tests to interfere with each other if they register wizards with identical IDs.</p>
-<h3>Step result processing mutations</h3>
-<p>The <code>process_step_result()</code> method in wizard subclasses receives the raw result dictionary and can modify it in place. Changes made during processing affect the <code>collected_data</code> field in <code>WizardResult</code>, which can cause downstream steps to see modified data they weren't expecting.</p>
-<h2>How to avoid problems</h2>
-<ol>
-<li>
-<p><strong>Validate cost limits upfront.</strong> Check <code>estimated_cost_range</code> and set reasonable <code>max_tokens</code> values for each step. Consider implementing cost guards that halt execution if <code>total_cost</code> approaches your budget.</p>
-</li>
-<li>
-<p><strong>Make step conditions resilient.</strong> Write condition functions that handle missing files, network timeouts, and other transient failures gracefully. Return <code>False</code> rather than raising exceptions when external dependencies aren't available.</p>
-</li>
-<li>
-<p><strong>Use unique wizard IDs in tests.</strong> Include test method names or random suffixes in wizard IDs when registering test wizards to avoid registry collisions between test runs.</p>
-</li>
-<li>
-<p><strong>Copy result data before processing.</strong> If you need to modify step results in <code>process_step_result()</code>, work on a copy to avoid affecting the original data that gets stored in <code>WizardResult.collected_data</code>.</p>
-</li>
-<li>
-<p><strong>Verify directory structure for custom wizards.</strong> Before calling <code>save_custom_wizard()</code>, ensure the base directory and any parent directories exist and are writable.</p>
-</li>
-</ol>
-<h2>Source files</h2>
+<h1>Multi-step guided interactive workflows that walk users through complex tasks</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'BaseWizard.run' was never awaited</code></td>
+<td><code>run()</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>AttributeError: 'NoneType' object has no attribute ...</code> after <code>get_wizard</code></td>
+<td>The wizard id is unknown; <code>get_wizard</code> returned <code>None</code></td>
+<td>Check <code>get_wizard(id) is not None</code>; list ids with <code>list_wizards()</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td>A <code>question</code> step never prompts / hangs</td>
+<td>No <code>ask_user_callback</code> wired (outside Claude Code)</td>
+<td>Pass an <code>ask_user_callback</code> to the wizard, or run via the <code>/wizard</code> skill</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>WizardResult.success</code> is <code>False</code> with a populated <code>error</code></td>
+<td>A step failed (LLM call, validation, or an aborted confirm)</td>
+<td>Read <code>result.error</code> and <code>result.steps_completed</code> to see where it stopped</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Custom wizard not found by <code>get_wizard</code></td>
+<td>It was never <code>register_wizard</code>'d (or <code>save_custom_wizard</code>'d)</td>
+<td>Register the class or save the definition first</td>
+<td>low</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/wizards/**</code></li>
+<li><strong><code>run()</code> is async.</strong> Forgetting to <code>await</code> it is the most common
+mistake.</li>
+<li><strong>There is no registry class.</strong> Use the module-level functions
+(<code>list_wizards</code>, <code>get_wizard</code>, …) — not a <code>WizardRegistry</code>.</li>
+<li><strong><code>question</code> steps need a callback.</strong> Outside the <code>/wizard</code> skill,
+supply an <code>ask_user_callback</code> or the wizard can't collect input.</li>
 </ul>
-<p><strong>Tags:</strong> <code>wizards</code>, <code>interactive</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm you are awaiting: <code>await get_wizard(id)().run()</code>.</li>
+<li>Confirm the id exists: <code>get_wizard(id) is not None</code> /
+<code>list_wizards()</code>.</li>
+<li>On failure, read <code>result.error</code> and <code>result.steps_completed</code>.</li>
+<li>If a <code>question</code> step stalls, check the <code>ask_user_callback</code> wiring.</li>
+</ol>
 
   </article>
   <footer>

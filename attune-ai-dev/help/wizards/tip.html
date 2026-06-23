@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: working effectively with wizards — tip</title>
-  <meta name="description" content="Inherit from `BaseWizard` and override `build_prompt_context()` and `process_step_result()` instead of creating config-driven wizards from YAML. The built-in wizards like `DebugWizard` and `RefactorWi" />
-  <meta property="og:title" content="Tip: working effectively with wizards — tip" />
-  <meta property="og:description" content="Inherit from `BaseWizard` and override `build_prompt_context()` and `process_step_result()` instead of creating config-driven wizards from YAML. The built-in wizards like `DebugWizard` and `RefactorWi" />
+  <title>Multi-step guided interactive workflows that walk users through complex tasks — tip</title>
+  <meta name="description" content="- **Depend on the documented public surface.** The supported API is the registry functions plus `BaseWizard`, `ConfigDrivenWizard`, the `WizardConfig` / `WizardStep` / `WizardResult` dataclasses, `Ste" />
+  <meta property="og:title" content="Multi-step guided interactive workflows that walk users through complex tasks — tip" />
+  <meta property="og:description" content="- **Depend on the documented public surface.** The supported API is the registry functions plus `BaseWizard`, `ConfigDrivenWizard`, the `WizardConfig` / `WizardStep` / `WizardResult` dataclasses, `Ste" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/wizards/tip" />
   <style>
@@ -272,15 +272,21 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: working effectively with wizards</h1>
-<h2>Extend BaseWizard, don't configure from scratch</h2>
-<p>Inherit from <code>BaseWizard</code> and override <code>build_prompt_context()</code> and <code>process_step_result()</code> instead of creating config-driven wizards from YAML. The built-in wizards like <code>DebugWizard</code> and <code>RefactorWizard</code> show this pattern consistently.</p>
-<p>You get type safety, IDE support, and easier testing compared to string-based configuration. The tradeoff is less runtime flexibility — you can't modify wizard behavior without code changes.</p>
-<h2>Source files</h2>
+<h1>Multi-step guided interactive workflows that walk users through complex tasks</h1>
+<h2>Notes &amp; tips</h2>
 <ul>
-<li><code>src/attune/wizards/**</code></li>
+<li><strong>Depend on the documented public surface.</strong> The supported API is
+the registry functions plus <code>BaseWizard</code>, <code>ConfigDrivenWizard</code>, the
+<code>WizardConfig</code> / <code>WizardStep</code> / <code>WizardResult</code> dataclasses, <code>StepType</code>,
+and <code>WizardSession</code> — all from <code>attune.wizards</code>.</li>
+<li><strong><code>await</code> the run.</strong> <code>run()</code> is the only async method; the registry
+functions are sync.</li>
+<li><strong>Use the skill for interactive runs.</strong> <code>/wizard</code> wires the
+<code>ask_user_callback</code> to <code>AskUserQuestion</code>; a bare Python run needs you
+to supply one for <code>question</code> steps.</li>
+<li><strong>Discover before you run.</strong> <code>list_wizards()</code> gives ids, names,
+domains, and cost/duration estimates.</li>
 </ul>
-<p><strong>Tags:</strong> <code>wizards</code>, <code>interactive</code></p>
 
   </article>
   <footer>

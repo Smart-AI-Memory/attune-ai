@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Wizards errors — error</title>
-  <meta name="description" content="Failures in Attune AI&#x27;s XML-enhanced wizard system, which provides guided multi-step workflows for development tasks like debugging, refactoring, and security audits." />
-  <meta property="og:title" content="Wizards errors — error" />
-  <meta property="og:description" content="Failures in Attune AI&#x27;s XML-enhanced wizard system, which provides guided multi-step workflows for development tasks like debugging, refactoring, and security audits." />
+  <title>Multi-step guided interactive workflows that walk users through complex tasks — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BaseWizard.run&#x27; was never awaited` | `run()` called without `await` | It is a coroutine — `await` it or use `asynci" />
+  <meta property="og:title" content="Multi-step guided interactive workflows that walk users through complex tasks — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BaseWizard.run&#x27; was never awaited` | `run()` called without `await` | It is a coroutine — `await` it or use `asynci" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/wizards/error" />
   <style>
@@ -272,47 +272,67 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Wizards errors</h1>
-<p>Failures in Attune AI's XML-enhanced wizard system, which provides guided multi-step workflows for development tasks like debugging, refactoring, and security audits.</p>
-<h2>Common error signatures</h2>
+<h1>Multi-step guided interactive workflows that walk users through complex tasks</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'BaseWizard.run' was never awaited</code></td>
+<td><code>run()</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>AttributeError: 'NoneType' object has no attribute ...</code> after <code>get_wizard</code></td>
+<td>The wizard id is unknown; <code>get_wizard</code> returned <code>None</code></td>
+<td>Check <code>get_wizard(id) is not None</code>; list ids with <code>list_wizards()</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td>A <code>question</code> step never prompts / hangs</td>
+<td>No <code>ask_user_callback</code> wired (outside Claude Code)</td>
+<td>Pass an <code>ask_user_callback</code> to the wizard, or run via the <code>/wizard</code> skill</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>WizardResult.success</code> is <code>False</code> with a populated <code>error</code></td>
+<td>A step failed (LLM call, validation, or an aborted confirm)</td>
+<td>Read <code>result.error</code> and <code>result.steps_completed</code> to see where it stopped</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Custom wizard not found by <code>get_wizard</code></td>
+<td>It was never <code>register_wizard</code>'d (or <code>save_custom_wizard</code>'d)</td>
+<td>Register the class or save the definition first</td>
+<td>low</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>ValueError: Cannot write wizard YAML: {error_details}</code> — Custom wizard save operations failed due to filesystem issues or invalid YAML structure</li>
-<li><code>ValueError: Cannot delete built-in wizard: '{wizard_id}'</code> — Attempted to delete a built-in wizard (DebugWizard, RefactorWizard, etc.)</li>
-<li><code>KeyError</code> or <code>None</code> returned from <code>get_wizard()</code> — Requested wizard ID not found in registry</li>
-<li>Step execution failures during <code>BaseWizard.run()</code> — Wizard step conditions, prompt generation, or result processing errors</li>
-<li>XML parsing errors in task decomposition — Invalid XML structure in decomposed task responses</li>
+<li><strong><code>run()</code> is async.</strong> Forgetting to <code>await</code> it is the most common
+mistake.</li>
+<li><strong>There is no registry class.</strong> Use the module-level functions
+(<code>list_wizards</code>, <code>get_wizard</code>, …) — not a <code>WizardRegistry</code>.</li>
+<li><strong><code>question</code> steps need a callback.</strong> Outside the <code>/wizard</code> skill,
+supply an <code>ask_user_callback</code> or the wizard can't collect input.</li>
 </ul>
-<h2>Where errors originate</h2>
-<p>Wizard errors typically start at these key entry points:</p>
-<ul>
-<li><strong>Registry operations</strong>: <code>register_wizard()</code>, <code>get_wizard()</code>, <code>list_wizards()</code> — Wizard registration and lookup failures</li>
-<li><strong>Custom wizard management</strong>: <code>save_custom_wizard()</code>, <code>delete_custom_wizard()</code> — File I/O and validation errors when persisting wizard definitions</li>
-<li><strong>Wizard execution</strong>: <code>BaseWizard.run()</code> — Step processing, condition evaluation, and prompt context building failures</li>
-<li><strong>Step processing</strong>: <code>build_prompt_context()</code>, <code>process_step_result()</code> — Individual wizard implementations failing to handle step data</li>
-</ul>
-<h2>How to diagnose</h2>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Check the wizard ID and registration status.</strong> Use <code>list_wizards()</code> to verify the wizard exists and <code>get_wizard(wizard_id)</code> returns a valid class. Missing wizards return <code>None</code> rather than raising exceptions.</p>
-</li>
-<li>
-<p><strong>Examine custom wizard YAML structure.</strong> If <code>save_custom_wizard()</code> fails, validate that your wizard definition matches the expected schema with required fields like <code>wizard_id</code>, <code>name</code>, <code>description</code>, and properly formatted <code>steps</code>.</p>
-</li>
-<li>
-<p><strong>Review step conditions and context.</strong> When <code>BaseWizard.run()</code> fails mid-execution, check that step conditions (<code>WizardStep.condition</code>) evaluate correctly and that <code>build_prompt_context()</code> can access all required data from the wizard session.</p>
-</li>
-<li>
-<p><strong>Validate filesystem permissions.</strong> Custom wizard save/delete operations require write access to the wizard definitions directory. Permission errors manifest as <code>ValueError</code> with &quot;Cannot write wizard YAML&quot; messages.</p>
-</li>
-<li>
-<p><strong>Check built-in wizard constraints.</strong> Attempts to modify built-in wizards (DebugWizard, RefactorWizard, ReleasePrepWizard, SecurityWizard, TestGenWizard) will fail with explicit error messages about protected wizard IDs.</p>
-</li>
+<li>Confirm you are awaiting: <code>await get_wizard(id)().run()</code>.</li>
+<li>Confirm the id exists: <code>get_wizard(id) is not None</code> /
+<code>list_wizards()</code>.</li>
+<li>On failure, read <code>result.error</code> and <code>result.steps_completed</code>.</li>
+<li>If a <code>question</code> step stalls, check the <code>ask_user_callback</code> wiring.</li>
 </ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/wizards/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>wizards</code>, <code>interactive</code></p>
 
   </article>
   <footer>

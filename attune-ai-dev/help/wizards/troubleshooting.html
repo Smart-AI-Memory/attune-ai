@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot wizards — troubleshooting</title>
-  <meta name="description" content="The wizards feature provides XML-enhanced interactive workflows for Attune AI. These multi-step guided processes help with debugging, refactoring, release preparation, security audits, and test genera" />
-  <meta property="og:title" content="Troubleshoot wizards — troubleshooting" />
-  <meta property="og:description" content="The wizards feature provides XML-enhanced interactive workflows for Attune AI. These multi-step guided processes help with debugging, refactoring, release preparation, security audits, and test genera" />
+  <title>Multi-step guided interactive workflows that walk users through complex tasks — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BaseWizard.run&#x27; was never awaited` | `run()` called without `await` | It is a coroutine — `await` it or use `asynci" />
+  <meta property="og:title" content="Multi-step guided interactive workflows that walk users through complex tasks — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;BaseWizard.run&#x27; was never awaited` | `run()` called without `await` | It is a coroutine — `await` it or use `asynci" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/wizards/troubleshooting" />
   <style>
@@ -272,136 +272,67 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot wizards</h1>
-<h2>Before you start</h2>
-<p>The wizards feature provides XML-enhanced interactive workflows for Attune AI. These multi-step guided processes help with debugging, refactoring, release preparation, security audits, and test generation.</p>
-<h2>Symptom table</h2>
+<h1>Multi-step guided interactive workflows that walk users through complex tasks</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>ValueError: Cannot write wizard YAML</code></td>
-<td>File permissions on the target directory and available disk space</td>
+<td><code>RuntimeWarning: coroutine 'BaseWizard.run' was never awaited</code></td>
+<td><code>run()</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td><code>ValueError: Cannot delete built-in wizard</code></td>
-<td>Whether you're trying to delete a built-in wizard (only custom wizards can be deleted)</td>
+<td><code>AttributeError: 'NoneType' object has no attribute ...</code> after <code>get_wizard</code></td>
+<td>The wizard id is unknown; <code>get_wizard</code> returned <code>None</code></td>
+<td>Check <code>get_wizard(id) is not None</code>; list ids with <code>list_wizards()</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td>Wizard step skipped unexpectedly</td>
-<td>The step's <code>condition</code> function and the current <code>WizardSession</code> state</td>
+<td>A <code>question</code> step never prompts / hangs</td>
+<td>No <code>ask_user_callback</code> wired (outside Claude Code)</td>
+<td>Pass an <code>ask_user_callback</code> to the wizard, or run via the <code>/wizard</code> skill</td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>WizardResult.success</code> is <code>False</code> but no error message</td>
-<td>The <code>WizardResult.error</code> field and exception handling in <code>BaseWizard.run()</code></td>
+<td><code>WizardResult.success</code> is <code>False</code> with a populated <code>error</code></td>
+<td>A step failed (LLM call, validation, or an aborted confirm)</td>
+<td>Read <code>result.error</code> and <code>result.steps_completed</code> to see where it stopped</td>
+<td>medium</td>
 </tr>
 <tr>
-<td>Wizard hangs on a step</td>
-<td>Token limits (<code>max_tokens</code>) and provider response timeouts</td>
-</tr>
-<tr>
-<td>Empty or malformed wizard output</td>
-<td>The <code>prompt_template</code> and <code>prompt_context_template</code> for the failing step</td>
+<td>Custom wizard not found by <code>get_wizard</code></td>
+<td>It was never <code>register_wizard</code>'d (or <code>save_custom_wizard</code>'d)</td>
+<td>Register the class or save the definition first</td>
+<td>low</td>
 </tr>
 </tbody>
 </table>
-<h2>Step-by-step diagnosis</h2>
+<h3>Risk areas</h3>
+<ul>
+<li><strong><code>run()</code> is async.</strong> Forgetting to <code>await</code> it is the most common
+mistake.</li>
+<li><strong>There is no registry class.</strong> Use the module-level functions
+(<code>list_wizards</code>, <code>get_wizard</code>, …) — not a <code>WizardRegistry</code>.</li>
+<li><strong><code>question</code> steps need a callback.</strong> Outside the <code>/wizard</code> skill,
+supply an <code>ask_user_callback</code> or the wizard can't collect input.</li>
+</ul>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Reproduce the failure with a minimal wizard run.</strong>
-Create a simple test that calls <code>BaseWizard.run()</code> with the same <code>initial_context</code> that triggers the issue. This isolates the problem from surrounding application logic.</p>
-</li>
-<li>
-<p><strong>Check wizard registration and retrieval.</strong>
-Verify the wizard is properly registered by running:</p>
-<pre><code class="language-python">from attune.wizards import list_wizards, get_wizard
-print([w.wizard_id for w in list_wizards()])
-wizard_class = get_wizard(&quot;your-wizard-id&quot;)
-print(f&quot;Found: {wizard_class}&quot;)
-</code></pre>
-</li>
-<li>
-<p><strong>Enable debug logging and examine step execution.</strong>
-Set logging to <code>DEBUG</code> level before running the wizard. Look for patterns in the step processing, particularly around <code>build_prompt_context()</code> and <code>process_step_result()</code> calls.</p>
-</li>
-<li>
-<p><strong>Inspect the <code>WizardResult</code> object.</strong>
-After a failed run, examine these fields in order:</p>
-<ul>
-<li><code>WizardResult.error</code> - Contains the failure reason</li>
-<li><code>WizardResult.steps_completed</code> - Shows how far the wizard got</li>
-<li><code>WizardResult.collected_data</code> - Reveals what data was gathered</li>
-<li><code>WizardResult.total_cost</code> and <code>total_duration_ms</code> - Indicates resource usage</li>
-</ul>
-</li>
-<li>
-<p><strong>Validate step configuration.</strong>
-For each failing step, check:</p>
-<ul>
-<li><code>step_type</code> matches the intended execution mode</li>
-<li><code>prompt_template</code> is not None for steps that need AI interaction</li>
-<li><code>questions</code> list is properly defined for form-based steps</li>
-<li><code>tier</code> setting matches your provider capabilities</li>
-</ul>
-</li>
+<li>Confirm you are awaiting: <code>await get_wizard(id)().run()</code>.</li>
+<li>Confirm the id exists: <code>get_wizard(id) is not None</code> /
+<code>list_wizards()</code>.</li>
+<li>On failure, read <code>result.error</code> and <code>result.steps_completed</code>.</li>
+<li>If a <code>question</code> step stalls, check the <code>ask_user_callback</code> wiring.</li>
 </ol>
-<h2>Common fixes</h2>
-<ul>
-<li>
-<p><strong>Fix wizard registration errors.</strong></p>
-<pre><code class="language-python">from attune.wizards import register_wizard
-register_wizard(&quot;my-wizard&quot;, MyWizardClass)
-</code></pre>
-<p>Ensure you call <code>register_wizard()</code> before trying to retrieve the wizard with <code>get_wizard()</code>.</p>
-</li>
-<li>
-<p><strong>Resolve custom wizard file permissions.</strong></p>
-<pre><code class="language-bash"># Make wizard directory writable
-chmod 755 ~/.attune/wizards/
-# Check available disk space
-df -h ~/.attune/
-</code></pre>
-</li>
-<li>
-<p><strong>Fix step condition logic.</strong>
-If steps are skipping unexpectedly, verify the condition function:</p>
-<pre><code class="language-python"># In your WizardStep definition
-condition=lambda session: session.collected_data.get('prerequisite_done', False)
-</code></pre>
-</li>
-<li>
-<p><strong>Adjust token limits for complex steps.</strong>
-Increase <code>max_tokens</code> for steps that generate long outputs:</p>
-<pre><code class="language-python">WizardStep(
-    id=&quot;analysis&quot;,
-    step_type=StepType.QUESTION,
-    max_tokens=8192  # Increase from default 4096
-)
-</code></pre>
-</li>
-<li>
-<p><strong>Handle missing ask_user_callback.</strong>
-For interactive wizards, ensure you provide a callback function:</p>
-<pre><code class="language-python">def my_callback(question):
-    return input(f&quot;{question}: &quot;)
-
-wizard = MyWizard(ask_user_callback=my_callback)
-</code></pre>
-</li>
-</ul>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/wizards/base.py</code> - <code>BaseWizard</code> class and core logic</li>
-<li><code>src/attune/wizards/types.py</code> - Data structures (<code>WizardStep</code>, <code>WizardConfig</code>, etc.)</li>
-<li><code>src/attune/wizards/registry.py</code> - Wizard registration and management</li>
-<li><code>src/attune/wizards/builtin/</code> - Built-in wizard implementations</li>
-</ul>
-<p><strong>Tags:</strong> <code>wizards</code>, <code>interactive</code></p>
 
   </article>
   <footer>

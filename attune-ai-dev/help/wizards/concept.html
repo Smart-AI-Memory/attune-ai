@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Wizards — concept</title>
-  <meta name="description" content="Interactive, multi-step workflows that guide users through complex development tasks by breaking them into sequential steps with prompts, questions, and validation." />
-  <meta property="og:title" content="Wizards — concept" />
-  <meta property="og:description" content="Interactive, multi-step workflows that guide users through complex development tasks by breaking them into sequential steps with prompts, questions, and validation." />
+  <title>Multi-step guided interactive workflows that walk users through complex tasks — concept</title>
+  <meta name="description" content="Wizards are **interactive, multi-step workflows** that guide a user through a complex development task by breaking it into sequential steps — questions that collect input, LLM calls, task decompositio" />
+  <meta property="og:title" content="Multi-step guided interactive workflows that walk users through complex tasks — concept" />
+  <meta property="og:description" content="Wizards are **interactive, multi-step workflows** that guide a user through a complex development task by breaking it into sequential steps — questions that collect input, LLM calls, task decompositio" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/wizards/concept" />
   <style>
@@ -272,36 +272,125 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Wizards</h1>
-<p>Interactive, multi-step workflows that guide users through complex development tasks by breaking them into sequential steps with prompts, questions, and validation.</p>
-<h2>Core structure</h2>
-<p>Wizards are built from these components:</p>
-<p><strong><code>WizardStep</code></strong> — A single step in the workflow, containing an ID, name, description, execution type, and optional prompt template. Steps can be questions that collect user input or automated actions that process data.</p>
-<p><strong><code>WizardConfig</code></strong> — Metadata describing the wizard's purpose, domain (like &quot;development&quot;), estimated cost and duration, and version information.</p>
-<p><strong><code>BaseWizard</code></strong> — The abstract foundation that all wizards inherit from. It handles step execution, context building, and result collection through a standardized <code>run()</code> method.</p>
-<p><strong><code>WizardResult</code></strong> — The final output containing the wizard ID, completion status, collected data, generated output, and execution metrics like cost and duration.</p>
-<h2>Built-in wizard types</h2>
-<p>Attune includes five specialized wizards for common development scenarios:</p>
+<h1>Multi-step guided interactive workflows that walk users through complex tasks</h1>
+<h2>Overview</h2>
+<p>Wizards are <strong>interactive, multi-step workflows</strong> that guide a user
+through a complex development task by breaking it into sequential steps
+— questions that collect input, LLM calls, task decomposition, and
+review/confirm gates. Each wizard runs to a <code>WizardResult</code> carrying the
+collected data, generated output, and cost/duration metrics.</p>
+<p>The registry is a set of <strong>module-level functions</strong> in
+<code>attune.wizards</code> (there is no registry class): <code>list_wizards()</code>,
+<code>get_wizard(id)</code>, <code>register_wizard(...)</code>, <code>save_custom_wizard(...)</code>, and
+<code>delete_custom_wizard(...)</code>. Five wizards ship built in — <code>debug</code>,
+<code>refactor</code>, <code>release-prep</code>, <code>security</code>, and <code>test-gen</code>.</p>
+<p>You reach wizards two ways:</p>
 <ul>
-<li><strong><code>DebugWizard</code></strong> — Guides systematic debugging with step-by-step problem identification</li>
-<li><strong><code>RefactorWizard</code></strong> — Walks through code restructuring with safety checks</li>
-<li><strong><code>ReleasePrepWizard</code></strong> — Automates release preparation tasks and validation</li>
-<li><strong><code>SecurityWizard</code></strong> — Conducts guided security audits with risk assessment</li>
-<li><strong><code>TestGenWizard</code></strong> — Generates comprehensive test suites through interactive prompting</li>
+<li>the Python API — <code>from attune.wizards import get_wizard, list_wizards</code>
+(the primary surface, documented throughout);</li>
+<li>the <strong><code>/wizard</code></strong> skill, inside a Claude Code conversation.</li>
 </ul>
-<p>Each wizard customizes the base workflow by implementing <code>build_prompt_context()</code> to prepare AI prompts and <code>process_step_result()</code> to handle user responses.</p>
-<h2>Step execution flow</h2>
-<p>Wizards execute through a consistent pattern:</p>
-<ol>
-<li>Each step defines its execution mode via <code>StepType</code> (question vs. automated action)</li>
-<li>The wizard builds context using the step's prompt template and current session data</li>
-<li>For question steps, the wizard presents forms to collect user input</li>
-<li>For action steps, the wizard processes data automatically</li>
-<li>Results are validated and stored before moving to the next step</li>
-<li>The final <code>WizardResult</code> contains all collected data and generated outputs</li>
-</ol>
-<h2>Custom wizard creation</h2>
-<p>You can create custom wizards by extending <code>BaseWizard</code> or by saving YAML definitions that define steps, prompts, and validation rules. The <code>save_custom_wizard()</code> function stores these definitions for reuse, while <code>register_wizard()</code> makes wizard classes available to the system.</p>
+<p>There is <strong>no <code>attune wizard</code> CLI command and no MCP tool</strong> — wizards
+run through the Python API or the skill. A wizard's <code>run()</code> method is
+<strong>async</strong> — <code>await</code> it.</p>
+<h2>Concepts</h2>
+<h3>The four core types</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WizardStep</code></td>
+<td>One step — <code>id</code>, <code>name</code>, <code>description</code>, <code>step_type</code>, an optional <code>prompt_template</code>, <code>questions</code>, a <code>tier</code>, and a <code>condition</code>.</td>
+</tr>
+<tr>
+<td><code>WizardConfig</code></td>
+<td>Wizard metadata — <code>wizard_id</code>, <code>name</code>, <code>description</code>, <code>domain</code>, <code>version</code>, <code>source</code>, <code>estimated_cost_range</code>, <code>estimated_duration_minutes</code>.</td>
+</tr>
+<tr>
+<td><code>BaseWizard</code></td>
+<td>Abstract base all wizards inherit from; drives step execution via the async <code>run()</code> method.</td>
+</tr>
+<tr>
+<td><code>WizardResult</code></td>
+<td>The outcome — <code>wizard_id</code>, <code>run_id</code>, <code>success</code>, <code>steps_completed</code>, <code>collected_data</code>, <code>generated_output</code>, <code>tasks</code>, <code>total_cost</code>, <code>total_duration_ms</code>, <code>error</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3>Step types</h3>
+<p>A step's <code>step_type</code> is a <code>StepType</code>: <code>question</code> (collect user input),
+<code>llm_call</code> (run a model call), <code>task_decompose</code> (break work into an
+XML task tree via <code>TaskDecomposer</code>), <code>review</code>, <code>preview</code>, and
+<code>confirm</code> (human gates). The wizard walks the steps in order, honoring
+each step's optional <code>condition</code>.</p>
+<h3>Running a built-in wizard</h3>
+<p><code>get_wizard(id)</code> returns the wizard <strong>class</strong> (or <code>None</code>); instantiate
+it and <code>await</code> its <code>run()</code>:</p>
+<ul>
+<li><code>BaseWizard(ask_user_callback=None, provider=None, **workflow_kwargs)</code>
+— the <code>ask_user_callback</code> is how the wizard collects input for
+<code>question</code> steps (wired to <code>AskUserQuestion</code> inside Claude Code);</li>
+<li><code>run(initial_context=None)</code> is a coroutine returning a
+<code>WizardResult</code>.</li>
+</ul>
+<p>A subclass customizes two hooks: <code>build_prompt_context(step)</code> (prepare
+the model prompt) and <code>process_step_result(step, result)</code> (handle a
+step's output).</p>
+<h3>The built-in wizards</h3>
+<p><code>list_wizards()</code> returns the registered <code>WizardConfig</code>s. Five ship
+built in:</p>
+<table>
+<thead>
+<tr>
+<th><code>wizard_id</code></th>
+<th>Class</th>
+<th>Guides</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>debug</code></td>
+<td><code>DebugWizard</code></td>
+<td>Systematic debugging, step by step.</td>
+</tr>
+<tr>
+<td><code>refactor</code></td>
+<td><code>RefactorWizard</code></td>
+<td>Code restructuring with safety checks.</td>
+</tr>
+<tr>
+<td><code>release-prep</code></td>
+<td><code>ReleasePrepWizard</code></td>
+<td>Release preparation and validation.</td>
+</tr>
+<tr>
+<td><code>security</code></td>
+<td><code>SecurityWizard</code></td>
+<td>Guided security audit with risk assessment.</td>
+</tr>
+<tr>
+<td><code>test-gen</code></td>
+<td><code>TestGenWizard</code></td>
+<td>Interactive test-suite generation.</td>
+</tr>
+</tbody>
+</table>
+<h3>Custom wizards — subclass or config-driven</h3>
+<p>Two ways to add a wizard:</p>
+<ul>
+<li><strong>Subclass <code>BaseWizard</code></strong> and implement <code>build_prompt_context</code> /
+<code>process_step_result</code>, then <code>register_wizard(id, cls)</code> to make it
+discoverable.</li>
+<li><strong>Config-driven</strong> — build a <code>ConfigDrivenWizard(config, steps)</code> from
+a <code>WizardConfig</code> + a list of <code>WizardStep</code>s (no subclass needed), or
+persist a definition with <code>save_custom_wizard(data, base_dir=None)</code>
+(returns the saved <code>Path</code>) and remove it with
+<code>delete_custom_wizard(id, base_dir=None)</code>.</li>
+</ul>
 
   </article>
   <footer>

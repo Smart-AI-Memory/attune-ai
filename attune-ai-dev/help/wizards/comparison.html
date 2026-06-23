@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Wizards vs direct AI calls — comparison</title>
-  <meta name="description" content="Wizards provide structured, multi-step interactive workflows that guide users through complex development tasks. They differ from direct AI calls by offering predefined steps, form-based input collect" />
-  <meta property="og:title" content="Wizards vs direct AI calls — comparison" />
-  <meta property="og:description" content="Wizards provide structured, multi-step interactive workflows that guide users through complex development tasks. They differ from direct AI calls by offering predefined steps, form-based input collect" />
+  <title>Multi-step guided interactive workflows that walk users through complex tasks — comparison</title>
+  <meta name="description" content="Wizards differ from workflows in interaction model:" />
+  <meta property="og:title" content="Multi-step guided interactive workflows that walk users through complex tasks — comparison" />
+  <meta property="og:description" content="Wizards differ from workflows in interaction model:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/wizards/comparison" />
   <style>
@@ -272,95 +272,40 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Wizards vs direct AI calls</h1>
-<h2>Overview</h2>
-<p>Wizards provide structured, multi-step interactive workflows that guide users through complex development tasks. They differ from direct AI calls by offering predefined steps, form-based input collection, and built-in progress tracking.</p>
-<h2>Feature comparison</h2>
+<h1>Multi-step guided interactive workflows that walk users through complex tasks</h1>
+<h2>Comparison</h2>
+<p>Wizards differ from workflows in interaction model:</p>
 <table>
 <thead>
 <tr>
-<th>Feature</th>
+<th></th>
 <th>Wizards</th>
-<th>Direct AI calls</th>
+<th>Workflows</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Structure</strong></td>
-<td>Predefined steps with clear progression</td>
-<td>One-off prompts without guidance</td>
+<td>Interaction</td>
+<td>Interactive — collect input mid-run via <code>question</code>/<code>confirm</code> steps</td>
+<td>Non-interactive — run to completion from inputs</td>
 </tr>
 <tr>
-<td><strong>User interaction</strong></td>
-<td>Form questions with validation</td>
-<td>Free-form text input only</td>
+<td>Entry</td>
+<td><code>get_wizard(id)</code> + <code>await run()</code>, or <code>/wizard</code> skill</td>
+<td><code>attune workflow run &lt;slug&gt;</code> / the workflow class</td>
 </tr>
 <tr>
-<td><strong>Progress tracking</strong></td>
-<td>Built-in step completion and duration metrics</td>
-<td>Manual tracking required</td>
-</tr>
-<tr>
-<td><strong>Cost estimation</strong></td>
-<td>Predefined ranges (e.g., $0.01-$0.50)</td>
-<td>No cost prediction</td>
-</tr>
-<tr>
-<td><strong>Reusability</strong></td>
-<td>Registered and shareable across team</td>
-<td>Ad-hoc, not reusable</td>
-</tr>
-<tr>
-<td><strong>Context management</strong></td>
-<td>Automatic prompt context building</td>
-<td>Manual context assembly</td>
-</tr>
-<tr>
-<td><strong>Error handling</strong></td>
-<td>Structured error reporting and recovery</td>
-<td>Basic error messages</td>
-</tr>
-<tr>
-<td><strong>Output format</strong></td>
-<td>Consistent structured results</td>
-<td>Variable response format</td>
+<td>Output</td>
+<td><code>WizardResult</code> (collected data + generated output)</td>
+<td><code>WorkflowResult</code></td>
 </tr>
 </tbody>
 </table>
-<h2>Built-in wizard types</h2>
-<p>The system includes five specialized wizards:</p>
-<ul>
-<li><strong>DebugWizard</strong>: Guided debugging with systematic problem isolation</li>
-<li><strong>RefactorWizard</strong>: Step-by-step code refactoring with safety checks</li>
-<li><strong>ReleasePrepWizard</strong>: Release checklist automation and validation</li>
-<li><strong>SecurityWizard</strong>: Security audit workflows with threat modeling</li>
-<li><strong>TestGenWizard</strong>: Comprehensive test generation for code coverage</li>
-</ul>
-<h2>When to use wizards</h2>
-<p>Choose wizards when you need:</p>
-<ul>
-<li><strong>Consistent workflows</strong>: Repeatable processes that team members execute regularly</li>
-<li><strong>Guided interaction</strong>: Users benefit from structured questions rather than open prompts</li>
-<li><strong>Progress tracking</strong>: You need to monitor completion rates and duration</li>
-<li><strong>Quality gates</strong>: Built-in validation and review steps are essential</li>
-<li><strong>Cost control</strong>: Predefined token limits and cost estimates matter</li>
-<li><strong>Team standardization</strong>: Multiple developers need the same workflow experience</li>
-</ul>
-<p>Examples: code reviews, security audits, release preparation, debugging complex issues.</p>
-<h2>When to use direct AI calls</h2>
-<p>Choose direct AI calls when you need:</p>
-<ul>
-<li><strong>Exploratory work</strong>: One-off questions or experimental prompts</li>
-<li><strong>Maximum flexibility</strong>: Custom prompting without workflow constraints</li>
-<li><strong>Simple interactions</strong>: Single-step operations that don't need structure</li>
-<li><strong>Rapid iteration</strong>: Testing different approaches without setup overhead</li>
-<li><strong>Custom context</strong>: Highly specific context that doesn't fit wizard patterns</li>
-</ul>
-<p>Examples: quick code explanations, ad-hoc refactoring ideas, experimental feature brainstorming.</p>
-<h2>Recommendation</h2>
-<p><strong>Use wizards as your default for development workflows.</strong> They provide better user experience, cost predictability, and team consistency. The built-in types (debug, refactor, release prep, security, test generation) cover most common scenarios.</p>
-<p>Fall back to direct AI calls only for exploratory work or when you need prompting flexibility that wizards don't support. You can always prototype with direct calls, then create a custom wizard if the workflow proves valuable.</p>
-<p><strong>Source files:</strong> <code>src/attune/wizards/**</code></p>
+<p>Reach for a <strong>wizard</strong> when the task needs the user in the loop
+(answering questions, confirming gates); reach for a <strong>workflow</strong> when
+the run is fully specified up front. Several builtins mirror a
+workflow (<code>release-prep</code>, <code>security</code>, <code>test-gen</code>) but wrap it in a
+guided, interactive flow.</p>
 
   </article>
   <footer>

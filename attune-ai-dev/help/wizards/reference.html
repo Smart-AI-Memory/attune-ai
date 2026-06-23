@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Wizards reference — reference</title>
-  <meta name="description" content="Build and run interactive, multi-step workflows. Register built-in wizards for debugging, refactoring, security audits, and test generation. Create custom wizards from YAML definitions." />
-  <meta property="og:title" content="Wizards reference — reference" />
-  <meta property="og:description" content="Build and run interactive, multi-step workflows. Register built-in wizards for debugging, refactoring, security audits, and test generation. Create custom wizards from YAML definitions." />
+  <title>Multi-step guided interactive workflows that walk users through complex tasks — reference</title>
+  <meta name="description" content="The public surface is the registry functions and the wizard classes/dataclasses, all re-exported from `attune.wizards`." />
+  <meta property="og:title" content="Multi-step guided interactive workflows that walk users through complex tasks — reference" />
+  <meta property="og:description" content="The public surface is the registry functions and the wizard classes/dataclasses, all re-exported from `attune.wizards`." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/wizards/reference" />
   <style>
@@ -272,408 +272,115 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Wizards reference</h1>
-<p>Build and run interactive, multi-step workflows. Register built-in wizards for debugging, refactoring, security audits, and test generation. Create custom wizards from YAML definitions.</p>
-<h2>Classes</h2>
+<h1>Multi-step guided interactive workflows that walk users through complex tasks</h1>
+<h2>Reference</h2>
+<p>The public surface is the registry functions and the wizard
+classes/dataclasses, all re-exported from <code>attune.wizards</code>.</p>
+<h3>Registry functions — <code>attune.wizards</code></h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
+<th>Function</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>StepType</code></td>
-<td>Execution mode for a wizard step</td>
+<td><code>list_wizards() -&gt; list[WizardConfig]</code></td>
+<td>All registered wizard configs (built-in + custom).</td>
+</tr>
+<tr>
+<td><code>get_wizard(wizard_id) -&gt; type[BaseWizard] | None</code></td>
+<td>The wizard class for an id, or <code>None</code>.</td>
+</tr>
+<tr>
+<td><code>register_wizard(wizard_id, wizard_class) -&gt; None</code></td>
+<td>Register a <code>BaseWizard</code> subclass.</td>
+</tr>
+<tr>
+<td><code>save_custom_wizard(wizard_data, base_dir=None) -&gt; Path</code></td>
+<td>Persist a config-driven wizard definition; returns the saved path.</td>
+</tr>
+<tr>
+<td><code>delete_custom_wizard(wizard_id, base_dir=None) -&gt; bool</code></td>
+<td>Remove a saved custom wizard.</td>
+</tr>
+</tbody>
+</table>
+<h3>Classes — <code>attune.wizards</code></h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BaseWizard(ask_user_callback=None, provider=None, **kwargs)</code></td>
+<td>Abstract base; async <code>run(initial_context=None) -&gt; WizardResult</code>; hooks <code>build_prompt_context(step)</code> and <code>process_step_result(step, result)</code>.</td>
+</tr>
+<tr>
+<td><code>ConfigDrivenWizard(config, steps, **kwargs)</code></td>
+<td>A wizard built from a <code>WizardConfig</code> + <code>list[WizardStep]</code>, no subclass needed.</td>
+</tr>
+<tr>
+<td><code>WizardSession</code></td>
+<td>Per-run session state.</td>
+</tr>
+<tr>
+<td><code>TaskDecomposer</code> / <code>DecomposedTask</code></td>
+<td>Back the <code>task_decompose</code> step type (XML task decomposition).</td>
+</tr>
+</tbody>
+</table>
+<h3>Dataclasses — <code>attune.wizards</code></h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Fields</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WizardConfig</code></td>
+<td><code>wizard_id</code>, <code>name</code>, <code>description</code>, <code>domain</code>, <code>version</code>, <code>source</code>, <code>estimated_cost_range</code>, <code>estimated_duration_minutes</code>.</td>
 </tr>
 <tr>
 <td><code>WizardStep</code></td>
-<td>Definition of a single wizard step</td>
-</tr>
-<tr>
-<td><code>WizardConfig</code></td>
-<td>Metadata for a wizard</td>
+<td><code>id</code>, <code>name</code>, <code>description</code>, <code>step_type</code>, <code>prompt_template</code>, <code>tier</code>, <code>questions</code>, <code>condition</code>, <code>max_tokens</code>, <code>prompt_context_template</code>, <code>review_source_step_id</code>.</td>
 </tr>
 <tr>
 <td><code>WizardResult</code></td>
-<td>Result from a completed wizard run</td>
+<td><code>wizard_id</code>, <code>run_id</code>, <code>success</code>, <code>steps_completed</code>, <code>collected_data</code>, <code>generated_output</code>, <code>tasks</code>, <code>total_cost</code>, <code>total_duration_ms</code>, <code>error</code>.</td>
 </tr>
 <tr>
-<td><code>BaseWizard</code></td>
-<td>Abstract base class for interactive, multi-step wizards</td>
-</tr>
-<tr>
-<td><code>DebugWizard</code></td>
-<td>Guided debugging wizard</td>
-</tr>
-<tr>
-<td><code>RefactorWizard</code></td>
-<td>Guided refactoring wizard</td>
-</tr>
-<tr>
-<td><code>ReleasePrepWizard</code></td>
-<td>Guided release preparation wizard</td>
-</tr>
-<tr>
-<td><code>SecurityWizard</code></td>
-<td>Guided security audit wizard</td>
-</tr>
-<tr>
-<td><code>TestGenWizard</code></td>
-<td>Guided test generation wizard</td>
-</tr>
-</tbody>
-</table>
-<h2>WizardStep fields</h2>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>id</code></td>
-<td><code>str</code></td>
-<td></td>
-<td>Step identifier</td>
-</tr>
-<tr>
-<td><code>name</code></td>
-<td><code>str</code></td>
-<td></td>
-<td>Display name</td>
-</tr>
-<tr>
-<td><code>description</code></td>
-<td><code>str</code></td>
-<td><code>''</code></td>
-<td>Step description</td>
-</tr>
-<tr>
-<td><code>step_type</code></td>
 <td><code>StepType</code></td>
-<td><code>StepType.QUESTION</code></td>
-<td>Execution mode</td>
-</tr>
-<tr>
-<td><code>prompt_template</code></td>
-<td>`str</td>
-<td>None`</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>tier</code></td>
-<td><code>str</code></td>
-<td><code>'capable'</code></td>
-<td>Model tier requirement</td>
-</tr>
-<tr>
-<td><code>questions</code></td>
-<td>`list[FormQuestion]</td>
-<td>None`</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>condition</code></td>
-<td>`Callable[[WizardSession], bool]</td>
-<td>None`</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>max_tokens</code></td>
-<td><code>int</code></td>
-<td><code>4096</code></td>
-<td>Maximum response tokens</td>
-</tr>
-<tr>
-<td><code>prompt_context_template</code></td>
-<td>`dict[str, Any]</td>
-<td>None`</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>review_source_step_id</code></td>
-<td>`str</td>
-<td>None`</td>
-<td><code>None</code></td>
+<td><code>question</code>, <code>llm_call</code>, <code>task_decompose</code>, <code>review</code>, <code>preview</code>, <code>confirm</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2>WizardConfig fields</h2>
+<h3>Entry points</h3>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
+<th>Surface</th>
+<th>Invocation</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>wizard_id</code></td>
-<td><code>str</code></td>
-<td></td>
-<td>Unique wizard identifier</td>
+<td>Python</td>
+<td><code>get_wizard(&lt;id&gt;)</code>, then <code>await &lt;cls&gt;().run()</code>; <code>list_wizards()</code> to discover.</td>
 </tr>
 <tr>
-<td><code>name</code></td>
-<td><code>str</code></td>
-<td></td>
-<td>Display name</td>
-</tr>
-<tr>
-<td><code>description</code></td>
-<td><code>str</code></td>
-<td></td>
-<td>Wizard description</td>
-</tr>
-<tr>
-<td><code>domain</code></td>
-<td><code>str</code></td>
-<td><code>'development'</code></td>
-<td>Application domain</td>
-</tr>
-<tr>
-<td><code>version</code></td>
-<td><code>str</code></td>
-<td><code>'1.0.0'</code></td>
-<td>Wizard version</td>
-</tr>
-<tr>
-<td><code>source</code></td>
-<td><code>str</code></td>
-<td><code>'builtin'</code></td>
-<td>Source type</td>
-</tr>
-<tr>
-<td><code>estimated_cost_range</code></td>
-<td><code>tuple[float, float]</code></td>
-<td><code>(0.01, 0.5)</code></td>
-<td>Cost estimate range</td>
-</tr>
-<tr>
-<td><code>estimated_duration_minutes</code></td>
-<td><code>int</code></td>
-<td><code>5</code></td>
-<td>Time estimate</td>
+<td>Skill</td>
+<td><code>/wizard</code> in a Claude Code conversation.</td>
 </tr>
 </tbody>
 </table>
-<h2>WizardResult fields</h2>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>wizard_id</code></td>
-<td><code>str</code></td>
-<td></td>
-<td>Wizard that ran</td>
-</tr>
-<tr>
-<td><code>run_id</code></td>
-<td><code>str</code></td>
-<td></td>
-<td>Unique run identifier</td>
-</tr>
-<tr>
-<td><code>success</code></td>
-<td><code>bool</code></td>
-<td></td>
-<td>Whether wizard completed successfully</td>
-</tr>
-<tr>
-<td><code>steps_completed</code></td>
-<td><code>list[str]</code></td>
-<td><code>[]</code></td>
-<td>IDs of completed steps</td>
-</tr>
-<tr>
-<td><code>collected_data</code></td>
-<td><code>dict[str, Any]</code></td>
-<td><code>{}</code></td>
-<td>Data gathered from user</td>
-</tr>
-<tr>
-<td><code>generated_output</code></td>
-<td>`str</td>
-<td>dict[str, Any]`</td>
-<td><code>''</code></td>
-</tr>
-<tr>
-<td><code>tasks</code></td>
-<td><code>list[dict[str, Any]]</code></td>
-<td><code>[]</code></td>
-<td>Generated task list</td>
-</tr>
-<tr>
-<td><code>total_cost</code></td>
-<td><code>float</code></td>
-<td><code>0.0</code></td>
-<td>Total API cost</td>
-</tr>
-<tr>
-<td><code>total_duration_ms</code></td>
-<td><code>float</code></td>
-<td><code>0.0</code></td>
-<td>Total execution time</td>
-</tr>
-<tr>
-<td><code>error</code></td>
-<td>`str</td>
-<td>None`</td>
-<td><code>None</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Functions</h2>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>register_wizard</code></td>
-<td><code>wizard_id: str, wizard_class: type[BaseWizard]</code></td>
-<td><code>None</code></td>
-<td>Register a wizard class</td>
-</tr>
-<tr>
-<td><code>get_wizard</code></td>
-<td><code>wizard_id: str</code></td>
-<td>`type[BaseWizard]</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>list_wizards</code></td>
-<td></td>
-<td><code>list[WizardConfig]</code></td>
-<td>List all registered wizard configs</td>
-</tr>
-<tr>
-<td><code>save_custom_wizard</code></td>
-<td>`wizard_data: dict[str, Any], base_dir: str</td>
-<td>None = None`</td>
-<td><code>Path</code></td>
-</tr>
-<tr>
-<td><code>delete_custom_wizard</code></td>
-<td>`wizard_id: str, base_dir: str</td>
-<td>None = None`</td>
-<td><code>bool</code></td>
-</tr>
-</tbody>
-</table>
-<h2>BaseWizard methods</h2>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td>`ask_user_callback: AskUserQuestionCallback</td>
-<td>None = None, provider: str</td>
-<td>None = None, **workflow_kwargs: Any`</td>
-</tr>
-<tr>
-<td><code>run</code></td>
-<td>`initial_context: dict[str, Any]</td>
-<td>None = None`</td>
-<td><code>WizardResult</code></td>
-</tr>
-<tr>
-<td><code>build_prompt_context</code></td>
-<td><code>step: WizardStep</code></td>
-<td><code>PromptContext</code></td>
-<td>Build context for step prompts</td>
-</tr>
-<tr>
-<td><code>process_step_result</code></td>
-<td><code>step: WizardStep, result: dict[str, Any]</code></td>
-<td><code>None</code></td>
-<td>Process step execution results</td>
-</tr>
-</tbody>
-</table>
-<h2>WizardResult methods</h2>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>to_dict</code></td>
-<td><code>self</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Convert result to dictionary</td>
-</tr>
-</tbody>
-</table>
-<h2>Raises</h2>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Exception</th>
-<th>Message</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>save_custom_wizard</code></td>
-<td><code>ValueError</code></td>
-<td><code>'Cannot write wizard YAML: {...}'</code></td>
-</tr>
-<tr>
-<td><code>delete_custom_wizard</code></td>
-<td><code>ValueError</code></td>
-<td><code>&quot;Cannot delete built-in wizard: '{...}'&quot;</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Constants</h2>
-<table>
-<thead>
-<tr>
-<th>Constant</th>
-<th>Value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>SCHEMA_VERSION</code></td>
-<td><code>'1.0'</code></td>
-</tr>
-</tbody>
-</table>
+<p>No <code>attune wizard</code> CLI command and no MCP tool exist for wizards.</p>
 
   </article>
   <footer>

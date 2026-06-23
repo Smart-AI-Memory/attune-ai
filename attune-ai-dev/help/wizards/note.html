@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Note: wizards — note</title>
-  <meta name="description" content="The wizards system provides XML-enhanced interactive workflows that guide users through complex, multi-step processes in Attune AI. Each wizard breaks down tasks like debugging, refactoring, or securi" />
-  <meta property="og:title" content="Note: wizards — note" />
-  <meta property="og:description" content="The wizards system provides XML-enhanced interactive workflows that guide users through complex, multi-step processes in Attune AI. Each wizard breaks down tasks like debugging, refactoring, or securi" />
+  <title>Multi-step guided interactive workflows that walk users through complex tasks — note</title>
+  <meta name="description" content="Wizards are **interactive, multi-step workflows** that guide a user through a complex development task by breaking it into sequential steps — questions that collect input, LLM calls, task decompositio" />
+  <meta property="og:title" content="Multi-step guided interactive workflows that walk users through complex tasks — note" />
+  <meta property="og:description" content="Wizards are **interactive, multi-step workflows** that guide a user through a complex development task by breaking it into sequential steps — questions that collect input, LLM calls, task decompositio" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/wizards/note" />
   <style>
@@ -272,42 +272,139 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Note: wizards</h1>
-<h2>Context</h2>
-<p>The wizards system provides XML-enhanced interactive workflows that guide users through complex, multi-step processes in Attune AI. Each wizard breaks down tasks like debugging, refactoring, or security auditing into structured steps with AI-powered prompts and user interactions.</p>
-<h2>Architecture</h2>
-<p>The wizards system separates data types from execution logic:</p>
-<p><strong>Core data types</strong> (<code>_types.py</code>):</p>
+<h1>Multi-step guided interactive workflows that walk users through complex tasks</h1>
+<h2>Overview</h2>
+<p>Wizards are <strong>interactive, multi-step workflows</strong> that guide a user
+through a complex development task by breaking it into sequential steps
+— questions that collect input, LLM calls, task decomposition, and
+review/confirm gates. Each wizard runs to a <code>WizardResult</code> carrying the
+collected data, generated output, and cost/duration metrics.</p>
+<p>The registry is a set of <strong>module-level functions</strong> in
+<code>attune.wizards</code> (there is no registry class): <code>list_wizards()</code>,
+<code>get_wizard(id)</code>, <code>register_wizard(...)</code>, <code>save_custom_wizard(...)</code>, and
+<code>delete_custom_wizard(...)</code>. Five wizards ship built in — <code>debug</code>,
+<code>refactor</code>, <code>release-prep</code>, <code>security</code>, and <code>test-gen</code>.</p>
+<p>You reach wizards two ways:</p>
 <ul>
-<li><code>WizardStep</code> — Defines individual workflow steps with prompts, questions, and execution modes</li>
-<li><code>WizardConfig</code> — Contains wizard metadata like name, domain, and estimated cost</li>
-<li><code>WizardResult</code> — Captures completion status, collected data, and execution metrics</li>
-<li><code>StepType</code> — Enum for step execution modes (question, action, review)</li>
+<li>the Python API — <code>from attune.wizards import get_wizard, list_wizards</code>
+(the primary surface, documented throughout);</li>
+<li>the <strong><code>/wizard</code></strong> skill, inside a Claude Code conversation.</li>
 </ul>
-<p><strong>Base execution</strong> (<code>base.py</code>):</p>
+<p>There is <strong>no <code>attune wizard</code> CLI command and no MCP tool</strong> — wizards
+run through the Python API or the skill. A wizard's <code>run()</code> method is
+<strong>async</strong> — <code>await</code> it.</p>
+<h2>Concepts</h2>
+<h3>The four core types</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WizardStep</code></td>
+<td>One step — <code>id</code>, <code>name</code>, <code>description</code>, <code>step_type</code>, an optional <code>prompt_template</code>, <code>questions</code>, a <code>tier</code>, and a <code>condition</code>.</td>
+</tr>
+<tr>
+<td><code>WizardConfig</code></td>
+<td>Wizard metadata — <code>wizard_id</code>, <code>name</code>, <code>description</code>, <code>domain</code>, <code>version</code>, <code>source</code>, <code>estimated_cost_range</code>, <code>estimated_duration_minutes</code>.</td>
+</tr>
+<tr>
+<td><code>BaseWizard</code></td>
+<td>Abstract base all wizards inherit from; drives step execution via the async <code>run()</code> method.</td>
+</tr>
+<tr>
+<td><code>WizardResult</code></td>
+<td>The outcome — <code>wizard_id</code>, <code>run_id</code>, <code>success</code>, <code>steps_completed</code>, <code>collected_data</code>, <code>generated_output</code>, <code>tasks</code>, <code>total_cost</code>, <code>total_duration_ms</code>, <code>error</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3>Step types</h3>
+<p>A step's <code>step_type</code> is a <code>StepType</code>: <code>question</code> (collect user input),
+<code>llm_call</code> (run a model call), <code>task_decompose</code> (break work into an
+XML task tree via <code>TaskDecomposer</code>), <code>review</code>, <code>preview</code>, and
+<code>confirm</code> (human gates). The wizard walks the steps in order, honoring
+each step's optional <code>condition</code>.</p>
+<h3>Running a built-in wizard</h3>
+<p><code>get_wizard(id)</code> returns the wizard <strong>class</strong> (or <code>None</code>); instantiate
+it and <code>await</code> its <code>run()</code>:</p>
 <ul>
-<li><code>BaseWizard</code> — Abstract class that orchestrates step execution, context building, and result processing</li>
+<li><code>BaseWizard(ask_user_callback=None, provider=None, **workflow_kwargs)</code>
+— the <code>ask_user_callback</code> is how the wizard collects input for
+<code>question</code> steps (wired to <code>AskUserQuestion</code> inside Claude Code);</li>
+<li><code>run(initial_context=None)</code> is a coroutine returning a
+<code>WizardResult</code>.</li>
 </ul>
-<p><strong>Registry management</strong> (<code>registry.py</code>):</p>
+<p>A subclass customizes two hooks: <code>build_prompt_context(step)</code> (prepare
+the model prompt) and <code>process_step_result(step, result)</code> (handle a
+step's output).</p>
+<h3>The built-in wizards</h3>
+<p><code>list_wizards()</code> returns the registered <code>WizardConfig</code>s. Five ship
+built in:</p>
+<table>
+<thead>
+<tr>
+<th><code>wizard_id</code></th>
+<th>Class</th>
+<th>Guides</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>debug</code></td>
+<td><code>DebugWizard</code></td>
+<td>Systematic debugging, step by step.</td>
+</tr>
+<tr>
+<td><code>refactor</code></td>
+<td><code>RefactorWizard</code></td>
+<td>Code restructuring with safety checks.</td>
+</tr>
+<tr>
+<td><code>release-prep</code></td>
+<td><code>ReleasePrepWizard</code></td>
+<td>Release preparation and validation.</td>
+</tr>
+<tr>
+<td><code>security</code></td>
+<td><code>SecurityWizard</code></td>
+<td>Guided security audit with risk assessment.</td>
+</tr>
+<tr>
+<td><code>test-gen</code></td>
+<td><code>TestGenWizard</code></td>
+<td>Interactive test-suite generation.</td>
+</tr>
+</tbody>
+</table>
+<h3>Custom wizards — subclass or config-driven</h3>
+<p>Two ways to add a wizard:</p>
 <ul>
-<li>Functions to register, retrieve, save, and delete wizard definitions</li>
-<li>Support for both built-in and custom wizards stored as YAML</li>
+<li><strong>Subclass <code>BaseWizard</code></strong> and implement <code>build_prompt_context</code> /
+<code>process_step_result</code>, then <code>register_wizard(id, cls)</code> to make it
+discoverable.</li>
+<li><strong>Config-driven</strong> — build a <code>ConfigDrivenWizard(config, steps)</code> from
+a <code>WizardConfig</code> + a list of <code>WizardStep</code>s (no subclass needed), or
+persist a definition with <code>save_custom_wizard(data, base_dir=None)</code>
+(returns the saved <code>Path</code>) and remove it with
+<code>delete_custom_wizard(id, base_dir=None)</code>.</li>
 </ul>
-<h2>Built-in wizards</h2>
-<p>Five specialized wizards extend <code>BaseWizard</code>:</p>
+<h2>Notes &amp; tips</h2>
 <ul>
-<li><code>DebugWizard</code> — Guides systematic debugging workflows</li>
-<li><code>RefactorWizard</code> — Structures code refactoring processes</li>
-<li><code>ReleasePrepWizard</code> — Orchestrates release preparation tasks</li>
-<li><code>SecurityWizard</code> — Facilitates security audit procedures</li>
-<li><code>TestGenWizard</code> — Assists with test generation workflows</li>
+<li><strong>Depend on the documented public surface.</strong> The supported API is
+the registry functions plus <code>BaseWizard</code>, <code>ConfigDrivenWizard</code>, the
+<code>WizardConfig</code> / <code>WizardStep</code> / <code>WizardResult</code> dataclasses, <code>StepType</code>,
+and <code>WizardSession</code> — all from <code>attune.wizards</code>.</li>
+<li><strong><code>await</code> the run.</strong> <code>run()</code> is the only async method; the registry
+functions are sync.</li>
+<li><strong>Use the skill for interactive runs.</strong> <code>/wizard</code> wires the
+<code>ask_user_callback</code> to <code>AskUserQuestion</code>; a bare Python run needs you
+to supply one for <code>question</code> steps.</li>
+<li><strong>Discover before you run.</strong> <code>list_wizards()</code> gives ids, names,
+domains, and cost/duration estimates.</li>
 </ul>
-<p>Each wizard customizes <code>build_prompt_context()</code> and <code>process_step_result()</code> to handle domain-specific logic while following the common execution pattern.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/wizards/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>wizards</code>, <code>interactive</code></p>
 
   </article>
   <footer>
