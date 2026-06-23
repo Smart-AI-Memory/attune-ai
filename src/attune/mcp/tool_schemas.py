@@ -161,21 +161,22 @@ def get_workflow_tools() -> dict[str, dict[str, Any]]:
             param_desc="Project root to check",
         ),
         "research_synthesis": {
-            "description": "Synthesize insights from multiple documents. Summarizes, analyzes patterns, and produces a unified answer.",
+            "description": "Synthesize insights from local source documents at a path. A 3-agent pipeline summarizes, analyzes patterns across, and produces a unified answer from the documents found at the given directory or file.",
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "sources": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "List of document texts to synthesize (minimum 2)",
-                    },
-                    "question": {
+                    "path": {
                         "type": "string",
-                        "description": "Research question to answer",
+                        "description": "Directory or file of source documents to analyze",
+                        "default": ".",
+                    },
+                    "depth": {
+                        "type": "string",
+                        "enum": ["quick", "standard", "deep"],
+                        "description": "Synthesis depth / agent budget (default: standard)",
+                        "default": "standard",
                     },
                 },
-                "required": ["sources", "question"],
             },
         },
         "analyze_batch": {

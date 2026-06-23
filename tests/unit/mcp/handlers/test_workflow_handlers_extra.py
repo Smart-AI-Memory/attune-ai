@@ -219,9 +219,7 @@ class TestRunResearchSynthesisNonDict:
             "attune.workflows.research_synthesis.ResearchSynthesisWorkflow.execute",
             new=AsyncMock(return_value=mock_result),
         ):
-            result = await server._run_research_synthesis(
-                {"sources": ["src/", "docs/"], "question": "what is X?"}
-            )
+            result = await server._run_research_synthesis({"path": "docs", "depth": "quick"})
 
         assert result["success"] is True
         assert "output" in result
