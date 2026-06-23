@@ -10667,3 +10667,26 @@ files.
   PRs" lesson to the `generate_all.py` / `plugin/help/generated`
   surface (the `.help/templates/` lesson is the sibling on the
   template side).
+
+- **Editing any `plugin/skills/<name>/SKILL.md` requires running
+  `scripts/sync_agents_skills.py` — there's a SECOND, CI-enforced copy
+  under `.agents/skills/<name>/SKILL.md`**: bit BOTH PRs in one session
+  2026-06-23 (#1020 release_prep→release_notes skill reframe; #1021
+  research_synthesis planning-skill edit). `.agents/skills/*/SKILL.md`
+  is sync-GENERATED from `plugin/skills/*/SKILL.md` (Claude-Code
+  frontmatter stripped to agentskills.io format), and
+  `tests/unit/plugins/test_sync_agents_skills.py::
+  test_skill_body_content_matches` fails the WHOLE test matrix with
+  "`<name>/SKILL.md body differs. Run: python
+  scripts/sync_agents_skills.py`" whenever the two drift. The pre-commit
+  hooks did NOT catch it locally (the sync isn't a pre-commit hook), so
+  it only surfaced as a red matrix on the PR. Workflow for any skill-body
+  edit: after editing `plugin/skills/<x>/SKILL.md`, run `PYTHONPATH=src
+  <py> scripts/sync_agents_skills.py` (regenerates the `.agents` copy),
+  then `--check` to confirm `0 failed`, and stage the regenerated
+  `.agents/skills/<x>/SKILL.md` alongside the source. Verify with
+  `git status` — only the edited skills' `.agents` copies should change
+  (the script rewrites all 17 but leaves unchanged ones byte-identical).
+  This is a sibling to the existing "plugin-reference-validation tests
+  parse skill .md for tool names" lesson — both are PR-only skill-surface
+  gates that pre-commit misses.
