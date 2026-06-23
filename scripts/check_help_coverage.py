@@ -44,6 +44,8 @@ KNOWN_GAPS: set[str] = {
     "doc-orchestrator",
     "perf-audit",
     "rag-code-gen",
+    "release-gate",
+    "release-notes",
     "research-synthesis",
     "simplify-code",
     "test-audit",
