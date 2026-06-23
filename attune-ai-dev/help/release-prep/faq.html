@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Release Prep FAQ — faq</title>
-  <meta name="description" content="Release prep runs a preflight checklist across your project before you publish. It coordinates specialized agents to check code quality, test coverage, security, and documentation, then produces a `Re" />
+  <meta name="description" content="Release-prep is the **deterministic gate** for shipping. Four agents run real tools — `bandit`, `ruff`, `pytest --cov`, and a docstring / README / CHANGELOG check — in parallel, measure the results ag" />
   <meta property="og:title" content="Release Prep FAQ — faq" />
-  <meta property="og:description" content="Release prep runs a preflight checklist across your project before you publish. It coordinates specialized agents to check code quality, test coverage, security, and documentation, then produces a `Re" />
+  <meta property="og:description" content="Release-prep is the **deterministic gate** for shipping. Four agents run real tools — `bandit`, `ruff`, `pytest --cov`, and a docstring / README / CHANGELOG check — in parallel, measure the results ag" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/release-prep/faq" />
   <style>
@@ -273,75 +273,69 @@
   </nav>
   <article class="markdown-body">
 <h1>Release Prep FAQ</h1>
-<h2>What is release prep?</h2>
-<p>Release prep runs a preflight checklist across your project before you publish. It coordinates specialized agents to check code quality, test coverage, security, and documentation, then produces a <code>ReleaseReadinessReport</code> with a go/no-go verdict.</p>
-<h2>When should I use it?</h2>
-<p>Use release prep before tagging a release, bumping a version, or uploading to PyPI. It's also useful after merging a large feature branch when you want to confirm the codebase is in a shippable state.</p>
+<h2>What is release-prep?</h2>
+<p>Release-prep is the <strong>deterministic gate</strong> for shipping. Four agents
+run real tools — <code>bandit</code>, <code>ruff</code>, <code>pytest --cov</code>, and a docstring /
+README / CHANGELOG check — in parallel, measure the results against
+hard quality-gate thresholds, and return an APPROVED or BLOCKED
+verdict. It is the enforcement half of the release pair.</p>
+<h2>What's the difference between release-prep and release-notes?</h2>
+<p>Release-prep is the deterministic gate — real bandit/ruff/pytest
+against hard thresholds, returning APPROVED or BLOCKED. Release-notes
+is advisory — it drafts a changelog and an LLM go/no-go and never
+blocks. Run the gate with <code>attune workflow run release-gate</code>.</p>
+<h2>How much does the gate cost?</h2>
+<p>$0 by default. <code>RELEASE_LLM_MODE</code> defaults to <code>&quot;simulated&quot;</code>, so the
+agents score real tool output with rule-based logic and make no API
+calls. Set <code>RELEASE_LLM_MODE=real</code> plus an <code>ANTHROPIC_API_KEY</code> to let
+the security and quality agents classify their output with an LLM.</p>
 <h2>What checks does it run?</h2>
-<p>Four specialized agents run in parallel:</p>
+<p>Four agents run in parallel:</p>
 <ul>
-<li><strong><code>CodeQualityAgent</code></strong> — runs ruff, checks type hints and complexity.</li>
-<li><strong><code>TestCoverageAgent</code></strong> — runs <code>pytest --cov</code> and parses the coverage report.</li>
-<li><strong><code>SecurityAuditorAgent</code></strong> — scans for vulnerabilities, secret leaks, and unsafe patterns.</li>
-<li><strong><code>DocumentationAgent</code></strong> — checks docstring coverage, README currency, and CHANGELOG presence.</li>
+<li><strong><code>SecurityAuditorAgent</code></strong> — <code>uv run bandit -r src/ -f json --severity-level medium</code>; <code>critical_issues</code> = CRITICAL + HIGH.</li>
+<li><strong><code>TestCoverageAgent</code></strong> — <code>uv run pytest --cov=&lt;target&gt;</code>; parses the
+TOTAL coverage percentage.</li>
+<li><strong><code>CodeQualityAgent</code></strong> — <code>uv run ruff check src/ --statistics</code>;
+maps violations to a 0–10 quality score.</li>
+<li><strong><code>DocumentationAgent</code></strong> — AST walk of <code>src/**/*.py</code> for docstring
+coverage, plus README/CHANGELOG presence.</li>
 </ul>
-<p>Each agent returns a <code>ReleaseAgentResult</code> with a <code>score</code>, <code>confidence</code>, and <code>findings</code> dict.</p>
-<h2>What does the final report look like?</h2>
-<p><code>assess_readiness()</code> returns a <code>ReleaseReadinessReport</code>. The key fields are:</p>
+<h2>Why did a BLOCKED run still exit 0?</h2>
+<p><code>WorkflowResult.success</code> means the assessment <strong>ran</strong>, not that the
+release was approved. The verdict is in <code>metadata[&quot;approved&quot;]</code> (and
+<code>metadata[&quot;confidence&quot;]</code>), and the full report is in <code>final_output</code>.
+Branch on the verdict, not the exit code.</p>
+<h2>How do I run it?</h2>
 <ul>
-<li><code>approved</code> — <code>True</code> if every critical <code>QualityGate</code> passed.</li>
-<li><code>blockers</code> — list of issues that must be fixed before release.</li>
-<li><code>warnings</code> — non-blocking advisories.</li>
-<li><code>quality_gates</code> — list of <code>QualityGate</code> results, each with <code>name</code>, <code>threshold</code>, <code>actual</code>, and <code>passed</code>.</li>
+<li><strong>CLI:</strong> <code>attune workflow run release-gate</code> (canonical slug
+<code>release-prep</code>).</li>
+<li><strong>Python:</strong> <code>await ReleasePrepTeamWorkflow().execute(path=&quot;.&quot;)</code>
+(importable from <code>attune.agents.release</code>).</li>
 </ul>
-<p>Call <code>format_console_output()</code> to print a human-readable summary, or <code>to_dict()</code> to serialize the report.</p>
-<h2>What's the fastest way to run it?</h2>
-<p>Instantiate <code>ReleasePrepTeam</code> and call <code>assess_readiness()</code>:</p>
-<pre><code class="language-python">from release import ReleasePrepTeam
+<p>There is no MCP tool for the gate — it is CLI / Python only.</p>
+<h2>How do I customize the thresholds?</h2>
+<p>Pass a <code>quality_gates</code> dict to <code>ReleasePrepTeam</code> or
+<code>ReleasePrepTeamWorkflow</code> using the keys <code>max_critical_issues</code>,
+<code>min_coverage</code>, <code>min_quality_score</code>, and <code>min_doc_coverage</code>. Coverage
+and doc-coverage are percentages (e.g. <code>90.0</code>), not fractions:</p>
+<pre><code class="language-python">import asyncio
 
-team = ReleasePrepTeam()
-report = team.assess_readiness(codebase_path=&quot;.&quot;)
-print(report.format_console_output())
+from attune.agents.release import ReleasePrepTeam
+
+
+async def main() -&gt; None:
+    team = ReleasePrepTeam(quality_gates={&quot;min_coverage&quot;: 90.0})
+    report = await team.assess_readiness(codebase_path=&quot;.&quot;)
+    print(report.format_console_output())
+
+
+asyncio.run(main())
 </code></pre>
-<p>If you need workflow integration, use <code>ReleasePrepTeamWorkflow.execute()</code> instead, which accepts a <code>path</code> and optional <code>context</code> dict.</p>
-<h2>Can I customize the quality gate thresholds?</h2>
-<p>Yes. Pass a <code>quality_gates</code> dict to <code>ReleasePrepTeam</code> or <code>ReleasePrepTeamWorkflow</code>:</p>
-<pre><code class="language-python">team = ReleasePrepTeam(quality_gates={&quot;coverage&quot;: 0.90, &quot;security&quot;: 0.95})
-</code></pre>
-<p>Each key is a gate name and the value is the minimum passing threshold. Gates with <code>critical=True</code> block the <code>approved</code> verdict if they fail.</p>
-<h2>What happens when a check needs more analysis?</h2>
-<p><code>ReleaseAgent</code> uses progressive tier escalation — it starts at a cheap model tier and escalates to more capable tiers if confidence is low. The <code>ReleaseAgentResult.escalated</code> field tells you whether escalation occurred, and <code>tier_used</code> records which tier produced the final result.</p>
-<h2>How do I check what the run cost?</h2>
-<p>Call <code>get_total_cost()</code> on your <code>ReleasePrepTeam</code> instance after <code>assess_readiness()</code> returns. The same value is also available as <code>ReleaseReadinessReport.total_cost</code>.</p>
-<h2>How do I debug a failed run?</h2>
-<p>Run <code>pytest -k &quot;release-prep&quot; -v</code> first. If the tests pass but your results look wrong, inspect the <code>findings</code> dict on each <code>ReleaseAgentResult</code> in <code>report.agent_results</code> — each agent records its raw output there. You can also check <code>execution_time_ms</code> and <code>success</code> per agent to identify which one failed.</p>
-<h2>Where are the source files?</h2>
-<ul>
-<li><code>src/attune/agents/release/</code> — individual agents (<code>base_agent</code>, <code>coverage_agent</code>, <code>documentation_agent</code>, <code>quality_agent</code>, <code>security_agent</code>)</li>
-<li><code>src/attune/workflows/release_prep.py</code> — <code>ReleasePreparationWorkflow</code></li>
-</ul>
+<h2>Which calls are async?</h2>
+<p>Both <code>ReleasePrepTeamWorkflow.execute</code> and
+<code>ReleasePrepTeam.assess_readiness</code> are coroutines — <code>await</code> them or
+drive them with <code>asyncio.run</code>.</p>
 <p><strong>Tags:</strong> <code>release</code>, <code>publishing</code>, <code>quality</code></p>
-<h2>Unresolved references</h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Line 47 (code fence)</td>
-<td>error</td>
-<td><code>from release import …</code> — module not importable</td>
-</tr>
-</tbody>
-</table>
 
   </article>
   <footer>

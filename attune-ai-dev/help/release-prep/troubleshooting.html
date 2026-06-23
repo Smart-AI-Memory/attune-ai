@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot release prep — troubleshooting</title>
-  <meta name="description" content="Release prep coordinates four specialized agents — health checker, security scanner, changelog generator, and release assessor — and aggregates their results into a `ReleaseReadinessReport`. Most fail" />
-  <meta property="og:title" content="Troubleshoot release prep — troubleshooting" />
-  <meta property="og:description" content="Release prep coordinates four specialized agents — health checker, security scanner, changelog generator, and release assessor — and aggregates their results into a `ReleaseReadinessReport`. Most fail" />
+  <title>Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;ReleasePrepTeam.assess_readiness&#x27; was never awaited` | `assess_readiness` (or `execute`) called without `await` | B" />
+  <meta property="og:title" content="Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;ReleasePrepTeam.assess_readiness&#x27; was never awaited` | `assess_readiness` (or `execute`) called without `await` | B" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/release-prep/troubleshooting" />
   <style>
@@ -272,132 +272,79 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot release prep</h1>
-<p>Release prep coordinates four specialized agents — health checker, security scanner, changelog generator, and release assessor — and aggregates their results into a <code>ReleaseReadinessReport</code>. Most failures fall into one of the categories below.</p>
-<h2>Symptom table</h2>
+<h1>Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>assess_readiness()</code> returns <code>approved: False</code> with no <code>blockers</code></td>
-<td>Inspect each <code>QualityGate</code> in <code>report.quality_gates</code> — a gate with <code>passed: False</code> and <code>critical: True</code> will block approval even if <code>blockers</code> is empty</td>
+<td><code>RuntimeWarning: coroutine 'ReleasePrepTeam.assess_readiness' was never awaited</code></td>
+<td><code>assess_readiness</code> (or <code>execute</code>) called without <code>await</code></td>
+<td>Both are coroutines — <code>await</code> them or use <code>asyncio.run</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td>An agent result has <code>success: False</code> but <code>score: 0.0</code> and <code>findings: {}</code></td>
-<td>The agent likely raised before writing results; check the <code>agent_id</code> and <code>agent_role</code> fields to identify which agent failed, then run it directly via <code>ReleaseAgent.process()</code></td>
+<td>Verdict is BLOCKED but the command exited 0</td>
+<td><code>success</code> reflects that the assessment ran, not the verdict</td>
+<td>Read <code>metadata[&quot;approved&quot;]</code> / the report — don't gate on the exit code alone</td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>confidence</code> on the report is unexpectedly low</td>
-<td>One or more agents escalated to a higher tier (<code>escalated: True</code> in <code>ReleaseAgentResult</code>); this usually means the cheaper tier timed out or returned unusable output</td>
+<td>Security gate shows <code>actual: -1</code> / a gate can't be measured</td>
+<td>The agent errored (e.g. the tool raised); <code>critical_issues</code> falls back to <code>-1</code></td>
+<td>Inspect that agent's <code>findings[&quot;error&quot;]</code>; confirm the tool runs in the project</td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>TestCoverageAgent</code> fails or returns no coverage data</td>
-<td>Confirm <code>pytest --cov</code> runs cleanly in your environment: <code>pytest --cov . --cov-report=term-missing</code></td>
+<td>Coverage reads as estimated, not measured</td>
+<td><code>pytest --cov</code> output wasn't parseable (timeout, no TOTAL line)</td>
+<td>The percentage is heuristic from test count (<code>findings[&quot;estimated&quot;]</code> is <code>True</code>); run coverage directly to confirm</td>
+<td>low</td>
 </tr>
 <tr>
-<td><code>CodeQualityAgent</code> findings are empty or missing</td>
-<td>Confirm <code>ruff</code> is installed and on <code>PATH</code>: <code>ruff check . --output-format=json</code></td>
+<td>A gate reports <code>&quot;bandit not available&quot;</code> / <code>&quot;ruff not available&quot;</code></td>
+<td>The tool isn't installed in the run environment</td>
+<td>Install the tool; the agent scores a neutral fallback otherwise</td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>total_cost</code> from <code>ReleasePrepTeam.get_total_cost()</code> is much higher than expected</td>
-<td>An agent escalated from CHEAP to CAPABLE or PREMIUM; check <code>tier_used</code> and <code>escalated</code> on the relevant <code>ReleaseAgentResult</code> entries</td>
-</tr>
-<tr>
-<td><code>ReleasePrepTeamWorkflow.execute()</code> hangs</td>
-<td>Check whether Redis is reachable; <code>ReleasePrepTeam</code> accepts a <code>redis_url</code> and may be waiting on a connection that never resolves</td>
-</tr>
-<tr>
-<td>The report's <code>quality_gates</code> list is empty</td>
-<td><code>ReleasePrepTeam</code> was initialized without custom <code>quality_gates</code> and the defaults were not applied; pass an explicit <code>quality_gates</code> dict to <code>ReleasePrepTeam(quality_gates={...})</code></td>
+<td>Setting <code>quality_gates={&quot;coverage&quot;: 0.9}</code> has no effect</td>
+<td>Wrong key</td>
+<td>Use <code>min_coverage</code> (a percentage like <code>90.0</code>), not <code>coverage</code></td>
+<td>medium</td>
 </tr>
 </tbody>
 </table>
-<h2>Step-by-step diagnosis</h2>
-<ol>
-<li>
-<p><strong>Print the full report to the console.</strong>
-Call <code>report.format_console_output()</code> on the returned <code>ReleaseReadinessReport</code>. This surfaces all <code>blockers</code>, <code>warnings</code>, and per-gate <code>message</code> strings in one pass, and is cheaper than enabling debug logging.</p>
-</li>
-<li>
-<p><strong>Serialize the report and inspect every field.</strong>
-Call <code>report.to_dict()</code> and pretty-print it. Check <code>agent_results</code> for any entry where <code>success: False</code>, and check <code>quality_gates</code> for any entry where <code>passed: False</code>. The <code>message</code> field on a failed <code>QualityGate</code> usually names the exact issue.</p>
-</li>
-<li>
-<p><strong>Reproduce the failure against a single agent.</strong>
-Instantiate only the agent that failed and call <code>process()</code> directly on your codebase path:</p>
-<pre><code class="language-python">from release.release_agents import TestCoverageAgent  # or CodeQualityAgent, DocumentationAgent, SecurityAuditorAgent
-
-agent = TestCoverageAgent()
-result = agent.process(codebase_path='.')
-print(result.success, result.score, result.findings)
-</code></pre>
-<p>This isolates the failure from the parallel orchestration in <code>ReleasePrepTeam</code>.</p>
-</li>
-<li>
-<p><strong>Check whether the underlying tool is the real failure.</strong>
-Each agent shells out to an external tool. Run the tools directly to rule out environment issues:</p>
-<pre><code class="language-bash"># TestCoverageAgent
-pytest --cov . --cov-report=term-missing
-
-# CodeQualityAgent
-ruff check . --output-format=json
-</code></pre>
-<p>If the tool itself fails, the agent result will reflect that failure regardless of what release prep does.</p>
-</li>
-<li>
-<p><strong>Inspect <code>execution_time_ms</code> and <code>tier_used</code> per agent.</strong>
-High <code>execution_time_ms</code> or an unexpected <code>tier_used</code> value (e.g., PREMIUM when you expect CHEAP) tells you which agent triggered tier escalation. Escalation happens automatically when a lower tier times out or returns low-confidence output — it is not a bug, but it does increase <code>total_cost</code>.</p>
-</li>
-<li>
-<p><strong>Run the full workflow with a minimal path.</strong>
-If you can't reproduce the failure on a single agent, try <code>ReleasePrepTeamWorkflow.execute()</code> on a small subdirectory to confirm the orchestration layer is not the source of the problem:</p>
-<pre><code class="language-python">from release.release_prep_team import ReleasePrepTeamWorkflow
-
-workflow = ReleasePrepTeamWorkflow()
-report = workflow.execute(path='./src/mypackage')
-print(report.format_console_output())
-</code></pre>
-</li>
-</ol>
-<h2>Common fixes</h2>
-<p><strong>A critical quality gate is blocking approval.</strong>
-Inspect the failing gate:</p>
-<pre><code class="language-python">for gate in report.quality_gates:
-    if not gate.passed and gate.critical:
-        print(gate.name, gate.threshold, gate.actual, gate.message)
-</code></pre>
-<p>Raise the <code>actual</code> value above <code>threshold</code> (fix failing tests, improve coverage, resolve lint errors) or, if the threshold is misconfigured, pass corrected thresholds when constructing <code>ReleasePrepTeam</code>:</p>
-<pre><code class="language-python">team = ReleasePrepTeam(quality_gates={'coverage': 0.80, 'security': 0.90})
-</code></pre>
-<p><strong><code>TestCoverageAgent</code> reports no coverage or crashes.</strong>
-<code>pytest --cov</code> must be installed and your package must be discoverable. Install the missing dependency:</p>
-<pre><code class="language-bash">pip install pytest-cov
-</code></pre>
-<p>Then confirm the coverage report runs outside release prep before retrying.</p>
-<p><strong><code>CodeQualityAgent</code> returns empty findings.</strong>
-<code>ruff</code> must be on <code>PATH</code>. Install it if missing:</p>
-<pre><code class="language-bash">pip install ruff
-</code></pre>
-<p><strong>Redis connection hangs.</strong>
-If you pass a <code>redis_url</code> to <code>ReleasePrepTeam</code> or <code>ReleasePrepTeamWorkflow</code>, verify connectivity before running:</p>
-<pre><code class="language-bash">redis-cli -u &quot;$REDIS_URL&quot; ping
-</code></pre>
-<p>If Redis is unavailable and you don't need distributed state, omit <code>redis_url</code> entirely — both classes accept <code>None</code>.</p>
-<p><strong>Tier escalation inflating cost.</strong>
-If <code>ReleaseAgent</code> is escalating unexpectedly, check that your environment can complete the CHEAP-tier call within its timeout. Escalation to CAPABLE or PREMIUM is automatic when the cheaper tier fails; there is no flag to disable it, but fixing the underlying tool failure (coverage not found, ruff not installed) will prevent unnecessary escalation.</p>
-<p><strong>Report fields are missing or zero after a successful run.</strong>
-<code>ReleaseReadinessReport</code> fields like <code>total_duration</code> and <code>total_cost</code> default to <code>0.0</code>. If they remain zero after a real run, the agents may have returned before writing those values — confirm each <code>ReleaseAgentResult.execution_time_ms</code> and <code>cost</code> are non-zero, and check that <code>ReleasePrepTeam.get_total_cost()</code> returns the expected sum.</p>
-<h2>Source files</h2>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/workflows/release_prep.py</code></li>
-<li><code>src/attune/agents/release/**</code></li>
+<li><strong>The async call is easy to get wrong.</strong> <code>assess_readiness</code> and
+<code>execute</code> are coroutines. Calling <code>assess_readiness</code> synchronously is
+the single most common mistake.</li>
+<li><strong><code>success</code> is not the verdict.</strong> A BLOCKED release returns
+<code>success=True</code>. Branch on <code>metadata[&quot;approved&quot;]</code>.</li>
+<li><strong>Threshold keys are specific.</strong> They are <code>max_critical_issues</code>,
+<code>min_coverage</code>, <code>min_quality_score</code>, <code>min_doc_coverage</code> — coverage and
+doc-coverage are percentages (e.g. <code>80.0</code>), not fractions.</li>
 </ul>
-<p><strong>Tags:</strong> <code>release</code>, <code>publishing</code>, <code>quality</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm you are awaiting: <code>await workflow.execute(path=&quot;.&quot;)</code> /
+<code>await team.assess_readiness(codebase_path=&quot;.&quot;)</code>.</li>
+<li>Read the verdict from <code>result.metadata[&quot;approved&quot;]</code>, not <code>success</code>.</li>
+<li>For a blocked gate, read the report's blockers and the failing
+gate's actual-vs-threshold.</li>
+<li>For an errored agent, inspect its <code>findings[&quot;error&quot;]</code> in
+<code>report.agent_results</code>.</li>
+<li>Confirm the tools (<code>bandit</code>, <code>ruff</code>, <code>pytest</code>) run in the project
+environment.</li>
+</ol>
 
   </article>
   <footer>

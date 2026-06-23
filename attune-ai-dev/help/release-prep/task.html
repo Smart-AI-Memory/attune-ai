@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Work with release prep — task</title>
-  <meta name="description" content="Use `ReleasePrepTeam` when you need an objective go/no-go recommendation before cutting a release tag — it runs health checks, security scanning, documentation review, and changelog generation in para" />
-  <meta property="og:title" content="Work with release prep — task" />
-  <meta property="og:description" content="Use `ReleasePrepTeam` when you need an objective go/no-go recommendation before cutting a release tag — it runs health checks, security scanning, documentation review, and changelog generation in para" />
+  <title>Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds — task</title>
+  <meta name="description" content="**Goal:** get a pass/fail verdict before tagging a release." />
+  <meta property="og:title" content="Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds — task" />
+  <meta property="og:description" content="**Goal:** get a pass/fail verdict before tagging a release." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/release-prep/task" />
   <style>
@@ -272,63 +272,68 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Work with release prep</h1>
-<p>Use <code>ReleasePrepTeam</code> when you need an objective go/no-go recommendation before cutting a release tag — it runs health checks, security scanning, documentation review, and changelog generation in parallel and aggregates the results into a single <code>ReleaseReadinessReport</code>.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>A local checkout of the codebase you want to assess</li>
-<li>The <code>release</code> package available in your Python environment</li>
-</ul>
-<h2>Run a release readiness assessment</h2>
-<ol>
-<li>
-<p><strong>Instantiate <code>ReleasePrepTeam</code>.</strong></p>
-<pre><code class="language-python">from release import ReleasePrepTeam
+<h1>Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds</h1>
+<h2>Tasks</h2>
+<h3>Gate a release from the CLI</h3>
+<p><strong>Goal:</strong> get a pass/fail verdict before tagging a release.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-bash"># Run the gate at the project root:
+attune workflow run release-gate
 
-team = ReleasePrepTeam()
+# JSON output for a CI step:
+attune workflow run release-gate --json
 </code></pre>
-<p>To tighten or relax thresholds, pass a <code>quality_gates</code> dict at construction time:</p>
-<pre><code class="language-python">team = ReleasePrepTeam(quality_gates={&quot;test_coverage&quot;: 0.85, &quot;code_quality&quot;: 0.80})
-</code></pre>
-</li>
-<li>
-<p><strong>Call <code>assess_readiness</code> against your codebase path.</strong></p>
-<pre><code class="language-python">report = team.assess_readiness(codebase_path=&quot;.&quot;)
-</code></pre>
-<p>This coordinates four agents — <code>health-checker</code>, <code>security-scanner</code>, <code>changelog-generator</code>, and <code>release-assessor</code> — and returns a <code>ReleaseReadinessReport</code>. Each agent produces a <code>ReleaseAgentResult</code> containing a <code>score</code>, a <code>confidence</code> value, and a <code>findings</code> dict. Agents that need deeper analysis automatically escalate through model tiers (CHEAP → CAPABLE → PREMIUM); the tier used is recorded in the <code>tier_used</code> field of each result.</p>
-</li>
-<li>
-<p><strong>Print the formatted report.</strong></p>
-<pre><code class="language-python">print(report.format_console_output())
-</code></pre>
-</li>
-<li>
-<p><strong>Review blockers and warnings.</strong></p>
-<p>Entries in <code>report.blockers</code> must be resolved before release. Entries in <code>report.warnings</code> are non-critical but worth addressing:</p>
-<pre><code class="language-python">for blocker in report.blockers:
-    print(f&quot;BLOCKER: {blocker}&quot;)
+<p><strong>Verify:</strong> the slugs are <code>release-gate</code> and <code>release-prep</code> (both run
+<code>ReleasePrepTeamWorkflow</code>). <code>--path</code> / <code>-p</code> defaults to the current
+directory; <code>--json</code> / <code>-j</code> emits machine-readable output. The verdict
+is APPROVED or BLOCKED; the run exits 0 even when BLOCKED (the verdict
+is data, not the exit code).</p>
+<h3>Run the gate from Python</h3>
+<p><strong>Goal:</strong> drive the gate from a release script and branch on the
+verdict.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
 
-for warning in report.warnings:
-    print(f&quot;WARNING: {warning}&quot;)
-</code></pre>
-</li>
-<li>
-<p><strong>Serialize the report for CI pipelines (optional).</strong></p>
-<pre><code class="language-python">import json
+from attune.agents.release import ReleasePrepTeamWorkflow
 
-with open(&quot;release-readiness.json&quot;, &quot;w&quot;) as f:
-    json.dump(report.to_dict(), f, indent=2)
+
+async def main() -&gt; None:
+    workflow = ReleasePrepTeamWorkflow()
+    result = await workflow.execute(path=&quot;.&quot;)
+
+    approved = result.metadata[&quot;approved&quot;]
+    print(&quot;APPROVED&quot; if approved else &quot;BLOCKED&quot;, result.metadata[&quot;confidence&quot;])
+    print(result.summary)
+
+
+asyncio.run(main())
 </code></pre>
-</li>
-</ol>
-<h2>Confirm success</h2>
-<p>The assessment passes when <code>report.approved</code> is <code>True</code> and <code>report.blockers</code> is empty. To see the detail behind the verdict, inspect <code>report.quality_gates</code>: each <code>QualityGate</code> exposes the gate's <code>threshold</code>, the measured <code>actual</code> value, and whether it <code>passed</code>. Any gate where <code>critical</code> is <code>True</code> and <code>passed</code> is <code>False</code> sets <code>report.approved</code> to <code>False</code>.</p>
-<h2>Key files</h2>
-<ul>
-<li><code>src/attune/workflows/release_prep.py</code> — <code>ReleasePrepTeamWorkflow</code>, <code>ReleasePreparationWorkflow</code></li>
-<li><code>src/attune/agents/release/release_prep_team.py</code> — <code>ReleasePrepTeam</code></li>
-<li><code>src/attune/agents/release/release_models.py</code> — <code>ReleaseReadinessReport</code>, <code>QualityGate</code>, <code>ReleaseAgentResult</code></li>
-</ul>
+<p><strong>Verify:</strong> <code>execute</code> is a coroutine — <code>await</code> it. <code>result.success</code> is
+<code>True</code> whenever the assessment ran; the verdict is
+<code>result.metadata[&quot;approved&quot;]</code>. The full report is in
+<code>result.final_output</code>.</p>
+<h3>Customize the quality-gate thresholds</h3>
+<p><strong>Goal:</strong> raise (or lower) the bars the gate enforces.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.agents.release import ReleasePrepTeam
+
+
+async def main() -&gt; None:
+    team = ReleasePrepTeam(
+        quality_gates={&quot;min_coverage&quot;: 90.0, &quot;min_quality_score&quot;: 8.0},
+    )
+    report = await team.assess_readiness(codebase_path=&quot;.&quot;)
+    print(report.format_console_output())
+
+
+asyncio.run(main())
+</code></pre>
+<p><strong>Verify:</strong> <code>assess_readiness</code> is a coroutine — <code>await</code> it. The
+<code>quality_gates</code> keys are <code>max_critical_issues</code>, <code>min_coverage</code>,
+<code>min_quality_score</code>, and <code>min_doc_coverage</code>; any you pass override the
+defaults, the rest stay at <code>DEFAULT_QUALITY_GATES</code>.</p>
 
   </article>
   <footer>

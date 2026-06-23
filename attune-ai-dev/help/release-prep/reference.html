@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Release Prep reference — reference</title>
-  <meta name="description" content="Assess codebase readiness for release by running parallel health, security, test coverage, and documentation checks through a team of specialized agents. Each agent&#x27;s findings are aggregated into a `R" />
-  <meta property="og:title" content="Release Prep reference — reference" />
-  <meta property="og:description" content="Assess codebase readiness for release by running parallel health, security, test coverage, and documentation checks through a team of specialized agents. Each agent&#x27;s findings are aggregated into a `R" />
+  <title>Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds — reference</title>
+  <meta name="description" content="Release-prep&#x27;s public surface is the `ReleasePrepTeamWorkflow` (CLI / registry adapter) and the `ReleasePrepTeam` coordinator, both importable from `attune.agents.release`." />
+  <meta property="og:title" content="Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds — reference" />
+  <meta property="og:description" content="Release-prep&#x27;s public surface is the `ReleasePrepTeamWorkflow` (CLI / registry adapter) and the `ReleasePrepTeam` coordinator, both importable from `attune.agents.release`." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/release-prep/reference" />
   <style>
@@ -272,467 +272,182 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Release Prep reference</h1>
-<p>Assess codebase readiness for release by running parallel health, security, test coverage, and documentation checks through a team of specialized agents. Each agent's findings are aggregated into a <code>ReleaseReadinessReport</code> containing quality gate results, blockers, and actionable warnings.</p>
-<h2>Classes</h2>
+<h1>Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds</h1>
+<h2>Reference</h2>
+<p>Release-prep's public surface is the <code>ReleasePrepTeamWorkflow</code> (CLI /
+registry adapter) and the <code>ReleasePrepTeam</code> coordinator, both importable
+from <code>attune.agents.release</code>.</p>
+<h3><code>ReleasePrepTeamWorkflow</code> — <code>attune.agents.release</code></h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
-<th>File</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>ReleaseAgent</code></td>
-<td>Base agent with CHEAP -&gt; CAPABLE -&gt; PREMIUM escalation.</td>
-<td><code>src/attune/agents/release/base_agent.py</code></td>
+<td><code>ReleasePrepTeamWorkflow(quality_gates=None, **kwargs)</code></td>
+<td>Construct the registry adapter. <code>quality_gates</code> overrides thresholds.</td>
+</tr>
+<tr>
+<td><code>ReleasePrepTeamWorkflow.execute(path=&quot;.&quot;, context=None, **kwargs)</code></td>
+<td><strong>Async.</strong> Run the gate. Maps <code>target</code> → <code>path</code> for CLI/VSCode. Returns a <code>WorkflowResult</code>.</td>
+</tr>
+<tr>
+<td><code>ReleasePrepTeamWorkflow.name</code></td>
+<td>The canonical slug, <code>&quot;release-prep&quot;</code> (synonym <code>release-gate</code>).</td>
+</tr>
+<tr>
+<td><code>ReleasePrepTeamWorkflow.stages</code></td>
+<td><code>[&quot;triage&quot;, &quot;parallel-validation&quot;, &quot;synthesis&quot;, &quot;decision&quot;]</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>ReleasePrepTeam</code> — <code>attune.agents.release</code></h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ReleasePrepTeam(quality_gates=None, redis_url=None)</code></td>
+<td>Construct the coordinator. Optional Redis URL for coordination (graceful no-op when unavailable).</td>
+</tr>
+<tr>
+<td><code>ReleasePrepTeam.assess_readiness(codebase_path=&quot;.&quot;)</code></td>
+<td><strong>Async.</strong> Run the four agents in parallel and return a <code>ReleaseReadinessReport</code>.</td>
+</tr>
+<tr>
+<td><code>ReleasePrepTeam.get_total_cost()</code></td>
+<td>Total LLM cost across agents ($0 in the default rule-based mode).</td>
+</tr>
+</tbody>
+</table>
+<h3>Default quality gates</h3>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Key</th>
+<th>Default</th>
+<th>Critical</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Security</td>
+<td><code>max_critical_issues</code></td>
+<td><code>0</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Test Coverage</td>
+<td><code>min_coverage</code></td>
+<td><code>80.0</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Code Quality</td>
+<td><code>min_quality_score</code></td>
+<td><code>7.0</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td><code>min_doc_coverage</code></td>
+<td><code>80.0</code></td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<h3>The four agents</h3>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Tool</th>
+<th>Score basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SecurityAuditorAgent</code></td>
+<td>bandit (JSON, severity ≥ medium)</td>
+<td>Severity-weighted; <code>critical_issues</code> = CRITICAL + HIGH.</td>
 </tr>
 <tr>
 <td><code>TestCoverageAgent</code></td>
-<td>Runs pytest --cov and parses coverage report.</td>
-<td><code>src/attune/agents/release/coverage_agent.py</code></td>
-</tr>
-<tr>
-<td><code>DocumentationAgent</code></td>
-<td>Checks docstring coverage, README currency, and CHANGELOG presence.</td>
-<td><code>src/attune/agents/release/documentation_agent.py</code></td>
+<td>pytest collect + <code>pytest --cov</code></td>
+<td>TOTAL coverage %; heuristic estimate as fallback.</td>
 </tr>
 <tr>
 <td><code>CodeQualityAgent</code></td>
-<td>Runs ruff, checks type hints and complexity.</td>
-<td><code>src/attune/agents/release/quality_agent.py</code></td>
-</tr>
-<tr>
-<td><code>SecurityAuditorAgent</code></td>
-<td>Analyzes bandit output and classifies vulnerabilities by severity.</td>
-<td><code>src/attune/agents/release/security_agent.py</code></td>
-</tr>
-<tr>
-<td><code>Tier</code></td>
-<td>Model tier for progressive escalation.</td>
-<td><code>src/attune/agents/release/release_models.py</code></td>
-</tr>
-<tr>
-<td><code>ReleaseAgentResult</code></td>
-<td>Result from an individual release agent.</td>
-<td><code>src/attune/agents/release/release_models.py</code></td>
-</tr>
-<tr>
-<td><code>QualityGate</code></td>
-<td>Quality gate threshold for release readiness.</td>
-<td><code>src/attune/agents/release/release_models.py</code></td>
-</tr>
-<tr>
-<td><code>ReleaseReadinessReport</code></td>
-<td>Aggregated release readiness assessment.</td>
-<td><code>src/attune/agents/release/release_models.py</code></td>
-</tr>
-<tr>
-<td><code>ReleasePrepTeam</code></td>
-<td>Coordinates parallel execution of release preparation agents.</td>
-<td><code>src/attune/agents/release/release_prep_team.py</code></td>
-</tr>
-<tr>
-<td><code>ReleasePrepTeamWorkflow</code></td>
-<td>Workflow wrapper that integrates ReleasePrepTeam with the CLI registry.</td>
-<td><code>src/attune/agents/release/release_prep_team.py</code></td>
-</tr>
-<tr>
-<td><code>ReleasePreparationWorkflow</code></td>
-<td>Pre-release quality gate workflow powered by Agent SDK subagents.</td>
-<td><code>src/attune/workflows/release_prep.py</code></td>
-</tr>
-</tbody>
-</table>
-<h2>ReleaseAgent</h2>
-<p><code>ReleaseAgent</code> is the base class for all specialized release agents and implements CHEAP → CAPABLE → PREMIUM tier escalation. In most workflows, instantiate <code>ReleasePrepTeam</code> rather than individual agents directly.</p>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td><code>agent_id: str, role: str, redis_client: Any | None = None, state_store: AgentStateStore | None = None</code></td>
-<td><code>None</code></td>
-<td>Constructs the agent with an identity string, role label, and optional Redis and state store connections.</td>
-</tr>
-<tr>
-<td><code>process</code></td>
-<td><code>codebase_path: str = '.'</code></td>
-<td><code>ReleaseAgentResult</code></td>
-<td>Runs the agent against the given codebase path and returns a scored result.</td>
-</tr>
-</tbody>
-</table>
-<h2>Specialized agents</h2>
-<p>Each agent below extends <code>ReleaseAgent</code> and shares the same constructor signature.</p>
-<table>
-<thead>
-<tr>
-<th>Class</th>
-<th>Parameters</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>TestCoverageAgent</code></td>
-<td><code>redis_client: Any | None = None, state_store: AgentStateStore | None = None</code></td>
-<td>Runs pytest --cov and parses coverage report.</td>
+<td><code>ruff check --statistics</code></td>
+<td>0–10 by violation count.</td>
 </tr>
 <tr>
 <td><code>DocumentationAgent</code></td>
-<td><code>redis_client: Any | None = None, state_store: AgentStateStore | None = None</code></td>
-<td>Checks docstring coverage, README currency, and CHANGELOG presence.</td>
-</tr>
-<tr>
-<td><code>CodeQualityAgent</code></td>
-<td><code>redis_client: Any | None = None, state_store: AgentStateStore | None = None</code></td>
-<td>Runs ruff, checks type hints and complexity.</td>
-</tr>
-<tr>
-<td><code>SecurityAuditorAgent</code></td>
-<td><code>redis_client: Any | None = None, state_store: AgentStateStore | None = None</code></td>
-<td>Analyzes bandit output and classifies vulnerabilities by severity.</td>
+<td>AST docstring walk</td>
+<td>Public-function docstring coverage %.</td>
 </tr>
 </tbody>
 </table>
-<h2>ReleasePrepTeam</h2>
-<p><code>ReleasePrepTeam</code> coordinates parallel execution of all release preparation agents and is the primary entry point for programmatic use.</p>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td><code>quality_gates: dict[str, Any] | None = None, redis_url: str | None = None</code></td>
-<td><code>None</code></td>
-<td>Constructs the team with optional quality gate threshold overrides and a Redis connection URL.</td>
-</tr>
-<tr>
-<td><code>get_total_cost</code></td>
-<td>—</td>
-<td><code>float</code></td>
-<td>Returns the accumulated LLM cost across all agents in the most recent <code>assess_readiness</code> run.</td>
-</tr>
-<tr>
-<td><code>assess_readiness</code></td>
-<td><code>codebase_path: str = '.'</code></td>
-<td><code>ReleaseReadinessReport</code></td>
-<td>Runs all agents in parallel against the codebase and returns an aggregated readiness report.</td>
-</tr>
-</tbody>
-</table>
-<h2>ReleasePrepTeamWorkflow</h2>
-<p><code>ReleasePrepTeamWorkflow</code> wraps <code>ReleasePrepTeam</code> so it can be registered and invoked through the CLI workflow registry.</p>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td><code>quality_gates: dict[str, float] | None = None, **kwargs: Any</code></td>
-<td><code>None</code></td>
-<td>Constructs the workflow with optional quality gate thresholds.</td>
-</tr>
-<tr>
-<td><code>run_stage</code></td>
-<td><code>stage_name: str, tier: ModelTier, input_data: Any</code></td>
-<td><code>Any</code></td>
-<td>Runs a named stage at the specified model tier.</td>
-</tr>
-<tr>
-<td><code>execute</code></td>
-<td><code>path: str = '.', context: dict[str, Any] | None = None, **kwargs: Any</code></td>
-<td><code>WorkflowResult</code></td>
-<td>Runs the full release preparation workflow against the given codebase path.</td>
-</tr>
-</tbody>
-</table>
-<h2>ReleasePreparationWorkflow</h2>
-<p><code>ReleasePreparationWorkflow</code> is the Agent SDK–backed workflow. It orchestrates four subagents — <code>health-checker</code>, <code>security-scanner</code>, <code>changelog-generator</code>, and <code>release-assessor</code> — and synthesizes their findings into a structured report.</p>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>execute</code></td>
-<td><code>**kwargs: Any</code></td>
-<td><code>WorkflowResult</code></td>
-<td>Runs the four-subagent pipeline and returns a synthesized release readiness report.</td>
-</tr>
-</tbody>
-</table>
-<h2>ReleaseAgentResult</h2>
-<p>Result returned by an individual release agent.</p>
+<h3><code>WorkflowResult</code> fields read after a run</h3>
 <table>
 <thead>
 <tr>
 <th>Field</th>
 <th>Type</th>
-<th>Default</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
-<tr>
-<td><code>agent_id</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>agent_role</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
 <tr>
 <td><code>success</code></td>
 <td><code>bool</code></td>
-<td>—</td>
+<td>Whether the assessment <strong>ran</strong> (always <code>True</code> on a completed run — not the verdict).</td>
 </tr>
 <tr>
-<td><code>tier_used</code></td>
-<td><code>Tier</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>findings</code></td>
-<td><code>dict[str, Any]</code></td>
-<td><code>field(default_factory=dict)</code></td>
-</tr>
-<tr>
-<td><code>score</code></td>
-<td><code>float</code></td>
-<td><code>0.0</code></td>
-</tr>
-<tr>
-<td><code>confidence</code></td>
-<td><code>float</code></td>
-<td><code>0.0</code></td>
-</tr>
-<tr>
-<td><code>cost</code></td>
-<td><code>float</code></td>
-<td><code>0.0</code></td>
-</tr>
-<tr>
-<td><code>execution_time_ms</code></td>
-<td><code>float</code></td>
-<td><code>0.0</code></td>
-</tr>
-<tr>
-<td><code>escalated</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
-</tr>
-</tbody>
-</table>
-<h2>QualityGate</h2>
-<p>A single named quality gate threshold used to evaluate release readiness.</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>name</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>threshold</code></td>
-<td><code>float</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>actual</code></td>
-<td><code>float</code></td>
-<td><code>0.0</code></td>
-</tr>
-<tr>
-<td><code>passed</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
-</tr>
-<tr>
-<td><code>critical</code></td>
-<td><code>bool</code></td>
-<td><code>True</code></td>
-</tr>
-<tr>
-<td><code>message</code></td>
-<td><code>str</code></td>
-<td><code>''</code></td>
-</tr>
-</tbody>
-</table>
-<h2>ReleaseReadinessReport</h2>
-<p>Aggregated release readiness assessment produced by <code>ReleasePrepTeam.assess_readiness</code>.</p>
-<h3>Fields</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>approved</code></td>
-<td><code>bool</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>confidence</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>quality_gates</code></td>
-<td><code>list[QualityGate]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-<tr>
-<td><code>agent_results</code></td>
-<td><code>list[ReleaseAgentResult]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-<tr>
-<td><code>blockers</code></td>
-<td><code>list[str]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-<tr>
-<td><code>warnings</code></td>
-<td><code>list[str]</code></td>
-<td><code>field(default_factory=list)</code></td>
+<td><code>final_output</code></td>
+<td><code>dict</code></td>
+<td>The serialized <code>WorkflowReport</code> (verdict callout, gate table, per-agent breakdown, blockers, warnings, next steps).</td>
 </tr>
 <tr>
 <td><code>summary</code></td>
 <td><code>str</code></td>
-<td><code>''</code></td>
+<td>Executive summary — approval status and the failed gates.</td>
 </tr>
 <tr>
-<td><code>timestamp</code></td>
-<td><code>str</code></td>
-<td><code>field(default_factory=lambda: datetime.now().isoformat())</code></td>
-</tr>
-<tr>
-<td><code>total_duration</code></td>
-<td><code>float</code></td>
-<td><code>0.0</code></td>
-</tr>
-<tr>
-<td><code>total_cost</code></td>
-<td><code>float</code></td>
-<td><code>0.0</code></td>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td><code>approved</code> (bool) and <code>confidence</code> (<code>high</code> / <code>medium</code> / <code>low</code>).</td>
 </tr>
 </tbody>
 </table>
-<h3>Methods</h3>
+<h3>Entry points</h3>
 <table>
 <thead>
 <tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
+<th>Surface</th>
+<th>Invocation</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>to_dict</code></td>
-<td>—</td>
-<td><code>dict[str, Any]</code></td>
-<td>Serializes the report to a plain dictionary.</td>
+<td>CLI</td>
+<td><code>attune workflow run release-gate [--path &lt;p&gt;] [--json]</code> (canonical slug <code>release-prep</code>).</td>
 </tr>
 <tr>
-<td><code>format_console_output</code></td>
-<td>—</td>
-<td><code>str</code></td>
-<td>Formats the report for terminal display.</td>
+<td>Python</td>
+<td><code>await ReleasePrepTeamWorkflow().execute(path=&lt;p&gt;)</code> or <code>await ReleasePrepTeam().assess_readiness(codebase_path=&lt;p&gt;)</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2>Constants</h2>
-<h3><code>_SUBAGENT_NAMES</code></h3>
-<p>Subagent names spawned by <code>ReleasePreparationWorkflow</code>.</p>
-<table>
-<thead>
-<tr>
-<th>Constant</th>
-<th>Members</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>_SUBAGENT_NAMES</code></td>
-<td><code>health-checker</code>, <code>security-scanner</code>, <code>changelog-generator</code>, <code>release-assessor</code></td>
-</tr>
-</tbody>
-</table>
-<h3><code>_SYSTEM_PROMPT</code></h3>
-<p>System prompt used to configure the release preparation orchestrator.</p>
-<pre><code>You are a release preparation orchestrator. Coordinate four specialized subagents to assess release readiness and synthesize their findings into a single structured report. Be thorough but concise. Cite file paths and line numbers when possible.
-</code></pre>
-<h3><code>_TASK_PROMPT_TEMPLATE</code></h3>
-<p>Task prompt template passed to the orchestrator when <code>ReleasePreparationWorkflow.execute</code> runs. <code>{path}</code> is interpolated with the target codebase path.</p>
-<pre><code>Assess release readiness for the codebase at {path} using the four specialized subagents below. Each subagent should focus on its domain and report findings as structured markdown.
-
-After all subagents finish, synthesize their findings into a single report with these sections:
-
-## Summary
-Overall release readiness score (0-100) and a 2-3 sentence executive summary with a go/no-go recommendation.
-
-## Health
-Findings from the health checker — test results, dependency status, CI pipeline health.
-
-## Security
-Findings from the security scanner — vulnerabilities, outdated dependencies, secret leaks.
-
-## Changelog
-Generated changelog from the changelog generator — notable changes since last release.
-
-## Suggestions
-Actionable next steps ordered by priority, including any blockers that must be resolved before release.
-</code></pre>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/release_prep.py</code></li>
-<li><code>src/attune/agents/release/**</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>release</code>, <code>publishing</code>, <code>quality</code></p>
+<p>There is <strong>no MCP tool</strong> for the gate — it is CLI / Python only.</p>
 
   </article>
   <footer>

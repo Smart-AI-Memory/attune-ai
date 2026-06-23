@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Release Prep: What to Watch For — warning</title>
-  <meta name="description" content="`ReleasePrepTeam.assess_readiness()` evaluates each `QualityGate` against a `threshold` value. If `QualityGate.critical` is `True` and `QualityGate.passed` is `False`, the gate contributes a blocker t" />
-  <meta property="og:title" content="Release Prep: What to Watch For — warning" />
-  <meta property="og:description" content="`ReleasePrepTeam.assess_readiness()` evaluates each `QualityGate` against a `threshold` value. If `QualityGate.critical` is `True` and `QualityGate.passed` is `False`, the gate contributes a blocker t" />
+  <title>Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;ReleasePrepTeam.assess_readiness&#x27; was never awaited` | `assess_readiness` (or `execute`) called without `await` | B" />
+  <meta property="og:title" content="Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;ReleasePrepTeam.assess_readiness&#x27; was never awaited` | `assess_readiness` (or `execute`) called without `await` | B" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/release-prep/warning" />
   <style>
@@ -272,25 +272,79 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Release Prep: What to Watch For</h1>
-<h2>Critical quality gates can block a release silently</h2>
-<p><code>ReleasePrepTeam.assess_readiness()</code> evaluates each <code>QualityGate</code> against a <code>threshold</code> value. If <code>QualityGate.critical</code> is <code>True</code> and <code>QualityGate.passed</code> is <code>False</code>, the gate contributes a blocker to <code>ReleaseReadinessReport.blockers</code> and sets <code>ReleaseReadinessReport.approved</code> to <code>False</code>. If you pass custom <code>quality_gates</code> to <code>ReleasePrepTeam.__init__()</code> with thresholds that don't match your project's actual metrics, you can get a false GO or an unexplained NO-GO with no clear message in <code>ReleaseReadinessReport.warnings</code>.</p>
-<p><strong>Mitigation:</strong> After calling <code>assess_readiness()</code>, inspect <code>report.quality_gates</code> directly — check both <code>QualityGate.actual</code> and <code>QualityGate.threshold</code> for each gate before trusting the top-level <code>report.approved</code> field. Use <code>ReleaseReadinessReport.format_console_output()</code> to surface the full picture, not just the verdict.</p>
-<h2>Tier escalation adds cost and latency you may not expect</h2>
-<p><code>ReleaseAgent</code> escalates automatically through CHEAP → CAPABLE → PREMIUM tiers when confidence is low. Each <code>ReleaseAgentResult</code> records <code>tier_used</code>, <code>escalated</code>, <code>cost</code>, and <code>execution_time_ms</code>. Because <code>ReleasePrepTeam</code> runs agents in parallel, a single low-confidence result from <code>SecurityAuditorAgent</code> or <code>TestCoverageAgent</code> can trigger escalation on that agent without affecting others — but the cumulative cost across agents can be higher than expected for a routine check run.</p>
-<p><strong>Mitigation:</strong> Call <code>ReleasePrepTeam.get_total_cost()</code> after <code>assess_readiness()</code> completes. If cost is a concern, review <code>report.agent_results</code> and check <code>escalated</code> on each <code>ReleaseAgentResult</code> to identify which agents triggered escalation.</p>
-<h2><code>_run_command</code> output is consumed by agents, not returned to callers</h2>
-<p><code>CodeQualityAgent</code> (runs <code>ruff</code>, checks type hints and complexity) and <code>TestCoverageAgent</code> (runs <code>pytest --cov</code>) both rely on <code>_run_command</code> internally. This helper is exported in <code>release.release_agents.__all__</code> but is a private implementation detail — its interface can change without notice. If you call it directly in tests or custom agents, a refactor can break your code without breaking the published API.</p>
-<p><strong>Mitigation:</strong> Depend only on the classes and functions listed in <code>release.__init__.__all__</code>: <code>ReleaseAgent</code>, <code>ReleasePrepTeam</code>, <code>ReleasePrepTeamWorkflow</code>, and <code>ReleaseReadinessReport</code>. Use <code>ReleaseAgent.process()</code> to run an individual agent rather than invoking <code>_run_command</code> directly.</p>
-<h2><code>DocumentationAgent</code> checks the CHANGELOG at assessment time</h2>
-<p><code>DocumentationAgent</code> verifies docstring coverage, README currency, and CHANGELOG presence during the <code>assess_readiness()</code> call. If your CHANGELOG is updated after assessment starts — for example, by a parallel CI step — the result recorded in <code>ReleaseAgentResult.findings</code> reflects the file state at the moment the agent ran. Re-running <code>assess_readiness()</code> after all file changes are committed is the only way to get an accurate result.</p>
-<p><strong>Mitigation:</strong> Commit all documentation and CHANGELOG updates before calling <code>assess_readiness()</code>. Do not rely on a cached <code>ReleaseReadinessReport</code> across commits — the <code>timestamp</code> field shows when the report was generated.</p>
-<h2>Source files</h2>
+<h1>Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'ReleasePrepTeam.assess_readiness' was never awaited</code></td>
+<td><code>assess_readiness</code> (or <code>execute</code>) called without <code>await</code></td>
+<td>Both are coroutines — <code>await</code> them or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td>Verdict is BLOCKED but the command exited 0</td>
+<td><code>success</code> reflects that the assessment ran, not the verdict</td>
+<td>Read <code>metadata[&quot;approved&quot;]</code> / the report — don't gate on the exit code alone</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Security gate shows <code>actual: -1</code> / a gate can't be measured</td>
+<td>The agent errored (e.g. the tool raised); <code>critical_issues</code> falls back to <code>-1</code></td>
+<td>Inspect that agent's <code>findings[&quot;error&quot;]</code>; confirm the tool runs in the project</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Coverage reads as estimated, not measured</td>
+<td><code>pytest --cov</code> output wasn't parseable (timeout, no TOTAL line)</td>
+<td>The percentage is heuristic from test count (<code>findings[&quot;estimated&quot;]</code> is <code>True</code>); run coverage directly to confirm</td>
+<td>low</td>
+</tr>
+<tr>
+<td>A gate reports <code>&quot;bandit not available&quot;</code> / <code>&quot;ruff not available&quot;</code></td>
+<td>The tool isn't installed in the run environment</td>
+<td>Install the tool; the agent scores a neutral fallback otherwise</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Setting <code>quality_gates={&quot;coverage&quot;: 0.9}</code> has no effect</td>
+<td>Wrong key</td>
+<td>Use <code>min_coverage</code> (a percentage like <code>90.0</code>), not <code>coverage</code></td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/workflows/release_prep.py</code></li>
-<li><code>src/attune/agents/release/**</code></li>
+<li><strong>The async call is easy to get wrong.</strong> <code>assess_readiness</code> and
+<code>execute</code> are coroutines. Calling <code>assess_readiness</code> synchronously is
+the single most common mistake.</li>
+<li><strong><code>success</code> is not the verdict.</strong> A BLOCKED release returns
+<code>success=True</code>. Branch on <code>metadata[&quot;approved&quot;]</code>.</li>
+<li><strong>Threshold keys are specific.</strong> They are <code>max_critical_issues</code>,
+<code>min_coverage</code>, <code>min_quality_score</code>, <code>min_doc_coverage</code> — coverage and
+doc-coverage are percentages (e.g. <code>80.0</code>), not fractions.</li>
 </ul>
-<p><strong>Tags:</strong> <code>release</code>, <code>publishing</code>, <code>quality</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm you are awaiting: <code>await workflow.execute(path=&quot;.&quot;)</code> /
+<code>await team.assess_readiness(codebase_path=&quot;.&quot;)</code>.</li>
+<li>Read the verdict from <code>result.metadata[&quot;approved&quot;]</code>, not <code>success</code>.</li>
+<li>For a blocked gate, read the report's blockers and the failing
+gate's actual-vs-threshold.</li>
+<li>For an errored agent, inspect its <code>findings[&quot;error&quot;]</code> in
+<code>report.agent_results</code>.</li>
+<li>Confirm the tools (<code>bandit</code>, <code>ruff</code>, <code>pytest</code>) run in the project
+environment.</li>
+</ol>
 
   </article>
   <footer>

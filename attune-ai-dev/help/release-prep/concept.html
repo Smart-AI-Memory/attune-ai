@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Release Prep — concept</title>
-  <meta name="description" content="Release prep is a multi-agent pipeline that fans four specialist agents out across your codebase in parallel, then synthesizes their findings into a single go/no-go `ReleaseReadinessReport`." />
-  <meta property="og:title" content="Release Prep — concept" />
-  <meta property="og:description" content="Release prep is a multi-agent pipeline that fans four specialist agents out across your codebase in parallel, then synthesizes their findings into a single go/no-go `ReleaseReadinessReport`." />
+  <title>Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds — concept</title>
+  <meta name="description" content="Release-prep is the **deterministic gate** for shipping. A team of four agents runs **real tools** — `bandit`, `ruff`, `pytest --cov`, and a docstring/README/CHANGELOG check — in parallel, measures th" />
+  <meta property="og:title" content="Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds — concept" />
+  <meta property="og:description" content="Release-prep is the **deterministic gate** for shipping. A team of four agents runs **real tools** — `bandit`, `ruff`, `pytest --cov`, and a docstring/README/CHANGELOG check — in parallel, measures th" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/release-prep/concept" />
   <style>
@@ -272,80 +272,135 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Release Prep</h1>
-<p>Release prep is a multi-agent pipeline that fans four specialist agents out across your codebase in parallel, then synthesizes their findings into a single go/no-go <code>ReleaseReadinessReport</code>.</p>
-<h2>Agent coordination model</h2>
-<p><code>ReleasePrepTeam</code> orchestrates the pipeline. When you call <code>assess_readiness(codebase_path='.')</code>, it dispatches four agents simultaneously:</p>
+<h1>Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds</h1>
+<h2>Overview</h2>
+<p>Release-prep is the <strong>deterministic gate</strong> for shipping. A team of four
+agents runs <strong>real tools</strong> — <code>bandit</code>, <code>ruff</code>, <code>pytest --cov</code>, and a
+docstring/README/CHANGELOG check — in parallel, measures the results
+against <strong>hard quality-gate thresholds</strong>, and returns an APPROVED or
+BLOCKED verdict. It is the enforcement half of the release pair.</p>
+<p>It is the counterpart to <strong>release-notes</strong>, the advisory workflow.
+Release-notes <em>predicts and drafts</em> (a changelog plus an LLM go/no-go);
+release-prep <em>measures and gates</em> (real numbers against thresholds).
+Reach for release-prep when you need a pass/fail you can trust before
+tagging a release or uploading to PyPI.</p>
+<p>Two things distinguish release-prep from the SDK workflows:</p>
 <ul>
-<li><strong><code>TestCoverageAgent</code></strong> — runs <code>pytest --cov</code> and parses the coverage report.</li>
-<li><strong><code>DocumentationAgent</code></strong> — checks docstring coverage, README currency, and CHANGELOG presence.</li>
-<li><strong><code>CodeQualityAgent</code></strong> — runs <code>ruff</code>, checks type hints, and measures complexity.</li>
-<li><strong><code>SecurityAuditorAgent</code></strong> — scans for vulnerabilities, outdated dependencies, and secret leaks.</li>
+<li><strong>It runs by default at zero API cost.</strong> The agents are rule-based
+(<code>RELEASE_LLM_MODE</code> defaults to <code>&quot;simulated&quot;</code>) — they parse real tool
+output, not LLM responses. LLM enhancement is opt-in.</li>
+<li><strong>It is CLI-only.</strong> There is no MCP tool for the gate (that keeps the
+conversational surface advisory). Run it with <strong><code>attune workflow run release-gate</code></strong> (or the canonical slug <code>release-prep</code>).</li>
 </ul>
-<p>All four extend <code>ReleaseAgent</code>, which handles <em>progressive tier escalation</em>: each check begins at the <code>CHEAP</code> model tier. If the agent's <code>confidence</code> falls below an internal threshold, it re-runs at <code>CAPABLE</code>, then <code>PREMIUM</code> if confidence is still insufficient. The resulting <code>ReleaseAgentResult</code> records <code>tier_used</code>, <code>escalated</code>, <code>score</code>, <code>confidence</code>, and <code>execution_time_ms</code>, so you can see exactly how each agent reached its conclusion.</p>
-<p>Each agent result is then evaluated against a <code>QualityGate</code>. A gate compares a named <code>threshold</code> against the agent's measured <code>actual</code> value. Gates where <code>critical</code> is <code>True</code> become blockers if they fail; non-critical gates produce warnings instead. You configure thresholds by passing a <code>quality_gates</code> dict to <code>ReleasePrepTeam(quality_gates={...})</code>.</p>
-<h2>Release readiness report</h2>
-<p><code>assess_readiness()</code> returns a <code>ReleaseReadinessReport</code> that aggregates every agent's findings:</p>
+<p>You also reach release-prep through the Python API
+(<code>ReleasePrepTeamWorkflow</code> / <code>ReleasePrepTeam</code>), documented here for
+wiring the gate into a release script or CI step.</p>
+<h2>Concepts</h2>
+<h3>Four agents, real tools, run in parallel</h3>
+<p><code>ReleasePrepTeam.assess_readiness</code> runs four agents concurrently
+(<code>asyncio.gather</code> over <code>run_in_executor</code>). Each runs a real tool and
+parses its output into a score and findings:</p>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>What it tells you</th>
+<th>Agent</th>
+<th>Tool it runs</th>
+<th>What it measures</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>approved</code></td>
-<td><code>True</code> if all critical quality gates passed</td>
+<td><code>SecurityAuditorAgent</code></td>
+<td><code>uv run bandit -r src/ -f json --severity-level medium</code></td>
+<td>Counts vulnerabilities by severity; <code>critical_issues</code> = CRITICAL + HIGH.</td>
 </tr>
 <tr>
-<td><code>confidence</code></td>
-<td>Overall confidence level string</td>
+<td><code>TestCoverageAgent</code></td>
+<td><code>uv run pytest --co</code> then <code>uv run pytest --cov=&lt;target&gt; -x --timeout=30</code></td>
+<td>Parses the TOTAL coverage percentage; estimates from test count if coverage can't be measured.</td>
 </tr>
 <tr>
-<td><code>quality_gates</code></td>
-<td>Each gate's <code>threshold</code>, <code>actual</code>, and <code>passed</code> values</td>
+<td><code>CodeQualityAgent</code></td>
+<td><code>uv run ruff check src/ --statistics</code></td>
+<td>Counts lint violations and maps them to a 0–10 quality score.</td>
 </tr>
 <tr>
-<td><code>blockers</code></td>
-<td>Issues that must be resolved before release</td>
-</tr>
-<tr>
-<td><code>warnings</code></td>
-<td>Non-blocking issues worth addressing</td>
-</tr>
-<tr>
-<td><code>total_cost</code></td>
-<td>Cumulative model spend across all agents</td>
+<td><code>DocumentationAgent</code></td>
+<td>AST walk of <code>src/**/*.py</code></td>
+<td>Docstring coverage of public functions, plus README/CHANGELOG presence.</td>
 </tr>
 </tbody>
 </table>
-<p>Call <code>report.format_console_output()</code> for a human-readable summary, or <code>report.to_dict()</code> to serialize the report for CI artifacts or downstream tooling.</p>
-<h2>Integration points</h2>
-<p>Three entry points expose release prep depending on your context:</p>
+<h3>Four quality gates, four thresholds</h3>
+<p>The team evaluates the agent results against <code>DEFAULT_QUALITY_GATES</code>.
+Three gates are <strong>critical</strong> (a failure blocks release); documentation
+is a warning only:</p>
 <table>
 <thead>
 <tr>
-<th>Entry point</th>
-<th>When to use it</th>
+<th>Gate</th>
+<th>Threshold key</th>
+<th>Default</th>
+<th>Critical?</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>ReleasePrepTeam.assess_readiness(codebase_path='.')</code></td>
-<td>Direct Python — use this when scripting release automation</td>
+<td>Security</td>
+<td><code>max_critical_issues</code></td>
+<td><code>0</code></td>
+<td>Yes — blocks</td>
 </tr>
 <tr>
-<td><code>ReleasePrepTeamWorkflow.execute(path='.')</code></td>
-<td>Workflow runner — integrates with the CLI registry; <code>run_stage</code> lets you control the model tier per stage</td>
+<td>Test Coverage</td>
+<td><code>min_coverage</code></td>
+<td><code>80.0</code></td>
+<td>Yes — blocks</td>
 </tr>
 <tr>
-<td><code>ReleasePreparationWorkflow.execute(**kwargs)</code></td>
-<td>Standalone workflow registered under <code>workflows.release_prep</code></td>
+<td>Code Quality</td>
+<td><code>min_quality_score</code></td>
+<td><code>7.0</code></td>
+<td>Yes — blocks</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td><code>min_doc_coverage</code></td>
+<td><code>80.0</code></td>
+<td>No — warning</td>
 </tr>
 </tbody>
 </table>
-<p>After <code>assess_readiness()</code> returns, <code>ReleasePrepTeam.get_total_cost()</code> gives you the aggregate model cost independently of the report if you need it separately.</p>
+<p>A release is <strong>approved</strong> when no critical gate fails and there are no
+blockers. Confidence is <code>high</code> (approved, no warnings), <code>medium</code>
+(approved with warnings), or <code>low</code> (not approved).</p>
+<h3>Rule-based by default, LLM-enhanced on request</h3>
+<p><code>RELEASE_LLM_MODE</code> defaults to <code>&quot;simulated&quot;</code> — the agents score real
+tool output with rule-based logic and make <strong>no</strong> API calls (cost is
+$0). Set <code>RELEASE_LLM_MODE=real</code> <strong>and</strong> provide an <code>ANTHROPIC_API_KEY</code>
+to let the security and quality agents send their tool output to an LLM
+for nuanced classification (coverage and documentation stay
+rule-based). The mode is recorded per agent in <code>findings[&quot;mode&quot;]</code>.</p>
+<h3>Progressive tier escalation</h3>
+<p>Each agent starts at the <code>CHEAP</code> model tier and escalates to <code>CAPABLE</code>,
+then <code>PREMIUM</code>, only if its run reports failure (for the security agent,
+&quot;failure&quot; means critical issues remain; for code quality, a score below
+threshold). Escalation is most meaningful in <code>real</code> LLM mode, where a
+stronger model re-analyzes; in the default rule-based mode it re-runs
+the same deterministic command. <code>ReleaseAgentResult.escalated</code> records
+whether escalation happened and <code>tier_used</code> records the final tier.</p>
+<h3>The assessment always &quot;succeeds&quot;; the verdict is the payload</h3>
+<p><code>ReleasePrepTeamWorkflow.execute</code> returns a <code>WorkflowResult</code> whose
+<code>success</code> reflects that the assessment <strong>ran</strong> — not the release
+verdict. A BLOCKED release still returns <code>success=True</code> and exits 0; the
+verdict lives in <code>metadata[&quot;approved&quot;]</code> (and <code>metadata[&quot;confidence&quot;]</code>),
+and the full report is the serialized <code>WorkflowReport</code> in
+<code>final_output</code>. Read the verdict from the report, not from <code>success</code>.</p>
+<h3><code>execute</code> and <code>assess_readiness</code> are async</h3>
+<p>Both <code>ReleasePrepTeamWorkflow.execute</code> and
+<code>ReleasePrepTeam.assess_readiness</code> are coroutines — <code>await</code> them (or
+drive them with <code>asyncio.run</code>). Calling <code>assess_readiness</code> without
+awaiting is the most common mistake.</p>
 
   </article>
   <footer>

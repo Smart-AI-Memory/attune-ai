@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Release Prep Entry Points — comparison</title>
-  <meta name="description" content="Release prep exposes three distinct entry points for running a pre-release quality gate across health, security, changelog, and code quality checks. Choosing the wrong one adds unnecessary complexity " />
-  <meta property="og:title" content="Comparison: Release Prep Entry Points — comparison" />
-  <meta property="og:description" content="Release prep exposes three distinct entry points for running a pre-release quality gate across health, security, changelog, and code quality checks. Choosing the wrong one adds unnecessary complexity " />
+  <title>Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds — comparison</title>
+  <meta name="description" content="Release-prep is the **gate** half of the release pair:" />
+  <meta property="og:title" content="Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds — comparison" />
+  <meta property="og:description" content="Release-prep is the **gate** half of the release pair:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/release-prep/comparison" />
   <style>
@@ -272,97 +272,39 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Release Prep Entry Points</h1>
-<h2>Context</h2>
-<p>Release prep exposes three distinct entry points for running a pre-release quality gate across health, security, changelog, and code quality checks. Choosing the wrong one adds unnecessary complexity or costs you control over quality gate thresholds. This page helps you pick the right one.</p>
-<h2>The three options at a glance</h2>
+<h1>Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds</h1>
+<h2>Comparison</h2>
+<p>Release-prep is the <strong>gate</strong> half of the release pair:</p>
 <table>
 <thead>
 <tr>
-<th></th>
-<th><code>ReleasePrepTeam</code></th>
-<th><code>ReleasePrepTeamWorkflow</code></th>
-<th><code>ReleasePreparationWorkflow</code></th>
+<th>Workflow</th>
+<th>Slug(s)</th>
+<th>Kind</th>
+<th>What it does</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Import from</strong></td>
-<td><code>release</code></td>
-<td><code>release</code></td>
-<td><code>workflows.release_prep</code></td>
+<td><code>release-prep</code> (this feature)</td>
+<td><code>release-prep</code>, <code>release-gate</code></td>
+<td>Deterministic gate (agent team)</td>
+<td>Runs real bandit / ruff / pytest / docstring checks against hard thresholds; returns APPROVED / BLOCKED. CLI-only; $0 by default.</td>
 </tr>
 <tr>
-<td><strong>Primary method</strong></td>
-<td><code>assess_readiness(codebase_path)</code></td>
-<td><code>execute(path, context)</code></td>
-<td><code>execute(**kwargs)</code></td>
-</tr>
-<tr>
-<td><strong>Custom quality gates</strong></td>
-<td><code>dict[str, Any]</code> via <code>__init__</code></td>
-<td><code>dict[str, float]</code> via <code>__init__</code></td>
-<td>Not exposed</td>
-</tr>
-<tr>
-<td><strong>Stage-level control</strong></td>
-<td>No</td>
-<td><code>run_stage(stage_name, tier, input_data)</code></td>
-<td>No</td>
-</tr>
-<tr>
-<td><strong>Cost tracking</strong></td>
-<td><code>get_total_cost() -&gt; float</code></td>
-<td>Via <code>ReleaseReadinessReport.total_cost</code></td>
-<td>Via <code>WorkflowResult</code></td>
-</tr>
-<tr>
-<td><strong>Redis state store</strong></td>
-<td>Optional <code>redis_url</code></td>
-<td>Inherited via <code>**kwargs</code></td>
-<td>Not exposed</td>
-</tr>
-<tr>
-<td><strong>Returns</strong></td>
-<td><code>ReleaseReadinessReport</code></td>
-<td><code>ReleaseReadinessReport</code></td>
-<td><code>WorkflowResult</code></td>
-</tr>
-<tr>
-<td><strong>Best for</strong></td>
-<td>Direct programmatic use</td>
-<td>CLI registry integration</td>
-<td>One-shot workflow invocation</td>
+<td><code>release-notes</code></td>
+<td><code>release-notes</code></td>
+<td>Advisory (SDK)</td>
+<td>Drafts a changelog + an LLM go/no-go. Does not block. Subscription-billed with depth budget caps.</td>
 </tr>
 </tbody>
 </table>
-<h2>Feature-by-feature breakdown</h2>
-<h3>Quality gate configuration</h3>
-<p><code>ReleasePrepTeam</code> and <code>ReleasePrepTeamWorkflow</code> both accept custom quality gates at construction time. <code>ReleasePrepTeam</code> accepts <code>dict[str, Any]</code>, giving you the most flexibility — you can pass full <code>QualityGate</code> objects with <code>name</code>, <code>threshold</code>, <code>critical</code>, and <code>message</code> fields. <code>ReleasePrepTeamWorkflow</code> narrows this to <code>dict[str, float]</code>, which is enough for threshold-only overrides but won't let you mark a gate as non-critical or attach a custom message.</p>
-<p><code>ReleasePreparationWorkflow</code> does not expose quality gate configuration at all. It runs with whatever defaults are baked in.</p>
-<h3>Output format</h3>
-<p>All three paths ultimately produce data that maps to <code>ReleaseReadinessReport</code>, which carries <code>approved</code>, <code>confidence</code>, <code>quality_gates</code>, <code>agent_results</code>, <code>blockers</code>, <code>warnings</code>, <code>summary</code>, <code>total_duration</code>, and <code>total_cost</code>. When you use <code>ReleasePrepTeam</code> or <code>ReleasePrepTeamWorkflow</code> directly, you get a <code>ReleaseReadinessReport</code> back and can call <code>format_console_output()</code> or <code>to_dict()</code> on it immediately.</p>
-<p><code>ReleasePreparationWorkflow</code> wraps results in a <code>WorkflowResult</code>, so you go through an extra layer before reaching the same data.</p>
-<h3>Agent visibility</h3>
-<p>Each entry point runs the same four specialized agents — <code>CodeQualityAgent</code>, <code>TestCoverageAgent</code>, <code>DocumentationAgent</code>, and <code>SecurityAuditorAgent</code> — but only <code>ReleasePrepTeamWorkflow</code> lets you interact with the execution model directly via <code>run_stage(stage_name, tier, input_data)</code>. This matters if you need to re-run a single stage at a different <code>Tier</code> without re-running the full assessment, or if you want to inject custom input data for a specific stage.</p>
-<h3>Cost tracking</h3>
-<p><code>ReleasePrepTeam</code> exposes <code>get_total_cost() -&gt; float</code> as a dedicated method, making it easy to check spend after <code>assess_readiness()</code> returns. <code>ReleasePrepTeamWorkflow</code> surfaces the same figure through <code>ReleaseReadinessReport.total_cost</code>. <code>ReleasePreparationWorkflow</code> folds cost into the broader <code>WorkflowResult</code> — accessible, but not as direct.</p>
-<h2>When NOT to use release prep directly</h2>
-<ul>
-<li><strong>Exploratory or one-off checks</strong>: Running <code>/release-prep check</code> from the skill is faster than wiring up any of these classes for a single assessment.</li>
-<li><strong>You only need one agent's output</strong>: Instantiate <code>CodeQualityAgent</code>, <code>TestCoverageAgent</code>, <code>DocumentationAgent</code>, or <code>SecurityAuditorAgent</code> directly via <code>ReleaseAgent.process(codebase_path)</code>. Invoking the full team for a single domain check adds unnecessary cost and latency.</li>
-<li><strong>You need a check type the public API does not cover</strong>: None of these entry points expose extension hooks for custom agent types. If your release gate requires domain logic outside the four built-in agents, file a feature request rather than patching internals.</li>
-</ul>
-<h2>Use X when...</h2>
-<p><strong>Use <code>ReleasePrepTeam</code></strong> when you are writing application code that drives release gating directly. It gives you the cleanest interface (<code>assess_readiness()</code> in, <code>ReleaseReadinessReport</code> out), full quality gate control via <code>dict[str, Any]</code>, and an explicit <code>get_total_cost()</code> call for spend tracking. This is the right default for new integrations.</p>
-<p><strong>Use <code>ReleasePrepTeamWorkflow</code></strong> when you need stage-level control — specifically, the ability to call <code>run_stage(stage_name, tier, input_data)</code> to re-run or customize individual stages — or when your code integrates with the CLI registry that expects the workflow interface. The <code>dict[str, float]</code> gate format is a minor constraint; if you need full <code>QualityGate</code> objects, prefer <code>ReleasePrepTeam</code>.</p>
-<p><strong>Use <code>ReleasePreparationWorkflow</code></strong> only when the rest of your pipeline already expects a <code>WorkflowResult</code> and you have no need to customize quality gates or inspect per-stage execution. It is the least flexible of the three but requires the least setup.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/release_prep.py</code></li>
-<li><code>src/attune/agents/release/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>release</code>, <code>publishing</code>, <code>quality</code></p>
+<p>Reach for <strong>release-prep</strong> when you need an enforced gate on measured
+numbers. Reach for <strong>release-notes</strong> when you want the changelog drafted
+and a recommendation. A common flow is release-notes to draft and read
+the landscape, then release-prep to gate the actual ship.</p>
+<p>When all gates pass, the report's next step points at <strong>secure-release</strong>
+(<code>attune workflow run secure-release</code>), the composite security pipeline.</p>
 
   </article>
   <footer>
