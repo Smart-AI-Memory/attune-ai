@@ -25,7 +25,7 @@
     
     
       
-        <title>Smart Test CLI Reference - Attune AI</title>
+        <title>Smart Test - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#smart-test-cli-reference" class="md-skip">
+        <a href="#smart-test" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Smart Test CLI Reference
+              Smart Test
             
           </span>
         </div>
@@ -3924,6 +3924,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../features/smart-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Smart Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../features/spec-engine/" class="md-nav__link">
         
   
@@ -3979,68 +4007,74 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
+  <a href="#reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Description
+        Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#workflow-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Workflow classes
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#depth-agent-turn-budget-test-audit-test-gen" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage
+        Depth → agent-turn budget (test-audit / test-gen)
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#subagents" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Options
+        Subagents
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#output" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#workflowresult-fields-read-after-a-run" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Output
+        WorkflowResult fields read after a run
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#exit-codes" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#entry-points" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exit codes
+        Entry points
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#related-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related commands
-      
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -4064,71 +4098,167 @@
   
 
 
-<h1 id="smart-test-cli-reference">Smart Test CLI Reference<a class="headerlink" href="#smart-test-cli-reference" title="Permanent link">&para;</a></h1>
-<p>Analyze test coverage gaps and generate pytest tests for uncovered code.</p>
-<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<p><code>smart-test</code> runs an autonomous test coverage audit and test generation workflow against a Python codebase. It parses <code>pytest-cov</code> coverage output, identifies untested functions and branches, and writes executable pytest tests with edge cases and error-path assertions. Output is a structured report covering coverage gaps, generated test files, and prioritized next steps.</p>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>smart-test [OPTIONS] &lt;PATH&gt;
-</code></pre></div>
-<h2 id="options">Options<a class="headerlink" href="#options" title="Permanent link">&para;</a></h2>
+<h1 id="smart-test">Smart Test<a class="headerlink" href="#smart-test" title="Permanent link">&para;</a></h1>
+<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<p>Smart-test's public surface is the <code>TestAuditWorkflow</code>,
+<code>TestGenerationWorkflow</code>, and <code>ParallelTestGenerationWorkflow</code>
+classes, re-exported from <code>attune.workflows</code>. <code>WorkflowResult</code>
+comes from <code>attune.workflows</code> as well.</p>
+<h3 id="workflow-classes">Workflow classes<a class="headerlink" href="#workflow-classes" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Default</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--help</code></td>
-<td>—</td>
-<td>Show this help message and exit</td>
+<td><code>TestAuditWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Coverage audit. Honors <code>path</code> (str, required; deprecated <code>src_path</code> alias) and <code>depth</code> (<code>"quick"</code> / <code>"standard"</code> / <code>"deep"</code>, default <code>"standard"</code>). Slug <code>"test-audit"</code>.</td>
+</tr>
+<tr>
+<td><code>TestGenerationWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Test generation. Honors <code>path</code> (str, required) and <code>depth</code> (default <code>"standard"</code>). Slug <code>"test-gen"</code>.</td>
+</tr>
+<tr>
+<td><code>ParallelTestGenerationWorkflow.execute(top=200, batch_size=10, output_dir="tests/behavioral/generated")</code></td>
+<td><strong>Async.</strong> Batch generation across low-coverage modules. Registered name <code>"parallel-test-generation"</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h2>
-<p>On success, <code>smart-test</code> prints a structured Markdown report to stdout with the following sections:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>## Summary
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Overall test generation summary — how many functions were analyzed,
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>how many test cases were designed, and how many test files were written.
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>## Coverage
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Current coverage analysis and areas that need testing.
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>## Test Gaps
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>Functions and modules that lack adequate test coverage.
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>## Suggestions
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>Actionable next steps for improving test coverage, ordered by priority.
-</code></pre></div>
-<p>Generated test files are written to <code>tests/behavioral/generated/</code> by default.</p>
-<h2 id="exit-codes">Exit codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
+<p>Each <code>test-audit</code> / <code>test-gen</code> stage runs at the <code>CAPABLE</code> model
+tier. Underscore-prefixed names (<code>_run_agent_audit</code>,
+<code>_run_agent_gen</code>, <code>_SUBAGENT_NAMES</code>) are internal and may change.</p>
+<h3 id="depth-agent-turn-budget-test-audit-test-gen">Depth → agent-turn budget (test-audit / test-gen)<a class="headerlink" href="#depth-agent-turn-budget-test-audit-test-gen" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Code</th>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Use when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quick</code></td>
+<td>10</td>
+<td>A fast pass on a small path.</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>20</td>
+<td>The default — balanced coverage and cost.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+<td>The fullest pass on a large or critical area.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="subagents">Subagents<a class="headerlink" href="#subagents" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Workflow</th>
+<th>Subagents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test-audit</code></td>
+<td><code>coverage-auditor</code> (coverage metrics), <code>gap-analyzer</code> (untested paths), <code>test-planner</code> (prioritized plan).</td>
+</tr>
+<tr>
+<td><code>test-gen</code></td>
+<td><code>function-identifier</code> (finds untested functions), <code>test-designer</code> (designs cases), <code>test-writer</code> (writes pytest code).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="workflowresult-fields-read-after-a-run"><code>WorkflowResult</code> fields read after a run<a class="headerlink" href="#workflowresult-fields-read-after-a-run" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
 <th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>0</code></td>
-<td>Workflow completed; report written to stdout</td>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the run completed.</td>
 </tr>
 <tr>
-<td><code>1</code></td>
-<td>Workflow failed — coverage file not found, invalid coverage JSON, or missing <code>files</code> key in coverage data</td>
+<td><code>final_output</code></td>
+<td><code>Any</code></td>
+<td>The report — a serialized report when findings parse, else the raw markdown.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str \| None</code></td>
+<td>Short summary.</td>
+</tr>
+<tr>
+<td><code>suggestions</code></td>
+<td><code>list[NextAction]</code></td>
+<td>Prioritized next actions.</td>
+</tr>
+<tr>
+<td><code>cost_report</code></td>
+<td><code>CostReport</code></td>
+<td>Cost / usage for the run.</td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>str</code></td>
+<td>The provider that served the run (<code>"anthropic"</code> for the SDK workflows).</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td>Echoes the run's <code>path</code> / <code>src_path</code>, <code>depth</code>, and <code>max_turns</code>; carries SDK error fields on failure.</td>
+</tr>
+<tr>
+<td><code>error</code> / <code>error_type</code></td>
+<td><code>str \| None</code></td>
+<td>Failure reason and category (<code>"config"</code> / <code>"runtime"</code> / <code>"provider"</code> / <code>"timeout"</code> / <code>"validation"</code>).</td>
 </tr>
 </tbody>
 </table>
-<h2 id="related-commands">Related commands<a class="headerlink" href="#related-commands" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>/smart-test</code> — invoke the same workflow as a Claude Code skill from a conversation</li>
-<li><code>fix-test</code> — diagnose and repair failing pytest tests after a refactor or dependency upgrade</li>
-</ul>
-<!-- attune-generated: source_hash=2ed25e274258323117a16cf96fcb5bf0a40e45a9bb8c246d4abfdc74365cfabc feature=smart-test kind=cli-reference generated_at=2026-05-16 -->
+<h3 id="entry-points">Entry points<a class="headerlink" href="#entry-points" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Invocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Skill</td>
+<td><code>/smart-test</code> in a Claude Code conversation — routes to gap analysis, generation, or both.</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>attune workflow run test-audit --path &lt;p&gt; [--depth ...] [--json]</code>; <code>attune workflow run test-gen --path &lt;p&gt; [--depth ...] [--json]</code>.</td>
+</tr>
+<tr>
+<td>MCP tools</td>
+<td><code>test_audit</code> (optional <code>path</code>, defaults to <code>src/</code>); <code>test_gen_parallel</code> (<code>top</code>, <code>batch_size</code>).</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>await TestAuditWorkflow().execute(path=&lt;p&gt;)</code>; <code>await TestGenerationWorkflow().execute(path=&lt;p&gt;)</code>; <code>await ParallelTestGenerationWorkflow().execute(top=..., batch_size=...)</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>For single-module test generation, the reliable surfaces are the
+CLI (<code>attune workflow run test-gen --path &lt;module&gt;</code>) and the Python
+API (<code>TestGenerationWorkflow().execute(path=&lt;module&gt;)</code>).</p>
+<!-- attune-generated: source_hash=d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe feature=smart-test kind=reference generated_at=2026-06-23 -->
 
 
 
