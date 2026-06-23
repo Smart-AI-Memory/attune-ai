@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Smart Test reference — reference</title>
-  <meta name="description" content="Find coverage gaps in your codebase and generate pytest tests with edge cases, boundary values, and error paths." />
-  <meta property="og:title" content="Smart Test reference — reference" />
-  <meta property="og:description" content="Find coverage gaps in your codebase and generate pytest tests with edge cases, boundary values, and error paths." />
+  <title>Find untested code with a coverage audit, then generate pytest tests to close the gaps — reference</title>
+  <meta name="description" content="Smart-test&#x27;s public surface is the `TestAuditWorkflow`, `TestGenerationWorkflow`, and `ParallelTestGenerationWorkflow` classes, re-exported from `attune.workflows`. `WorkflowResult` comes from `attune" />
+  <meta property="og:title" content="Find untested code with a coverage audit, then generate pytest tests to close the gaps — reference" />
+  <meta property="og:description" content="Smart-test&#x27;s public surface is the `TestAuditWorkflow`, `TestGenerationWorkflow`, and `ParallelTestGenerationWorkflow` classes, re-exported from `attune.workflows`. `WorkflowResult` comes from `attune" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/smart-test/reference" />
   <style>
@@ -272,550 +272,166 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Smart Test reference</h1>
-<p>Find coverage gaps in your codebase and generate pytest tests with edge cases, boundary values, and error paths.</p>
-<h2>Classes</h2>
+<h1>Find untested code with a coverage audit, then generate pytest tests to close the gaps</h1>
+<h2>Reference</h2>
+<p>Smart-test's public surface is the <code>TestAuditWorkflow</code>,
+<code>TestGenerationWorkflow</code>, and <code>ParallelTestGenerationWorkflow</code>
+classes, re-exported from <code>attune.workflows</code>. <code>WorkflowResult</code>
+comes from <code>attune.workflows</code> as well.</p>
+<h3>Workflow classes</h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>ModuleCoverage</code></td>
-<td>Coverage data for a single module.</td>
+<td><code>TestAuditWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Coverage audit. Honors <code>path</code> (str, required; deprecated <code>src_path</code> alias) and <code>depth</code> (<code>&quot;quick&quot;</code> / <code>&quot;standard&quot;</code> / <code>&quot;deep&quot;</code>, default <code>&quot;standard&quot;</code>). Slug <code>&quot;test-audit&quot;</code>.</td>
 </tr>
 <tr>
-<td><code>TestAuditWorkflow</code></td>
-<td>Autonomous test coverage audit with Agent SDK subagents.</td>
+<td><code>TestGenerationWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Test generation. Honors <code>path</code> (str, required) and <code>depth</code> (default <code>&quot;standard&quot;</code>). Slug <code>&quot;test-gen&quot;</code>.</td>
 </tr>
 <tr>
-<td><code>ASTFunctionAnalyzer</code></td>
-<td>AST-based function analyzer for accurate test generation.</td>
-</tr>
-<tr>
-<td><code>FunctionSignature</code></td>
-<td>Detailed function analysis for test generation.</td>
-</tr>
-<tr>
-<td><code>ClassSignature</code></td>
-<td>Detailed class analysis for test generation.</td>
-</tr>
-<tr>
-<td><code>TestGenerationWorkflow</code></td>
-<td>SDK-native test generation with three specialized subagents.</td>
-</tr>
-<tr>
-<td><code>TestGenerationTask</code></td>
-<td>Tracks the state of a single test generation task.</td>
-</tr>
-<tr>
-<td><code>ParallelTestGenerationWorkflow</code></td>
-<td>Generate and complete behavioral tests in parallel using multi-tier LLMs.</td>
+<td><code>ParallelTestGenerationWorkflow.execute(top=200, batch_size=10, output_dir=&quot;tests/behavioral/generated&quot;)</code></td>
+<td><strong>Async.</strong> Batch generation across low-coverage modules. Registered name <code>&quot;parallel-test-generation&quot;</code>.</td>
 </tr>
 </tbody>
 </table>
-<h3><code>ModuleCoverage</code> fields</h3>
-<p><code>ModuleCoverage</code> is a dataclass.</p>
+<p>Each <code>test-audit</code> / <code>test-gen</code> stage runs at the <code>CAPABLE</code> model
+tier. Underscore-prefixed names (<code>_run_agent_audit</code>,
+<code>_run_agent_gen</code>, <code>_SUBAGENT_NAMES</code>) are internal and may change.</p>
+<h3>Depth → agent-turn budget (test-audit / test-gen)</h3>
+<table>
+<thead>
+<tr>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Use when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quick</code></td>
+<td>10</td>
+<td>A fast pass on a small path.</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>20</td>
+<td>The default — balanced coverage and cost.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+<td>The fullest pass on a large or critical area.</td>
+</tr>
+</tbody>
+</table>
+<h3>Subagents</h3>
+<table>
+<thead>
+<tr>
+<th>Workflow</th>
+<th>Subagents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test-audit</code></td>
+<td><code>coverage-auditor</code> (coverage metrics), <code>gap-analyzer</code> (untested paths), <code>test-planner</code> (prioritized plan).</td>
+</tr>
+<tr>
+<td><code>test-gen</code></td>
+<td><code>function-identifier</code> (finds untested functions), <code>test-designer</code> (designs cases), <code>test-writer</code> (writes pytest code).</td>
+</tr>
+</tbody>
+</table>
+<h3><code>WorkflowResult</code> fields read after a run</h3>
 <table>
 <thead>
 <tr>
 <th>Field</th>
 <th>Type</th>
-<th>Default</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>path</code></td>
-<td><code>str</code></td>
-<td>—</td>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the run completed.</td>
 </tr>
 <tr>
-<td><code>stmts</code></td>
-<td><code>int</code></td>
-<td>—</td>
+<td><code>final_output</code></td>
+<td><code>Any</code></td>
+<td>The report — a serialized report when findings parse, else the raw markdown.</td>
 </tr>
 <tr>
-<td><code>covered</code></td>
-<td><code>int</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>missing_lines</code></td>
-<td><code>list[int]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-<tr>
-<td><code>pct</code></td>
-<td><code>float</code></td>
-<td><code>0.0</code></td>
-</tr>
-<tr>
-<td><code>priority</code></td>
-<td><code>float</code></td>
-<td><code>0.0</code></td>
-</tr>
-</tbody>
-</table>
-<h3><code>FunctionSignature</code> fields</h3>
-<p><code>FunctionSignature</code> is a dataclass.</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>name</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>params</code></td>
-<td><code>list[tuple[str, str, str | None]]</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>return_type</code></td>
+<td><code>summary</code></td>
 <td><code>str | None</code></td>
-<td>—</td>
+<td>Short summary.</td>
 </tr>
 <tr>
-<td><code>is_async</code></td>
-<td><code>bool</code></td>
-<td>—</td>
+<td><code>suggestions</code></td>
+<td><code>list[NextAction]</code></td>
+<td>Prioritized next actions.</td>
 </tr>
 <tr>
-<td><code>raises</code></td>
-<td><code>set[str]</code></td>
-<td>—</td>
+<td><code>cost_report</code></td>
+<td><code>CostReport</code></td>
+<td>Cost / usage for the run.</td>
 </tr>
 <tr>
-<td><code>has_side_effects</code></td>
-<td><code>bool</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>docstring</code></td>
-<td><code>str | None</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>complexity</code></td>
-<td><code>int</code></td>
-<td><code>1</code></td>
-</tr>
-<tr>
-<td><code>decorators</code></td>
-<td><code>list[str]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-</tbody>
-</table>
-<h3><code>ClassSignature</code> fields</h3>
-<p><code>ClassSignature</code> is a dataclass.</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>name</code></td>
+<td><code>provider</code></td>
 <td><code>str</code></td>
-<td>—</td>
+<td>The provider that served the run (<code>&quot;anthropic&quot;</code> for the SDK workflows).</td>
 </tr>
 <tr>
-<td><code>methods</code></td>
-<td><code>list[FunctionSignature]</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>init_params</code></td>
-<td><code>list[tuple[str, str, str | None]]</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>base_classes</code></td>
-<td><code>list[str]</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>docstring</code></td>
-<td><code>str | None</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>is_enum</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
-</tr>
-<tr>
-<td><code>is_dataclass</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
-</tr>
-<tr>
-<td><code>required_init_params</code></td>
-<td><code>int</code></td>
-<td><code>0</code></td>
-</tr>
-</tbody>
-</table>
-<h3><code>TestGenerationTask</code> fields</h3>
-<p><code>TestGenerationTask</code> is a dataclass.</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>module_path</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>coverage</code></td>
-<td><code>float</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>output_path</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>status</code></td>
-<td><code>str</code></td>
-<td><code>'pending'</code></td>
-</tr>
-</tbody>
-</table>
-<h3><code>TestAuditWorkflow</code> methods</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td><code>self, *, system_prompt_suffix: str = '', **kwargs: Any</code></td>
-<td><code>None</code></td>
-<td>Initializes the workflow with an optional system prompt suffix.</td>
-</tr>
-<tr>
-<td><code>execute</code></td>
-<td><code>self, **kwargs: Any</code></td>
-<td><code>WorkflowResult</code></td>
-<td>Runs the coverage audit and returns a structured result.</td>
-</tr>
-</tbody>
-</table>
-<h3><code>ASTFunctionAnalyzer</code> methods</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td><code>self</code></td>
-<td>—</td>
-<td>Initializes the analyzer.</td>
-</tr>
-<tr>
-<td><code>analyze</code></td>
-<td><code>self, code: str, file_path: str = ''</code></td>
-<td><code>tuple[list[FunctionSignature], list[ClassSignature]]</code></td>
-<td>Parses source code and returns extracted function and class signatures.</td>
-</tr>
-<tr>
-<td><code>visit_FunctionDef</code></td>
-<td><code>self, node: ast.FunctionDef</code></td>
-<td><code>None</code></td>
-<td>Visits a function definition node during AST traversal.</td>
-</tr>
-<tr>
-<td><code>visit_AsyncFunctionDef</code></td>
-<td><code>self, node: ast.AsyncFunctionDef</code></td>
-<td><code>None</code></td>
-<td>Visits an async function definition node during AST traversal.</td>
-</tr>
-<tr>
-<td><code>visit_ClassDef</code></td>
-<td><code>self, node: ast.ClassDef</code></td>
-<td><code>None</code></td>
-<td>Visits a class definition node during AST traversal.</td>
-</tr>
-</tbody>
-</table>
-<h3><code>TestGenerationWorkflow</code> methods</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td><code>self, **kwargs: Any</code></td>
-<td>—</td>
-<td>Initializes the workflow.</td>
-</tr>
-<tr>
-<td><code>execute</code></td>
-<td><code>self, **kwargs: Any</code></td>
-<td><code>WorkflowResult</code></td>
-<td>Runs test generation with three specialized subagents and returns a structured result.</td>
-</tr>
-</tbody>
-</table>
-<h3><code>ParallelTestGenerationWorkflow</code> methods</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>default_context</code></td>
-<td><code>cls, xml_config: dict | None = None</code></td>
-<td><code>WorkflowContext</code></td>
-<td>Returns the default workflow context, optionally configured with XML.</td>
-</tr>
-<tr>
-<td><code>discover_low_coverage_modules</code></td>
-<td><code>self, top_n: int = 200</code></td>
-<td><code>list[tuple[str, float]]</code></td>
-<td>Returns the top N modules ranked by lowest coverage.</td>
-</tr>
-<tr>
-<td><code>analyze_module_structure</code></td>
-<td><code>self, file_path: str</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Analyzes a module's structure and returns a summary dict.</td>
-</tr>
-<tr>
-<td><code>generate_test_template_with_ai</code></td>
-<td><code>self, module_path: str, structure: dict[str, Any]</code></td>
-<td><code>str</code></td>
-<td>Generates a test file template for the given module using an LLM.</td>
-</tr>
-<tr>
-<td><code>complete_test_with_ai</code></td>
-<td><code>self, template: str, module_path: str</code></td>
-<td><code>str</code></td>
-<td>Completes a test template into a full test file using an LLM.</td>
-</tr>
-<tr>
-<td><code>process_module_batch</code></td>
-<td><code>self, modules: list[tuple[str, float]], output_dir: Path, batch_size: int = 10</code></td>
-<td><code>list[TestGenerationTask]</code></td>
-<td>Processes a batch of modules and returns generation task results.</td>
-</tr>
-<tr>
-<td><code>execute</code></td>
-<td><code>self, top: int = 200, batch_size: int = 10, output_dir: str = 'tests/behavioral/generated', **kwargs</code></td>
-<td><code>WorkflowResult</code></td>
-<td>Runs parallel test generation across low-coverage modules and returns a structured result.</td>
-</tr>
-</tbody>
-</table>
-<h2>Functions</h2>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>parse_coverage_json</code></td>
-<td><code>json_path: str</code></td>
-<td><code>list[ModuleCoverage]</code></td>
-<td>Parse pytest-cov's coverage.json output.</td>
-</tr>
-<tr>
-<td><code>prioritize_modules</code></td>
-<td><code>modules: list[ModuleCoverage], min_threshold: float = 50.0</code></td>
-<td><code>list[ModuleCoverage]</code></td>
-<td>Sort modules by priority and filter below threshold.</td>
-</tr>
-<tr>
-<td><code>group_into_batches</code></td>
-<td><code>modules: list[ModuleCoverage], max_batches: int = 5</code></td>
-<td><code>list[dict]</code></td>
-<td>Group modules into batches by subsystem (package path).</td>
-</tr>
-<tr>
-<td><code>format_test_gen_report</code></td>
-<td><code>result: dict, input_data: dict</code></td>
-<td><code>str</code></td>
-<td>Format test generation output as a human-readable report.</td>
-</tr>
-<tr>
-<td><code>generate_test_for_function</code></td>
-<td><code>module: str, func: dict</code></td>
-<td><code>str</code></td>
-<td>Generate executable tests for a function based on AST analysis.</td>
-</tr>
-<tr>
-<td><code>generate_test_cases_for_params</code></td>
-<td><code>params: list</code></td>
+<td><code>metadata</code></td>
 <td><code>dict</code></td>
-<td>Generate test cases based on parameter types.</td>
+<td>Echoes the run's <code>path</code> / <code>src_path</code>, <code>depth</code>, and <code>max_turns</code>; carries SDK error fields on failure.</td>
 </tr>
 <tr>
-<td><code>get_type_assertion</code></td>
-<td><code>return_type: str</code></td>
+<td><code>error</code> / <code>error_type</code></td>
 <td><code>str | None</code></td>
-<td>Generate assertion for return type checking.</td>
-</tr>
-<tr>
-<td><code>get_param_test_values</code></td>
-<td><code>type_hint: str</code></td>
-<td><code>list[str]</code></td>
-<td>Get test values for a single parameter based on its type.</td>
-</tr>
-<tr>
-<td><code>generate_test_for_class</code></td>
-<td><code>module: str, cls: dict</code></td>
-<td><code>str</code></td>
-<td>Generate executable test class based on AST analysis.</td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>CLI entry point for test generation workflow.</td>
+<td>Failure reason and category (<code>&quot;config&quot;</code> / <code>&quot;runtime&quot;</code> / <code>&quot;provider&quot;</code> / <code>&quot;timeout&quot;</code> / <code>&quot;validation&quot;</code>).</td>
 </tr>
 </tbody>
 </table>
-<h3>Raises</h3>
+<h3>Entry points</h3>
 <table>
 <thead>
 <tr>
-<th>Function</th>
-<th>Exception</th>
-<th>Message</th>
+<th>Surface</th>
+<th>Invocation</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>parse_coverage_json</code></td>
-<td><code>FileNotFoundError</code></td>
-<td><code>'Coverage file not found: {...}'</code></td>
+<td>Skill</td>
+<td><code>/smart-test</code> in a Claude Code conversation — routes to gap analysis, generation, or both.</td>
 </tr>
 <tr>
-<td><code>parse_coverage_json</code></td>
-<td><code>ValueError</code></td>
-<td><code>'Invalid coverage JSON at {...}: {...}'</code></td>
+<td>CLI</td>
+<td><code>attune workflow run test-audit --path &lt;p&gt; [--depth ...] [--json]</code>; <code>attune workflow run test-gen --path &lt;p&gt; [--depth ...] [--json]</code>.</td>
 </tr>
 <tr>
-<td><code>parse_coverage_json</code></td>
-<td><code>ValueError</code></td>
-<td><code>&quot;Unexpected coverage JSON structure in {...}: 'files' key missing or not a dict&quot;</code></td>
+<td>MCP tools</td>
+<td><code>test_audit</code> (optional <code>path</code>, defaults to <code>src/</code>); <code>test_gen_parallel</code> (<code>top</code>, <code>batch_size</code>).</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>await TestAuditWorkflow().execute(path=&lt;p&gt;)</code>; <code>await TestGenerationWorkflow().execute(path=&lt;p&gt;)</code>; <code>await ParallelTestGenerationWorkflow().execute(top=..., batch_size=...)</code>.</td>
 </tr>
 </tbody>
 </table>
-<h3><code>get_param_test_values</code> return values</h3>
-<p><code>get_param_test_values</code> returns a <code>list[str]</code>. The list may contain the following literal value:</p>
-<table>
-<thead>
-<tr>
-<th>Value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>&quot;test_value&quot;</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Constants</h2>
-<table>
-<thead>
-<tr>
-<th>Constant</th>
-<th>Type</th>
-<th>Members</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>AUDIT_SYSTEM_PROMPT</code></td>
-<td><code>str</code></td>
-<td>System prompt for the coverage-auditor subagent. Instructs it to review module prioritization and return a JSON object with a <code>&quot;modules&quot;</code> key.</td>
-</tr>
-<tr>
-<td><code>PLAN_SYSTEM_PROMPT</code></td>
-<td><code>str</code></td>
-<td>System prompt for the test-planner subagent. Instructs it to group modules into logical batches and return a JSON object with a <code>&quot;batches&quot;</code> key, each containing a <code>&quot;task_xml&quot;</code> field.</td>
-</tr>
-<tr>
-<td><code>BATCH_TASK_TEMPLATE</code></td>
-<td><code>str</code></td>
-<td>XML task prompt template. Interpolation keys: <code>{batch_id}</code>, <code>{subsystem}</code>, <code>{target_pct}</code>, <code>{missing_lines_summary}</code>, <code>{source_path}</code>, <code>{key_signatures}</code>, <code>{test_path}</code>, <code>{test_class_specs}</code>, <code>{module}</code>.</td>
-</tr>
-<tr>
-<td><code>DEFAULT_SKIP_PATTERNS</code></td>
-<td><code>list</code></td>
-<td><code>'.git'</code>, <code>'.hg'</code>, <code>'.svn'</code>, <code>'node_modules'</code>, <code>'bower_components'</code>, <code>'vendor'</code>, <code>'__pycache__'</code>, <code>'.mypy_cache'</code>, <code>'.pytest_cache'</code>, <code>'.ruff_cache'</code>, <code>'.hypothesis'</code>, <code>'venv'</code>, <code>'.venv'</code>, <code>'env'</code>, <code>'.env'</code>, <code>'virtualenv'</code>, <code>'.virtualenv'</code>, <code>'.tox'</code>, <code>'.nox'</code>, <code>'build'</code>, <code>'dist'</code>, <code>'eggs'</code>, <code>'.eggs'</code>, <code>'site-packages'</code>, <code>'.idea'</code>, <code>'.vscode'</code>, <code>'migrations'</code>, <code>'alembic'</code>, <code>'_build'</code>, <code>'docs/_build'</code></td>
-</tr>
-<tr>
-<td><code>_SUBAGENT_NAMES</code> (audit)</td>
-<td><code>list</code></td>
-<td><code>'coverage-auditor'</code>, <code>'gap-analyzer'</code>, <code>'test-planner'</code></td>
-</tr>
-<tr>
-<td><code>_SUBAGENT_NAMES</code> (gen)</td>
-<td><code>list</code></td>
-<td><code>'function-identifier'</code>, <code>'test-designer'</code>, <code>'test-writer'</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/test_gen/**</code></li>
-<li><code>src/attune/workflows/test_audit/**</code></li>
-<li><code>src/attune/workflows/test_gen_parallel.py</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>tests</code>, <code>coverage</code>, <code>generation</code></p>
+<p>For single-module test generation, the reliable surfaces are the
+CLI (<code>attune workflow run test-gen --path &lt;module&gt;</code>) and the Python
+API (<code>TestGenerationWorkflow().execute(path=&lt;module&gt;)</code>).</p>
 
   </article>
   <footer>

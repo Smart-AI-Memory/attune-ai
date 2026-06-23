@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: Target modules below 50% coverage first — tip</title>
-  <meta name="description" content="When you run `/smart-test`, specify the module you care about most rather than pointing it at the entire codebase. `prioritize_modules()` already filters out anything above the 50% coverage threshold " />
-  <meta property="og:title" content="Tip: Target modules below 50% coverage first — tip" />
-  <meta property="og:description" content="When you run `/smart-test`, specify the module you care about most rather than pointing it at the entire codebase. `prioritize_modules()` already filters out anything above the 50% coverage threshold " />
+  <title>Find untested code with a coverage audit, then generate pytest tests to close the gaps — tip</title>
+  <meta name="description" content="- **Depend on the documented public surface.** The supported API is the three workflow classes and their async `execute`, plus the `WorkflowResult` they return. Internal helpers (underscore- prefixed " />
+  <meta property="og:title" content="Find untested code with a coverage audit, then generate pytest tests to close the gaps — tip" />
+  <meta property="og:description" content="- **Depend on the documented public surface.** The supported API is the three workflow classes and their async `execute`, plus the `WorkflowResult` they return. Internal helpers (underscore- prefixed " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/smart-test/tip" />
   <style>
@@ -272,17 +272,22 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: Target modules below 50% coverage first</h1>
-<p>When you run <code>/smart-test</code>, specify the module you care about most rather than pointing it at the entire codebase. <code>prioritize_modules()</code> already filters out anything above the 50% coverage threshold and ranks the rest by a priority score — so the first items in the gap report are the ones that matter most.</p>
-<p><strong>Why it's memorable:</strong> A focused target means the three subagents (function-identifier, test-designer, test-writer) spend their cycles on your riskiest code, not on modules that are already well-covered.</p>
-<p><strong>The tradeoff:</strong> You may miss low-priority gaps in other modules. Run a broader audit with <code>TestAuditWorkflow</code> afterward to catch anything the scoped run skipped — but only after the high-risk gaps are closed.</p>
-<h2>Source files</h2>
+<h1>Find untested code with a coverage audit, then generate pytest tests to close the gaps</h1>
+<h2>Notes &amp; tips</h2>
 <ul>
-<li><code>src/attune/workflows/test_audit/**</code></li>
-<li><code>src/attune/workflows/test_gen/**</code></li>
-<li><code>src/attune/workflows/test_gen_parallel.py</code></li>
+<li><strong>Depend on the documented public surface.</strong> The supported API is
+the three workflow classes and their async <code>execute</code>, plus the
+<code>WorkflowResult</code> they return. Internal helpers (underscore-
+prefixed names, the AST/coverage parsing utilities) may change.</li>
+<li><strong>Audit before you generate.</strong> Running <code>test-audit</code> first tells
+you <em>where</em> the gaps are so a <code>test-gen</code> pass spends its budget on
+the modules that matter.</li>
+<li><strong>Keep runs cheap with <code>path</code> and <code>depth</code>.</strong> A <code>quick</code> pass over
+one module is far faster than a <code>deep</code> pass over <code>src/</code>.</li>
+<li><strong>Single-module generation is most reliable via CLI / Python.</strong>
+Drive it with <code>attune workflow run test-gen --path &lt;module&gt;</code> or
+<code>TestGenerationWorkflow().execute(path=&lt;module&gt;)</code>.</li>
 </ul>
-<p><strong>Tags:</strong> <code>tests</code>, <code>coverage</code>, <code>generation</code></p>
 
   </article>
   <footer>

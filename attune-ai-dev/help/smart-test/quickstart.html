@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: Smart Test — quickstart</title>
-  <meta name="description" content="Find untested code and generate pytest tests with edge cases." />
-  <meta property="og:title" content="Quickstart: Smart Test — quickstart" />
-  <meta property="og:description" content="Find untested code and generate pytest tests with edge cases." />
+  <title>Find untested code with a coverage audit, then generate pytest tests to close the gaps — quickstart</title>
+  <meta name="description" content="Audit a directory for coverage gaps and print the report. `TestAuditWorkflow.execute` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
+  <meta property="og:title" content="Find untested code with a coverage audit, then generate pytest tests to close the gaps — quickstart" />
+  <meta property="og:description" content="Audit a directory for coverage gaps and print the report. `TestAuditWorkflow.execute` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/smart-test/quickstart" />
   <style>
@@ -272,60 +272,30 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: Smart Test</h1>
-<p>Find untested code and generate pytest tests with edge cases.</p>
-<pre><code>/smart-test &lt;path or module to test&gt;
-</code></pre>
-<p><strong>Result:</strong> A coverage gap report ranked by risk, plus working pytest functions with assertions for untested functions, branches, and error paths.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>The project is cloned and installed locally</li>
-<li><code>pytest-cov</code> has produced a <code>coverage.json</code> file for your project</li>
-</ul>
-<h2>Steps</h2>
-<ol>
-<li>
-<p><strong>Parse your coverage report.</strong> Point <code>parse_coverage_json()</code> at the JSON file that <code>pytest-cov</code> wrote:</p>
-<pre><code class="language-python">from attune.workflows.test_audit.coverage_parser import parse_coverage_json, prioritize_modules
+<h1>Find untested code with a coverage audit, then generate pytest tests to close the gaps</h1>
+<h2>Quickstart</h2>
+<p>Audit a directory for coverage gaps and print the report.
+<code>TestAuditWorkflow.execute</code> is an async coroutine, so drive it with
+<code>asyncio.run</code> (or <code>await</code> it inside an existing event loop):</p>
+<pre><code class="language-python">import asyncio
 
-modules = parse_coverage_json(&quot;coverage.json&quot;)
-</code></pre>
-<p>You'll get a list of <code>ModuleCoverage</code> objects, each with <code>path</code>, <code>stmts</code>, <code>covered</code>, <code>missing_lines</code>, and a <code>pct</code> score.</p>
-</li>
-<li>
-<p><strong>Identify the highest-priority gaps.</strong> Filter out modules above your coverage threshold (default 50%) and sort by priority:</p>
-<pre><code class="language-python">targets = prioritize_modules(modules)
-print(targets[0].path, targets[0].pct)
-# src/attune/help/engine.py  23.4
-</code></pre>
-<p>The module with the lowest coverage and the most uncovered statements appears first.</p>
-</li>
-<li>
-<p><strong>Generate tests for the top module.</strong> Run the test generation workflow against that path:</p>
-<pre><code>attune workflow run test-gen --path src/attune/help/engine.py
-</code></pre>
-<p><strong>Expected output:</strong></p>
-<pre><code>## Summary
-Analyzed 12 functions. Designed 31 test cases. Wrote 1 test file.
+from attune.workflows import TestAuditWorkflow
 
-## Test Gaps
-- engine.py: _resolve_template — no branch coverage on missing-key path
-- engine.py: render — exception handler never triggered
 
-## Suggestions
-1. Add parametrized tests for empty-input edge cases (low effort)
-2. Add error-path test for FileNotFoundError in parse_coverage_json (low effort)
+async def main() -&gt; None:
+    workflow = TestAuditWorkflow()
+    result = await workflow.execute(path=&quot;src/&quot;, depth=&quot;standard&quot;)
+
+    print(result.success)          # True on a completed audit
+    print(result.summary)          # short coverage summary
+    print(result.final_output)     # the full gap report
+
+
+asyncio.run(main())
 </code></pre>
-<p>The generated file is written to <code>tests/behavioral/generated/</code>.</p>
-</li>
-<li>
-<p><strong>Verify the tests pass.</strong></p>
-<pre><code>pytest tests/behavioral/generated/ -v
-</code></pre>
-<p>All generated tests should pass on the first run against your current codebase.</p>
-</li>
-</ol>
-<p><strong>Next:</strong> Run <code>pytest --cov</code> again and re-run <code>prioritize_modules()</code> to confirm coverage improved for the module you targeted.</p>
+<p><code>depth</code> defaults to <code>&quot;standard&quot;</code>, so <code>execute(path=&quot;src/&quot;)</code> is
+equivalent. Use <code>&quot;quick&quot;</code> for a fast pass or <code>&quot;deep&quot;</code> for the
+fullest audit.</p>
 
   </article>
   <footer>

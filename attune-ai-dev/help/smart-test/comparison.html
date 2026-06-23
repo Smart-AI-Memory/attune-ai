@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Smart Test vs Fix Test: Choosing the right testing tool — comparison</title>
-  <meta name="description" content="Both smart-test and fix-test work on your test suite, but they solve opposite problems. Smart-test finds code that has no tests and writes them. Fix-test takes tests that already exist but are broken " />
-  <meta property="og:title" content="Smart Test vs Fix Test: Choosing the right testing tool — comparison" />
-  <meta property="og:description" content="Both smart-test and fix-test work on your test suite, but they solve opposite problems. Smart-test finds code that has no tests and writes them. Fix-test takes tests that already exist but are broken " />
+  <title>Find untested code with a coverage audit, then generate pytest tests to close the gaps — comparison</title>
+  <meta name="description" content="Smart-test and **deep-review** both surface test gaps, but only smart-test generates the tests to close them." />
+  <meta property="og:title" content="Find untested code with a coverage audit, then generate pytest tests to close the gaps — comparison" />
+  <meta property="og:description" content="Smart-test and **deep-review** both surface test gaps, but only smart-test generates the tests to close them." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/smart-test/comparison" />
   <style>
@@ -272,108 +272,47 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Smart Test vs Fix Test: Choosing the right testing tool</h1>
-<h2>Overview</h2>
-<p>Both smart-test and fix-test work on your test suite, but they solve opposite problems. Smart-test finds code that has no tests and writes them. Fix-test takes tests that already exist but are broken and repairs them. Running them together covers the full testing lifecycle — but picking the wrong one for your situation wastes time.</p>
-<h2>Feature comparison</h2>
+<h1>Find untested code with a coverage audit, then generate pytest tests to close the gaps</h1>
+<h2>Comparison</h2>
+<p>Smart-test and <strong>deep-review</strong> both surface test gaps, but only
+smart-test generates the tests to close them.</p>
 <table>
 <thead>
 <tr>
-<th>Capability</th>
-<th>smart-test</th>
-<th>fix-test</th>
+<th></th>
+<th><code>smart-test</code></th>
+<th><code>deep-review</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Primary job</strong></td>
-<td>Finds untested code and generates pytest tests</td>
-<td>Diagnoses failing tests and applies targeted fixes</td>
+<td><strong>Scope</strong></td>
+<td>Dedicated to test coverage: audit gaps, then generate tests</td>
+<td>One pass of a broader review (security / quality / test gaps)</td>
 </tr>
 <tr>
-<td><strong>Starting condition</strong></td>
-<td>Code exists; tests are absent or thin</td>
-<td>Tests exist; they are failing</td>
+<td><strong>Test-gap detection</strong></td>
+<td><code>test-audit</code> — three subagents focused on coverage</td>
+<td>The <code>test-gap-reviewer</code> pass (one of three)</td>
 </tr>
 <tr>
-<td><strong>Coverage analysis</strong></td>
-<td>Yes — parses <code>coverage.json</code>, ranks modules by gap size and risk</td>
-<td>No — works from pytest tracebacks, not coverage data</td>
+<td><strong>Generates tests</strong></td>
+<td>Yes — <code>test-gen</code> and the batch generator</td>
+<td>No — it reports gaps, it does not write tests</td>
 </tr>
 <tr>
-<td><strong>AST-based code analysis</strong></td>
-<td>Yes — <code>ASTFunctionAnalyzer</code> extracts function signatures, async status, raises, decorators, and complexity</td>
-<td>No</td>
-</tr>
-<tr>
-<td><strong>Output</strong></td>
-<td>New <code>.py</code> test files with assertions, edge cases, parametrized inputs, and error-path tests</td>
-<td>Repaired existing test files</td>
-</tr>
-<tr>
-<td><strong>Parallelism</strong></td>
-<td><code>ParallelTestGenerationWorkflow</code> can process up to 200 low-coverage modules in configurable batches</td>
-<td>Sequential: diagnose → fix → re-run, up to 3 retry attempts per test</td>
-</tr>
-<tr>
-<td><strong>Retry / self-healing</strong></td>
-<td>No — generates once; you review</td>
-<td>Yes — reruns after each fix, reports what still needs manual attention</td>
-</tr>
-<tr>
-<td><strong>Root-cause classification</strong></td>
-<td>No</td>
-<td>Yes — import errors, mock mismatches, assertion drift, type errors, missing fixtures, environment issues</td>
-</tr>
-<tr>
-<td><strong>Best scale</strong></td>
-<td>Bootstrapping coverage across a whole codebase or auditing a new module</td>
-<td>Repairing a specific failing test or a broken CI pipeline</td>
-</tr>
-<tr>
-<td><strong>Runs on</strong></td>
-<td>Your Claude subscription — no extra API key</td>
-<td>Your Claude subscription — no extra API key</td>
+<td><strong>Slugs</strong></td>
+<td><code>attune workflow run test-audit</code> / <code>test-gen</code></td>
+<td><code>attune workflow run deep-review</code></td>
 </tr>
 </tbody>
 </table>
-<h2>How each tool works internally</h2>
-<p><strong>smart-test</strong> runs two coordinated workflows:</p>
-<ol>
-<li><code>TestAuditWorkflow</code> — three subagents (<code>coverage-auditor</code>, <code>gap-analyzer</code>, <code>test-planner</code>) parse <code>coverage.json</code> via <code>parse_coverage_json()</code>, rank modules using <code>prioritize_modules()</code> (default threshold: 50% coverage), group them into subsystem batches with <code>group_into_batches()</code>, and produce a structured audit report.</li>
-<li><code>TestGenerationWorkflow</code> (or <code>ParallelTestGenerationWorkflow</code> for large codebases) — three subagents (<code>function-identifier</code>, <code>test-designer</code>, <code>test-writer</code>) analyze each module's AST, then write pytest functions with assertions, boundary values, and <code>@pytest.mark.parametrize</code> blocks.</li>
-</ol>
-<p><strong>fix-test</strong> runs a tighter loop: run the failing test, classify the traceback into a known root-cause category, apply a fix, re-run, and repeat up to three times. It does not generate new coverage — it restores tests that a refactor or dependency upgrade broke.</p>
-<h2>Tradeoffs to know before you choose</h2>
-<ul>
-<li><strong>smart-test is broader but not self-healing.</strong> It can generate tests for 200 modules in parallel, but it won't automatically fix a test it generates that fails. Review generated tests before committing them.</li>
-<li><strong>fix-test is precise but narrow.</strong> It excels at the tedious read-traceback → edit → re-run loop, but it can't tell you what's untested — only what's broken.</li>
-<li><strong>Coverage threshold matters for smart-test.</strong> <code>prioritize_modules()</code> filters out modules already above 50% coverage by default. If your codebase is mostly well-covered, smart-test may produce a smaller report than you expect — that's by design, not a bug.</li>
-<li><strong>For legacy codebases with no tests at all,</strong> smart-test is the clear starting point. Fix-test has nothing to work with until tests exist.</li>
-</ul>
-<h2>Use smart-test when…</h2>
-<ul>
-<li>You've written new public functions or modules and want tests before they ship.</li>
-<li>Your coverage has dropped below the 80% threshold and you need to find exactly what's missing.</li>
-<li>You're bootstrapping a test suite for a legacy codebase with little or no coverage.</li>
-<li>You want to verify that error paths and boundary conditions are exercised before a release.</li>
-<li>You need to generate tests across many modules at once — <code>ParallelTestGenerationWorkflow</code> handles batches of up to 200 modules.</li>
-</ul>
-<h2>Use fix-test when…</h2>
-<ul>
-<li><code>pytest</code> is showing failures after a refactor, dependency upgrade, or large migration.</li>
-<li>CI is broken on tests you didn't intentionally change.</li>
-<li>You want the read-traceback → edit → re-run loop automated with automatic retry.</li>
-<li>You already have tests — they're just wrong after the code moved.</li>
-</ul>
-<p><strong>If you're unsure:</strong> check whether tests <em>exist</em> for the code in question. If they don't, start with smart-test. If they do but they're red, start with fix-test.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/test_gen/**</code></li>
-<li><code>src/attune/workflows/test_audit/**</code></li>
-<li><code>src/attune/workflows/test_gen_parallel.py</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>tests</code>, <code>coverage</code>, <code>generation</code></p>
+<p>Reach for <strong>smart-test</strong> when the goal is coverage — find what's
+untested and write tests for it. Reach for <strong>deep-review</strong> when you
+want test gaps as one input alongside a security and quality read,
+without generating anything. A common flow is deep-review (or
+test-audit) to find the gaps, then test-gen to fill them. To repair
+<em>failing</em> tests rather than write missing ones, see <strong>fix-test</strong>.</p>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Smart Test cautions — warning</title>
-  <meta name="description" content="Smart-test reads your coverage data, analyzes module structure with AST parsing, and generates pytest tests — all in a pipeline where a bad input at one stage silently degrades output at the next. The" />
-  <meta property="og:title" content="Smart Test cautions — warning" />
-  <meta property="og:description" content="Smart-test reads your coverage data, analyzes module structure with AST parsing, and generates pytest tests — all in a pipeline where a bad input at one stage silently degrades output at the next. The" />
+  <title>Find untested code with a coverage audit, then generate pytest tests to close the gaps — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run" />
+  <meta property="og:title" content="Find untested code with a coverage audit, then generate pytest tests to close the gaps — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/smart-test/warning" />
   <style>
@@ -272,40 +272,88 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Smart Test cautions</h1>
-<h2>What to watch for</h2>
-<p>Smart-test reads your coverage data, analyzes module structure with AST parsing, and generates pytest tests — all in a pipeline where a bad input at one stage silently degrades output at the next. The risks below are specific to that pipeline.</p>
-<h2>Risk areas</h2>
-<h3><code>parse_coverage_json()</code> raises on missing or malformed coverage files</h3>
-<p><code>parse_coverage_json()</code> raises <code>FileNotFoundError</code> if the coverage file doesn't exist and <code>ValueError</code> if the JSON is structurally unexpected — including a distinct error if the top-level <code>files</code> key is missing. If you run smart-test before generating coverage data (for example, before any <code>pytest --cov</code> run), you'll hit this immediately.</p>
-<p><strong>Mitigation:</strong> Run <code>pytest --cov=&lt;your-src-dir&gt; --cov-report=json</code> before invoking smart-test. Confirm <code>coverage.json</code> exists at the path you're passing.</p>
-<hr />
-<h3><code>prioritize_modules()</code> silently drops modules below the threshold</h3>
-<p><code>prioritize_modules()</code> filters out any module whose coverage is below <code>min_threshold</code> (default <code>50.0</code>). Modules with very low coverage — often the ones most in need of tests — are excluded from the output without any warning.</p>
-<p><strong>Mitigation:</strong> If the gap report looks shorter than expected, check whether your lowest-coverage modules are being filtered. You can lower or override <code>min_threshold</code> to include them.</p>
-<hr />
-<h3><code>group_into_batches()</code> caps output at five batches</h3>
-<p><code>group_into_batches()</code> groups modules by package path and caps the result at <code>max_batches=5</code>. In a large codebase, modules beyond that limit are silently omitted from test generation.</p>
-<p><strong>Mitigation:</strong> For codebases with many low-coverage subsystems, run smart-test targeting specific subdirectories rather than the whole project at once. <code>ParallelTestGenerationWorkflow</code> supports a <code>top</code> parameter (default <code>200</code>) and a <code>batch_size</code> parameter (default <code>10</code>) for finer control.</p>
-<hr />
-<h3>AST analysis produces incomplete signatures for dynamically constructed code</h3>
-<p><code>ASTFunctionAnalyzer</code> derives function signatures — parameters, return types, raised exceptions, decorators — from static AST inspection. Dynamically generated functions, heavily decorated callables, or code using <code>__getattr__</code> tricks may yield incomplete <code>FunctionSignature</code> or <code>ClassSignature</code> data, which causes <code>generate_test_for_function()</code> and <code>generate_test_for_class()</code> to produce tests with missing assertions or wrong instantiation patterns.</p>
-<p><strong>Mitigation:</strong> Review generated tests for dynamic or heavily decorated functions before committing them. Treat generated tests as a starting point, not a finished suite.</p>
-<hr />
-<h3>Generated tests use <code>&quot;test_value&quot;</code> as the default string parameter</h3>
-<p><code>get_param_test_values()</code> returns <code>&quot;test_value&quot;</code> as the literal test value for string parameters. Tests generated for functions that validate, transform, or reject specific string formats will pass the generation step but may assert incorrect behavior.</p>
-<p><strong>Mitigation:</strong> After generation, search the output for <code>&quot;test_value&quot;</code> and replace it with domain-appropriate inputs — especially for functions that parse, sanitize, or pattern-match strings.</p>
-<hr />
-<h3>Private helpers change without notice</h3>
-<p>Internal functions and constants prefixed with <code>_</code> (including <code>_SUBAGENT_NAMES</code>, <code>_SYSTEM_PROMPT</code>, and <code>_TASK_PROMPT_TEMPLATE</code> in both workflow packages) are not part of the public API and can change between releases. Both <code>TestAuditWorkflow</code> and <code>TestGenerationWorkflow</code> expose only their <code>execute()</code> method as a stable entry point.</p>
-<p><strong>Mitigation:</strong> Depend on <code>execute()</code> and the public exports listed in each package's <code>__all__</code>. Avoid referencing underscore-prefixed names in downstream code or tests.</p>
-<h2>Source files</h2>
+<h1>Find untested code with a coverage audit, then generate pytest tests to close the gaps</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'execute' was never awaited</code></td>
+<td><code>execute</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>WorkflowResult.success</code> is <code>False</code>, <code>error</code> is <code>&quot;path argument is required&quot;</code></td>
+<td><code>execute</code> called with empty or missing <code>path</code></td>
+<td>Pass a non-empty <code>path</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>DeprecationWarning: ...execute(src_path=...) is deprecated</code></td>
+<td>The audit was called with the legacy <code>src_path</code> kwarg</td>
+<td>Use <code>path=</code> instead (the audit still runs)</td>
+<td>low</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK unavailable: ...&quot;</code></td>
+<td><code>claude_agent_sdk</code> is not importable</td>
+<td>Install the Agent SDK dependency for the environment</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK connection failed: ...&quot;</code></td>
+<td>A <code>ConnectionError</code> / <code>TimeoutError</code> reaching the SDK</td>
+<td>Check connectivity / retry</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Generated tests don't pass as-is</td>
+<td>Generation is a predictive starting point</td>
+<td>Review, adjust, and run them before committing</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Audit finding looks like a false positive</td>
+<td>Findings are LLM predictions, not verified defects</td>
+<td>Confirm against the cited file/line before acting</td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/workflows/test_gen/**</code></li>
-<li><code>src/attune/workflows/test_audit/**</code></li>
-<li><code>src/attune/workflows/test_gen_parallel.py</code></li>
+<li><strong>The async call is easy to get wrong.</strong> <code>execute</code> is a
+coroutine on every smart-test workflow. Forgetting to <code>await</code> it
+is the single most common mistake.</li>
+<li><strong>Two slugs, one feature.</strong> The skill / topic is <code>smart-test</code>,
+but the CLI slugs are <code>test-audit</code> and <code>test-gen</code>. And a
+same-named repo-level skill (<code>.claude/skills/smart-test</code>) does
+something different — it runs your diff's affected tests.</li>
+<li><strong>Generation is a draft.</strong> <code>test-gen</code> writes a starting point.
+Run and review the output; a generated test that imports the
+wrong symbol or asserts the wrong value is on you to catch.</li>
 </ul>
-<p><strong>Tags:</strong> <code>tests</code>, <code>coverage</code>, <code>generation</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm you are awaiting: <code>result = await TestAuditWorkflow().execute(path=&quot;src/&quot;)</code> inside an <code>async def</code>
+or <code>asyncio.run</code>.</li>
+<li>Check <code>result.success</code>; if <code>False</code>, read <code>result.error</code> and
+<code>result.error_type</code>.</li>
+<li>For a CLI &quot;unknown workflow&quot; error, confirm the slug is
+<code>test-audit</code> or <code>test-gen</code> (not <code>smart-test</code>).</li>
+<li>On an SDK error, inspect <code>result.metadata</code> for the captured SDK
+error fields.</li>
+<li>Confirm the scope: <code>result.metadata</code> echoes the run's <code>path</code> /
+<code>src_path</code>, <code>depth</code>, and <code>max_turns</code>.</li>
+</ol>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Smart Test errors — error</title>
-  <meta name="description" content="Most smart-test failures fall into two categories: coverage file problems and malformed source code that the AST analyzer cannot parse." />
-  <meta property="og:title" content="Smart Test errors — error" />
-  <meta property="og:description" content="Most smart-test failures fall into two categories: coverage file problems and malformed source code that the AST analyzer cannot parse." />
+  <title>Find untested code with a coverage audit, then generate pytest tests to close the gaps — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run" />
+  <meta property="og:title" content="Find untested code with a coverage audit, then generate pytest tests to close the gaps — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/smart-test/error" />
   <style>
@@ -272,69 +272,88 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Smart Test errors</h1>
-<h2>Common error signatures</h2>
-<p>Most smart-test failures fall into two categories: coverage file problems and malformed source code that the AST analyzer cannot parse.</p>
+<h1>Find untested code with a coverage audit, then generate pytest tests to close the gaps</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>Exception</th>
-<th>Message pattern</th>
-<th>Likely cause</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>FileNotFoundError</code></td>
-<td><code>Coverage file not found: {path}</code></td>
-<td><code>parse_coverage_json()</code> was called before <code>pytest --cov</code> produced a <code>coverage.json</code>, or the path passed to it is wrong</td>
+<td><code>RuntimeWarning: coroutine 'execute' was never awaited</code></td>
+<td><code>execute</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td><code>ValueError</code></td>
-<td><code>Invalid coverage JSON at {path}: {detail}</code></td>
-<td>The <code>coverage.json</code> file exists but is not valid JSON — typically a truncated or partially written file</td>
+<td><code>WorkflowResult.success</code> is <code>False</code>, <code>error</code> is <code>&quot;path argument is required&quot;</code></td>
+<td><code>execute</code> called with empty or missing <code>path</code></td>
+<td>Pass a non-empty <code>path</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td><code>ValueError</code></td>
-<td><code>Unexpected coverage JSON structure in {path}: 'files' key missing or not a dict</code></td>
-<td>The JSON is valid but doesn't match the expected pytest-cov schema — usually caused by a coverage.py version mismatch</td>
+<td><code>DeprecationWarning: ...execute(src_path=...) is deprecated</code></td>
+<td>The audit was called with the legacy <code>src_path</code> kwarg</td>
+<td>Use <code>path=</code> instead (the audit still runs)</td>
+<td>low</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK unavailable: ...&quot;</code></td>
+<td><code>claude_agent_sdk</code> is not importable</td>
+<td>Install the Agent SDK dependency for the environment</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK connection failed: ...&quot;</code></td>
+<td>A <code>ConnectionError</code> / <code>TimeoutError</code> reaching the SDK</td>
+<td>Check connectivity / retry</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Generated tests don't pass as-is</td>
+<td>Generation is a predictive starting point</td>
+<td>Review, adjust, and run them before committing</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Audit finding looks like a false positive</td>
+<td>Findings are LLM predictions, not verified defects</td>
+<td>Confirm against the cited file/line before acting</td>
+<td>medium</td>
 </tr>
 </tbody>
 </table>
-<h2>Where errors originate</h2>
-<p>Failures in the coverage-parsing stage happen in <code>parse_coverage_json()</code> before any test generation begins. Failures in the generation stage come from <code>ASTFunctionAnalyzer</code>, <code>generate_test_for_function()</code>, or <code>generate_test_for_class()</code> when the source module has syntax the analyzer doesn't handle.</p>
+<h3>Risk areas</h3>
 <ul>
-<li><code>parse_coverage_json(json_path)</code> — reads and validates <code>coverage.json</code>; raises <code>FileNotFoundError</code> or <code>ValueError</code> (see above)</li>
-<li><code>prioritize_modules(modules, min_threshold)</code> — filters by coverage threshold; a completely empty result here means every module is above <code>min_threshold</code> (default <code>50.0</code>), not that parsing failed</li>
-<li><code>group_into_batches(modules, max_batches)</code> — groups by package path; an empty batch list means <code>prioritize_modules()</code> returned nothing</li>
-<li><code>generate_test_for_function(module, func)</code> — depends on <code>ASTFunctionAnalyzer.analyze()</code> having run first; if <code>func</code> is missing expected keys the output will be an empty or broken test stub</li>
-<li><code>TestAuditWorkflow.execute()</code> and <code>TestGenerationWorkflow.execute()</code> — orchestrate the subagents; errors from the functions above bubble up through these</li>
+<li><strong>The async call is easy to get wrong.</strong> <code>execute</code> is a
+coroutine on every smart-test workflow. Forgetting to <code>await</code> it
+is the single most common mistake.</li>
+<li><strong>Two slugs, one feature.</strong> The skill / topic is <code>smart-test</code>,
+but the CLI slugs are <code>test-audit</code> and <code>test-gen</code>. And a
+same-named repo-level skill (<code>.claude/skills/smart-test</code>) does
+something different — it runs your diff's affected tests.</li>
+<li><strong>Generation is a draft.</strong> <code>test-gen</code> writes a starting point.
+Run and review the output; a generated test that imports the
+wrong symbol or asserts the wrong value is on you to catch.</li>
 </ul>
-<h2>How to diagnose</h2>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Identify which stage failed.</strong> Coverage-parsing errors (<code>FileNotFoundError</code>, <code>ValueError</code>) happen before any test generation. If you see one of the message patterns in the table above, the problem is in your <code>coverage.json</code>, not in your source code.</p>
-</li>
-<li>
-<p><strong>Confirm <code>coverage.json</code> was generated.</strong> Run <code>pytest --cov=&lt;your_src_dir&gt; --cov-report=json</code> and verify the file exists at the path you're passing to smart-test. If the file is missing, pytest-cov either wasn't installed or the run failed before producing output.</p>
-</li>
-<li>
-<p><strong>Check for a <code>'files'</code> key mismatch.</strong> If you see the <code>'files' key missing</code> error, your <code>coverage.json</code> was generated by a coverage.py version that uses a different schema. Upgrade or pin <code>coverage</code> to a version compatible with pytest-cov 4.x and regenerate the file.</p>
-</li>
-<li>
-<p><strong>Isolate an empty prioritization result.</strong> If smart-test produces no modules to test, check the <code>min_threshold</code> in <code>prioritize_modules()</code> (default <code>50.0</code>). All your modules may already be above 50% coverage. Lower the threshold or target a specific module path directly.</p>
-</li>
-<li>
-<p><strong>Debug AST analysis failures.</strong> If test generation produces empty or malformed stubs, run <code>ASTFunctionAnalyzer().analyze(source_code, file_path)</code> directly on the failing module to see what <code>FunctionSignature</code> and <code>ClassSignature</code> objects it produces. Missing <code>raises</code>, empty <code>params</code>, or <code>complexity=1</code> on a clearly complex function indicate the analyzer couldn't parse that construct.</p>
-</li>
+<li>Confirm you are awaiting: <code>result = await TestAuditWorkflow().execute(path=&quot;src/&quot;)</code> inside an <code>async def</code>
+or <code>asyncio.run</code>.</li>
+<li>Check <code>result.success</code>; if <code>False</code>, read <code>result.error</code> and
+<code>result.error_type</code>.</li>
+<li>For a CLI &quot;unknown workflow&quot; error, confirm the slug is
+<code>test-audit</code> or <code>test-gen</code> (not <code>smart-test</code>).</li>
+<li>On an SDK error, inspect <code>result.metadata</code> for the captured SDK
+error fields.</li>
+<li>Confirm the scope: <code>result.metadata</code> echoes the run's <code>path</code> /
+<code>src_path</code>, <code>depth</code>, and <code>max_turns</code>.</li>
 </ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/test_audit/coverage_parser.py</code></li>
-<li><code>src/attune/workflows/test_gen/</code></li>
-<li><code>src/attune/workflows/test_gen_parallel.py</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>tests</code>, <code>coverage</code>, <code>generation</code></p>
 
   </article>
   <footer>

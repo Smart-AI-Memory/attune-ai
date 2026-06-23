@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Work with smart test — task</title>
-  <meta name="description" content="Use smart test when you need to audit test coverage, extend gap-detection logic, or change how pytest tests are generated for uncovered functions and classes." />
-  <meta property="og:title" content="Work with smart test — task" />
-  <meta property="og:description" content="Use smart test when you need to audit test coverage, extend gap-detection logic, or change how pytest tests are generated for uncovered functions and classes." />
+  <title>Find untested code with a coverage audit, then generate pytest tests to close the gaps — task</title>
+  <meta name="description" content="**Goal:** audit a directory for untested code without writing any Python." />
+  <meta property="og:title" content="Find untested code with a coverage audit, then generate pytest tests to close the gaps — task" />
+  <meta property="og:description" content="**Goal:** audit a directory for untested code without writing any Python." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/smart-test/task" />
   <style>
@@ -272,116 +272,86 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Work with smart test</h1>
-<p>Use smart test when you need to audit test coverage, extend gap-detection logic, or change how pytest tests are generated for uncovered functions and classes.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>Access to the project source code</li>
-<li>Familiarity with the files under <code>src/attune/workflows/test_gen/</code> and <code>src/attune/workflows/test_audit/</code></li>
-</ul>
-<h2>Steps</h2>
-<ol>
-<li>
-<p><strong>Identify the function that owns the behavior you want to change.</strong></p>
-<p>The smart-test feature is split across two workflow packages. Locate your entry point in the table below:</p>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>File</th>
-<th>Responsibility</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>parse_coverage_json()</code></td>
-<td><code>test_audit/coverage_parser.py</code></td>
-<td>Parse pytest-cov's <code>coverage.json</code> output into <code>ModuleCoverage</code> objects</td>
-</tr>
-<tr>
-<td><code>prioritize_modules()</code></td>
-<td><code>test_audit/coverage_parser.py</code></td>
-<td>Sort modules by priority score and drop those below the coverage threshold</td>
-</tr>
-<tr>
-<td><code>group_into_batches()</code></td>
-<td><code>test_audit/coverage_parser.py</code></td>
-<td>Group modules into batches by subsystem (package path)</td>
-</tr>
-<tr>
-<td><code>format_test_gen_report()</code></td>
-<td><code>test_gen/report_formatter.py</code></td>
-<td>Format test generation output as a human-readable report</td>
-</tr>
-<tr>
-<td><code>generate_test_for_function()</code></td>
-<td><code>test_gen/test_templates.py</code></td>
-<td>Generate executable pytest tests for a function using AST analysis</td>
-</tr>
-<tr>
-<td><code>generate_test_for_class()</code></td>
-<td><code>test_gen/test_templates.py</code></td>
-<td>Generate an executable test class using AST analysis</td>
-</tr>
-<tr>
-<td><code>generate_test_cases_for_params()</code></td>
-<td><code>test_gen/test_templates.py</code></td>
-<td>Generate test cases based on parameter types</td>
-</tr>
-<tr>
-<td><code>get_type_assertion()</code></td>
-<td><code>test_gen/test_templates.py</code></td>
-<td>Generate a return-type assertion for a function</td>
-</tr>
-<tr>
-<td><code>get_param_test_values()</code></td>
-<td><code>test_gen/test_templates.py</code></td>
-<td>Return test values for a parameter based on its type hint</td>
-</tr>
-</tbody>
-</table>
-<p>Read the function's docstring, parameters, and return type to confirm it owns the behavior you need.</p>
-</li>
-<li>
-<p><strong>Check which workflow class calls your target function.</strong></p>
-<ul>
-<li><code>TestAuditWorkflow</code> — coordinates the coverage audit using three subagents (<code>coverage-auditor</code>, <code>gap-analyzer</code>, <code>test-planner</code>) and produces a structured report.</li>
-<li><code>TestGenerationWorkflow</code> — coordinates test generation using three subagents (<code>function-identifier</code>, <code>test-designer</code>, <code>test-writer</code>).</li>
-<li><code>ParallelTestGenerationWorkflow</code> — discovers low-coverage modules and generates behavioral tests in parallel batches.</li>
-</ul>
-<p>If your change affects orchestration rather than a single function, edit the relevant <code>execute()</code> method directly.</p>
-</li>
-<li>
-<p><strong>Make your change.</strong></p>
-<p>Key details to keep consistent:</p>
-<ul>
-<li><code>parse_coverage_json()</code> raises <code>FileNotFoundError</code> when the coverage file is missing and <code>ValueError</code> when the JSON structure is invalid or the <code>files</code> key is absent. Preserve these error types and messages if you touch the parser.</li>
-<li><code>prioritize_modules()</code> filters out modules below <code>min_threshold</code> (default <code>50.0</code>). If you change the threshold logic, update the default parameter value rather than hardcoding a number inside the function body.</li>
-<li><code>get_param_test_values()</code> returns <code>&quot;test_value&quot;</code> as the string literal for unrecognized types. Keep this fallback in place so test generation never produces empty parameter lists.</li>
-<li><code>DEFAULT_SKIP_PATTERNS</code> controls which directories <code>ParallelTestGenerationWorkflow</code> ignores during module discovery. Add new patterns to this constant rather than filtering inline.</li>
-</ul>
-</li>
-<li>
-<p><strong>Run the related tests.</strong></p>
-<pre><code>pytest -k &quot;smart_test or test_audit or test_gen&quot; -v
+<h1>Find untested code with a coverage audit, then generate pytest tests to close the gaps</h1>
+<h2>Tasks</h2>
+<h3>Find coverage gaps from the CLI</h3>
+<p><strong>Goal:</strong> audit a directory for untested code without writing any
+Python.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-bash"># Audit a source tree at the default (standard) depth:
+attune workflow run test-audit --path src/
+
+# Deep audit, JSON output for a CI gate:
+attune workflow run test-audit --path src/ --depth deep --json
 </code></pre>
-<p>Fix any failures before moving on.</p>
-</li>
-<li>
-<p><strong>Verify end-to-end output.</strong></p>
-<p>Run the full audit workflow against a known directory and confirm the report contains the expected sections:</p>
-<pre><code>/smart-test src/&lt;your-module&gt;/
+<p><strong>Verify:</strong> the audit slug is <code>test-audit</code>. <code>--path</code> / <code>-p</code>
+defaults to the current directory; <code>--depth</code> accepts <code>quick</code>,
+<code>standard</code>, or <code>deep</code>; <code>--json</code> / <code>-j</code> emits machine-readable
+output. Use <code>attune workflow info test-audit</code> to confirm
+registration.</p>
+<h3>Generate tests for a module from the CLI</h3>
+<p><strong>Goal:</strong> write pytest tests for a module that came back
+under-covered.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-bash"># Generate tests for a single module:
+attune workflow run test-gen --path src/attune/config.py
+
+# A deeper generation pass:
+attune workflow run test-gen --path src/attune/config.py --depth deep
 </code></pre>
-<p>The output should include a <strong>Summary</strong> with a test health score, a <strong>Coverage</strong> section with line and function metrics, a <strong>Test Gaps</strong> section listing untested functions by priority, and a <strong>Suggestions</strong> section with a prioritized test plan.</p>
-</li>
-</ol>
-<h2>Key files</h2>
-<ul>
-<li><code>src/attune/workflows/test_audit/coverage_parser.py</code></li>
-<li><code>src/attune/workflows/test_gen/report_formatter.py</code></li>
-<li><code>src/attune/workflows/test_gen/test_templates.py</code></li>
-<li><code>src/attune/workflows/test_gen_parallel.py</code></li>
-</ul>
+<p><strong>Verify:</strong> the generation slug is <code>test-gen</code>. It takes the same
+<code>--path</code> / <code>--depth</code> / <code>--json</code> flags as the audit. Review and run
+the generated tests before committing them — generation is a
+starting point, not guaranteed-passing code.</p>
+<h3>Audit then generate from Python</h3>
+<p><strong>Goal:</strong> drive the find-then-fill loop from a script.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import TestAuditWorkflow, TestGenerationWorkflow
+
+
+async def main() -&gt; None:
+    audit = await TestAuditWorkflow().execute(path=&quot;src/api/&quot;)
+    if not audit.success:
+        print(&quot;audit failed:&quot;, audit.error)
+        return
+    print(audit.final_output)
+
+    gen = await TestGenerationWorkflow().execute(path=&quot;src/api/&quot;)
+    print(gen.final_output)
+    for action in gen.suggestions:
+        print(action)
+
+
+asyncio.run(main())
+</code></pre>
+<p><strong>Verify:</strong> both <code>execute</code> calls are coroutines — <code>await</code> them. A
+completed run returns <code>success=True</code> with the report in
+<code>final_output</code>; a failure returns <code>success=False</code> with a populated
+<code>error</code> and <code>error_type</code>.</p>
+<h3>Batch-generate across the lowest-coverage modules</h3>
+<p><strong>Goal:</strong> generate tests for many under-covered modules at once.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import ParallelTestGenerationWorkflow
+
+
+async def main() -&gt; None:
+    workflow = ParallelTestGenerationWorkflow()
+    result = await workflow.execute(top=10, batch_size=5)
+    print(result.success)
+    print(result.final_output)
+
+
+asyncio.run(main())
+</code></pre>
+<p><strong>Verify:</strong> <code>execute</code> takes <code>top</code> (default <code>200</code>), <code>batch_size</code>
+(default <code>10</code>), and <code>output_dir</code> (default
+<code>tests/behavioral/generated</code>). It writes generated test files to
+<code>output_dir</code> and returns their paths in the result. This is also
+the workflow behind the <code>test_gen_parallel</code> MCP tool.</p>
 
   </article>
   <footer>

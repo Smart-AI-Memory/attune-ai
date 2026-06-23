@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Smart Test — concept</title>
-  <meta name="description" content="Smart Test finds untested code in your Python codebase and generates pytest tests to cover it — including edge cases, error paths, and boundary values." />
-  <meta property="og:title" content="Smart Test — concept" />
-  <meta property="og:description" content="Smart Test finds untested code in your Python codebase and generates pytest tests to cover it — including edge cases, error paths, and boundary values." />
+  <title>Find untested code with a coverage audit, then generate pytest tests to close the gaps — concept</title>
+  <meta name="description" content="Smart-test answers two questions about your test suite: *what isn&#x27;t tested?* and *what tests would close the gap?* It pairs two SDK-native workflows:" />
+  <meta property="og:title" content="Find untested code with a coverage audit, then generate pytest tests to close the gaps — concept" />
+  <meta property="og:description" content="Smart-test answers two questions about your test suite: *what isn&#x27;t tested?* and *what tests would close the gap?* It pairs two SDK-native workflows:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/smart-test/concept" />
   <style>
@@ -272,29 +272,144 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Smart Test</h1>
-<p>Smart Test finds untested code in your Python codebase and generates pytest tests to cover it — including edge cases, error paths, and boundary values.</p>
-<h2>How it works</h2>
-<p>Smart Test runs two coordinated workflows: a <strong>test audit</strong> that identifies coverage gaps, and a <strong>test generation</strong> pipeline that writes tests to close them.</p>
-<h3>Coverage audit</h3>
-<p><code>TestAuditWorkflow</code> orchestrates three specialized subagents — <code>coverage-auditor</code>, <code>gap-analyzer</code>, and <code>test-planner</code> — to produce a structured report. The audit reads pytest-cov's <code>coverage.json</code> output via <code>parse_coverage_json</code>, then uses <code>prioritize_modules</code> to rank modules by coverage gap. Modules below a 50% coverage threshold are surfaced first. The result is a report with four sections: an overall health score (0–100), raw coverage metrics, a list of untested code paths, and a prioritized plan with effort estimates.</p>
-<p><code>ModuleCoverage</code> is the data unit that flows through this stage — it tracks the source path, total statements, covered statements, missing line numbers, coverage percentage, and a computed priority score for each module.</p>
-<h3>Test generation</h3>
-<p>Once gaps are identified, three subagents take over: <code>function-identifier</code>, <code>test-designer</code>, and <code>test-writer</code>. <code>ASTFunctionAnalyzer</code> inspects your source using Python's AST to extract <code>FunctionSignature</code> and <code>ClassSignature</code> records — capturing parameter types, return types, raised exceptions, async status, decorators, and cyclomatic complexity — without executing the code.</p>
-<p>From those signatures, <code>generate_test_for_function</code> and <code>generate_test_for_class</code> produce executable pytest functions. <code>generate_test_cases_for_params</code> derives test values from type hints (for example, a <code>str</code> parameter gets <code>&quot;test_value&quot;</code>), and <code>get_type_assertion</code> adds a matching return-type assertion. For input combinations, the output uses <code>@pytest.mark.parametrize</code>.</p>
-<p>For large codebases, <code>ParallelTestGenerationWorkflow</code> scales this up: it discovers the top-N lowest-coverage modules, generates a test template with one LLM call, then completes the test body with a second — processing up to 200 modules in configurable batches of 10, writing output to <code>tests/behavioral/generated/</code>.</p>
-<h3>Batching and grouping</h3>
-<p><code>group_into_batches</code> clusters modules by subsystem (package path) before handing them to the planner. Each batch becomes a structured XML task prompt — specifying the coverage target, missing line numbers, key signatures, and the test file path to create — so the writing subagent has everything it needs without re-reading the full codebase.</p>
-<h2>When it matters</h2>
-<p>Use Smart Test when you need to answer &quot;what isn't tested?&quot; rather than guessing. Typical situations:</p>
+<h1>Find untested code with a coverage audit, then generate pytest tests to close the gaps</h1>
+<h2>Overview</h2>
+<p>Smart-test answers two questions about your test suite: <em>what isn't
+tested?</em> and <em>what tests would close the gap?</em> It pairs two
+SDK-native workflows:</p>
 <ul>
-<li>You've added a new module or public API and want to catch gaps before they become regressions.</li>
-<li>Coverage has dropped below 80% and you need to find exactly what's missing, not just the percentage.</li>
-<li>You're bootstrapping a legacy codebase that has little or no test coverage.</li>
-<li>You want to verify that exception handlers and error paths actually execute, not just the happy path.</li>
+<li><strong>test-audit</strong> (<code>TestAuditWorkflow</code>) — a coverage audit that
+finds untested and under-tested code and prioritizes it;</li>
+<li><strong>test-gen</strong> (<code>TestGenerationWorkflow</code>) — test generation that
+writes pytest tests with edge cases and error paths.</li>
 </ul>
-<h2>Relationship to Fix Test</h2>
-<p>Smart Test and Fix Test are complementary. Smart Test generates tests for code that has no coverage. Fix Test diagnoses and repairs tests that already exist but are failing — for example after a refactor changes a function signature or moves a module. If your starting point is a broken CI pipeline, reach for Fix Test. If your starting point is untested code, reach for Smart Test.</p>
+<p>A third workflow, <strong><code>ParallelTestGenerationWorkflow</code></strong>, batches
+generation across many low-coverage modules at once. Each of the
+two primary workflows is SDK-native: it delegates to three
+specialized Claude Agent SDK subagents (scoped to Read / Glob /
+Grep) and synthesizes their findings into a single
+<code>WorkflowResult</code>.</p>
+<p>Like the other analysis workflows, the audit <strong>predicts</strong> — its
+findings are LLM judgments to verify, not proofs — and generated
+tests are a <strong>starting point</strong> to review and run, not guaranteed-
+passing code.</p>
+<p>You reach smart-test several ways:</p>
+<ul>
+<li>the <strong><code>/smart-test</code></strong> skill, inside a Claude Code conversation —
+a router for <em>gap analysis</em>, <em>test generation</em>, or <em>both</em> (see
+<em>The <code>/smart-test</code> skill routes by approach</em> below);</li>
+<li>the CLI — <strong><code>attune workflow run test-audit</code></strong> and
+<strong><code>attune workflow run test-gen</code></strong>;</li>
+<li>MCP tools — <strong><code>test_audit</code></strong> and <strong><code>test_gen_parallel</code></strong>;</li>
+<li>the Python API — <code>await TestAuditWorkflow().execute(...)</code>,
+<code>await TestGenerationWorkflow().execute(...)</code>, and
+<code>await ParallelTestGenerationWorkflow().execute(...)</code>.</li>
+</ul>
+<p>A name note: the <strong>feature, skill, and help topic</strong> are
+<code>smart-test</code>, but the two workflows it drives register under the
+slugs <strong><code>test-audit</code></strong> and <strong><code>test-gen</code></strong>. There is also a
+<strong>separate, unrelated</strong> repo-level skill at
+<code>.claude/skills/smart-test</code> (alias <code>st</code>) that just runs the
+pytest tests affected by your recent diff — same name, different
+job. This page documents the gap-analysis-and-generation feature.</p>
+<h2>Concepts</h2>
+<h3>Audit, then generate</h3>
+<p>The two primary workflows compose: run the audit to find and rank
+gaps, then run generation to write the tests that close them.</p>
+<table>
+<thead>
+<tr>
+<th>Workflow</th>
+<th>Slug</th>
+<th>Subagents</th>
+<th>What it produces</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TestAuditWorkflow</code></td>
+<td><code>test-audit</code></td>
+<td><code>coverage-auditor</code>, <code>gap-analyzer</code>, <code>test-planner</code></td>
+<td>A coverage report: health score, coverage metrics, untested paths, and a prioritized plan.</td>
+</tr>
+<tr>
+<td><code>TestGenerationWorkflow</code></td>
+<td><code>test-gen</code></td>
+<td><code>function-identifier</code>, <code>test-designer</code>, <code>test-writer</code></td>
+<td>A report of generated pytest tests covering happy paths, edge cases, and error handling.</td>
+</tr>
+</tbody>
+</table>
+<p>Both synthesize their three passes into a report with the same
+four sections — <strong>Summary</strong> (an overall 0–100 health score plus a
+short executive summary), <strong>Coverage</strong>, <strong>Test Gaps</strong>, and
+<strong>Suggestions</strong> (next steps ordered by priority).</p>
+<h3>Depth controls the agent-turn budget</h3>
+<p>Both workflows take a <code>depth</code> of <code>&quot;quick&quot;</code>, <code>&quot;standard&quot;</code> (default),
+or <code>&quot;deep&quot;</code>, which maps to the maximum agent turns and a per-run
+cost cap:</p>
+<table>
+<thead>
+<tr>
+<th>Depth</th>
+<th>Max agent turns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quick</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>20</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+</tr>
+</tbody>
+</table>
+<p>An unrecognized depth falls back to the standard budget (20 turns).</p>
+<h3><code>execute</code> is async</h3>
+<p>On both workflows <code>execute</code> is a coroutine — <code>await</code> it (or drive
+it with <code>asyncio.run</code>). Each reads <code>path</code> (required) and <code>depth</code>
+(default <code>&quot;standard&quot;</code>); an empty or missing <code>path</code> returns a failed
+<code>WorkflowResult</code> (&quot;path argument is required&quot;) rather than raising.
+<code>TestAuditWorkflow.execute</code> also accepts a deprecated <code>src_path</code>
+alias for <code>path</code> (it emits a <code>DeprecationWarning</code> and <code>path</code> wins
+if both are given).</p>
+<h3>Batch generation across many modules</h3>
+<p><code>ParallelTestGenerationWorkflow</code> (registered name
+<code>parallel-test-generation</code>) is the batch path: its <code>execute</code> takes
+<code>top</code> (number of lowest-coverage modules to process, default
+<code>200</code>), <code>batch_size</code> (modules generated in parallel, default <code>10</code>),
+and <code>output_dir</code> (where tests are written, default
+<code>tests/behavioral/generated</code>). It discovers the lowest-coverage
+modules, generates a test template and completes it per module, and
+returns a <code>WorkflowResult</code> with the generated file paths and
+statistics. Unlike test-audit / test-gen it is a multi-stage
+pipeline (<code>discover</code> → <code>generate_templates</code> → <code>complete_tests</code> →
+<code>validate</code>), not a single SDK query.</p>
+<h3>The result is a <code>WorkflowResult</code></h3>
+<p>Each <code>execute</code> returns a <code>WorkflowResult</code> (from
+<code>attune.workflows</code>). The report lands in <code>final_output</code> — a
+serialized report when the findings parse, or the raw markdown
+otherwise — with a short <code>summary</code>, a <code>suggestions</code> list, the
+<code>cost_report</code>, the <code>provider</code>, and a <code>metadata</code> dict echoing the
+run's <code>path</code> (or <code>src_path</code> for the audit), <code>depth</code>, and
+<code>max_turns</code>. On failure, <code>success</code> is <code>False</code> and <code>error</code> /
+<code>error_type</code> carry the reason.</p>
+<h3>The <code>/smart-test</code> skill routes by approach</h3>
+<p>The <code>/smart-test</code> skill picks the tool for the approach you ask
+for:</p>
+<ul>
+<li><strong>Gap analysis</strong> → the audit (find untested public functions);</li>
+<li><strong>Generate tests</strong> → test generation for a module;</li>
+<li><strong>Both</strong> → audit first, then generate for the gaps it found.</li>
+</ul>
+<p>The CLI and Python surfaces, by contrast, drive each workflow
+directly.</p>
 
   </article>
   <footer>
