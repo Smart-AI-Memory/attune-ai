@@ -1,14 +1,4 @@
----
-type: reference
-name: security-audit-reference
-feature: security-audit
-depth: reference
-generated_at: 2026-06-23T12:50:51.607005+00:00
-source_hash: e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a
-status: generated
----
-
-# Audit code for vulnerabilities with four Agent SDK subagents
+# Security Audit
 
 ## Reference
 
@@ -63,3 +53,5 @@ from `attune.workflows` as well.
 | CLI | `attune workflow run security-audit --path <p> [--depth quick\|standard\|deep] [--json] [--cheap]`. |
 | MCP tool | `security_audit` — one required `path` argument; runs at standard depth (the handler does not pass `depth`). |
 | Python | `await SecurityAuditWorkflow().execute(path=<p>, depth=<d>)`. |
+
+<!-- attune-generated: source_hash=e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a feature=security-audit kind=reference generated_at=2026-06-23 -->

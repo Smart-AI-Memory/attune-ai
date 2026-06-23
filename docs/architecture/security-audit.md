@@ -1,103 +1,151 @@
----
-type: architecture
-name: security-audit
-tags: [security, workflow, monitoring]
-source: src/attune/workflows/security_audit.py
----
+# Security Audit
 
-# Security Audit architecture
+## Overview
 
-Scan code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, injection risks.
+Security-audit scans a codebase for vulnerabilities and reports
+them by severity with prioritized remediation. It is **SDK-native**:
+`SecurityAuditWorkflow` delegates the analysis to four specialized
+Claude Agent SDK subagents and synthesizes their findings into one
+report — an overall security score, findings grouped CRITICAL /
+HIGH / MEDIUM / LOW, and an effort-ranked remediation plan.
 
-## Purpose
+Like its sibling bug-predict, it **predicts** rather than proves:
+the four subagents apply LLM judgment over the code (via Read /
+Glob / Grep), so a finding is a lead to verify, not a confirmed
+exploit. Treat a CRITICAL finding as "audit this first," not "this
+is definitely exploitable."
 
-The security audit subsystem orchestrates four specialized LLM subagents (`vuln-scanner`, `secret-detector`, `auth-reviewer`, `remediation-planner`) to produce a unified, severity-grouped report with CWE identifiers and actionable remediation steps. It owns the scanning workflow, subagent coordination, and report synthesis. It does **not** own telemetry storage, alert delivery, or secret-scrubbing of LLM call records — those are handled by the monitoring and telemetry layers described below.
+You reach security-audit four ways, all of which run the same
+workflow:
 
-## Key classes
+- the **`/security-audit`** skill, inside a Claude Code
+  conversation;
+- the CLI — **`attune workflow run security-audit`**;
+- the **`security_audit`** MCP tool (one required `path`
+  argument);
+- the Python API — `await SecurityAuditWorkflow().execute(...)`,
+  documented here for wiring an audit into a hook, a CI gate, or a
+  custom tool.
 
-| Class | Responsibility | File |
-|-------|----------------|------|
-| `SecurityAuditWorkflow` | Coordinates the four subagents and synthesizes their output into a single structured report with Summary, Security, and Suggestions sections. | `src/attune/workflows/security_audit.py` |
-| `AlertEngine` | Persists alert configurations in SQLite, evaluates telemetry metrics against thresholds, and dispatches `AlertEvent` records when a threshold is breached. | `src/attune/monitoring/engine.py` |
-| `AlertConfig` | Dataclass that holds one alert's full configuration (metric, threshold, channel, cooldown, severity); serializes to/from dict for SQLite persistence. | `src/attune/monitoring/models.py` |
-| `AlertEvent` | Immutable dataclass capturing a single threshold-breach event (current value, threshold, severity, timestamp, message). | `src/attune/monitoring/models.py` |
-| `AlertMetric` | Enum of the telemetry metrics that `AlertEngine` can monitor. | `src/attune/monitoring/models.py` |
-| `AlertChannel` | Enum of supported notification channels (webhook, email, etc.). | `src/attune/monitoring/models.py` |
-| `AlertSeverity` | Enum of severity levels (`WARNING` and above) used in both `AlertConfig` and `AlertEvent`. | `src/attune/monitoring/models.py` |
-| `TelemetryBackend` | Protocol defining the two methods (`log_call`, `log_workflow`) that any storage backend must implement. | `src/attune/monitoring/multi_backend.py` |
-| `MultiBackend` | Fan-out composite that writes to all registered `TelemetryBackend` instances; tracks per-backend failures without aborting the others. | `src/attune/monitoring/multi_backend.py` |
-| `OTELBackend` | `TelemetryBackend` implementation that batches records and exports them to an OpenTelemetry collector with configurable retry logic. | `src/attune/monitoring/otel_backend.py` |
+The audit workflow is self-contained — it owns scanning and
+report synthesis only. Alerting, telemetry storage, and
+monitoring live in a **separate** subsystem (`attune.monitoring`)
+and are not part of this feature.
 
-## Data flow
+## Concepts
 
-The audit path and the monitoring path are parallel concerns that share the `TelemetryBackend` protocol.
+### Four subagents, one synthesized report
 
-**Audit path** (triggered by `attune workflow run security-audit`):
+`SecurityAuditWorkflow.execute` issues a single
+`claude_agent_sdk.query` whose options define four subagents, each
+scoped to `Read` / `Glob` / `Grep`:
 
-```
-attune CLI
-    │
-    ▼
-SecurityAuditWorkflow.execute(path=...)
-    │  dispatches task prompt to each subagent in sequence
-    ├──▶ vuln-scanner        (eval/exec, injection, SSRF)
-    ├──▶ secret-detector     (hardcoded secrets, API keys)
-    ├──▶ auth-reviewer       (auth/authz patterns)
-    └──▶ remediation-planner (prioritized fix suggestions)
-    │
-    ▼
-Orchestrator synthesizes findings
-    │
-    ▼
-Unified report: Summary / Security (by severity) / Suggestions
-```
+| Subagent | What it looks for |
+|----------|-------------------|
+| `vuln-scanner` | `eval`/`exec` usage, SQL injection, XSS, path traversal, command injection, and insecure deserialization. Reports file, line, severity, and remediation advice. |
+| `secret-detector` | Hardcoded API keys, passwords, tokens, private keys, database credentials, and sensitive environment variables committed to source — plus how to externalize each. |
+| `auth-reviewer` | Missing auth checks, broken access control, insecure session management, weak password policies, and privilege-escalation risks. |
+| `remediation-planner` | Reviews all findings and builds a prioritized fix plan, grouped by effort (quick wins / medium / major refactors), with time estimates and inter-fix dependencies. |
 
-**Monitoring path** (alert evaluation on telemetry data):
+The orchestrator then synthesizes all four into one report with
+three sections — **Summary** (an overall 0–100 security score plus
+a 2–3 sentence posture summary), **Security** (consolidated
+findings grouped CRITICAL / HIGH / MEDIUM / LOW), and
+**Suggestions** (remediation steps ordered by priority, each with
+an effort estimate).
 
-```
-LLM call / workflow run
-    │
-    ▼
-MultiBackend.log_call() / log_workflow()
-    ├──▶ OTELBackend   (batched export to OTEL collector)
-    └──▶ [other TelemetryBackend implementations]
+### Depth controls the budget — and deep engages extended thinking
 
-alert watch loop
-    │
-    ▼
-AlertEngine.get_metrics()         (reads telemetry from disk)
-    │
-    ▼
-AlertEngine.check_and_trigger()   (compares each AlertConfig threshold)
-    │
-    ▼
-AlertEvent recorded in SQLite
-    │
-    └──▶ notification dispatched via AlertChannel (webhook / email)
-```
+`execute` takes a `depth` of `"quick"`, `"standard"` (default),
+or `"deep"`. Depth maps to the maximum agent turns and a per-run
+cost cap:
 
-## Design decisions
+| Depth | Max agent turns |
+|-------|-----------------|
+| `quick` | 10 |
+| `standard` | 20 |
+| `deep` | 40 |
 
-**Four fixed subagents rather than a single general-purpose agent.** The subagent names (`vuln-scanner`, `secret-detector`, `auth-reviewer`, `remediation-planner`) are declared as a module-level constant (`_SUBAGENT_NAMES`). Splitting responsibilities this way keeps each agent's context window focused and makes the prompt template predictable. A single-agent approach was rejected because combining vulnerability scanning, secret detection, auth review, and remediation planning in one prompt produces lower-quality output on large codebases.
+An unrecognized depth falls back to the standard budget (20
+turns). A `deep` audit additionally engages a token-aware task
+budget and **extended thinking** (with high reasoning effort), so
+the remediation-planner and architecture-level reasoning get more
+room — at higher cost.
 
-**Orchestrator-synthesized report, not per-agent reports.** The system prompt instructs a senior-security-orchestrator persona to merge subagent output into one report (Summary → Security → Suggestions). This means callers always receive a single artifact; they never need to merge multiple responses. The trade-off is that the orchestrator's synthesis step adds latency.
+### Findings survive synthesis
 
-**SQLite for alert persistence.** `AlertEngine` writes `AlertConfig` and `AlertEvent` records to a local SQLite file (default: `.attune/alerts.db`). This avoids an external service dependency for the common single-developer case. Teams that need distributed alert state must replace `AlertEngine` or its storage layer.
+Two mechanisms keep findings from being lost in the
+orchestrator's synthesis step:
 
-**`MultiBackend` failure isolation.** When one `TelemetryBackend` raises, `MultiBackend` records it in a failed-backends list and continues writing to the remaining backends. This prevents a flaky OTEL collector from silently dropping local telemetry. Call `reset_failures()` to re-enable a previously failed backend.
+- the query runs with a structured `output_format`, so findings
+  parse into categories reliably rather than depending on prose
+  formatting; and
+- after the run, the per-subagent transcripts are recovered from
+  the session and appended to the report under a
+  **"## Subagent findings"** heading — so a finding a subagent
+  surfaced is preserved even if the synthesis under-reports it.
+  The raw transcripts are also attached to the result's
+  `metadata["subagent_transcripts"]`.
 
-## Extension points
+### `execute` is async, and honors only `path` and `depth`
 
-- **Add a new scan category:** Add the subagent name to `_SUBAGENT_NAMES` in `src/attune/workflows/security_audit.py` and update `_TASK_PROMPT_TEMPLATE` to describe its domain and expected output format.
+`execute` is a coroutine — `await` it (or drive it with
+`asyncio.run`). Calling it without awaiting is the most common
+mistake.
 
-- **Add a new telemetry storage backend:** Implement the `TelemetryBackend` protocol (`log_call`, `log_workflow`), then register an instance via `MultiBackend.add_backend()`. The `OTELBackend` is the canonical example to follow.
+It reads exactly two keyword arguments: `path` (required) and
+`depth` (default `"standard"`). Any other keyword is ignored. An
+empty or missing `path` returns a failed `WorkflowResult` rather
+than raising.
 
-- **Add a new notification channel:** Extend the `AlertChannel` enum in `src/attune/monitoring/models.py`, then add the corresponding dispatch branch inside `AlertEngine.check_and_trigger()`.
+### The result is a `WorkflowResult`
 
-- **Add a new monitorable metric:** Extend the `AlertMetric` enum and update `AlertEngine.get_metrics()` to compute and return the new metric's value.
+`execute` returns a `WorkflowResult` (from `attune.workflows`).
+The synthesized report lands in `final_output` — a serialized
+report when the findings parse, or the raw markdown otherwise —
+with a short `summary`, a `suggestions` list, the `cost_report`,
+the `provider`, and a `metadata` dict echoing `path`, `depth`,
+`max_turns`, and the recovered `subagent_transcripts`. On failure,
+`success` is `False` and `error` / `error_type` carry the reason.
 
-- **Configure alerts programmatically:** Call `AlertEngine.add_alert()` directly instead of going through the CLI. `get_alert_engine()` returns a ready-to-use instance pointed at the default database path.
+## Design & extension
 
-For usage, see `attune help-docs ref-skill-security-audit` or the quickstart at `quickstarts/run-security-audit.md`.
+### Design decisions
 
-<!-- attune-generated: source_hash=b5ac92e21712579189bcbb6c5f4ee162ee999a19b070da3f645661ffa7e81668 feature=security-audit kind=architecture generated_at=2026-05-16 -->
+- **SDK-native, four specialized subagents.** Since v4.2.0,
+  security-audit is a single `claude_agent_sdk.query` with four
+  subagents — `vuln-scanner`, `secret-detector`, `auth-reviewer`,
+  and `remediation-planner`. Splitting the work keeps each
+  subagent's context focused; the cost is an extra synthesis step
+  in the orchestrator.
+- **Findings are recovered, not just synthesized.** The run uses a
+  structured `output_format`, and the per-subagent transcripts are
+  pulled from the session and appended under "## Subagent
+  findings" — so the orchestrator's synthesis is no longer a single
+  point of data loss.
+- **Prediction, not certification, is the contract.** The workflow
+  returns LLM-judged findings; it deliberately trades a scanner's
+  precision for breadth and prioritized remediation. This is why
+  findings are framed as leads to verify, never a security
+  guarantee.
+- **The result is data, not print output.** `execute` returns a
+  `WorkflowResult` (report in `final_output`, plus `summary`,
+  `suggestions`, `cost_report`, and `metadata`); the CLI, MCP, and
+  skill surfaces all render that same result.
+
+### Extension points
+
+- **Steer a single run:** pass `system_prompt_suffix` to the
+  constructor to append instructions to the orchestrator prompt
+  without subclassing — the pattern discovery-sweep's
+  `SecurityAuditSource` uses.
+- **Change the budget:** choose `depth` (`quick` / `standard` /
+  `deep`) to trade coverage against cost; `deep` adds extended
+  thinking, and `--cheap` on the CLI forces unpinned subagents
+  onto Haiku.
+- **Add a scan category:** the four subagent names are a
+  module-level constant (`_SUBAGENT_NAMES`) and the task prompt is
+  a module template; a new category is a new subagent definition
+  plus a synthesis-section update in `security_audit.py`.
+
+<!-- attune-generated: source_hash=e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a feature=security-audit kind=architecture generated_at=2026-06-23 -->

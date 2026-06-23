@@ -3,66 +3,105 @@ type: task
 name: security-audit-task
 feature: security-audit
 depth: task
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: eae54371f777d7daaf221262e83161689f726496eaa58090e4ea0460f613d131
+generated_at: 2026-06-23T12:50:51.607005+00:00
+source_hash: e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a
 status: generated
 ---
 
-# Run a security audit
+# Audit code for vulnerabilities with four Agent SDK subagents
 
-Use `SecurityAuditWorkflow` when you want to scan a codebase for vulnerabilities — including `eval`/`exec` usage, path traversal, hardcoded secrets, and injection risks — and receive a severity-grouped report with actionable remediation steps.
+## Tasks
 
-## Prerequisites
+### Audit a path from the CLI
 
-- Access to the project source code you want to scan
-- The `attune` package installed with the `workflows` and `security` modules available
+**Goal:** run a one-off audit over a directory without writing any
+Python.
 
-## Run the audit
+**Steps:**
 
-1. **Import and instantiate `SecurityAuditWorkflow`.**
+```bash
+# Default depth (standard) over a directory:
+attune workflow run security-audit --path src/
 
-   ```python
-   from attune.workflows.security_audit import SecurityAuditWorkflow
+# Deep audit (extended thinking), JSON output for a CI gate:
+attune workflow run security-audit --path src/ --depth deep --json
 
-   workflow = SecurityAuditWorkflow()
-   ```
+# Cost-saving pass (unpinned subagents run on Haiku):
+attune workflow run security-audit --path src/ --cheap
+```
 
-   Pass `system_prompt_suffix` if you want to append additional instructions to the orchestrator prompt:
+**Verify:** `--path` / `-p` defaults to the current directory;
+`--depth` accepts `quick`, `standard`, or `deep`; `--json` / `-j`
+emits machine-readable output; `--cheap` forces every subagent
+without an explicit model onto Haiku for that run. Use
+`attune workflow info security-audit` to confirm registration, and
+`attune workflow list` to see it alongside the other workflows.
 
-   ```python
-   workflow = SecurityAuditWorkflow(system_prompt_suffix="Focus on authentication code only.")
-   ```
+### Call the audit from Python
 
-2. **Call `execute()` with the path to scan.**
+**Goal:** drive security-audit from a hook or CI gate and act on
+the result.
 
-   ```python
-   result = workflow.execute(path="src/")
-   ```
+**Steps:**
 
-   The workflow coordinates four specialized subagents — `vuln-scanner`, `secret-detector`, `auth-reviewer`, and `remediation-planner` — and synthesizes their output into a single report.
+```python
+import asyncio
 
-3. **Inspect the returned `WorkflowResult`.**
+from attune.workflows import SecurityAuditWorkflow
 
-   The report contains three sections:
 
-   - **Summary** — an overall security score (0–100) and a brief executive summary
-   - **Security** — consolidated findings grouped by severity (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`)
-   - **Suggestions** — prioritized remediation steps with estimated effort per fix
+async def main() -> None:
+    workflow = SecurityAuditWorkflow()
+    result = await workflow.execute(path="src/api/", depth="deep")
 
-4. **Run the audit from the CLI** (alternative to the Python API).
+    if not result.success:
+        print("audit failed:", result.error)
+        return
 
-   ```
-   attune workflow run security-audit --path "src/"
-   ```
+    print(result.final_output)
+    for action in result.suggestions:
+        print(action)
 
-   The CLI produces the same severity-grouped findings with CWE identifiers.
 
-## Verify success
+asyncio.run(main())
+```
 
-The audit completed successfully when `WorkflowResult` contains all three report sections — **Summary**, **Security**, and **Suggestions** — and the **Summary** section includes a numeric security score. If findings exist, they appear under **Security** with at least one severity label (`CRITICAL`, `HIGH`, `MEDIUM`, or `LOW`).
+**Verify:** `execute` is a coroutine — `await` it. A completed
+audit returns `success=True` with the report in `final_output`;
+a failure returns `success=False` with a populated `error` and
+`error_type`. `metadata` echoes the `path`, `depth`, and
+`max_turns` used, plus the recovered `subagent_transcripts`.
 
-## Key files
+### Focus the audit with a prompt suffix
 
-- `src/attune/workflows/security_audit.py` — `SecurityAuditWorkflow` and its four subagent definitions
-- `src/attune/security/` — `SecretsDetector`, `PIIScrubber`, `AuditLogger`, and related detection primitives
-- `src/attune/monitoring/alerts_cli.py` — CLI commands (`watch`, `history`, `metrics`) for monitoring audit-related telemetry thresholds
+**Goal:** steer the audit toward a concern without replacing the
+built-in orchestrator behavior.
+
+**Steps:**
+
+```python
+import asyncio
+
+from attune.workflows import SecurityAuditWorkflow
+
+
+async def main() -> None:
+    workflow = SecurityAuditWorkflow(
+        system_prompt_suffix=(
+            "Prioritize authentication and secret-handling code. "
+            "Call out anything touching the login flow."
+        ),
+    )
+    result = await workflow.execute(path="src/auth/")
+    print(result.final_output)
+
+
+asyncio.run(main())
+```
+
+**Verify:** `system_prompt_suffix` is a keyword-only constructor
+argument appended to the orchestrator's system prompt. The four
+subagents still run their normal analysis; the suffix only steers
+the orchestrator. The empty-string default leaves behavior
+unchanged (this is the hook discovery-sweep's `SecurityAuditSource`
+uses to augment the prompt per instance).
