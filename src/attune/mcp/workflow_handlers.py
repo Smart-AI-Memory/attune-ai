@@ -167,7 +167,9 @@ class WorkflowHandlersMixin:
         from attune.workflows.doc_audit import DocAuditWorkflow
 
         workflow = DocAuditWorkflow()
-        result = await workflow.execute(project_root=self._validated_path(args))
+        # execute reads `path` (not the legacy `project_root`); passing the
+        # stale kwarg left `path` empty → "path argument is required".
+        result = await workflow.execute(path=self._validated_path(args))
 
         return _workflow_response(result, score="score", findings=("checks", []))
 
@@ -188,23 +190,12 @@ class WorkflowHandlersMixin:
         """
         from attune.workflows.document_gen import DocumentGenerationWorkflow
 
-        source_code = ""
-        raw_source_path = args.get("source_path", "")
-        if raw_source_path:
-            source_path = self._validated_path(args, key="source_path", default="")
-            try:
-                from pathlib import Path
-
-                source_code = Path(source_path).read_text(encoding="utf-8")
-            except (OSError, UnicodeDecodeError) as e:
-                logger.warning("Could not read source file %s: %s", source_path, e)
-
+        # execute reads `path` (and `depth`); the SDK subagents read the
+        # source themselves. The legacy `source_code`/`doc_type`/`audience`
+        # kwargs were dropped in the v4.2.0 SDK migration, so passing them
+        # left `path` empty → "path argument is required".
         workflow = DocumentGenerationWorkflow()
-        result = await workflow.execute(
-            source_code=source_code,
-            doc_type=args.get("doc_type", "api_reference"),
-            audience=args.get("audience", "developers"),
-        )
+        result = await workflow.execute(path=self._validated_path(args, key="source_path"))
 
         return _workflow_response(result, document="document", sections="sections")
 
@@ -227,9 +218,10 @@ class WorkflowHandlersMixin:
         )
 
         workflow = DocumentationOrchestrator()
-        result = await workflow.execute(
-            context={"project_root": self._validated_path(args)},
-        )
+        # execute scopes off the `path` kwarg; the project root was
+        # previously buried inside the `context` dict, where execute never
+        # read it — so the ops scope-picker could not re-scope the run.
+        result = await workflow.execute(path=self._validated_path(args))
 
         return {
             "success": getattr(result, "phase", "") == "complete",
@@ -257,7 +249,9 @@ class WorkflowHandlersMixin:
         from attune.workflows.test_audit import TestAuditWorkflow
 
         workflow = TestAuditWorkflow()
-        result = await workflow.execute(src_path=self._validated_path(args, default="src/"))
+        # Use the canonical `path` kwarg; `src_path` still works but is a
+        # deprecated alias that emits a DeprecationWarning.
+        result = await workflow.execute(path=self._validated_path(args, default="src/"))
 
         return _workflow_response(result, raw_output=True)
 
@@ -424,8 +418,10 @@ class WorkflowHandlersMixin:
         )
 
         workflow = OrchestratedHealthCheckWorkflow()
+        # Use the canonical `path` kwarg; `project_root` still works but is a
+        # deprecated alias that emits a DeprecationWarning.
         result = await workflow.execute(
-            project_root=self._validated_path(args, key="project_root"),
+            path=self._validated_path(args, key="project_root"),
         )
 
         return {

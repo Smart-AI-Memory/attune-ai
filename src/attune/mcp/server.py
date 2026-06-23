@@ -419,7 +419,10 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
         validated_path = str(_validate_file_path(args["module"], allowed_dir=self._workspace_root))
         workflow = TestGenerationWorkflow()
-        result = await workflow.execute(module_path=validated_path)
+        # execute reads `path` — the legacy `module_path` kwarg was dropped
+        # in the v4.2.0 SDK migration, so passing it left `path` empty and
+        # every call failed with "path argument is required".
+        result = await workflow.execute(path=validated_path)
 
         return _workflow_response(
             result,

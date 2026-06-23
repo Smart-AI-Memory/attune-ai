@@ -180,8 +180,10 @@ class TestMixinPathValidation:
             await server._run_doc_audit({"path": "../../etc/passwd"})
 
     @pytest.mark.asyncio
-    async def test_doc_gen_skips_validation_when_no_source_path(self):
-        """_run_doc_gen skips validation when source_path is empty."""
+    async def test_doc_gen_validates_default_path_when_no_source_path(self):
+        """_run_doc_gen validates the default path ('.') when source_path
+        is absent — execute now takes a validated `path`, so the default
+        is validated against the workspace root too."""
         server = _make_server(workspace_root="/workspace")
         result = _make_result()
         mod = _make_workflow_module(
@@ -198,7 +200,7 @@ class TestMixinPathValidation:
         ):
             await server._run_doc_gen({})
 
-        mock_validate.assert_not_called()
+        mock_validate.assert_called_once_with(".", allowed_dir="/workspace")
 
 
 # ==================================================================
@@ -239,7 +241,7 @@ class TestRunDocAudit:
         with patch.dict(sys.modules, {"attune.workflows.doc_audit": mod}):
             await server._run_doc_audit({})
 
-        mod.DocAuditWorkflow.return_value.execute.assert_awaited_once_with(project_root=".")
+        mod.DocAuditWorkflow.return_value.execute.assert_awaited_once_with(path=".")
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("_bypass_path_validation")
@@ -285,8 +287,8 @@ class TestRunDocGen:
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("_bypass_path_validation")
-    async def test_empty_source_path_skips_read(self):
-        """Empty source_path passes empty string to workflow."""
+    async def test_defaults_path_to_dot(self):
+        """Absent source_path defaults the `path` kwarg to '.'."""
         server = _make_server()
         result = _make_result()
         mod = _make_workflow_module(
@@ -299,12 +301,15 @@ class TestRunDocGen:
             await server._run_doc_gen({})
 
         call_kwargs = mod.DocumentGenerationWorkflow.return_value.execute.call_args
-        assert call_kwargs.kwargs["source_code"] == ""
+        # execute reads `path` — NOT the legacy source_code/doc_type/audience
+        # kwargs, which the SDK migration dropped. Guard against the drift
+        # reappearing.
+        assert call_kwargs.kwargs == {"path": "."}
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("_bypass_path_validation")
-    async def test_passes_doc_type_and_audience(self):
-        """doc_type and audience are forwarded to execute()."""
+    async def test_passes_source_path_as_path(self):
+        """The source_path arg is forwarded to execute() as `path`."""
         server = _make_server()
         result = _make_result()
         mod = _make_workflow_module(
@@ -314,11 +319,12 @@ class TestRunDocGen:
         )
 
         with patch.dict(sys.modules, {"attune.workflows.document_gen": mod}):
-            await server._run_doc_gen({"doc_type": "tutorial", "audience": "beginners"})
+            await server._run_doc_gen({"source_path": "src/mod.py"})
 
         call_kwargs = mod.DocumentGenerationWorkflow.return_value.execute.call_args
-        assert call_kwargs.kwargs["doc_type"] == "tutorial"
-        assert call_kwargs.kwargs["audience"] == "beginners"
+        assert call_kwargs.kwargs == {"path": "src/mod.py"}
+        assert "source_code" not in call_kwargs.kwargs
+        assert "doc_type" not in call_kwargs.kwargs
 
 
 class TestRunDocOrchestrator:
@@ -353,8 +359,8 @@ class TestRunDocOrchestrator:
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("_bypass_path_validation")
-    async def test_passes_path_in_context(self):
-        """Path is passed inside context dict."""
+    async def test_passes_path(self):
+        """Path is passed as the `path` kwarg (execute scopes off it)."""
         server = _make_server()
         result = MagicMock()
         result.phase = "complete"
@@ -371,7 +377,10 @@ class TestRunDocOrchestrator:
             await server._run_doc_orchestrator({"path": "/myproject"})
 
         call_kwargs = mod.DocumentationOrchestrator.return_value.execute.call_args
-        assert call_kwargs.kwargs["context"]["project_root"] == "/myproject"
+        # execute reads `path` (or the deprecated top-level `project_root`),
+        # never a `context["project_root"]` — passing it inside context
+        # silently dropped the scope.
+        assert call_kwargs.kwargs == {"path": "/myproject"}
 
 
 class TestRunTestAudit:
@@ -406,8 +415,10 @@ class TestRunTestAudit:
             await server._run_test_audit({})
 
         call_kwargs = mod.TestAuditWorkflow.return_value.execute.call_args
-        # PurePosixPath strips trailing slash: "src/" → "src"
-        assert call_kwargs.kwargs["src_path"] in ("src/", "src")
+        # execute takes the canonical `path` kwarg now (`src_path` is a
+        # deprecated alias). PurePosixPath strips trailing slash: "src/" → "src"
+        assert call_kwargs.kwargs["path"] in ("src/", "src")
+        assert "src_path" not in call_kwargs.kwargs
 
 
 class TestRunTestGenParallel:
@@ -661,8 +672,8 @@ class TestRunHealthCheck:
 
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("_bypass_path_validation")
-    async def test_passes_project_root(self):
-        """execute() receives project_root kwarg."""
+    async def test_passes_path(self):
+        """execute() receives the canonical `path` kwarg."""
         server = _make_server()
         result = MagicMock()
         mod = _make_workflow_module(
@@ -675,10 +686,12 @@ class TestRunHealthCheck:
             sys.modules,
             {"attune.workflows.orchestrated_health_check": mod},
         ):
+            # The TOOL input key stays `project_root`; only the execute kwarg
+            # is modernized to `path` (`project_root` is a deprecated alias).
             await server._run_health_check({"project_root": "/proj"})
 
         mod.OrchestratedHealthCheckWorkflow.return_value.execute.assert_awaited_once_with(
-            project_root="/proj"
+            path="/proj"
         )
 
 
