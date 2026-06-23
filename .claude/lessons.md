@@ -10758,3 +10758,51 @@ files.
     (`plugin/help/generated/`) is refreshed only at release-prep cadence.
     So a PyPI release for a batch of doc-rollout PRs ships byte-identical
     runtime — defer the release until the bundled help is regenerated.
+
+- **Single-sourcing a help feature — the `features.yaml` entry is an
+  UNRELIABLE scope signal; verify the real public surface and document
+  any conflation in DD5** (hit 2026-06-23 single-sourcing agents /
+  mcp-server / wizards, the Tier-2 back half; follow-on to the
+  "five Tier-2-rollout traps" entry above). The per-feature loop reads
+  the feature's `description` + `files:` glob as its scope hypothesis,
+  but that entry drifts from the code and routinely names MORE (or the
+  WRONG thing) than the actual feature:
+  - **Conflated subsystems (agents).** The `agents` entry's description
+    said "Release agents, state persistence, and recovery" with a glob
+    spanning `src/attune/agents/**` AND `src/attune/agent_factory/**` —
+    two distinct subsystems. The user-facing feature is the **Universal
+    Agent Factory** (`agent_factory/`: `AgentFactory`); the release
+    agent TEAM (`agents/release/`) belongs to release-prep and the
+    state store (`agents/state/`) is that team's persistence. Fix:
+    introspect the package's `__all__` to find the REAL public surface,
+    scope the master to ONE feature, REWRITE the `features.yaml`
+    description + drop the cross-subsystem tag, and document the
+    rescoping in the DD5 comment (the `security-audit` entry set the
+    precedent — its old glob conflated `attune.monitoring`). Preserve
+    only the tags golden queries depend on.
+  - **A live registry/count ≠ the built-in set (mcp-server).** The doc
+    said "41 tools" — correct for the five `get_*_tools` SCHEMA groups,
+    but `EmpathyMCPServer.tools` ALSO absorbs plugin-registered tools at
+    construction (`_register_plugin_tools` — attune-redis adds five
+    `redis_*` → `len(server.tools)` == 46 with redis installed). When
+    documenting a COUNT or a collection, distinguish the static/built-in
+    set from the live object that grows via plugins/dynamic
+    registration; a "Verify: == 41" example would fail in a
+    plugin-installed env. Qualify as "N built-in … plus plugin tools".
+  - **A stale memory can assert a class that doesn't exist (wizards).**
+    The website-accuracy memory said `from attune.wizards import
+    WizardRegistry; r = WizardRegistry()`, but there IS no
+    `WizardRegistry` — the registry is module-level functions
+    (`list_wizards`/`get_wizard`/`register_wizard`/…). Introspect
+    `__all__` + `inspect.signature` before documenting; recalled
+    memories reflect what was true when written.
+  - **General rule:** before authoring a single-source master, run
+    `python -c "import <pkg>; print(<pkg>.__all__)"` (and
+    `inspect.signature`/`iscoroutinefunction` on the entry points) to
+    ground the ACTUAL public surface — don't trust the `features.yaml`
+    description, the existing LLM concept.md, or a recalled memory. The
+    adversarial review (step 4b) catches what slips through, but
+    grounding the surface first is cheaper than a review round-trip.
+    Across the 7-feature Tier-2 batch the adversarial pass found real
+    fiction on 5 of 7 (only rag-grounding + wizards were clean first
+    try) — it is not optional.
