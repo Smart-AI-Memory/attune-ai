@@ -25,7 +25,7 @@
     
     
       
-        <title>How to generate code grounded in attune-help context - Attune AI</title>
+        <title>Rag Grounding - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#how-to-generate-code-grounded-in-attune-help-context" class="md-skip">
+        <a href="#rag-grounding" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              How to generate code grounded in attune-help context
+              Rag Grounding
             
           </span>
         </div>
@@ -3952,6 +3952,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../features/rag-grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rag Grounding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../features/refactor-plan/" class="md-nav__link">
         
   
@@ -4147,10 +4175,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#quickstart" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick start
+        Quickstart
       
     </span>
   </a>
@@ -4158,33 +4186,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#core-api" class="md-nav__link">
+  <a href="#tasks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core API
+        Tasks
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integration-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration patterns
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Integration patterns">
+    <nav class="md-nav" aria-label="Tasks">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#inspecting-the-result" class="md-nav__link">
+  <a href="#generate-a-grounded-answer-from-python" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Inspecting the result
+        Generate a grounded answer from Python
       
     </span>
   </a>
@@ -4192,10 +4209,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#passing-context-at-instantiation" class="md-nav__link">
+  <a href="#run-it-from-the-cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Passing context at instantiation
+        Run it from the CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tune-retrieval-breadth-and-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tune retrieval breadth and cost
       
     </span>
   </a>
@@ -4208,24 +4236,63 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
+  <a href="#reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        See also
+        Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ragcodegenworkflow-attuneworkflowsrag_code_gen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RagCodeGenWorkflow — attune.workflows.rag_code_gen
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#unresolved-references" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#depth-turns-and-budget" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Unresolved references
+        Depth → turns and budget
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflowresult-fields-read-after-a-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WorkflowResult fields read after a run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#entry-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entry points
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -4249,97 +4316,216 @@
   
 
 
-<h1 id="how-to-generate-code-grounded-in-attune-help-context">How to generate code grounded in attune-help context<a class="headerlink" href="#how-to-generate-code-grounded-in-attune-help-context" title="Permanent link">&para;</a></h1>
-<p>Use this guide when you need to generate code or explanations that cite real attune APIs, workflow names, and CLI commands — and you want the output to carry provenance back to the retrieved documentation that informed it.</p>
-<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">workflows.rag_code_gen</span><span class="w"> </span><span class="kn">import</span> <span class="n">RagCodeGenWorkflow</span>
+<h1 id="rag-grounding">Rag Grounding<a class="headerlink" href="#rag-grounding" title="Permanent link">&para;</a></h1>
+<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
+<p>Ask a grounded question and print the answer with its sources.
+<code>execute</code> is a coroutine, so drive it with <code>asyncio.run</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">workflow</span> <span class="o">=</span> <span class="n">RagCodeGenWorkflow</span><span class="p">()</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="s2">&quot;How do I compose a RagCodeGenWorkflow with a custom retrieval step?&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">RagCodeGenWorkflow</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">workflow</span> <span class="o">=</span> <span class="n">RagCodeGenWorkflow</span><span class="p">()</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="s2">&quot;How do I run a security audit?&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">)</span>        <span class="c1"># True on a completed run</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">)</span>   <span class="c1"># generated answer + a ## Sources block</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
 </code></pre></div>
-<p>Running this retrieves matching attune-help passages, constructs a citation-forced prompt, and returns a <code>WorkflowResult</code> whose answer is grounded in the retrieved context.</p>
-<h2 id="core-api">Core API<a class="headerlink" href="#core-api" title="Permanent link">&para;</a></h2>
+<p><code>k</code> defaults to 3 and <code>depth</code> to <code>"standard"</code>, so
+<code>execute(query=...)</code> is equivalent.</p>
+<h2 id="tasks">Tasks<a class="headerlink" href="#tasks" title="Permanent link">&para;</a></h2>
+<h3 id="generate-a-grounded-answer-from-python">Generate a grounded answer from Python<a class="headerlink" href="#generate-a-grounded-answer-from-python" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> answer a coding question grounded in attune docs, with
+citations.</p>
+<p><strong>Steps:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">RagCodeGenWorkflow</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">workflow</span> <span class="o">=</span> <span class="n">RagCodeGenWorkflow</span><span class="p">()</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="s2">&quot;How do I customize release gates?&quot;</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;generation failed:&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        <span class="k">return</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">)</span>               <span class="c1"># answer + ## Sources</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;citation&quot;</span><span class="p">])</span>       <span class="c1"># structured provenance</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</code></pre></div>
+<p><strong>Verify:</strong> <code>execute</code> is a coroutine — <code>await</code> it. <code>k</code> controls how
+many passages are retrieved. The output ends with a <code>## Sources</code> block;
+<code>metadata["citation"]["hits"]</code> lists each cited template with its
+<code>template_path</code>, <code>category</code>, and <code>score</code>.</p>
+<h3 id="run-it-from-the-cli">Run it from the CLI<a class="headerlink" href="#run-it-from-the-cli" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> get a grounded answer without writing Python.</p>
+<p><strong>Steps:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># query is passed as JSON input; the workflow slug is rag-code-gen:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>rag-code-gen<span class="w"> </span>--input<span class="w"> </span><span class="s1">&#39;{&quot;query&quot;: &quot;how do I run a security audit?&quot;}&#39;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># deeper run, JSON output:</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>rag-code-gen<span class="w"> </span>--input<span class="w"> </span><span class="s1">&#39;{&quot;query&quot;: &quot;...&quot;, &quot;k&quot;: 5}&#39;</span><span class="w"> </span>--depth<span class="w"> </span>deep<span class="w"> </span>--json
+</code></pre></div>
+<p><strong>Verify:</strong> the slug is <code>rag-code-gen</code> (not <code>rag-grounding</code>, which is
+the feature/help name). <code>--input</code> / <code>-i</code> takes JSON carrying <code>query</code>
+(and optional <code>k</code>); <code>--depth</code> accepts <code>quick</code> / <code>standard</code> / <code>deep</code>;
+<code>--json</code> / <code>-j</code> emits machine-readable output.</p>
+<h3 id="tune-retrieval-breadth-and-cost">Tune retrieval breadth and cost<a class="headerlink" href="#tune-retrieval-breadth-and-cost" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> trade grounding breadth against speed and cost.</p>
+<p><strong>Steps:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">RagCodeGenWorkflow</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">workflow</span> <span class="o">=</span> <span class="n">RagCodeGenWorkflow</span><span class="p">()</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="s2">&quot;explain the memory tiers&quot;</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="s2">&quot;quick&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">)</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</code></pre></div>
+<p><strong>Verify:</strong> lower <code>k</code> retrieves fewer passages (faster, narrower
+grounding); <code>quick</code> uses the smallest turn budget (6) and lowest cap
+($2). <code>metadata["retrieval_ms"]</code> reports retrieval time.</p>
+<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<p>The public surface is <code>RagCodeGenWorkflow</code>, re-exported from
+<code>attune.workflows</code>.</p>
+<h3 id="ragcodegenworkflow-attuneworkflowsrag_code_gen"><code>RagCodeGenWorkflow</code> — <code>attune.workflows.rag_code_gen</code><a class="headerlink" href="#ragcodegenworkflow-attuneworkflowsrag_code_gen" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Class / Method</th>
+<th>Symbol</th>
 <th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>RagCodeGenWorkflow(**kwargs)</code></td>
-<td>Initializes the RAG-grounded code generation workflow; accepts keyword arguments for runtime configuration.</td>
+<td>Construct the workflow (pipeline is lazily initialized on first <code>execute</code>).</td>
 </tr>
 <tr>
-<td><code>.execute(**kwargs)</code></td>
-<td>Runs retrieval and generation; returns a <code>WorkflowResult</code> containing the grounded answer.</td>
+<td><code>RagCodeGenWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Retrieve + generate. Honors <code>query</code> (required), <code>k</code>, <code>depth</code>, <code>feedback</code>, <code>model</code>, <code>path</code> (and deprecated <code>cwd</code>). Returns a <code>WorkflowResult</code>.</td>
+</tr>
+<tr>
+<td><code>RagCodeGenWorkflow.name</code></td>
+<td>The registered CLI slug, <code>"rag-code-gen"</code>.</td>
+</tr>
+<tr>
+<td><code>RagCodeGenWorkflow.stages</code></td>
+<td><code>["retrieve", "generate"]</code> — retrieve at <code>CHEAP</code> (zero-LLM), generate at <code>CAPABLE</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="integration-patterns">Integration patterns<a class="headerlink" href="#integration-patterns" title="Permanent link">&para;</a></h2>
-<h3 id="inspecting-the-result">Inspecting the result<a class="headerlink" href="#inspecting-the-result" title="Permanent link">&para;</a></h3>
-<p><code>execute</code> returns a <code>WorkflowResult</code>. Unpack it to separate the generated code from the provenance metadata:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">workflows.rag_code_gen</span><span class="w"> </span><span class="kn">import</span> <span class="n">RagCodeGenWorkflow</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">workflow</span> <span class="o">=</span> <span class="n">RagCodeGenWorkflow</span><span class="p">()</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="s2">&quot;Show a task template with numbered steps&quot;</span><span class="p">)</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># Access the generated content and its cited sources</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">sources</span><span class="p">)</span>
-</code></pre></div>
-<h3 id="passing-context-at-instantiation">Passing context at instantiation<a class="headerlink" href="#passing-context-at-instantiation" title="Permanent link">&para;</a></h3>
-<p>If your application already holds retrieval configuration, pass it through <code>__init__</code> so <code>execute</code> calls inherit it without repetition:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">workflows.rag_code_gen</span><span class="w"> </span><span class="kn">import</span> <span class="n">RagCodeGenWorkflow</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">workflow</span> <span class="o">=</span> <span class="n">RagCodeGenWorkflow</span><span class="p">(</span><span class="n">top_k</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">min_score</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">for</span> <span class="n">query</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;RagCodeGenWorkflow patterns&quot;</span><span class="p">,</span> <span class="s2">&quot;how do I write a task template?&quot;</span><span class="p">]:</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">query</span><span class="p">)</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
-</code></pre></div>
-<blockquote>
-<p><strong>Note:</strong> The underlying system prompt instructs the model to treat all content inside <code>&lt;passage&gt;</code> tags as retrieved documentation, not as instructions. Prompt-injection attempts embedded in retrieved passages are ignored by design.</p>
-</blockquote>
-<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>concepts/task-template-design-patterns.md</code> — mental model for the template types that RAG retrieves</li>
-<li><code>concepts/task-template-migration.md</code> — how attune-help content stays fresh as source code changes</li>
-</ul>
-<!-- attune-generated: source_hash=0c56c05d50048a3426da1a4782fa4bdecd9fc2a19dcd7d2d0957aa7b55b42550 feature=rag-grounding kind=how-to generated_at=2026-06-02 -->
-
-<h2 id="unresolved-references">Unresolved references<a class="headerlink" href="#unresolved-references" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
+<h3 id="depth-turns-and-budget">Depth → turns and budget<a class="headerlink" href="#depth-turns-and-budget" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Budget cap</th>
+<th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Line 14 (code fence)</td>
-<td>error</td>
-<td><code>from workflows.rag_code_gen import …</code> — module not importable</td>
+<td><code>quick</code></td>
+<td>6</td>
+<td>$2</td>
+<td>Narrowest, cheapest.</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>12</td>
+<td>$10</td>
+<td>Default.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>24</td>
+<td>$25</td>
+<td>Enables extended thinking.</td>
 </tr>
 </tbody>
 </table>
+<h3 id="workflowresult-fields-read-after-a-run"><code>WorkflowResult</code> fields read after a run<a class="headerlink" href="#workflowresult-fields-read-after-a-run" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the run completed.</td>
+</tr>
+<tr>
+<td><code>final_output</code></td>
+<td><code>Any</code></td>
+<td>Generated answer followed by a <code>## Sources</code> citations block.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str \| None</code></td>
+<td>Short overview.</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td><code>query</code>, <code>depth</code>, <code>max_turns</code>, <code>citation</code> (structured provenance), <code>fallback_used</code>, <code>confidence</code>, <code>retrieval_ms</code>, <code>feedback_recorded</code>.</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td><code>str \| None</code></td>
+<td>Failure reason (e.g. missing <code>query</code>, bad <code>k</code>, unknown <code>model</code>, RAG retrieval failure).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="entry-points">Entry points<a class="headerlink" href="#entry-points" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Invocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python</td>
+<td><code>await RagCodeGenWorkflow().execute(query=&lt;q&gt;, k=&lt;n&gt;, depth=&lt;d&gt;)</code>.</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>attune workflow run rag-code-gen --input '{"query": "&lt;q&gt;"}' [--depth ...] [--json]</code>.</td>
+</tr>
+<tr>
+<td>Skill</td>
+<td><code>/rag-code-gen</code> in a Claude Code conversation.</td>
+</tr>
+</tbody>
+</table>
+<p>There is no dedicated MCP tool for this workflow.</p>
+<!-- attune-generated: source_hash=80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4 feature=rag-grounding kind=how-to generated_at=2026-06-23 -->
 
 
 
 
 
 
-
-  
-  
 
 
 

@@ -25,7 +25,7 @@
     
     
       
-        <title>rag-grounding CLI reference - Attune AI</title>
+        <title>Rag Grounding - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#rag-grounding-cli-reference" class="md-skip">
+        <a href="#rag-grounding" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              rag-grounding CLI reference
+              Rag Grounding
             
           </span>
         </div>
@@ -3952,6 +3952,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../features/rag-grounding/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rag Grounding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../features/refactor-plan/" class="md-nav__link">
         
   
@@ -4147,68 +4175,63 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
+  <a href="#reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Description
+        Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ragcodegenworkflow-attuneworkflowsrag_code_gen" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RagCodeGenWorkflow — attune.workflows.rag_code_gen
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#depth-turns-and-budget" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage
+        Depth → turns and budget
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#workflowresult-fields-read-after-a-run" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Options
+        WorkflowResult fields read after a run
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#output" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#entry-points" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Output
+        Entry points
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#exit-codes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exit codes
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related commands
-      
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -4232,75 +4255,136 @@
   
 
 
-<h1 id="rag-grounding-cli-reference">rag-grounding CLI reference<a class="headerlink" href="#rag-grounding-cli-reference" title="Permanent link">&para;</a></h1>
-<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<p><code>rag-grounding</code> runs the <code>RagCodeGenWorkflow</code>, which retrieves attune-help context and feeds citation-forced prompts to Claude. The workflow grounds every response in retrieved documentation, ensuring that referenced APIs, workflow names, and CLI commands come from the attune ecosystem rather than model priors. Output includes the generated code or explanation together with provenance citations.</p>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>rag-grounding [OPTIONS]
-</code></pre></div>
-<h2 id="options">Options<a class="headerlink" href="#options" title="Permanent link">&para;</a></h2>
+<h1 id="rag-grounding">Rag Grounding<a class="headerlink" href="#rag-grounding" title="Permanent link">&para;</a></h1>
+<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<p>The public surface is <code>RagCodeGenWorkflow</code>, re-exported from
+<code>attune.workflows</code>.</p>
+<h3 id="ragcodegenworkflow-attuneworkflowsrag_code_gen"><code>RagCodeGenWorkflow</code> — <code>attune.workflows.rag_code_gen</code><a class="headerlink" href="#ragcodegenworkflow-attuneworkflowsrag_code_gen" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Default</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--help</code></td>
-<td>—</td>
-<td>Show this message and exit</td>
+<td><code>RagCodeGenWorkflow(**kwargs)</code></td>
+<td>Construct the workflow (pipeline is lazily initialized on first <code>execute</code>).</td>
+</tr>
+<tr>
+<td><code>RagCodeGenWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Retrieve + generate. Honors <code>query</code> (required), <code>k</code>, <code>depth</code>, <code>feedback</code>, <code>model</code>, <code>path</code> (and deprecated <code>cwd</code>). Returns a <code>WorkflowResult</code>.</td>
+</tr>
+<tr>
+<td><code>RagCodeGenWorkflow.name</code></td>
+<td>The registered CLI slug, <code>"rag-code-gen"</code>.</td>
+</tr>
+<tr>
+<td><code>RagCodeGenWorkflow.stages</code></td>
+<td><code>["retrieve", "generate"]</code> — retrieve at <code>CHEAP</code> (zero-LLM), generate at <code>CAPABLE</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h2>
-<p>The command writes a <code>WorkflowResult</code> to stdout. The result contains the generated code or explanation and the retrieved passages that grounded the response.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Retrieving attune-help context...
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Running RagCodeGenWorkflow...
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>--- Result ---
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>&lt;generated code or explanation&gt;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>--- Sources ---
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>[1] concepts/template-composition.md
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>[2] concepts/task-template-design-patterns.md
-</code></pre></div>
-<h2 id="exit-codes">Exit codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
+<h3 id="depth-turns-and-budget">Depth → turns and budget<a class="headerlink" href="#depth-turns-and-budget" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Code</th>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Budget cap</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quick</code></td>
+<td>6</td>
+<td>$2</td>
+<td>Narrowest, cheapest.</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>12</td>
+<td>$10</td>
+<td>Default.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>24</td>
+<td>$25</td>
+<td>Enables extended thinking.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="workflowresult-fields-read-after-a-run"><code>WorkflowResult</code> fields read after a run<a class="headerlink" href="#workflowresult-fields-read-after-a-run" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
 <th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>0</code></td>
-<td>Workflow completed and <code>WorkflowResult</code> was returned successfully</td>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the run completed.</td>
 </tr>
 <tr>
-<td><code>1</code></td>
-<td>Workflow failed — check stderr for details</td>
+<td><code>final_output</code></td>
+<td><code>Any</code></td>
+<td>Generated answer followed by a <code>## Sources</code> citations block.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str \| None</code></td>
+<td>Short overview.</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td><code>query</code>, <code>depth</code>, <code>max_turns</code>, <code>citation</code> (structured provenance), <code>fallback_used</code>, <code>confidence</code>, <code>retrieval_ms</code>, <code>feedback_recorded</code>.</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td><code>str \| None</code></td>
+<td>Failure reason (e.g. missing <code>query</code>, bad <code>k</code>, unknown <code>model</code>, RAG retrieval failure).</td>
 </tr>
 </tbody>
 </table>
-<h2 id="related-commands">Related commands<a class="headerlink" href="#related-commands" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>attune-help</code> — browse the help templates that supply retrieval context to this workflow</li>
-<li><code>attune-rag</code> — the retrieval layer this workflow calls to fetch attune-help passages</li>
-</ul>
-<!-- attune-generated: source_hash=0c56c05d50048a3426da1a4782fa4bdecd9fc2a19dcd7d2d0957aa7b55b42550 feature=rag-grounding kind=cli-reference generated_at=2026-06-02 -->
+<h3 id="entry-points">Entry points<a class="headerlink" href="#entry-points" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Invocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python</td>
+<td><code>await RagCodeGenWorkflow().execute(query=&lt;q&gt;, k=&lt;n&gt;, depth=&lt;d&gt;)</code>.</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>attune workflow run rag-code-gen --input '{"query": "&lt;q&gt;"}' [--depth ...] [--json]</code>.</td>
+</tr>
+<tr>
+<td>Skill</td>
+<td><code>/rag-code-gen</code> in a Claude Code conversation.</td>
+</tr>
+</tbody>
+</table>
+<p>There is no dedicated MCP tool for this workflow.</p>
+<!-- attune-generated: source_hash=80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4 feature=rag-grounding kind=reference generated_at=2026-06-23 -->
 
 
 
 
 
 
-
-  
-  
 
 
 
