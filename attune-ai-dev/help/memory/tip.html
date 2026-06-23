@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: working effectively with memory — tip</title>
-  <meta name="description" content="Call `is_redis_available()` before you instantiate any Redis-backed component." />
-  <meta property="og:title" content="Tip: working effectively with memory — tip" />
-  <meta property="og:description" content="Call `is_redis_available()` before you instantiate any Redis-backed component." />
+  <title>Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security — tip</title>
+  <meta name="description" content="- **Depend on the documented public surface.** The supported API is `UnifiedMemory`, `MemoryConfig`, and the security/loader classes re-exported from `attune.memory`, plus the `MemoryBackend` / `Searc" />
+  <meta property="og:title" content="Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security — tip" />
+  <meta property="og:description" content="- **Depend on the documented public surface.** The supported API is `UnifiedMemory`, `MemoryConfig`, and the security/loader classes re-exported from `attune.memory`, plus the `MemoryBackend` / `Searc" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/tip" />
   <style>
@@ -272,16 +272,22 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: working effectively with memory</h1>
-<p>Call <code>is_redis_available()</code> before you instantiate any Redis-backed component.</p>
-<p>This single guard prevents import-time failures in environments where Redis is not installed — the function checks availability without importing the Redis subsystem at all. Skipping it means a missing dependency surfaces as a confusing runtime error instead of a clear unavailability signal.</p>
-<p><strong>Why it works:</strong> <code>is_redis_available()</code> is specifically designed for this pre-flight check, so you pay no import cost regardless of the result.</p>
-<p><strong>Tradeoff:</strong> You still need to handle the <code>False</code> case explicitly — the function tells you Redis is unavailable but does not fall back to a mock automatically. Use <code>get_redis_memory(use_mock=True)</code> if you want an automatic fallback.</p>
-<h2>Source files</h2>
+<h1>Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security</h1>
+<h2>Notes &amp; tips</h2>
 <ul>
-<li><code>src/attune/memory/**</code></li>
+<li><strong>Depend on the documented public surface.</strong> The supported API is
+<code>UnifiedMemory</code>, <code>MemoryConfig</code>, and the security/loader classes
+re-exported from <code>attune.memory</code>, plus the <code>MemoryBackend</code> /
+<code>SearchableMemoryBackend</code> protocols from <code>attune.memory.backend</code>.
+Submodule internals (<code>mixins/</code>, <code>short_term/</code>, <code>long_term_*</code>) may
+change.</li>
+<li><strong>Let classification run.</strong> Keep <code>auto_classify=True</code> unless you have
+a reason to set the level yourself.</li>
+<li><strong>Check capabilities, don't assume.</strong> Use <code>get_capabilities()</code> /
+<code>supports_*()</code> before relying on real-time or cross-process behavior.</li>
+<li><strong>Close when done.</strong> Call <code>close()</code> (or <code>save()</code>) to flush and
+release the backend.</li>
 </ul>
-<p><strong>Tags:</strong> <code>memory</code>, <code>storage</code></p>
 
   </article>
   <footer>

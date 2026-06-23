@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Memory backends — comparison</title>
-  <meta name="description" content="The memory subsystem offers two backend tiers — a base protocol (`MemoryBackend`) and an extended protocol (`SearchableMemoryBackend`) — plus two complementary integration paths: Redis-backed short-te" />
-  <meta property="og:title" content="Comparison: Memory backends — comparison" />
-  <meta property="og:description" content="The memory subsystem offers two backend tiers — a base protocol (`MemoryBackend`) and an extended protocol (`SearchableMemoryBackend`) — plus two complementary integration paths: Redis-backed short-te" />
+  <title>Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security — comparison</title>
+  <meta name="description" content="Memory&#x27;s two tiers serve different retention horizons:" />
+  <meta property="og:title" content="Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security — comparison" />
+  <meta property="og:description" content="Memory&#x27;s two tiers serve different retention horizons:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/comparison" />
   <style>
@@ -272,204 +272,52 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Memory backends</h1>
-<h2>Overview</h2>
-<p>The memory subsystem offers two backend tiers — a base protocol (<code>MemoryBackend</code>) and an extended protocol (<code>SearchableMemoryBackend</code>) — plus two complementary integration paths: Redis-backed short-term memory and Claude Code file-based memory (<code>ClaudeMemoryLoader</code>). Choosing the right combination depends on whether you need distributed state, semantic search, or static project context loaded at startup.</p>
-<h2>Backend protocol comparison</h2>
+<h1>Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security</h1>
+<h2>Comparison</h2>
+<p>Memory's two tiers serve different retention horizons:</p>
 <table>
 <thead>
 <tr>
-<th>Capability</th>
-<th><code>MemoryBackend</code></th>
-<th><code>SearchableMemoryBackend</code></th>
+<th>Tier</th>
+<th>API</th>
+<th>Lifetime</th>
+<th>Backed by</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Basic store / retrieve / delete</td>
-<td>✅ <code>stash</code>, <code>retrieve</code>, <code>delete</code></td>
-<td>✅ inherits all base methods</td>
+<td>Short-term</td>
+<td><code>stash</code> / <code>retrieve</code></td>
+<td>TTL-expiring (seconds–days)</td>
+<td>Redis or in-process</td>
 </tr>
 <tr>
-<td>Key-pattern listing</td>
-<td>✅ <code>keys(pattern)</code></td>
-<td>✅</td>
+<td>Long-term</td>
+<td><code>persist_pattern</code> / <code>recall_pattern</code> / <code>search_patterns</code></td>
+<td>Durable</td>
+<td>Persistent storage</td>
 </tr>
 <tr>
-<td>Connection health check</td>
-<td>✅ <code>is_connected()</code>, <code>get_stats()</code></td>
-<td>✅</td>
+<td>Staging</td>
+<td><code>stage_pattern</code> / <code>promote_pattern</code></td>
+<td>Until promoted or expired</td>
+<td>Short-term, then long-term</td>
 </tr>
 <tr>
-<td>Distributed support</td>
-<td>runtime flag via <code>supports_distributed()</code></td>
-<td>runtime flag via <code>supports_distributed()</code></td>
-</tr>
-<tr>
-<td>Real-time pub/sub support</td>
-<td>runtime flag via <code>supports_realtime()</code></td>
-<td>runtime flag via <code>supports_realtime()</code></td>
-</tr>
-<tr>
-<td>Semantic search</td>
-<td>❌</td>
-<td>✅ <code>search(query, limit, **filters)</code></td>
-</tr>
-<tr>
-<td>Long-term memory promotion</td>
-<td>❌</td>
-<td>✅ <code>promote(session_id)</code></td>
-</tr>
-<tr>
-<td>Content-addressed storage</td>
-<td>❌</td>
-<td>✅ <code>remember(content, memory_id, session_id, topics)</code></td>
-</tr>
-<tr>
-<td>Pruning by age</td>
-<td>❌</td>
-<td>✅ <code>prune(max_age_days)</code></td>
-</tr>
-<tr>
-<td>Recent-item retrieval</td>
-<td>❌</td>
-<td>✅ <code>recent(limit, **filters)</code></td>
+<td>Static</td>
+<td><code>ClaudeMemoryLoader.load_all_memory()</code></td>
+<td>Read-only project files</td>
+<td><code>CLAUDE.md</code> files</td>
 </tr>
 </tbody>
 </table>
-<p><code>SearchableMemoryBackend</code> is a strict superset of <code>MemoryBackend</code>. There is no scenario where the base protocol is preferable on features alone; the base protocol exists so that lightweight backends can satisfy the contract without implementing search infrastructure.</p>
-<h2>Storage path comparison</h2>
-<table>
-<thead>
-<tr>
-<th>Dimension</th>
-<th>Redis short-term memory</th>
-<th>Claude file memory (<code>ClaudeMemoryLoader</code>)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Backing store</strong></td>
-<td>Redis instance (local or remote)</td>
-<td>Filesystem (<code>CLAUDE.md</code> files)</td>
-</tr>
-<tr>
-<td><strong>Persistence</strong></td>
-<td>TTL-controlled; evicted when TTL expires or Redis restarts</td>
-<td>Persists as long as the file exists; survives process restarts</td>
-</tr>
-<tr>
-<td><strong>Scope</strong></td>
-<td>Per-agent or shared across agents via <code>agent_id</code> param</td>
-<td>Per-project; scoped by <code>project_root</code> in <code>ClaudeMemoryConfig</code></td>
-</tr>
-<tr>
-<td><strong>Distributed</strong></td>
-<td>Yes — multiple agents share one Redis</td>
-<td>No — file reads are local to the process</td>
-</tr>
-<tr>
-<td><strong>Import depth</strong></td>
-<td>N/A</td>
-<td>Configurable via <code>max_import_depth</code> (default 5 levels)</td>
-</tr>
-<tr>
-<td><strong>File size guard</strong></td>
-<td>N/A</td>
-<td>Enforced via <code>max_file_size_bytes</code> (default 1 MB)</td>
-</tr>
-<tr>
-<td><strong>Entry point</strong></td>
-<td><code>get_redis_memory(url, use_mock)</code></td>
-<td><code>ClaudeMemoryLoader(config).load_all_memory(project_root)</code></td>
-</tr>
-<tr>
-<td><strong>Railway support</strong></td>
-<td><code>get_railway_redis()</code> — raises <code>OSError</code> if <code>REDIS_URL</code> is absent</td>
-<td>Not applicable</td>
-</tr>
-<tr>
-<td><strong>Availability check</strong></td>
-<td><code>is_redis_available()</code> — safe to call without importing Redis</td>
-<td>No equivalent; file presence is the availability signal</td>
-</tr>
-<tr>
-<td><strong>Typical data</strong></td>
-<td>Ephemeral agent state, session keys, short-lived values</td>
-<td>Project conventions, framework guidelines, reusable instructions</td>
-</tr>
-</tbody>
-</table>
-<h2>Feature matrix: enterprise control plane</h2>
-<p><code>MemoryControlPanel</code> adds an operational layer on top of Redis short-term memory. It has no equivalent for file-based memory.</p>
-<table>
-<thead>
-<tr>
-<th>Operation</th>
-<th>API method</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Redis lifecycle</td>
-<td><code>start_redis(verbose)</code>, <code>stop_redis()</code></td>
-<td>Only relevant when <code>ControlPanelConfig.auto_start_redis</code> is <code>True</code></td>
-</tr>
-<tr>
-<td>Health and stats</td>
-<td><code>health_check()</code>, <code>get_statistics()</code>, <code>status()</code></td>
-<td>Returns <code>MemoryStats</code> / <code>dict</code></td>
-</tr>
-<tr>
-<td>Pattern management</td>
-<td><code>list_patterns(classification, limit)</code>, <code>delete_pattern(pattern_id, user_id)</code></td>
-<td>Supports classification filtering</td>
-</tr>
-<tr>
-<td>Bulk operations</td>
-<td><code>clear_short_term(agent_id)</code>, <code>export_patterns(output_path, classification)</code></td>
-<td>Export writes to a file path</td>
-</tr>
-<tr>
-<td>HTTP API surface</td>
-<td><code>run_api_server(panel, host, port, api_key, ...)</code></td>
-<td>Includes rate limiting, SSL, and CORS via <code>RateLimiter</code> and <code>APIKeyAuth</code></td>
-</tr>
-</tbody>
-</table>
-<p>There is no <code>MemoryControlPanel</code> equivalent for <code>ClaudeMemoryLoader</code>. If you need audit logging, PII scrubbing (<code>PIIScrubber</code>), secrets detection (<code>SecretsDetector</code>), or access classification (<code>ClassificationRules</code>), those are Redis-path concerns.</p>
-<h2>Decision guide</h2>
-<p><strong>Use Redis short-term memory (<code>get_redis_memory</code>) when:</strong></p>
+<p>Reach for <strong>short-term</strong> working memory for transient state, **staging</p>
 <ul>
-<li>Multiple agents need to share state within or across sessions — <code>supports_distributed()</code> must return <code>True</code>.</li>
-<li>You need TTL-controlled eviction: stale values should disappear automatically.</li>
-<li>You are deploying to Railway and have a Redis add-on; use <code>get_railway_redis()</code>.</li>
-<li>You need the enterprise control plane: audit logging, pattern export, PII scrubbing, or the HTTP API.</li>
-<li>You want real-time coordination between agents (pub/sub via <code>supports_realtime()</code>).</li>
+<li>promotion** when a pattern should be reviewed before it becomes
+durable, and <strong>long-term patterns</strong> for knowledge you'll search later.
+<code>UnifiedMemory</code> exposes all three; <code>ClaudeMemoryLoader</code> is the separate
+static-context path.</li>
 </ul>
-<p><strong>Use <code>ClaudeMemoryLoader</code> when:</strong></p>
-<ul>
-<li>You need to inject static project context — coding conventions, framework rules, project-specific instructions — into an agent at startup.</li>
-<li>The content lives in <code>CLAUDE.md</code> files and is edited by humans, not written programmatically.</li>
-<li>You want zero infrastructure: no Redis, no network, no TTLs.</li>
-<li>Memory must survive process restarts without any explicit persistence code.</li>
-</ul>
-<p><strong>Use <code>SearchableMemoryBackend</code> (over <code>MemoryBackend</code>) when:</strong></p>
-<ul>
-<li>Your backend implementation supports semantic search and you want to expose <code>search</code>, <code>remember</code>, <code>promote</code>, and <code>prune</code> to callers.</li>
-<li>You are writing a backend adapter and the underlying store (e.g., a vector database) can satisfy the full contract.</li>
-</ul>
-<p><strong>Stick with the base <code>MemoryBackend</code> when:</strong></p>
-<ul>
-<li>You are implementing a lightweight backend (mock, in-memory, or test fixture) that does not need search.</li>
-<li>You want to enforce at the type level that a component only uses simple key-value operations.</li>
-</ul>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/memory/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>memory</code>, <code>storage</code></p>
 
   </article>
   <footer>

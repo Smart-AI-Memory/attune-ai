@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Memory cautions — warning</title>
-  <meta name="description" content="The memory subsystem spans short-term Redis storage, long-term `MemDocsStorage`, Claude memory file loading, and a security layer that classifies and encrypts patterns. The risks below reflect the poi" />
-  <meta property="og:title" content="Memory cautions — warning" />
-  <meta property="og:description" content="The memory subsystem spans short-term Redis storage, long-term `MemDocsStorage`, Claude memory file loading, and a security layer that classifies and encrypts patterns. The risks below reflect the poi" />
+  <title>Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `TypeError: __init__() missing 1 required positional argument: &#x27;user_id&#x27;` | `UnifiedMemory()` constructed without `user_id` | Pass `user_id` — " />
+  <meta property="og:title" content="Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `TypeError: __init__() missing 1 required positional argument: &#x27;user_id&#x27;` | `UnifiedMemory()` constructed without `user_id` | Pass `user_id` — " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/warning" />
   <style>
@@ -272,51 +272,76 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Memory cautions</h1>
-<h2>What to watch for</h2>
-<p>The memory subsystem spans short-term Redis storage, long-term <code>MemDocsStorage</code>, Claude memory file loading, and a security layer that classifies and encrypts patterns. The risks below reflect the points where these layers interact in ways that are easy to overlook.</p>
-<h2>Risk areas</h2>
-<h3>Secrets and PII stored without classification</h3>
-<p><code>MemDocsStorage</code> and <code>SecureMemDocsIntegration</code> apply classification rules automatically, but only when the content passes through their security layer. If you write directly to a <code>MemoryBackend</code> via <code>stash()</code>, the <code>SecretsDetector</code> and <code>PIIScrubber</code> are bypassed entirely. Content containing values that match <code>HEALTHCARE_KEYWORDS</code>, <code>FINANCIAL_KEYWORDS</code>, or <code>SENSITIVE_PATTERN_TYPES</code> will be stored in plaintext with no access controls.</p>
-<p><strong>Mitigation:</strong> Route writes that may contain sensitive content through <code>SecureMemDocsIntegration</code> rather than calling <code>stash()</code> directly on a backend.</p>
-<h3><code>get_redis_memory()</code> silently falls back to a mock backend</h3>
-<p><code>get_redis_memory()</code> accepts a <code>use_mock</code> parameter. When <code>use_mock</code> is <code>None</code> (the default), the function reads an environment variable to decide. In environments where that variable is unset or Redis is unreachable, it may silently return a mock backend. Code that assumes a real Redis connection — for example, anything relying on TTL expiry or pub/sub via <code>CHANNEL_SESSIONS</code> — will appear to work but will not persist data or coordinate across agents.</p>
-<p><strong>Mitigation:</strong> Call <code>is_redis_available()</code> before <code>get_redis_memory()</code> to confirm the Redis subsystem is reachable, or check <code>is_connected()</code> on the returned backend before proceeding.</p>
-<h3><code>get_railway_redis()</code> raises <code>OSError</code> when <code>REDIS_URL</code> is missing</h3>
-<p><code>get_railway_redis()</code> has no fallback. If <code>REDIS_URL</code> is not set in the environment, it raises <code>OSError</code> immediately with instructions to run <code>railway add --database redis</code>. This is intentional, but it means any startup path that calls this function without a guard will crash the process rather than degrading gracefully.</p>
-<p><strong>Mitigation:</strong> Check for <code>REDIS_URL</code> in the environment before calling <code>get_railway_redis()</code>, or wrap the call and handle <code>OSError</code> explicitly.</p>
-<h3><code>ClaudeMemoryLoader</code> follows imports up to <code>max_import_depth</code></h3>
-<p><code>ClaudeMemoryConfig</code> defaults to <code>max_import_depth: int = 5</code>. <code>ClaudeMemoryLoader.load_all_memory()</code> follows <code>@import</code> directives in CLAUDE.md files recursively to that depth. A deeply nested or circular import chain will not raise an error at depth 5 — it will silently truncate. If your project memory relies on files at depth 6 or beyond, those files will not be loaded and <code>get_loaded_files()</code> will not list them.</p>
-<p><strong>Mitigation:</strong> Keep import chains shallow. Call <code>get_loaded_files()</code> after <code>load_all_memory()</code> to verify the expected files were included.</p>
-<h3><code>max_file_size_bytes</code> silently skips large memory files</h3>
-<p><code>ClaudeMemoryConfig</code> defaults to <code>max_file_size_bytes: int = 1000000</code> (1 MB). Files that exceed this limit are skipped without raising an exception. A CLAUDE.md that grows past 1 MB through accumulated lessons or imports will be excluded from the loaded context with no visible indication.</p>
-<p><strong>Mitigation:</strong> Set <code>validate_files: bool = True</code> in your <code>ClaudeMemoryConfig</code> (the default) and monitor the size of memory files in long-running projects.</p>
-<h3><code>promote()</code> on <code>SearchableMemoryBackend</code> moves all session data</h3>
-<p><code>SearchableMemoryBackend.promote()</code> transfers memory from a session to long-term storage. The <code>session_id</code> parameter is optional; if omitted, the method uses a default session. Calling <code>promote()</code> without an explicit <code>session_id</code> in a multi-agent setup — where multiple agents share a Redis instance via <code>KEY_ACTIVE_AGENTS</code> — can promote the wrong session's data.</p>
-<p><strong>Mitigation:</strong> Always pass an explicit <code>session_id</code> to <code>promote()</code> when running more than one agent against the same backend.</p>
-<h3><code>clear_short_term()</code> on <code>MemoryControlPanel</code> is not scoped by default</h3>
-<p><code>MemoryControlPanel.clear_short_term()</code> accepts an <code>agent_id</code> parameter that defaults to <code>'admin'</code>. Passing the wrong <code>agent_id</code>, or relying on the default in a multi-agent deployment, will clear memory belonging to a different agent rather than the intended one.</p>
-<p><strong>Mitigation:</strong> Pass the specific <code>agent_id</code> whose short-term memory you intend to clear, and confirm with <code>get_statistics()</code> before and after.</p>
-<h2>How to avoid problems</h2>
-<ol>
-<li>
-<p><strong>Verify backend identity before writing.</strong> Call <code>is_connected()</code> on any <code>MemoryBackend</code> instance before writing session-critical data. For Railway deployments, confirm <code>REDIS_URL</code> is set before calling <code>get_railway_redis()</code>.</p>
-</li>
-<li>
-<p><strong>Route sensitive content through the security layer.</strong> Direct <code>stash()</code> calls bypass <code>SecretsDetector</code>, <code>PIIScrubber</code>, and <code>EncryptionManager</code>. Use <code>SecureMemDocsIntegration</code> for any content that might contain values matching the HEALTHCARE, FINANCIAL, or PROPRIETARY keyword sets.</p>
-</li>
-<li>
-<p><strong>Audit loaded memory files explicitly.</strong> After <code>load_all_memory()</code>, call <code>get_loaded_files()</code> to confirm your expected CLAUDE.md files are present. Missing files are almost always caused by <code>max_import_depth</code> or <code>max_file_size_bytes</code> limits.</p>
-</li>
-<li>
-<p><strong>Scope destructive operations to a specific agent.</strong> Pass explicit <code>agent_id</code> and <code>session_id</code> arguments to <code>clear_short_term()</code> and <code>promote()</code> to avoid operating on the wrong agent's data in shared-Redis deployments.</p>
-</li>
-</ol>
-<h2>Source files</h2>
+<h1>Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TypeError: __init__() missing 1 required positional argument: 'user_id'</code></td>
+<td><code>UnifiedMemory()</code> constructed without <code>user_id</code></td>
+<td>Pass <code>user_id</code> — it is required</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>persist_pattern</code> / <code>stage_pattern</code> returns <code>None</code></td>
+<td>Long-term storage unavailable (e.g. no writable <code>storage_dir</code>)</td>
+<td>Check <code>health_check()</code> / <code>get_backend_status()</code>; confirm storage config</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>retrieve</code> returns <code>None</code> for a key you stashed</td>
+<td>The entry expired (<code>ttl_seconds</code>) or the backend isn't persistent</td>
+<td>Re-stash with a longer TTL; check <code>supports_persistence()</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Cross-process reads don't see another process's writes</td>
+<td>The backend isn't distributed (in-process store)</td>
+<td>Check <code>supports_distributed()</code>; configure Redis</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>recall_pattern</code> returns <code>None</code> for a real id</td>
+<td><code>check_permissions=True</code> and the caller's <code>access_tier</code> is insufficient</td>
+<td>Use a higher <code>access_tier</code>, or pass <code>check_permissions=False</code> for trusted callers</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>A <code>SENSITIVE</code> pattern stored unencrypted</td>
+<td><code>encryption_enabled</code> is off in the config</td>
+<td>Enable encryption in <code>MemoryConfig</code></td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/memory/**</code></li>
+<li><strong><code>user_id</code> is required.</strong> <code>UnifiedMemory</code> is per-user; there is no
+zero-arg constructor.</li>
+<li><strong>Protocol vs. <code>UnifiedMemory</code> signatures differ.</strong> The protocol's
+<code>stash(key, value, ttl, agent_id)</code> is not <code>UnifiedMemory</code>'s
+<code>stash(key, value, ttl_seconds)</code> — don't conflate them.</li>
+<li><strong>Capabilities are deployment-dependent.</strong> Real-time, distribution,
+and persistence vary by backend — check before relying on them.</li>
 </ul>
-<p><strong>Tags:</strong> <code>memory</code>, <code>storage</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm construction: <code>UnifiedMemory(user_id=&quot;...&quot;)</code>.</li>
+<li><code>health_check()</code> / <code>get_backend_status()</code> for backend state.</li>
+<li><code>get_capabilities()</code> to confirm realtime/distributed/persistence.</li>
+<li>For a missing short-term key, check the TTL and
+<code>supports_persistence()</code>.</li>
+<li>For a missing pattern, check <code>pattern_id</code>, <code>access_tier</code>, and
+<code>check_permissions</code>.</li>
+</ol>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Note: memory — note</title>
-  <meta name="description" content="The memory subsystem (`src/attune/memory/`) covers short-term storage, semantic search, Claude Code memory file loading, Redis configuration, and an enterprise control panel. It is versioned at `2.2.0" />
-  <meta property="og:title" content="Note: memory — note" />
-  <meta property="og:description" content="The memory subsystem (`src/attune/memory/`) covers short-term storage, semantic search, Claude Code memory file loading, Redis configuration, and an enterprise control panel. It is versioned at `2.2.0" />
+  <title>Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security — note</title>
+  <meta name="description" content="Attune&#x27;s memory subsystem gives agents two tiers of storage behind one API: **short-term** working memory (fast, TTL-expiring, optionally Redis-backed) and **long-term** pattern memory (durable, searc" />
+  <meta property="og:title" content="Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security — note" />
+  <meta property="og:description" content="Attune&#x27;s memory subsystem gives agents two tiers of storage behind one API: **short-term** working memory (fast, TTL-expiring, optionally Redis-backed) and **long-term** pattern memory (durable, searc" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/note" />
   <style>
@@ -272,31 +272,107 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Note: memory</h1>
-<h2>Context</h2>
-<p>The memory subsystem (<code>src/attune/memory/</code>) covers short-term storage, semantic search, Claude Code memory file loading, Redis configuration, and an enterprise control panel. It is versioned at <code>2.2.0</code>.</p>
-<h2>Two-layer public surface</h2>
-<p>The package exposes two protocol classes that define the storage contract and a set of top-level functions that configure and instantiate backends.</p>
-<p><strong>Protocols</strong> (defined in <code>src/attune/memory/backend.py</code>):</p>
+<h1>Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security</h1>
+<h2>Overview</h2>
+<p>Attune's memory subsystem gives agents two tiers of storage behind one
+API: <strong>short-term</strong> working memory (fast, TTL-expiring, optionally
+Redis-backed) and <strong>long-term</strong> pattern memory (durable, searchable,
+classified). Security runs before anything durable is written —
+auto-classification, PII scrubbing, secrets detection, and at-rest
+encryption for sensitive patterns.</p>
+<p>The recommended entry point is <strong><code>UnifiedMemory</code></strong>, which composes both
+tiers and the security layer behind a single object. It is
+environment-aware: a <code>MemoryConfig</code> auto-detected from the environment
+chooses backends (in-process for development, Redis for production) so
+the same code runs in either. For custom backends, two protocols —
+<code>MemoryBackend</code> and <code>SearchableMemoryBackend</code> — define the short-term
+and searchable contracts.</p>
+<p>You reach memory these ways:</p>
 <ul>
-<li><code>MemoryBackend</code> — the base protocol for short-term memory backends. Every backend must implement <code>stash</code>, <code>retrieve</code>, <code>delete</code>, <code>keys</code>, <code>is_connected</code>, <code>get_stats</code>, <code>close</code>, <code>supports_realtime</code>, and <code>supports_distributed</code>.</li>
-<li><code>SearchableMemoryBackend</code> — extends <code>MemoryBackend</code> with semantic operations: <code>search</code>, <code>remember</code>, <code>promote</code>, <code>prune</code>, and <code>recent</code>.</li>
+<li>the Python API — <code>from attune.memory import UnifiedMemory</code> (the
+primary surface, documented throughout);</li>
+<li>the <strong><code>MemoryBackend</code> / <code>SearchableMemoryBackend</code> protocols</strong> (in
+<code>attune.memory.backend</code>) — for wiring a custom store (any class
+implementing the methods works);</li>
+<li><strong><code>ClaudeMemoryLoader</code></strong> — for static project context merged from
+<code>CLAUDE.md</code> files;</li>
+<li><strong><code>MemoryControlPanel</code></strong> — a runtime management surface for browsing,
+exporting, and clearing stored memory.</li>
 </ul>
-<p><strong>Configuration and factory functions</strong> (in <code>src/attune/memory/config.py</code> and <code>src/attune/memory/__init__.py</code>):</p>
+<p><code>UnifiedMemory</code>'s public methods are synchronous — call them directly,
+no <code>await</code>.</p>
+<h2>Concepts</h2>
+<h3>Two tiers, one object</h3>
+<p><code>UnifiedMemory(user_id=...)</code> exposes both tiers:</p>
 <ul>
-<li><code>is_redis_available()</code> — probes Redis availability without importing the Redis subsystem, making it safe to call at startup.</li>
-<li><code>parse_redis_url(url)</code> — converts a Redis URL string into a connection-parameter dict.</li>
-<li><code>get_redis_config()</code> — reads connection parameters from environment variables; marked legacy because it returns a plain dict rather than a typed config object.</li>
-<li><code>get_redis_memory(url, use_mock)</code> — the preferred factory; returns a <code>RedisShortTermMemory</code> instance configured from the environment.</li>
+<li><strong>Short-term</strong> — a keyed working store: <code>stash(key, value, ttl_seconds=None)</code> writes, <code>retrieve(key)</code> reads. Entries expire
+after <code>ttl_seconds</code> (or the config default). Backed by Redis when
+available, an in-process store otherwise.</li>
+<li><strong>Long-term</strong> — durable, searchable <strong>patterns</strong>:
+<code>persist_pattern(content, pattern_type, ...)</code> stores one,
+<code>recall_pattern(pattern_id)</code> reads it back, and <code>search_patterns( query=..., limit=10)</code> queries by content. Patterns can be <strong>staged</strong>
+first (<code>stage_pattern(...)</code>) and later <strong>promoted</strong> to durable
+storage (<code>promote_pattern(staged_id)</code>).</li>
 </ul>
-<p>The functions and classes are designed to compose: factory functions typically return objects that satisfy <code>MemoryBackend</code> or <code>SearchableMemoryBackend</code>, and backend methods mirror the top-level function signatures.</p>
-<h2>Claude Code memory integration</h2>
-<p><code>ClaudeMemoryLoader</code> (in <code>src/attune/memory/claude_memory.py</code>) loads and caches <code>CLAUDE.md</code> files. Its behavior is controlled by <code>ClaudeMemoryConfig</code>, which lets you enable or disable each memory scope (<code>load_enterprise</code>, <code>load_user</code>, <code>load_project</code>), cap file size with <code>max_file_size_bytes</code> (default 1 000 000 bytes), and limit import recursion with <code>max_import_depth</code> (default 5). Each loaded file is represented as a <code>MemoryFile</code> dataclass carrying its <code>level</code>, <code>path</code>, <code>content</code>, <code>imports</code>, and <code>load_order</code>.</p>
-<p><code>create_default_project_memory(project_root, framework)</code> writes a starter <code>.claude/CLAUDE.md</code> file into a project tree. The injected block is delimited by the markers <code>&lt;!-- attune-lessons-start --&gt;</code> and <code>&lt;!-- attune-lessons-end --&gt;</code>.</p>
-<h2>Enterprise control panel</h2>
-<p><code>MemoryControlPanel</code> (configured via <code>ControlPanelConfig</code>) provides operational management: starting and stopping Redis, retrieving statistics via <code>get_statistics()</code>, listing or deleting stored patterns, clearing short-term memory with <code>clear_short_term()</code>, and exporting patterns with <code>export_patterns()</code>. <code>run_api_server()</code> exposes these operations over HTTP with optional API-key authentication (<code>APIKeyAuth</code>), rate limiting (<code>RateLimiter</code>), and TLS.</p>
-<h2>Railway deployment</h2>
-<p><code>get_railway_redis()</code> is a convenience factory for Railway-hosted deployments. It raises <code>OSError</code> if <code>REDIS_URL</code> is not set in the environment, with a message directing you to run <code>railway add --database redis</code>.</p>
+<h3>Construction is environment-aware</h3>
+<p><code>UnifiedMemory</code> takes a required <code>user_id</code>, an optional <code>config</code>
+(<code>MemoryConfig</code>, default auto-detected from the environment), and an
+optional <code>access_tier</code> (<code>AccessTier</code>, default <code>CONTRIBUTOR</code>).
+<code>MemoryConfig.from_environment()</code> reads <code>ATTUNE_</code>-prefixed variables
+(<code>EMPATHY_</code> also accepted) — <code>ATTUNE_ENV</code> selects <code>development</code>,
+<code>staging</code>, or <code>production</code>, which in turn drives Redis and storage
+defaults. Construct one with explicit settings via
+<code>UnifiedMemory(user_id=&quot;me&quot;, config=MemoryConfig(...))</code>.</p>
+<h3>Security runs before durable writes</h3>
+<p>When you persist a pattern, classification and scrubbing run first.
+<code>auto_classify=True</code> (the default) assigns a <code>Classification</code> —
+<code>PUBLIC</code>, <code>INTERNAL</code>, or <code>SENSITIVE</code> — from the content and pattern
+type; PII is scrubbed and credential-like content is flagged before
+storage; <code>SENSITIVE</code> patterns are encrypted at rest. You can pass an
+explicit <code>classification</code> to override the auto-assignment. Reads honor
+the caller's <code>access_tier</code> unless you set <code>check_permissions=False</code> on
+<code>recall_pattern</code>.</p>
+<h3>Capabilities tell you what the backend can do</h3>
+<p>A deployment's backend may or may not support real-time updates,
+distribution across processes, or durable persistence. <code>UnifiedMemory</code>
+surfaces this: <code>get_capabilities()</code> returns a <code>dict[str, bool]</code>, and
+<code>supports_realtime()</code>, <code>supports_distributed()</code>, and
+<code>supports_persistence()</code> answer individually. <code>health_check()</code> and
+<code>get_backend_status()</code> report runtime state. Check capabilities before
+relying on, say, cross-process coordination.</p>
+<h3>Custom backends implement a protocol</h3>
+<p><code>MemoryBackend</code> is a <code>@runtime_checkable</code> <code>Protocol</code> for short-term
+stores: <code>stash(key, value, ttl, agent_id)</code>, <code>retrieve(key, agent_id)</code>,
+<code>delete(key)</code>, <code>keys(pattern)</code>, <code>is_connected()</code>, <code>get_stats()</code>,
+<code>close()</code>, plus <code>supports_realtime()</code> / <code>supports_distributed()</code>.
+<code>SearchableMemoryBackend</code> extends it with <code>search(query, limit)</code>,
+<code>remember(content, ...)</code>, <code>promote(session_id)</code>, <code>prune(max_age_days)</code>,
+and <code>recent(limit)</code>. Any class implementing the methods satisfies the
+protocol — no base class to inherit. (Note these protocol signatures —
+<code>stash(key, value, ttl, agent_id)</code> — differ from <code>UnifiedMemory</code>'s
+own <code>stash(key, value, ttl_seconds)</code>.)</p>
+<h3>Static project context</h3>
+<p><code>ClaudeMemoryLoader</code> resolves <code>CLAUDE.md</code> files at enterprise, user,
+and project levels and merges them via its <code>load_all_memory()</code> method.
+Which levels load is controlled by the <code>MemoryConfig</code> <strong>fields</strong>
+<code>load_enterprise_memory</code> / <code>load_user_memory</code> / <code>load_project_memory</code>
+(not loader methods). This is the static counterpart to the read/write
+tiers above.</p>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Depend on the documented public surface.</strong> The supported API is
+<code>UnifiedMemory</code>, <code>MemoryConfig</code>, and the security/loader classes
+re-exported from <code>attune.memory</code>, plus the <code>MemoryBackend</code> /
+<code>SearchableMemoryBackend</code> protocols from <code>attune.memory.backend</code>.
+Submodule internals (<code>mixins/</code>, <code>short_term/</code>, <code>long_term_*</code>) may
+change.</li>
+<li><strong>Let classification run.</strong> Keep <code>auto_classify=True</code> unless you have
+a reason to set the level yourself.</li>
+<li><strong>Check capabilities, don't assume.</strong> Use <code>get_capabilities()</code> /
+<code>supports_*()</code> before relying on real-time or cross-process behavior.</li>
+<li><strong>Close when done.</strong> Call <code>close()</code> (or <code>save()</code>) to flush and
+release the backend.</li>
+</ul>
 
   </article>
   <footer>

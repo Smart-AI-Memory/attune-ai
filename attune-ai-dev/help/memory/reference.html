@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Memory reference — reference</title>
-  <meta name="description" content="Layered storage API for Attune AI agents. Use `MemoryBackend` and `SearchableMemoryBackend` to write short-term data and recall it by semantic query. Use `UnifiedMemory` to combine short-term Redis st" />
-  <meta property="og:title" content="Memory reference — reference" />
-  <meta property="og:description" content="Layered storage API for Attune AI agents. Use `MemoryBackend` and `SearchableMemoryBackend` to write short-term data and recall it by semantic query. Use `UnifiedMemory` to combine short-term Redis st" />
+  <title>Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security — reference</title>
+  <meta name="description" content="The recommended surface is `UnifiedMemory` from `attune.memory`. The security/loader classes (`Classification`, `PIIScrubber`, `SecretsDetector`, `AuditLogger`, `ClaudeMemoryLoader`, `MemoryControlPan" />
+  <meta property="og:title" content="Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security — reference" />
+  <meta property="og:description" content="The recommended surface is `UnifiedMemory` from `attune.memory`. The security/loader classes (`Classification`, `PIIScrubber`, `SecretsDetector`, `AuditLogger`, `ClaudeMemoryLoader`, `MemoryControlPan" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/reference" />
   <style>
@@ -272,1333 +272,216 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Memory reference</h1>
-<p>Layered storage API for Attune AI agents. Use <code>MemoryBackend</code> and <code>SearchableMemoryBackend</code> to write short-term data and recall it by semantic query. Use <code>UnifiedMemory</code> to combine short-term Redis storage with long-term MemDocs pattern storage in a single interface. Use <code>ClaudeMemoryLoader</code> to inject project-level CLAUDE.md files into agent context. Use <code>MemoryControlPanel</code> to administer Redis, inspect patterns, and export audit data. The security subpackage provides PII scrubbing, secrets detection, and audit logging. Version: <code>2.2.0</code>.</p>
-<h2>Classes</h2>
+<h1>Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security</h1>
+<h2>Reference</h2>
+<p>The recommended surface is <code>UnifiedMemory</code> from <code>attune.memory</code>. The
+security/loader classes (<code>Classification</code>, <code>PIIScrubber</code>,
+<code>SecretsDetector</code>, <code>AuditLogger</code>, <code>ClaudeMemoryLoader</code>,
+<code>MemoryControlPanel</code>) are re-exported from <code>attune.memory</code> too; the
+backend <strong>protocols</strong> live in <code>attune.memory.backend</code> (they are not
+re-exported from the package root).</p>
+<h3><code>UnifiedMemory</code> — <code>attune.memory</code></h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
-<th>File</th>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>UnifiedMemory(user_id, config=MemoryConfig.from_environment(), access_tier=AccessTier.CONTRIBUTOR)</code></td>
+<td>Construct the unified memory. <code>user_id</code> is required.</td>
+</tr>
+<tr>
+<td><code>stash(key, value, ttl_seconds=None) -&gt; bool</code></td>
+<td>Write short-term working memory.</td>
+</tr>
+<tr>
+<td><code>retrieve(key) -&gt; Any | None</code></td>
+<td>Read short-term memory; <code>None</code> if missing/expired.</td>
+</tr>
+<tr>
+<td><code>persist_pattern(content, pattern_type, classification=None, auto_classify=True, metadata=None) -&gt; dict | None</code></td>
+<td>Store a durable pattern (classified + scrubbed first).</td>
+</tr>
+<tr>
+<td><code>recall_pattern(pattern_id, check_permissions=True, use_cache=True) -&gt; dict | None</code></td>
+<td>Read a durable pattern by id.</td>
+</tr>
+<tr>
+<td><code>search_patterns(query=None, pattern_type=None, classification=None, limit=10) -&gt; list[dict]</code></td>
+<td>Query durable patterns by content/type/classification.</td>
+</tr>
+<tr>
+<td><code>stage_pattern(pattern_data, pattern_type=&quot;general&quot;, ttl_hours=24) -&gt; str | None</code></td>
+<td>Stage a candidate pattern; returns a staged id.</td>
+</tr>
+<tr>
+<td><code>promote_pattern(staged_pattern_id, classification=None, auto_classify=True) -&gt; dict | None</code></td>
+<td>Promote a staged pattern to durable storage.</td>
+</tr>
+<tr>
+<td><code>get_staged_patterns() -&gt; list[dict]</code></td>
+<td>List pending staged patterns.</td>
+</tr>
+<tr>
+<td><code>get_capabilities() -&gt; dict[str, bool]</code></td>
+<td>Backend capability flags.</td>
+</tr>
+<tr>
+<td><code>supports_realtime() / supports_distributed() / supports_persistence() -&gt; bool</code></td>
+<td>Individual capability checks.</td>
+</tr>
+<tr>
+<td><code>health_check() -&gt; dict</code> / <code>get_backend_status() -&gt; dict</code></td>
+<td>Runtime state.</td>
+</tr>
+<tr>
+<td><code>set_handoff(situation, background, assessment, recommendation, **extra)</code></td>
+<td>Record an SBAR handoff.</td>
+</tr>
+<tr>
+<td><code>generate_compact_state() -&gt; str</code> / <code>export_to_claude_md(path=None) -&gt; Path</code></td>
+<td>Snapshot state; write it to a CLAUDE.md-style file.</td>
+</tr>
+<tr>
+<td><code>clear_pattern_cache() -&gt; int</code> / <code>save() -&gt; None</code> / <code>close() -&gt; None</code></td>
+<td>Cache and lifecycle management.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>MemoryConfig</code> — selected fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>environment</code></td>
+<td><code>Environment.DEVELOPMENT</code></td>
+<td><code>development</code> / <code>staging</code> / <code>production</code>.</td>
+</tr>
+<tr>
+<td><code>redis_url</code> / <code>redis_host</code> / <code>redis_port</code></td>
+<td><code>None</code> / <code>localhost</code> / <code>6379</code></td>
+<td>Short-term backend coordinates.</td>
+</tr>
+<tr>
+<td><code>redis_mock</code> / <code>redis_auto_start</code> / <code>redis_required</code></td>
+<td><code>False</code> / — / —</td>
+<td>In-process mock, auto-start, or require Redis.</td>
+</tr>
+<tr>
+<td><code>default_ttl_seconds</code></td>
+<td>—</td>
+<td>Default short-term expiry.</td>
+</tr>
+<tr>
+<td><code>storage_dir</code></td>
+<td>—</td>
+<td>Long-term pattern storage directory.</td>
+</tr>
+<tr>
+<td><code>encryption_enabled</code></td>
+<td>—</td>
+<td>Encrypt <code>SENSITIVE</code> patterns at rest.</td>
+</tr>
+<tr>
+<td><code>load_enterprise_memory</code> / <code>load_user_memory</code> / <code>load_project_memory</code></td>
+<td>—</td>
+<td>Which <code>CLAUDE.md</code> levels <code>ClaudeMemoryLoader</code> loads.</td>
+</tr>
+</tbody>
+</table>
+<p>Build one from the environment with <code>MemoryConfig.from_environment()</code>.</p>
+<h3>Backend protocols — <code>attune.memory.backend</code></h3>
+<table>
+<thead>
+<tr>
+<th>Protocol</th>
+<th>Methods</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>MemoryBackend</code></td>
-<td>Protocol for short-term memory backends.</td>
-<td><code>src/attune/memory/backend.py</code></td>
+<td><code>stash(key, value, ttl, agent_id)</code>, <code>retrieve(key, agent_id)</code>, <code>delete(key)</code>, <code>keys(pattern)</code>, <code>is_connected()</code>, <code>get_stats()</code>, <code>close()</code>, <code>supports_realtime()</code>, <code>supports_distributed()</code>.</td>
 </tr>
 <tr>
 <td><code>SearchableMemoryBackend</code></td>
-<td>Extended protocol for backends with semantic search.</td>
-<td><code>src/attune/memory/backend.py</code></td>
+<td>Extends <code>MemoryBackend</code> with <code>search(query, limit)</code>, <code>remember(content, ...)</code>, <code>promote(session_id)</code>, <code>prune(max_age_days)</code>, <code>recent(limit)</code>.</td>
 </tr>
+</tbody>
+</table>
+<p>Both are <code>@runtime_checkable</code> — any class implementing the methods
+satisfies the protocol.</p>
+<h3>Security and loader surface — <code>attune.memory</code></h3>
+<table>
+<thead>
 <tr>
-<td><code>ClaudeMemoryConfig</code></td>
-<td>Configuration for Claude memory integration.</td>
-<td><code>src/attune/memory/claude_memory.py</code></td>
+<th>Symbol</th>
+<th>Role</th>
 </tr>
-<tr>
-<td><code>MemoryFile</code></td>
-<td>Represents a loaded CLAUDE.md memory file.</td>
-<td><code>src/attune/memory/claude_memory.py</code></td>
-</tr>
-<tr>
-<td><code>ClaudeMemoryLoader</code></td>
-<td>Loads and manages Claude Code memory files (CLAUDE.md).</td>
-<td><code>src/attune/memory/claude_memory.py</code></td>
-</tr>
-<tr>
-<td><code>ControlPanelConfig</code></td>
-<td>Configuration for the memory control panel.</td>
-<td><code>src/attune/memory/control_panel.py</code></td>
-</tr>
-<tr>
-<td><code>MemoryControlPanel</code></td>
-<td>Enterprise control panel for Empathy memory management.</td>
-<td><code>src/attune/memory/control_panel.py</code></td>
-</tr>
-<tr>
-<td><code>MemoryAPIHandler</code></td>
-<td>HTTP request handler for the Memory Control Panel API.</td>
-<td><code>src/attune/memory/control_panel_api.py</code></td>
-</tr>
-<tr>
-<td><code>RateLimiter</code></td>
-<td>Simple in-memory rate limiter by IP address.</td>
-<td><code>src/attune/memory/control_panel_support.py</code></td>
-</tr>
-<tr>
-<td><code>APIKeyAuth</code></td>
-<td>Simple API key authentication.</td>
-<td><code>src/attune/memory/control_panel_support.py</code></td>
-</tr>
-<tr>
-<td><code>MemoryStats</code></td>
-<td>Statistics for the memory system.</td>
-<td><code>src/attune/memory/control_panel_support.py</code></td>
-</tr>
-<tr>
-<td><code>CrossSessionCoordinator</code></td>
-<td>Coordinator for cross-session agent communication.</td>
-<td><code>src/attune/memory/cross_session/coordinator.py</code></td>
-</tr>
-<tr>
-<td><code>SessionType</code></td>
-<td>Type of session/agent.</td>
-<td><code>src/attune/memory/cross_session/models.py</code></td>
-</tr>
-<tr>
-<td><code>ConflictStrategy</code></td>
-<td>Strategy for resolving conflicts between agents.</td>
-<td><code>src/attune/memory/cross_session/models.py</code></td>
-</tr>
-<tr>
-<td><code>SessionInfo</code></td>
-<td>Information about an active session.</td>
-<td><code>src/attune/memory/cross_session/models.py</code></td>
-</tr>
-<tr>
-<td><code>ConflictResult</code></td>
-<td>Result of a conflict resolution.</td>
-<td><code>src/attune/memory/cross_session/models.py</code></td>
-</tr>
-<tr>
-<td><code>BackgroundService</code></td>
-<td>Background service daemon for cross-session coordination.</td>
-<td><code>src/attune/memory/cross_session/service.py</code></td>
-</tr>
-<tr>
-<td><code>EdgeType</code></td>
-<td>Types of relationships between memory-graph nodes.</td>
-<td><code>src/attune/memory/edges.py</code></td>
-</tr>
-<tr>
-<td><code>Edge</code></td>
-<td>An edge connecting two nodes in the memory graph.</td>
-<td><code>src/attune/memory/edges.py</code></td>
-</tr>
-<tr>
-<td><code>EncryptionManager</code></td>
-<td>Manages encryption and decryption for <code>SENSITIVE</code> patterns.</td>
-<td><code>src/attune/memory/encryption.py</code></td>
-</tr>
-<tr>
-<td><code>FeatureStatus</code></td>
-<td>Status of an optional memory feature.</td>
-<td><code>src/attune/memory/features.py</code></td>
-</tr>
-<tr>
-<td><code>FeatureInfo</code></td>
-<td>Information about a memory feature.</td>
-<td><code>src/attune/memory/features.py</code></td>
-</tr>
-<tr>
-<td><code>MemoryFeatures</code></td>
-<td>Check availability of memory subsystem features.</td>
-<td><code>src/attune/memory/features.py</code></td>
-</tr>
-<tr>
-<td><code>FileSessionMemory</code></td>
-<td>File-based session memory with persistence.</td>
-<td><code>src/attune/memory/file_session.py</code></td>
-</tr>
-<tr>
-<td><code>FileSessionConfig</code></td>
-<td>Configuration for file-based session memory.</td>
-<td><code>src/attune/memory/file_session_models.py</code></td>
-</tr>
-<tr>
-<td><code>WorkingEntry</code></td>
-<td>Entry in working memory.</td>
-<td><code>src/attune/memory/file_session_models.py</code></td>
-</tr>
-<tr>
-<td><code>StagedPatternFile</code></td>
-<td>Pattern staged for validation (file-based).</td>
-<td><code>src/attune/memory/file_session_models.py</code></td>
-</tr>
-<tr>
-<td><code>SessionState</code></td>
-<td>Complete state of a session.</td>
-<td><code>src/attune/memory/file_session_models.py</code></td>
-</tr>
-<tr>
-<td><code>PatternStagingMixin</code></td>
-<td>Mixin providing pattern staging operations.</td>
-<td><code>src/attune/memory/file_session_patterns.py</code></td>
-</tr>
-<tr>
-<td><code>PersistenceMixin</code></td>
-<td>Mixin providing session persistence operations.</td>
-<td><code>src/attune/memory/file_session_persistence.py</code></td>
-</tr>
-<tr>
-<td><code>FileStashBackend</code></td>
-<td>Searchable, zero-infrastructure session stash backed by a local JSONL file.</td>
-<td><code>src/attune/memory/file_stash.py</code></td>
-</tr>
-<tr>
-<td><code>MemoryGraph</code></td>
-<td>Knowledge graph for cross-workflow intelligence.</td>
-<td><code>src/attune/memory/graph.py</code></td>
-</tr>
-<tr>
-<td><code>LessonsManager</code></td>
-<td>Manages lessons learned from previous sessions.</td>
-<td><code>src/attune/memory/lessons.py</code></td>
-</tr>
-<tr>
-<td><code>SecureMemDocsIntegration</code></td>
-<td>Secure integration between Claude Memory and MemDocs.</td>
-<td><code>src/attune/memory/long_term_integration.py</code></td>
-</tr>
-<tr>
-<td><code>PatternOperationsMixin</code></td>
-<td>Mixin providing pattern list, delete, and statistics operations.</td>
-<td><code>src/attune/memory/long_term_operations.py</code></td>
-</tr>
-<tr>
-<td><code>PatternPipelineMixin</code></td>
-<td>Mixin providing store/retrieve pipeline helpers.</td>
-<td><code>src/attune/memory/long_term_pipelines.py</code></td>
-</tr>
+</thead>
+<tbody>
 <tr>
 <td><code>Classification</code></td>
-<td>Three-tier classification system for MemDocs patterns.</td>
-<td><code>src/attune/memory/long_term_types.py</code></td>
-</tr>
-<tr>
-<td><code>ClassificationRules</code></td>
-<td>Security rules for each classification level.</td>
-<td><code>src/attune/memory/long_term_types.py</code></td>
-</tr>
-<tr>
-<td><code>PatternMetadata</code></td>
-<td>Metadata for stored MemDocs patterns.</td>
-<td><code>src/attune/memory/long_term_types.py</code></td>
-</tr>
-<tr>
-<td><code>SecurePattern</code></td>
-<td>Represents a securely stored pattern.</td>
-<td><code>src/attune/memory/long_term_types.py</code></td>
-</tr>
-<tr>
-<td><code>SecurityError</code></td>
-<td>Raised when a security policy is violated.</td>
-<td><code>src/attune/memory/long_term_types.py</code></td>
-</tr>
-<tr>
-<td><code>MemoryPermissionError</code></td>
-<td>Raised when access is denied.</td>
-<td><code>src/attune/memory/long_term_types.py</code></td>
-</tr>
-<tr>
-<td><code>AttuneMemoryTool</code></td>
-<td>Anthropic Memory tool backed by an attune <code>MemoryBackend</code>.</td>
-<td><code>src/attune/memory/memory_tool.py</code></td>
-</tr>
-<tr>
-<td><code>BackendInitMixin</code></td>
-<td>Mixin providing backend initialization for <code>UnifiedMemory</code>.</td>
-<td><code>src/attune/memory/mixins/backend_init_mixin.py</code></td>
-</tr>
-<tr>
-<td><code>CapabilitiesMixin</code></td>
-<td>Mixin providing capability detection and health checks for <code>UnifiedMemory</code>.</td>
-<td><code>src/attune/memory/mixins/capabilities_mixin.py</code></td>
-</tr>
-<tr>
-<td><code>HandoffAndExportMixin</code></td>
-<td>Mixin providing session handoff and export for <code>UnifiedMemory</code>.</td>
-<td><code>src/attune/memory/mixins/handoff_mixin.py</code></td>
-</tr>
-<tr>
-<td><code>LifecycleMixin</code></td>
-<td>Mixin providing lifecycle management for <code>UnifiedMemory</code>.</td>
-<td><code>src/attune/memory/mixins/lifecycle_mixin.py</code></td>
-</tr>
-<tr>
-<td><code>LongTermOperationsMixin</code></td>
-<td>Mixin providing long-term memory operations for <code>UnifiedMemory</code>.</td>
-<td><code>src/attune/memory/mixins/long_term_mixin.py</code></td>
-</tr>
-<tr>
-<td><code>PatternPromotionMixin</code></td>
-<td>Mixin providing pattern promotion for <code>UnifiedMemory</code>.</td>
-<td><code>src/attune/memory/mixins/promotion_mixin.py</code></td>
-</tr>
-<tr>
-<td><code>ShortTermOperationsMixin</code></td>
-<td>Mixin providing short-term memory operations for <code>UnifiedMemory</code>.</td>
-<td><code>src/attune/memory/mixins/short_term_mixin.py</code></td>
-</tr>
-<tr>
-<td><code>NodeType</code></td>
-<td>Types of nodes in the memory graph.</td>
-<td><code>src/attune/memory/nodes.py</code></td>
-</tr>
-<tr>
-<td><code>Node</code></td>
-<td>A node in the memory graph.</td>
-<td><code>src/attune/memory/nodes.py</code></td>
-</tr>
-<tr>
-<td><code>BugNode</code></td>
-<td>Specialized node for bugs.</td>
-<td><code>src/attune/memory/nodes.py</code></td>
-</tr>
-<tr>
-<td><code>VulnerabilityNode</code></td>
-<td>Specialized node for security vulnerabilities.</td>
-<td><code>src/attune/memory/nodes.py</code></td>
-</tr>
-<tr>
-<td><code>PerformanceNode</code></td>
-<td>Specialized node for performance issues.</td>
-<td><code>src/attune/memory/nodes.py</code></td>
-</tr>
-<tr>
-<td><code>PatternNode</code></td>
-<td>Specialized node for code patterns.</td>
-<td><code>src/attune/memory/nodes.py</code></td>
-</tr>
-<tr>
-<td><code>PersonalMemory</code></td>
-<td>Store and retrieve personal cross-session memory.</td>
-<td><code>src/attune/memory/personal.py</code></td>
-</tr>
-<tr>
-<td><code>RedisDetectionResult</code></td>
-<td>Result of Redis auto-detection.</td>
-<td><code>src/attune/memory/redis_auto_detect.py</code></td>
-</tr>
-<tr>
-<td><code>RedisAutoDetector</code></td>
-<td>Auto-detect Redis availability and manage user preferences.</td>
-<td><code>src/attune/memory/redis_auto_detect.py</code></td>
-</tr>
-<tr>
-<td><code>RedisStartMethod</code></td>
-<td>Methods for starting Redis, in order of preference.</td>
-<td><code>src/attune/memory/redis_bootstrap.py</code></td>
-</tr>
-<tr>
-<td><code>RedisStatus</code></td>
-<td>Status of a Redis connection or startup attempt.</td>
-<td><code>src/attune/memory/redis_bootstrap.py</code></td>
-</tr>
-<tr>
-<td><code>AuditLogger</code></td>
-<td>Comprehensive audit logging for Attune AI.</td>
-<td><code>src/attune/memory/security/audit_logger.py</code></td>
-</tr>
-<tr>
-<td><code>AuditEvent</code></td>
-<td>Represents a single audit event.</td>
-<td><code>src/attune/memory/security/events.py</code></td>
-</tr>
-<tr>
-<td><code>SecurityViolation</code></td>
-<td>Represents a security policy violation.</td>
-<td><code>src/attune/memory/security/events.py</code></td>
-</tr>
-<tr>
-<td><code>AuditLogMethodsMixin</code></td>
-<td>Mixin that adds event-specific logging methods to <code>AuditLogger</code>.</td>
-<td><code>src/attune/memory/security/log_methods.py</code></td>
-</tr>
-<tr>
-<td><code>PIIDetection</code></td>
-<td>Details about a detected PII instance.</td>
-<td><code>src/attune/memory/security/pii_scrubber.py</code></td>
-</tr>
-<tr>
-<td><code>PIIPattern</code></td>
-<td>Definition of a PII detection pattern.</td>
-<td><code>src/attune/memory/security/pii_scrubber.py</code></td>
+<td><code>PUBLIC</code> / <code>INTERNAL</code> / <code>SENSITIVE</code>.</td>
 </tr>
 <tr>
 <td><code>PIIScrubber</code></td>
-<td>Comprehensive PII detection and scrubbing system.</td>
-<td><code>src/attune/memory/security/pii_scrubber.py</code></td>
-</tr>
-<tr>
-<td><code>AuditQueryMixin</code></td>
-<td>Mixin that adds query capabilities to <code>AuditLogger</code>.</td>
-<td><code>src/attune/memory/security/query.py</code></td>
-</tr>
-<tr>
-<td><code>AuditReportMixin</code></td>
-<td>Mixin that adds reporting capabilities to <code>AuditLogger</code>.</td>
-<td><code>src/attune/memory/security/reports.py</code></td>
+<td>Strips personally identifiable information before storage.</td>
 </tr>
 <tr>
 <td><code>SecretsDetector</code></td>
-<td>Detects secrets using pattern matching and entropy analysis.</td>
-<td><code>src/attune/memory/security/secrets_detector.py</code></td>
+<td>Flags credential-like content.</td>
 </tr>
 <tr>
-<td><code>SecretType</code></td>
-<td>Types of secrets that can be detected.</td>
-<td><code>src/attune/memory/security/secrets_types.py</code></td>
+<td><code>AuditLogger</code></td>
+<td>Records writes/reads as <code>AuditEvent</code>s for compliance.</td>
 </tr>
 <tr>
-<td><code>Severity</code></td>
-<td>Severity levels for secret detections.</td>
-<td><code>src/attune/memory/security/secrets_types.py</code></td>
+<td><code>ClaudeMemoryLoader</code></td>
+<td>Resolves + merges <code>CLAUDE.md</code> levels; entry point <code>load_all_memory()</code>.</td>
 </tr>
 <tr>
-<td><code>SecretDetection</code></td>
-<td>Metadata about a detected secret.</td>
-<td><code>src/attune/memory/security/secrets_types.py</code></td>
-</tr>
-<tr>
-<td><code>SessionStashEntry</code></td>
-<td>A single raw cross-session finding awaiting recall or promotion.</td>
-<td><code>src/attune/memory/session_stash.py</code></td>
-</tr>
-<tr>
-<td><code>BaseOperations</code></td>
-<td>CRUD operations and connection management for short-term memory.</td>
-<td><code>src/attune/memory/short_term/base.py</code></td>
-</tr>
-<tr>
-<td><code>BatchOperations</code></td>
-<td>Batch operations using Redis pipelines.</td>
-<td><code>src/attune/memory/short_term/batch.py</code></td>
-</tr>
-<tr>
-<td><code>CacheManager</code></td>
-<td>Local LRU cache manager for two-tier caching.</td>
-<td><code>src/attune/memory/short_term/caching.py</code></td>
-</tr>
-<tr>
-<td><code>ConflictNegotiation</code></td>
-<td>Conflict context and resolution operations.</td>
-<td><code>src/attune/memory/short_term/conflicts.py</code></td>
-</tr>
-<tr>
-<td><code>CrossSessionManager</code></td>
-<td>Cross-session coordination operations.</td>
-<td><code>src/attune/memory/short_term/cross_session.py</code></td>
-</tr>
-<tr>
-<td><code>RedisShortTermMemory</code></td>
-<td>Facade composing all short-term memory operations.</td>
-<td><code>src/attune/memory/short_term/facade.py</code></td>
-</tr>
-<tr>
-<td><code>Pagination</code></td>
-<td>SCAN-based pagination operations.</td>
-<td><code>src/attune/memory/short_term/pagination.py</code></td>
-</tr>
-<tr>
-<td><code>PatternStaging</code></td>
-<td>Pattern staging lifecycle operations.</td>
-<td><code>src/attune/memory/short_term/patterns.py</code></td>
-</tr>
-<tr>
-<td><code>PubSubManager</code></td>
-<td>Real-time publish/subscribe operations.</td>
-<td><code>src/attune/memory/short_term/pubsub.py</code></td>
-</tr>
-<tr>
-<td><code>QueueManager</code></td>
-<td>Redis list operations for task queues.</td>
-<td><code>src/attune/memory/short_term/queues.py</code></td>
-</tr>
-<tr>
-<td><code>DataSanitizer</code></td>
-<td>Data sanitization for short-term memory.</td>
-<td><code>src/attune/memory/short_term/security.py</code></td>
-</tr>
-<tr>
-<td><code>SessionManager</code></td>
-<td>Collaboration session operations.</td>
-<td><code>src/attune/memory/short_term/sessions.py</code></td>
-</tr>
-<tr>
-<td><code>StreamManager</code></td>
-<td>Redis Streams operations for audit trails and event logs.</td>
-<td><code>src/attune/memory/short_term/streams.py</code></td>
-</tr>
-<tr>
-<td><code>TimelineManager</code></td>
-<td>Redis sorted set operations for timeline queries.</td>
-<td><code>src/attune/memory/short_term/timelines.py</code></td>
-</tr>
-<tr>
-<td><code>TransactionManager</code></td>
-<td>Atomic operations using Redis transactions.</td>
-<td><code>src/attune/memory/short_term/transactions.py</code></td>
-</tr>
-<tr>
-<td><code>WorkingMemory</code></td>
-<td>Working memory operations for agent data storage.</td>
-<td><code>src/attune/memory/short_term/working.py</code></td>
-</tr>
-<tr>
-<td><code>LongTermMemory</code></td>
-<td>Simplified long-term persistent storage interface.</td>
-<td><code>src/attune/memory/simple_storage.py</code></td>
-</tr>
-<tr>
-<td><code>MemDocsStorage</code></td>
-<td>Mock/simple MemDocs storage backend.</td>
-<td><code>src/attune/memory/storage_backend.py</code></td>
-</tr>
-<tr>
-<td><code>AgentContext</code></td>
-<td>Compact context package for sub-agent handoff.</td>
-<td><code>src/attune/memory/summary_index.py</code></td>
-</tr>
-<tr>
-<td><code>ConversationSummaryIndex</code></td>
-<td>Redis-backed conversation summary with topic indexing.</td>
-<td><code>src/attune/memory/summary_index.py</code></td>
-</tr>
-<tr>
-<td><code>AccessTier</code></td>
-<td>Role-based access tiers per EMPATHY_PHILOSOPHY.md.</td>
-<td><code>src/attune/memory/types.py</code></td>
-</tr>
-<tr>
-<td><code>TTLStrategy</code></td>
-<td>TTL strategies for different memory types.</td>
-<td><code>src/attune/memory/types.py</code></td>
-</tr>
-<tr>
-<td><code>RedisConfig</code></td>
-<td>Enhanced Redis configuration with SSL and retry support.</td>
-<td><code>src/attune/memory/types.py</code></td>
-</tr>
-<tr>
-<td><code>RedisMetrics</code></td>
-<td>Metrics for Redis operations.</td>
-<td><code>src/attune/memory/types.py</code></td>
-</tr>
-<tr>
-<td><code>PaginatedResult</code></td>
-<td>Result of a paginated query.</td>
-<td><code>src/attune/memory/types.py</code></td>
-</tr>
-<tr>
-<td><code>TimeWindowQuery</code></td>
-<td>Query parameters for time-window operations.</td>
-<td><code>src/attune/memory/types.py</code></td>
-</tr>
-<tr>
-<td><code>AgentCredentials</code></td>
-<td>Agent identity and access permissions.</td>
-<td><code>src/attune/memory/types.py</code></td>
-</tr>
-<tr>
-<td><code>StagedPattern</code></td>
-<td>Pattern awaiting validation.</td>
-<td><code>src/attune/memory/types.py</code></td>
-</tr>
-<tr>
-<td><code>ConflictContext</code></td>
-<td>Context for principled negotiation.</td>
-<td><code>src/attune/memory/types.py</code></td>
-</tr>
-<tr>
-<td><code>SecurityError</code></td>
-<td>Raised when a security policy is violated (e.g., secrets detected in data).</td>
-<td><code>src/attune/memory/types.py</code></td>
-</tr>
-<tr>
-<td><code>Environment</code></td>
-<td>Deployment environment for storage configuration.</td>
-<td><code>src/attune/memory/unified.py</code></td>
-</tr>
-<tr>
-<td><code>MemoryConfig</code></td>
-<td>Configuration for the unified memory system.</td>
-<td><code>src/attune/memory/unified.py</code></td>
-</tr>
-<tr>
-<td><code>UnifiedMemory</code></td>
-<td>Unified interface for short-term and long-term memory.</td>
-<td><code>src/attune/memory/unified.py</code></td>
+<td><code>MemoryControlPanel</code></td>
+<td>Runtime management — browse, export, and clear stored memory.</td>
 </tr>
 </tbody>
 </table>
-<h3><code>MemoryBackend</code></h3>
-<p><code>MemoryBackend</code> is the protocol every short-term storage backend must implement. Pass any conforming backend to <code>UnifiedMemory</code>, <code>AttuneMemoryTool</code>, or <code>make_memory_tool</code>.</p>
-<h4>Methods</h4>
+<h3>Entry points</h3>
 <table>
 <thead>
 <tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
+<th>Surface</th>
+<th>Invocation</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>stash</code></td>
-<td><code>key: str, value: Any, ttl: int | None = None, agent_id: str | None = None</code></td>
-<td><code>bool</code></td>
-<td>Write a value; returns <code>True</code> on success.</td>
+<td>Python (recommended)</td>
+<td><code>from attune.memory import UnifiedMemory</code>.</td>
 </tr>
 <tr>
-<td><code>retrieve</code></td>
-<td><code>key: str, agent_id: str | None = None</code></td>
-<td><code>Any | None</code></td>
-<td>Read a value by key, or <code>None</code> if absent.</td>
+<td>Custom backend</td>
+<td>Implement <code>MemoryBackend</code> / <code>SearchableMemoryBackend</code> (from <code>attune.memory.backend</code>).</td>
 </tr>
 <tr>
-<td><code>delete</code></td>
-<td><code>key: str</code></td>
-<td><code>bool</code></td>
-<td>Remove a key; returns <code>True</code> on success.</td>
+<td>Static context</td>
+<td><code>ClaudeMemoryLoader().load_all_memory()</code>.</td>
 </tr>
 <tr>
-<td><code>keys</code></td>
-<td><code>pattern: str = '*'</code></td>
-<td><code>list[str]</code></td>
-<td>List keys matching a glob pattern.</td>
-</tr>
-<tr>
-<td><code>is_connected</code></td>
-<td>—</td>
-<td><code>bool</code></td>
-<td>Return <code>True</code> when the backend is reachable.</td>
-</tr>
-<tr>
-<td><code>get_stats</code></td>
-<td>—</td>
-<td><code>dict</code></td>
-<td>Return backend-specific statistics.</td>
-</tr>
-<tr>
-<td><code>close</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>Release the backend connection.</td>
-</tr>
-<tr>
-<td><code>supports_realtime</code></td>
-<td>—</td>
-<td><code>bool</code></td>
-<td>Return <code>True</code> if the backend supports pub/sub.</td>
-</tr>
-<tr>
-<td><code>supports_distributed</code></td>
-<td>—</td>
-<td><code>bool</code></td>
-<td>Return <code>True</code> if the backend supports distributed access.</td>
+<td>Runtime management</td>
+<td><code>MemoryControlPanel</code>.</td>
 </tr>
 </tbody>
 </table>
-<h3><code>SearchableMemoryBackend</code></h3>
-<p><code>SearchableMemoryBackend</code> extends <code>MemoryBackend</code> with semantic search, session promotion, and pruning. Use it anywhere you need <code>search</code> or <code>remember</code> in addition to the base CRUD operations.</p>
-<h4>Methods</h4>
-<p>Inherits all <code>MemoryBackend</code> methods, plus:</p>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>search</code></td>
-<td><code>query: str, limit: int = 10, **filters: Any</code></td>
-<td><code>list[dict]</code></td>
-<td>Semantic search over stored memory.</td>
-</tr>
-<tr>
-<td><code>remember</code></td>
-<td><code>content: str, *, memory_id: str | None = None, session_id: str | None = None, topics: list[str] | None = None</code></td>
-<td><code>bool</code></td>
-<td>Store content with optional topic metadata.</td>
-</tr>
-<tr>
-<td><code>promote</code></td>
-<td><code>session_id: str | None = None</code></td>
-<td><code>bool</code></td>
-<td>Promote session memory to long-term storage.</td>
-</tr>
-<tr>
-<td><code>prune</code></td>
-<td><code>max_age_days: int | None = None</code></td>
-<td><code>int</code></td>
-<td>Remove stale entries; returns the count removed.</td>
-</tr>
-<tr>
-<td><code>recent</code></td>
-<td><code>limit: int = 5, **filters: Any</code></td>
-<td><code>list[dict]</code></td>
-<td>Return the most-recent entries, newest first.</td>
-</tr>
-</tbody>
-</table>
-<h3><code>ClaudeMemoryConfig</code></h3>
-<p>Configuration for Claude memory integration. Controls which CLAUDE.md files are loaded and imposes safety limits on file size and import depth.</p>
-<h4>Fields</h4>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>enabled</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
-</tr>
-<tr>
-<td><code>load_enterprise</code></td>
-<td><code>bool</code></td>
-<td><code>True</code></td>
-</tr>
-<tr>
-<td><code>load_user</code></td>
-<td><code>bool</code></td>
-<td><code>True</code></td>
-</tr>
-<tr>
-<td><code>load_project</code></td>
-<td><code>bool</code></td>
-<td><code>True</code></td>
-</tr>
-<tr>
-<td><code>enterprise_memory_path</code></td>
-<td><code>str | None</code></td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>project_root</code></td>
-<td><code>str | None</code></td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>max_import_depth</code></td>
-<td><code>int</code></td>
-<td><code>5</code></td>
-</tr>
-<tr>
-<td><code>max_file_size_bytes</code></td>
-<td><code>int</code></td>
-<td><code>1000000</code></td>
-</tr>
-<tr>
-<td><code>validate_files</code></td>
-<td><code>bool</code></td>
-<td><code>True</code></td>
-</tr>
-</tbody>
-</table>
-<h3><code>MemoryFile</code></h3>
-<p>Represents a loaded CLAUDE.md memory file with its content and import graph.</p>
-<h4>Fields</h4>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>level</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>path</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>content</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>imports</code></td>
-<td><code>list[str]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-<tr>
-<td><code>load_order</code></td>
-<td><code>int</code></td>
-<td><code>0</code></td>
-</tr>
-</tbody>
-</table>
-<h3><code>ControlPanelConfig</code></h3>
-<p>Configuration for the memory control panel, including Redis connection details and storage paths.</p>
-<h4>Fields</h4>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>redis_host</code></td>
-<td><code>str</code></td>
-<td><code>'localhost'</code></td>
-</tr>
-<tr>
-<td><code>redis_port</code></td>
-<td><code>int</code></td>
-<td><code>6379</code></td>
-</tr>
-<tr>
-<td><code>storage_dir</code></td>
-<td><code>str</code></td>
-<td><code>'./memdocs_storage'</code></td>
-</tr>
-<tr>
-<td><code>audit_dir</code></td>
-<td><code>str</code></td>
-<td><code>'./logs'</code></td>
-</tr>
-<tr>
-<td><code>auto_start_redis</code></td>
-<td><code>bool</code></td>
-<td><code>True</code></td>
-</tr>
-</tbody>
-</table>
-<h3><code>ClaudeMemoryLoader</code></h3>
-<p>Loads and manages Claude Code memory files (CLAUDE.md).</p>
-<h4>Methods</h4>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td><code>config: ClaudeMemoryConfig | None = None</code></td>
-<td>—</td>
-<td>Initialize the loader with optional config.</td>
-</tr>
-<tr>
-<td><code>load_all_memory</code></td>
-<td><code>project_root: str | None = None</code></td>
-<td><code>str</code></td>
-<td>Load and concatenate all CLAUDE.md files into a single string.</td>
-</tr>
-<tr>
-<td><code>clear_cache</code></td>
-<td>—</td>
-<td>—</td>
-<td>Clear the in-memory file cache.</td>
-</tr>
-<tr>
-<td><code>get_loaded_files</code></td>
-<td>—</td>
-<td><code>list[str]</code></td>
-<td>Return paths of all currently loaded memory files.</td>
-</tr>
-</tbody>
-</table>
-<h3><code>MemoryControlPanel</code></h3>
-<p>Enterprise control panel for Empathy memory management. Gives you operational control over Redis, stored patterns, and short-term memory.</p>
-<h4>Methods</h4>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td><code>config: ControlPanelConfig | None = None</code></td>
-<td>—</td>
-<td>Initialize the panel with optional config.</td>
-</tr>
-<tr>
-<td><code>status</code></td>
-<td>—</td>
-<td><code>dict[str, Any]</code></td>
-<td>Return current panel and Redis status.</td>
-</tr>
-<tr>
-<td><code>start_redis</code></td>
-<td><code>verbose: bool = True</code></td>
-<td><code>RedisStatus</code></td>
-<td>Start Redis and return its status.</td>
-</tr>
-<tr>
-<td><code>stop_redis</code></td>
-<td>—</td>
-<td><code>bool</code></td>
-<td>Stop Redis; returns <code>True</code> on success.</td>
-</tr>
-<tr>
-<td><code>get_statistics</code></td>
-<td>—</td>
-<td><code>MemoryStats</code></td>
-<td>Return memory usage statistics.</td>
-</tr>
-<tr>
-<td><code>list_patterns</code></td>
-<td><code>classification: str | None = None, limit: int = 100</code></td>
-<td><code>list[dict[str, Any]]</code></td>
-<td>List stored patterns, optionally filtered by classification.</td>
-</tr>
-<tr>
-<td><code>delete_pattern</code></td>
-<td><code>pattern_id: str, user_id: str = 'admin@system'</code></td>
-<td><code>bool</code></td>
-<td>Delete a pattern by ID.</td>
-</tr>
-<tr>
-<td><code>clear_short_term</code></td>
-<td><code>agent_id: str = 'admin'</code></td>
-<td><code>int</code></td>
-<td>Clear short-term memory for an agent; returns the count removed.</td>
-</tr>
-<tr>
-<td><code>export_patterns</code></td>
-<td><code>output_path: str, classification: str | None = None</code></td>
-<td><code>int</code></td>
-<td>Export patterns to a file; returns the count exported.</td>
-</tr>
-<tr>
-<td><code>health_check</code></td>
-<td>—</td>
-<td><code>dict[str, Any]</code></td>
-<td>Run a health check and return results.</td>
-</tr>
-</tbody>
-</table>
-<h3><code>RateLimiter</code></h3>
-<p>Sliding-window, in-memory rate limiter keyed by client IP address.</p>
-<h4>Methods</h4>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td><code>window_seconds: int = 60, max_requests: int = 100</code></td>
-<td>—</td>
-<td>Initialize with sliding-window parameters.</td>
-</tr>
-<tr>
-<td><code>is_allowed</code></td>
-<td><code>client_ip: str</code></td>
-<td><code>bool</code></td>
-<td>Return <code>True</code> when the client IP is within its rate limit.</td>
-</tr>
-<tr>
-<td><code>get_remaining</code></td>
-<td><code>client_ip: str</code></td>
-<td><code>int</code></td>
-<td>Return the number of requests remaining for the client IP in the current window.</td>
-</tr>
-</tbody>
-</table>
-<h3><code>APIKeyAuth</code></h3>
-<p>Single-key API authentication for the Memory Control Panel.</p>
-<h4>Methods</h4>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td><code>api_key: str | None = None</code></td>
-<td>—</td>
-<td>Initialize with an optional API key.</td>
-</tr>
-<tr>
-<td><code>is_valid</code></td>
-<td><code>provided_key: str | None</code></td>
-<td><code>bool</code></td>
-<td>Return <code>True</code> when the provided key matches the configured key.</td>
-</tr>
-</tbody>
-</table>
-<h2>Functions</h2>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-<th>File</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>is_redis_available</code></td>
-<td>—</td>
-<td><code>bool</code></td>
-<td>Check whether the Redis subsystem is available without importing it.</td>
-<td><code>src/attune/memory/__init__.py</code></td>
-</tr>
-<tr>
-<td><code>create_default_project_memory</code></td>
-<td><code>project_root: str, framework: str = 'empathy'</code></td>
-<td>—</td>
-<td>Create a default <code>.claude/CLAUDE.md</code> file for a project.</td>
-<td><code>src/attune/memory/claude_memory.py</code></td>
-</tr>
-<tr>
-<td><code>parse_redis_url</code></td>
-<td><code>url: str</code></td>
-<td><code>dict</code></td>
-<td>Parse a Redis URL into connection parameters.</td>
-<td><code>src/attune/memory/config.py</code></td>
-</tr>
-<tr>
-<td><code>get_redis_config</code></td>
-<td>—</td>
-<td><code>dict</code></td>
-<td>Return Redis configuration from environment variables (legacy dict API).</td>
-<td><code>src/attune/memory/config.py</code></td>
-</tr>
-<tr>
-<td><code>get_redis_memory</code></td>
-<td><code>url: str | None = None, use_mock: bool | None = None</code></td>
-<td><code>RedisShortTermMemory</code></td>
-<td>Create a <code>RedisShortTermMemory</code> instance using environment-based config.</td>
-<td><code>src/attune/memory/config.py</code></td>
-</tr>
-<tr>
-<td><code>check_redis_connection</code></td>
-<td>—</td>
-<td><code>dict</code></td>
-<td>Check the Redis connection and return its status.</td>
-<td><code>src/attune/memory/config.py</code></td>
-</tr>
-<tr>
-<td><code>get_railway_redis</code></td>
-<td>—</td>
-<td><code>RedisShortTermMemory</code></td>
-<td>Return Redis configured for Railway deployment.</td>
-<td><code>src/attune/memory/config.py</code></td>
-</tr>
-<tr>
-<td><code>run_api_server</code></td>
-<td><code>panel: MemoryControlPanel, host: str = 'localhost', port: int = 8765, api_key: str | None = None, enable_rate_limit: bool = True, rate_limit_requests: int = 100, rate_limit_window: int = 60, ssl_certfile: str | None = None, ssl_keyfile: str | None = None, allowed_origins: list[str] | None = None</code></td>
-<td>—</td>
-<td>Run the Memory API server with security features enabled.</td>
-<td><code>src/attune/memory/control_panel_api.py</code></td>
-</tr>
-<tr>
-<td><code>print_status</code></td>
-<td><code>panel: MemoryControlPanel</code></td>
-<td>—</td>
-<td>Print panel status in formatted output.</td>
-<td><code>src/attune/memory/control_panel_display.py</code></td>
-</tr>
-<tr>
-<td><code>print_stats</code></td>
-<td><code>panel: MemoryControlPanel</code></td>
-<td>—</td>
-<td>Print memory statistics in formatted output.</td>
-<td><code>src/attune/memory/control_panel_display.py</code></td>
-</tr>
-<tr>
-<td><code>print_health</code></td>
-<td><code>panel: MemoryControlPanel</code></td>
-<td>—</td>
-<td>Print the health check results in formatted output.</td>
-<td><code>src/attune/memory/control_panel_display.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td>—</td>
-<td>CLI entry point for the control panel.</td>
-<td><code>src/attune/memory/control_panel_display.py</code></td>
-</tr>
-<tr>
-<td><code>resolve_by_priority</code></td>
-<td><code>agent_id: str, access_tier: AccessTier, session_info: SessionInfo, resource_key: str, other_session: SessionInfo | None</code></td>
-<td><code>ConflictResult</code></td>
-<td>Resolve a resource conflict using access-tier priority.</td>
-<td><code>src/attune/memory/cross_session/conflicts.py</code></td>
-</tr>
-<tr>
-<td><code>resolve_first_write</code></td>
-<td><code>agent_id: str, client: Any, resource_key: str, other_session: SessionInfo | None</code></td>
-<td><code>ConflictResult</code></td>
-<td>Resolve a conflict using first-write-wins.</td>
-<td><code>src/attune/memory/cross_session/conflicts.py</code></td>
-</tr>
-<tr>
-<td><code>resolve_last_write</code></td>
-<td><code>agent_id: str, resource_key: str, other_session: SessionInfo | None</code></td>
-<td><code>ConflictResult</code></td>
-<td>Resolve a conflict using last-write-wins.</td>
-<td><code>src/attune/memory/cross_session/conflicts.py</code></td>
-</tr>
-<tr>
-<td><code>generate_agent_id</code></td>
-<td><code>session_type: SessionType</code></td>
-<td><code>str</code></td>
-<td>Generate a unique agent ID for the given session type.</td>
-<td><code>src/attune/memory/cross_session/models.py</code></td>
-</tr>
-<tr>
-<td><code>check_redis_cross_session_support</code></td>
-<td><code>memory: RedisShortTermMemory</code></td>
-<td><code>bool</code></td>
-<td>Check whether Redis supports cross-session communication.</td>
-<td><code>src/attune/memory/cross_session/service.py</code></td>
-</tr>
-<tr>
-<td><code>get_or_start_service</code></td>
-<td><code>memory: RedisShortTermMemory</code></td>
-<td><code>BackgroundService | None</code></td>
-<td>Return the running background service, or start one if none exists.</td>
-<td><code>src/attune/memory/cross_session/service.py</code></td>
-</tr>
-<tr>
-<td><code>get_file_session_memory</code></td>
-<td><code>user_id: str, base_dir: str = '.attune', **kwargs: Any</code></td>
-<td><code>FileSessionMemory</code></td>
-<td>Create a file-based session memory instance for a user.</td>
-<td><code>src/attune/memory/file_session.py</code></td>
-</tr>
-<tr>
-<td><code>classify_pattern</code></td>
-<td><code>content: str, pattern_type: str</code></td>
-<td><code>Classification</code></td>
-<td>Auto-classify a pattern based on its content and type.</td>
-<td><code>src/attune/memory/long_term_classification.py</code></td>
-</tr>
-<tr>
-<td><code>check_access</code></td>
-<td><code>user_id: str, classification: Classification, metadata: dict[str, Any]</code></td>
-<td><code>bool</code></td>
-<td>Return <code>True</code> when the user has access to a pattern at the given classification level.</td>
-<td><code>src/attune/memory/long_term_classification.py</code></td>
-</tr>
-<tr>
-<td><code>make_memory_tool</code></td>
-<td><code>backend: MemoryBackend | None = None, *, root: str = _DEFAULT_ROOT, user_id: str | None = None</code></td>
-<td><code>Any</code></td>
-<td>Build an Anthropic Memory-tool instance backed by an attune backend.</td>
-<td><code>src/attune/memory/memory_tool.py</code></td>
-</tr>
-<tr>
-<td><code>auto_detect_redis</code></td>
-<td>—</td>
-<td><code>RedisDetectionResult</code></td>
-<td>Auto-detect Redis availability.</td>
-<td><code>src/attune/memory/redis_auto_detect.py</code></td>
-</tr>
-<tr>
-<td><code>ensure_redis</code></td>
-<td><code>host: str = 'localhost', port: int = 6379, auto_start: bool = True, verbose: bool = True</code></td>
-<td><code>RedisStatus</code></td>
-<td>Ensure Redis is available, starting it if necessary.</td>
-<td><code>src/attune/memory/redis_bootstrap.py</code></td>
-</tr>
-<tr>
-<td><code>stop_redis</code></td>
-<td><code>method: RedisStartMethod</code></td>
-<td><code>bool</code></td>
-<td>Stop Redis if this process started it; returns <code>True</code> on success.</td>
-<td><code>src/attune/memory/redis_bootstrap.py</code></td>
-</tr>
-<tr>
-<td><code>get_redis_or_mock</code></td>
-<td><code>host: str = 'localhost', port: int = 6379</code></td>
-<td>—</td>
-<td>Return a Redis connection, starting Redis if needed, or fall back to a mock.</td>
-<td><code>src/attune/memory/redis_bootstrap.py</code></td>
-</tr>
-<tr>
-<td><code>detect_secrets</code></td>
-<td><code>content: str, **kwargs</code></td>
-<td><code>list[SecretDetection]</code></td>
-<td>Detect secrets in text without instantiating a <code>SecretsDetector</code>.</td>
-<td><code>src/attune/memory/security/secrets_detector.py</code></td>
-</tr>
-<tr>
-<td><code>resolve_backend</code></td>
-<td><code>backend: SearchableMemoryBackend | None = None</code></td>
-<td><code>SearchableMemoryBackend | None</code></td>
-<td>Return a searchable backend, or <code>None</code> if none is available.</td>
-<td><code>src/attune/memory/session_stash.py</code></td>
-</tr>
-<tr>
-<td><code>backend_status</code></td>
-<td>—</td>
-<td><code>dict</code></td>
-<td>Report which backend recall resolves to, for health surfacing.</td>
-<td><code>src/attune/memory/session_stash.py</code></td>
-</tr>
-<tr>
-<td><code>stash_entry</code></td>
-<td><code>entry: SessionStashEntry, backend: SearchableMemoryBackend | None = None</code></td>
-<td><code>bool</code></td>
-<td>Write a finding to the searchable recall tier after the PII gate.</td>
-<td><code>src/attune/memory/session_stash.py</code></td>
-</tr>
-<tr>
-<td><code>recall_entries</code></td>
-<td><code>query: str, top_k: int = 5, cwd: str | None = None, backend: SearchableMemoryBackend | None = None</code></td>
-<td><code>list[dict[str, Any]]</code></td>
-<td>Semantic recall over stashed findings; returns an empty list when unavailable.</td>
-<td><code>src/attune/memory/session_stash.py</code></td>
-</tr>
-<tr>
-<td><code>recent_entries</code></td>
-<td><code>top_k: int = 5, cwd: str | None = None, backend: SearchableMemoryBackend | None = None</code></td>
-<td><code>list[dict[str, Any]]</code></td>
-<td>Query-less recall of the most-recent findings, for use at session start.</td>
-<td><code>src/attune/memory/session_stash.py</code></td>
-</tr>
-</tbody>
-</table>
-<h3>Raises</h3>
-<h4><code>get_railway_redis</code></h4>
-<table>
-<thead>
-<tr>
-<th>Raises</th>
-<th>Message</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>OSError</code></td>
-<td><code>'REDIS_URL not found. Make sure Redis is added to your Railway project.\nRun: railway add --database redis\nFor external access, use REDIS_PUBLIC_URL'</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Constants</h2>
-<h3>Cross-session Redis keys</h3>
-<table>
-<thead>
-<tr>
-<th>Constant</th>
-<th>Type</th>
-<th>Value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>CHANNEL_SESSIONS</code></td>
-<td><code>str</code></td>
-<td><code>'empathy:sessions'</code></td>
-</tr>
-<tr>
-<td><code>KEY_ACTIVE_AGENTS</code></td>
-<td><code>str</code></td>
-<td><code>'empathy:active_agents'</code></td>
-</tr>
-<tr>
-<td><code>KEY_SERVICE_LOCK</code></td>
-<td><code>str</code></td>
-<td><code>'empathy:service_lock'</code></td>
-</tr>
-<tr>
-<td><code>KEY_SERVICE_HEARTBEAT</code></td>
-<td><code>str</code></td>
-<td><code>'empathy:service_heartbeat'</code></td>
-</tr>
-</tbody>
-</table>
-<h3>CLAUDE.md delimiters</h3>
-<table>
-<thead>
-<tr>
-<th>Constant</th>
-<th>Type</th>
-<th>Value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>_CLAUDE_MD_START</code></td>
-<td><code>str</code></td>
-<td><code>'&lt;!-- attune-lessons-start --&gt;'</code></td>
-</tr>
-<tr>
-<td><code>_CLAUDE_MD_END</code></td>
-<td><code>str</code></td>
-<td><code>'&lt;!-- attune-lessons-end --&gt;'</code></td>
-</tr>
-</tbody>
-</table>
-<h3>Classification keywords</h3>
-<p>These lists drive auto-classification in <code>classify_pattern</code>. A pattern whose content matches keywords from one of these constants is assigned the corresponding classification level.</p>
-<table>
-<thead>
-<tr>
-<th>Constant</th>
-<th>Members</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>HEALTHCARE_KEYWORDS</code></td>
-<td><code>'patient'</code>, <code>'medical'</code>, <code>'diagnosis'</code>, <code>'treatment'</code>, <code>'healthcare'</code>, <code>'clinical'</code>, <code>'hipaa'</code>, <code>'phi'</code>, <code>'medical record'</code>, <code>'prescription'</code></td>
-</tr>
-<tr>
-<td><code>FINANCIAL_KEYWORDS</code></td>
-<td><code>'financial'</code>, <code>'payment'</code>, <code>'credit card'</code>, <code>'banking'</code>, <code>'transaction'</code>, <code>'pci dss'</code>, <code>'payment card'</code></td>
-</tr>
-<tr>
-<td><code>PROPRIETARY_KEYWORDS</code></td>
-<td><code>'proprietary'</code>, <code>'confidential'</code>, <code>'internal'</code>, <code>'trade secret'</code>, <code>'company confidential'</code>, <code>'restricted'</code></td>
-</tr>
-<tr>
-<td><code>SENSITIVE_PATTERN_TYPES</code></td>
-<td><code>'clinical_protocol'</code>, <code>'medical_guideline'</code>, <code>'patient_workflow'</code>, <code>'financial_procedure'</code></td>
-</tr>
-<tr>
-<td><code>INTERNAL_PATTERN_TYPES</code></td>
-<td><code>'architecture'</code>, <code>'business_logic'</code>, <code>'company_process'</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/memory/**</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>memory</code>, <code>storage</code></p>
 
   </article>
   <footer>

@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Memory FAQ — faq</title>
-  <meta name="description" content="It provides storage, lookup, and security for agent memory. The module covers short-term backends (via `MemoryBackend` and `SearchableMemoryBackend`), Claude Code memory file loading (`ClaudeMemoryLoa" />
+  <meta name="description" content="It gives agents two tiers of storage behind one API: short-term working memory (TTL-expiring, optionally Redis-backed) and long-term pattern memory (durable, searchable, classified). Security — auto-c" />
   <meta property="og:title" content="Memory FAQ — faq" />
-  <meta property="og:description" content="It provides storage, lookup, and security for agent memory. The module covers short-term backends (via `MemoryBackend` and `SearchableMemoryBackend`), Claude Code memory file loading (`ClaudeMemoryLoa" />
+  <meta property="og:description" content="It gives agents two tiers of storage behind one API: short-term working memory (TTL-expiring, optionally Redis-backed) and long-term pattern memory (durable, searchable, classified). Security — auto-c" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/faq" />
   <style>
@@ -273,34 +273,46 @@
   </nav>
   <article class="markdown-body">
 <h1>Memory FAQ</h1>
-<h2>What does the memory feature do?</h2>
-<p>It provides storage, lookup, and security for agent memory. The module covers short-term backends (via <code>MemoryBackend</code> and <code>SearchableMemoryBackend</code>), Claude Code memory file loading (<code>ClaudeMemoryLoader</code>), and an enterprise control panel (<code>MemoryControlPanel</code>) for managing patterns, Redis, and audit logs.</p>
-<h2>When do I need to use the memory feature?</h2>
-<p>Use it when your agent needs to store or retrieve state across steps, load project-level <code>CLAUDE.md</code> memory files, or manage long-term patterns with classification and security controls. If you only need simple key-value caching with no agent context, a plain dict or file may be sufficient.</p>
-<h2>How do I check whether Redis is available before using it?</h2>
-<p>Call <code>is_redis_available()</code>. It checks the Redis subsystem without importing it, so it's safe to call at startup or in a conditional import path.</p>
-<h2>How do I get a Redis-backed memory instance?</h2>
-<p>Call <code>get_redis_memory(url=..., use_mock=...)</code>. It reads environment variables for configuration, so you can omit both arguments in most deployments. On Railway, use <code>get_railway_redis()</code> instead — it raises <code>OSError</code> with remediation instructions if <code>REDIS_URL</code> is not set.</p>
-<h2>What is the difference between <code>MemoryBackend</code> and <code>SearchableMemoryBackend</code>?</h2>
-<p><code>MemoryBackend</code> is the base protocol: it covers <code>stash</code>, <code>retrieve</code>, <code>delete</code>, <code>keys</code>, <code>is_connected</code>, <code>get_stats</code>, <code>close</code>, <code>supports_realtime</code>, and <code>supports_distributed</code>. <code>SearchableMemoryBackend</code> extends it with semantic search (<code>search</code>), long-term memory methods (<code>remember</code>, <code>promote</code>, <code>prune</code>), and <code>recent</code>. Use <code>SearchableMemoryBackend</code> when your backend needs semantic search or cross-session promotion.</p>
-<h2>How do I load CLAUDE.md memory files into a project?</h2>
-<p>Instantiate <code>ClaudeMemoryLoader</code> with a <code>ClaudeMemoryConfig</code> and call <code>load_all_memory(project_root=...)</code>. The config controls which levels are loaded (<code>load_enterprise</code>, <code>load_user</code>, <code>load_project</code>), the search depth (<code>max_import_depth</code>, default <code>5</code>), and file-size limits (<code>max_file_size_bytes</code>, default <code>1000000</code>).</p>
-<p>If you need a default memory file for a new project, call <code>create_default_project_memory(project_root, framework='empathy')</code> — it creates <code>.claude/CLAUDE.md</code> for you.</p>
-<h2>How do I check the health of the memory control panel?</h2>
-<p>Call <code>MemoryControlPanel.health_check()</code>. For a formatted overview of status and statistics, use <code>print_status(panel)</code> and <code>print_stats(panel)</code>.</p>
-<h2>How do I clear short-term memory for an agent?</h2>
-<p>Call <code>MemoryControlPanel.clear_short_term(agent_id=...)</code>. The default <code>agent_id</code> is <code>'admin'</code>.</p>
-<h2>How do I debug a memory problem?</h2>
-<p>Start with <code>pytest -k &quot;memory&quot; -v</code> to confirm the tests pass. If they pass but your code still fails:</p>
-<ol>
-<li>Call <code>is_redis_available()</code> to rule out a missing Redis connection.</li>
-<li>Call <code>check_redis_connection()</code> for a detailed status dict.</li>
-<li>Call <code>MemoryControlPanel.health_check()</code> for control-panel-level diagnostics.</li>
-<li>Add <code>logger.debug</code> at the suspected failure point and re-run with logging enabled.</li>
-</ol>
-<p>For symptom-based issues, see the troubleshooting page for this feature.</p>
-<h2>Where are the source files?</h2>
-<p>All memory source files are under <code>src/attune/memory/</code>.</p>
+<h2>What does the memory subsystem do?</h2>
+<p>It gives agents two tiers of storage behind one API: short-term
+working memory (TTL-expiring, optionally Redis-backed) and long-term
+pattern memory (durable, searchable, classified). Security —
+auto-classification, PII scrubbing, secrets detection, and at-rest
+encryption for sensitive patterns — runs before anything durable is
+written. The recommended entry point is <code>UnifiedMemory</code>.</p>
+<h2>What's the difference between short-term and long-term memory?</h2>
+<p>Short-term (<code>stash</code> / <code>retrieve</code>) is TTL-expiring working storage.
+Long-term (<code>persist_pattern</code> / <code>recall_pattern</code> / <code>search_patterns</code>)
+is durable, searchable, classified pattern storage. Patterns can be
+staged first (<code>stage_pattern</code>) and promoted later (<code>promote_pattern</code>).</p>
+<h2>How do I construct a UnifiedMemory?</h2>
+<p><code>UnifiedMemory(user_id=&quot;...&quot;)</code>. <code>user_id</code> is required; <code>config</code>
+(a <code>MemoryConfig</code>, default auto-detected from the environment) and
+<code>access_tier</code> (default <code>AccessTier.CONTRIBUTOR</code>) are optional. Import
+it with <code>from attune.memory import UnifiedMemory</code>.</p>
+<h2>Do I need Redis?</h2>
+<p>No. <code>UnifiedMemory</code> auto-detects the environment and uses an
+in-process store when Redis isn't available; Redis adds real-time and
+cross-process support. Check <code>supports_distributed()</code> /
+<code>get_capabilities()</code> to see what the active backend supports.</p>
+<h2>Are the calls async?</h2>
+<p>No — <code>UnifiedMemory</code>'s public methods are synchronous. Call them
+directly, no <code>await</code>.</p>
+<h2>How is sensitive data protected?</h2>
+<p>On <code>persist_pattern</code>, content is auto-classified (<code>PUBLIC</code> /
+<code>INTERNAL</code> / <code>SENSITIVE</code>), PII is scrubbed, secrets are flagged, and
+<code>SENSITIVE</code> patterns are encrypted at rest when encryption is enabled.
+Keep <code>auto_classify=True</code> unless you set the level yourself.</p>
+<h2>What is staging for?</h2>
+<p><code>stage_pattern</code> holds a candidate pattern so you can review it
+(<code>get_staged_patterns()</code>) before <code>promote_pattern</code> commits it to
+durable storage (running classification and scrubbing on the way).</p>
+<h2>How do I write a custom backend?</h2>
+<p>Implement the <code>MemoryBackend</code> protocol (or <code>SearchableMemoryBackend</code>
+for search) from <code>attune.memory.backend</code> — both are
+<code>@runtime_checkable</code>, so any class implementing the methods satisfies
+them. Note the protocol's <code>stash(key, value, ttl, agent_id)</code> differs
+from <code>UnifiedMemory</code>'s own <code>stash(key, value, ttl_seconds)</code>.</p>
 <p><strong>Tags:</strong> <code>memory</code>, <code>storage</code></p>
 
   </article>

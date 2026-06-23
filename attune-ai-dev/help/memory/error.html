@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Memory errors — error</title>
-  <meta name="description" content="Failures in the memory subsystem fall into three categories: Redis connectivity errors, filesystem errors when loading `CLAUDE.md` memory files, and security/permission violations when accessing class" />
-  <meta property="og:title" content="Memory errors — error" />
-  <meta property="og:description" content="Failures in the memory subsystem fall into three categories: Redis connectivity errors, filesystem errors when loading `CLAUDE.md` memory files, and security/permission violations when accessing class" />
+  <title>Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `TypeError: __init__() missing 1 required positional argument: &#x27;user_id&#x27;` | `UnifiedMemory()` constructed without `user_id` | Pass `user_id` — " />
+  <meta property="og:title" content="Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `TypeError: __init__() missing 1 required positional argument: &#x27;user_id&#x27;` | `UnifiedMemory()` constructed without `user_id` | Pass `user_id` — " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/error" />
   <style>
@@ -272,87 +272,76 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Memory errors</h1>
-<h2>Common error signatures</h2>
-<p>Failures in the memory subsystem fall into three categories: Redis connectivity errors, filesystem errors when loading <code>CLAUDE.md</code> memory files, and security/permission violations when accessing classified patterns.</p>
+<h1>Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>Exception</th>
-<th>Likely source</th>
-<th>Typical cause</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>OSError: REDIS_URL not found...</code></td>
-<td><code>get_railway_redis()</code></td>
-<td><code>REDIS_URL</code> environment variable is missing from the Railway project</td>
+<td><code>TypeError: __init__() missing 1 required positional argument: 'user_id'</code></td>
+<td><code>UnifiedMemory()</code> constructed without <code>user_id</code></td>
+<td>Pass <code>user_id</code> — it is required</td>
+<td>high</td>
 </tr>
 <tr>
-<td><code>OSError</code></td>
-<td><code>create_default_project_memory()</code></td>
-<td>Target directory is not writable or <code>project_root</code> path does not exist</td>
+<td><code>persist_pattern</code> / <code>stage_pattern</code> returns <code>None</code></td>
+<td>Long-term storage unavailable (e.g. no writable <code>storage_dir</code>)</td>
+<td>Check <code>health_check()</code> / <code>get_backend_status()</code>; confirm storage config</td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>MemoryPermissionError</code></td>
-<td>Pattern access checks</td>
-<td>Caller's access tier does not meet the pattern's <code>Classification</code> level</td>
+<td><code>retrieve</code> returns <code>None</code> for a key you stashed</td>
+<td>The entry expired (<code>ttl_seconds</code>) or the backend isn't persistent</td>
+<td>Re-stash with a longer TTL; check <code>supports_persistence()</code></td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>SecurityError</code></td>
-<td><code>SecureMemDocsIntegration</code></td>
-<td>PII or secrets detected in content being stored</td>
+<td>Cross-process reads don't see another process's writes</td>
+<td>The backend isn't distributed (in-process store)</td>
+<td>Check <code>supports_distributed()</code>; configure Redis</td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>ValueError</code></td>
-<td><code>parse_redis_url()</code></td>
-<td>Malformed Redis URL passed to connection setup</td>
+<td><code>recall_pattern</code> returns <code>None</code> for a real id</td>
+<td><code>check_permissions=True</code> and the caller's <code>access_tier</code> is insufficient</td>
+<td>Use a higher <code>access_tier</code>, or pass <code>check_permissions=False</code> for trusted callers</td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>ConnectionError</code></td>
-<td><code>MemoryBackend.is_connected()</code></td>
-<td>Redis process is not running or the configured host/port is unreachable</td>
+<td>A <code>SENSITIVE</code> pattern stored unencrypted</td>
+<td><code>encryption_enabled</code> is off in the config</td>
+<td>Enable encryption in <code>MemoryConfig</code></td>
+<td>medium</td>
 </tr>
 </tbody>
 </table>
-<h2>Where errors originate</h2>
-<p>Errors can arise from any of the following entry points. The function that raises is usually not the one the caller invoked — trace the chained exception (<code>__cause__</code>) to find the original raise site.</p>
+<h3>Risk areas</h3>
 <ul>
-<li><strong><code>get_railway_redis()</code></strong> — raises <code>OSError</code> when <code>REDIS_URL</code> is absent. The error message includes the exact Railway CLI command needed to add Redis.</li>
-<li><strong><code>get_redis_memory(url, use_mock)</code></strong> — wraps environment-based Redis setup; failures here usually mean the URL is malformed or the environment variable is unset.</li>
-<li><strong><code>parse_redis_url(url)</code></strong> — raises <code>ValueError</code> on a malformed URL before a connection is attempted.</li>
-<li><strong><code>create_default_project_memory(project_root, framework)</code></strong> — raises <code>OSError</code> if <code>.claude/CLAUDE.md</code> cannot be written.</li>
-<li><strong><code>ClaudeMemoryLoader.load_all_memory(project_root)</code></strong> — raises if <code>max_import_depth</code> is exceeded or a file exceeds <code>max_file_size_bytes</code> (default 1 000 000 bytes).</li>
-<li><strong><code>MemoryControlPanel.start_redis()</code></strong> / <strong><code>stop_redis()</code></strong> — failures surface as <code>RedisStatus</code> error states or raise if the subprocess cannot be managed.</li>
-<li><strong><code>MemoryBackend.stash()</code> / <code>retrieve()</code> / <code>delete()</code></strong> — raise when the backend is not connected; call <code>is_connected()</code> first to distinguish a connection failure from a logic error.</li>
+<li><strong><code>user_id</code> is required.</strong> <code>UnifiedMemory</code> is per-user; there is no
+zero-arg constructor.</li>
+<li><strong>Protocol vs. <code>UnifiedMemory</code> signatures differ.</strong> The protocol's
+<code>stash(key, value, ttl, agent_id)</code> is not <code>UnifiedMemory</code>'s
+<code>stash(key, value, ttl_seconds)</code> — don't conflate them.</li>
+<li><strong>Capabilities are deployment-dependent.</strong> Real-time, distribution,
+and persistence vary by backend — check before relying on them.</li>
 </ul>
-<h2>How to diagnose</h2>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Read the full exception chain.</strong> When exceptions are re-raised with <code>from e</code>, Python prints both the original cause and the wrapper. The original cause names the exact operation that failed — do not stop at the outermost message.</p>
-</li>
-<li>
-<p><strong>Check whether Redis is reachable.</strong> Call <code>is_redis_available()</code> to test whether the Redis subsystem can be imported, then call <code>check_redis_connection()</code> to verify the live connection. A <code>False</code> or error result from either narrows the problem to infrastructure rather than application logic.</p>
-</li>
-<li>
-<p><strong>Inspect <code>ClaudeMemoryConfig</code> fields when memory files fail to load.</strong> Verify that <code>project_root</code> resolves to the correct directory, that <code>max_import_depth</code> (default 5) is not too low for your import graph, and that no file exceeds <code>max_file_size_bytes</code>. Set <code>validate_files = True</code> (the default) to surface malformed files early.</p>
-</li>
-<li>
-<p><strong>Check access tier for <code>MemoryPermissionError</code>.</strong> Pattern access is gated by <code>Classification</code> rules. Confirm the agent's access tier against the pattern's classification level. Healthcare, financial, and proprietary patterns are governed by <code>HEALTHCARE_KEYWORDS</code>, <code>FINANCIAL_KEYWORDS</code>, and <code>PROPRIETARY_KEYWORDS</code> classification rules respectively.</p>
-</li>
-<li>
-<p><strong>Confirm the environment variable for Railway deployments.</strong> <code>get_railway_redis()</code> requires <code>REDIS_URL</code>. If it is absent, the error message instructs you to run <code>railway add --database redis</code>. For external access, use <code>REDIS_PUBLIC_URL</code> instead.</p>
-</li>
-<li>
-<p><strong>Use <code>MemoryControlPanel.health_check()</code></strong> to get a structured report of Redis status, storage availability, and audit log accessibility in one call before diving into individual subsystems.</p>
-</li>
+<li>Confirm construction: <code>UnifiedMemory(user_id=&quot;...&quot;)</code>.</li>
+<li><code>health_check()</code> / <code>get_backend_status()</code> for backend state.</li>
+<li><code>get_capabilities()</code> to confirm realtime/distributed/persistence.</li>
+<li>For a missing short-term key, check the TTL and
+<code>supports_persistence()</code>.</li>
+<li>For a missing pattern, check <code>pattern_id</code>, <code>access_tier</code>, and
+<code>check_permissions</code>.</li>
 </ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/memory/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>memory</code>, <code>storage</code></p>
 
   </article>
   <footer>
