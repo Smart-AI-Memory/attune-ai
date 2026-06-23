@@ -10463,3 +10463,66 @@ files.
   not-yet-merged file as "new". Higher-leverage alternative if the
   pattern keeps biting: fix the single CONCURRENT TOUCHER (the leaked
   thread) rather than the N sites — one fix neutralizes them all.
+
+- **Authoring a SECOND feature on the same branch as an open PR
+  orphans the new work if that PR squash-merges mid-session — one
+  feature per branch when an earlier PR may merge**: 2026-06-23,
+  help-docs single-source rollout. bug-predict + security-audit were
+  bundled on one branch as PR #1009; I then kept authoring deep-review
+  on the SAME branch. #1009 squash-merged mid-session, which DELETED
+  the branch; my subsequent `git push` of the deep-review commit
+  printed `* [new branch]` and RE-CREATED the branch as an orphaned
+  ref — detached from the now-merged PR (the PR's `headRefOid` stays
+  frozen at the merge SHA; `gh pr view` shows `state: MERGED` while
+  `git ls-remote` shows the branch back at your new commit). Tells:
+  (a) push says `[new branch]` for a branch you pushed earlier;
+  (b) local HEAD == origin/<branch> but `gh pr view <n> --json
+  headRefOid` shows an OLDER sha; (c) `gh pr view <n> --json state` ==
+  `MERGED`. Recovery (clean): `git fetch origin main`; confirm the
+  merge was a squash with `git merge-base --is-ancestor <old-commit>
+  origin/main` (NOT-ancestor = squash) and that the merged features'
+  files are on main (`git cat-file -e origin/main:<path>`); then
+  `git checkout -b <fresh> origin/main` and `git cherry-pick
+  <new-commit>` — because the new commit's diff is isolated to the new
+  feature, it applies cleanly onto post-merge main; verify the
+  cherry-pick stayed GPG-signed (`git log --show-signature -1`, since
+  replays can drop signatures) and that `git diff --stat origin/main
+  HEAD` shows ONLY the new feature's files; push, open a fresh PR.
+  Then delete the orphan branch (`git push origin --delete <orphan>`
+  after `gh pr list --head <orphan> --state open` shows 0). Prevention:
+  put each feature on its OWN branch when any sibling PR might merge
+  before you finish — the "bundle for fewer PRs" convenience is what
+  creates the orphan. Same family as the existing "stacked PR
+  auto-close" and "branch-vs-worktree commit tangle" lessons.
+
+- **attune-author `check_python_refs` reads a backticked dotted
+  FILENAME (e.g. `` `attune.config.yml` ``) as a Python import path
+  and flags it unresolvable — prefix `./` to mark it a path**: hit
+  2026-06-23 projecting the bug-predict master in the help-docs
+  single-source rollout. The fact-checker treats any backticked
+  `a.b.c` token as a dotted module and tries to import it; a config
+  filename with a dot (`attune.config.yml`, `foo.config.yaml`) trips
+  it. Filenames referenced WITH a slash (`~/.attune/auth_strategy.json`,
+  `./attune.config.yml`) are read as paths, not modules, and pass. Fix
+  the doc, don't suppress: write `` `./attune.config.yml` `` (accurate
+  — the loader looks for it cwd-relative). It dedups by token, so it
+  may report only the FIRST occurrence — fix every instance
+  (`replace_all`). The dry-run fact-check quality bar for the
+  single-source rollout is 0 findings; this is the most common
+  false-positive shape.
+
+- **A feature's skill can live at repo-level `.claude/skills/<name>/
+  SKILL.md`, NOT `plugin/skills/<name>/` — check BOTH dirs before
+  asserting a feature has no skill entry point**: 2026-06-23, the
+  deep-review master initially omitted the `/deep-review` skill
+  because `ls plugin/skills/` (where bug-predict / security-audit live)
+  had no `deep-review` dir. An independent adversarial review caught
+  that `.claude/skills/deep-review/SKILL.md` DOES exist — deep-review's
+  skill is registered at the repo `.claude/skills/` level instead of
+  the plugin dir. The doc under-claimed (omitted a real surface) rather
+  than over-claimed, but the fix matters for completeness. When
+  grounding a feature's entry points, grep BOTH `plugin/skills/` and
+  `.claude/skills/` (and `plugin/commands/` / `.claude/commands/`).
+  Reinforces that the independent adversarial-review step (R7 step 4b)
+  is load-bearing, not decorative — it found a real omission the author
+  missed.
