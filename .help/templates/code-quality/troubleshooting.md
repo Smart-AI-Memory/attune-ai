@@ -1,73 +1,49 @@
 ---
 type: troubleshooting
+name: code-quality-troubleshooting
 feature: code-quality
 depth: troubleshooting
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 4f0f1e5876a5f83b83316fb690fa9aa652fd8f63b15844a89c384083fbac424f
+generated_at: 2026-06-23T15:45:20.604236+00:00
+source_hash: 3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472
 status: generated
 ---
 
-# Troubleshoot code quality
+# Multi-subagent code review across security, quality, performance, and architecture
 
-## Before you start
+## Failure modes
 
-The code quality feature runs four specialized subagents (security, quality, performance, and architecture reviewers) to analyze your code. When issues occur, they typically stem from the orchestration workflow or individual subagent failures.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'CodeReviewWorkflow.execute' was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `WorkflowResult.success` is `False`, `error` is `"path argument is required"` | `execute` called with empty or missing `path` | Pass a non-empty `path` | high |
+| `attune workflow run code-quality` errors "unknown workflow" | The slug is `code-review`, not `code-quality` | Run `attune workflow run code-review` (the skill / help topic is `code-quality`) | medium |
+| `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
+| `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry; `transient` is set when a retry is reasonable | medium |
+| Review stops early / partial report | The depth's agent-turn or budget cap was reached | Use a narrower `path`, a shallower `depth`, or accept a deeper (costlier) run | medium |
+| A finding looks like a false positive | Findings are LLM predictions, not verified defects | Confirm against the cited file/line before acting | medium |
 
-## Symptom table
+### Risk areas
 
-| If you observe | Check |
-|----------------|-------|
-| `/code-quality` command fails with exception | Check the file path exists and you have read permissions |
-| Review hangs or takes extremely long | Verify the target directory size — large codebases may exceed reasonable scan limits |
-| Empty or incomplete results | Confirm all four subagents (_SUBAGENT_NAMES) are available and responding |
-| Score shows as 0 or missing | Look for subagent communication failures in the workflow logs |
-| Results missing specific categories | Check which of the four reviewers (security, quality, performance, architecture) failed to report |
+- **The async call is easy to get wrong.** `execute` is the only
+  public method and it is a coroutine. Forgetting to `await` it is
+  the single most common mistake.
+- **The slug differs from the name.** The feature, skill, and help
+  topic are `code-quality`; the workflow slug and MCP tool are
+  `code-review`. Use `code-review` for `attune workflow run` and
+  the MCP call.
+- **Findings are predictions, not proofs.** A CRITICAL or HIGH
+  finding means "look here first," not a confirmed defect — and a
+  clean review is not a guarantee. Verify before acting.
 
-## Step-by-step diagnosis
+### Diagnosis order
 
-1. **Verify the target path.**
-   Confirm the file or directory you're reviewing exists and is readable:
-   ```bash
-   ls -la /path/to/your/code
-   ```
-   The CodeReviewWorkflow needs read access to analyze files.
-
-2. **Test with a minimal example.**
-   Try reviewing a single small file first:
-   ```
-   /code-quality path/to/simple_file.py
-   ```
-   This isolates whether the issue is with the workflow itself or the complexity of your target.
-
-3. **Check subagent availability.**
-   The workflow depends on four specialized reviewers. If any are unavailable, the unified report will be incomplete. Look for error messages mentioning `security-reviewer`, `quality-reviewer`, `perf-reviewer`, or `architect-reviewer`.
-
-4. **Enable debug logging.**
-   Set your logging level to DEBUG before running the review to see detailed workflow execution and subagent communication.
-
-5. **Inspect the CodeReviewWorkflow execution.**
-   The workflow orchestrates multiple subagents and synthesizes their findings. Check if the failure occurs during:
-   - Initial path validation
-   - Subagent coordination
-   - Result synthesis into the final report
-
-## Common fixes
-
-- **Path issues:** Use absolute paths or verify your current working directory. The workflow needs to locate and read your source files.
-
-- **Permission errors:** Ensure the code quality process has read access to your target files:
-  ```bash
-  chmod +r /path/to/your/code
-  ```
-
-- **Large directory timeouts:** For whole-project scans, start with a subdirectory to confirm the workflow functions, then expand scope gradually.
-
-- **Missing dependencies:** The four specialized subagents may require specific analysis tools. Check that your environment includes all necessary code analysis dependencies.
-
-- **Stale workflow state:** If reviews worked previously but now fail, restart your Claude Code session to clear any cached workflow state.
-
-## Source files
-
-- `src/attune/workflows/code_review.py`
-
-**Tags:** `review`, `quality`, `bugs`
+1. Confirm you are awaiting: `result = await workflow.execute(
+   path="src/")` inside an `async def` or `asyncio.run`.
+2. Check `result.success`; if `False`, read `result.error` and
+   `result.error_type`.
+3. For an "unknown workflow" CLI error, confirm you used the
+   `code-review` slug.
+4. On an SDK error, inspect `result.metadata` for the captured
+   `sdk_stderr` / SDK error kind.
+5. Confirm the scope: `result.metadata` echoes the `path`, `depth`,
+   and `max_turns`.
