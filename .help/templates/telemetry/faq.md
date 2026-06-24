@@ -3,55 +3,59 @@ type: faq
 name: telemetry-faq
 feature: telemetry
 depth: faq
-generated_at: 2026-05-16T06:19:45.846271+00:00
-source_hash: ed8485991002cc1c218f67b4f33f230bcbdc4325599a2e03f2bbe584d94a5e90
-status: generated
+status: manual
 ---
 
 # Telemetry FAQ
 
-## What does the telemetry feature do?
+## What does attune telemetry record?
 
-It tracks usage, coordinates agents via TTL-based signals, monitors agent heartbeats, gates workflows on human approval, and streams real-time events through Redis Streams. It also records feedback and calculates cost savings from model-tier routing.
-
-## What can I track with telemetry?
-
-You can track agent status and progress with `HeartbeatCoordinator`, send and receive inter-agent coordination signals with `CoordinationSignals`, stream and consume real-time events with `EventStreamer`, and collect human approval decisions with `ApprovalGate`.
-
-## How do I start the telemetry CLI?
-
-Call `main()` from `src/attune/telemetry/__main__.py`, or run the module directly with `python -m attune.telemetry`. From there you can run subcommands like `cmd_telemetry_show()` to view recent entries, `cmd_telemetry_savings()` to see cost savings, and `cmd_telemetry_cache_stats()` to check prompt-caching performance.
-
-## What is a coordination signal and how long does it live?
-
-A `CoordinationSignal` is a typed message sent from one agent to another (or broadcast to all agents). Its default TTL is 60 seconds. You can override that per signal using the `ttl_seconds` parameter on `CoordinationSignals.signal()` or `CoordinationSignals.broadcast()`.
-
-## How do I check whether an agent is still running?
-
-Call `HeartbeatCoordinator.is_agent_alive(agent_id)`. To get full status, use `get_agent_status(agent_id)`, which returns an `AgentHeartbeat` with fields for `status`, `progress`, and `current_task`. To find agents that haven't sent a heartbeat recently, call `get_stale_agents(threshold_seconds=60.0)`.
-
-## How does human approval gating work?
-
-Your agent calls `ApprovalGate.request_approval()` with an `approval_type` and optional context dict. The call blocks until a human responds via `respond_to_approval()` or the request times out. The response is an `ApprovalResponse` with `approved`, `responder`, and an optional `reason`.
-
-## What happens to approval requests that time out?
-
-They remain in storage with `status = 'pending'` until you explicitly remove them. Call `ApprovalGate.clear_expired_requests()` to purge them.
-
-## How do I consume events from the stream?
-
-Use `EventStreamer.consume_events()`, optionally filtering by a list of `event_types`. To look back at past events rather than waiting for new ones, call `get_recent_events(event_type, count=100)` instead.
+Three things, all exported from `attune.telemetry`: every LLM call's
+cost, tokens, cache hits, and duration (`UsageTracker`); a quality score
+per workflow stage and tier (`FeedbackLoop`); and agent-coordination
+signals — heartbeats, event streams, and approval requests
+(`HeartbeatCoordinator`, `EventStreamer`, `ApprovalGate`).
 
 ## Where is telemetry data stored by default?
 
-Help queries are logged to `help_queries.jsonl` (the value of `_DEFAULT_FILE`). Coordination signals and heartbeats use Redis TTL keys. Event streams are backed by Redis Streams.
+Locally, under `~/.attune/telemetry` (the usage ledger is
+`usage.jsonl`); the directory is overridable via `ATTUNE_HOME`. Nothing
+leaves your machine unless you explicitly enable an opt-in phone-home.
+The Redis-backed coordination signals use Redis keys/streams instead of
+the local file.
 
-## How do I debug a telemetry problem?
+## How do I see my usage and cost metrics?
 
-Run `pytest -k "telemetry" -v` first. If tests pass but your code still fails, enable debug logging and add a `logger.debug` statement at the suspected failure point. For symptom-based diagnosis, see the troubleshooting page for this feature.
+From Python, `UsageTracker.get_instance().get_stats(days=30)` (and
+`calculate_savings(days=30)`); from a conversation, the
+`telemetry_stats` MCP tool; or the ops dashboard — all read the same
+on-disk store.
+
+## Why won't the feedback loop change my recommended tier?
+
+`recommend_tier` needs at least `MIN_SAMPLES` (10) feedback samples for
+the stage's tier before it moves; below that it keeps the current tier
+with reason "Insufficient data". Tier strings are lowercase
+(`cheap`/`capable`/`premium`) — feedback recorded under another casing
+is invisible to `recommend_tier`.
+
+## Does `get_quality_stats` need 10 samples too?
+
+No. `get_quality_stats` returns `None` only when there is no feedback
+for the stage at all; with any samples it returns a `QualityStats`
+(its `sample_count` tells you how many). The `MIN_SAMPLES` gate lives in
+`recommend_tier`, not here.
+
+## How do I check whether an agent is still running?
+
+With the coordination classes (Redis-backed):
+`HeartbeatCoordinator.is_agent_alive(...)`, `get_active_agents()`, and
+`get_stale_agents()`; `EventStreamer.consume_events()` /
+`get_recent_events()` read the event stream. Guard their use behind
+`TelemetryFeatures.is_redis_available()`.
 
 ## Where are the source files?
 
-All telemetry source files live under `src/attune/telemetry/`.
+All telemetry source lives under `src/attune/telemetry/`.
 
 **Tags:** `telemetry`, `metrics`

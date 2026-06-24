@@ -3,52 +3,81 @@ type: concept
 name: telemetry-concept
 feature: telemetry
 depth: concept
-generated_at: 2026-06-22T10:00:48.764701+00:00
-source_hash: dba935dbb81bdeff572ce1339760a554a2afb6a7b99583b95b2a4ce078fd6abc
+generated_at: 2026-06-24T00:53:03.849694+00:00
+source_hash: 70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b
 status: generated
 ---
 
-# Telemetry
+# Usage tracking, model-tier feedback loops, and agent-coordination signals
 
-Attune's telemetry layer is an observability system that tracks agent activity, routes signals between agents, gates high-stakes actions on human approval, and records usage data to drive cost and quality feedback loops.
+## Overview
 
-## What telemetry covers
+Telemetry is how attune **measures itself**. The
+`attune.telemetry` package records what every workflow run costs,
+learns which model tier each workflow stage actually needs, and carries
+the liveness signals that let multi-agent teams coordinate.
 
-Telemetry spans five distinct concerns that work together to keep multi-agent workflows visible and controllable:
+Three groups live here, all exported from `attune.telemetry`:
 
-| Concern | What it does | Key types |
-|---|---|---|
-| **Usage tracking** | Records help queries and calculates cost savings from prompt caching and model-tier routing | `UsageTracker`, `FeedbackLoop` |
-| **Anonymous usage ping** | Opt-in (default OFF) phone-home of a frozen, anonymized payload to help prioritize development | `usage_ping` |
-| **Agent heartbeats** | Publishes liveness signals to Redis TTL keys so you can detect stale or crashed agents | `HeartbeatCoordinator`, `AgentHeartbeat` |
-| **Inter-agent coordination** | Routes typed signals between agents with configurable TTLs; expired signals are discarded automatically | `CoordinationSignals`, `CoordinationSignal` |
-| **Human approval gates** | Pauses a workflow until a human responds to an `ApprovalRequest`; times out if no response arrives within `timeout_seconds` | `ApprovalGate`, `ApprovalRequest`, `ApprovalResponse` |
+- **Usage tracking** — `UsageTracker` logs every LLM call (cost,
+  tokens, cache hits, duration) to a local append-only store and rolls
+  it up into stats and cost-savings reports.
+- **Feedback loops** — `FeedbackLoop` records a quality score per
+  workflow stage and tier, then recommends the cheapest tier that still
+  meets the quality bar (`recommend_tier`).
+- **Coordination signals** — `EventStreamer`, `HeartbeatCoordinator`,
+  and `ApprovalGate` carry agent heartbeats, event streams, and
+  human-in-the-loop approval requests for multi-agent runs. (These are
+  telemetry in the "agent liveness/coordination" sense and also relate
+  to orchestration.)
 
-A sixth concern — real-time event streaming — cuts across the others: `EventStreamer` publishes `StreamEvent` records to Redis Streams so external consumers can observe what is happening without polling.
+The data is **local-first**: `UsageTracker` writes under
+`~/.attune/telemetry` (overridable via `ATTUNE_HOME`) and nothing here
+calls the network unless an opt-in phone-home is explicitly enabled. The
+`telemetry_stats` MCP tool and the ops dashboard read the same on-disk
+store (`~/.attune/telemetry/usage.jsonl`).
 
-## How the pieces fit together
+## Concepts
 
-Think of telemetry as three concentric layers:
+### `UsageTracker` — the cost/usage ledger
 
-1. **Signal transport.** `CoordinationSignals` and `EventStreamer` move data between agents and between agents and humans. Signals carry a `ttl_seconds` field (default 60); the Redis TTL key expires the signal automatically so stale coordination state never accumulates.
+`UsageTracker` is the per-process ledger of LLM calls. It buffers
+records and writes them in batches to `~/.attune/telemetry`. Use the
+process-wide singleton, or construct one directly with store knobs:
+`UsageTracker(telemetry_dir=None, retention_days=90,
+max_file_size_mb=10, buffer_size=50)`.
 
-2. **Liveness.** `HeartbeatCoordinator` writes an `AgentHeartbeat` record on each call to `beat()`. The record includes `status`, `progress` (0.0–1.0), and `current_task`. Calling `get_stale_agents(threshold_seconds=60.0)` returns agents whose last beat is older than the threshold — a concrete way to detect a hung agent without building custom polling logic.
+`track_llm_call(...)` is the record path — workflows call it for you
+with the call's `workflow`, `stage`, `tier`, `model`, `provider`,
+`cost`, `tokens`, cache flags, and `duration_ms`. `get_stats(days=30)`
+rolls the store up; `calculate_savings(days=30)` reports cache/tier
+savings; `get_recent_entries()`, `get_cache_stats()`, and
+`export_to_dict()` read it back; `flush()` forces a write and `reset()`
+clears it.
 
-3. **Control.** `ApprovalGate.request_approval()` blocks until a human calls `respond_to_approval()` or the request times out. The `ApprovalResponse` carries `approved: bool` and an optional `reason`, giving the workflow a typed branch point rather than an ambiguous string.
+### `FeedbackLoop` — tier recommendation from quality scores
 
-Usage data recorded by `UsageTracker` and quality scores from `FeedbackLoop` sit alongside these runtime signals. The CLI commands (`cmd_telemetry_show`, `cmd_telemetry_savings`, `cmd_telemetry_cache_stats`, `cmd_agent_performance`) surface that data without requiring direct access to the underlying storage.
+`FeedbackLoop` closes the cost/quality loop. You record a quality score
+(0–1) for a workflow stage at the tier it ran on; once at least
+`MIN_SAMPLES` (10) exist for that stage, it recommends a tier.
+`QUALITY_THRESHOLD` is `0.7`; feedback entries expire after
+`FEEDBACK_TTL` (604800 s = 7 days). Backing storage is the optional
+`memory` passed to the constructor.
 
-Separately, an **opt-in usage ping** lets you share an anonymized signal with the maintainers. It is **OFF by default**; `cmd_telemetry_enable`, `cmd_telemetry_disable`, and `cmd_telemetry_status` (under `attune telemetry`) turn it on or off and show the exact payload that would be sent. The payload is frozen — workflow name, an anonymous install ID, package version, OS, and Python version only. No paths, prompts, costs, tokens, or free text are ever included, and `DO_NOT_TRACK` overrides everything.
+### `TelemetryFeatures` — feature/Redis status
 
-## When telemetry matters
+`TelemetryFeatures` reports which telemetry features are available in
+the current environment — chiefly whether the Redis-backed coordination
+features are reachable. `list_all_features()` and
+`get_feature_status()` enumerate status; `is_redis_available()` /
+`require_redis()` gate the Redis-dependent paths.
 
-Telemetry becomes important in three scenarios:
+### Coordination signals
 
-- **Multi-agent pipelines.** When several agents run concurrently, `CoordinationSignals.broadcast()` lets one agent notify all others of a state change (for example, that a shared resource is ready) without knowing how many listeners exist.
-- **Long-running tasks.** `HeartbeatCoordinator` makes it straightforward to answer "is this agent still alive?" by checking `is_agent_alive(agent_id)` or listing stale agents with `get_stale_agents()`.
-- **Sensitive or irreversible actions.** Wrapping an action in `ApprovalGate.request_approval()` inserts a human checkpoint. If the timeout expires before a response arrives, the gate returns a typed `ApprovalResponse` with `approved: False` so the workflow can handle the timeout explicitly.
-
-## Related topics
-
-- **Concept**: Feedback loop — how `record_template_feedback()` and `get_template_confidence()` use accumulated ratings to rank templates
-- **Reference**: Telemetry — field-level documentation for `CoordinationSignal`, `AgentHeartbeat`, `ApprovalRequest`, and `StreamEvent`
+`HeartbeatCoordinator` tracks agent liveness (`beat`,
+`start_heartbeat`, `get_active_agents`, `get_stale_agents`,
+`is_agent_alive`); `EventStreamer` publishes and consumes event streams
+(`publish_event`, `consume_events`, `get_recent_events`); `ApprovalGate`
+carries `ApprovalRequest` / `ApprovalResponse` for human-in-the-loop
+steps. These back multi-agent coordination and are Redis-backed when
+available.

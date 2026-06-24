@@ -3,66 +3,38 @@ type: warning
 name: telemetry-warning
 feature: telemetry
 depth: warning
-generated_at: 2026-05-16T06:19:45.841550+00:00
-source_hash: ed8485991002cc1c218f67b4f33f230bcbdc4325599a2e03f2bbe584d94a5e90
+generated_at: 2026-06-24T00:53:03.849694+00:00
+source_hash: 70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b
 status: generated
 ---
 
-# Telemetry cautions
+# Usage tracking, model-tier feedback loops, and agent-coordination signals
 
-## What to watch for
+## Failure modes
 
-The telemetry module does more than record metrics — it coordinates agents via TTL-based signals, tracks heartbeats through Redis TTL keys, gates workflow steps on human approval, and feeds quality scores back into template ranking through `FeedbackLoop`. Changes in one area can affect the others in ways that aren't visible until something silently stops working.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `get_stats` totals are 0 | No calls recorded yet, or buffered and unflushed | Run a workflow, or call `flush()` | low |
+| `recommend_tier` keeps returning the current tier | Fewer than `MIN_SAMPLES` (10) feedback rows for the stage's tier | Record more feedback before expecting a switch | medium |
+| `recommend_tier` says "No feedback data available" despite recorded feedback | Tier recorded with non-lowercase casing (e.g. `"CAPABLE"`); it only matches `cheap`/`capable`/`premium` | Record with lowercase tier strings | medium |
+| Coordination calls fail / no agents listed | Redis-backed features unavailable | Check `TelemetryFeatures.is_redis_available()`; install the Redis extra | medium |
+| Stats look stale | Entries older than retention/TTL aged out | `retention_days` (90) bounds the store; feedback `FEEDBACK_TTL` is 7 days | low |
 
-## Risk areas
+### Risk areas
 
-### TTL-based coordination signals expire without warning
+- **Buffered writes.** `UsageTracker` batches; a reader may miss the
+  newest calls until `flush()` or the buffer fills (`buffer_size`).
+- **`MIN_SAMPLES` gate.** Tier recommendations are conservative by
+  design — they need 10 samples before they move.
+- **Redis-gated coordination.** `EventStreamer` /
+  `HeartbeatCoordinator` need Redis; guard with `TelemetryFeatures`.
 
-`CoordinationSignal` has a default `ttl_seconds` of 60. If a receiving agent calls `wait_for_signal()` or `check_signal()` after the TTL has elapsed, the signal is gone — no error is raised, and `check_signal()` returns `None`. Under load or in slow CI environments, 60 seconds can pass faster than expected. Set `ttl_seconds` explicitly for any signal that crosses a slow boundary, and treat a `None` return from `check_signal()` as a distinct case, not a "signal hasn't arrived yet" case.
+### Diagnosis order
 
-### Heartbeat staleness thresholds can mask dead agents
-
-`get_stale_agents()` uses a default `threshold_seconds` of 60.0. If your agent's `beat()` cadence is close to that threshold, transient delays can cause a live agent to appear stale. Conversely, `is_agent_alive()` trusts the Redis TTL key, so an agent that crashed between beats may still appear alive until the key expires. Don't treat `is_agent_alive()` as a real-time liveness check — use `get_agent_status()` and inspect `last_beat` directly when precision matters.
-
-### Approval requests time out silently and block workflows
-
-`ApprovalGate.request_approval()` blocks until a response arrives or `timeout_seconds` elapses. If the timeout fires, the calling workflow stalls at that gate. Expired requests accumulate until `clear_expired_requests()` is called explicitly — they are not cleaned up automatically. Monitor `get_pending_approvals()` in long-running workflows, and call `clear_expired_requests()` on a schedule to prevent stale requests from cluttering the queue.
-
-### Feedback scores influence template ranking from the first rating
-
-`FeedbackLoop` computes confidence as `good / (good + bad)` and that score feeds into template ranking (see [Template feedback loop](concepts/feedback-loop.md)). A single early bad rating on a new template produces a very low confidence score. If you are testing a template or running integration exercises, use a separate feedback store rather than writing to the production `feedback.json`, or your test ratings will skew ranking for real users.
-
-### `EventStreamer.consume_events()` blocks when `block_ms` is set
-
-Passing a non-`None` `block_ms` to `consume_events()` causes the call to block for up to `block_ms` milliseconds waiting for new Redis Stream entries. In a synchronous context this can stall the entire thread. Use `block_ms=None` (non-blocking) when you need to poll, and reserve blocking mode for dedicated consumer threads.
-
-### Private helpers in `src/attune/telemetry/` can change without notice
-
-Names prefixed with `_` — including `_LOG_VERSION` and `_DEFAULT_FILE` — are not covered by the public API contract defined in `__all__`. Depending on them directly means a refactor can break your code silently.
-
-## How to avoid problems
-
-1. **Set TTLs explicitly for slow signal paths.** Don't rely on the 60-second default for `CoordinationSignal` when agents cross slow network boundaries or run in resource-constrained CI. Pass `ttl_seconds` to `CoordinationSignals.signal()` or `broadcast()` with a value that reflects your actual worst-case latency.
-
-2. **Treat `None` returns from signal checks as expiry, not absence.** After a signal's TTL elapses, `check_signal()` and `wait_for_signal()` return `None`. Build your coordination logic to handle expiry explicitly rather than retrying indefinitely.
-
-3. **Isolate test feedback from production ratings.** Point `FeedbackLoop` at a temporary file during tests so that bad ratings generated during development don't lower confidence scores in the live ranking data.
-
-4. **Schedule `clear_expired_requests()` in long-running workflows.** Approval requests do not self-clean. Without periodic calls to `clear_expired_requests()`, `get_pending_approvals()` will return stale entries that have already timed out.
-
-5. **Run `pytest -k "telemetry"` before committing changes.** Module-level globals, Redis connection state, and environment variables can make telemetry behave differently in tests than in production. If tests pass locally but fail in CI, check for implicit shared state in the telemetry module first.
-
-## Source files
-
-- `src/attune/telemetry/**`
-
-**Tags:** `telemetry`, `metrics`
-
-## Unresolved references
-
-> Auto-generated by attune-author fact-check. Review and either
-> fix the source code, fix this doc, or add an override.
-
-| Location | Severity | Issue |
-|---|---|---|
-| Line 33 | error | `[Template feedback loop](concepts/feedback-loop.md)` — target does not exist |
+1. `UsageTracker.get_instance().get_stats(days=1)` — is anything
+   recorded?
+2. `flush()` then re-read, to rule out buffering.
+3. For tier recommendations, `get_quality_stats(...)` returns `None`
+   only when the stage has no feedback; `recommend_tier` needs
+   `MIN_SAMPLES` (and lowercase tier strings) before it moves.
+4. For coordination, `TelemetryFeatures().is_redis_available()`.

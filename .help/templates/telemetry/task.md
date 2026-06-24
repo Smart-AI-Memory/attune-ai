@@ -3,76 +3,74 @@ type: task
 name: telemetry-task
 feature: telemetry
 depth: task
-generated_at: 2026-06-22T10:00:48.764701+00:00
-source_hash: dba935dbb81bdeff572ce1339760a554a2afb6a7b99583b95b2a4ce078fd6abc
+generated_at: 2026-06-24T00:53:03.849694+00:00
+source_hash: 70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b
 status: generated
 ---
 
-# Work with telemetry
+# Usage tracking, model-tier feedback loops, and agent-coordination signals
 
-Use the telemetry module when you need to query usage data, review cost savings, monitor agent performance, or extend the CLI with new reporting commands.
+## Tasks
 
-## Prerequisites
+### See your usage and cost stats
 
-- Access to the project source code
-- Familiarity with the files under `src/attune/telemetry/`
+**Goal:** roll up recent LLM usage without a dashboard.
 
-## Steps
+**Steps:**
 
-1. **Identify the CLI command that covers your goal.**
-   Each subcommand has a single responsibility. Match your goal to the function that owns it:
+```python
+from attune.telemetry import UsageTracker
 
-   | Goal | Function | File |
-   |---|---|---|
-   | View recent telemetry entries | `cmd_telemetry_show()` | `cli_core.py` |
-   | Calculate cost savings | `cmd_telemetry_savings()` | `cli_core.py` |
-   | Review prompt cache performance | `cmd_telemetry_cache_stats()` | `cli_core.py` |
-   | Analyze Sonnet → Opus fallback costs | `cmd_sonnet_opus_analysis()` | `cli_analysis.py` |
-   | View per-file test status | `cmd_file_test_status()` | `cli_analysis.py` |
-   | View Tier 1 automation status | `cmd_tier1_status()` | `cli_automation.py` |
-   | View task routing report | `cmd_task_routing_report()` | `cli_automation.py` |
-   | View agent performance metrics | `cmd_agent_performance()` | `cli_automation.py` |
-   | Check usage-ping opt-in status and payload | `cmd_telemetry_status()` | `cli_commands/telemetry_commands.py` |
-   | Opt in to anonymous usage pinging | `cmd_telemetry_enable()` | `cli_commands/telemetry_commands.py` |
-   | Opt out of anonymous usage pinging | `cmd_telemetry_disable()` | `cli_commands/telemetry_commands.py` |
-
-2. **Read the function's docstring, parameters, and return type.**
-   Confirm that the function owns the exact behavior you need before proceeding. All CLI command functions return `int` (exit code `0` on success).
-
-3. **Run the existing telemetry tests to establish a baseline.**
-   ```
-   pytest -k "telemetry"
-   ```
-   All tests must pass before you make any changes.
-
-4. **Edit the target function.**
-   Apply your change — new logic, additional output fields, or updated filtering. Match the naming conventions, error-handling style, and logging patterns already present in that file.
-
-5. **Register any new subcommand in the CLI entry point.**
-   If you added a new `cmd_*` function for the telemetry module, wire it up in `src/attune/telemetry/__main__.py` via `main()`. For user-facing commands like the usage-ping opt-in controls, add them to `src/attune/cli_commands/telemetry_commands.py` instead (registered through `cli_minimal.py`).
-
-6. **Run the tests again.**
-   ```
-   pytest -k "telemetry"
-   ```
-
-## Key files
-
-| File | Purpose |
-|---|---|
-| `src/attune/telemetry/__main__.py` | CLI entry point — `main()` dispatches all subcommands |
-| `src/attune/telemetry/cli_core.py` | Core telemetry display and savings commands |
-| `src/attune/telemetry/cli_analysis.py` | Cost and test-status analysis commands |
-| `src/attune/telemetry/cli_automation.py` | Tier 1, task routing, and agent performance commands |
-| `src/attune/telemetry/usage_ping.py` | Opt-in anonymous usage sync — enable/disable, payload building, endpoint resolution |
-| `src/attune/cli_commands/telemetry_commands.py` | User-facing usage-ping commands: `cmd_telemetry_enable`, `cmd_telemetry_disable`, `cmd_telemetry_status` |
-
-## Verify your changes
-
-Run the telemetry CLI directly and confirm your expected output appears:
-
-```
-python -m attune.telemetry <subcommand>
+stats = UsageTracker.get_instance().get_stats(days=30)
+print(stats["total_calls"], stats["total_cost"])
+print(stats["cache_hit_rate"], "cache hit rate")
+print(stats["by_workflow"])
 ```
 
-A return code of `0` and the expected report printed to stdout confirms the command succeeded. Re-run `pytest -k "telemetry"` to confirm no regressions were introduced.
+**Verify:** `get_stats(days=30)` returns a dict with `total_calls`,
+`total_cost`, `total_tokens_input`/`total_tokens_output`,
+`cache_hits`/`cache_misses`/`cache_hit_rate`, and the `by_workflow`,
+`by_tier`, `by_provider` breakdowns.
+
+### Estimate cost savings
+
+**Goal:** see what caching and tier routing saved.
+
+**Steps:**
+
+```python
+from attune.telemetry import UsageTracker
+
+savings = UsageTracker.get_instance().calculate_savings(days=30)
+print(savings)
+```
+
+**Verify:** `calculate_savings(days=30)` returns a dict summarizing the
+savings over the window.
+
+### Record feedback and get a tier recommendation
+
+**Goal:** let the feedback loop pick the cheapest sufficient tier.
+
+**Steps:**
+
+```python
+from attune.telemetry import FeedbackLoop
+
+loop = FeedbackLoop()
+# tier strings are lowercase: "cheap" / "capable" / "premium"
+loop.record_feedback(
+    "code-review", "security", tier="capable", quality_score=0.92
+)
+rec = loop.recommend_tier("code-review", "security", current_tier="capable")
+print(rec.recommended_tier, rec.reason)
+```
+
+**Verify:** `record_feedback(...)` returns the entry id (a `str`);
+`recommend_tier(...)` returns a `TierRecommendation`. Tier strings are
+**lowercase** — `recommend_tier` only looks up `cheap`/`capable`/
+`premium`, so feedback recorded under another casing is invisible to it.
+The `MIN_SAMPLES` (10) gate lives in `recommend_tier`: until the stage's
+tier has 10 samples it keeps the current tier (reason `"Insufficient
+data …"`); with no matching feedback at all it reports `"No feedback
+data available"`.

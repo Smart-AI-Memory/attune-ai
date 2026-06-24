@@ -1,83 +1,100 @@
-# Telemetry architecture
+# Telemetry
 
-Runtime observability for Attune AI agents.
+## Overview
 
-## Purpose
+Telemetry is how attune **measures itself**. The
+`attune.telemetry` package records what every workflow run costs,
+learns which model tier each workflow stage actually needs, and carries
+the liveness signals that let multi-agent teams coordinate.
 
-The telemetry subsystem records what agents are doing, routes coordination signals between them, gates workflow steps on human approval, streams events in real time, and feeds quality scores back to the model-tier selection logic. It does **not** handle prompt construction, workflow scheduling, or LLM API calls — those remain in their respective subsystems. Keeping this boundary clean means you can add a new tracking mechanism or swap the Redis backend without touching agent or workflow code.
+Three groups live here, all exported from `attune.telemetry`:
 
-## Key classes
+- **Usage tracking** — `UsageTracker` logs every LLM call (cost,
+  tokens, cache hits, duration) to a local append-only store and rolls
+  it up into stats and cost-savings reports.
+- **Feedback loops** — `FeedbackLoop` records a quality score per
+  workflow stage and tier, then recommends the cheapest tier that still
+  meets the quality bar (`recommend_tier`).
+- **Coordination signals** — `EventStreamer`, `HeartbeatCoordinator`,
+  and `ApprovalGate` carry agent heartbeats, event streams, and
+  human-in-the-loop approval requests for multi-agent runs. (These are
+  telemetry in the "agent liveness/coordination" sense and also relate
+  to orchestration.)
 
-| Class | Responsibility | File |
-|-------|---------------|------|
-| `CoordinationSignal` | Dataclass envelope for a single inter-agent signal, including TTL, source/target agents, and an arbitrary payload. | `src/attune/telemetry/agent_coordination.py` |
-| `CoordinationSignals` | Writes, broadcasts, and consumes `CoordinationSignal` records backed by TTL-expiring Redis keys. | `src/attune/telemetry/agent_coordination.py` |
-| `AgentHeartbeat` | Dataclass snapshot of one agent's liveness state: status, progress float, and current task string. | `src/attune/telemetry/agent_tracking.py` |
-| `HeartbeatCoordinator` | Manages per-agent heartbeat keys in Redis; detects stale agents via a configurable threshold. | `src/attune/telemetry/agent_tracking.py` |
-| `ApprovalRequest` | Dataclass representing a pending human-approval gate, including a timeout and current status field. | `src/attune/telemetry/approval_gates.py` |
-| `ApprovalResponse` | Dataclass carrying the human's approved/rejected decision and an optional reason string. | `src/attune/telemetry/approval_gates.py` |
-| `ApprovalGate` | Issues approval requests, polls for responses, and expires timed-out requests from the pending queue. | `src/attune/telemetry/approval_gates.py` |
-| `StreamEvent` | Dataclass envelope for a single Redis Streams entry: event type, timestamp, and data payload. | `src/attune/telemetry/event_streaming.py` |
-| `EventStreamer` | Publishes `StreamEvent` records and exposes blocking/non-blocking consumers; also manages stream lifecycle (trim, delete). | `src/attune/telemetry/event_streaming.py` |
-| `FeatureStatus` | Enum-like status value for a single optional telemetry capability. | `src/attune/telemetry/features.py` |
-| `FeatureInfo` | Holds the name, status, and descriptive metadata for one telemetry feature. | `src/attune/telemetry/features.py` |
-| `TelemetryFeatures` | Queries which telemetry features (e.g., streaming, heartbeat) are available in the current environment. | `src/attune/telemetry/features.py` |
-| `FeedbackLoop` | Records per-response quality feedback and translates accumulated scores into model-tier recommendations. | `src/attune/telemetry/feedback_loop.py` |
-| `ModelTier` | Mirrors `workflows.base.ModelTier`; kept local so telemetry has no hard dependency on the workflows package. | `src/attune/telemetry/feedback_models.py` |
-| `FeedbackEntry` | Dataclass for one quality rating attached to a single LLM response. | `src/attune/telemetry/feedback_models.py` |
-| `QualityStats` | Aggregates `FeedbackEntry` records into per-stage statistics (counts, mean score). | `src/attune/telemetry/feedback_models.py` |
-| `TierRecommendation` | Carries a `ModelTier` recommendation derived from `QualityStats`, with a confidence value. | `src/attune/telemetry/feedback_models.py` |
-| `HelpTracker` | Appends help-system query records to a JSONL file (`help_queries.jsonl`); append-only, no reads. | `src/attune/telemetry/help_tracker.py` |
-| `UsageTracker` | Privacy-first local tracker that logs usage events without sending data off-device. | `src/attune/telemetry/usage_tracker.py` |
+The data is **local-first**: `UsageTracker` writes under
+`~/.attune/telemetry` (overridable via `ATTUNE_HOME`) and nothing here
+calls the network unless an opt-in phone-home is explicitly enabled. The
+`telemetry_stats` MCP tool and the ops dashboard read the same on-disk
+store (`~/.attune/telemetry/usage.jsonl`).
 
-## Data flow
+## Concepts
 
-Two largely independent flows converge on Redis, plus a local-only path for help and usage logging:
+### `UsageTracker` — the cost/usage ledger
 
-```
-Agent process
-│
-├─ HeartbeatCoordinator ──── beat() ──────────────────► Redis TTL key
-│                                                        (expires if agent dies)
-│
-├─ CoordinationSignals ───── signal() / broadcast() ──► Redis TTL key
-│                        ◄── wait_for_signal() ─────────
-│
-├─ ApprovalGate ──────────── request_approval() ──────► Redis (pending queue)
-│                        ◄── respond_to_approval() ─────
-│
-└─ EventStreamer ──────────── publish_event() ─────────► Redis Stream
-                         ◄── consume_events() ───────────
+`UsageTracker` is the per-process ledger of LLM calls. It buffers
+records and writes them in batches to `~/.attune/telemetry`. Use the
+process-wide singleton, or construct one directly with store knobs:
+`UsageTracker(telemetry_dir=None, retention_days=90,
+max_file_size_mb=10, buffer_size=50)`.
 
-LLM response
-│
-└─ FeedbackLoop
-     │  record(FeedbackEntry)
-     ▼
-   FeedbackEntry[]  ──► QualityStats  ──► TierRecommendation
-                                            (Sonnet ↔ Opus routing)
+`track_llm_call(...)` is the record path — workflows call it for you
+with the call's `workflow`, `stage`, `tier`, `model`, `provider`,
+`cost`, `tokens`, cache flags, and `duration_ms`. `get_stats(days=30)`
+rolls the store up; `calculate_savings(days=30)` reports cache/tier
+savings; `get_recent_entries()`, `get_cache_stats()`, and
+`export_to_dict()` read it back; `flush()` forces a write and `reset()`
+clears it.
 
-Agent process (help / usage, local only)
-│
-├─ HelpTracker  ──► help_queries.jsonl  (append-only)
-└─ UsageTracker ──► local telemetry store  (no network)
-```
+### `FeedbackLoop` — tier recommendation from quality scores
 
-`TelemetryFeatures` is queried at startup to determine which of the Redis-backed paths are available before any of the above runs.
+`FeedbackLoop` closes the cost/quality loop. You record a quality score
+(0–1) for a workflow stage at the tier it ran on; once at least
+`MIN_SAMPLES` (10) exist for that stage, it recommends a tier.
+`QUALITY_THRESHOLD` is `0.7`; feedback entries expire after
+`FEEDBACK_TTL` (604800 s = 7 days). Backing storage is the optional
+`memory` passed to the constructor.
 
-## Design decisions
+### `TelemetryFeatures` — feature/Redis status
 
-**Local mirror of `ModelTier`**: `feedback_models.py` defines its own `ModelTier` rather than importing from `workflows.base`. This avoids a circular dependency between the telemetry and workflows packages. If the canonical enum changes, both copies must be kept in sync — an intentional trade-off documented here so the next maintainer knows the duplication is load-bearing.
+`TelemetryFeatures` reports which telemetry features are available in
+the current environment — chiefly whether the Redis-backed coordination
+features are reachable. `list_all_features()` and
+`get_feature_status()` enumerate status; `is_redis_available()` /
+`require_redis()` gate the Redis-dependent paths.
 
-**TTL as the liveness mechanism**: `CoordinationSignals` and `HeartbeatCoordinator` both rely on Redis TTL expiry rather than explicit deletion to clean up after dead agents. This means the absence of a key is the signal — no separate garbage-collection process is needed, but it also means a Redis restart clears all liveness state.
+### Coordination signals
 
-**Approval gate is synchronous from the requester's perspective**: `ApprovalGate.request_approval()` blocks until a response arrives or the timeout expires. This keeps agent workflow code simple (no callback wiring), at the cost of holding a thread during the wait window.
+`HeartbeatCoordinator` tracks agent liveness (`beat`,
+`start_heartbeat`, `get_active_agents`, `get_stale_agents`,
+`is_agent_alive`); `EventStreamer` publishes and consumes event streams
+(`publish_event`, `consume_events`, `get_recent_events`); `ApprovalGate`
+carries `ApprovalRequest` / `ApprovalResponse` for human-in-the-loop
+steps. These back multi-agent coordination and are Redis-backed when
+available.
 
-## Extension points
+## Design & extension
 
-- **Add a new coordination signal type**: call `CoordinationSignals.signal()` or `CoordinationSignals.broadcast()` with a new `signal_type` string. No class changes are required; the payload is an arbitrary `dict`.
-- **Track a new agent metric**: add fields to `AgentHeartbeat` and pass them through `HeartbeatCoordinator.beat()`. Both are dataclasses, so adding fields is straightforward.
-- **Add a new approval workflow**: call `ApprovalGate.request_approval()` with a new `approval_type` string; the gate stores and routes requests by that type without requiring subclassing.
-- **Consume events in a new service**: construct an `EventStreamer` and call `consume_events()` with the event types you care about. Publishing requires only `publish_event()` — there is no registry to update.
-- **Add a quality-feedback stage**: create `FeedbackEntry` records for the new stage and pass them to `FeedbackLoop`. `QualityStats` aggregates by stage name, so no schema changes are needed.
-- **Disable Redis-backed features gracefully**: check `TelemetryFeatures` at startup and skip the Redis-dependent paths if the relevant feature reports unavailable.
+### Design decisions
+
+- **Local-first, opt-in phone-home.** Usage data is written locally;
+  any network reporting is a separate, consent-gated path.
+- **Append-only, batched, retention-bounded.** `UsageTracker` buffers
+  and rolls files, bounded by `retention_days` / `max_file_size_mb`, so
+  the store stays small without losing recent fidelity.
+- **Conservative tier feedback.** `FeedbackLoop` requires
+  `MIN_SAMPLES` and a `QUALITY_THRESHOLD` before it recommends a change,
+  so a single bad score can't downgrade a stage.
+- **Redis-optional coordination.** Heartbeats and event streams use
+  Redis when present; `TelemetryFeatures` reports availability so
+  callers degrade gracefully.
+
+### Extension points
+
+- **Read the data your own way:** `UsageTracker.export_to_dict()` /
+  `get_recent_entries()`.
+- **Feed the loop:** call `FeedbackLoop.record_feedback(...)` from a
+  custom workflow stage.
+- **Coordinate custom agents:** publish via `EventStreamer` and beat
+  via `HeartbeatCoordinator` (Redis required).
+
+<!-- attune-generated: source_hash=70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b feature=telemetry kind=architecture generated_at=2026-06-24 -->
