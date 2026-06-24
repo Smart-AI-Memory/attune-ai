@@ -19,7 +19,7 @@ and the component folder layout.
 | Field | Value / Purpose |
 |-------|-----------------|
 | `name` | `attune-ai` — the plugin name. |
-| `version` | Plugin bundle version (`8.9.1`). |
+| `version` | Plugin bundle version (`8.9.2`). |
 | `description` | One-line plugin summary shown in Claude Code. |
 | `author` | `{name, email}` — Smart AI Memory. |
 | `homepage` / `repository` | Project links. |

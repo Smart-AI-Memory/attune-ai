@@ -92,7 +92,7 @@ are part of the bundle.
 
 `plugin/core/` exists so the plugin can carry a version for standalone
 operation; `plugin/core/__init__.py` is just
-`__version__ = "8.9.1"`. The real runtime is the pip-installed
+`__version__ = "8.9.2"`. The real runtime is the pip-installed
 `attune-ai` package, which the `.mcp.json` server pulls via
 `uvx --from attune-ai`.
 
