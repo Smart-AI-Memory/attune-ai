@@ -4,7 +4,8 @@
 **Created:** 2026-06-24
 
 Each decision lists the choice, the alternative(s), and the rationale.
-D1–D4 RATIFIED 2026-06-24; OQ1/OQ2 resolved (see below).
+D1–D4 RATIFIED 2026-06-24; OQ1/OQ2 resolved (see below). D5 added
+2026-06-24 (adopts bundle emission ON TOP OF the D1 fallback).
 
 ---
 
@@ -84,6 +85,41 @@ patch (consistent with 8.7.1's docs/distribution patch precedent). The
 changelog carries the nuance so the scope is not over-claimed.
 
 ---
+
+## D5 — Bundle emission (Design B), layered on the D1 fallback (RATIFIED)
+
+**Choice:** Add an attune-ai sync step that projects each single-sourced
+feature's `.help/templates/<F>/<kind>.md` into the **bundled**
+type-organized layout `plugin/help/generated/<type>/<F>.md` (ID
+`<prefix>-<F>`, e.g. `con-help-system`), then rebuilds `cross_links.json`
++ `source_manifest`. The plugin ships `plugin/help/generated/`, so this
+makes the grounded content resolve **from the bundle** — for clean
+`uvx`/plugin installs, not only dev checkouts.
+
+**Why D1 alone is insufficient (the trigger):** the D1 fallback reads
+`.help/templates/<F>/`, which resolves only where that dir exists (a dev
+checkout). The live MCP probe passed only because the connected server
+resolved against the repo checkout; a clean install ships neither
+`.help/templates/<F>/` nor that content in `plugin/help/generated/`
+(which currently holds only lessons/skill-derived `tool-<skill>` and
+system concepts). Emission puts the content where the shipped bundle is.
+
+**Mechanism / scope:**
+- A new **attune-ai** script (`scripts/sync_help_bundle.py`) — NOT a
+  change to the sibling `attune-author` projector (which only emits
+  `help`/`docs` targets).
+- Naming `con-<F>` etc. does not collide with the existing
+  `con-tool-<skill>` bundle IDs (verified).
+- `generate_all.py` does not wipe dirs (verified — no rmtree/unlink), so
+  emitted files survive a bundle regen; `source` frontmatter points at
+  `content/features/<F>.md` for staleness tracking.
+- The D1 fallback stays as a safety net for dev checkouts.
+
+**Cost / follow-up:** duplicates ~10 kinds × 26 features (~280 files)
+into the tracked bundle. The redundant `tool-<skill>` concepts for
+skill-features can be retired later (not in scope here). Delivery to pip
+users still depends on the wheel packaging `plugin/help/generated`
+(separate from D2; tracked).
 
 ## Resolved questions
 

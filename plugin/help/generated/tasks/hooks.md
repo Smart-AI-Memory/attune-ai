@@ -1,0 +1,73 @@
+---
+name: hooks
+source: content/features/hooks.md
+tags:
+- hooks
+- webhooks
+- events
+- automation
+type: task
+---
+
+# The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config
+
+## Tasks
+
+### Register and fire an in-process hook
+
+```python
+from attune.hooks import HookRegistry, HookEvent
+
+registry = HookRegistry()
+
+
+def guard(**context) -> dict:
+    return {"blocked": context.get("tool_name") == "Bash"}
+
+
+hook_id = registry.register(HookEvent.PRE_TOOL_USE, guard, priority=10)
+results = registry.fire_sync(HookEvent.PRE_TOOL_USE, {"tool_name": "Bash"})
+print(hook_id, results[0]["success"], results[0]["output"])
+```
+
+**Verify:** `register(...)` returns a hook id (a `str`). `fire_sync`
+runs every matching handler — calling each as `handler(**context)` — and
+returns a list of result dicts (a success record carries `event`,
+`hook`, `description`, `success`, `output`, `error`, `duration_ms`; an
+error record is a subset). `fire(...)` is the async variant.
+
+### Load hooks from YAML config
+
+**Goal:** declare hooks in a file instead of code.
+
+**Steps:** `HookConfig.from_yaml(path)` returns a `HookConfig`;
+`get_hooks_for_event(event)` lists the `HookRule`s for an event. Each
+rule's `hooks` are `HookDefinition`s an executor can run.
+
+```python
+from attune.hooks import HookConfig, HookEvent
+
+config = HookConfig.from_yaml("hooks.yaml")
+for rule in config.get_hooks_for_event(HookEvent.PRE_TOOL_USE):
+    print(rule.description, rule.priority)
+```
+
+**Verify:** `from_yaml` is a constructor returning `HookConfig`;
+`get_hooks_for_event` returns `list[HookRule]`.
+
+### Execute a configured hook
+
+```python
+import asyncio
+
+from attune.hooks import HookExecutor, HookDefinition
+from attune.hooks.config import HookType
+
+hook = HookDefinition(type=HookType.COMMAND, command="echo hi", timeout=5)
+executor = HookExecutor()
+result = asyncio.run(executor.execute(hook, {"tool_name": "Bash"}))
+print(result)
+```
+
+**Verify:** `HookExecutor.execute(hook, context)` is **async** — await
+it; it returns a result dict.
