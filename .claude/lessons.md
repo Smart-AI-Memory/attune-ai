@@ -10806,3 +10806,32 @@ files.
     Across the 7-feature Tier-2 batch the adversarial pass found real
     fiction on 5 of 7 (only rag-grounding + wizards were clean first
     try) — it is not optional.
+
+- **A cancelled NON-required check still flips the PR to UNSTABLE and
+  blocks the GitHub merge button — and cancelling/rerunning one CI run
+  can collaterally cancel a concurrent sibling workflow**: hit 2026-06-23
+  cutting 8.9.0 (PR #1032). The `test (ubuntu-latest, 3.12)` lane hit the
+  known runner-hang (xdist finalize-deadlock, step "Run tests" wedged
+  ~26 min). I `gh run cancel <tests-run>` + `gh run rerun --failed` to
+  clear it (rerun went green in ~4 min) — correct for the hang. BUT
+  afterward the **non-required `security` check** (a SEPARATE workflow
+  run) showed bucket `cancel`, which flipped the PR to `UNSTABLE`, and
+  GitHub refused the merge even though ALL 8 REQUIRED checks
+  (`pre-commit, lint, code-quality, coverage, platform-compat,
+  test (ubuntu-latest, 3.12), CodeQL, default-install-smoke`) were green
+  and `mergeable=MERGEABLE`. Existing core lesson covers
+  "cancelled-but-REQUIRED = BLOCKING"; this adds that **cancelled-but-
+  NON-required also blocks the merge UI via UNSTABLE** (the merge button
+  / non-admin `gh pr merge` won't proceed on UNSTABLE). Two durable
+  points: (1) before treating a PR as ready after any run-cancel, re-read
+  `gh pr checks <n> --json name,bucket` for ANY `cancel`/`fail` bucket —
+  not just the required set — because UNSTABLE from a non-required cancel
+  is enough to block; (2) recovery is cheap and clean: `gh run rerun
+  <that-run>` on the collaterally-cancelled check → it goes green →
+  UNSTABLE clears → normal squash-merge (no admin bypass needed). Prefer
+  this over admin-merging, since the root cause was self-inflicted. When
+  clearing a hung lane during a release, expect sibling non-required
+  workflows (security scans, Vercel, agent reviews) to need a rerun
+  before the PR is mergeable. Pairs with the core "Rapid pushes +
+  cancel-in-progress … cancelled-but-required = BLOCKING" lesson and the
+  "verify-first on infra — required vs non-required" lesson.
