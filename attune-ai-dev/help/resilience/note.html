@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks — concept</title>
+  <title>Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks — note</title>
   <meta name="description" content="`attune.resilience` is a small toolkit of **fault-tolerance primitives** for code that calls flaky things (LLM APIs, networks, subprocesses). Five patterns, each in its own module and exported from `a" />
-  <meta property="og:title" content="Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks — concept" />
+  <meta property="og:title" content="Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks — note" />
   <meta property="og:description" content="`attune.resilience` is a small toolkit of **fault-tolerance primitives** for code that calls flaky things (LLM APIs, networks, subprocesses). Five patterns, each in its own module and exported from `a" />
   <meta property="og:type" content="website" />
-  <link rel="canonical" href="https://attune-ai.dev/help/resilience/concept" />
+  <link rel="canonical" href="https://attune-ai.dev/help/resilience/note" />
   <style>
     :root {
       --primary: #004ac6;
@@ -267,7 +267,7 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/resilience">Resilience</a><span class="sep">&rsaquo;</span><span>concept</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/resilience">Resilience</a><span class="sep">&rsaquo;</span><span>note</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
@@ -321,6 +321,16 @@ underlying class (<code>add</code> / <code>execute</code>).</p>
 function — then <code>run_all()</code> (async) or <code>run_all_sync()</code> returns a
 <code>SystemHealth</code> (<code>status</code>, <code>checks</code>, <code>to_dict()</code>). <code>HealthStatus</code> is
 <code>HEALTHY</code> / <code>DEGRADED</code> / <code>UNHEALTHY</code> / <code>UNKNOWN</code>.</p>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Decorators are the common path; classes are for control.</strong> Reach
+for <code>@retry</code> / <code>@circuit_breaker</code> / <code>@timeout</code> first.</li>
+<li><strong>Name your breakers.</strong> A stable <code>name</code> shares one breaker across call
+sites via <code>get_circuit_breaker</code>.</li>
+<li><strong>Narrow <code>retryable_exceptions</code>.</strong> Don't retry bugs.</li>
+<li><strong>Mind the async primitives.</strong> <code>with_fallback</code> / <code>with_timeout</code> return
+/ take coroutines.</li>
+</ul>
 
   </article>
   <footer>

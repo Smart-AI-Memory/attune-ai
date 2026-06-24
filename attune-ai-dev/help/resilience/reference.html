@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Resilience reference — reference</title>
-  <meta name="description" content="Protect your functions from failures, timeouts, and cascading errors with circuit breakers, retry logic, fallbacks, and health monitoring." />
-  <meta property="og:title" content="Resilience reference — reference" />
-  <meta property="og:description" content="Protect your functions from failures, timeouts, and cascading errors with circuit breakers, retry logic, fallbacks, and health monitoring." />
+  <title>Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks — reference</title>
+  <meta name="description" content="| Symbol | Kind | Purpose | |--------|------|---------| | `retry(max_attempts=3, backoff_factor=2.0, initial_delay=1.0, max_delay=60.0, jitter=True, retryable_exceptions=None, on_retry=None)` | decora" />
+  <meta property="og:title" content="Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks — reference" />
+  <meta property="og:description" content="| Symbol | Kind | Purpose | |--------|------|---------| | `retry(max_attempts=3, backoff_factor=2.0, initial_delay=1.0, max_delay=60.0, jitter=True, retryable_exceptions=None, on_retry=None)` | decora" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/resilience/reference" />
   <style>
@@ -272,531 +272,86 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Resilience reference</h1>
-<p>Protect your functions from failures, timeouts, and cascading errors with circuit breakers, retry logic, fallbacks, and health monitoring.</p>
-<h2>Classes</h2>
-<h3>CircuitBreaker</h3>
+<h1>Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks</h1>
+<h2>Reference</h2>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Kind</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>name</code></td>
-<td>str</td>
-<td></td>
-<td>Circuit breaker identifier</td>
+<td><code>retry(max_attempts=3, backoff_factor=2.0, initial_delay=1.0, max_delay=60.0, jitter=True, retryable_exceptions=None, on_retry=None)</code></td>
+<td>decorator</td>
+<td>Retry with backoff.</td>
 </tr>
 <tr>
-<td><code>failure_threshold</code></td>
-<td>int</td>
-<td>5</td>
-<td>Failures before opening circuit</td>
+<td><code>RetryConfig(...)</code> / <code>retry_with_backoff(func, *a, config=None)</code></td>
+<td>class / fn</td>
+<td>Retry config + imperative runner.</td>
 </tr>
 <tr>
-<td><code>reset_timeout</code></td>
-<td>float</td>
-<td>60.0</td>
-<td>Seconds before allowing half-open attempts</td>
+<td><code>circuit_breaker(name=None, failure_threshold=5, reset_timeout=60.0, half_open_max_calls=3, ...)</code></td>
+<td>decorator</td>
+<td>Circuit breaker.</td>
 </tr>
 <tr>
-<td><code>half_open_max_calls</code></td>
-<td>int</td>
-<td>3</td>
-<td>Max calls in half-open state</td>
+<td><code>CircuitBreaker(name, ...)</code> / <code>get_circuit_breaker(name)</code></td>
+<td>class / fn</td>
+<td>Breaker object + registry lookup.</td>
 </tr>
 <tr>
-<td><code>excluded_exceptions</code></td>
-<td>tuple[type[Exception], ...]</td>
-<td>()</td>
-<td>Exceptions that don't count as failures</td>
+<td><code>CircuitState</code></td>
+<td>enum</td>
+<td><code>CLOSED</code> / <code>OPEN</code> / <code>HALF_OPEN</code>.</td>
 </tr>
-</tbody>
-</table>
-<table>
-<thead>
-<tr>
-<th>Property</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>state</code></td>
-<td>CircuitState</td>
-<td>Current circuit state, checking for timeout</td>
-</tr>
-<tr>
-<td><code>is_open</code></td>
-<td>bool</td>
-<td>Whether circuit is open (failing fast)</td>
-</tr>
-<tr>
-<td><code>is_closed</code></td>
-<td>bool</td>
-<td>Whether circuit is closed (normal operation)</td>
-</tr>
-</tbody>
-</table>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>record_success</code></td>
-<td></td>
-<td>None</td>
-<td>Mark a successful operation</td>
-</tr>
-<tr>
-<td><code>record_failure</code></td>
-<td>exception: Exception</td>
-<td>None</td>
-<td>Mark a failed operation</td>
-</tr>
-<tr>
-<td><code>get_time_until_reset</code></td>
-<td></td>
-<td>float</td>
-<td>Seconds until circuit can transition to half-open</td>
-</tr>
-<tr>
-<td><code>reset</code></td>
-<td></td>
-<td>None</td>
-<td>Manually reset circuit to closed state</td>
-</tr>
-<tr>
-<td><code>get_stats</code></td>
-<td></td>
-<td>dict[str, Any]</td>
-<td>Get circuit breaker statistics</td>
-</tr>
-</tbody>
-</table>
-<h3>Fallback</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>name</code></td>
-<td>str</td>
-<td></td>
-<td>Fallback chain identifier</td>
-</tr>
-<tr>
-<td><code>functions</code></td>
-<td>list[Callable]</td>
-<td>[]</td>
-<td>List of fallback functions</td>
-</tr>
-<tr>
-<td><code>default_value</code></td>
-<td>Any | None</td>
-<td>None</td>
-<td>Value returned if all fallbacks fail</td>
-</tr>
-</tbody>
-</table>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>add</code></td>
-<td>func: Callable</td>
-<td>Fallback</td>
-<td>Add a function to the fallback chain</td>
-</tr>
-<tr>
-<td><code>execute</code></td>
-<td>*args: Any, **kwargs: Any</td>
-<td>Any</td>
-<td>Execute the fallback chain</td>
-</tr>
-</tbody>
-</table>
-<h3>HealthCheckResult</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>name</code></td>
-<td>str</td>
-<td></td>
-<td>Name of the health check</td>
-</tr>
-<tr>
-<td><code>status</code></td>
-<td>HealthStatus</td>
-<td></td>
-<td>Health status result</td>
-</tr>
-<tr>
-<td><code>message</code></td>
-<td>str</td>
-<td>''</td>
-<td>Descriptive message</td>
-</tr>
-<tr>
-<td><code>latency_ms</code></td>
-<td>float</td>
-<td>0.0</td>
-<td>Check execution time in milliseconds</td>
-</tr>
-<tr>
-<td><code>details</code></td>
-<td>dict[str, Any]</td>
-<td>{}</td>
-<td>Additional diagnostic information</td>
-</tr>
-<tr>
-<td><code>timestamp</code></td>
-<td>datetime</td>
-<td>now()</td>
-<td>When the check was performed</td>
-</tr>
-</tbody>
-</table>
-<h3>SystemHealth</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>status</code></td>
-<td>HealthStatus</td>
-<td></td>
-<td>Overall system health status</td>
-</tr>
-<tr>
-<td><code>checks</code></td>
-<td>list[HealthCheckResult]</td>
-<td></td>
-<td>Individual health check results</td>
-</tr>
-<tr>
-<td><code>version</code></td>
-<td>str</td>
-<td>'unknown'</td>
-<td>System version</td>
-</tr>
-<tr>
-<td><code>uptime_seconds</code></td>
-<td>float</td>
-<td>0.0</td>
-<td>System uptime</td>
-</tr>
-<tr>
-<td><code>timestamp</code></td>
-<td>datetime</td>
-<td>now()</td>
-<td>When the health summary was generated</td>
-</tr>
-</tbody>
-</table>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>to_dict</code></td>
-<td></td>
-<td>dict[str, Any]</td>
-<td>Convert to dictionary format</td>
-</tr>
-</tbody>
-</table>
-<h3>RetryConfig</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>max_attempts</code></td>
-<td>int</td>
-<td>3</td>
-<td>Maximum number of retry attempts</td>
-</tr>
-<tr>
-<td><code>backoff_factor</code></td>
-<td>float</td>
-<td>2.0</td>
-<td>Exponential backoff multiplier</td>
-</tr>
-<tr>
-<td><code>initial_delay</code></td>
-<td>float</td>
-<td>1.0</td>
-<td>Initial delay in seconds</td>
-</tr>
-<tr>
-<td><code>max_delay</code></td>
-<td>float</td>
-<td>60.0</td>
-<td>Maximum delay between retries</td>
-</tr>
-<tr>
-<td><code>jitter</code></td>
-<td>bool</td>
-<td>True</td>
-<td>Whether to add random jitter</td>
-</tr>
-<tr>
-<td><code>retryable_exceptions</code></td>
-<td>tuple[type[Exception], ...]</td>
-<td>(Exception,)</td>
-<td>Exception types that trigger retries</td>
-</tr>
-</tbody>
-</table>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>get_delay</code></td>
-<td>attempt: int</td>
-<td>float</td>
-<td>Calculate delay for given attempt number</td>
-</tr>
-</tbody>
-</table>
-<h3>Exception Classes</h3>
-<table>
-<thead>
-<tr>
-<th>Class</th>
-<th>Parameters</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
 <tr>
 <td><code>CircuitOpenError</code></td>
-<td>name: str, reset_time: float</td>
-<td>Raised when circuit breaker is open</td>
+<td>exception</td>
+<td>Raised when the breaker is open.</td>
 </tr>
 <tr>
-<td><code>TimeoutError</code></td>
-<td>operation: str, timeout: float</td>
-<td>Raised when an operation times out</td>
-</tr>
-</tbody>
-</table>
-<h2>Functions</h2>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Raises</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>circuit_breaker</code></td>
-<td>name: str | None = None, failure_threshold: int = 5, reset_timeout: float = 60.0, half_open_max_calls: int = 3, excluded_exceptions: tuple[type[Exception], ...] | None = None, fallback: Callable[..., T] | None = None</td>
-<td>Callable</td>
-<td>CircuitOpenError</td>
-<td>Decorator to wrap a function with circuit breaker protection</td>
+<td><code>timeout(seconds, error_message=None, fallback=None)</code></td>
+<td>decorator</td>
+<td>Bound a call.</td>
 </tr>
 <tr>
-<td><code>fallback</code></td>
-<td>*fallback_funcs: Callable, default: Any | None = None, log_failures: bool = True</td>
-<td>Callable</td>
-<td>RuntimeError</td>
-<td>Decorator to add fallback behavior to a function</td>
+<td><code>with_timeout(coro, seconds, fallback_value=None)</code></td>
+<td>async fn</td>
+<td>Bound a coroutine.</td>
 </tr>
 <tr>
-<td><code>get_circuit_breaker</code></td>
-<td>name: str</td>
-<td>CircuitBreaker | None</td>
-<td></td>
-<td>Get a registered circuit breaker by name</td>
+<td><code>ResilienceTimeoutError</code></td>
+<td>exception</td>
+<td>Raised on overrun.</td>
 </tr>
 <tr>
-<td><code>get_health_check</code></td>
-<td></td>
-<td>HealthCheck</td>
-<td></td>
-<td>Get or create global health check instance</td>
+<td><code>fallback(*fns, default=None, log_failures=True)</code></td>
+<td>decorator (sync)</td>
+<td>Try alternates.</td>
 </tr>
 <tr>
-<td><code>register_default_checks</code></td>
-<td>health: HealthCheck</td>
-<td>None</td>
-<td></td>
-<td>Register default health checks for Attune AI</td>
+<td><code>with_fallback(primary, fallbacks, default=None)</code></td>
+<td>fn → <strong>async</strong> wrapper</td>
+<td>Programmatic fallback chain.</td>
 </tr>
 <tr>
-<td><code>retry</code></td>
-<td>max_attempts: int = 3, backoff_factor: float = 2.0, initial_delay: float = 1.0, max_delay: float = 60.0, jitter: bool = True, retryable_exceptions: tuple[type[Exception], ...] | None = None, on_retry: Callable[[Exception, int], None] | None = None</td>
-<td>Callable</td>
-<td>last_exception, RuntimeError</td>
-<td>Decorator for retrying functions with exponential backoff</td>
+<td><code>Fallback(name, functions, default_value=None)</code></td>
+<td>class</td>
+<td><code>add</code> / <code>execute</code>.</td>
 </tr>
 <tr>
-<td><code>retry_with_backoff</code></td>
-<td>func: Callable[..., T], *args: Any, config: RetryConfig | None = None, **kwargs: Any</td>
-<td>T</td>
-<td>last_exception, RuntimeError</td>
-<td>Execute a function with retry logic</td>
+<td><code>HealthCheck(version=&quot;unknown&quot;)</code></td>
+<td>class</td>
+<td><code>register(name, timeout=10.0, critical=False)</code> <strong>decorator</strong>, <code>run_all</code> (async), <code>run_all_sync</code>.</td>
 </tr>
 <tr>
-<td><code>timeout</code></td>
-<td>seconds: float, error_message: str | None = None, fallback: Callable[..., T] | None = None</td>
-<td>Callable</td>
-<td>TimeoutError</td>
-<td>Decorator to add timeout to a function</td>
-</tr>
-<tr>
-<td><code>with_fallback</code></td>
-<td>primary: Callable[..., T], fallbacks: list[Callable[..., T]], default: T | None = None</td>
-<td>Callable[..., T]</td>
-<td></td>
-<td>Create a function that tries primary then fallbacks</td>
-</tr>
-<tr>
-<td><code>with_timeout</code></td>
-<td>coro: Any, seconds: float, fallback_value: T | None = None</td>
-<td>T</td>
-<td>TimeoutError</td>
-<td>Execute a coroutine with a timeout</td>
-</tr>
-</tbody>
-</table>
-<h3>Raises</h3>
-<table>
-<thead>
-<tr>
-<th>Exception</th>
-<th>Message</th>
-<th>Context</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>RuntimeError</td>
-<td>'All fallbacks failed for {...}'</td>
-<td>All fallback functions failed</td>
-</tr>
-<tr>
-<td>RuntimeError</td>
-<td>'Unexpected retry loop exit'</td>
-<td>Internal retry mechanism error</td>
-</tr>
-<tr>
-<td>TimeoutError</td>
-<td>'coroutine'</td>
-<td>Coroutine execution timeout</td>
-</tr>
-</tbody>
-</table>
-<h2>Enums</h2>
-<h3>CircuitState</h3>
-<p>Circuit breaker states for tracking failure conditions.</p>
-<h3>HealthStatus</h3>
-<p>Health status levels for system monitoring.</p>
-<h2>Health Check Manager</h2>
-<p>The <code>HealthCheck</code> class monitors system components with configurable checks.</p>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td>version: str = 'unknown'</td>
-<td></td>
-<td>Initialize health check manager</td>
-</tr>
-<tr>
-<td><code>register</code></td>
-<td>name: str, timeout: float = 10.0, critical: bool = False</td>
-<td>Callable</td>
-<td>Register a new health check</td>
-</tr>
-<tr>
-<td><code>run_check</code></td>
-<td>name: str</td>
-<td>HealthCheckResult</td>
-<td>Run a single health check</td>
-</tr>
-<tr>
-<td><code>run_all</code></td>
-<td></td>
-<td>SystemHealth</td>
-<td>Run all health checks asynchronously</td>
-</tr>
-<tr>
-<td><code>run_all_sync</code></td>
-<td></td>
-<td>SystemHealth</td>
-<td>Run all health checks synchronously</td>
+<td><code>HealthStatus</code> / <code>SystemHealth</code></td>
+<td>enum / class</td>
+<td><code>HEALTHY</code>/<code>DEGRADED</code>/<code>UNHEALTHY</code>/<code>UNKNOWN</code>; aggregate result.</td>
 </tr>
 </tbody>
 </table>

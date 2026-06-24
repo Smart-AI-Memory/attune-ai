@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks — concept</title>
-  <meta name="description" content="`attune.resilience` is a small toolkit of **fault-tolerance primitives** for code that calls flaky things (LLM APIs, networks, subprocesses). Five patterns, each in its own module and exported from `a" />
-  <meta property="og:title" content="Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks — concept" />
-  <meta property="og:description" content="`attune.resilience` is a small toolkit of **fault-tolerance primitives** for code that calls flaky things (LLM APIs, networks, subprocesses). Five patterns, each in its own module and exported from `a" />
+  <title>Resilience FAQ — faq</title>
+  <meta name="description" content="`retry` for transient failures that usually succeed on a re-try; `circuit_breaker` when a dependency is down and retrying just piles on; `timeout` for calls that may hang; `fallback` when an alternate" />
+  <meta property="og:title" content="Resilience FAQ — faq" />
+  <meta property="og:description" content="`retry` for transient failures that usually succeed on a re-try; `circuit_breaker` when a dependency is down and retrying just piles on; `timeout` for calls that may hang; `fallback` when an alternate" />
   <meta property="og:type" content="website" />
-  <link rel="canonical" href="https://attune-ai.dev/help/resilience/concept" />
+  <link rel="canonical" href="https://attune-ai.dev/help/resilience/faq" />
   <style>
     :root {
       --primary: #004ac6;
@@ -267,60 +267,45 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/resilience">Resilience</a><span class="sep">&rsaquo;</span><span>concept</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/resilience">Resilience</a><span class="sep">&rsaquo;</span><span>faq</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks</h1>
-<h2>Overview</h2>
-<p><code>attune.resilience</code> is a small toolkit of <strong>fault-tolerance primitives</strong>
-for code that calls flaky things (LLM APIs, networks, subprocesses).
-Five patterns, each in its own module and exported from
-<code>attune.resilience</code>:</p>
-<ul>
-<li><strong>retry</strong> — re-run on failure with exponential backoff + jitter.</li>
-<li><strong>circuit breaker</strong> — stop calling a failing dependency until it
-recovers.</li>
-<li><strong>timeout</strong> — bound how long a call may run.</li>
-<li><strong>fallback</strong> — try alternates when the primary fails.</li>
-<li><strong>health checks</strong> — aggregate component health into one status.</li>
-</ul>
-<p>Each pattern has a <strong>decorator</strong> (the common case) and the underlying
-<strong>class/function</strong> for programmatic use.</p>
-<h2>Concepts</h2>
-<h3>retry</h3>
-<p><code>@retry(...)</code> re-invokes a function on exception with exponential
-backoff. Knobs: <code>max_attempts</code> (3), <code>backoff_factor</code> (2.0),
-<code>initial_delay</code> (1.0), <code>max_delay</code> (60.0), <code>jitter</code> (True),
-<code>retryable_exceptions</code> (which exceptions to retry — default all), and an
-<code>on_retry</code> callback. <code>RetryConfig</code> holds the same settings as an object
-(<code>get_delay(attempt)</code> computes the wait); <code>retry_with_backoff(func, *a, config=...)</code> runs a call imperatively.</p>
-<h3>circuit breaker</h3>
-<p><code>@circuit_breaker(name=..., failure_threshold=5, reset_timeout=60.0, half_open_max_calls=3)</code> trips OPEN after <code>failure_threshold</code>
-consecutive failures, short-circuiting calls (raising <code>CircuitOpenError</code>)
-until <code>reset_timeout</code> elapses, then probes in HALF_OPEN. <code>CircuitState</code>
-is <code>CLOSED</code> / <code>OPEN</code> / <code>HALF_OPEN</code>. The underlying <code>CircuitBreaker</code>
-class exposes <code>record_success</code> / <code>record_failure</code> / <code>reset</code> /
-<code>get_stats</code> / <code>get_time_until_reset</code>; <code>get_circuit_breaker(name)</code> looks
-one up from the shared registry by name.</p>
-<h3>timeout</h3>
-<p><code>@timeout(seconds, error_message=None, fallback=None)</code> bounds a call,
-raising <code>ResilienceTimeoutError</code> (or returning <code>fallback</code>) on overrun.
-For awaiting a coroutine with a bound, use <code>with_timeout(coro, seconds, fallback_value=None)</code>.</p>
-<h3>fallback</h3>
-<p><code>@fallback(*fallback_funcs, default=None)</code> runs the alternates in order
-when the decorated function raises. <code>with_fallback(primary, fallbacks, default=None)</code> builds the same chain programmatically — <strong>note it
-returns an async wrapper</strong> (await it), whereas the <code>@fallback</code> decorator
-runs synchronously on a sync target (it returns a coroutine wrapper for
-an <code>async def</code>). <code>Fallback(name, functions, default_value)</code> is the
-underlying class (<code>add</code> / <code>execute</code>).</p>
-<h3>health checks</h3>
-<p><code>HealthCheck</code> aggregates named checks. Register each as a <strong>decorator</strong>
-— <code>@hc.register(name, timeout=10.0, critical=False)</code> over a check
-function — then <code>run_all()</code> (async) or <code>run_all_sync()</code> returns a
-<code>SystemHealth</code> (<code>status</code>, <code>checks</code>, <code>to_dict()</code>). <code>HealthStatus</code> is
-<code>HEALTHY</code> / <code>DEGRADED</code> / <code>UNHEALTHY</code> / <code>UNKNOWN</code>.</p>
+<h1>Resilience FAQ</h1>
+<h2>Which resilience pattern should I use?</h2>
+<p><code>retry</code> for transient failures that usually succeed on a re-try;
+<code>circuit_breaker</code> when a dependency is down and retrying just piles on;
+<code>timeout</code> for calls that may hang; <code>fallback</code> when an alternate result
+is acceptable; <code>HealthCheck</code> to aggregate component status. All are
+imported from <code>attune.resilience</code>.</p>
+<h2>Is the fallback API synchronous or asynchronous?</h2>
+<p>The <code>@fallback</code> decorator runs synchronously on a sync function.
+<code>with_fallback(primary, fallbacks)</code> returns an <strong>async</strong> wrapper you must
+await (e.g. <code>asyncio.run(...)</code>). <code>with_timeout(coro, seconds)</code> is also
+async. The <code>@retry</code>, <code>@circuit_breaker</code>, and <code>@timeout</code> decorators work
+on plain sync functions.</p>
+<h2>How do I reset a tripped circuit breaker?</h2>
+<p><code>get_circuit_breaker(name).reset()</code>, or wait <code>reset_timeout</code> for it to
+probe in <code>HALF_OPEN</code>. A breaker trips <code>OPEN</code> after <code>failure_threshold</code>
+consecutive failures and raises <code>CircuitOpenError</code> while open. Inspect
+it with <code>get_circuit_breaker(name).get_stats()</code> (keys: <code>name</code>, <code>state</code>,
+<code>failure_count</code>, <code>success_count</code>, <code>time_until_reset</code>).</p>
+<h2>How do I stop retrying on non-transient errors?</h2>
+<p>Pass <code>retryable_exceptions=(SomeError, ...)</code> to <code>@retry</code> so only those
+exceptions retry. Left at the default (<code>None</code>), retry treats all
+exceptions as retryable — including programming errors.</p>
+<h2>How do I register a health check?</h2>
+<p><code>register</code> is a <strong>decorator</strong>: apply <code>@hc.register(&quot;name&quot;)</code> over a check
+function that returns a bool/dict, then call <code>run_all_sync()</code> (or the
+async <code>run_all()</code>) to get a <code>SystemHealth</code>. It is not a
+<code>register(name, fn)</code> two-argument call.</p>
+<h2>Where is the source?</h2>
+<p>All resilience source lives under <code>src/attune/resilience/</code> — one module
+per pattern (<code>retry</code>, <code>circuit_breaker</code>, <code>timeout</code>, <code>fallback</code>,
+<code>health</code>).</p>
+<p><strong>Tags:</strong> <code>resilience</code>, <code>fault-tolerance</code>, <code>retry</code>, <code>circuit-breaker</code>,
+<code>reliability</code></p>
 
   </article>
   <footer>

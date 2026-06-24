@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Work with resilience — task</title>
-  <meta name="description" content="Use resilience patterns when you need to protect your application from failures with circuit breakers, retries, timeouts, fallbacks, or health monitoring." />
-  <meta property="og:title" content="Work with resilience — task" />
-  <meta property="og:description" content="Use resilience patterns when you need to protect your application from failures with circuit breakers, retries, timeouts, fallbacks, or health monitoring." />
+  <title>Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks — task</title>
+  <meta name="description" content="```python from attune.resilience import retry" />
+  <meta property="og:title" content="Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks — task" />
+  <meta property="og:description" content="```python from attune.resilience import retry" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/resilience/task" />
   <style>
@@ -272,182 +272,94 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Work with resilience</h1>
-<p>Use resilience patterns when you need to protect your application from failures with circuit breakers, retries, timeouts, fallbacks, or health monitoring.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>Access to the project source code</li>
-<li>Python environment with the attune package installed</li>
-<li>Understanding of fault tolerance concepts (circuit breakers, retries, fallbacks)</li>
-</ul>
-<h2>Add circuit breaker protection</h2>
-<ol>
-<li>
-<p><strong>Import the circuit breaker decorator:</strong></p>
-<pre><code class="language-python">from attune.resilience import circuit_breaker
-</code></pre>
-</li>
-<li>
-<p><strong>Wrap your function with the decorator:</strong></p>
-<pre><code class="language-python">@circuit_breaker(name=&quot;api_call&quot;, failure_threshold=3, reset_timeout=30.0)
-def call_external_api():
-    # Your external API call here
-    response = requests.get(&quot;https://api.example.com/data&quot;)
-    return response.json()
-</code></pre>
-</li>
-<li>
-<p><strong>Handle circuit open exceptions:</strong></p>
-<pre><code class="language-python">from attune.resilience import CircuitOpenError
-
-try:
-    result = call_external_api()
-except CircuitOpenError as e:
-    print(f&quot;Circuit breaker is open, trying again in {e.reset_time} seconds&quot;)
-</code></pre>
-</li>
-</ol>
-<h2>Implement retry logic</h2>
-<ol>
-<li>
-<p><strong>Add the retry decorator to functions that might fail transiently:</strong></p>
+<h1>Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks</h1>
+<h2>Tasks</h2>
+<h3>Retry a flaky call with backoff</h3>
 <pre><code class="language-python">from attune.resilience import retry
 
-@retry(max_attempts=3, initial_delay=1.0, backoff_factor=2.0)
-def unstable_operation():
-    # Operation that might fail due to network issues
-    return requests.get(&quot;https://unreliable-service.com/data&quot;)
+
+@retry(max_attempts=5, backoff_factor=2.0, initial_delay=0.1)
+def fetch() -&gt; str:
+    return &quot;ok&quot;
+
+
+print(fetch())
 </code></pre>
-</li>
-<li>
-<p><strong>Configure which exceptions trigger retries:</strong></p>
-<pre><code class="language-python">@retry(
-    max_attempts=5,
-    retryable_exceptions=(requests.ConnectionError, requests.Timeout)
-)
-def network_operation():
-    return requests.get(&quot;https://service.com&quot;, timeout=10)
+<p><strong>Verify:</strong> the function runs normally on success; on exception it
+retries up to <code>max_attempts</code>, sleeping <code>initial_delay * backoff_factor**n</code> (capped at <code>max_delay</code>, with jitter).</p>
+<h3>Guard a dependency with a circuit breaker</h3>
+<pre><code class="language-python">from attune.resilience import circuit_breaker, get_circuit_breaker
+
+
+@circuit_breaker(name=&quot;api&quot;, failure_threshold=5, reset_timeout=30.0)
+def call_api() -&gt; str:
+    return &quot;ok&quot;
+
+
+print(call_api())
+print(get_circuit_breaker(&quot;api&quot;).get_stats())
 </code></pre>
-</li>
-</ol>
-<h2>Set up fallback behavior</h2>
-<ol>
-<li>
-<p><strong>Use the fallback decorator for graceful degradation:</strong></p>
-<pre><code class="language-python">from attune.resilience import fallback
-
-def get_from_cache():
-    return {&quot;data&quot;: &quot;cached_value&quot;}
-
-def get_default():
-    return {&quot;data&quot;: &quot;default_value&quot;}
-
-@fallback(get_from_cache, get_default, default={&quot;data&quot;: &quot;fallback&quot;})
-def get_user_data():
-    # Primary data source that might fail
-    return requests.get(&quot;https://user-service.com/data&quot;).json()
-</code></pre>
-</li>
-<li>
-<p><strong>Chain multiple fallbacks programmatically:</strong></p>
-<pre><code class="language-python">from attune.resilience import with_fallback
-
-robust_function = with_fallback(
-    primary=get_from_database,
-    fallbacks=[get_from_cache, get_from_file],
-    default={&quot;empty&quot;: True}
-)
-</code></pre>
-</li>
-</ol>
-<h2>Monitor system health</h2>
-<ol>
-<li>
-<p><strong>Register health checks for your components:</strong></p>
-<pre><code class="language-python">from attune.resilience import get_health_check
-
-health = get_health_check()
-
-@health.register(&quot;database&quot;, timeout=5.0, critical=True)
-async def check_database():
-    # Your database connectivity check
-    await db.execute(&quot;SELECT 1&quot;)
-    return &quot;Database is healthy&quot;
-</code></pre>
-</li>
-<li>
-<p><strong>Run health checks to get system status:</strong></p>
-<pre><code class="language-python">system_health = await health.run_all()
-
-if system_health.status == HealthStatus.HEALTHY:
-    print(&quot;All systems operational&quot;)
-else:
-    print(f&quot;System issues detected: {system_health.checks}&quot;)
-</code></pre>
-</li>
-</ol>
-<h2>Add timeouts to prevent hanging</h2>
-<ol>
-<li>
-<p><strong>Wrap functions that might run too long:</strong></p>
+<p><strong>Verify:</strong> <code>get_circuit_breaker(&quot;api&quot;)</code> returns the registered
+<code>CircuitBreaker</code>; <code>get_stats()</code> reports <code>name</code>, <code>state</code>,
+<code>failure_count</code>, <code>success_count</code>, <code>time_until_reset</code>. After
+<code>failure_threshold</code> consecutive failures the breaker opens and calls
+raise <code>CircuitOpenError</code> until <code>reset_timeout</code> passes.</p>
+<h3>Bound a call with a timeout</h3>
 <pre><code class="language-python">from attune.resilience import timeout
 
-@timeout(seconds=30.0, error_message=&quot;Processing took too long&quot;)
-def long_running_task():
-    # Task that should complete within 30 seconds
-    process_large_dataset()
-</code></pre>
-</li>
-<li>
-<p><strong>Use timeout with async operations:</strong></p>
-<pre><code class="language-python">from attune.resilience import with_timeout
 
-async def fetch_data():
-    result = await with_timeout(
-        slow_async_operation(),
-        seconds=10.0,
-        fallback_value={&quot;timeout&quot;: True}
-    )
-    return result
+@timeout(seconds=5.0)
+def quick() -&gt; str:
+    return &quot;done&quot;
+
+
+print(quick())
 </code></pre>
-</li>
-</ol>
-<h2>Verify your implementation</h2>
-<ol>
-<li>
-<p><strong>Test circuit breaker behavior:</strong></p>
-<ul>
-<li>Trigger failures to open the circuit</li>
-<li>Verify the circuit opens after reaching the failure threshold</li>
-<li>Confirm the circuit resets after the timeout period</li>
-</ul>
-</li>
-<li>
-<p><strong>Validate retry patterns:</strong></p>
-<ul>
-<li>Simulate transient failures to test retry logic</li>
-<li>Check that non-retryable exceptions fail immediately</li>
-<li>Verify backoff delays increase between attempts</li>
-</ul>
-</li>
-<li>
-<p><strong>Check fallback execution:</strong></p>
-<ul>
-<li>Force primary function failures to test fallback chain</li>
-<li>Ensure each fallback runs in sequence when the previous fails</li>
-<li>Confirm default values return when all fallbacks fail</li>
-</ul>
-</li>
-<li>
-<p><strong>Monitor health check results:</strong></p>
-<ul>
-<li>Run <code>health.run_all()</code> and inspect the returned <code>SystemHealth</code> object</li>
-<li>Verify critical checks affect overall system status</li>
-<li>Check that health check timeouts work correctly</li>
-</ul>
-</li>
-</ol>
-<p>Your resilience patterns are working when functions gracefully handle failures, recover automatically when possible, and provide meaningful feedback about system health.</p>
+<p><strong>Verify:</strong> returns normally within the bound; raises
+<code>ResilienceTimeoutError</code> (or returns the <code>fallback</code>) on overrun.</p>
+<h3>Fall back to alternates</h3>
+<pre><code class="language-python">import asyncio
+
+from attune.resilience import fallback, with_fallback
+
+
+@fallback(lambda: &quot;from-fallback&quot;)          # decorator: synchronous
+def risky() -&gt; str:
+    raise RuntimeError(&quot;primary failed&quot;)
+
+
+print(risky())
+
+
+def primary() -&gt; str:
+    raise ValueError(&quot;boom&quot;)
+
+
+safe = with_fallback(primary, [lambda: &quot;backup&quot;])   # returns async wrapper
+print(asyncio.run(safe()))
+</code></pre>
+<p><strong>Verify:</strong> the <code>@fallback</code> decorator returns the first alternate's
+result synchronously; <code>with_fallback(...)</code> returns an <strong>async</strong> callable
+— <code>await</code> it (here via <code>asyncio.run</code>).</p>
+<h3>Aggregate component health</h3>
+<pre><code class="language-python">from attune.resilience import HealthCheck
+
+hc = HealthCheck()
+
+
+@hc.register(&quot;db&quot;)               # register is a decorator
+def check_db() -&gt; bool:
+    return True
+
+
+health = hc.run_all_sync()
+print(health.status, health.to_dict())
+</code></pre>
+<p><strong>Verify:</strong> <code>register(name, ...)</code> is a <strong>decorator</strong> — apply it over a
+check function (returning a bool/dict), not as <code>register(name, fn)</code>.
+<code>run_all_sync()</code> returns a <code>SystemHealth</code> whose <code>status</code> is a
+<code>HealthStatus</code> and <code>to_dict()</code> serializes the result; <code>run_all()</code> is the
+async variant.</p>
 
   </article>
   <footer>
