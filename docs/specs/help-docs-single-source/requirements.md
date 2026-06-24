@@ -1,6 +1,9 @@
 # Requirements: Single-Source Help + Docs
 
-**Status:** requirements (awaiting approval)
+**Status:** approved and executed (2026-06-24) — requirements were
+ratified and the full rollout landed; every feature is single-sourced
+(`status: manual`). See [tasks.md](tasks.md) closeout and
+[r7-rollout-playbook.md](r7-rollout-playbook.md).
 **Created:** 2026-06-21
 **Owner:** Patrick + agent
 
