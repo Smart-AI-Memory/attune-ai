@@ -25,6 +25,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -72,6 +73,7 @@ def _planned_outputs(
     bundle_dir = root / "plugin" / "help" / "generated"
     plan: list[tuple[Path, Path, str, list[str]]] = []
 
+    bundle_root = bundle_dir.resolve()
     for feature, entry in sorted(features.items()):
         feat_dir = templates_dir / feature
         if not feat_dir.is_dir():
@@ -82,6 +84,17 @@ def _planned_outputs(
             if type_dir is None:
                 continue  # unknown kind — skip
             dest = bundle_dir / type_dir / f"{feature}.md"
+            # Containment check (CWE-22): `feature` is a features.yaml key;
+            # a `..`/separator in it must not write outside the bundle.
+            # Mirrors the read-side guards in attune.help.templates.
+            try:
+                dest.resolve().relative_to(bundle_root)
+            except ValueError:
+                print(
+                    f"  SKIP unsafe feature key: {feature!r}",
+                    file=sys.stderr,
+                )
+                continue
             plan.append((kind_file, dest, feature, list(tags)))
     return plan
 
@@ -97,7 +110,12 @@ def _render_bundle_file(
     (type, name, tags, source) so cross-link + source-manifest builders
     pick it up. `source` points at the single-source master.
     """
-    post = frontmatter.load(str(src))
+    try:
+        post = frontmatter.load(str(src))
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL: name the offending file — a malformed template
+        # otherwise aborts the whole sync with an opaque traceback.
+        raise RuntimeError(f"failed to parse {src}: {exc}") from exc
     kind = src.stem
     out = frontmatter.Post(post.content)
     out["type"] = post.get("type", kind)
@@ -109,8 +127,11 @@ def _render_bundle_file(
 
 def _rebuild_indexes(bundle_dir: Path) -> None:
     """Rebuild cross_links.json and source_manifest.json in place."""
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
-    import json
+    # Sibling scripts live in this dir; insert once (idempotent) so repeat
+    # calls don't stack entries. These modules are not importable packages.
+    scripts_dir = str(Path(__file__).resolve().parent)
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
 
     from build_cross_links import build_cross_links
     from generate_all import _build_source_manifest
@@ -151,6 +172,10 @@ def main(argv: list[str] | None = None) -> int:
     for src, dest, feature, tags in plan:
         rendered = _render_bundle_file(src, feature, tags)
         current = dest.read_text(encoding="utf-8") if dest.exists() else None
+        # NOTE: byte-exact compare. This (and the drift-guard test) couples
+        # to frontmatter.dumps()/PyYAML output formatting — a library bump
+        # that changes serialization would flag every file stale until a
+        # re-sync. Intentional (cheap, catches real drift); re-sync if so.
         if current == rendered:
             continue
         stale += 1
