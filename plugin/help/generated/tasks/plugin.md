@@ -40,7 +40,7 @@ cat plugin/.claude-plugin/plugin.json
 
 **Verify:** `name` is `attune-ai`, `license` is `Apache-2.0`, and
 `keywords` include `claude-code`. The `version` here is the plugin
-bundle version (`8.9.1`); the sibling `marketplace.json` carries a
+bundle version (`8.9.2`); the sibling `marketplace.json` carries a
 matching version in `metadata.version` and `plugins[0].version`.
 
 ### List the components Claude Code will discover

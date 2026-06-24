@@ -53,7 +53,7 @@ cat plugin/.claude-plugin/plugin.json
 
 **Verify:** `name` is `attune-ai`, `license` is `Apache-2.0`, and
 `keywords` include `claude-code`. The `version` here is the plugin
-bundle version (`8.9.1`); the sibling `marketplace.json` carries a
+bundle version (`8.9.2`); the sibling `marketplace.json` carries a
 matching version in `metadata.version` and `plugins[0].version`.
 
 ### List the components Claude Code will discover
@@ -84,7 +84,7 @@ and the component folder layout.
 | Field | Value / Purpose |
 |-------|-----------------|
 | `name` | `attune-ai` — the plugin name. |
-| `version` | Plugin bundle version (`8.9.1`). |
+| `version` | Plugin bundle version (`8.9.2`). |
 | `description` | One-line plugin summary shown in Claude Code. |
 | `author` | `{name, email}` — Smart AI Memory. |
 | `homepage` / `repository` | Project links. |
@@ -123,4 +123,4 @@ and the component folder layout.
 | Add marketplace | `claude plugin marketplace add Smart-AI-Memory/attune-ai` |
 | Install plugin | `claude plugin install attune-ai@attune-ai` |
 
-<!-- attune-generated: source_hash=b2da4bbb5a02defe23a5d626662d1309cad3c1d550e9fe54c614bf96cdf2c6f6 feature=plugin kind=how-to generated_at=2026-06-24 -->
+<!-- attune-generated: source_hash=0c448ba69ee8546bc76d88364bffc606531d666c64711912a8285967cb769da2 feature=plugin kind=how-to generated_at=2026-06-24 -->

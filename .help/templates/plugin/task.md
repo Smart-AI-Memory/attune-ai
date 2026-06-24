@@ -3,8 +3,8 @@ type: task
 name: plugin-task
 feature: plugin
 depth: task
-generated_at: 2026-06-24T12:40:17.276596+00:00
-source_hash: b2da4bbb5a02defe23a5d626662d1309cad3c1d550e9fe54c614bf96cdf2c6f6
+generated_at: 2026-06-24T13:46:09.936892+00:00
+source_hash: 0c448ba69ee8546bc76d88364bffc606531d666c64711912a8285967cb769da2
 status: generated
 ---
 
@@ -41,7 +41,7 @@ cat plugin/.claude-plugin/plugin.json
 
 **Verify:** `name` is `attune-ai`, `license` is `Apache-2.0`, and
 `keywords` include `claude-code`. The `version` here is the plugin
-bundle version (`8.9.1`); the sibling `marketplace.json` carries a
+bundle version (`8.9.2`); the sibling `marketplace.json` carries a
 matching version in `metadata.version` and `plugins[0].version`.
 
 ### List the components Claude Code will discover

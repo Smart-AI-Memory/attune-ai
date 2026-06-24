@@ -3,8 +3,8 @@ type: note
 name: plugin-note
 feature: plugin
 depth: note
-generated_at: 2026-06-24T12:40:17.276596+00:00
-source_hash: b2da4bbb5a02defe23a5d626662d1309cad3c1d550e9fe54c614bf96cdf2c6f6
+generated_at: 2026-06-24T13:46:09.936892+00:00
+source_hash: 0c448ba69ee8546bc76d88364bffc606531d666c64711912a8285967cb769da2
 status: generated
 ---
 
@@ -93,7 +93,7 @@ are part of the bundle.
 
 `plugin/core/` exists so the plugin can carry a version for standalone
 operation; `plugin/core/__init__.py` is just
-`__version__ = "8.9.1"`. The real runtime is the pip-installed
+`__version__ = "8.9.2"`. The real runtime is the pip-installed
 `attune-ai` package, which the `.mcp.json` server pulls via
 `uvx --from attune-ai`.
 

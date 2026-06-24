@@ -3,8 +3,8 @@ type: reference
 name: plugin-reference
 feature: plugin
 depth: reference
-generated_at: 2026-06-24T12:40:17.276596+00:00
-source_hash: b2da4bbb5a02defe23a5d626662d1309cad3c1d550e9fe54c614bf96cdf2c6f6
+generated_at: 2026-06-24T13:46:09.936892+00:00
+source_hash: 0c448ba69ee8546bc76d88364bffc606531d666c64711912a8285967cb769da2
 status: generated
 ---
 
@@ -20,7 +20,7 @@ and the component folder layout.
 | Field | Value / Purpose |
 |-------|-----------------|
 | `name` | `attune-ai` — the plugin name. |
-| `version` | Plugin bundle version (`8.9.1`). |
+| `version` | Plugin bundle version (`8.9.2`). |
 | `description` | One-line plugin summary shown in Claude Code. |
 | `author` | `{name, email}` — Smart AI Memory. |
 | `homepage` / `repository` | Project links. |

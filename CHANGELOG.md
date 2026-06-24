@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.9.2] — 2026-06-24
+
+Help-delivery patch — ships the single-source content **in the bundled
+help corpus** so clean plugin/`uvx` installs serve it (8.9.1 only added
+the dev-checkout fallback). No runtime API change.
+
+### Fixed
+
+- **Single-source help now ships in the served bundle (Design B).** The
+  8.9.1 resolver fallback served single-source content only where
+  `.help/templates/<feature>/` exists on disk (a dev checkout). A clean
+  plugin/`uvx` install ships `plugin/help/generated/` but not that dir,
+  so conversation users still got the old bundle. `scripts/
+  sync_help_bundle.py` now projects every single-sourced feature's kinds
+  into `plugin/help/generated/<type>/<feature>.md` (286 files across 26
+  features) and rebuilds the cross-link + source-manifest indexes, so
+  `populate`/`help_lookup` resolve the grounded content from the shipped
+  artifact. (help-serving-bridge spec, D5)
+
+### Notes
+
+- Cross-links / progressive-depth for the single-source bundle entries
+  are a tracked follow-up (D3); bodies, titles, and tags serve now.
+- The dev-checkout fallback (D1) remains as a safety net.
+
 ## [8.9.1] — 2026-06-24
 
 Help-serving patch — the in-conversation help surface now serves the
