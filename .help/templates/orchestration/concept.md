@@ -3,73 +3,83 @@ type: concept
 name: orchestration-concept
 feature: orchestration
 depth: concept
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 1d31bb00ab6284a8ff06a91f07123af0d56d15af02f09b6311f660814398d142
+generated_at: 2026-06-24T04:42:36.420317+00:00
+source_hash: 8eeb348f730d4eaa712d0cf9b78905ce878837e5c821fc161778c91d1d163103
 status: generated
 ---
 
-# Orchestration
+# Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines
 
-Orchestration is the system that selects an execution strategy, assembles the right agents, and routes data between them so that complex multi-step tasks run as a single coordinated pipeline.
+## Overview
 
-## Mental model
+`attune.orchestration` assembles and runs **multi-agent pipelines**: it
+analyzes a task, picks a composition pattern, builds a team of agents,
+and executes them under a chosen strategy. It sits above the individual
+workflows — where a workflow is one analysis, orchestration coordinates
+*several* agents into one coordinated run.
 
-Every orchestrated task moves through three layers:
+An orchestrated task moves through three layers:
 
-1. **Strategy selection** — `MetaOrchestrator` examines the task's complexity, domain, and requirements, then picks a composition pattern (Sequential, Parallel, Debate, Teaching, Refinement, or Adaptive). You can also call `get_strategy(name)` directly to bypass automatic selection.
-2. **Agent assembly** — The registry supplies `AgentTemplate` instances matched by capability or tier. Dynamic teams can be built at runtime via `DynamicTeamBuilder` and stored in `TeamStore`.
-3. **Execution** — The chosen `ExecutionStrategy` subclass calls `execute(agents, context)`, enforces any quality gates or depth limits, and returns a `StrategyResult` that downstream stages or callers consume.
+1. **Meta-orchestration** — `MetaOrchestrator` analyzes the task
+   (complexity, domain, requirements) and chooses a `CompositionPattern`.
+2. **Team assembly** — `AgentTemplate`s are matched by capability/tier
+   from the registry, or a `DynamicTeamBuilder` builds a team at runtime.
+3. **Execution** — an `ExecutionStrategy` runs the agents and returns a
+   `StrategyResult`.
 
-This separation means you can swap strategies — for example, replacing `SequentialStrategy` with `ParallelStrategy` — without changing the agents or the code that reads the result.
+## Concepts
 
-## Execution strategies
+### Meta-orchestration — `MetaOrchestrator`
 
-Each strategy implements `ExecutionStrategy.execute(agents, context) -> StrategyResult`. The strategies available out of the box are:
+`MetaOrchestrator` is the planning layer. Its methods are synchronous:
+`analyze_task(...)` returns a `TaskRequirements` (carrying a
+`TaskComplexity` — `SIMPLE` / `MODERATE` / `COMPLEX` — and a `TaskDomain`
+— `TESTING` / `SECURITY` / `CODE_QUALITY` / `DOCUMENTATION` /
+`PERFORMANCE` / `ARCHITECTURE` / `REFACTORING` / `GENERAL`);
+`create_execution_plan(...)` returns an `ExecutionPlan`;
+`compose_team(...)` and `analyze_and_compose(...)` go from a task
+description to a composed team.
 
-| Strategy | What it does |
-|---|---|
-| `SequentialStrategy` | Runs agents one after another, passing output forward |
-| `ParallelStrategy` | Runs agents concurrently and merges results |
-| `DebateStrategy` | Agents argue positions; a judge resolves conflicts |
-| `TeachingStrategy` | A lead agent instructs subordinate agents |
-| `RefinementStrategy` | Each agent iteratively improves the previous output |
-| `AdaptiveStrategy` | Switches sub-strategy at runtime based on intermediate results |
-| `ToolEnhancedStrategy` | Single agent with access to the full tool set |
-| `PromptCachedSequentialStrategy` | Sequential execution with a shared cached context (default TTL: 3600 s) |
-| `DelegationChainStrategy` | Hierarchical delegation enforcing a configurable `max_depth` (default: 3) |
-| `ConditionalStrategy` | Branches execution: if *condition* then *A* else *B* |
-| `MultiConditionalStrategy` | Switch/case branching across multiple conditions with an optional default |
-| `NestedStrategy` | Embeds a registered `WorkflowDefinition` as a single step |
-| `NestedSequentialStrategy` | Sequential steps where any step can be an agent or a nested workflow |
+`CompositionPattern` enumerates the strategies the planner can pick:
+`SEQUENTIAL`, `PARALLEL`, `DEBATE`, `TEACHING`, `REFINEMENT`,
+`ADAPTIVE`, `CONDITIONAL`, `TOOL_ENHANCED`, `PROMPT_CACHED_SEQUENTIAL`,
+`DELEGATION_CHAIN`.
 
-Use `register_strategy(name, strategy_class)` to add your own implementation to the registry.
+### Team assembly — agent templates and dynamic teams
 
-## Workflow composition
+The agent registry supplies reusable `AgentTemplate`s (each has an `id`,
+`role`, `capabilities`, `tools`, `tier_preference`, `quality_gates`, and
+`resource_requirements`). Query it with `get_all_templates()`,
+`get_template(template_id)`, `get_templates_by_capability(...)`,
+`get_templates_by_tier(...)`, and `get_registry()`; extend it with
+`register_custom_template(...)` / `unregister_template(...)`.
+`AgentCapability` and `ResourceRequirements` model a template's
+capabilities and resource needs.
 
-Workflows are named, reusable pipelines registered with `register_workflow(workflow)` and retrieved by ID with `get_workflow(workflow_id)`. `NestedStrategy` and `NestedSequentialStrategy` reference them by `WorkflowReference`, which lets one workflow embed another up to a configurable nesting depth.
+`DynamicTeamBuilder(state_store=None, redis_client=None)` builds a team
+at runtime — `build_from_spec(...)`, `build_from_plan(...)`,
+`build_from_config(...)` — producing a `DynamicTeam` /
+`DynamicTeamResult` from a `TeamSpecification`. `TeamStore` persists
+teams.
 
-A concrete example from the meta-orchestration patterns: a Secure Release pipeline uses `SequentialStrategy` to chain `security_audit → dependency_check → release_prep`, where each stage is itself a registered workflow.
+### Execution — strategies
 
-## Agent registry
+An `ExecutionStrategy` runs the assembled agents:
+`execute(agents, context)` is **async** and returns a `StrategyResult`.
+`get_strategy(name)` returns a strategy by name. Nine names construct
+with **no arguments** — `sequential`, `parallel`, `debate`, `teaching`,
+`refinement`, `adaptive`, `tool_enhanced`, `prompt_cached_sequential`,
+`delegation_chain`. The registry also holds `conditional`,
+`multi_conditional`, `nested`, and `nested_sequential`, but those require
+constructor args, so fetching them bare via `get_strategy` raises
+`TypeError` — construct them directly. The classes exported directly from
+`attune.orchestration` are the base `ExecutionStrategy` plus
+`ToolEnhancedStrategy`, `PromptCachedSequentialStrategy`, and
+`DelegationChainStrategy`.
 
-The registry decouples strategy logic from agent definitions:
+### Workflow composition
 
-- `get_template(template_id)` — retrieve one template by ID
-- `get_templates_by_capability(capability)` — find agents that expose a specific capability
-- `get_templates_by_tier(tier)` — find agents preferring a resource tier
-- `register_custom_template(template)` — add a user-defined agent at runtime
-- `unregister_template(template_id)` — remove a template; returns `False` if the ID is not found
-
-## Key interfaces
-
-Other parts of the codebase interact with orchestration through these entry points:
-
-| Interface | Purpose | Source |
-|---|---|---|
-| `ExecutionStrategy` | Base class every strategy extends | `_strategies/base.py` |
-| `ToolEnhancedStrategy` | Single-agent execution with full tool access | `_strategies/advanced_strategies.py` |
-| `PromptCachedSequentialStrategy` | Sequential execution with shared prompt cache | `_strategies/advanced_strategies.py` |
-| `DelegationChainStrategy` | Hierarchical delegation with depth enforcement | `_strategies/advanced_strategies.py` |
-| `ConditionalStrategy` | If/else branching between workflow branches | `_strategies/conditional_strategies.py` |
-| `MultiConditionalStrategy` | Switch/case branching with optional default | `_strategies/conditional_strategies.py` |
-| `NestedStrategy` | Embed a registered workflow as a single step | `_strategies/conditional_strategies.py` |
+`WorkflowComposer(state_store=None)` composes workflows —
+`compose(...)` and `compose_with_simplification(...)`.
+`WorkflowAgentAdapter` adapts a workflow so it can run as an agent
+inside a team.

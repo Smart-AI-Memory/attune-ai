@@ -1,14 +1,4 @@
----
-type: note
-name: orchestration-note
-feature: orchestration
-depth: note
-generated_at: 2026-06-24T04:42:36.420317+00:00
-source_hash: 8eeb348f730d4eaa712d0cf9b78905ce878837e5c821fc161778c91d1d163103
-status: generated
----
-
-# Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines
+# Orchestration
 
 ## Overview
 
@@ -84,11 +74,23 @@ constructor args, so fetching them bare via `get_strategy` raises
 `WorkflowAgentAdapter` adapts a workflow so it can run as an agent
 inside a team.
 
-## Notes & tips
+## Design & extension
 
-- **Plan sync, execute async.** `MetaOrchestrator` / builders are sync;
-  `execute` is async.
-- **Start from templates.** `get_all_templates()` is the cheapest way to
-  see what a team can be built from.
-- **`get_strategy` takes a registry name**, not a class.
-- **Orchestration composes workflows; it doesn't replace them.**
+### Design decisions
+
+- **Three separable layers.** Planning (`MetaOrchestrator`), assembly
+  (templates + `DynamicTeamBuilder`), and execution
+  (`ExecutionStrategy`) are decoupled, so a strategy can be swapped
+  without touching the agents.
+- **Templates over ad-hoc agents.** Reusable `AgentTemplate`s matched by
+  capability/tier keep team assembly declarative.
+- **Sync planning, async execution.** Planning is cheap and synchronous;
+  the actual multi-agent run is async.
+
+### Extension points
+
+- **Custom agent:** `register_custom_template(...)`.
+- **Custom team:** a `TeamSpecification` → `DynamicTeamBuilder`.
+- **Run a workflow as an agent:** `WorkflowAgentAdapter`.
+
+<!-- attune-generated: source_hash=8eeb348f730d4eaa712d0cf9b78905ce878837e5c821fc161778c91d1d163103 feature=orchestration kind=architecture generated_at=2026-06-24 -->
