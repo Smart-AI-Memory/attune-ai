@@ -10917,3 +10917,43 @@ files.
   necessary-not-sufficient wiring vs. a real round-trip receipt) and
   the "verify-first applies to infra/config diagnoses" lesson (read the
   actual resolver before asserting what's served).
+
+- **"Projected ≠ served" has a DEPLOYMENT layer: a resolver fix that
+  passes the dev probe (and even the live connected MCP server) can
+  still fail a CLEAN install — prove resolution with the fallback
+  DISABLED, and remember content on `main` doesn't reach users without a
+  version bump + publish**: 2026-06-24 follow-on to the help-serving-
+  bridge work. 8.9.1 shipped a resolver FALLBACK
+  (`_find_template_file` → `.help/templates/<F>/<kind>.md`) so
+  `populate`/MCP `help_lookup` serve single-source content. The live
+  deployed `help_lookup` returned the grounded body — looked done. But
+  the fallback only resolves where `.help/templates/<F>/` exists ON
+  DISK, and the running server was resolving against the **repo
+  checkout**; a clean `uvx`/plugin install ships `plugin/help/generated/`
+  but NOT `.help/templates/<F>/`, so it would still serve the old
+  bundle. The dev probe (and the connected-session probe) masked the
+  clean-install gap. Two durable rules: (1) **prove the served surface
+  with the fallback OFF** — copy the shipped bundle to a NON-canonical
+  path (so the dev fallback can't fire) and assert
+  `populate("con-<F>", generated_dir=<that copy>)` resolves; if it only
+  works when the repo's `.help/templates` is reachable, a clean install
+  is broken. (2) **content merged to `main` ≠ delivered** — the help
+  bundle ships inside the plugin/wheel, so users get it only after a
+  version bump + publish (`claude plugin update attune-ai@attune-ai`).
+  Fix shipped as Design B (8.9.2, help-serving-bridge D5):
+  `scripts/sync_help_bundle.py` emits each single-sourced feature's
+  kinds INTO `plugin/help/generated/<type>/<F>.md` (286 files) +
+  rebuilds the cross-link/source-manifest indexes, so the content lives
+  in the SHIPPED artifact. (`generate_all.py` doesn't clobber, so the
+  emitted files survive a bundle regen; `con-<F>` doesn't collide with
+  the bundle's `con-tool-<skill>`.) Extends the #1047 "projected ≠
+  served — verify the consuming surface's dir + dogfood the live lookup"
+  lesson with the packaging/deployment half: dogfooding the CONNECTED
+  server isn't enough; simulate the CLEAN artifact. Also recurred this
+  session: the **xdist coverage finalize-deadlock** (#1050 coverage
+  stuck ~16 min in "Run tests with coverage" vs the normal ~8) —
+  `gh run cancel <run>` + `gh run rerun --job <coverage-job-id>` cleared
+  it (reran green in ~8 min); the other 7 required were already
+  concluded green so the cancel didn't lose them (only cancel once
+  coverage itself is the hung lane, never to bypass a different lane
+  while coverage is legitimately running).
