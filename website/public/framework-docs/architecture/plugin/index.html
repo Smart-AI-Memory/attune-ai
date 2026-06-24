@@ -12,7 +12,7 @@
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/reference/orchestration/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/architecture/plugin/">
       
       
       
@@ -25,7 +25,7 @@
     
     
       
-        <title>Orchestration - Attune AI</title>
+        <title>Plugin - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#orchestration" class="md-skip">
+        <a href="#plugin" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Orchestration
+              Plugin
             
           </span>
         </div>
@@ -348,7 +348,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../" class="md-tabs__link">
+        <a href="../../reference/" class="md-tabs__link">
           
   
   
@@ -2625,7 +2625,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../reference/" class="md-nav__link">
         
   
   
@@ -2707,7 +2707,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../API_REFERENCE/" class="md-nav__link">
+      <a href="../../reference/API_REFERENCE/" class="md-nav__link">
         
   
   
@@ -2735,7 +2735,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../empathy-os/" class="md-nav__link">
+      <a href="../../reference/empathy-os/" class="md-nav__link">
         
   
   
@@ -2763,7 +2763,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
+      <a href="../../reference/configuration/" class="md-nav__link">
         
   
   
@@ -2791,7 +2791,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../core/" class="md-nav__link">
+      <a href="../../reference/core/" class="md-nav__link">
         
   
   
@@ -2819,7 +2819,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../config/" class="md-nav__link">
+      <a href="../../reference/config/" class="md-nav__link">
         
   
   
@@ -2847,7 +2847,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../pattern-library/" class="md-nav__link">
+      <a href="../../reference/pattern-library/" class="md-nav__link">
         
   
   
@@ -2875,7 +2875,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../multi-agent/" class="md-nav__link">
+      <a href="../../reference/multi-agent/" class="md-nav__link">
         
   
   
@@ -2903,7 +2903,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../persistence/" class="md-nav__link">
+      <a href="../../reference/persistence/" class="md-nav__link">
         
   
   
@@ -2931,7 +2931,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../llm-toolkit/" class="md-nav__link">
+      <a href="../../reference/llm-toolkit/" class="md-nav__link">
         
   
   
@@ -2959,7 +2959,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ops-dashboard/" class="md-nav__link">
+      <a href="../../reference/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -3113,7 +3113,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cli-reference/" class="md-nav__link">
+      <a href="../../reference/cli-reference/" class="md-nav__link">
         
   
   
@@ -3195,7 +3195,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../FAQ/" class="md-nav__link">
+      <a href="../../reference/FAQ/" class="md-nav__link">
         
   
   
@@ -3223,7 +3223,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../TROUBLESHOOTING/" class="md-nav__link">
+      <a href="../../reference/TROUBLESHOOTING/" class="md-nav__link">
         
   
   
@@ -3251,7 +3251,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../glossary/" class="md-nav__link">
+      <a href="../../reference/glossary/" class="md-nav__link">
         
   
   
@@ -3369,7 +3369,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ops-dashboard/" class="md-nav__link">
+      <a href="../ops-dashboard/" class="md-nav__link">
         
   
   
@@ -4455,22 +4455,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#reference" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reference
+        Overview
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Reference">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concepts
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Concepts">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#meta-orchestration" class="md-nav__link">
+  <a href="#the-two-manifests" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Meta-orchestration
+        The two manifests
       
     </span>
   </a>
@@ -4478,10 +4489,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#team-assembly" class="md-nav__link">
+  <a href="#auto-discovered-components" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Team assembly
+        Auto-discovered components
       
     </span>
   </a>
@@ -4489,10 +4500,60 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#execution-composition" class="md-nav__link">
+  <a href="#hooks-and-mcp-shipped-not-owned-here" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Execution &amp; composition
+        Hooks and MCP — shipped, not owned here
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-bundled-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The bundled core
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-extension" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design &amp; extension
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design &amp; extension">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#design-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design decisions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extension-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Extension points
       
     </span>
   </a>
@@ -4524,110 +4585,143 @@
   
 
 
-<h1 id="orchestration">Orchestration<a class="headerlink" href="#orchestration" title="Permanent link">&para;</a></h1>
-<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
-<h3 id="meta-orchestration">Meta-orchestration<a class="headerlink" href="#meta-orchestration" title="Permanent link">&para;</a></h3>
+<h1 id="plugin">Plugin<a class="headerlink" href="#plugin" title="Permanent link">&para;</a></h1>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The <strong>plugin</strong> is how attune installs into Claude Code. It is a
+<strong>bundle</strong> — a directory under <code>plugin/</code> with a manifest and a set of
+component folders that Claude Code discovers automatically when the
+plugin is installed. It is a packaging artifact, not a Python API:
+<code>plugin/core</code> carries only a <code>__version__</code>.</p>
+<p>This page documents the <strong>bundle itself</strong> — its manifest
+(<code>plugin.json</code>), its marketplace listing (<code>marketplace.json</code>), how a
+user installs it, and the component directories Claude Code reads. It
+does <strong>not</strong> document the MCP server internals (that is the
+<strong>mcp-server</strong> feature) or the individual hook scripts (that is the
+<strong>hooks</strong> feature); the plugin just <em>ships</em> those.</p>
+<p>You reach it these ways:</p>
+<ul>
+<li><strong>install</strong> — <code>claude plugin marketplace add
+  Smart-AI-Memory/attune-ai</code> then <code>claude plugin install
+  attune-ai@attune-ai</code>; Claude Code reads the manifest and registers
+  every component;</li>
+<li><strong>inspect</strong> — the <code>plugin/</code> directory: <code>plugin/.claude-plugin/</code> holds
+  the two manifests, and the sibling folders (<code>commands/</code>, <code>skills/</code>,
+  <code>agents/</code>, <code>hooks/</code>, <code>help/</code>) are the auto-discovered components.</li>
+</ul>
+<h2 id="concepts">Concepts<a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h2>
+<h3 id="the-two-manifests">The two manifests<a class="headerlink" href="#the-two-manifests" title="Permanent link">&para;</a></h3>
+<p>The bundle is described by two JSON files in
+<code>plugin/.claude-plugin/</code>:</p>
+<ul>
+<li><strong><code>plugin.json</code></strong> — the plugin manifest. Its <code>name</code> is <code>attune-ai</code>,
+  with <code>version</code>, <code>description</code>, <code>author</code>, <code>homepage</code>, <code>repository</code>,
+  <code>license</code> (<code>Apache-2.0</code>), and <code>keywords</code>. This is what Claude Code
+  reads to register the plugin.</li>
+<li><strong><code>marketplace.json</code></strong> — the marketplace listing. Its top-level
+  <code>name</code> is <strong><code>attune-ai-plugin</code></strong> (the marketplace name, distinct from
+  the plugin name), with an <code>owner</code> and <code>metadata</code>, and a <code>plugins</code>
+  array. The single entry has <code>name</code> <code>attune-ai</code>, <code>source</code> <code>./</code> (the
+  plugin lives at the marketplace root), <code>category</code> <code>developer-tools</code>,
+  and its own <code>tags</code>.</li>
+</ul>
+<p>The marketplace name (<code>attune-ai-plugin</code>) and the plugin name
+(<code>attune-ai</code>) are deliberately different — the install command
+(<code>attune-ai@attune-ai</code>) references the <em>plugin</em> name twice (plugin @
+marketplace), because this repo is its own single-plugin marketplace.</p>
+<h3 id="auto-discovered-components">Auto-discovered components<a class="headerlink" href="#auto-discovered-components" title="Permanent link">&para;</a></h3>
+<p>Claude Code reads fixed-name folders inside the bundle. Each is a
+component type:</p>
 <table>
 <thead>
 <tr>
-<th>Symbol</th>
-<th>Purpose</th>
+<th>Folder</th>
+<th>What it holds</th>
+<th>Count</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>MetaOrchestrator()</code></td>
-<td><code>analyze_task</code>, <code>create_execution_plan</code>, <code>compose_team</code>, <code>analyze_and_compose</code> (all sync).</td>
+<td><code>commands/</code></td>
+<td>Slash commands (<code>.md</code>)</td>
+<td>1 (<code>handoff</code>)</td>
 </tr>
 <tr>
-<td><code>TaskRequirements</code> / <code>ExecutionPlan</code></td>
-<td>Planner inputs/outputs.</td>
+<td><code>skills/</code></td>
+<td>Skills (one dir each, <code>SKILL.md</code>)</td>
+<td>17</td>
 </tr>
 <tr>
-<td><code>TaskComplexity</code></td>
-<td><code>SIMPLE</code> / <code>MODERATE</code> / <code>COMPLEX</code>.</td>
+<td><code>agents/</code></td>
+<td>Subagent definitions (<code>.md</code>)</td>
+<td>6</td>
 </tr>
 <tr>
-<td><code>TaskDomain</code></td>
-<td><code>TESTING</code> / <code>SECURITY</code> / <code>CODE_QUALITY</code> / <code>DOCUMENTATION</code> / <code>PERFORMANCE</code> / <code>ARCHITECTURE</code> / <code>REFACTORING</code> / <code>GENERAL</code>.</td>
+<td><code>hooks/</code></td>
+<td><code>hooks.json</code> + hook scripts</td>
+<td>~20 scripts</td>
 </tr>
 <tr>
-<td><code>CompositionPattern</code></td>
-<td>The 10 patterns (SEQUENTIAL … DELEGATION_CHAIN).</td>
+<td><code>help/</code></td>
+<td>Generated help, templates, schemas</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>.mcp.json</code></td>
+<td>MCP server registration</td>
+<td>1 server</td>
 </tr>
 </tbody>
 </table>
-<h3 id="team-assembly">Team assembly<a class="headerlink" href="#team-assembly" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Symbol</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>get_all_templates()</code> / <code>get_template(id)</code></td>
-<td>Registry access.</td>
-</tr>
-<tr>
-<td><code>get_templates_by_capability(...)</code> / <code>get_templates_by_tier(...)</code></td>
-<td>Filter templates.</td>
-</tr>
-<tr>
-<td><code>register_custom_template(...)</code> / <code>unregister_template(...)</code> / <code>get_registry()</code></td>
-<td>Extend/inspect the registry.</td>
-</tr>
-<tr>
-<td><code>AgentTemplate</code></td>
-<td><code>id</code>, <code>role</code>, <code>capabilities</code>, <code>tools</code>, <code>tier_preference</code>, <code>quality_gates</code>, <code>resource_requirements</code>.</td>
-</tr>
-<tr>
-<td><code>AgentCapability</code> / <code>ResourceRequirements</code></td>
-<td>Capability + resource models.</td>
-</tr>
-<tr>
-<td><code>DynamicTeamBuilder(state_store=None, redis_client=None)</code></td>
-<td><code>build_from_spec</code> / <code>build_from_plan</code> / <code>build_from_config</code>.</td>
-</tr>
-<tr>
-<td><code>DynamicTeam</code> / <code>DynamicTeamResult</code> / <code>TeamSpecification</code> / <code>TeamStore</code></td>
-<td>Team objects + persistence.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="execution-composition">Execution &amp; composition<a class="headerlink" href="#execution-composition" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Symbol</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ExecutionStrategy</code></td>
-<td>Base; <code>execute(agents, context)</code> is <strong>async</strong> → <code>StrategyResult</code>.</td>
-</tr>
-<tr>
-<td><code>get_strategy(name)</code></td>
-<td>Resolve a no-arg strategy (9 names). <code>conditional</code>/<code>multi_conditional</code>/<code>nested</code>/<code>nested_sequential</code> are registered too but need constructor args.</td>
-</tr>
-<tr>
-<td><code>ToolEnhancedStrategy</code> / <code>PromptCachedSequentialStrategy</code> / <code>DelegationChainStrategy</code></td>
-<td>Exported concrete strategies.</td>
-</tr>
-<tr>
-<td><code>WorkflowComposer(state_store=None)</code></td>
-<td><code>compose</code> / <code>compose_with_simplification</code>.</td>
-</tr>
-<tr>
-<td><code>WorkflowAgentAdapter</code></td>
-<td>Run a workflow as a team agent.</td>
-</tr>
-</tbody>
-</table>
-<!-- attune-generated: source_hash=8eeb348f730d4eaa712d0cf9b78905ce878837e5c821fc161778c91d1d163103 feature=orchestration kind=reference generated_at=2026-06-24 -->
+<p><code>commands/</code> ships <code>handoff</code> (the <code>/handoff</code> resume-prompt command).
+The 17 skills are the developer-workflow surface (<code>spec</code>,
+<code>security-audit</code>, <code>code-quality</code>, <code>smart-test</code>, <code>release-prep</code>, …). The
+6 agents are read-only or planning subagents
+(<code>security-reviewer</code>, <code>refactor-planner</code>, <code>release-prep-auditor</code>,
+<code>spec-author</code>, <code>setup-guide</code>, <code>help-content-explainer</code>).</p>
+<h3 id="hooks-and-mcp-shipped-not-owned-here">Hooks and MCP — shipped, not owned here<a class="headerlink" href="#hooks-and-mcp-shipped-not-owned-here" title="Permanent link">&para;</a></h3>
+<p><code>hooks/hooks.json</code> wires hook scripts to five Claude Code lifecycle
+events — <code>SessionStart</code>, <code>Stop</code>, <code>PreToolUse</code>, <code>PostToolUse</code>,
+<code>UserPromptSubmit</code>. <code>.mcp.json</code> registers the MCP server
+(<code>uvx --from attune-ai python -m attune.mcp.server</code>). The plugin
+<strong>bundles</strong> both, but their behavior is documented by the <strong>hooks</strong> and
+<strong>mcp-server</strong> features respectively — this page covers only that they
+are part of the bundle.</p>
+<h3 id="the-bundled-core">The bundled core<a class="headerlink" href="#the-bundled-core" title="Permanent link">&para;</a></h3>
+<p><code>plugin/core/</code> exists so the plugin can carry a version for standalone
+operation; <code>plugin/core/__init__.py</code> is just
+<code>__version__ = "8.9.0"</code>. The real runtime is the pip-installed
+<code>attune-ai</code> package, which the <code>.mcp.json</code> server pulls via
+<code>uvx --from attune-ai</code>.</p>
+<h2 id="design-extension">Design &amp; extension<a class="headerlink" href="#design-extension" title="Permanent link">&para;</a></h2>
+<h3 id="design-decisions">Design decisions<a class="headerlink" href="#design-decisions" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Self-marketplace.</strong> The repo is its own single-plugin marketplace
+  (<code>source: ./</code>), so <code>marketplace add</code> + <code>install</code> point at one
+  GitHub repo — no separate registry to publish to.</li>
+<li><strong>Convention over configuration.</strong> Components are discovered by fixed
+  folder names rather than enumerated in the manifest, keeping
+  <code>plugin.json</code> to identity/metadata.</li>
+<li><strong>Thin bundled core.</strong> <code>plugin/core</code> carries only a version; the
+  heavy runtime stays in the pip package the MCP server pulls, so the
+  bundle stays small and the runtime updates independently.</li>
+<li><strong>Separation of concerns.</strong> The bundle ships the MCP server and hooks
+  but documents them as their own features — the plugin page stays about
+  packaging.</li>
+</ul>
+<h3 id="extension-points">Extension points<a class="headerlink" href="#extension-points" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Add a command/skill/agent:</strong> drop a file into the matching folder
+  (<code>commands/*.md</code>, <code>skills/&lt;name&gt;/SKILL.md</code>, <code>agents/*.md</code>); Claude
+  Code auto-discovers it on install.</li>
+<li><strong>Add a hook:</strong> wire it in <code>hooks/hooks.json</code> (see the hooks
+  feature).</li>
+<li><strong>Change marketplace metadata:</strong> edit
+  <code>plugin/.claude-plugin/marketplace.json</code> (name, category, tags).</li>
+<li><strong>Bump the bundle version:</strong> update <code>plugin.json</code>,
+  <code>marketplace.json</code>, and <code>plugin/core/__init__.py</code> together at
+  release.</li>
+</ul>
+<!-- attune-generated: source_hash=db043c60a7143c7669b27c81b171e2b6169746b1daae7d276d9b914b20fb8c53 feature=plugin kind=architecture generated_at=2026-06-24 -->
 
 
 

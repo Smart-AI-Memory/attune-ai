@@ -25,7 +25,7 @@
     
     
       
-        <title>How to use the Claude Code plugin - Attune AI</title>
+        <title>Plugin - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#how-to-use-the-claude-code-plugin" class="md-skip">
+        <a href="#plugin" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              How to use the Claude Code plugin
+              Plugin
             
           </span>
         </div>
@@ -4120,6 +4120,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../features/plugin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../features/rag-grounding/" class="md-nav__link">
         
   
@@ -4427,10 +4455,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#quickstart" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick start
+        Quickstart
       
     </span>
   </a>
@@ -4438,22 +4466,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#core-api" class="md-nav__link">
+  <a href="#tasks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core API
+        Tasks
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Core API">
+    <nav class="md-nav" aria-label="Tasks">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#state-discovery-hooks_state" class="md-nav__link">
+  <a href="#install-the-plugin" class="md-nav__link">
     <span class="md-ellipsis">
       
-        State discovery (hooks._state)
+        Install the plugin
       
     </span>
   </a>
@@ -4461,10 +4489,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#context-utilization-hooks_transcript_size" class="md-nav__link">
+  <a href="#read-the-manifest" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Context utilization (hooks._transcript_size)
+        Read the manifest
       
     </span>
   </a>
@@ -4472,54 +4500,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#resume-prompt-hooks_resume_prompt" class="md-nav__link">
+  <a href="#list-the-components-claude-code-will-discover" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Resume prompt (hooks._resume_prompt)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#compact-warning-hookscompact_warning" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Compact warning (hooks.compact_warning)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#security-hookssecurity_guard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Security (hooks.security_guard)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#spec-orientation-hooksspec_orient" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Spec orientation (hooks.spec_orient)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#hook-entry-points" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Hook entry points
+        List the components Claude Code will discover
       
     </span>
   </a>
@@ -4532,22 +4516,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#integration-patterns" class="md-nav__link">
+  <a href="#reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integration patterns
+        Reference
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Integration patterns">
+    <nav class="md-nav" aria-label="Reference">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#security-guard-in-a-tool-call-pipeline" class="md-nav__link">
+  <a href="#pluginclaude-pluginpluginjson" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Security guard in a tool-call pipeline
+        plugin/.claude-plugin/plugin.json
       
     </span>
   </a>
@@ -4555,10 +4539,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#spec-orientation-at-session-start" class="md-nav__link">
+  <a href="#pluginclaude-pluginmarketplacejson" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Spec orientation at session start
+        plugin/.claude-plugin/marketplace.json
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-folders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component folders
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Install
       
     </span>
   </a>
@@ -4567,28 +4573,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See also
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#unresolved-references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Unresolved references
-      
-    </span>
-  </a>
   
 </li>
       
@@ -4612,291 +4596,212 @@
   
 
 
-<h1 id="how-to-use-the-claude-code-plugin">How to use the Claude Code plugin<a class="headerlink" href="#how-to-use-the-claude-code-plugin" title="Permanent link">&para;</a></h1>
-<p>Use this guide when you need to wire up, call, or extend the Claude Code plugin's hooks and commands — session continuity, security validation, spec orientation, and context-utilization warnings.</p>
-<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<p>The following snippet checks context utilization and prints a compact warning when the transcript is getting full:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">hooks._transcript_size</span><span class="w"> </span><span class="kn">import</span> <span class="n">estimate_utilization</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">hooks._state</span><span class="w"> </span><span class="kn">import</span> <span class="n">git_state</span><span class="p">,</span> <span class="n">workspace_roots</span><span class="p">,</span> <span class="n">discover_specs</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">hooks._resume_prompt</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_resume_prompt</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">hooks.compact_warning</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_warning</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">cwd</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">roots</span> <span class="o">=</span> <span class="n">workspace_roots</span><span class="p">(</span><span class="n">cwd</span><span class="p">)</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">specs</span> <span class="o">=</span> <span class="n">discover_specs</span><span class="p">(</span><span class="n">roots</span><span class="p">)</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">spec</span> <span class="o">=</span> <span class="n">specs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">specs</span> <span class="k">else</span> <span class="kc">None</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">util</span> <span class="o">=</span> <span class="n">estimate_utilization</span><span class="p">(</span><span class="s2">&quot;~/.claude/transcript.jsonl&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="k">if</span> <span class="n">util</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">:</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">state</span> <span class="o">=</span> <span class="n">git_state</span><span class="p">(</span><span class="n">cwd</span><span class="p">)</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">resume</span> <span class="o">=</span> <span class="n">build_resume_prompt</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">workspace_path</span><span class="o">=</span><span class="s2">&quot;~/attune&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">format_warning</span><span class="p">(</span><span class="n">util</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">resume_body</span><span class="o">=</span><span class="n">resume</span><span class="p">))</span>
+<h1 id="plugin">Plugin<a class="headerlink" href="#plugin" title="Permanent link">&para;</a></h1>
+<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
+<p>Install the plugin into Claude Code from the marketplace:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>claude<span class="w"> </span>plugin<span class="w"> </span>marketplace<span class="w"> </span>add<span class="w"> </span>Smart-AI-Memory/attune-ai
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>claude<span class="w"> </span>plugin<span class="w"> </span>install<span class="w"> </span>attune-ai@attune-ai
 </code></pre></div>
-<p>Running this prints a formatted warning block to stdout when the transcript exceeds 80 % utilization.</p>
-<h2 id="core-api">Core API<a class="headerlink" href="#core-api" title="Permanent link">&para;</a></h2>
-<p>Each hook module exposes a <code>main()</code> entry point callable by Claude Code directly. The shared helpers in <code>hooks._state</code> and <code>hooks._transcript_size</code> are the building blocks the other hooks rely on.</p>
-<h3 id="state-discovery-hooks_state">State discovery (<code>hooks._state</code>)<a class="headerlink" href="#state-discovery-hooks_state" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Function / Class</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>workspace_roots(cwd)</code></td>
-<td>Returns candidate workspace root paths to scan for specs</td>
-</tr>
-<tr>
-<td><code>discover_specs(roots)</code></td>
-<td>Walks <code>specs/</code> directories under each root; returns <code>list[SpecInfo]</code></td>
-</tr>
-<tr>
-<td><code>git_state(cwd)</code></td>
-<td>Snapshots branch, last commit SHA + subject, and uncommitted files</td>
-</tr>
-<tr>
-<td><code>session_sentinel_path(session_id)</code></td>
-<td>Returns the path of the once-per-session compact-warning sentinel file</td>
-</tr>
-<tr>
-<td><code>prune_stale_sentinels(now)</code></td>
-<td>Deletes sentinel files older than the TTL; returns count removed</td>
-</tr>
-<tr>
-<td><code>SpecInfo</code></td>
-<td>Dataclass: <code>slug</code>, <code>path</code>, <code>layer</code>, <code>phase</code>, <code>status</code>, <code>mtime</code></td>
-</tr>
-<tr>
-<td><code>GitState</code></td>
-<td>Dataclass: <code>branch</code>, <code>last_sha</code>, <code>last_subject</code>, <code>uncommitted</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="context-utilization-hooks_transcript_size">Context utilization (<code>hooks._transcript_size</code>)<a class="headerlink" href="#context-utilization-hooks_transcript_size" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>estimate_utilization(transcript_path)</code></td>
-<td>Returns context utilization as a float in <code>[0.0, 1.0]</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="resume-prompt-hooks_resume_prompt">Resume prompt (<code>hooks._resume_prompt</code>)<a class="headerlink" href="#resume-prompt-hooks_resume_prompt" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>build_resume_prompt(spec_info, git_state, *, workspace_path, todo_summary)</code></td>
-<td>Renders the user-facing resume prompt body</td>
-</tr>
-</tbody>
-</table>
-<h3 id="compact-warning-hookscompact_warning">Compact warning (<code>hooks.compact_warning</code>)<a class="headerlink" href="#compact-warning-hookscompact_warning" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>format_warning(util, threshold, resume_body)</code></td>
-<td>Composes the full warning message + resume prompt</td>
-</tr>
-</tbody>
-</table>
-<h3 id="security-hookssecurity_guard">Security (<code>hooks.security_guard</code>)<a class="headerlink" href="#security-hookssecurity_guard" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>validate_bash_command(command)</code></td>
-<td>Checks a Bash command against security policies; returns <code>(allowed, reason)</code></td>
-</tr>
-<tr>
-<td><code>validate_file_path(file_path)</code></td>
-<td>Checks a file path against security policies; returns <code>(allowed, reason)</code></td>
-</tr>
-<tr>
-<td><code>main(context)</code></td>
-<td>Validates a tool call dict; returns an updated context dict</td>
-</tr>
-</tbody>
-</table>
-<h3 id="spec-orientation-hooksspec_orient">Spec orientation (<code>hooks.spec_orient</code>)<a class="headerlink" href="#spec-orientation-hooksspec_orient" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>format_orientation(specs)</code></td>
-<td>Returns a short markdown list of in-flight specs for session start</td>
-</tr>
-<tr>
-<td><code>render_spec_pin(spec, char_budget)</code></td>
-<td>Renders a spec body for post-compact context restoration</td>
-</tr>
-</tbody>
-</table>
-<h3 id="hook-entry-points">Hook entry points<a class="headerlink" href="#hook-entry-points" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Module</th>
-<th><code>main()</code> behavior</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>hooks._handoff_cli</code></td>
-<td>CLI wrapper for the <code>/handoff</code> slash command</td>
-</tr>
-<tr>
-<td><code>hooks.compact_warning</code></td>
-<td>Entry point — never raises</td>
-</tr>
-<tr>
-<td><code>hooks.format_on_save</code></td>
-<td>Reads a tool result from stdin and formats Python files</td>
-</tr>
-<tr>
-<td><code>hooks.help_freshness_check</code></td>
-<td>Checks help-template freshness on session start</td>
-</tr>
-<tr>
-<td><code>hooks.help_on_error</code></td>
-<td>Reads a <code>PostToolUse</code> payload and suggests help if applicable</td>
-</tr>
-<tr>
-<td><code>hooks.help_post_commit</code></td>
-<td>Checks for stale help after a git commit</td>
-</tr>
-<tr>
-<td><code>hooks.spec_orient</code></td>
-<td>Branches on <code>source</code>; never raises</td>
-</tr>
-<tr>
-<td><code>hooks.welcome</code></td>
-<td>Prints a welcome message to stderr (Claude Code surfaces stderr)</td>
-</tr>
-</tbody>
-</table>
-<h2 id="integration-patterns">Integration patterns<a class="headerlink" href="#integration-patterns" title="Permanent link">&para;</a></h2>
-<h3 id="security-guard-in-a-tool-call-pipeline">Security guard in a tool-call pipeline<a class="headerlink" href="#security-guard-in-a-tool-call-pipeline" title="Permanent link">&para;</a></h3>
-<p>Wrap any outgoing tool call through <code>hooks.security_guard.main()</code> before execution. The function accepts the raw context dict Claude Code passes to a <code>PreToolUse</code> hook and returns the same dict, potentially with a blocking annotation:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">hooks.security_guard</span><span class="w"> </span><span class="kn">import</span> <span class="n">main</span> <span class="k">as</span> <span class="n">security_check</span><span class="p">,</span> <span class="n">validate_bash_command</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Quick inline check</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">allowed</span><span class="p">,</span> <span class="n">reason</span> <span class="o">=</span> <span class="n">validate_bash_command</span><span class="p">(</span><span class="s2">&quot;rm -rf /private/etc/hosts&quot;</span><span class="p">)</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">allowed</span><span class="p">:</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="k">raise</span> <span class="ne">PermissionError</span><span class="p">(</span><span class="n">reason</span><span class="p">)</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1"># Full hook integration — called by Claude Code automatically,</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># but you can invoke it directly in tests:</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">context</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;tool&quot;</span><span class="p">:</span> <span class="s2">&quot;Bash&quot;</span><span class="p">,</span> <span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;command&quot;</span><span class="p">:</span> <span class="s2">&quot;ls -la&quot;</span><span class="p">}}</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="n">result</span> <span class="o">=</span> <span class="n">security_check</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+<p>The first command registers this repo as a marketplace; the second
+installs the <code>attune-ai</code> plugin from it. After install, Claude Code
+auto-discovers the components — the slash command, the 17 skills, the 6
+agents, the hooks, and the MCP server — and they become available in
+your session.</p>
+<p>To inspect the bundle locally:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cat<span class="w"> </span>plugin/.claude-plugin/plugin.json
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ls<span class="w"> </span>plugin/skills<span class="w"> </span>plugin/agents<span class="w"> </span>plugin/commands
 </code></pre></div>
-<p><code>SYSTEM_DIRECTORIES</code> (<code>{'/etc', '/sys', '/proc', ...}</code>) and <code>SEARCH_COMMAND_PREFIXES</code> are the policy constants the validator checks against.</p>
-<h3 id="spec-orientation-at-session-start">Spec orientation at session start<a class="headerlink" href="#spec-orientation-at-session-start" title="Permanent link">&para;</a></h3>
-<p>Call <code>format_orientation</code> immediately after <code>discover_specs</code> to surface in-flight work to the model:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">hooks._state</span><span class="w"> </span><span class="kn">import</span> <span class="n">workspace_roots</span><span class="p">,</span> <span class="n">discover_specs</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">hooks.spec_orient</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_orientation</span><span class="p">,</span> <span class="n">render_spec_pin</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">roots</span> <span class="o">=</span> <span class="n">workspace_roots</span><span class="p">(</span><span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">())</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">specs</span> <span class="o">=</span> <span class="n">discover_specs</span><span class="p">(</span><span class="n">roots</span><span class="p">)</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="c1"># Short list for a fresh session</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">format_orientation</span><span class="p">(</span><span class="n">specs</span><span class="p">))</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1"># Detailed pin for post-compact restoration (default 4 000-char budget)</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="k">if</span> <span class="n">specs</span><span class="p">:</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">render_spec_pin</span><span class="p">(</span><span class="n">specs</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<h2 id="tasks">Tasks<a class="headerlink" href="#tasks" title="Permanent link">&para;</a></h2>
+<h3 id="install-the-plugin">Install the plugin<a class="headerlink" href="#install-the-plugin" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> add attune to Claude Code.</p>
+<p><strong>Steps:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>claude<span class="w"> </span>plugin<span class="w"> </span>marketplace<span class="w"> </span>add<span class="w"> </span>Smart-AI-Memory/attune-ai
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>claude<span class="w"> </span>plugin<span class="w"> </span>install<span class="w"> </span>attune-ai@attune-ai
 </code></pre></div>
-<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>concepts/task-template-design-patterns.md</code> — how attune structures help content the plugin surfaces</li>
-<li><code>concepts/task-template-migration.md</code> — background on the session-continuity model the hooks support</li>
-</ul>
-<h2 id="unresolved-references">Unresolved references<a class="headerlink" href="#unresolved-references" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
+<p><strong>Verify:</strong> the <code>/attune</code> and <code>/handoff</code> commands appear, and the
+attune skills (<code>/spec</code>, <code>/security-audit</code>, …) are available in the
+session. <code>attune-ai@attune-ai</code> is <code>plugin-name@marketplace-plugin</code> —
+both resolve to the <code>attune-ai</code> plugin in this single-plugin
+marketplace.</p>
+<h3 id="read-the-manifest">Read the manifest<a class="headerlink" href="#read-the-manifest" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> confirm the bundle's identity and version.</p>
+<p><strong>Steps:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>cat<span class="w"> </span>plugin/.claude-plugin/plugin.json
+</code></pre></div>
+<p><strong>Verify:</strong> <code>name</code> is <code>attune-ai</code>, <code>license</code> is <code>Apache-2.0</code>, and
+<code>keywords</code> include <code>claude-code</code>. The <code>version</code> here is the plugin
+bundle version (<code>8.9.0</code>); the sibling <code>marketplace.json</code> carries a
+matching version in <code>metadata.version</code> and <code>plugins[0].version</code>.</p>
+<h3 id="list-the-components-claude-code-will-discover">List the components Claude Code will discover<a class="headerlink" href="#list-the-components-claude-code-will-discover" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> see what the bundle ships.</p>
+<p><strong>Steps:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>ls<span class="w"> </span>plugin/commands<span class="w">   </span><span class="c1"># 1 command (handoff.md)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>ls<span class="w"> </span>plugin/skills<span class="w">     </span><span class="c1"># 17 skill directories</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>ls<span class="w"> </span>plugin/agents<span class="w">     </span><span class="c1"># 6 agent definitions</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>cat<span class="w"> </span>plugin/.mcp.json<span class="w"> </span><span class="c1"># the MCP server registration</span>
+</code></pre></div>
+<p><strong>Verify:</strong> each folder name is the component type Claude Code reads.
+<code>hooks/hooks.json</code> binds scripts to the five lifecycle events; for what
+those hooks do, see the <strong>hooks</strong> feature, and for the MCP server, the
+<strong>mcp-server</strong> feature.</p>
+<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<p>The plugin is a packaging artifact; its "API" is the manifest schema
+and the component folder layout.</p>
+<h3 id="pluginclaude-pluginpluginjson"><code>plugin/.claude-plugin/plugin.json</code><a class="headerlink" href="#pluginclaude-pluginpluginjson" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
+<th>Field</th>
+<th>Value / Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Line 16 (code fence)</td>
-<td>error</td>
-<td><code>from hooks._transcript_size import …</code> — module not importable</td>
+<td><code>name</code></td>
+<td><code>attune-ai</code> — the plugin name.</td>
 </tr>
 <tr>
-<td>Line 16 (code fence)</td>
-<td>error</td>
-<td><code>from hooks._state import …</code> — module not importable</td>
+<td><code>version</code></td>
+<td>Plugin bundle version (<code>8.9.0</code>).</td>
 </tr>
 <tr>
-<td>Line 16 (code fence)</td>
-<td>error</td>
-<td><code>from hooks._resume_prompt import …</code> — module not importable</td>
+<td><code>description</code></td>
+<td>One-line plugin summary shown in Claude Code.</td>
 </tr>
 <tr>
-<td>Line 16 (code fence)</td>
-<td>error</td>
-<td><code>from hooks.compact_warning import …</code> — module not importable</td>
+<td><code>author</code></td>
+<td><code>{name, email}</code> — Smart AI Memory.</td>
 </tr>
 <tr>
-<td>Line 105 (code fence)</td>
-<td>error</td>
-<td><code>from hooks.security_guard import …</code> — module not importable</td>
+<td><code>homepage</code> / <code>repository</code></td>
+<td>Project links.</td>
 </tr>
 <tr>
-<td>Line 125 (code fence)</td>
-<td>error</td>
-<td><code>from hooks.spec_orient import …</code> — module not importable</td>
+<td><code>license</code></td>
+<td><code>Apache-2.0</code>.</td>
+</tr>
+<tr>
+<td><code>keywords</code></td>
+<td>Discovery keywords (include <code>claude-code</code>).</td>
 </tr>
 </tbody>
 </table>
+<h3 id="pluginclaude-pluginmarketplacejson"><code>plugin/.claude-plugin/marketplace.json</code><a class="headerlink" href="#pluginclaude-pluginmarketplacejson" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value / Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>attune-ai-plugin</code> — the <strong>marketplace</strong> name.</td>
+</tr>
+<tr>
+<td><code>owner</code></td>
+<td><code>{name, email}</code> of the marketplace.</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>{description, version}</code>.</td>
+</tr>
+<tr>
+<td><code>plugins[]</code></td>
+<td>The plugin entries; one here.</td>
+</tr>
+<tr>
+<td><code>plugins[0].name</code></td>
+<td><code>attune-ai</code> — the plugin offered.</td>
+</tr>
+<tr>
+<td><code>plugins[0].source</code></td>
+<td><code>./</code> — plugin at the marketplace root.</td>
+</tr>
+<tr>
+<td><code>plugins[0].category</code></td>
+<td><code>developer-tools</code>.</td>
+</tr>
+<tr>
+<td><code>plugins[0].tags</code></td>
+<td>Marketplace listing tags.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="component-folders">Component folders<a class="headerlink" href="#component-folders" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Folder</th>
+<th>Component</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>commands/</code></td>
+<td>Slash commands</td>
+<td><code>handoff.md</code> → <code>/handoff</code>.</td>
+</tr>
+<tr>
+<td><code>skills/</code></td>
+<td>Skills</td>
+<td>17 dirs, each with <code>SKILL.md</code>.</td>
+</tr>
+<tr>
+<td><code>agents/</code></td>
+<td>Subagents</td>
+<td>6 <code>.md</code> definitions.</td>
+</tr>
+<tr>
+<td><code>hooks/</code></td>
+<td>Hooks</td>
+<td><code>hooks.json</code> + ~20 scripts → 5 events.</td>
+</tr>
+<tr>
+<td><code>help/</code></td>
+<td>Help</td>
+<td><code>generated/</code>, <code>templates/</code>, <code>schemas/</code>.</td>
+</tr>
+<tr>
+<td><code>core/</code></td>
+<td>Version</td>
+<td><code>__version__</code> only.</td>
+</tr>
+<tr>
+<td><code>.mcp.json</code></td>
+<td>MCP server</td>
+<td><code>uvx --from attune-ai python -m attune.mcp.server</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Add marketplace</td>
+<td><code>claude plugin marketplace add Smart-AI-Memory/attune-ai</code></td>
+</tr>
+<tr>
+<td>Install plugin</td>
+<td><code>claude plugin install attune-ai@attune-ai</code></td>
+</tr>
+</tbody>
+</table>
+<!-- attune-generated: source_hash=db043c60a7143c7669b27c81b171e2b6169746b1daae7d276d9b914b20fb8c53 feature=plugin kind=how-to generated_at=2026-06-24 -->
 
 
 
 
 
 
-
-  
-  
 
 
 
