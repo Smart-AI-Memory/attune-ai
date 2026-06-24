@@ -1,109 +1,119 @@
-# Ops Dashboard architecture
+# Ops Dashboard
 
-Local operations dashboard — workflow runner with per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming.
+## Overview
 
-## Purpose
+The ops dashboard is attune's **local operations layer** — a FastAPI
+web app you run on your own machine to execute workflows against a
+chosen feature scope, browse persisted run history, chain workflows
+with a click, and watch live logs stream over **SSE**. It lives in
+**`src/attune/ops/`** and is launched with `attune ops` (or `python -m
+attune.ops`), binding to **`127.0.0.1:8765`** by default.
 
-`attune ops` serves as the workflow OS's local web dashboard. It is responsible for: presenting home-page KPIs and cost sparklines, letting users pick a feature scope and trigger workflow runs, streaming live run output over SSE, persisting run history to disk, and enforcing trusted-host access control.
+This page documents the **runner core** — the server, its config, and
+the `RunnerService`/`Run` execution model. The dashboard also *displays*
+data owned by other features — Anthropic cost (`ops.anthropic_cost`),
+telemetry (`ops.data` reads the telemetry store), and help coverage
+(`ops.help_data`) — but those are **adjacent** surfaces it renders, not
+its own; each belongs to its respective feature (telemetry, help-system).
 
-It is **not** responsible for defining workflows themselves, managing the attune agent, or writing telemetry data — those concerns live outside this module. `attune ops` reads telemetry and run state; it does not produce them.
+The public API is deliberately tiny — `__all__` is exactly
+**`create_app`, `build_config`, `Config`**. Everything else
+(`RunnerService`, `Run`, the `ops.data` readers) is reached through
+those or imported from its submodule.
 
-## Key classes
+You reach it these ways:
 
-| Class | Responsibility | File |
-|-------|----------------|------|
-| `Config` | Holds all resolved paths and server settings (host, port, retention policy, trusted hosts) that the dashboard reads at startup. | `src/attune/ops/config.py` |
-| `TrustedHostMiddleware` | Rejects any request whose `Host` header is not on the configured allowlist before it reaches a route handler. | `src/attune/ops/middleware.py` |
-| `RunnerService` | Owns the run history list and the concurrency lock; enforces the one-active-run-at-a-time constraint. | `src/attune/ops/runner.py` |
-| `Run` | Represents a single workflow execution and its associated SSE broadcast state; created and managed by `RunnerService`. | `src/attune/ops/runner.py` |
-| `RunnerBusyError` | Signals that a new run was requested while one is already pending or running; raised by `RunnerService`. | `src/attune/ops/runner.py` |
-| `HomeKpis` | Aggregates today's event count, rolling 7-day cost and savings, and the sparkline data shown above the fold on the home page. | `src/attune/ops/data.py` |
-| `DailyCost` | Carries one day's event count and cost; the list of these forms the sparkline fed into `HomeKpis`. | `src/attune/ops/data.py` |
-| `TelemetrySummary` | Read-only snapshot of aggregate telemetry: total requests, cost, savings, and breakdowns by workflow and by day. | `src/attune/ops/data.py` |
-| `WorkflowEntry` | Describes one workflow available for dispatch: name, description, stage count, and CLI tier mapping. | `src/attune/ops/data.py` |
-| `PathArgSpec` | Describes how a workflow accepts a scope path on the CLI (`kwarg` name and whether it is required). | `src/attune/ops/data.py` |
-| `Feature` | Represents one entry from `.help/features.yaml`; drives the scope picker that lets users target a specific feature path. | `src/attune/ops/data.py` |
-| `FamilyVersion` | Records one package's resolved version and source; used by the dashboard to surface dependency info. | `src/attune/ops/data.py` |
-| `SpecPhase` | Snapshot of one phase file's existence and status string within a spec directory. | `src/attune/ops/routes/specs.py` |
-| `SpecRecord` | Aggregates a spec directory's path and the `SpecPhase` snapshot for each of the four phase files (`decisions.md`, `requirements.md`, `design.md`, `tasks.md`). | `src/attune/ops/routes/specs.py` |
+- the **CLI** — `attune ops` / `python -m attune.ops` starts the server;
+- the **Python API** — `from attune.ops import create_app, build_config,
+  Config` to build and embed the app (e.g. in tests).
 
-> **Note:** `Run` and `RunnerService` together do three things — execution lifecycle, SSE broadcast state, and history retention — which may be worth splitting if the runner grows more complex.
+## Concepts
 
-## Data flow
+### The public surface: `build_config` → `create_app`
 
-```
-CLI / browser request
-        |
-        v
-TrustedHostMiddleware  ──── rejects unlisted Host headers
-        |
-        v
-   FastAPI app  (create_app())
-   ┌────────────────────────────────────────────┐
-   │                                            │
-   │  GET /                                     │
-   │    TelemetrySummary ──> home_kpis()        │
-   │                             └──> HomeKpis  │
-   │                                   (KPI     │
-   │                                    panel + │
-   │                                    sparkline│
-   │                                    of      │
-   │                                    DailyCost)
-   │                                            │
-   │  GET /workflows                            │
-   │    WorkflowEntry[]  (scope: PathArgSpec)   │
-   │                                            │
-   │  GET /features                             │
-   │    list_features() ──> Feature[]           │
-   │    first_feature() ──> Feature | None      │
-   │                                            │
-   │  POST /workflows/{name}/run                │
-   │    RunnerService.start()                   │
-   │      ├── RunnerBusyError (409 if busy)     │
-   │      └── Run (new execution)               │
-   │            └── SSE  /runs/{run_id}/stream  │
-   │                                            │
-   │  GET /specs                                │
-   │    SpecRecord[]                            │
-   │      └── SpecPhase × 4 per spec           │
-   └────────────────────────────────────────────┘
-        |
-        v
-  Config  (read at startup: paths, host, port,
-           trusted_hosts, runs_retention_days)
-  ├── telemetry_path  →  TelemetrySummary source
-  ├── runs_dir        →  persisted Run history
-  ├── memory_dir      →  agent memory (read-only)
-  └── sessions_dir    →  session records (read-only)
-```
+`build_config(project_root, *, host, port, allow_run, …)` produces a
+`Config`; `create_app(config, *, runner=None)` returns a ready
+`FastAPI` app. Both are **synchronous**. `Config` anchors every path the
+dashboard reads or writes via derived **properties**: `runs_dir`,
+`sessions_dir`, `bulletin_dir`, `memory_dir`, `telemetry_path`
+(`attune_home()` resolves the attune state root).
 
-## Design decisions
+### The run-safety gate
 
-**Lazy FastAPI import via `create_app()`**
-`create_app()` and `build_config()` are thin wrappers that import FastAPI only when the dashboard is actually started. This keeps `import attune` fast for all other subcommands that don't need a web server.
+`Config.allow_run` defaults to **`False`** — the dashboard will not
+execute a workflow unless it is `True`. The **CLI flips it on by
+default**, disabling it only when you pass `--read-only`. So `attune
+ops` can run workflows out of the box; `attune ops --read-only` serves a
+look-but-don't-run dashboard.
 
-**One active run at a time**
-`RunnerService` holds a concurrency lock and raises `RunnerBusyError` when a second run is attempted. The alternative — queuing runs — was not chosen because the dashboard is a local single-user tool; silent queueing would obscure whether a previous run was still in progress.
+### `RunnerService` and `Run` — the execution model
 
-**`Config` as a resolved-paths dataclass, not a live reader**
-`build_config()` resolves all paths and environment variables once at startup and freezes them into a `Config` dataclass. Routes read `Config` fields directly rather than re-reading the environment on each request, so there is no ambiguity about which config values are active.
+`RunnerService` owns workflow execution. Its one **async** method is the
+killer to remember:
 
-**`allow_run` flag**
-Workflow execution is disabled by default (`allow_run = False`). This is an explicit opt-in so that dashboard deployments used purely for observability cannot accidentally trigger runs.
+- **`start(workflow, *, path=None) -> Run` is a coroutine** — `await`
+  it. It launches a workflow (optionally scoped to a `path`) and returns
+  a `Run`.
+- `recent`, `get`, `get_or_load`, `handle_stdout_line` are
+  **synchronous**; `current` and `persistence_dir` are properties.
+- Only **one run at a time**: starting a second while one is active
+  raises **`RunnerBusyError(current_run_id)`**.
 
-**Trusted-host enforcement at middleware layer**
-`TrustedHostMiddleware` runs before any route handler, so the allowlist check cannot be bypassed by a misconfigured route. The `trusted_hosts` tuple in `Config` is the single source of truth for this list.
+A `Run` is one execution. `Run.subscribe()` is an **async iterator** of
+events — this is the SSE feed the browser consumes. `append_line`,
+`mark_done`, `to_dict`/`to_record` are sync; `duration_seconds` and
+`is_terminal` are properties.
 
-## Extension points
+### Scope picker, persistence, and chaining
 
-- **Add a new route:** register it on the FastAPI app returned by `create_app()`. Place data-shape dataclasses in `src/attune/ops/data.py` and route logic under `src/attune/ops/routes/`.
-- **Change server settings** (host, port, retention, trusted hosts): pass arguments to `build_config()` or set the corresponding environment variables — `build_config()` merges both sources.
-- **Support additional spec phase files:** add filenames to the `_PHASE_FILES` tuple in `src/attune/ops/routes/specs.py`. Valid status strings are governed by `_VALID_STATUSES` in the same file.
-- **Extend the scope picker:** add entries to `.help/features.yaml` in the project root. `list_features()` and `first_feature()` parse this file; no code changes are needed for new features.
-- **Add a new run backend:** replace or subclass `RunnerService`. The concurrency contract is: raise `RunnerBusyError` if a run is already active, return a `Run` instance otherwise. SSE consumers depend on `Run`'s broadcast interface.
+The feature **scope picker** reads `.help/features.yaml` so you can
+narrow a run to one feature; `ops.data.workflow_default_scope` supplies
+the default. Run history is **persisted** to `Config.runs_dir` and
+survives restarts (`get_or_load` rehydrates a past run);
+`prune_old_runs` trims beyond `runs_retention_days` (default 30). UI
+interactions are counted via `ops.interaction_counters.EVENTS`
+(`pill_click`, `rec_card_click`, `scope_picker_change`).
 
-## See also
+### Adjacent read-only surfaces
 
-- [How-to: use the ops dashboard](../how-to/ops-dashboard.md) — task-focused recipes for the dashboard's core API
-- [Tutorial: ops-dashboard walkthrough](../tutorials/ops-dashboard.md) — end-to-end first run
-- [Reference: ops-dashboard CLI](../reference/ops-dashboard.md) — every command-line flag, environment variable, and exit code
+The dashboard renders data it does not own:
+
+| Submodule | Role | Owning feature |
+|---|---|---|
+| `ops.data` | Reads telemetry/workflows/sessions/KPIs | telemetry |
+| `ops.anthropic_cost` | `fetch_summary()` → cost report | (account-level) |
+| `ops.help_data` | Help coverage + search (the help tab) | help-system |
+| `ops.spec_lifecycle` | `derive_lifecycle(spec)` → status label | spec tooling |
+
+`ops.spec_lifecycle`'s only public function is `derive_lifecycle(spec,
+*, now=None) -> str` (plus the `STALE_THRESHOLD_DAYS` constant) — it
+labels a spec's lifecycle bucket from its phases and last-modified time.
+(There is no candidate-detection API here.)
+
+## Design & extension
+
+### Design decisions
+
+- **Tiny public surface.** `__all__` is just `create_app`,
+  `build_config`, `Config` — the runner and readers stay internal-ish so
+  the supported API is small and stable.
+- **Runs off by default in `Config`.** Execution is opt-in
+  (`allow_run`); the CLI enables it deliberately so embedding the app is
+  safe by default.
+- **One run at a time.** `RunnerService` is single-flight
+  (`RunnerBusyError`), keeping run state and the SSE feed unambiguous.
+- **Read-only adjacency.** The dashboard *renders* cost/telemetry/help
+  via `ops.data`/`ops.anthropic_cost`/`ops.help_data` but never owns
+  that data — each stays the responsibility of its feature.
+
+### Extension points
+
+- **Custom command builder / executor:** pass `command_builder` /
+  `executor` to `RunnerService` (default `echo_command_builder`).
+- **Inject a runner:** `create_app(config, runner=...)` for tests or a
+  custom execution backend.
+- **Retention:** tune `runs_retention_days` (or call `prune_old_runs`).
+- **New read panel:** add a reader to `ops.data` and surface it in the
+  app — keep ownership with the source feature.
+
+<!-- attune-generated: source_hash=1cad6797952953474159da11cd78e2e6f3b36b4845377e700eb2570427d138e7 feature=ops-dashboard kind=architecture generated_at=2026-06-24 -->

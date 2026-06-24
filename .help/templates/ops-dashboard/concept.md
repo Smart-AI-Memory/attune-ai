@@ -3,54 +3,99 @@ type: concept
 name: ops-dashboard-concept
 feature: ops-dashboard
 depth: concept
-generated_at: 2026-06-22T10:00:48.764701+00:00
-source_hash: dd650b4658efc1f6876bf6f2701d846e9091228187573660cdcfc10ab83fa6c2
+generated_at: 2026-06-24T12:00:17.825226+00:00
+source_hash: 1cad6797952953474159da11cd78e2e6f3b36b4845377e700eb2570427d138e7
 status: generated
 ---
 
-# Ops Dashboard
+# The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming
 
-## What the ops dashboard is
+## Overview
 
-The ops dashboard is a locally running web server — the operations layer of the attune workflow OS — that lets you run workflows against a specific feature scope, browse persisted run history, chain workflows with a single click, and stream live logs over SSE.
+The ops dashboard is attune's **local operations layer** — a FastAPI
+web app you run on your own machine to execute workflows against a
+chosen feature scope, browse persisted run history, chain workflows
+with a click, and watch live logs stream over **SSE**. It lives in
+**`src/attune/ops/`** and is launched with `attune ops` (or `python -m
+attune.ops`), binding to **`127.0.0.1:8765`** by default.
 
-You start it with `attune ops` (or `python -m attune.ops`). It binds to `127.0.0.1:8765` by default and serves a browser UI backed by a FastAPI application created by `create_app`.
+This page documents the **runner core** — the server, its config, and
+the `RunnerService`/`Run` execution model. The dashboard also *displays*
+data owned by other features — Anthropic cost (`ops.anthropic_cost`),
+telemetry (`ops.data` reads the telemetry store), and help coverage
+(`ops.help_data`) — but those are **adjacent** surfaces it renders, not
+its own; each belongs to its respective feature (telemetry, help-system).
 
-## How the pieces fit together
+The public API is deliberately tiny — `__all__` is exactly
+**`create_app`, `build_config`, `Config`**. Everything else
+(`RunnerService`, `Run`, the `ops.data` readers) is reached through
+those or imported from its submodule.
 
-The dashboard is built from five cooperating concerns: configuration, cost reporting, telemetry, spend-anomaly detection, and spec-completion detection.
+You reach it these ways:
 
-**Configuration** is the root. `Config` tells every other part of the dashboard where to look for project state and attune state:
+- the **CLI** — `attune ops` / `python -m attune.ops` starts the server;
+- the **Python API** — `from attune.ops import create_app, build_config,
+  Config` to build and embed the app (e.g. in tests).
 
-- `project_root` and `attune_home` anchor all relative paths.
-- Derived properties — `runs_dir`, `sessions_dir`, `bulletin_dir`, `memory_dir`, `telemetry_path` — point to the directories where the dashboard reads and writes persisted data.
-- `specs_roots` lists the directories that the candidate detector scans.
-- `allow_run` must be `True` before the dashboard will actually execute a workflow; this is a deliberate safety gate.
-- `trusted_hosts` restricts which remote hosts may connect.
-- `runs_retention_days` (default `30`) controls how long run history is kept on disk.
+## Concepts
 
-**Cost reporting** calls the Anthropic admin cost-report endpoint at `https://api.anthropic.com/v1/organizations/cost_report`. `fetch_summary(refresh=False)` returns either a `CostSummary` or a `CostFetchError`. `CostSummary` breaks spending down along three axes — `by_day`, `by_model`, and `by_cost_type` — plus rolled-up totals (`today_usd`, `seven_day_usd`, `month_to_date_usd`, `thirty_day_usd`). The `source` field tells you whether the data came from a live API call or an in-memory cache. When the fetch fails, `CostFetchError` carries a `kind` (a `CostFetchErrorKind` enum) and a human-readable `message` so the UI can display a precise error rather than a generic one.
+### The public surface: `build_config` → `create_app`
 
-**Spend-anomaly detection** (R6) raises alerts when daily API spend becomes anomalous or approaches the monthly ceiling. `SpendAlarm` independently flags two triggers: (1) today's spend is a statistical outlier versus the trailing baseline (z-score, with a flat-multiplier fallback when variance is zero), and (2) month-to-date spend reaches 80% of the monthly cap (default $350). The alarm prefers account-level spend (the admin cost-report, which also sees CI spend) and falls back to local `usage.jsonl` when no admin key is configured. Its `detail` field carries a one-line explanation for display.
+`build_config(project_root, *, host, port, allow_run, …)` produces a
+`Config`; `create_app(config, *, runner=None)` returns a ready
+`FastAPI` app. Both are **synchronous**. `Config` anchors every path the
+dashboard reads or writes via derived **properties**: `runs_dir`,
+`sessions_dir`, `bulletin_dir`, `memory_dir`, `telemetry_path`
+(`attune_home()` resolves the attune state root).
 
-**Telemetry** is recorded locally. `TelemetrySummary` aggregates the requests the dashboard has processed: `total_requests`, `total_cost`, `total_savings`, and breakdowns `by_workflow` and `by_day`. The UI uses this data to show you which workflows you run most and what they cost.
+### The run-safety gate
 
-**Spec-completion detection** is opt-in (`specs_candidates_enabled` in `Config`). When enabled, `detect_candidates` scans the configured `specs_roots` and returns a list of `Candidate` objects — one per spec that looks ready to close out. Each `Candidate` carries the spec's `slug`, `path`, `current_status`, supporting `evidence`, and a `snapshot_hash` so the detector can avoid re-surfacing a candidate you have already dismissed.
+`Config.allow_run` defaults to **`False`** — the dashboard will not
+execute a workflow unless it is `True`. The **CLI flips it on by
+default**, disabling it only when you pass `--read-only`. So `attune
+ops` can run workflows out of the box; `attune ops --read-only` serves a
+look-but-don't-run dashboard.
 
-## Scope picker and session tracking
+### `RunnerService` and `Run` — the execution model
 
-The dashboard's feature scope picker reads from `.help/features.yaml`. Each `Feature` entry has a `name`, `description`, optional `path`, and `tags`. When you select a scope, the dashboard filters the workflow list and records the interaction (the `scope_picker_change` event is one of the tracked `EVENTS`, alongside `pill_click` and `rec_card_click`).
+`RunnerService` owns workflow execution. Its one **async** method is the
+killer to remember:
 
-Sessions — individual Claude Code conversations — surface on the `/sessions` page. Each `Session` record captures `started_at`, `last_activity`, `duration_seconds`, `message_count`, and the `starter_prompt` that opened the conversation.
+- **`start(workflow, *, path=None) -> Run` is a coroutine** — `await`
+  it. It launches a workflow (optionally scoped to a `path`) and returns
+  a `Run`.
+- `recent`, `get`, `get_or_load`, `handle_stdout_line` are
+  **synchronous**; `current` and `persistence_dir` are properties.
+- Only **one run at a time**: starting a second while one is active
+  raises **`RunnerBusyError(current_run_id)`**.
 
-## When this matters
+A `Run` is one execution. `Run.subscribe()` is an **async iterator** of
+events — this is the SSE feed the browser consumes. `append_line`,
+`mark_done`, `to_dict`/`to_record` are sync; `duration_seconds` and
+`is_terminal` are properties.
 
-You need the ops dashboard when you want to:
+### Scope picker, persistence, and chaining
 
-- Monitor daily API-spend anomalies and month-to-date spending against an automated ceiling gauge.
-- Track Anthropic API spend across models and days without leaving your project.
-- Run attune workflows from a browser UI rather than typing CLI commands, especially when you want to chain multiple workflows in sequence.
-- Review persisted run history beyond the `runs_retention_days` window to audit what ran and when.
-- Let the spec-completion detector surface specs that have accumulated enough evidence to close.
+The feature **scope picker** reads `.help/features.yaml` so you can
+narrow a run to one feature; `ops.data.workflow_default_scope` supplies
+the default. Run history is **persisted** to `Config.runs_dir` and
+survives restarts (`get_or_load` rehydrates a past run);
+`prune_old_runs` trims beyond `runs_retention_days` (default 30). UI
+interactions are counted via `ops.interaction_counters.EVENTS`
+(`pill_click`, `rec_card_click`, `scope_picker_change`).
 
-If you only need a single workflow run from the command line and have no interest in the browser UI, the dashboard is more than you need — individual workflows can still be invoked directly through the `attune` CLI without starting the server.
+### Adjacent read-only surfaces
+
+The dashboard renders data it does not own:
+
+| Submodule | Role | Owning feature |
+|---|---|---|
+| `ops.data` | Reads telemetry/workflows/sessions/KPIs | telemetry |
+| `ops.anthropic_cost` | `fetch_summary()` → cost report | (account-level) |
+| `ops.help_data` | Help coverage + search (the help tab) | help-system |
+| `ops.spec_lifecycle` | `derive_lifecycle(spec)` → status label | spec tooling |
+
+`ops.spec_lifecycle`'s only public function is `derive_lifecycle(spec,
+*, now=None) -> str` (plus the `STALE_THRESHOLD_DAYS` constant) — it
+labels a spec's lifecycle bucket from its phases and last-modified time.
+(There is no candidate-detection API here.)
