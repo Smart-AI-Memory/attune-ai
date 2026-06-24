@@ -1,4 +1,14 @@
-# Resilience
+---
+type: note
+name: resilience-note
+feature: resilience
+depth: note
+generated_at: 2026-06-24T01:31:58.105100+00:00
+source_hash: 5cb46b75c64a21b6c79cd5a1c06a09a397f1048bd4e927af38e5c62d97a332d6
+status: generated
+---
+
+# Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks
 
 ## Overview
 
@@ -65,24 +75,12 @@ function — then `run_all()` (async) or `run_all_sync()` returns a
 `SystemHealth` (`status`, `checks`, `to_dict()`). `HealthStatus` is
 `HEALTHY` / `DEGRADED` / `UNHEALTHY` / `UNKNOWN`.
 
-## Design & extension
+## Notes & tips
 
-### Design decisions
-
-- **Decorator + class for each pattern.** The decorator covers the
-  common case; the class/function gives programmatic control.
-- **Registry-backed breakers.** `circuit_breaker(name=...)` shares state
-  by name so multiple call sites to one dependency trip together.
-- **Backoff with jitter by default.** `retry` spreads retries to avoid
-  thundering-herd.
-
-### Extension points
-
-- **Custom retry policy:** build a `RetryConfig` and use
-  `retry_with_backoff(func, config=...)`.
-- **Inspect/reset breakers:** `get_circuit_breaker(name)` →
-  `get_stats()` / `reset()`.
-- **Custom health checks:** `@hc.register(name)` over a check function,
-  then `run_all_sync()`.
-
-<!-- attune-generated: source_hash=5cb46b75c64a21b6c79cd5a1c06a09a397f1048bd4e927af38e5c62d97a332d6 feature=resilience kind=architecture generated_at=2026-06-24 -->
+- **Decorators are the common path; classes are for control.** Reach
+  for `@retry` / `@circuit_breaker` / `@timeout` first.
+- **Name your breakers.** A stable `name` shares one breaker across call
+  sites via `get_circuit_breaker`.
+- **Narrow `retryable_exceptions`.** Don't retry bugs.
+- **Mind the async primitives.** `with_fallback` / `with_timeout` return
+  / take coroutines.

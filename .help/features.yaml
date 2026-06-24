@@ -379,12 +379,14 @@ features:
     status: manual
 
   resilience:
+    # Single-sourced via content/features/resilience.md (projector).
+    # Scope = the attune.resilience package: retry / circuit_breaker /
+    # timeout / fallback / health, each a decorator + underlying class.
+    # Adversarial review caught HealthCheck.register being a decorator
+    # (not register(name, fn)) — fixed in the master.
     description: Fault-tolerance primitives — circuit breakers, retries, timeouts, fallbacks, health checks
-    files:
-      - src/attune/resilience/**
     tags: [resilience, fault-tolerance, retry, circuit-breaker, reliability]
-    doc_paths:
-      - docs/how-to/resilience-patterns.md
+    status: manual
 
   hooks:
     description: Hook system — pre/post-tool events, webhooks, and hook executor
