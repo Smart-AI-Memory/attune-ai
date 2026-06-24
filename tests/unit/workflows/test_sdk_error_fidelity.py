@@ -15,6 +15,7 @@ from __future__ import annotations
 import subprocess
 
 import claude_agent_sdk
+import pytest
 
 from attune.workflows.agent_sdk_adapter import (
     SdkSubprocessError,
@@ -24,6 +25,19 @@ from attune.workflows.agent_sdk_adapter import (
     capture_subprocess_failure,
     classify_subprocess_failure,
 )
+
+
+@pytest.fixture(autouse=True)
+def _no_real_claude_probe():
+    """Override the workflows-conftest probe-disable for this module.
+
+    The conftest fixture nulls ``_find_claude_cli`` so other workflow
+    tests never spawn a real probe. This module tests the probe and
+    finder machinery directly, with explicit per-test mocks, so it
+    needs the real functions — a no-op override restores them.
+    """
+    yield
+
 
 # ---------------------------------------------------------------------
 # SdkSubprocessError
@@ -183,19 +197,6 @@ class TestCaptureSubprocessFailure:
         # The exact token should NOT appear in output (redacted away)
         assert fake_key not in out
 
-    def test_empty_argv_returns_synthetic_failure(self):
-        """An empty argv falls back to a claude probe instead of
-        ``subprocess.run([])`` (which used to raise IndexError and
-        surface the useless '(capture-call also failed: IndexError ...)'
-        message — the 2026-06-06 dogfood bug). When no claude binary is
-        locatable, the message is honest about that."""
-        out = capture_subprocess_failure([])
-        # Must never be the old IndexError artifact.
-        assert "IndexError" not in out
-        # Either the probe ran (claude present) or we got the honest
-        # not-found message — both are acceptable, neither is a crash.
-        assert out  # non-empty
-
     def test_empty_argv_probes_when_claude_present(self, monkeypatch):
         """When claude IS locatable, an empty argv re-runs a real probe
         whose stderr is captured and classifiable. Monkeypatch the probe
@@ -211,15 +212,18 @@ class TestCaptureSubprocessFailure:
         assert kind == "api_quota"
 
     def test_empty_argv_honest_message_when_claude_missing(self, monkeypatch):
-        """When no claude binary exists, the empty-argv path returns an
-        honest 'claude CLI not found' message (still classifier-safe)."""
+        """When no claude binary exists, the empty-argv path returns a
+        synthetic message that classifies as 'unknown' (the original
+        cause is undiagnosable — we couldn't probe), NOT 'not_found'."""
         monkeypatch.setattr(
             "attune.workflows.agent_sdk_adapter._find_claude_cli",
             lambda: None,
         )
         out = capture_subprocess_failure([])
-        assert "claude CLI not found" in out
+        assert "no claude binary available" in out
         assert "IndexError" not in out
+        kind, _msg = classify_subprocess_failure(out)
+        assert kind == "unknown"
 
 
 # ---------------------------------------------------------------------

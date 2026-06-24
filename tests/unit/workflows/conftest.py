@@ -8,6 +8,30 @@ import pytest
 from attune.cost_tracker import CostTracker
 
 
+@pytest.fixture(autouse=True)
+def _no_real_claude_probe(monkeypatch):
+    """Unit tests must never spawn the real ``claude`` CLI.
+
+    The SDK-failure handler's argv-recovery fallback
+    (``agent_sdk_adapter._fallback_probe_argv``) runs a real
+    ``claude -p ping`` subprocess when no argv is recoverable from the
+    exception — which is exactly the case for the MOCK exceptions the
+    workflow ``execute()`` exception-handling tests raise (e.g.
+    ``RuntimeError("kaboom")``). Force the probe to report "no binary"
+    so ``capture_subprocess_failure`` returns its synthetic message and
+    classifies "unknown", matching the pre-probe contract those tests
+    assert (``"claude CLI subprocess failed"`` / ``sdk_error_kind ==
+    "unknown"``) — and, crucially, without spawning a subprocess.
+
+    ``test_sdk_error_fidelity.py`` (which tests the probe machinery
+    itself) overrides this fixture by name with a no-op.
+    """
+    monkeypatch.setattr(
+        "attune.workflows.agent_sdk_adapter._find_claude_cli",
+        lambda: None,
+    )
+
+
 @pytest.fixture
 def cost_tracker(tmp_path):
     """Create isolated CostTracker for testing.

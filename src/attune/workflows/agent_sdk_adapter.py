@@ -694,8 +694,12 @@ def capture_subprocess_failure(
     if not args:
         args = _fallback_probe_argv()
         if not args:
-            # No claude binary locatable — honest synthetic message.
-            return "(capture-call also failed: claude CLI not found)"
+            # No claude binary locatable to re-run the failed call.
+            # Phrased to classify as "unknown" (NOT "not_found"): the
+            # original failure cause is genuinely undiagnosable here —
+            # we couldn't probe — and must avoid the not_found
+            # classifier's ``claude.*not.*found`` pattern.
+            return "(capture-call skipped: no claude binary available to re-run)"
     try:
         result = subprocess.run(  # noqa: S603
             args,
