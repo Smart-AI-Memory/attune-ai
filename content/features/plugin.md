@@ -95,7 +95,7 @@ are part of the bundle.
 
 `plugin/core/` exists so the plugin can carry a version for standalone
 operation; `plugin/core/__init__.py` is just
-`__version__ = "8.9.0"`. The real runtime is the pip-installed
+`__version__ = "8.9.1"`. The real runtime is the pip-installed
 `attune-ai` package, which the `.mcp.json` server pulls via
 `uvx --from attune-ai`.
 
@@ -152,7 +152,7 @@ cat plugin/.claude-plugin/plugin.json
 
 **Verify:** `name` is `attune-ai`, `license` is `Apache-2.0`, and
 `keywords` include `claude-code`. The `version` here is the plugin
-bundle version (`8.9.0`); the sibling `marketplace.json` carries a
+bundle version (`8.9.1`); the sibling `marketplace.json` carries a
 matching version in `metadata.version` and `plugins[0].version`.
 
 ### List the components Claude Code will discover
@@ -183,7 +183,7 @@ and the component folder layout.
 | Field | Value / Purpose |
 |-------|-----------------|
 | `name` | `attune-ai` — the plugin name. |
-| `version` | Plugin bundle version (`8.9.0`). |
+| `version` | Plugin bundle version (`8.9.1`). |
 | `description` | One-line plugin summary shown in Claude Code. |
 | `author` | `{name, email}` — Smart AI Memory. |
 | `homepage` / `repository` | Project links. |

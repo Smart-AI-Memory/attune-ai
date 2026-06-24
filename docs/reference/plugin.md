@@ -10,7 +10,7 @@ and the component folder layout.
 | Field | Value / Purpose |
 |-------|-----------------|
 | `name` | `attune-ai` — the plugin name. |
-| `version` | Plugin bundle version (`8.9.0`). |
+| `version` | Plugin bundle version (`8.9.1`). |
 | `description` | One-line plugin summary shown in Claude Code. |
 | `author` | `{name, email}` — Smart AI Memory. |
 | `homepage` / `repository` | Project links. |
@@ -49,4 +49,4 @@ and the component folder layout.
 | Add marketplace | `claude plugin marketplace add Smart-AI-Memory/attune-ai` |
 | Install plugin | `claude plugin install attune-ai@attune-ai` |
 
-<!-- attune-generated: source_hash=db043c60a7143c7669b27c81b171e2b6169746b1daae7d276d9b914b20fb8c53 feature=plugin kind=reference generated_at=2026-06-24 -->
+<!-- attune-generated: source_hash=b2da4bbb5a02defe23a5d626662d1309cad3c1d550e9fe54c614bf96cdf2c6f6 feature=plugin kind=reference generated_at=2026-06-24 -->

@@ -18,6 +18,13 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_GENERATED_DIR = Path(__file__).resolve().parents[3] / "plugin" / "help" / "generated"
 
+# Single-source projector output (feature-organized:
+# .help/templates/<feature>/<kind>.md). The resolver falls back here
+# when an ID is absent from the type-organized bundle, so the
+# in-conversation help surface serves the single-sourced content.
+# (help-serving-bridge spec, D1, 2026-06-24.)
+_DEFAULT_TEMPLATES_DIR = Path(__file__).resolve().parents[3] / ".help" / "templates"
+
 # Cross-links cache: loaded once per process, thread-safe.
 # Call invalidate_cross_links_cache() to force a reload.
 _CROSS_LINKS_CACHE: dict[str, dict[str, Any]] = {}
@@ -95,12 +102,56 @@ _PREFIX_MAP = {
     "com": "comparisons",
 }
 
+# ID prefix -> singular kind filename in the single-source layout
+# (.help/templates/<feature>/<kind>.md). Mirrors _PREFIX_MAP, whose
+# values are the type-organized bundle's plural directory names.
+_PREFIX_TO_KIND = {
+    "err": "error",
+    "war": "warning",
+    "tip": "tip",
+    "ref": "reference",
+    "tas": "task",
+    "faq": "faq",
+    "not": "note",
+    "qui": "quickstart",
+    "con": "concept",
+    "tro": "troubleshooting",
+    "com": "comparison",
+}
+
+
+def _templates_dir_for(generated_dir: Path) -> Path | None:
+    """Derive the single-source templates dir paired with a bundle dir.
+
+    The canonical bundle is ``<root>/plugin/help/generated``; the
+    single-source projector writes to ``<root>/.help/templates``. Only
+    the canonical bundle layout gets an implicit fallback, so a custom
+    ``generated_dir`` (e.g. a test tmp dir) resolves deterministically
+    with no surprise fallback.
+
+    Args:
+        generated_dir: The bundle directory being resolved against.
+
+    Returns:
+        The paired ``.help/templates`` dir, or None for non-canonical
+        layouts.
+    """
+    resolved = generated_dir.resolve()
+    if resolved.parts[-3:] == ("plugin", "help", "generated"):
+        return resolved.parents[2] / ".help" / "templates"
+    return None
+
 
 def _find_template_file(
     template_id: str,
     generated_dir: Path,
 ) -> Path | None:
     """Locate a template file on disk.
+
+    Resolves an ID against the type-organized bundle first; if absent,
+    falls back to the single-source layout
+    (``.help/templates/<feature>/<kind>.md``) so the in-conversation
+    help surface serves single-sourced content (help-serving-bridge D1).
 
     Args:
         template_id: Template identifier string.
@@ -129,6 +180,49 @@ def _find_template_file(
 
     if filepath.exists():
         return filepath
+
+    # Fallback: single-source content (help-serving-bridge D1).
+    fallback = _find_single_source_file(prefix, name, generated_dir)
+    if fallback is not None:
+        return fallback
+    return None
+
+
+def _find_single_source_file(
+    prefix: str,
+    name: str,
+    generated_dir: Path,
+) -> Path | None:
+    """Resolve an ID to a single-source template, or None.
+
+    Args:
+        prefix: ID type prefix (e.g. ``con``).
+        name: Feature slug (the ID's second segment).
+        generated_dir: The bundle dir being resolved against.
+
+    Returns:
+        Path to ``.help/templates/<name>/<kind>.md`` if it exists and is
+        contained within the templates dir, else None.
+    """
+    kind = _PREFIX_TO_KIND.get(prefix)
+    if kind is None:
+        return None
+
+    templates_dir = _templates_dir_for(generated_dir)
+    if templates_dir is None:
+        return None
+
+    candidate = templates_dir / name / f"{kind}.md"
+
+    # Containment check: prevent path traversal (CWE-22)
+    try:
+        candidate.resolve().relative_to(templates_dir.resolve())
+    except ValueError:
+        logger.warning("Path traversal blocked (fallback): %s-%s", prefix, name)
+        return None
+
+    if candidate.exists():
+        return candidate
     return None
 
 
