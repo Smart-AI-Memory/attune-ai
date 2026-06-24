@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Telemetry FAQ — faq</title>
-  <meta name="description" content="It tracks usage, coordinates agents via TTL-based signals, monitors agent heartbeats, gates workflows on human approval, and streams real-time events through Redis Streams. It also records feedback an" />
+  <meta name="description" content="Three things, all exported from `attune.telemetry`: every LLM call&#x27;s cost, tokens, cache hits, and duration (`UsageTracker`); a quality score per workflow stage and tier (`FeedbackLoop`); and agent-co" />
   <meta property="og:title" content="Telemetry FAQ — faq" />
-  <meta property="og:description" content="It tracks usage, coordinates agents via TTL-based signals, monitors agent heartbeats, gates workflows on human approval, and streams real-time events through Redis Streams. It also records feedback an" />
+  <meta property="og:description" content="Three things, all exported from `attune.telemetry`: every LLM call&#x27;s cost, tokens, cache hits, and duration (`UsageTracker`); a quality score per workflow stage and tier (`FeedbackLoop`); and agent-co" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/telemetry/faq" />
   <style>
@@ -273,28 +273,42 @@
   </nav>
   <article class="markdown-body">
 <h1>Telemetry FAQ</h1>
-<h2>What does the telemetry feature do?</h2>
-<p>It tracks usage, coordinates agents via TTL-based signals, monitors agent heartbeats, gates workflows on human approval, and streams real-time events through Redis Streams. It also records feedback and calculates cost savings from model-tier routing.</p>
-<h2>What can I track with telemetry?</h2>
-<p>You can track agent status and progress with <code>HeartbeatCoordinator</code>, send and receive inter-agent coordination signals with <code>CoordinationSignals</code>, stream and consume real-time events with <code>EventStreamer</code>, and collect human approval decisions with <code>ApprovalGate</code>.</p>
-<h2>How do I start the telemetry CLI?</h2>
-<p>Call <code>main()</code> from <code>src/attune/telemetry/__main__.py</code>, or run the module directly with <code>python -m attune.telemetry</code>. From there you can run subcommands like <code>cmd_telemetry_show()</code> to view recent entries, <code>cmd_telemetry_savings()</code> to see cost savings, and <code>cmd_telemetry_cache_stats()</code> to check prompt-caching performance.</p>
-<h2>What is a coordination signal and how long does it live?</h2>
-<p>A <code>CoordinationSignal</code> is a typed message sent from one agent to another (or broadcast to all agents). Its default TTL is 60 seconds. You can override that per signal using the <code>ttl_seconds</code> parameter on <code>CoordinationSignals.signal()</code> or <code>CoordinationSignals.broadcast()</code>.</p>
-<h2>How do I check whether an agent is still running?</h2>
-<p>Call <code>HeartbeatCoordinator.is_agent_alive(agent_id)</code>. To get full status, use <code>get_agent_status(agent_id)</code>, which returns an <code>AgentHeartbeat</code> with fields for <code>status</code>, <code>progress</code>, and <code>current_task</code>. To find agents that haven't sent a heartbeat recently, call <code>get_stale_agents(threshold_seconds=60.0)</code>.</p>
-<h2>How does human approval gating work?</h2>
-<p>Your agent calls <code>ApprovalGate.request_approval()</code> with an <code>approval_type</code> and optional context dict. The call blocks until a human responds via <code>respond_to_approval()</code> or the request times out. The response is an <code>ApprovalResponse</code> with <code>approved</code>, <code>responder</code>, and an optional <code>reason</code>.</p>
-<h2>What happens to approval requests that time out?</h2>
-<p>They remain in storage with <code>status = 'pending'</code> until you explicitly remove them. Call <code>ApprovalGate.clear_expired_requests()</code> to purge them.</p>
-<h2>How do I consume events from the stream?</h2>
-<p>Use <code>EventStreamer.consume_events()</code>, optionally filtering by a list of <code>event_types</code>. To look back at past events rather than waiting for new ones, call <code>get_recent_events(event_type, count=100)</code> instead.</p>
+<h2>What does attune telemetry record?</h2>
+<p>Three things, all exported from <code>attune.telemetry</code>: every LLM call's
+cost, tokens, cache hits, and duration (<code>UsageTracker</code>); a quality score
+per workflow stage and tier (<code>FeedbackLoop</code>); and agent-coordination
+signals — heartbeats, event streams, and approval requests
+(<code>HeartbeatCoordinator</code>, <code>EventStreamer</code>, <code>ApprovalGate</code>).</p>
 <h2>Where is telemetry data stored by default?</h2>
-<p>Help queries are logged to <code>help_queries.jsonl</code> (the value of <code>_DEFAULT_FILE</code>). Coordination signals and heartbeats use Redis TTL keys. Event streams are backed by Redis Streams.</p>
-<h2>How do I debug a telemetry problem?</h2>
-<p>Run <code>pytest -k &quot;telemetry&quot; -v</code> first. If tests pass but your code still fails, enable debug logging and add a <code>logger.debug</code> statement at the suspected failure point. For symptom-based diagnosis, see the troubleshooting page for this feature.</p>
+<p>Locally, under <code>~/.attune/telemetry</code> (the usage ledger is
+<code>usage.jsonl</code>); the directory is overridable via <code>ATTUNE_HOME</code>. Nothing
+leaves your machine unless you explicitly enable an opt-in phone-home.
+The Redis-backed coordination signals use Redis keys/streams instead of
+the local file.</p>
+<h2>How do I see my usage and cost metrics?</h2>
+<p>From Python, <code>UsageTracker.get_instance().get_stats(days=30)</code> (and
+<code>calculate_savings(days=30)</code>); from a conversation, the
+<code>telemetry_stats</code> MCP tool; or the ops dashboard — all read the same
+on-disk store.</p>
+<h2>Why won't the feedback loop change my recommended tier?</h2>
+<p><code>recommend_tier</code> needs at least <code>MIN_SAMPLES</code> (10) feedback samples for
+the stage's tier before it moves; below that it keeps the current tier
+with reason &quot;Insufficient data&quot;. Tier strings are lowercase
+(<code>cheap</code>/<code>capable</code>/<code>premium</code>) — feedback recorded under another casing
+is invisible to <code>recommend_tier</code>.</p>
+<h2>Does <code>get_quality_stats</code> need 10 samples too?</h2>
+<p>No. <code>get_quality_stats</code> returns <code>None</code> only when there is no feedback
+for the stage at all; with any samples it returns a <code>QualityStats</code>
+(its <code>sample_count</code> tells you how many). The <code>MIN_SAMPLES</code> gate lives in
+<code>recommend_tier</code>, not here.</p>
+<h2>How do I check whether an agent is still running?</h2>
+<p>With the coordination classes (Redis-backed):
+<code>HeartbeatCoordinator.is_agent_alive(...)</code>, <code>get_active_agents()</code>, and
+<code>get_stale_agents()</code>; <code>EventStreamer.consume_events()</code> /
+<code>get_recent_events()</code> read the event stream. Guard their use behind
+<code>TelemetryFeatures.is_redis_available()</code>.</p>
 <h2>Where are the source files?</h2>
-<p>All telemetry source files live under <code>src/attune/telemetry/</code>.</p>
+<p>All telemetry source lives under <code>src/attune/telemetry/</code>.</p>
 <p><strong>Tags:</strong> <code>telemetry</code>, <code>metrics</code></p>
 
   </article>

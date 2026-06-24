@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Telemetry vs alternatives — comparison</title>
-  <meta name="description" content="The telemetry feature covers four distinct concerns that can each be addressed by different mechanisms: usage tracking, agent coordination, agent liveness monitoring, and human approval gating. This p" />
-  <meta property="og:title" content="Comparison: Telemetry vs alternatives — comparison" />
-  <meta property="og:description" content="The telemetry feature covers four distinct concerns that can each be addressed by different mechanisms: usage tracking, agent coordination, agent liveness monitoring, and human approval gating. This p" />
+  <title>Usage tracking, model-tier feedback loops, and agent-coordination signals — comparison</title>
+  <meta name="description" content="Telemetry is the **measurement** layer, distinct from the surfaces that read it:" />
+  <meta property="og:title" content="Usage tracking, model-tier feedback loops, and agent-coordination signals — comparison" />
+  <meta property="og:description" content="Telemetry is the **measurement** layer, distinct from the surfaces that read it:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/telemetry/comparison" />
   <style>
@@ -272,123 +272,43 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Telemetry vs alternatives</h1>
-<h2>Context</h2>
-<p>The telemetry feature covers four distinct concerns that can each be addressed by different mechanisms: usage tracking, agent coordination, agent liveness monitoring, and human approval gating. This page helps you decide which telemetry subsystem — or alternative approach — fits your situation.</p>
-<h2>Feature breakdown</h2>
+<h1>Usage tracking, model-tier feedback loops, and agent-coordination signals</h1>
+<h2>Comparison</h2>
+<p>Telemetry is the <strong>measurement</strong> layer, distinct from the surfaces that
+read it:</p>
 <table>
 <thead>
 <tr>
-<th>Capability</th>
-<th>Telemetry subsystem</th>
-<th>What it gives you</th>
-<th>What it does not do</th>
+<th></th>
+<th>telemetry</th>
+<th>ops-dashboard</th>
+<th>usage-signals phone-home</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Usage tracking</strong></td>
+<td>Role</td>
+<td>Records usage/quality/coordination</td>
+<td>Renders it in a local web UI</td>
+<td>Optionally reports anonymized signal</td>
+</tr>
+<tr>
+<td>Locality</td>
+<td>Local store under <code>~/.attune/telemetry</code></td>
+<td>Reads the local store</td>
+<td>Network, opt-in only</td>
+</tr>
+<tr>
+<td>Entry</td>
 <td><code>UsageTracker</code> / <code>FeedbackLoop</code></td>
-<td>Logs queries to <code>help_queries.jsonl</code>; computes per-template confidence scores via <code>good/(good+bad)</code></td>
-<td>Does not expose real-time streams; data is append-only JSONL</td>
-</tr>
-<tr>
-<td><strong>Agent coordination</strong></td>
-<td><code>CoordinationSignals</code></td>
-<td>TTL-based signals between named agents; targeted (<code>signal()</code>) or broadcast (<code>broadcast()</code>); blocking wait (<code>wait_for_signal()</code>) with configurable timeout</td>
-<td>Signals expire after <code>ttl_seconds</code> (default 60 s); no delivery guarantee after TTL lapses</td>
-</tr>
-<tr>
-<td><strong>Agent liveness</strong></td>
-<td><code>HeartbeatCoordinator</code></td>
-<td>Tracks <code>status</code>, <code>progress</code>, and <code>current_task</code> per agent; detects stale agents beyond a configurable threshold (default 60 s)</td>
-<td>Does not restart failed agents; detection only</td>
-</tr>
-<tr>
-<td><strong>Human approval gates</strong></td>
-<td><code>ApprovalGate</code></td>
-<td>Pauses workflow execution until a human calls <code>respond_to_approval()</code>; supports per-request timeouts</td>
-<td>Synchronous blocking call — unsuitable for fire-and-forget workflows</td>
-</tr>
-<tr>
-<td><strong>Real-time event streaming</strong></td>
-<td><code>EventStreamer</code></td>
-<td>Publishes and consumes typed events via Redis Streams; supports backfill via <code>get_recent_events()</code></td>
-<td>Requires Redis; not a replacement for structured logging</td>
-</tr>
-<tr>
-<td><strong>CLI analysis</strong></td>
-<td><code>cmd_sonnet_opus_analysis()</code>, <code>cmd_tier1_status()</code>, <code>cmd_task_routing_report()</code>, etc.</td>
-<td>Pre-built reports for cost savings, Tier 1 automation status, task routing, and test status</td>
-<td>Read-only reporting; does not mutate state</td>
+<td><code>python -m attune.ops</code></td>
+<td>Consent-gated client</td>
 </tr>
 </tbody>
 </table>
-<h2>When to use telemetry</h2>
-<p>Choose a telemetry subsystem when your work maps directly to one of the following:</p>
-<ul>
-<li><strong>Template quality feedback</strong> — You want to accumulate <code>good</code>/<code>bad</code> ratings and surface confidence scores that influence template ranking. Use <code>record_template_feedback()</code> and <code>get_template_confidence()</code>, or the CLI: <code>attune help-docs &lt;id&gt; --feedback good|bad</code>.</li>
-<li><strong>Multi-agent coordination</strong> — Two or more agents need to hand off work or wait on each other. <code>CoordinationSignals.signal()</code> sends to a specific agent; <code>CoordinationSignals.broadcast()</code> fans out to all listeners. TTL ensures stale signals self-clean.</li>
-<li><strong>Agent health monitoring</strong> — You need to know which agents are alive and what they are doing. <code>HeartbeatCoordinator.get_active_agents()</code> and <code>get_stale_agents(threshold_seconds=…)</code> answer both questions without polling custom state.</li>
-<li><strong>Approval-gated workflows</strong> — A workflow step must not proceed without an explicit human <code>approved: true</code> response. <code>ApprovalGate.request_approval()</code> blocks until a response arrives or the timeout expires.</li>
-<li><strong>Operational reporting</strong> — You need a snapshot of cost savings, test coverage by file, or task routing decisions. Run the appropriate CLI subcommand (<code>cmd_sonnet_opus_analysis</code>, <code>cmd_file_test_status</code>, etc.) rather than parsing raw logs yourself.</li>
-</ul>
-<h2>When not to use telemetry</h2>
-<ul>
-<li><strong>Cross-feature orchestration</strong> — If your logic needs to coordinate telemetry with other top-level features, use the orchestration layer above <code>src/attune/telemetry/</code> rather than wiring subsystems together directly.</li>
-<li><strong>Ephemeral scripts</strong> — Setting up <code>HeartbeatCoordinator</code> or <code>CoordinationSignals</code> for a one-off script adds overhead with no payoff. A simple log statement is sufficient for throwaway work.</li>
-<li><strong>Guaranteed message delivery</strong> — <code>CoordinationSignals</code> uses Redis TTL keys. If an agent is offline when a signal arrives and the TTL lapses, the signal is gone. If you need durable queuing, look outside this module.</li>
-<li><strong>Agent remediation</strong> — <code>HeartbeatCoordinator</code> tells you an agent is stale; it does not restart or reschedule it. Pair it with an external supervisor if you need automatic recovery.</li>
-<li><strong>Replacing structured logging</strong> — <code>EventStreamer</code> is designed for real-time coordination events, not audit trails. Do not use it as a general-purpose logger.</li>
-</ul>
-<h2>Decision rules</h2>
-<table>
-<thead>
-<tr>
-<th>Situation</th>
-<th>Use this</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Rating a help template and influencing its ranking</td>
-<td><code>FeedbackLoop</code> / <code>record_template_feedback()</code></td>
-</tr>
-<tr>
-<td>One agent needs to wake another agent</td>
-<td><code>CoordinationSignals.signal()</code></td>
-</tr>
-<tr>
-<td>One agent needs to notify all agents</td>
-<td><code>CoordinationSignals.broadcast()</code></td>
-</tr>
-<tr>
-<td>Checking whether a specific agent is still running</td>
-<td><code>HeartbeatCoordinator.is_agent_alive()</code></td>
-</tr>
-<tr>
-<td>Finding all agents that have gone silent</td>
-<td><code>HeartbeatCoordinator.get_stale_agents()</code></td>
-</tr>
-<tr>
-<td>Pausing a workflow for human sign-off</td>
-<td><code>ApprovalGate.request_approval()</code></td>
-</tr>
-<tr>
-<td>Viewing cost or routing reports without writing code</td>
-<td><code>attune telemetry &lt;subcommand&gt;</code> CLI</td>
-</tr>
-<tr>
-<td>Durable, guaranteed message delivery between agents</td>
-<td>Look outside <code>src/attune/telemetry/</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/telemetry/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>telemetry</code>, <code>metrics</code></p>
+<p><code>UsageTracker</code> answers &quot;what did it cost&quot;; <code>FeedbackLoop</code> answers &quot;what
+tier should this stage use&quot;; the coordination classes answer &quot;which
+agents are alive.&quot;</p>
 
   </article>
   <footer>

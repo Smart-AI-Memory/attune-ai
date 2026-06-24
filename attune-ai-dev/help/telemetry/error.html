@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Telemetry errors — error</title>
-  <meta name="description" content="Telemetry errors typically fall into three categories: failures in CLI command execution, failures in agent coordination and heartbeat tracking, and failures in approval gate or event streaming operat" />
-  <meta property="og:title" content="Telemetry errors — error" />
-  <meta property="og:description" content="Telemetry errors typically fall into three categories: failures in CLI command execution, failures in agent coordination and heartbeat tracking, and failures in approval gate or event streaming operat" />
+  <title>Usage tracking, model-tier feedback loops, and agent-coordination signals — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `get_stats` totals are 0 | No calls recorded yet, or buffered and unflushed | Run a workflow, or call `flush()` | low | | `recommend_tier` keep" />
+  <meta property="og:title" content="Usage tracking, model-tier feedback loops, and agent-coordination signals — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `get_stats` totals are 0 | No calls recorded yet, or buffered and unflushed | Run a workflow, or call `flush()` | low | | `recommend_tier` keep" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/telemetry/error" />
   <style>
@@ -272,52 +272,69 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Telemetry errors</h1>
-<h2>Common error signatures</h2>
-<p>Telemetry errors typically fall into three categories: failures in CLI command execution, failures in agent coordination and heartbeat tracking, and failures in approval gate or event streaming operations.</p>
+<h1>Usage tracking, model-tier feedback loops, and agent-coordination signals</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_stats</code> totals are 0</td>
+<td>No calls recorded yet, or buffered and unflushed</td>
+<td>Run a workflow, or call <code>flush()</code></td>
+<td>low</td>
+</tr>
+<tr>
+<td><code>recommend_tier</code> keeps returning the current tier</td>
+<td>Fewer than <code>MIN_SAMPLES</code> (10) feedback rows for the stage's tier</td>
+<td>Record more feedback before expecting a switch</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>recommend_tier</code> says &quot;No feedback data available&quot; despite recorded feedback</td>
+<td>Tier recorded with non-lowercase casing (e.g. <code>&quot;CAPABLE&quot;</code>); it only matches <code>cheap</code>/<code>capable</code>/<code>premium</code></td>
+<td>Record with lowercase tier strings</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Coordination calls fail / no agents listed</td>
+<td>Redis-backed features unavailable</td>
+<td>Check <code>TelemetryFeatures.is_redis_available()</code>; install the Redis extra</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Stats look stale</td>
+<td>Entries older than retention/TTL aged out</td>
+<td><code>retention_days</code> (90) bounds the store; feedback <code>FEEDBACK_TTL</code> is 7 days</td>
+<td>low</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><strong>CLI commands returning non-zero</strong> — <code>main()</code> and subcommands such as <code>cmd_telemetry_show()</code>, <code>cmd_telemetry_savings()</code>, and <code>cmd_telemetry_cache_stats()</code> all return <code>int</code> exit codes. A return value other than <code>0</code> indicates a failure in data retrieval or rendering.</li>
-<li><strong><code>KeyError</code> or <code>ValueError</code> in <code>CoordinationSignal.from_dict()</code> or <code>AgentHeartbeat.from_dict()</code></strong> — these dataclass deserializers expect specific keys (<code>signal_id</code>, <code>signal_type</code>, <code>source_agent</code>, <code>agent_id</code>, <code>status</code>, <code>progress</code>, etc.). Missing or mistyped fields raise these exceptions when parsing stored Redis data.</li>
-<li><strong><code>TimeoutError</code> or <code>None</code> return from <code>CoordinationSignals.wait_for_signal()</code></strong> — the method polls for up to <code>timeout</code> seconds (default <code>30.0</code>) and returns <code>None</code> if no matching signal arrives. Callers that don't handle <code>None</code> may propagate <code>AttributeError</code> or silent no-ops downstream.</li>
-<li><strong>Stale or missing heartbeat</strong> — <code>HeartbeatCoordinator.is_agent_alive()</code> returns <code>False</code> when the TTL key has expired in Redis. If your workflow assumes an agent is running, this produces incorrect branching rather than a raised exception, making it easy to miss.</li>
-<li><strong><code>ApprovalGate.request_approval()</code> timing out</strong> — if no human responds within <code>timeout_seconds</code>, the gate returns an <code>ApprovalResponse</code> with <code>approved=False</code>. Workflows that don't check <code>response.approved</code> before proceeding will act on a rejected or timed-out request.</li>
-<li><strong><code>EventStreamer</code> publish/consume failures</strong> — <code>publish_event()</code> and <code>consume_events()</code> depend on a live Redis Streams connection. A connection error here produces an exception that propagates to the caller with no automatic retry.</li>
+<li><strong>Buffered writes.</strong> <code>UsageTracker</code> batches; a reader may miss the
+newest calls until <code>flush()</code> or the buffer fills (<code>buffer_size</code>).</li>
+<li><strong><code>MIN_SAMPLES</code> gate.</strong> Tier recommendations are conservative by
+design — they need 10 samples before they move.</li>
+<li><strong>Redis-gated coordination.</strong> <code>EventStreamer</code> /
+<code>HeartbeatCoordinator</code> need Redis; guard with <code>TelemetryFeatures</code>.</li>
 </ul>
-<h2>Where errors originate</h2>
-<p>The following CLI entry points are the most common raise sites. Failures in the underlying coordination and streaming classes typically bubble up through these commands.</p>
-<ul>
-<li><code>main()</code> — top-level telemetry CLI dispatcher; catches unhandled exceptions from all subcommands.</li>
-<li><code>cmd_sonnet_opus_analysis()</code> — reads Sonnet 4.5 → Opus 4.5 fallback data; fails if the underlying telemetry log is missing or malformed.</li>
-<li><code>cmd_file_test_status()</code> and <code>cmd_test_status()</code> — query per-file and aggregate test status; fail if the telemetry store is unavailable.</li>
-<li><code>cmd_tier1_status()</code> and <code>cmd_task_routing_report()</code> — aggregate automation metrics; sensitive to incomplete or corrupt telemetry records.</li>
-<li><code>cmd_agent_performance()</code>, <code>cmd_telemetry_savings()</code>, <code>cmd_telemetry_cache_stats()</code> — all read from the telemetry log (<code>help_queries.jsonl</code> by default at <code>_DEFAULT_FILE</code>); fail if that file is absent or written in an incompatible format (log version <code>_LOG_VERSION = '1.0'</code>).</li>
-</ul>
-<h2>How to diagnose</h2>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Check the CLI exit code first.</strong> All telemetry subcommands return <code>0</code> on success. Any other value means a command-specific failure occurred — run the command directly in your shell to see the error output before it gets swallowed by a calling script.</p>
-</li>
-<li>
-<p><strong>Inspect <code>help_queries.jsonl</code> for format issues.</strong> The default telemetry log is a JSONL file. If a line is malformed or written by a different log version than <code>1.0</code>, deserialization in <code>from_dict()</code> will raise <code>KeyError</code> or <code>ValueError</code>. Open the file and check that each line is valid JSON containing the expected fields.</p>
-</li>
-<li>
-<p><strong>Verify Redis connectivity for coordination and streaming failures.</strong> <code>CoordinationSignals</code>, <code>HeartbeatCoordinator</code>, <code>ApprovalGate</code>, and <code>EventStreamer</code> all depend on a <code>memory</code> backend (Redis). If the backend is unavailable, every method that reads or writes signals will fail. Confirm the Redis connection before debugging the telemetry logic itself.</p>
-</li>
-<li>
-<p><strong>Check TTL expiry for <code>None</code> returns from <code>wait_for_signal()</code> and <code>is_agent_alive()</code>.</strong> These methods return <code>None</code> or <code>False</code> — not exceptions — when a TTL key has expired. If your workflow is silently skipping a coordination step, check whether the <code>ttl_seconds</code> on the relevant <code>CoordinationSignal</code> (default <code>60</code>) is too short for your workload, and whether <code>get_stale_agents(threshold_seconds=60.0)</code> reports the affected agent.</p>
-</li>
-<li>
-<p><strong>Audit approval responses before acting on them.</strong> When <code>ApprovalGate.request_approval()</code> returns, check <code>response.approved</code> explicitly. A <code>False</code> value can mean either a rejection or a timeout — <code>response.reason</code> and <code>response.responder</code> distinguish between the two.</p>
-</li>
-<li>
-<p><strong>Enable <code>DEBUG</code> logging.</strong> Most telemetry classes use <code>logging</code>. Set the log level to <code>DEBUG</code> and re-run the failing scenario. Logged state leading up to the failure usually identifies whether the root cause is a missing key, an expired TTL, or a backend connection error.</p>
-</li>
+<li><code>UsageTracker.get_instance().get_stats(days=1)</code> — is anything
+recorded?</li>
+<li><code>flush()</code> then re-read, to rule out buffering.</li>
+<li>For tier recommendations, <code>get_quality_stats(...)</code> returns <code>None</code>
+only when the stage has no feedback; <code>recommend_tier</code> needs
+<code>MIN_SAMPLES</code> (and lowercase tier strings) before it moves.</li>
+<li>For coordination, <code>TelemetryFeatures().is_redis_available()</code>.</li>
 </ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/telemetry/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>telemetry</code>, <code>metrics</code></p>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot telemetry — troubleshooting</title>
-  <meta name="description" content="Attune&#x27;s telemetry subsystem covers usage tracking, feedback loops, agent heartbeats, inter-agent coordination signals, human approval gates, and real-time event streaming. Symptoms can originate in a" />
-  <meta property="og:title" content="Troubleshoot telemetry — troubleshooting" />
-  <meta property="og:description" content="Attune&#x27;s telemetry subsystem covers usage tracking, feedback loops, agent heartbeats, inter-agent coordination signals, human approval gates, and real-time event streaming. Symptoms can originate in a" />
+  <title>Usage tracking, model-tier feedback loops, and agent-coordination signals — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `get_stats` totals are 0 | No calls recorded yet, or buffered and unflushed | Run a workflow, or call `flush()` | low | | `recommend_tier` keep" />
+  <meta property="og:title" content="Usage tracking, model-tier feedback loops, and agent-coordination signals — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `get_stats` totals are 0 | No calls recorded yet, or buffered and unflushed | Run a workflow, or call `flush()` | low | | `recommend_tier` keep" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/telemetry/troubleshooting" />
   <style>
@@ -272,134 +272,69 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot telemetry</h1>
-<h2>Before you start</h2>
-<p>Attune's telemetry subsystem covers usage tracking, feedback loops, agent heartbeats, inter-agent coordination signals, human approval gates, and real-time event streaming. Symptoms can originate in any of these areas. Identify which component is affected before diving into code.</p>
-<h2>Symptom table</h2>
+<h1>Usage tracking, model-tier feedback loops, and agent-coordination signals</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>attune telemetry</code> command exits with a traceback</td>
-<td>Read the exception type and line number — most CLI failures surface in <code>main()</code> in <code>src/attune/telemetry/__main__.py</code></td>
+<td><code>get_stats</code> totals are 0</td>
+<td>No calls recorded yet, or buffered and unflushed</td>
+<td>Run a workflow, or call <code>flush()</code></td>
+<td>low</td>
 </tr>
 <tr>
-<td>Cost-savings or cache-stats output is missing or wrong</td>
-<td>Run <code>cmd_telemetry_savings()</code> and <code>cmd_telemetry_cache_stats()</code> directly and compare against raw entries from <code>cmd_telemetry_show()</code></td>
+<td><code>recommend_tier</code> keeps returning the current tier</td>
+<td>Fewer than <code>MIN_SAMPLES</code> (10) feedback rows for the stage's tier</td>
+<td>Record more feedback before expecting a switch</td>
+<td>medium</td>
 </tr>
 <tr>
-<td>Sonnet→Opus fallback analysis shows no data</td>
-<td>Confirm telemetry entries exist: <code>attune telemetry show</code>; if the log is empty, check that <code>help_queries.jsonl</code> is being written</td>
+<td><code>recommend_tier</code> says &quot;No feedback data available&quot; despite recorded feedback</td>
+<td>Tier recorded with non-lowercase casing (e.g. <code>&quot;CAPABLE&quot;</code>); it only matches <code>cheap</code>/<code>capable</code>/<code>premium</code></td>
+<td>Record with lowercase tier strings</td>
+<td>medium</td>
 </tr>
 <tr>
-<td>An agent appears stuck or unresponsive</td>
-<td>Call <code>HeartbeatCoordinator.get_stale_agents(threshold_seconds=60.0)</code> — any agent listed there has not called <code>beat()</code> within the TTL</td>
+<td>Coordination calls fail / no agents listed</td>
+<td>Redis-backed features unavailable</td>
+<td>Check <code>TelemetryFeatures.is_redis_available()</code>; install the Redis extra</td>
+<td>medium</td>
 </tr>
 <tr>
-<td>An agent shows <code>is_agent_alive()</code> returning <code>False</code> unexpectedly</td>
-<td>Check that the agent's loop is calling <code>beat()</code> and that its <code>HeartbeatCoordinator</code> is connected to the same Redis memory instance</td>
-</tr>
-<tr>
-<td>A coordination signal is never received</td>
-<td>Call <code>CoordinationSignals.get_pending_signals()</code> to see what is queued; verify <code>ttl_seconds</code> has not expired before <code>wait_for_signal()</code> polls</td>
-</tr>
-<tr>
-<td>An approval request times out without a response</td>
-<td>Call <code>ApprovalGate.get_pending_approvals()</code> to confirm the request exists; check <code>timeout_seconds</code> on the <code>ApprovalRequest</code> and whether <code>clear_expired_requests()</code> already removed it</td>
-</tr>
-<tr>
-<td>Event stream consumers receive no events</td>
-<td>Call <code>EventStreamer.get_stream_info(event_type)</code> to verify the stream exists and has entries; confirm <code>start_id</code> in <code>consume_events()</code> is not set past the last entry</td>
-</tr>
-<tr>
-<td>Intermittent signal or heartbeat loss</td>
-<td>Check for Redis TTL expiry — <code>CoordinationSignal.ttl_seconds</code> defaults to 60 and <code>get_stale_agents()</code> uses a 60-second threshold; reduce poll intervals or increase TTLs</td>
+<td>Stats look stale</td>
+<td>Entries older than retention/TTL aged out</td>
+<td><code>retention_days</code> (90) bounds the store; feedback <code>FEEDBACK_TTL</code> is 7 days</td>
+<td>low</td>
 </tr>
 </tbody>
 </table>
-<h2>Diagnosis steps</h2>
-<p>Follow these steps in order — each one is cheaper than the next.</p>
+<h3>Risk areas</h3>
+<ul>
+<li><strong>Buffered writes.</strong> <code>UsageTracker</code> batches; a reader may miss the
+newest calls until <code>flush()</code> or the buffer fills (<code>buffer_size</code>).</li>
+<li><strong><code>MIN_SAMPLES</code> gate.</strong> Tier recommendations are conservative by
+design — they need 10 samples before they move.</li>
+<li><strong>Redis-gated coordination.</strong> <code>EventStreamer</code> /
+<code>HeartbeatCoordinator</code> need Redis; guard with <code>TelemetryFeatures</code>.</li>
+</ul>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Reproduce the failure with a minimal call.</strong>
-Strip the failing call down to its required arguments and run it outside the surrounding workflow. For CLI commands, run the subcommand directly:</p>
-<pre><code>attune telemetry show
-attune telemetry cache-stats
-attune telemetry savings
-</code></pre>
-<p>Confirm the failure occurs before adding complexity.</p>
-</li>
-<li>
-<p><strong>Check the telemetry log file.</strong>
-All CLI commands read from <code>help_queries.jsonl</code> (the <code>_DEFAULT_FILE</code> constant). Verify the file exists and contains recent entries:</p>
-<pre><code class="language-bash">ls -lh help_queries.jsonl
-tail -5 help_queries.jsonl
-</code></pre>
-<p>An empty or missing file explains missing output in <code>cmd_telemetry_show()</code>, <code>cmd_telemetry_savings()</code>, and <code>cmd_telemetry_cache_stats()</code>.</p>
-</li>
-<li>
-<p><strong>Enable DEBUG logging and re-run.</strong>
-Set the log level before invoking the failing command:</p>
-<pre><code class="language-bash">ATTUNE_LOG_LEVEL=DEBUG attune telemetry show
-</code></pre>
-<p>Look for Redis connection errors, missing keys, or unexpected <code>None</code> returns from heartbeat or signal lookups.</p>
-</li>
-<li>
-<p><strong>Inspect the relevant entry point.</strong>
-Match your symptom to the function responsible:</p>
-<ul>
-<li><code>main()</code> — CLI argument parsing and subcommand dispatch</li>
-<li><code>cmd_telemetry_show()</code> — recent telemetry entries</li>
-<li><code>cmd_telemetry_savings()</code> — cost-savings calculation</li>
-<li><code>cmd_telemetry_cache_stats()</code> — prompt caching statistics</li>
-<li><code>cmd_sonnet_opus_analysis()</code> — Sonnet 4.5 → Opus 4.5 fallback analysis</li>
-<li><code>cmd_file_test_status()</code> / <code>cmd_test_status()</code> — per-file and overall test status</li>
-<li><code>cmd_tier1_status()</code> / <code>cmd_task_routing_report()</code> — Tier 1 automation and task routing</li>
-</ul>
-<p>Add a temporary <code>print()</code> or log statement at the function's first line to confirm it is being reached.</p>
-</li>
-<li>
-<p><strong>Run the telemetry test suite.</strong></p>
-<pre><code class="language-bash">pytest -k &quot;telemetry&quot; -v
-</code></pre>
-<p>A failing test that exercises the broken path gives you a reproducible baseline and a fixture you can reuse when writing a fix.</p>
-</li>
+<li><code>UsageTracker.get_instance().get_stats(days=1)</code> — is anything
+recorded?</li>
+<li><code>flush()</code> then re-read, to rule out buffering.</li>
+<li>For tier recommendations, <code>get_quality_stats(...)</code> returns <code>None</code>
+only when the stage has no feedback; <code>recommend_tier</code> needs
+<code>MIN_SAMPLES</code> (and lowercase tier strings) before it moves.</li>
+<li>For coordination, <code>TelemetryFeatures().is_redis_available()</code>.</li>
 </ol>
-<h2>Common fixes</h2>
-<p><strong>Empty or missing <code>help_queries.jsonl</code></strong>
-The file is not created automatically if no queries have been recorded. Trigger a help query to initialize it, or create the file manually and verify its path matches <code>_DEFAULT_FILE</code>.</p>
-<p><strong>Heartbeat agent shows as stale immediately</strong>
-The agent is not calling <code>beat()</code> frequently enough relative to the TTL. Either increase <code>ttl_seconds</code> when calling <code>start_heartbeat()</code>, or call <code>beat()</code> more frequently inside the agent loop:</p>
-<pre><code class="language-python">coordinator.beat(status='running', progress=0.5, current_task='processing')
-</code></pre>
-<p><strong>Coordination signal expires before it is consumed</strong>
-Increase <code>ttl_seconds</code> when sending the signal, or reduce <code>poll_interval</code> in <code>wait_for_signal()</code>:</p>
-<pre><code class="language-python">signals.signal(signal_type='ready', ttl_seconds=120)
-signals.wait_for_signal('ready', timeout=90.0, poll_interval=0.25)
-</code></pre>
-<p><strong>Approval request disappears before a human responds</strong>
-<code>clear_expired_requests()</code> removes requests whose <code>timeout_seconds</code> has elapsed. Increase <code>timeout</code> when calling <code>request_approval()</code>, or call <code>get_pending_approvals()</code> immediately after to confirm the request was stored.</p>
-<p><strong>Event stream consumer receives nothing</strong>
-The default <code>start_id='$'</code> in <code>consume_events()</code> means &quot;events from now onward.&quot; To read existing events, use <code>get_recent_events()</code> instead:</p>
-<pre><code class="language-python">events = streamer.get_recent_events(event_type='my_event', count=50)
-</code></pre>
-<p><strong>Redis connection errors across all components</strong>
-<code>HeartbeatCoordinator</code>, <code>CoordinationSignals</code>, <code>ApprovalGate</code>, and <code>EventStreamer</code> all accept a <code>memory</code> argument. If you pass <code>None</code>, each class uses its default connection. Confirm all components in the same workflow share the same Redis instance and that the connection is reachable.</p>
-<p><strong>Dependency version mismatch</strong>
-A Redis client upgrade can change serialization behavior. Run:</p>
-<pre><code class="language-bash">pip show redis
-</code></pre>
-<p>and confirm the installed version is compatible with the version specified in your project's dependency file.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/telemetry/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>telemetry</code>, <code>metrics</code></p>
 
   </article>
   <footer>

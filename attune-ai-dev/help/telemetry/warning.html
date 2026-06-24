@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Telemetry cautions — warning</title>
-  <meta name="description" content="The telemetry module does more than record metrics — it coordinates agents via TTL-based signals, tracks heartbeats through Redis TTL keys, gates workflow steps on human approval, and feeds quality sc" />
-  <meta property="og:title" content="Telemetry cautions — warning" />
-  <meta property="og:description" content="The telemetry module does more than record metrics — it coordinates agents via TTL-based signals, tracks heartbeats through Redis TTL keys, gates workflow steps on human approval, and feeds quality sc" />
+  <title>Usage tracking, model-tier feedback loops, and agent-coordination signals — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `get_stats` totals are 0 | No calls recorded yet, or buffered and unflushed | Run a workflow, or call `flush()` | low | | `recommend_tier` keep" />
+  <meta property="og:title" content="Usage tracking, model-tier feedback loops, and agent-coordination signals — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `get_stats` totals are 0 | No calls recorded yet, or buffered and unflushed | Run a workflow, or call `flush()` | low | | `recommend_tier` keep" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/telemetry/warning" />
   <style>
@@ -272,66 +272,69 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Telemetry cautions</h1>
-<h2>What to watch for</h2>
-<p>The telemetry module does more than record metrics — it coordinates agents via TTL-based signals, tracks heartbeats through Redis TTL keys, gates workflow steps on human approval, and feeds quality scores back into template ranking through <code>FeedbackLoop</code>. Changes in one area can affect the others in ways that aren't visible until something silently stops working.</p>
-<h2>Risk areas</h2>
-<h3>TTL-based coordination signals expire without warning</h3>
-<p><code>CoordinationSignal</code> has a default <code>ttl_seconds</code> of 60. If a receiving agent calls <code>wait_for_signal()</code> or <code>check_signal()</code> after the TTL has elapsed, the signal is gone — no error is raised, and <code>check_signal()</code> returns <code>None</code>. Under load or in slow CI environments, 60 seconds can pass faster than expected. Set <code>ttl_seconds</code> explicitly for any signal that crosses a slow boundary, and treat a <code>None</code> return from <code>check_signal()</code> as a distinct case, not a &quot;signal hasn't arrived yet&quot; case.</p>
-<h3>Heartbeat staleness thresholds can mask dead agents</h3>
-<p><code>get_stale_agents()</code> uses a default <code>threshold_seconds</code> of 60.0. If your agent's <code>beat()</code> cadence is close to that threshold, transient delays can cause a live agent to appear stale. Conversely, <code>is_agent_alive()</code> trusts the Redis TTL key, so an agent that crashed between beats may still appear alive until the key expires. Don't treat <code>is_agent_alive()</code> as a real-time liveness check — use <code>get_agent_status()</code> and inspect <code>last_beat</code> directly when precision matters.</p>
-<h3>Approval requests time out silently and block workflows</h3>
-<p><code>ApprovalGate.request_approval()</code> blocks until a response arrives or <code>timeout_seconds</code> elapses. If the timeout fires, the calling workflow stalls at that gate. Expired requests accumulate until <code>clear_expired_requests()</code> is called explicitly — they are not cleaned up automatically. Monitor <code>get_pending_approvals()</code> in long-running workflows, and call <code>clear_expired_requests()</code> on a schedule to prevent stale requests from cluttering the queue.</p>
-<h3>Feedback scores influence template ranking from the first rating</h3>
-<p><code>FeedbackLoop</code> computes confidence as <code>good / (good + bad)</code> and that score feeds into template ranking (see <a>Template feedback loop</a>). A single early bad rating on a new template produces a very low confidence score. If you are testing a template or running integration exercises, use a separate feedback store rather than writing to the production <code>feedback.json</code>, or your test ratings will skew ranking for real users.</p>
-<h3><code>EventStreamer.consume_events()</code> blocks when <code>block_ms</code> is set</h3>
-<p>Passing a non-<code>None</code> <code>block_ms</code> to <code>consume_events()</code> causes the call to block for up to <code>block_ms</code> milliseconds waiting for new Redis Stream entries. In a synchronous context this can stall the entire thread. Use <code>block_ms=None</code> (non-blocking) when you need to poll, and reserve blocking mode for dedicated consumer threads.</p>
-<h3>Private helpers in <code>src/attune/telemetry/</code> can change without notice</h3>
-<p>Names prefixed with <code>_</code> — including <code>_LOG_VERSION</code> and <code>_DEFAULT_FILE</code> — are not covered by the public API contract defined in <code>__all__</code>. Depending on them directly means a refactor can break your code silently.</p>
-<h2>How to avoid problems</h2>
-<ol>
-<li>
-<p><strong>Set TTLs explicitly for slow signal paths.</strong> Don't rely on the 60-second default for <code>CoordinationSignal</code> when agents cross slow network boundaries or run in resource-constrained CI. Pass <code>ttl_seconds</code> to <code>CoordinationSignals.signal()</code> or <code>broadcast()</code> with a value that reflects your actual worst-case latency.</p>
-</li>
-<li>
-<p><strong>Treat <code>None</code> returns from signal checks as expiry, not absence.</strong> After a signal's TTL elapses, <code>check_signal()</code> and <code>wait_for_signal()</code> return <code>None</code>. Build your coordination logic to handle expiry explicitly rather than retrying indefinitely.</p>
-</li>
-<li>
-<p><strong>Isolate test feedback from production ratings.</strong> Point <code>FeedbackLoop</code> at a temporary file during tests so that bad ratings generated during development don't lower confidence scores in the live ranking data.</p>
-</li>
-<li>
-<p><strong>Schedule <code>clear_expired_requests()</code> in long-running workflows.</strong> Approval requests do not self-clean. Without periodic calls to <code>clear_expired_requests()</code>, <code>get_pending_approvals()</code> will return stale entries that have already timed out.</p>
-</li>
-<li>
-<p><strong>Run <code>pytest -k &quot;telemetry&quot;</code> before committing changes.</strong> Module-level globals, Redis connection state, and environment variables can make telemetry behave differently in tests than in production. If tests pass locally but fail in CI, check for implicit shared state in the telemetry module first.</p>
-</li>
-</ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/telemetry/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>telemetry</code>, <code>metrics</code></p>
-<h2>Unresolved references</h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
+<h1>Usage tracking, model-tier feedback loops, and agent-coordination signals</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>Location</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
 <th>Severity</th>
-<th>Issue</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Line 33</td>
-<td>error</td>
-<td><code>[Template feedback loop](concepts/feedback-loop.md)</code> — target does not exist</td>
+<td><code>get_stats</code> totals are 0</td>
+<td>No calls recorded yet, or buffered and unflushed</td>
+<td>Run a workflow, or call <code>flush()</code></td>
+<td>low</td>
+</tr>
+<tr>
+<td><code>recommend_tier</code> keeps returning the current tier</td>
+<td>Fewer than <code>MIN_SAMPLES</code> (10) feedback rows for the stage's tier</td>
+<td>Record more feedback before expecting a switch</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>recommend_tier</code> says &quot;No feedback data available&quot; despite recorded feedback</td>
+<td>Tier recorded with non-lowercase casing (e.g. <code>&quot;CAPABLE&quot;</code>); it only matches <code>cheap</code>/<code>capable</code>/<code>premium</code></td>
+<td>Record with lowercase tier strings</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Coordination calls fail / no agents listed</td>
+<td>Redis-backed features unavailable</td>
+<td>Check <code>TelemetryFeatures.is_redis_available()</code>; install the Redis extra</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Stats look stale</td>
+<td>Entries older than retention/TTL aged out</td>
+<td><code>retention_days</code> (90) bounds the store; feedback <code>FEEDBACK_TTL</code> is 7 days</td>
+<td>low</td>
 </tr>
 </tbody>
 </table>
+<h3>Risk areas</h3>
+<ul>
+<li><strong>Buffered writes.</strong> <code>UsageTracker</code> batches; a reader may miss the
+newest calls until <code>flush()</code> or the buffer fills (<code>buffer_size</code>).</li>
+<li><strong><code>MIN_SAMPLES</code> gate.</strong> Tier recommendations are conservative by
+design — they need 10 samples before they move.</li>
+<li><strong>Redis-gated coordination.</strong> <code>EventStreamer</code> /
+<code>HeartbeatCoordinator</code> need Redis; guard with <code>TelemetryFeatures</code>.</li>
+</ul>
+<h3>Diagnosis order</h3>
+<ol>
+<li><code>UsageTracker.get_instance().get_stats(days=1)</code> — is anything
+recorded?</li>
+<li><code>flush()</code> then re-read, to rule out buffering.</li>
+<li>For tier recommendations, <code>get_quality_stats(...)</code> returns <code>None</code>
+only when the stage has no feedback; <code>recommend_tier</code> needs
+<code>MIN_SAMPLES</code> (and lowercase tier strings) before it moves.</li>
+<li>For coordination, <code>TelemetryFeatures().is_redis_available()</code>.</li>
+</ol>
 
   </article>
   <footer>

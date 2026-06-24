@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Work with telemetry — task</title>
-  <meta name="description" content="Use the telemetry module when you need to query usage data, review cost savings, monitor agent performance, or extend the CLI with new reporting commands." />
-  <meta property="og:title" content="Work with telemetry — task" />
-  <meta property="og:description" content="Use the telemetry module when you need to query usage data, review cost savings, monitor agent performance, or extend the CLI with new reporting commands." />
+  <title>Usage tracking, model-tier feedback loops, and agent-coordination signals — task</title>
+  <meta name="description" content="**Goal:** roll up recent LLM usage without a dashboard." />
+  <meta property="og:title" content="Usage tracking, model-tier feedback loops, and agent-coordination signals — task" />
+  <meta property="og:description" content="**Goal:** roll up recent LLM usage without a dashboard." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/telemetry/task" />
   <style>
@@ -272,149 +272,51 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Work with telemetry</h1>
-<p>Use the telemetry module when you need to query usage data, review cost savings, monitor agent performance, or extend the CLI with new reporting commands.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>Access to the project source code</li>
-<li>Familiarity with the files under <code>src/attune/telemetry/</code></li>
-</ul>
-<h2>Steps</h2>
-<ol>
-<li>
-<p><strong>Identify the CLI command that covers your goal.</strong>
-Each subcommand has a single responsibility. Match your goal to the function that owns it:</p>
-<table>
-<thead>
-<tr>
-<th>Goal</th>
-<th>Function</th>
-<th>File</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>View recent telemetry entries</td>
-<td><code>cmd_telemetry_show()</code></td>
-<td><code>cli_core.py</code></td>
-</tr>
-<tr>
-<td>Calculate cost savings</td>
-<td><code>cmd_telemetry_savings()</code></td>
-<td><code>cli_core.py</code></td>
-</tr>
-<tr>
-<td>Review prompt cache performance</td>
-<td><code>cmd_telemetry_cache_stats()</code></td>
-<td><code>cli_core.py</code></td>
-</tr>
-<tr>
-<td>Analyze Sonnet → Opus fallback costs</td>
-<td><code>cmd_sonnet_opus_analysis()</code></td>
-<td><code>cli_analysis.py</code></td>
-</tr>
-<tr>
-<td>View per-file test status</td>
-<td><code>cmd_file_test_status()</code></td>
-<td><code>cli_analysis.py</code></td>
-</tr>
-<tr>
-<td>View Tier 1 automation status</td>
-<td><code>cmd_tier1_status()</code></td>
-<td><code>cli_automation.py</code></td>
-</tr>
-<tr>
-<td>View task routing report</td>
-<td><code>cmd_task_routing_report()</code></td>
-<td><code>cli_automation.py</code></td>
-</tr>
-<tr>
-<td>View agent performance metrics</td>
-<td><code>cmd_agent_performance()</code></td>
-<td><code>cli_automation.py</code></td>
-</tr>
-<tr>
-<td>Check usage-ping opt-in status and payload</td>
-<td><code>cmd_telemetry_status()</code></td>
-<td><code>cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td>Opt in to anonymous usage pinging</td>
-<td><code>cmd_telemetry_enable()</code></td>
-<td><code>cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td>Opt out of anonymous usage pinging</td>
-<td><code>cmd_telemetry_disable()</code></td>
-<td><code>cli_commands/telemetry_commands.py</code></td>
-</tr>
-</tbody>
-</table>
-</li>
-<li>
-<p><strong>Read the function's docstring, parameters, and return type.</strong>
-Confirm that the function owns the exact behavior you need before proceeding. All CLI command functions return <code>int</code> (exit code <code>0</code> on success).</p>
-</li>
-<li>
-<p><strong>Run the existing telemetry tests to establish a baseline.</strong></p>
-<pre><code>pytest -k &quot;telemetry&quot;
+<h1>Usage tracking, model-tier feedback loops, and agent-coordination signals</h1>
+<h2>Tasks</h2>
+<h3>See your usage and cost stats</h3>
+<p><strong>Goal:</strong> roll up recent LLM usage without a dashboard.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">from attune.telemetry import UsageTracker
+
+stats = UsageTracker.get_instance().get_stats(days=30)
+print(stats[&quot;total_calls&quot;], stats[&quot;total_cost&quot;])
+print(stats[&quot;cache_hit_rate&quot;], &quot;cache hit rate&quot;)
+print(stats[&quot;by_workflow&quot;])
 </code></pre>
-<p>All tests must pass before you make any changes.</p>
-</li>
-<li>
-<p><strong>Edit the target function.</strong>
-Apply your change — new logic, additional output fields, or updated filtering. Match the naming conventions, error-handling style, and logging patterns already present in that file.</p>
-</li>
-<li>
-<p><strong>Register any new subcommand in the CLI entry point.</strong>
-If you added a new <code>cmd_*</code> function for the telemetry module, wire it up in <code>src/attune/telemetry/__main__.py</code> via <code>main()</code>. For user-facing commands like the usage-ping opt-in controls, add them to <code>src/attune/cli_commands/telemetry_commands.py</code> instead (registered through <code>cli_minimal.py</code>).</p>
-</li>
-<li>
-<p><strong>Run the tests again.</strong></p>
-<pre><code>pytest -k &quot;telemetry&quot;
+<p><strong>Verify:</strong> <code>get_stats(days=30)</code> returns a dict with <code>total_calls</code>,
+<code>total_cost</code>, <code>total_tokens_input</code>/<code>total_tokens_output</code>,
+<code>cache_hits</code>/<code>cache_misses</code>/<code>cache_hit_rate</code>, and the <code>by_workflow</code>,
+<code>by_tier</code>, <code>by_provider</code> breakdowns.</p>
+<h3>Estimate cost savings</h3>
+<p><strong>Goal:</strong> see what caching and tier routing saved.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">from attune.telemetry import UsageTracker
+
+savings = UsageTracker.get_instance().calculate_savings(days=30)
+print(savings)
 </code></pre>
-</li>
-</ol>
-<h2>Key files</h2>
-<table>
-<thead>
-<tr>
-<th>File</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>src/attune/telemetry/__main__.py</code></td>
-<td>CLI entry point — <code>main()</code> dispatches all subcommands</td>
-</tr>
-<tr>
-<td><code>src/attune/telemetry/cli_core.py</code></td>
-<td>Core telemetry display and savings commands</td>
-</tr>
-<tr>
-<td><code>src/attune/telemetry/cli_analysis.py</code></td>
-<td>Cost and test-status analysis commands</td>
-</tr>
-<tr>
-<td><code>src/attune/telemetry/cli_automation.py</code></td>
-<td>Tier 1, task routing, and agent performance commands</td>
-</tr>
-<tr>
-<td><code>src/attune/telemetry/usage_ping.py</code></td>
-<td>Opt-in anonymous usage sync — enable/disable, payload building, endpoint resolution</td>
-</tr>
-<tr>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-<td>User-facing usage-ping commands: <code>cmd_telemetry_enable</code>, <code>cmd_telemetry_disable</code>, <code>cmd_telemetry_status</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Verify your changes</h2>
-<p>Run the telemetry CLI directly and confirm your expected output appears:</p>
-<pre><code>python -m attune.telemetry &lt;subcommand&gt;
+<p><strong>Verify:</strong> <code>calculate_savings(days=30)</code> returns a dict summarizing the
+savings over the window.</p>
+<h3>Record feedback and get a tier recommendation</h3>
+<p><strong>Goal:</strong> let the feedback loop pick the cheapest sufficient tier.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">from attune.telemetry import FeedbackLoop
+
+loop = FeedbackLoop()
+# tier strings are lowercase: &quot;cheap&quot; / &quot;capable&quot; / &quot;premium&quot;
+loop.record_feedback(
+    &quot;code-review&quot;, &quot;security&quot;, tier=&quot;capable&quot;, quality_score=0.92
+)
+rec = loop.recommend_tier(&quot;code-review&quot;, &quot;security&quot;, current_tier=&quot;capable&quot;)
+print(rec.recommended_tier, rec.reason)
 </code></pre>
-<p>A return code of <code>0</code> and the expected report printed to stdout confirms the command succeeded. Re-run <code>pytest -k &quot;telemetry&quot;</code> to confirm no regressions were introduced.</p>
+<p><strong>Verify:</strong> <code>record_feedback(...)</code> returns the entry id (a <code>str</code>);
+<code>recommend_tier(...)</code> returns a <code>TierRecommendation</code>. Tier strings are
+<strong>lowercase</strong> — <code>recommend_tier</code> only looks up <code>cheap</code>/<code>capable</code>/
+<code>premium</code>, so feedback recorded under another casing is invisible to it.
+The <code>MIN_SAMPLES</code> (10) gate lives in <code>recommend_tier</code>: until the stage's
+tier has 10 samples it keeps the current tier (reason <code>&quot;Insufficient data …&quot;</code>); with no matching feedback at all it reports <code>&quot;No feedback data available&quot;</code>.</p>
 
   </article>
   <footer>

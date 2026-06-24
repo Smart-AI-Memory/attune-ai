@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Note: telemetry — note</title>
-  <meta name="description" content="The `attune.telemetry` package covers four distinct concerns that share a common infrastructure layer:" />
-  <meta property="og:title" content="Note: telemetry — note" />
-  <meta property="og:description" content="The `attune.telemetry` package covers four distinct concerns that share a common infrastructure layer:" />
+  <title>Usage tracking, model-tier feedback loops, and agent-coordination signals — note</title>
+  <meta name="description" content="Telemetry is how attune **measures itself**. The `attune.telemetry` package records what every workflow run costs, learns which model tier each workflow stage actually needs, and carries the liveness " />
+  <meta property="og:title" content="Usage tracking, model-tier feedback loops, and agent-coordination signals — note" />
+  <meta property="og:description" content="Telemetry is how attune **measures itself**. The `attune.telemetry` package records what every workflow run costs, learns which model tier each workflow stage actually needs, and carries the liveness " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/telemetry/note" />
   <style>
@@ -272,22 +272,78 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Note: telemetry</h1>
-<h2>Context</h2>
-<p>The <code>attune.telemetry</code> package covers four distinct concerns that share a common infrastructure layer:</p>
+<h1>Usage tracking, model-tier feedback loops, and agent-coordination signals</h1>
+<h2>Overview</h2>
+<p>Telemetry is how attune <strong>measures itself</strong>. The
+<code>attune.telemetry</code> package records what every workflow run costs,
+learns which model tier each workflow stage actually needs, and carries
+the liveness signals that let multi-agent teams coordinate.</p>
+<p>Three groups live here, all exported from <code>attune.telemetry</code>:</p>
 <ul>
-<li><strong>Usage tracking</strong> — records help queries to <code>help_queries.jsonl</code> (log version <code>1.0</code>) and exposes cost and cache statistics via the CLI</li>
-<li><strong>Agent coordination</strong> — routes TTL-scoped signals between agents through <code>CoordinationSignals</code> (backed by Redis)</li>
-<li><strong>Heartbeat tracking</strong> — lets <code>HeartbeatCoordinator</code> detect stale agents using Redis TTL keys</li>
-<li><strong>Human approval gates</strong> — suspends workflow execution until a human responds via <code>ApprovalGate</code></li>
+<li><strong>Usage tracking</strong> — <code>UsageTracker</code> logs every LLM call (cost,
+tokens, cache hits, duration) to a local append-only store and rolls
+it up into stats and cost-savings reports.</li>
+<li><strong>Feedback loops</strong> — <code>FeedbackLoop</code> records a quality score per
+workflow stage and tier, then recommends the cheapest tier that still
+meets the quality bar (<code>recommend_tier</code>).</li>
+<li><strong>Coordination signals</strong> — <code>EventStreamer</code>, <code>HeartbeatCoordinator</code>,
+and <code>ApprovalGate</code> carry agent heartbeats, event streams, and
+human-in-the-loop approval requests for multi-agent runs. (These are
+telemetry in the &quot;agent liveness/coordination&quot; sense and also relate
+to orchestration.)</li>
 </ul>
-<p>The feedback loop described in <code>concepts/feedback-loop.md</code> (<code>FeedbackLoop</code>, <code>FeedbackEntry</code>, <code>QualityStats</code>) is part of this package and is exported alongside the coordination and tracking classes.</p>
-<h2>Design</h2>
-<p>The package exposes classes and CLI entry points at the same boundary. The CLI functions in <code>cli_analysis.py</code> and <code>cli_automation.py</code> (for example, <code>cmd_sonnet_opus_analysis</code>, <code>cmd_tier1_status</code>) operate on the same data structures that the classes produce — <code>AgentHeartbeat</code>, <code>CoordinationSignal</code>, <code>ApprovalRequest</code>, and their counterparts. Neither layer wraps the other; they share the underlying Redis-backed memory store passed at construction time.</p>
-<p><code>CoordinationSignal</code> carries a <code>ttl_seconds</code> field (default 60) that controls how long a signal remains visible to <code>wait_for_signal</code> and <code>check_signal</code>. Signals past their TTL are invisible to consumers but are not automatically deleted; <code>clear_signals()</code> must be called explicitly to remove them.</p>
-<h2>Source</h2>
-<p><code>src/attune/telemetry/**</code> — 16 source files total.</p>
-<p><strong>Tags:</strong> <code>telemetry</code>, <code>metrics</code></p>
+<p>The data is <strong>local-first</strong>: <code>UsageTracker</code> writes under
+<code>~/.attune/telemetry</code> (overridable via <code>ATTUNE_HOME</code>) and nothing here
+calls the network unless an opt-in phone-home is explicitly enabled. The
+<code>telemetry_stats</code> MCP tool and the ops dashboard read the same on-disk
+store (<code>~/.attune/telemetry/usage.jsonl</code>).</p>
+<h2>Concepts</h2>
+<h3><code>UsageTracker</code> — the cost/usage ledger</h3>
+<p><code>UsageTracker</code> is the per-process ledger of LLM calls. It buffers
+records and writes them in batches to <code>~/.attune/telemetry</code>. Use the
+process-wide singleton, or construct one directly with store knobs:
+<code>UsageTracker(telemetry_dir=None, retention_days=90, max_file_size_mb=10, buffer_size=50)</code>.</p>
+<p><code>track_llm_call(...)</code> is the record path — workflows call it for you
+with the call's <code>workflow</code>, <code>stage</code>, <code>tier</code>, <code>model</code>, <code>provider</code>,
+<code>cost</code>, <code>tokens</code>, cache flags, and <code>duration_ms</code>. <code>get_stats(days=30)</code>
+rolls the store up; <code>calculate_savings(days=30)</code> reports cache/tier
+savings; <code>get_recent_entries()</code>, <code>get_cache_stats()</code>, and
+<code>export_to_dict()</code> read it back; <code>flush()</code> forces a write and <code>reset()</code>
+clears it.</p>
+<h3><code>FeedbackLoop</code> — tier recommendation from quality scores</h3>
+<p><code>FeedbackLoop</code> closes the cost/quality loop. You record a quality score
+(0–1) for a workflow stage at the tier it ran on; once at least
+<code>MIN_SAMPLES</code> (10) exist for that stage, it recommends a tier.
+<code>QUALITY_THRESHOLD</code> is <code>0.7</code>; feedback entries expire after
+<code>FEEDBACK_TTL</code> (604800 s = 7 days). Backing storage is the optional
+<code>memory</code> passed to the constructor.</p>
+<h3><code>TelemetryFeatures</code> — feature/Redis status</h3>
+<p><code>TelemetryFeatures</code> reports which telemetry features are available in
+the current environment — chiefly whether the Redis-backed coordination
+features are reachable. <code>list_all_features()</code> and
+<code>get_feature_status()</code> enumerate status; <code>is_redis_available()</code> /
+<code>require_redis()</code> gate the Redis-dependent paths.</p>
+<h3>Coordination signals</h3>
+<p><code>HeartbeatCoordinator</code> tracks agent liveness (<code>beat</code>,
+<code>start_heartbeat</code>, <code>get_active_agents</code>, <code>get_stale_agents</code>,
+<code>is_agent_alive</code>); <code>EventStreamer</code> publishes and consumes event streams
+(<code>publish_event</code>, <code>consume_events</code>, <code>get_recent_events</code>); <code>ApprovalGate</code>
+carries <code>ApprovalRequest</code> / <code>ApprovalResponse</code> for human-in-the-loop
+steps. These back multi-agent coordination and are Redis-backed when
+available.</p>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Depend on the documented public surface.</strong> The supported API is the
+classes exported from <code>attune.telemetry</code>; the per-module internals
+(file layout, buffering) are implementation details.</li>
+<li><strong>Use the singleton for reads.</strong> <code>UsageTracker.get_instance()</code> reads
+the same store workflows write to; constructing a fresh tracker with a
+different <code>telemetry_dir</code> reads a different store.</li>
+<li><strong><code>flush()</code> before reading freshly written calls.</strong> Writes are
+buffered.</li>
+<li><strong>Coordination needs Redis.</strong> Gate <code>EventStreamer</code> /
+<code>HeartbeatCoordinator</code> use behind <code>TelemetryFeatures</code>.</li>
+</ul>
 
   </article>
   <footer>

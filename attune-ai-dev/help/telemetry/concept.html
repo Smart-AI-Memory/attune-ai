@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Telemetry — concept</title>
-  <meta name="description" content="Attune&#x27;s telemetry layer is an observability system that tracks agent activity, routes signals between agents, gates high-stakes actions on human approval, and records usage data to drive cost and qua" />
-  <meta property="og:title" content="Telemetry — concept" />
-  <meta property="og:description" content="Attune&#x27;s telemetry layer is an observability system that tracks agent activity, routes signals between agents, gates high-stakes actions on human approval, and records usage data to drive cost and qua" />
+  <title>Usage tracking, model-tier feedback loops, and agent-coordination signals — concept</title>
+  <meta name="description" content="Telemetry is how attune **measures itself**. The `attune.telemetry` package records what every workflow run costs, learns which model tier each workflow stage actually needs, and carries the liveness " />
+  <meta property="og:title" content="Usage tracking, model-tier feedback loops, and agent-coordination signals — concept" />
+  <meta property="og:description" content="Telemetry is how attune **measures itself**. The `attune.telemetry` package records what every workflow run costs, learns which model tier each workflow stage actually needs, and carries the liveness " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/telemetry/concept" />
   <style>
@@ -272,74 +272,65 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Telemetry</h1>
-<p>Attune's telemetry layer is an observability system that tracks agent activity, routes signals between agents, gates high-stakes actions on human approval, and records usage data to drive cost and quality feedback loops.</p>
-<h2>What telemetry covers</h2>
-<p>Telemetry spans five distinct concerns that work together to keep multi-agent workflows visible and controllable:</p>
-<table>
-<thead>
-<tr>
-<th>Concern</th>
-<th>What it does</th>
-<th>Key types</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Usage tracking</strong></td>
-<td>Records help queries and calculates cost savings from prompt caching and model-tier routing</td>
-<td><code>UsageTracker</code>, <code>FeedbackLoop</code></td>
-</tr>
-<tr>
-<td><strong>Anonymous usage ping</strong></td>
-<td>Opt-in (default OFF) phone-home of a frozen, anonymized payload to help prioritize development</td>
-<td><code>usage_ping</code></td>
-</tr>
-<tr>
-<td><strong>Agent heartbeats</strong></td>
-<td>Publishes liveness signals to Redis TTL keys so you can detect stale or crashed agents</td>
-<td><code>HeartbeatCoordinator</code>, <code>AgentHeartbeat</code></td>
-</tr>
-<tr>
-<td><strong>Inter-agent coordination</strong></td>
-<td>Routes typed signals between agents with configurable TTLs; expired signals are discarded automatically</td>
-<td><code>CoordinationSignals</code>, <code>CoordinationSignal</code></td>
-</tr>
-<tr>
-<td><strong>Human approval gates</strong></td>
-<td>Pauses a workflow until a human responds to an <code>ApprovalRequest</code>; times out if no response arrives within <code>timeout_seconds</code></td>
-<td><code>ApprovalGate</code>, <code>ApprovalRequest</code>, <code>ApprovalResponse</code></td>
-</tr>
-</tbody>
-</table>
-<p>A sixth concern — real-time event streaming — cuts across the others: <code>EventStreamer</code> publishes <code>StreamEvent</code> records to Redis Streams so external consumers can observe what is happening without polling.</p>
-<h2>How the pieces fit together</h2>
-<p>Think of telemetry as three concentric layers:</p>
-<ol>
-<li>
-<p><strong>Signal transport.</strong> <code>CoordinationSignals</code> and <code>EventStreamer</code> move data between agents and between agents and humans. Signals carry a <code>ttl_seconds</code> field (default 60); the Redis TTL key expires the signal automatically so stale coordination state never accumulates.</p>
-</li>
-<li>
-<p><strong>Liveness.</strong> <code>HeartbeatCoordinator</code> writes an <code>AgentHeartbeat</code> record on each call to <code>beat()</code>. The record includes <code>status</code>, <code>progress</code> (0.0–1.0), and <code>current_task</code>. Calling <code>get_stale_agents(threshold_seconds=60.0)</code> returns agents whose last beat is older than the threshold — a concrete way to detect a hung agent without building custom polling logic.</p>
-</li>
-<li>
-<p><strong>Control.</strong> <code>ApprovalGate.request_approval()</code> blocks until a human calls <code>respond_to_approval()</code> or the request times out. The <code>ApprovalResponse</code> carries <code>approved: bool</code> and an optional <code>reason</code>, giving the workflow a typed branch point rather than an ambiguous string.</p>
-</li>
-</ol>
-<p>Usage data recorded by <code>UsageTracker</code> and quality scores from <code>FeedbackLoop</code> sit alongside these runtime signals. The CLI commands (<code>cmd_telemetry_show</code>, <code>cmd_telemetry_savings</code>, <code>cmd_telemetry_cache_stats</code>, <code>cmd_agent_performance</code>) surface that data without requiring direct access to the underlying storage.</p>
-<p>Separately, an <strong>opt-in usage ping</strong> lets you share an anonymized signal with the maintainers. It is <strong>OFF by default</strong>; <code>cmd_telemetry_enable</code>, <code>cmd_telemetry_disable</code>, and <code>cmd_telemetry_status</code> (under <code>attune telemetry</code>) turn it on or off and show the exact payload that would be sent. The payload is frozen — workflow name, an anonymous install ID, package version, OS, and Python version only. No paths, prompts, costs, tokens, or free text are ever included, and <code>DO_NOT_TRACK</code> overrides everything.</p>
-<h2>When telemetry matters</h2>
-<p>Telemetry becomes important in three scenarios:</p>
+<h1>Usage tracking, model-tier feedback loops, and agent-coordination signals</h1>
+<h2>Overview</h2>
+<p>Telemetry is how attune <strong>measures itself</strong>. The
+<code>attune.telemetry</code> package records what every workflow run costs,
+learns which model tier each workflow stage actually needs, and carries
+the liveness signals that let multi-agent teams coordinate.</p>
+<p>Three groups live here, all exported from <code>attune.telemetry</code>:</p>
 <ul>
-<li><strong>Multi-agent pipelines.</strong> When several agents run concurrently, <code>CoordinationSignals.broadcast()</code> lets one agent notify all others of a state change (for example, that a shared resource is ready) without knowing how many listeners exist.</li>
-<li><strong>Long-running tasks.</strong> <code>HeartbeatCoordinator</code> makes it straightforward to answer &quot;is this agent still alive?&quot; by checking <code>is_agent_alive(agent_id)</code> or listing stale agents with <code>get_stale_agents()</code>.</li>
-<li><strong>Sensitive or irreversible actions.</strong> Wrapping an action in <code>ApprovalGate.request_approval()</code> inserts a human checkpoint. If the timeout expires before a response arrives, the gate returns a typed <code>ApprovalResponse</code> with <code>approved: False</code> so the workflow can handle the timeout explicitly.</li>
+<li><strong>Usage tracking</strong> — <code>UsageTracker</code> logs every LLM call (cost,
+tokens, cache hits, duration) to a local append-only store and rolls
+it up into stats and cost-savings reports.</li>
+<li><strong>Feedback loops</strong> — <code>FeedbackLoop</code> records a quality score per
+workflow stage and tier, then recommends the cheapest tier that still
+meets the quality bar (<code>recommend_tier</code>).</li>
+<li><strong>Coordination signals</strong> — <code>EventStreamer</code>, <code>HeartbeatCoordinator</code>,
+and <code>ApprovalGate</code> carry agent heartbeats, event streams, and
+human-in-the-loop approval requests for multi-agent runs. (These are
+telemetry in the &quot;agent liveness/coordination&quot; sense and also relate
+to orchestration.)</li>
 </ul>
-<h2>Related topics</h2>
-<ul>
-<li><strong>Concept</strong>: Feedback loop — how <code>record_template_feedback()</code> and <code>get_template_confidence()</code> use accumulated ratings to rank templates</li>
-<li><strong>Reference</strong>: Telemetry — field-level documentation for <code>CoordinationSignal</code>, <code>AgentHeartbeat</code>, <code>ApprovalRequest</code>, and <code>StreamEvent</code></li>
-</ul>
+<p>The data is <strong>local-first</strong>: <code>UsageTracker</code> writes under
+<code>~/.attune/telemetry</code> (overridable via <code>ATTUNE_HOME</code>) and nothing here
+calls the network unless an opt-in phone-home is explicitly enabled. The
+<code>telemetry_stats</code> MCP tool and the ops dashboard read the same on-disk
+store (<code>~/.attune/telemetry/usage.jsonl</code>).</p>
+<h2>Concepts</h2>
+<h3><code>UsageTracker</code> — the cost/usage ledger</h3>
+<p><code>UsageTracker</code> is the per-process ledger of LLM calls. It buffers
+records and writes them in batches to <code>~/.attune/telemetry</code>. Use the
+process-wide singleton, or construct one directly with store knobs:
+<code>UsageTracker(telemetry_dir=None, retention_days=90, max_file_size_mb=10, buffer_size=50)</code>.</p>
+<p><code>track_llm_call(...)</code> is the record path — workflows call it for you
+with the call's <code>workflow</code>, <code>stage</code>, <code>tier</code>, <code>model</code>, <code>provider</code>,
+<code>cost</code>, <code>tokens</code>, cache flags, and <code>duration_ms</code>. <code>get_stats(days=30)</code>
+rolls the store up; <code>calculate_savings(days=30)</code> reports cache/tier
+savings; <code>get_recent_entries()</code>, <code>get_cache_stats()</code>, and
+<code>export_to_dict()</code> read it back; <code>flush()</code> forces a write and <code>reset()</code>
+clears it.</p>
+<h3><code>FeedbackLoop</code> — tier recommendation from quality scores</h3>
+<p><code>FeedbackLoop</code> closes the cost/quality loop. You record a quality score
+(0–1) for a workflow stage at the tier it ran on; once at least
+<code>MIN_SAMPLES</code> (10) exist for that stage, it recommends a tier.
+<code>QUALITY_THRESHOLD</code> is <code>0.7</code>; feedback entries expire after
+<code>FEEDBACK_TTL</code> (604800 s = 7 days). Backing storage is the optional
+<code>memory</code> passed to the constructor.</p>
+<h3><code>TelemetryFeatures</code> — feature/Redis status</h3>
+<p><code>TelemetryFeatures</code> reports which telemetry features are available in
+the current environment — chiefly whether the Redis-backed coordination
+features are reachable. <code>list_all_features()</code> and
+<code>get_feature_status()</code> enumerate status; <code>is_redis_available()</code> /
+<code>require_redis()</code> gate the Redis-dependent paths.</p>
+<h3>Coordination signals</h3>
+<p><code>HeartbeatCoordinator</code> tracks agent liveness (<code>beat</code>,
+<code>start_heartbeat</code>, <code>get_active_agents</code>, <code>get_stale_agents</code>,
+<code>is_agent_alive</code>); <code>EventStreamer</code> publishes and consumes event streams
+(<code>publish_event</code>, <code>consume_events</code>, <code>get_recent_events</code>); <code>ApprovalGate</code>
+carries <code>ApprovalRequest</code> / <code>ApprovalResponse</code> for human-in-the-loop
+steps. These back multi-agent coordination and are Redis-backed when
+available.</p>
 
   </article>
   <footer>
