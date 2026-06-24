@@ -389,7 +389,11 @@ features:
     status: manual
 
   hooks:
+    # Single-sourced via content/features/hooks.md (projector).
+    # Scope = the attune.hooks package: HookEvent + HookRegistry
+    # (in-process) + HookExecutor/HookConfig/HookDefinition (declarative)
+    # + the bundled scripts/ hooks. Key gotcha documented: handlers are
+    # called handler(**context) (kwargs-unpacked), not handler(context).
     description: Hook system — pre/post-tool events, webhooks, and hook executor
-    files:
-      - src/attune/hooks/**
     tags: [hooks, webhooks, events, automation]
+    status: manual
