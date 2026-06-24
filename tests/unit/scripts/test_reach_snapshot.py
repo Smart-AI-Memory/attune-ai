@@ -63,6 +63,59 @@ class TestBuildSnapshot:
             )
         assert fetched == ["a", "b"]  # c never attempted
 
+    def test_seed_skips_already_captured_no_duplicate_fetch(self, mod, monkeypatch) -> None:
+        monkeypatch.setattr(mod, "fetch_github_signals", lambda: {})
+        fetched: list[str] = []
+
+        def fetcher(pkg: str):
+            fetched.append(pkg)
+            return dict(STATS)
+
+        snap = mod.build_snapshot(
+            ["a", "b", "c"],
+            spacing_seconds=0,
+            seed={"a": dict(STATS), "b": dict(STATS)},
+            fetcher=fetcher,
+            sleeper=lambda s: None,
+        )
+        assert fetched == ["c"]  # only the remainder fetched
+        assert set(snap["pypi_recent"]) == {"a", "b", "c"}  # seed preserved
+
+    def test_persist_called_after_each_success(self, mod, monkeypatch) -> None:
+        monkeypatch.setattr(mod, "fetch_github_signals", lambda: {})
+        writes: list[set[str]] = []
+
+        snap = mod.build_snapshot(
+            ["a", "b"],
+            spacing_seconds=0,
+            fetcher=lambda pkg: dict(STATS),
+            sleeper=lambda s: None,
+            persist=lambda s: writes.append(set(s["pypi_recent"])),
+        )
+        # one persist per fetched package, growing the set each time
+        assert writes == [{"a"}, {"a", "b"}]
+        assert set(snap["pypi_recent"]) == {"a", "b"}
+
+    def test_rate_limit_persists_packages_fetched_before_it(self, mod, monkeypatch) -> None:
+        monkeypatch.setattr(mod, "fetch_github_signals", lambda: {})
+        last_write: dict[str, set[str]] = {}
+
+        def fetcher(pkg: str):
+            if pkg == "c":
+                raise mod.RateLimitedError("wait 15 minutes")
+            return dict(STATS)
+
+        with pytest.raises(mod.RateLimitedError):
+            mod.build_snapshot(
+                ["a", "b", "c"],
+                spacing_seconds=0,
+                fetcher=fetcher,
+                sleeper=lambda s: None,
+                persist=lambda s: last_write.update(seen=set(s["pypi_recent"])),
+            )
+        # a and b were persisted before c's 429 discarded the run
+        assert last_write["seen"] == {"a", "b"}
+
 
 class TestRenderTable:
     def test_table_has_all_packages_and_github_line(self, mod) -> None:
@@ -107,3 +160,56 @@ class TestCli:
         assert rc == 1
         assert "Wait 15 minutes" in capsys.readouterr().err
         assert not list(tmp_path.glob("*.json"))
+
+    def test_partial_then_rate_limit_persists_progress(
+        self, mod, tmp_path: Path, monkeypatch, capsys
+    ) -> None:
+        monkeypatch.setattr(mod, "fetch_github_signals", lambda: {})
+
+        def fetcher(pkg: str):
+            if pkg == "c":
+                raise mod.RateLimitedError("Wait 15 minutes")
+            return dict(STATS)
+
+        monkeypatch.setattr(mod, "fetch_pypistats_recent", fetcher)
+        rc = mod.main(["--out", str(tmp_path), "--spacing", "0", "--packages", "a", "b", "c"])
+        assert rc == 1
+        err = capsys.readouterr().err
+        assert "captured 2/3 today" in err
+        # the day file holds the two packages fetched before the 429
+        files = list(tmp_path.glob("*.json"))
+        assert len(files) == 1
+        data = json.loads(files[0].read_text(encoding="utf-8"))
+        assert set(data["pypi_recent"]) == {"a", "b"}
+
+    def test_rerun_completes_remainder_then_clears(
+        self, mod, tmp_path: Path, monkeypatch, capsys
+    ) -> None:
+        monkeypatch.setattr(mod, "fetch_github_signals", lambda: {"stars": 9})
+        fetched: list[str] = []
+        flaky = {"raise_on_c": True}
+
+        def fetcher(pkg: str):
+            fetched.append(pkg)
+            if pkg == "c" and flaky["raise_on_c"]:
+                raise mod.RateLimitedError("Wait 15 minutes")
+            return dict(STATS)
+
+        monkeypatch.setattr(mod, "fetch_pypistats_recent", fetcher)
+        argv = ["--out", str(tmp_path), "--spacing", "0", "--packages", "a", "b", "c"]
+
+        # first run: a,b succeed, c 429s
+        assert mod.main(argv) == 1
+        assert fetched == ["a", "b", "c"]
+
+        # cooldown over: rerun skips a,b and fetches only c
+        flaky["raise_on_c"] = False
+        fetched.clear()
+        assert mod.main(argv) == 0
+        assert fetched == ["c"]  # a,b not re-fetched
+
+        files = list(tmp_path.glob("*.json"))
+        assert len(files) == 1
+        data = json.loads(files[0].read_text(encoding="utf-8"))
+        assert set(data["pypi_recent"]) == {"a", "b", "c"}
+        assert data["github"] == {"stars": 9}

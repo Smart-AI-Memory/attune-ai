@@ -1,8 +1,25 @@
 # Reach Snapshot Resilience
 
-**Status:** draft — awaiting review
+**Status:** implemented (2026-06-24) — Option A shipped in
+`scripts/reach_snapshot.py`; tests in
+`tests/unit/scripts/test_reach_snapshot.py`.
 **Owner:** Patrick + agent
 **Created:** 2026-06-22
+
+---
+
+## Decisions
+
+- **D1 → A (resumable partial write).** Each package is persisted to
+  the day file as it succeeds (atomic temp+rename); a rerun loads the
+  day file, skips already-captured packages, and fetches only the
+  remainder. The rate-limit discipline is unchanged (still spaces
+  requests, still aborts on the first 429). C (scheduled cadence) is
+  left as an optional fast-follow, not done here.
+- **Retention → merge/skip within a day.** A rerun the same day merges
+  into the existing `<date>.json` and skips packages already present —
+  it does not overwrite. The GitHub line is filled in by whichever run
+  completes the full package set.
 
 ---
 

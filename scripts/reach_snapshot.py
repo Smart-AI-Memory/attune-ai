@@ -17,6 +17,14 @@ bursts and the penalty outlasts minutes of retrying — this script
 spaces requests (default 60s) and ABORTS on the first 429 with a
 "wait 15 minutes" message instead of hammering.
 
+Resumable partial progress (reach-snapshot-resilience): each
+package is persisted to the day file *as it succeeds* (atomic
+temp+rename). On rerun the same day, already-captured packages are
+loaded and skipped, so a 429 degrades to "rerun later to finish the
+remainder" instead of discarding the packages already fetched. The
+GitHub line stays best-effort and is filled in on the run that
+completes the set.
+
 Usage:
     python scripts/reach_snapshot.py
     python scripts/reach_snapshot.py --spacing 60 --out docs/specs/usage-signals/snapshots
@@ -124,29 +132,51 @@ def fetch_github_signals(repo: str = REPO) -> dict[str, object]:
 def build_snapshot(
     packages: list[str],
     spacing_seconds: float,
+    *,
+    seed: dict[str, dict[str, int]] | None = None,
+    date: str | None = None,
     fetcher=None,
     sleeper=None,
+    persist=None,
 ) -> dict[str, object]:
-    """Fetch all package stats with rate-limit spacing between calls.
+    """Fetch package stats with rate-limit spacing, preserving progress.
 
     fetcher/sleeper default to the module-level functions, resolved
     at CALL time (not def time) so tests can monkeypatch the module
     attributes — a def-time default would bind the original function
     object and silently bypass patches.
+
+    seed pre-loads already-captured packages (from today's day file);
+    those are skipped, so a rerun only fetches the remainder. persist,
+    if given, is called with the current snapshot after EACH successful
+    fetch — so a later 429 (raised by fetcher) leaves the packages
+    fetched so far durably written. The GitHub line is fetched once at
+    the end (on the run that completes the set); partial writes carry
+    an empty github until then.
     """
     fetcher = fetcher or fetch_pypistats_recent
     sleeper = sleeper or time.sleep
-    pypi: dict[str, dict[str, int]] = {}
-    for i, pkg in enumerate(packages):
+    now = datetime.now(timezone.utc)
+    date = date or now.strftime("%Y-%m-%d")
+    taken_at = now.isoformat()
+    pypi: dict[str, dict[str, int]] = dict(seed or {})
+
+    def snapshot(github: dict[str, object]) -> dict[str, object]:
+        return {
+            "date": date,
+            "taken_at": taken_at,
+            "pypi_recent": pypi,
+            "github": github,
+        }
+
+    remaining = [pkg for pkg in packages if pkg not in pypi]
+    for i, pkg in enumerate(remaining):
         if i:
             sleeper(spacing_seconds)
         pypi[pkg] = fetcher(pkg)
-    return {
-        "date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-        "taken_at": datetime.now(timezone.utc).isoformat(),
-        "pypi_recent": pypi,
-        "github": fetch_github_signals(),
-    }
+        if persist is not None:
+            persist(snapshot({}))
+    return snapshot(fetch_github_signals())
 
 
 def render_table(snapshot: dict[str, object]) -> str:
@@ -169,6 +199,33 @@ def render_table(snapshot: dict[str, object]) -> str:
         parts = ", ".join(f"{k}={v}" for k, v in gh.items())
         lines += ["", f"GitHub: {parts}"]
     return "\n".join(lines) + "\n"
+
+
+def _load_seed(path: Path) -> dict[str, dict[str, int]]:
+    """Load already-captured pypi_recent from today's day file, if any.
+
+    Best-effort: a missing or malformed file degrades to an empty seed
+    (a fresh full run), never an error.
+    """
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning("could not load existing snapshot %s: %s", path, e)
+        return {}
+    pypi = data.get("pypi_recent", {})
+    if not isinstance(pypi, dict):
+        return {}
+    return {pkg: stats for pkg, stats in pypi.items() if isinstance(stats, dict)}
+
+
+def _atomic_write_json(path: Path, data: dict[str, object]) -> None:
+    """Write JSON via temp+rename so a partial file is never observed."""
+    text = json.dumps(data, indent=2, sort_keys=True) + "\n"
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    tmp.replace(path)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -195,18 +252,32 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
 
+    args.out.mkdir(parents=True, exist_ok=True)
+    date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    out_path = args.out / f"{date}.json"
+    seed = _load_seed(out_path)
+
+    def persist(snapshot: dict[str, object]) -> None:
+        _atomic_write_json(out_path, snapshot)
+
     try:
-        snapshot = build_snapshot(args.packages, args.spacing)
+        snapshot = build_snapshot(
+            args.packages, args.spacing, seed=seed, date=date, persist=persist
+        )
     except RateLimitedError as e:
+        captured = len(_load_seed(out_path))
+        total = len(args.packages)
         print(f"error: {e}", file=sys.stderr)
+        print(
+            f"captured {captured}/{total} today; rerun after the cooldown " "to finish the rest.",
+            file=sys.stderr,
+        )
         return 1
     except (urllib.error.URLError, OSError) as e:
         print(f"error: network failure: {e}", file=sys.stderr)
         return 1
 
-    args.out.mkdir(parents=True, exist_ok=True)
-    out_path = args.out / f"{snapshot['date']}.json"
-    out_path.write_text(json.dumps(snapshot, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _atomic_write_json(out_path, snapshot)
     print(render_table(snapshot))
     print(f"wrote {out_path}")
     return 0
