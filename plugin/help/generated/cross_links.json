@@ -1,15 +1,35 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 901,
-    "linked_templates": 771,
-    "total_tags": 62
+    "total_templates": 1187,
+    "linked_templates": 877,
+    "total_tags": 109
   },
   "links": {
+    "com-agents": {
+      "tags": [
+        "agents",
+        "ai"
+      ]
+    },
     "com-auth-strategies": {
       "tags": [
         "auth",
         "setup"
+      ]
+    },
+    "com-bug-predict": {
+      "tags": [
+        "bugs",
+        "prediction",
+        "scanning",
+        "race-condition"
+      ]
+    },
+    "com-cli": {
+      "tags": [
+        "cli",
+        "commands"
       ]
     },
     "com-cli-vs-claude-code": {
@@ -18,10 +38,178 @@
         "claude-code"
       ]
     },
+    "com-code-quality": {
+      "tags": [
+        "review",
+        "quality",
+        "bugs",
+        "lint"
+      ]
+    },
+    "com-configuration": {
+      "tags": [
+        "config",
+        "settings"
+      ]
+    },
+    "com-deep-review": {
+      "tags": [
+        "review",
+        "security",
+        "quality",
+        "tests",
+        "comprehensive-review"
+      ]
+    },
+    "com-doc-gen": {
+      "tags": [
+        "docs",
+        "documentation",
+        "generation"
+      ]
+    },
+    "com-fix-test": {
+      "tags": [
+        "tests",
+        "debugging",
+        "fixes"
+      ]
+    },
+    "com-help-system": {
+      "tags": [
+        "help",
+        "templates",
+        "docs"
+      ]
+    },
+    "com-hooks": {
+      "tags": [
+        "hooks",
+        "webhooks",
+        "events",
+        "automation"
+      ]
+    },
     "com-lite-vs-full": {
       "tags": [
         "plugin",
         "setup"
+      ]
+    },
+    "com-mcp-server": {
+      "tags": [
+        "mcp",
+        "tools",
+        "server"
+      ]
+    },
+    "com-memory": {
+      "tags": [
+        "memory",
+        "storage"
+      ]
+    },
+    "com-models": {
+      "tags": [
+        "models",
+        "auth",
+        "llm"
+      ]
+    },
+    "com-ops-dashboard": {
+      "tags": [
+        "ops",
+        "dashboard",
+        "runner",
+        "workflows",
+        "scope-picker",
+        "persistence",
+        "sse"
+      ]
+    },
+    "com-orchestration": {
+      "tags": [
+        "orchestration",
+        "teams"
+      ]
+    },
+    "com-plugin": {
+      "tags": [
+        "plugin",
+        "claude-code"
+      ]
+    },
+    "com-rag-grounding": {
+      "tags": [
+        "rag",
+        "retrieval",
+        "grounding",
+        "faithfulness",
+        "citation"
+      ]
+    },
+    "com-refactor-plan": {
+      "tags": [
+        "refactor",
+        "tech-debt",
+        "complexity"
+      ]
+    },
+    "com-release-notes": {
+      "tags": [
+        "release",
+        "changelog",
+        "advisory"
+      ]
+    },
+    "com-release-prep": {
+      "tags": [
+        "release",
+        "publishing",
+        "quality"
+      ]
+    },
+    "com-resilience": {
+      "tags": [
+        "resilience",
+        "fault-tolerance",
+        "retry",
+        "circuit-breaker",
+        "reliability"
+      ]
+    },
+    "com-security-audit": {
+      "tags": [
+        "security",
+        "audit",
+        "owasp",
+        "scanning",
+        "cve"
+      ]
+    },
+    "com-smart-test": {
+      "tags": [
+        "tests",
+        "coverage",
+        "generation"
+      ]
+    },
+    "com-spec-engine": {
+      "tags": [
+        "spec",
+        "planning"
+      ]
+    },
+    "com-telemetry": {
+      "tags": [
+        "telemetry",
+        "metrics"
+      ]
+    },
+    "com-wizards": {
+      "tags": [
+        "wizards",
+        "interactive"
       ]
     },
     "com-workflow-vs-wizard": {
@@ -30,10 +218,44 @@
         "architecture"
       ]
     },
+    "con-agents": {
+      "tags": [
+        "agents",
+        "ai"
+      ]
+    },
     "con-audience-adaptation": {
       "tags": [
         "help-system",
         "architecture"
+      ]
+    },
+    "con-bug-predict": {
+      "tags": [
+        "bugs",
+        "prediction",
+        "scanning",
+        "race-condition"
+      ]
+    },
+    "con-cli": {
+      "tags": [
+        "cli",
+        "commands"
+      ]
+    },
+    "con-code-quality": {
+      "tags": [
+        "review",
+        "quality",
+        "bugs",
+        "lint"
+      ]
+    },
+    "con-configuration": {
+      "tags": [
+        "config",
+        "settings"
       ]
     },
     "con-cross-linking": {
@@ -42,10 +264,61 @@
         "architecture"
       ]
     },
+    "con-deep-review": {
+      "tags": [
+        "review",
+        "security",
+        "quality",
+        "tests",
+        "comprehensive-review"
+      ]
+    },
+    "con-doc-gen": {
+      "tags": [
+        "docs",
+        "documentation",
+        "generation"
+      ]
+    },
     "con-feedback-loop": {
       "tags": [
         "help-system",
         "telemetry"
+      ]
+    },
+    "con-fix-test": {
+      "tags": [
+        "tests",
+        "debugging",
+        "fixes"
+      ]
+    },
+    "con-help-system": {
+      "tags": [
+        "help",
+        "templates",
+        "docs"
+      ]
+    },
+    "con-hooks": {
+      "tags": [
+        "hooks",
+        "webhooks",
+        "events",
+        "automation"
+      ]
+    },
+    "con-mcp-server": {
+      "tags": [
+        "mcp",
+        "tools",
+        "server"
+      ]
+    },
+    "con-memory": {
+      "tags": [
+        "memory",
+        "storage"
       ]
     },
     "con-meta-orchestration": {
@@ -54,10 +327,95 @@
         "workflow"
       ]
     },
+    "con-models": {
+      "tags": [
+        "models",
+        "auth",
+        "llm"
+      ]
+    },
+    "con-ops-dashboard": {
+      "tags": [
+        "ops",
+        "dashboard",
+        "runner",
+        "workflows",
+        "scope-picker",
+        "persistence",
+        "sse"
+      ]
+    },
+    "con-orchestration": {
+      "tags": [
+        "orchestration",
+        "teams"
+      ]
+    },
+    "con-plugin": {
+      "tags": [
+        "plugin",
+        "claude-code"
+      ]
+    },
     "con-progressive-depth": {
       "tags": [
         "help-system",
         "ux"
+      ]
+    },
+    "con-rag-grounding": {
+      "tags": [
+        "rag",
+        "retrieval",
+        "grounding",
+        "faithfulness",
+        "citation"
+      ]
+    },
+    "con-refactor-plan": {
+      "tags": [
+        "refactor",
+        "tech-debt",
+        "complexity"
+      ]
+    },
+    "con-release-notes": {
+      "tags": [
+        "release",
+        "changelog",
+        "advisory"
+      ]
+    },
+    "con-release-prep": {
+      "tags": [
+        "release",
+        "publishing",
+        "quality"
+      ]
+    },
+    "con-resilience": {
+      "tags": [
+        "resilience",
+        "fault-tolerance",
+        "retry",
+        "circuit-breaker",
+        "reliability"
+      ]
+    },
+    "con-security-audit": {
+      "tags": [
+        "security",
+        "audit",
+        "owasp",
+        "scanning",
+        "cve"
+      ]
+    },
+    "con-smart-test": {
+      "tags": [
+        "tests",
+        "coverage",
+        "generation"
       ]
     },
     "con-socratic-discovery": {
@@ -66,10 +424,22 @@
         "ux"
       ]
     },
+    "con-spec-engine": {
+      "tags": [
+        "spec",
+        "planning"
+      ]
+    },
     "con-sync-paradigm": {
       "tags": [
         "architecture",
         "documentation"
+      ]
+    },
+    "con-telemetry": {
+      "tags": [
+        "telemetry",
+        "metrics"
       ]
     },
     "con-template-composition": {
@@ -185,6 +555,12 @@
         "routing"
       ]
     },
+    "con-wizards": {
+      "tags": [
+        "wizards",
+        "interactive"
+      ]
+    },
     "con-workflow-chain-prediction": {
       "tags": [
         "help-system",
@@ -253,6 +629,32 @@
       ],
       "tags": [
         "git"
+      ]
+    },
+    "err-agents": {
+      "related_warning": [
+        "war-agents"
+      ],
+      "prevented_by": [
+        "tip-agents",
+        "tip-release-prep"
+      ],
+      "related_faq": [
+        "faq-agents"
+      ],
+      "tags": [
+        "agents",
+        "ai"
+      ],
+      "embeds": [
+        {
+          "id": "tip-agents",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-release-prep",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-agents-skills-must-stay-synced-with-plugin-skills": {
@@ -345,7 +747,9 @@
         "war-attune-skill-names-must-not-collide-with-claude-code-built-in"
       ],
       "prevented_by": [
-        "tip-after-10-inspects"
+        "tip-after-10-inspects",
+        "tip-plugin",
+        "tip-rag-grounding"
       ],
       "related_faq": [
         "faq-attune-skill-names-must-not-collide-with-claude-code-built-in"
@@ -357,6 +761,14 @@
         {
           "id": "tip-after-10-inspects",
           "position": "after_resolution"
+        },
+        {
+          "id": "tip-plugin",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-rag-grounding",
+          "position": "after_resolution"
         }
       ]
     },
@@ -367,6 +779,7 @@
         "tip-after-first-inspect",
         "tip-high-tech-debt",
         "tip-no-patterns",
+        "tip-ops-dashboard",
         "tip-weekly-review"
       ],
       "related_faq": [
@@ -396,6 +809,10 @@
         },
         {
           "id": "tip-no-patterns",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-ops-dashboard",
           "position": "after_resolution"
         },
         {
@@ -476,6 +893,44 @@
       ],
       "tags": [
         "claude-code"
+      ]
+    },
+    "err-bug-predict": {
+      "related_warning": [
+        "war-bug-predict"
+      ],
+      "prevented_by": [
+        "tip-bug-predict",
+        "tip-doc-gen",
+        "tip-release-notes",
+        "tip-security-audit"
+      ],
+      "related_faq": [
+        "faq-bug-predict"
+      ],
+      "tags": [
+        "bugs",
+        "prediction",
+        "scanning",
+        "race-condition"
+      ],
+      "embeds": [
+        {
+          "id": "tip-bug-predict",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-doc-gen",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-release-notes",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-security-audit",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-bug-predict-dangerous-eval-flags-subprocess-exec": {
@@ -589,16 +1044,28 @@
       "related_warning": [
         "war-claude-code-plugin-is-platform-specific"
       ],
+      "prevented_by": [
+        "tip-plugin"
+      ],
       "related_faq": [
         "faq-claude-code-plugin-is-platform-specific"
       ],
       "tags": [
         "claude-code"
+      ],
+      "embeds": [
+        {
+          "id": "tip-plugin",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-claude-code-plugins-expect-plugin-json-inside-claude-plugin": {
       "related_warning": [
         "war-claude-code-plugins-expect-plugin-json-inside-claude-plugin"
+      ],
+      "prevented_by": [
+        "tip-plugin"
       ],
       "related_faq": [
         "faq-claude-code-plugins-expect-plugin-json-inside-claude-plugin"
@@ -606,15 +1073,51 @@
       "tags": [
         "testing",
         "claude-code"
+      ],
+      "embeds": [
+        {
+          "id": "tip-plugin",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-claude-plugin-install-is-marketplace-only": {
+      "prevented_by": [
+        "tip-plugin"
+      ],
       "related_faq": [
         "faq-claude-plugin-install-is-marketplace-only"
       ],
       "tags": [
         "testing",
         "claude-code"
+      ],
+      "embeds": [
+        {
+          "id": "tip-plugin",
+          "position": "after_resolution"
+        }
+      ]
+    },
+    "err-cli": {
+      "related_warning": [
+        "war-cli"
+      ],
+      "prevented_by": [
+        "tip-cli"
+      ],
+      "related_faq": [
+        "faq-cli"
+      ],
+      "tags": [
+        "cli",
+        "commands"
+      ],
+      "embeds": [
+        {
+          "id": "tip-cli",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-clusterfuzz-dockerfile-copies-to-src-repo-but-also-copies": {
@@ -647,6 +1150,34 @@
       ],
       "tags": [
         "claude-code"
+      ]
+    },
+    "err-code-quality": {
+      "related_warning": [
+        "war-code-quality"
+      ],
+      "prevented_by": [
+        "tip-code-quality",
+        "tip-deep-review"
+      ],
+      "related_faq": [
+        "faq-code-quality"
+      ],
+      "tags": [
+        "review",
+        "quality",
+        "bugs",
+        "lint"
+      ],
+      "embeds": [
+        {
+          "id": "tip-code-quality",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-deep-review",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-codecov-patch-0-usually-means-tests-skipped-not-failed": {
@@ -724,6 +1255,27 @@
         "python"
       ]
     },
+    "err-configuration": {
+      "related_warning": [
+        "war-configuration"
+      ],
+      "prevented_by": [
+        "tip-configuration"
+      ],
+      "related_faq": [
+        "faq-configuration"
+      ],
+      "tags": [
+        "config",
+        "settings"
+      ],
+      "embeds": [
+        {
+          "id": "tip-configuration",
+          "position": "after_resolution"
+        }
+      ]
+    },
     "err-costreport-fields-are-named-not-positional": {
       "related_warning": [
         "war-costreport-fields-are-named-not-positional"
@@ -748,11 +1300,20 @@
       ]
     },
     "err-custom-mcp-stdio-loop-fails-claude-code-handshake": {
+      "prevented_by": [
+        "tip-plugin"
+      ],
       "related_faq": [
         "faq-custom-mcp-stdio-loop-fails-claude-code-handshake"
       ],
       "tags": [
         "claude-code"
+      ],
+      "embeds": [
+        {
+          "id": "tip-plugin",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-dataclassorder-true-needs-compare-false-on-list-fields": {
@@ -779,6 +1340,9 @@
       "related_warning": [
         "war-dead-code-modules-with-full-test-suites-look-alive"
       ],
+      "prevented_by": [
+        "tip-deep-review"
+      ],
       "related_faq": [
         "faq-dead-code-modules-with-full-test-suites-look-alive"
       ],
@@ -787,6 +1351,12 @@
         "imports",
         "claude-code",
         "python"
+      ],
+      "embeds": [
+        {
+          "id": "tip-deep-review",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-dead-tests-from-monorepo-extraction-accumulate-in-packages-with": {
@@ -802,6 +1372,45 @@
         "security",
         "git",
         "claude-code"
+      ]
+    },
+    "err-deep-review": {
+      "related_warning": [
+        "war-deep-review"
+      ],
+      "prevented_by": [
+        "tip-code-quality",
+        "tip-deep-review",
+        "tip-fix-test",
+        "tip-smart-test"
+      ],
+      "related_faq": [
+        "faq-deep-review"
+      ],
+      "tags": [
+        "review",
+        "security",
+        "quality",
+        "tests",
+        "comprehensive-review"
+      ],
+      "embeds": [
+        {
+          "id": "tip-code-quality",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-deep-review",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-fix-test",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-smart-test",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-deep-review-false-positives-verify-before-acting": {
@@ -877,6 +1486,53 @@
       ],
       "tags": [
         "packaging"
+      ]
+    },
+    "err-doc-gen": {
+      "related_warning": [
+        "war-doc-gen"
+      ],
+      "prevented_by": [
+        "tip-bug-predict",
+        "tip-doc-gen",
+        "tip-rag-grounding",
+        "tip-refactor-plan",
+        "tip-security-audit",
+        "tip-smart-test"
+      ],
+      "related_faq": [
+        "faq-doc-gen"
+      ],
+      "tags": [
+        "docs",
+        "documentation",
+        "generation"
+      ],
+      "embeds": [
+        {
+          "id": "tip-bug-predict",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-doc-gen",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-rag-grounding",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-refactor-plan",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-security-audit",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-smart-test",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-dont-append-z-to-timezone-aware-isoformat": {
@@ -960,11 +1616,20 @@
       "related_warning": [
         "war-exploration-agents-fabricate-names-verify-against-source"
       ],
+      "prevented_by": [
+        "tip-release-prep"
+      ],
       "related_faq": [
         "faq-exploration-agents-fabricate-names-verify-against-source"
       ],
       "tags": [
         "testing"
+      ],
+      "embeds": [
+        {
+          "id": "tip-release-prep",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-f841-unused-fixture-lint-fires-when-a-test-is-refactored-to": {
@@ -986,6 +1651,33 @@
       ],
       "related_faq": [
         "faq-fastembed-is-the-local-embeddings-path-that-passes-a-50mb"
+      ]
+    },
+    "err-fix-test": {
+      "related_warning": [
+        "war-fix-test"
+      ],
+      "prevented_by": [
+        "tip-deep-review",
+        "tip-fix-test"
+      ],
+      "related_faq": [
+        "faq-fix-test"
+      ],
+      "tags": [
+        "tests",
+        "debugging",
+        "fixes"
+      ],
+      "embeds": [
+        {
+          "id": "tip-deep-review",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-fix-test",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-forced-anthropic-tool-use-is-the-cleanest-path-to-guaranteed": {
@@ -1111,6 +1803,7 @@
         "tip-after-10-inspects",
         "tip-after-first-inspect",
         "tip-no-patterns",
+        "tip-ops-dashboard",
         "tip-weekly-review"
       ],
       "related_faq": [
@@ -1132,6 +1825,10 @@
         },
         {
           "id": "tip-no-patterns",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-ops-dashboard",
           "position": "after_resolution"
         },
         {
@@ -1233,12 +1930,21 @@
       "related_warning": [
         "war-github-repos-serve-as-claude-code-marketplaces"
       ],
+      "prevented_by": [
+        "tip-plugin"
+      ],
       "related_faq": [
         "faq-github-repos-serve-as-claude-code-marketplaces"
       ],
       "tags": [
         "git",
         "claude-code"
+      ],
+      "embeds": [
+        {
+          "id": "tip-plugin",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-gitignore-exclusions-break-ci-tests-that-read-those-files": {
@@ -1356,6 +2062,51 @@
       ],
       "tags": [
         "claude-code"
+      ]
+    },
+    "err-help-system": {
+      "related_warning": [
+        "war-help-system"
+      ],
+      "prevented_by": [
+        "tip-help-system"
+      ],
+      "related_faq": [
+        "faq-help-system"
+      ],
+      "tags": [
+        "help",
+        "templates",
+        "docs"
+      ],
+      "embeds": [
+        {
+          "id": "tip-help-system",
+          "position": "after_resolution"
+        }
+      ]
+    },
+    "err-hooks": {
+      "related_warning": [
+        "war-hooks"
+      ],
+      "prevented_by": [
+        "tip-hooks"
+      ],
+      "related_faq": [
+        "faq-hooks"
+      ],
+      "tags": [
+        "hooks",
+        "webhooks",
+        "events",
+        "automation"
+      ],
+      "embeds": [
+        {
+          "id": "tip-hooks",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-hot-reload-subsystem-was-1-038-lines-of-dead-code": {
@@ -1562,6 +2313,38 @@
         "claude-code"
       ]
     },
+    "err-mcp-server": {
+      "related_warning": [
+        "war-mcp-server"
+      ],
+      "prevented_by": [
+        "tip-cost-savings",
+        "tip-mcp-server",
+        "tip-rag-grounding"
+      ],
+      "related_faq": [
+        "faq-mcp-server"
+      ],
+      "tags": [
+        "mcp",
+        "tools",
+        "server"
+      ],
+      "embeds": [
+        {
+          "id": "tip-cost-savings",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-mcp-server",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-rag-grounding",
+          "position": "after_resolution"
+        }
+      ]
+    },
     "err-mcp-server-process-doesnt-inherit-env-variables": {
       "related_faq": [
         "faq-mcp-server-process-doesnt-inherit-env-variables"
@@ -1597,6 +2380,27 @@
       "tags": [
         "testing",
         "claude-code"
+      ]
+    },
+    "err-memory": {
+      "related_warning": [
+        "war-memory"
+      ],
+      "prevented_by": [
+        "tip-memory"
+      ],
+      "related_faq": [
+        "faq-memory"
+      ],
+      "tags": [
+        "memory",
+        "storage"
+      ],
+      "embeds": [
+        {
+          "id": "tip-memory",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-metadata-can-reach-a-retriever-with-zero-signal-if-the-sidecar": {
@@ -1655,6 +2459,28 @@
       "tags": [
         "testing",
         "imports"
+      ]
+    },
+    "err-models": {
+      "related_warning": [
+        "war-models"
+      ],
+      "prevented_by": [
+        "tip-models"
+      ],
+      "related_faq": [
+        "faq-models"
+      ],
+      "tags": [
+        "models",
+        "auth",
+        "llm"
+      ],
+      "embeds": [
+        {
+          "id": "tip-models",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-modeltier-has-two-copies-imports-must-match": {
@@ -1814,6 +2640,73 @@
         "faq-openssf-scorecard-alerts-2-codereviewid-3-sastid-are-process"
       ]
     },
+    "err-ops-dashboard": {
+      "related_warning": [
+        "war-ops-dashboard"
+      ],
+      "prevented_by": [
+        "tip-after-10-inspects",
+        "tip-after-first-inspect",
+        "tip-no-patterns",
+        "tip-ops-dashboard",
+        "tip-weekly-review"
+      ],
+      "related_faq": [
+        "faq-ops-dashboard"
+      ],
+      "tags": [
+        "ops",
+        "dashboard",
+        "runner",
+        "workflows",
+        "scope-picker",
+        "persistence",
+        "sse"
+      ],
+      "embeds": [
+        {
+          "id": "tip-after-10-inspects",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-after-first-inspect",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-no-patterns",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-ops-dashboard",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-weekly-review",
+          "position": "after_resolution"
+        }
+      ]
+    },
+    "err-orchestration": {
+      "related_warning": [
+        "war-orchestration"
+      ],
+      "prevented_by": [
+        "tip-orchestration"
+      ],
+      "related_faq": [
+        "faq-orchestration"
+      ],
+      "tags": [
+        "orchestration",
+        "teams"
+      ],
+      "embeds": [
+        {
+          "id": "tip-orchestration",
+          "position": "after_resolution"
+        }
+      ]
+    },
     "err-orphan-help-dirs-are-deprecated-3-depth-output-adding-them-to": {
       "related_warning": [
         "war-orphan-help-dirs-are-deprecated-3-depth-output-adding-them-to"
@@ -1936,6 +2829,27 @@
         "testing",
         "security",
         "windows"
+      ]
+    },
+    "err-plugin": {
+      "related_warning": [
+        "war-plugin"
+      ],
+      "prevented_by": [
+        "tip-plugin"
+      ],
+      "related_faq": [
+        "faq-plugin"
+      ],
+      "tags": [
+        "plugin",
+        "claude-code"
+      ],
+      "embeds": [
+        {
+          "id": "tip-plugin",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-plugin-read-skill-references-break-outside-the-plugin": {
@@ -2214,6 +3128,45 @@
         "packaging"
       ]
     },
+    "err-rag-grounding": {
+      "related_warning": [
+        "war-rag-grounding"
+      ],
+      "prevented_by": [
+        "tip-after-10-inspects",
+        "tip-doc-gen",
+        "tip-mcp-server",
+        "tip-rag-grounding"
+      ],
+      "related_faq": [
+        "faq-rag-grounding"
+      ],
+      "tags": [
+        "rag",
+        "retrieval",
+        "grounding",
+        "faithfulness",
+        "citation"
+      ],
+      "embeds": [
+        {
+          "id": "tip-after-10-inspects",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-doc-gen",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-mcp-server",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-rag-grounding",
+          "position": "after_resolution"
+        }
+      ]
+    },
     "err-re-adding-an-import-after-the-formatter-strips-it-use-function": {
       "related_warning": [
         "war-re-adding-an-import-after-the-formatter-strips-it-use-function"
@@ -2299,9 +3252,49 @@
         "testing"
       ]
     },
+    "err-refactor-plan": {
+      "related_warning": [
+        "war-refactor-plan"
+      ],
+      "prevented_by": [
+        "tip-doc-gen",
+        "tip-high-tech-debt",
+        "tip-refactor-plan",
+        "tip-smart-test"
+      ],
+      "related_faq": [
+        "faq-refactor-plan"
+      ],
+      "tags": [
+        "refactor",
+        "tech-debt",
+        "complexity"
+      ],
+      "embeds": [
+        {
+          "id": "tip-doc-gen",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-high-tech-debt",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-refactor-plan",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-smart-test",
+          "position": "after_resolution"
+        }
+      ]
+    },
     "err-registry-count-assertions-are-scattered-across-test-files": {
       "related_warning": [
         "war-registry-count-assertions-are-scattered-across-test-files"
+      ],
+      "prevented_by": [
+        "tip-deep-review"
       ],
       "related_faq": [
         "faq-registry-count-assertions-are-scattered-across-test-files"
@@ -2310,6 +3303,12 @@
         "testing",
         "security",
         "git"
+      ],
+      "embeds": [
+        {
+          "id": "tip-deep-review",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-release-branches-carry-unmerged-commits-that-feature-branches": {
@@ -2322,6 +3321,70 @@
       "tags": [
         "git",
         "claude-code"
+      ]
+    },
+    "err-release-notes": {
+      "related_warning": [
+        "war-release-notes"
+      ],
+      "prevented_by": [
+        "tip-bug-predict",
+        "tip-release-notes",
+        "tip-security-audit"
+      ],
+      "related_faq": [
+        "faq-release-notes"
+      ],
+      "tags": [
+        "release",
+        "changelog",
+        "advisory"
+      ],
+      "embeds": [
+        {
+          "id": "tip-bug-predict",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-release-notes",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-security-audit",
+          "position": "after_resolution"
+        }
+      ]
+    },
+    "err-release-prep": {
+      "related_warning": [
+        "war-release-prep"
+      ],
+      "prevented_by": [
+        "tip-after-first-inspect",
+        "tip-agents",
+        "tip-release-prep"
+      ],
+      "related_faq": [
+        "faq-release-prep"
+      ],
+      "tags": [
+        "release",
+        "publishing",
+        "quality"
+      ],
+      "embeds": [
+        {
+          "id": "tip-after-first-inspect",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-agents",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-release-prep",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-release-published-workflow-dispatch-both-approved-for-pypi-env": {
@@ -2353,12 +3416,21 @@
       "related_warning": [
         "war-replacing-a-mixin-based-class-scatters-test-failures-across"
       ],
+      "prevented_by": [
+        "tip-deep-review"
+      ],
       "related_faq": [
         "faq-replacing-a-mixin-based-class-scatters-test-failures-across"
       ],
       "tags": [
         "testing",
         "git"
+      ],
+      "embeds": [
+        {
+          "id": "tip-deep-review",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-repo-merge-policy-may-restrict-merge-strategies": {
@@ -2395,12 +3467,55 @@
       "related_warning": [
         "war-research-subagents-can-hallucinate-sdk-signatures-introspect"
       ],
+      "prevented_by": [
+        "tip-bug-predict",
+        "tip-release-notes",
+        "tip-security-audit"
+      ],
       "related_faq": [
         "faq-research-subagents-can-hallucinate-sdk-signatures-introspect"
       ],
       "tags": [
         "imports",
         "claude-code"
+      ],
+      "embeds": [
+        {
+          "id": "tip-bug-predict",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-release-notes",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-security-audit",
+          "position": "after_resolution"
+        }
+      ]
+    },
+    "err-resilience": {
+      "related_warning": [
+        "war-resilience"
+      ],
+      "prevented_by": [
+        "tip-resilience"
+      ],
+      "related_faq": [
+        "faq-resilience"
+      ],
+      "tags": [
+        "resilience",
+        "fault-tolerance",
+        "retry",
+        "circuit-breaker",
+        "reliability"
+      ],
+      "embeds": [
+        {
+          "id": "tip-resilience",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-resultmessage-result-is-often-none-capture-assistantmessage": {
@@ -2502,11 +3617,30 @@
       "related_warning": [
         "war-sdk-agent-model-config-uses-stale-model-names"
       ],
+      "prevented_by": [
+        "tip-bug-predict",
+        "tip-release-notes",
+        "tip-security-audit"
+      ],
       "related_faq": [
         "faq-sdk-agent-model-config-uses-stale-model-names"
       ],
       "tags": [
         "testing"
+      ],
+      "embeds": [
+        {
+          "id": "tip-bug-predict",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-release-notes",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-security-audit",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-sdk-native-security-audit-workflow-swallows-subagent-findings": {
@@ -2538,6 +3672,50 @@
       "tags": [
         "testing",
         "security"
+      ]
+    },
+    "err-security-audit": {
+      "related_warning": [
+        "war-security-audit"
+      ],
+      "prevented_by": [
+        "tip-bug-predict",
+        "tip-doc-gen",
+        "tip-release-notes",
+        "tip-security-audit",
+        "tip-smart-test"
+      ],
+      "related_faq": [
+        "faq-security-audit"
+      ],
+      "tags": [
+        "security",
+        "audit",
+        "owasp",
+        "scanning",
+        "cve"
+      ],
+      "embeds": [
+        {
+          "id": "tip-bug-predict",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-doc-gen",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-release-notes",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-security-audit",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-smart-test",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-selective-hook-skip-with-skip-hookname-is-not-the-same-as-no": {
@@ -2619,6 +3797,69 @@
       ],
       "tags": [
         "claude-code"
+      ]
+    },
+    "err-smart-test": {
+      "related_warning": [
+        "war-smart-test"
+      ],
+      "prevented_by": [
+        "tip-deep-review",
+        "tip-doc-gen",
+        "tip-refactor-plan",
+        "tip-security-audit",
+        "tip-smart-test"
+      ],
+      "related_faq": [
+        "faq-smart-test"
+      ],
+      "tags": [
+        "tests",
+        "coverage",
+        "generation"
+      ],
+      "embeds": [
+        {
+          "id": "tip-deep-review",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-doc-gen",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-refactor-plan",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-security-audit",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-smart-test",
+          "position": "after_resolution"
+        }
+      ]
+    },
+    "err-spec-engine": {
+      "related_warning": [
+        "war-spec-engine"
+      ],
+      "prevented_by": [
+        "tip-spec-engine"
+      ],
+      "related_faq": [
+        "faq-spec-engine"
+      ],
+      "tags": [
+        "spec",
+        "planning"
+      ],
+      "embeds": [
+        {
+          "id": "tip-spec-engine",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-splitting-text-on-breaks-backtick-quoted-code-references": {
@@ -2766,6 +4007,27 @@
         "git"
       ]
     },
+    "err-telemetry": {
+      "related_warning": [
+        "war-telemetry"
+      ],
+      "prevented_by": [
+        "tip-telemetry"
+      ],
+      "related_faq": [
+        "faq-telemetry"
+      ],
+      "tags": [
+        "telemetry",
+        "metrics"
+      ],
+      "embeds": [
+        {
+          "id": "tip-telemetry",
+          "position": "after_resolution"
+        }
+      ]
+    },
     "err-template-generators-overwrite-hand-written-files": {
       "related_warning": [
         "war-template-generators-overwrite-hand-written-files"
@@ -2794,6 +4056,9 @@
       "related_warning": [
         "war-tests-for-optional-dep-code-need-pytest-importorskip-guards-in"
       ],
+      "prevented_by": [
+        "tip-smart-test"
+      ],
       "related_faq": [
         "faq-tests-for-optional-dep-code-need-pytest-importorskip-guards-in"
       ],
@@ -2801,6 +4066,12 @@
         "ci",
         "testing",
         "imports"
+      ],
+      "embeds": [
+        {
+          "id": "tip-smart-test",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-text-white-on-gradient-primary-sections-gets-overridden": {
@@ -3150,6 +4421,27 @@
         "windows"
       ]
     },
+    "err-wizards": {
+      "related_warning": [
+        "war-wizards"
+      ],
+      "prevented_by": [
+        "tip-wizards"
+      ],
+      "related_faq": [
+        "faq-wizards"
+      ],
+      "tags": [
+        "wizards",
+        "interactive"
+      ],
+      "embeds": [
+        {
+          "id": "tip-wizards",
+          "position": "after_resolution"
+        }
+      ]
+    },
     "err-wizards-call-workflows-internally-they-are-not-duplicates": {
       "related_warning": [
         "war-wizards-call-workflows-internally-they-are-not-duplicates"
@@ -3258,6 +4550,15 @@
       ],
       "tags": [
         "git"
+      ]
+    },
+    "faq-agents": {
+      "related_error": [
+        "err-agents"
+      ],
+      "tags": [
+        "agents",
+        "ai"
       ]
     },
     "faq-agents-skills-must-stay-synced-with-plugin-skills": {
@@ -3407,6 +4708,17 @@
         "claude-code"
       ]
     },
+    "faq-bug-predict": {
+      "related_error": [
+        "err-bug-predict"
+      ],
+      "tags": [
+        "bugs",
+        "prediction",
+        "scanning",
+        "race-condition"
+      ]
+    },
     "faq-bug-predict-dangerous-eval-flags-subprocess-exec": {
       "related_error": [
         "err-bug-predict-dangerous-eval-flags-subprocess-exec"
@@ -3519,6 +4831,15 @@
         "claude-code"
       ]
     },
+    "faq-cli": {
+      "related_error": [
+        "err-cli"
+      ],
+      "tags": [
+        "cli",
+        "commands"
+      ]
+    },
     "faq-clusterfuzz-dockerfile-copies-to-src-repo-but-also-copies": {
       "related_error": [
         "err-clusterfuzz-dockerfile-copies-to-src-repo-but-also-copies"
@@ -3543,6 +4864,17 @@
       ],
       "tags": [
         "claude-code"
+      ]
+    },
+    "faq-code-quality": {
+      "related_error": [
+        "err-code-quality"
+      ],
+      "tags": [
+        "review",
+        "quality",
+        "bugs",
+        "lint"
       ]
     },
     "faq-codecov-patch-0-usually-means-tests-skipped-not-failed": {
@@ -3606,6 +4938,15 @@
         "imports",
         "git",
         "python"
+      ]
+    },
+    "faq-configuration": {
+      "related_error": [
+        "err-configuration"
+      ],
+      "tags": [
+        "config",
+        "settings"
       ]
     },
     "faq-costreport-fields-are-named-not-positional": {
@@ -3673,6 +5014,18 @@
         "claude-code"
       ]
     },
+    "faq-deep-review": {
+      "related_error": [
+        "err-deep-review"
+      ],
+      "tags": [
+        "review",
+        "security",
+        "quality",
+        "tests",
+        "comprehensive-review"
+      ]
+    },
     "faq-deep-review-false-positives-verify-before-acting": {
       "related_error": [
         "err-deep-review-false-positives-verify-before-acting"
@@ -3731,6 +5084,16 @@
       ],
       "tags": [
         "packaging"
+      ]
+    },
+    "faq-doc-gen": {
+      "related_error": [
+        "err-doc-gen"
+      ],
+      "tags": [
+        "docs",
+        "documentation",
+        "generation"
       ]
     },
     "faq-dont-append-z-to-timezone-aware-isoformat": {
@@ -3816,6 +5179,16 @@
     "faq-fastembed-is-the-local-embeddings-path-that-passes-a-50mb": {
       "related_error": [
         "err-fastembed-is-the-local-embeddings-path-that-passes-a-50mb"
+      ]
+    },
+    "faq-fix-test": {
+      "related_error": [
+        "err-fix-test"
+      ],
+      "tags": [
+        "tests",
+        "debugging",
+        "fixes"
       ]
     },
     "faq-forced-anthropic-tool-use-is-the-cleanest-path-to-guaranteed": {
@@ -4086,6 +5459,27 @@
         "claude-code"
       ]
     },
+    "faq-help-system": {
+      "related_error": [
+        "err-help-system"
+      ],
+      "tags": [
+        "help",
+        "templates",
+        "docs"
+      ]
+    },
+    "faq-hooks": {
+      "related_error": [
+        "err-hooks"
+      ],
+      "tags": [
+        "hooks",
+        "webhooks",
+        "events",
+        "automation"
+      ]
+    },
     "faq-hot-reload-subsystem-was-1-038-lines-of-dead-code": {
       "related_error": [
         "err-hot-reload-subsystem-was-1-038-lines-of-dead-code"
@@ -4246,6 +5640,16 @@
         "claude-code"
       ]
     },
+    "faq-mcp-server": {
+      "related_error": [
+        "err-mcp-server"
+      ],
+      "tags": [
+        "mcp",
+        "tools",
+        "server"
+      ]
+    },
     "faq-mcp-server-process-doesnt-inherit-env-variables": {
       "related_error": [
         "err-mcp-server-process-doesnt-inherit-env-variables"
@@ -4278,6 +5682,15 @@
       "tags": [
         "testing",
         "claude-code"
+      ]
+    },
+    "faq-memory": {
+      "related_error": [
+        "err-memory"
+      ],
+      "tags": [
+        "memory",
+        "storage"
       ]
     },
     "faq-metadata-can-reach-a-retriever-with-zero-signal-if-the-sidecar": {
@@ -4330,6 +5743,16 @@
       "tags": [
         "testing",
         "imports"
+      ]
+    },
+    "faq-models": {
+      "related_error": [
+        "err-models"
+      ],
+      "tags": [
+        "models",
+        "auth",
+        "llm"
       ]
     },
     "faq-modeltier-has-two-copies-imports-must-match": {
@@ -4450,6 +5873,29 @@
         "err-openssf-scorecard-alerts-2-codereviewid-3-sastid-are-process"
       ]
     },
+    "faq-ops-dashboard": {
+      "related_error": [
+        "err-ops-dashboard"
+      ],
+      "tags": [
+        "ops",
+        "dashboard",
+        "runner",
+        "workflows",
+        "scope-picker",
+        "persistence",
+        "sse"
+      ]
+    },
+    "faq-orchestration": {
+      "related_error": [
+        "err-orchestration"
+      ],
+      "tags": [
+        "orchestration",
+        "teams"
+      ]
+    },
     "faq-orphan-help-dirs-are-deprecated-3-depth-output-adding-them-to": {
       "related_error": [
         "err-orphan-help-dirs-are-deprecated-3-depth-output-adding-them-to"
@@ -4548,6 +5994,15 @@
         "testing",
         "security",
         "windows"
+      ]
+    },
+    "faq-plugin": {
+      "related_error": [
+        "err-plugin"
+      ],
+      "tags": [
+        "plugin",
+        "claude-code"
       ]
     },
     "faq-plugin-read-skill-references-break-outside-the-plugin": {
@@ -4760,6 +6215,18 @@
         "packaging"
       ]
     },
+    "faq-rag-grounding": {
+      "related_error": [
+        "err-rag-grounding"
+      ],
+      "tags": [
+        "rag",
+        "retrieval",
+        "grounding",
+        "faithfulness",
+        "citation"
+      ]
+    },
     "faq-re-adding-an-import-after-the-formatter-strips-it-use-function": {
       "related_error": [
         "err-re-adding-an-import-after-the-formatter-strips-it-use-function"
@@ -4827,6 +6294,16 @@
         "testing"
       ]
     },
+    "faq-refactor-plan": {
+      "related_error": [
+        "err-refactor-plan"
+      ],
+      "tags": [
+        "refactor",
+        "tech-debt",
+        "complexity"
+      ]
+    },
     "faq-registry-count-assertions-are-scattered-across-test-files": {
       "related_error": [
         "err-registry-count-assertions-are-scattered-across-test-files"
@@ -4844,6 +6321,26 @@
       "tags": [
         "git",
         "claude-code"
+      ]
+    },
+    "faq-release-notes": {
+      "related_error": [
+        "err-release-notes"
+      ],
+      "tags": [
+        "release",
+        "changelog",
+        "advisory"
+      ]
+    },
+    "faq-release-prep": {
+      "related_error": [
+        "err-release-prep"
+      ],
+      "tags": [
+        "release",
+        "publishing",
+        "quality"
       ]
     },
     "faq-release-published-workflow-dispatch-both-approved-for-pypi-env": {
@@ -4902,6 +6399,18 @@
       "tags": [
         "imports",
         "claude-code"
+      ]
+    },
+    "faq-resilience": {
+      "related_error": [
+        "err-resilience"
+      ],
+      "tags": [
+        "resilience",
+        "fault-tolerance",
+        "retry",
+        "circuit-breaker",
+        "reliability"
       ]
     },
     "faq-resultmessage-result-is-often-none-capture-assistantmessage": {
@@ -4999,6 +6508,18 @@
         "security"
       ]
     },
+    "faq-security-audit": {
+      "related_error": [
+        "err-security-audit"
+      ],
+      "tags": [
+        "security",
+        "audit",
+        "owasp",
+        "scanning",
+        "cve"
+      ]
+    },
     "faq-selective-hook-skip-with-skip-hookname-is-not-the-same-as-no": {
       "related_error": [
         "err-selective-hook-skip-with-skip-hookname-is-not-the-same-as-no"
@@ -5060,6 +6581,25 @@
       ],
       "tags": [
         "claude-code"
+      ]
+    },
+    "faq-smart-test": {
+      "related_error": [
+        "err-smart-test"
+      ],
+      "tags": [
+        "tests",
+        "coverage",
+        "generation"
+      ]
+    },
+    "faq-spec-engine": {
+      "related_error": [
+        "err-spec-engine"
+      ],
+      "tags": [
+        "spec",
+        "planning"
       ]
     },
     "faq-squash-merge-deletes-the-remote-branch-subsequent-push-silently": {
@@ -5164,6 +6704,15 @@
       ],
       "tags": [
         "git"
+      ]
+    },
+    "faq-telemetry": {
+      "related_error": [
+        "err-telemetry"
+      ],
+      "tags": [
+        "telemetry",
+        "metrics"
       ]
     },
     "faq-template-generators-overwrite-hand-written-files": {
@@ -5475,6 +7024,15 @@
         "windows"
       ]
     },
+    "faq-wizards": {
+      "related_error": [
+        "err-wizards"
+      ],
+      "tags": [
+        "wizards",
+        "interactive"
+      ]
+    },
     "faq-wizards-call-workflows-internally-they-are-not-duplicates": {
       "related_error": [
         "err-wizards-call-workflows-internally-they-are-not-duplicates"
@@ -5521,6 +7079,53 @@
         "packaging"
       ]
     },
+    "not-agents": {
+      "related_reference": [
+        "ref-agents",
+        "ref-release-prep"
+      ],
+      "tags": [
+        "agents",
+        "ai"
+      ]
+    },
+    "not-bug-predict": {
+      "related_reference": [
+        "ref-bug-predict",
+        "ref-doc-gen",
+        "ref-release-notes",
+        "ref-security-audit",
+        "ref-tool-bug-predict"
+      ],
+      "tags": [
+        "bugs",
+        "prediction",
+        "scanning",
+        "race-condition"
+      ]
+    },
+    "not-cli": {
+      "related_reference": [
+        "ref-cli"
+      ],
+      "tags": [
+        "cli",
+        "commands"
+      ]
+    },
+    "not-code-quality": {
+      "related_reference": [
+        "ref-code-quality",
+        "ref-deep-review",
+        "ref-tool-code-review"
+      ],
+      "tags": [
+        "review",
+        "quality",
+        "bugs",
+        "lint"
+      ]
+    },
     "not-code-simplification": {
       "tags": [
         "philosophy",
@@ -5531,6 +7136,15 @@
       "tags": [
         "cli",
         "claude-code"
+      ]
+    },
+    "not-configuration": {
+      "related_reference": [
+        "ref-configuration"
+      ],
+      "tags": [
+        "config",
+        "settings"
       ]
     },
     "not-critical-rules": {
@@ -5558,12 +7172,19 @@
       ]
     },
     "not-decision-d4-code-is-the-source-of-truth": {
+      "related_reference": [
+        "ref-doc-gen",
+        "ref-rag-grounding"
+      ],
       "tags": [
         "architecture",
         "design-decision"
       ]
     },
     "not-decision-d5-intelligent-templates-the-engine": {
+      "related_reference": [
+        "ref-help-system"
+      ],
       "tags": [
         "architecture",
         "design-decision"
@@ -5575,10 +7196,135 @@
         "design-decision"
       ]
     },
+    "not-deep-review": {
+      "related_reference": [
+        "ref-code-quality",
+        "ref-deep-review",
+        "ref-fix-test",
+        "ref-smart-test",
+        "ref-tool-code-review"
+      ],
+      "tags": [
+        "review",
+        "security",
+        "quality",
+        "tests",
+        "comprehensive-review"
+      ]
+    },
+    "not-doc-gen": {
+      "related_reference": [
+        "ref-bug-predict",
+        "ref-doc-gen",
+        "ref-rag-grounding",
+        "ref-refactor-plan",
+        "ref-security-audit",
+        "ref-smart-test"
+      ],
+      "tags": [
+        "docs",
+        "documentation",
+        "generation"
+      ]
+    },
+    "not-fix-test": {
+      "related_reference": [
+        "ref-deep-review",
+        "ref-fix-test"
+      ],
+      "tags": [
+        "tests",
+        "debugging",
+        "fixes"
+      ]
+    },
+    "not-help-system": {
+      "related_reference": [
+        "ref-help-system"
+      ],
+      "tags": [
+        "help",
+        "templates",
+        "docs"
+      ]
+    },
+    "not-hooks": {
+      "related_reference": [
+        "ref-hooks"
+      ],
+      "tags": [
+        "hooks",
+        "webhooks",
+        "events",
+        "automation"
+      ]
+    },
     "not-markdown-formatting": {
       "tags": [
         "formatting",
         "standards"
+      ]
+    },
+    "not-mcp-server": {
+      "related_reference": [
+        "ref-mcp-server",
+        "ref-rag-grounding"
+      ],
+      "tags": [
+        "mcp",
+        "tools",
+        "server"
+      ]
+    },
+    "not-memory": {
+      "related_reference": [
+        "ref-memory"
+      ],
+      "tags": [
+        "memory",
+        "storage"
+      ]
+    },
+    "not-models": {
+      "related_reference": [
+        "ref-models"
+      ],
+      "tags": [
+        "models",
+        "auth",
+        "llm"
+      ]
+    },
+    "not-ops-dashboard": {
+      "related_reference": [
+        "ref-ops-dashboard"
+      ],
+      "tags": [
+        "ops",
+        "dashboard",
+        "runner",
+        "workflows",
+        "scope-picker",
+        "persistence",
+        "sse"
+      ]
+    },
+    "not-orchestration": {
+      "related_reference": [
+        "ref-orchestration"
+      ],
+      "tags": [
+        "orchestration",
+        "teams"
+      ]
+    },
+    "not-plugin": {
+      "related_reference": [
+        "ref-plugin"
+      ],
+      "tags": [
+        "plugin",
+        "claude-code"
       ]
     },
     "not-project-structure": {
@@ -5586,10 +7332,119 @@
         "architecture"
       ]
     },
+    "not-rag-grounding": {
+      "related_reference": [
+        "ref-doc-gen",
+        "ref-mcp-server",
+        "ref-rag-grounding"
+      ],
+      "tags": [
+        "rag",
+        "retrieval",
+        "grounding",
+        "faithfulness",
+        "citation"
+      ]
+    },
+    "not-refactor-plan": {
+      "related_reference": [
+        "ref-doc-gen",
+        "ref-refactor-plan",
+        "ref-smart-test"
+      ],
+      "tags": [
+        "refactor",
+        "tech-debt",
+        "complexity"
+      ]
+    },
+    "not-release-notes": {
+      "related_reference": [
+        "ref-bug-predict",
+        "ref-release-notes",
+        "ref-security-audit"
+      ],
+      "tags": [
+        "release",
+        "changelog",
+        "advisory"
+      ]
+    },
+    "not-release-prep": {
+      "related_reference": [
+        "ref-agents",
+        "ref-release-prep"
+      ],
+      "tags": [
+        "release",
+        "publishing",
+        "quality"
+      ]
+    },
+    "not-resilience": {
+      "related_reference": [
+        "ref-resilience"
+      ],
+      "tags": [
+        "resilience",
+        "fault-tolerance",
+        "retry",
+        "circuit-breaker",
+        "reliability"
+      ]
+    },
+    "not-security-audit": {
+      "related_reference": [
+        "ref-bug-predict",
+        "ref-doc-gen",
+        "ref-release-notes",
+        "ref-security-audit",
+        "ref-smart-test"
+      ],
+      "tags": [
+        "security",
+        "audit",
+        "owasp",
+        "scanning",
+        "cve"
+      ]
+    },
+    "not-smart-test": {
+      "related_reference": [
+        "ref-deep-review",
+        "ref-doc-gen",
+        "ref-refactor-plan",
+        "ref-security-audit",
+        "ref-smart-test"
+      ],
+      "tags": [
+        "tests",
+        "coverage",
+        "generation"
+      ]
+    },
     "not-socratic-interaction-rule": {
       "tags": [
         "philosophy",
         "ux"
+      ]
+    },
+    "not-spec-engine": {
+      "related_reference": [
+        "ref-spec-engine"
+      ],
+      "tags": [
+        "spec",
+        "planning"
+      ]
+    },
+    "not-telemetry": {
+      "related_reference": [
+        "ref-telemetry"
+      ],
+      "tags": [
+        "telemetry",
+        "metrics"
       ]
     },
     "not-term-cli": {
@@ -5642,10 +7497,33 @@
         "terminology"
       ]
     },
+    "not-wizards": {
+      "related_reference": [
+        "ref-wizards"
+      ],
+      "tags": [
+        "wizards",
+        "interactive"
+      ]
+    },
+    "qui-agents": {
+      "tags": [
+        "agents",
+        "ai"
+      ]
+    },
     "qui-browse-help": {
       "tags": [
         "cli",
         "help"
+      ]
+    },
+    "qui-bug-predict": {
+      "tags": [
+        "bugs",
+        "prediction",
+        "scanning",
+        "race-condition"
       ]
     },
     "qui-check-costs": {
@@ -5660,10 +7538,68 @@
         "setup"
       ]
     },
+    "qui-cli": {
+      "tags": [
+        "cli",
+        "commands"
+      ]
+    },
+    "qui-code-quality": {
+      "tags": [
+        "review",
+        "quality",
+        "bugs",
+        "lint"
+      ]
+    },
+    "qui-configuration": {
+      "tags": [
+        "config",
+        "settings"
+      ]
+    },
+    "qui-deep-review": {
+      "tags": [
+        "review",
+        "security",
+        "quality",
+        "tests",
+        "comprehensive-review"
+      ]
+    },
+    "qui-doc-gen": {
+      "tags": [
+        "docs",
+        "documentation",
+        "generation"
+      ]
+    },
+    "qui-fix-test": {
+      "tags": [
+        "tests",
+        "debugging",
+        "fixes"
+      ]
+    },
     "qui-generate-tests": {
       "tags": [
         "workflow",
         "testing"
+      ]
+    },
+    "qui-help-system": {
+      "tags": [
+        "help",
+        "templates",
+        "docs"
+      ]
+    },
+    "qui-hooks": {
+      "tags": [
+        "hooks",
+        "webhooks",
+        "events",
+        "automation"
       ]
     },
     "qui-install": {
@@ -5677,6 +7613,88 @@
         "claude-code"
       ]
     },
+    "qui-mcp-server": {
+      "tags": [
+        "mcp",
+        "tools",
+        "server"
+      ]
+    },
+    "qui-memory": {
+      "tags": [
+        "memory",
+        "storage"
+      ]
+    },
+    "qui-models": {
+      "tags": [
+        "models",
+        "auth",
+        "llm"
+      ]
+    },
+    "qui-ops-dashboard": {
+      "tags": [
+        "ops",
+        "dashboard",
+        "runner",
+        "workflows",
+        "scope-picker",
+        "persistence",
+        "sse"
+      ]
+    },
+    "qui-orchestration": {
+      "tags": [
+        "orchestration",
+        "teams"
+      ]
+    },
+    "qui-plugin": {
+      "tags": [
+        "plugin",
+        "claude-code"
+      ]
+    },
+    "qui-rag-grounding": {
+      "tags": [
+        "rag",
+        "retrieval",
+        "grounding",
+        "faithfulness",
+        "citation"
+      ]
+    },
+    "qui-refactor-plan": {
+      "tags": [
+        "refactor",
+        "tech-debt",
+        "complexity"
+      ]
+    },
+    "qui-release-notes": {
+      "tags": [
+        "release",
+        "changelog",
+        "advisory"
+      ]
+    },
+    "qui-release-prep": {
+      "tags": [
+        "release",
+        "publishing",
+        "quality"
+      ]
+    },
+    "qui-resilience": {
+      "tags": [
+        "resilience",
+        "fault-tolerance",
+        "retry",
+        "circuit-breaker",
+        "reliability"
+      ]
+    },
     "qui-run-code-review": {
       "tags": [
         "workflow",
@@ -5687,6 +7705,15 @@
       "tags": [
         "workflow",
         "security"
+      ]
+    },
+    "qui-security-audit": {
+      "tags": [
+        "security",
+        "audit",
+        "owasp",
+        "scanning",
+        "cve"
       ]
     },
     "qui-skill-attune-hub": {
@@ -5777,6 +7804,194 @@
       "tags": [
         "skill",
         "claude-code"
+      ]
+    },
+    "qui-smart-test": {
+      "tags": [
+        "tests",
+        "coverage",
+        "generation"
+      ]
+    },
+    "qui-spec-engine": {
+      "tags": [
+        "spec",
+        "planning"
+      ]
+    },
+    "qui-telemetry": {
+      "tags": [
+        "telemetry",
+        "metrics"
+      ]
+    },
+    "qui-wizards": {
+      "tags": [
+        "wizards",
+        "interactive"
+      ]
+    },
+    "ref-agents": {
+      "tags": [
+        "agents",
+        "ai"
+      ]
+    },
+    "ref-bug-predict": {
+      "tags": [
+        "bugs",
+        "prediction",
+        "scanning",
+        "race-condition"
+      ]
+    },
+    "ref-cli": {
+      "tags": [
+        "cli",
+        "commands"
+      ]
+    },
+    "ref-code-quality": {
+      "tags": [
+        "review",
+        "quality",
+        "bugs",
+        "lint"
+      ]
+    },
+    "ref-configuration": {
+      "tags": [
+        "config",
+        "settings"
+      ]
+    },
+    "ref-deep-review": {
+      "tags": [
+        "review",
+        "security",
+        "quality",
+        "tests",
+        "comprehensive-review"
+      ]
+    },
+    "ref-doc-gen": {
+      "tags": [
+        "docs",
+        "documentation",
+        "generation"
+      ]
+    },
+    "ref-fix-test": {
+      "tags": [
+        "tests",
+        "debugging",
+        "fixes"
+      ]
+    },
+    "ref-help-system": {
+      "tags": [
+        "help",
+        "templates",
+        "docs"
+      ]
+    },
+    "ref-hooks": {
+      "tags": [
+        "hooks",
+        "webhooks",
+        "events",
+        "automation"
+      ]
+    },
+    "ref-mcp-server": {
+      "tags": [
+        "mcp",
+        "tools",
+        "server"
+      ]
+    },
+    "ref-memory": {
+      "tags": [
+        "memory",
+        "storage"
+      ]
+    },
+    "ref-models": {
+      "tags": [
+        "models",
+        "auth",
+        "llm"
+      ]
+    },
+    "ref-ops-dashboard": {
+      "tags": [
+        "ops",
+        "dashboard",
+        "runner",
+        "workflows",
+        "scope-picker",
+        "persistence",
+        "sse"
+      ]
+    },
+    "ref-orchestration": {
+      "tags": [
+        "orchestration",
+        "teams"
+      ]
+    },
+    "ref-plugin": {
+      "tags": [
+        "plugin",
+        "claude-code"
+      ]
+    },
+    "ref-rag-grounding": {
+      "tags": [
+        "rag",
+        "retrieval",
+        "grounding",
+        "faithfulness",
+        "citation"
+      ]
+    },
+    "ref-refactor-plan": {
+      "tags": [
+        "refactor",
+        "tech-debt",
+        "complexity"
+      ]
+    },
+    "ref-release-notes": {
+      "tags": [
+        "release",
+        "changelog",
+        "advisory"
+      ]
+    },
+    "ref-release-prep": {
+      "tags": [
+        "release",
+        "publishing",
+        "quality"
+      ]
+    },
+    "ref-resilience": {
+      "tags": [
+        "resilience",
+        "fault-tolerance",
+        "retry",
+        "circuit-breaker",
+        "reliability"
+      ]
+    },
+    "ref-security-audit": {
+      "tags": [
+        "security",
+        "audit",
+        "owasp",
+        "scanning",
+        "cve"
       ]
     },
     "ref-skill-attune-hub": {
@@ -6036,6 +8251,25 @@
         "plugin"
       ]
     },
+    "ref-smart-test": {
+      "tags": [
+        "tests",
+        "coverage",
+        "generation"
+      ]
+    },
+    "ref-spec-engine": {
+      "tags": [
+        "spec",
+        "planning"
+      ]
+    },
+    "ref-telemetry": {
+      "tags": [
+        "telemetry",
+        "metrics"
+      ]
+    },
     "ref-tool-analyze-batch": {
       "tags": [
         "mcp",
@@ -6292,10 +8526,30 @@
         "workflow"
       ]
     },
+    "ref-wizards": {
+      "tags": [
+        "wizards",
+        "interactive"
+      ]
+    },
+    "tas-agents": {
+      "tags": [
+        "agents",
+        "ai"
+      ]
+    },
     "tas-browse-help-docs": {
       "tags": [
         "cli",
         "help"
+      ]
+    },
+    "tas-bug-predict": {
+      "tags": [
+        "bugs",
+        "prediction",
+        "scanning",
+        "race-condition"
       ]
     },
     "tas-check-auth-status": {
@@ -6304,10 +8558,68 @@
         "auth"
       ]
     },
+    "tas-cli": {
+      "tags": [
+        "cli",
+        "commands"
+      ]
+    },
+    "tas-code-quality": {
+      "tags": [
+        "review",
+        "quality",
+        "bugs",
+        "lint"
+      ]
+    },
+    "tas-configuration": {
+      "tags": [
+        "config",
+        "settings"
+      ]
+    },
+    "tas-deep-review": {
+      "tags": [
+        "review",
+        "security",
+        "quality",
+        "tests",
+        "comprehensive-review"
+      ]
+    },
+    "tas-doc-gen": {
+      "tags": [
+        "docs",
+        "documentation",
+        "generation"
+      ]
+    },
     "tas-export-telemetry": {
       "tags": [
         "cli",
         "telemetry"
+      ]
+    },
+    "tas-fix-test": {
+      "tags": [
+        "tests",
+        "debugging",
+        "fixes"
+      ]
+    },
+    "tas-help-system": {
+      "tags": [
+        "help",
+        "templates",
+        "docs"
+      ]
+    },
+    "tas-hooks": {
+      "tags": [
+        "hooks",
+        "webhooks",
+        "events",
+        "automation"
       ]
     },
     "tas-install-plugin": {
@@ -6323,6 +8635,88 @@
         "memory"
       ]
     },
+    "tas-mcp-server": {
+      "tags": [
+        "mcp",
+        "tools",
+        "server"
+      ]
+    },
+    "tas-memory": {
+      "tags": [
+        "memory",
+        "storage"
+      ]
+    },
+    "tas-models": {
+      "tags": [
+        "models",
+        "auth",
+        "llm"
+      ]
+    },
+    "tas-ops-dashboard": {
+      "tags": [
+        "ops",
+        "dashboard",
+        "runner",
+        "workflows",
+        "scope-picker",
+        "persistence",
+        "sse"
+      ]
+    },
+    "tas-orchestration": {
+      "tags": [
+        "orchestration",
+        "teams"
+      ]
+    },
+    "tas-plugin": {
+      "tags": [
+        "plugin",
+        "claude-code"
+      ]
+    },
+    "tas-rag-grounding": {
+      "tags": [
+        "rag",
+        "retrieval",
+        "grounding",
+        "faithfulness",
+        "citation"
+      ]
+    },
+    "tas-refactor-plan": {
+      "tags": [
+        "refactor",
+        "tech-debt",
+        "complexity"
+      ]
+    },
+    "tas-release-notes": {
+      "tags": [
+        "release",
+        "changelog",
+        "advisory"
+      ]
+    },
+    "tas-release-prep": {
+      "tags": [
+        "release",
+        "publishing",
+        "quality"
+      ]
+    },
+    "tas-resilience": {
+      "tags": [
+        "resilience",
+        "fault-tolerance",
+        "retry",
+        "circuit-breaker",
+        "reliability"
+      ]
+    },
     "tas-run-doctor": {
       "tags": [
         "cli",
@@ -6333,6 +8727,34 @@
       "tags": [
         "cli",
         "workflow"
+      ]
+    },
+    "tas-security-audit": {
+      "tags": [
+        "security",
+        "audit",
+        "owasp",
+        "scanning",
+        "cve"
+      ]
+    },
+    "tas-smart-test": {
+      "tags": [
+        "tests",
+        "coverage",
+        "generation"
+      ]
+    },
+    "tas-spec-engine": {
+      "tags": [
+        "spec",
+        "planning"
+      ]
+    },
+    "tas-telemetry": {
+      "tags": [
+        "telemetry",
+        "metrics"
       ]
     },
     "tas-use-attune-hub": {
@@ -6470,6 +8892,12 @@
         "task"
       ]
     },
+    "tas-wizards": {
+      "tags": [
+        "wizards",
+        "interactive"
+      ]
+    },
     "tip-after-10-inspects": {
       "tags": [
         "discovery"
@@ -6530,9 +8958,73 @@
         "workflow-transition"
       ]
     },
+    "tip-agents": {
+      "tags": [
+        "agents",
+        "ai"
+      ]
+    },
+    "tip-bug-predict": {
+      "tags": [
+        "bugs",
+        "prediction",
+        "scanning",
+        "race-condition"
+      ]
+    },
+    "tip-cli": {
+      "tags": [
+        "cli",
+        "commands"
+      ]
+    },
+    "tip-code-quality": {
+      "tags": [
+        "review",
+        "quality",
+        "bugs",
+        "lint"
+      ]
+    },
+    "tip-configuration": {
+      "tags": [
+        "config",
+        "settings"
+      ]
+    },
     "tip-cost-savings": {
       "tags": [
         "discovery"
+      ]
+    },
+    "tip-deep-review": {
+      "tags": [
+        "review",
+        "security",
+        "quality",
+        "tests",
+        "comprehensive-review"
+      ]
+    },
+    "tip-doc-gen": {
+      "tags": [
+        "docs",
+        "documentation",
+        "generation"
+      ]
+    },
+    "tip-fix-test": {
+      "tags": [
+        "tests",
+        "debugging",
+        "fixes"
+      ]
+    },
+    "tip-help-system": {
+      "tags": [
+        "help",
+        "templates",
+        "docs"
       ]
     },
     "tip-high-tech-debt": {
@@ -6540,14 +9032,152 @@
         "discovery"
       ]
     },
+    "tip-hooks": {
+      "tags": [
+        "hooks",
+        "webhooks",
+        "events",
+        "automation"
+      ]
+    },
+    "tip-mcp-server": {
+      "tags": [
+        "mcp",
+        "tools",
+        "server"
+      ]
+    },
+    "tip-memory": {
+      "tags": [
+        "memory",
+        "storage"
+      ]
+    },
+    "tip-models": {
+      "tags": [
+        "models",
+        "auth",
+        "llm"
+      ]
+    },
     "tip-no-patterns": {
       "tags": [
         "discovery"
       ]
     },
+    "tip-ops-dashboard": {
+      "tags": [
+        "ops",
+        "dashboard",
+        "runner",
+        "workflows",
+        "scope-picker",
+        "persistence",
+        "sse"
+      ]
+    },
+    "tip-orchestration": {
+      "tags": [
+        "orchestration",
+        "teams"
+      ]
+    },
+    "tip-plugin": {
+      "tags": [
+        "plugin",
+        "claude-code"
+      ]
+    },
+    "tip-rag-grounding": {
+      "tags": [
+        "rag",
+        "retrieval",
+        "grounding",
+        "faithfulness",
+        "citation"
+      ]
+    },
+    "tip-refactor-plan": {
+      "tags": [
+        "refactor",
+        "tech-debt",
+        "complexity"
+      ]
+    },
+    "tip-release-notes": {
+      "tags": [
+        "release",
+        "changelog",
+        "advisory"
+      ]
+    },
+    "tip-release-prep": {
+      "tags": [
+        "release",
+        "publishing",
+        "quality"
+      ]
+    },
+    "tip-resilience": {
+      "tags": [
+        "resilience",
+        "fault-tolerance",
+        "retry",
+        "circuit-breaker",
+        "reliability"
+      ]
+    },
+    "tip-security-audit": {
+      "tags": [
+        "security",
+        "audit",
+        "owasp",
+        "scanning",
+        "cve"
+      ]
+    },
+    "tip-smart-test": {
+      "tags": [
+        "tests",
+        "coverage",
+        "generation"
+      ]
+    },
+    "tip-spec-engine": {
+      "tags": [
+        "spec",
+        "planning"
+      ]
+    },
+    "tip-telemetry": {
+      "tags": [
+        "telemetry",
+        "metrics"
+      ]
+    },
     "tip-weekly-review": {
       "tags": [
         "discovery"
+      ]
+    },
+    "tip-wizards": {
+      "tags": [
+        "wizards",
+        "interactive"
+      ]
+    },
+    "tro-agents": {
+      "tags": [
+        "agents",
+        "ai"
+      ]
+    },
+    "tro-bug-predict": {
+      "tags": [
+        "bugs",
+        "prediction",
+        "scanning",
+        "race-condition"
       ]
     },
     "tro-ci-tests-timeout": {
@@ -6557,11 +9187,69 @@
         "windows"
       ]
     },
+    "tro-cli": {
+      "tags": [
+        "cli",
+        "commands"
+      ]
+    },
+    "tro-code-quality": {
+      "tags": [
+        "review",
+        "quality",
+        "bugs",
+        "lint"
+      ]
+    },
+    "tro-configuration": {
+      "tags": [
+        "config",
+        "settings"
+      ]
+    },
+    "tro-deep-review": {
+      "tags": [
+        "review",
+        "security",
+        "quality",
+        "tests",
+        "comprehensive-review"
+      ]
+    },
+    "tro-doc-gen": {
+      "tags": [
+        "docs",
+        "documentation",
+        "generation"
+      ]
+    },
+    "tro-fix-test": {
+      "tags": [
+        "tests",
+        "debugging",
+        "fixes"
+      ]
+    },
     "tro-gpg-signing-fails": {
       "tags": [
         "git",
         "macos",
         "setup"
+      ]
+    },
+    "tro-help-system": {
+      "tags": [
+        "help",
+        "templates",
+        "docs"
+      ]
+    },
+    "tro-hooks": {
+      "tags": [
+        "hooks",
+        "webhooks",
+        "events",
+        "automation"
       ]
     },
     "tro-import-error-attune": {
@@ -6571,11 +9259,54 @@
         "setup"
       ]
     },
+    "tro-mcp-server": {
+      "tags": [
+        "mcp",
+        "tools",
+        "server"
+      ]
+    },
     "tro-mcp-server-not-responding": {
       "tags": [
         "mcp",
         "claude-code",
         "setup"
+      ]
+    },
+    "tro-memory": {
+      "tags": [
+        "memory",
+        "storage"
+      ]
+    },
+    "tro-models": {
+      "tags": [
+        "models",
+        "auth",
+        "llm"
+      ]
+    },
+    "tro-ops-dashboard": {
+      "tags": [
+        "ops",
+        "dashboard",
+        "runner",
+        "workflows",
+        "scope-picker",
+        "persistence",
+        "sse"
+      ]
+    },
+    "tro-orchestration": {
+      "tags": [
+        "orchestration",
+        "teams"
+      ]
+    },
+    "tro-plugin": {
+      "tags": [
+        "plugin",
+        "claude-code"
       ]
     },
     "tro-plugin-not-found": {
@@ -6590,6 +9321,79 @@
         "git",
         "python",
         "ci"
+      ]
+    },
+    "tro-rag-grounding": {
+      "tags": [
+        "rag",
+        "retrieval",
+        "grounding",
+        "faithfulness",
+        "citation"
+      ]
+    },
+    "tro-refactor-plan": {
+      "tags": [
+        "refactor",
+        "tech-debt",
+        "complexity"
+      ]
+    },
+    "tro-release-notes": {
+      "tags": [
+        "release",
+        "changelog",
+        "advisory"
+      ]
+    },
+    "tro-release-prep": {
+      "tags": [
+        "release",
+        "publishing",
+        "quality"
+      ]
+    },
+    "tro-resilience": {
+      "tags": [
+        "resilience",
+        "fault-tolerance",
+        "retry",
+        "circuit-breaker",
+        "reliability"
+      ]
+    },
+    "tro-security-audit": {
+      "tags": [
+        "security",
+        "audit",
+        "owasp",
+        "scanning",
+        "cve"
+      ]
+    },
+    "tro-smart-test": {
+      "tags": [
+        "tests",
+        "coverage",
+        "generation"
+      ]
+    },
+    "tro-spec-engine": {
+      "tags": [
+        "spec",
+        "planning"
+      ]
+    },
+    "tro-telemetry": {
+      "tags": [
+        "telemetry",
+        "metrics"
+      ]
+    },
+    "tro-wizards": {
+      "tags": [
+        "wizards",
+        "interactive"
       ]
     },
     "tro-workflow-not-running": {
@@ -6636,6 +9440,15 @@
       ],
       "tags": [
         "git"
+      ]
+    },
+    "war-agents": {
+      "related_error": [
+        "err-agents"
+      ],
+      "tags": [
+        "agents",
+        "ai"
       ]
     },
     "war-agents-skills-must-stay-synced-with-plugin-skills": {
@@ -6728,6 +9541,17 @@
         "err-bg-var-primary-bg-opacity-10-is-invisible-in-dark-mode"
       ]
     },
+    "war-bug-predict": {
+      "related_error": [
+        "err-bug-predict"
+      ],
+      "tags": [
+        "bugs",
+        "prediction",
+        "scanning",
+        "race-condition"
+      ]
+    },
     "war-bug-predict-dangerous-eval-flags-subprocess-exec": {
       "related_error": [
         "err-bug-predict-dangerous-eval-flags-subprocess-exec"
@@ -6809,6 +9633,15 @@
         "claude-code"
       ]
     },
+    "war-cli": {
+      "related_error": [
+        "err-cli"
+      ],
+      "tags": [
+        "cli",
+        "commands"
+      ]
+    },
     "war-clusterfuzz-dockerfile-copies-to-src-repo-but-also-copies": {
       "related_error": [
         "err-clusterfuzz-dockerfile-copies-to-src-repo-but-also-copies"
@@ -6825,6 +9658,17 @@
         "security",
         "imports",
         "packaging"
+      ]
+    },
+    "war-code-quality": {
+      "related_error": [
+        "err-code-quality"
+      ],
+      "tags": [
+        "review",
+        "quality",
+        "bugs",
+        "lint"
       ]
     },
     "war-codecov-patch-0-usually-means-tests-skipped-not-failed": {
@@ -6861,6 +9705,15 @@
       ],
       "tags": [
         "claude-code"
+      ]
+    },
+    "war-configuration": {
+      "related_error": [
+        "err-configuration"
+      ],
+      "tags": [
+        "config",
+        "settings"
       ]
     },
     "war-costreport-fields-are-named-not-positional": {
@@ -6911,6 +9764,18 @@
         "claude-code"
       ]
     },
+    "war-deep-review": {
+      "related_error": [
+        "err-deep-review"
+      ],
+      "tags": [
+        "review",
+        "security",
+        "quality",
+        "tests",
+        "comprehensive-review"
+      ]
+    },
     "war-deep-review-false-positives-verify-before-acting": {
       "related_error": [
         "err-deep-review-false-positives-verify-before-acting"
@@ -6951,6 +9816,16 @@
       ],
       "tags": [
         "packaging"
+      ]
+    },
+    "war-doc-gen": {
+      "related_error": [
+        "err-doc-gen"
+      ],
+      "tags": [
+        "docs",
+        "documentation",
+        "generation"
       ]
     },
     "war-dont-append-z-to-timezone-aware-isoformat": {
@@ -7020,6 +9895,16 @@
     "war-fastembed-is-the-local-embeddings-path-that-passes-a-50mb": {
       "related_error": [
         "err-fastembed-is-the-local-embeddings-path-that-passes-a-50mb"
+      ]
+    },
+    "war-fix-test": {
+      "related_error": [
+        "err-fix-test"
+      ],
+      "tags": [
+        "tests",
+        "debugging",
+        "fixes"
       ]
     },
     "war-forced-anthropic-tool-use-is-the-cleanest-path-to-guaranteed": {
@@ -7249,6 +10134,27 @@
         "claude-code"
       ]
     },
+    "war-help-system": {
+      "related_error": [
+        "err-help-system"
+      ],
+      "tags": [
+        "help",
+        "templates",
+        "docs"
+      ]
+    },
+    "war-hooks": {
+      "related_error": [
+        "err-hooks"
+      ],
+      "tags": [
+        "hooks",
+        "webhooks",
+        "events",
+        "automation"
+      ]
+    },
     "war-hot-reload-subsystem-was-1-038-lines-of-dead-code": {
       "related_error": [
         "err-hot-reload-subsystem-was-1-038-lines-of-dead-code"
@@ -7361,12 +10267,31 @@
         "claude-code"
       ]
     },
+    "war-mcp-server": {
+      "related_error": [
+        "err-mcp-server"
+      ],
+      "tags": [
+        "mcp",
+        "tools",
+        "server"
+      ]
+    },
     "war-mcp-tool-renames-propagate-to-skill-docs": {
       "related_error": [
         "err-mcp-tool-renames-propagate-to-skill-docs"
       ],
       "tags": [
         "claude-code"
+      ]
+    },
+    "war-memory": {
+      "related_error": [
+        "err-memory"
+      ],
+      "tags": [
+        "memory",
+        "storage"
       ]
     },
     "war-metadata-can-reach-a-retriever-with-zero-signal-if-the-sidecar": {
@@ -7383,6 +10308,16 @@
       ],
       "tags": [
         "git"
+      ]
+    },
+    "war-models": {
+      "related_error": [
+        "err-models"
+      ],
+      "tags": [
+        "models",
+        "auth",
+        "llm"
       ]
     },
     "war-modeltier-has-two-copies-imports-must-match": {
@@ -7494,6 +10429,29 @@
         "err-openssf-scorecard-alerts-2-codereviewid-3-sastid-are-process"
       ]
     },
+    "war-ops-dashboard": {
+      "related_error": [
+        "err-ops-dashboard"
+      ],
+      "tags": [
+        "ops",
+        "dashboard",
+        "runner",
+        "workflows",
+        "scope-picker",
+        "persistence",
+        "sse"
+      ]
+    },
+    "war-orchestration": {
+      "related_error": [
+        "err-orchestration"
+      ],
+      "tags": [
+        "orchestration",
+        "teams"
+      ]
+    },
     "war-orphan-help-dirs-are-deprecated-3-depth-output-adding-them-to": {
       "related_error": [
         "err-orphan-help-dirs-are-deprecated-3-depth-output-adding-them-to"
@@ -7564,6 +10522,15 @@
         "testing",
         "security",
         "windows"
+      ]
+    },
+    "war-plugin": {
+      "related_error": [
+        "err-plugin"
+      ],
+      "tags": [
+        "plugin",
+        "claude-code"
       ]
     },
     "war-plugin-read-skill-references-break-outside-the-plugin": {
@@ -7741,6 +10708,18 @@
         "packaging"
       ]
     },
+    "war-rag-grounding": {
+      "related_error": [
+        "err-rag-grounding"
+      ],
+      "tags": [
+        "rag",
+        "retrieval",
+        "grounding",
+        "faithfulness",
+        "citation"
+      ]
+    },
     "war-re-adding-an-import-after-the-formatter-strips-it-use-function": {
       "related_error": [
         "err-re-adding-an-import-after-the-formatter-strips-it-use-function"
@@ -7791,6 +10770,16 @@
         "testing"
       ]
     },
+    "war-refactor-plan": {
+      "related_error": [
+        "err-refactor-plan"
+      ],
+      "tags": [
+        "refactor",
+        "tech-debt",
+        "complexity"
+      ]
+    },
     "war-registry-count-assertions-are-scattered-across-test-files": {
       "related_error": [
         "err-registry-count-assertions-are-scattered-across-test-files"
@@ -7808,6 +10797,26 @@
       "tags": [
         "git",
         "claude-code"
+      ]
+    },
+    "war-release-notes": {
+      "related_error": [
+        "err-release-notes"
+      ],
+      "tags": [
+        "release",
+        "changelog",
+        "advisory"
+      ]
+    },
+    "war-release-prep": {
+      "related_error": [
+        "err-release-prep"
+      ],
+      "tags": [
+        "release",
+        "publishing",
+        "quality"
       ]
     },
     "war-release-published-workflow-dispatch-both-approved-for-pypi-env": {
@@ -7866,6 +10875,18 @@
       "tags": [
         "imports",
         "claude-code"
+      ]
+    },
+    "war-resilience": {
+      "related_error": [
+        "err-resilience"
+      ],
+      "tags": [
+        "resilience",
+        "fault-tolerance",
+        "retry",
+        "circuit-breaker",
+        "reliability"
       ]
     },
     "war-resultmessage-result-is-often-none-capture-assistantmessage": {
@@ -7934,6 +10955,18 @@
         "security"
       ]
     },
+    "war-security-audit": {
+      "related_error": [
+        "err-security-audit"
+      ],
+      "tags": [
+        "security",
+        "audit",
+        "owasp",
+        "scanning",
+        "cve"
+      ]
+    },
     "war-semantic-cache-70-hit-rate-claim-was-unmeasured": {
       "related_error": [
         "err-semantic-cache-70-hit-rate-claim-was-unmeasured"
@@ -7977,6 +11010,25 @@
       ],
       "tags": [
         "claude-code"
+      ]
+    },
+    "war-smart-test": {
+      "related_error": [
+        "err-smart-test"
+      ],
+      "tags": [
+        "tests",
+        "coverage",
+        "generation"
+      ]
+    },
+    "war-spec-engine": {
+      "related_error": [
+        "err-spec-engine"
+      ],
+      "tags": [
+        "spec",
+        "planning"
       ]
     },
     "war-splitting-text-on-breaks-backtick-quoted-code-references": {
@@ -8072,6 +11124,15 @@
       ],
       "tags": [
         "git"
+      ]
+    },
+    "war-telemetry": {
+      "related_error": [
+        "err-telemetry"
+      ],
+      "tags": [
+        "telemetry",
+        "metrics"
       ]
     },
     "war-template-generators-overwrite-hand-written-files": {
@@ -8290,6 +11351,15 @@
         "windows"
       ]
     },
+    "war-wizards": {
+      "related_error": [
+        "err-wizards"
+      ],
+      "tags": [
+        "wizards",
+        "interactive"
+      ]
+    },
     "war-wizards-call-workflows-internally-they-are-not-duplicates": {
       "related_error": [
         "err-wizards-call-workflows-internally-they-are-not-duplicates"
@@ -8338,6 +11408,45 @@
     }
   },
   "tag_index": {
+    "advisory": [
+      "com-release-notes",
+      "con-release-notes",
+      "err-release-notes",
+      "faq-release-notes",
+      "not-release-notes",
+      "qui-release-notes",
+      "ref-release-notes",
+      "tas-release-notes",
+      "tip-release-notes",
+      "tro-release-notes",
+      "war-release-notes"
+    ],
+    "agents": [
+      "com-agents",
+      "con-agents",
+      "err-agents",
+      "faq-agents",
+      "not-agents",
+      "qui-agents",
+      "ref-agents",
+      "tas-agents",
+      "tip-agents",
+      "tro-agents",
+      "war-agents"
+    ],
+    "ai": [
+      "com-agents",
+      "con-agents",
+      "err-agents",
+      "faq-agents",
+      "not-agents",
+      "qui-agents",
+      "ref-agents",
+      "tas-agents",
+      "tip-agents",
+      "tro-agents",
+      "war-agents"
+    ],
     "architecture": [
       "com-workflow-vs-wizard",
       "con-audience-adaptation",
@@ -8354,17 +11463,89 @@
       "not-decision-d6-proof-of-concept-lessons-learned-error-templates",
       "not-project-structure"
     ],
+    "audit": [
+      "com-security-audit",
+      "con-security-audit",
+      "err-security-audit",
+      "faq-security-audit",
+      "not-security-audit",
+      "qui-security-audit",
+      "ref-security-audit",
+      "tas-security-audit",
+      "tip-security-audit",
+      "tro-security-audit",
+      "war-security-audit"
+    ],
     "auth": [
       "com-auth-strategies",
+      "com-models",
+      "con-models",
+      "err-models",
+      "faq-models",
+      "not-models",
+      "qui-models",
+      "ref-models",
       "tas-check-auth-status",
-      "tro-workflow-not-running"
+      "tas-models",
+      "tip-models",
+      "tro-models",
+      "tro-workflow-not-running",
+      "war-models"
     ],
     "auto-discovered": [
       "con-tool-coach",
       "con-tool-rag-code-gen"
     ],
+    "automation": [
+      "com-hooks",
+      "con-hooks",
+      "err-hooks",
+      "faq-hooks",
+      "not-hooks",
+      "qui-hooks",
+      "ref-hooks",
+      "tas-hooks",
+      "tip-hooks",
+      "tro-hooks",
+      "war-hooks"
+    ],
     "bugs": [
-      "con-tool-bug-predict"
+      "com-bug-predict",
+      "com-code-quality",
+      "con-bug-predict",
+      "con-code-quality",
+      "con-tool-bug-predict",
+      "err-bug-predict",
+      "err-code-quality",
+      "faq-bug-predict",
+      "faq-code-quality",
+      "not-bug-predict",
+      "not-code-quality",
+      "qui-bug-predict",
+      "qui-code-quality",
+      "ref-bug-predict",
+      "ref-code-quality",
+      "tas-bug-predict",
+      "tas-code-quality",
+      "tip-bug-predict",
+      "tip-code-quality",
+      "tro-bug-predict",
+      "tro-code-quality",
+      "war-bug-predict",
+      "war-code-quality"
+    ],
+    "changelog": [
+      "com-release-notes",
+      "con-release-notes",
+      "err-release-notes",
+      "faq-release-notes",
+      "not-release-notes",
+      "qui-release-notes",
+      "ref-release-notes",
+      "tas-release-notes",
+      "tip-release-notes",
+      "tro-release-notes",
+      "war-release-notes"
     ],
     "ci": [
       "con-tool-release-prep",
@@ -8448,8 +11629,36 @@
       "war-yaml-run-values-with-colons-cause-parse-errors",
       "war-zsh-has-status-as-a-read-only-builtin-variable"
     ],
+    "circuit-breaker": [
+      "com-resilience",
+      "con-resilience",
+      "err-resilience",
+      "faq-resilience",
+      "not-resilience",
+      "qui-resilience",
+      "ref-resilience",
+      "tas-resilience",
+      "tip-resilience",
+      "tro-resilience",
+      "war-resilience"
+    ],
+    "citation": [
+      "com-rag-grounding",
+      "con-rag-grounding",
+      "err-rag-grounding",
+      "faq-rag-grounding",
+      "not-rag-grounding",
+      "qui-rag-grounding",
+      "ref-rag-grounding",
+      "tas-rag-grounding",
+      "tip-rag-grounding",
+      "tro-rag-grounding",
+      "war-rag-grounding"
+    ],
     "claude-code": [
       "com-cli-vs-claude-code",
+      "com-plugin",
+      "con-plugin",
       "err-adding-a-plugin-skill-has-three-enforcement-gates-not-one",
       "err-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that",
       "err-agents-skills-must-stay-synced-with-plugin-skills",
@@ -8493,6 +11702,7 @@
       "err-metapathfinder-find-module-load-module-is-dead-in-python-3-12",
       "err-mixin-classes-inherit-self-workspace-root-at-runtime-not-at",
       "err-new-mcp-handlers-must-match-the-validation-pattern-of-adjacent",
+      "err-plugin",
       "err-plugin-read-skill-references-break-outside-the-plugin",
       "err-pre-commit-auto-fix-requires-re-stage-before-retry",
       "err-pre-commit-black-unstaged-files-re-stage-after-failure",
@@ -8567,6 +11777,7 @@
       "faq-metapathfinder-find-module-load-module-is-dead-in-python-3-12",
       "faq-mixin-classes-inherit-self-workspace-root-at-runtime-not-at",
       "faq-new-mcp-handlers-must-match-the-validation-pattern-of-adjacent",
+      "faq-plugin",
       "faq-plugin-read-skill-references-break-outside-the-plugin",
       "faq-pre-commit-auto-fix-requires-re-stage-before-retry",
       "faq-pre-commit-black-unstaged-files-re-stage-after-failure",
@@ -8599,7 +11810,9 @@
       "faq-version-bumps-must-update-7-files-not-just-pyproject-toml",
       "faq-vs-code-extension-reads-mcp-json-at-project-root-not-claude-mcp",
       "not-command-hubs",
+      "not-plugin",
       "qui-install-plugin",
+      "qui-plugin",
       "qui-skill-attune-hub",
       "qui-skill-bug-predict",
       "qui-skill-coach",
@@ -8615,8 +11828,12 @@
       "qui-skill-smart-test",
       "qui-skill-spec",
       "qui-skill-workflow-orchestration",
+      "ref-plugin",
       "tas-install-plugin",
+      "tas-plugin",
+      "tip-plugin",
       "tro-mcp-server-not-responding",
+      "tro-plugin",
       "tro-plugin-not-found",
       "war-adding-a-plugin-skill-has-three-enforcement-gates-not-one",
       "war-agents-skills-must-stay-synced-with-plugin-skills",
@@ -8648,6 +11865,7 @@
       "war-mcp-json-python-resolves-to-pyenv-shim-not-project-venv",
       "war-mcp-tool-renames-propagate-to-skill-docs",
       "war-new-mcp-handlers-must-match-the-validation-pattern-of-adjacent",
+      "war-plugin",
       "war-plugin-read-skill-references-break-outside-the-plugin",
       "war-pre-commit-auto-fix-requires-re-stage-before-retry",
       "war-pre-commit-black-unstaged-files-re-stage-after-failure",
@@ -8673,17 +11891,28 @@
       "war-version-bumps-must-update-7-files-not-just-pyproject-toml"
     ],
     "cli": [
+      "com-cli",
       "com-cli-vs-claude-code",
+      "con-cli",
+      "err-cli",
+      "faq-cli",
+      "not-cli",
       "not-command-hubs",
       "qui-browse-help",
       "qui-check-costs",
       "qui-check-health",
+      "qui-cli",
+      "ref-cli",
       "tas-browse-help-docs",
       "tas-check-auth-status",
+      "tas-cli",
       "tas-export-telemetry",
       "tas-manage-lessons",
       "tas-run-doctor",
-      "tas-run-workflow"
+      "tas-run-workflow",
+      "tip-cli",
+      "tro-cli",
+      "war-cli"
     ],
     "code-quality": [
       "not-code-simplification",
@@ -8692,8 +11921,58 @@
     "code-smells": [
       "con-tool-refactor-plan"
     ],
+    "commands": [
+      "com-cli",
+      "con-cli",
+      "err-cli",
+      "faq-cli",
+      "not-cli",
+      "qui-cli",
+      "ref-cli",
+      "tas-cli",
+      "tip-cli",
+      "tro-cli",
+      "war-cli"
+    ],
     "complexity": [
-      "con-tool-refactor-plan"
+      "com-refactor-plan",
+      "con-refactor-plan",
+      "con-tool-refactor-plan",
+      "err-refactor-plan",
+      "faq-refactor-plan",
+      "not-refactor-plan",
+      "qui-refactor-plan",
+      "ref-refactor-plan",
+      "tas-refactor-plan",
+      "tip-refactor-plan",
+      "tro-refactor-plan",
+      "war-refactor-plan"
+    ],
+    "comprehensive-review": [
+      "com-deep-review",
+      "con-deep-review",
+      "err-deep-review",
+      "faq-deep-review",
+      "not-deep-review",
+      "qui-deep-review",
+      "ref-deep-review",
+      "tas-deep-review",
+      "tip-deep-review",
+      "tro-deep-review",
+      "war-deep-review"
+    ],
+    "config": [
+      "com-configuration",
+      "con-configuration",
+      "err-configuration",
+      "faq-configuration",
+      "not-configuration",
+      "qui-configuration",
+      "ref-configuration",
+      "tas-configuration",
+      "tip-configuration",
+      "tro-configuration",
+      "war-configuration"
     ],
     "context": [
       "con-tool-memory-and-context"
@@ -8702,10 +11981,58 @@
       "con-tier-routing"
     ],
     "coverage": [
-      "con-tool-smart-test"
+      "com-smart-test",
+      "con-smart-test",
+      "con-tool-smart-test",
+      "err-smart-test",
+      "faq-smart-test",
+      "not-smart-test",
+      "qui-smart-test",
+      "ref-smart-test",
+      "tas-smart-test",
+      "tip-smart-test",
+      "tro-smart-test",
+      "war-smart-test"
+    ],
+    "cve": [
+      "com-security-audit",
+      "con-security-audit",
+      "err-security-audit",
+      "faq-security-audit",
+      "not-security-audit",
+      "qui-security-audit",
+      "ref-security-audit",
+      "tas-security-audit",
+      "tip-security-audit",
+      "tro-security-audit",
+      "war-security-audit"
+    ],
+    "dashboard": [
+      "com-ops-dashboard",
+      "con-ops-dashboard",
+      "err-ops-dashboard",
+      "faq-ops-dashboard",
+      "not-ops-dashboard",
+      "qui-ops-dashboard",
+      "ref-ops-dashboard",
+      "tas-ops-dashboard",
+      "tip-ops-dashboard",
+      "tro-ops-dashboard",
+      "war-ops-dashboard"
     ],
     "debugging": [
-      "con-tool-fix-test"
+      "com-fix-test",
+      "con-fix-test",
+      "con-tool-fix-test",
+      "err-fix-test",
+      "faq-fix-test",
+      "not-fix-test",
+      "qui-fix-test",
+      "ref-fix-test",
+      "tas-fix-test",
+      "tip-fix-test",
+      "tro-fix-test",
+      "war-fix-test"
     ],
     "design": [
       "con-tool-planning"
@@ -8729,21 +12056,128 @@
       "tip-no-patterns",
       "tip-weekly-review"
     ],
+    "docs": [
+      "com-doc-gen",
+      "com-help-system",
+      "con-doc-gen",
+      "con-help-system",
+      "err-doc-gen",
+      "err-help-system",
+      "faq-doc-gen",
+      "faq-help-system",
+      "not-doc-gen",
+      "not-help-system",
+      "qui-doc-gen",
+      "qui-help-system",
+      "ref-doc-gen",
+      "ref-help-system",
+      "tas-doc-gen",
+      "tas-help-system",
+      "tip-doc-gen",
+      "tip-help-system",
+      "tro-doc-gen",
+      "tro-help-system",
+      "war-doc-gen",
+      "war-help-system"
+    ],
     "docstrings": [
       "con-tool-doc-gen"
     ],
     "documentation": [
+      "com-doc-gen",
+      "con-doc-gen",
       "con-sync-paradigm",
-      "con-tool-doc-gen"
+      "con-tool-doc-gen",
+      "err-doc-gen",
+      "faq-doc-gen",
+      "not-doc-gen",
+      "qui-doc-gen",
+      "ref-doc-gen",
+      "tas-doc-gen",
+      "tip-doc-gen",
+      "tro-doc-gen",
+      "war-doc-gen"
+    ],
+    "events": [
+      "com-hooks",
+      "con-hooks",
+      "err-hooks",
+      "faq-hooks",
+      "not-hooks",
+      "qui-hooks",
+      "ref-hooks",
+      "tas-hooks",
+      "tip-hooks",
+      "tro-hooks",
+      "war-hooks"
+    ],
+    "faithfulness": [
+      "com-rag-grounding",
+      "con-rag-grounding",
+      "err-rag-grounding",
+      "faq-rag-grounding",
+      "not-rag-grounding",
+      "qui-rag-grounding",
+      "ref-rag-grounding",
+      "tas-rag-grounding",
+      "tip-rag-grounding",
+      "tro-rag-grounding",
+      "war-rag-grounding"
+    ],
+    "fault-tolerance": [
+      "com-resilience",
+      "con-resilience",
+      "err-resilience",
+      "faq-resilience",
+      "not-resilience",
+      "qui-resilience",
+      "ref-resilience",
+      "tas-resilience",
+      "tip-resilience",
+      "tro-resilience",
+      "war-resilience"
     ],
     "fixes": [
-      "con-tool-fix-test"
+      "com-fix-test",
+      "con-fix-test",
+      "con-tool-fix-test",
+      "err-fix-test",
+      "faq-fix-test",
+      "not-fix-test",
+      "qui-fix-test",
+      "ref-fix-test",
+      "tas-fix-test",
+      "tip-fix-test",
+      "tro-fix-test",
+      "war-fix-test"
     ],
     "formatting": [
       "not-markdown-formatting"
     ],
     "generation": [
-      "con-tool-smart-test"
+      "com-doc-gen",
+      "com-smart-test",
+      "con-doc-gen",
+      "con-smart-test",
+      "con-tool-smart-test",
+      "err-doc-gen",
+      "err-smart-test",
+      "faq-doc-gen",
+      "faq-smart-test",
+      "not-doc-gen",
+      "not-smart-test",
+      "qui-doc-gen",
+      "qui-smart-test",
+      "ref-doc-gen",
+      "ref-smart-test",
+      "tas-doc-gen",
+      "tas-smart-test",
+      "tip-doc-gen",
+      "tip-smart-test",
+      "tro-doc-gen",
+      "tro-smart-test",
+      "war-doc-gen",
+      "war-smart-test"
     ],
     "git": [
       "err-after-a-pr-merges-while-youre-afk-pull-main-before-tagging",
@@ -9007,9 +12441,33 @@
       "war-workflowresult-constructor-mismatches-surface-only-at-runtime",
       "war-yaml-run-block-scalars-break-on-blank-lines-inside-multi-line"
     ],
+    "grounding": [
+      "com-rag-grounding",
+      "con-rag-grounding",
+      "err-rag-grounding",
+      "faq-rag-grounding",
+      "not-rag-grounding",
+      "qui-rag-grounding",
+      "ref-rag-grounding",
+      "tas-rag-grounding",
+      "tip-rag-grounding",
+      "tro-rag-grounding",
+      "war-rag-grounding"
+    ],
     "help": [
+      "com-help-system",
+      "con-help-system",
+      "err-help-system",
+      "faq-help-system",
+      "not-help-system",
       "qui-browse-help",
-      "tas-browse-help-docs"
+      "qui-help-system",
+      "ref-help-system",
+      "tas-browse-help-docs",
+      "tas-help-system",
+      "tip-help-system",
+      "tro-help-system",
+      "war-help-system"
     ],
     "help-system": [
       "con-audience-adaptation",
@@ -9018,6 +12476,19 @@
       "con-progressive-depth",
       "con-template-composition",
       "con-workflow-chain-prediction"
+    ],
+    "hooks": [
+      "com-hooks",
+      "con-hooks",
+      "err-hooks",
+      "faq-hooks",
+      "not-hooks",
+      "qui-hooks",
+      "ref-hooks",
+      "tas-hooks",
+      "tip-hooks",
+      "tro-hooks",
+      "war-hooks"
     ],
     "hub": [
       "con-tool-attune-hub"
@@ -9180,8 +12651,47 @@
       "war-verify-new-dispatch-branches-with-a-known-fixture-not-just",
       "war-yaml-run-block-scalars-break-on-blank-lines-inside-multi-line"
     ],
+    "interactive": [
+      "com-wizards",
+      "con-wizards",
+      "err-wizards",
+      "faq-wizards",
+      "not-wizards",
+      "qui-wizards",
+      "ref-wizards",
+      "tas-wizards",
+      "tip-wizards",
+      "tro-wizards",
+      "war-wizards"
+    ],
+    "lint": [
+      "com-code-quality",
+      "con-code-quality",
+      "err-code-quality",
+      "faq-code-quality",
+      "not-code-quality",
+      "qui-code-quality",
+      "ref-code-quality",
+      "tas-code-quality",
+      "tip-code-quality",
+      "tro-code-quality",
+      "war-code-quality"
+    ],
     "linting": [
       "con-tool-code-quality"
+    ],
+    "llm": [
+      "com-models",
+      "con-models",
+      "err-models",
+      "faq-models",
+      "not-models",
+      "qui-models",
+      "ref-models",
+      "tas-models",
+      "tip-models",
+      "tro-models",
+      "war-models"
     ],
     "macos": [
       "err-bare-manifest-in-gitignore-silently-excludes-any-manifest",
@@ -9198,6 +12708,13 @@
       "war-windows-ci-runners-are-3x-slower-than-ubuntu-macos"
     ],
     "mcp": [
+      "com-mcp-server",
+      "con-mcp-server",
+      "err-mcp-server",
+      "faq-mcp-server",
+      "not-mcp-server",
+      "qui-mcp-server",
+      "ref-mcp-server",
       "ref-tool-analyze-batch",
       "ref-tool-analyze-image",
       "ref-tool-attune-get-level",
@@ -9230,18 +12747,96 @@
       "ref-tool-test-audit",
       "ref-tool-test-gen-parallel",
       "ref-tool-test-generation",
-      "tro-mcp-server-not-responding"
+      "tas-mcp-server",
+      "tip-mcp-server",
+      "tro-mcp-server",
+      "tro-mcp-server-not-responding",
+      "war-mcp-server"
     ],
     "memory": [
+      "com-memory",
+      "con-memory",
       "con-tool-memory-and-context",
+      "err-memory",
+      "faq-memory",
+      "not-memory",
+      "qui-memory",
+      "ref-memory",
       "ref-tool-memory-forget",
       "ref-tool-memory-retrieve",
       "ref-tool-memory-search",
       "ref-tool-memory-store",
-      "tas-manage-lessons"
+      "tas-manage-lessons",
+      "tas-memory",
+      "tip-memory",
+      "tro-memory",
+      "war-memory"
+    ],
+    "metrics": [
+      "com-telemetry",
+      "con-telemetry",
+      "err-telemetry",
+      "faq-telemetry",
+      "not-telemetry",
+      "qui-telemetry",
+      "ref-telemetry",
+      "tas-telemetry",
+      "tip-telemetry",
+      "tro-telemetry",
+      "war-telemetry"
+    ],
+    "models": [
+      "com-models",
+      "con-models",
+      "err-models",
+      "faq-models",
+      "not-models",
+      "qui-models",
+      "ref-models",
+      "tas-models",
+      "tip-models",
+      "tro-models",
+      "war-models"
+    ],
+    "ops": [
+      "com-ops-dashboard",
+      "con-ops-dashboard",
+      "err-ops-dashboard",
+      "faq-ops-dashboard",
+      "not-ops-dashboard",
+      "qui-ops-dashboard",
+      "ref-ops-dashboard",
+      "tas-ops-dashboard",
+      "tip-ops-dashboard",
+      "tro-ops-dashboard",
+      "war-ops-dashboard"
     ],
     "orchestration": [
-      "con-tool-workflow-orchestration"
+      "com-orchestration",
+      "con-orchestration",
+      "con-tool-workflow-orchestration",
+      "err-orchestration",
+      "faq-orchestration",
+      "not-orchestration",
+      "qui-orchestration",
+      "ref-orchestration",
+      "tas-orchestration",
+      "tip-orchestration",
+      "tro-orchestration",
+      "war-orchestration"
+    ],
+    "owasp": [
+      "com-security-audit",
+      "con-security-audit",
+      "err-security-audit",
+      "faq-security-audit",
+      "not-security-audit",
+      "qui-security-audit",
+      "ref-security-audit",
+      "tas-security-audit",
+      "tip-security-audit",
+      "tro-security-audit",
+      "war-security-audit"
     ],
     "packaging": [
       "err-attune-help-re-exports-create-a-hidden-cross-package-dep-on",
@@ -9363,7 +12958,18 @@
       "war-zsh-has-status-as-a-read-only-builtin-variable"
     ],
     "persistence": [
-      "con-tool-memory-and-context"
+      "com-ops-dashboard",
+      "con-ops-dashboard",
+      "con-tool-memory-and-context",
+      "err-ops-dashboard",
+      "faq-ops-dashboard",
+      "not-ops-dashboard",
+      "qui-ops-dashboard",
+      "ref-ops-dashboard",
+      "tas-ops-dashboard",
+      "tip-ops-dashboard",
+      "tro-ops-dashboard",
+      "war-ops-dashboard"
     ],
     "philosophy": [
       "con-socratic-discovery",
@@ -9371,11 +12977,29 @@
       "not-socratic-interaction-rule"
     ],
     "planning": [
+      "com-spec-engine",
+      "con-spec-engine",
       "con-tool-planning",
-      "con-tool-spec"
+      "con-tool-spec",
+      "err-spec-engine",
+      "faq-spec-engine",
+      "not-spec-engine",
+      "qui-spec-engine",
+      "ref-spec-engine",
+      "tas-spec-engine",
+      "tip-spec-engine",
+      "tro-spec-engine",
+      "war-spec-engine"
     ],
     "plugin": [
       "com-lite-vs-full",
+      "com-plugin",
+      "con-plugin",
+      "err-plugin",
+      "faq-plugin",
+      "not-plugin",
+      "qui-plugin",
+      "ref-plugin",
       "ref-skill-attune-hub",
       "ref-skill-bug-predict",
       "ref-skill-coach",
@@ -9392,10 +13016,38 @@
       "ref-skill-spec",
       "ref-skill-workflow-orchestration",
       "tas-install-plugin",
-      "tro-plugin-not-found"
+      "tas-plugin",
+      "tip-plugin",
+      "tro-plugin",
+      "tro-plugin-not-found",
+      "war-plugin"
+    ],
+    "prediction": [
+      "com-bug-predict",
+      "con-bug-predict",
+      "err-bug-predict",
+      "faq-bug-predict",
+      "not-bug-predict",
+      "qui-bug-predict",
+      "ref-bug-predict",
+      "tas-bug-predict",
+      "tip-bug-predict",
+      "tro-bug-predict",
+      "war-bug-predict"
     ],
     "publishing": [
-      "con-tool-release-prep"
+      "com-release-prep",
+      "con-release-prep",
+      "con-tool-release-prep",
+      "err-release-prep",
+      "faq-release-prep",
+      "not-release-prep",
+      "qui-release-prep",
+      "ref-release-prep",
+      "tas-release-prep",
+      "tip-release-prep",
+      "tro-release-prep",
+      "war-release-prep"
     ],
     "python": [
       "err-adding-logger-before-eager-imports-triggers-e402-in-init-py",
@@ -9528,16 +13180,184 @@
       "war-workflowresult-constructor-mismatches-surface-only-at-runtime"
     ],
     "quality": [
-      "con-tool-code-quality"
+      "com-code-quality",
+      "com-deep-review",
+      "com-release-prep",
+      "con-code-quality",
+      "con-deep-review",
+      "con-release-prep",
+      "con-tool-code-quality",
+      "err-code-quality",
+      "err-deep-review",
+      "err-release-prep",
+      "faq-code-quality",
+      "faq-deep-review",
+      "faq-release-prep",
+      "not-code-quality",
+      "not-deep-review",
+      "not-release-prep",
+      "qui-code-quality",
+      "qui-deep-review",
+      "qui-release-prep",
+      "ref-code-quality",
+      "ref-deep-review",
+      "ref-release-prep",
+      "tas-code-quality",
+      "tas-deep-review",
+      "tas-release-prep",
+      "tip-code-quality",
+      "tip-deep-review",
+      "tip-release-prep",
+      "tro-code-quality",
+      "tro-deep-review",
+      "tro-release-prep",
+      "war-code-quality",
+      "war-deep-review",
+      "war-release-prep"
+    ],
+    "race-condition": [
+      "com-bug-predict",
+      "con-bug-predict",
+      "err-bug-predict",
+      "faq-bug-predict",
+      "not-bug-predict",
+      "qui-bug-predict",
+      "ref-bug-predict",
+      "tas-bug-predict",
+      "tip-bug-predict",
+      "tro-bug-predict",
+      "war-bug-predict"
+    ],
+    "rag": [
+      "com-rag-grounding",
+      "con-rag-grounding",
+      "err-rag-grounding",
+      "faq-rag-grounding",
+      "not-rag-grounding",
+      "qui-rag-grounding",
+      "ref-rag-grounding",
+      "tas-rag-grounding",
+      "tip-rag-grounding",
+      "tro-rag-grounding",
+      "war-rag-grounding"
+    ],
+    "refactor": [
+      "com-refactor-plan",
+      "con-refactor-plan",
+      "err-refactor-plan",
+      "faq-refactor-plan",
+      "not-refactor-plan",
+      "qui-refactor-plan",
+      "ref-refactor-plan",
+      "tas-refactor-plan",
+      "tip-refactor-plan",
+      "tro-refactor-plan",
+      "war-refactor-plan"
     ],
     "refactoring": [
       "con-tool-refactor-plan"
     ],
     "release": [
-      "con-tool-release-prep"
+      "com-release-notes",
+      "com-release-prep",
+      "con-release-notes",
+      "con-release-prep",
+      "con-tool-release-prep",
+      "err-release-notes",
+      "err-release-prep",
+      "faq-release-notes",
+      "faq-release-prep",
+      "not-release-notes",
+      "not-release-prep",
+      "qui-release-notes",
+      "qui-release-prep",
+      "ref-release-notes",
+      "ref-release-prep",
+      "tas-release-notes",
+      "tas-release-prep",
+      "tip-release-notes",
+      "tip-release-prep",
+      "tro-release-notes",
+      "tro-release-prep",
+      "war-release-notes",
+      "war-release-prep"
+    ],
+    "reliability": [
+      "com-resilience",
+      "con-resilience",
+      "err-resilience",
+      "faq-resilience",
+      "not-resilience",
+      "qui-resilience",
+      "ref-resilience",
+      "tas-resilience",
+      "tip-resilience",
+      "tro-resilience",
+      "war-resilience"
+    ],
+    "resilience": [
+      "com-resilience",
+      "con-resilience",
+      "err-resilience",
+      "faq-resilience",
+      "not-resilience",
+      "qui-resilience",
+      "ref-resilience",
+      "tas-resilience",
+      "tip-resilience",
+      "tro-resilience",
+      "war-resilience"
+    ],
+    "retrieval": [
+      "com-rag-grounding",
+      "con-rag-grounding",
+      "err-rag-grounding",
+      "faq-rag-grounding",
+      "not-rag-grounding",
+      "qui-rag-grounding",
+      "ref-rag-grounding",
+      "tas-rag-grounding",
+      "tip-rag-grounding",
+      "tro-rag-grounding",
+      "war-rag-grounding"
+    ],
+    "retry": [
+      "com-resilience",
+      "con-resilience",
+      "err-resilience",
+      "faq-resilience",
+      "not-resilience",
+      "qui-resilience",
+      "ref-resilience",
+      "tas-resilience",
+      "tip-resilience",
+      "tro-resilience",
+      "war-resilience"
     ],
     "review": [
-      "con-tool-code-quality"
+      "com-code-quality",
+      "com-deep-review",
+      "con-code-quality",
+      "con-deep-review",
+      "con-tool-code-quality",
+      "err-code-quality",
+      "err-deep-review",
+      "faq-code-quality",
+      "faq-deep-review",
+      "not-code-quality",
+      "not-deep-review",
+      "qui-code-quality",
+      "qui-deep-review",
+      "ref-code-quality",
+      "ref-deep-review",
+      "tas-code-quality",
+      "tas-deep-review",
+      "tip-code-quality",
+      "tip-deep-review",
+      "tro-code-quality",
+      "tro-deep-review",
+      "war-code-quality",
+      "war-deep-review"
     ],
     "routing": [
       "con-tool-attune-hub",
@@ -9546,10 +13366,62 @@
     "rules": [
       "not-critical-rules"
     ],
+    "runner": [
+      "com-ops-dashboard",
+      "con-ops-dashboard",
+      "err-ops-dashboard",
+      "faq-ops-dashboard",
+      "not-ops-dashboard",
+      "qui-ops-dashboard",
+      "ref-ops-dashboard",
+      "tas-ops-dashboard",
+      "tip-ops-dashboard",
+      "tro-ops-dashboard",
+      "war-ops-dashboard"
+    ],
     "scanning": [
-      "con-tool-bug-predict"
+      "com-bug-predict",
+      "com-security-audit",
+      "con-bug-predict",
+      "con-security-audit",
+      "con-tool-bug-predict",
+      "err-bug-predict",
+      "err-security-audit",
+      "faq-bug-predict",
+      "faq-security-audit",
+      "not-bug-predict",
+      "not-security-audit",
+      "qui-bug-predict",
+      "qui-security-audit",
+      "ref-bug-predict",
+      "ref-security-audit",
+      "tas-bug-predict",
+      "tas-security-audit",
+      "tip-bug-predict",
+      "tip-security-audit",
+      "tro-bug-predict",
+      "tro-security-audit",
+      "war-bug-predict",
+      "war-security-audit"
+    ],
+    "scope-picker": [
+      "com-ops-dashboard",
+      "con-ops-dashboard",
+      "err-ops-dashboard",
+      "faq-ops-dashboard",
+      "not-ops-dashboard",
+      "qui-ops-dashboard",
+      "ref-ops-dashboard",
+      "tas-ops-dashboard",
+      "tip-ops-dashboard",
+      "tro-ops-dashboard",
+      "war-ops-dashboard"
     ],
     "security": [
+      "com-deep-review",
+      "com-security-audit",
+      "con-deep-review",
+      "con-security-audit",
       "con-tool-bug-predict",
       "con-tool-security-audit",
       "err-adding-dns-resolution-to-validate-webhook-url-breaks-tests-that",
@@ -9560,6 +13432,7 @@
       "err-clusterfuzzlite-no-deps-misses-transitive-imports",
       "err-codeql-py-clear-text-logging-sensitive-data-traces-data-flow",
       "err-dead-tests-from-monorepo-extraction-accumulate-in-packages-with",
+      "err-deep-review",
       "err-duplicate-plugins-cause-conflicting-skill-triggers",
       "err-golden-query-test-fixtures-must-match-the-actual-corpus-layout",
       "err-hand-crafted-summary-prototype-is-the-fastest-way-to-measure-a",
@@ -9582,6 +13455,7 @@
       "err-sdk-adapter-swallows-subagent-findings-lesson-was-wrong-adapter",
       "err-sdk-native-security-audit-workflow-swallows-subagent-findings",
       "err-sdk-native-workflows-validate-in-execute-not-input-schema",
+      "err-security-audit",
       "err-ssrf-always-decode-urls-before-validating-hostnames",
       "err-ssrf-in-webhook-handlers-is-easy-to-miss",
       "err-ssrf-strip-ipv6-zone-ids-before-ip-validation",
@@ -9598,6 +13472,7 @@
       "faq-clusterfuzzlite-no-deps-misses-transitive-imports",
       "faq-codeql-py-clear-text-logging-sensitive-data-traces-data-flow",
       "faq-dead-tests-from-monorepo-extraction-accumulate-in-packages-with",
+      "faq-deep-review",
       "faq-duplicate-plugins-cause-conflicting-skill-triggers",
       "faq-golden-query-test-fixtures-must-match-the-actual-corpus-layout",
       "faq-hand-crafted-summary-prototype-is-the-fastest-way-to-measure-a",
@@ -9620,6 +13495,7 @@
       "faq-sdk-adapter-swallows-subagent-findings-lesson-was-wrong-adapter",
       "faq-sdk-native-security-audit-workflow-swallows-subagent-findings",
       "faq-sdk-native-workflows-validate-in-execute-not-input-schema",
+      "faq-security-audit",
       "faq-ssrf-always-decode-urls-before-validating-hostnames",
       "faq-ssrf-in-webhook-handlers-is-easy-to-miss",
       "faq-ssrf-strip-ipv6-zone-ids-before-ip-validation",
@@ -9629,12 +13505,25 @@
       "faq-validate-infrastructure-against-user-value-before-extending",
       "faq-windows-path-resolve-prepends-the-drive-letter-to-unix-paths",
       "not-critical-rules",
+      "not-deep-review",
+      "not-security-audit",
+      "qui-deep-review",
       "qui-run-security-audit",
+      "qui-security-audit",
+      "ref-deep-review",
+      "ref-security-audit",
+      "tas-deep-review",
+      "tas-security-audit",
+      "tip-deep-review",
+      "tip-security-audit",
+      "tro-deep-review",
+      "tro-security-audit",
       "war-attune-helps-sidecar-schemas-dont-match-path-keyed-assumptions",
       "war-bug-predict-dangerous-eval-flags-subprocess-exec",
       "war-changing-error-messages-breaks-tests-across-the-codebase",
       "war-clusterfuzzlite-no-deps-misses-transitive-imports",
       "war-dead-tests-from-monorepo-extraction-accumulate-in-packages-with",
+      "war-deep-review",
       "war-duplicate-plugins-cause-conflicting-skill-triggers",
       "war-golden-query-test-fixtures-must-match-the-actual-corpus-layout",
       "war-hand-crafted-summary-prototype-is-the-fastest-way-to-measure-a",
@@ -9654,9 +13543,36 @@
       "war-registry-count-assertions-are-scattered-across-test-files",
       "war-sdk-adapter-swallows-subagent-findings-lesson-was-wrong-adapter",
       "war-sdk-native-workflows-validate-in-execute-not-input-schema",
+      "war-security-audit",
       "war-ssrf-always-decode-urls-before-validating-hostnames",
       "war-ssrf-strip-ipv6-zone-ids-before-ip-validation",
       "war-validate-infrastructure-against-user-value-before-extending"
+    ],
+    "server": [
+      "com-mcp-server",
+      "con-mcp-server",
+      "err-mcp-server",
+      "faq-mcp-server",
+      "not-mcp-server",
+      "qui-mcp-server",
+      "ref-mcp-server",
+      "tas-mcp-server",
+      "tip-mcp-server",
+      "tro-mcp-server",
+      "war-mcp-server"
+    ],
+    "settings": [
+      "com-configuration",
+      "con-configuration",
+      "err-configuration",
+      "faq-configuration",
+      "not-configuration",
+      "qui-configuration",
+      "ref-configuration",
+      "tas-configuration",
+      "tip-configuration",
+      "tro-configuration",
+      "war-configuration"
     ],
     "setup": [
       "com-auth-strategies",
@@ -9723,10 +13639,47 @@
       "tas-use-workflow-orchestration"
     ],
     "spec": [
-      "con-tool-spec"
+      "com-spec-engine",
+      "con-spec-engine",
+      "con-tool-spec",
+      "err-spec-engine",
+      "faq-spec-engine",
+      "not-spec-engine",
+      "qui-spec-engine",
+      "ref-spec-engine",
+      "tas-spec-engine",
+      "tip-spec-engine",
+      "tro-spec-engine",
+      "war-spec-engine"
+    ],
+    "sse": [
+      "com-ops-dashboard",
+      "con-ops-dashboard",
+      "err-ops-dashboard",
+      "faq-ops-dashboard",
+      "not-ops-dashboard",
+      "qui-ops-dashboard",
+      "ref-ops-dashboard",
+      "tas-ops-dashboard",
+      "tip-ops-dashboard",
+      "tro-ops-dashboard",
+      "war-ops-dashboard"
     ],
     "standards": [
       "not-markdown-formatting"
+    ],
+    "storage": [
+      "com-memory",
+      "con-memory",
+      "err-memory",
+      "faq-memory",
+      "not-memory",
+      "qui-memory",
+      "ref-memory",
+      "tas-memory",
+      "tip-memory",
+      "tro-memory",
+      "war-memory"
     ],
     "task": [
       "tas-use-attune-hub",
@@ -9745,10 +13698,60 @@
       "tas-use-spec",
       "tas-use-workflow-orchestration"
     ],
+    "teams": [
+      "com-orchestration",
+      "con-orchestration",
+      "err-orchestration",
+      "faq-orchestration",
+      "not-orchestration",
+      "qui-orchestration",
+      "ref-orchestration",
+      "tas-orchestration",
+      "tip-orchestration",
+      "tro-orchestration",
+      "war-orchestration"
+    ],
+    "tech-debt": [
+      "com-refactor-plan",
+      "con-refactor-plan",
+      "err-refactor-plan",
+      "faq-refactor-plan",
+      "not-refactor-plan",
+      "qui-refactor-plan",
+      "ref-refactor-plan",
+      "tas-refactor-plan",
+      "tip-refactor-plan",
+      "tro-refactor-plan",
+      "war-refactor-plan"
+    ],
     "telemetry": [
+      "com-telemetry",
       "con-feedback-loop",
+      "con-telemetry",
+      "err-telemetry",
+      "faq-telemetry",
+      "not-telemetry",
       "qui-check-costs",
-      "tas-export-telemetry"
+      "qui-telemetry",
+      "ref-telemetry",
+      "tas-export-telemetry",
+      "tas-telemetry",
+      "tip-telemetry",
+      "tro-telemetry",
+      "war-telemetry"
+    ],
+    "templates": [
+      "com-help-system",
+      "con-help-system",
+      "err-help-system",
+      "faq-help-system",
+      "not-help-system",
+      "qui-help-system",
+      "ref-help-system",
+      "tas-help-system",
+      "tip-help-system",
+      "tro-help-system",
+      "war-help-system"
     ],
     "terminology": [
       "not-term-cli",
@@ -10049,6 +14052,41 @@
       "war-workflowresult-constructor-mismatches-surface-only-at-runtime",
       "war-zsh-has-status-as-a-read-only-builtin-variable"
     ],
+    "tests": [
+      "com-deep-review",
+      "com-fix-test",
+      "com-smart-test",
+      "con-deep-review",
+      "con-fix-test",
+      "con-smart-test",
+      "err-deep-review",
+      "err-fix-test",
+      "err-smart-test",
+      "faq-deep-review",
+      "faq-fix-test",
+      "faq-smart-test",
+      "not-deep-review",
+      "not-fix-test",
+      "not-smart-test",
+      "qui-deep-review",
+      "qui-fix-test",
+      "qui-smart-test",
+      "ref-deep-review",
+      "ref-fix-test",
+      "ref-smart-test",
+      "tas-deep-review",
+      "tas-fix-test",
+      "tas-smart-test",
+      "tip-deep-review",
+      "tip-fix-test",
+      "tip-smart-test",
+      "tro-deep-review",
+      "tro-fix-test",
+      "tro-smart-test",
+      "war-deep-review",
+      "war-fix-test",
+      "war-smart-test"
+    ],
     "tool": [
       "ref-tool-analyze-batch",
       "ref-tool-analyze-image",
@@ -10083,6 +14121,19 @@
       "ref-tool-test-gen-parallel",
       "ref-tool-test-generation"
     ],
+    "tools": [
+      "com-mcp-server",
+      "con-mcp-server",
+      "err-mcp-server",
+      "faq-mcp-server",
+      "not-mcp-server",
+      "qui-mcp-server",
+      "ref-mcp-server",
+      "tas-mcp-server",
+      "tip-mcp-server",
+      "tro-mcp-server",
+      "war-mcp-server"
+    ],
     "utility": [
       "ref-tool-attune-get-level",
       "ref-tool-attune-set-level",
@@ -10096,6 +14147,19 @@
       "con-progressive-depth",
       "con-socratic-discovery",
       "not-socratic-interaction-rule"
+    ],
+    "webhooks": [
+      "com-hooks",
+      "con-hooks",
+      "err-hooks",
+      "faq-hooks",
+      "not-hooks",
+      "qui-hooks",
+      "ref-hooks",
+      "tas-hooks",
+      "tip-hooks",
+      "tro-hooks",
+      "war-hooks"
     ],
     "windows": [
       "err-bare-manifest-in-gitignore-silently-excludes-any-manifest",
@@ -10121,6 +14185,19 @@
       "war-windows-ci-encoding",
       "war-windows-ci-runners-are-3x-slower-than-ubuntu-macos",
       "war-windows-time-time-can-return-0-0-duration-for-fast-operations"
+    ],
+    "wizards": [
+      "com-wizards",
+      "con-wizards",
+      "err-wizards",
+      "faq-wizards",
+      "not-wizards",
+      "qui-wizards",
+      "ref-wizards",
+      "tas-wizards",
+      "tip-wizards",
+      "tro-wizards",
+      "war-wizards"
     ],
     "workflow": [
       "com-workflow-vs-wizard",
@@ -10166,7 +14243,18 @@
       "tip-after-test-gen"
     ],
     "workflows": [
-      "con-tool-workflow-orchestration"
+      "com-ops-dashboard",
+      "con-ops-dashboard",
+      "con-tool-workflow-orchestration",
+      "err-ops-dashboard",
+      "faq-ops-dashboard",
+      "not-ops-dashboard",
+      "qui-ops-dashboard",
+      "ref-ops-dashboard",
+      "tas-ops-dashboard",
+      "tip-ops-dashboard",
+      "tro-ops-dashboard",
+      "war-ops-dashboard"
     ]
   },
   "workflow_map": {
