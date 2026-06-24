@@ -7903,6 +7903,46 @@ files.
   the suffix. Extends the "interrupted compound Bash command may
   have partially executed" lesson to the Edit-tool surface.
 
+- **A next-session starter / TODO handoff can be STALE ON ARRIVAL
+  — its lead "do this big thing" item may have shipped between
+  when it was written and when you read it (same-day!); reconcile
+  every named thread against git/PyPI BEFORE executing**:
+  2026-06-24, the starter (written ~5h earlier the same day) led
+  with "#1 the big one — PyPI release-prep regen: the doc rollout
+  is NOT in the wheel, regenerate `plugin/help/generated/`, bump,
+  publish." Cheap verification showed ALL of it already done:
+  v8.9.2 was tagged at 10:14 EDT (AFTER #1043 help-system and
+  #1044 ops-dashboard merged that same morning), published to
+  PyPI, and `sync_help_bundle.py --check` reported the bundle in
+  sync — `git diff v8.9.2..origin/main -- plugin/help/generated/`
+  was EMPTY. A "regen + bump" pass would have produced a no-op
+  diff. TWO of the starter's other "open threads" were also
+  already complete: the `memory_lint.py` `.help/templates/memory/`
+  false-positive fix AND its `test_memory_lint.py` regression test
+  (6 tests green) both landed that morning. So "both" of the
+  user's picked threads collapsed to one real task (a fresh reach
+  snapshot). Durable rules: (1) treat a session starter/TODO
+  handoff as a HYPOTHESIS, not a contract — for each named thread
+  run the cheap reconciliation (`gh pr view <n> --json
+  state,mergedAt`, `git log <tag>..origin/main`, a `--check`-style
+  drift probe, `pytest` the supposedly-missing test) BEFORE doing
+  the work; same-day staleness is real because PRs land between
+  writing and reading. (2) To settle "is content actually in the
+  pip wheel," download and grep the REAL artifact: `pip download
+  <pkg>==<v> --no-deps && unzip -l *.whl | grep <path>` — here it
+  proved `plugin/help/generated/` ships in NEITHER wheel nor sdist
+  (because `plugin/` has no `__init__.py`, so setuptools `find`
+  never packages it). The help bundle is delivered via the Claude
+  Code PLUGIN channel — where `_DEFAULT_GENERATED_DIR =
+  Path(__file__).parents[3]/plugin/help/generated` resolves
+  against the plugin checkout — NOT `pip install`. So "not in the
+  wheel" was true but BY DESIGN, and no bundle regen could ever
+  change it. Extends "Spec-named work-scope drifts from code
+  reality — grep the actual instances" to the session-handoff
+  surface, and "projected ≠ served has a DEPLOYMENT layer" with
+  the artifact-grep technique (inspect the built wheel; don't
+  reason about packaging from pyproject alone).
+
 - **An absurd benchmark score (0% or ~100%) indicts the scoring
   harness before the system under test — introspect the result
   object's real shape first**: the lessons-corpus-rag Phase 0
