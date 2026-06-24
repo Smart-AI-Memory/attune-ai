@@ -97,9 +97,17 @@ For each feature `<F>`:
    called synchronously across a whole file; reversed AUTO-mode logic;
    wrong dict keys). See follow-up P5.
 
-5. **Verify serve** through the **real** consumer (see "Verification"
-   below) — all 10 projected kinds serve with non-empty bodies and the
-   feature reports complete (faq retained).
+5. **Verify serve through BOTH consumers** (see "Verification" below) —
+   all 10 projected kinds serve with non-empty bodies on each:
+   - **Probe 1 — ops dashboard** (`attune.ops.help_data`): feature
+     reports complete (faq retained).
+   - **Probe 2 — in-conversation** (`populate` / MCP `help_lookup`):
+     `populate("con-<F>")` (and the other kinds) return non-empty bodies
+     and `populate_progressive("<F>")` is not `None`. **Required
+     acceptance** — a green Probe 1 with a `None` Probe 2 means the
+     content reaches the dashboard but NOT conversation users (the
+     "projected ≠ served" trap that hid through 9 features). Never
+     declare a feature done on Probe 1 alone.
 
 6. **Verify mkdocs:** `mkdocs build --strict`. **No per-feature
    `mkdocs.yml` edit is needed** (P4/D12 implemented): the
@@ -121,12 +129,24 @@ For each feature `<F>`:
 
 ## Verification recipe (copy-paste)
 
-The live consumer of the feature-dir `.help/templates/<F>/` layout is
-`attune.ops.help_data` (the ops living-docs dashboard) — **not**
-`attune_help.HelpEngine(template_dir=...)`. The t2 check named the
-latter, but the HelpEngine override path needs a `cross_links.json` and
-uses a kind-pluralized layout, so it falls back to bundled templates
-and silently misses the feature dir. Verify against the real consumer:
+A feature has **two** served surfaces, and BOTH must be probed — the
+Tier-1/2/3 rollout verified only the first and shipped 9 features that
+the second never served (the "projected ≠ served" trap; fixed by the
+help-serving-bridge resolver fallback, 8.9.1). Run **both** probes
+below for every feature; the in-conversation one is non-negotiable
+acceptance.
+
+Use the **main** venv's python + `PYTHONPATH=<worktree>/src` for both
+(the worktree venv lacks the `[ops]` extras; the editable-install
+MAPPING otherwise points `attune` at the main checkout — see CLAUDE.md).
+
+### Probe 1 — the ops dashboard surface (`attune.ops.help_data`)
+
+The living-docs dashboard reads the feature-dir `.help/templates/<F>/`
+layout directly — **not** `attune_help.HelpEngine(template_dir=...)`
+(the t2 check named the latter, but the HelpEngine override path needs a
+`cross_links.json` and a kind-pluralized layout, so it silently falls
+back to bundled templates and misses the feature dir).
 
 ```bash
 PYTHONPATH=<worktree>/src <main-venv>/bin/python - <<'PY'
@@ -143,9 +163,33 @@ for k in ("concept","task","reference","quickstart","comparison",
 PY
 ```
 
-Use the **main** venv's python + `PYTHONPATH=<worktree>/src` (the
-worktree venv lacks the `[ops]` extras; the editable-install MAPPING
-otherwise points `attune` at the main checkout — see CLAUDE.md).
+### Probe 2 — the in-conversation surface (`populate` / MCP `help_lookup`)
+
+**This is the one the rollout missed.** MCP `help_lookup` →
+`attune.help.engine.populate` / `populate_progressive` resolve against
+the type-organized bundle first, then fall back to
+`.help/templates/<F>/<kind>.md` (8.9.1+). If this probe returns `None`,
+the grounded content is NOT reaching conversation users no matter how
+green the dashboard probe is. Assert it for every feature:
+
+```bash
+PYTHONPATH=<worktree>/src <main-venv>/bin/python - <<'PY'
+from attune.help.engine import populate, populate_progressive
+F = "<F>"
+prefix_kind = {"con":"concept","tas":"task","ref":"reference",
+               "qui":"quickstart","com":"comparison","err":"error",
+               "tro":"troubleshooting","war":"warning","not":"note",
+               "tip":"tip","faq":"faq"}
+missing = []
+for prefix in prefix_kind:
+    r = populate(f"{prefix}-{F}")
+    if r is None or not r.body.strip():
+        missing.append(prefix)
+assert populate_progressive(F) is not None, f"progressive: {F} not served"
+assert not missing, f"NOT served in-conversation: {missing}"
+print(f"in-conversation surface OK — {F} served via populate()/help_lookup")
+PY
+```
 
 ---
 
