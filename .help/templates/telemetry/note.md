@@ -3,32 +3,94 @@ type: note
 name: telemetry-note
 feature: telemetry
 depth: note
-generated_at: 2026-05-16T06:19:45.853537+00:00
-source_hash: ed8485991002cc1c218f67b4f33f230bcbdc4325599a2e03f2bbe584d94a5e90
+generated_at: 2026-06-24T00:53:03.849694+00:00
+source_hash: 70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b
 status: generated
 ---
 
-# Note: telemetry
+# Usage tracking, model-tier feedback loops, and agent-coordination signals
 
-## Context
+## Overview
 
-The `attune.telemetry` package covers four distinct concerns that share a common infrastructure layer:
+Telemetry is how attune **measures itself**. The
+`attune.telemetry` package records what every workflow run costs,
+learns which model tier each workflow stage actually needs, and carries
+the liveness signals that let multi-agent teams coordinate.
 
-- **Usage tracking** — records help queries to `help_queries.jsonl` (log version `1.0`) and exposes cost and cache statistics via the CLI
-- **Agent coordination** — routes TTL-scoped signals between agents through `CoordinationSignals` (backed by Redis)
-- **Heartbeat tracking** — lets `HeartbeatCoordinator` detect stale agents using Redis TTL keys
-- **Human approval gates** — suspends workflow execution until a human responds via `ApprovalGate`
+Three groups live here, all exported from `attune.telemetry`:
 
-The feedback loop described in `concepts/feedback-loop.md` (`FeedbackLoop`, `FeedbackEntry`, `QualityStats`) is part of this package and is exported alongside the coordination and tracking classes.
+- **Usage tracking** — `UsageTracker` logs every LLM call (cost,
+  tokens, cache hits, duration) to a local append-only store and rolls
+  it up into stats and cost-savings reports.
+- **Feedback loops** — `FeedbackLoop` records a quality score per
+  workflow stage and tier, then recommends the cheapest tier that still
+  meets the quality bar (`recommend_tier`).
+- **Coordination signals** — `EventStreamer`, `HeartbeatCoordinator`,
+  and `ApprovalGate` carry agent heartbeats, event streams, and
+  human-in-the-loop approval requests for multi-agent runs. (These are
+  telemetry in the "agent liveness/coordination" sense and also relate
+  to orchestration.)
 
-## Design
+The data is **local-first**: `UsageTracker` writes under
+`~/.attune/telemetry` (overridable via `ATTUNE_HOME`) and nothing here
+calls the network unless an opt-in phone-home is explicitly enabled. The
+`telemetry_stats` MCP tool and the ops dashboard read the same on-disk
+store (`~/.attune/telemetry/usage.jsonl`).
 
-The package exposes classes and CLI entry points at the same boundary. The CLI functions in `cli_analysis.py` and `cli_automation.py` (for example, `cmd_sonnet_opus_analysis`, `cmd_tier1_status`) operate on the same data structures that the classes produce — `AgentHeartbeat`, `CoordinationSignal`, `ApprovalRequest`, and their counterparts. Neither layer wraps the other; they share the underlying Redis-backed memory store passed at construction time.
+## Concepts
 
-`CoordinationSignal` carries a `ttl_seconds` field (default 60) that controls how long a signal remains visible to `wait_for_signal` and `check_signal`. Signals past their TTL are invisible to consumers but are not automatically deleted; `clear_signals()` must be called explicitly to remove them.
+### `UsageTracker` — the cost/usage ledger
 
-## Source
+`UsageTracker` is the per-process ledger of LLM calls. It buffers
+records and writes them in batches to `~/.attune/telemetry`. Use the
+process-wide singleton, or construct one directly with store knobs:
+`UsageTracker(telemetry_dir=None, retention_days=90,
+max_file_size_mb=10, buffer_size=50)`.
 
-`src/attune/telemetry/**` — 16 source files total.
+`track_llm_call(...)` is the record path — workflows call it for you
+with the call's `workflow`, `stage`, `tier`, `model`, `provider`,
+`cost`, `tokens`, cache flags, and `duration_ms`. `get_stats(days=30)`
+rolls the store up; `calculate_savings(days=30)` reports cache/tier
+savings; `get_recent_entries()`, `get_cache_stats()`, and
+`export_to_dict()` read it back; `flush()` forces a write and `reset()`
+clears it.
 
-**Tags:** `telemetry`, `metrics`
+### `FeedbackLoop` — tier recommendation from quality scores
+
+`FeedbackLoop` closes the cost/quality loop. You record a quality score
+(0–1) for a workflow stage at the tier it ran on; once at least
+`MIN_SAMPLES` (10) exist for that stage, it recommends a tier.
+`QUALITY_THRESHOLD` is `0.7`; feedback entries expire after
+`FEEDBACK_TTL` (604800 s = 7 days). Backing storage is the optional
+`memory` passed to the constructor.
+
+### `TelemetryFeatures` — feature/Redis status
+
+`TelemetryFeatures` reports which telemetry features are available in
+the current environment — chiefly whether the Redis-backed coordination
+features are reachable. `list_all_features()` and
+`get_feature_status()` enumerate status; `is_redis_available()` /
+`require_redis()` gate the Redis-dependent paths.
+
+### Coordination signals
+
+`HeartbeatCoordinator` tracks agent liveness (`beat`,
+`start_heartbeat`, `get_active_agents`, `get_stale_agents`,
+`is_agent_alive`); `EventStreamer` publishes and consumes event streams
+(`publish_event`, `consume_events`, `get_recent_events`); `ApprovalGate`
+carries `ApprovalRequest` / `ApprovalResponse` for human-in-the-loop
+steps. These back multi-agent coordination and are Redis-backed when
+available.
+
+## Notes & tips
+
+- **Depend on the documented public surface.** The supported API is the
+  classes exported from `attune.telemetry`; the per-module internals
+  (file layout, buffering) are implementation details.
+- **Use the singleton for reads.** `UsageTracker.get_instance()` reads
+  the same store workflows write to; constructing a fresh tracker with a
+  different `telemetry_dir` reads a different store.
+- **`flush()` before reading freshly written calls.** Writes are
+  buffered.
+- **Coordination needs Redis.** Gate `EventStreamer` /
+  `HeartbeatCoordinator` use behind `TelemetryFeatures`.

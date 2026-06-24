@@ -295,13 +295,15 @@ features:
     arch_path: docs/architecture/enhanced_escalation_architecture.md
 
   telemetry:
+    # Single-sourced via content/features/telemetry.md (projector).
+    # Scope = the attune.telemetry package: UsageTracker (usage ledger)
+    # + FeedbackLoop (model-tier feedback). The package ALSO exports
+    # agent-coordination classes (EventStreamer / HeartbeatCoordinator /
+    # ApprovalGate) that overlap the orchestration feature — documented
+    # here as a secondary group, NOT duplicated under orchestration.
     description: Usage tracking and feedback loops
-    files:
-      - src/attune/telemetry/**
     tags: [telemetry, metrics]
-    doc_paths:
-      - docs/how-to/telemetry-and-signals.md
-      - docs/how-to/project-analysis-and-metrics.md
+    status: manual
 
   plugin:
     description: Claude Code plugin — skills, hooks, commands, and MCP config

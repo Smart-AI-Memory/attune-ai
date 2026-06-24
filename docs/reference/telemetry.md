@@ -1,14 +1,4 @@
----
-type: reference
-name: telemetry-reference
-feature: telemetry
-depth: reference
-generated_at: 2026-06-24T00:53:03.849694+00:00
-source_hash: 70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b
-status: generated
----
-
-# Usage tracking, model-tier feedback loops, and agent-coordination signals
+# Telemetry
 
 ## Reference
 
@@ -43,3 +33,5 @@ The public surface is exported from `attune.telemetry`.
 | `HeartbeatCoordinator` | Agent liveness (`beat`, `get_active_agents`, `get_stale_agents`). |
 | `EventStreamer` | Event streams (`publish_event`, `consume_events`). |
 | `ApprovalGate` | Human-in-the-loop approvals (`ApprovalRequest` / `ApprovalResponse`). |
+
+<!-- attune-generated: source_hash=70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b feature=telemetry kind=reference generated_at=2026-06-24 -->
