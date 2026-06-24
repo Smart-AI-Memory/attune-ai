@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Help System errors — error</title>
-  <meta name="description" content="Errors in the help system fall into three main categories:" />
-  <meta property="og:title" content="Help System errors — error" />
-  <meta property="og:description" content="Errors in the help system fall into three main categories:" />
+  <title>The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `TypeError: &#x27;list&#x27; object is not callable` on `report.stale_features()` | `stale_features` is a **property**, not a method | Drop the `()` — `r" />
+  <meta property="og:title" content="The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `TypeError: &#x27;list&#x27; object is not callable` on `report.stale_features()` | `stale_features` is a **property**, not a method | Drop the `()` — `r" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/help-system/error" />
   <style>
@@ -272,54 +272,67 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Help System errors</h1>
-<h2>Common error signatures</h2>
-<p>Errors in the help system fall into three main categories:</p>
+<h1>The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TypeError: 'list' object is not callable</code> on <code>report.stale_features()</code></td>
+<td><code>stale_features</code> is a <strong>property</strong>, not a method</td>
+<td>Drop the <code>()</code> — <code>report.stale_features</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>populate()</code> returns <code>None</code></td>
+<td>Template ID not found in the generated directory</td>
+<td>Confirm the ID and <code>generated_dir</code>; generate first</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Stale content served after source changed</td>
+<td>Templates not regenerated</td>
+<td>Run <code>run_maintenance(..., dry_run=False)</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Cross-links resolve to the wrong/old target</td>
+<td>Stale cross-link cache</td>
+<td><code>invalidate_cross_links_cache()</code> and retry</td>
+<td>low</td>
+</tr>
+<tr>
+<td>Progressive depth never advances</td>
+<td>Session state keyed to a different topic</td>
+<td>Check <code>help.session</code> state; <code>reset_session()</code> to clear</td>
+<td>low</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><strong><code>ValueError: Invalid feature name: {...}</code></strong> — raised by <code>generate_feature_templates()</code> when the <code>Feature</code> passed has a name that fails validation. Check the <code>feature.name</code> field before calling the generator.</li>
-<li><strong><code>FileNotFoundError</code> / <code>OSError</code></strong> — raised by <code>load_manifest()</code>, <code>save_manifest()</code>, <code>check_staleness()</code>, or <code>run_maintenance()</code> when <code>help_dir</code> or <code>project_root</code> does not exist or is not readable. Verify both paths before calling these functions.</li>
-<li><strong><code>KeyError</code> / <code>None</code> return from <code>populate()</code> or <code>populate_progressive()</code></strong> — <code>populate()</code> returns <code>None</code> when the <code>template_id</code> does not resolve to a file under <code>generated_dir</code>. A missing or incorrect <code>generated_dir</code> is the most common cause.</li>
-<li><strong>Stale hash mismatch</strong> — <code>check_staleness()</code> returns a <code>StalenessReport</code> with <code>stale_count &gt; 0</code> when source files have changed since the last <code>run_maintenance()</code> run. This is not an exception, but it causes <code>get_workflow_help()</code> and <code>get_precursor_warnings()</code> to serve outdated templates.</li>
+<li><strong>Properties vs methods.</strong> <code>StalenessReport</code> and <code>MaintenanceResult</code>
+expose counts as properties — calling them raises <code>TypeError</code>.</li>
+<li><strong><code>populate</code> can return <code>None</code>.</strong> It is <code>PopulatedTemplate | None</code> —
+guard the result before using it.</li>
+<li><strong>Scope confusion.</strong> The engine is <code>src/attune/help/</code>; the doc
+<em>authoring</em> tooling and the ops help <em>tab</em> are separate surfaces.</li>
 </ul>
-<h2>Where errors originate</h2>
-<p>The following functions are the most common raise sites. The cause and the likely fix are paired for each:</p>
-<ul>
-<li><strong><code>generate_feature_templates(feature, help_dir, project_root)</code></strong> — raises <code>ValueError</code> for an invalid <code>feature.name</code>. Ensure the <code>Feature</code> dataclass was constructed with a non-empty, valid name string.</li>
-<li><strong><code>load_manifest(help_dir)</code> / <code>save_manifest(manifest, help_dir)</code></strong> — raises <code>OSError</code> if <code>help_dir</code> does not exist or the process lacks write permission. Create the directory and check permissions before calling either function.</li>
-<li><strong><code>scan_project(project_root)</code></strong> — raises <code>OSError</code> if <code>project_root</code> is not a readable directory. Returns an empty list (no exception) when no features are detected, which causes <code>proposals_to_manifest()</code> to produce an empty <code>FeatureManifest</code>.</li>
-<li><strong><code>populate(template_id, ...)</code></strong> — returns <code>None</code> (no exception) when the template file is missing. Passing a wrong <code>generated_dir</code> or a misspelled <code>template_id</code> both produce this silent failure.</li>
-<li><strong><code>record_template_feedback(template_id, rating)</code></strong> — writes to <code>feedback.json</code> in <code>generated_dir</code>; raises <code>OSError</code> if the directory is not writable.</li>
-<li><strong><code>run_maintenance(help_dir, project_root)</code></strong> — records failed feature names in <code>MaintenanceResult.failed</code>. Check <code>result.failed</code> after the call; a non-empty list means one or more features were not regenerated.</li>
-</ul>
-<h2>How to diagnose</h2>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Check <code>MaintenanceResult.failed</code> after <code>run_maintenance()</code>.</strong>
-A non-empty <code>failed</code> list means specific features could not be regenerated. Re-run with <code>dry_run=True</code> first to see what <code>check_staleness()</code> reports without making changes.</p>
-</li>
-<li>
-<p><strong>Call <code>check_staleness()</code> directly to isolate hash mismatches.</strong>
-Compare <code>StalenessReport.stale_features</code> against your expected feature names. If the list is unexpectedly large, <code>get_changed_files(project_root)</code> shows which source files triggered the staleness.</p>
-</li>
-<li>
-<p><strong>Confirm <code>populate()</code> receives the correct <code>generated_dir</code>.</strong>
-When <code>populate()</code> returns <code>None</code>, call <code>search_by_tag()</code> or <code>list_tags()</code> with the same <code>generated_dir</code> to confirm templates exist there. A result of <code>{}</code> means the directory is wrong or empty.</p>
-</li>
-<li>
-<p><strong>Validate <code>Feature</code> fields before generation.</strong>
-<code>generate_feature_templates()</code> raises <code>ValueError: Invalid feature name: {...}</code> synchronously. Log <code>feature.name</code>, <code>feature.files</code>, and <code>feature.tags</code> before the call to confirm the <code>Feature</code> dataclass is populated correctly.</p>
-</li>
-<li>
-<p><strong>Check <code>resolve_topic()</code> when <code>get_workflow_help()</code> returns an empty list.</strong>
-<code>get_workflow_help()</code> relies on <code>resolve_topic(query, manifest)</code> to map a workflow name to a feature. If <code>resolve_topic()</code> returns <code>None</code>, no templates are returned. Pass your <code>workflow_name</code> to <code>resolve_topic()</code> directly and inspect the result.</p>
-</li>
+<li>Confirm the manifest loads: <code>load_manifest(&quot;.help&quot;)</code>.</li>
+<li>Confirm the template exists: <code>populate(&quot;&lt;id&gt;&quot;)</code> is not <code>None</code>.</li>
+<li>Rule out staleness: <code>check_staleness(...).stale_features</code>.</li>
+<li>For cross-link issues: <code>invalidate_cross_links_cache()</code>.</li>
+<li>For progressive depth: inspect <code>help.session</code> state.</li>
 </ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/help/**</code></li>
-<li><code>packages/attune-help/src/attune_help/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>help</code>, <code>templates</code>, <code>docs</code></p>
 
   </article>
   <footer>

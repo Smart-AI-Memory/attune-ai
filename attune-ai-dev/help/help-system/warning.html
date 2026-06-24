@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Help System Cautions — warning</title>
-  <meta name="description" content="The help system combines a stateful progressive-depth engine with generated templates on disk. Most surprises come from stale templates that no longer match their source, session state that persists a" />
-  <meta property="og:title" content="Help System Cautions — warning" />
-  <meta property="og:description" content="The help system combines a stateful progressive-depth engine with generated templates on disk. Most surprises come from stale templates that no longer match their source, session state that persists a" />
+  <title>The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `TypeError: &#x27;list&#x27; object is not callable` on `report.stale_features()` | `stale_features` is a **property**, not a method | Drop the `()` — `r" />
+  <meta property="og:title" content="The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `TypeError: &#x27;list&#x27; object is not callable` on `report.stale_features()` | `stale_features` is a **property**, not a method | Drop the `()` — `r" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/help-system/warning" />
   <style>
@@ -272,46 +272,67 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Help System Cautions</h1>
-<h2>What to watch for</h2>
-<p>The help system combines a stateful progressive-depth engine with generated templates on disk. Most surprises come from stale templates that no longer match their source, session state that persists across unrelated lookups, and confidence scores that silently reflect sparse or skewed feedback data.</p>
-<h2>Risk areas</h2>
-<h3>Stale templates after source changes</h3>
-<p><code>run_maintenance()</code> and <code>check_staleness()</code> compare a stored hash against the output of <code>compute_source_hash()</code>. If you add or remove files that a <code>Feature</code> tracks without updating <code>features.yaml</code>, the hash stays unchanged and stale templates are never flagged. Always update <code>FeatureManifest</code> entries — particularly the <code>files</code> list on each <code>Feature</code> — when source files move or are deleted.</p>
-<h3>Session state bleeding across topics</h3>
-<p><code>populate_progressive()</code> advances depth by reading and writing session state managed by <code>update_state()</code>. That state persists until you call <code>reset_session()</code>. In test suites or long-running processes, a prior lookup on one topic can leave depth at level 1 or 2, causing the next <code>populate_progressive()</code> call on a different topic to return task- or reference-depth content when concept-depth content was expected. Call <code>reset_session()</code> between unrelated test cases and at logical session boundaries in production.</p>
-<h3>Confidence scores driven by thin feedback data</h3>
-<p><code>get_template_confidence()</code> returns a float derived from whatever ratings <code>record_template_feedback()</code> has recorded. With few ratings, the score is volatile — a single negative rating can push a frequently used template below any confidence threshold you apply. Cross-reference <code>get_usage_weights()</code> (which draws on 30 days of usage telemetry by default) before treating confidence alone as a signal for suppressing a template.</p>
-<h3><code>generate_feature_templates()</code> silently skips existing files</h3>
-<p>When <code>overwrite=False</code> (the default), <code>generate_feature_templates()</code> leaves existing templates untouched even if the underlying source has changed. If you regenerate after a significant refactor without passing <code>overwrite=True</code>, users may receive help that describes the old API. Use <code>run_maintenance()</code> to detect which features are stale before deciding whether to force regeneration.</p>
-<h3><code>get_precursor_warnings()</code> returns an empty list for unrecognised paths</h3>
-<p><code>get_precursor_warnings()</code> maps a <code>file_path</code> to relevant <code>PopulatedTemplate</code> results using filename and extension. Paths that don't match any feature in the manifest return an empty list with no error. If precursor warnings appear to be missing for a file type you expect to be covered, verify that the corresponding <code>Feature.files</code> patterns in <code>features.yaml</code> include that path.</p>
-<h3>Cross-link cache is not invalidated automatically</h3>
-<p><code>populate()</code> can compose related templates when <code>compose=True</code>. The cross-link index backing this is cached in memory. If you add or remove templates on disk during the same process lifetime, call <code>invalidate_cross_links_cache()</code> before the next <code>populate()</code> call, or the composed output may reference templates that no longer exist.</p>
-<h2>How to avoid problems</h2>
-<ol>
-<li>
-<p><strong>Keep <code>features.yaml</code> in sync with your source tree.</strong> <code>match_files_to_features()</code> and <code>compute_source_hash()</code> both rely on the <code>files</code> list inside each <code>Feature</code>. An outdated manifest causes staleness detection to miss real changes.</p>
-</li>
-<li>
-<p><strong>Reset session state in tests.</strong> Add <code>reset_session()</code> to your test teardown so that progressive-depth advancement in one test doesn't affect the starting depth of the next.</p>
-</li>
-<li>
-<p><strong>Pair confidence with usage data.</strong> When using <code>get_template_confidence()</code> to rank or suppress templates, also call <code>get_usage_weights()</code> so that low-traffic templates aren't unfairly penalised by a small feedback sample.</p>
-</li>
-<li>
-<p><strong>Run maintenance before regenerating.</strong> Call <code>run_maintenance()</code> with <code>dry_run=True</code> first to see <code>MaintenanceResult.stale_count()</code> and <code>MaintenanceResult.regenerated_count()</code> without writing anything, then re-run without <code>dry_run</code> once you've confirmed the scope of changes.</p>
-</li>
-<li>
-<p><strong>Depend only on the public API.</strong> Names beginning with <code>_</code> — such as internal template-file finders and cache structures — can change without notice. Rely on the exports listed in <code>help.engine.__all__</code> to avoid breakage during refactors.</p>
-</li>
-</ol>
-<h2>Source files</h2>
+<h1>The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TypeError: 'list' object is not callable</code> on <code>report.stale_features()</code></td>
+<td><code>stale_features</code> is a <strong>property</strong>, not a method</td>
+<td>Drop the <code>()</code> — <code>report.stale_features</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>populate()</code> returns <code>None</code></td>
+<td>Template ID not found in the generated directory</td>
+<td>Confirm the ID and <code>generated_dir</code>; generate first</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Stale content served after source changed</td>
+<td>Templates not regenerated</td>
+<td>Run <code>run_maintenance(..., dry_run=False)</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Cross-links resolve to the wrong/old target</td>
+<td>Stale cross-link cache</td>
+<td><code>invalidate_cross_links_cache()</code> and retry</td>
+<td>low</td>
+</tr>
+<tr>
+<td>Progressive depth never advances</td>
+<td>Session state keyed to a different topic</td>
+<td>Check <code>help.session</code> state; <code>reset_session()</code> to clear</td>
+<td>low</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/help/**</code></li>
-<li><code>packages/attune-help/src/attune_help/**</code></li>
+<li><strong>Properties vs methods.</strong> <code>StalenessReport</code> and <code>MaintenanceResult</code>
+expose counts as properties — calling them raises <code>TypeError</code>.</li>
+<li><strong><code>populate</code> can return <code>None</code>.</strong> It is <code>PopulatedTemplate | None</code> —
+guard the result before using it.</li>
+<li><strong>Scope confusion.</strong> The engine is <code>src/attune/help/</code>; the doc
+<em>authoring</em> tooling and the ops help <em>tab</em> are separate surfaces.</li>
 </ul>
-<p><strong>Tags:</strong> <code>help</code>, <code>templates</code>, <code>docs</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm the manifest loads: <code>load_manifest(&quot;.help&quot;)</code>.</li>
+<li>Confirm the template exists: <code>populate(&quot;&lt;id&gt;&quot;)</code> is not <code>None</code>.</li>
+<li>Rule out staleness: <code>check_staleness(...).stale_features</code>.</li>
+<li>For cross-link issues: <code>invalidate_cross_links_cache()</code>.</li>
+<li>For progressive depth: inspect <code>help.session</code> state.</li>
+</ol>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot help system — troubleshooting</title>
-  <meta name="description" content="The help system has two layers that can fail independently: the **manifest layer** (feature discovery, `features.yaml`, staleness tracking) and the **template layer** (population, progressive depth, c" />
-  <meta property="og:title" content="Troubleshoot help system — troubleshooting" />
-  <meta property="og:description" content="The help system has two layers that can fail independently: the **manifest layer** (feature discovery, `features.yaml`, staleness tracking) and the **template layer** (population, progressive depth, c" />
+  <title>The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `TypeError: &#x27;list&#x27; object is not callable` on `report.stale_features()` | `stale_features` is a **property**, not a method | Drop the `()` — `r" />
+  <meta property="og:title" content="The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `TypeError: &#x27;list&#x27; object is not callable` on `report.stale_features()` | `stale_features` is a **property**, not a method | Drop the `()` — `r" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/help-system/troubleshooting" />
   <style>
@@ -272,147 +272,67 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot help system</h1>
-<h2>Before you start</h2>
-<p>The help system has two layers that can fail independently: the <strong>manifest layer</strong> (feature discovery, <code>features.yaml</code>, staleness tracking) and the <strong>template layer</strong> (population, progressive depth, cross-link resolution, rendering). Identify which layer the failure is in before diving into code.</p>
-<h2>Symptom table</h2>
+<h1>The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>populate()</code> or <code>populate_progressive()</code> returns <code>None</code></td>
-<td>Confirm the template ID exists: call <code>search_by_tag()</code> or inspect the generated directory for the matching <code>.md</code> file</td>
+<td><code>TypeError: 'list' object is not callable</code> on <code>report.stale_features()</code></td>
+<td><code>stale_features</code> is a <strong>property</strong>, not a method</td>
+<td>Drop the <code>()</code> — <code>report.stale_features</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td><code>generate_feature_templates()</code> raises <code>ValueError: Invalid feature name</code></td>
-<td>Verify <code>Feature.name</code> contains no path separators or unsupported characters before passing it to <code>generate_feature_templates()</code></td>
+<td><code>populate()</code> returns <code>None</code></td>
+<td>Template ID not found in the generated directory</td>
+<td>Confirm the ID and <code>generated_dir</code>; generate first</td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>check_staleness()</code> reports every feature as stale after no code change</td>
-<td>Compare <code>FeatureStaleness.current_hash</code> vs <code>FeatureStaleness.stored_hash</code>; a missing or corrupt <code>features.yaml</code> resets all stored hashes</td>
+<td>Stale content served after source changed</td>
+<td>Templates not regenerated</td>
+<td>Run <code>run_maintenance(..., dry_run=False)</code></td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>run_maintenance()</code> shows <code>MaintenanceResult.regenerated_count</code> of 0 but stale features remain</td>
-<td>Check <code>MaintenanceResult.skipped_manual</code> and <code>MaintenanceResult.failed</code>; manually edited templates are skipped by default</td>
+<td>Cross-links resolve to the wrong/old target</td>
+<td>Stale cross-link cache</td>
+<td><code>invalidate_cross_links_cache()</code> and retry</td>
+<td>low</td>
 </tr>
 <tr>
-<td><code>get_precursor_warnings()</code> returns an empty list for a file you expect to match</td>
-<td>Confirm <code>match_files_to_features()</code> maps that file to at least one feature; files outside the manifest's tracked paths produce no warnings</td>
-</tr>
-<tr>
-<td><code>get_workflow_help()</code> returns irrelevant templates</td>
-<td>Call <code>resolve_topic()</code> with the same <code>workflow_name</code> to see which feature the manifest resolves to; the mismatch is usually in <code>FeatureManifest.features</code></td>
-</tr>
-<tr>
-<td>Cross-link resolution silently drops links</td>
-<td>Call <code>invalidate_cross_links_cache()</code> to force a cache rebuild, then re-run <code>populate()</code></td>
-</tr>
-<tr>
-<td><code>get_template_confidence()</code> returns an unexpected score</td>
-<td>Inspect <code>feedback.json</code> in your generated directory; stale or corrupt feedback entries skew the score</td>
-</tr>
-<tr>
-<td>Renderers (<code>render_cli</code>, <code>render_claude_code</code>, <code>render_marketplace</code>) produce empty output</td>
-<td>Confirm <code>populate()</code> returned a non-<code>None</code> <code>PopulatedTemplate</code> before passing it to the renderer</td>
+<td>Progressive depth never advances</td>
+<td>Session state keyed to a different topic</td>
+<td>Check <code>help.session</code> state; <code>reset_session()</code> to clear</td>
+<td>low</td>
 </tr>
 </tbody>
 </table>
-<h2>Step-by-step diagnosis</h2>
+<h3>Risk areas</h3>
+<ul>
+<li><strong>Properties vs methods.</strong> <code>StalenessReport</code> and <code>MaintenanceResult</code>
+expose counts as properties — calling them raises <code>TypeError</code>.</li>
+<li><strong><code>populate</code> can return <code>None</code>.</strong> It is <code>PopulatedTemplate | None</code> —
+guard the result before using it.</li>
+<li><strong>Scope confusion.</strong> The engine is <code>src/attune/help/</code>; the doc
+<em>authoring</em> tooling and the ops help <em>tab</em> are separate surfaces.</li>
+</ul>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Reproduce the failure with a minimal call.</strong>
-Strip the failing call to its required arguments and run it in isolation. For example, if <code>populate()</code> misbehaves, call it directly with only <code>template_id</code> and a bare <code>AudienceProfile()</code> — no extra context — and confirm the failure still occurs.</p>
-</li>
-<li>
-<p><strong>Check the manifest is valid.</strong>
-Load the manifest explicitly and inspect it:</p>
-<pre><code class="language-python">from help.manifest import load_manifest
-manifest = load_manifest(&quot;your/help_dir&quot;)
-print(manifest.version, list(manifest.features.keys()))
-</code></pre>
-<p>A <code>KeyError</code> or empty <code>features</code> dict means <code>features.yaml</code> is missing, malformed, or was never written by <code>save_manifest()</code>.</p>
-</li>
-<li>
-<p><strong>Check staleness state.</strong>
-Run a dry-run maintenance pass to see what the system considers stale without making changes:</p>
-<pre><code class="language-python">from help.maintenance import run_maintenance
-result = run_maintenance(&quot;your/help_dir&quot;, &quot;your/project_root&quot;, dry_run=True)
-print(result.stale_count, result.staleness.stale_features())
-</code></pre>
-<p>If <code>stale_features()</code> lists features you didn't change, compare <code>FeatureStaleness.current_hash</code> with <code>FeatureStaleness.stored_hash</code> to find which source files changed.</p>
-</li>
-<li>
-<p><strong>Inspect changed files.</strong></p>
-<pre><code class="language-python">from help.maintenance import get_changed_files, format_status_report
-from help.staleness import check_staleness
-from help.manifest import load_manifest
-
-manifest = load_manifest(&quot;your/help_dir&quot;)
-changed = get_changed_files(&quot;your/project_root&quot;)
-report = check_staleness(manifest, &quot;your/help_dir&quot;, &quot;your/project_root&quot;)
-print(format_status_report(report))
-</code></pre>
-<p>This confirms which files triggered staleness and which features they map to via <code>match_files_to_features()</code>.</p>
-</li>
-<li>
-<p><strong>Reset session state if depth is stuck.</strong>
-Progressive depth is stateful. If <code>populate_progressive()</code> always returns the same depth level, call <code>reset_session()</code> and retry:</p>
-<pre><code class="language-python">from help.engine import reset_session
-reset_session()
-</code></pre>
-</li>
-<li>
-<p><strong>Run the help system tests.</strong></p>
-<pre><code>pytest -k &quot;help&quot; -v --tb=short
-</code></pre>
-<p>If a test covers the failing path, its fixtures give you a reproducible starting point. Pay particular attention to tests covering <code>populate()</code>, <code>check_staleness()</code>, and <code>run_maintenance()</code>.</p>
-</li>
+<li>Confirm the manifest loads: <code>load_manifest(&quot;.help&quot;)</code>.</li>
+<li>Confirm the template exists: <code>populate(&quot;&lt;id&gt;&quot;)</code> is not <code>None</code>.</li>
+<li>Rule out staleness: <code>check_staleness(...).stale_features</code>.</li>
+<li>For cross-link issues: <code>invalidate_cross_links_cache()</code>.</li>
+<li>For progressive depth: inspect <code>help.session</code> state.</li>
 </ol>
-<h2>Common fixes</h2>
-<ul>
-<li>
-<p><strong>Missing or stale <code>features.yaml</code>.</strong>
-Regenerate it from a fresh scan:</p>
-<pre><code class="language-python">from help.bootstrap import scan_project, proposals_to_manifest
-from help.manifest import save_manifest
-
-proposals = scan_project(&quot;your/project_root&quot;)
-manifest = proposals_to_manifest(proposals)
-save_manifest(manifest, &quot;your/help_dir&quot;)
-</code></pre>
-</li>
-<li>
-<p><strong>Template not found after generation.</strong>
-If <code>populate()</code> returns <code>None</code> for a template you just generated, confirm <code>overwrite=True</code> was passed to <code>generate_feature_templates()</code> when regenerating, and that the <code>help_dir</code> path you pass to <code>populate()</code> matches the one used during generation.</p>
-</li>
-<li>
-<p><strong>Stale cross-link cache.</strong>
-Call <code>invalidate_cross_links_cache()</code> from <code>help.templates</code> after adding or removing templates. The cache is not invalidated automatically when files change on disk.</p>
-</li>
-<li>
-<p><strong>Corrupt or missing <code>feedback.json</code>.</strong>
-If <code>get_template_confidence()</code> raises or returns nonsensical values, delete <code>feedback.json</code> from the generated directory. The file is recreated on the next <code>record_template_feedback()</code> call.</p>
-</li>
-<li>
-<p><strong>Dependency version mismatch.</strong>
-If behavior changed after a dependency upgrade, run <code>pip show &lt;package&gt;</code> to confirm the installed version. The manifest format (<code>features.yaml</code> version field: <code>FeatureManifest.version</code>) can also vary between releases — check that the version integer matches what your installed code expects.</p>
-</li>
-<li>
-<p><strong>Manually edited templates blocking regeneration.</strong>
-<code>run_maintenance()</code> skips templates listed in <code>MaintenanceResult.skipped_manual</code>. To force regeneration, call <code>generate_feature_templates()</code> directly with <code>overwrite=True</code>.</p>
-</li>
-</ul>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/help/**</code></li>
-<li><code>packages/attune-help/src/attune_help/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>help</code>, <code>templates</code>, <code>docs</code></p>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Note: help system — note</title>
-  <meta name="description" content="The help system is a progressive-depth template engine. It scans your project to discover features, generates and maintains per-feature help templates at three depth levels (`concept`, `task`, `refere" />
-  <meta property="og:title" content="Note: help system — note" />
-  <meta property="og:description" content="The help system is a progressive-depth template engine. It scans your project to discover features, generates and maintains per-feature help templates at three depth levels (`concept`, `task`, `refere" />
+  <title>The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help — note</title>
+  <meta name="description" content="The help system is attune&#x27;s **progressive-depth help engine** — it discovers a project&#x27;s features, generates depth-layered help templates for each one, and serves the right level of detail based on wh" />
+  <meta property="og:title" content="The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help — note" />
+  <meta property="og:description" content="The help system is attune&#x27;s **progressive-depth help engine** — it discovers a project&#x27;s features, generates depth-layered help templates for each one, and serves the right level of detail based on wh" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/help-system/note" />
   <style>
@@ -272,87 +272,185 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Note: help system</h1>
-<h2>Context</h2>
-<p>The help system is a progressive-depth template engine. It scans your project to discover features, generates and maintains per-feature help templates at three depth levels (<code>concept</code>, <code>task</code>, <code>reference</code>), and adapts output for different audiences and rendering targets.</p>
-<h2>Public surface</h2>
-<p>The <code>help.engine</code> module re-exports the full public API. The surface splits into two cooperating layers.</p>
-<p><strong>Data classes</strong> represent the domain objects that flow between functions:</p>
+<h1>The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help</h1>
+<h2>Overview</h2>
+<p>The help system is attune's <strong>progressive-depth help engine</strong> — it
+discovers a project's features, generates depth-layered help templates
+for each one, and serves the right level of detail based on who is
+asking and what they are doing. It lives in <strong><code>src/attune/help/</code></strong> and
+is organized into focused submodules (discovery, manifest, generation,
+population, staleness, maintenance, feedback).</p>
+<p>This page documents the <strong>engine</strong> — the Python API you call to scan,
+generate, populate, and maintain help content. It is <strong>not</strong> the
+single-source rollout tooling (<code>scripts/project_features.py</code>,
+<code>content/features/</code>) that authors these very docs, and it is <strong>not</strong>
+the ops dashboard's help tab (<code>attune.ops.help_data</code>, which only
+<em>displays</em> the engine's output). Those are adjacent surfaces that
+consume the engine.</p>
+<p>The pipeline flows in four stages — <strong>discovery → generation →
+population → maintenance</strong> — and every entry point is <strong>synchronous</strong>.</p>
+<p>You reach it these ways:</p>
+<ul>
+<li>the Python API — import from the <strong>help submodules</strong>
+(<code>attune.help.bootstrap</code>, <code>attune.help.templates</code>,
+<code>attune.help.maintenance</code>, …); the top-level <code>attune.help</code> package
+exposes nothing, so you import from the owning submodule;</li>
+<li>the <strong><code>attune.help.engine</code></strong> facade — a single import surface that
+re-exports the entire public help API (36 names across the
+submodules), so <code>from attune.help.engine import populate, scan_project, run_maintenance, …</code> resolves them all in one place.</li>
+</ul>
+<h2>Concepts</h2>
+<h3>The four-stage pipeline</h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Module</th>
-<th>Represents</th>
+<th>Stage</th>
+<th>Submodule</th>
+<th>Entry point</th>
+<th>Produces</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. Discovery</td>
+<td><code>help.bootstrap</code></td>
+<td><code>scan_project(project_root)</code></td>
+<td><code>list[ProposedFeature]</code></td>
+</tr>
+<tr>
+<td>2. Generation</td>
+<td><code>help.generator</code></td>
+<td><code>generate_feature_templates(...)</code> <em>(deprecated)</em></td>
+<td><code>GenerationResult</code></td>
+</tr>
+<tr>
+<td>3. Population</td>
+<td><code>help.templates</code></td>
+<td><code>populate(template_id, ...)</code></td>
+<td><code>PopulatedTemplate | None</code></td>
+</tr>
+<tr>
+<td>4. Maintenance</td>
+<td><code>help.maintenance</code></td>
+<td><code>run_maintenance(help_dir, project_root)</code></td>
+<td><code>MaintenanceResult</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Discovery</strong> — <code>scan_project()</code> walks the project root (skipping
+<code>.git</code>, <code>node_modules</code>, <code>__pycache__</code>, …) and returns <code>ProposedFeature</code>
+objects (<code>name</code>, <code>description</code>, matched <code>files</code>, <code>tags</code>). Pass accepted
+proposals to <code>proposals_to_manifest()</code> to build a <code>FeatureManifest</code>,
+which <code>help.manifest</code> persists to <code>features.yaml</code>.</p>
+<p><strong>Generation</strong> — <code>generate_feature_templates()</code> takes a <code>Feature</code> from
+the manifest and writes templates into the help directory, returning a
+<code>GenerationResult</code>. <strong>It is deprecated</strong> — it produces only three depths
+(concept/task/reference) and emits a <code>DeprecationWarning</code>; it survives
+as an internal escape hatch for the MCP <code>help_update</code> tool. The current
+generation path is the single-source authoring pipeline
+(<code>attune-author generate &lt;feature&gt; --all-kinds</code> → the projector), not
+this function.</p>
+<p><strong>Population</strong> — <code>populate(template_id, context=None, audience=None)</code>
+resolves a template against the generated directory, applies a
+<code>TemplateContext</code> (the fields <code>populate</code> honors are <code>file_path</code>,
+<code>workflow_name</code>, and <code>error_message</code>), and returns a
+<code>PopulatedTemplate</code> (or <code>None</code> if the ID resolves to no file).
+Template IDs use the grammar <strong><code>&lt;type-prefix&gt;-&lt;name&gt;</code></strong> — e.g.
+<code>con-progressive-depth</code> for the <em>concept</em> named <code>progressive-depth</code>
+(prefixes: <code>con</code>/<code>tas</code>/<code>ref</code>/<code>qui</code>/<code>err</code>/<code>war</code>/<code>tip</code>/<code>not</code>/<code>faq</code>/<code>tro</code>/
+<code>com</code>). <code>populate_progressive()</code> (<code>help.progression</code>) advances depth
+across calls, tracking per-topic state in <code>help.session</code>.</p>
+<p><strong>Maintenance</strong> — <code>run_maintenance()</code> calls <code>check_staleness()</code>, which
+hashes each feature's sources with <code>compute_source_hash()</code> and compares
+to the stored hash. It returns a <code>MaintenanceResult</code>; passing
+<code>dry_run=False</code> regenerates the stale features.</p>
+<h3>Contextual entry points</h3>
+<p>Rather than resolving a template ID directly, you can ask the engine
+what is relevant right now (canonical home: <code>help.feedback</code>, also
+re-exported from <code>help.engine</code>):</p>
+<ul>
+<li><code>get_precursor_warnings(file_path)</code> — up to three <code>PopulatedTemplate</code>
+objects relevant to the file about to be edited.</li>
+<li><code>get_workflow_help(workflow_name)</code> — templates relevant after a named
+workflow completes.</li>
+<li><code>resolve_topic(query, manifest)</code> (<code>help.manifest</code>) — maps a free-text
+query to a feature name.</li>
+<li><code>search_by_tag(tag)</code> / <code>list_tags()</code> — browse the inventory by tag;
+both accept <code>sort_by_usage=True</code> to rank by recent activity.</li>
+</ul>
+<h3>Properties, not methods (the gotcha)</h3>
+<p>The staleness and maintenance result objects expose <strong>properties</strong>, not
+method calls — accessing them with <code>()</code> raises <code>TypeError</code>:</p>
+<ul>
+<li><code>StalenessReport.stale_features</code> — the list of stale feature names.</li>
+<li><code>StalenessReport.stale_count</code> / <code>current_count</code>.</li>
+<li><code>MaintenanceResult.regenerated_count</code> / <code>stale_count</code>.</li>
+</ul>
+<h3>Rendering and feedback</h3>
+<p>Three renderers convert a <code>PopulatedTemplate</code> into its final string
+(<code>help.transformers</code>): <code>render_claude_code()</code>, <code>render_marketplace()</code>,
+<code>render_cli()</code>. Every populated template can be rated:
+<code>record_template_feedback(template_id, rating)</code> writes feedback and
+returns the updated confidence; <code>get_template_confidence(template_id)</code>
+reads it back; <code>get_usage_weights(days=30)</code> returns a <code>dict[str, float]</code>
+the engine uses to rank contextual results.</p>
+<h3>Key data types</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Submodule</th>
+<th>Role</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>ProposedFeature</code></td>
 <td><code>help.bootstrap</code></td>
-<td>A feature discovered during project scanning</td>
+<td>Discovery output (<code>name</code>, <code>files</code>, <code>tags</code>, confidence)</td>
 </tr>
 <tr>
-<td><code>Feature</code></td>
+<td><code>Feature</code> / <code>FeatureManifest</code></td>
 <td><code>help.manifest</code></td>
-<td>A project feature mapped to its source files</td>
+<td>Persistent record of features → source files (<code>Feature.status</code>/<code>is_manual</code> gates staleness)</td>
 </tr>
 <tr>
-<td><code>FeatureManifest</code></td>
-<td><code>help.manifest</code></td>
-<td>The parsed <code>features.yaml</code> manifest</td>
-</tr>
-<tr>
-<td><code>GeneratedTemplate</code></td>
+<td><code>GeneratedTemplate</code> / <code>GenerationResult</code></td>
 <td><code>help.generator</code></td>
-<td>A single generated template file with its source hash</td>
+<td>Generation output (carries <code>source_hash</code>)</td>
 </tr>
 <tr>
-<td><code>GenerationResult</code></td>
-<td><code>help.generator</code></td>
-<td>All templates generated for one feature</td>
-</tr>
-<tr>
-<td><code>MaintenanceResult</code></td>
-<td><code>help.maintenance</code></td>
-<td>The outcome of a maintenance run, including <code>stale_count</code> and <code>regenerated_count</code></td>
-</tr>
-<tr>
-<td><code>StalenessReport</code></td>
-<td><code>help.staleness</code></td>
-<td>Per-feature staleness status across a manifest</td>
-</tr>
-<tr>
-<td><code>AudienceProfile</code></td>
+<td><code>TemplateContext</code> / <code>AudienceProfile</code></td>
 <td><code>help.templates</code></td>
-<td>Target channel and verbosity for rendered output</td>
-</tr>
-<tr>
-<td><code>TemplateContext</code></td>
-<td><code>help.templates</code></td>
-<td>Runtime parameters (file path, workflow name, error message, etc.) passed to <code>populate</code></td>
+<td>Runtime parameters + output channel</td>
 </tr>
 <tr>
 <td><code>PopulatedTemplate</code></td>
 <td><code>help.templates</code></td>
-<td>A template with all context slots filled, ready for rendering</td>
+<td>Final content object for a renderer</td>
+</tr>
+<tr>
+<td><code>StalenessReport</code></td>
+<td><code>help.staleness</code></td>
+<td>Aggregate staleness status (properties)</td>
+</tr>
+<tr>
+<td><code>MaintenanceResult</code></td>
+<td><code>help.maintenance</code></td>
+<td>Summary of a maintenance run (properties)</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Top-level functions</strong> accept and return those classes. A few representative examples:</p>
+<h2>Notes &amp; tips</h2>
 <ul>
-<li><code>scan_project()</code> → <code>list[ProposedFeature]</code>; feed the result to <code>proposals_to_manifest()</code> to produce a <code>FeatureManifest</code>.</li>
-<li><code>generate_feature_templates(feature, help_dir, project_root)</code> → <code>GenerationResult</code>; pass <code>overwrite=True</code> to replace existing files.</li>
-<li><code>run_maintenance(help_dir, project_root)</code> → <code>MaintenanceResult</code>; set <code>dry_run=True</code> to preview changes without writing.</li>
-<li><code>populate(template_id, context, audience)</code> → <code>PopulatedTemplate</code>; pass to <code>render_cli()</code>, <code>render_claude_code()</code>, or <code>render_marketplace()</code> for channel-specific output.</li>
-<li><code>get_precursor_warnings(file_path)</code> and <code>get_workflow_help(workflow_name)</code> return <code>list[PopulatedTemplate]</code> ranked by relevance.</li>
-<li><code>record_template_feedback(template_id, rating)</code> updates the confidence score returned by <code>get_template_confidence()</code>.</li>
+<li><strong>Import from the owning submodule</strong> (no top-level <code>__all__</code>), or use
+the <code>help.engine</code> facade for the contextual/feedback helpers.</li>
+<li><strong>Counts are properties.</strong> <code>stale_features</code>, <code>stale_count</code>,
+<code>regenerated_count</code>, <code>current_count</code> — no <code>()</code>.</li>
+<li><strong><code>populate</code> is nullable.</strong> Always check for <code>None</code>.</li>
+<li><strong>Maintenance is hash-based.</strong> It only regenerates features whose
+source actually changed; <code>dry_run=True</code> reports without writing.</li>
 </ul>
-<h2>Session state</h2>
-<p><code>populate_progressive()</code> tracks which depth level (<code>0</code> = concept, <code>1</code> = task, <code>2</code> = reference) the current session has reached for a given topic. Call <code>reset_session()</code> to clear that state — for example, between test runs or when the user switches topics.</p>
-<h2>Rendering targets</h2>
-<p>Three renderers in <code>help.transformers</code> adapt a <code>PopulatedTemplate</code> for different surfaces: <code>render_cli()</code>, <code>render_claude_code()</code>, and <code>render_marketplace()</code>. The <code>AudienceProfile.channel</code> field defaults to <code>'claude-code'</code>.</p>
-<p><strong>Tags:</strong> <code>help</code>, <code>templates</code>, <code>docs</code></p>
 
   </article>
   <footer>

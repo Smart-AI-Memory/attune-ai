@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Help System vs Alternatives — comparison</title>
-  <meta name="description" content="The help system is a progressive-depth template engine that generates, populates, and maintains contextual documentation for project features. It covers the full lifecycle: scanning source code to pro" />
-  <meta property="og:title" content="Comparison: Help System vs Alternatives — comparison" />
-  <meta property="og:description" content="The help system is a progressive-depth template engine that generates, populates, and maintains contextual documentation for project features. It covers the full lifecycle: scanning source code to pro" />
+  <title>The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help — comparison</title>
+  <meta name="description" content="The help engine *produces and serves* help content; other surfaces *author* or *display* it:" />
+  <meta property="og:title" content="The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help — comparison" />
+  <meta property="og:description" content="The help engine *produces and serves* help content; other surfaces *author* or *display* it:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/help-system/comparison" />
   <style>
@@ -272,140 +272,42 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Help System vs Alternatives</h1>
-<h2>Context</h2>
-<p>The help system is a progressive-depth template engine that generates, populates, and maintains contextual documentation for project features. It covers the full lifecycle: scanning source code to propose features, generating templates at three depths (<code>concept</code>, <code>task</code>, <code>reference</code>), adapting output to different audiences, and tracking staleness when source files change.</p>
-<h2>Feature comparison</h2>
-<p>The table below compares the help system's built-in entry points against two common alternatives: writing ad-hoc documentation by hand, and using a generic static-site generator.</p>
+<h1>The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help</h1>
+<h2>Comparison</h2>
+<p>The help engine <em>produces and serves</em> help content; other surfaces
+<em>author</em> or <em>display</em> it:</p>
 <table>
 <thead>
 <tr>
-<th>Capability</th>
-<th>Help system</th>
-<th>Hand-written docs</th>
-<th>Generic static-site generator</th>
+<th></th>
+<th>help-system (engine)</th>
+<th>rollout tooling</th>
+<th>ops-dashboard help tab</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Feature discovery</td>
-<td><code>scan_project()</code> proposes features from source automatically</td>
-<td>Manual — you identify features yourself</td>
-<td>Manual</td>
+<td>Role</td>
+<td>Discover/generate/populate/maintain templates</td>
+<td>Author single-source masters → project them</td>
+<td>Display coverage + search</td>
 </tr>
 <tr>
-<td>Template generation</td>
-<td><code>generate_feature_templates()</code> produces concept, task, and reference depths in one call</td>
-<td>Author each depth by hand</td>
-<td>Typically single-depth pages</td>
+<td>Where</td>
+<td><code>src/attune/help/</code></td>
+<td><code>scripts/project_features.py</code>, <code>content/features/</code></td>
+<td><code>attune.ops.help_data</code></td>
 </tr>
 <tr>
-<td>Progressive depth</td>
-<td><code>populate_progressive()</code> advances depth per session; <code>reset_session()</code> resets on topic change</td>
-<td>Not applicable</td>
-<td>Not applicable</td>
-</tr>
-<tr>
-<td>Staleness detection</td>
-<td><code>check_staleness()</code> hashes source files; <code>run_maintenance()</code> regenerates stale templates automatically</td>
-<td>No detection — drift is silent</td>
-<td>No detection</td>
-</tr>
-<tr>
-<td>Audience adaptation</td>
-<td><code>render_claude_code()</code>, <code>render_cli()</code>, <code>render_marketplace()</code> target specific channels from the same template</td>
-<td>Duplicate content per channel</td>
-<td>Requires custom theming per target</td>
-</tr>
-<tr>
-<td>Contextual warnings</td>
-<td><code>get_precursor_warnings(file_path)</code> surfaces relevant help when a specific file is being edited</td>
-<td>Not applicable</td>
-<td>Not applicable</td>
-</tr>
-<tr>
-<td>Workflow-triggered help</td>
-<td><code>get_workflow_help(workflow_name)</code> returns up to 3 relevant templates after a workflow completes</td>
-<td>Not applicable</td>
-<td>Not applicable</td>
-</tr>
-<tr>
-<td>Feedback loop</td>
-<td><code>record_template_feedback()</code> updates a confidence score; <code>get_usage_weights()</code> tunes relevance over time</td>
-<td>None</td>
-<td>None</td>
-</tr>
-<tr>
-<td>Tag-based discovery</td>
-<td><code>search_by_tag()</code> and <code>list_tags()</code> let you navigate templates by tag, optionally sorted by usage</td>
-<td>Manual index maintenance</td>
-<td>Depends on plugin</td>
-</tr>
-<tr>
-<td>CI maintenance hook</td>
-<td><code>run_hook()</code> integrates into CI; <code>run_maintenance(dry_run=True)</code> previews changes without writing</td>
-<td>None</td>
-<td>None</td>
+<td>Entry</td>
+<td><code>import attune.help</code></td>
+<td><code>python scripts/project_features.py &lt;F&gt;</code></td>
+<td><code>python -m attune.ops</code></td>
 </tr>
 </tbody>
 </table>
-<h2>When NOT to use the help system</h2>
-<ul>
-<li><strong>Single-use scripts.</strong> If you need one throwaway document, the overhead of defining a <code>Feature</code>, running <code>generate_feature_templates()</code>, and managing a <code>FeatureManifest</code> outweighs the benefit. Write the doc directly.</li>
-<li><strong>Content the public API doesn't expose.</strong> The help system does not expose internals for patching. If you need behavior outside the public API (see <code>help.engine.__all__</code>), open an issue or propose an extension point rather than reaching into private modules.</li>
-<li><strong>Cross-feature orchestration.</strong> If your documentation problem spans several features and requires coordinating their manifests, work at the orchestration layer above individual <code>load_manifest()</code> / <code>save_manifest()</code> calls rather than calling each feature's pipeline directly.</li>
-<li><strong>Non-project documentation.</strong> <code>scan_project()</code> skips well-known non-source directories (<code>.git</code>, <code>node_modules</code>, <code>dist</code>, <code>build</code>, and others) and is designed for structured project trees. It is not a general-purpose documentation crawler.</li>
-</ul>
-<h2>Use the help system when…</h2>
-<table>
-<thead>
-<tr>
-<th>Situation</th>
-<th>Recommended entry point</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>You want to discover what features exist in a codebase</td>
-<td><code>scan_project()</code> → <code>proposals_to_manifest()</code></td>
-</tr>
-<tr>
-<td>You need concept, task, and reference docs generated for a feature</td>
-<td><code>generate_feature_templates()</code></td>
-</tr>
-<tr>
-<td>You want help that adapts as a user asks follow-up questions</td>
-<td><code>populate_progressive()</code> + <code>reset_session()</code></td>
-</tr>
-<tr>
-<td>You need to warn a user before they edit a specific file</td>
-<td><code>get_precursor_warnings(file_path)</code></td>
-</tr>
-<tr>
-<td>You want help surfaced automatically after a workflow finishes</td>
-<td><code>get_workflow_help(workflow_name)</code></td>
-</tr>
-<tr>
-<td>Your templates may drift as source files change</td>
-<td><code>check_staleness()</code> + <code>run_maintenance()</code> or <code>run_hook()</code> in CI</td>
-</tr>
-<tr>
-<td>You need to render the same template for Claude Code, CLI, and marketplace</td>
-<td><code>render_claude_code()</code>, <code>render_cli()</code>, <code>render_marketplace()</code></td>
-</tr>
-<tr>
-<td>You want to measure whether a template is actually useful</td>
-<td><code>record_template_feedback()</code> + <code>get_template_confidence()</code></td>
-</tr>
-</tbody>
-</table>
-<p>The help system is the right choice when you need the full pipeline — discovery, generation, population, adaptation, and maintenance — rather than any single step in isolation. If you only need one step, the corresponding module (<code>help.bootstrap</code>, <code>help.generator</code>, <code>help.staleness</code>, etc.) is importable independently.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/help/**</code></li>
-<li><code>packages/attune-help/src/attune_help/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>help</code>, <code>templates</code>, <code>docs</code></p>
+<p>The engine is the runtime; the rollout tooling is the authoring
+pipeline; the ops dashboard is one read-only consumer.</p>
 
   </article>
   <footer>

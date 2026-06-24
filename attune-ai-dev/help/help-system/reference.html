@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Help System reference — reference</title>
-  <meta name="description" content="APIs for building, populating, maintaining, and rendering progressive-depth help templates." />
-  <meta property="og:title" content="Help System reference — reference" />
-  <meta property="og:description" content="APIs for building, populating, maintaining, and rendering progressive-depth help templates." />
+  <title>The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help — reference</title>
+  <meta name="description" content="The engine is submodule-organized — there is no top-level `__all__`. Import from the submodule that owns each symbol, or use the `help.engine` facade for the contextual/feedback helpers." />
+  <meta property="og:title" content="The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help — reference" />
+  <meta property="og:description" content="The engine is submodule-organized — there is no top-level `__all__`. Import from the submodule that owns each symbol, or use the `help.engine` facade for the contextual/feedback helpers." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/help-system/reference" />
   <style>
@@ -272,853 +272,220 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Help System reference</h1>
-<p>APIs for building, populating, maintaining, and rendering progressive-depth help templates.</p>
-<h2>Classes</h2>
+<h1>The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help</h1>
+<h2>Reference</h2>
+<p>The engine is submodule-organized — there is no top-level <code>__all__</code>.
+Import from the submodule that owns each symbol, or use the
+<code>help.engine</code> facade for the contextual/feedback helpers.</p>
+<h3><code>help.bootstrap</code></h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>scan_project(project_root) -&gt; list[ProposedFeature]</code></td>
+<td>Discover candidate features.</td>
+</tr>
+<tr>
+<td><code>proposals_to_manifest(...)</code></td>
+<td>Build a <code>FeatureManifest</code> from accepted proposals.</td>
+</tr>
 <tr>
 <td><code>ProposedFeature</code></td>
-<td>A feature discovered by scanning.</td>
+<td>Discovery record.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>help.manifest</code></h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>load_manifest(help_dir)</code> / <code>save_manifest(...)</code></td>
+<td>Read/write the manifest.</td>
 </tr>
 <tr>
-<td><code>GeneratedTemplate</code></td>
-<td>Result of generating one template file.</td>
+<td><code>match_files_to_features(...)</code></td>
+<td>Map changed files to features.</td>
 </tr>
 <tr>
-<td><code>GenerationResult</code></td>
-<td>Result of generating templates for a feature.</td>
+<td><code>resolve_topic(query, manifest) -&gt; str | None</code></td>
+<td>Free-text query → feature name.</td>
+</tr>
+<tr>
+<td><code>Feature(name, description, files, tags, status=&quot;generated&quot;)</code> / <code>FeatureManifest</code></td>
+<td>Manifest data types. <code>Feature.is_manual</code> (true when <code>status == &quot;manual&quot;</code>) makes staleness/maintenance skip it.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>help.generator</code></h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>generate_feature_templates(feature, help_dir, project_root, depths=None, overwrite=False) -&gt; GenerationResult</code></td>
+<td><strong>Deprecated.</strong> Write 3-depth templates; emits <code>DeprecationWarning</code>. Use <code>attune-author generate … --all-kinds</code> instead.</td>
+</tr>
+<tr>
+<td><code>GeneratedTemplate</code> / <code>GenerationResult</code></td>
+<td>Generation outputs.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>help.staleness</code></h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>check_staleness(manifest, help_dir, project_root, features=None) -&gt; StalenessReport</code></td>
+<td>Compare source hashes.</td>
+</tr>
+<tr>
+<td><code>compute_source_hash(...)</code></td>
+<td>Hash a feature's sources.</td>
+</tr>
+<tr>
+<td><code>StalenessReport</code></td>
+<td><strong>Properties:</strong> <code>current_count</code>, <code>stale_count</code>, <code>stale_features</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>help.maintenance</code></h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run_maintenance(help_dir, project_root, features=None, dry_run=False) -&gt; MaintenanceResult</code></td>
+<td>Regenerate stale features.</td>
+</tr>
+<tr>
+<td><code>run_hook(...)</code></td>
+<td>Hook-friendly wrapper (checks changed files first).</td>
+</tr>
+<tr>
+<td><code>format_status_report(...)</code> / <code>get_changed_files(...)</code></td>
+<td>Reporting helpers.</td>
 </tr>
 <tr>
 <td><code>MaintenanceResult</code></td>
-<td>Result of a help maintenance run.</td>
-</tr>
-<tr>
-<td><code>Feature</code></td>
-<td>A project feature mapped to source files.</td>
-</tr>
-<tr>
-<td><code>FeatureManifest</code></td>
-<td>Parsed features.yaml manifest.</td>
-</tr>
-<tr>
-<td><code>FeatureStaleness</code></td>
-<td>Staleness status for one feature.</td>
-</tr>
-<tr>
-<td><code>StalenessReport</code></td>
-<td>Staleness report across all features.</td>
-</tr>
-<tr>
-<td><code>TemplateContext</code></td>
-<td>Runtime parameters for template population.</td>
-</tr>
-<tr>
-<td><code>AudienceProfile</code></td>
-<td>Target audience for output adaptation.</td>
-</tr>
-<tr>
-<td><code>PopulatedTemplate</code></td>
-<td>Result of template population.</td>
+<td><strong>Properties:</strong> <code>regenerated_count</code>, <code>stale_count</code>.</td>
 </tr>
 </tbody>
 </table>
-<h3><code>ProposedFeature</code> fields</h3>
-<p>[dataclass]</p>
+<h3><code>help.templates</code></h3>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>name</code></td>
-<td><code>str</code></td>
-<td>—</td>
+<td><code>populate(template_id, context=None, audience=None, *, generated_dir=None, compose=False) -&gt; PopulatedTemplate | None</code></td>
+<td>Resolve + populate a template.</td>
 </tr>
 <tr>
-<td><code>description</code></td>
-<td><code>str</code></td>
-<td>—</td>
+<td><code>invalidate_cross_links_cache()</code></td>
+<td>Clear the cross-link resolution cache.</td>
 </tr>
 <tr>
-<td><code>files</code></td>
-<td><code>list[str]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-<tr>
-<td><code>tags</code></td>
-<td><code>list[str]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-<tr>
-<td><code>confidence</code></td>
-<td><code>str</code></td>
-<td><code>'medium'</code></td>
-</tr>
-<tr>
-<td><code>reason</code></td>
-<td><code>str</code></td>
-<td><code>''</code></td>
+<td><code>TemplateContext</code> / <code>AudienceProfile</code> / <code>PopulatedTemplate</code></td>
+<td>Population types.</td>
 </tr>
 </tbody>
 </table>
-<h3><code>GeneratedTemplate</code> fields</h3>
-<p>[dataclass]</p>
+<h3><code>help.progression</code>, <code>help.session</code>, <code>help.transformers</code>, <code>help.feedback</code></h3>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
+<th>Symbol</th>
+<th>Module</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>feature</code></td>
-<td><code>str</code></td>
-<td>—</td>
+<td><code>populate_progressive(template_id, ...)</code></td>
+<td><code>progression</code></td>
+<td>Population that advances depth across calls.</td>
 </tr>
 <tr>
-<td><code>depth</code></td>
-<td><code>str</code></td>
-<td>—</td>
+<td><code>get_state</code> / <code>update_state</code> / <code>reset_session</code></td>
+<td><code>session</code></td>
+<td>Per-topic session state.</td>
 </tr>
 <tr>
-<td><code>path</code></td>
-<td><code>Path</code></td>
-<td>—</td>
+<td><code>render_claude_code</code> / <code>render_marketplace</code> / <code>render_cli</code></td>
+<td><code>transformers</code></td>
+<td><code>(PopulatedTemplate) -&gt; str</code>.</td>
 </tr>
 <tr>
-<td><code>source_hash</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-</tbody>
-</table>
-<h3><code>GenerationResult</code> fields</h3>
-<p>[dataclass]</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>feature</code></td>
-<td><code>str</code></td>
-<td>—</td>
+<td><code>record_template_feedback(id, rating) -&gt; float</code></td>
+<td><code>feedback</code></td>
+<td>Record a rating, return confidence.</td>
 </tr>
 <tr>
-<td><code>templates</code></td>
-<td><code>list[GeneratedTemplate]</code></td>
-<td><code>field(default_factory=list, compare=False)</code></td>
+<td><code>get_template_confidence(id) -&gt; float</code></td>
+<td><code>feedback</code></td>
+<td>Read confidence.</td>
 </tr>
 <tr>
-<td><code>source_hash</code></td>
-<td><code>str</code></td>
-<td><code>field(default='', compare=False)</code></td>
+<td><code>get_usage_weights(days=30) -&gt; dict</code></td>
+<td><code>feedback</code></td>
+<td>Usage-weighted ranking.</td>
 </tr>
 <tr>
-<td><code>matched_files</code></td>
-<td><code>list[str]</code></td>
-<td><code>field(default_factory=list, compare=False)</code></td>
+<td><code>get_precursor_warnings(file_path, *, max_results=3)</code></td>
+<td><code>feedback</code></td>
+<td>File-relevant templates.</td>
+</tr>
+<tr>
+<td><code>get_workflow_help(name, *, max_results=3)</code></td>
+<td><code>feedback</code></td>
+<td>Workflow-relevant templates.</td>
+</tr>
+<tr>
+<td><code>search_by_tag(tag, *, sort_by_usage=False) -&gt; list[str]</code></td>
+<td><code>feedback</code></td>
+<td>Template IDs by tag.</td>
+</tr>
+<tr>
+<td><code>list_tags(*, sort_by_usage=False) -&gt; dict[str, int]</code></td>
+<td><code>feedback</code></td>
+<td>Tag → template count.</td>
 </tr>
 </tbody>
 </table>
-<h3><code>MaintenanceResult</code> fields</h3>
-<p>[dataclass]</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>staleness</code></td>
-<td><code>StalenessReport</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>regenerated</code></td>
-<td><code>list[GenerationResult]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-<tr>
-<td><code>skipped_manual</code></td>
-<td><code>list[str]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-<tr>
-<td><code>failed</code></td>
-<td><code>list[str]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-</tbody>
-</table>
-<h4><code>MaintenanceResult</code> properties</h4>
-<table>
-<thead>
-<tr>
-<th>Property</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>stale_count</code></td>
-<td><code>int</code></td>
-<td>Number of stale features detected.</td>
-</tr>
-<tr>
-<td><code>regenerated_count</code></td>
-<td><code>int</code></td>
-<td>Number of features regenerated.</td>
-</tr>
-</tbody>
-</table>
-<h3><code>Feature</code> fields</h3>
-<p>[dataclass]</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>name</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>description</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>files</code></td>
-<td><code>list[str]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-<tr>
-<td><code>tags</code></td>
-<td><code>list[str]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-</tbody>
-</table>
-<h3><code>FeatureManifest</code> fields</h3>
-<p>[dataclass]</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>version</code></td>
-<td><code>int</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>features</code></td>
-<td><code>dict[str, Feature]</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>path</code></td>
-<td>`Path</td>
-<td>None`</td>
-</tr>
-</tbody>
-</table>
-<h3><code>FeatureStaleness</code> fields</h3>
-<p>[dataclass]</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>feature</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>is_stale</code></td>
-<td><code>bool</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>current_hash</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>stored_hash</code></td>
-<td>`str</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>matched_files</code></td>
-<td><code>list[str]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-</tbody>
-</table>
-<h3><code>StalenessReport</code> fields</h3>
-<p>[dataclass]</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>entries</code></td>
-<td><code>list[FeatureStaleness]</code></td>
-<td>—</td>
-</tr>
-</tbody>
-</table>
-<h4><code>StalenessReport</code> properties</h4>
-<table>
-<thead>
-<tr>
-<th>Property</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>stale_count</code></td>
-<td><code>int</code></td>
-<td>Count of stale features.</td>
-</tr>
-<tr>
-<td><code>current_count</code></td>
-<td><code>int</code></td>
-<td>Count of up-to-date features.</td>
-</tr>
-<tr>
-<td><code>stale_features</code></td>
-<td><code>list[str]</code></td>
-<td>Names of stale features.</td>
-</tr>
-</tbody>
-</table>
-<h3><code>TemplateContext</code> fields</h3>
-<p>[dataclass]</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>file_path</code></td>
-<td>`str</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>error_message</code></td>
-<td>`str</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>workflow_name</code></td>
-<td>`str</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>tool_name</code></td>
-<td>`str</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>skill_name</code></td>
-<td>`str</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>extra</code></td>
-<td><code>dict[str, Any]</code></td>
-<td><code>field(default_factory=dict)</code></td>
-</tr>
-</tbody>
-</table>
-<h3><code>AudienceProfile</code> fields</h3>
-<p>[dataclass]</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>channel</code></td>
-<td><code>str</code></td>
-<td><code>'claude-code'</code></td>
-</tr>
-<tr>
-<td><code>verbosity</code></td>
-<td><code>str</code></td>
-<td><code>'normal'</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Functions</h2>
-<h3>Bootstrap</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>scan_project</code></td>
-<td><code>project_root: str | Path</code></td>
-<td><code>list[ProposedFeature]</code></td>
-<td>Scan a project and propose features.</td>
-</tr>
-<tr>
-<td><code>proposals_to_manifest</code></td>
-<td><code>proposals: list[ProposedFeature]</code></td>
-<td><code>FeatureManifest</code></td>
-<td>Convert accepted proposals to a FeatureManifest.</td>
-</tr>
-</tbody>
-</table>
-<h3>Feedback and discovery</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>record_template_feedback</code></td>
-<td><code>template_id: str, rating: str, *, generated_dir: str | Path | None = None</code></td>
-<td><code>float</code></td>
-<td>Record user feedback on a template.</td>
-</tr>
-<tr>
-<td><code>get_template_confidence</code></td>
-<td><code>template_id: str, *, generated_dir: str | Path | None = None</code></td>
-<td><code>float</code></td>
-<td>Get confidence score based on feedback.</td>
-</tr>
-<tr>
-<td><code>get_usage_weights</code></td>
-<td><code>days: int = 30</code></td>
-<td><code>dict[str, float]</code></td>
-<td>Get template relevance weights from usage telemetry.</td>
-</tr>
-<tr>
-<td><code>search_by_tag</code></td>
-<td><code>tag: str, *, generated_dir: str | Path | None = None, sort_by_usage: bool = False</code></td>
-<td><code>list[str]</code></td>
-<td>Find template IDs matching a tag.</td>
-</tr>
-<tr>
-<td><code>list_tags</code></td>
-<td><code>*, generated_dir: str | Path | None = None, sort_by_usage: bool = False</code></td>
-<td><code>dict[str, int]</code></td>
-<td>List all tags with their template counts.</td>
-</tr>
-<tr>
-<td><code>get_workflow_help</code></td>
-<td><code>workflow_name: str, *, generated_dir: str | Path | None = None, max_results: int = 3</code></td>
-<td><code>list[PopulatedTemplate]</code></td>
-<td>Get help templates relevant after a workflow completes.</td>
-</tr>
-<tr>
-<td><code>get_precursor_warnings</code></td>
-<td><code>file_path: str, *, generated_dir: str | Path | None = None, max_results: int = 3</code></td>
-<td><code>list[PopulatedTemplate]</code></td>
-<td>Get warnings relevant to a file being edited.</td>
-</tr>
-</tbody>
-</table>
-<h3>Generation</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-<th>Raises</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>generate_feature_templates</code></td>
-<td><code>feature: Feature, help_dir: str | Path, project_root: str | Path, depths: list[str] | None = None, overwrite: bool = False</code></td>
-<td><code>GenerationResult</code></td>
-<td>Generate help templates for a feature.</td>
-<td><code>ValueError</code> — <code>'Invalid feature name: {...}'</code></td>
-</tr>
-</tbody>
-</table>
-<h3>Maintenance</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>run_maintenance</code></td>
-<td><code>help_dir: str | Path, project_root: str | Path, features: list[str] | None = None, dry_run: bool = False</code></td>
-<td><code>MaintenanceResult</code></td>
-<td>Check staleness and regenerate stale help templates.</td>
-</tr>
-<tr>
-<td><code>get_changed_files</code></td>
-<td><code>project_root: str | Path</code></td>
-<td><code>list[str]</code></td>
-<td>Get files changed in the most recent commit.</td>
-</tr>
-<tr>
-<td><code>run_hook</code></td>
-<td><code>help_dir: str | Path, project_root: str | Path</code></td>
-<td><code>MaintenanceResult | None</code></td>
-<td>Post-commit hook entry point.</td>
-</tr>
-<tr>
-<td><code>format_status_report</code></td>
-<td><code>report: StalenessReport, help_dir: str | Path | None = None</code></td>
-<td><code>str</code></td>
-<td>Format a staleness report for display.</td>
-</tr>
-</tbody>
-</table>
-<h3>Manifest</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>load_manifest</code></td>
-<td><code>help_dir: str | Path</code></td>
-<td><code>FeatureManifest</code></td>
-<td>Load and validate features.yaml from a .help/ directory.</td>
-</tr>
-<tr>
-<td><code>save_manifest</code></td>
-<td><code>manifest: FeatureManifest, help_dir: str | Path</code></td>
-<td><code>Path</code></td>
-<td>Write a FeatureManifest to features.yaml.</td>
-</tr>
-<tr>
-<td><code>match_files_to_features</code></td>
-<td><code>changed_files: list[str], manifest: FeatureManifest</code></td>
-<td><code>dict[str, list[str]]</code></td>
-<td>Match changed files against feature glob patterns.</td>
-</tr>
-<tr>
-<td><code>resolve_topic</code></td>
-<td><code>query: str, manifest: FeatureManifest</code></td>
-<td><code>str | None</code></td>
-<td>Resolve a user query to a feature name.</td>
-</tr>
-</tbody>
-</table>
-<h3>Polish</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>polish_template</code></td>
-<td><code>content: str, feature_name: str, source_summary: str</code></td>
-<td><code>str</code></td>
-<td>Polish a generated template using an LLM.</td>
-</tr>
-<tr>
-<td><code>build_source_summary</code></td>
-<td><code>public_classes: list[dict[str, str]], public_functions: list[dict[str, str]], module_docstrings: list[str], file_count: int</code></td>
-<td><code>str</code></td>
-<td>Build a concise source summary for the polish prompt.</td>
-</tr>
-</tbody>
-</table>
-<h3>Preamble</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>get_preamble</code></td>
-<td><code>feature_name: str, help_dir: str | Path | None = None</code></td>
-<td><code>str | None</code></td>
-<td>Get the one-liner preamble for a feature.</td>
-</tr>
-<tr>
-<td><code>get_related_preambles</code></td>
-<td><code>feature_name: str, help_dir: str | Path | None = None, max_results: int = 3</code></td>
-<td><code>list[dict[str, str]]</code></td>
-<td>Get preambles for features related by shared tags.</td>
-</tr>
-</tbody>
-</table>
-<h3>Progression</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>populate_progressive</code></td>
-<td><code>template_id: str, context: Any = None, audience: AudienceProfile | None = None, *, generated_dir: str | Path | None = None, starting_level: int | None = None</code></td>
-<td><code>PopulatedTemplate | None</code></td>
-<td>Populate a template with type-driven depth escalation.</td>
-</tr>
-</tbody>
-</table>
-<h3>Session</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>get_state</code></td>
-<td>—</td>
-<td><code>dict[str, Any]</code></td>
-<td>Get the current session state (thread-safe read).</td>
-</tr>
-<tr>
-<td><code>update_state</code></td>
-<td><code>topic: str, starting_level: int | None = None</code></td>
-<td><code>int</code></td>
-<td>Update session state for a topic access.</td>
-</tr>
-<tr>
-<td><code>reset_session</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>Reset progressive depth to defaults.</td>
-</tr>
-</tbody>
-</table>
-<h3>Staleness</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>compute_source_hash</code></td>
-<td><code>feature: Feature, project_root: str | Path</code></td>
-<td><code>tuple[str, list[str]]</code></td>
-<td>Compute SHA-256 hash of a feature's source files.</td>
-</tr>
-<tr>
-<td><code>check_staleness</code></td>
-<td><code>manifest: FeatureManifest, help_dir: str | Path, project_root: str | Path, features: list[str] | None = None</code></td>
-<td><code>StalenessReport</code></td>
-<td>Check which features have stale help templates.</td>
-</tr>
-</tbody>
-</table>
-<h3>Templates</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>invalidate_cross_links_cache</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>Clear the cross-links cache so the next lookup re-reads disk.</td>
-</tr>
-<tr>
-<td><code>populate</code></td>
-<td><code>template_id: str, context: TemplateContext | None = None, audience: AudienceProfile | None = None, *, generated_dir: str | Path | None = None, compose: bool = False</code></td>
-<td><code>PopulatedTemplate | None</code></td>
-<td>Populate a template with context and audience adaptation.</td>
-</tr>
-</tbody>
-</table>
-<h3>Renderers</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>render_claude_code</code></td>
-<td><code>template: PopulatedTemplate</code></td>
-<td><code>str</code></td>
-<td>Render a template for inline Claude Code conversation.</td>
-</tr>
-<tr>
-<td><code>render_marketplace</code></td>
-<td><code>template: PopulatedTemplate</code></td>
-<td><code>str</code></td>
-<td>Render a template for agentskills.io documentation page.</td>
-</tr>
-<tr>
-<td><code>render_cli</code></td>
-<td><code>template: PopulatedTemplate</code></td>
-<td><code>str</code></td>
-<td>Render a template for terminal display via <code>attune help</code>.</td>
-</tr>
-</tbody>
-</table>
-<h2>Constants</h2>
-<table>
-<thead>
-<tr>
-<th>Constant</th>
-<th>Type</th>
-<th>Members</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>_DEPTH_NAMES</code></td>
-<td><code>tuple</code></td>
-<td><code>'concept'</code>, <code>'task'</code>, <code>'reference'</code></td>
-</tr>
-<tr>
-<td><code>_MANIFEST_FILENAME</code></td>
-<td><code>str</code></td>
-<td><code>'features.yaml'</code></td>
-</tr>
-<tr>
-<td><code>_FEEDBACK_FILE</code></td>
-<td><code>str</code></td>
-<td><code>'feedback.json'</code></td>
-</tr>
-<tr>
-<td><code>_SKIP_DIRS</code></td>
-<td><code>set</code></td>
-<td><code>'.git'</code>, <code>'.github'</code>, <code>'.help'</code>, <code>'.claude'</code>, <code>'.agents'</code>, <code>'__pycache__'</code>, <code>'.mypy_cache'</code>, <code>'.pytest_cache'</code>, <code>'.ruff_cache'</code>, <code>'.tox'</code>, <code>'.venv'</code>, <code>'venv'</code>, <code>'env'</code>, <code>'node_modules'</code>, <code>'dist'</code>, <code>'build'</code>, <code>'.egg-info'</code>, <code>'htmlcov'</code>, <code>'site'</code></td>
-</tr>
-<tr>
-<td><code>_ENTRY_POINT_NAMES</code></td>
-<td><code>set</code></td>
-<td><code>'main.py'</code>, <code>'app.py'</code>, <code>'cli.py'</code>, <code>'server.py'</code>, <code>'manage.py'</code>, <code>'wsgi.py'</code>, <code>'asgi.py'</code>, <code>'index.ts'</code>, <code>'index.js'</code>, <code>'main.go'</code>, <code>'main.rs'</code></td>
-</tr>
-<tr>
-<td><code>_CONFIG_PATTERNS</code></td>
-<td><code>set</code></td>
-<td><code>'config'</code>, <code>'settings'</code>, <code>'conf'</code></td>
-</tr>
-<tr>
-<td><code>_EXCLUDED_DIRS</code></td>
-<td><code>set</code></td>
-<td><code>'__pycache__'</code>, <code>'.mypy_cache'</code>, <code>'.pytest_cache'</code>, <code>'.ruff_cache'</code>, <code>'node_modules'</code>, <code>'.git'</code></td>
-</tr>
-<tr>
-<td><code>_COMPOUND_PREFIXES</code></td>
-<td><code>list</code></td>
-<td><code>'ref-skill-'</code>, <code>'ref-tool-'</code>, <code>'ref-'</code>, <code>'tas-use-'</code>, <code>'tas-tool-'</code>, <code>'tas-'</code>, <code>'con-tool-'</code>, <code>'con-'</code>, <code>'err-'</code>, <code>'war-'</code>, <code>'tip-'</code>, <code>'faq-'</code>, <code>'not-'</code>, <code>'qui-'</code>, <code>'tro-'</code>, <code>'com-'</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/help/**</code></li>
-<li><code>packages/attune-help/src/attune_help/**</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>help</code>, <code>templates</code>, <code>docs</code></p>
+<p><code>help.engine</code> is a pure facade — it defines no names of its own and
+re-exports the <strong>entire</strong> public help API (36 symbols across all the
+submodules above: data types, <code>scan_project</code>, <code>populate</code>,
+<code>run_maintenance</code>, <code>check_staleness</code>, the feedback helpers, …). Import
+any public symbol from its owning submodule or from <code>help.engine</code>.</p>
 
   </article>
   <footer>
