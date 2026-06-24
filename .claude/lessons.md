@@ -10835,3 +10835,44 @@ files.
   before the PR is mergeable. Pairs with the core "Rapid pushes +
   cancel-in-progress … cancelled-but-required = BLOCKING" lesson and the
   "verify-first on infra — required vs non-required" lesson.
+
+- **Single-sourcing a feature's help docs: the static gates are
+  import/syntax-level — only the adversarial subagent review + a real
+  RUN of every example catches the fiction that matters (a recurring
+  taxonomy)**: across the Tier-3 help rollout (2026-06-24, features
+  telemetry/configuration/resilience/hooks/cli/orchestration, PRs
+  #1034–#1040), `scripts/project_features.py --dry-run` (fact-check) and
+  `scripts/check_doc_examples.py` (example gate) both passed on docs that
+  still contained real behavioral fiction — because they validate
+  imports/syntax, NOT runtime behavior. The mandatory adversarial
+  general-purpose subagent review (verify EVERY claim against source)
+  found fiction on most features that the static gates missed, and the
+  OLD generated `.help` concept/faq docs were the worst offenders. The
+  recurring fiction classes to grep/verify for: (1) **module
+  mis-attribution** — a symbol claimed in package X actually lives in
+  submodule Y (configuration: `ConfigLoader`/`load_unified_config`/
+  `CONFIG_SEARCH_PATHS` are in `config.loader`, not `config.unified`);
+  (2) **decorator-vs-N-arg call** — `HealthCheck.register` is a
+  decorator (`@hc.register("name")`), not `register(name, fn)`, and the
+  wrong form DIDN'T crash (registered nothing) so it passed a smoke
+  test; (3) **callable invocation convention** — hooks handlers get
+  context `**`-unpacked (`handler(**context)`), not `handler(context)`;
+  (4) **state-gate location** — telemetry `MIN_SAMPLES` gates
+  `recommend_tier`, not `get_quality_stats`; (5) **non-public symbol
+  cited as public** — orchestration's old docs cite `register_strategy`
+  (not in `__all__`); (6) **sync-vs-async hidden by the signature** —
+  `route_user_input`/`MetaOrchestrator.execute` are async but
+  `inspect.signature` alone doesn't show it (use
+  `inspect.iscoroutinefunction`); (7) **scope inflation** — cli's
+  `review` is only the nested `patterns review`, not a top-level
+  command. Durable loop: BEFORE authoring, ground the package `__all__`
+  + `iscoroutinefunction` on entry points AND actually RUN each example
+  snippet (a non-crashing wrong call is the dangerous case); run the
+  adversarial review as a hard gate (fix findings, but re-verify
+  reviewer false-positives against code first); when the old faq is
+  accurate, freeze it `status:manual` and preserve it, else rewrite from
+  the master's verified seeds; DD5 must drop the per-feature special
+  keys too (`doc_kinds`, `arch_path`), not just `files`/`doc_paths`.
+  Extends the Tier-2 "adversarial pass found real fiction on 5 of 7" and
+  "ground the ACTUAL public surface first" lessons with the concrete
+  taxonomy + the "static gates don't execute" root cause.
