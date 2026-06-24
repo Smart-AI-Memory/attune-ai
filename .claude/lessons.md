@@ -10876,3 +10876,44 @@ files.
   Extends the Tier-2 "adversarial pass found real fiction on 5 of 7" and
   "ground the ACTUAL public surface first" lessons with the concrete
   taxonomy + the "static gates don't execute" root cause.
+
+- **"Projected ≠ served" — completing a help/docs rollout doesn't
+  mean the in-conversation surface serves it; verify which directory
+  each consuming surface actually reads, and dogfood the live lookup**:
+  hit 2026-06-24 right after finishing the help-docs-single-source
+  Tier-3 rollout (9/9). The single-source projector writes
+  `.help/templates/<feature>/<kind>.md` (FEATURE-organized), but
+  `attune.help.templates.populate()` / MCP `help_lookup` read
+  `plugin/help/generated/<type>/<name>.md` (TYPE-organized) by default
+  (`_DEFAULT_GENERATED_DIR`), a SEPARATE corpus built by
+  `scripts/generate_all.py` from `.claude/CLAUDE.md` lessons +
+  `plugin/skills/*/SKILL.md` — it never reads `content/features/` or
+  `.help/templates/`. Net: the rollout reached `ops.help_data` (which
+  reads `.help/templates`) and the website (`docs/`), but the
+  in-conversation MCP/plugin surface still served the old, separately-
+  sourced, ~800-template-stale bundle. Caught only because Patrick
+  asked "couldn't we use what you just generated?" and a dogfood probe
+  (`populate("con-help-system")` → `None`; `populate("con-progressive-
+  depth")` → a bundle-only system concept) exposed the split.
+  Diagnostic recipe: (1) grep the consuming handler for its
+  `generated_dir`/default (`src/attune/mcp/server.py` →
+  `attune.help.engine` → `_DEFAULT_GENERATED_DIR`); (2) actually CALL
+  the live lookup for a rolled-out feature and confirm the grounded
+  body comes back — never infer "projected = served." Packaging twist:
+  the **pip wheel ships NEITHER dir** (both live outside `src/attune`,
+  absent from `MANIFEST.in`/`package-data`), so in an installed wheel
+  `_DEFAULT_GENERATED_DIR` resolves to a nonexistent
+  `…/site-packages/../plugin/help/generated`. attune-ai's in-tool help
+  is a **Claude Code PLUGIN** feature (the plugin bundles both
+  `.help/templates` (286 files) and `plugin/help/generated` (905
+  files)), NOT a pip feature — so "deliver to users" means knowing the
+  CHANNEL, and the handoff's "regen `plugin/help/generated` to reach
+  pip users" conflated two pipelines + the wrong channel. Fix shipped
+  (8.9.1, help-serving-bridge spec D1): a resolver fallback in
+  `_find_template_file` to `.help/templates/<feature>/<kind>.md` when an
+  ID is absent from the bundle (canonical-layout-only so custom dirs
+  stay deterministic; traversal-guarded). Pairs with the
+  "Registered ≠ working — dogfood the live loop" lesson (same family:
+  necessary-not-sufficient wiring vs. a real round-trip receipt) and
+  the "verify-first applies to infra/config diagnoses" lesson (read the
+  actual resolver before asserting what's served).
