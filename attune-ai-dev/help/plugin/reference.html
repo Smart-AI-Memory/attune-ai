@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Plugin reference — reference</title>
-  <meta name="description" content="Claude Code plugin — hooks, session management, and security APIs" />
-  <meta property="og:title" content="Plugin reference — reference" />
-  <meta property="og:description" content="Claude Code plugin — hooks, session management, and security APIs" />
+  <title>The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers — reference</title>
+  <meta name="description" content="The plugin is a packaging artifact; its &quot;API&quot; is the manifest schema and the component folder layout." />
+  <meta property="og:title" content="The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers — reference" />
+  <meta property="og:description" content="The plugin is a packaging artifact; its &quot;API&quot; is the manifest schema and the component folder layout." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/plugin/reference" />
   <style>
@@ -272,401 +272,158 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Plugin reference</h1>
-<p>Claude Code plugin — hooks, session management, and security APIs</p>
-<p>Use the <code>hooks</code> package to build on or extend the attune-ai Claude Code plugin. The package lets you discover in-flight specs, snapshot git state, gate execution in SDK subprocess sessions, validate shell commands, and compose session-start or resume prompts.</p>
-<h2>Classes</h2>
-<table>
-<thead>
-<tr>
-<th>Class</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>SpecInfo</code></td>
-<td>One in-flight spec discovered under a workspace root.</td>
-</tr>
-<tr>
-<td><code>GitState</code></td>
-<td>Snapshot of the worktree's git state at hook fire time.</td>
-</tr>
-</tbody>
-</table>
-<p>Both are dataclasses defined in <code>plugin/hooks/_state.py</code>.</p>
-<h3><code>SpecInfo</code> fields</h3>
+<h1>The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers</h1>
+<h2>Reference</h2>
+<p>The plugin is a packaging artifact; its &quot;API&quot; is the manifest schema
+and the component folder layout.</p>
+<h3><code>plugin/.claude-plugin/plugin.json</code></h3>
 <table>
 <thead>
 <tr>
 <th>Field</th>
-<th>Type</th>
-<th>Default</th>
+<th>Value / Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>slug</code></td>
-<td><code>str</code></td>
-<td></td>
+<td><code>name</code></td>
+<td><code>attune-ai</code> — the plugin name.</td>
 </tr>
 <tr>
-<td><code>path</code></td>
-<td><code>Path</code></td>
-<td></td>
+<td><code>version</code></td>
+<td>Plugin bundle version (<code>8.9.0</code>).</td>
 </tr>
 <tr>
-<td><code>layer</code></td>
-<td><code>str</code></td>
-<td></td>
+<td><code>description</code></td>
+<td>One-line plugin summary shown in Claude Code.</td>
 </tr>
 <tr>
-<td><code>phase</code></td>
-<td><code>str</code></td>
-<td></td>
+<td><code>author</code></td>
+<td><code>{name, email}</code> — Smart AI Memory.</td>
 </tr>
 <tr>
-<td><code>status</code></td>
-<td><code>str</code></td>
-<td></td>
+<td><code>homepage</code> / <code>repository</code></td>
+<td>Project links.</td>
 </tr>
 <tr>
-<td><code>mtime</code></td>
-<td><code>float</code></td>
-<td></td>
+<td><code>license</code></td>
+<td><code>Apache-2.0</code>.</td>
 </tr>
 <tr>
-<td><code>effective_status</code></td>
-<td><code>str</code></td>
-<td><code>''</code></td>
-</tr>
-<tr>
-<td><code>status_source</code></td>
-<td><code>str</code></td>
-<td><code>'header'</code></td>
-</tr>
-<tr>
-<td><code>status_conflict</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
+<td><code>keywords</code></td>
+<td>Discovery keywords (include <code>claude-code</code>).</td>
 </tr>
 </tbody>
 </table>
-<h3><code>GitState</code> fields</h3>
+<h3><code>plugin/.claude-plugin/marketplace.json</code></h3>
 <table>
 <thead>
 <tr>
 <th>Field</th>
-<th>Type</th>
-<th>Default</th>
+<th>Value / Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>branch</code></td>
-<td><code>str</code></td>
-<td></td>
+<td><code>name</code></td>
+<td><code>attune-ai-plugin</code> — the <strong>marketplace</strong> name.</td>
 </tr>
 <tr>
-<td><code>last_sha</code></td>
-<td><code>str</code></td>
-<td></td>
+<td><code>owner</code></td>
+<td><code>{name, email}</code> of the marketplace.</td>
 </tr>
 <tr>
-<td><code>last_subject</code></td>
-<td><code>str</code></td>
-<td></td>
+<td><code>metadata</code></td>
+<td><code>{description, version}</code>.</td>
 </tr>
 <tr>
-<td><code>uncommitted</code></td>
-<td><code>tuple[str, ...]</code></td>
-<td></td>
+<td><code>plugins[]</code></td>
+<td>The plugin entries; one here.</td>
+</tr>
+<tr>
+<td><code>plugins[0].name</code></td>
+<td><code>attune-ai</code> — the plugin offered.</td>
+</tr>
+<tr>
+<td><code>plugins[0].source</code></td>
+<td><code>./</code> — plugin at the marketplace root.</td>
+</tr>
+<tr>
+<td><code>plugins[0].category</code></td>
+<td><code>developer-tools</code>.</td>
+</tr>
+<tr>
+<td><code>plugins[0].tags</code></td>
+<td>Marketplace listing tags.</td>
 </tr>
 </tbody>
 </table>
-<h2>Functions</h2>
+<h3>Component folders</h3>
 <table>
 <thead>
 <tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-<th>File</th>
+<th>Folder</th>
+<th>Component</th>
+<th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>int</code></td>
-<td>Entry point for the <code>/handoff</code> slash command; always returns <code>0</code>.</td>
-<td><code>plugin/hooks/_handoff_cli.py</code></td>
+<td><code>commands/</code></td>
+<td>Slash commands</td>
+<td><code>handoff.md</code> → <code>/handoff</code>.</td>
 </tr>
 <tr>
-<td><code>build_resume_prompt</code></td>
-<td><code>spec_info: SpecInfo | None, git_state: GitState, *, workspace_path: str = '~/attune', todo_summary: str | None = None</code></td>
-<td><code>str</code></td>
-<td>Render the user-facing resume prompt body.</td>
-<td><code>plugin/hooks/_resume_prompt.py</code></td>
+<td><code>skills/</code></td>
+<td>Skills</td>
+<td>17 dirs, each with <code>SKILL.md</code>.</td>
 </tr>
 <tr>
-<td><code>is_sdk_subprocess</code></td>
-<td>—</td>
-<td><code>bool</code></td>
-<td>True when running inside an SDK-spawned <code>claude</code> subprocess.</td>
-<td><code>plugin/hooks/_sdk_gate.py</code></td>
+<td><code>agents/</code></td>
+<td>Subagents</td>
+<td>6 <code>.md</code> definitions.</td>
 </tr>
 <tr>
-<td><code>exit_if_sdk_subprocess</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>Exit 0 with no output when inside an SDK subprocess session.</td>
-<td><code>plugin/hooks/_sdk_gate.py</code></td>
+<td><code>hooks/</code></td>
+<td>Hooks</td>
+<td><code>hooks.json</code> + ~20 scripts → 5 events.</td>
 </tr>
 <tr>
-<td><code>discover_specs</code></td>
-<td><code>roots: list[Path]</code></td>
-<td><code>list[SpecInfo]</code></td>
-<td>Walk <code>specs/</code> directories under each root for in-flight specs.</td>
-<td><code>plugin/hooks/_state.py</code></td>
+<td><code>help/</code></td>
+<td>Help</td>
+<td><code>generated/</code>, <code>templates/</code>, <code>schemas/</code>.</td>
 </tr>
 <tr>
-<td><code>git_state</code></td>
-<td><code>cwd: Path</code></td>
-<td><code>GitState</code></td>
-<td>Return branch, last commit, and uncommitted files for <code>cwd</code>.</td>
-<td><code>plugin/hooks/_state.py</code></td>
+<td><code>core/</code></td>
+<td>Version</td>
+<td><code>__version__</code> only.</td>
 </tr>
 <tr>
-<td><code>session_sentinel_path</code></td>
-<td><code>session_id: str | None</code></td>
-<td><code>Path</code></td>
-<td>Path to the once-per-session compact-warning sentinel.</td>
-<td><code>plugin/hooks/_state.py</code></td>
-</tr>
-<tr>
-<td><code>prune_stale_sentinels</code></td>
-<td><code>now: float | None = None</code></td>
-<td><code>int</code></td>
-<td>Delete sentinel files older than the TTL.</td>
-<td><code>plugin/hooks/_state.py</code></td>
-</tr>
-<tr>
-<td><code>workspace_roots</code></td>
-<td><code>cwd: Path | None = None</code></td>
-<td><code>list[Path]</code></td>
-<td>Best-effort guess at workspace roots to scan for specs.</td>
-<td><code>plugin/hooks/_state.py</code></td>
-</tr>
-<tr>
-<td><code>estimate_utilization</code></td>
-<td><code>transcript_path: str | Path</code></td>
-<td><code>float</code></td>
-<td>Return estimated context utilization in <code>[0.0, 1.0]</code>.</td>
-<td><code>plugin/hooks/_transcript_size.py</code></td>
-</tr>
-<tr>
-<td><code>format_warning</code></td>
-<td><code>util: float, threshold: float, resume_body: str</code></td>
-<td><code>str</code></td>
-<td>Compose the user-facing compact warning and resume prompt.</td>
-<td><code>plugin/hooks/compact_warning.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>int</code></td>
-<td>Entry point for compact warning; never raises.</td>
-<td><code>plugin/hooks/compact_warning.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>Read tool result from stdin and format Python files.</td>
-<td><code>plugin/hooks/format_on_save.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>Check help template freshness on session start.</td>
-<td><code>plugin/hooks/help_freshness_check.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>Read <code>PostToolUse</code> payload and suggest help if applicable.</td>
-<td><code>plugin/hooks/help_on_error.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>Check for stale help after git commit.</td>
-<td><code>plugin/hooks/help_post_commit.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>int</code></td>
-<td>Surface matching rules once per session; never raises.</td>
-<td><code>plugin/hooks/jit_recall.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>int</code></td>
-<td>Surface top-scoring lessons for this prompt, once per session each.</td>
-<td><code>plugin/hooks/lesson_recall.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>int</code></td>
-<td>Surface the anonymous-usage consent ask once per workspace (MCP / Claude Code).</td>
-<td><code>plugin/hooks/usage_consent_notice.py</code></td>
-</tr>
-<tr>
-<td><code>validate_bash_command</code></td>
-<td><code>command: str</code></td>
-<td><code>tuple[bool, str]</code></td>
-<td>Validate a Bash command against security policies.</td>
-<td><code>plugin/hooks/security_guard.py</code></td>
-</tr>
-<tr>
-<td><code>validate_file_path</code></td>
-<td><code>file_path: str</code></td>
-<td><code>tuple[bool, str]</code></td>
-<td>Validate a file path against security policies.</td>
-<td><code>plugin/hooks/security_guard.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td><code>context: dict[str, Any]</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Validate a tool call against security policies.</td>
-<td><code>plugin/hooks/security_guard.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>int</code></td>
-<td>Entry point for session recall.</td>
-<td><code>plugin/hooks/session_recall.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>int</code></td>
-<td>Act once per substantive session; never raises.</td>
-<td><code>plugin/hooks/session_stash.py</code></td>
-</tr>
-<tr>
-<td><code>format_orientation</code></td>
-<td><code>specs: list[SpecInfo]</code></td>
-<td><code>str</code></td>
-<td>Short markdown list of in-flight specs for non-compact starts.</td>
-<td><code>plugin/hooks/spec_orient.py</code></td>
-</tr>
-<tr>
-<td><code>render_spec_pin</code></td>
-<td><code>spec: SpecInfo, char_budget: int = _POST_COMPACT_CHAR_BUDGET</code></td>
-<td><code>str</code></td>
-<td>Render a spec body for post-compact context restoration.</td>
-<td><code>plugin/hooks/spec_orient.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>int</code></td>
-<td>Branch on <code>source</code>; never raises.</td>
-<td><code>plugin/hooks/spec_orient.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>Print welcome message to stderr (Claude Code surfaces stderr).</td>
-<td><code>plugin/hooks/welcome.py</code></td>
+<td><code>.mcp.json</code></td>
+<td>MCP server</td>
+<td><code>uvx --from attune-ai python -m attune.mcp.server</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2>Constants</h2>
+<h3>Install</h3>
 <table>
 <thead>
 <tr>
-<th>Constant</th>
-<th>Type</th>
-<th>Values</th>
-<th>Description</th>
+<th>Step</th>
+<th>Command</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>__version__</code></td>
-<td><code>str</code></td>
-<td><code>'8.4.0'</code></td>
-<td>Package version string.</td>
+<td>Add marketplace</td>
+<td><code>claude plugin marketplace add Smart-AI-Memory/attune-ai</code></td>
 </tr>
 <tr>
-<td><code>_TERMINAL_VERDICTS</code></td>
-<td><code>frozenset</code></td>
-<td><code>{'closed', 'complete', 'completed', 'retired', 'superseded', 'shipped', 'done'}</code></td>
-<td>Spec status values that mark a spec as finished.</td>
-</tr>
-<tr>
-<td><code>_ONGOING_VERDICTS</code></td>
-<td><code>frozenset</code></td>
-<td><code>{'living', 'ongoing'}</code></td>
-<td>Spec status values that mark a spec as actively in progress.</td>
-</tr>
-<tr>
-<td><code>_SPEC_SUBDIRS</code></td>
-<td><code>tuple</code></td>
-<td><code>{'specs', 'docs/specs'}</code></td>
-<td>Directory names searched for spec files under each workspace root.</td>
-</tr>
-<tr>
-<td><code>_SENTINEL_PREFIX</code></td>
-<td><code>str</code></td>
-<td><code>'.jit-recalled-'</code></td>
-<td>File prefix for per-session JIT recall sentinels (<code>hooks/jit_recall</code>).</td>
-</tr>
-<tr>
-<td><code>_SENTINEL_PREFIX</code></td>
-<td><code>str</code></td>
-<td><code>'.lesson-recalled-'</code></td>
-<td>File prefix for per-session lesson recall sentinels (<code>hooks/lesson_recall</code>).</td>
-</tr>
-<tr>
-<td><code>SYSTEM_DIRECTORIES</code></td>
-<td><code>frozenset</code></td>
-<td><code>{'/etc', '/sys', '/proc', '/dev', '/boot', '/sbin', '/usr/sbin', '/private/etc', '/private/var'}</code></td>
-<td>Filesystem paths blocked by the security guard.</td>
-</tr>
-<tr>
-<td><code>SEARCH_COMMAND_PREFIXES</code></td>
-<td><code>frozenset</code></td>
-<td><code>{'grep', 'rg', 'ack', 'ag', 'git grep', 'git log', 'git diff'}</code></td>
-<td>Read-only search prefixes that bypass security blocking.</td>
-</tr>
-<tr>
-<td><code>_VALID_TYPES</code></td>
-<td><code>set</code></td>
-<td><code>{'decision', 'pattern', 'bug', 'reference', 'note'}</code></td>
-<td>Allowed values for a spec's <code>type</code> field.</td>
+<td>Install plugin</td>
+<td><code>claude plugin install attune-ai@attune-ai</code></td>
 </tr>
 </tbody>
 </table>
-<h2>Source files</h2>
-<ul>
-<li><code>plugin/**</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>plugin</code>, <code>claude-code</code></p>
 
   </article>
   <footer>

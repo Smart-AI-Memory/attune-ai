@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Work with the plugin — task</title>
-  <meta name="description" content="Use the plugin when you need to change how attune-ai integrates with Claude Code — including hook behavior, session recall, spec orientation, SDK subprocess gating, or the `/handoff` slash command." />
-  <meta property="og:title" content="Work with the plugin — task" />
-  <meta property="og:description" content="Use the plugin when you need to change how attune-ai integrates with Claude Code — including hook behavior, session recall, spec orientation, SDK subprocess gating, or the `/handoff` slash command." />
+  <title>The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers — task</title>
+  <meta name="description" content="**Goal:** add attune to Claude Code." />
+  <meta property="og:title" content="The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers — task" />
+  <meta property="og:description" content="**Goal:** add attune to Claude Code." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/plugin/task" />
   <style>
@@ -272,108 +272,40 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Work with the plugin</h1>
-<p>Use the plugin when you need to change how attune-ai integrates with Claude Code — including hook behavior, session recall, spec orientation, SDK subprocess gating, or the <code>/handoff</code> slash command.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>Access to the project source code</li>
-<li>Python environment with <code>pytest</code> available</li>
-</ul>
-<h2>Identify the right hook</h2>
-<p>Each module in <code>hooks/</code> owns a single responsibility. Match your goal to the correct entry point before you edit anything:</p>
-<table>
-<thead>
-<tr>
-<th>Goal</th>
-<th>Module</th>
-<th>Entry point</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Customize the <code>/handoff</code> slash command</td>
-<td><code>hooks/_handoff_cli.py</code></td>
-<td><code>main()</code></td>
-</tr>
-<tr>
-<td>Change the resume-prompt format</td>
-<td><code>hooks/_resume_prompt.py</code></td>
-<td><code>build_resume_prompt()</code></td>
-</tr>
-<tr>
-<td>Gate a hook from running inside an SDK subprocess</td>
-<td><code>hooks/_sdk_gate.py</code></td>
-<td><code>exit_if_sdk_subprocess()</code></td>
-</tr>
-<tr>
-<td>Discover in-flight specs under workspace roots</td>
-<td><code>hooks/_state.py</code></td>
-<td><code>discover_specs()</code></td>
-</tr>
-<tr>
-<td>Snapshot branch, last commit, and dirty files</td>
-<td><code>hooks/_state.py</code></td>
-<td><code>git_state()</code></td>
-</tr>
-<tr>
-<td>Manage compact-warning sentinels</td>
-<td><code>hooks/_state.py</code></td>
-<td><code>session_sentinel_path()</code>, <code>prune_stale_sentinels()</code></td>
-</tr>
-<tr>
-<td>Estimate context utilization from a transcript</td>
-<td><code>hooks/_transcript_size.py</code></td>
-<td><code>estimate_utilization()</code></td>
-</tr>
-<tr>
-<td>Validate bash commands or file paths</td>
-<td><code>hooks/security_guard.py</code></td>
-<td><code>validate_bash_command()</code>, <code>validate_file_path()</code></td>
-</tr>
-<tr>
-<td>Show the usage-consent notice to MCP users (SessionStart)</td>
-<td><code>hooks/usage_consent_notice.py</code></td>
-<td><code>main()</code></td>
-</tr>
-<tr>
-<td>Orient the session around active specs</td>
-<td><code>hooks/spec_orient.py</code></td>
-<td><code>main()</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Modify the hook</h2>
-<ol>
-<li>
-<p><strong>Open the target module.</strong> Read the function's signature, docstring, and return type to confirm it owns the behavior you want to change.</p>
-</li>
-<li>
-<p><strong>Edit the function.</strong> To change how the resume prompt is structured, edit <code>build_resume_prompt()</code> in <code>hooks/_resume_prompt.py</code>:</p>
-<pre><code class="language-python">build_resume_prompt(
-    spec_info: SpecInfo | None,
-    git_state: GitState,
-    *,
-    workspace_path: str = '~/attune',
-    todo_summary: str | None = None,
-) -&gt; str
+<h1>The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers</h1>
+<h2>Tasks</h2>
+<h3>Install the plugin</h3>
+<p><strong>Goal:</strong> add attune to Claude Code.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-bash">claude plugin marketplace add Smart-AI-Memory/attune-ai
+claude plugin install attune-ai@attune-ai
 </code></pre>
-<p><code>SpecInfo</code> provides <code>slug</code>, <code>path</code>, <code>layer</code>, <code>phase</code>, <code>status</code>, and <code>mtime</code> for each in-flight spec. <code>GitState</code> provides <code>branch</code>, <code>last_sha</code>, <code>last_subject</code>, and <code>uncommitted</code> files.</p>
-</li>
-<li>
-<p><strong>Add SDK subprocess gating if needed.</strong> If your hook must not run inside an SDK-spawned <code>claude</code> subprocess, call <code>exit_if_sdk_subprocess()</code> at the top of <code>main()</code>. To check the condition without exiting, call <code>is_sdk_subprocess()</code> directly.</p>
-</li>
-<li>
-<p><strong>Run the tests</strong> to catch regressions:</p>
-<pre><code>pytest -k &quot;plugin&quot;
+<p><strong>Verify:</strong> the <code>/attune</code> and <code>/handoff</code> commands appear, and the
+attune skills (<code>/spec</code>, <code>/security-audit</code>, …) are available in the
+session. <code>attune-ai@attune-ai</code> is <code>plugin-name@marketplace-plugin</code> —
+both resolve to the <code>attune-ai</code> plugin in this single-plugin
+marketplace.</p>
+<h3>Read the manifest</h3>
+<p><strong>Goal:</strong> confirm the bundle's identity and version.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-bash">cat plugin/.claude-plugin/plugin.json
 </code></pre>
-</li>
-</ol>
-<h2>Verify success</h2>
-<p>Your change is complete when both of the following are true:</p>
-<ul>
-<li><code>pytest -k &quot;plugin&quot;</code> exits with no failures.</li>
-<li>The hook produces the output you intended when triggered manually or through the normal Claude Code flow.</li>
-</ul>
+<p><strong>Verify:</strong> <code>name</code> is <code>attune-ai</code>, <code>license</code> is <code>Apache-2.0</code>, and
+<code>keywords</code> include <code>claude-code</code>. The <code>version</code> here is the plugin
+bundle version (<code>8.9.0</code>); the sibling <code>marketplace.json</code> carries a
+matching version in <code>metadata.version</code> and <code>plugins[0].version</code>.</p>
+<h3>List the components Claude Code will discover</h3>
+<p><strong>Goal:</strong> see what the bundle ships.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-bash">ls plugin/commands   # 1 command (handoff.md)
+ls plugin/skills     # 17 skill directories
+ls plugin/agents     # 6 agent definitions
+cat plugin/.mcp.json # the MCP server registration
+</code></pre>
+<p><strong>Verify:</strong> each folder name is the component type Claude Code reads.
+<code>hooks/hooks.json</code> binds scripts to the five lifecycle events; for what
+those hooks do, see the <strong>hooks</strong> feature, and for the MCP server, the
+<strong>mcp-server</strong> feature.</p>
 
   </article>
   <footer>

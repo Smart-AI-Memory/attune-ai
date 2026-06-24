@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot plugin — troubleshooting</title>
-  <meta name="description" content="These steps cover the attune plugin&#x27;s hooks, slash commands, and MCP configuration — including session continuity hooks, security guards, spec discovery, and transcript monitoring." />
-  <meta property="og:title" content="Troubleshoot plugin — troubleshooting" />
-  <meta property="og:description" content="These steps cover the attune plugin&#x27;s hooks, slash commands, and MCP configuration — including session continuity hooks, security guards, spec discovery, and transcript monitoring." />
+  <title>The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `claude plugin install attune-ai@attune-ai` can&#x27;t find the plugin | The marketplace wasn&#x27;t added first | Run `claude plugin marketplace add Sma" />
+  <meta property="og:title" content="The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `claude plugin install attune-ai@attune-ai` can&#x27;t find the plugin | The marketplace wasn&#x27;t added first | Run `claude plugin marketplace add Sma" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/plugin/troubleshooting" />
   <style>
@@ -272,134 +272,70 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot plugin</h1>
-<h2>Before you start</h2>
-<p>These steps cover the attune plugin's hooks, slash commands, and MCP configuration — including session continuity hooks, security guards, spec discovery, and transcript monitoring.</p>
-<h2>Symptom table</h2>
+<h1>The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>/attune</code> or other skill commands show no matches</td>
-<td>Run <code>claude plugin list</code> and confirm <code>attune-ai</code> appears</td>
+<td><code>claude plugin install attune-ai@attune-ai</code> can't find the plugin</td>
+<td>The marketplace wasn't added first</td>
+<td>Run <code>claude plugin marketplace add Smart-AI-Memory/attune-ai</code> before installing</td>
+<td>high</td>
 </tr>
 <tr>
-<td>Skills appear but produce no output</td>
-<td>Run <code>claude plugin marketplace list</code> and verify the marketplace was added</td>
+<td>Components don't appear after install</td>
+<td>A component folder or the manifest is malformed</td>
+<td>Confirm <code>plugin/.claude-plugin/plugin.json</code> parses and the folders exist</td>
+<td>high</td>
 </tr>
 <tr>
-<td>Two conflicting skill triggers fire</td>
-<td>Run <code>claude plugin list</code> and check for both <code>attune-lite</code> and <code>attune-ai</code> — only one should be installed</td>
+<td>MCP tools missing but skills present</td>
+<td>The <code>.mcp.json</code> server didn't launch (<code>uvx</code>/<code>attune-ai</code> unavailable)</td>
+<td>See the mcp-server feature; confirm <code>uvx --from attune-ai python -m attune.mcp.server</code> runs</td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>session_recall</code> or <code>session_stash</code> produces unexpected results</td>
-<td>Check for stale sentinel files: call <code>prune_stale_sentinels()</code> and inspect the path returned by <code>session_sentinel_path(session_id)</code></td>
+<td>Hooks not firing</td>
+<td><code>hooks/hooks.json</code> event wiring</td>
+<td>See the hooks feature; this page only confirms the file is shipped</td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>spec_orient</code> shows no specs or wrong specs</td>
-<td>Confirm <code>workspace_roots()</code> returns the expected paths, then verify <code>discover_specs(roots)</code> finds <code>.yaml</code> files under <code>specs/</code> or <code>docs/specs/</code> subdirectories</td>
-</tr>
-<tr>
-<td>Compact warning fires every session instead of once</td>
-<td>A sentinel file under the prefix <code>.jit-recalled-</code> may be missing or stale — call <code>prune_stale_sentinels()</code> to clean up</td>
-</tr>
-<tr>
-<td><code>security_guard</code> blocks a command you expect to allow</td>
-<td>Pass the command string to <code>validate_bash_command(command)</code> and inspect the returned <code>(bool, str)</code> reason</td>
-</tr>
-<tr>
-<td>Context utilization reading seems wrong</td>
-<td>Call <code>estimate_utilization(transcript_path)</code> directly and confirm the returned float is in <code>[0.0, 1.0]</code></td>
-</tr>
-<tr>
-<td><code>spec_orient</code> reports a status conflict</td>
-<td>Check the <code>SpecInfo</code> fields <code>status_conflict</code> and <code>status_source</code> on the affected spec</td>
+<td>Version looks stale</td>
+<td><code>plugin/core/__init__.py</code> / manifest version not bumped at release</td>
+<td>The plugin version is set at release; the runtime is the pip <code>attune-ai</code></td>
+<td>low</td>
 </tr>
 </tbody>
 </table>
-<h2>Step-by-step diagnosis</h2>
+<h3>Risk areas</h3>
+<ul>
+<li><strong>Marketplace before install.</strong> <code>install</code> resolves the plugin from a
+registered marketplace — adding the marketplace is the required first
+step.</li>
+<li><strong>Two names, not one.</strong> <code>attune-ai-plugin</code> (marketplace) ≠
+<code>attune-ai</code> (plugin). The install string is <code>plugin@marketplace</code>,
+which here reads <code>attune-ai@attune-ai</code>.</li>
+<li><strong>The bundle ships, it doesn't implement.</strong> MCP-server and hook
+behavior live in their own features; debugging those means going
+there, not here.</li>
+</ul>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Reproduce the failure in isolation.</strong>
-Confirm the failure occurs outside its normal trigger context. For hook entry points, call <code>main()</code> directly from a shell or a one-line Python script with the minimal required environment.</p>
-</li>
-<li>
-<p><strong>Check plugin installation.</strong>
-Run <code>claude plugin list</code> to confirm <code>attune-ai</code> is installed and no conflicting plugin (such as <code>attune-lite</code>) is also present. If the plugin is missing, reinstall it:</p>
-<pre><code>claude plugin marketplace add Smart-AI-Memory/attune-ai
-claude plugin install attune-ai@attune-ai
-</code></pre>
-</li>
-<li>
-<p><strong>Inspect workspace and spec discovery.</strong>
-Call <code>workspace_roots()</code> to confirm it returns your expected project root, then pass those roots to <code>discover_specs(roots)</code> to verify it returns the <code>SpecInfo</code> objects you expect. Check the <code>slug</code>, <code>path</code>, <code>layer</code>, <code>phase</code>, <code>status</code>, and <code>effective_status</code> fields on each result.</p>
-</li>
-<li>
-<p><strong>Check git state.</strong>
-Call <code>git_state(cwd)</code> with your working directory. Confirm that <code>branch</code>, <code>last_sha</code>, <code>last_subject</code>, and <code>uncommitted</code> reflect the actual repository state. A wrong <code>cwd</code> is a common cause of stale or empty <code>GitState</code> values.</p>
-</li>
-<li>
-<p><strong>Audit sentinel files.</strong>
-Call <code>session_sentinel_path(session_id)</code> to find the expected sentinel path, then call <code>prune_stale_sentinels()</code> to remove any files older than the TTL. Re-run the failing hook after pruning.</p>
-</li>
-<li>
-<p><strong>Check the security guard.</strong>
-If <code>security_guard</code> is blocking or allowing something unexpectedly, call <code>validate_bash_command(command)</code> or <code>validate_file_path(file_path)</code> directly. Each returns a <code>(bool, str)</code> tuple — the string explains the verdict. Paths under <code>SYSTEM_DIRECTORIES</code> (<code>/etc</code>, <code>/sys</code>, <code>/proc</code>, and others) are always blocked.</p>
-</li>
-<li>
-<p><strong>Check transcript utilization.</strong>
-If <code>compact_warning</code> behaves unexpectedly, call <code>estimate_utilization(transcript_path)</code> and compare the result against the threshold passed to <code>format_warning(util, threshold, resume_body)</code>. Confirm the transcript path is correct and the file is not empty.</p>
-</li>
-<li>
-<p><strong>Run the related tests.</strong>
-Run <code>pytest -k &quot;plugin&quot; -v</code> to confirm which paths are covered. A failing test that exercises your symptom narrows the search immediately.</p>
-</li>
+<li>Confirm the marketplace was added: <code>claude plugin marketplace add Smart-AI-Memory/attune-ai</code>.</li>
+<li>Confirm the manifest parses: <code>cat plugin/.claude-plugin/plugin.json</code>.</li>
+<li>Confirm the component folders exist: <code>ls plugin/skills plugin/agents plugin/commands</code>.</li>
+<li>For missing MCP tools, go to the mcp-server feature; for hooks, the
+hooks feature.</li>
 </ol>
-<h2>Common fixes</h2>
-<ul>
-<li>
-<p><strong>Conflicting plugins.</strong> Remove the duplicate before reinstalling:</p>
-<pre><code>claude plugin uninstall attune-lite
-claude plugin install attune-ai@attune-ai
-</code></pre>
-</li>
-<li>
-<p><strong>Missing marketplace source.</strong> If <code>claude plugin list</code> shows nothing, add the marketplace first:</p>
-<pre><code>claude plugin marketplace add Smart-AI-Memory/attune-ai
-claude plugin install attune-ai@attune-ai
-</code></pre>
-</li>
-<li>
-<p><strong>Stale sentinels causing repeated compact warnings.</strong> Call <code>prune_stale_sentinels()</code> from Python or add a one-time invocation to your session setup. The function returns the count of deleted files.</p>
-</li>
-<li>
-<p><strong>Wrong workspace root.</strong> If <code>discover_specs()</code> returns an empty list, <code>workspace_roots()</code> may be resolving to the wrong directory. Pass an explicit <code>cwd</code> argument to override the default (<code>~/attune</code>).</p>
-</li>
-<li>
-<p><strong><code>SpecInfo</code> status conflict.</strong> When <code>status_conflict</code> is <code>True</code>, the spec's <code>status_source</code> field indicates whether the status came from its header or another source. Resolve the conflict by editing the spec file directly so the header status matches the intended <code>effective_status</code>.</p>
-</li>
-<li>
-<p><strong>Dependency or environment drift.</strong> If a hook worked previously without a code change, confirm your Python environment is clean. Run <code>pip show</code> on any recently updated packages and verify the installed versions match what the plugin was last tested against.</p>
-</li>
-</ul>
-<h2>Source files</h2>
-<ul>
-<li><code>hooks/_handoff_cli.py</code></li>
-<li><code>hooks/_resume_prompt.py</code></li>
-<li><code>hooks/_state.py</code></li>
-<li><code>hooks/_transcript_size.py</code></li>
-<li><code>hooks/compact_warning.py</code></li>
-<li><code>hooks/security_guard.py</code></li>
-<li><code>hooks/session_recall.py</code></li>
-<li><code>hooks/session_stash.py</code></li>
-<li><code>hooks/spec_orient.py</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>plugin</code>, <code>claude-code</code></p>
 
   </article>
   <footer>

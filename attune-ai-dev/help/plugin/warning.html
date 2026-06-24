@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Plugin cautions — warning</title>
-  <meta name="description" content="`session_sentinel_path()` writes a file prefixed with `.jit-recalled-` to mark that a session has already received a compact warning. These sentinel files are not cleaned up automatically — if you cal" />
-  <meta property="og:title" content="Plugin cautions — warning" />
-  <meta property="og:description" content="`session_sentinel_path()` writes a file prefixed with `.jit-recalled-` to mark that a session has already received a compact warning. These sentinel files are not cleaned up automatically — if you cal" />
+  <title>The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `claude plugin install attune-ai@attune-ai` can&#x27;t find the plugin | The marketplace wasn&#x27;t added first | Run `claude plugin marketplace add Sma" />
+  <meta property="og:title" content="The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `claude plugin install attune-ai@attune-ai` can&#x27;t find the plugin | The marketplace wasn&#x27;t added first | Run `claude plugin marketplace add Sma" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/plugin/warning" />
   <style>
@@ -272,25 +272,70 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Plugin cautions</h1>
-<h2>Stale sentinels accumulate if you skip pruning</h2>
-<p><code>session_sentinel_path()</code> writes a file prefixed with <code>.jit-recalled-</code> to mark that a session has already received a compact warning. These sentinel files are not cleaned up automatically — if you call <code>session_sentinel_path()</code> without periodically calling <code>prune_stale_sentinels()</code>, old sentinels accumulate and can suppress warnings in sessions that should receive them.</p>
-<p><strong>Mitigation:</strong> Call <code>prune_stale_sentinels()</code> at a predictable point in your hook lifecycle (for example, at startup or after a session ends). Its return value tells you how many files were removed, which is useful for debugging runaway accumulation.</p>
-<h2><code>status_conflict</code> in <code>SpecInfo</code> silently overrides <code>effective_status</code></h2>
-<p><code>discover_specs()</code> populates <code>SpecInfo</code> fields including <code>effective_status</code> and <code>status_conflict</code>. When <code>status_conflict</code> is <code>True</code>, the <code>effective_status</code> field does not simply reflect the <code>status</code> header — there is a disagreement between sources. Code that reads <code>effective_status</code> without checking <code>status_conflict</code> first can act on a resolved value that masks an underlying inconsistency.</p>
-<p><strong>Mitigation:</strong> Always check <code>spec.status_conflict</code> before trusting <code>spec.effective_status</code> in any logic that gates on spec state (for example, filtering out terminal statuses from <code>_TERMINAL_VERDICTS</code>).</p>
-<h2><code>build_resume_prompt()</code> silently uses a default workspace path</h2>
-<p><code>build_resume_prompt()</code> accepts <code>workspace_path</code> with a default of <code>~/attune</code>. If the actual workspace is elsewhere and you omit this argument, the rendered resume prompt will reference the wrong path — and the error will not surface as an exception; the output will simply be wrong.</p>
-<p><strong>Mitigation:</strong> Always pass <code>workspace_path</code> explicitly. Derive it from <code>workspace_roots()</code> rather than relying on the default.</p>
-<h2><code>estimate_utilization()</code> returns a float in <code>[0.0, 1.0]</code>, not a percentage</h2>
-<p><code>estimate_utilization()</code> returns a value between <code>0.0</code> and <code>1.0</code>. Passing this directly to <code>format_warning()</code> as the <code>threshold</code> argument without converting to the same scale as your threshold constant will produce incorrect warning behavior — for example, a threshold of <code>80</code> will never be reached by a utilization of <code>0.95</code>.</p>
-<p><strong>Mitigation:</strong> Keep your threshold and the return value of <code>estimate_utilization()</code> on the same scale. If your threshold is a fraction, express it as a value in <code>[0.0, 1.0]</code> as well.</p>
-<h2><code>git_state()</code> reflects the working directory at call time</h2>
-<p><code>git_state()</code> returns a <code>GitState</code> snapshot — <code>branch</code>, <code>last_sha</code>, <code>last_subject</code>, and <code>uncommitted</code> files — captured at the moment of the call. If you call it once and cache the result across multiple hook operations, the snapshot can go stale: a commit, stash, or branch switch between calls will not be reflected.</p>
-<p><strong>Mitigation:</strong> Call <code>git_state()</code> as late as possible in your hook, immediately before you need the data, rather than capturing it at startup.</p>
-<h2>Private helpers in <code>hooks._state</code> can change without notice</h2>
-<p><code>discover_specs()</code>, <code>workspace_roots()</code>, and <code>session_sentinel_path()</code> are public, but several internal behaviors they depend on — including <code>_SPEC_SUBDIRS</code>, <code>_SENTINEL_PREFIX</code>, and <code>_TERMINAL_VERDICTS</code> — are private module-level constants. Code that reaches past the public functions and reads these constants directly will break silently during refactors.</p>
-<p><strong>Mitigation:</strong> Use only the public functions listed in the API. If you need the list of terminal statuses for comparison, derive it from <code>SpecInfo.effective_status</code> values returned by <code>discover_specs()</code> rather than importing <code>_TERMINAL_VERDICTS</code> directly.</p>
+<h1>The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>claude plugin install attune-ai@attune-ai</code> can't find the plugin</td>
+<td>The marketplace wasn't added first</td>
+<td>Run <code>claude plugin marketplace add Smart-AI-Memory/attune-ai</code> before installing</td>
+<td>high</td>
+</tr>
+<tr>
+<td>Components don't appear after install</td>
+<td>A component folder or the manifest is malformed</td>
+<td>Confirm <code>plugin/.claude-plugin/plugin.json</code> parses and the folders exist</td>
+<td>high</td>
+</tr>
+<tr>
+<td>MCP tools missing but skills present</td>
+<td>The <code>.mcp.json</code> server didn't launch (<code>uvx</code>/<code>attune-ai</code> unavailable)</td>
+<td>See the mcp-server feature; confirm <code>uvx --from attune-ai python -m attune.mcp.server</code> runs</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Hooks not firing</td>
+<td><code>hooks/hooks.json</code> event wiring</td>
+<td>See the hooks feature; this page only confirms the file is shipped</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Version looks stale</td>
+<td><code>plugin/core/__init__.py</code> / manifest version not bumped at release</td>
+<td>The plugin version is set at release; the runtime is the pip <code>attune-ai</code></td>
+<td>low</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
+<ul>
+<li><strong>Marketplace before install.</strong> <code>install</code> resolves the plugin from a
+registered marketplace — adding the marketplace is the required first
+step.</li>
+<li><strong>Two names, not one.</strong> <code>attune-ai-plugin</code> (marketplace) ≠
+<code>attune-ai</code> (plugin). The install string is <code>plugin@marketplace</code>,
+which here reads <code>attune-ai@attune-ai</code>.</li>
+<li><strong>The bundle ships, it doesn't implement.</strong> MCP-server and hook
+behavior live in their own features; debugging those means going
+there, not here.</li>
+</ul>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm the marketplace was added: <code>claude plugin marketplace add Smart-AI-Memory/attune-ai</code>.</li>
+<li>Confirm the manifest parses: <code>cat plugin/.claude-plugin/plugin.json</code>.</li>
+<li>Confirm the component folders exist: <code>ls plugin/skills plugin/agents plugin/commands</code>.</li>
+<li>For missing MCP tools, go to the mcp-server feature; for hooks, the
+hooks feature.</li>
+</ol>
 
   </article>
   <footer>

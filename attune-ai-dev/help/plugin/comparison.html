@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Plugin hooks vs direct scripting — comparison</title>
-  <meta name="description" content="The attune Claude Code plugin ships a suite of lifecycle hooks — session continuity, security validation, spec orientation, transcript monitoring, and formatting. Each hook exposes a `main()` entry po" />
-  <meta property="og:title" content="Comparison: Plugin hooks vs direct scripting — comparison" />
-  <meta property="og:description" content="The attune Claude Code plugin ships a suite of lifecycle hooks — session continuity, security validation, spec orientation, transcript monitoring, and formatting. Each hook exposes a `main()` entry po" />
+  <title>The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers — comparison</title>
+  <meta name="description" content="The plugin is the **packaging surface**; the things it ships are separate features:" />
+  <meta property="og:title" content="The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers — comparison" />
+  <meta property="og:description" content="The plugin is the **packaging surface**; the things it ships are separate features:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/plugin/comparison" />
   <style>
@@ -272,95 +272,42 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Plugin hooks vs direct scripting</h1>
-<h2>Context</h2>
-<p>The attune Claude Code plugin ships a suite of lifecycle hooks — session continuity, security validation, spec orientation, transcript monitoring, and formatting. Each hook exposes a <code>main()</code> entry point and shares state helpers from <code>hooks._state</code>. The question this page answers: <strong>should you wire up the plugin hooks, or solve the problem with a standalone script?</strong></p>
-<h2>Feature comparison</h2>
+<h1>The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers</h1>
+<h2>Comparison</h2>
+<p>The plugin is the <strong>packaging surface</strong>; the things it ships are
+separate features:</p>
 <table>
 <thead>
 <tr>
-<th>Capability</th>
-<th>Plugin hooks</th>
-<th>Standalone script</th>
+<th></th>
+<th>plugin</th>
+<th>mcp-server</th>
+<th>hooks</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Session continuity</strong></td>
-<td><code>session_recall.main()</code>, <code>session_stash.main()</code> handle sentinel creation, pruning, and resume-prompt rendering automatically</td>
-<td>You implement sentinel logic from scratch; no TTL pruning</td>
+<td>Role</td>
+<td>The installable bundle (manifest + components)</td>
+<td>One bundled component — the MCP tool server</td>
+<td>One bundled component — lifecycle hook scripts</td>
 </tr>
 <tr>
-<td><strong>Resume prompt quality</strong></td>
-<td><code>build_resume_prompt()</code> is the single source of truth for prompt format, incorporating <code>SpecInfo</code> and <code>GitState</code></td>
-<td>You assemble the prompt manually; format drifts from the canonical shape</td>
+<td>Artifact</td>
+<td><code>plugin/</code> + <code>plugin.json</code> / <code>marketplace.json</code></td>
+<td><code>python -m attune.mcp.server</code> + <code>.mcp.json</code></td>
+<td><code>hooks/hooks.json</code> + scripts</td>
 </tr>
 <tr>
-<td><strong>Spec discovery</strong></td>
-<td><code>discover_specs(roots)</code> walks <code>specs/</code> and <code>docs/specs/</code> subdirectories and returns typed <code>SpecInfo</code> objects</td>
-<td>You write your own directory walker with no <code>effective_status</code> or <code>status_conflict</code> resolution</td>
-</tr>
-<tr>
-<td><strong>Git state snapshot</strong></td>
-<td><code>git_state(cwd)</code> returns a <code>GitState</code> with <code>branch</code>, <code>last_sha</code>, <code>last_subject</code>, and <code>uncommitted</code> files in one call</td>
-<td>You shell out to git and parse output yourself</td>
-</tr>
-<tr>
-<td><strong>Transcript monitoring</strong></td>
-<td><code>estimate_utilization(transcript_path)</code> returns a <code>[0.0, 1.0]</code> float; <code>format_warning()</code> composes the user-facing alert</td>
-<td>You approximate token load without a calibrated utilization curve</td>
-</tr>
-<tr>
-<td><strong>Security validation</strong></td>
-<td><code>validate_bash_command()</code> and <code>validate_file_path()</code> check against <code>SYSTEM_DIRECTORIES</code> and <code>SEARCH_COMMAND_PREFIXES</code></td>
-<td>You maintain your own allowlist/blocklist</td>
-</tr>
-<tr>
-<td><strong>Spec orientation</strong></td>
-<td><code>format_orientation()</code> and <code>render_spec_pin()</code> render context-aware spec summaries with a configurable <code>char_budget</code></td>
-<td>You write and maintain your own rendering logic</td>
-</tr>
-<tr>
-<td><strong>JIT recall</strong></td>
-<td><code>jit_recall.main()</code> fires per-session recall with sentinel deduplication via <code>_SENTINEL_PREFIX</code></td>
-<td>No deduplication; you re-fire on every invocation</td>
-</tr>
-<tr>
-<td><strong>Stale sentinel cleanup</strong></td>
-<td><code>prune_stale_sentinels(now)</code> removes expired files automatically</td>
-<td>Manual cleanup or accumulating sentinel files</td>
-</tr>
-<tr>
-<td><strong>Entry-point contract</strong></td>
-<td>All hooks return <code>int</code> (0 on success) or <code>None</code>; never raises</td>
-<td>Contract is whatever you write</td>
+<td>Documented by</td>
+<td>This page</td>
+<td>mcp-server feature</td>
+<td>hooks feature</td>
 </tr>
 </tbody>
 </table>
-<h2>Key tradeoffs</h2>
-<p><strong>Plugin hooks are more constrained, on purpose.</strong> Each hook does one thing and exposes a narrow surface. If you need to combine <code>git_state()</code> with <code>discover_specs()</code> in a way the hooks don't anticipate, you call those functions directly from <code>hooks._state</code> — the helpers are public.</p>
-<p><strong>Standalone scripts are faster to prototype but slower to maintain.</strong> You avoid the hook wiring overhead, but you re-implement state discovery, sentinel logic, and prompt formatting that the plugin already handles correctly. Once your script grows beyond ~50 lines of state manipulation, you are reimplementing the plugin.</p>
-<p><strong>Security validation is non-trivial to get right.</strong> <code>validate_bash_command()</code> and <code>validate_file_path()</code> encode specific rules about <code>SYSTEM_DIRECTORIES</code> and <code>SEARCH_COMMAND_PREFIXES</code>. A standalone script that skips these checks is not equivalent — it is less safe.</p>
-<h2>Use plugin hooks when…</h2>
-<ul>
-<li>You are hooking into Claude Code lifecycle events (session start/end, post-commit, pre-save, error, compact warning).</li>
-<li>You need reliable resume prompts that stay consistent with <code>build_resume_prompt()</code> as the canonical format.</li>
-<li>You want spec-aware orientation (<code>spec_orient</code>) or JIT recall without writing your own discovery and deduplication logic.</li>
-<li>Security validation of bash commands or file paths is in scope — use <code>validate_bash_command()</code> and <code>validate_file_path()</code> rather than rolling your own.</li>
-<li>You need transcript utilization monitoring via <code>estimate_utilization()</code>.</li>
-</ul>
-<h2>Use a standalone script when…</h2>
-<ul>
-<li>You need a one-off automation that touches none of the session, spec, or git state the hooks manage.</li>
-<li>You are prototyping behavior before deciding whether it belongs in a hook at all.</li>
-<li>Your logic genuinely doesn't fit any of the hook entry points and you don't need the shared state infrastructure.</li>
-</ul>
-<p>In practice, most persistent Claude Code workflow automation belongs in a hook. Standalone scripts are the right starting point, not the right finishing point.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>plugin/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>plugin</code>, <code>claude-code</code></p>
+<p>The plugin is the box; mcp-server and hooks are two of the things
+inside it. Install the box and Claude Code unpacks every component.</p>
 
   </article>
   <footer>

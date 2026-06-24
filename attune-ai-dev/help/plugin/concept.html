@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Plugin — concept</title>
-  <meta name="description" content="The attune-ai plugin is a Claude Code extension that installs hooks, slash commands, and MCP configuration to give Claude continuous awareness of your workspace — its in-flight specs, git state, conte" />
-  <meta property="og:title" content="Plugin — concept" />
-  <meta property="og:description" content="The attune-ai plugin is a Claude Code extension that installs hooks, slash commands, and MCP configuration to give Claude continuous awareness of your workspace — its in-flight specs, git state, conte" />
+  <title>The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers — concept</title>
+  <meta name="description" content="The **plugin** is how attune installs into Claude Code. It is a **bundle** — a directory under `plugin/` with a manifest and a set of component folders that Claude Code discovers automatically when th" />
+  <meta property="og:title" content="The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers — concept" />
+  <meta property="og:description" content="The **plugin** is how attune installs into Claude Code. It is a **bundle** — a directory under `plugin/` with a manifest and a set of component folders that Claude Code discovers automatically when th" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/plugin/concept" />
   <style>
@@ -272,20 +272,111 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Plugin</h1>
-<p>The attune-ai plugin is a Claude Code extension that installs hooks, slash commands, and MCP configuration to give Claude continuous awareness of your workspace — its in-flight specs, git state, context utilization, and safety boundaries.</p>
-<h2>Hook responsibilities</h2>
-<p>The plugin's hooks fire at specific Claude Code lifecycle moments. They fall into five categories.</p>
-<p><strong>Session continuity</strong> — <code>welcome</code>, <code>session_recall</code>, and <code>session_stash</code> orient Claude at session start and preserve state across interruptions. <code>spec_orient</code> calls <code>discover_specs()</code> to find in-flight specs under your workspace roots, then formats them into an orientation prompt using <code>format_orientation()</code> and <code>render_spec_pin()</code>.</p>
-<p><strong>Recall</strong> — <code>jit_recall</code> consults a curated decision-point → rule map and injects the matching rule at the moment of decision. <code>lesson_recall</code> surfaces stored lessons relevant to the current context.</p>
-<p><strong>Compact warning</strong> — <code>compact_warning</code> calls <code>estimate_utilization()</code> to measure context window consumption and emits a warning via <code>format_warning()</code> when utilization crosses a threshold. A session sentinel keyed by <code>session_sentinel_path()</code> ensures the warning fires at most once per session; <code>prune_stale_sentinels()</code> removes sentinels that outlive their TTL.</p>
-<p><strong>Safety</strong> — <code>security_guard</code> validates bash commands against <code>SEARCH_COMMAND_PREFIXES</code> and file paths against <code>SYSTEM_DIRECTORIES</code> before Claude executes them.</p>
-<p><strong>Help and formatting</strong> — <code>help_on_error</code>, <code>help_post_commit</code>, and <code>help_freshness_check</code> surface relevant help at key moments. <code>usage_consent_notice</code> asks once per workspace about anonymous usage sharing when running under MCP / Claude Code. <code>format_on_save</code> formats files when Claude writes them.</p>
-<p>Every hook that must not run inside an SDK-spawned subprocess calls <code>exit_if_sdk_subprocess()</code> at startup. You can inspect the gate condition directly with <code>is_sdk_subprocess()</code>.</p>
-<h2>Shared state model</h2>
-<p>Two dataclasses form the shared vocabulary that hooks pass between each other at fire time.</p>
-<p><code>SpecInfo</code> represents one in-flight spec discovered under a workspace root. Its core fields are <code>slug</code>, <code>path</code>, <code>layer</code>, <code>phase</code>, <code>status</code>, and <code>mtime</code>. When a status is ambiguous — for example, when the spec header conflicts with an external source — <code>effective_status</code> holds the resolved value, <code>status_source</code> records where it came from, and <code>status_conflict</code> flags the disagreement. <code>spec_orient</code> uses two status categories to decide what to surface: terminal statuses (<code>closed</code>, <code>complete</code>, <code>completed</code>, <code>retired</code>, <code>superseded</code>, <code>shipped</code>, <code>done</code>) and ongoing statuses (<code>living</code>, <code>ongoing</code>).</p>
-<p><code>GitState</code> is a lightweight worktree snapshot carrying the current <code>branch</code>, the <code>last_sha</code> and <code>last_subject</code> of the most recent commit, and any <code>uncommitted</code> file paths. <code>build_resume_prompt()</code> in <code>hooks._resume_prompt</code> accepts both a <code>SpecInfo</code> and a <code>GitState</code> to assemble the <code>/handoff</code> resume prompt — it is the single source of truth for that format.</p>
+<h1>The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers</h1>
+<h2>Overview</h2>
+<p>The <strong>plugin</strong> is how attune installs into Claude Code. It is a
+<strong>bundle</strong> — a directory under <code>plugin/</code> with a manifest and a set of
+component folders that Claude Code discovers automatically when the
+plugin is installed. It is a packaging artifact, not a Python API:
+<code>plugin/core</code> carries only a <code>__version__</code>.</p>
+<p>This page documents the <strong>bundle itself</strong> — its manifest
+(<code>plugin.json</code>), its marketplace listing (<code>marketplace.json</code>), how a
+user installs it, and the component directories Claude Code reads. It
+does <strong>not</strong> document the MCP server internals (that is the
+<strong>mcp-server</strong> feature) or the individual hook scripts (that is the
+<strong>hooks</strong> feature); the plugin just <em>ships</em> those.</p>
+<p>You reach it these ways:</p>
+<ul>
+<li><strong>install</strong> — <code>claude plugin marketplace add Smart-AI-Memory/attune-ai</code> then <code>claude plugin install attune-ai@attune-ai</code>; Claude Code reads the manifest and registers
+every component;</li>
+<li><strong>inspect</strong> — the <code>plugin/</code> directory: <code>plugin/.claude-plugin/</code> holds
+the two manifests, and the sibling folders (<code>commands/</code>, <code>skills/</code>,
+<code>agents/</code>, <code>hooks/</code>, <code>help/</code>) are the auto-discovered components.</li>
+</ul>
+<h2>Concepts</h2>
+<h3>The two manifests</h3>
+<p>The bundle is described by two JSON files in
+<code>plugin/.claude-plugin/</code>:</p>
+<ul>
+<li><strong><code>plugin.json</code></strong> — the plugin manifest. Its <code>name</code> is <code>attune-ai</code>,
+with <code>version</code>, <code>description</code>, <code>author</code>, <code>homepage</code>, <code>repository</code>,
+<code>license</code> (<code>Apache-2.0</code>), and <code>keywords</code>. This is what Claude Code
+reads to register the plugin.</li>
+<li><strong><code>marketplace.json</code></strong> — the marketplace listing. Its top-level
+<code>name</code> is <strong><code>attune-ai-plugin</code></strong> (the marketplace name, distinct from
+the plugin name), with an <code>owner</code> and <code>metadata</code>, and a <code>plugins</code>
+array. The single entry has <code>name</code> <code>attune-ai</code>, <code>source</code> <code>./</code> (the
+plugin lives at the marketplace root), <code>category</code> <code>developer-tools</code>,
+and its own <code>tags</code>.</li>
+</ul>
+<p>The marketplace name (<code>attune-ai-plugin</code>) and the plugin name
+(<code>attune-ai</code>) are deliberately different — the install command
+(<code>attune-ai@attune-ai</code>) references the <em>plugin</em> name twice (plugin @
+marketplace), because this repo is its own single-plugin marketplace.</p>
+<h3>Auto-discovered components</h3>
+<p>Claude Code reads fixed-name folders inside the bundle. Each is a
+component type:</p>
+<table>
+<thead>
+<tr>
+<th>Folder</th>
+<th>What it holds</th>
+<th>Count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>commands/</code></td>
+<td>Slash commands (<code>.md</code>)</td>
+<td>1 (<code>handoff</code>)</td>
+</tr>
+<tr>
+<td><code>skills/</code></td>
+<td>Skills (one dir each, <code>SKILL.md</code>)</td>
+<td>17</td>
+</tr>
+<tr>
+<td><code>agents/</code></td>
+<td>Subagent definitions (<code>.md</code>)</td>
+<td>6</td>
+</tr>
+<tr>
+<td><code>hooks/</code></td>
+<td><code>hooks.json</code> + hook scripts</td>
+<td>~20 scripts</td>
+</tr>
+<tr>
+<td><code>help/</code></td>
+<td>Generated help, templates, schemas</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>.mcp.json</code></td>
+<td>MCP server registration</td>
+<td>1 server</td>
+</tr>
+</tbody>
+</table>
+<p><code>commands/</code> ships <code>handoff</code> (the <code>/handoff</code> resume-prompt command).
+The 17 skills are the developer-workflow surface (<code>spec</code>,
+<code>security-audit</code>, <code>code-quality</code>, <code>smart-test</code>, <code>release-prep</code>, …). The
+6 agents are read-only or planning subagents
+(<code>security-reviewer</code>, <code>refactor-planner</code>, <code>release-prep-auditor</code>,
+<code>spec-author</code>, <code>setup-guide</code>, <code>help-content-explainer</code>).</p>
+<h3>Hooks and MCP — shipped, not owned here</h3>
+<p><code>hooks/hooks.json</code> wires hook scripts to five Claude Code lifecycle
+events — <code>SessionStart</code>, <code>Stop</code>, <code>PreToolUse</code>, <code>PostToolUse</code>,
+<code>UserPromptSubmit</code>. <code>.mcp.json</code> registers the MCP server
+(<code>uvx --from attune-ai python -m attune.mcp.server</code>). The plugin
+<strong>bundles</strong> both, but their behavior is documented by the <strong>hooks</strong> and
+<strong>mcp-server</strong> features respectively — this page covers only that they
+are part of the bundle.</p>
+<h3>The bundled core</h3>
+<p><code>plugin/core/</code> exists so the plugin can carry a version for standalone
+operation; <code>plugin/core/__init__.py</code> is just
+<code>__version__ = &quot;8.9.0&quot;</code>. The real runtime is the pip-installed
+<code>attune-ai</code> package, which the <code>.mcp.json</code> server pulls via
+<code>uvx --from attune-ai</code>.</p>
 
   </article>
   <footer>
