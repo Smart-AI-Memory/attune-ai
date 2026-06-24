@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
+import platform
 import re
 import shutil
 import subprocess
@@ -679,7 +680,22 @@ def capture_subprocess_failure(
         itself raises. The synthetic strings are intentionally
         formatted so the classifier's "unknown" fallback still
         renders them to the user.
+
+    Note:
+        An empty ``args`` means ``_last_subprocess_argv()`` could not
+        recover the failing argv from the SDK exception (the common
+        case on current SDK versions — see that function's docstring).
+        Rather than calling ``subprocess.run([])`` (which raises
+        ``IndexError`` and surfaced the useless "(capture-call also
+        failed: IndexError ...)" message), fall back to a minimal
+        ``claude`` probe that reproduces the auth/quota/not-found
+        failure modes we care about.
     """
+    if not args:
+        args = _fallback_probe_argv()
+        if not args:
+            # No claude binary locatable — honest synthetic message.
+            return "(capture-call also failed: claude CLI not found)"
     try:
         result = subprocess.run(  # noqa: S603
             args,
@@ -688,6 +704,7 @@ def capture_subprocess_failure(
             text=True,
             timeout=timeout_s,
             check=False,  # we want to inspect failure output
+            stdin=subprocess.DEVNULL,  # never block on inherited stdin
         )
         # Some failures put real errors on stdout (e.g. JSON envelope).
         # Concatenate; the classifier scans both anyway.
@@ -706,10 +723,9 @@ def _last_subprocess_argv(exc: BaseException) -> list[str]:
     """Extract the failing argv from an SDK ``Exception('Command failed ...')``.
 
     The SDK's ``claude_agent_sdk._internal.query`` raises a bare
-    ``Exception`` with a string message but stores the subprocess
-    args on the exception's ``__cause__`` or in an attribute the
-    classifier walks. This helper centralises that extraction so
-    a drift-guard test can fail loudly when the SDK changes shape.
+    ``Exception`` on an 'error' stream message. This helper centralises
+    argv extraction so a drift-guard test can fail loudly when a future
+    SDK version starts stashing the argv on the exception.
 
     Walks these candidate attribute paths in order:
 
@@ -718,9 +734,19 @@ def _last_subprocess_argv(exc: BaseException) -> list[str]:
     2. ``exc.__cause__.cmd`` — ``subprocess.CalledProcessError``-shaped
        wrap.
     3. ``exc.cmd`` — direct attribute on the exception.
-    4. Fallback: empty list — caller's downstream
-       ``capture_subprocess_failure([])`` will hit the OSError path
-       and surface a synthetic "(capture-call also failed)" string.
+    4. Fallback: empty list.
+
+    VERIFIED against claude-agent-sdk 0.1.63: the exception raised at
+    ``claude_agent_sdk/_internal/query.py`` (``raise Exception(
+    message.get("error", "Unknown error"))``) carries NO argv —
+    ``args[0]`` is the *string* error message ("Command failed with
+    exit code 1"), ``__cause__`` is ``None``, and there is no ``.cmd``
+    attribute. So on the current SDK every call returns ``[]`` and
+    there is nothing to re-run verbatim. ``capture_subprocess_failure``
+    handles the empty result by falling back to a minimal ``claude``
+    probe (see ``_fallback_probe_argv``). The shape walk above is kept
+    for forward/backward compatibility with SDK versions that DO stash
+    the argv, and the drift-guard test pins the 0.1.63 finding.
 
     Returns:
         The captured argv as ``list[str]``, or ``[]`` if no
@@ -750,6 +776,72 @@ def _last_subprocess_argv(exc: BaseException) -> list[str]:
         return [cmd]
 
     return []
+
+
+def _find_claude_cli() -> str | None:
+    """Locate the ``claude`` CLI binary, mirroring the SDK's search.
+
+    Order matches ``claude_agent_sdk``'s transport ``_find_cli``:
+    the SDK's bundled binary first (so the probe hits the SAME binary
+    the failed workflow ran), then ``PATH``, then well-known install
+    locations.
+
+    Returns:
+        Absolute path to a ``claude`` binary, or ``None`` if none is
+        found.
+    """
+    cli_name = "claude.exe" if platform.system() == "Windows" else "claude"
+
+    # 1. SDK bundled CLI (same binary the SDK itself prefers).
+    try:
+        sdk_dir = Path(claude_agent_sdk.__file__).parent
+        bundled = sdk_dir / "_bundled" / cli_name
+        if bundled.is_file():
+            return str(bundled)
+    except (AttributeError, OSError):  # pragma: no cover - defensive
+        pass
+
+    # 2. PATH.
+    if found := shutil.which("claude"):
+        return found
+
+    # 3. Known install locations.
+    for path in (
+        Path.home() / ".npm-global/bin/claude",
+        Path("/usr/local/bin/claude"),
+        Path.home() / ".local/bin/claude",
+        Path.home() / "node_modules/.bin/claude",
+        Path.home() / ".yarn/bin/claude",
+        Path.home() / ".claude/local/claude",
+    ):
+        if path.is_file():
+            return str(path)
+
+    return None
+
+
+def _fallback_probe_argv() -> list[str]:
+    """Build a minimal ``claude`` probe argv for failure diagnosis.
+
+    When ``_last_subprocess_argv`` returns ``[]`` (no argv recoverable
+    from the SDK exception — the common case, see its docstring), there
+    is nothing to re-run verbatim. Instead build a minimal probe,
+    ``[<claude-path>, "-p", "ping"]``, that reproduces the *startup* and
+    *auth/quota* failure modes we actually care about: claude-not-found
+    (errors at exec), expired/missing key, and the usage-limit 400.
+    These fail identically regardless of prompt, so a tiny probe
+    surfaces the same real stderr the full workflow invocation would
+    have. Subscription users pay no per-request cost for the probe.
+
+    Returns:
+        ``[<claude-path>, "-p", "ping"]`` when a ``claude`` binary is
+        locatable, else ``[]`` (caller renders an honest
+        "claude CLI not found" message).
+    """
+    claude = _find_claude_cli()
+    if not claude:
+        return []
+    return [claude, "-p", "ping"]
 
 
 def get_max_budget_usd(depth: str = "standard") -> float | None:

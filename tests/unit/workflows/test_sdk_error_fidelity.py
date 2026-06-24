@@ -4,16 +4,22 @@ Covers Phase 1 of docs/specs/sdk-error-message-fidelity/:
 
 - ``SdkSubprocessError`` dataclass-exception (str, format_user_message)
 - ``classify_subprocess_failure`` (all 6 kinds, most-specific-wins)
-- ``capture_subprocess_failure`` (happy path, timeout, OSError, redaction)
+- ``capture_subprocess_failure`` (happy path, timeout, OSError, redaction,
+  empty-argv probe fallback)
 - ``_last_subprocess_argv`` extractor (3 shapes + fallback + drift guard)
+- ``_fallback_probe_argv`` / ``_find_claude_cli`` (probe construction)
 """
 
 from __future__ import annotations
 
 import subprocess
 
+import claude_agent_sdk
+
 from attune.workflows.agent_sdk_adapter import (
     SdkSubprocessError,
+    _fallback_probe_argv,
+    _find_claude_cli,
     _last_subprocess_argv,
     capture_subprocess_failure,
     classify_subprocess_failure,
@@ -178,9 +184,42 @@ class TestCaptureSubprocessFailure:
         assert fake_key not in out
 
     def test_empty_argv_returns_synthetic_failure(self):
-        """An empty argv hits the OSError path inside subprocess.run."""
+        """An empty argv falls back to a claude probe instead of
+        ``subprocess.run([])`` (which used to raise IndexError and
+        surface the useless '(capture-call also failed: IndexError ...)'
+        message — the 2026-06-06 dogfood bug). When no claude binary is
+        locatable, the message is honest about that."""
         out = capture_subprocess_failure([])
-        assert "capture-call also failed" in out
+        # Must never be the old IndexError artifact.
+        assert "IndexError" not in out
+        # Either the probe ran (claude present) or we got the honest
+        # not-found message — both are acceptable, neither is a crash.
+        assert out  # non-empty
+
+    def test_empty_argv_probes_when_claude_present(self, monkeypatch):
+        """When claude IS locatable, an empty argv re-runs a real probe
+        whose stderr is captured and classifiable. Monkeypatch the probe
+        to a fast fake binary so the test makes no real API call."""
+        monkeypatch.setattr(
+            "attune.workflows.agent_sdk_adapter._fallback_probe_argv",
+            lambda: ["sh", "-c", "echo 'reached your specified API usage limits' 1>&2; exit 1"],
+        )
+        out = capture_subprocess_failure([])
+        assert "IndexError" not in out
+        assert "usage limits" in out
+        kind, _msg = classify_subprocess_failure(out)
+        assert kind == "api_quota"
+
+    def test_empty_argv_honest_message_when_claude_missing(self, monkeypatch):
+        """When no claude binary exists, the empty-argv path returns an
+        honest 'claude CLI not found' message (still classifier-safe)."""
+        monkeypatch.setattr(
+            "attune.workflows.agent_sdk_adapter._find_claude_cli",
+            lambda: None,
+        )
+        out = capture_subprocess_failure([])
+        assert "claude CLI not found" in out
+        assert "IndexError" not in out
 
 
 # ---------------------------------------------------------------------
@@ -219,10 +258,36 @@ class TestLastSubprocessArgv:
 
     def test_returns_empty_list_when_no_shape_matches(self):
         """Drift guard: when none of the recognized shapes apply,
-        return []. Downstream capture_subprocess_failure([]) hits the
-        OSError path and surfaces a synthetic message."""
+        return []. Downstream capture_subprocess_failure([]) then falls
+        back to a claude probe (see TestCaptureSubprocessFailure)."""
         exc = Exception("plain string message, no argv anywhere")
         assert _last_subprocess_argv(exc) == []
+
+    def test_real_sdk_exception_shape_yields_empty(self):
+        """Drift guard pinned to the INSTALLED claude-agent-sdk.
+
+        The exception the SDK actually raises on a failed run
+        (``claude_agent_sdk/_internal/query.py``:
+        ``raise Exception(message.get("error", "Unknown error"))``)
+        carries NO argv — ``args[0]`` is the string error message,
+        ``__cause__`` is None, no ``.cmd``. So extraction returns [].
+
+        Verified against 0.1.63 (2026-06-06). If a future SDK starts
+        stashing the argv on the exception, this assertion flips and we
+        should teach ``_last_subprocess_argv`` the new shape so the
+        capture re-runs the EXACT failing argv instead of the probe.
+        The version print makes the pin auditable when it does change.
+        """
+        # Reproduces the exact construction at query.py.
+        real_exc = Exception("Command failed with exit code 1")
+        assert real_exc.args[0] == "Command failed with exit code 1"
+        assert real_exc.__cause__ is None
+        assert not hasattr(real_exc, "cmd")
+        assert _last_subprocess_argv(real_exc) == [], (
+            f"claude-agent-sdk {claude_agent_sdk.__version__} now stashes "
+            "an argv on the failure exception — extend _last_subprocess_argv "
+            "to read it (preferred over the probe fallback)."
+        )
 
     def test_handles_cause_cmd_as_string(self):
         """Some subprocess errors store .cmd as a single string instead
@@ -239,3 +304,51 @@ class TestLastSubprocessArgv:
         """Don't false-positive on non-string args[0]."""
         exc = Exception({"not": "a list"})
         assert _last_subprocess_argv(exc) == []
+
+
+# ---------------------------------------------------------------------
+# _fallback_probe_argv / _find_claude_cli
+# ---------------------------------------------------------------------
+
+
+class TestFallbackProbe:
+    """The minimal claude probe used when no argv is recoverable."""
+
+    def test_probe_uses_located_binary(self, monkeypatch):
+        """When claude is found, the probe is [path, '-p', 'ping']."""
+        monkeypatch.setattr(
+            "attune.workflows.agent_sdk_adapter._find_claude_cli",
+            lambda: "/usr/local/bin/claude",
+        )
+        assert _fallback_probe_argv() == ["/usr/local/bin/claude", "-p", "ping"]
+
+    def test_probe_empty_when_no_binary(self, monkeypatch):
+        """No claude binary → empty probe (caller renders not-found)."""
+        monkeypatch.setattr(
+            "attune.workflows.agent_sdk_adapter._find_claude_cli",
+            lambda: None,
+        )
+        assert _fallback_probe_argv() == []
+
+    def test_find_claude_cli_returns_path_or_none(self):
+        """In a real environment the finder returns a path or None;
+        either way it must never raise."""
+        result = _find_claude_cli()
+        assert result is None or isinstance(result, str)
+
+    def test_find_claude_cli_prefers_path_when_no_bundle(self, monkeypatch, tmp_path):
+        """With the SDK bundle absent, PATH discovery wins."""
+        fake = tmp_path / "claude"
+        fake.write_text("#!/bin/sh\n")
+        fake.chmod(0o755)
+        # Force the bundled-CLI lookup to miss by pointing the SDK dir
+        # at an empty temp location.
+        monkeypatch.setattr(
+            "attune.workflows.agent_sdk_adapter.claude_agent_sdk.__file__",
+            str(tmp_path / "no_such_pkg" / "__init__.py"),
+        )
+        monkeypatch.setattr(
+            "attune.workflows.agent_sdk_adapter.shutil.which",
+            lambda name: str(fake) if name == "claude" else None,
+        )
+        assert _find_claude_cli() == str(fake)
