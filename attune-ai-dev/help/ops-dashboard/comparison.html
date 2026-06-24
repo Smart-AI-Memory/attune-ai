@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Ops Dashboard vs alternatives — comparison</title>
-  <meta name="description" content="The ops dashboard (`attune ops` / `python -m attune.ops`) is a local server that combines a workflow runner, per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE " />
-  <meta property="og:title" content="Comparison: Ops Dashboard vs alternatives — comparison" />
-  <meta property="og:description" content="The ops dashboard (`attune ops` / `python -m attune.ops`) is a local server that combines a workflow runner, per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE " />
+  <title>The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming — comparison</title>
+  <meta name="description" content="The ops dashboard is one of three front doors to attune&#x27;s workflows:" />
+  <meta property="og:title" content="The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming — comparison" />
+  <meta property="og:description" content="The ops dashboard is one of three front doors to attune&#x27;s workflows:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/comparison" />
   <style>
@@ -272,108 +272,42 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Ops Dashboard vs alternatives</h1>
-<h2>Context</h2>
-<p>The ops dashboard (<code>attune ops</code> / <code>python -m attune.ops</code>) is a local server that combines a workflow runner, per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming into a single interface. It exposes a FastAPI application via <code>create_app()</code> and reads project and attune state through a <code>Config</code> dataclass.</p>
-<h2>Feature comparison</h2>
+<h1>The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming</h1>
+<h2>Comparison</h2>
+<p>The ops dashboard is one of three front doors to attune's workflows:</p>
 <table>
 <thead>
 <tr>
-<th>Capability</th>
-<th>Ops dashboard</th>
-<th>Ad-hoc script</th>
-<th>Direct CLI invocation</th>
+<th></th>
+<th>ops-dashboard</th>
+<th>mcp-server</th>
+<th>CLI</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Workflow execution</strong></td>
-<td>Full — scope picker, <code>WorkflowEntry</code> stage map, workflow chaining</td>
-<td>Manual — you wire the calls yourself</td>
-<td>Single workflow only, no chaining</td>
+<td>Surface</td>
+<td>Local web UI (HTTP)</td>
+<td>MCP tools (stdio)</td>
+<td><code>attune workflow run</code></td>
 </tr>
 <tr>
-<td><strong>Run history</strong></td>
-<td>Persisted to <code>Config.runs_dir</code>; retained for <code>runs_retention_days</code> days (default 30)</td>
-<td>None unless you add it yourself</td>
-<td>None</td>
+<td>Strength</td>
+<td>Scope picker, run history, chaining, live SSE</td>
+<td>In-conversation tool calls</td>
+<td>Scriptable one-shots</td>
 </tr>
 <tr>
-<td><strong>Cost visibility</strong></td>
-<td>Live Anthropic cost report via <code>fetch_summary()</code> with <code>CostSummary</code> fields (<code>today_usd</code>, <code>seven_day_usd</code>, <code>month_to_date_usd</code>, <code>thirty_day_usd</code>, <code>by_model</code>)</td>
-<td>None</td>
-<td>None</td>
-</tr>
-<tr>
-<td><strong>Session tracking</strong></td>
-<td><code>Session</code> records surfaced on <code>/sessions</code> page (message count, duration, starter prompt)</td>
-<td>None</td>
-<td>None</td>
-</tr>
-<tr>
-<td><strong>Spec completion candidates</strong></td>
-<td>Detected via <code>detect_candidates()</code> when <code>specs_candidates_enabled = True</code></td>
-<td>None</td>
-<td>None</td>
-</tr>
-<tr>
-<td><strong>Scope targeting</strong></td>
-<td>Feature-level via <code>.help/features.yaml</code> <code>Feature</code> entries and <code>PathArgSpec</code></td>
-<td>Hardcoded paths</td>
-<td>Single <code>--path</code> argument at most</td>
-</tr>
-<tr>
-<td><strong>Telemetry</strong></td>
-<td><code>TelemetrySummary</code> tracks requests, cost, savings, and per-workflow breakdowns</td>
-<td>None</td>
-<td>None</td>
-</tr>
-<tr>
-<td><strong>Startup overhead</strong></td>
-<td>FastAPI server + SSE — not suitable for quick one-off commands</td>
-<td>Near-zero</td>
-<td>Near-zero</td>
-</tr>
-<tr>
-<td><strong>Remote access</strong></td>
-<td>Configurable <code>host</code>/<code>port</code>; <code>trusted_hosts</code> whitelist</td>
-<td>N/A</td>
-<td>N/A</td>
-</tr>
-<tr>
-<td><strong>Admin API key required</strong></td>
-<td>Yes, for <code>fetch_summary()</code> — <code>load_admin_key()</code> returns <code>None</code> if unavailable; cost panel is skipped gracefully</td>
-<td>N/A</td>
-<td>N/A</td>
+<td>Entry</td>
+<td><code>attune ops</code></td>
+<td><code>python -m attune.mcp.server</code></td>
+<td><code>attune workflow run &lt;slug&gt;</code></td>
 </tr>
 </tbody>
 </table>
-<h2>Tradeoffs</h2>
-<p><strong>Ops dashboard wins when</strong> you need any combination of: cross-workflow visibility, cost tracking, session history, or scope-targeted execution. All of that infrastructure is built in and requires no extra code on your part.</p>
-<p><strong>Ops dashboard loses when</strong> you need a fast, stateless command. The server starts on <code>host:port</code> (default <code>127.0.0.1:8765</code>) and blocks (<code>cmd_ops()</code> returns <code>0</code> only on clean shutdown). For a single workflow run with no need for history or cost data, launching the full server is unnecessary overhead.</p>
-<p><strong>Cost data is optional, not required.</strong> <code>fetch_summary(refresh=False)</code> returns a <code>(CostSummary | None, CostFetchError | None)</code> tuple. If <code>load_admin_key()</code> returns <code>None</code>, the dashboard still runs — cost panels are simply absent. You do not need Anthropic admin credentials to use the workflow runner.</p>
-<p><strong><code>allow_run</code></strong> defaults to <code>False</code> in <code>Config</code>. The dashboard can display workflow metadata without being allowed to execute runs. This is the safe default for read-only inspection.</p>
-<h2>When to use the ops dashboard</h2>
-<p>Use the ops dashboard when at least one of these is true:</p>
-<ul>
-<li>You are running multiple workflows against different features and want a scope picker rather than manually specifying paths on every invocation.</li>
-<li>You need to inspect run history across sessions — <code>Config.runs_dir</code> and <code>runs_retention_days</code> give you durable records without any extra tooling.</li>
-<li>You want live Anthropic cost data (<code>CostSummary.today_usd</code>, <code>by_model</code>, etc.) visible alongside your workflow activity.</li>
-<li>You are working on a project with spec completion tracking and want <code>detect_candidates()</code> surfaced automatically (<code>specs_candidates_enabled = True</code>).</li>
-<li>You want clickable workflow chaining — advancing from one <code>WorkflowEntry</code> stage to the next without returning to the terminal.</li>
-</ul>
-<h2>When to use an alternative instead</h2>
-<ul>
-<li><strong>Single, quick command with no history needed:</strong> invoke the workflow directly via the <code>attune</code> CLI. The ops dashboard's server startup and SSE infrastructure add latency that a one-shot command does not justify.</li>
-<li><strong>Automated or CI context:</strong> a blocking server (<code>cmd_ops</code>) is the wrong shape for a pipeline step. Call the relevant function directly or use the CLI subcommand in a non-interactive script.</li>
-<li><strong>Exploratory or throwaway work:</strong> a small script that calls the relevant functions directly is simpler than standing up a dashboard you will discard.</li>
-<li><strong>You need behavior not exposed in <code>__all__</code></strong> (<code>create_app</code>, <code>build_config</code>, <code>Config</code>): do not reach into private internals — the surface is intentionally narrow. File an issue or propose an extension point instead.</li>
-</ul>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/ops/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>ops</code>, <code>dashboard</code>, <code>runner</code>, <code>workflows</code>, <code>scope-picker</code>, <code>persistence</code>, <code>sse</code></p>
+<p>It is the <em>browser</em> front door; the MCP server is the <em>conversational</em>
+one; the CLI is the <em>terminal</em> one. The dashboard renders cost,
+telemetry, and help data those other features own.</p>
 
   </article>
   <footer>

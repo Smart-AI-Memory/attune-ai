@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ops Dashboard FAQ — faq</title>
-  <meta name="description" content="A local operations dashboard that lets you run workflows against a specific feature scope, view persisted run history, chain workflows with a single click, and stream live logs over SSE. You start it " />
+  <meta name="description" content="A local FastAPI web app that lets you run attune workflows against a specific feature scope, browse persisted run history, chain workflows with a single click, and stream live logs over SSE. Start it " />
   <meta property="og:title" content="Ops Dashboard FAQ — faq" />
-  <meta property="og:description" content="A local operations dashboard that lets you run workflows against a specific feature scope, view persisted run history, chain workflows with a single click, and stream live logs over SSE. You start it " />
+  <meta property="og:description" content="A local FastAPI web app that lets you run attune workflows against a specific feature scope, browse persisted run history, chain workflows with a single click, and stream live logs over SSE. Start it " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/faq" />
   <style>
@@ -274,61 +274,59 @@
   <article class="markdown-body">
 <h1>Ops Dashboard FAQ</h1>
 <h2>What is the ops dashboard?</h2>
-<p>A local operations dashboard that lets you run workflows against a specific feature scope, view persisted run history, chain workflows with a single click, and stream live logs over SSE. You start it with <code>python -m attune.ops</code> or via <code>attune ops</code> on the CLI.</p>
-<h2>How do I start the dashboard?</h2>
-<p>Run <code>python -m attune.ops</code> (calls <code>main()</code>) or use the <code>attune ops</code> subcommand (registered by <code>add_subparser()</code>). Both block until you stop the server. By default the server listens on <code>127.0.0.1:8765</code>; you can change the host and port in <code>Config</code>.</p>
+<p>A local FastAPI web app that lets you run attune workflows against a
+specific feature scope, browse persisted run history, chain workflows
+with a single click, and stream live logs over SSE. Start it with
+<code>attune ops</code> or <code>python -m attune.ops</code> (default <code>127.0.0.1:8765</code>).</p>
+<h2>How do I start it?</h2>
+<p>Run <code>attune ops</code> (the CLI subcommand registered by <code>add_subparser()</code>) or
+<code>python -m attune.ops</code> (calls <code>main()</code>). Both block until you stop the
+server. Workflow execution is <strong>enabled by default</strong>; pass <code>--read-only</code>
+for a look-but-don't-run dashboard.</p>
+<h2>What's the public API?</h2>
+<p>Exactly three names — <code>attune.ops.__all__</code> is <code>create_app</code>,
+<code>build_config</code>, and <code>Config</code>. Build a config with <code>build_config(...)</code>
+(don't instantiate <code>Config</code> directly), then <code>create_app(config)</code> returns
+the <code>FastAPI</code> app. Both are synchronous. The runner lives in
+<code>attune.ops.runner</code>.</p>
 <h2>What does <code>Config</code> control?</h2>
-<p><code>Config</code> is the central settings dataclass for the dashboard. Its key fields are:</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>What it controls</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>project_root</code></td>
-<td>Root of your project tree</td>
-</tr>
-<tr>
-<td><code>attune_home</code></td>
-<td>Where attune reads and writes state</td>
-</tr>
-<tr>
-<td><code>host</code> / <code>port</code></td>
-<td>Server bind address (default <code>127.0.0.1:8765</code>)</td>
-</tr>
-<tr>
-<td><code>allow_run</code></td>
-<td>Whether workflow execution is permitted</td>
-</tr>
-<tr>
-<td><code>specs_roots</code></td>
-<td>Directories the candidate detector scans</td>
-</tr>
-<tr>
-<td><code>runs_retention_days</code></td>
-<td>How long persisted run history is kept (default 30)</td>
-</tr>
-<tr>
-<td><code>specs_candidates_enabled</code></td>
-<td>Whether spec-completion candidate detection is active</td>
-</tr>
-</tbody>
-</table>
-<p>Use <code>build_config()</code> to construct a <code>Config</code> rather than instantiating it directly.</p>
-<h2>How does cost reporting work?</h2>
-<p>Call <code>fetch_summary()</code> to get account-level Anthropic API cost data. It returns a <code>(CostSummary | None, CostFetchError | None)</code> tuple. Pass <code>refresh=True</code> to bypass the in-memory cache. The <code>CostSummary</code> fields cover today, the last 7 days, month-to-date, and the last 30 days, plus breakdowns by day, model, and cost type. If the fetch fails, the <code>CostFetchError</code> tells you the <code>kind</code> and a human-readable <code>message</code>. The dashboard fetches from <code>https://api.anthropic.com/v1/organizations/cost_report</code> and requires an admin API key, which <code>load_admin_key()</code> resolves.</p>
-<h2>How do I tell whether cost data is live or cached?</h2>
-<p>Check the <code>source</code> field on the returned <code>CostSummary</code>. It is either <code>'live'</code> or <code>'cached'</code>. The <code>fetched_at</code> field tells you when the data was last retrieved.</p>
-<h2>What are spec-completion candidates?</h2>
-<p>When <code>specs_candidates_enabled</code> is <code>True</code> in your <code>Config</code>, <code>detect_candidates()</code> scans your <code>specs_roots</code> and returns a list of <code>Candidate</code> objects — specs that appear ready to move to the next phase based on file evidence. Each <code>Candidate</code> includes a <code>slug</code>, <code>path</code>, <code>current_status</code>, supporting <code>evidence</code>, and a <code>snapshot_hash</code>.</p>
-<h2>How do I run the dashboard in tests?</h2>
-<p>Use <code>clear_cache()</code> (available in both <code>attune.ops.anthropic_cost</code> and the candidate-detector module) to reset in-memory caches between test cases. This is a test-only helper and is not part of the public API (<code>__all__</code> exports only <code>create_app</code>, <code>build_config</code>, and <code>Config</code>).</p>
+<p><code>Config</code> anchors every path the dashboard reads or writes. Key fields:
+<code>host</code>/<code>port</code> (default <code>127.0.0.1:8765</code>), <code>allow_run</code> (default <code>False</code>),
+<code>specs_roots</code>, <code>runs_retention_days</code> (default 30), and
+<code>specs_candidates_enabled</code>. Derived <strong>properties</strong> (no parentheses)
+include <code>runs_dir</code>, <code>sessions_dir</code>, <code>bulletin_dir</code>, <code>memory_dir</code>, and
+<code>telemetry_path</code>.</p>
+<h2>Why won't my workflow run?</h2>
+<p><code>Config.allow_run</code> must be <code>True</code>. It defaults to <code>False</code>; the CLI
+enables it (<code>allow_run = not --read-only</code>), so <code>attune ops</code> can run
+workflows out of the box while <code>attune ops --read-only</code> cannot.</p>
+<h2>How do I run a workflow from Python?</h2>
+<p>Use <code>RunnerService</code>. Its <code>start(workflow, *, path=None)</code> method is a
+<strong>coroutine</strong> — <code>await</code> it; it returns a <code>Run</code>. Only one run is active
+at a time, so a concurrent <code>start()</code> raises <code>RunnerBusyError</code> (which
+carries <code>current_run_id</code>).</p>
+<h2>How does the live log stream work?</h2>
+<p><code>Run.subscribe()</code> is an <strong>async iterator</strong> of events — the SSE feed the
+browser consumes. Iterate it with <code>async for</code>; <code>Run.is_terminal</code> (a
+property) flips true when the run finishes.</p>
+<h2>Does the dashboard own the cost / telemetry / help data it shows?</h2>
+<p>No. Those are <strong>adjacent</strong> read-only surfaces it renders:
+<code>ops.anthropic_cost.fetch_summary()</code> (account cost), <code>ops.data</code> (reads
+the telemetry store), and <code>ops.help_data</code> (the help tab). Each is owned
+by its own feature (telemetry, help-system); the dashboard only displays
+them.</p>
+<h2>How do I label a spec's lifecycle?</h2>
+<p><code>ops.spec_lifecycle.derive_lifecycle(spec, *, now=None)</code> returns a status
+string from the spec's phases and last-modified time. That is the only
+public function in the module — there is no candidate-detection API.</p>
+<h2>How long is run history kept?</h2>
+<p><code>runs_retention_days</code> (default 30). History is persisted to
+<code>Config.runs_dir</code> and survives restarts (<code>get_or_load</code> rehydrates a past
+run); <code>prune_old_runs</code> trims older entries.</p>
 <h2>Where are the source files?</h2>
-<p>All dashboard source lives under <code>src/attune/ops/</code>.</p>
-<p><strong>Tags:</strong> <code>ops</code>, <code>dashboard</code>, <code>runner</code>, <code>workflows</code>, <code>scope-picker</code>, <code>persistence</code>, <code>sse</code></p>
+<ul>
+<li><code>src/attune/ops/**</code></li>
+</ul>
 
   </article>
   <footer>

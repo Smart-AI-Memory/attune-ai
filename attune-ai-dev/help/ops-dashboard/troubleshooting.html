@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot ops dashboard — troubleshooting</title>
-  <meta name="description" content="The ops dashboard (`attune ops` / `python -m attune.ops`) is a local FastAPI server that provides a workflow runner with a per-feature scope picker, persisted run history, clickable workflow chaining," />
-  <meta property="og:title" content="Troubleshoot ops dashboard — troubleshooting" />
-  <meta property="og:description" content="The ops dashboard (`attune ops` / `python -m attune.ops`) is a local FastAPI server that provides a workflow runner with a per-feature scope picker, persisted run history, clickable workflow chaining," />
+  <title>The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;RunnerService.start&#x27; was never awaited` | `start()` called without `await` | It&#x27;s async — `await` it / `asyncio.run" />
+  <meta property="og:title" content="The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;RunnerService.start&#x27; was never awaited` | `start()` called without `await` | It&#x27;s async — `await` it / `asyncio.run" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/troubleshooting" />
   <style>
@@ -272,142 +272,69 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot ops dashboard</h1>
-<h2>Before you start</h2>
-<p>The ops dashboard (<code>attune ops</code> / <code>python -m attune.ops</code>) is a local FastAPI server that provides a workflow runner with a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. It binds to <code>127.0.0.1:8765</code> by default and reads project state from the paths defined in <code>Config</code>.</p>
-<h2>Symptom table</h2>
+<h1>The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Dashboard server won't start</td>
-<td>Confirm no other process is using port <code>8765</code> (or your configured <code>Config.port</code>). Check that <code>Config.project_root</code> and <code>Config.attune_home</code> resolve to real directories.</td>
+<td><code>RuntimeWarning: coroutine 'RunnerService.start' was never awaited</code></td>
+<td><code>start()</code> called without <code>await</code></td>
+<td>It's async — <code>await</code> it / <code>asyncio.run</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td>Cost data missing or stale</td>
-<td>Call <code>fetch_summary(refresh=True)</code> to bypass the in-memory cache. Check that <code>load_admin_key()</code> returns a non-<code>None</code> value — if it returns <code>None</code>, the Anthropic admin key is absent or unreadable.</td>
+<td>Workflows won't run from the UI</td>
+<td><code>Config.allow_run</code> is <code>False</code> (e.g. <code>--read-only</code>)</td>
+<td>Start without <code>--read-only</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td><code>CostFetchError</code> returned instead of <code>CostSummary</code></td>
-<td>Inspect the <code>CostFetchError.kind</code> and <code>CostFetchError.message</code> fields. The <code>kind</code> field narrows the failure to a specific <code>CostFetchErrorKind</code> category (auth, network, parsing, etc.).</td>
+<td><code>RunnerBusyError</code> on start</td>
+<td>A run is already active (one at a time)</td>
+<td>Wait for / inspect <code>runner.current</code></td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>CostSummary.source</code> is <code>'cached'</code> when you expect live data</td>
-<td>Call <code>clear_cache()</code> then re-request. This empties the in-memory cache and forces a fresh fetch on the next call to <code>fetch_summary()</code>.</td>
+<td><code>TypeError</code> calling <code>config.runs_dir()</code></td>
+<td><code>runs_dir</code> is a property</td>
+<td>Drop the <code>()</code></td>
+<td>medium</td>
 </tr>
 <tr>
-<td>Spec completion candidates not appearing</td>
-<td>Verify <code>Config.specs_candidates_enabled</code> is <code>True</code> and that <code>Config.specs_roots</code> is non-empty. Run <code>detect_candidates(config)</code> directly and inspect the returned <code>list[Candidate]</code>.</td>
-</tr>
-<tr>
-<td>Sessions page is empty</td>
-<td>Check that <code>Config.sessions_dir</code> exists on disk. The directory is under <code>Config.attune_home</code> and may not be created until the first session write.</td>
-</tr>
-<tr>
-<td>Run history missing</td>
-<td>Check that <code>Config.runs_dir</code> exists. Like <code>sessions_dir</code>, it is only created on the first write. Confirm <code>Config.runs_retention_days</code> (default <code>30</code>) has not expired old entries.</td>
-</tr>
-<tr>
-<td><code>cmd_ops</code> exits immediately with a non-zero code</td>
-<td>Check the return value and any stderr output. <code>cmd_ops</code> returns <code>0</code> on clean exit; any other value indicates a startup failure.</td>
+<td>Cost panel shows an error</td>
+<td><code>fetch_summary</code> returned a <code>CostFetchError</code> (no admin key, network)</td>
+<td>Inspect the error <code>kind</code>/<code>message</code>; cost is an adjacent surface</td>
+<td>low</td>
 </tr>
 </tbody>
 </table>
-<h2>Diagnosis steps</h2>
+<h3>Risk areas</h3>
+<ul>
+<li><strong><code>RunnerService.start</code> and <code>Run.subscribe</code> are async.</strong> They are the
+two awaitable surfaces; everything else on the runner is sync.</li>
+<li><strong><code>allow_run</code> is a real gate.</strong> Off by default in <code>Config</code>; the CLI
+turns it on unless <code>--read-only</code>.</li>
+<li><strong>Scope confusion.</strong> Cost/telemetry/help shown on the dashboard are
+<em>adjacent</em> surfaces — owned by other features, only read here.</li>
+</ul>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Reproduce the failure with the minimal invocation.</strong>
-Run <code>python -m attune.ops</code> (or <code>attune ops</code>) in your project root with no extra flags. If the failure disappears, a CLI flag or environment variable in your normal invocation is the cause.</p>
-</li>
-<li>
-<p><strong>Confirm the admin API key is present.</strong>
-Call <code>load_admin_key()</code> in a Python REPL. If it returns <code>None</code>, the dashboard cannot reach the Anthropic cost-report endpoint at <code>https://api.anthropic.com/v1/organizations/cost_report</code>. Set the key in your environment before proceeding.</p>
-</li>
-<li>
-<p><strong>Check the cache before deeper investigation.</strong>
-Call <code>clear_cache()</code> and retry the failing operation. Cost-fetch failures and stale data are often explained by a poisoned in-memory cache, and clearing it takes seconds.</p>
-</li>
-<li>
-<p><strong>Inspect <code>Config</code> field values.</strong>
-Build a config with <code>build_config()</code> and print the relevant fields (<code>project_root</code>, <code>attune_home</code>, <code>host</code>, <code>port</code>, <code>specs_roots</code>, <code>specs_candidates_enabled</code>). Mismatched paths are a common root cause for missing data and silent failures.</p>
-</li>
-<li>
-<p><strong>Call <code>fetch_summary</code> directly and examine the error.</strong></p>
-<pre><code class="language-python">summary, error = fetch_summary(refresh=True)
-if error:
-    print(error.kind, error.message)
-</code></pre>
-<p>The <code>CostFetchError.kind</code> field tells you whether the failure is an auth error, a network error, or a parsing error — each has a different fix.</p>
-</li>
-<li>
-<p><strong>Run <code>detect_candidates</code> directly for spec-completion issues.</strong></p>
-<pre><code class="language-python">from attune.ops import build_config
-from attune.ops.specs_candidates import detect_candidates
-config = build_config()
-candidates = detect_candidates(config)
-</code></pre>
-<p>If the list is empty, check <code>config.specs_roots</code> and <code>config.specs_candidates_enabled</code>.</p>
-</li>
-<li>
-<p><strong>Run the related tests.</strong></p>
-<pre><code>pytest -k &quot;ops&quot; -v
-</code></pre>
-<p>A failing test that exercises your symptom confirms the regression and provides a fixture you can adapt for further isolation.</p>
-</li>
+<li>Confirm the app builds: <code>create_app(build_config(Path(&quot;.&quot;)))</code>.</li>
+<li>Confirm runs are allowed: <code>config.allow_run</code> (and no <code>--read-only</code>).</li>
+<li>For a run that won't start: check <code>runner.current</code> /
+<code>RunnerBusyError</code>.</li>
+<li>For async warnings: <code>await</code> <code>start()</code> / iterate <code>subscribe()</code>.</li>
+<li>For a data panel: that data is owned by its feature (telemetry /
+help-system / cost).</li>
 </ol>
-<h2>Common fixes</h2>
-<ul>
-<li>
-<p><strong>Admin key not loaded — cost data unavailable.</strong>
-<code>load_admin_key()</code> reads the key from your environment. Export the key before starting the server:</p>
-<pre><code class="language-bash">export ANTHROPIC_ADMIN_KEY=&quot;sk-admin-...&quot;
-attune ops
-</code></pre>
-</li>
-<li>
-<p><strong>Stale cost data.</strong>
-Force a cache reset without restarting the server:</p>
-<pre><code class="language-python">from attune.ops.anthropic_cost import clear_cache
-clear_cache()
-</code></pre>
-<p>The next call to <code>fetch_summary()</code> will hit the live endpoint.</p>
-</li>
-<li>
-<p><strong>Port already in use.</strong>
-Change the port in your <code>Config</code> (field: <code>port</code>) or free the existing listener:</p>
-<pre><code class="language-bash">lsof -i :8765        # find the PID
-kill &lt;PID&gt;
-attune ops
-</code></pre>
-</li>
-<li>
-<p><strong>Missing runs or sessions directory.</strong>
-<code>Config.runs_dir</code> and <code>Config.sessions_dir</code> are created on first write, not on startup. If you need them to exist before the first run (for example, in a CI setup), create them manually:</p>
-<pre><code class="language-bash">mkdir -p &quot;$(python -c 'from attune.ops import build_config; print(build_config().runs_dir)')&quot;
-</code></pre>
-</li>
-<li>
-<p><strong>Spec candidates disabled or no roots configured.</strong>
-In your config source, set <code>specs_candidates_enabled = True</code> and populate <code>specs_roots</code> with at least one valid path. This change is in your project's config, outside the dashboard itself.</p>
-</li>
-<li>
-<p><strong>Dependency version drift.</strong>
-A FastAPI or Anthropic SDK upgrade can silently change behavior. Check installed versions:</p>
-<pre><code class="language-bash">pip show fastapi anthropic
-</code></pre>
-<p>Pin to the versions your project targets if the output differs from expectations.</p>
-</li>
-</ul>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/ops/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>ops</code>, <code>dashboard</code>, <code>runner</code>, <code>workflows</code>, <code>scope-picker</code>, <code>persistence</code>, <code>sse</code></p>
 
   </article>
   <footer>

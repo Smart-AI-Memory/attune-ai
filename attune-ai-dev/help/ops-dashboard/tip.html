@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: working effectively with ops dashboard — tip</title>
-  <meta name="description" content="Use `fetch_summary(refresh=False)` as your entry point for cost data — it handles caching and returns a typed `(CostSummary | None, CostFetchError | None)` tuple so you never have to catch raw HTTP er" />
-  <meta property="og:title" content="Tip: working effectively with ops dashboard — tip" />
-  <meta property="og:description" content="Use `fetch_summary(refresh=False)` as your entry point for cost data — it handles caching and returns a typed `(CostSummary | None, CostFetchError | None)` tuple so you never have to catch raw HTTP er" />
+  <title>The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming — tip</title>
+  <meta name="description" content="- **Depend on the documented public surface:** `create_app`, `build_config`, `Config` from `attune.ops`. The runner and readers are reached from their submodules. - **`await` the two async surfaces.**" />
+  <meta property="og:title" content="The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming — tip" />
+  <meta property="og:description" content="- **Depend on the documented public surface:** `create_app`, `build_config`, `Config` from `attune.ops`. The runner and readers are reached from their submodules. - **`await` the two async surfaces.**" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/tip" />
   <style>
@@ -272,12 +272,19 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: working effectively with ops dashboard</h1>
-<p>Use <code>fetch_summary(refresh=False)</code> as your entry point for cost data — it handles caching and returns a typed <code>(CostSummary | None, CostFetchError | None)</code> tuple so you never have to catch raw HTTP errors yourself.</p>
-<p><strong>Why it sticks:</strong> the cache layer means repeated calls inside a single dashboard render are free; setting <code>refresh=True</code> only when you genuinely need live data keeps the Anthropic admin API from rate-limiting you.</p>
-<p><strong>Tradeoff:</strong> the cached value reflects the moment it was last populated, not wall-clock now. Check <code>CostSummary.fetched_at</code> and <code>CostSummary.source</code> (either <code>'live'</code> or <code>'cached'</code>) before presenting figures to a user who needs precision.</p>
-<p>The three other stable entry points are <code>create_app()</code> (the FastAPI factory), <code>build_config()</code> (the config builder), and <code>clear_cache()</code> — all exported via <code>__all__</code> in <code>src/attune/ops/__init__.py</code>. Everything else, including anything prefixed with an underscore such as <code>_COST_REPORT_URL</code> or <code>_API_VERSION</code>, is internal and may change without notice.</p>
-<p><strong>Tags:</strong> <code>ops</code>, <code>dashboard</code>, <code>runner</code>, <code>workflows</code>, <code>scope-picker</code>, <code>persistence</code>, <code>sse</code></p>
+<h1>The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming</h1>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Depend on the documented public surface:</strong> <code>create_app</code>,
+<code>build_config</code>, <code>Config</code> from <code>attune.ops</code>. The runner and readers are
+reached from their submodules.</li>
+<li><strong><code>await</code> the two async surfaces.</strong> <code>RunnerService.start</code> and
+<code>Run.subscribe</code>; everything else on the runner is sync.</li>
+<li><strong>Paths are properties.</strong> <code>runs_dir</code>, <code>sessions_dir</code>,
+<code>telemetry_path</code> — no <code>()</code>.</li>
+<li><strong><code>--read-only</code> for a safe demo.</strong> It serves the dashboard with
+execution disabled.</li>
+</ul>
 
   </article>
   <footer>

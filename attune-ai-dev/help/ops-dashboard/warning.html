@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ops Dashboard Cautions — warning</title>
-  <meta name="description" content="The ops dashboard runs a local FastAPI server (`python -m attune.ops`) that combines a workflow runner, a per-feature scope picker, persisted run history, and live SSE log streaming. Most surprises co" />
-  <meta property="og:title" content="Ops Dashboard Cautions — warning" />
-  <meta property="og:description" content="The ops dashboard runs a local FastAPI server (`python -m attune.ops`) that combines a workflow runner, a per-feature scope picker, persisted run history, and live SSE log streaming. Most surprises co" />
+  <title>The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;RunnerService.start&#x27; was never awaited` | `start()` called without `await` | It&#x27;s async — `await` it / `asyncio.run" />
+  <meta property="og:title" content="The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;RunnerService.start&#x27; was never awaited` | `start()` called without `await` | It&#x27;s async — `await` it / `asyncio.run" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/warning" />
   <style>
@@ -272,44 +272,69 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Ops Dashboard Cautions</h1>
-<p>The ops dashboard runs a local FastAPI server (<code>python -m attune.ops</code>) that combines a workflow runner, a per-feature scope picker, persisted run history, and live SSE log streaming. Most surprises come from three areas: the in-memory cost cache, the admin API key lookup, and configuration fields that silently restrict what the server allows.</p>
-<h2>Risk areas</h2>
-<h3><code>fetch_summary()</code> returns stale data by default</h3>
-<p><code>fetch_summary(*, refresh: bool = False)</code> returns a cached <code>CostSummary</code> when <code>refresh</code> is <code>False</code>. If you call it without setting <code>refresh=True</code>, the <code>source</code> field on the returned <code>CostSummary</code> will be <code>'cached'</code>, and the cost figures (<code>today_usd</code>, <code>seven_day_usd</code>, <code>month_to_date_usd</code>, <code>thirty_day_usd</code>) will reflect whenever the cache was last populated — not the current moment. Always check <code>CostSummary.source</code> before presenting figures as live, and pass <code>refresh=True</code> when you need a current snapshot.</p>
-<h3><code>load_admin_key()</code> returns <code>None</code> silently</h3>
-<p><code>load_admin_key()</code> returns <code>None</code> if the admin API key is unavailable rather than raising an exception. Code that passes the result directly to an HTTP client will fail later with a confusing auth error instead of a clear &quot;key not configured&quot; message. Check for <code>None</code> before use and surface a clear error to the user at that point.</p>
-<h3><code>clear_cache()</code> is a test helper, not a lifecycle hook</h3>
-<p><code>clear_cache()</code> in <code>attune.ops.anthropic_cost</code> is documented as a test-only convenience. Calling it in production code to force a refresh will work, but it bypasses the <code>refresh</code> parameter contract of <code>fetch_summary()</code> and can cause cache stampedes if multiple requests arrive simultaneously. Use <code>fetch_summary(refresh=True)</code> instead.</p>
-<h3><code>Config.allow_run</code> gates workflow execution</h3>
-<p><code>Config.allow_run</code> defaults to <code>False</code>. With that default, the dashboard will load and display workflows but silently refuse to execute them. If you deploy the dashboard and find that run buttons have no effect, check this field first. Set it to <code>True</code> only in environments where you intend to allow workflow execution.</p>
-<h3><code>Config.trusted_hosts</code> controls which origins the server accepts</h3>
-<p><code>Config.trusted_hosts</code> defaults to an empty tuple. Requests from hosts not in this tuple will be rejected. When running the dashboard behind a proxy or in a non-localhost environment, add the proxy's hostname to <code>trusted_hosts</code> before starting the server — otherwise every request will fail and the error will appear to come from the network layer, not from configuration.</p>
-<h3><code>create_app()</code> and <code>build_config()</code> defer their imports</h3>
-<p>Both functions use lazy imports to avoid pulling FastAPI into the <code>attune</code> namespace at import time. If FastAPI is missing from the environment, the failure surfaces only when you first call one of these functions, not at <code>import attune</code>. If the server fails to start unexpectedly, verify FastAPI is installed before looking elsewhere.</p>
-<h2>How to avoid problems</h2>
-<ol>
-<li>
-<p><strong>Check <code>CostSummary.source</code> after every <code>fetch_summary()</code> call.</strong> A value of <code>'cached'</code> means the figures may be hours old. Pass <code>refresh=True</code> when you need current data.</p>
-</li>
-<li>
-<p><strong>Guard against <code>None</code> from <code>load_admin_key()</code>.</strong> Treat a <code>None</code> return as a configuration error and fail fast with a descriptive message rather than propagating <code>None</code> into downstream calls.</p>
-</li>
-<li>
-<p><strong>Set <code>allow_run</code> and <code>trusted_hosts</code> explicitly in production configs.</strong> Both fields have defaults that are safe for local development but will cause silent failures in other environments.</p>
-</li>
-<li>
-<p><strong>Use <code>fetch_summary(refresh=True)</code> instead of <code>clear_cache()</code>.</strong> Reserve <code>clear_cache()</code> for test setup and teardown only.</p>
-</li>
-<li>
-<p><strong>Depend only on the public API.</strong> <code>__all__</code> exports <code>create_app</code>, <code>build_config</code>, and <code>Config</code>. Functions and constants prefixed with <code>_</code> (such as <code>_COST_REPORT_URL</code> and <code>_API_VERSION</code>) can change without notice.</p>
-</li>
-</ol>
-<h2>Source files</h2>
+<h1>The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'RunnerService.start' was never awaited</code></td>
+<td><code>start()</code> called without <code>await</code></td>
+<td>It's async — <code>await</code> it / <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td>Workflows won't run from the UI</td>
+<td><code>Config.allow_run</code> is <code>False</code> (e.g. <code>--read-only</code>)</td>
+<td>Start without <code>--read-only</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>RunnerBusyError</code> on start</td>
+<td>A run is already active (one at a time)</td>
+<td>Wait for / inspect <code>runner.current</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>TypeError</code> calling <code>config.runs_dir()</code></td>
+<td><code>runs_dir</code> is a property</td>
+<td>Drop the <code>()</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Cost panel shows an error</td>
+<td><code>fetch_summary</code> returned a <code>CostFetchError</code> (no admin key, network)</td>
+<td>Inspect the error <code>kind</code>/<code>message</code>; cost is an adjacent surface</td>
+<td>low</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/ops/**</code></li>
+<li><strong><code>RunnerService.start</code> and <code>Run.subscribe</code> are async.</strong> They are the
+two awaitable surfaces; everything else on the runner is sync.</li>
+<li><strong><code>allow_run</code> is a real gate.</strong> Off by default in <code>Config</code>; the CLI
+turns it on unless <code>--read-only</code>.</li>
+<li><strong>Scope confusion.</strong> Cost/telemetry/help shown on the dashboard are
+<em>adjacent</em> surfaces — owned by other features, only read here.</li>
 </ul>
-<p><strong>Tags:</strong> <code>ops</code>, <code>dashboard</code>, <code>runner</code>, <code>workflows</code>, <code>scope-picker</code>, <code>persistence</code>, <code>sse</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm the app builds: <code>create_app(build_config(Path(&quot;.&quot;)))</code>.</li>
+<li>Confirm runs are allowed: <code>config.allow_run</code> (and no <code>--read-only</code>).</li>
+<li>For a run that won't start: check <code>runner.current</code> /
+<code>RunnerBusyError</code>.</li>
+<li>For async warnings: <code>await</code> <code>start()</code> / iterate <code>subscribe()</code>.</li>
+<li>For a data panel: that data is owned by its feature (telemetry /
+help-system / cost).</li>
+</ol>
 
   </article>
   <footer>

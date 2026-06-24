@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ops Dashboard reference — reference</title>
-  <meta name="description" content="Run and monitor the attune workflow OS from a local web dashboard. The dashboard exposes a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. Sta" />
-  <meta property="og:title" content="Ops Dashboard reference — reference" />
-  <meta property="og:description" content="Run and monitor the attune workflow OS from a local web dashboard. The dashboard exposes a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. Sta" />
+  <title>The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming — reference</title>
+  <meta name="description" content="The public API is `create_app`, `build_config`, and `Config`, exported from `attune.ops`. The runner and read-side helpers are imported from their submodules." />
+  <meta property="og:title" content="The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming — reference" />
+  <meta property="og:description" content="The public API is `create_app`, `build_config`, and `Config`, exported from `attune.ops`. The runner and read-side helpers are imported from their submodules." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/reference" />
   <style>
@@ -272,966 +272,156 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Ops Dashboard reference</h1>
-<p>Run and monitor the attune workflow OS from a local web dashboard. The dashboard exposes a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. Start it with <code>attune ops</code> or <code>python -m attune.ops</code>.</p>
-<h2>Classes</h2>
+<h1>The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming</h1>
+<h2>Reference</h2>
+<p>The public API is <code>create_app</code>, <code>build_config</code>, and <code>Config</code>, exported
+from <code>attune.ops</code>. The runner and read-side helpers are imported from
+their submodules.</p>
+<h3><code>attune.ops</code></h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>CostFetchError</code></td>
-<td>Categorized failure for a cost-report fetch.</td>
+<td><code>build_config(project_root=None, *, host=&quot;127.0.0.1&quot;, port=8765, allow_run=False, specs_roots=None, trusted_hosts=None, runs_retention_days=30, specs_candidates_enabled=False) -&gt; Config</code></td>
+<td>Build the dashboard config.</td>
 </tr>
 <tr>
-<td><code>CostSummary</code></td>
-<td>Account-level cost data from the Anthropic admin cost-report.</td>
-</tr>
-<tr>
-<td><code>Candidate</code></td>
-<td>One completion-candidate spec returned by the detector.</td>
+<td><code>create_app(config, *, runner=None) -&gt; FastAPI</code></td>
+<td>Build the FastAPI app (sync).</td>
 </tr>
 <tr>
 <td><code>Config</code></td>
-<td>Project and attune-state configuration that <code>attune ops</code> reads at startup.</td>
-</tr>
-<tr>
-<td><code>TelemetrySummary</code></td>
-<td>Aggregated telemetry — request counts, costs, savings, and per-workflow breakdowns.</td>
-</tr>
-<tr>
-<td><code>WorkflowEntry</code></td>
-<td>One entry in the registered workflow catalog.</td>
-</tr>
-<tr>
-<td><code>PathArgSpec</code></td>
-<td>How a workflow accepts a scope path on the CLI.</td>
-</tr>
-<tr>
-<td><code>Feature</code></td>
-<td>One feature from <code>.help/features.yaml</code> for the scope picker.</td>
-</tr>
-<tr>
-<td><code>Session</code></td>
-<td>One Claude Code session surfaced on the dashboard's <code>/sessions</code> page.</td>
-</tr>
-<tr>
-<td><code>FamilyVersion</code></td>
-<td>Package name, version, and resolution source for one attune family member.</td>
-</tr>
-<tr>
-<td><code>DailyCost</code></td>
-<td>One day's cost for the home-page sparkline.</td>
-</tr>
-<tr>
-<td><code>HomeKpis</code></td>
-<td>Summary numbers shown above the fold on the home page.</td>
-</tr>
-<tr>
-<td><code>SpendAlarm</code></td>
-<td>Daily API-spend anomaly verdict with ceiling-approach gauge for the dashboard (R6).</td>
-</tr>
-<tr>
-<td><code>SweepChipCounts</code></td>
-<td>Per-bucket counts loaded from a persisted discovery-sweep result.</td>
-</tr>
-<tr>
-<td><code>DismissEntry</code></td>
-<td>One dismissed candidate's persisted state.</td>
-</tr>
-<tr>
-<td><code>TemplateRecord</code></td>
-<td>One template file in the help corpus.</td>
-</tr>
-<tr>
-<td><code>FeatureSummary</code></td>
-<td>One feature — name plus which template kinds exist for it.</td>
-</tr>
-<tr>
-<td><code>SearchHit</code></td>
-<td>One ranked hit from a help-corpus search query.</td>
-</tr>
-<tr>
-<td><code>GapsReport</code></td>
-<td>Coverage-gap signals — incomplete sets and stale templates.</td>
-</tr>
-<tr>
-<td><code>HelpRegenJob</code></td>
-<td>One regen invocation — status, captured stdout, and exit code.</td>
-</tr>
-<tr>
-<td><code>HelpRegenRunner</code></td>
-<td>Owns the regen-job history and active subprocess.</td>
-</tr>
-<tr>
-<td><code>HelpRegenBusyError</code></td>
-<td>Raised when a regen job is requested while one is already running.</td>
-</tr>
-<tr>
-<td><code>InteractionCounters</code></td>
-<td>Process-lifetime counters for dashboard UI interactions.</td>
-</tr>
-<tr>
-<td><code>TrustedHostMiddleware</code></td>
-<td>Rejects requests whose <code>Host</code> header is not on the allowlist.</td>
-</tr>
-<tr>
-<td><code>JournalEntry</code></td>
-<td>One pending-writes journal entry.</td>
-</tr>
-<tr>
-<td><code>InteractionEvent</code></td>
-<td>Request body for <code>POST /api/telemetry/interaction</code>.</td>
-</tr>
-<tr>
-<td><code>SpecPhase</code></td>
-<td>One phase file's status snapshot.</td>
-</tr>
-<tr>
-<td><code>SpecRecord</code></td>
-<td>One spec's summary — directory plus the status of each phase file present.</td>
-</tr>
-<tr>
-<td><code>RunnerBusyError</code></td>
-<td>Raised when a run is already pending or running.</td>
-</tr>
-<tr>
-<td><code>Run</code></td>
-<td>Single workflow execution and its broadcast state.</td>
-</tr>
-<tr>
-<td><code>RunnerService</code></td>
-<td>Owns the run history and concurrency lock.</td>
-</tr>
-<tr>
-<td><code>RedactionResult</code></td>
-<td>Outcome of a redaction pass.</td>
-</tr>
-<tr>
-<td><code>SummaryResult</code></td>
-<td>One Haiku-or-cache result, ready to slot into a <code>Session</code>.</td>
-</tr>
-<tr>
-<td><code>Budget</code></td>
-<td>Mutable spend ledger for one page-load summarization loop.</td>
-</tr>
-<tr>
-<td><code>CacheKey</code></td>
-<td>Stable key that invalidates a cached summary when the source moves.</td>
-</tr>
-<tr>
-<td><code>CachedSummary</code></td>
-<td>One persisted session summary plus the metadata needed to validate it.</td>
+<td>Settings dataclass. <strong>Properties:</strong> <code>bulletin_dir</code>, <code>memory_dir</code>, <code>runs_dir</code>, <code>sessions_dir</code>, <code>telemetry_path</code>. <code>allow_run</code> defaults <code>False</code>.</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h3><code>CostFetchError</code> fields</h3>
+<h3><code>attune.ops.runner</code></h3>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Type</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>kind</code></td>
-<td><code>CostFetchErrorKind</code></td>
+<td><code>RunnerService(*, history_limit=20, command_builder=None, executor=None, persistence_dir=None, project_root=None, bulletin=None, actor_id=None, actor_kind=&quot;dashboard&quot;)</code></td>
+<td>Workflow runner.</td>
 </tr>
 <tr>
-<td><code>message</code></td>
-<td><code>str</code></td>
+<td><code>RunnerService.start(workflow, *, path=None) -&gt; Run</code></td>
+<td><strong>Async.</strong> Launch a run (one at a time).</td>
+</tr>
+<tr>
+<td><code>RunnerService.recent</code> / <code>.get</code> / <code>.get_or_load</code> / <code>.handle_stdout_line</code></td>
+<td>Sync history/lookup helpers.</td>
+</tr>
+<tr>
+<td><code>RunnerService.current</code> / <code>.persistence_dir</code></td>
+<td>Properties.</td>
+</tr>
+<tr>
+<td><code>Run.subscribe() -&gt; AsyncIterator</code></td>
+<td><strong>Async.</strong> SSE event feed.</td>
+</tr>
+<tr>
+<td><code>Run.append_line</code> / <code>.mark_done</code> / <code>.to_dict</code> / <code>.to_record</code></td>
+<td>Sync run helpers.</td>
+</tr>
+<tr>
+<td><code>Run.duration_seconds</code> / <code>.is_terminal</code></td>
+<td>Properties.</td>
+</tr>
+<tr>
+<td><code>RunnerBusyError(current_run_id)</code></td>
+<td>Raised on a concurrent <code>start()</code>.</td>
+</tr>
+<tr>
+<td><code>prune_old_runs(...)</code> / <code>echo_command_builder</code></td>
+<td>Retention + a default command builder.</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h3><code>CostSummary</code> fields</h3>
+<h3>Read-side submodules</h3>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Type</th>
+<th>Module</th>
+<th>Key public API</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>today_usd</code></td>
-<td><code>float</code></td>
+<td><code>ops.data</code></td>
+<td><code>read_telemetry_summary</code>, <code>list_workflows</code>, <code>list_features</code>, <code>home_kpis</code>, <code>list_recent_sessions</code>, <code>env_health</code>, <code>family_versions</code>, <code>workflow_default_scope</code>, <code>sparkline_points</code>, …</td>
 </tr>
 <tr>
-<td><code>seven_day_usd</code></td>
-<td><code>float</code></td>
+<td><code>ops.anthropic_cost</code></td>
+<td><code>fetch_summary(*, refresh=False) -&gt; tuple[CostSummary | None, CostFetchError | None]</code>; <code>CostSummary</code>, <code>CostFetchError</code>, <code>CostFetchErrorKind</code>.</td>
 </tr>
 <tr>
-<td><code>month_to_date_usd</code></td>
-<td><code>float</code></td>
+<td><code>ops.help_data</code></td>
+<td><code>coverage_gaps</code>, <code>search</code>, <code>list_features</code>, <code>get_template</code>.</td>
 </tr>
 <tr>
-<td><code>thirty_day_usd</code></td>
-<td><code>float</code></td>
+<td><code>ops.spec_lifecycle</code></td>
+<td><code>derive_lifecycle(spec, *, now=None) -&gt; str</code> (only public function) + <code>STALE_THRESHOLD_DAYS</code>.</td>
 </tr>
 <tr>
-<td><code>by_day</code></td>
-<td><code>list[tuple[date, float]]</code></td>
+<td><code>ops.interaction_counters</code></td>
+<td><code>EVENTS = ('pill_click', 'rec_card_click', 'scope_picker_change')</code>.</td>
 </tr>
 <tr>
-<td><code>by_model</code></td>
-<td><code>list[tuple[str, float]]</code></td>
-</tr>
-<tr>
-<td><code>by_cost_type</code></td>
-<td><code>list[tuple[str, float]]</code></td>
-</tr>
-<tr>
-<td><code>fetched_at</code></td>
-<td><code>datetime</code></td>
-</tr>
-<tr>
-<td><code>source</code></td>
-<td><code>Literal['live', 'cached']</code></td>
+<td><code>ops.cli</code></td>
+<td><code>add_subparser</code>, <code>cmd_ops</code>, <code>main</code>.</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h3><code>Candidate</code> fields</h3>
+<h3>CLI flags (<code>attune ops</code> / <code>python -m attune.ops</code>)</h3>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Type</th>
+<th>Flag</th>
+<th>Effect</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>slug</code></td>
-<td><code>str</code></td>
+<td><code>--host</code> / <code>--port</code></td>
+<td>Bind address (default <code>127.0.0.1:8765</code>).</td>
 </tr>
 <tr>
-<td><code>path</code></td>
-<td><code>str</code></td>
+<td><code>--project-root</code></td>
+<td>Project to serve.</td>
 </tr>
 <tr>
-<td><code>current_status</code></td>
-<td><code>str</code></td>
+<td><code>--no-browser</code></td>
+<td>Don't auto-open a browser.</td>
 </tr>
 <tr>
-<td><code>evidence</code></td>
-<td><code>list[str]</code></td>
+<td><code>--read-only</code></td>
+<td>Disable runs (<code>allow_run=False</code>); runs are <strong>enabled</strong> otherwise.</td>
 </tr>
 <tr>
-<td><code>snapshot_hash</code></td>
-<td><code>str</code></td>
+<td><code>--specs-root DIR</code></td>
+<td>Spec directory (repeatable).</td>
 </tr>
-</tbody>
-</table>
-<hr />
-<h3><code>Config</code> fields</h3>
-<table>
-<thead>
 <tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
+<td><code>--trusted-host</code></td>
+<td>Allow a remote host.</td>
 </tr>
-</thead>
-<tbody>
 <tr>
-<td><code>project_root</code></td>
-<td><code>Path</code></td>
-<td>—</td>
+<td><code>--runs-retention-days</code></td>
+<td>History retention (default 30).</td>
 </tr>
 <tr>
-<td><code>attune_home</code></td>
-<td><code>Path</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>host</code></td>
-<td><code>str</code></td>
-<td><code>'127.0.0.1'</code></td>
-</tr>
-<tr>
-<td><code>port</code></td>
-<td><code>int</code></td>
-<td><code>8765</code></td>
-</tr>
-<tr>
-<td><code>allow_run</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
-</tr>
-<tr>
-<td><code>specs_roots</code></td>
-<td><code>tuple[Path, ...]</code></td>
-<td><code>()</code></td>
-</tr>
-<tr>
-<td><code>trusted_hosts</code></td>
-<td><code>tuple[str, ...]</code></td>
-<td><code>()</code></td>
-</tr>
-<tr>
-<td><code>runs_retention_days</code></td>
-<td><code>int</code></td>
-<td><code>30</code></td>
-</tr>
-<tr>
-<td><code>specs_candidates_enabled</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
-</tr>
-</tbody>
-</table>
-<h3><code>Config</code> properties</h3>
-<table>
-<thead>
-<tr>
-<th>Property</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>telemetry_path</code></td>
-<td><code>Path</code></td>
-<td>Path to the telemetry data file.</td>
-</tr>
-<tr>
-<td><code>runs_dir</code></td>
-<td><code>Path</code></td>
-<td>Disk root for persisted ops runs. May not exist until first write.</td>
-</tr>
-<tr>
-<td><code>memory_dir</code></td>
-<td><code>Path</code></td>
-<td>Path to the memory directory.</td>
-</tr>
-<tr>
-<td><code>sessions_dir</code></td>
-<td><code>Path</code></td>
-<td>Path to the sessions directory.</td>
-</tr>
-<tr>
-<td><code>bulletin_dir</code></td>
-<td><code>Path</code></td>
-<td>Directory for the multi-actor bulletin's active log and archive.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3><code>TelemetrySummary</code> fields</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>total_requests</code></td>
-<td><code>int</code></td>
-</tr>
-<tr>
-<td><code>total_cost</code></td>
-<td><code>float</code></td>
-</tr>
-<tr>
-<td><code>total_savings</code></td>
-<td><code>float</code></td>
-</tr>
-<tr>
-<td><code>by_workflow</code></td>
-<td><code>list[tuple[str, int, float]]</code></td>
-</tr>
-<tr>
-<td><code>by_day</code></td>
-<td><code>list[tuple[str, int, float]]</code></td>
-</tr>
-<tr>
-<td><code>last_event_at</code></td>
-<td>`str</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3><code>WorkflowEntry</code> fields</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>name</code></td>
-<td><code>str</code></td>
-</tr>
-<tr>
-<td><code>description</code></td>
-<td><code>str</code></td>
-</tr>
-<tr>
-<td><code>stages</code></td>
-<td><code>int</code></td>
-</tr>
-<tr>
-<td><code>tier_map</code></td>
-<td><code>dict[str, str]</code></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3><code>PathArgSpec</code> fields</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>kwarg</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>required</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3><code>Feature</code> fields</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>name</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>description</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>path</code></td>
-<td>`str</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>tags</code></td>
-<td><code>tuple[str, ...]</code></td>
-<td><code>()</code></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3><code>Session</code> fields</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>id</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>started_at</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>last_activity</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>duration_seconds</code></td>
-<td><code>float</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>message_count</code></td>
-<td><code>int</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>starter_prompt</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>source</code></td>
-<td><code>str</code></td>
-<td><code>'heuristic'</code></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3><code>FamilyVersion</code> fields</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>package</code></td>
-<td><code>str</code></td>
-</tr>
-<tr>
-<td><code>version</code></td>
-<td>`str</td>
-</tr>
-<tr>
-<td><code>source</code></td>
-<td><code>str</code></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3><code>SpendAlarm</code> fields</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>level</code></td>
-<td><code>str</code> — <code>&quot;ok&quot;</code> | <code>&quot;alarm&quot;</code> | <code>&quot;insufficient_data&quot;</code></td>
-</tr>
-<tr>
-<td><code>triggered_by</code></td>
-<td><code>tuple[str, ...]</code> — subset of <code>{&quot;daily_anomaly&quot;, &quot;ceiling&quot;}</code></td>
-</tr>
-<tr>
-<td><code>today_cost</code></td>
-<td><code>float</code></td>
-</tr>
-<tr>
-<td><code>baseline_mean</code></td>
-<td><code>float</code></td>
-</tr>
-<tr>
-<td><code>baseline_days</code></td>
-<td><code>int</code></td>
-</tr>
-<tr>
-<td><code>method</code></td>
-<td><code>str</code> — <code>&quot;zscore&quot;</code> | <code>&quot;multiplier&quot;</code> | <code>&quot;none&quot;</code></td>
-</tr>
-<tr>
-<td><code>z_score</code></td>
-<td><code>float | None</code></td>
-</tr>
-<tr>
-<td><code>month_to_date</code></td>
-<td><code>float</code></td>
-</tr>
-<tr>
-<td><code>monthly_ceiling</code></td>
-<td><code>float</code></td>
-</tr>
-<tr>
-<td><code>ceiling_pct</code></td>
-<td><code>float</code></td>
-</tr>
-<tr>
-<td><code>source</code></td>
-<td><code>str</code> — <code>&quot;account&quot;</code> | <code>&quot;local&quot;</code></td>
-</tr>
-<tr>
-<td><code>detail</code></td>
-<td><code>str</code> — one-line human explanation</td>
-</tr>
-</tbody>
-</table>
-<h2>Functions</h2>
-<p>The tables below are organized by source module.</p>
-<h3><code>src/attune/ops/__init__.py</code></h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>create_app</code></td>
-<td><code>*args, **kwargs</code></td>
-<td>—</td>
-<td>Lazy-import the FastAPI factory so importing attune doesn't pull FastAPI.</td>
-</tr>
-<tr>
-<td><code>build_config</code></td>
-<td><code>*args, **kwargs</code></td>
-<td>—</td>
-<td>Lazy import of the config builder.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3><code>src/attune/ops/anthropic_cost.py</code></h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>clear_cache</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>Empty the in-memory cache. Test-only convenience.</td>
-</tr>
-<tr>
-<td><code>load_admin_key</code></td>
-<td>—</td>
-<td>`str</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>fetch_summary</code></td>
-<td><code>*, refresh: bool = False</code></td>
-<td>`tuple[CostSummary</td>
-<td>None, CostFetchError</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3><code>src/attune/ops/cli.py</code></h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>add_subparser</code></td>
-<td><code>subparsers: argparse._SubParsersAction</code></td>
-<td><code>None</code></td>
-<td>Register the <code>ops</code> subparser on the main attune CLI parser.</td>
-</tr>
-<tr>
-<td><code>cmd_ops</code></td>
-<td><code>args: argparse.Namespace</code></td>
-<td><code>int</code></td>
-<td>Run the dashboard server (blocking). Returns <code>0</code>.</td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>int</code></td>
-<td>Standalone entry point: <code>python -m attune.ops</code>.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3><code>src/attune/ops/completion_candidates.py</code></h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>clear_cache</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>Reset the in-memory caches. Test helper.</td>
-</tr>
-<tr>
-<td><code>detect_candidates</code></td>
-<td>`config: Config, *, now: float</td>
-<td>None = None`</td>
-<td><code>list[Candidate]</code></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3><code>src/attune/ops/config.py</code></h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>attune_home</code></td>
-<td>—</td>
-<td><code>Path</code></td>
-<td>Resolve the user's attune home directory (env override → <code>~/.attune</code>).</td>
-</tr>
-<tr>
-<td><code>build_config</code></td>
-<td>`project_root: Path</td>
-<td>None = None, *, host: str = '127.0.0.1', port: int = 8765, allow_run: bool = False, specs_roots: tuple[Path, ...]</td>
-<td>None = None, trusted_hosts: tuple[str, ...]</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3><code>src/attune/ops/data.py</code></h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>list_features</code></td>
-<td>`project_root: Path</td>
-<td>str`</td>
-<td><code>list[Feature]</code></td>
-</tr>
-<tr>
-<td><code>first_feature</code></td>
-<td>`project_root: Path</td>
-<td>str`</td>
-<td>`Feature</td>
-</tr>
-<tr>
-<td><code>workflow_default_scope</code></td>
-<td>`workflow_name: str, project_root: Path</td>
-<td>str`</td>
-<td><code>str</code></td>
-</tr>
-<tr>
-<td><code>derive_project_name</code></td>
-<td>`project_root: Path</td>
-<td>str`</td>
-<td><code>str</code></td>
-</tr>
-<tr>
-<td><code>claude_sessions_dir</code></td>
-<td>`project_root: Path</td>
-<td>str`</td>
-<td><code>Path</code></td>
-</tr>
-<tr>
-<td><code>enumerate_project_encoded_keys</code></td>
-<td>`project_root: Path</td>
-<td>str`</td>
-<td><code>list[Path]</code></td>
-</tr>
-<tr>
-<td><code>list_recent_sessions_with_paths</code></td>
-<td>`project_root: Path</td>
-<td>str, *, days: int = 3, limit: int</td>
-<td>None = DEFAULT_SESSION_LIST_CAP, now: datetime</td>
-</tr>
-<tr>
-<td><code>list_recent_sessions</code></td>
-<td>`project_root: Path</td>
-<td>str, *, days: int = 3, limit: int</td>
-<td>None = DEFAULT_SESSION_LIST_CAP, now: datetime</td>
-</tr>
-<tr>
-<td><code>home_kpis</code></td>
-<td>`summary: TelemetrySummary, *, today: date</td>
-<td>None = None`</td>
-<td><code>HomeKpis</code></td>
-</tr>
-<tr>
-<td><code>sparkline_points</code></td>
-<td><code>values: list[float], *, width: int = 240, height: int = 40</code></td>
-<td><code>str</code></td>
-<td>Render values as an SVG <code>polyline</code> <code>points</code> string.</td>
-</tr>
-<tr>
-<td><code>read_telemetry_summary</code></td>
-<td>`config: Config, *, recent_days: int = 7, today: date</td>
-<td>None = None`</td>
-<td><code>TelemetrySummary</code></td>
-</tr>
-<tr>
-<td><code>read_sweep_chip_counts</code></td>
-<td><code>scope_path: str, config: Config</code></td>
-<td><code>SweepChipCounts</code></td>
-<td>Read the latest persisted sweep result for <code>scope_path</code> and tally chips.</td>
-</tr>
-<tr>
-<td><code>read_daily_spend</code></td>
-<td><code>config: Config, *, days: int = 35, today: date | None = None</code></td>
-<td><code>dict[str, float]</code></td>
-<td>Daily API spend (USD) bucketed by timestamp from <code>usage.jsonl</code>.</td>
-</tr>
-<tr>
-<td><code>spend_alarm</code></td>
-<td><code>daily: dict[str, float], *, today: date | None = None, monthly_ceiling: float = 350.0, ceiling_fraction: float = 0.8, z_threshold: float = 3.0, flat_multiplier: float = 3.0, min_baseline_days: int = 3, ...</code></td>
-<td><code>SpendAlarm</code></td>
-<td>Flag anomalous daily API spend and approach to the monthly ceiling.</td>
-</tr>
-<tr>
-<td><code>build_spend_alarm</code></td>
-<td><code>config: Config, cost_summary: Any | None = None, *, today: date | None = None</code></td>
-<td><code>SpendAlarm</code></td>
-<td>Assemble the spend alarm, preferring account-level spend from the cost summary.</td>
-</tr>
-<tr>
-<td><code>list_workflows</code></td>
-<td>—</td>
-<td><code>list[WorkflowEntry]</code></td>
-<td>Return the registered workflow catalog. Empty if the registry is unavailable.</td>
-</tr>
-<tr>
-<td><code>family_versions</code></td>
-<td>—</td>
-<td><code>list[FamilyVersion]</code></td>
-<td>Resolve installed versions for every related attune package.</td>
-</tr>
-<tr>
-<td><code>env_health</code></td>
-<td><code>config: Config</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Lightweight environment snapshot for the Health page.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3><code>src/attune/ops/dismiss_store.py</code></h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>store_path</code></td>
-<td><code>config: Config</code></td>
-<td><code>Path</code></td>
-<td>Return the absolute path to the dismiss-store JSON file.</td>
-</tr>
-<tr>
-<td><code>load</code></td>
-<td><code>config: Config</code></td>
-<td><code>dict[str, DismissEntry]</code></td>
-<td>Read the dismiss store. Missing or corrupt file returns <code>{}</code>.</td>
-</tr>
-<tr>
-<td><code>save</code></td>
-<td>`slug: str, snapshot_hash: str, config: Config, *, ttl_days: int = DEFAULT_TTL_DAYS, now: datetime</td>
-<td>None = None`</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>clear</code></td>
-<td><code>slug: str, config: Config</code></td>
-<td><code>None</code></td>
-<td>Remove the entry for <code>slug</code>. No-op if absent.</td>
-</tr>
-<tr>
-<td><code>is_active</code></td>
-<td>`slug: str, current_hash: str, config: Config, *, now: datetime</td>
-<td>None = None`</td>
-<td><code>bool</code></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3><code>src/attune/ops/help_data.py</code></h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>corpus_root</code></td>
-<td><code>config: Config</code></td>
-<td><code>Path</code></td>
-<td>Return the <code>.help/templates/</code> directory for this project.</td>
-</tr>
-<tr>
-<td><code>list_features</code></td>
-<td><code>config: Config</code></td>
-<td><code>list[FeatureSummary]</code></td>
-<td>All features in the corpus, alphabetical.</td>
-</tr>
-<tr>
-<td><code>get_template</code></td>
-<td><code>config: Config, feature: str, kind: str</code></td>
-<td>`TemplateRecord</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>search</code></td>
-<td><code>config: Config, query: str, *, limit: int = 20</code></td>
-<td><code>list[SearchHit]</code></td>
-<td>Run a keyword search against the help corpus.</td>
-</tr>
-<tr>
-<td><code>coverage_gaps</code></td>
-<td><code>config: Config</code></td>
-<td><code>GapsReport</code></td>
-<td>Compute incomplete sets and stale templates across the corpus.</td>
-</tr>
-<tr>
-<td>`recently_regenerated</td>
-<td></td>
-<td></td>
-<td></td>
+<td><code>--specs-candidates</code> / <code>--no-specs-candidates</code></td>
+<td>Toggle spec candidate display.</td>
 </tr>
 </tbody>
 </table>

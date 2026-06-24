@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ops Dashboard errors — error</title>
-  <meta name="description" content="Most failures in the ops dashboard fall into one of two categories: cost-report fetch errors and configuration errors." />
-  <meta property="og:title" content="Ops Dashboard errors — error" />
-  <meta property="og:description" content="Most failures in the ops dashboard fall into one of two categories: cost-report fetch errors and configuration errors." />
+  <title>The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;RunnerService.start&#x27; was never awaited` | `start()` called without `await` | It&#x27;s async — `await` it / `asyncio.run" />
+  <meta property="og:title" content="The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;RunnerService.start&#x27; was never awaited` | `start()` called without `await` | It&#x27;s async — `await` it / `asyncio.run" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/error" />
   <style>
@@ -272,46 +272,69 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Ops Dashboard errors</h1>
-<h2>Common error signatures</h2>
-<p>Most failures in the ops dashboard fall into one of two categories: cost-report fetch errors and configuration errors.</p>
-<p><strong>Cost-report fetch errors</strong> are represented by <code>CostFetchError</code>, a dataclass with two fields:</p>
+<h1>The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'RunnerService.start' was never awaited</code></td>
+<td><code>start()</code> called without <code>await</code></td>
+<td>It's async — <code>await</code> it / <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td>Workflows won't run from the UI</td>
+<td><code>Config.allow_run</code> is <code>False</code> (e.g. <code>--read-only</code>)</td>
+<td>Start without <code>--read-only</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>RunnerBusyError</code> on start</td>
+<td>A run is already active (one at a time)</td>
+<td>Wait for / inspect <code>runner.current</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>TypeError</code> calling <code>config.runs_dir()</code></td>
+<td><code>runs_dir</code> is a property</td>
+<td>Drop the <code>()</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Cost panel shows an error</td>
+<td><code>fetch_summary</code> returned a <code>CostFetchError</code> (no admin key, network)</td>
+<td>Inspect the error <code>kind</code>/<code>message</code>; cost is an adjacent surface</td>
+<td>low</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>kind: CostFetchErrorKind</code> — a categorized enum value identifying what went wrong (for example, a missing admin key, a network failure, or an unexpected API response)</li>
-<li><code>message: str</code> — a human-readable description of the failure</li>
+<li><strong><code>RunnerService.start</code> and <code>Run.subscribe</code> are async.</strong> They are the
+two awaitable surfaces; everything else on the runner is sync.</li>
+<li><strong><code>allow_run</code> is a real gate.</strong> Off by default in <code>Config</code>; the CLI
+turns it on unless <code>--read-only</code>.</li>
+<li><strong>Scope confusion.</strong> Cost/telemetry/help shown on the dashboard are
+<em>adjacent</em> surfaces — owned by other features, only read here.</li>
 </ul>
-<p><code>fetch_summary()</code> always returns a <code>(CostSummary | None, CostFetchError | None)</code> tuple. When the second element is not <code>None</code>, the fetch failed and the first element is <code>None</code>. A <code>CostSummary</code> with <code>source='cached'</code> means the live fetch failed silently and an older result was served instead — check the <code>fetched_at</code> field to assess staleness.</p>
-<p><strong>Configuration errors</strong> surface when <code>build_config()</code> cannot construct a valid <code>Config</code>. Missing or inaccessible paths for <code>project_root</code> or <code>attune_home</code> are the most common cause.</p>
-<h2>Where errors originate</h2>
-<ul>
-<li><code>fetch_summary(*, refresh: bool = False)</code> — Returns <code>(None, CostFetchError)</code> when the Anthropic admin cost-report endpoint at <code>https://api.anthropic.com/v1/organizations/cost_report</code> is unreachable, returns a non-success status, or when <code>load_admin_key()</code> returns <code>None</code>.</li>
-<li><code>load_admin_key()</code> — Returns <code>None</code> rather than raising when the admin API key is absent. A <code>None</code> result here is the most common upstream cause of a failed <code>fetch_summary()</code> call.</li>
-<li><code>build_config()</code> — Raises during startup if the resolved <code>Config</code> fields (such as <code>project_root</code> or <code>attune_home</code>) refer to paths the process cannot access.</li>
-<li><code>create_app()</code> — Defers the FastAPI import until call time; an <code>ImportError</code> here means FastAPI is not installed in the current environment.</li>
-</ul>
-<h2>How to diagnose</h2>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Check whether <code>fetch_summary()</code> returned a <code>CostFetchError</code>.</strong> Inspect the <code>kind</code> and <code>message</code> fields directly — they identify the failure category without requiring a stack trace.</p>
-</li>
-<li>
-<p><strong>Verify the admin key is available.</strong> Call <code>load_admin_key()</code> in isolation. If it returns <code>None</code>, the dashboard cannot reach the cost-report API regardless of network state. Ensure the key is present in the expected environment variable or credentials file before investigating further.</p>
-</li>
-<li>
-<p><strong>Confirm <code>CostSummary.source</code>.</strong> If the dashboard is displaying cost data but the figures look stale, check whether <code>source == 'cached'</code>. Compare <code>fetched_at</code> against the current time to determine how old the cached result is, then investigate why the live fetch failed.</p>
-</li>
-<li>
-<p><strong>Reproduce the <code>build_config()</code> failure path.</strong> If the dashboard fails to start, run <code>python -m attune.ops</code> directly. A startup error will print the exception and the <code>Config</code> field that could not be resolved, making it straightforward to identify which path is missing or inaccessible.</p>
-</li>
-<li>
-<p><strong>Check for a missing FastAPI installation.</strong> If <code>create_app()</code> raises <code>ImportError</code>, FastAPI is not installed. The lazy-import design means this error only appears at server startup, not at import time.</p>
-</li>
+<li>Confirm the app builds: <code>create_app(build_config(Path(&quot;.&quot;)))</code>.</li>
+<li>Confirm runs are allowed: <code>config.allow_run</code> (and no <code>--read-only</code>).</li>
+<li>For a run that won't start: check <code>runner.current</code> /
+<code>RunnerBusyError</code>.</li>
+<li>For async warnings: <code>await</code> <code>start()</code> / iterate <code>subscribe()</code>.</li>
+<li>For a data panel: that data is owned by its feature (telemetry /
+help-system / cost).</li>
 </ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/ops/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>ops</code>, <code>dashboard</code>, <code>runner</code>, <code>workflows</code>, <code>scope-picker</code>, <code>persistence</code>, <code>sse</code></p>
 
   </article>
   <footer>

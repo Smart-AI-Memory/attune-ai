@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Note: ops dashboard — note</title>
-  <meta name="description" content="`attune ops` is a local operations dashboard for the workflow OS. You run it as a blocking server process — either via `python -m attune.ops` (the `main()` entry point) or through the `attune` CLI aft" />
-  <meta property="og:title" content="Note: ops dashboard — note" />
-  <meta property="og:description" content="`attune ops` is a local operations dashboard for the workflow OS. You run it as a blocking server process — either via `python -m attune.ops` (the `main()` entry point) or through the `attune` CLI aft" />
+  <title>The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming — note</title>
+  <meta name="description" content="The ops dashboard is attune&#x27;s **local operations layer** — a FastAPI web app you run on your own machine to execute workflows against a chosen feature scope, browse persisted run history, chain workfl" />
+  <meta property="og:title" content="The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming — note" />
+  <meta property="og:description" content="The ops dashboard is attune&#x27;s **local operations layer** — a FastAPI web app you run on your own machine to execute workflows against a chosen feature scope, browse persisted run history, chain workfl" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/note" />
   <style>
@@ -272,26 +272,113 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Note: ops dashboard</h1>
-<h2>What the ops dashboard is</h2>
-<p><code>attune ops</code> is a local operations dashboard for the workflow OS. You run it as a blocking server process — either via <code>python -m attune.ops</code> (the <code>main()</code> entry point) or through the <code>attune</code> CLI after <code>add_subparser</code> registers the <code>ops</code> subcommand. The server address and port default to <code>127.0.0.1:8765</code>, both configurable through <code>Config</code>.</p>
-<p>The dashboard provides a per-feature scope picker, persisted workflow run history, clickable workflow chaining, and live SSE log streaming. Run history is retained for <code>runs_retention_days</code> days (default: 30); the disk root for persisted runs is available at <code>Config.runs_dir</code>.</p>
-<h2>Public surface</h2>
-<p>Three names are exported at the package boundary via <code>__all__</code>: <code>create_app</code>, <code>build_config</code>, and <code>Config</code>.</p>
+<h1>The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming</h1>
+<h2>Overview</h2>
+<p>The ops dashboard is attune's <strong>local operations layer</strong> — a FastAPI
+web app you run on your own machine to execute workflows against a
+chosen feature scope, browse persisted run history, chain workflows
+with a click, and watch live logs stream over <strong>SSE</strong>. It lives in
+<strong><code>src/attune/ops/</code></strong> and is launched with <code>attune ops</code> (or <code>python -m attune.ops</code>), binding to <strong><code>127.0.0.1:8765</code></strong> by default.</p>
+<p>This page documents the <strong>runner core</strong> — the server, its config, and
+the <code>RunnerService</code>/<code>Run</code> execution model. The dashboard also <em>displays</em>
+data owned by other features — Anthropic cost (<code>ops.anthropic_cost</code>),
+telemetry (<code>ops.data</code> reads the telemetry store), and help coverage
+(<code>ops.help_data</code>) — but those are <strong>adjacent</strong> surfaces it renders, not
+its own; each belongs to its respective feature (telemetry, help-system).</p>
+<p>The public API is deliberately tiny — <code>__all__</code> is exactly
+<strong><code>create_app</code>, <code>build_config</code>, <code>Config</code></strong>. Everything else
+(<code>RunnerService</code>, <code>Run</code>, the <code>ops.data</code> readers) is reached through
+those or imported from its submodule.</p>
+<p>You reach it these ways:</p>
 <ul>
-<li><strong><code>create_app()</code></strong> — lazily imports the FastAPI application factory, so importing <code>attune</code> does not pull in FastAPI as a side effect.</li>
-<li><strong><code>build_config()</code></strong> — lazily imports the config builder that produces a <code>Config</code> instance.</li>
-<li><strong><code>Config</code></strong> — the central configuration dataclass. It locates <code>project_root</code>, <code>attune_home</code>, spec roots, and derived paths such as <code>telemetry_path</code>, <code>runs_dir</code>, <code>memory_dir</code>, <code>sessions_dir</code>, and <code>bulletin_dir</code>.</li>
+<li>the <strong>CLI</strong> — <code>attune ops</code> / <code>python -m attune.ops</code> starts the server;</li>
+<li>the <strong>Python API</strong> — <code>from attune.ops import create_app, build_config, Config</code> to build and embed the app (e.g. in tests).</li>
 </ul>
-<h2>Cost reporting</h2>
-<p>Anthropic API cost data is fetched from <code>https://api.anthropic.com/v1/organizations/cost_report</code> using API version <code>2023-06-01</code>. The result is a <code>CostSummary</code>, which carries today's spend, 7-day, month-to-date, and 30-day totals, plus breakdowns by day, model, and cost type. The <code>source</code> field indicates whether the data came from a live request or the in-memory cache.</p>
-<p><code>fetch_summary(*, refresh: bool = False)</code> returns a <code>(CostSummary | None, CostFetchError | None)</code> tuple. A <code>CostFetchError</code> pairs a <code>CostFetchErrorKind</code> with a human-readable <code>message</code>; it is returned rather than raised so callers can handle partial failures without exception handling.</p>
-<p><code>load_admin_key()</code> returns the admin API key or <code>None</code> if unavailable. <code>clear_cache()</code> empties the in-memory cache and is intended for use in tests only.</p>
-<h2>Spec completion detection</h2>
-<p>When <code>Config.specs_candidates_enabled</code> is <code>True</code>, <code>detect_candidates(config)</code> scans the configured <code>specs_roots</code> and returns a list of <code>Candidate</code> dataclasses. Each <code>Candidate</code> carries a <code>slug</code>, a <code>path</code>, a <code>current_status</code>, a list of <code>evidence</code> strings, and a <code>snapshot_hash</code>. Dismissed candidates are tracked in <code>spec_completion_dismissed.json</code> under the <code>ops</code> subdirectory of <code>attune_home</code>.</p>
-<h2>Source</h2>
-<p><code>src/attune/ops/**</code></p>
-<p><strong>Tags:</strong> <code>ops</code>, <code>dashboard</code>, <code>runner</code>, <code>workflows</code>, <code>scope-picker</code>, <code>persistence</code>, <code>sse</code></p>
+<h2>Concepts</h2>
+<h3>The public surface: <code>build_config</code> → <code>create_app</code></h3>
+<p><code>build_config(project_root, *, host, port, allow_run, …)</code> produces a
+<code>Config</code>; <code>create_app(config, *, runner=None)</code> returns a ready
+<code>FastAPI</code> app. Both are <strong>synchronous</strong>. <code>Config</code> anchors every path the
+dashboard reads or writes via derived <strong>properties</strong>: <code>runs_dir</code>,
+<code>sessions_dir</code>, <code>bulletin_dir</code>, <code>memory_dir</code>, <code>telemetry_path</code>
+(<code>attune_home()</code> resolves the attune state root).</p>
+<h3>The run-safety gate</h3>
+<p><code>Config.allow_run</code> defaults to <strong><code>False</code></strong> — the dashboard will not
+execute a workflow unless it is <code>True</code>. The <strong>CLI flips it on by
+default</strong>, disabling it only when you pass <code>--read-only</code>. So <code>attune ops</code> can run workflows out of the box; <code>attune ops --read-only</code> serves a
+look-but-don't-run dashboard.</p>
+<h3><code>RunnerService</code> and <code>Run</code> — the execution model</h3>
+<p><code>RunnerService</code> owns workflow execution. Its one <strong>async</strong> method is the
+killer to remember:</p>
+<ul>
+<li><strong><code>start(workflow, *, path=None) -&gt; Run</code> is a coroutine</strong> — <code>await</code>
+it. It launches a workflow (optionally scoped to a <code>path</code>) and returns
+a <code>Run</code>.</li>
+<li><code>recent</code>, <code>get</code>, <code>get_or_load</code>, <code>handle_stdout_line</code> are
+<strong>synchronous</strong>; <code>current</code> and <code>persistence_dir</code> are properties.</li>
+<li>Only <strong>one run at a time</strong>: starting a second while one is active
+raises <strong><code>RunnerBusyError(current_run_id)</code></strong>.</li>
+</ul>
+<p>A <code>Run</code> is one execution. <code>Run.subscribe()</code> is an <strong>async iterator</strong> of
+events — this is the SSE feed the browser consumes. <code>append_line</code>,
+<code>mark_done</code>, <code>to_dict</code>/<code>to_record</code> are sync; <code>duration_seconds</code> and
+<code>is_terminal</code> are properties.</p>
+<h3>Scope picker, persistence, and chaining</h3>
+<p>The feature <strong>scope picker</strong> reads <code>.help/features.yaml</code> so you can
+narrow a run to one feature; <code>ops.data.workflow_default_scope</code> supplies
+the default. Run history is <strong>persisted</strong> to <code>Config.runs_dir</code> and
+survives restarts (<code>get_or_load</code> rehydrates a past run);
+<code>prune_old_runs</code> trims beyond <code>runs_retention_days</code> (default 30). UI
+interactions are counted via <code>ops.interaction_counters.EVENTS</code>
+(<code>pill_click</code>, <code>rec_card_click</code>, <code>scope_picker_change</code>).</p>
+<h3>Adjacent read-only surfaces</h3>
+<p>The dashboard renders data it does not own:</p>
+<table>
+<thead>
+<tr>
+<th>Submodule</th>
+<th>Role</th>
+<th>Owning feature</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ops.data</code></td>
+<td>Reads telemetry/workflows/sessions/KPIs</td>
+<td>telemetry</td>
+</tr>
+<tr>
+<td><code>ops.anthropic_cost</code></td>
+<td><code>fetch_summary()</code> → cost report</td>
+<td>(account-level)</td>
+</tr>
+<tr>
+<td><code>ops.help_data</code></td>
+<td>Help coverage + search (the help tab)</td>
+<td>help-system</td>
+</tr>
+<tr>
+<td><code>ops.spec_lifecycle</code></td>
+<td><code>derive_lifecycle(spec)</code> → status label</td>
+<td>spec tooling</td>
+</tr>
+</tbody>
+</table>
+<p><code>ops.spec_lifecycle</code>'s only public function is <code>derive_lifecycle(spec, *, now=None) -&gt; str</code> (plus the <code>STALE_THRESHOLD_DAYS</code> constant) — it
+labels a spec's lifecycle bucket from its phases and last-modified time.
+(There is no candidate-detection API here.)</p>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Depend on the documented public surface:</strong> <code>create_app</code>,
+<code>build_config</code>, <code>Config</code> from <code>attune.ops</code>. The runner and readers are
+reached from their submodules.</li>
+<li><strong><code>await</code> the two async surfaces.</strong> <code>RunnerService.start</code> and
+<code>Run.subscribe</code>; everything else on the runner is sync.</li>
+<li><strong>Paths are properties.</strong> <code>runs_dir</code>, <code>sessions_dir</code>,
+<code>telemetry_path</code> — no <code>()</code>.</li>
+<li><strong><code>--read-only</code> for a safe demo.</strong> It serves the dashboard with
+execution disabled.</li>
+</ul>
 
   </article>
   <footer>
