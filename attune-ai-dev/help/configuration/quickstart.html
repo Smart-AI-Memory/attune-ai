@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: Attune Configuration — quickstart</title>
-  <meta name="description" content="Load your first `UnifiedConfig` object and confirm it reads correctly:" />
-  <meta property="og:title" content="Quickstart: Attune Configuration — quickstart" />
-  <meta property="og:description" content="Load your first `UnifiedConfig` object and confirm it reads correctly:" />
+  <title>Layered configuration — the unified config tree, agent config, and the XML/empathy config layer — quickstart</title>
+  <meta name="description" content="Load the unified config and validate it:" />
+  <meta property="og:title" content="Layered configuration — the unified config tree, agent config, and the XML/empathy config layer — quickstart" />
+  <meta property="og:description" content="Load the unified config and validate it:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/configuration/quickstart" />
   <style>
@@ -272,68 +272,17 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: Attune Configuration</h1>
-<p>Load your first <code>UnifiedConfig</code> object and confirm it reads correctly:</p>
-<pre><code class="language-python">from attune.config.loader import load_unified_config
-
-config = load_unified_config()
-print(config.to_dict())
-</code></pre>
-<p>If a config file exists at one of the default search paths (<code>./attune.config.json</code>, <code>~/.attune/config.json</code>, or <code>~/.config/attune/config.json</code>), you'll see its contents printed as a dictionary. If no file is found, you'll see the defaults.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>The package is installed in your local environment</li>
-<li>Optionally, a config file exists at one of the <code>CONFIG_SEARCH_PATHS</code> locations</li>
-</ul>
-<h2>Step 1: Validate the loaded config</h2>
-<p>Pass the config object to <code>validate_config</code> to catch any missing or malformed values before they cause runtime errors:</p>
+<h1>Layered configuration — the unified config tree, agent config, and the XML/empathy config layer</h1>
+<h2>Quickstart</h2>
+<p>Load the unified config and validate it:</p>
 <pre><code class="language-python">from attune.config.loader import load_unified_config
 from attune.config.validation import validate_config
 
-config = load_unified_config()
-errors = validate_config(config)
-
-if errors:
-    for e in errors:
-        print(e)
-else:
-    print(&quot;Config is valid.&quot;)
+cfg = load_unified_config()        # searches CONFIG_SEARCH_PATHS
+errors = validate_config(cfg)
+print(type(cfg).__name__, &quot;with&quot;, len(errors), &quot;validation error(s)&quot;)
+print(cfg.routing.to_dict())
 </code></pre>
-<p>Expected output when config is valid:</p>
-<pre><code>Config is valid.
-</code></pre>
-<h2>Step 2: Override a value and save</h2>
-<p>Use <code>set_value</code> to change a config value in memory, then write it back to disk with <code>save_unified_config</code>:</p>
-<pre><code class="language-python">from attune.config.loader import load_unified_config, save_unified_config
-
-config = load_unified_config()
-config.set_value(&quot;telemetry.enabled&quot;, False)
-
-saved_path = save_unified_config(config)
-print(f&quot;Saved to: {saved_path}&quot;)
-</code></pre>
-<p>Expected output:</p>
-<pre><code>Saved to: /home/you/.attune/config.json
-</code></pre>
-<h2>Step 3: Apply environment variable overrides</h2>
-<p><code>ATTUNE_</code> environment variables override file-based config at load time. To apply them explicitly to an existing config object, call <code>apply_env_overrides</code>:</p>
-<pre><code class="language-python">from attune.config.loader import load_unified_config, ConfigLoader
-
-config = load_unified_config()
-config = ConfigLoader.apply_env_overrides(config)
-print(config.get_value(&quot;telemetry.enabled&quot;))
-</code></pre>
-<p>Set <code>ATTUNE_TELEMETRY_ENABLED=false</code> in your shell before running to see the override take effect.</p>
-<h2>Step 4: Read a value and check all available keys</h2>
-<pre><code class="language-python">from attune.config.loader import load_unified_config
-
-config = load_unified_config()
-print(config.get_all_keys())
-print(config.get_value(&quot;telemetry.enabled&quot;))
-</code></pre>
-<p>This prints every key the config object knows about, then the current value of one of them — confirming the config is fully loaded and accessible.</p>
-<hr />
-<p><strong>Next:</strong> Read the <code>UnifiedAgentConfig</code> reference to learn how agent-specific settings — including <code>ModelTier</code>, <code>Provider</code>, and <code>WorkflowMode</code> — layer on top of <code>UnifiedConfig</code>.</p>
 
   </article>
   <footer>

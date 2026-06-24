@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Configuration cautions — warning</title>
-  <meta name="description" content="`get_attune_env()` checks `ATTUNE_` prefixed variables first, then silently falls back to the legacy `EMPATHY_` prefix. If you rename an environment variable from `EMPATHY_*` to `ATTUNE_*` in one envi" />
-  <meta property="og:title" content="Configuration cautions — warning" />
-  <meta property="og:description" content="`get_attune_env()` checks `ATTUNE_` prefixed variables first, then silently falls back to the legacy `EMPATHY_` prefix. If you rename an environment variable from `EMPATHY_*` to `ATTUNE_*` in one envi" />
+  <title>Layered configuration — the unified config tree, agent config, and the XML/empathy config layer — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `AttributeError` mixing the two configs | Treating a `UnifiedConfig` like an `AttuneConfig` (or vice versa) | They are different types — use on" />
+  <meta property="og:title" content="Layered configuration — the unified config tree, agent config, and the XML/empathy config layer — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `AttributeError` mixing the two configs | Treating a `UnifiedConfig` like an `AttuneConfig` (or vice versa) | They are different types — use on" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/configuration/warning" />
   <style>
@@ -272,52 +272,65 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Configuration cautions</h1>
-<h2>Risk areas</h2>
-<h3>Silent fallback in <code>get_attune_env()</code> masks missing variables</h3>
-<p><code>get_attune_env()</code> checks <code>ATTUNE_</code> prefixed variables first, then silently falls back to the legacy <code>EMPATHY_</code> prefix. If you rename an environment variable from <code>EMPATHY_*</code> to <code>ATTUNE_*</code> in one environment but not another, the function returns the stale <code>EMPATHY_</code> value without any warning. You will not see an error — just behavior driven by an outdated variable.</p>
-<p><strong>Mitigation:</strong> After migrating variable names, explicitly verify that no <code>EMPATHY_</code> counterparts remain set in your environment. Search your shell configuration, CI secrets, and deployment manifests.</p>
-<hr />
-<h3><code>get_loader()</code> returns a shared global instance</h3>
-<p><code>get_loader()</code> returns a single global <code>ConfigLoader</code> instance. Calling <code>ConfigLoader.apply_env_overrides()</code> or mutating the config through <code>set_value()</code> on that instance affects every caller in the same process. In tests, this means a configuration change in one test can leak into later tests.</p>
-<p><strong>Mitigation:</strong> In test code, construct a separate <code>ConfigLoader</code> instance directly rather than using <code>get_loader()</code>. Reset any shared state explicitly between tests.</p>
-<hr />
-<h3><code>load_unified_config()</code> path discovery can load an unexpected file</h3>
-<p>When you call <code>load_unified_config()</code> without a <code>path</code> argument, <code>ConfigLoader.discover_config_path()</code> searches the following locations in order:</p>
+<h1>Layered configuration — the unified config tree, agent config, and the XML/empathy config layer</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AttributeError</code> mixing the two configs</td>
+<td>Treating a <code>UnifiedConfig</code> like an <code>AttuneConfig</code> (or vice versa)</td>
+<td>They are different types — use one tree's API consistently</td>
+<td>high</td>
+</tr>
+<tr>
+<td>Env override ignored</td>
+<td>Variable not <code>ATTUNE_</code>/<code>EMPATHY_</code>-prefixed, or set after load</td>
+<td>Prefix correctly; reload after setting</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>validate_config</code> reports errors</td>
+<td>A section value is out of range/invalid</td>
+<td>Read each <code>ValidationError</code>; fix the named field</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>get_value</code>/<code>set_value</code> <code>KeyError</code></td>
+<td>Key path not in <code>get_all_keys()</code></td>
+<td>List <code>get_all_keys()</code> first</td>
+<td>low</td>
+</tr>
+<tr>
+<td>XML config changes not seen elsewhere</td>
+<td>Replaced a local instance, not the global</td>
+<td>Use <code>set_config()</code> to swap the global instance</td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>./attune.config.json</code></li>
-<li><code>~/.attune/config.json</code></li>
-<li><code>~/.config/attune/config.json</code></li>
+<li><strong>Two return types.</strong> <code>load_config</code> → <code>AttuneConfig</code>;
+<code>load_unified_config</code> → <code>UnifiedConfig</code>. Don't cross their APIs.</li>
+<li><strong>Env precedence.</strong> <code>ATTUNE_</code> wins over <code>EMPATHY_</code> wins over file.</li>
+<li><strong>Global XML config.</strong> <code>get_config</code>/<code>set_config</code> operate on a shared
+instance; a local <code>EmpathyXMLConfig(...)</code> is not the global one.</li>
 </ul>
-<p>If a file exists at a higher-priority path that you did not intend to use — for example, a leftover <code>./attune.config.json</code> in the working directory — it silently takes precedence over your user-level config. Behavior differs between environments without any error.</p>
-<p><strong>Mitigation:</strong> Pass an explicit <code>path</code> argument to <code>load_unified_config()</code> in production code and CI scripts. Reserve path-discovery for interactive use only.</p>
-<hr />
-<h3><code>save_unified_config()</code> overwrites without a backup</h3>
-<p><code>save_unified_config()</code> writes the <code>UnifiedConfig</code> to disk immediately. There is no built-in versioning, confirmation step, or rollback mechanism. Passing a partially constructed <code>UnifiedConfig</code> — for example, one where <code>validate_config()</code> returns <code>ValidationError</code> items — will overwrite a valid config file with invalid data.</p>
-<p><strong>Mitigation:</strong> Call <code>validate_config(config)</code> and confirm the returned list is empty before calling <code>save_unified_config()</code>. Consider writing to a temporary path first and renaming only on success.</p>
-<hr />
-<h3><code>iter_attune_env_prefix()</code> yields unexpected keys when the suffix is empty</h3>
-<p><code>iter_attune_env_prefix(prefix, suffix='')</code> matches any environment variable of the form <code>ATTUNE_{prefix}*{suffix}</code>. With the default empty suffix, this is a prefix-only match, so an environment that contains loosely named variables (for example, <code>ATTUNE_MODEL_EXTRA_DEBUG</code>) can produce unexpected entries alongside the ones you intended to iterate.</p>
-<p><strong>Mitigation:</strong> Pass an explicit <code>suffix</code> when you need to narrow the match. Enumerate the yielded <code>(middle_part, value)</code> pairs in a log statement during development to confirm you are capturing exactly the variables you expect.</p>
-<hr />
-<h3><code>set_config()</code> replaces the process-wide <code>EmpathyXMLConfig</code> instance</h3>
-<p><code>set_config()</code> overwrites the global <code>EmpathyXMLConfig</code> returned by every subsequent call to <code>get_config()</code>. Calling it mid-request or during concurrent operations leaves part of the call graph using the old config and part using the new one, with no coordination between them.</p>
-<p><strong>Mitigation:</strong> Call <code>set_config()</code> only during application startup, before any concurrent work begins. Treat the global config as immutable after that point.</p>
-<hr />
-<h2>How to avoid problems</h2>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Validate before saving.</strong> Call <code>validate_config(config)</code> and check that it returns an empty list before persisting changes with <code>save_unified_config()</code>.</p>
-</li>
-<li>
-<p><strong>Isolate global state in tests.</strong> Avoid <code>get_loader()</code> and <code>get_config()</code> in test code. Instantiate <code>ConfigLoader</code> directly and pass config objects explicitly to keep tests independent.</p>
-</li>
-<li>
-<p><strong>Prefer explicit paths in automation.</strong> Supply a <code>path</code> argument to <code>load_unified_config()</code> and <code>save_unified_config()</code> in scripts and CI pipelines so the file being read or written is always unambiguous.</p>
-</li>
-<li>
-<p><strong>Depend only on the public API.</strong> Names starting with <code>_</code> — such as <code>_validate_file_path</code> — can change without notice. Use the exported names listed in <code>__all__</code> instead.</p>
-</li>
+<li>Which tree are you on? <code>type(cfg).__name__</code>.</li>
+<li>For the unified tree, <code>validate_config(cfg)</code> then read each error.</li>
+<li>For env issues, confirm the <code>ATTUNE_</code>/<code>EMPATHY_</code> prefix and load
+order.</li>
+<li>For key-path issues, <code>cfg.get_all_keys()</code>.</li>
 </ol>
 
   </article>

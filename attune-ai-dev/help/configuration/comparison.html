@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Configuration Approaches — comparison</title>
-  <meta name="description" content="Attune exposes two distinct configuration systems side by side:" />
-  <meta property="og:title" content="Comparison: Configuration Approaches — comparison" />
-  <meta property="og:description" content="Attune exposes two distinct configuration systems side by side:" />
+  <title>Layered configuration — the unified config tree, agent config, and the XML/empathy config layer — comparison</title>
+  <meta name="description" content="Four layers, distinct jobs:" />
+  <meta property="og:title" content="Layered configuration — the unified config tree, agent config, and the XML/empathy config layer — comparison" />
+  <meta property="og:description" content="Four layers, distinct jobs:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/configuration/comparison" />
   <style>
@@ -272,109 +272,52 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Configuration Approaches</h1>
-<h2>Context</h2>
-<p>Attune exposes two distinct configuration systems side by side:</p>
-<ul>
-<li><strong><code>UnifiedConfig</code> / <code>ConfigLoader</code></strong> — a file-backed, section-structured config used by the agent and workflow layer</li>
-<li><strong><code>EmpathyXMLConfig</code></strong> — a legacy global-singleton config loaded from <code>.attune/config.json</code> or environment variables</li>
-</ul>
-<p>Understanding which system owns what prevents subtle conflicts, especially when environment variable overrides are involved.</p>
-<h2>Feature comparison</h2>
+<h1>Layered configuration — the unified config tree, agent config, and the XML/empathy config layer</h1>
+<h2>Comparison</h2>
+<p>Four layers, distinct jobs:</p>
 <table>
 <thead>
 <tr>
-<th>Capability</th>
-<th><code>UnifiedConfig</code> + <code>ConfigLoader</code></th>
-<th><code>EmpathyXMLConfig</code></th>
+<th></th>
+<th>Unified config</th>
+<th>Agent config</th>
+<th>XML/empathy config</th>
+<th>Legacy dataclass</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Primary entry point</strong></td>
-<td><code>load_unified_config()</code> / <code>get_loader()</code></td>
-<td><code>get_config()</code> / <code>set_config()</code></td>
+<td>Class</td>
+<td><code>UnifiedConfig</code></td>
+<td><code>UnifiedAgentConfig</code></td>
+<td><code>EmpathyXMLConfig</code></td>
+<td><code>AttuneConfig</code></td>
 </tr>
 <tr>
-<td><strong>File format</strong></td>
-<td>YAML or JSON (auto-discovered)</td>
-<td>JSON only (<code>.attune/config.json</code>)</td>
+<td>Entry</td>
+<td><code>load_unified_config()</code></td>
+<td>construct / <code>for_book_production</code></td>
+<td><code>get_config()</code></td>
+<td><code>load_config()</code></td>
 </tr>
 <tr>
-<td><strong>Search path</strong></td>
-<td><code>./attune.config.json</code>, <code>~/.attune/config.json</code>, <code>~/.config/attune/config.json</code></td>
-<td>Fixed: <code>.attune/config.json</code></td>
+<td>Scope</td>
+<td>App-wide sections</td>
+<td>LLM agent runtime</td>
+<td>Empathy subsystem</td>
+<td>Back-compat</td>
 </tr>
 <tr>
-<td><strong>Environment overrides</strong></td>
-<td><code>ConfigLoader.apply_env_overrides()</code> reads <code>ATTUNE_</code> prefix</td>
-<td><code>EmpathyXMLConfig.from_env()</code> reads <code>ATTUNE_</code> prefix</td>
-</tr>
-<tr>
-<td><strong>Env variable lookup</strong></td>
-<td><code>get_attune_env()</code> — checks <code>ATTUNE_</code> first, falls back to <code>EMPATHY_</code></td>
-<td>Same fallback via <code>from_env()</code></td>
-</tr>
-<tr>
-<td><strong>Structured sections</strong></td>
-<td>Yes — <code>AnalysisConfig</code>, <code>AuthConfig</code>, <code>EnvironmentConfig</code>, <code>PersistenceConfig</code>, <code>RoutingConfig</code>, <code>TelemetryConfig</code>, <code>WorkflowConfig</code></td>
-<td>No — flat sub-objects: <code>XMLConfig</code>, <code>OptimizationConfig</code>, <code>AdaptiveConfig</code>, <code>I18nConfig</code>, <code>MetricsConfig</code></td>
-</tr>
-<tr>
-<td><strong>Validation</strong></td>
-<td><code>validate_config(config)</code> returns <code>list[ValidationError]</code></td>
-<td>None exposed in public API</td>
-</tr>
-<tr>
-<td><strong>Agent/workflow integration</strong></td>
-<td>Direct — <code>UnifiedAgentConfig</code>, <code>BookProductionConfig</code>, <code>WorkflowMode</code> all consume <code>UnifiedConfig</code></td>
-<td>Indirect — agents read global singleton via <code>get_config()</code></td>
-</tr>
-<tr>
-<td><strong>Serialization</strong></td>
-<td><code>UnifiedConfig.to_dict()</code> / <code>from_dict()</code> on every section</td>
-<td><code>save_to_file()</code> / <code>load_from_file()</code> on the top-level object</td>
-</tr>
-<tr>
-<td><strong>Save location control</strong></td>
-<td><code>save_unified_config(config, path)</code> accepts an explicit path</td>
-<td><code>save_to_file(config_file=...)</code> accepts an explicit path</td>
-</tr>
-<tr>
-<td><strong>Global singleton</strong></td>
-<td>No — instantiate <code>ConfigLoader</code> or call <code>load_unified_config()</code></td>
-<td>Yes — <code>get_config()</code> / <code>set_config()</code> manage a module-level instance</td>
-</tr>
-<tr>
-<td><strong>Key–value access</strong></td>
-<td><code>UnifiedConfig.get_value(key)</code> / <code>set_value(key, value)</code> / <code>get_all_keys()</code></td>
-<td>Not available</td>
+<td>Status</td>
+<td>Modern (preferred)</td>
+<td>Active</td>
+<td>Active (subsystem)</td>
+<td>Legacy</td>
 </tr>
 </tbody>
 </table>
-<h2>Tradeoffs</h2>
-<p><strong><code>UnifiedConfig</code> + <code>ConfigLoader</code> is the right default.</strong> It is the system that agent classes, workflow modes, and book-production pipelines are built on. <code>ConfigLoader.apply_env_overrides()</code> gives you a single, explicit place where environment variables win, and <code>validate_config()</code> surfaces <code>ValidationError</code> objects at load time rather than at the point of use. The three-path discovery order (<code>./attune.config.json</code> → <code>~/.attune/config.json</code> → <code>~/.config/attune/config.json</code>) means the same code works across developer workstations, CI, and production without any changes.</p>
-<p><strong><code>EmpathyXMLConfig</code> is a narrower, legacy surface.</strong> Its global-singleton pattern (<code>get_config()</code> / <code>set_config()</code>) is convenient for code that predates the unified system but makes testing harder — replacing the singleton in one test can affect another. It has no built-in validation pass, so missing or malformed values surface as runtime errors rather than startup errors. Use it only when integrating with existing code that already calls <code>get_config()</code>.</p>
-<p>One practical difference worth noting: <code>get_attune_env()</code> checks <code>ATTUNE_</code> first and then falls back to <code>EMPATHY_</code> for backward compatibility. Both systems share this fallback, so a variable set as <code>EMPATHY_FOO</code> is visible through either path. <code>iter_attune_env_prefix(prefix, suffix)</code> lets you enumerate all variables matching <code>ATTUNE_{prefix}*{suffix}</code>, which is useful when the unified config section names map directly to env var prefixes.</p>
-<h2>Use X when…</h2>
-<p><strong>Use <code>UnifiedConfig</code> + <code>ConfigLoader</code> when:</strong></p>
-<ul>
-<li>You are writing new agent, workflow, or book-production code — <code>UnifiedAgentConfig</code> and <code>BookProductionConfig</code> depend on it directly</li>
-<li>You need structured, validated sections (<code>AuthConfig</code>, <code>TelemetryConfig</code>, <code>PersistenceConfig</code>, etc.) with <code>validate_config()</code> catching problems at startup</li>
-<li>You want explicit, path-controlled saves via <code>save_unified_config(config, path)</code></li>
-<li>You are writing tests that must swap config without global state leaking between cases</li>
-</ul>
-<p><strong>Use <code>EmpathyXMLConfig</code> when:</strong></p>
-<ul>
-<li>You are maintaining or extending existing code that already calls <code>get_config()</code> / <code>set_config()</code></li>
-<li>You need to construct config entirely from environment variables via <code>EmpathyXMLConfig.from_env()</code> with no file on disk</li>
-<li>The sub-objects you need (<code>OptimizationConfig</code>, <code>AdaptiveConfig</code>, <code>I18nConfig</code>, <code>MetricsConfig</code>) are only modeled in this system</li>
-</ul>
-<p><strong>Do not use either system directly when:</strong></p>
-<ul>
-<li>You need runtime behavior that no public method exposes — extend the relevant section class rather than patching internals</li>
-<li>You are writing a throwaway script that reads one or two values — call <code>get_attune_env(name, default)</code> directly instead of loading a full config object</li>
-</ul>
+<p><code>load_config()</code> and <code>load_unified_config()</code> return <strong>different types</strong>
+(<code>AttuneConfig</code> vs <code>UnifiedConfig</code>) — they are not interchangeable.</p>
 
   </article>
   <footer>

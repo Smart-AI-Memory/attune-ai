@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: Use `load_unified_config()` as your entry point — tip</title>
-  <meta name="description" content="Call `load_unified_config()` rather than constructing a `ConfigLoader` directly. It applies environment variable overrides automatically and searches the standard config paths (`./attune.config.json`," />
-  <meta property="og:title" content="Tip: Use `load_unified_config()` as your entry point — tip" />
-  <meta property="og:description" content="Call `load_unified_config()` rather than constructing a `ConfigLoader` directly. It applies environment variable overrides automatically and searches the standard config paths (`./attune.config.json`," />
+  <title>Layered configuration — the unified config tree, agent config, and the XML/empathy config layer — tip</title>
+  <meta name="description" content="- **Prefer the unified tree for new code.** `UnifiedConfig` + `load_unified_config` + `validate_config` is the modern path. - **`AttuneConfig` ≡ `EmpathyConfig`.** Same class, two names. - **`load_con" />
+  <meta property="og:title" content="Layered configuration — the unified config tree, agent config, and the XML/empathy config layer — tip" />
+  <meta property="og:description" content="- **Prefer the unified tree for new code.** `UnifiedConfig` + `load_unified_config` + `validate_config` is the modern path. - **`AttuneConfig` ≡ `EmpathyConfig`.** Same class, two names. - **`load_con" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/configuration/tip" />
   <style>
@@ -272,12 +272,17 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: Use <code>load_unified_config()</code> as your entry point</h1>
-<p>Call <code>load_unified_config()</code> rather than constructing a <code>ConfigLoader</code> directly. It applies environment variable overrides automatically and searches the standard config paths (<code>./attune.config.json</code>, <code>~/.attune/config.json</code>, <code>~/.config/attune/config.json</code>) without you having to wire that logic yourself.</p>
-<p><strong>Why:</strong> <code>ConfigLoader.apply_env_overrides()</code> respects the <code>ATTUNE_</code> prefix and the <code>EMPATHY_</code> fallback — both of which you lose if you load a config file and skip that step.</p>
-<p><strong>Tradeoff:</strong> <code>load_unified_config()</code> always resolves the path through <code>ConfigLoader.discover_config_path()</code>. If you need to load from an explicit, non-standard path in a test or script, pass that path directly: <code>load_unified_config(path=&quot;my/custom/config.json&quot;)</code>. In that case you still get override resolution, but path discovery is bypassed.</p>
-<p><strong>Reading environment variables directly?</strong> Use <code>get_attune_env(name)</code> instead of <code>os.environ.get()</code>. It checks <code>ATTUNE_{name}</code> first and falls back to <code>EMPATHY_{name}</code>, which keeps your code consistent with how the loader itself reads the environment. To iterate a namespace of related variables, use <code>iter_attune_env_prefix(prefix)</code>.</p>
-<p><strong>Tags:</strong> <code>config</code>, <code>settings</code></p>
+<h1>Layered configuration — the unified config tree, agent config, and the XML/empathy config layer</h1>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Prefer the unified tree for new code.</strong> <code>UnifiedConfig</code> +
+<code>load_unified_config</code> + <code>validate_config</code> is the modern path.</li>
+<li><strong><code>AttuneConfig</code> ≡ <code>EmpathyConfig</code>.</strong> Same class, two names.</li>
+<li><strong><code>load_config</code> and <code>load_unified_config</code> differ.</strong> Different return
+types; pick one and stay consistent.</li>
+<li><strong>Use <code>set_config()</code> for the XML config.</strong> It swaps the global
+instance other code reads.</li>
+</ul>
 
   </article>
   <footer>

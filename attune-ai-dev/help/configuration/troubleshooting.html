@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot configuration — troubleshooting</title>
-  <meta name="description" content="| If you observe | Check | |----------------|-------| | `AgentOperationError` raised during agent startup | The `operation` and `cause` fields on the exception — they name the failing step and its roo" />
-  <meta property="og:title" content="Troubleshoot configuration — troubleshooting" />
-  <meta property="og:description" content="| If you observe | Check | |----------------|-------| | `AgentOperationError` raised during agent startup | The `operation` and `cause` fields on the exception — they name the failing step and its roo" />
+  <title>Layered configuration — the unified config tree, agent config, and the XML/empathy config layer — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `AttributeError` mixing the two configs | Treating a `UnifiedConfig` like an `AttuneConfig` (or vice versa) | They are different types — use on" />
+  <meta property="og:title" content="Layered configuration — the unified config tree, agent config, and the XML/empathy config layer — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `AttributeError` mixing the two configs | Treating a `UnifiedConfig` like an `AttuneConfig` (or vice versa) | They are different types — use on" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/configuration/troubleshooting" />
   <style>
@@ -272,131 +272,66 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot configuration</h1>
-<h2>Symptom table</h2>
+<h1>Layered configuration — the unified config tree, agent config, and the XML/empathy config layer</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>AgentOperationError</code> raised during agent startup</td>
-<td>The <code>operation</code> and <code>cause</code> fields on the exception — they name the failing step and its root cause</td>
+<td><code>AttributeError</code> mixing the two configs</td>
+<td>Treating a <code>UnifiedConfig</code> like an <code>AttuneConfig</code> (or vice versa)</td>
+<td>They are different types — use one tree's API consistently</td>
+<td>high</td>
 </tr>
 <tr>
-<td>Config values not reflecting environment variables</td>
-<td>Whether you set <code>ATTUNE_</code> or <code>EMPATHY_</code> prefixes — <code>get_attune_env()</code> checks <code>ATTUNE_</code> first, then falls back to <code>EMPATHY_</code></td>
+<td>Env override ignored</td>
+<td>Variable not <code>ATTUNE_</code>/<code>EMPATHY_</code>-prefixed, or set after load</td>
+<td>Prefix correctly; reload after setting</td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>load_unified_config()</code> returns unexpected values</td>
-<td>Whether a config file exists at one of the three search paths: <code>./attune.config.json</code>, <code>~/.attune/config.json</code>, or <code>~/.config/attune/config.json</code></td>
+<td><code>validate_config</code> reports errors</td>
+<td>A section value is out of range/invalid</td>
+<td>Read each <code>ValidationError</code>; fix the named field</td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>validate_config()</code> returns a non-empty list</td>
-<td>Each <code>ValidationError</code> in the list — check <code>section_name</code> to isolate which config section is invalid</td>
+<td><code>get_value</code>/<code>set_value</code> <code>KeyError</code></td>
+<td>Key path not in <code>get_all_keys()</code></td>
+<td>List <code>get_all_keys()</code> first</td>
+<td>low</td>
 </tr>
 <tr>
-<td><code>EmpathyXMLConfig.load_from_file()</code> fails</td>
-<td>Whether <code>.attune/config.json</code> exists and is valid JSON; it's the default path</td>
-</tr>
-<tr>
-<td>Config changes not persisting</td>
-<td>Whether you called <code>save_unified_config()</code> and that it wrote to the expected path (it returns the <code>Path</code> it saved to)</td>
-</tr>
-<tr>
-<td><code>BookProductionConfig</code> properties returning wrong values</td>
-<td>The underlying <code>UnifiedAgentConfig</code> — call <code>get_model_id()</code> directly to verify the model resolved correctly</td>
+<td>XML config changes not seen elsewhere</td>
+<td>Replaced a local instance, not the global</td>
+<td>Use <code>set_config()</code> to swap the global instance</td>
+<td>medium</td>
 </tr>
 </tbody>
 </table>
-<h2>Diagnose the problem</h2>
-<h3>1. Check which config file is being loaded</h3>
-<p><code>ConfigLoader.discover_config_path()</code> searches the three known locations in order. Confirm which file it finds — or whether it finds none — before assuming your edits took effect:</p>
-<pre><code class="language-python">from attune.config.loader import ConfigLoader
-
-path = ConfigLoader.discover_config_path()
-print(path)  # None means no file was found; defaults apply
-</code></pre>
-<p>If <code>path</code> is <code>None</code>, call <code>ConfigLoader.get_default_config_path()</code> to see where a new file would be written.</p>
-<h3>2. Verify environment variable resolution</h3>
-<p><code>get_attune_env()</code> checks <code>ATTUNE_&lt;name&gt;</code> first and falls back to <code>EMPATHY_&lt;name&gt;</code>. If a value is not resolving as expected, print both candidates:</p>
-<pre><code class="language-python">import os
-name = &quot;MY_VAR&quot;
-print(os.environ.get(f&quot;ATTUNE_{name}&quot;))
-print(os.environ.get(f&quot;EMPATHY_{name}&quot;))
-</code></pre>
-<p>To inspect all variables under a prefix — for example, all routing overrides — use <code>iter_attune_env_prefix()</code>:</p>
-<pre><code class="language-python">from attune.config.env_compat import iter_attune_env_prefix
-
-for middle, value in iter_attune_env_prefix(&quot;ROUTING_&quot;):
-    print(middle, value)
-</code></pre>
-<h3>3. Run validation and read every error</h3>
-<p>Call <code>validate_config()</code> on your loaded config and print the full list of <code>ValidationError</code> objects. Each error names the offending section:</p>
-<pre><code class="language-python">from attune.config.loader import load_unified_config
-from attune.config.validation import validate_config
-
-config = load_unified_config()
-errors = validate_config(config)
-for err in errors:
-    print(err)
-</code></pre>
-<p>Zero errors here rules out malformed config as the cause.</p>
-<h3>4. Confirm environment overrides are applied</h3>
-<p><code>ConfigLoader.apply_env_overrides()</code> is a separate step from loading. If you load a config manually and skip this call, environment variables will not be reflected:</p>
-<pre><code class="language-python">from attune.config.loader import get_loader
-
-loader = get_loader()
-config = loader.load()
-config = loader.apply_env_overrides(config)
-</code></pre>
-<p>Use <code>load_unified_config()</code> instead of <code>loader.load()</code> directly if you want both steps handled for you.</p>
-<h3>5. Inspect individual values and all known keys</h3>
-<p>Use <code>UnifiedConfig.get_all_keys()</code> to enumerate every key the config object knows about, then <code>get_value()</code> to spot-check suspicious ones:</p>
-<pre><code class="language-python">config = load_unified_config()
-for key in config.get_all_keys():
-    print(key, config.get_value(key))
-</code></pre>
-<h3>6. Run the configuration tests</h3>
-<pre><code class="language-bash">pytest -k &quot;config&quot; -v
-</code></pre>
-<p>A failing test that exercises your code path is the fastest way to isolate whether the problem is in the config layer itself or in how it is called.</p>
-<h2>Common fixes</h2>
-<p><strong>Missing or wrong config file path</strong>
-Pass the path explicitly to avoid relying on discovery:</p>
-<pre><code class="language-python">from attune.config.loader import load_unified_config
-config = load_unified_config(path=&quot;/absolute/path/to/attune.config.json&quot;)
-</code></pre>
-<p><strong>Environment variable not picked up</strong>
-Prefix your variable with <code>ATTUNE_</code> (preferred) or <code>EMPATHY_</code> (legacy fallback). Both are checked by <code>get_attune_env()</code>. Variables without either prefix are invisible to the config system.</p>
-<p><strong>Config saved to the wrong location</strong>
-<code>save_unified_config()</code> returns the <code>Path</code> it actually wrote to. Capture and log it:</p>
-<pre><code class="language-python">from attune.config.loader import save_unified_config
-saved_path = save_unified_config(config)
-print(f&quot;Saved to: {saved_path}&quot;)
-</code></pre>
-<p><strong><code>EmpathyXMLConfig</code> not reflecting code changes</strong>
-<code>get_config()</code> returns a global singleton. If you need to replace it in tests or after a reload, call <code>set_config()</code> explicitly with a new <code>EmpathyXMLConfig</code> instance. Otherwise the old instance persists for the lifetime of the process.</p>
-<p><strong><code>BookProductionConfig</code> properties returning stale values</strong>
-<code>BookProductionConfig</code> exposes <code>model</code>, <code>max_tokens</code>, <code>temperature</code>, <code>timeout</code>, <code>retry_attempts</code>, and <code>retry_delay</code> as computed properties derived from <code>UnifiedAgentConfig</code>. If any of these look wrong, inspect the parent config by calling <code>UnifiedAgentConfig.get_model_id()</code> and checking the <code>ModelTier</code> and <code>Provider</code> fields directly.</p>
-<p><strong>Validation errors in a specific section</strong>
-Each config section (<code>AuthConfig</code>, <code>RoutingConfig</code>, <code>TelemetryConfig</code>, <code>AnalysisConfig</code>, <code>PersistenceConfig</code>, <code>EnvironmentConfig</code>, <code>WorkflowConfig</code>) exposes <code>to_dict()</code> and <code>from_dict()</code>. Round-trip the failing section to confirm it survives serialization:</p>
-<pre><code class="language-python">section_dict = config_section.to_dict()
-restored = type(config_section).from_dict(section_dict)
-</code></pre>
-<p>A mismatch between <code>section_dict</code> and the restored object identifies which field is not serializing correctly.</p>
-<p><strong>YAML not available</strong>
-<code>YAML_AVAILABLE</code> is a module-level flag in <code>config</code>. If it is <code>False</code>, YAML-format config files will not load. Install PyYAML:</p>
-<pre><code class="language-bash">pip install pyyaml
-</code></pre>
-<h2>Source files</h2>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/config/**</code></li>
+<li><strong>Two return types.</strong> <code>load_config</code> → <code>AttuneConfig</code>;
+<code>load_unified_config</code> → <code>UnifiedConfig</code>. Don't cross their APIs.</li>
+<li><strong>Env precedence.</strong> <code>ATTUNE_</code> wins over <code>EMPATHY_</code> wins over file.</li>
+<li><strong>Global XML config.</strong> <code>get_config</code>/<code>set_config</code> operate on a shared
+instance; a local <code>EmpathyXMLConfig(...)</code> is not the global one.</li>
 </ul>
-<p><strong>Tags:</strong> <code>config</code>, <code>settings</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Which tree are you on? <code>type(cfg).__name__</code>.</li>
+<li>For the unified tree, <code>validate_config(cfg)</code> then read each error.</li>
+<li>For env issues, confirm the <code>ATTUNE_</code>/<code>EMPATHY_</code> prefix and load
+order.</li>
+<li>For key-path issues, <code>cfg.get_all_keys()</code>.</li>
+</ol>
 
   </article>
   <footer>
