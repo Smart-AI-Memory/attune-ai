@@ -3,9 +3,7 @@ type: faq
 name: configuration-faq
 feature: configuration
 depth: faq
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 5e48805be1a999be45deb9a9c24e4965ca3ad0e741320a5c68a4675f40612ac8
-status: generated
+status: manual
 ---
 
 # Configuration FAQ

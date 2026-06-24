@@ -3,48 +3,35 @@ type: error
 name: configuration-error
 feature: configuration
 depth: error
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 5e48805be1a999be45deb9a9c24e4965ca3ad0e741320a5c68a4675f40612ac8
+generated_at: 2026-06-24T01:14:11.680426+00:00
+source_hash: 7359a1b70578c0d83b0fc6af405ebd38e3949c66a7f64b303c05e961504871c1
 status: generated
 ---
 
-# Configuration errors
+# Layered configuration — the unified config tree, agent config, and the XML/empathy config layer
 
-Configuration errors in Attune fall into three categories: missing or unresolvable config files, invalid or unrecognized field values, and environment variable mismatches.
+## Failure modes
 
-## Common error signatures
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `AttributeError` mixing the two configs | Treating a `UnifiedConfig` like an `AttuneConfig` (or vice versa) | They are different types — use one tree's API consistently | high |
+| Env override ignored | Variable not `ATTUNE_`/`EMPATHY_`-prefixed, or set after load | Prefix correctly; reload after setting | medium |
+| `validate_config` reports errors | A section value is out of range/invalid | Read each `ValidationError`; fix the named field | medium |
+| `get_value`/`set_value` `KeyError` | Key path not in `get_all_keys()` | List `get_all_keys()` first | low |
+| XML config changes not seen elsewhere | Replaced a local instance, not the global | Use `set_config()` to swap the global instance | medium |
 
-| Symptom | Likely cause |
-|---|---|
-| `FileNotFoundError` from `ConfigLoader.load()` | None of the search paths (`./attune.config.json`, `~/.attune/config.json`, `~/.config/attune/config.json`) contain a readable file and no path was passed explicitly. |
-| `ValidationError` returned by `validate_config()` | A `UnifiedConfig` field contains a value that fails `ConfigValidator.validate_section()` — for example, an unrecognized `WorkflowMode` or an empty required field in `AuthConfig`. |
-| `AgentOperationError` wrapping another exception | `UnifiedAgentConfig` caught an exception during an agent operation and re-raised it with operation context. Inspect `cause` for the original error. |
-| `KeyError` or `AttributeError` from `UnifiedConfig.get_value()` | The key passed does not appear in `get_all_keys()` — often a typo or a key from an older config schema. |
-| `EmpathyXMLConfig.load_from_file()` raises `FileNotFoundError` or `JSONDecodeError` | `.attune/config.json` is absent, empty, or not valid JSON. |
-| Environment variable silently ignored | The variable was set with the legacy `EMPATHY_` prefix but the code now reads `ATTUNE_` first via `get_attune_env()`. The `EMPATHY_` value is used only as a fallback. |
+### Risk areas
 
-## Where errors originate
+- **Two return types.** `load_config` → `AttuneConfig`;
+  `load_unified_config` → `UnifiedConfig`. Don't cross their APIs.
+- **Env precedence.** `ATTUNE_` wins over `EMPATHY_` wins over file.
+- **Global XML config.** `get_config`/`set_config` operate on a shared
+  instance; a local `EmpathyXMLConfig(...)` is not the global one.
 
-- **`ConfigLoader.load()`** — Attempts to read from the discovered or default config path. Fails with a filesystem error if the file is missing or unreadable. Call `ConfigLoader.discover_config_path()` beforehand to confirm which path the loader resolves to.
-- **`load_unified_config(path)`** — Wraps `ConfigLoader.load()`; passing `None` triggers automatic path discovery against `CONFIG_SEARCH_PATHS`. If discovery returns nothing, the loader falls back to `ConfigLoader.get_default_config_path()`.
-- **`validate_config(config)`** — Returns a list of `ValidationError` objects rather than raising. An empty return value means the config is valid. A non-empty list means one or more sections failed `ConfigValidator.validate_section()`.
-- **`get_attune_env(name)`** — Checks `ATTUNE_{name}` first, then `EMPATHY_{name}`. Returns `None` (not an exception) when neither is set, so callers that do not check the return value may propagate `None` silently.
-- **`EmpathyXMLConfig.load_from_file()`** — Reads `.attune/config.json` by default. Any parse failure raises immediately and is not caught internally.
+### Diagnosis order
 
-## How to diagnose
-
-1. **Check which config file was loaded.** Call `ConfigLoader.discover_config_path()` to see which path the loader resolved, or `ConfigLoader.get_default_config_path()` to see the fallback. If `discover_config_path()` returns `None`, no file matched any of the `CONFIG_SEARCH_PATHS` entries.
-
-2. **Run `validate_config()` explicitly and inspect the list.** `validate_config()` returns `list[ValidationError]`, not an exception — iterate the result and print each `ValidationError` to identify which section and field failed. A return value of `[]` means validation passed.
-
-3. **Check the `AgentOperationError.cause` attribute.** When you catch an `AgentOperationError`, the wrapped `cause` exception holds the original traceback. Log or print `cause` before handling the outer error to avoid losing the root cause.
-
-4. **Audit environment variable names.** Use `iter_attune_env_prefix(prefix)` to list all `ATTUNE_{prefix}*` variables currently set. If you expect a value and `get_attune_env(name)` returns `None`, confirm the variable is spelled with the `ATTUNE_` prefix, not only `EMPATHY_`.
-
-5. **Validate the JSON config file independently.** If `EmpathyXMLConfig.load_from_file()` fails, open `.attune/config.json` in a JSON linter before re-running. An empty file or a trailing comma produces a `JSONDecodeError` that is otherwise reported without the offending line number.
-
-## Source files
-
-- `src/attune/config/**`
-
-**Tags:** `config`, `settings`
+1. Which tree are you on? `type(cfg).__name__`.
+2. For the unified tree, `validate_config(cfg)` then read each error.
+3. For env issues, confirm the `ATTUNE_`/`EMPATHY_` prefix and load
+   order.
+4. For key-path issues, `cfg.get_all_keys()`.
