@@ -520,3 +520,39 @@ hand-authored failure-mode prose into seeds for no sourcing benefit.
 - **Note:** follow-ups.md FM1 instructed recording this as "decision
   D7" — that label was already taken (FAQ projection scope) when FM1
   was written; recorded here as **D13**.
+
+## D14 — release-prep split into a gate + an advisor by semantics, not just by name
+
+**Decided (2026-06-21, shipped in #1024; recorded here 2026-06-24 to
+defuse a stale briefing):** the two fully-built workflows that both
+claimed the slug `release-prep` were **not** redundant — they are a
+deterministic **gate** and an LLM **advisor** — so they were split by
+*semantics*, keeping both, under distinct slugs:
+
+| Slug(s) | Class | Role | Surface |
+| ------- | ----- | ---- | ------- |
+| `release-prep`, `release-gate` | `ReleasePrepTeamWorkflow` (`agents/release/`) | Deterministic gate: real bandit/ruff/pytest/docstrings vs hard thresholds → APPROVED/BLOCKED; $0 by default | **CLI / Python only — no MCP tool** |
+| `release-notes` | `ReleasePreparationWorkflow` (`workflows/release_prep.py`) | Advisory: drafts a changelog + LLM go/no-go; never blocks | **MCP tool `release_notes`** |
+
+**Why this over the three options the stale briefing posed (a unify /
+b distinct slugs / c delete one):** the briefing framed the dual
+implementation as drift to be collapsed. It is not — the gate (measured
+numbers, reproducible, free) and the advisor (changelog + narrative
+recommendation) are genuinely different products. Naive (a)/(c) would
+have **lost the changelog generator** (the team has no equivalent).
+The shipped resolution is a refined (b): distinct slugs *plus* a rename
+that makes the semantics legible (`ReleasePreparationWorkflow.name` →
+`"release-notes"`; MCP tool `release_prep` → `release_notes`), so the
+conversational/MCP surface is advisory and the gate is CLI-only.
+
+**Already done — no further action:**
+
+- Registry (`workflows/__init__.py`): `release-prep`/`release-gate` →
+  `ReleasePrepTeamWorkflow`; `release-notes` → `ReleasePreparationWorkflow`.
+- MCP (`mcp/server.py`): tool renamed `release_prep` → `release_notes`.
+- Both `content/features/release-prep.md` and `release-notes.md`
+  authored and projected (#1024, 12/25).
+
+**Note:** if the original "release-prep can't be single-sourced"
+briefing resurfaces, it predates #1024 and is obsolete — both features
+ship single-sourced.
