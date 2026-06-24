@@ -3,55 +3,81 @@ type: faq
 name: ops-dashboard-faq
 feature: ops-dashboard
 depth: faq
-generated_at: 2026-06-10T07:07:04.669090+00:00
-source_hash: 5a9cf489e3626794b14e2ce54ec4ec47a2ac21cb2d5f13fcb3e0dd6147f0d24f
-status: generated
+status: manual
 ---
 
 # Ops Dashboard FAQ
 
 ## What is the ops dashboard?
 
-A local operations dashboard that lets you run workflows against a specific feature scope, view persisted run history, chain workflows with a single click, and stream live logs over SSE. You start it with `python -m attune.ops` or via `attune ops` on the CLI.
+A local FastAPI web app that lets you run attune workflows against a
+specific feature scope, browse persisted run history, chain workflows
+with a single click, and stream live logs over SSE. Start it with
+`attune ops` or `python -m attune.ops` (default `127.0.0.1:8765`).
 
-## How do I start the dashboard?
+## How do I start it?
 
-Run `python -m attune.ops` (calls `main()`) or use the `attune ops` subcommand (registered by `add_subparser()`). Both block until you stop the server. By default the server listens on `127.0.0.1:8765`; you can change the host and port in `Config`.
+Run `attune ops` (the CLI subcommand registered by `add_subparser()`) or
+`python -m attune.ops` (calls `main()`). Both block until you stop the
+server. Workflow execution is **enabled by default**; pass `--read-only`
+for a look-but-don't-run dashboard.
+
+## What's the public API?
+
+Exactly three names — `attune.ops.__all__` is `create_app`,
+`build_config`, and `Config`. Build a config with `build_config(...)`
+(don't instantiate `Config` directly), then `create_app(config)` returns
+the `FastAPI` app. Both are synchronous. The runner lives in
+`attune.ops.runner`.
 
 ## What does `Config` control?
 
-`Config` is the central settings dataclass for the dashboard. Its key fields are:
+`Config` anchors every path the dashboard reads or writes. Key fields:
+`host`/`port` (default `127.0.0.1:8765`), `allow_run` (default `False`),
+`specs_roots`, `runs_retention_days` (default 30), and
+`specs_candidates_enabled`. Derived **properties** (no parentheses)
+include `runs_dir`, `sessions_dir`, `bulletin_dir`, `memory_dir`, and
+`telemetry_path`.
 
-| Field | What it controls |
-|---|---|
-| `project_root` | Root of your project tree |
-| `attune_home` | Where attune reads and writes state |
-| `host` / `port` | Server bind address (default `127.0.0.1:8765`) |
-| `allow_run` | Whether workflow execution is permitted |
-| `specs_roots` | Directories the candidate detector scans |
-| `runs_retention_days` | How long persisted run history is kept (default 30) |
-| `specs_candidates_enabled` | Whether spec-completion candidate detection is active |
+## Why won't my workflow run?
 
-Use `build_config()` to construct a `Config` rather than instantiating it directly.
+`Config.allow_run` must be `True`. It defaults to `False`; the CLI
+enables it (`allow_run = not --read-only`), so `attune ops` can run
+workflows out of the box while `attune ops --read-only` cannot.
 
-## How does cost reporting work?
+## How do I run a workflow from Python?
 
-Call `fetch_summary()` to get account-level Anthropic API cost data. It returns a `(CostSummary | None, CostFetchError | None)` tuple. Pass `refresh=True` to bypass the in-memory cache. The `CostSummary` fields cover today, the last 7 days, month-to-date, and the last 30 days, plus breakdowns by day, model, and cost type. If the fetch fails, the `CostFetchError` tells you the `kind` and a human-readable `message`. The dashboard fetches from `https://api.anthropic.com/v1/organizations/cost_report` and requires an admin API key, which `load_admin_key()` resolves.
+Use `RunnerService`. Its `start(workflow, *, path=None)` method is a
+**coroutine** — `await` it; it returns a `Run`. Only one run is active
+at a time, so a concurrent `start()` raises `RunnerBusyError` (which
+carries `current_run_id`).
 
-## How do I tell whether cost data is live or cached?
+## How does the live log stream work?
 
-Check the `source` field on the returned `CostSummary`. It is either `'live'` or `'cached'`. The `fetched_at` field tells you when the data was last retrieved.
+`Run.subscribe()` is an **async iterator** of events — the SSE feed the
+browser consumes. Iterate it with `async for`; `Run.is_terminal` (a
+property) flips true when the run finishes.
 
-## What are spec-completion candidates?
+## Does the dashboard own the cost / telemetry / help data it shows?
 
-When `specs_candidates_enabled` is `True` in your `Config`, `detect_candidates()` scans your `specs_roots` and returns a list of `Candidate` objects — specs that appear ready to move to the next phase based on file evidence. Each `Candidate` includes a `slug`, `path`, `current_status`, supporting `evidence`, and a `snapshot_hash`.
+No. Those are **adjacent** read-only surfaces it renders:
+`ops.anthropic_cost.fetch_summary()` (account cost), `ops.data` (reads
+the telemetry store), and `ops.help_data` (the help tab). Each is owned
+by its own feature (telemetry, help-system); the dashboard only displays
+them.
 
-## How do I run the dashboard in tests?
+## How do I label a spec's lifecycle?
 
-Use `clear_cache()` (available in both `attune.ops.anthropic_cost` and the candidate-detector module) to reset in-memory caches between test cases. This is a test-only helper and is not part of the public API (`__all__` exports only `create_app`, `build_config`, and `Config`).
+`ops.spec_lifecycle.derive_lifecycle(spec, *, now=None)` returns a status
+string from the spec's phases and last-modified time. That is the only
+public function in the module — there is no candidate-detection API.
+
+## How long is run history kept?
+
+`runs_retention_days` (default 30). History is persisted to
+`Config.runs_dir` and survives restarts (`get_or_load` rehydrates a past
+run); `prune_old_runs` trims older entries.
 
 ## Where are the source files?
 
-All dashboard source lives under `src/attune/ops/`.
-
-**Tags:** `ops`, `dashboard`, `runner`, `workflows`, `scope-picker`, `persistence`, `sse`
+- `src/attune/ops/**`

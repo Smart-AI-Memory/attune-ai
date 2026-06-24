@@ -144,11 +144,22 @@ features:
     tags: [release, publishing, quality]
     status: manual
 
+  # ops-dashboard is single-sourced (status: manual) from
+  # content/features/ops-dashboard.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/ops-dashboard/*.md. Marked `status: manual` WITHOUT
+  # `files:` so topic resolution routes here while staleness/maintenance
+  # never overwrites the projected content with LLM output (DD5,
+  # help-docs-single-source). The frozen faq.md stays on disk until the
+  # four-channel FAQ Generator (D6/D7) replaces it. Scope is the runner
+  # CORE (src/attune/ops/**) — cost/telemetry/help shown on the
+  # dashboard (ops.anthropic_cost / ops.data / ops.help_data) are
+  # adjacent READ-ONLY surfaces owned by their own features, not this
+  # one. Description/tags unchanged to preserve topic resolution.
   ops-dashboard:
     description: Local operations dashboard — workflow runner with per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming
-    files:
-      - src/attune/ops/**
     tags: [ops, dashboard, runner, workflows, scope-picker, persistence, sse]
+    status: manual
 
   # refactor-plan is single-sourced (status: manual) from
   # content/features/refactor-plan.md and rendered by

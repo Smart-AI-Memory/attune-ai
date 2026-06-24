@@ -3,124 +3,96 @@ type: task
 name: ops-dashboard-task
 feature: ops-dashboard
 depth: task
-generated_at: 2026-06-22T10:00:48.764701+00:00
-source_hash: dd650b4658efc1f6876bf6f2701d846e9091228187573660cdcfc10ab83fa6c2
+generated_at: 2026-06-24T12:00:17.825226+00:00
+source_hash: 1cad6797952953474159da11cd78e2e6f3b36b4845377e700eb2570427d138e7
 status: generated
 ---
 
-# Work with the ops dashboard
+# The local FastAPI operations dashboard — a workflow runner with per-feature scope, persisted run history, workflow chaining, and live SSE log streaming
 
-Use the ops dashboard when you need to run workflows, browse per-feature scopes, inspect persisted run history, or monitor live cost data for your Anthropic account.
+## Tasks
 
-## Prerequisites
+### Configure where the dashboard reads and writes
 
-- Access to the project source code under `src/attune/ops/`
-- An Anthropic admin API key if you intend to use cost reporting (returned by `load_admin_key()`)
+**Goal:** point the dashboard at a project and inspect its derived
+paths.
 
-## Start the dashboard server
+**Steps:**
 
-1. **Launch the server from the CLI.**
-   Run the following command to start the dashboard in blocking mode:
+```python
+from pathlib import Path
 
-   ```
-   python -m attune.ops
-   ```
+from attune.ops import build_config
 
-   This calls `main()`, which delegates to `cmd_ops()`. The server binds to `127.0.0.1:8765` by default (set by `Config.host` and `Config.port`).
-
-2. **Verify the server is running.**
-   `cmd_ops()` returns `0` on success. If the process is blocking and no error is printed, the dashboard is live at `http://127.0.0.1:8765`.
-
-## Configure the dashboard
-
-1. **Locate the `Config` dataclass** in `src/attune/ops/__init__.py`. It controls all runtime paths and feature flags.
-
-2. **Set the fields relevant to your environment:**
-
-   | Field | Default | Purpose |
-   |---|---|---|
-   | `host` | `'127.0.0.1'` | Address the server binds to |
-   | `port` | `8765` | Port the server listens on |
-   | `allow_run` | `False` | Permit workflow execution |
-   | `specs_roots` | `()` | Paths scanned for spec files |
-   | `trusted_hosts` | `()` | Hosts allowed to make requests |
-   | `runs_retention_days` | `30` | How long persisted run history is kept |
-   | `specs_candidates_enabled` | `False` | Enable spec completion candidate detection |
-
-3. **Use `build_config()`** (exported from `src/attune/ops/__init__.py`) to construct a `Config` instance rather than instantiating it directly. This ensures all derived properties (`telemetry_path`, `runs_dir`, `memory_dir`, `sessions_dir`, `bulletin_dir`) resolve correctly.
-
-## Fetch Anthropic cost data
-
-1. **Check that an admin key is available.**
-   Call `load_admin_key()` from `src/attune/ops/anthropic_cost.py`. It returns the key string or `None` if unavailable. The dashboard cannot retrieve cost data without a valid key.
-
-2. **Call `fetch_summary()`** to retrieve account-level cost data:
-
-   ```python
-   summary, error = fetch_summary()
-   ```
-
-   - On success, `summary` is a `CostSummary` with fields `today_usd`, `seven_day_usd`, `month_to_date_usd`, `thirty_day_usd`, `by_day`, `by_model`, `by_cost_type`, `fetched_at`, and `source`.
-   - On failure, `error` is a `CostFetchError` with a `kind` (`CostFetchErrorKind`) and a `message` string.
-
-3. **Force a cache refresh** by passing `refresh=True`:
-
-   ```python
-   summary, error = fetch_summary(refresh=True)
-   ```
-
-4. **Clear the in-memory cache** during testing by calling `clear_cache()` from `src/attune/ops/anthropic_cost.py`.
-
-## Monitor spend anomalies and ceiling approach
-
-1. **Assemble the alarm** with `build_spend_alarm()` from `src/attune/ops/data.py`:
-
-   ```python
-   from attune.ops import data, anthropic_cost
-
-   cost_summary, _ = anthropic_cost.fetch_summary()
-   alarm = data.build_spend_alarm(config, cost_summary)
-   ```
-
-   - `alarm.level` is `"ok"`, `"alarm"`, or `"insufficient_data"`.
-   - `alarm.triggered_by` lists which condition(s) fired: `"daily_anomaly"` and/or `"ceiling"`.
-   - `alarm.source` is `"account"` (admin cost-report) or `"local"` (`usage.jsonl`).
-
-2. **Daily-anomaly trigger:** today's spend is flagged when it exceeds the
-   z-score threshold (default `3.0`) versus the trailing baseline, or — when
-   the baseline has zero variance — when it exceeds `baseline_mean * 3.0`.
-   Fewer than 3 prior active (non-zero) days skips the check.
-
-3. **Ceiling trigger:** month-to-date spend is flagged once it reaches
-   `ceiling_fraction` (default `0.8`) of `monthly_ceiling` (default `$350`).
-   Pass `monthly_ceiling=` to override for your org.
-
-4. **Access raw data** with `read_daily_spend()` (local only) for a
-   `{YYYY-MM-DD: total_cost}` dict, then pass it to `spend_alarm()` with
-   custom thresholds when you need fine-grained control.
-
-## Detect spec completion candidates
-
-1. **Enable candidate detection** by setting `specs_candidates_enabled = True` in your `Config` and populating `specs_roots` with the paths to scan.
-
-2. **Call `detect_candidates()`** from `src/attune/ops/spec_candidates.py`:
-
-   ```python
-   candidates = detect_candidates(config)
-   ```
-
-   Each returned `Candidate` has a `slug`, `path`, `current_status`, `evidence` list, and `snapshot_hash`.
-
-## Register the CLI subcommand
-
-If you need to extend or re-register the `ops` subcommand on the main `attune` CLI parser, call `add_subparser()` from `src/attune/ops/cli.py` and pass the parent `subparsers` action. This wires `cmd_ops()` as the handler for `attune ops`.
-
-## Verify your changes
-
-Run the ops-related tests to confirm nothing is broken:
-
-```
-pytest -k "ops"
+config = build_config(Path("."), runs_retention_days=14)
+print("runs:", config.runs_dir)
+print("sessions:", config.sessions_dir)
+print("telemetry:", config.telemetry_path)
 ```
 
-A passing test suite with no new failures confirms that the dashboard server, cost-reporting, and candidate detection behave correctly. If you modified `Config`, also check that `build_config()` still returns a valid instance with all path properties resolving to accessible locations.
+**Verify:** `build_config()` returns a `Config`. `runs_dir`,
+`sessions_dir`, and `telemetry_path` are **properties** (no `()`), all
+anchored under the attune home / project root.
+
+### Run a workflow with the runner
+
+**Goal:** execute a workflow and get a `Run` back.
+
+**Steps:**
+
+```python
+import asyncio
+
+from attune.ops.runner import RunnerService, RunnerBusyError
+
+
+async def main() -> None:
+    runner = RunnerService()
+    try:
+        run = await runner.start("security-audit", path="src/attune/config")
+        print("started:", run.id)
+    except RunnerBusyError as exc:
+        print("busy with:", exc.current_run_id)
+
+
+asyncio.run(main())
+```
+
+**Verify:** `start()` is a **coroutine** — `await` it; it returns a
+`Run`. Only one run is active at a time, so a concurrent `start()`
+raises `RunnerBusyError`.
+
+### Stream a run's output over SSE
+
+**Goal:** consume a run's live event feed (what the browser does).
+
+**Steps:**
+
+```python
+async def stream(run) -> None:
+    async for event in run.subscribe():
+        print(event)
+        if run.is_terminal:
+            break
+```
+
+**Verify:** `Run.subscribe()` is an **async iterator** of events;
+`is_terminal` flips true when the run finishes.
+
+### Label a spec's lifecycle
+
+**Goal:** ask the dashboard's spec helper what bucket a spec is in.
+
+**Steps:**
+
+```python
+from types import SimpleNamespace
+
+from attune.ops.spec_lifecycle import derive_lifecycle
+
+spec = SimpleNamespace(phases=[], last_modified=None)
+print(derive_lifecycle(spec))
+```
+
+**Verify:** `derive_lifecycle(spec, *, now=None)` returns a status
+**string**. It is the only public function in `ops.spec_lifecycle`.
