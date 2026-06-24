@@ -10957,3 +10957,30 @@ files.
   concluded green so the cancel didn't lose them (only cancel once
   coverage itself is the hung lane, never to bypass a different lane
   while coverage is legitimately running).
+
+- **Path-validation read/write SYMMETRY — a module that carefully guards
+  the READ path can still leave the WRITE path unguarded; audit emitters
+  for the same containment check the readers have**: 2026-06-24, the
+  code-review of `scripts/sync_help_bundle.py` (Design B). The READ side
+  (`attune.help.templates._find_template_file` /
+  `_find_single_source_file`) guarded every resolution with
+  `candidate.resolve().relative_to(base.resolve())` (blocks
+  `con-../../etc/passwd`). But the WRITE side built
+  `dest = bundle_dir / type_dir / f"{feature}.md"` from a raw
+  `features.yaml` KEY and called `dest.write_text(...)` with NO
+  containment check — a key like `../../../outside/evil` would write
+  outside the bundle (CWE-22). Low likelihood (repo-controlled config),
+  but it violated the project's "ALWAYS validate file paths" rule and was
+  a pure asymmetry: I'd applied read-side rigor and forgotten the write
+  side of the same module. **Review heuristic:** when a change both
+  READS and WRITES paths derived from data/config/IDs, check that the
+  emitter has the SAME `.resolve().relative_to(<root>)` (or
+  `_validate_file_path(..., allowed_dir=<root>)`) guard the reader does —
+  grep `write_text`/`open(...,"w")`/`mkdir` against the file's own
+  read-path guards. Fix here: a `dest.resolve().relative_to(bundle_root)`
+  skip-guard in the planner + a write-side traversal test mirroring the
+  existing read-side one. Pairs with the coding-standards "ALWAYS
+  validate file paths" rule (which `_validate_file_path(allowed_dir=...)`
+  satisfies directly) and the "registered ≠ working — dogfood" family
+  (here: an independent security-reviewer pass corroborated the finding I
+  spotted, which is the right belt-and-suspenders for self-authored code).
