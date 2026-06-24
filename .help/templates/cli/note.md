@@ -3,17 +3,72 @@ type: note
 name: cli-note
 feature: cli
 depth: note
-generated_at: 2026-06-10T07:07:04.671376+00:00
-source_hash: 5b5c949846a62732ae6954c6682e1c7a924430b6ac1efcd58027d681df89d386
+generated_at: 2026-06-24T04:24:53.876139+00:00
+source_hash: bd2a2253f6a68a6b8671e90b653a8b827a19319e732c7538d504fb7c9e90bdb4
 status: generated
 ---
 
-# Note: CLI architecture
+# The attune command-line interface and its natural-language router
 
-The `attune` CLI is implemented across two top-level modules and a `cli_commands` package.
+## Overview
 
-- **`attune.cli_minimal`** owns the entry point. `create_parser()` builds the argument parser, and `main()` dispatches to a command handler based on the parsed subcommand. `get_version()` surfaces the installed package version.
-- **`attune.cli_router`** handles natural-language and slash-command input. `route_user_input()` and `is_slash_command()` are the primary dispatch functions. `HybridRouter` backs them with a learned-preference layer: it calls `learn_preference()` to associate a keyword with a skill invocation, and `get_suggestions()` to complete partial input. Preferences are stored as `RoutingPreference` records with fields `keyword`, `skill`, `args`, `usage_count`, and `confidence`.
-- **`attune.cli_commands`** groups handlers by domain. Each handler receives an `argparse.Namespace` and returns an `int` exit code. The exit-code contract is enforced through `run_workflow_with_exit_code()` in `cli_commands._exit_codes`, which instantiates and executes a workflow class and returns the agreed-upon integer. Command groups include cost tracking (`cmd_costs`, `cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset`), memory (`cmd_remember`, `cmd_forget`, `cmd_lessons`, `cmd_memory_capture`, `cmd_memory_recall`, `cmd_memory_topics`, `cmd_memory_forget_topic`), telemetry, provider configuration, workflow management, and utility commands such as `cmd_setup`, `cmd_validate`, and `cmd_doctor`.
+The `attune` command-line interface is the terminal front door to the
+framework. It has two layers:
 
-`HybridRouter` and the command handlers are independent of each other. The router resolves natural-language input to a skill invocation before any `argparse` parsing occurs; the command handlers run only after `main()` has dispatched a recognized subcommand.
+- **The CLI itself** (`attune.cli_minimal`) — an argparse program with
+  grouped subcommands (`workflow`, `telemetry`, `costs`, `auth`,
+  `memory`, `doctor`, `setup`, …). The `attune` console script runs its
+  `main()`.
+- **The natural-language router** (`attune.cli_router`) — turns free
+  text or a `/slash` command into a workflow/skill choice
+  (`route_user_input`, `is_slash_command`, `SmartRouter`,
+  `HybridRouter`).
+
+You invoke it as `attune <command>` (the installed console script) or
+`python -m attune.cli_minimal`.
+
+## Concepts
+
+### Invocation
+
+The packaged entry point is `attune = attune.cli_minimal:main`
+(`[project.scripts]`), so `attune <command>` runs the CLI; `python -m
+attune.cli_minimal` is equivalent. `attune --help` lists the commands;
+`attune doctor` checks the install.
+
+### Command groups
+
+`cli_minimal` registers grouped subcommands, each dispatched to a
+`cmd_*` handler:
+
+- `workflow` — `list`, `info`, `run` (run an analysis workflow).
+- `telemetry` — `show`, `savings`, `export`, `enable`/`disable`,
+  `models`, `agents`, `signals`.
+- `costs` — `today`, `export`, `reset`.
+- `auth` — `setup`, `reset`; `provider` — `show`, `set`.
+- memory — `capture`, `recall`, `topics`, `forget-topic`; plus
+  `remember` / `forget` / `lessons`.
+- `patterns` — `review`, `promote`, `reject`.
+- standalone — `setup`, `doctor`, `features`, `validate`, `version`,
+  `help-docs`.
+
+### The natural-language router
+
+`attune.cli_router` maps user input to a workflow or skill.
+`is_slash_command(text)` tells a `/command` from prose.
+`route_user_input(user_input, context=None)` is **async** and returns a
+routing dict (`workflow`, `skill`, `confidence`, `reasoning`, `args`,
+`secondary_workflows`, `type`, `source`, …). `SmartRouter` exposes
+`route` (async) / `route_sync` (sync) / `list_workflows` /
+`get_workflow_info` / `suggest_for_error` / `suggest_for_file`;
+`HybridRouter` adds `get_suggestions` and `learn_preference`;
+`RoutingPreference` carries routing preferences.
+
+## Notes & tips
+
+- **`python -m attune.cli_minimal` is the fallback** when the `attune`
+  script isn't on PATH.
+- **`attune doctor` first.** It diagnoses most install/config issues.
+- **`route_user_input` is async.** `is_slash_command` and
+  `list_workflows` are sync.
+- **`<group> --help`.** Every command group has its own help.

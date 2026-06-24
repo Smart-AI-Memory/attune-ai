@@ -1,14 +1,19 @@
----
-type: task
-name: cli-task
-feature: cli
-depth: task
-generated_at: 2026-06-24T04:24:53.876139+00:00
-source_hash: bd2a2253f6a68a6b8671e90b653a8b827a19319e732c7538d504fb7c9e90bdb4
-status: generated
----
+# Cli
 
-# The attune command-line interface and its natural-language router
+## Quickstart
+
+Check the install and list commands:
+
+```bash
+attune --help
+attune doctor
+```
+
+Run an analysis workflow:
+
+```bash
+attune workflow run security-audit
+```
 
 ## Tasks
 
@@ -63,3 +68,25 @@ print(router.list_workflows())                 # synchronous
 
 **Verify:** `SmartRouter.list_workflows()` is synchronous; `route` is
 async and `route_sync` is its synchronous counterpart.
+
+## Reference
+
+### Invocation
+
+| Surface | Invocation |
+|---------|------------|
+| Console script | `attune <command>` (`attune.cli_minimal:main`). |
+| Module | `python -m attune.cli_minimal`. |
+| Help / health | `attune --help`, `attune doctor`. |
+
+### `attune.cli_router`
+
+| Symbol | Kind | Purpose |
+|--------|------|---------|
+| `is_slash_command(text) -> bool` | fn (sync) | Is this a `/command`? |
+| `route_user_input(user_input, context=None) -> dict` | fn (**async**) | Route text → workflow/skill dict. |
+| `SmartRouter` | class | `route` (async) / `route_sync` / `list_workflows` / `get_workflow_info` / `suggest_for_error` / `suggest_for_file`. |
+| `HybridRouter` | class | `route`, `get_suggestions`, `learn_preference`. |
+| `RoutingPreference` | dataclass | Routing preferences. |
+
+<!-- attune-generated: source_hash=bd2a2253f6a68a6b8671e90b653a8b827a19319e732c7538d504fb7c9e90bdb4 feature=cli kind=how-to generated_at=2026-06-24 -->

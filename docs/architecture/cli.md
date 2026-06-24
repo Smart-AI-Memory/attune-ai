@@ -1,54 +1,78 @@
-# CLI architecture
+# Cli
 
-Command-line interface and routing for attune.
+## Overview
 
-## Purpose
+The `attune` command-line interface is the terminal front door to the
+framework. It has two layers:
 
-The CLI layer owns two things: dispatching user-typed input to the correct command handler (cost tracking, help browsing, memory/lessons management), and learning per-user routing shortcuts via `HybridRouter` so that partial or keyword input resolves to a Claude Code skill invocation. It does **not** own rendering — that belongs to `transformers.py` — and it does not own the underlying data stores for costs, memory, or cross-links.
+- **The CLI itself** (`attune.cli_minimal`) — an argparse program with
+  grouped subcommands (`workflow`, `telemetry`, `costs`, `auth`,
+  `memory`, `doctor`, `setup`, …). The `attune` console script runs its
+  `main()`.
+- **The natural-language router** (`attune.cli_router`) — turns free
+  text or a `/slash` command into a workflow/skill choice
+  (`route_user_input`, `is_slash_command`, `SmartRouter`,
+  `HybridRouter`).
 
-## Key classes
+You invoke it as `attune <command>` (the installed console script) or
+`python -m attune.cli_minimal`.
 
-| Class | Responsibility | File |
-|-------|---------------|------|
-| `RoutingPreference` | Dataclass that records one learned keyword→skill mapping with usage count and confidence score. | `src/attune/cli_router.py` |
-| `HybridRouter` | Resolves free-form user input to a skill invocation by consulting stored `RoutingPreference` records; also updates those records via `learn_preference()` and surfaces completions via `get_suggestions()`. | `src/attune/cli_router.py` |
+## Concepts
 
-## Data flow
+### Invocation
 
-User input travels from the shell through the router, then fans out to one of four command groups:
+The packaged entry point is `attune = attune.cli_minimal:main`
+(`[project.scripts]`), so `attune <command>` runs the CLI; `python -m
+attune.cli_minimal` is equivalent. `attune --help` lists the commands;
+`attune doctor` checks the install.
 
-```
-User input (string)
-        |
-        v
-  HybridRouter.route()
-   |   consults: preferences file (RoutingPreference records)
-   |
-   +--[keyword match]--> skill invocation dict --> Claude Code
-   |
-   +--[cost commands]--> cmd_costs / cmd_costs_today
-   |                     cmd_costs_export / cmd_costs_reset
-   |
-   +--[help commands]--> cmd_help
-   |                       --> help_commands.py (browses templates)
-   |
-   +--[memory commands]--> cmd_remember / cmd_forget / cmd_lessons
-                           cmd_memory_capture / cmd_memory_recall
-```
+### Command groups
 
-`HybridRouter.learn_preference()` writes back to the preferences file after a successful routing decision, tightening future matches for the same keyword.
+`cli_minimal` registers grouped subcommands, each dispatched to a
+`cmd_*` handler:
 
-## Design decisions
+- `workflow` — `list`, `info`, `run` (run an analysis workflow).
+- `telemetry` — `show`, `savings`, `export`, `enable`/`disable`,
+  `models`, `agents`, `signals`.
+- `costs` — `today`, `export`, `reset`.
+- `auth` — `setup`, `reset`; `provider` — `show`, `set`.
+- memory — `capture`, `recall`, `topics`, `forget-topic`; plus
+  `remember` / `forget` / `lessons`.
+- `patterns` — `review`, `promote`, `reject`.
+- standalone — `setup`, `doctor`, `features`, `validate`, `version`,
+  `help-docs`.
 
-**Learned routing lives in a separate dataclass, not in `HybridRouter` itself.** `RoutingPreference` is a plain dataclass so it can be serialized, inspected, and tested independently of the routing logic. Embedding confidence and usage count directly on the router would make those fields invisible to anything that needs to read or migrate the preferences file.
+### The natural-language router
 
-**Command groups are split across modules (`cost_commands.py`, `help_commands.py`, quick-memory module) rather than collected in one file.** Each group has a distinct `__all__` and can evolve independently. The tradeoff is that adding a new top-level command requires wiring it in two places (the module and the router), which is intentional — it keeps the router's dispatch table explicit.
+`attune.cli_router` maps user input to a workflow or skill.
+`is_slash_command(text)` tells a `/command` from prose.
+`route_user_input(user_input, context=None)` is **async** and returns a
+routing dict (`workflow`, `skill`, `confidence`, `reasoning`, `args`,
+`secondary_workflows`, `type`, `source`, …). `SmartRouter` exposes
+`route` (async) / `route_sync` (sync) / `list_workflows` /
+`get_workflow_info` / `suggest_for_error` / `suggest_for_file`;
+`HybridRouter` adds `get_suggestions` and `learn_preference`;
+`RoutingPreference` carries routing preferences.
 
-## Extension points
+## Design & extension
 
-- **Add a new command group:** Implement your command functions (signature `(args: Namespace) -> int`) in a new module, declare them in `__all__`, and register them as subcommands in the argument parser. The router's fan-out structure means you do not need to touch existing command modules.
-- **Change how preferences are stored or scored:** Subclass or replace `RoutingPreference` — it is a plain dataclass with no base-class coupling. Pass a custom `preferences_path` to `HybridRouter.__init__()` to point at a different backing file.
-- **Add a new routing strategy:** Extend `HybridRouter.route()`. The method receives the full `context` dict, so additional signals (project name, recent skill history) can influence resolution without changing the `RoutingPreference` schema.
-- **Browse help from the CLI:** `cmd_help` delegates to `help_commands.py`. To add new template categories beyond `errors`, `warnings`, `tips`, and `references`, extend `_CATEGORIES` in that module and add the corresponding templates.
+### Design decisions
 
-For rendering changes (Rich panels, markdown output), see `transformers.py` — that is outside this subsystem's scope.
+- **argparse with grouped subcommands.** `cli_minimal` keeps a flat,
+  dependency-light CLI (`main()` dispatches to `cmd_*` handlers).
+- **Routing is separate from dispatch.** `cli_router` decides *what* to
+  run from natural language; `cli_minimal` runs explicit subcommands.
+- **Sync and async router entries.** `route`/`route_user_input` are
+  async for use inside async hosts; `route_sync`/`list_workflows` serve
+  synchronous callers.
+
+### Extension points
+
+- **Add a subcommand:** add a `cmd_*` handler and register its parser in
+  `cli_minimal.main()`.
+- **Influence routing:** `HybridRouter.learn_preference` /
+  `RoutingPreference`.
+- **Query routing programmatically:** `SmartRouter.route_sync` /
+  `list_workflows` / `suggest_for_file`.
+
+<!-- attune-generated: source_hash=bd2a2253f6a68a6b8671e90b653a8b827a19319e732c7538d504fb7c9e90bdb4 feature=cli kind=architecture generated_at=2026-06-24 -->
