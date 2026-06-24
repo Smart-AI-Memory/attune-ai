@@ -1,81 +1,35 @@
----
-description: Configure Attune AI with Python, YAML, JSON, or environment variables. Flexible configuration with validation and defaults.
----
-
 # Configuration
 
-Learn how to configure the Attune AI for your needs.
+## Reference
 
-## Configuration Methods
+### `attune.config` (package top level)
 
-### 1. Direct Instantiation
+| Symbol | Purpose |
+|--------|---------|
+| `load_config(filepath=None, use_env=True) -> AttuneConfig` | Load the legacy dataclass. |
+| `AttuneConfig` / `EmpathyConfig` | The legacy config dataclass (same class). |
+| `get_config() -> EmpathyXMLConfig` / `set_config(config)` | Read/replace the global XML/empathy config. |
+| `EmpathyXMLConfig`, `XMLConfig`, `OptimizationConfig`, `AdaptiveConfig`, `I18nConfig`, `MetricsConfig` | XML/empathy config + sub-objects. |
+| `UnifiedAgentConfig`, `BookProductionConfig` | Agent config. |
+| `ModelTier`, `Provider`, `WorkflowMode` | Agent config enums. |
+| `RedisConfig` | Redis section. |
 
-```python
-from attune import EmpathyOS
+### `attune.config.loader`
 
-empathy = EmpathyOS(
-    user_id="user_123",
-    target_level=4,
-    confidence_threshold=0.75,
-    persistence_enabled=True
-)
-```
+| Symbol | Purpose |
+|--------|---------|
+| `load_unified_config(path=None) -> UnifiedConfig` | Load the unified tree. |
+| `save_unified_config(...)` | Persist a `UnifiedConfig`. |
+| `ConfigLoader` | Loader class (`load`, `save`, `get_config`, `apply_env_overrides`, `discover_config_path`). |
+| `CONFIG_SEARCH_PATHS` | The ordered search paths. |
 
-### 2. YAML Configuration File
+### `attune.config.unified` / `.sections` / `.validation` / `.env_compat`
 
-Create `empathy.config.yml`:
+| Symbol | Purpose |
+|--------|---------|
+| `UnifiedConfig` | Modern config; sections + `get_value`/`set_value`/`get_all_keys`. |
+| `AnalysisConfig`, `AuthConfig`, `EnvironmentConfig`, `PersistenceConfig`, `RoutingConfig`, `TelemetryConfig`, `WorkflowConfig` | The seven sections. |
+| `validate_config(config) -> list[ValidationError]`, `ValidationError`, `ConfigValidator` | Validation. |
+| `get_attune_env(name, default=None)`, `iter_attune_env_prefix(prefix, suffix="")` | `ATTUNE_`/`EMPATHY_` env access. |
 
-```yaml
-user_id: "user_123"
-target_level: 4
-confidence_threshold: 0.75
-persistence_enabled: true
-persistence_backend: "sqlite"
-persistence_path: ".attune"
-```
-
-Load it:
-
-```python
-from attune import load_config
-
-config = load_config(filepath="empathy.config.yml")
-empathy = EmpathyOS.from_config(config)
-```
-
-### 3. Environment Variables
-
-```bash
-export ATTUNE_USER_ID="user_123"
-export ATTUNE_TARGET_LEVEL=4
-export ATTUNE_CONFIDENCE_THRESHOLD=0.75
-```
-
-## Configuration Options
-
-### Core Settings
-
-- `user_id` (str): Unique user identifier
-- `target_level` (int): Target empathy level (1-5)
-- `confidence_threshold` (float): Minimum confidence for predictions (0.0-1.0)
-
-### Trust Settings
-
-- `trust_building_rate` (float): How fast trust increases (default: 0.05)
-- `trust_erosion_rate` (float): How fast trust decreases on failures (default: 0.10)
-
-### Persistence Settings
-
-- `persistence_enabled` (bool): Enable pattern storage (default: True)
-- `persistence_backend` (str): Backend type ("sqlite", "postgresql")
-- `persistence_path` (str): Storage location (default: ".attune")
-
-### Metrics Settings
-
-- `metrics_enabled` (bool): Enable metrics collection (default: True)
-- `metrics_path` (str): Metrics storage location
-
-## Next Steps
-
-- **[Examples](../tutorials/examples/simple-chatbot.md)**: See configuration in action
-- **[API Reference](../reference/empathy-os.md)**: Complete API documentation
+<!-- attune-generated: source_hash=7359a1b70578c0d83b0fc6af405ebd38e3949c66a7f64b303c05e961504871c1 feature=configuration kind=reference generated_at=2026-06-24 -->

@@ -347,12 +347,17 @@ features:
     status: manual
 
   configuration:
+    # Single-sourced via content/features/configuration.md (projector).
+    # Scope = the attune.config package, which spans FOUR layers with
+    # overlapping names: the unified tree (UnifiedConfig + sections +
+    # config.loader + validation), agent config (UnifiedAgentConfig),
+    # the XML/empathy layer (EmpathyXMLConfig via get_config/set_config),
+    # and the legacy AttuneConfig (== EmpathyConfig) dataclass loaded by
+    # load_config. The doc distinguishes all four (the prior generated
+    # concept doc mis-attributed config.loader symbols to config.unified).
     description: Project configuration and settings management
-    files:
-      - src/attune/config/**
     tags: [config, settings]
-    doc_paths:
-      - docs/reference/configuration.md
+    status: manual
 
   # rag-grounding is single-sourced (status: manual) from
   # content/features/rag-grounding.md and rendered by

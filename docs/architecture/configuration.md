@@ -1,14 +1,4 @@
----
-type: note
-name: configuration-note
-feature: configuration
-depth: note
-generated_at: 2026-06-24T01:14:11.680426+00:00
-source_hash: 7359a1b70578c0d83b0fc6af405ebd38e3949c66a7f64b303c05e961504871c1
-status: generated
----
-
-# Layered configuration — the unified config tree, agent config, and the XML/empathy config layer
+# Configuration
 
 ## Overview
 
@@ -89,12 +79,26 @@ returns one. It carries `from_yaml` / `to_yaml` / `from_env` /
 `validate`. New code should prefer the unified tree; this remains for
 back-compat.
 
-## Notes & tips
+## Design & extension
 
-- **Prefer the unified tree for new code.** `UnifiedConfig` +
-  `load_unified_config` + `validate_config` is the modern path.
-- **`AttuneConfig` ≡ `EmpathyConfig`.** Same class, two names.
-- **`load_config` and `load_unified_config` differ.** Different return
-  types; pick one and stay consistent.
-- **Use `set_config()` for the XML config.** It swaps the global
-  instance other code reads.
+### Design decisions
+
+- **Sectioned unified config.** Splitting `UnifiedConfig` into typed
+  sections keeps each concern cohesive and round-trippable via
+  `to_dict`/`from_dict`.
+- **Env compatibility shim.** `get_attune_env` honors both `ATTUNE_`
+  and legacy `EMPATHY_` prefixes so prefix migration is non-breaking.
+- **Layers, not one config.** Agent config, the XML/empathy config, and
+  the legacy dataclass coexist deliberately — each serves a subsystem;
+  the unified tree is the modern front door.
+
+### Extension points
+
+- **Add a setting:** extend the relevant `config.sections` dataclass
+  (it gets `to_dict`/`from_dict` round-tripping and key-path access).
+- **Custom validation:** add to `config.validation` /
+  `ConfigValidator`.
+- **New env override:** read it via `get_attune_env` /
+  `iter_attune_env_prefix`.
+
+<!-- attune-generated: source_hash=7359a1b70578c0d83b0fc6af405ebd38e3949c66a7f64b303c05e961504871c1 feature=configuration kind=architecture generated_at=2026-06-24 -->
