@@ -3,67 +3,61 @@ type: task
 name: plugin-task
 feature: plugin
 depth: task
-generated_at: 2026-06-22T10:00:48.764701+00:00
-source_hash: 843f895eed3fa2d3d0b8021830c8c31e3c292c176a967396a76c27deb5a60deb
+generated_at: 2026-06-24T05:04:42.110775+00:00
+source_hash: db043c60a7143c7669b27c81b171e2b6169746b1daae7d276d9b914b20fb8c53
 status: generated
-scaffold_hash: 50c1caa20aa764e3b2db2159a2560e5480f7bfc5f82efed9516912df86eebf1d
 ---
 
-# Work with the plugin
+# The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers
 
-Use the plugin when you need to change how attune-ai integrates with Claude Code — including hook behavior, session recall, spec orientation, SDK subprocess gating, or the `/handoff` slash command.
+## Tasks
 
-## Prerequisites
+### Install the plugin
 
-- Access to the project source code
-- Python environment with `pytest` available
+**Goal:** add attune to Claude Code.
 
-## Identify the right hook
+**Steps:**
 
-Each module in `hooks/` owns a single responsibility. Match your goal to the correct entry point before you edit anything:
+```bash
+claude plugin marketplace add Smart-AI-Memory/attune-ai
+claude plugin install attune-ai@attune-ai
+```
 
-| Goal | Module | Entry point |
-|---|---|---|
-| Customize the `/handoff` slash command | `hooks/_handoff_cli.py` | `main()` |
-| Change the resume-prompt format | `hooks/_resume_prompt.py` | `build_resume_prompt()` |
-| Gate a hook from running inside an SDK subprocess | `hooks/_sdk_gate.py` | `exit_if_sdk_subprocess()` |
-| Discover in-flight specs under workspace roots | `hooks/_state.py` | `discover_specs()` |
-| Snapshot branch, last commit, and dirty files | `hooks/_state.py` | `git_state()` |
-| Manage compact-warning sentinels | `hooks/_state.py` | `session_sentinel_path()`, `prune_stale_sentinels()` |
-| Estimate context utilization from a transcript | `hooks/_transcript_size.py` | `estimate_utilization()` |
-| Validate bash commands or file paths | `hooks/security_guard.py` | `validate_bash_command()`, `validate_file_path()` |
-| Show the usage-consent notice to MCP users (SessionStart) | `hooks/usage_consent_notice.py` | `main()` |
-| Orient the session around active specs | `hooks/spec_orient.py` | `main()` |
+**Verify:** the `/attune` and `/handoff` commands appear, and the
+attune skills (`/spec`, `/security-audit`, …) are available in the
+session. `attune-ai@attune-ai` is `plugin-name@marketplace-plugin` —
+both resolve to the `attune-ai` plugin in this single-plugin
+marketplace.
 
-## Modify the hook
+### Read the manifest
 
-1. **Open the target module.** Read the function's signature, docstring, and return type to confirm it owns the behavior you want to change.
+**Goal:** confirm the bundle's identity and version.
 
-2. **Edit the function.** To change how the resume prompt is structured, edit `build_resume_prompt()` in `hooks/_resume_prompt.py`:
+**Steps:**
 
-   ```python
-   build_resume_prompt(
-       spec_info: SpecInfo | None,
-       git_state: GitState,
-       *,
-       workspace_path: str = '~/attune',
-       todo_summary: str | None = None,
-   ) -> str
-   ```
+```bash
+cat plugin/.claude-plugin/plugin.json
+```
 
-   `SpecInfo` provides `slug`, `path`, `layer`, `phase`, `status`, and `mtime` for each in-flight spec. `GitState` provides `branch`, `last_sha`, `last_subject`, and `uncommitted` files.
+**Verify:** `name` is `attune-ai`, `license` is `Apache-2.0`, and
+`keywords` include `claude-code`. The `version` here is the plugin
+bundle version (`8.9.0`); the sibling `marketplace.json` carries a
+matching version in `metadata.version` and `plugins[0].version`.
 
-3. **Add SDK subprocess gating if needed.** If your hook must not run inside an SDK-spawned `claude` subprocess, call `exit_if_sdk_subprocess()` at the top of `main()`. To check the condition without exiting, call `is_sdk_subprocess()` directly.
+### List the components Claude Code will discover
 
-4. **Run the tests** to catch regressions:
+**Goal:** see what the bundle ships.
 
-   ```
-   pytest -k "plugin"
-   ```
+**Steps:**
 
-## Verify success
+```bash
+ls plugin/commands   # 1 command (handoff.md)
+ls plugin/skills     # 17 skill directories
+ls plugin/agents     # 6 agent definitions
+cat plugin/.mcp.json # the MCP server registration
+```
 
-Your change is complete when both of the following are true:
-
-- `pytest -k "plugin"` exits with no failures.
-- The hook produces the output you intended when triggered manually or through the normal Claude Code flow.
+**Verify:** each folder name is the component type Claude Code reads.
+`hooks/hooks.json` binds scripts to the five lifecycle events; for what
+those hooks do, see the **hooks** feature, and for the MCP server, the
+**mcp-server** feature.

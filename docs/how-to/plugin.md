@@ -1,158 +1,126 @@
----
-type: how-to
-name: plugin
-tags: [plugin, claude-code, hooks, mcp]
-source: developer-guidance
----
+# Plugin
 
-# How to use the Claude Code plugin
+## Quickstart
 
-Use this guide when you need to wire up, call, or extend the Claude Code plugin's hooks and commands — session continuity, security validation, spec orientation, and context-utilization warnings.
+Install the plugin into Claude Code from the marketplace:
 
-## Quick start
-
-The following snippet checks context utilization and prints a compact warning when the transcript is getting full:
-
-```python
-from hooks._transcript_size import estimate_utilization
-from hooks._state import git_state, workspace_roots, discover_specs
-from hooks._resume_prompt import build_resume_prompt
-from hooks.compact_warning import format_warning
-from pathlib import Path
-
-cwd = Path.cwd()
-roots = workspace_roots(cwd)
-specs = discover_specs(roots)
-spec = specs[0] if specs else None
-
-util = estimate_utilization("~/.claude/transcript.jsonl")
-if util > 0.8:
-    state = git_state(cwd)
-    resume = build_resume_prompt(spec, state, workspace_path="~/attune")
-    print(format_warning(util, threshold=0.8, resume_body=resume))
+```bash
+claude plugin marketplace add Smart-AI-Memory/attune-ai
+claude plugin install attune-ai@attune-ai
 ```
 
-Running this prints a formatted warning block to stdout when the transcript exceeds 80 % utilization.
+The first command registers this repo as a marketplace; the second
+installs the `attune-ai` plugin from it. After install, Claude Code
+auto-discovers the components — the slash command, the 17 skills, the 6
+agents, the hooks, and the MCP server — and they become available in
+your session.
 
-## Core API
+To inspect the bundle locally:
 
-Each hook module exposes a `main()` entry point callable by Claude Code directly. The shared helpers in `hooks._state` and `hooks._transcript_size` are the building blocks the other hooks rely on.
-
-### State discovery (`hooks._state`)
-
-| Function / Class | Purpose |
-|---|---|
-| `workspace_roots(cwd)` | Returns candidate workspace root paths to scan for specs |
-| `discover_specs(roots)` | Walks `specs/` directories under each root; returns `list[SpecInfo]` |
-| `git_state(cwd)` | Snapshots branch, last commit SHA + subject, and uncommitted files |
-| `session_sentinel_path(session_id)` | Returns the path of the once-per-session compact-warning sentinel file |
-| `prune_stale_sentinels(now)` | Deletes sentinel files older than the TTL; returns count removed |
-| `SpecInfo` | Dataclass: `slug`, `path`, `layer`, `phase`, `status`, `mtime` |
-| `GitState` | Dataclass: `branch`, `last_sha`, `last_subject`, `uncommitted` |
-
-### Context utilization (`hooks._transcript_size`)
-
-| Function | Purpose |
-|---|---|
-| `estimate_utilization(transcript_path)` | Returns context utilization as a float in `[0.0, 1.0]` |
-
-### Resume prompt (`hooks._resume_prompt`)
-
-| Function | Purpose |
-|---|---|
-| `build_resume_prompt(spec_info, git_state, *, workspace_path, todo_summary)` | Renders the user-facing resume prompt body |
-
-### Compact warning (`hooks.compact_warning`)
-
-| Function | Purpose |
-|---|---|
-| `format_warning(util, threshold, resume_body)` | Composes the full warning message + resume prompt |
-
-### Security (`hooks.security_guard`)
-
-| Function | Purpose |
-|---|---|
-| `validate_bash_command(command)` | Checks a Bash command against security policies; returns `(allowed, reason)` |
-| `validate_file_path(file_path)` | Checks a file path against security policies; returns `(allowed, reason)` |
-| `main(context)` | Validates a tool call dict; returns an updated context dict |
-
-### Spec orientation (`hooks.spec_orient`)
-
-| Function | Purpose |
-|---|---|
-| `format_orientation(specs)` | Returns a short markdown list of in-flight specs for session start |
-| `render_spec_pin(spec, char_budget)` | Renders a spec body for post-compact context restoration |
-
-### Hook entry points
-
-| Module | `main()` behavior |
-|---|---|
-| `hooks._handoff_cli` | CLI wrapper for the `/handoff` slash command |
-| `hooks.compact_warning` | Entry point — never raises |
-| `hooks.format_on_save` | Reads a tool result from stdin and formats Python files |
-| `hooks.help_freshness_check` | Checks help-template freshness on session start |
-| `hooks.help_on_error` | Reads a `PostToolUse` payload and suggests help if applicable |
-| `hooks.help_post_commit` | Checks for stale help after a git commit |
-| `hooks.spec_orient` | Branches on `source`; never raises |
-| `hooks.welcome` | Prints a welcome message to stderr (Claude Code surfaces stderr) |
-
-## Integration patterns
-
-### Security guard in a tool-call pipeline
-
-Wrap any outgoing tool call through `hooks.security_guard.main()` before execution. The function accepts the raw context dict Claude Code passes to a `PreToolUse` hook and returns the same dict, potentially with a blocking annotation:
-
-```python
-from hooks.security_guard import main as security_check, validate_bash_command
-
-# Quick inline check
-allowed, reason = validate_bash_command("rm -rf /private/etc/hosts")
-if not allowed:
-    raise PermissionError(reason)
-
-# Full hook integration — called by Claude Code automatically,
-# but you can invoke it directly in tests:
-context = {"tool": "Bash", "input": {"command": "ls -la"}}
-result = security_check(context)
+```bash
+cat plugin/.claude-plugin/plugin.json
+ls plugin/skills plugin/agents plugin/commands
 ```
 
-`SYSTEM_DIRECTORIES` (`{'/etc', '/sys', '/proc', ...}`) and `SEARCH_COMMAND_PREFIXES` are the policy constants the validator checks against.
+## Tasks
 
-### Spec orientation at session start
+### Install the plugin
 
-Call `format_orientation` immediately after `discover_specs` to surface in-flight work to the model:
+**Goal:** add attune to Claude Code.
 
-```python
-from hooks._state import workspace_roots, discover_specs
-from hooks.spec_orient import format_orientation, render_spec_pin
-from pathlib import Path
+**Steps:**
 
-roots = workspace_roots(Path.cwd())
-specs = discover_specs(roots)
-
-# Short list for a fresh session
-print(format_orientation(specs))
-
-# Detailed pin for post-compact restoration (default 4 000-char budget)
-if specs:
-    print(render_spec_pin(specs[0]))
+```bash
+claude plugin marketplace add Smart-AI-Memory/attune-ai
+claude plugin install attune-ai@attune-ai
 ```
 
-## See also
+**Verify:** the `/attune` and `/handoff` commands appear, and the
+attune skills (`/spec`, `/security-audit`, …) are available in the
+session. `attune-ai@attune-ai` is `plugin-name@marketplace-plugin` —
+both resolve to the `attune-ai` plugin in this single-plugin
+marketplace.
 
-- `concepts/task-template-design-patterns.md` — how attune structures help content the plugin surfaces
-- `concepts/task-template-migration.md` — background on the session-continuity model the hooks support
+### Read the manifest
 
-## Unresolved references
+**Goal:** confirm the bundle's identity and version.
 
-> Auto-generated by attune-author fact-check. Review and either
-> fix the source code, fix this doc, or add an override.
+**Steps:**
 
-| Location | Severity | Issue |
-|---|---|---|
-| Line 16 (code fence) | error | `from hooks._transcript_size import …` — module not importable |
-| Line 16 (code fence) | error | `from hooks._state import …` — module not importable |
-| Line 16 (code fence) | error | `from hooks._resume_prompt import …` — module not importable |
-| Line 16 (code fence) | error | `from hooks.compact_warning import …` — module not importable |
-| Line 105 (code fence) | error | `from hooks.security_guard import …` — module not importable |
-| Line 125 (code fence) | error | `from hooks.spec_orient import …` — module not importable |
+```bash
+cat plugin/.claude-plugin/plugin.json
+```
+
+**Verify:** `name` is `attune-ai`, `license` is `Apache-2.0`, and
+`keywords` include `claude-code`. The `version` here is the plugin
+bundle version (`8.9.0`); the sibling `marketplace.json` carries a
+matching version in `metadata.version` and `plugins[0].version`.
+
+### List the components Claude Code will discover
+
+**Goal:** see what the bundle ships.
+
+**Steps:**
+
+```bash
+ls plugin/commands   # 1 command (handoff.md)
+ls plugin/skills     # 17 skill directories
+ls plugin/agents     # 6 agent definitions
+cat plugin/.mcp.json # the MCP server registration
+```
+
+**Verify:** each folder name is the component type Claude Code reads.
+`hooks/hooks.json` binds scripts to the five lifecycle events; for what
+those hooks do, see the **hooks** feature, and for the MCP server, the
+**mcp-server** feature.
+
+## Reference
+
+The plugin is a packaging artifact; its "API" is the manifest schema
+and the component folder layout.
+
+### `plugin/.claude-plugin/plugin.json`
+
+| Field | Value / Purpose |
+|-------|-----------------|
+| `name` | `attune-ai` — the plugin name. |
+| `version` | Plugin bundle version (`8.9.0`). |
+| `description` | One-line plugin summary shown in Claude Code. |
+| `author` | `{name, email}` — Smart AI Memory. |
+| `homepage` / `repository` | Project links. |
+| `license` | `Apache-2.0`. |
+| `keywords` | Discovery keywords (include `claude-code`). |
+
+### `plugin/.claude-plugin/marketplace.json`
+
+| Field | Value / Purpose |
+|-------|-----------------|
+| `name` | `attune-ai-plugin` — the **marketplace** name. |
+| `owner` | `{name, email}` of the marketplace. |
+| `metadata` | `{description, version}`. |
+| `plugins[]` | The plugin entries; one here. |
+| `plugins[0].name` | `attune-ai` — the plugin offered. |
+| `plugins[0].source` | `./` — plugin at the marketplace root. |
+| `plugins[0].category` | `developer-tools`. |
+| `plugins[0].tags` | Marketplace listing tags. |
+
+### Component folders
+
+| Folder | Component | Notes |
+|--------|-----------|-------|
+| `commands/` | Slash commands | `handoff.md` → `/handoff`. |
+| `skills/` | Skills | 17 dirs, each with `SKILL.md`. |
+| `agents/` | Subagents | 6 `.md` definitions. |
+| `hooks/` | Hooks | `hooks.json` + ~20 scripts → 5 events. |
+| `help/` | Help | `generated/`, `templates/`, `schemas/`. |
+| `core/` | Version | `__version__` only. |
+| `.mcp.json` | MCP server | `uvx --from attune-ai python -m attune.mcp.server`. |
+
+### Install
+
+| Step | Command |
+|------|---------|
+| Add marketplace | `claude plugin marketplace add Smart-AI-Memory/attune-ai` |
+| Install plugin | `claude plugin install attune-ai@attune-ai` |
+
+<!-- attune-generated: source_hash=db043c60a7143c7669b27c81b171e2b6169746b1daae7d276d9b914b20fb8c53 feature=plugin kind=how-to generated_at=2026-06-24 -->

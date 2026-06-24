@@ -303,12 +303,19 @@ features:
     tags: [telemetry, metrics]
     status: manual
 
+  # plugin is single-sourced (status: manual) from
+  # content/features/plugin.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/plugin/*.md. The entry is retained — WITHOUT
+  # `files:`/`arch_path:` and marked `status: manual` — so topic
+  # resolution still routes here while staleness/maintenance never runs
+  # the LLM generator to overwrite the projected content (DD5,
+  # help-docs-single-source decision, 2026-06-24). The retained faq.md
+  # stays on disk frozen as a manual file.
   plugin:
     description: Claude Code plugin — skills, hooks, commands, and MCP config
-    files:
-      - plugin/**
     tags: [plugin, claude-code]
-    arch_path: docs/architecture/plugin-system.md
+    status: manual
 
   # spec-engine is single-sourced (status: manual) from
   # content/features/spec-engine.md and rendered by
