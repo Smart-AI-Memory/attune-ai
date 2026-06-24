@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.9.1] — 2026-06-24
+
+Help-serving patch — the in-conversation help surface now serves the
+single-sourced feature content. No runtime API change.
+
+### Fixed
+
+- **In-conversation help (`help_lookup` / `populate`) now serves the
+  single-source content.** The help-docs-single-source rollout populated
+  `.help/templates/<feature>/` (feature-organized), but the engine
+  resolver only read the type-organized `plugin/help/generated/` bundle —
+  so the grounded, fiction-free help reached the ops dashboard and the
+  website but **not** the MCP/plugin help surface. The resolver now falls
+  back to `.help/templates/<feature>/<kind>.md` when an ID is absent from
+  the bundle, so single-sourced features resolve in-conversation. Bundle-
+  only IDs (system concepts, lessons/skill-derived templates) are
+  unchanged. (help-serving-bridge spec, D1)
+
+### Notes
+
+- Scope is the **Claude Code plugin** channel (which ships
+  `.help/templates`). Packaging the in-tool help into the **pip wheel**
+  remains out of scope (D2). Cross-links/progressive-depth for the
+  fallback-served content are a tracked follow-up (D3).
+
 ## [8.9.0] — 2026-06-23
 
 Runtime patch — MCP reliability fixes plus a tool-name
