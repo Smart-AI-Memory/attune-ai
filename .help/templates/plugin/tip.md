@@ -3,15 +3,21 @@ type: tip
 name: plugin-tip
 feature: plugin
 depth: tip
-generated_at: 2026-06-10T07:07:04.684068+00:00
-source_hash: 97a2943dbbe1f0524955dd7678a2b8b4eb09cacaf89d2950ee2705251fcd2249
+generated_at: 2026-06-24T05:04:42.110775+00:00
+source_hash: db043c60a7143c7669b27c81b171e2b6169746b1daae7d276d9b914b20fb8c53
 status: generated
 ---
 
-# Tip: working effectively with plugin
+# The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers
 
-Call `estimate_utilization()` before you call `build_resume_prompt()` — passing a bloated transcript into the resume builder wastes context budget that the prompt itself needs.
+## Notes & tips
 
-**Why it sticks:** `estimate_utilization` returns a `float` in `[0.0, 1.0]`; if it's already high, `format_warning` in `hooks.compact_warning` can surface that to the user before you spend tokens on the full resume prompt.
-
-**Tradeoff:** Adding the utilization check is an extra call to `hooks._transcript_size.estimate_utilization`. In fast-path hooks where transcript I/O is expensive, you may choose to skip it and call `build_resume_prompt` unconditionally — just know you're trading responsiveness for accuracy.
+- **Add the marketplace first.** `install` needs a registered
+  marketplace to resolve `attune-ai@attune-ai` against.
+- **Mind the two names.** Marketplace `attune-ai-plugin`, plugin
+  `attune-ai`. The install string repeats the plugin name on purpose.
+- **The folders are the contract.** Claude Code discovers components by
+  fixed folder names (`commands/`, `skills/`, `agents/`, `hooks/`,
+  `help/`) — that layout *is* the plugin's interface.
+- **Go to the component's feature to debug it.** MCP tools → mcp-server;
+  hook behavior → hooks. This page is the bundle.

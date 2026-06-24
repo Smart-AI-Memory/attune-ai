@@ -1,14 +1,4 @@
----
-type: concept
-name: plugin-concept
-feature: plugin
-depth: concept
-generated_at: 2026-06-24T05:04:42.110775+00:00
-source_hash: db043c60a7143c7669b27c81b171e2b6169746b1daae7d276d9b914b20fb8c53
-status: generated
----
-
-# The Claude Code plugin bundle — its manifest, marketplace listing, install flow, and the components Claude Code auto-discovers
+# Plugin
 
 ## Overview
 
@@ -96,3 +86,35 @@ operation; `plugin/core/__init__.py` is just
 `__version__ = "8.9.0"`. The real runtime is the pip-installed
 `attune-ai` package, which the `.mcp.json` server pulls via
 `uvx --from attune-ai`.
+
+## Design & extension
+
+### Design decisions
+
+- **Self-marketplace.** The repo is its own single-plugin marketplace
+  (`source: ./`), so `marketplace add` + `install` point at one
+  GitHub repo — no separate registry to publish to.
+- **Convention over configuration.** Components are discovered by fixed
+  folder names rather than enumerated in the manifest, keeping
+  `plugin.json` to identity/metadata.
+- **Thin bundled core.** `plugin/core` carries only a version; the
+  heavy runtime stays in the pip package the MCP server pulls, so the
+  bundle stays small and the runtime updates independently.
+- **Separation of concerns.** The bundle ships the MCP server and hooks
+  but documents them as their own features — the plugin page stays about
+  packaging.
+
+### Extension points
+
+- **Add a command/skill/agent:** drop a file into the matching folder
+  (`commands/*.md`, `skills/<name>/SKILL.md`, `agents/*.md`); Claude
+  Code auto-discovers it on install.
+- **Add a hook:** wire it in `hooks/hooks.json` (see the hooks
+  feature).
+- **Change marketplace metadata:** edit
+  `plugin/.claude-plugin/marketplace.json` (name, category, tags).
+- **Bump the bundle version:** update `plugin.json`,
+  `marketplace.json`, and `plugin/core/__init__.py` together at
+  release.
+
+<!-- attune-generated: source_hash=db043c60a7143c7669b27c81b171e2b6169746b1daae7d276d9b914b20fb8c53 feature=plugin kind=architecture generated_at=2026-06-24 -->
