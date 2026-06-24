@@ -281,6 +281,8 @@
 <p><code>HookExecutor</code> runs hook actions and returns results asynchronously. <code>HookExecutorSync</code> is a synchronous wrapper around the same logic — use it when you're calling from a context that can't await, such as a CLI entry point or a synchronous event loop. Both accept a <code>python_handlers</code> dict that maps handler names to callables.</p>
 <h2>How do I register a hook at runtime?</h2>
 <p>Call <code>HookRegistry.register(event, handler, ...)</code>. It returns a <code>handler_id</code> string you can pass to <code>HookRegistry.unregister(handler_id)</code> later if you need to remove it.</p>
+<h2>How should a Python handler be written?</h2>
+<p>The registry calls handlers with the fired context <strong>unpacked as keyword arguments</strong> — write <code>def handler(**context): ...</code>, not <code>def handler(context): ...</code>. A positional <code>context</code> parameter raises <code>TypeError: got an unexpected keyword argument</code>. Read individual values inside with <code>context.get(&quot;tool_name&quot;)</code>, etc.</p>
 <h2>How do I load hooks from a config file?</h2>
 <p>Use <code>HookConfig.from_yaml(yaml_path)</code> to load a config, then pass it to <code>HookRegistry.load_config(config)</code>. To save the current config back to disk, call <code>HookConfig.to_yaml(yaml_path)</code>.</p>
 <h2>How do I fire a hook?</h2>

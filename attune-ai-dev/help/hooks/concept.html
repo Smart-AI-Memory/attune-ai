@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Hooks — concept</title>
-  <meta name="description" content="The hooks system lets you attach actions to Claude Code lifecycle events so Attune AI can automatically run logic—security checks, telemetry, session evaluation, and compaction—at precise moments duri" />
-  <meta property="og:title" content="Hooks — concept" />
-  <meta property="og:description" content="The hooks system lets you attach actions to Claude Code lifecycle events so Attune AI can automatically run logic—security checks, telemetry, session evaluation, and compaction—at precise moments duri" />
+  <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — concept</title>
+  <meta name="description" content="`attune.hooks` is an **event system**: it lets code (and config) react to lifecycle events — before/after a tool runs, at session start/end, around compaction, and on stop. The public surface, exporte" />
+  <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — concept" />
+  <meta property="og:description" content="`attune.hooks` is an **event system**: it lets code (and config) react to lifecycle events — before/after a tool runs, at session start/end, around compaction, and on stop. The public surface, exporte" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/concept" />
   <style>
@@ -272,108 +272,56 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Hooks</h1>
-<p>The hooks system lets you attach actions to Claude Code lifecycle events so Attune AI can automatically run logic—security checks, telemetry, session evaluation, and compaction—at precise moments during an agent session.</p>
-<h2>Mental model</h2>
-<p>Hooks work as a three-layer pipeline:</p>
-<ol>
-<li><strong>Declaration</strong> — A <code>HookDefinition</code> describes what action to run; a <code>HookMatcher</code> decides when to run it by evaluating <code>matches(context)</code> against the current runtime context dict. Pairing them produces a <code>HookRule</code>.</li>
-<li><strong>Configuration</strong> — A <code>HookConfig</code> groups rules by <code>HookEvent</code>. Build one programmatically with <code>add_hook()</code>, or load one from a YAML file with <code>HookConfig.from_yaml()</code>. The <code>priority</code> parameter on <code>add_hook()</code> controls the order in which rules fire within the same event.</li>
-<li><strong>Dispatch</strong> — <code>HookRegistry</code> is the runtime hub. Call <code>fire(event, context)</code> or <code>fire_sync(event, context)</code>, and the registry evaluates each <code>HookMatcher</code> against the context dict, passes matched <code>HookDefinition</code>s to <code>HookExecutor</code>, and accumulates results in an execution log.</li>
-</ol>
-<p>The context dict flows through every layer — from the <code>HookMatcher.matches()</code> check to the <code>HookExecutor.execute()</code> return value — so hooks have access to the same runtime information at every stage.</p>
-<h2>Event lifecycle</h2>
-<p><code>HookEvent</code> values correspond to Claude Code lifecycle points. Because hooks fire at these specific moments, you can run security validation before a tool executes or trigger session evaluation after it completes, without modifying agent core code.</p>
-<h2>Configuration layer</h2>
-<table>
-<thead>
-<tr>
-<th>Class</th>
-<th>Role</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>HookEvent</code></td>
-<td>Identifies the lifecycle point where a rule applies</td>
-</tr>
-<tr>
-<td><code>HookType</code></td>
-<td>Specifies the kind of action a <code>HookDefinition</code> performs</td>
-</tr>
-<tr>
-<td><code>HookDefinition</code></td>
-<td>Describes a single action to execute</td>
-</tr>
-<tr>
-<td><code>HookMatcher</code></td>
-<td>Evaluates <code>matches(context)</code> to decide whether a rule fires</td>
-</tr>
-<tr>
-<td><code>HookRule</code></td>
-<td>Pairs a <code>HookMatcher</code> with one or more <code>HookDefinition</code>s</td>
-</tr>
-<tr>
-<td><code>HookConfig</code></td>
-<td>Holds all rules; serializes to and from YAML</td>
-</tr>
-</tbody>
-</table>
-<p><code>HookConfig.from_yaml(yaml_path)</code> reads a hook configuration file and returns a ready-to-use <code>HookConfig</code>. <code>to_yaml(yaml_path)</code> writes the current configuration back to disk. <code>get_hooks_for_event(event)</code> returns the list of <code>HookRule</code>s registered for a given event.</p>
-<h2>Registry and dispatch</h2>
-<p><code>HookRegistry</code> is the object you interact with at runtime.</p>
+<h1>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config</h1>
+<h2>Overview</h2>
+<p><code>attune.hooks</code> is an <strong>event system</strong>: it lets code (and config) react
+to lifecycle events — before/after a tool runs, at session start/end,
+around compaction, and on stop. The public surface, exported from
+<code>attune.hooks</code>, is five symbols:</p>
 <ul>
-<li><strong>Loading from config</strong>: Pass a <code>HookConfig</code> to <code>HookRegistry(config)</code> at construction, or call <code>load_config(config)</code> to swap configuration later.</li>
-<li><strong>Registering Python handlers directly</strong>: <code>register(event, handler, description, matcher, priority)</code> wraps a callable in a rule and returns a <code>handler_id</code> string. Pass that string to <code>unregister(handler_id)</code> to remove the handler.</li>
-<li><strong>Firing events</strong>: <code>fire(event, context)</code> is asynchronous; <code>fire_sync(event, context)</code> is synchronous. Both return a list of result dicts—one per matched hook.</li>
-<li><strong>Inspecting results</strong>: <code>get_execution_log(limit, event_filter)</code> returns recent execution records. <code>get_stats()</code> returns aggregate counters across all events. <code>clear_execution_log()</code> resets the log.</li>
+<li><strong><code>HookEvent</code></strong> — the events you can hook (<code>PRE_TOOL_USE</code>,
+<code>POST_TOOL_USE</code>, <code>SESSION_START</code>, <code>SESSION_END</code>, <code>PRE_COMPACT</code>,
+<code>POST_COMPACT</code>, <code>PRE_COMMAND</code>, <code>POST_COMMAND</code>, <code>STOP</code>).</li>
+<li><strong><code>HookRegistry</code></strong> — register Python handlers for events and fire
+them in-process.</li>
+<li><strong><code>HookExecutor</code></strong> — run a configured <code>HookDefinition</code> (command,
+Python, or webhook).</li>
+<li><strong><code>HookConfig</code></strong> / <strong><code>HookDefinition</code></strong> — the declarative,
+config-driven hooks (loaded from YAML).</li>
 </ul>
-<h2>Execution</h2>
-<p><code>HookExecutor</code> runs a <code>HookDefinition</code> against a context dict and returns a result dict. Construct it with a <code>python_handlers</code> mapping to let the executor resolve handler names to Python callables—the same mapping that <code>HookRegistry</code> uses when you call <code>register()</code>. <code>HookExecutorSync</code> provides the same interface for synchronous call sites.</p>
-<h2>Built-in scripts</h2>
-<p>The <code>scripts</code> package ships Python callables designed for use as hook handlers. You can register them with <code>HookRegistry.register()</code> or reference them from a YAML configuration:</p>
-<table>
-<thead>
-<tr>
-<th>Handler</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>run_evaluate_session</code></td>
-<td>Evaluates a completed session for learning potential</td>
-</tr>
-<tr>
-<td><code>run_pre_compact</code></td>
-<td>Generates a compaction summary before context is compressed</td>
-</tr>
-<tr>
-<td><code>suggest_compact</code></td>
-<td>Recommends compaction when token usage crosses a threshold</td>
-</tr>
-<tr>
-<td><code>check_init</code> / <code>handle_init_response</code></td>
-<td>Detects whether Attune AI is initialized and prompts the user</td>
-</tr>
-<tr>
-<td><code>validate_bash_command</code> / <code>validate_file_path</code></td>
-<td>Blocks unsafe shell commands and file paths</td>
-</tr>
-<tr>
-<td><code>record_telemetry</code></td>
-<td>Records session telemetry</td>
-</tr>
-<tr>
-<td><code>apply_learned_patterns</code></td>
-<td>Generates context injection from learned patterns</td>
-</tr>
-</tbody>
-</table>
-<p>Every script in this package guards against double-execution using <code>is_sdk_subprocess()</code>. When that function returns <code>True</code>, <code>exit_if_sdk_subprocess()</code> exits silently—preventing a hook from running a second time inside an SDK-spawned <code>claude</code> subprocess.</p>
-<h2>Integration surface</h2>
-<p>The public API exported from <code>hooks.__init__</code> is <code>HookConfig</code>, <code>HookDefinition</code>, <code>HookEvent</code>, <code>HookExecutor</code>, and <code>HookRegistry</code>. Everything else—<code>HookType</code>, <code>HookMatcher</code>, <code>HookRule</code>, the executor internals—is consumed internally by those five classes.</p>
-<p>At the project level, the <code>hooks</code> section of the Attune AI YAML configuration controls whether the system is active (<code>enabled: true</code>) and whether individual executions are logged to disk (<code>log_executions</code>). <code>HookConfig.from_yaml()</code> reads this section when loading the project file.</p>
+<p>The plugin also ships concrete hook scripts under
+<code>attune/hooks/scripts/</code> (e.g. <code>security_guard</code>, <code>worktree_path_guard</code>,
+<code>lessons_reminder</code>) — these are the hooks Claude Code actually runs.</p>
+<h2>Concepts</h2>
+<h3><code>HookEvent</code></h3>
+<p>The lifecycle events. Their <strong>values are the Claude Code event names</strong> —
+e.g. <code>HookEvent.PRE_TOOL_USE.value == &quot;PreToolUse&quot;</code> — so the same enum
+labels in-process registration and the Claude Code hook contract.</p>
+<h3><code>HookRegistry</code> — in-process handlers</h3>
+<p><code>HookRegistry(config=None)</code> is the programmatic surface.
+<code>register(event, handler, description=&quot;&quot;, matcher=None, priority=0)</code>
+adds a handler and returns a hook id. <strong>Handlers receive the context
+dict unpacked as keyword arguments</strong> — write <code>def handler(**context)</code>,
+not <code>def handler(context)</code>. Fire with <code>fire(event, context=None)</code>
+(async) or <code>fire_sync(event, context=None)</code> (sync); both return a list
+of per-hook result dicts — a success record carries <code>event</code>, <code>hook</code>,
+<code>description</code>, <code>success</code>, <code>output</code>, <code>error</code>, <code>duration_ms</code>; an error
+record is a subset (<code>event</code>, <code>hook</code>, <code>success</code>, <code>error</code>). <code>get_matching_hooks</code>, <code>unregister</code>,
+<code>get_execution_log</code>, <code>get_stats</code>, and <code>load_config</code> round it out.</p>
+<h3><code>HookExecutor</code> and <code>HookDefinition</code></h3>
+<p><code>HookDefinition</code> (a pydantic model) describes a configured hook: <code>type</code>
+(<code>HookType.COMMAND</code> / <code>PYTHON</code> / <code>WEBHOOK</code>, default <code>PYTHON</code>),
+<code>command</code>, <code>description</code>, <code>timeout</code> (1–300 s, default 30),
+<code>async_execution</code> (default <code>False</code>), <code>on_error</code> (default <code>&quot;log&quot;</code>).
+<code>HookExecutor(python_handlers=None).execute(hook, context)</code> (async) runs
+one.</p>
+<h3><code>HookConfig</code> — declarative, config-driven hooks</h3>
+<p><code>HookConfig</code> (pydantic) holds the declarative rules: <code>hooks</code> (a dict of
+event → list of <code>HookRule</code>), plus <code>enabled</code>, <code>log_executions</code>, and
+<code>default_timeout</code>. Load it with <code>HookConfig.from_yaml(yaml_path)</code>, build
+it with <code>add_hook(event, hook, matcher=None, priority=0)</code>, and query it
+with <code>get_hooks_for_event(event)</code>. A <code>HookRule</code> carries a <code>matcher</code>, its
+<code>hooks</code>, <code>enabled</code>, <code>priority</code>, and <code>description</code>.</p>
 
   </article>
   <footer>

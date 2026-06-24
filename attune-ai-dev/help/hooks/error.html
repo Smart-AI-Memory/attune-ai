@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Hooks errors — error</title>
-  <meta name="description" content="Errors in the hook system typically fall into three categories:" />
-  <meta property="og:title" content="Hooks errors — error" />
-  <meta property="og:description" content="Errors in the hook system typically fall into three categories:" />
+  <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `handler() got an unexpected keyword argument` | handler written as `def handler(context)` | context is unpacked as kwargs — use `def handler(*" />
+  <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `handler() got an unexpected keyword argument` | handler written as `def handler(context)` | context is unpacked as kwargs — use `def handler(*" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/error" />
   <style>
@@ -272,47 +272,59 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Hooks errors</h1>
-<h2>Common error signatures</h2>
-<p>Errors in the hook system typically fall into three categories:</p>
+<h1>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>handler() got an unexpected keyword argument</code></td>
+<td>handler written as <code>def handler(context)</code></td>
+<td>context is unpacked as kwargs — use <code>def handler(**context)</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>RuntimeWarning: coroutine 'fire' was never awaited</code></td>
+<td><code>fire</code>/<code>execute</code> called without <code>await</code></td>
+<td>use <code>fire_sync</code>, or <code>await</code> the async ones</td>
+<td>high</td>
+</tr>
+<tr>
+<td>Hook never fires</td>
+<td>wrong <code>HookEvent</code>, or a <code>matcher</code> excludes the context</td>
+<td>check the event; inspect <code>get_matching_hooks(event, context)</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>ValidationError</code> building a <code>HookDefinition</code></td>
+<td><code>timeout</code> outside 1–300, or missing <code>command</code></td>
+<td>supply a valid <code>command</code> and <code>timeout</code></td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><strong>Configuration errors</strong> — <code>HookConfig.from_yaml()</code> raises when the YAML file is missing, malformed, or contains an unrecognized <code>HookEvent</code> or <code>HookType</code> value.</li>
-<li><strong>Executor errors</strong> — <code>HookExecutor.execute()</code> or <code>HookExecutorSync.execute()</code> raises when a <code>HookDefinition</code> references a Python handler name that was not registered in the <code>python_handlers</code> dict passed to the constructor.</li>
-<li><strong>Registry dispatch errors</strong> — <code>HookRegistry.fire()</code> or <code>HookRegistry.fire_sync()</code> raises when an event fires but the underlying executor fails, or when <code>register()</code> is called with an invalid <code>priority</code> or a <code>HookMatcher</code> whose <code>matches()</code> method raises unexpectedly.</li>
-<li><strong>Script hook errors</strong> — <code>run_evaluate_session()</code>, <code>apply_learned_patterns()</code>, or <code>run_pre_compact()</code> raises when the <code>context</code> dict is missing expected keys, or when <code>initialize_project()</code> cannot create the required <code>.attune</code> subdirectories.</li>
+<li><strong>Handlers take kwargs.</strong> <code>def handler(**context)</code>, not
+<code>def handler(context)</code>.</li>
+<li><strong><code>fire</code> and <code>execute</code> are async; <code>fire_sync</code> is sync.</strong></li>
+<li><strong>Priority + matcher decide what runs.</strong> A <code>matcher</code> can exclude a
+handler even for the right event.</li>
 </ul>
-<h2>Where errors originate</h2>
-<p>The following functions are the most common raise sites. The symptom you observe upstream — a hook silently not firing, a <code>fire()</code> call returning no results, or a script handler crashing — usually traces back to one of these:</p>
-<ul>
-<li><code>HookConfig.from_yaml()</code> — fails fast if the YAML path does not exist or the file does not parse into a valid <code>HookConfig</code>.</li>
-<li><code>HookExecutor.execute()</code> / <code>HookExecutorSync.execute()</code> — fails if the <code>HookDefinition</code> requests a Python handler that is absent from <code>python_handlers</code>.</li>
-<li><code>HookRegistry.fire()</code> / <code>HookRegistry.fire_sync()</code> — propagates executor errors for every matching rule; inspect <code>get_execution_log()</code> immediately after a failed <code>fire()</code> call to see which rules ran and which did not.</li>
-<li><code>run_evaluate_session()</code> / <code>apply_learned_patterns()</code> — fail when the <code>context</code> dict passed by the hook lifecycle is incomplete.</li>
-<li><code>initialize_project()</code> — fails with a filesystem error if the process lacks write permission to create directories under <code>INIT_DIRECTORIES</code> (<code>.attune</code>, <code>.attune/sessions</code>, etc.).</li>
-</ul>
-<h2>How to diagnose</h2>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Read the execution log first.</strong> Call <code>HookRegistry.get_execution_log()</code> (optionally with <code>event_filter</code>) immediately after a failed <code>fire()</code> or <code>fire_sync()</code> call. The log shows which <code>HookRule</code> and <code>HookDefinition</code> were attempted and where execution stopped.</p>
-</li>
-<li>
-<p><strong>Check <code>get_stats()</code> for silent failures.</strong> If <code>fire()</code> returns an empty list when you expected results, call <code>HookRegistry.get_stats()</code> to verify that hooks are registered for the event and that the <code>HookMatcher.matches()</code> call is returning <code>True</code> for your context.</p>
-</li>
-<li>
-<p><strong>Validate your <code>HookConfig</code> in isolation.</strong> Load the config with <code>HookConfig.from_yaml()</code> and call <code>get_hooks_for_event()</code> for the relevant <code>HookEvent</code> before wiring it into a <code>HookRegistry</code>. This confirms the YAML parsed correctly and the right rules are present.</p>
-</li>
-<li>
-<p><strong>Verify Python handler registration.</strong> If the error message indicates an unresolved handler, confirm that every handler name referenced in your <code>HookDefinition</code> objects appears as a key in the <code>python_handlers</code> dict you passed to <code>HookExecutor</code> or <code>HookExecutorSync</code>.</p>
-</li>
-<li>
-<p><strong>Check context keys for script hooks.</strong> <code>run_evaluate_session()</code>, <code>apply_learned_patterns()</code>, and <code>run_pre_compact()</code> all receive a <code>context: dict[str, Any]</code>. Print the context dict at the call site and compare it against the keys the script expects — missing keys are the most common cause of <code>KeyError</code> in these handlers.</p>
-</li>
+<li>Did it fire? <code>registry.get_matching_hooks(event, context)</code>.</li>
+<li>Handler signature — <code>**context</code>?</li>
+<li>Async-not-awaited? Use <code>fire_sync</code> or <code>await</code>.</li>
+<li>For config hooks, <code>HookConfig.get_hooks_for_event(event)</code>.</li>
 </ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/hooks/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>hooks</code>, <code>webhooks</code>, <code>events</code>, <code>automation</code></p>
 
   </article>
   <footer>

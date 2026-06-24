@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Hooks: What to Watch Out For — warning</title>
-  <meta name="description" content="`HookRegistry` exposes two dispatch methods: `fire` and `fire_sync`. Calling `fire_sync` from within an async context — or calling `fire` where the event loop is not running — produces silent failures" />
-  <meta property="og:title" content="Hooks: What to Watch Out For — warning" />
-  <meta property="og:description" content="`HookRegistry` exposes two dispatch methods: `fire` and `fire_sync`. Calling `fire_sync` from within an async context — or calling `fire` where the event loop is not running — produces silent failures" />
+  <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `handler() got an unexpected keyword argument` | handler written as `def handler(context)` | context is unpacked as kwargs — use `def handler(*" />
+  <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `handler() got an unexpected keyword argument` | handler written as `def handler(context)` | context is unpacked as kwargs — use `def handler(*" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/warning" />
   <style>
@@ -272,26 +272,59 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Hooks: What to Watch Out For</h1>
-<h2>Mixing <code>fire</code> and <code>fire_sync</code> in the same call path</h2>
-<p><code>HookRegistry</code> exposes two dispatch methods: <code>fire</code> and <code>fire_sync</code>. Calling <code>fire_sync</code> from within an async context — or calling <code>fire</code> where the event loop is not running — produces silent failures or deadlocks rather than obvious errors. Decide on one execution model per call path and use <code>HookExecutorSync</code> only when you are certain there is no surrounding event loop.</p>
-<h2>Priority ordering silently drops hooks when a matcher rejects them</h2>
-<p><code>HookRegistry.register</code> accepts a <code>priority</code> parameter, and <code>get_matching_hooks</code> returns only hooks whose <code>HookMatcher.matches</code> returns <code>True</code> for the current context. A hook registered at high priority but with a narrow matcher will never appear in the results without any error. Before assuming a hook is broken, call <code>get_matching_hooks</code> directly with your context dict to verify that the matcher is satisfied.</p>
-<h2><code>HookConfig.from_yaml</code> does not validate handler names at load time</h2>
-<p>When you load a configuration with <code>HookConfig.from_yaml</code>, Python-handler names referenced in the YAML are not resolved until <code>HookExecutor.execute</code> runs. If you pass a <code>python_handlers</code> dict to <code>HookExecutor</code> that is missing a name defined in the config, the failure occurs at execution time — potentially mid-session. To catch mismatches early, instantiate <code>HookExecutor(python_handlers=your_map)</code> and do a dry-run <code>execute</code> call during startup or in your test suite.</p>
-<h2>Execution log grows unbounded without explicit management</h2>
-<p><code>HookRegistry.get_execution_log</code> defaults to returning the last 100 entries, but the underlying log is not automatically capped. In long-running sessions with frequent events, memory usage grows steadily. Call <code>clear_execution_log</code> at session boundaries (for example, after <code>run_pre_compact</code> completes) or use the <code>limit</code> and <code>event_filter</code> parameters to keep queries focused.</p>
-<h2><code>apply_learned_patterns</code> injects context that affects subsequent hook evaluation</h2>
-<p><code>apply_learned_patterns</code> generates a context-injection string from learned patterns. If you call this before firing hooks that read from the same context dict, the injected content can change which hooks <code>HookMatcher.matches</code> selects. Run <code>apply_learned_patterns</code> after hook dispatch if your matchers depend on unmodified session context, or make a copy of the context dict before injection.</p>
-<h2><code>validate_bash_command</code> and <code>validate_file_path</code> return a tuple, not an exception</h2>
-<p><code>scripts.security_guard.validate_bash_command</code> and <code>validate_file_path</code> both return <code>tuple[bool, str]</code>. Callers that check only the boolean and discard the message string lose the reason a command was rejected. Always unpack and log or surface the second element — particularly in hooks that run <code>validate_bash_command</code> against tool inputs, where the rejection reason is the actionable signal.</p>
-<h2>How to reduce risk</h2>
+<h1>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>handler() got an unexpected keyword argument</code></td>
+<td>handler written as <code>def handler(context)</code></td>
+<td>context is unpacked as kwargs — use <code>def handler(**context)</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>RuntimeWarning: coroutine 'fire' was never awaited</code></td>
+<td><code>fire</code>/<code>execute</code> called without <code>await</code></td>
+<td>use <code>fire_sync</code>, or <code>await</code> the async ones</td>
+<td>high</td>
+</tr>
+<tr>
+<td>Hook never fires</td>
+<td>wrong <code>HookEvent</code>, or a <code>matcher</code> excludes the context</td>
+<td>check the event; inspect <code>get_matching_hooks(event, context)</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>ValidationError</code> building a <code>HookDefinition</code></td>
+<td><code>timeout</code> outside 1–300, or missing <code>command</code></td>
+<td>supply a valid <code>command</code> and <code>timeout</code></td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><strong>Verify matcher behavior before debugging executor behavior.</strong> Call <code>registry.get_matching_hooks(event, context)</code> to confirm which hooks are selected before investigating why a hook appears not to run.</li>
-<li><strong>Audit your <code>python_handlers</code> map against your YAML config at startup.</strong> A one-time check when you construct <code>HookExecutor</code> prevents silent execution failures later.</li>
-<li><strong>Use <code>get_stats</code> to detect unexpected hook activity.</strong> <code>HookRegistry.get_stats</code> gives you a count-level view of dispatch activity. A count that is higher or lower than expected is the fastest indicator that a matcher or priority setting is wrong.</li>
-<li><strong>Keep context dicts immutable across a single <code>fire</code> call.</strong> Pass a copy if any handler or script (such as <code>apply_learned_patterns</code>) may mutate the dict mid-dispatch.</li>
+<li><strong>Handlers take kwargs.</strong> <code>def handler(**context)</code>, not
+<code>def handler(context)</code>.</li>
+<li><strong><code>fire</code> and <code>execute</code> are async; <code>fire_sync</code> is sync.</strong></li>
+<li><strong>Priority + matcher decide what runs.</strong> A <code>matcher</code> can exclude a
+handler even for the right event.</li>
 </ul>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Did it fire? <code>registry.get_matching_hooks(event, context)</code>.</li>
+<li>Handler signature — <code>**context</code>?</li>
+<li>Async-not-awaited? Use <code>fire_sync</code> or <code>await</code>.</li>
+<li>For config hooks, <code>HookConfig.get_hooks_for_event(event)</code>.</li>
+</ol>
 
   </article>
   <footer>

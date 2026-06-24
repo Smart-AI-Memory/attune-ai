@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot hooks — troubleshooting</title>
-  <meta name="description" content="The hook system fires callbacks at Claude Code lifecycle events. It is built around three collaborating classes: `HookRegistry` (registers and dispatches hooks), `HookExecutor` / `HookExecutorSync` (r" />
-  <meta property="og:title" content="Troubleshoot hooks — troubleshooting" />
-  <meta property="og:description" content="The hook system fires callbacks at Claude Code lifecycle events. It is built around three collaborating classes: `HookRegistry` (registers and dispatches hooks), `HookExecutor` / `HookExecutorSync` (r" />
+  <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `handler() got an unexpected keyword argument` | handler written as `def handler(context)` | context is unpacked as kwargs — use `def handler(*" />
+  <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `handler() got an unexpected keyword argument` | handler written as `def handler(context)` | context is unpacked as kwargs — use `def handler(*" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/troubleshooting" />
   <style>
@@ -272,157 +272,59 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot hooks</h1>
-<h2>Before you start</h2>
-<p>The hook system fires callbacks at Claude Code lifecycle events. It is built around three collaborating classes: <code>HookRegistry</code> (registers and dispatches hooks), <code>HookExecutor</code> / <code>HookExecutorSync</code> (runs a single <code>HookDefinition</code>), and <code>HookConfig</code> (loads rules from YAML and supplies them to the registry). Most problems fall into one of three categories: a hook never fires, a hook fires but produces unexpected output, or a hook fires but raises an error.</p>
-<h2>Symptom table</h2>
+<h1>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>handler() got an unexpected keyword argument</code></td>
+<td>handler written as <code>def handler(context)</code></td>
+<td>context is unpacked as kwargs — use <code>def handler(**context)</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>RuntimeWarning: coroutine 'fire' was never awaited</code></td>
+<td><code>fire</code>/<code>execute</code> called without <code>await</code></td>
+<td>use <code>fire_sync</code>, or <code>await</code> the async ones</td>
+<td>high</td>
+</tr>
 <tr>
 <td>Hook never fires</td>
-<td>Call <code>registry.get_matching_hooks(event, context)</code> — if the list is empty, the <code>HookMatcher</code> condition is not satisfied or the hook was never registered for that <code>HookEvent</code>.</td>
+<td>wrong <code>HookEvent</code>, or a <code>matcher</code> excludes the context</td>
+<td>check the event; inspect <code>get_matching_hooks(event, context)</code></td>
+<td>medium</td>
 </tr>
 <tr>
-<td>Hook fires for the wrong events</td>
-<td>Inspect <code>registry.get_stats()</code> — compare the event counts against what you expect, then review the <code>HookMatcher.matches()</code> logic for the affected rule.</td>
-</tr>
-<tr>
-<td>Hook fires but returns unexpected output</td>
-<td>Call <code>registry.get_execution_log(event_filter=&lt;your_event&gt;)</code> and examine the result dicts returned by <code>HookExecutor.execute()</code>.</td>
-</tr>
-<tr>
-<td>Hook registered via YAML never loads</td>
-<td>Confirm <code>HookConfig.from_yaml(yaml_path)</code> succeeds and that you subsequently called <code>registry.load_config(config)</code>.</td>
-</tr>
-<tr>
-<td>Python handler is never called</td>
-<td>Verify the handler name is a key in the <code>python_handlers</code> dict passed to <code>HookExecutor(python_handlers={...})</code>.</td>
-</tr>
-<tr>
-<td>Intermittent failures</td>
-<td>Check for mutable state outside the handler callable (globals, module-level caches). Confirm that <code>context</code> dicts are not mutated between <code>fire()</code> calls.</td>
-</tr>
-<tr>
-<td><code>fire()</code> hangs or is very slow</td>
-<td>Switch to <code>fire_sync()</code> via <code>HookRegistry.fire_sync()</code> to isolate async overhead. Then check the handler for blocking I/O or unbounded loops.</td>
-</tr>
-<tr>
-<td>Security-guard hook blocks a command unexpectedly</td>
-<td>Call <code>validate_bash_command(command)</code> or <code>validate_file_path(file_path)</code> directly and inspect the returned <code>(bool, str)</code> tuple to see the rejection reason.</td>
+<td><code>ValidationError</code> building a <code>HookDefinition</code></td>
+<td><code>timeout</code> outside 1–300, or missing <code>command</code></td>
+<td>supply a valid <code>command</code> and <code>timeout</code></td>
+<td>medium</td>
 </tr>
 </tbody>
 </table>
-<h2>Diagnosis steps</h2>
-<p>Work through these in order — each step costs more time than the one before it.</p>
-<h3>1. Confirm the hook is registered</h3>
-<pre><code class="language-python">hooks = registry.get_matching_hooks(event, context)
-print(hooks)  # empty list means nothing is registered for this event + context
-</code></pre>
-<p>If the list is empty, either <code>registry.register(event, handler, ...)</code> was never called, or the <code>HookMatcher</code> returned <code>False</code> for the provided <code>context</code>. Add a temporary matcher that always returns <code>True</code> to distinguish the two cases:</p>
-<pre><code class="language-python">class AlwaysMatch:
-    def matches(self, context):
-        return True
-</code></pre>
-<h3>2. Check the execution log</h3>
-<pre><code class="language-python">log = registry.get_execution_log(limit=20, event_filter=your_event)
-for entry in log:
-    print(entry)
-</code></pre>
-<p><code>get_execution_log()</code> returns the most recent executions. An empty log after <code>fire()</code> confirms the hook did not execute at all. Non-empty entries show the result dict from each <code>HookExecutor.execute()</code> call, which includes any errors the handler raised.</p>
-<h3>3. Review registry stats</h3>
-<pre><code class="language-python">stats = registry.get_stats()
-print(stats)
-</code></pre>
-<p><code>get_stats()</code> shows aggregate counts per event. A count of zero for an event you expected to fire points to a registration or dispatch problem rather than an executor problem.</p>
-<h3>4. Fire the hook in isolation</h3>
-<p>Strip the call down to its required arguments and fire directly:</p>
-<pre><code class="language-python">from hooks import HookRegistry, HookConfig, HookEvent
-
-registry = HookRegistry()
-registry.register(HookEvent.YOUR_EVENT, your_handler, description=&quot;debug test&quot;)
-results = registry.fire_sync(HookEvent.YOUR_EVENT, context={&quot;key&quot;: &quot;value&quot;})
-print(results)
-</code></pre>
-<p>Using <code>fire_sync()</code> removes async scheduling from the equation and gives you a synchronous result or a traceback immediately.</p>
-<h3>5. Test the executor in isolation</h3>
-<p>If <code>fire_sync()</code> produces the wrong result, test the executor directly:</p>
-<pre><code class="language-python">from hooks.executor import HookExecutorSync
-
-executor = HookExecutorSync(python_handlers={&quot;my_handler&quot;: your_callable})
-result = executor.execute(hook_definition, context)
-print(result)
-</code></pre>
-<p>This confirms whether the problem is in dispatch (<code>HookRegistry</code>) or execution (<code>HookExecutor</code>).</p>
-<h3>6. Run the related tests</h3>
-<pre><code class="language-bash">pytest -k &quot;hooks&quot; -v
-</code></pre>
-<p>A failing test that covers your path gives you a reproducible baseline and a fixture you can adapt.</p>
-<h2>Common fixes</h2>
-<p><strong>Hook never fires — missing <code>load_config</code> call</strong></p>
-<p>If you loaded rules from YAML, you must pass the config to the registry explicitly:</p>
-<pre><code class="language-python">config = HookConfig.from_yaml(&quot;hooks.yaml&quot;)
-registry = HookRegistry()
-registry.load_config(config)   # required — the registry does not auto-load
-</code></pre>
-<p><strong>Hook never fires — matcher rejects the context</strong></p>
-<p><code>HookMatcher.matches(context)</code> receives the dict you pass to <code>fire()</code>. If a required key is absent or has the wrong value, the hook is silently skipped. Add logging inside <code>matches()</code> or temporarily replace the matcher with one that always returns <code>True</code> to verify.</p>
-<p><strong>Python handler not called — key missing from <code>python_handlers</code></strong></p>
-<p><code>HookExecutor</code> looks up handlers by name in the dict you supply at construction time. If the key is absent, the handler is not called. Confirm the key matches exactly:</p>
-<pre><code class="language-python">executor = HookExecutorSync(python_handlers={&quot;expected_key&quot;: your_callable})
-</code></pre>
-<p><strong>Handler ID lost — cannot unregister</strong></p>
-<p><code>registry.register(...)</code> returns a <code>str</code> handler ID. If you discard it, you cannot call <code>registry.unregister(handler_id)</code> later. Store the ID when you register:</p>
-<pre><code class="language-python">handler_id = registry.register(HookEvent.YOUR_EVENT, your_handler)
-# later:
-registry.unregister(handler_id)
-</code></pre>
-<p><strong>Stale execution log skewing diagnosis</strong></p>
-<p>The log accumulates across calls. Clear it before a focused test run:</p>
-<pre><code class="language-python">registry.clear_execution_log()
-# then reproduce the failure
-</code></pre>
-<p><strong>Dependency or environment drift</strong></p>
-<p>If hooks worked previously without a code change, confirm your environment is consistent:</p>
-<pre><code class="language-bash">pip show &lt;dependency-name&gt;
-</code></pre>
-<p>This is a change outside the hooks feature itself — a dependency upgrade can alter behavior in <code>HookExecutor</code> or in your handler callables.</p>
-<h2>Source files</h2>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/hooks/**</code></li>
+<li><strong>Handlers take kwargs.</strong> <code>def handler(**context)</code>, not
+<code>def handler(context)</code>.</li>
+<li><strong><code>fire</code> and <code>execute</code> are async; <code>fire_sync</code> is sync.</strong></li>
+<li><strong>Priority + matcher decide what runs.</strong> A <code>matcher</code> can exclude a
+handler even for the right event.</li>
 </ul>
-<p><strong>Tags:</strong> <code>hooks</code>, <code>events</code>, <code>automation</code>, <code>HookRegistry</code>, <code>HookExecutor</code>, <code>HookConfig</code></p>
-<h2>Unresolved references</h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Line 72 (code fence)</td>
-<td>error</td>
-<td><code>from hooks import …</code> — module not importable</td>
-</tr>
-<tr>
-<td>Line 87 (code fence)</td>
-<td>error</td>
-<td><code>from hooks.executor import …</code> — module not importable</td>
-</tr>
-</tbody>
-</table>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Did it fire? <code>registry.get_matching_hooks(event, context)</code>.</li>
+<li>Handler signature — <code>**context</code>?</li>
+<li>Async-not-awaited? Use <code>fire_sync</code> or <code>await</code>.</li>
+<li>For config hooks, <code>HookConfig.get_hooks_for_event(event)</code>.</li>
+</ol>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Work with hooks — task</title>
-  <meta name="description" content="Use hooks when you need to run custom handlers in response to Claude Code lifecycle events — intercepting activity before or after tool execution, session evaluation, or context compaction." />
-  <meta property="og:title" content="Work with hooks — task" />
-  <meta property="og:description" content="Use hooks when you need to run custom handlers in response to Claude Code lifecycle events — intercepting activity before or after tool execution, session evaluation, or context compaction." />
+  <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — task</title>
+  <meta name="description" content="```python from attune.hooks import HookRegistry, HookEvent" />
+  <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — task" />
+  <meta property="og:description" content="```python from attune.hooks import HookRegistry, HookEvent" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/task" />
   <style>
@@ -272,109 +272,53 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Work with hooks</h1>
-<p>Use hooks when you need to run custom handlers in response to Claude Code lifecycle events — intercepting activity before or after tool execution, session evaluation, or context compaction.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li><code>attune.hooks</code> installed and importable in your project</li>
-<li>A <code>HookEvent</code> value that corresponds to the lifecycle point you want to intercept</li>
-</ul>
-<h2>Register a hook programmatically</h2>
-<ol>
-<li>
-<p>Import <code>HookEvent</code> and <code>HookRegistry</code> from <code>attune.hooks</code>:</p>
-<pre><code class="language-python">from attune.hooks import HookEvent, HookRegistry
+<h1>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config</h1>
+<h2>Tasks</h2>
+<h3>Register and fire an in-process hook</h3>
+<pre><code class="language-python">from attune.hooks import HookRegistry, HookEvent
+
+registry = HookRegistry()
+
+
+def guard(**context) -&gt; dict:
+    return {&quot;blocked&quot;: context.get(&quot;tool_name&quot;) == &quot;Bash&quot;}
+
+
+hook_id = registry.register(HookEvent.PRE_TOOL_USE, guard, priority=10)
+results = registry.fire_sync(HookEvent.PRE_TOOL_USE, {&quot;tool_name&quot;: &quot;Bash&quot;})
+print(hook_id, results[0][&quot;success&quot;], results[0][&quot;output&quot;])
 </code></pre>
-</li>
-<li>
-<p>Create a <code>HookRegistry</code> instance:</p>
-<pre><code class="language-python">registry = HookRegistry()
+<p><strong>Verify:</strong> <code>register(...)</code> returns a hook id (a <code>str</code>). <code>fire_sync</code>
+runs every matching handler — calling each as <code>handler(**context)</code> — and
+returns a list of result dicts (a success record carries <code>event</code>,
+<code>hook</code>, <code>description</code>, <code>success</code>, <code>output</code>, <code>error</code>, <code>duration_ms</code>; an
+error record is a subset). <code>fire(...)</code> is the async variant.</p>
+<h3>Load hooks from YAML config</h3>
+<p><strong>Goal:</strong> declare hooks in a file instead of code.</p>
+<p><strong>Steps:</strong> <code>HookConfig.from_yaml(path)</code> returns a <code>HookConfig</code>;
+<code>get_hooks_for_event(event)</code> lists the <code>HookRule</code>s for an event. Each
+rule's <code>hooks</code> are <code>HookDefinition</code>s an executor can run.</p>
+<pre><code class="language-python">from attune.hooks import HookConfig, HookEvent
+
+config = HookConfig.from_yaml(&quot;hooks.yaml&quot;)
+for rule in config.get_hooks_for_event(HookEvent.PRE_TOOL_USE):
+    print(rule.description, rule.priority)
 </code></pre>
-</li>
-<li>
-<p>Write a handler function that accepts a <code>context</code> dict and returns a dict:</p>
-<pre><code class="language-python">def my_handler(context: dict) -&gt; dict:
-    # your logic here
-    return {}
+<p><strong>Verify:</strong> <code>from_yaml</code> is a constructor returning <code>HookConfig</code>;
+<code>get_hooks_for_event</code> returns <code>list[HookRule]</code>.</p>
+<h3>Execute a configured hook</h3>
+<pre><code class="language-python">import asyncio
+
+from attune.hooks import HookExecutor, HookDefinition
+from attune.hooks.config import HookType
+
+hook = HookDefinition(type=HookType.COMMAND, command=&quot;echo hi&quot;, timeout=5)
+executor = HookExecutor()
+result = asyncio.run(executor.execute(hook, {&quot;tool_name&quot;: &quot;Bash&quot;}))
+print(result)
 </code></pre>
-</li>
-<li>
-<p>Call <code>registry.register()</code> to bind the handler to an event. Store the returned handler ID — you need it to remove the hook later:</p>
-<pre><code class="language-python">handler_id = registry.register(
-    event=HookEvent.&lt;event&gt;,
-    handler=my_handler,
-    description=&quot;Describe what this hook does&quot;,
-    priority=0,
-)
-</code></pre>
-<p>Pass a <code>HookMatcher</code> to the <code>matcher</code> parameter if you want the hook to fire only when the context meets a specific condition.</p>
-</li>
-<li>
-<p>Fire the event with a context dict. Use <code>fire_sync()</code> in synchronous code or <code>fire()</code> in async code:</p>
-<pre><code class="language-python">results = registry.fire_sync(HookEvent.&lt;event&gt;, context={&quot;key&quot;: &quot;value&quot;})
-</code></pre>
-<p>Both methods return a list of result dicts — one per matched handler.</p>
-</li>
-</ol>
-<h2>Verify hook execution</h2>
-<p>Call <code>registry.get_execution_log()</code> after firing the event. Pass <code>event_filter</code> to narrow the results to a single event type:</p>
-<pre><code class="language-python">log = registry.get_execution_log(limit=10, event_filter=HookEvent.&lt;event&gt;)
-</code></pre>
-<p>Then call <code>registry.get_stats()</code> to check aggregate invocation counts across all events. If the count for your event increased and your handler's entry appears in <code>log</code>, the hook fired correctly.</p>
-<h2>Load hook configuration from YAML</h2>
-<p>Use <code>HookConfig.from_yaml()</code> when you manage hooks as configuration files rather than registering handlers in code.</p>
-<ol>
-<li>
-<p>Import <code>HookConfig</code> and <code>HookRegistry</code> from <code>attune.hooks</code>:</p>
-<pre><code class="language-python">from attune.hooks import HookConfig, HookRegistry
-</code></pre>
-</li>
-<li>
-<p>Load the config file:</p>
-<pre><code class="language-python">config = HookConfig.from_yaml(&quot;path/to/hooks.yaml&quot;)
-</code></pre>
-</li>
-<li>
-<p>Pass the config to the registry:</p>
-<pre><code class="language-python">registry = HookRegistry(config=config)
-</code></pre>
-<p>To apply the config to an existing registry, call <code>registry.load_config(config)</code> instead.</p>
-</li>
-<li>
-<p>Fire events normally. The registry matches the rules defined in the YAML and executes them automatically.</p>
-</li>
-<li>
-<p>To persist a modified config back to disk, call:</p>
-<pre><code class="language-python">config.to_yaml(&quot;path/to/hooks.yaml&quot;)
-</code></pre>
-</li>
-</ol>
-<h2>Remove a hook</h2>
-<p>Call <code>registry.unregister()</code> with the handler ID that <code>register()</code> returned. It returns <code>True</code> when the hook is successfully removed:</p>
-<pre><code class="language-python">removed = registry.unregister(handler_id)
-</code></pre>
-<p>If <code>removed</code> is <code>False</code>, the handler ID was not found in the registry — confirm you are using the ID returned by the original <code>register()</code> call.</p>
-<h2>Unresolved references</h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Line 18 (prose)</td>
-<td>error</td>
-<td><code>attune.hooks</code> — dotted path not resolvable</td>
-</tr>
-</tbody>
-</table>
+<p><strong>Verify:</strong> <code>HookExecutor.execute(hook, context)</code> is <strong>async</strong> — await
+it; it returns a result dict.</p>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Note: hooks — note</title>
-  <meta name="description" content="The `hooks` package manages lifecycle event dispatch for Attune AI. It exposes five public names at the package boundary: `HookConfig`, `HookDefinition`, `HookEvent`, `HookExecutor`, and `HookRegistry" />
-  <meta property="og:title" content="Note: hooks — note" />
-  <meta property="og:description" content="The `hooks` package manages lifecycle event dispatch for Attune AI. It exposes five public names at the package boundary: `HookConfig`, `HookDefinition`, `HookEvent`, `HookExecutor`, and `HookRegistry" />
+  <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — note</title>
+  <meta name="description" content="`attune.hooks` is an **event system**: it lets code (and config) react to lifecycle events — before/after a tool runs, at session start/end, around compaction, and on stop. The public surface, exporte" />
+  <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — note" />
+  <meta property="og:description" content="`attune.hooks` is an **event system**: it lets code (and config) react to lifecycle events — before/after a tool runs, at session start/end, around compaction, and on stop. The public surface, exporte" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/note" />
   <style>
@@ -272,25 +272,66 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Note: hooks</h1>
-<p>The <code>hooks</code> package manages lifecycle event dispatch for Attune AI. It exposes five public names at the package boundary: <code>HookConfig</code>, <code>HookDefinition</code>, <code>HookEvent</code>, <code>HookExecutor</code>, and <code>HookRegistry</code>.</p>
-<h2>How the package is structured</h2>
-<p>Three modules divide the responsibilities:</p>
+<h1>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config</h1>
+<h2>Overview</h2>
+<p><code>attune.hooks</code> is an <strong>event system</strong>: it lets code (and config) react
+to lifecycle events — before/after a tool runs, at session start/end,
+around compaction, and on stop. The public surface, exported from
+<code>attune.hooks</code>, is five symbols:</p>
 <ul>
-<li>
-<p><strong><code>hooks.config</code></strong> defines the data model: <code>HookEvent</code> (event types tied to the Claude Code lifecycle), <code>HookType</code>, <code>HookDefinition</code>, <code>HookMatcher</code>, <code>HookRule</code>, and <code>HookConfig</code>. <code>HookConfig</code> is the top-level container; you load it from a YAML file with <code>HookConfig.from_yaml()</code> and query it with <code>get_hooks_for_event()</code>.</p>
-</li>
-<li>
-<p><strong><code>hooks.executor</code></strong> runs hook actions. <code>HookExecutor.execute()</code> accepts a <code>HookDefinition</code> and a context dict and returns a result dict. <code>HookExecutorSync</code> wraps the same interface for call sites that cannot use async code.</p>
-</li>
-<li>
-<p><strong><code>hooks.registry</code></strong> is the dispatch layer. <code>HookRegistry</code> holds all registered hooks, matches them against incoming events via <code>get_matching_hooks()</code>, and fires them with <code>fire()</code> or <code>fire_sync()</code>. It also tracks execution history through <code>get_execution_log()</code> and exposes aggregate metrics through <code>get_stats()</code>.</p>
-</li>
+<li><strong><code>HookEvent</code></strong> — the events you can hook (<code>PRE_TOOL_USE</code>,
+<code>POST_TOOL_USE</code>, <code>SESSION_START</code>, <code>SESSION_END</code>, <code>PRE_COMPACT</code>,
+<code>POST_COMPACT</code>, <code>PRE_COMMAND</code>, <code>POST_COMMAND</code>, <code>STOP</code>).</li>
+<li><strong><code>HookRegistry</code></strong> — register Python handlers for events and fire
+them in-process.</li>
+<li><strong><code>HookExecutor</code></strong> — run a configured <code>HookDefinition</code> (command,
+Python, or webhook).</li>
+<li><strong><code>HookConfig</code></strong> / <strong><code>HookDefinition</code></strong> — the declarative,
+config-driven hooks (loaded from YAML).</li>
 </ul>
-<h2>Relationship to scripts</h2>
-<p>The <code>scripts</code> package contains Python callables that plug into the registry as handlers. Examples include <code>run_evaluate_session</code>, <code>run_pre_compact</code>, <code>check_init</code>, and <code>suggest_compact</code>. You pass these callables to <code>HookRegistry.register()</code> as the <code>handler</code> argument. The registry assigns each registration a string ID that <code>unregister()</code> accepts later.</p>
-<h2>Execution log</h2>
-<p><code>HookRegistry.get_execution_log()</code> returns up to 100 entries by default. Pass <code>event_filter</code> to narrow results to a specific <code>HookEvent</code>. Call <code>clear_execution_log()</code> to reset it between test runs or sessions.</p>
+<p>The plugin also ships concrete hook scripts under
+<code>attune/hooks/scripts/</code> (e.g. <code>security_guard</code>, <code>worktree_path_guard</code>,
+<code>lessons_reminder</code>) — these are the hooks Claude Code actually runs.</p>
+<h2>Concepts</h2>
+<h3><code>HookEvent</code></h3>
+<p>The lifecycle events. Their <strong>values are the Claude Code event names</strong> —
+e.g. <code>HookEvent.PRE_TOOL_USE.value == &quot;PreToolUse&quot;</code> — so the same enum
+labels in-process registration and the Claude Code hook contract.</p>
+<h3><code>HookRegistry</code> — in-process handlers</h3>
+<p><code>HookRegistry(config=None)</code> is the programmatic surface.
+<code>register(event, handler, description=&quot;&quot;, matcher=None, priority=0)</code>
+adds a handler and returns a hook id. <strong>Handlers receive the context
+dict unpacked as keyword arguments</strong> — write <code>def handler(**context)</code>,
+not <code>def handler(context)</code>. Fire with <code>fire(event, context=None)</code>
+(async) or <code>fire_sync(event, context=None)</code> (sync); both return a list
+of per-hook result dicts — a success record carries <code>event</code>, <code>hook</code>,
+<code>description</code>, <code>success</code>, <code>output</code>, <code>error</code>, <code>duration_ms</code>; an error
+record is a subset (<code>event</code>, <code>hook</code>, <code>success</code>, <code>error</code>). <code>get_matching_hooks</code>, <code>unregister</code>,
+<code>get_execution_log</code>, <code>get_stats</code>, and <code>load_config</code> round it out.</p>
+<h3><code>HookExecutor</code> and <code>HookDefinition</code></h3>
+<p><code>HookDefinition</code> (a pydantic model) describes a configured hook: <code>type</code>
+(<code>HookType.COMMAND</code> / <code>PYTHON</code> / <code>WEBHOOK</code>, default <code>PYTHON</code>),
+<code>command</code>, <code>description</code>, <code>timeout</code> (1–300 s, default 30),
+<code>async_execution</code> (default <code>False</code>), <code>on_error</code> (default <code>&quot;log&quot;</code>).
+<code>HookExecutor(python_handlers=None).execute(hook, context)</code> (async) runs
+one.</p>
+<h3><code>HookConfig</code> — declarative, config-driven hooks</h3>
+<p><code>HookConfig</code> (pydantic) holds the declarative rules: <code>hooks</code> (a dict of
+event → list of <code>HookRule</code>), plus <code>enabled</code>, <code>log_executions</code>, and
+<code>default_timeout</code>. Load it with <code>HookConfig.from_yaml(yaml_path)</code>, build
+it with <code>add_hook(event, hook, matcher=None, priority=0)</code>, and query it
+with <code>get_hooks_for_event(event)</code>. A <code>HookRule</code> carries a <code>matcher</code>, its
+<code>hooks</code>, <code>enabled</code>, <code>priority</code>, and <code>description</code>.</p>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong><code>def handler(**context)</code>.</strong> The single most common mistake is a
+positional <code>context</code> parameter.</li>
+<li><strong><code>fire_sync</code> for synchronous code.</strong> <code>fire</code> / <code>execute</code> are async.</li>
+<li><strong><code>HookEvent</code> values are the Claude Code names.</strong> One enum spans the
+in-process and Claude Code contracts.</li>
+<li><strong>Declarative vs imperative.</strong> <code>HookConfig</code>/<code>from_yaml</code> for config;
+<code>HookRegistry</code> for embedded Python.</li>
+</ul>
 
   </article>
   <footer>

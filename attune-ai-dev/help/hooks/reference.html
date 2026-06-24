@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Hooks reference — reference</title>
-  <meta name="description" content="Use the hooks API to attach custom behavior to Claude Code lifecycle events. You can define hooks declaratively in YAML via `HookConfig`, or register Python callable handlers programmatically through " />
-  <meta property="og:title" content="Hooks reference — reference" />
-  <meta property="og:description" content="Use the hooks API to attach custom behavior to Claude Code lifecycle events. You can define hooks declaratively in YAML via `HookConfig`, or register Python callable handlers programmatically through " />
+  <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — reference</title>
+  <meta name="description" content="| Symbol | Kind | Purpose | |--------|------|---------| | `HookEvent` | enum | `PRE_TOOL_USE`/`POST_TOOL_USE`/`SESSION_START`/`SESSION_END`/`PRE_COMPACT`/`POST_COMPACT`/`PRE_COMMAND`/`POST_COMMAND`/`S" />
+  <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — reference" />
+  <meta property="og:description" content="| Symbol | Kind | Purpose | |--------|------|---------| | `HookEvent` | enum | `PRE_TOOL_USE`/`POST_TOOL_USE`/`SESSION_START`/`SESSION_END`/`PRE_COMPACT`/`POST_COMPACT`/`PRE_COMMAND`/`POST_COMMAND`/`S" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/reference" />
   <style>
@@ -272,402 +272,54 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Hooks reference</h1>
-<p>Use the hooks API to attach custom behavior to Claude Code lifecycle events. You can define hooks declaratively in YAML via <code>HookConfig</code>, or register Python callable handlers programmatically through <code>HookRegistry</code>, then fire them synchronously or asynchronously against a runtime context dict. The <code>hooks.scripts</code> package ships ready-to-use scripts for security validation, context compaction, session learning, telemetry recording, and first-time project setup.</p>
-<h2>Classes</h2>
+<h1>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config</h1>
+<h2>Reference</h2>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
-<th>File</th>
+<th>Symbol</th>
+<th>Kind</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>HookEvent</code></td>
-<td>Hook event types matching Claude Code lifecycle.</td>
-<td><code>src/attune/hooks/config.py</code></td>
+<td>enum</td>
+<td><code>PRE_TOOL_USE</code>/<code>POST_TOOL_USE</code>/<code>SESSION_START</code>/<code>SESSION_END</code>/<code>PRE_COMPACT</code>/<code>POST_COMPACT</code>/<code>PRE_COMMAND</code>/<code>POST_COMMAND</code>/<code>STOP</code>; values are Claude Code event names.</td>
 </tr>
 <tr>
-<td><code>HookType</code></td>
-<td>Type of hook action.</td>
-<td><code>src/attune/hooks/config.py</code></td>
+<td><code>HookRegistry(config=None)</code></td>
+<td>class</td>
+<td><code>register(event, handler, description=&quot;&quot;, matcher=None, priority=0) -&gt; str</code>, <code>fire</code> (async) / <code>fire_sync</code>, <code>get_matching_hooks</code>, <code>unregister</code>, <code>get_execution_log</code>, <code>get_stats</code>, <code>load_config</code>.</td>
 </tr>
 <tr>
-<td><code>HookDefinition</code></td>
-<td>Definition of a single hook action.</td>
-<td><code>src/attune/hooks/config.py</code></td>
+<td><code>HookExecutor(python_handlers=None)</code></td>
+<td>class</td>
+<td><code>execute(hook, context)</code> — <strong>async</strong>.</td>
 </tr>
 <tr>
-<td><code>HookMatcher</code></td>
-<td>Evaluates context to decide whether a hook should fire.</td>
-<td><code>src/attune/hooks/config.py</code></td>
+<td><code>HookDefinition(type=HookType.PYTHON, command, description=&quot;&quot;, timeout=30, async_execution=False, on_error=&quot;log&quot;)</code></td>
+<td>pydantic model</td>
+<td>A configured hook.</td>
 </tr>
 <tr>
-<td><code>HookRule</code></td>
-<td>A complete hook rule with a matcher and its associated actions.</td>
-<td><code>src/attune/hooks/config.py</code></td>
+<td><code>HookConfig(hooks={}, enabled=True, log_executions=True, default_timeout=30)</code></td>
+<td>pydantic model</td>
+<td><code>from_yaml(path)</code>, <code>add_hook(event, hook, matcher=None, priority=0)</code>, <code>get_hooks_for_event(event)</code>, <code>to_yaml</code>.</td>
 </tr>
 <tr>
-<td><code>HookConfig</code></td>
-<td>Complete hook configuration for an Empathy session.</td>
-<td><code>src/attune/hooks/config.py</code></td>
+<td><code>HookType</code> (<code>attune.hooks.config</code>)</td>
+<td>enum</td>
+<td><code>COMMAND</code> / <code>PYTHON</code> / <code>WEBHOOK</code>.</td>
 </tr>
 <tr>
-<td><code>HookExecutor</code></td>
-<td>Runs hook actions asynchronously.</td>
-<td><code>src/attune/hooks/executor.py</code></td>
-</tr>
-<tr>
-<td><code>HookExecutorSync</code></td>
-<td>Synchronous wrapper for <code>HookExecutor</code>.</td>
-<td><code>src/attune/hooks/executor.py</code></td>
-</tr>
-<tr>
-<td><code>HookRegistry</code></td>
-<td>Central registry for hook management and dispatch.</td>
-<td><code>src/attune/hooks/registry.py</code></td>
+<td><code>HookRule</code> (<code>attune.hooks.config</code>)</td>
+<td>pydantic model</td>
+<td><code>matcher</code>, <code>hooks</code>, <code>enabled</code>, <code>priority</code>, <code>description</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2>Functions</h2>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-<th>File</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>is_sdk_subprocess</code></td>
-<td>—</td>
-<td><code>bool</code></td>
-<td>Returns <code>True</code> when running inside an SDK-spawned <code>claude</code> subprocess.</td>
-<td><code>src/attune/hooks/scripts/_sdk_gate.py</code></td>
-</tr>
-<tr>
-<td><code>exit_if_sdk_subprocess</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>Exits with code 0 and produces no output when inside an SDK subprocess session.</td>
-<td><code>src/attune/hooks/scripts/_sdk_gate.py</code></td>
-</tr>
-<tr>
-<td><code>run_evaluate_session</code></td>
-<td><code>context: dict[str, Any]</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Evaluates a session for learning potential.</td>
-<td><code>src/attune/hooks/scripts/evaluate_session.py</code></td>
-</tr>
-<tr>
-<td><code>get_learning_summary</code></td>
-<td><code>context: dict[str, Any]</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Returns the learning summary for the current user.</td>
-<td><code>src/attune/hooks/scripts/evaluate_session.py</code></td>
-</tr>
-<tr>
-<td><code>apply_learned_patterns</code></td>
-<td><code>context: dict[str, Any]</code></td>
-<td><code>str</code></td>
-<td>Generates a context-injection string from learned patterns.</td>
-<td><code>src/attune/hooks/scripts/evaluate_session.py</code></td>
-</tr>
-<tr>
-<td><code>get_project_root</code></td>
-<td><code>**context: Any</code></td>
-<td><code>Path</code></td>
-<td>Returns the project root directory.</td>
-<td><code>src/attune/hooks/scripts/first_time_init.py</code></td>
-</tr>
-<tr>
-<td><code>is_initialized</code></td>
-<td><code>project_root: Path</code></td>
-<td><code>bool</code></td>
-<td>Returns <code>True</code> if Attune AI is initialized in the given project root.</td>
-<td><code>src/attune/hooks/scripts/first_time_init.py</code></td>
-</tr>
-<tr>
-<td><code>get_never_ask_file</code></td>
-<td><code>project_root: Path</code></td>
-<td><code>Path</code></td>
-<td>Returns the path to the 'never ask again' marker file.</td>
-<td><code>src/attune/hooks/scripts/first_time_init.py</code></td>
-</tr>
-<tr>
-<td><code>should_skip_init</code></td>
-<td><code>project_root: Path</code></td>
-<td><code>bool</code></td>
-<td>Returns <code>True</code> if the user previously chose 'never ask again'.</td>
-<td><code>src/attune/hooks/scripts/first_time_init.py</code></td>
-</tr>
-<tr>
-<td><code>mark_never_ask</code></td>
-<td><code>project_root: Path</code></td>
-<td><code>None</code></td>
-<td>Writes the 'never ask again' marker to suppress future init prompts.</td>
-<td><code>src/attune/hooks/scripts/first_time_init.py</code></td>
-</tr>
-<tr>
-<td><code>initialize_project</code></td>
-<td><code>project_root: Path</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Sets up the Attune AI directory structure under the project root.</td>
-<td><code>src/attune/hooks/scripts/first_time_init.py</code></td>
-</tr>
-<tr>
-<td><code>check_init</code></td>
-<td><code>**context: Any</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Returns an initialization prompt if Attune AI is not yet set up in the project.</td>
-<td><code>src/attune/hooks/scripts/first_time_init.py</code></td>
-</tr>
-<tr>
-<td><code>handle_init_response</code></td>
-<td><code>action: str, **context: Any</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Processes the user's response to the initialization prompt.</td>
-<td><code>src/attune/hooks/scripts/first_time_init.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td><code>**context: Any</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Entry point for the first-time initialization hook.</td>
-<td><code>src/attune/hooks/scripts/first_time_init.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>Reads a tool result from stdin and formats Python files.</td>
-<td><code>src/attune/hooks/scripts/format_on_save.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>int</code></td>
-<td>—</td>
-<td><code>src/attune/hooks/scripts/help_freshness_nudge.py</code></td>
-</tr>
-<tr>
-<td><code>already_reminded</code></td>
-<td>—</td>
-<td><code>bool</code></td>
-<td>Returns <code>True</code> if the lessons reminder already fired in this session.</td>
-<td><code>src/attune/hooks/scripts/lessons_reminder.py</code></td>
-</tr>
-<tr>
-<td><code>mark_reminded</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>Writes the sentinel file to prevent repeat reminders in this session.</td>
-<td><code>src/attune/hooks/scripts/lessons_reminder.py</code></td>
-</tr>
-<tr>
-<td><code>has_session_work</code></td>
-<td>—</td>
-<td><code>bool</code></td>
-<td>Returns <code>True</code> if this session produced git commits or file edits.</td>
-<td><code>src/attune/hooks/scripts/lessons_reminder.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>int</code></td>
-<td>Checks whether to print a lessons reminder and prints it.</td>
-<td><code>src/attune/hooks/scripts/lessons_reminder.py</code></td>
-</tr>
-<tr>
-<td><code>run_pre_compact</code></td>
-<td><code>context: dict[str, Any]</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Saves collaboration state before context compaction.</td>
-<td><code>src/attune/hooks/scripts/pre_compact.py</code></td>
-</tr>
-<tr>
-<td><code>generate_compaction_summary</code></td>
-<td><code>collaboration_state: Any, include_patterns: bool = True, include_history: bool = False</code></td>
-<td><code>str</code></td>
-<td>Generates a summary string for inclusion in the compacted context.</td>
-<td><code>src/attune/hooks/scripts/pre_compact.py</code></td>
-</tr>
-<tr>
-<td><code>validate_bash_command</code></td>
-<td><code>command: str</code></td>
-<td><code>tuple[bool, str]</code></td>
-<td>Checks a Bash command against security policies; returns <code>(valid, message)</code>.</td>
-<td><code>src/attune/hooks/scripts/security_guard.py</code></td>
-</tr>
-<tr>
-<td><code>validate_file_path</code></td>
-<td><code>file_path: str</code></td>
-<td><code>tuple[bool, str]</code></td>
-<td>Checks a file path against security policies; returns <code>(valid, message)</code>.</td>
-<td><code>src/attune/hooks/scripts/security_guard.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td><code>context: dict[str, Any]</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Validates a tool call against security policies and returns a decision dict.</td>
-<td><code>src/attune/hooks/scripts/security_guard.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>int</code></td>
-<td>Prints the starter-prompt notice if the file exists.</td>
-<td><code>src/attune/hooks/scripts/starter_prompt_nudge.py</code></td>
-</tr>
-<tr>
-<td><code>get_compaction_state_file</code></td>
-<td>—</td>
-<td><code>Path</code></td>
-<td>Returns the path to the compaction tracking state file.</td>
-<td><code>src/attune/hooks/scripts/suggest_compact.py</code></td>
-</tr>
-<tr>
-<td><code>load_compaction_state</code></td>
-<td>—</td>
-<td><code>dict[str, Any]</code></td>
-<td>Loads compaction tracking state from disk.</td>
-<td><code>src/attune/hooks/scripts/suggest_compact.py</code></td>
-</tr>
-<tr>
-<td><code>save_compaction_state</code></td>
-<td><code>state: dict[str, Any]</code></td>
-<td><code>None</code></td>
-<td>Writes compaction tracking state to disk.</td>
-<td><code>src/attune/hooks/scripts/suggest_compact.py</code></td>
-</tr>
-<tr>
-<td><code>should_suggest_compaction</code></td>
-<td><code>state: dict[str, Any], threshold: int = DEFAULT_COMPACT_THRESHOLD, interval: int = DEFAULT_REMINDER_INTERVAL</code></td>
-<td><code>tuple[bool, str]</code></td>
-<td>Returns <code>(True, reason)</code> when compaction should be suggested, <code>(False, '')</code> otherwise.</td>
-<td><code>src/attune/hooks/scripts/suggest_compact.py</code></td>
-</tr>
-<tr>
-<td><code>get_compaction_recommendations</code></td>
-<td><code>context: dict[str, Any]</code></td>
-<td><code>list[str]</code></td>
-<td>Returns a list of compaction recommendations based on the current context.</td>
-<td><code>src/attune/hooks/scripts/suggest_compact.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td><code>**context: Any</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Entry point for the suggest-compact hook.</td>
-<td><code>src/attune/hooks/scripts/suggest_compact.py</code></td>
-</tr>
-<tr>
-<td><code>reset_on_compaction</code></td>
-<td><code>**context: Any</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Resets compaction tracking state after a compaction event.</td>
-<td><code>src/attune/hooks/scripts/suggest_compact.py</code></td>
-</tr>
-<tr>
-<td><code>record_telemetry</code></td>
-<td><code>context: dict[str, Any]</code></td>
-<td><code>None</code></td>
-<td>Records tool usage telemetry from the hook context.</td>
-<td><code>src/attune/hooks/scripts/telemetry_hook.py</code></td>
-</tr>
-<tr>
-<td><code>main</code></td>
-<td><code>context: dict[str, Any]</code></td>
-<td><code>int</code></td>
-<td>Validates the target path against the session's worktree; exits non-zero on mismatch.</td>
-<td><code>src/attune/hooks/scripts/worktree_path_guard.py</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Constants</h2>
-<table>
-<thead>
-<tr>
-<th>Constant</th>
-<th>Type</th>
-<th>Members / Value</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>DEFAULT_CONFIG</code></td>
-<td><code>str</code></td>
-<td>See below</td>
-<td>Default YAML template written to disk during project initialization.</td>
-</tr>
-<tr>
-<td><code>ENFORCEMENT_NAME</code></td>
-<td><code>str</code></td>
-<td><code>'worktree_path_guard'</code></td>
-<td>Name identifier used by the worktree path guard script.</td>
-</tr>
-<tr>
-<td><code>EXPECTED_KINDS</code></td>
-<td><code>set</code></td>
-<td><code>'concept'</code>, <code>'task'</code>, <code>'reference'</code>, <code>'error'</code>, <code>'warning'</code>, <code>'troubleshooting'</code>, <code>'faq'</code>, <code>'quickstart'</code>, <code>'tip'</code>, <code>'note'</code>, <code>'comparison'</code></td>
-<td>Allowed help-content kind identifiers.</td>
-</tr>
-<tr>
-<td><code>INIT_DIRECTORIES</code></td>
-<td><code>list</code></td>
-<td><code>'.attune'</code>, <code>'.attune/compact_states'</code>, <code>'.attune/learned_skills'</code>, <code>'.attune/sessions'</code>, <code>'.attune/patterns'</code></td>
-<td>Directories created under the project root during initialization.</td>
-</tr>
-<tr>
-<td><code>SEARCH_COMMAND_PREFIXES</code></td>
-<td><code>frozenset</code></td>
-<td><code>'grep'</code>, <code>'rg'</code>, <code>'ack'</code>, <code>'ag'</code>, <code>'git grep'</code>, <code>'git log'</code>, <code>'git diff'</code></td>
-<td>Shell command prefixes the security guard treats as read-only searches.</td>
-</tr>
-<tr>
-<td><code>SYSTEM_DIRECTORIES</code></td>
-<td><code>frozenset</code></td>
-<td><code>'/etc'</code>, <code>'/sys'</code>, <code>'/proc'</code>, <code>'/dev'</code>, <code>'/boot'</code>, <code>'/sbin'</code>, <code>'/usr/sbin'</code>, <code>'/private/etc'</code>, <code>'/private/var'</code></td>
-<td>System paths the security guard blocks from file writes.</td>
-</tr>
-</tbody>
-</table>
-<h3><code>DEFAULT_CONFIG</code></h3>
-<pre><code class="language-yaml"># Attune AI Configuration
-# Generated: {timestamp}
-
-agent:
-  name: empathy-assistant
-  model_tier: capable
-  empathy_level: 3
-
-hooks:
-  enabled: true
-  log_executions: false
-
-learning:
-  enabled: true
-  auto_evaluate: true
-  quality_threshold: good
-  max_patterns_per_session: 10
-
-context:
-  auto_compact: true
-  token_threshold: 80
-</code></pre>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/hooks/**</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>hooks</code>, <code>webhooks</code>, <code>events</code>, <code>automation</code></p>
 
   </article>
   <footer>
