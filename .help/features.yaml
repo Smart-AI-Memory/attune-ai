@@ -281,16 +281,16 @@ features:
     status: manual
 
   orchestration:
+    # Single-sourced via content/features/orchestration.md (projector).
+    # Scope = the attune.orchestration package: MetaOrchestrator
+    # (planning), AgentTemplate registry + DynamicTeamBuilder (assembly),
+    # ExecutionStrategy/get_strategy (execution), WorkflowComposer.
+    # Overlaps the agents feature (agent factory) — distinct: this is the
+    # team-assembly/agent-template layer, not the factory. Old concept/faq
+    # claimed a public register_strategy (NOT exported) — corrected here.
     description: Dynamic teams, workflow composition, and agent models
-    files:
-      - src/attune/orchestration/**
     tags: [orchestration, teams]
-    doc_paths:
-      - docs/how-to/multi-agent-coordination.md
-      - docs/how-to/auto-chaining.md
-      - docs/tutorials/META_ORCHESTRATION_TUTORIAL.md
-      - docs/reference/multi-agent.md
-    arch_path: docs/architecture/enhanced_escalation_architecture.md
+    status: manual
 
   telemetry:
     # Single-sourced via content/features/telemetry.md (projector).

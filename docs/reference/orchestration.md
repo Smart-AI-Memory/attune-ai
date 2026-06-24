@@ -1,14 +1,4 @@
----
-type: reference
-name: orchestration-reference
-feature: orchestration
-depth: reference
-generated_at: 2026-06-24T04:42:36.420317+00:00
-source_hash: 8eeb348f730d4eaa712d0cf9b78905ce878837e5c821fc161778c91d1d163103
-status: generated
----
-
-# Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines
+# Orchestration
 
 ## Reference
 
@@ -43,3 +33,5 @@ status: generated
 | `ToolEnhancedStrategy` / `PromptCachedSequentialStrategy` / `DelegationChainStrategy` | Exported concrete strategies. |
 | `WorkflowComposer(state_store=None)` | `compose` / `compose_with_simplification`. |
 | `WorkflowAgentAdapter` | Run a workflow as a team agent. |
+
+<!-- attune-generated: source_hash=8eeb348f730d4eaa712d0cf9b78905ce878837e5c821fc161778c91d1d163103 feature=orchestration kind=reference generated_at=2026-06-24 -->
