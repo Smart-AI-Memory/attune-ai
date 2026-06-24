@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.9.0] — 2026-06-23
+
+Runtime patch — MCP reliability fixes plus a tool-name
+disambiguation. No new features.
+
+### Changed
+
+- **`release_prep` MCP tool renamed to `release_notes`.** The SDK
+  workflow that drafts release notes and LLM go/no-go advice is now
+  exposed as the `release_notes` MCP tool (and `release-notes`
+  workflow), disambiguating it from the deterministic `release-prep`
+  readiness gate — the agent-team workflow and the `release-prep`
+  skill keep their names. **Breaking for MCP clients that called
+  `release_prep`**: switch to `release_notes`. (#1018, #1020)
+
+### Fixed
+
+- **MCP handler keyword arguments dropped by the v4.2.0 SDK execute
+  migration are restored** — tool calls that pass options now receive
+  them again. (#1017)
+- **`research_synthesis` MCP tool is now path-based**, matching its
+  underlying workflow's signature. (#1021)
+
 ## [8.8.0] — 2026-06-22
 
 Two opt-in features — an extended prompt-cache window for the
