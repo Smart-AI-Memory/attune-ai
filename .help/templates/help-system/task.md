@@ -3,115 +3,92 @@ type: task
 name: help-system-task
 feature: help-system
 depth: task
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 15713124af0cd76c022a741b771c19b44c22f9a2907b20d728e874c8b91b68f5
+generated_at: 2026-06-24T11:38:37.880839+00:00
+source_hash: ca01c2128b2f7c655e8b49be4eed5c98e84af405f64d43f1ed48adce237ea1ab
 status: generated
 ---
 
-# Work with the help system
+# The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help
 
-Use the help system when you need to scan a project for features, generate or maintain help templates, surface progressive-depth content to users, or record and query template feedback.
+## Tasks
 
-## Prerequisites
+### Discover features in a project
 
-- Access to the project source code
-- Python environment with `attune-help` installed
-- A `features.yaml` manifest in your help directory (see `load_manifest` / `save_manifest`)
+**Goal:** turn a source tree into a feature manifest.
 
-## Steps
+**Steps:**
 
-1. **Scan the project and build a feature manifest.**
-   Call `scan_project()` with your project root to discover features from source files. Review the returned `ProposedFeature` list, then pass the accepted proposals to `proposals_to_manifest()` to produce a `FeatureManifest`.
+```python
+from attune.help.bootstrap import scan_project, proposals_to_manifest
 
-   ```python
-   from help.bootstrap import scan_project, proposals_to_manifest
+proposals = scan_project(".")
+manifest = proposals_to_manifest(proposals)
+print([p.name for p in proposals])
+```
 
-   proposals = scan_project("path/to/project")
-   manifest = proposals_to_manifest(proposals)
-   ```
+**Verify:** `scan_project()` returns a `list[ProposedFeature]`;
+`proposals_to_manifest()` returns a `FeatureManifest` mapping feature
+names to their matched source files.
 
-2. **Generate templates for each feature.**
-   Pass a `Feature` object, your help directory, and the project root to `generate_feature_templates()`. Set `overwrite=True` only when you want to replace existing files. The function raises `ValueError` if the feature name is invalid.
+### Generate templates for a feature (deprecated path)
 
-   ```python
-   from help.generator import generate_feature_templates
+**Goal:** write depth-layered help for one feature directly from the
+engine. **Prefer the single-source pipeline** (`attune-author generate
+<feature> --all-kinds`); this engine call is deprecated and emits a
+`DeprecationWarning`, kept as the MCP `help_update` escape hatch.
 
-   result = generate_feature_templates(
-       feature=manifest.features["my-feature"],
-       help_dir="help/",
-       project_root="path/to/project",
-       overwrite=False,
-   )
-   print(f"Generated {len(result.templates)} template(s)")
-   ```
+**Steps:**
 
-3. **Check and repair stale templates.**
-   Run `check_staleness()` to compare stored source hashes against the current state of matched files. If `StalenessReport.stale_count` is greater than zero, call `run_maintenance()` to regenerate outdated templates. Use `dry_run=True` first to preview what will change.
+```python
+import warnings
 
-   ```python
-   from help.staleness import check_staleness
-   from help.maintenance import run_maintenance, format_status_report
+from attune.help.manifest import load_manifest
+from attune.help.generator import generate_feature_templates
 
-   report = check_staleness(manifest, help_dir="help/", project_root="path/to/project")
-   print(report.stale_features)
+manifest = load_manifest(".help")
+feature = manifest.features["help-system"]
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    result = generate_feature_templates(feature, ".help", ".")
+print(result)
+```
 
-   result = run_maintenance("help/", "path/to/project", dry_run=True)
-   print(f"Stale: {result.stale_count}, would regenerate: {result.regenerated_count}")
-   ```
+**Verify:** `generate_feature_templates()` returns a `GenerationResult`
+of `GeneratedTemplate` objects, each with a `source_hash`. It is
+synchronous (no `await`) but warns — it writes only three depths.
 
-4. **Populate and render a template.**
-   Call `populate()` with a template ID and an optional `AudienceProfile` to get a `PopulatedTemplate`. Pass the result to one of the renderer functions to produce output for your target channel.
+### Regenerate only what's stale
 
-   ```python
-   from help.templates import populate, AudienceProfile
-   from help.transformers import render_cli, render_claude_code
+**Goal:** keep templates in sync as source changes, cheaply.
 
-   template = populate(
-       "tas-my-feature",
-       audience=AudienceProfile(channel="claude-code", verbosity="normal"),
-   )
-   print(render_cli(template))
-   ```
+**Steps:**
 
-5. **Surface contextual help for workflows and files.**
-   Use `get_workflow_help()` to retrieve relevant templates after a named workflow completes, or `get_precursor_warnings()` to surface warnings when a specific file is about to be edited.
+```python
+from attune.help.maintenance import run_maintenance
 
-   ```python
-   from help.feedback import get_workflow_help, get_precursor_warnings
+result = run_maintenance(".help", ".", dry_run=False)
+print(result.regenerated_count, "regenerated;", result.stale_count, "were stale")
+```
 
-   workflow_templates = get_workflow_help("deploy", max_results=3)
-   file_warnings = get_precursor_warnings("models.py", max_results=3)
-   ```
+**Verify:** `run_maintenance()` returns a `MaintenanceResult`. Read
+`regenerated_count` and `stale_count` as **properties** (no `()`). With
+`dry_run=True` it reports without rewriting.
 
-6. **Record feedback and query confidence.**
-   After a user rates a template, call `record_template_feedback()` with the template ID and rating. Retrieve the resulting confidence score, or call `get_template_confidence()` at any time to check a template's current score.
+### Find help relevant to a file or workflow
 
-   ```python
-   from help.feedback import record_template_feedback, get_template_confidence
+**Goal:** surface contextual help without knowing a template ID.
 
-   score = record_template_feedback("tas-my-feature", rating="helpful")
-   print(f"Updated confidence: {score:.2f}")
+**Steps:**
 
-   current = get_template_confidence("tas-my-feature")
-   ```
+```python
+from attune.help.engine import get_precursor_warnings, get_workflow_help
 
-7. **Verify the system is healthy.**
-   Run `pytest -k "help-system"` to catch regressions across template loading, progressive depth, cross-link resolution, and renderer output. See the help system testing quickstart for full test patterns.
+for t in get_precursor_warnings("src/attune/config/unified.py"):
+    print(t.template_id)
+for t in get_workflow_help("security-audit"):
+    print(t.template_id)
+```
 
-## Success criteria
-
-- `generate_feature_templates()` returns a `GenerationResult` with at least one entry in `result.templates` and no feature name in `MaintenanceResult.failed`.
-- `run_maintenance()` reports `regenerated_count > 0` for any features that were stale, and `stale_count` drops to zero on a second run.
-- `populate()` returns a non-`None` `PopulatedTemplate`, and each renderer (`render_cli`, `render_claude_code`, `render_marketplace`) produces non-empty output.
-- All `pytest -k "help-system"` tests pass.
-
-## Key files
-
-- `help/bootstrap.py` — `scan_project()`, `proposals_to_manifest()`
-- `help/generator.py` — `generate_feature_templates()`
-- `help/maintenance.py` — `run_maintenance()`, `run_hook()`, `get_changed_files()`, `format_status_report()`
-- `help/staleness.py` — `check_staleness()`, `compute_source_hash()`
-- `help/manifest.py` — `load_manifest()`, `save_manifest()`, `match_files_to_features()`, `resolve_topic()`
-- `help/feedback.py` — `record_template_feedback()`, `get_template_confidence()`, `get_usage_weights()`, `search_by_tag()`, `list_tags()`, `get_workflow_help()`, `get_precursor_warnings()`
-- `help/templates.py` — `populate()`, `AudienceProfile`, `TemplateContext`, `PopulatedTemplate`
-- `help/transformers.py` — `render_cli()`, `render_claude_code()`, `render_marketplace()`
+**Verify:** both return a `list[PopulatedTemplate]` (default
+`max_results=3`). They are exported from `help.feedback` and
+re-exported from `help.engine`.

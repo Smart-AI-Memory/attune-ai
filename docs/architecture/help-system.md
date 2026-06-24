@@ -1,112 +1,151 @@
-# Help System Architecture
+# Help System
 
-Progressive-depth help engine and template management.
+## Overview
 
-## Purpose
+The help system is attune's **progressive-depth help engine** — it
+discovers a project's features, generates depth-layered help templates
+for each one, and serves the right level of detail based on who is
+asking and what they are doing. It lives in **`src/attune/help/`** and
+is organized into focused submodules (discovery, manifest, generation,
+population, staleness, maintenance, feedback).
 
-The help system generates, stores, populates, and serves structured help templates keyed to project features. It owns the full lifecycle: scanning source code to discover features (`scan_project`), generating templates at three depth levels (`concept`, `task`, `reference`), detecting when those templates go stale as source changes, and rendering populated templates for different output channels. It does **not** own the underlying LLM calls that produce template prose, the CLI surface that triggers maintenance, or any project-specific business logic — those concerns live outside this subsystem.
+This page documents the **engine** — the Python API you call to scan,
+generate, populate, and maintain help content. It is **not** the
+single-source rollout tooling (`scripts/project_features.py`,
+`content/features/`) that authors these very docs, and it is **not**
+the ops dashboard's help tab (`attune.ops.help_data`, which only
+*displays* the engine's output). Those are adjacent surfaces that
+consume the engine.
 
-## Key classes
+The pipeline flows in four stages — **discovery → generation →
+population → maintenance** — and every entry point is **synchronous**.
 
-| Class | Responsibility | File |
-|-------|---------------|------|
-| `ProposedFeature` | Candidate feature discovered by `scan_project`, carrying name, description, file list, tags, and a confidence rating before the manifest is written. | `help/bootstrap.py` |
-| `Feature` | Confirmed feature from `features.yaml`, mapping a name and description to the source files it covers; the stable identity used throughout the pipeline. | `help/manifest.py` |
-| `FeatureManifest` | Typed container for all `Feature` entries loaded from `features.yaml`, including the file path so callers can save changes back. | `help/manifest.py` |
-| `GeneratedTemplate` | Record of one generated `.md` file: which feature and depth level produced it, where it lives on disk, and the source hash at generation time. | `help/generator.py` |
-| `GenerationResult` | Aggregates all `GeneratedTemplate` instances for a single feature run, plus the source hash and matched files — the handoff from `generate_feature_templates` to maintenance. | `help/generator.py` |
-| `FeatureStaleness` | Compares the stored source hash against the current hash for one feature and records which files were matched. | `help/staleness.py` |
-| `StalenessReport` | Aggregates `FeatureStaleness` entries across all features; exposes `stale_count`, `current_count`, and `stale_features` for maintenance decisions. | `help/staleness.py` |
-| `MaintenanceResult` | Records the outcome of `run_maintenance`: the `StalenessReport`, which features were regenerated, which were skipped (manual edits), and which failed. | `help/maintenance.py` |
-| `TemplateContext` | Supplies runtime slot values (`file_path`, `workflow_name`, `error_message`, `tool_name`, `skill_name`, `extra`) when populating a template for a specific situation. | `help/templates.py` |
-| `AudienceProfile` | Declares the target output channel (`claude-code` by default) and verbosity level so `populate` and the renderers can adapt tone and structure. | `help/templates.py` |
-| `PopulatedTemplate` | The result of template population — a resolved, audience-adapted document ready to hand to a renderer or return directly to a caller. | `help/templates.py` |
+You reach it these ways:
 
-## Data flow
+- the Python API — import from the **help submodules**
+  (`attune.help.bootstrap`, `attune.help.templates`,
+  `attune.help.maintenance`, …); the top-level `attune.help` package
+  exposes nothing, so you import from the owning submodule;
+- the **`attune.help.engine`** facade — a single import surface that
+  re-exports the entire public help API (36 names across the
+  submodules), so `from attune.help.engine import populate,
+  scan_project, run_maintenance, …` resolves them all in one place.
 
-Two distinct flows share the domain model. The **authoring flow** runs during project setup or CI to keep templates current. The **serving flow** runs at query time to answer a user's question.
+## Concepts
 
-### Authoring flow (generation and maintenance)
+### The four-stage pipeline
 
-```
-project source files
-        |
-        v
-  scan_project()                    [help.bootstrap]
-        |
-        v
-  list[ProposedFeature]
-        |
-  proposals_to_manifest()           [help.bootstrap]
-        |
-        v
-  FeatureManifest  <--load_manifest / save_manifest-->  features.yaml
-        |
-        v
-  compute_source_hash()             [help.staleness]
-  check_staleness()
-        |
-        v
-  StalenessReport
-        |  (stale features)
-        v
-  generate_feature_templates()      [help.generator]
-  (concept / task / reference .md files written to help_dir)
-        |
-        v
-  GenerationResult --> MaintenanceResult
-                          (run_maintenance / run_hook)  [help.maintenance]
-```
+| Stage | Submodule | Entry point | Produces |
+|---|---|---|---|
+| 1. Discovery | `help.bootstrap` | `scan_project(project_root)` | `list[ProposedFeature]` |
+| 2. Generation | `help.generator` | `generate_feature_templates(...)` *(deprecated)* | `GenerationResult` |
+| 3. Population | `help.templates` | `populate(template_id, ...)` | `PopulatedTemplate \| None` |
+| 4. Maintenance | `help.maintenance` | `run_maintenance(help_dir, project_root)` | `MaintenanceResult` |
 
-### Serving flow (population and rendering)
+**Discovery** — `scan_project()` walks the project root (skipping
+`.git`, `node_modules`, `__pycache__`, …) and returns `ProposedFeature`
+objects (`name`, `description`, matched `files`, `tags`). Pass accepted
+proposals to `proposals_to_manifest()` to build a `FeatureManifest`,
+which `help.manifest` persists to `features.yaml`.
 
-```
-query / file_path / workflow_name
-        |
-        v
-  resolve_topic()                   [help.manifest]
-        |
-        v
-  template_id
-        |
-        +----> populate()           [help.templates]
-        |      or populate_progressive()  [help.progression]
-        |         (uses session state from help.session)
-        |
-        v
-  PopulatedTemplate
-        |
-        +----> render_cli()         [help.transformers]
-        +----> render_claude_code()
-        +----> render_marketplace()
-        |
-        v
-  formatted string to caller
+**Generation** — `generate_feature_templates()` takes a `Feature` from
+the manifest and writes templates into the help directory, returning a
+`GenerationResult`. **It is deprecated** — it produces only three depths
+(concept/task/reference) and emits a `DeprecationWarning`; it survives
+as an internal escape hatch for the MCP `help_update` tool. The current
+generation path is the single-source authoring pipeline
+(`attune-author generate <feature> --all-kinds` → the projector), not
+this function.
 
-  Side channels:
-    get_workflow_help()      [help.feedback] -- post-workflow template list
-    get_precursor_warnings() [help.feedback] -- file-edit warnings
-    record_template_feedback / get_template_confidence / get_usage_weights
-```
+**Population** — `populate(template_id, context=None, audience=None)`
+resolves a template against the generated directory, applies a
+`TemplateContext` (the fields `populate` honors are `file_path`,
+`workflow_name`, and `error_message`), and returns a
+`PopulatedTemplate` (or `None` if the ID resolves to no file).
+Template IDs use the grammar **`<type-prefix>-<name>`** — e.g.
+`con-progressive-depth` for the *concept* named `progressive-depth`
+(prefixes: `con`/`tas`/`ref`/`qui`/`err`/`war`/`tip`/`not`/`faq`/`tro`/
+`com`). `populate_progressive()` (`help.progression`) advances depth
+across calls, tracking per-topic state in `help.session`.
 
-## Design decisions
+**Maintenance** — `run_maintenance()` calls `check_staleness()`, which
+hashes each feature's sources with `compute_source_hash()` and compares
+to the stored hash. It returns a `MaintenanceResult`; passing
+`dry_run=False` regenerates the stale features.
 
-**Three fixed depth levels instead of arbitrary nesting.** Templates are always generated at exactly the `concept`, `task`, and `reference` levels (the `_DEPTH_NAMES` tuple). This makes progressive depth deterministic: `populate_progressive` advances through a known sequence tracked in session state, then resets on topic change. An open-ended hierarchy would require callers to reason about depth discovery, which the session layer deliberately hides.
+### Contextual entry points
 
-**Source-hash-based staleness rather than file-modification timestamps.** `compute_source_hash` hashes the content of the files matched to each `Feature`. This means templates are only flagged stale when source content actually changes, not when files are touched by tooling or reformatters. The hash is stored in `GeneratedTemplate.source_hash` and checked by `FeatureStaleness`; `run_hook` uses `get_changed_files` to limit the staleness check to files reported by version control, keeping hook latency low.
+Rather than resolving a template ID directly, you can ask the engine
+what is relevant right now (canonical home: `help.feedback`, also
+re-exported from `help.engine`):
 
-**`FeatureManifest` as the single source of feature identity.** Every part of the pipeline — generation, staleness, topic resolution, precursor warnings — resolves features through `load_manifest`. Callers never construct `Feature` objects directly. This means renaming or re-scoping a feature requires only editing `features.yaml` (or re-running `scan_project` and `proposals_to_manifest`); no other module needs updating.
+- `get_precursor_warnings(file_path)` — up to three `PopulatedTemplate`
+  objects relevant to the file about to be edited.
+- `get_workflow_help(workflow_name)` — templates relevant after a named
+  workflow completes.
+- `resolve_topic(query, manifest)` (`help.manifest`) — maps a free-text
+  query to a feature name.
+- `search_by_tag(tag)` / `list_tags()` — browse the inventory by tag;
+  both accept `sort_by_usage=True` to rank by recent activity.
 
-**Feedback and usage data kept separate from template content.** `record_template_feedback`, `get_template_confidence`, and `get_usage_weights` write to `feedback.json` alongside the generated templates. Confidence scores influence serving (e.g., `search_by_tag` with `sort_by_usage=True`) but are never baked into the `.md` files themselves. This keeps templates reproducible: regenerating from source does not erase learned quality signals.
+### Properties, not methods (the gotcha)
 
-## Extension points
+The staleness and maintenance result objects expose **properties**, not
+method calls — accessing them with `()` raises `TypeError`:
 
-- **Add a new output channel**: implement a function with the signature `render_<channel>(template: PopulatedTemplate) -> str` in `help/transformers.py`, following the pattern of `render_cli`, `render_claude_code`, and `render_marketplace`. Pass an `AudienceProfile` with the matching `channel` value to `populate`.
+- `StalenessReport.stale_features` — the list of stale feature names.
+- `StalenessReport.stale_count` / `current_count`.
+- `MaintenanceResult.regenerated_count` / `stale_count`.
 
-- **Add a new template depth level**: extend the `_DEPTH_NAMES` tuple and add a corresponding generation branch in `generate_feature_templates`. Session state in `help.session` uses the index into `_DEPTH_NAMES`, so depth advancement in `populate_progressive` will pick up the new level automatically.
+### Rendering and feedback
 
-- **Register a new feature without re-scanning**: call `load_manifest`, add a `Feature` entry to `manifest.features`, then call `save_manifest`. Run `generate_feature_templates` for the new feature to produce its initial templates.
+Three renderers convert a `PopulatedTemplate` into its final string
+(`help.transformers`): `render_claude_code()`, `render_marketplace()`,
+`render_cli()`. Every populated template can be rated:
+`record_template_feedback(template_id, rating)` writes feedback and
+returns the updated confidence; `get_template_confidence(template_id)`
+reads it back; `get_usage_weights(days=30)` returns a `dict[str, float]`
+the engine uses to rank contextual results.
 
-- **Customize template prose quality**: replace or wrap `polish_template` in `help/polish.py`. Its `build_source_summary` helper assembles the context string passed to the LLM, so you can alter what source information influences the generated prose without changing the generation pipeline.
+### Key data types
 
-- **Hook maintenance into CI or pre-commit**: call `run_hook(help_dir, project_root)` — it calls `get_changed_files` internally and returns `None` if no matched features are stale, making it safe to call on every commit without unnecessary regeneration.
+| Type | Submodule | Role |
+|---|---|---|
+| `ProposedFeature` | `help.bootstrap` | Discovery output (`name`, `files`, `tags`, confidence) |
+| `Feature` / `FeatureManifest` | `help.manifest` | Persistent record of features → source files (`Feature.status`/`is_manual` gates staleness) |
+| `GeneratedTemplate` / `GenerationResult` | `help.generator` | Generation output (carries `source_hash`) |
+| `TemplateContext` / `AudienceProfile` | `help.templates` | Runtime parameters + output channel |
+| `PopulatedTemplate` | `help.templates` | Final content object for a renderer |
+| `StalenessReport` | `help.staleness` | Aggregate staleness status (properties) |
+| `MaintenanceResult` | `help.maintenance` | Summary of a maintenance run (properties) |
+
+## Design & extension
+
+### Design decisions
+
+- **Submodule-by-stage.** Discovery, manifest, generation, population,
+  staleness, maintenance, feedback each own a module so the pipeline
+  stays cohesive; `help.engine` is a thin facade over the feedback
+  helpers.
+- **Hash-based staleness.** Each generated template records a
+  `source_hash`; maintenance compares hashes so regeneration is
+  incremental, not wholesale.
+- **Progressive depth.** Population advances concept → task → reference
+  across repeated asks, tracked per topic in `help.session`, so users
+  get more detail only when they come back.
+- **Channel-aware rendering.** A single `PopulatedTemplate` renders to
+  Claude Code, marketplace, or CLI output via the `transformers`.
+
+### Extension points
+
+- **New depth or template kind:** add it to the single-source authoring
+  pipeline (`attune-author` + the projector), not the deprecated
+  `generate_feature_templates`.
+- **New renderer/channel:** add a `render_*` transformer over
+  `PopulatedTemplate`.
+- **Custom contextual triggers:** build on `get_precursor_warnings` /
+  `get_workflow_help` and the `get_usage_weights` ranking.
+- **Hook integration:** wrap `run_hook()` / `get_changed_files()` for
+  pre-commit or CI staleness checks.
+
+<!-- attune-generated: source_hash=ca01c2128b2f7c655e8b49be4eed5c98e84af405f64d43f1ed48adce237ea1ab feature=help-system kind=architecture generated_at=2026-06-24 -->

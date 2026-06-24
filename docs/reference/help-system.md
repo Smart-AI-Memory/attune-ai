@@ -1,14 +1,4 @@
----
-type: reference
-name: help-system-reference
-feature: help-system
-depth: reference
-generated_at: 2026-06-24T11:38:37.880839+00:00
-source_hash: ca01c2128b2f7c655e8b49be4eed5c98e84af405f64d43f1ed48adce237ea1ab
-status: generated
----
-
-# The progressive-depth help engine that discovers features, generates depth-layered templates, and serves contextual help
+# Help System
 
 ## Reference
 
@@ -85,3 +75,5 @@ re-exports the **entire** public help API (36 symbols across all the
 submodules above: data types, `scan_project`, `populate`,
 `run_maintenance`, `check_staleness`, the feedback helpers, …). Import
 any public symbol from its owning submodule or from `help.engine`.
+
+<!-- attune-generated: source_hash=ca01c2128b2f7c655e8b49be4eed5c98e84af405f64d43f1ed48adce237ea1ab feature=help-system kind=reference generated_at=2026-06-24 -->

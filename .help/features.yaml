@@ -204,13 +204,22 @@ features:
     tags: [mcp, tools, server]
     status: manual
 
+  # help-system is single-sourced (status: manual) from
+  # content/features/help-system.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/help-system/*.md. Marked `status: manual` WITHOUT
+  # `files:`/`doc_paths:` so topic resolution routes here while
+  # staleness/maintenance never overwrites the projected content with
+  # LLM output (DD5, help-docs-single-source). The frozen faq.md stays
+  # on disk until the four-channel FAQ Generator (D6/D7) replaces it.
+  # Scope is the help ENGINE (src/attune/help/**) — NOT the rollout
+  # tooling (scripts/project_features.py, content/) or the ops help tab
+  # (attune.ops.help_data). Description/tags unchanged to preserve
+  # golden queries hs-001 "help-system", hs-002 "templates".
   help-system:
     description: Progressive-depth help engine and template management
-    files:
-      - src/attune/help/**
     tags: [help, templates, docs]
-    doc_paths:
-      - docs/how-to/help-system-maintenance.md
+    status: manual
 
   # memory is single-sourced (status: manual) from
   # content/features/memory.md and rendered by
