@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: CLI and Routing — quickstart</title>
-  <meta name="description" content="Run your first attune command and confirm the CLI is working." />
-  <meta property="og:title" content="Quickstart: CLI and Routing — quickstart" />
-  <meta property="og:description" content="Run your first attune command and confirm the CLI is working." />
+  <title>The attune command-line interface and its natural-language router — quickstart</title>
+  <meta name="description" content="Check the install and list commands:" />
+  <meta property="og:title" content="The attune command-line interface and its natural-language router — quickstart" />
+  <meta property="og:description" content="Check the install and list commands:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/quickstart" />
   <style>
@@ -272,48 +272,15 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: CLI and Routing</h1>
-<p>Run your first attune command and confirm the CLI is working.</p>
+<h1>The attune command-line interface and its natural-language router</h1>
+<h2>Quickstart</h2>
+<p>Check the install and list commands:</p>
 <pre><code class="language-bash">attune --help
+attune doctor
 </code></pre>
-<p>You should see the top-level command listing. If you do, the CLI is installed and ready.</p>
-<h2>Step 1: Confirm your version</h2>
-<pre><code class="language-bash">attune version
+<p>Run an analysis workflow:</p>
+<pre><code class="language-bash">attune workflow run security-audit
 </code></pre>
-<p>Expected output:</p>
-<pre><code>attune &lt;version string&gt;
-</code></pre>
-<p>This calls <code>cmd_version</code> and verifies the entry point resolves correctly.</p>
-<h2>Step 2: Run setup</h2>
-<pre><code class="language-bash">attune setup
-</code></pre>
-<p><code>cmd_setup</code> walks you through the minimum configuration needed before running workflows or using memory commands.</p>
-<h2>Step 3: List available workflows</h2>
-<pre><code class="language-bash">attune workflow list
-</code></pre>
-<p><code>cmd_workflow_list</code> prints every registered workflow by name. Pick one from the output to use in the next step.</p>
-<h2>Step 4: Run a workflow</h2>
-<pre><code class="language-bash">attune workflow run &lt;workflow-name&gt;
-</code></pre>
-<p><code>cmd_workflow_run</code> executes the workflow and exits with a contract exit code from <code>run_workflow_with_exit_code</code>. Exit code <code>0</code> means success.</p>
-<p>Expected output:</p>
-<pre><code>Running &lt;workflow-name&gt;...
-Result: { ... }
-Exit code: 0
-</code></pre>
-<h2>Step 5: Check today's costs</h2>
-<pre><code class="language-bash">attune costs today
-</code></pre>
-<p><code>cmd_costs_today</code> prints a cost summary for the current session, confirming that telemetry is recording correctly.</p>
-<h2>What you just did</h2>
-<ul>
-<li>Verified the CLI entry point with <code>attune --help</code></li>
-<li>Confirmed your installed version with <code>cmd_version</code></li>
-<li>Configured attune with <code>cmd_setup</code></li>
-<li>Listed and ran a workflow via <code>cmd_workflow_list</code> and <code>cmd_workflow_run</code></li>
-<li>Checked cost tracking with <code>cmd_costs_today</code></li>
-</ul>
-<p><strong>Next:</strong> Run <code>attune doctor</code> (<code>cmd_doctor</code>) to validate your full environment and surface any configuration issues before going further.</p>
 
   </article>
   <footer>

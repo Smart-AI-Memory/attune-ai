@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CLI errors — error</title>
-  <meta name="description" content="These are the most likely failure categories you&#x27;ll encounter when running `attune` commands or invoking the CLI programmatically via `main()`." />
-  <meta property="og:title" content="CLI errors — error" />
-  <meta property="og:description" content="These are the most likely failure categories you&#x27;ll encounter when running `attune` commands or invoking the CLI programmatically via `main()`." />
+  <title>The attune command-line interface and its natural-language router — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `attune: command not found` | console script not on PATH | reinstall, or use `python -m attune.cli_minimal` | medium | | `RuntimeWarning: corou" />
+  <meta property="og:title" content="The attune command-line interface and its natural-language router — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `attune: command not found` | console script not on PATH | reinstall, or use `python -m attune.cli_minimal` | medium | | `RuntimeWarning: corou" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/error" />
   <style>
@@ -272,93 +272,58 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>CLI errors</h1>
-<h2>Common error signatures</h2>
-<p>These are the most likely failure categories you'll encounter when running <code>attune</code> commands or invoking the CLI programmatically via <code>main()</code>.</p>
-<p><strong>Non-zero exit codes from workflow execution</strong>
-<code>run_workflow_with_exit_code()</code> returns an integer exit code. Any value other than <code>0</code> means the workflow failed. The specific code distinguishes a validation failure from a runtime error — check the returned <code>int</code> before inspecting logs.</p>
-<p><strong>Unrecognised or malformed arguments</strong>
-<code>create_parser()</code> raises <code>SystemExit(2)</code> when an argument cannot be parsed. This most often happens when a subcommand receives unexpected flags or when a required positional argument is missing.</p>
-<p><strong>Routing failures in <code>HybridRouter.route()</code></strong>
-If <code>route_user_input()</code> or <code>HybridRouter.route()</code> cannot match input to a skill, the returned <code>dict</code> may indicate no match rather than raising. A <code>RoutingPreference</code> with <code>confidence: float</code> below a useful threshold produces low-quality routing silently — check the <code>confidence</code> field in the returned dict before acting on it.</p>
-<p><strong>Cost command failures</strong>
-<code>cmd_costs_export()</code> writes cost data to a file; an <code>OSError</code> or <code>PermissionError</code> here means the destination path is not writable. <code>cmd_costs_reset()</code> always returns <code>0</code> on success — a non-zero return signals that the reset did not complete.</p>
-<p><strong>Memory command failures</strong>
-<code>cmd_remember()</code> and <code>cmd_forget()</code> operate on a lessons file. A <code>FileNotFoundError</code> or <code>PermissionError</code> means the file path is missing or not writable. <code>cmd_forget()</code> requires a valid line number or keyword — passing neither produces an argument error.</p>
-<hr />
-<h2>Where errors originate</h2>
-<p>The following functions are the primary failure points. When an <code>attune</code> command misbehaves, the root cause is almost always in one of these:</p>
+<h1>The attune command-line interface and its natural-language router</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>Function</th>
-<th>Module</th>
-<th>What can go wrong</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>run_workflow_with_exit_code()</code></td>
-<td><code>cli_commands._exit_codes</code></td>
-<td>Workflow raises an unhandled exception; exit code is non-zero</td>
+<td><code>attune: command not found</code></td>
+<td>console script not on PATH</td>
+<td>reinstall, or use <code>python -m attune.cli_minimal</code></td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>cmd_costs_export()</code></td>
-<td><code>cli_commands.cost_commands</code></td>
-<td>Destination file not writable (<code>OSError</code>, <code>PermissionError</code>)</td>
+<td><code>RuntimeWarning: coroutine 'route_user_input' was never awaited</code></td>
+<td>called <code>route_user_input</code> without <code>await</code></td>
+<td>it is async — <code>await</code> it / <code>asyncio.run</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td><code>cmd_costs_reset()</code></td>
-<td><code>cli_commands.cost_commands</code></td>
-<td>Returns non-zero if reset did not complete</td>
+<td>A subcommand errors on args</td>
+<td>wrong subcommand or arguments</td>
+<td><code>attune &lt;group&gt; --help</code></td>
+<td>low</td>
 </tr>
 <tr>
-<td><code>cmd_remember()</code> / <code>cmd_forget()</code></td>
-<td><code>cli_commands.memory_commands</code></td>
-<td>Lessons file missing or not writable; bad line number or keyword</td>
-</tr>
-<tr>
-<td><code>HybridRouter.route()</code></td>
-<td><code>attune.cli_router</code></td>
-<td>Low <code>confidence</code> match; no skill matched for the given input</td>
-</tr>
-<tr>
-<td><code>main()</code></td>
-<td><code>attune.cli_minimal</code></td>
-<td><code>SystemExit</code> on bad arguments; propagates exit code to the shell</td>
+<td><code>attune doctor</code> reports problems</td>
+<td>environment/config issue</td>
+<td>follow its diagnostics</td>
+<td>medium</td>
 </tr>
 </tbody>
 </table>
-<hr />
-<h2>How to diagnose</h2>
-<ol>
-<li>
-<p><strong>Check the exit code first.</strong> Every command function returns an <code>int</code>. A non-zero value is the primary signal that something failed. For <code>run_workflow_with_exit_code()</code>, the exit code encodes the failure category — don't skip past it to the logs.</p>
-</li>
-<li>
-<p><strong>Identify which command failed.</strong> The subcommand name tells you which module to investigate. Cost commands live in <code>cli_commands.cost_commands</code>; memory commands in <code>cli_commands.memory_commands</code>; routing in <code>attune.cli_router</code>.</p>
-</li>
-<li>
-<p><strong>Inspect the <code>RoutingPreference</code> fields when routing misbehaves.</strong> If <code>HybridRouter.route()</code> sends input to the wrong skill, check the stored <code>RoutingPreference</code> for that keyword: low <code>confidence</code>, wrong <code>skill</code>, or a stale <code>args</code> value are the most common causes. Use <code>HybridRouter.get_suggestions()</code> to see what the router currently matches for a partial input.</p>
-</li>
-<li>
-<p><strong>Run <code>attune doctor</code> (<code>cmd_doctor</code>).</strong> This command runs environment checks and surfaces configuration problems that cause multiple CLI commands to fail in non-obvious ways.</p>
-</li>
-<li>
-<p><strong>Run <code>attune validate</code> (<code>cmd_validate</code>).</strong> Use this to confirm that your configuration is well-formed before re-running the failing command.</p>
-</li>
-<li>
-<p><strong>Re-run with a full traceback.</strong> If a command raises rather than returning a non-zero code, the traceback names the exact file and line. The most actionable line is usually the innermost frame inside <code>cli_commands/</code> or <code>cli_router.py</code>.</p>
-</li>
-</ol>
-<hr />
-<h2>Source files</h2>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/cli_minimal.py</code></li>
-<li><code>src/attune/cli_router.py</code></li>
-<li><code>src/attune/cli_commands/**</code></li>
+<li><strong><code>route_user_input</code> is async.</strong> <code>is_slash_command</code> and
+<code>SmartRouter.list_workflows</code> are sync; <code>route</code> is async (<code>route_sync</code>
+is the sync variant).</li>
+<li><strong>Console script vs module.</strong> If <code>attune</code> isn't on PATH, <code>python -m attune.cli_minimal</code> always works.</li>
 </ul>
-<p><strong>Tags:</strong> <code>cli</code>, <code>commands</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li><code>attune --help</code> — is the CLI reachable?</li>
+<li><code>attune doctor</code> — environment check.</li>
+<li><code>attune &lt;group&gt; --help</code> — subcommand usage.</li>
+<li>For routing in Python, remember <code>route_user_input</code> is async.</li>
+</ol>
 
   </article>
   <footer>

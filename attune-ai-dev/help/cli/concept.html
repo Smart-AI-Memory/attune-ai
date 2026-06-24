@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>The attune CLI — concept</title>
-  <meta name="description" content="The attune CLI is the single entry point — `attune.cli_minimal.main` — that parses your arguments, dispatches them to the right command handler, and returns a numeric exit code your shell can act on." />
-  <meta property="og:title" content="The attune CLI — concept" />
-  <meta property="og:description" content="The attune CLI is the single entry point — `attune.cli_minimal.main` — that parses your arguments, dispatches them to the right command handler, and returns a numeric exit code your shell can act on." />
+  <title>The attune command-line interface and its natural-language router — concept</title>
+  <meta name="description" content="The `attune` command-line interface is the terminal front door to the framework. It has two layers:" />
+  <meta property="og:title" content="The attune command-line interface and its natural-language router — concept" />
+  <meta property="og:description" content="The `attune` command-line interface is the terminal front door to the framework. It has two layers:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/concept" />
   <style>
@@ -272,116 +272,52 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>The attune CLI</h1>
-<p>The attune CLI is the single entry point — <code>attune.cli_minimal.main</code> — that parses your arguments, dispatches them to the right command handler, and returns a numeric exit code your shell can act on.</p>
-<h2>Structural overview</h2>
-<p>The CLI splits into two distinct layers that work together:</p>
-<p><strong>Command dispatch</strong> — <code>create_parser()</code> builds the argument parser and maps subcommands to handler functions. Every handler follows the same contract: it receives an <code>argparse.Namespace</code> and returns an <code>int</code> exit code. Workflow-backed commands go through <code>run_workflow_with_exit_code</code>, which instantiates a workflow class, runs it, and converts the result into the documented exit code contract for <code>attune workflow run</code>.</p>
-<p><strong>Input routing</strong> — <code>HybridRouter</code> sits alongside the dispatch layer to handle natural-language or shorthand input. When a user types something that isn't a slash command (detected by <code>is_slash_command()</code>), <code>route_user_input()</code> translates it into a Claude Code skill invocation. The router learns your habits: each time you invoke <code>learn_preference(keyword, skill)</code>, it stores a <code>RoutingPreference</code> entry that raises the confidence score for that keyword-to-skill mapping on future calls. <code>get_suggestions(partial)</code> uses those stored preferences to offer completions as you type.</p>
-<h2>Command groups</h2>
-<p>The handler functions are organized into focused modules:</p>
-<table>
-<thead>
-<tr>
-<th>Group</th>
-<th>Example commands</th>
-<th>What they do</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Workflows</strong></td>
-<td><code>cmd_workflow_run</code>, <code>cmd_workflow_list</code>, <code>cmd_workflow_info</code></td>
-<td>Run and inspect registered workflows</td>
-</tr>
-<tr>
-<td><strong>Memory</strong></td>
-<td><code>cmd_remember</code>, <code>cmd_forget</code>, <code>cmd_memory_recall</code>, <code>cmd_memory_topics</code>, <code>cmd_memory_capture</code>, <code>cmd_memory_forget_topic</code>, <code>cmd_lessons</code></td>
-<td>Read and write the Redis-backed lesson store</td>
-</tr>
-<tr>
-<td><strong>Costs</strong></td>
-<td><code>cmd_costs</code>, <code>cmd_costs_today</code>, <code>cmd_costs_export</code>, <code>cmd_costs_reset</code></td>
-<td>Report, export, and clear cost-tracking data</td>
-</tr>
-<tr>
-<td><strong>Telemetry</strong></td>
-<td><code>cmd_telemetry_show</code>, <code>cmd_telemetry_savings</code>, <code>cmd_telemetry_routing_stats</code>, <code>cmd_telemetry_models</code>, <code>cmd_telemetry_agents</code>, <code>cmd_telemetry_signals</code>, <code>cmd_telemetry_status</code>, <code>cmd_telemetry_enable</code>, <code>cmd_telemetry_disable</code></td>
-<td>Inspect routing and model-usage telemetry, and control the opt-in usage ping</td>
-</tr>
-<tr>
-<td><strong>Providers</strong></td>
-<td><code>cmd_provider_show</code>, <code>cmd_provider_set</code></td>
-<td>View and change the active model provider</td>
-</tr>
-<tr>
-<td><strong>Patterns</strong></td>
-<td><code>cmd_patterns_review</code>, <code>cmd_patterns_promote</code>, <code>cmd_patterns_reject</code></td>
-<td>Curate promoted code patterns</td>
-</tr>
-<tr>
-<td><strong>Utility</strong></td>
-<td><code>cmd_setup</code>, <code>cmd_validate</code>, <code>cmd_version</code>, <code>cmd_doctor</code>, <code>cmd_features</code></td>
-<td>Diagnose, configure, and inspect the installation</td>
-</tr>
-<tr>
-<td><strong>Help</strong></td>
-<td><code>cmd_help</code></td>
-<td>Browse attune-help documentation templates</td>
-</tr>
-<tr>
-<td><strong>Curator</strong></td>
-<td><code>cmd_curator</code></td>
-<td>Render the project briefing in the terminal</td>
-</tr>
-</tbody>
-</table>
-<h2>Routing preferences</h2>
-<p><code>RoutingPreference</code> is the unit of learned behavior inside <code>HybridRouter</code>. Each preference has five fields:</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Role</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>keyword</code></td>
-<td><code>str</code></td>
-<td>The input fragment that triggers this preference</td>
-</tr>
-<tr>
-<td><code>skill</code></td>
-<td><code>str</code></td>
-<td>The Claude Code skill to invoke</td>
-</tr>
-<tr>
-<td><code>args</code></td>
-<td><code>str</code></td>
-<td>Default arguments passed to the skill</td>
-</tr>
-<tr>
-<td><code>usage_count</code></td>
-<td><code>int</code></td>
-<td>How many times this mapping has fired</td>
-</tr>
-<tr>
-<td><code>confidence</code></td>
-<td><code>float</code></td>
-<td>Routing weight (starts at <code>1.0</code>, adjusted by usage)</td>
-</tr>
-</tbody>
-</table>
-<p>As <code>usage_count</code> grows, the router can weigh this preference more heavily when multiple skills match the same keyword. You can inspect accumulated preferences through <code>cmd_telemetry_routing_stats</code> and <code>cmd_telemetry_routing_check</code>.</p>
-<h2>When the CLI layer matters</h2>
-<p>You interact with this layer every time you run an <code>attune</code> command, but it also matters when you are:</p>
+<h1>The attune command-line interface and its natural-language router</h1>
+<h2>Overview</h2>
+<p>The <code>attune</code> command-line interface is the terminal front door to the
+framework. It has two layers:</p>
 <ul>
-<li><strong>Scripting</strong> — all handlers return integer exit codes, so <code>run_workflow_with_exit_code</code> gives pipelines a reliable signal to branch on.</li>
-<li><strong>Extending attune</strong> — adding a new subcommand means writing a handler that accepts <code>Namespace</code> and returns <code>int</code>, then registering it with <code>create_parser()</code>.</li>
-<li><strong>Debugging routing</strong> — if <code>HybridRouter</code> sends input to the wrong skill, <code>cmd_telemetry_routing_stats</code> and <code>cmd_telemetry_routing_check</code> show you which <code>RoutingPreference</code> entries are winning and why.</li>
+<li><strong>The CLI itself</strong> (<code>attune.cli_minimal</code>) — an argparse program with
+grouped subcommands (<code>workflow</code>, <code>telemetry</code>, <code>costs</code>, <code>auth</code>,
+<code>memory</code>, <code>doctor</code>, <code>setup</code>, …). The <code>attune</code> console script runs its
+<code>main()</code>.</li>
+<li><strong>The natural-language router</strong> (<code>attune.cli_router</code>) — turns free
+text or a <code>/slash</code> command into a workflow/skill choice
+(<code>route_user_input</code>, <code>is_slash_command</code>, <code>SmartRouter</code>,
+<code>HybridRouter</code>).</li>
 </ul>
+<p>You invoke it as <code>attune &lt;command&gt;</code> (the installed console script) or
+<code>python -m attune.cli_minimal</code>.</p>
+<h2>Concepts</h2>
+<h3>Invocation</h3>
+<p>The packaged entry point is <code>attune = attune.cli_minimal:main</code>
+(<code>[project.scripts]</code>), so <code>attune &lt;command&gt;</code> runs the CLI; <code>python -m attune.cli_minimal</code> is equivalent. <code>attune --help</code> lists the commands;
+<code>attune doctor</code> checks the install.</p>
+<h3>Command groups</h3>
+<p><code>cli_minimal</code> registers grouped subcommands, each dispatched to a
+<code>cmd_*</code> handler:</p>
+<ul>
+<li><code>workflow</code> — <code>list</code>, <code>info</code>, <code>run</code> (run an analysis workflow).</li>
+<li><code>telemetry</code> — <code>show</code>, <code>savings</code>, <code>export</code>, <code>enable</code>/<code>disable</code>,
+<code>models</code>, <code>agents</code>, <code>signals</code>.</li>
+<li><code>costs</code> — <code>today</code>, <code>export</code>, <code>reset</code>.</li>
+<li><code>auth</code> — <code>setup</code>, <code>reset</code>; <code>provider</code> — <code>show</code>, <code>set</code>.</li>
+<li>memory — <code>capture</code>, <code>recall</code>, <code>topics</code>, <code>forget-topic</code>; plus
+<code>remember</code> / <code>forget</code> / <code>lessons</code>.</li>
+<li><code>patterns</code> — <code>review</code>, <code>promote</code>, <code>reject</code>.</li>
+<li>standalone — <code>setup</code>, <code>doctor</code>, <code>features</code>, <code>validate</code>, <code>version</code>,
+<code>help-docs</code>.</li>
+</ul>
+<h3>The natural-language router</h3>
+<p><code>attune.cli_router</code> maps user input to a workflow or skill.
+<code>is_slash_command(text)</code> tells a <code>/command</code> from prose.
+<code>route_user_input(user_input, context=None)</code> is <strong>async</strong> and returns a
+routing dict (<code>workflow</code>, <code>skill</code>, <code>confidence</code>, <code>reasoning</code>, <code>args</code>,
+<code>secondary_workflows</code>, <code>type</code>, <code>source</code>, …). <code>SmartRouter</code> exposes
+<code>route</code> (async) / <code>route_sync</code> (sync) / <code>list_workflows</code> /
+<code>get_workflow_info</code> / <code>suggest_for_error</code> / <code>suggest_for_file</code>;
+<code>HybridRouter</code> adds <code>get_suggestions</code> and <code>learn_preference</code>;
+<code>RoutingPreference</code> carries routing preferences.</p>
 
   </article>
   <footer>

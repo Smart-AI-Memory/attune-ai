@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Work with the attune CLI — task</title>
-  <meta name="description" content="Use the attune CLI when you need to run workflows, manage memory and costs, or extend command behavior from the terminal." />
-  <meta property="og:title" content="Work with the attune CLI — task" />
-  <meta property="og:description" content="Use the attune CLI when you need to run workflows, manage memory and costs, or extend command behavior from the terminal." />
+  <title>The attune command-line interface and its natural-language router — task</title>
+  <meta name="description" content="```bash attune workflow list # what&#x27;s available attune workflow run code-review # run one attune workflow info code-review # describe it ```" />
+  <meta property="og:title" content="The attune command-line interface and its natural-language router — task" />
+  <meta property="og:description" content="```bash attune workflow list # what&#x27;s available attune workflow run code-review # run one attune workflow info code-review # describe it ```" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/task" />
   <style>
@@ -272,132 +272,44 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Work with the attune CLI</h1>
-<p>Use the attune CLI when you need to run workflows, manage memory and costs, or extend command behavior from the terminal.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>Access to the project source code</li>
-<li>Python environment with attune installed</li>
-<li>Familiarity with <code>src/attune/cli_minimal.py</code> as the CLI entry point</li>
-</ul>
-<h2>Identify the right command module</h2>
-<p>The CLI is organized into focused modules. Before writing or modifying any code, confirm which module owns the behavior you need:</p>
-<table>
-<thead>
-<tr>
-<th>Module</th>
-<th>Responsibility</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>cli_commands/_exit_codes.py</code></td>
-<td>Executes a workflow class and returns a contract exit code via <code>run_workflow_with_exit_code()</code></td>
-</tr>
-<tr>
-<td><code>cli_commands/cost_commands.py</code></td>
-<td>Cost reporting and reset: <code>cmd_costs</code>, <code>cmd_costs_today</code>, <code>cmd_costs_export</code>, <code>cmd_costs_reset</code></td>
-</tr>
-<tr>
-<td><code>cli_commands/curator.py</code></td>
-<td>Renders the project briefing via <code>cmd_curator()</code></td>
-</tr>
-<tr>
-<td><code>cli_commands/help_commands.py</code></td>
-<td>Handles <code>attune help</code> via <code>cmd_help()</code></td>
-</tr>
-<tr>
-<td><code>cli_commands/memory_agent.py</code></td>
-<td>Runs a single-shot agent with Redis-backed memory via <code>cmd_memory_agent()</code></td>
-</tr>
-<tr>
-<td><code>cli_commands/memory_commands.py</code></td>
-<td>Lesson and memory management: <code>cmd_remember</code>, <code>cmd_forget</code>, <code>cmd_lessons</code>, <code>cmd_memory_capture</code>, <code>cmd_memory_recall</code>, <code>cmd_memory_topics</code>, <code>cmd_memory_forget_topic</code></td>
-</tr>
-<tr>
-<td><code>cli_commands/pattern_review.py</code></td>
-<td>Pattern lifecycle: <code>cmd_patterns_review</code>, <code>cmd_patterns_promote</code>, <code>cmd_patterns_reject</code></td>
-</tr>
-<tr>
-<td><code>cli_commands/provider_commands.py</code></td>
-<td>Provider inspection and switching: <code>cmd_provider_show</code>, <code>cmd_provider_set</code></td>
-</tr>
-<tr>
-<td><code>cli_commands/telemetry_commands.py</code></td>
-<td>Telemetry, savings, routing stats, and model/agent signals</td>
-</tr>
-<tr>
-<td><code>cli_commands/utility_commands.py</code></td>
-<td>Setup, validation, version, features, and diagnostics via <code>cmd_doctor()</code></td>
-</tr>
-<tr>
-<td><code>cli_commands/workflow_commands.py</code></td>
-<td>Workflow listing, inspection, and execution: <code>cmd_workflow_list</code>, <code>cmd_workflow_info</code>, <code>cmd_workflow_run</code></td>
-</tr>
-<tr>
-<td><code>cli_router.py</code></td>
-<td>Routes free-text input to skill invocations via <code>HybridRouter</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Add or modify a CLI command</h2>
-<ol>
-<li>
-<p><strong>Open the module</strong> that owns the relevant command (see table above). Read the function signature, docstring, and return type to confirm the function handles what you need.</p>
-</li>
-<li>
-<p><strong>Edit the command function.</strong> Each command function accepts an <code>argparse.Namespace</code> argument and returns an <code>int</code> exit code. Add your logic inside the matching <code>cmd_*</code> function.</p>
-</li>
-<li>
-<p><strong>Register new commands in the parser.</strong> If you are adding a new subcommand, open <code>src/attune/cli_minimal.py</code> and call <code>create_parser()</code> to locate where subparsers are registered. Add your subcommand there, pointing its <code>set_defaults(func=...)</code> to your new <code>cmd_*</code> function.</p>
-</li>
-<li>
-<p><strong>Run the related tests</strong> to catch regressions before they reach other developers:</p>
-<pre><code>pytest -k &quot;cli&quot;
+<h1>The attune command-line interface and its natural-language router</h1>
+<h2>Tasks</h2>
+<h3>Run a workflow from the CLI</h3>
+<pre><code class="language-bash">attune workflow list                 # what's available
+attune workflow run code-review      # run one
+attune workflow info code-review     # describe it
 </code></pre>
-</li>
-</ol>
-<h2>Teach the router a new preference</h2>
-<p>Use <code>HybridRouter</code> from <code>attune.cli_router</code> when you want the router to map a keyword to a specific skill automatically.</p>
-<ol>
-<li>
-<p><strong>Instantiate the router:</strong></p>
-<pre><code class="language-python">from attune.cli_router import HybridRouter
+<p><strong>Verify:</strong> <code>attune workflow run &lt;slug&gt;</code> executes the named workflow;
+<code>attune workflow list</code> enumerates the registered workflows.</p>
+<h3>View usage and cost</h3>
+<pre><code class="language-bash">attune telemetry show
+attune telemetry savings
+attune costs today
+</code></pre>
+<p><strong>Verify:</strong> these read the local telemetry store (the same one the
+<code>telemetry</code> feature writes).</p>
+<h3>Route natural-language input in Python</h3>
+<pre><code class="language-python">import asyncio
 
-router = HybridRouter()
+from attune.cli_router import is_slash_command, route_user_input
+
+print(is_slash_command(&quot;/security&quot;))          # True
+print(is_slash_command(&quot;scan my code&quot;))        # False
+
+result = asyncio.run(route_user_input(&quot;run a security audit&quot;))
+print(result[&quot;workflow&quot;], result[&quot;confidence&quot;])
 </code></pre>
-</li>
-<li>
-<p><strong>Register a keyword preference</strong> with <code>learn_preference()</code>:</p>
-<pre><code class="language-python">router.learn_preference(keyword=&quot;costs&quot;, skill=&quot;cost_report&quot;, args=&quot;--today&quot;)
+<p><strong>Verify:</strong> <code>is_slash_command</code> is synchronous; <code>route_user_input</code> is
+<strong>async</strong> — await it (here via <code>asyncio.run</code>). The result dict includes
+<code>workflow</code>, <code>skill</code>, <code>confidence</code>, <code>reasoning</code>, and <code>args</code>.</p>
+<h3>List routable workflows</h3>
+<pre><code class="language-python">from attune.cli_router import SmartRouter
+
+router = SmartRouter()
+print(router.list_workflows())                 # synchronous
 </code></pre>
-<p>This creates a <code>RoutingPreference</code> with the fields <code>keyword</code>, <code>skill</code>, <code>args</code>, <code>usage_count</code>, and <code>confidence</code>.</p>
-</li>
-<li>
-<p><strong>Check autocomplete suggestions</strong> for a partial string:</p>
-<pre><code class="language-python">suggestions = router.get_suggestions(&quot;cos&quot;)
-</code></pre>
-</li>
-<li>
-<p><strong>Route a free-text input</strong> and inspect the result:</p>
-<pre><code class="language-python">result = router.route(&quot;show me today's costs&quot;)
-</code></pre>
-</li>
-</ol>
-<h2>Verify your changes</h2>
-<p>After editing a command or registering a routing preference, confirm the change works end-to-end:</p>
-<ol>
-<li>Run <code>attune --help</code> and verify your subcommand appears in the output.</li>
-<li>Run the subcommand directly — for example, <code>attune costs</code> — and confirm it exits with code <code>0</code> on success.</li>
-<li>For routing changes, call <code>router.get_suggestions()</code> with a partial keyword and confirm your new keyword appears in the returned list.</li>
-<li>Run <code>pytest -k &quot;cli&quot;</code> and confirm all tests pass with no new failures.</li>
-</ol>
-<h2>Key files</h2>
-<ul>
-<li><code>src/attune/cli_minimal.py</code> — entry point; defines <code>main()</code> and <code>create_parser()</code></li>
-<li><code>src/attune/cli_router.py</code> — <code>HybridRouter</code>, <code>route_user_input()</code>, <code>RoutingPreference</code></li>
-<li><code>src/attune/cli_commands/</code> — one module per command group</li>
-</ul>
+<p><strong>Verify:</strong> <code>SmartRouter.list_workflows()</code> is synchronous; <code>route</code> is
+async and <code>route_sync</code> is its synchronous counterpart.</p>
 
   </article>
   <footer>

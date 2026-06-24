@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CLI Cautions — warning</title>
-  <meta name="description" content="`run_workflow_with_exit_code()` in `cli_commands._exit_codes` returns an integer that callers treat as a shell exit code. If you wrap or re-invoke this function and swallow its return value, the proce" />
-  <meta property="og:title" content="CLI Cautions — warning" />
-  <meta property="og:description" content="`run_workflow_with_exit_code()` in `cli_commands._exit_codes` returns an integer that callers treat as a shell exit code. If you wrap or re-invoke this function and swallow its return value, the proce" />
+  <title>The attune command-line interface and its natural-language router — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `attune: command not found` | console script not on PATH | reinstall, or use `python -m attune.cli_minimal` | medium | | `RuntimeWarning: corou" />
+  <meta property="og:title" content="The attune command-line interface and its natural-language router — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `attune: command not found` | console script not on PATH | reinstall, or use `python -m attune.cli_minimal` | medium | | `RuntimeWarning: corou" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/warning" />
   <style>
@@ -272,41 +272,58 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>CLI Cautions</h1>
-<h2>Exit codes carry a contract</h2>
-<p><code>run_workflow_with_exit_code()</code> in <code>cli_commands._exit_codes</code> returns an integer that callers treat as a shell exit code. If you wrap or re-invoke this function and swallow its return value, the process exits <code>0</code> even when the workflow failed. Always propagate the return value up to <code>main()</code>.</p>
-<p>The <code>on_result</code> parameter is optional (<code>None</code> by default). If you pass a callback, it fires before the exit code is returned — a side effect that is easy to miss when reading the call site.</p>
-<h2><code>cmd_costs_reset</code> permanently clears all cost data</h2>
-<p><code>cmd_costs_reset()</code> returns <code>0</code> on success and provides no confirmation prompt. Running it by mistake discards every tracked cost record with no built-in undo. Before automating any script that calls this command, verify that cost data has been exported first with <code>cmd_costs_export()</code>.</p>
-<h2>Learned routing preferences persist across sessions</h2>
-<p><code>HybridRouter.learn_preference()</code> writes a <code>RoutingPreference</code> entry to disk (at the path supplied to <code>__init__</code>). Fields like <code>usage_count</code> and <code>confidence</code> accumulate over time. If you call <code>learn_preference()</code> in a test or a one-off script without pointing <code>preferences_path</code> to a throwaway location, you silently mutate the user's live routing preferences.</p>
-<p>The <code>RoutingPreference</code> dataclass has a <code>confidence</code> field (default <code>1.0</code>) that <code>HybridRouter.route()</code> reads when selecting a skill. Injecting preferences with arbitrary confidence values can cause <code>route()</code> to override user intent in ways that are hard to trace.</p>
-<h2>Slash-command detection happens before routing</h2>
-<p><code>is_slash_command()</code> in <code>attune.cli_router</code> runs before <code>route_user_input()</code> dispatches input. If you pre-process or strip leading characters from user input before passing it to <code>route_user_input()</code>, a <code>/command</code> string may not be recognized as a slash command, and the router silently falls back to keyword matching instead of raising an error.</p>
-<h2><code>cmd_costs_export</code> and <code>cmd_telemetry_export</code> write files silently</h2>
-<p>Both export commands return <code>0</code> on success without printing the output path unless the caller's <code>print_result</code> callback does so. In automated pipelines, check the destination explicitly after the call — a missing file indicates a failure that the exit code alone may not surface.</p>
-<h2>How to reduce risk</h2>
-<ol>
-<li>
-<p><strong>Always capture and propagate return values.</strong> Every command function in <code>cli_commands</code> returns an <code>int</code>. Discard it and you lose the only signal that something went wrong.</p>
-</li>
-<li>
-<p><strong>Isolate <code>HybridRouter</code> in tests.</strong> Pass a temporary file path to <code>HybridRouter.__init__</code> in test code so learned preferences don't bleed into the user's real preferences store.</p>
-</li>
-<li>
-<p><strong>Export before resetting.</strong> Any workflow that calls <code>cmd_costs_reset()</code> should call <code>cmd_costs_export()</code> first and verify the export succeeded.</p>
-</li>
-<li>
-<p><strong>Rely on the public API.</strong> Names prefixed with <code>_</code> — including <code>_CATEGORIES</code> and <code>_DEFAULT_MODEL</code> — can change without notice. Depend on the functions listed in <code>__all__</code> for <code>cost_commands</code> and <code>memory_commands</code>.</p>
-</li>
-</ol>
-<h2>Source files</h2>
+<h1>The attune command-line interface and its natural-language router</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>attune: command not found</code></td>
+<td>console script not on PATH</td>
+<td>reinstall, or use <code>python -m attune.cli_minimal</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>RuntimeWarning: coroutine 'route_user_input' was never awaited</code></td>
+<td>called <code>route_user_input</code> without <code>await</code></td>
+<td>it is async — <code>await</code> it / <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td>A subcommand errors on args</td>
+<td>wrong subcommand or arguments</td>
+<td><code>attune &lt;group&gt; --help</code></td>
+<td>low</td>
+</tr>
+<tr>
+<td><code>attune doctor</code> reports problems</td>
+<td>environment/config issue</td>
+<td>follow its diagnostics</td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/cli_minimal.py</code></li>
-<li><code>src/attune/cli_router.py</code></li>
-<li><code>src/attune/cli_commands/**</code></li>
+<li><strong><code>route_user_input</code> is async.</strong> <code>is_slash_command</code> and
+<code>SmartRouter.list_workflows</code> are sync; <code>route</code> is async (<code>route_sync</code>
+is the sync variant).</li>
+<li><strong>Console script vs module.</strong> If <code>attune</code> isn't on PATH, <code>python -m attune.cli_minimal</code> always works.</li>
 </ul>
-<p><strong>Tags:</strong> <code>cli</code>, <code>commands</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li><code>attune --help</code> — is the CLI reachable?</li>
+<li><code>attune doctor</code> — environment check.</li>
+<li><code>attune &lt;group&gt; --help</code> — subcommand usage.</li>
+<li>For routing in Python, remember <code>route_user_input</code> is async.</li>
+</ol>
 
   </article>
   <footer>

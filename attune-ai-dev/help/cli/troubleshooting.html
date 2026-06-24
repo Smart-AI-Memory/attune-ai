@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot cli — troubleshooting</title>
-  <meta name="description" content="This page covers the `attune` CLI — command dispatch, workflow execution, routing, memory, cost tracking, and telemetry commands. The entry point is `main()` in `attune.cli_minimal`. Routing goes thro" />
-  <meta property="og:title" content="Troubleshoot cli — troubleshooting" />
-  <meta property="og:description" content="This page covers the `attune` CLI — command dispatch, workflow execution, routing, memory, cost tracking, and telemetry commands. The entry point is `main()` in `attune.cli_minimal`. Routing goes thro" />
+  <title>The attune command-line interface and its natural-language router — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `attune: command not found` | console script not on PATH | reinstall, or use `python -m attune.cli_minimal` | medium | | `RuntimeWarning: corou" />
+  <meta property="og:title" content="The attune command-line interface and its natural-language router — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `attune: command not found` | console script not on PATH | reinstall, or use `python -m attune.cli_minimal` | medium | | `RuntimeWarning: corou" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/troubleshooting" />
   <style>
@@ -272,119 +272,58 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot cli</h1>
-<h2>Before you start</h2>
-<p>This page covers the <code>attune</code> CLI — command dispatch, workflow execution, routing, memory, cost tracking, and telemetry commands. The entry point is <code>main()</code> in <code>attune.cli_minimal</code>. Routing goes through <code>attune.cli_router</code>.</p>
-<h2>Symptom table</h2>
+<h1>The attune command-line interface and its natural-language router</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>attune &lt;command&gt;</code> exits with a non-zero code</td>
-<td>Run <code>attune doctor</code> — it reports environment and configuration problems directly</td>
+<td><code>attune: command not found</code></td>
+<td>console script not on PATH</td>
+<td>reinstall, or use <code>python -m attune.cli_minimal</code></td>
+<td>medium</td>
 </tr>
 <tr>
-<td>A workflow command returns unexpectedly</td>
-<td>Confirm the exit contract: <code>run_workflow_with_exit_code()</code> returns an <code>int</code>; check whether your caller is comparing against the correct value</td>
+<td><code>RuntimeWarning: coroutine 'route_user_input' was never awaited</code></td>
+<td>called <code>route_user_input</code> without <code>await</code></td>
+<td>it is async — <code>await</code> it / <code>asyncio.run</code></td>
+<td>high</td>
 </tr>
 <tr>
-<td><code>attune help</code> produces no output or errors</td>
-<td>Verify <code>cmd_help()</code> can resolve the requested template category — valid categories are <code>errors</code>, <code>warnings</code>, <code>tips</code>, <code>references</code></td>
+<td>A subcommand errors on args</td>
+<td>wrong subcommand or arguments</td>
+<td><code>attune &lt;group&gt; --help</code></td>
+<td>low</td>
 </tr>
 <tr>
-<td>Routing sends input to the wrong skill</td>
-<td>Check learned preferences with <code>HybridRouter.get_suggestions(partial)</code> and inspect the stored <code>RoutingPreference</code> fields (<code>keyword</code>, <code>skill</code>, <code>confidence</code>)</td>
-</tr>
-<tr>
-<td>A slash command is not recognised</td>
-<td>Call <code>is_slash_command(text)</code> on the raw input to confirm the text is being identified as a slash command before routing</td>
-</tr>
-<tr>
-<td>Memory commands silently do nothing</td>
-<td>Confirm the Redis-backed memory beta header <code>context-management-2025-06-27</code> is available in your environment; <code>cmd_memory_recall()</code> will return nothing if the store is unreachable</td>
-</tr>
-<tr>
-<td>Cost data is missing or stale</td>
-<td>Run <code>attune costs</code> (<code>cmd_costs</code>) then <code>attune costs today</code> (<code>cmd_costs_today</code>) to narrow the scope; if both are empty, run <code>attune costs reset</code> only as a last resort — it calls <code>cmd_costs_reset()</code>, which always returns <code>0</code> and clears all tracking data</td>
-</tr>
-<tr>
-<td><code>attune validate</code> fails after a config change</td>
-<td>Run <code>cmd_validate()</code> directly and read the full output before assuming a code bug</td>
+<td><code>attune doctor</code> reports problems</td>
+<td>environment/config issue</td>
+<td>follow its diagnostics</td>
+<td>medium</td>
 </tr>
 </tbody>
 </table>
-<h2>Diagnosis steps</h2>
-<p>Work through these in order — each step is cheaper than the one that follows.</p>
-<h3>1. Run <code>attune doctor</code></h3>
-<p><code>cmd_doctor()</code> is the fastest first check. It inspects the environment and prints actionable output without modifying state:</p>
-<pre><code>attune doctor
-</code></pre>
-<p>Fix anything it reports before continuing.</p>
-<h3>2. Reproduce with a minimal invocation</h3>
-<p>Strip the call to its required arguments. If you are running a workflow, pass only the mandatory <code>input_data</code> keys to <code>run_workflow_with_exit_code()</code> and confirm the failure still occurs without additional context.</p>
-<h3>3. Check the version and feature flags</h3>
-<pre><code>attune version
-attune features
-</code></pre>
-<p><code>cmd_version()</code> prints the value returned by <code>get_version()</code>. <code>cmd_features()</code> lists which features are active. A silent failure after an upgrade is often a disabled feature or a changed default model (<code>claude-sonnet-4-6</code>).</p>
-<h3>4. Inspect routing behaviour</h3>
-<p>If the wrong command is being dispatched, use <code>route_user_input()</code> directly to see what <code>HybridRouter.route()</code> resolves:</p>
-<pre><code class="language-python">from attune.cli_router import route_user_input
-result = route_user_input(&quot;your input here&quot;)
-print(result)
-</code></pre>
-<p>If a keyword is being routed incorrectly, check the <code>RoutingPreference</code> for that keyword — pay attention to the <code>confidence</code> and <code>usage_count</code> fields. You can correct a bad preference with:</p>
-<pre><code class="language-python">from attune.cli_router import HybridRouter
-router = HybridRouter()
-router.learn_preference(keyword=&quot;your-keyword&quot;, skill=&quot;correct-skill&quot;, args=&quot;&quot;)
-</code></pre>
-<h3>5. Run the related tests</h3>
-<pre><code>pytest -k &quot;cli&quot; -v
-</code></pre>
-<p>If a test covers the failing path, its fixtures show you the expected inputs and outputs. A failing test here points directly at a regression.</p>
-<h3>6. Enable debug logging</h3>
-<p>If the steps above haven't located the problem, bump Python's log level to <code>DEBUG</code> and re-run the failing command. Look for the first log line that deviates from the expected flow — that line identifies the offending module in <code>attune.cli_commands</code>.</p>
-<h2>Common fixes</h2>
-<p><strong>Wrong exit code handling</strong>
-<code>run_workflow_with_exit_code()</code> always returns an <code>int</code>. If your script treats a non-zero return as a crash rather than a workflow-defined outcome, wrap the call and check the value explicitly:</p>
-<pre><code class="language-python">exit_code = run_workflow_with_exit_code(MyWorkflow, data, name=&quot;my-workflow&quot;, json_mode=False, print_result=print)
-if exit_code != 0:
-    # handle non-zero outcome
-</code></pre>
-<p><strong>Bad routing preference overriding the correct skill</strong>
-A <code>RoutingPreference</code> with high <code>usage_count</code> but low <code>confidence</code> can silently win. Reset it:</p>
-<pre><code class="language-python">router = HybridRouter()
-router.learn_preference(keyword=&quot;bad-keyword&quot;, skill=&quot;correct-skill&quot;, args=&quot;&quot;)
-</code></pre>
-<p><strong>Provider not set</strong>
-If commands that call a model fail immediately, run:</p>
-<pre><code>attune provider show   # calls cmd_provider_show()
-attune provider set    # calls cmd_provider_set()
-</code></pre>
-<p><strong>Stale cost data after a reset</strong>
-<code>cmd_costs_reset()</code> always returns <code>0</code> and cannot be undone. Export first:</p>
-<pre><code>attune costs export    # cmd_costs_export() writes data to a file
-attune costs reset     # cmd_costs_reset() then clears all data
-</code></pre>
-<p><strong>Memory commands require the beta header</strong>
-<code>cmd_memory_agent()</code>, <code>cmd_memory_capture()</code>, <code>cmd_memory_recall()</code>, and related commands depend on the Redis-backed memory tool gated behind the <code>context-management-2025-06-27</code> beta. If these commands silently do nothing, the beta is not enabled in your environment — this requires a configuration change outside the CLI itself.</p>
-<p><strong>Dependency version drift</strong>
-A dependency upgrade can change behaviour without a code change. Confirm installed versions:</p>
-<pre><code>pip show anthropic
-</code></pre>
-<p>Then compare against the version the project expects.</p>
-<h2>Source files</h2>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/cli_minimal.py</code></li>
-<li><code>src/attune/cli_router.py</code></li>
-<li><code>src/attune/cli_commands/**</code></li>
+<li><strong><code>route_user_input</code> is async.</strong> <code>is_slash_command</code> and
+<code>SmartRouter.list_workflows</code> are sync; <code>route</code> is async (<code>route_sync</code>
+is the sync variant).</li>
+<li><strong>Console script vs module.</strong> If <code>attune</code> isn't on PATH, <code>python -m attune.cli_minimal</code> always works.</li>
 </ul>
-<p><strong>Tags:</strong> <code>cli</code>, <code>commands</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li><code>attune --help</code> — is the CLI reachable?</li>
+<li><code>attune doctor</code> — environment check.</li>
+<li><code>attune &lt;group&gt; --help</code> — subcommand usage.</li>
+<li>For routing in Python, remember <code>route_user_input</code> is async.</li>
+</ol>
 
   </article>
   <footer>

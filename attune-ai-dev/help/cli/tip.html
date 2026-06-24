@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: working effectively with cli — tip</title>
-  <meta name="description" content="Use `cmd_doctor` and `cmd_validate` to catch configuration problems before they surface as confusing exit codes at runtime." />
-  <meta property="og:title" content="Tip: working effectively with cli — tip" />
-  <meta property="og:description" content="Use `cmd_doctor` and `cmd_validate` to catch configuration problems before they surface as confusing exit codes at runtime." />
+  <title>The attune command-line interface and its natural-language router — tip</title>
+  <meta name="description" content="- **`python -m attune.cli_minimal` is the fallback** when the `attune` script isn&#x27;t on PATH. - **`attune doctor` first.** It diagnoses most install/config issues. - **`route_user_input` is async.** `i" />
+  <meta property="og:title" content="The attune command-line interface and its natural-language router — tip" />
+  <meta property="og:description" content="- **`python -m attune.cli_minimal` is the fallback** when the `attune` script isn&#x27;t on PATH. - **`attune doctor` first.** It diagnoses most install/config issues. - **`route_user_input` is async.** `i" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/tip" />
   <style>
@@ -272,41 +272,16 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: working effectively with cli</h1>
-<p>Use <code>cmd_doctor</code> and <code>cmd_validate</code> to catch configuration problems before they surface as confusing exit codes at runtime.</p>
-<p><strong>Why:</strong> <code>run_workflow_with_exit_code()</code> returns a contract exit code — if the environment or configuration is broken, you get a non-zero exit with little context. Running <code>cmd_doctor</code> and <code>cmd_validate</code> first gives you a human-readable diagnosis before you invoke any workflow.</p>
-<p><strong>Tradeoff:</strong> Both commands make live checks against your environment, so they add a small startup cost. Skip them in CI once your environment is known-good and you want deterministic timing.</p>
-<h2>Where this applies</h2>
-<p>The exit-code contract flows through <code>run_workflow_with_exit_code()</code> in <code>cli_commands._exit_codes</code>. Every <code>cmd_workflow_*</code> command — <code>cmd_workflow_list</code>, <code>cmd_workflow_info</code>, and <code>cmd_workflow_run</code> — ultimately relies on this contract, so a misconfigured environment fails there, not at the command that triggered the workflow.</p>
-<h2>Quick reference</h2>
-<table>
-<thead>
-<tr>
-<th>Command</th>
-<th>What it checks</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>cmd_doctor</code></td>
-<td>Environment health and dependencies</td>
-</tr>
-<tr>
-<td><code>cmd_validate</code></td>
-<td>Configuration correctness</td>
-</tr>
-<tr>
-<td><code>cmd_workflow_run</code></td>
-<td>Runs a workflow; returns the contract exit code</td>
-</tr>
-<tr>
-<td><code>cmd_provider_show</code> / <code>cmd_provider_set</code></td>
-<td>Active model provider — a common source of non-zero exits</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Source files:</strong> <code>attune.cli_minimal</code>, <code>attune.cli_router</code>, <code>cli_commands.utility_commands</code>, <code>cli_commands.workflow_commands</code></p>
-<p><strong>Tags:</strong> <code>cli</code>, <code>commands</code></p>
+<h1>The attune command-line interface and its natural-language router</h1>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong><code>python -m attune.cli_minimal</code> is the fallback</strong> when the <code>attune</code>
+script isn't on PATH.</li>
+<li><strong><code>attune doctor</code> first.</strong> It diagnoses most install/config issues.</li>
+<li><strong><code>route_user_input</code> is async.</strong> <code>is_slash_command</code> and
+<code>list_workflows</code> are sync.</li>
+<li><strong><code>&lt;group&gt; --help</code>.</strong> Every command group has its own help.</li>
+</ul>
 
   </article>
   <footer>

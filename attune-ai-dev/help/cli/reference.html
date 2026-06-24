@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CLI reference — reference</title>
-  <meta name="description" content="Use these modules to invoke attune commands, route user input to Claude Code skills, and integrate attune workflows into scripts with predictable exit codes." />
-  <meta property="og:title" content="CLI reference — reference" />
-  <meta property="og:description" content="Use these modules to invoke attune commands, route user input to Claude Code skills, and integrate attune workflows into scripts with predictable exit codes." />
+  <title>The attune command-line interface and its natural-language router — reference</title>
+  <meta name="description" content="| Surface | Invocation | |---------|------------| | Console script | `attune &lt;command&gt;` (`attune.cli_minimal:main`). | | Module | `python -m attune.cli_minimal`. | | Help / health | `attune --help`, `" />
+  <meta property="og:title" content="The attune command-line interface and its natural-language router — reference" />
+  <meta property="og:description" content="| Surface | Invocation | |---------|------------| | Console script | `attune &lt;command&gt;` (`attune.cli_minimal:main`). | | Module | `python -m attune.cli_minimal`. | | Help / health | `attune --help`, `" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/reference" />
   <style>
@@ -272,500 +272,68 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>CLI reference</h1>
-<p>Use these modules to invoke attune commands, route user input to Claude Code skills, and integrate attune workflows into scripts with predictable exit codes.</p>
-<h2>Classes</h2>
+<h1>The attune command-line interface and its natural-language router</h1>
+<h2>Reference</h2>
+<h3>Invocation</h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
+<th>Surface</th>
+<th>Invocation</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>RoutingPreference</code></td>
-<td>Learned routing preference that maps a keyword to a skill invocation.</td>
+<td>Console script</td>
+<td><code>attune &lt;command&gt;</code> (<code>attune.cli_minimal:main</code>).</td>
+</tr>
+<tr>
+<td>Module</td>
+<td><code>python -m attune.cli_minimal</code>.</td>
+</tr>
+<tr>
+<td>Help / health</td>
+<td><code>attune --help</code>, <code>attune doctor</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>attune.cli_router</code></h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Kind</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>is_slash_command(text) -&gt; bool</code></td>
+<td>fn (sync)</td>
+<td>Is this a <code>/command</code>?</td>
+</tr>
+<tr>
+<td><code>route_user_input(user_input, context=None) -&gt; dict</code></td>
+<td>fn (<strong>async</strong>)</td>
+<td>Route text → workflow/skill dict.</td>
+</tr>
+<tr>
+<td><code>SmartRouter</code></td>
+<td>class</td>
+<td><code>route</code> (async) / <code>route_sync</code> / <code>list_workflows</code> / <code>get_workflow_info</code> / <code>suggest_for_error</code> / <code>suggest_for_file</code>.</td>
 </tr>
 <tr>
 <td><code>HybridRouter</code></td>
-<td>Routes user input to Claude Code skill invocations, learning from recorded preferences.</td>
+<td>class</td>
+<td><code>route</code>, <code>get_suggestions</code>, <code>learn_preference</code>.</td>
+</tr>
+<tr>
+<td><code>RoutingPreference</code></td>
+<td>dataclass</td>
+<td>Routing preferences.</td>
 </tr>
 </tbody>
 </table>
-<h3><code>RoutingPreference</code> fields</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>keyword</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>skill</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>args</code></td>
-<td><code>str</code></td>
-<td><code>''</code></td>
-</tr>
-<tr>
-<td><code>usage_count</code></td>
-<td><code>int</code></td>
-<td><code>0</code></td>
-</tr>
-<tr>
-<td><code>confidence</code></td>
-<td><code>float</code></td>
-<td><code>1.0</code></td>
-</tr>
-</tbody>
-</table>
-<h3><code>HybridRouter</code> methods</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__</code></td>
-<td>`preferences_path: str</td>
-<td>None = None`</td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>route</code></td>
-<td>`user_input: str, context: dict[str, Any]</td>
-<td>None = None`</td>
-<td><code>dict[str, Any]</code></td>
-</tr>
-<tr>
-<td><code>learn_preference</code></td>
-<td><code>keyword: str, skill: str, args: str = ''</code></td>
-<td><code>None</code></td>
-<td>Record a keyword-to-skill mapping for future routing.</td>
-</tr>
-<tr>
-<td><code>get_suggestions</code></td>
-<td><code>partial: str</code></td>
-<td><code>list[str]</code></td>
-<td>Return skill suggestions matching a partial input string.</td>
-</tr>
-</tbody>
-</table>
-<h2>Functions</h2>
-<h3>Entry point</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>main</code></td>
-<td>`argv: list[str]</td>
-<td>None = None`</td>
-<td><code>int</code></td>
-</tr>
-<tr>
-<td><code>create_parser</code></td>
-<td>—</td>
-<td><code>argparse.ArgumentParser</code></td>
-<td>Build the argument parser for the <code>attune</code> CLI.</td>
-</tr>
-<tr>
-<td><code>get_version</code></td>
-<td>—</td>
-<td><code>str</code></td>
-<td>Return the installed package version.</td>
-</tr>
-</tbody>
-</table>
-<h3>Routing</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>route_user_input</code></td>
-<td>`user_input: str, context: dict[str, Any]</td>
-<td>None = None`</td>
-<td><code>dict[str, Any]</code></td>
-</tr>
-<tr>
-<td><code>is_slash_command</code></td>
-<td><code>text: str</code></td>
-<td><code>bool</code></td>
-<td>Return <code>True</code> if <code>text</code> begins with a slash command.</td>
-</tr>
-</tbody>
-</table>
-<h3>Workflow execution</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>run_workflow_with_exit_code</code></td>
-<td>`workflow_cls: type, input_data: dict[str, Any], *, name: str, json_mode: bool, print_result: Callable[[Any], None], on_result: Callable[[Any], None]</td>
-<td>None = None`</td>
-<td><code>int</code></td>
-</tr>
-<tr>
-<td><code>cmd_workflow_list</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>List available workflows.</td>
-</tr>
-<tr>
-<td><code>cmd_workflow_info</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Show workflow details.</td>
-</tr>
-<tr>
-<td><code>cmd_workflow_run</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Execute a workflow.</td>
-</tr>
-</tbody>
-</table>
-<h3>Cost tracking</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>cmd_costs</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Show cost report for recent period.</td>
-</tr>
-<tr>
-<td><code>cmd_costs_today</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Show today's cost summary.</td>
-</tr>
-<tr>
-<td><code>cmd_costs_export</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Export cost data to file.</td>
-</tr>
-<tr>
-<td><code>cmd_costs_reset</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Clear all cost tracking data.</td>
-</tr>
-</tbody>
-</table>
-<h3>Memory</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>cmd_memory_agent</code></td>
-<td><code>args: Any</code></td>
-<td><code>int</code></td>
-<td>Run a single-shot agent with attune's Redis-backed Memory tool.</td>
-</tr>
-<tr>
-<td><code>cmd_remember</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Add a lesson to the lessons file.</td>
-</tr>
-<tr>
-<td><code>cmd_forget</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Remove a lesson by line number or keyword.</td>
-</tr>
-<tr>
-<td><code>cmd_lessons</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>List current lessons with line numbers.</td>
-</tr>
-<tr>
-<td><code>cmd_memory_capture</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Save content to personal cross-session memory.</td>
-</tr>
-<tr>
-<td><code>cmd_memory_recall</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Search personal cross-session memory.</td>
-</tr>
-<tr>
-<td><code>cmd_memory_topics</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>List all personal memory topics.</td>
-</tr>
-<tr>
-<td><code>cmd_memory_forget_topic</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Delete a topic (or specific kind) from personal memory.</td>
-</tr>
-</tbody>
-</table>
-<h3>Pattern review</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>cmd_patterns_review</code></td>
-<td><code>args: Any</code></td>
-<td><code>int</code></td>
-<td>List staged patterns awaiting review.</td>
-</tr>
-<tr>
-<td><code>cmd_patterns_promote</code></td>
-<td><code>args: Any</code></td>
-<td><code>int</code></td>
-<td>Promote a staged pattern into the active library.</td>
-</tr>
-<tr>
-<td><code>cmd_patterns_reject</code></td>
-<td><code>args: Any</code></td>
-<td><code>int</code></td>
-<td>Reject (drop) a staged pattern.</td>
-</tr>
-</tbody>
-</table>
-<h3>Provider configuration</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>cmd_provider_show</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Show current provider configuration.</td>
-</tr>
-<tr>
-<td><code>cmd_provider_set</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Set the LLM provider.</td>
-</tr>
-</tbody>
-</table>
-<h3>Telemetry</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>cmd_telemetry_show</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Display usage summary.</td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_savings</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Show cost savings from tier routing.</td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_export</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Export telemetry data to file.</td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_routing_stats</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Show adaptive routing statistics.</td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_routing_check</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Check for tier upgrade recommendations.</td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_models</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Show model performance by provider.</td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_agents</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Show active agents and their status.</td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_signals</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Show coordination signals.</td>
-</tr>
-</tbody>
-</table>
-<h3>Utility</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>cmd_setup</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Install Attune slash commands for Claude Code.</td>
-</tr>
-<tr>
-<td><code>cmd_validate</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Validate configuration.</td>
-</tr>
-<tr>
-<td><code>cmd_version</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Show version information.</td>
-</tr>
-<tr>
-<td><code>cmd_features</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Show available memory and telemetry features.</td>
-</tr>
-<tr>
-<td><code>cmd_doctor</code></td>
-<td><code>args: Namespace</code></td>
-<td><code>int</code></td>
-<td>Run comprehensive environment health check.</td>
-</tr>
-<tr>
-<td><code>cmd_help</code></td>
-<td><code>args: argparse.Namespace</code></td>
-<td><code>int</code></td>
-<td>Handle the <code>attune help</code> command.</td>
-</tr>
-<tr>
-<td><code>cmd_curator</code></td>
-<td><code>args: Any</code></td>
-<td><code>int</code></td>
-<td>Render the curator briefing for the current project.</td>
-</tr>
-</tbody>
-</table>
-<h2>Module constants</h2>
-<table>
-<thead>
-<tr>
-<th>Constant</th>
-<th>Type</th>
-<th>Members</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>_CATEGORIES</code></td>
-<td><code>tuple</code></td>
-<td><code>'errors'</code>, <code>'warnings'</code>, <code>'tips'</code>, <code>'references'</code></td>
-</tr>
-<tr>
-<td><code>_DEFAULT_MODEL</code></td>
-<td><code>str</code></td>
-<td><code>'claude-sonnet-4-6'</code></td>
-</tr>
-<tr>
-<td><code>_MEMORY_BETA</code></td>
-<td><code>str</code></td>
-<td><code>'context-management-2025-06-27'</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/cli_minimal.py</code></li>
-<li><code>src/attune/cli_router.py</code></li>
-<li><code>src/attune/cli_commands/**</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>cli</code>, <code>commands</code></p>
 
   </article>
   <footer>
