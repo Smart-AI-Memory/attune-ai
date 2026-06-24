@@ -3,9 +3,7 @@ type: faq
 name: cli-faq
 feature: cli
 depth: faq
-generated_at: 2026-06-10T07:07:04.664140+00:00
-source_hash: 5b5c949846a62732ae6954c6682e1c7a924430b6ac1efcd58027d681df89d386
-status: generated
+status: manual
 ---
 
 # CLI FAQ
@@ -20,7 +18,7 @@ Call `main()` from `attune.cli_minimal`. It accepts an optional `argv` list; whe
 
 ## How does routing work?
 
-`route_user_input()` in `attune.cli_router` takes a string of user input and an optional context dict, then returns a routing decision as a dict. For more control, instantiate `HybridRouter` directly — it lets you call `route()`, teach it new preferences with `learn_preference()`, and get tab-completion candidates with `get_suggestions()`.
+`route_user_input()` in `attune.cli_router` takes a string of user input and an optional context dict, then returns a routing decision as a dict. **It is async** — `await` it (e.g. `asyncio.run(route_user_input(text))`). `is_slash_command` and `SmartRouter.list_workflows` are synchronous; `SmartRouter.route_sync` is the synchronous routing call. For more control, instantiate `HybridRouter` directly — it lets you call `route()`, teach it new preferences with `learn_preference()`, and get tab-completion candidates with `get_suggestions()`.
 
 ## What is a `RoutingPreference`?
 

@@ -256,15 +256,13 @@ features:
     status: manual
 
   cli:
+    # Single-sourced via content/features/cli.md (projector).
+    # Scope = cli_minimal.py (argparse main() + cmd_* handlers) +
+    # cli_router.py (route_user_input [async] / is_slash_command /
+    # SmartRouter / HybridRouter) + cli_commands/**.
     description: Command-line interface and routing
-    files:
-      - src/attune/cli_minimal.py
-      - src/attune/cli_router.py
-      - src/attune/cli_commands/**
     tags: [cli, commands]
-    doc_kinds: [cli-reference]
-    doc_paths:
-      - docs/reference/cli-reference.md
+    status: manual
 
   # models is single-sourced (status: manual) from
   # content/features/models.md and rendered by attune_author.projector
