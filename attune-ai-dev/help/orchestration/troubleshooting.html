@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot orchestration — troubleshooting</title>
-  <meta name="description" content="This page covers issues with meta-orchestration: dynamic team composition, execution strategies (Sequential, Parallel, Debate, Teaching, Refinement, Adaptive, and conditional variants), workflow regis" />
-  <meta property="og:title" content="Troubleshoot orchestration — troubleshooting" />
-  <meta property="og:description" content="This page covers issues with meta-orchestration: dynamic team composition, execution strategies (Sequential, Parallel, Debate, Teaching, Refinement, Adaptive, and conditional variants), workflow regis" />
+  <title>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;execute&#x27; was never awaited` | `ExecutionStrategy.execute` called without `await` | it is async — `await` it | high " />
+  <meta property="og:title" content="Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;execute&#x27; was never awaited` | `ExecutionStrategy.execute` called without `await` | it is async — `await` it | high " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/troubleshooting" />
   <style>
@@ -272,154 +272,63 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot orchestration</h1>
-<h2>Before you start</h2>
-<p>This page covers issues with meta-orchestration: dynamic team composition, execution strategies (Sequential, Parallel, Debate, Teaching, Refinement, Adaptive, and conditional variants), workflow registration, and agent template resolution.</p>
-<h2>Symptom table</h2>
+<h1>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ValueError: Unknown strategy: {...}</code></td>
-<td>The strategy name passed to <code>get_strategy()</code> is misspelled or not yet registered. Print <code>get_strategy.__doc__</code> or catch the error — the message lists available strategies.</td>
-</tr>
-<tr>
-<td><code>ValueError: Unknown workflow: {...}</code></td>
-<td>The workflow ID passed to <code>get_workflow()</code> was never registered. Call <code>register_workflow()</code> before referencing it in a <code>NestedStrategy</code> or <code>NestedSequentialStrategy</code>.</td>
-</tr>
-<tr>
-<td><code>get_template()</code> returns <code>None</code></td>
-<td>The template ID is not in the registry. Call <code>get_all_templates()</code> to list every registered ID and confirm yours is present.</td>
-</tr>
-<tr>
-<td><code>DelegationChainStrategy</code> raises or hangs</td>
-<td>The <code>max_depth</code> limit (default: 3) was hit. Either reduce nesting depth or increase <code>max_depth</code> in the constructor: <code>DelegationChainStrategy(max_depth=5)</code>.</td>
-</tr>
-<tr>
-<td><code>NestedStrategy</code> or <code>NestedSequentialStrategy</code> raises</td>
-<td>The <code>WorkflowReference</code> points to an unregistered workflow. Verify with <code>get_workflow(workflow_id)</code> before constructing the strategy.</td>
-</tr>
-<tr>
-<td>A workflow stage silently produces no output</td>
-<td>Check whether the <code>StrategyResult</code> from <code>execute()</code> carries an error field rather than raising. Log the full result object before discarding it.</td>
-</tr>
-<tr>
-<td><code>ConditionalStrategy</code> always takes the same branch</td>
-<td>The <code>Condition</code> evaluates against the <code>context</code> dict. Print the context at the branch point to confirm the expected keys and values are present.</td>
-</tr>
-<tr>
-<td>Intermittent failures across runs</td>
-<td>Look for shared mutable state: <code>WORKFLOW_REGISTRY</code> is a module-level registry, so tests or concurrent calls that register/unregister entries can interfere. Isolate with fresh registrations per test.</td>
-</tr>
-<tr>
-<td><code>PromptCachedSequentialStrategy</code> returns stale results</td>
-<td>The cache TTL (default: 3600 s) has not expired. Instantiate with a shorter TTL or pass a fresh <code>cached_context</code> string: <code>PromptCachedSequentialStrategy(cache_ttl=0)</code>.</td>
-</tr>
-</tbody>
-</table>
-<h2>Diagnose the failure</h2>
-<p>Work through these steps in order — each one is cheaper than the next.</p>
-<h3>1. Reproduce in isolation</h3>
-<p>Strip the failing call to its minimum required arguments and run it directly in a Python shell or a short script. For strategy failures:</p>
-<pre><code class="language-python">from attune.orchestration import get_strategy
-strategy = get_strategy(&quot;SequentialStrategy&quot;)   # replace with your strategy name
-</code></pre>
-<p>If this raises <code>ValueError</code>, the name is wrong or the strategy is not registered.</p>
-<h3>2. List what is registered</h3>
-<p>Before assuming a bug in execution logic, confirm that your strategies, workflows, and templates are actually registered:</p>
-<pre><code class="language-python">from attune.orchestration import get_all_templates
-from attune.orchestration._strategies import get_strategy   # catches ValueError on bad name
-
-# List all agent templates
-print([t.id for t in get_all_templates()])
-
-# List templates by capability or tier
-from attune.orchestration import get_templates_by_capability, get_templates_by_tier
-print(get_templates_by_capability(&quot;security&quot;))
-print(get_templates_by_tier(&quot;senior&quot;))
-</code></pre>
-<h3>3. Enable DEBUG logging</h3>
-<pre><code class="language-python">import logging
-logging.basicConfig(level=logging.DEBUG)
-</code></pre>
-<p>Re-run your orchestration pipeline. Log output will show which agents are dispatched and where execution stops.</p>
-<h3>4. Inspect strategy execution directly</h3>
-<p>Call <code>execute()</code> on the strategy with a minimal agent list and context dict, then inspect the full <code>StrategyResult</code> before it gets consumed by higher-level code:</p>
-<pre><code class="language-python">result = strategy.execute(agents=my_agents, context={&quot;target&quot;: &quot;src/&quot;})
-print(result)   # check for error fields or empty outputs
-</code></pre>
-<h3>5. Run the relevant tests</h3>
-<pre><code class="language-bash">pytest -k &quot;orchestration&quot; -v
-</code></pre>
-<p>If a test covers the failing path, its fixtures give you a known-good minimal setup to compare against your inputs.</p>
-<h2>Common fixes</h2>
-<p><strong>Unknown strategy name</strong>
-The error message from <code>get_strategy()</code> lists available strategies. Register a custom one if yours is missing:</p>
-<pre><code class="language-python">from attune.orchestration._strategies import register_strategy
-from my_module import MyCustomStrategy
-register_strategy(&quot;MyCustomStrategy&quot;, MyCustomStrategy)
-</code></pre>
-<p><strong>Unregistered workflow for nested execution</strong>
-Register the workflow before building any <code>NestedStrategy</code> or <code>NestedSequentialStrategy</code> that references it:</p>
-<pre><code class="language-python">from attune.orchestration._strategies.nesting import register_workflow
-register_workflow(my_workflow_definition)   # WorkflowDefinition instance
-</code></pre>
-<p><strong>Template not found</strong>
-Register the template at runtime before the orchestrator resolves it:</p>
-<pre><code class="language-python">from attune.orchestration import register_custom_template
-register_custom_template(my_template)   # AgentTemplate instance
-</code></pre>
-<p>To remove a template that is interfering with resolution:</p>
-<pre><code class="language-python">from attune.orchestration import unregister_template
-removed = unregister_template(&quot;bad-template-id&quot;)   # returns False if ID not found
-</code></pre>
-<p><strong>Delegation depth exceeded</strong>
-Reduce your nesting or raise the limit explicitly:</p>
-<pre><code class="language-python">from attune.orchestration import DelegationChainStrategy
-strategy = DelegationChainStrategy(max_depth=5)
-</code></pre>
-<p><strong>Stale cache in <code>PromptCachedSequentialStrategy</code></strong>
-Force a fresh execution by setting <code>cache_ttl=0</code> or passing a new <code>cached_context</code>:</p>
-<pre><code class="language-python">from attune.orchestration import PromptCachedSequentialStrategy
-strategy = PromptCachedSequentialStrategy(cached_context=fresh_context, cache_ttl=0)
-</code></pre>
-<p><strong>Dependency version mismatch</strong>
-If orchestration broke after an install or update, confirm the installed package versions match what the project expects:</p>
-<pre><code class="language-bash">pip show attune
-pip install --upgrade attune   # or pin to a known-good version
-</code></pre>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/orchestration/**</code></li>
-<li><code>src/attune/coordination/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>orchestration</code>, <code>teams</code></p>
-<h2>Unresolved references</h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>Location</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
 <th>Severity</th>
-<th>Issue</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Line 94 (code fence)</td>
-<td>error</td>
-<td><code>from my_module import …</code> — module not importable</td>
+<td><code>RuntimeWarning: coroutine 'execute' was never awaited</code></td>
+<td><code>ExecutionStrategy.execute</code> called without <code>await</code></td>
+<td>it is async — <code>await</code> it</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>get_strategy(name)</code> raises</td>
+<td>unknown name (<code>ValueError</code>), or an arg-taking name like <code>conditional</code>/<code>nested</code> (<code>TypeError</code>)</td>
+<td>use one of the nine no-arg names; construct arg-taking strategies directly</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>get_template(id)</code> returns <code>None</code></td>
+<td>no template with that id</td>
+<td>list ids via <code>get_all_templates()</code></td>
+<td>low</td>
+</tr>
+<tr>
+<td>Team build fails</td>
+<td>a <code>TeamSpecification</code> references an unknown template/capability</td>
+<td>check the spec against <code>get_all_templates()</code></td>
+<td>medium</td>
 </tr>
 </tbody>
 </table>
+<h3>Risk areas</h3>
+<ul>
+<li><strong>Planning is sync; execution is async.</strong> <code>MetaOrchestrator</code> methods
+and the builders are synchronous; <code>ExecutionStrategy.execute</code> is
+async.</li>
+<li><strong><code>get_strategy</code> resolves the nine no-arg strategies.</strong> The registry
+also holds <code>conditional</code>/<code>multi_conditional</code>/<code>nested</code>/
+<code>nested_sequential</code>, which require constructor args (fetching them bare
+raises <code>TypeError</code>).</li>
+<li><strong>Templates are matched by capability/tier.</strong> A team is only as good
+as the templates the registry can supply.</li>
+</ul>
+<h3>Diagnosis order</h3>
+<ol>
+<li><code>get_all_templates()</code> — what agents are available?</li>
+<li><code>MetaOrchestrator().analyze_task(...)</code> — what does the planner infer?</li>
+<li><code>get_strategy(name)</code> — is the strategy name valid?</li>
+<li>Async-not-awaited? <code>execute</code> must be awaited.</li>
+</ol>
 
   </article>
   <footer>

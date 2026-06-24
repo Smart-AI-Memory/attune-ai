@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: Choose your execution strategy before wiring agents together — tip</title>
-  <meta name="description" content="Pick the right `ExecutionStrategy` subclass up front — swapping strategies later requires rethinking data flow between every agent in the pipeline." />
-  <meta property="og:title" content="Tip: Choose your execution strategy before wiring agents together — tip" />
-  <meta property="og:description" content="Pick the right `ExecutionStrategy` subclass up front — swapping strategies later requires rethinking data flow between every agent in the pipeline." />
+  <title>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — tip</title>
+  <meta name="description" content="- **Plan sync, execute async.** `MetaOrchestrator` / builders are sync; `execute` is async. - **Start from templates.** `get_all_templates()` is the cheapest way to see what a team can be built from. " />
+  <meta property="og:title" content="Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — tip" />
+  <meta property="og:description" content="- **Plan sync, execute async.** `MetaOrchestrator` / builders are sync; `execute` is async. - **Start from templates.** `get_all_templates()` is the cheapest way to see what a team can be built from. " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/tip" />
   <style>
@@ -272,23 +272,16 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: Choose your execution strategy before wiring agents together</h1>
-<p>Pick the right <code>ExecutionStrategy</code> subclass up front — swapping strategies later requires rethinking data flow between every agent in the pipeline.</p>
-<p><strong>Why:</strong> Each strategy defines not just execution order but also how results pass between stages, so the wrong choice compounds across every step.</p>
-<p>Use <code>get_strategy(strategy_name)</code> to retrieve a strategy by name rather than instantiating subclasses directly. If the name isn't registered, you get an explicit <code>ValueError</code> listing available options — far cheaper than a silent misconfiguration discovered mid-pipeline.</p>
-<pre><code class="language-python">from attune.orchestration import get_strategy
-
-strategy = get_strategy(&quot;sequential&quot;)  # raises ValueError with available names if unknown
-</code></pre>
-<p>For pipelines that reuse the same context across many agents, prefer <code>PromptCachedSequentialStrategy</code> over a plain sequential approach — it shares a cached context with a configurable TTL (<code>cache_ttl</code>, default 3600 s), which avoids redundant computation on each agent call.</p>
-<p>For hierarchical delegation, <code>DelegationChainStrategy</code> enforces a <code>max_depth</code> (default 3) that prevents runaway recursive delegation. If you find yourself raising that limit, treat it as a signal that the pipeline needs restructuring rather than a deeper chain.</p>
-<p><strong>Tradeoff:</strong> <code>get_strategy()</code> returns a pre-configured instance. If you need non-default parameters — such as a custom <code>max_depth</code> for <code>DelegationChainStrategy</code> or a specific <code>cached_context</code> string — instantiate the class directly instead of going through the registry.</p>
-<h2>Source files</h2>
+<h1>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines</h1>
+<h2>Notes &amp; tips</h2>
 <ul>
-<li><code>src/attune/orchestration/_strategies/__init__.py</code></li>
-<li><code>src/attune/orchestration/_strategies/nesting.py</code></li>
+<li><strong>Plan sync, execute async.</strong> <code>MetaOrchestrator</code> / builders are sync;
+<code>execute</code> is async.</li>
+<li><strong>Start from templates.</strong> <code>get_all_templates()</code> is the cheapest way to
+see what a team can be built from.</li>
+<li><strong><code>get_strategy</code> takes a registry name</strong>, not a class.</li>
+<li><strong>Orchestration composes workflows; it doesn't replace them.</strong></li>
 </ul>
-<p><strong>Tags:</strong> <code>orchestration</code>, <code>teams</code></p>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Orchestration errors — error</title>
-  <meta name="description" content="Most orchestration failures are `ValueError` exceptions raised when a strategy name, workflow ID, or agent template cannot be resolved in the registry:" />
-  <meta property="og:title" content="Orchestration errors — error" />
-  <meta property="og:description" content="Most orchestration failures are `ValueError` exceptions raised when a strategy name, workflow ID, or agent template cannot be resolved in the registry:" />
+  <title>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;execute&#x27; was never awaited` | `ExecutionStrategy.execute` called without `await` | it is async — `await` it | high " />
+  <meta property="og:title" content="Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;execute&#x27; was never awaited` | `ExecutionStrategy.execute` called without `await` | it is async — `await` it | high " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/error" />
   <style>
@@ -272,48 +272,63 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Orchestration errors</h1>
-<h2>Common error signatures</h2>
-<p>Most orchestration failures are <code>ValueError</code> exceptions raised when a strategy name, workflow ID, or agent template cannot be resolved in the registry:</p>
+<h1>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'execute' was never awaited</code></td>
+<td><code>ExecutionStrategy.execute</code> called without <code>await</code></td>
+<td>it is async — <code>await</code> it</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>get_strategy(name)</code> raises</td>
+<td>unknown name (<code>ValueError</code>), or an arg-taking name like <code>conditional</code>/<code>nested</code> (<code>TypeError</code>)</td>
+<td>use one of the nine no-arg names; construct arg-taking strategies directly</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>get_template(id)</code> returns <code>None</code></td>
+<td>no template with that id</td>
+<td>list ids via <code>get_all_templates()</code></td>
+<td>low</td>
+</tr>
+<tr>
+<td>Team build fails</td>
+<td>a <code>TeamSpecification</code> references an unknown template/capability</td>
+<td>check the spec against <code>get_all_templates()</code></td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>ValueError: Unknown strategy: {name}. Available: {...}</code> — raised by <code>get_strategy()</code> when the requested strategy name is not registered.</li>
-<li><code>ValueError: Unknown workflow: {id}. Available: {...}</code> — raised by <code>get_workflow()</code> when a <code>WorkflowReference</code> points to a workflow ID that was never passed to <code>register_workflow()</code>.</li>
-<li><code>DelegationChainStrategy</code> silently enforces a <code>max_depth</code> (default: <code>3</code>); pipelines that exceed this depth are cut off rather than raising immediately, which can surface as incomplete results rather than an exception.</li>
-<li><code>NestedStrategy</code> and <code>NestedSequentialStrategy</code> share the same <code>NestingContext.DEFAULT_MAX_DEPTH</code> limit — exceeding it while composing workflows-within-workflows produces errors that name the offending <code>WorkflowReference</code>.</li>
+<li><strong>Planning is sync; execution is async.</strong> <code>MetaOrchestrator</code> methods
+and the builders are synchronous; <code>ExecutionStrategy.execute</code> is
+async.</li>
+<li><strong><code>get_strategy</code> resolves the nine no-arg strategies.</strong> The registry
+also holds <code>conditional</code>/<code>multi_conditional</code>/<code>nested</code>/
+<code>nested_sequential</code>, which require constructor args (fetching them bare
+raises <code>TypeError</code>).</li>
+<li><strong>Templates are matched by capability/tier.</strong> A team is only as good
+as the templates the registry can supply.</li>
 </ul>
-<h2>Where errors originate</h2>
-<p>The following functions are the direct raise sites. Errors returned from <code>execute()</code> on any strategy class typically trace back to one of these resolution steps:</p>
-<ul>
-<li><code>get_strategy(strategy_name)</code> — looks up a registered <code>ExecutionStrategy</code> subclass by name; raises <code>ValueError</code> for unknown names.</li>
-<li><code>register_strategy(name, strategy_class)</code> — registers a custom strategy; incorrect <code>strategy_class</code> types cause failures at the next <code>get_strategy()</code> call.</li>
-<li><code>register_workflow(workflow)</code> — adds a <code>WorkflowDefinition</code> to <code>WORKFLOW_REGISTRY</code>; skipping this step before referencing the workflow causes <code>get_workflow()</code> to raise.</li>
-<li><code>get_workflow(workflow_id)</code> — resolves a workflow by ID for use in <code>NestedStrategy</code> or <code>NestedSequentialStrategy</code>; raises <code>ValueError</code> if the ID is absent from the registry.</li>
-<li><code>get_template(template_id)</code> — retrieves an <code>AgentTemplate</code> from the template registry; returns <code>None</code> rather than raising, so a missing template can produce subtle downstream failures in strategy execution.</li>
-</ul>
-<h2>How to diagnose</h2>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Read the <code>ValueError</code> message.</strong> Both <code>get_strategy()</code> and <code>get_workflow()</code> include the full list of available names in the exception message. Compare that list against the name or ID you passed in — a typo or missing registration step is the most common cause.</p>
-</li>
-<li>
-<p><strong>Check registration order.</strong> <code>NestedStrategy</code> and <code>NestedSequentialStrategy</code> resolve <code>WorkflowReference</code> objects at execution time, not at construction time. If <code>register_workflow()</code> was not called before <code>execute()</code> runs, <code>get_workflow()</code> raises even though the strategy object was created without error.</p>
-</li>
-<li>
-<p><strong>Confirm <code>get_template()</code> returned a value, not <code>None</code>.</strong> Unlike the strategy and workflow lookups, <code>get_template()</code> returns <code>None</code> for an unknown <code>template_id</code> instead of raising. If an agent step produces no output, verify the template ID with <code>get_all_templates()</code> and re-register with <code>register_custom_template()</code> if it is missing.</p>
-</li>
-<li>
-<p><strong>Verify <code>max_depth</code> for nested and delegation patterns.</strong> <code>DelegationChainStrategy</code> defaults to <code>max_depth=3</code> and <code>NestedStrategy</code> defaults to <code>NestingContext.DEFAULT_MAX_DEPTH</code>. If your pipeline is deeper than these limits, pass an explicit <code>max_depth</code> at construction time.</p>
-</li>
-<li>
-<p><strong>Identify the composition pattern in use.</strong> The six patterns — Sequential, Parallel, Debate, Teaching, Refinement, and Adaptive — have different execution paths. Knowing which pattern your <code>MetaOrchestrator</code> selected narrows which strategy's <code>execute()</code> method to inspect.</p>
-</li>
+<li><code>get_all_templates()</code> — what agents are available?</li>
+<li><code>MetaOrchestrator().analyze_task(...)</code> — what does the planner infer?</li>
+<li><code>get_strategy(name)</code> — is the strategy name valid?</li>
+<li>Async-not-awaited? <code>execute</code> must be awaited.</li>
 </ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/orchestration/**</code></li>
-<li><code>src/attune/coordination/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>orchestration</code>, <code>teams</code></p>
 
   </article>
   <footer>

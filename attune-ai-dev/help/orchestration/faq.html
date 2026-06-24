@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Orchestration FAQ — faq</title>
-  <meta name="description" content="Orchestration is the meta-orchestration system that composes `BaseWorkflow` instances into multi-agent pipelines using execution strategies. It covers dynamic team building, workflow composition, and " />
+  <meta name="description" content="A workflow is one analysis; orchestration coordinates **several** agents into one pipeline. `MetaOrchestrator` analyzes the task (complexity, domain, requirements), picks a `CompositionPattern`, a tea" />
   <meta property="og:title" content="Orchestration FAQ — faq" />
-  <meta property="og:description" content="Orchestration is the meta-orchestration system that composes `BaseWorkflow` instances into multi-agent pipelines using execution strategies. It covers dynamic team building, workflow composition, and " />
+  <meta property="og:description" content="A workflow is one analysis; orchestration coordinates **several** agents into one pipeline. `MetaOrchestrator` analyzes the task (complexity, domain, requirements), picks a `CompositionPattern`, a tea" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/faq" />
   <style>
@@ -273,33 +273,38 @@
   </nav>
   <article class="markdown-body">
 <h1>Orchestration FAQ</h1>
-<h2>What is orchestration?</h2>
-<p>Orchestration is the meta-orchestration system that composes <code>BaseWorkflow</code> instances into multi-agent pipelines using execution strategies. It covers dynamic team building, workflow composition, and agent template management.</p>
-<h2>When should I use orchestration instead of calling a workflow directly?</h2>
-<p>Use orchestration when you need two or more workflows to run together — for example, chaining a security audit into a release prep, or running code review and bug prediction in parallel. If you only need a single workflow, call it directly.</p>
-<h2>What composition patterns are available?</h2>
-<p>Six patterns: <strong>Sequential</strong>, <strong>Parallel</strong>, <strong>Debate</strong>, <strong>Teaching</strong>, <strong>Refinement</strong>, and <strong>Adaptive</strong>. You can also use the conditional variants (<code>ConditionalStrategy</code>, <code>MultiConditionalStrategy</code>) for if/else branching, and <code>NestedStrategy</code> or <code>NestedSequentialStrategy</code> when you need workflows nested inside other workflows.</p>
-<h2>How do I get a strategy instance?</h2>
-<p>Call <code>get_strategy(strategy_name)</code>. It returns the corresponding <code>ExecutionStrategy</code> instance, or raises <code>ValueError</code> listing the available strategies if the name isn't recognized.</p>
-<h2>How do I add a custom strategy?</h2>
-<p>Call <code>register_strategy(name, strategy_class)</code> with your <code>ExecutionStrategy</code> subclass. After registration, <code>get_strategy(name)</code> will return an instance of your class.</p>
-<h2>How do I use nested workflows?</h2>
-<p>Register the workflow first with <code>register_workflow(workflow)</code>, then reference it by ID inside a <code>NestedStrategy</code> or <code>NestedSequentialStrategy</code>. Both accept a <code>max_depth</code> argument to prevent unbounded recursion.</p>
-<h2>What happens if I pass an unknown strategy or workflow name?</h2>
-<ul>
-<li><code>get_strategy()</code> raises <code>ValueError: 'Unknown strategy: {...}. Available: {...}'</code></li>
-<li><code>get_workflow()</code> raises <code>ValueError: 'Unknown workflow: {...}. Available: {...}'</code></li>
-</ul>
-<p>The error message includes the list of registered names, so you can see exactly what's available.</p>
-<h2>How do I find agent templates for a given capability or tier?</h2>
-<p>Use <code>get_templates_by_capability(capability)</code> or <code>get_templates_by_tier(tier)</code>. To register your own template at runtime, call <code>register_custom_template(template)</code>. To remove one, call <code>unregister_template(template_id)</code> — it returns <code>False</code> if the ID wasn't found.</p>
-<h2>How do I debug an orchestration pipeline that isn't working?</h2>
-<p>Run <code>pytest -k &quot;orchestration&quot; -v</code> first. If the tests pass but your pipeline still fails, add <code>logger.debug</code> calls around the <code>execute()</code> call on your strategy and re-run with logging enabled. Check that every workflow referenced by ID has been registered with <code>register_workflow()</code> before execution starts.</p>
-<h2>Where is the source code?</h2>
-<ul>
-<li><code>src/attune/orchestration/</code> — meta-orchestration system, execution strategies, and agent templates</li>
-<li><code>src/attune/coordination/</code> — supporting coordination logic</li>
-</ul>
+<h2>What does orchestration do that a single workflow doesn't?</h2>
+<p>A workflow is one analysis; orchestration coordinates <strong>several</strong> agents
+into one pipeline. <code>MetaOrchestrator</code> analyzes the task (complexity,
+domain, requirements), picks a <code>CompositionPattern</code>, a team of
+<code>AgentTemplate</code>s is assembled, and an <code>ExecutionStrategy</code> runs them.</p>
+<h2>How do I see the available agents?</h2>
+<p><code>get_all_templates()</code> returns the registry's <code>AgentTemplate</code>s (each has
+an <code>id</code>, <code>role</code>, <code>capabilities</code>, <code>tools</code>, <code>tier_preference</code>); fetch one
+with <code>get_template(template_id)</code>. Filter with
+<code>get_templates_by_capability(...)</code> or <code>get_templates_by_tier(...)</code>, and
+add your own with <code>register_custom_template(...)</code>.</p>
+<h2>Which execution strategies can <code>get_strategy</code> return?</h2>
+<p>Nine names construct with no arguments: <code>sequential</code>, <code>parallel</code>,
+<code>debate</code>, <code>teaching</code>, <code>refinement</code>, <code>adaptive</code>, <code>tool_enhanced</code>,
+<code>prompt_cached_sequential</code>, <code>delegation_chain</code>. The registry also holds
+<code>conditional</code>, <code>multi_conditional</code>, <code>nested</code>, and <code>nested_sequential</code>,
+but those require constructor arguments — fetching them bare via
+<code>get_strategy</code> raises <code>TypeError</code>, so construct them directly. An
+unknown name raises <code>ValueError</code>.</p>
+<h2>Is orchestration synchronous or asynchronous?</h2>
+<p>Planning and assembly are synchronous — <code>MetaOrchestrator.analyze_task</code>
+/ <code>create_execution_plan</code> / <code>compose_team</code>, the <code>DynamicTeamBuilder</code>
+methods, and <code>WorkflowComposer.compose</code>. The actual run,
+<code>ExecutionStrategy.execute(agents, context)</code>, is <strong>async</strong> and returns a
+<code>StrategyResult</code>.</p>
+<h2>How do I analyze a task before running it?</h2>
+<p><code>MetaOrchestrator().analyze_task(description)</code> returns a
+<code>TaskRequirements</code> with a <code>complexity</code> (<code>TaskComplexity</code>:
+<code>SIMPLE</code>/<code>MODERATE</code>/<code>COMPLEX</code>) and a <code>domain</code> (<code>TaskDomain</code>).
+<code>create_execution_plan(...)</code> turns requirements into an <code>ExecutionPlan</code>.</p>
+<h2>Where is the source?</h2>
+<p>All orchestration source lives under <code>src/attune/orchestration/</code>.</p>
 <p><strong>Tags:</strong> <code>orchestration</code>, <code>teams</code></p>
 
   </article>

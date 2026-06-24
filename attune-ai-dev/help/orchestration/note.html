@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Note: orchestration — note</title>
-  <meta name="description" content="The `src/attune/orchestration/` module covers three related concerns: dynamic agent team composition, execution strategy selection, and workflow nesting. These are the building blocks that meta-orches" />
-  <meta property="og:title" content="Note: orchestration — note" />
-  <meta property="og:description" content="The `src/attune/orchestration/` module covers three related concerns: dynamic agent team composition, execution strategy selection, and workflow nesting. These are the building blocks that meta-orches" />
+  <title>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — note</title>
+  <meta name="description" content="`attune.orchestration` assembles and runs **multi-agent pipelines**: it analyzes a task, picks a composition pattern, builds a team of agents, and executes them under a chosen strategy. It sits above " />
+  <meta property="og:title" content="Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — note" />
+  <meta property="og:description" content="`attune.orchestration` assembles and runs **multi-agent pipelines**: it analyzes a task, picks a composition pattern, builds a team of agents, and executes them under a chosen strategy. It sits above " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/note" />
   <style>
@@ -272,117 +272,77 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Note: orchestration</h1>
-<h2>Context</h2>
-<p>The <code>src/attune/orchestration/</code> module covers three related concerns: dynamic agent team composition, execution strategy selection, and workflow nesting. These are the building blocks that meta-orchestration patterns (Sequential, Parallel, Debate, Teaching, Refinement, Adaptive) are built on top of.</p>
-<h2>How the package surface is structured</h2>
-<p>The module exposes two complementary layers that are designed to compose with each other.</p>
-<p><strong>Execution strategy classes</strong> (defined under <code>_strategies/</code>) each extend <code>ExecutionStrategy</code> and implement a single <code>execute(agents, context) -&gt; StrategyResult</code> signature:</p>
-<table>
-<thead>
-<tr>
-<th>Class</th>
-<th>Where</th>
-<th>What it does</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ExecutionStrategy</code></td>
-<td><code>_strategies/base.py</code></td>
-<td>Abstract base for all composition strategies</td>
-</tr>
-<tr>
-<td><code>ToolEnhancedStrategy</code></td>
-<td><code>_strategies/advanced_strategies.py</code></td>
-<td>Runs a single agent with a full tool bundle</td>
-</tr>
-<tr>
-<td><code>PromptCachedSequentialStrategy</code></td>
-<td><code>_strategies/advanced_strategies.py</code></td>
-<td>Sequential execution with a shared cached context (default TTL: 3600 s)</td>
-</tr>
-<tr>
-<td><code>DelegationChainStrategy</code></td>
-<td><code>_strategies/advanced_strategies.py</code></td>
-<td>Hierarchical delegation with a configurable max depth (default: 3)</td>
-</tr>
-<tr>
-<td><code>ConditionalStrategy</code></td>
-<td><code>_strategies/conditional_strategies.py</code></td>
-<td>Branches on a single condition (if/else)</td>
-</tr>
-<tr>
-<td><code>MultiConditionalStrategy</code></td>
-<td><code>_strategies/conditional_strategies.py</code></td>
-<td>Branches on multiple conditions (switch/case)</td>
-</tr>
-<tr>
-<td><code>NestedStrategy</code></td>
-<td><code>_strategies/nesting.py</code></td>
-<td>Executes a referenced workflow as a nested unit</td>
-</tr>
-<tr>
-<td><code>NestedSequentialStrategy</code></td>
-<td><code>_strategies/nesting.py</code></td>
-<td>Sequential steps where each step can be an agent or a workflow reference</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Registry functions</strong> provide name-based lookup and registration so strategies and workflows can be composed without direct imports:</p>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Source</th>
-<th>What it does</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>get_strategy(name)</code></td>
-<td><code>_strategies/__init__.py</code></td>
-<td>Returns a strategy instance by name; raises <code>ValueError</code> for unknown names</td>
-</tr>
-<tr>
-<td><code>register_strategy(name, cls)</code></td>
-<td><code>_strategies/__init__.py</code></td>
-<td>Adds a custom <code>ExecutionStrategy</code> subclass to the registry</td>
-</tr>
-<tr>
-<td><code>register_workflow(workflow)</code></td>
-<td><code>_strategies/nesting.py</code></td>
-<td>Makes a <code>WorkflowDefinition</code> available for nested references</td>
-</tr>
-<tr>
-<td><code>get_workflow(workflow_id)</code></td>
-<td><code>_strategies/nesting.py</code></td>
-<td>Retrieves a registered workflow; raises <code>ValueError</code> if not found</td>
-</tr>
-<tr>
-<td><code>get_template(template_id)</code></td>
-<td><code>agent_templates/registry.py</code></td>
-<td>Retrieves an <code>AgentTemplate</code> by ID</td>
-</tr>
-<tr>
-<td><code>register_custom_template(template)</code></td>
-<td><code>agent_templates/registry.py</code></td>
-<td>Adds a user-defined template at runtime</td>
-</tr>
-<tr>
-<td><code>unregister_template(template_id)</code></td>
-<td><code>agent_templates/registry.py</code></td>
-<td>Removes a template; returns <code>False</code> if the ID is not found</td>
-</tr>
-</tbody>
-</table>
-<p>The pattern throughout is consistent: strategy classes hold execution logic, and the registry functions let <code>MetaOrchestrator</code> wire them together by name at runtime.</p>
-<h2>Source files</h2>
+<h1>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines</h1>
+<h2>Overview</h2>
+<p><code>attune.orchestration</code> assembles and runs <strong>multi-agent pipelines</strong>: it
+analyzes a task, picks a composition pattern, builds a team of agents,
+and executes them under a chosen strategy. It sits above the individual
+workflows — where a workflow is one analysis, orchestration coordinates
+<em>several</em> agents into one coordinated run.</p>
+<p>An orchestrated task moves through three layers:</p>
+<ol>
+<li><strong>Meta-orchestration</strong> — <code>MetaOrchestrator</code> analyzes the task
+(complexity, domain, requirements) and chooses a <code>CompositionPattern</code>.</li>
+<li><strong>Team assembly</strong> — <code>AgentTemplate</code>s are matched by capability/tier
+from the registry, or a <code>DynamicTeamBuilder</code> builds a team at runtime.</li>
+<li><strong>Execution</strong> — an <code>ExecutionStrategy</code> runs the agents and returns a
+<code>StrategyResult</code>.</li>
+</ol>
+<h2>Concepts</h2>
+<h3>Meta-orchestration — <code>MetaOrchestrator</code></h3>
+<p><code>MetaOrchestrator</code> is the planning layer. Its methods are synchronous:
+<code>analyze_task(...)</code> returns a <code>TaskRequirements</code> (carrying a
+<code>TaskComplexity</code> — <code>SIMPLE</code> / <code>MODERATE</code> / <code>COMPLEX</code> — and a <code>TaskDomain</code>
+— <code>TESTING</code> / <code>SECURITY</code> / <code>CODE_QUALITY</code> / <code>DOCUMENTATION</code> /
+<code>PERFORMANCE</code> / <code>ARCHITECTURE</code> / <code>REFACTORING</code> / <code>GENERAL</code>);
+<code>create_execution_plan(...)</code> returns an <code>ExecutionPlan</code>;
+<code>compose_team(...)</code> and <code>analyze_and_compose(...)</code> go from a task
+description to a composed team.</p>
+<p><code>CompositionPattern</code> enumerates the strategies the planner can pick:
+<code>SEQUENTIAL</code>, <code>PARALLEL</code>, <code>DEBATE</code>, <code>TEACHING</code>, <code>REFINEMENT</code>,
+<code>ADAPTIVE</code>, <code>CONDITIONAL</code>, <code>TOOL_ENHANCED</code>, <code>PROMPT_CACHED_SEQUENTIAL</code>,
+<code>DELEGATION_CHAIN</code>.</p>
+<h3>Team assembly — agent templates and dynamic teams</h3>
+<p>The agent registry supplies reusable <code>AgentTemplate</code>s (each has an <code>id</code>,
+<code>role</code>, <code>capabilities</code>, <code>tools</code>, <code>tier_preference</code>, <code>quality_gates</code>, and
+<code>resource_requirements</code>). Query it with <code>get_all_templates()</code>,
+<code>get_template(template_id)</code>, <code>get_templates_by_capability(...)</code>,
+<code>get_templates_by_tier(...)</code>, and <code>get_registry()</code>; extend it with
+<code>register_custom_template(...)</code> / <code>unregister_template(...)</code>.
+<code>AgentCapability</code> and <code>ResourceRequirements</code> model a template's
+capabilities and resource needs.</p>
+<p><code>DynamicTeamBuilder(state_store=None, redis_client=None)</code> builds a team
+at runtime — <code>build_from_spec(...)</code>, <code>build_from_plan(...)</code>,
+<code>build_from_config(...)</code> — producing a <code>DynamicTeam</code> /
+<code>DynamicTeamResult</code> from a <code>TeamSpecification</code>. <code>TeamStore</code> persists
+teams.</p>
+<h3>Execution — strategies</h3>
+<p>An <code>ExecutionStrategy</code> runs the assembled agents:
+<code>execute(agents, context)</code> is <strong>async</strong> and returns a <code>StrategyResult</code>.
+<code>get_strategy(name)</code> returns a strategy by name. Nine names construct
+with <strong>no arguments</strong> — <code>sequential</code>, <code>parallel</code>, <code>debate</code>, <code>teaching</code>,
+<code>refinement</code>, <code>adaptive</code>, <code>tool_enhanced</code>, <code>prompt_cached_sequential</code>,
+<code>delegation_chain</code>. The registry also holds <code>conditional</code>,
+<code>multi_conditional</code>, <code>nested</code>, and <code>nested_sequential</code>, but those require
+constructor args, so fetching them bare via <code>get_strategy</code> raises
+<code>TypeError</code> — construct them directly. The classes exported directly from
+<code>attune.orchestration</code> are the base <code>ExecutionStrategy</code> plus
+<code>ToolEnhancedStrategy</code>, <code>PromptCachedSequentialStrategy</code>, and
+<code>DelegationChainStrategy</code>.</p>
+<h3>Workflow composition</h3>
+<p><code>WorkflowComposer(state_store=None)</code> composes workflows —
+<code>compose(...)</code> and <code>compose_with_simplification(...)</code>.
+<code>WorkflowAgentAdapter</code> adapts a workflow so it can run as an agent
+inside a team.</p>
+<h2>Notes &amp; tips</h2>
 <ul>
-<li><code>src/attune/orchestration/**</code></li>
-<li><code>src/attune/coordination/**</code></li>
+<li><strong>Plan sync, execute async.</strong> <code>MetaOrchestrator</code> / builders are sync;
+<code>execute</code> is async.</li>
+<li><strong>Start from templates.</strong> <code>get_all_templates()</code> is the cheapest way to
+see what a team can be built from.</li>
+<li><strong><code>get_strategy</code> takes a registry name</strong>, not a class.</li>
+<li><strong>Orchestration composes workflows; it doesn't replace them.</strong></li>
 </ul>
-<p><strong>Tags:</strong> <code>orchestration</code>, <code>teams</code></p>
 
   </article>
   <footer>

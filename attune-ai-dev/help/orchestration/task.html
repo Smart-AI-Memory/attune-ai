@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Work with orchestration — task</title>
-  <meta name="description" content="Use orchestration when you need to compose dynamic agent teams, wire up execution strategies, and manage workflow and template registries." />
-  <meta property="og:title" content="Work with orchestration — task" />
-  <meta property="og:description" content="Use orchestration when you need to compose dynamic agent teams, wire up execution strategies, and manage workflow and template registries." />
+  <title>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — task</title>
+  <meta name="description" content="```python from attune.orchestration import MetaOrchestrator" />
+  <meta property="og:title" content="Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — task" />
+  <meta property="og:description" content="```python from attune.orchestration import MetaOrchestrator" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/task" />
   <style>
@@ -272,92 +272,41 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Work with orchestration</h1>
-<p>Use orchestration when you need to compose dynamic agent teams, wire up execution strategies, and manage workflow and template registries.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>Access to the project source code under <code>src/attune/orchestration/</code></li>
-<li>Familiarity with the <code>ExecutionStrategy</code> base class and the <code>AgentTemplate</code> data model</li>
-</ul>
-<h2>Steps</h2>
-<ol>
-<li>
-<p><strong>Identify the entry point for your goal.</strong>
-Match your goal to the function that owns that responsibility:</p>
-<table>
-<thead>
-<tr>
-<th>Goal</th>
-<th>Function</th>
-<th>Location</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Retrieve a strategy by name</td>
-<td><code>get_strategy()</code></td>
-<td><code>src/attune/orchestration/_strategies/__init__.py</code></td>
-</tr>
-<tr>
-<td>Register a new strategy class</td>
-<td><code>register_strategy()</code></td>
-<td><code>src/attune/orchestration/_strategies/__init__.py</code></td>
-</tr>
-<tr>
-<td>Register a workflow for nested references</td>
-<td><code>register_workflow()</code></td>
-<td><code>src/attune/orchestration/_strategies/nesting.py</code></td>
-</tr>
-<tr>
-<td>Retrieve a registered workflow by ID</td>
-<td><code>get_workflow()</code></td>
-<td><code>src/attune/orchestration/_strategies/nesting.py</code></td>
-</tr>
-<tr>
-<td>Retrieve an agent template by ID</td>
-<td><code>get_template()</code></td>
-<td><code>src/attune/orchestration/agent_templates/registry.py</code></td>
-</tr>
-<tr>
-<td>List all registered templates</td>
-<td><code>get_all_templates()</code></td>
-<td><code>src/attune/orchestration/agent_templates/registry.py</code></td>
-</tr>
-<tr>
-<td>Filter templates by capability</td>
-<td><code>get_templates_by_capability()</code></td>
-<td><code>src/attune/orchestration/agent_templates/registry.py</code></td>
-</tr>
-<tr>
-<td>Filter templates by tier</td>
-<td><code>get_templates_by_tier()</code></td>
-<td><code>src/attune/orchestration/agent_templates/registry.py</code></td>
-</tr>
-</tbody>
-</table>
-</li>
-<li>
-<p><strong>Read the function's signature and docstring.</strong>
-Confirm the parameter types, return type, and any exceptions the function raises. For example, <code>get_strategy()</code> raises <code>ValueError</code> with the message <code>'Unknown strategy: {...}. Available: {...}'</code> when the name is not registered, and <code>get_workflow()</code> raises a similar <code>ValueError</code> for unknown workflow IDs.</p>
-</li>
-<li>
-<p><strong>Make your change in the target function.</strong>
-Apply the naming conventions, error-handling style, and logging patterns already present in that file. If you are registering a new strategy, pass a <code>name</code> string and a class that subclasses <code>ExecutionStrategy</code>. If you are registering a workflow, pass a <code>WorkflowDefinition</code> instance.</p>
-</li>
-<li>
-<p><strong>Run the targeted test suite.</strong>
-Execute <code>pytest -k &quot;orchestration&quot;</code> to catch regressions before they affect other developers.</p>
-</li>
-</ol>
-<h2>Key files</h2>
-<ul>
-<li><code>src/attune/orchestration/_strategies/__init__.py</code> — strategy registry and <code>get_strategy</code> / <code>register_strategy</code></li>
-<li><code>src/attune/orchestration/_strategies/nesting.py</code> — workflow registry and nested execution strategies</li>
-<li><code>src/attune/orchestration/agent_templates/registry.py</code> — agent template registry</li>
-<li><code>src/attune/coordination/</code> — coordination layer that consumes orchestration strategies</li>
-</ul>
-<h2>Verify success</h2>
-<p>After running <code>pytest -k &quot;orchestration&quot;</code>, all tests pass with no failures or errors. If you registered a new strategy, call <code>get_strategy(&quot;&lt;your_strategy_name&gt;&quot;)</code> in a Python REPL and confirm it returns an instance of your class without raising <code>ValueError</code>. If you registered a workflow, call <code>get_workflow(&quot;&lt;your_workflow_id&gt;&quot;)</code> and confirm it returns your <code>WorkflowDefinition</code>.</p>
+<h1>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines</h1>
+<h2>Tasks</h2>
+<h3>Analyze a task and plan its orchestration</h3>
+<pre><code class="language-python">from attune.orchestration import MetaOrchestrator
+
+orch = MetaOrchestrator()
+reqs = orch.analyze_task(&quot;audit security and add tests&quot;)
+print(reqs.complexity, reqs.domain)
+</code></pre>
+<p><strong>Verify:</strong> <code>analyze_task(...)</code> is synchronous and returns a
+<code>TaskRequirements</code> with a <code>complexity</code> (<code>TaskComplexity</code>) and <code>domain</code>
+(<code>TaskDomain</code>). <code>create_execution_plan(...)</code> turns that into an
+<code>ExecutionPlan</code>.</p>
+<h3>Find agent templates by capability or tier</h3>
+<pre><code class="language-python">from attune.orchestration import (
+    get_all_templates,
+    get_template,
+    get_templates_by_tier,
+)
+
+all_templates = get_all_templates()
+one = get_template(all_templates[0].id)
+print(one.role, [str(c) for c in one.capabilities])
+</code></pre>
+<p><strong>Verify:</strong> <code>get_all_templates()</code> returns the registry's templates;
+<code>get_template(template_id)</code> returns one (or <code>None</code>);
+<code>get_templates_by_capability</code> / <code>get_templates_by_tier</code> filter the set.</p>
+<h3>Pick an execution strategy</h3>
+<pre><code class="language-python">from attune.orchestration import get_strategy
+
+strategy = get_strategy(&quot;parallel&quot;)
+print(type(strategy).__name__)
+</code></pre>
+<p><strong>Verify:</strong> <code>get_strategy(name)</code> resolves the nine no-arg strategy names
+above to a strategy. Running it — <code>await strategy.execute(agents, context)</code> — is <strong>async</strong> and returns a <code>StrategyResult</code>.</p>
 
   </article>
   <footer>

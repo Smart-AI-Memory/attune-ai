@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Orchestration cautions — warning</title>
-  <meta name="description" content="The orchestration module composes `BaseWorkflow` instances using named strategies, a shared workflow registry, and a template registry. Mistakes in any of these three areas tend to surface late — ofte" />
-  <meta property="og:title" content="Orchestration cautions — warning" />
-  <meta property="og:description" content="The orchestration module composes `BaseWorkflow` instances using named strategies, a shared workflow registry, and a template registry. Mistakes in any of these three areas tend to surface late — ofte" />
+  <title>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;execute&#x27; was never awaited` | `ExecutionStrategy.execute` called without `await` | it is async — `await` it | high " />
+  <meta property="og:title" content="Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;execute&#x27; was never awaited` | `ExecutionStrategy.execute` called without `await` | it is async — `await` it | high " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/warning" />
   <style>
@@ -272,46 +272,63 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Orchestration cautions</h1>
-<h2>What to watch for</h2>
-<p>The orchestration module composes <code>BaseWorkflow</code> instances using named strategies, a shared workflow registry, and a template registry. Mistakes in any of these three areas tend to surface late — often only when a pipeline runs under production conditions — because each component works correctly in isolation but interacts unexpectedly at composition time.</p>
-<h2>Risk areas</h2>
-<h3><code>get_strategy()</code> raises on unregistered names at call time, not at definition time</h3>
-<p><code>get_strategy(strategy_name)</code> raises <code>ValueError: 'Unknown strategy: {...}. Available: {...}'</code> if the name has not been registered. Because strategy selection often happens inside a pipeline definition rather than at import time, this error appears only when the pipeline executes. Register all custom strategies with <code>register_strategy()</code> before any pipeline that depends on them runs — not after.</p>
-<h3><code>DelegationChainStrategy</code> silently caps delegation depth</h3>
-<p><code>DelegationChainStrategy</code> defaults to <code>max_depth=3</code>. If your agent graph requires deeper hierarchical delegation, tasks at depth 4 and beyond are cut off without an exception. Pass an explicit <code>max_depth</code> when constructing the strategy whenever your delegation graph exceeds three levels.</p>
-<h3><code>PromptCachedSequentialStrategy</code> serves stale context after <code>cache_ttl</code> expires</h3>
-<p>The default <code>cache_ttl</code> is 3600 seconds. A cached context that was valid at pipeline start may have expired by the time a later sequential stage reads it. In long-running pipelines or CI environments where the same cached context object is reused across runs, verify that <code>cache_ttl</code> matches your actual pipeline duration.</p>
-<h3><code>NestedStrategy</code> and <code>NestedSequentialStrategy</code> hit depth limits across composition layers</h3>
-<p>Both classes accept a <code>max_depth</code> parameter (defaulting to <code>NestingContext.DEFAULT_MAX_DEPTH</code>). When you nest a workflow that itself contains nested steps — common in multi-pass patterns like Deep Review — the combined depth of all layers counts toward this limit. Plan your nesting depth explicitly; reaching the limit raises an error mid-execution rather than at registration time.</p>
-<h3>Workflow registry and template registry are global, mutable state</h3>
-<p><code>register_workflow()</code>, <code>register_strategy()</code>, and <code>register_custom_template()</code> all modify module-level registries. In tests that share a process, one test's registration persists into the next. Use <code>unregister_template()</code> (returns <code>False</code> if the template ID is not found) to clean up in teardown. For workflow and strategy registries, structure tests so each one registers only what it needs and runs in isolation.</p>
-<h3><code>get_workflow()</code> and <code>get_template()</code> fail silently or loudly depending on the call site</h3>
-<p><code>get_workflow(workflow_id)</code> raises <code>ValueError</code> for unknown IDs; <code>get_template(template_id)</code> returns <code>None</code>. Code that passes a <code>get_template()</code> result directly into a strategy without a <code>None</code> check will fail later with a less informative error. Check the return value of <code>get_template()</code> before use.</p>
-<h2>How to avoid problems</h2>
-<ol>
-<li>
-<p><strong>Register before you compose.</strong> Call <code>register_strategy()</code>, <code>register_workflow()</code>, and <code>register_custom_template()</code> at application startup, before any pipeline definition references them. Deferred registration causes <code>ValueError</code> at execution time, not at startup.</p>
-</li>
-<li>
-<p><strong>Set depth limits explicitly.</strong> Whenever you use <code>DelegationChainStrategy</code>, <code>NestedStrategy</code>, or <code>NestedSequentialStrategy</code>, pass <code>max_depth</code> as a named argument so the limit is visible at the call site rather than inherited from a default you may not remember.</p>
-</li>
-<li>
-<p><strong>Isolate registry state in tests.</strong> Because all registries are global, run orchestration tests with <code>pytest -k &quot;orchestration&quot;</code> in a subprocess or use explicit teardown (<code>unregister_template()</code>, or re-initialize the registry) to prevent cross-test contamination that passes locally but fails in CI.</p>
-</li>
-<li>
-<p><strong>Guard <code>get_template()</code> return values.</strong> Treat <code>None</code> returns as a hard error in your code rather than propagating them into strategy constructors, where the failure message will not mention the missing template ID.</p>
-</li>
-<li>
-<p><strong>Depend only on the public API.</strong> Names beginning with <code>_</code> — including internal registry helpers — can change without notice between releases. The stable surface is the set of names exported in each module's <code>__all__</code>.</p>
-</li>
-</ol>
-<h2>Source files</h2>
+<h1>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'execute' was never awaited</code></td>
+<td><code>ExecutionStrategy.execute</code> called without <code>await</code></td>
+<td>it is async — <code>await</code> it</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>get_strategy(name)</code> raises</td>
+<td>unknown name (<code>ValueError</code>), or an arg-taking name like <code>conditional</code>/<code>nested</code> (<code>TypeError</code>)</td>
+<td>use one of the nine no-arg names; construct arg-taking strategies directly</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>get_template(id)</code> returns <code>None</code></td>
+<td>no template with that id</td>
+<td>list ids via <code>get_all_templates()</code></td>
+<td>low</td>
+</tr>
+<tr>
+<td>Team build fails</td>
+<td>a <code>TeamSpecification</code> references an unknown template/capability</td>
+<td>check the spec against <code>get_all_templates()</code></td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/orchestration/**</code></li>
-<li><code>src/attune/coordination/**</code></li>
+<li><strong>Planning is sync; execution is async.</strong> <code>MetaOrchestrator</code> methods
+and the builders are synchronous; <code>ExecutionStrategy.execute</code> is
+async.</li>
+<li><strong><code>get_strategy</code> resolves the nine no-arg strategies.</strong> The registry
+also holds <code>conditional</code>/<code>multi_conditional</code>/<code>nested</code>/
+<code>nested_sequential</code>, which require constructor args (fetching them bare
+raises <code>TypeError</code>).</li>
+<li><strong>Templates are matched by capability/tier.</strong> A team is only as good
+as the templates the registry can supply.</li>
 </ul>
-<p><strong>Tags:</strong> <code>orchestration</code>, <code>teams</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li><code>get_all_templates()</code> — what agents are available?</li>
+<li><code>MetaOrchestrator().analyze_task(...)</code> — what does the planner infer?</li>
+<li><code>get_strategy(name)</code> — is the strategy name valid?</li>
+<li>Async-not-awaited? <code>execute</code> must be awaited.</li>
+</ol>
 
   </article>
   <footer>
