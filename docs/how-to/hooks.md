@@ -1,149 +1,95 @@
----
-type: how-to
-name: hooks
-tags: [hooks, events, automation, registry, executor]
-source: hooks/__init__.py
----
+# Hooks
 
-# How to use hooks
+## Quickstart
 
-Use this guide when you need to register handlers for Claude Code lifecycle events, fire hooks programmatically, or load hook configuration from YAML. It targets developers who are wiring up event-driven behavior in an Attune AI project.
-
-## Quick start
+Register an in-process handler and fire it:
 
 ```python
-from hooks import HookConfig, HookEvent, HookExecutor, HookRegistry
+from attune.hooks import HookRegistry, HookEvent
 
-# Build a registry and register a handler for a lifecycle event
 registry = HookRegistry()
 
-def on_pre_compact(context: dict) -> dict:
-    print(f"Pre-compact fired. Context keys: {list(context.keys())}")
-    return {"status": "ok"}
 
-handler_id = registry.register(
-    event=HookEvent.PRE_COMPACT,
-    handler=on_pre_compact,
-    description="Log context before compaction",
-    priority=10,
-)
+def on_pre_tool(**context) -> dict:        # context arrives as kwargs
+    return {"blocked": False, "tool": context.get("tool_name")}
 
-# Fire the hook and inspect results
-results = registry.fire_sync(HookEvent.PRE_COMPACT, context={"session_id": "abc123"})
-print(results)  # [{"status": "ok"}]
+
+registry.register(HookEvent.PRE_TOOL_USE, on_pre_tool)
+results = registry.fire_sync(HookEvent.PRE_TOOL_USE, {"tool_name": "Bash"})
+print(results)
 ```
 
-## Core API
+## Tasks
 
-### hooks package
-
-| Class | Purpose |
-|---|---|
-| `HookConfig` | Holds the complete hook configuration; load from or save to YAML |
-| `HookDefinition` | Describes a single hook action |
-| `HookEvent` | Enum of lifecycle event types (e.g. `PRE_COMPACT`) |
-| `HookMatcher` | Determines whether a hook fires for a given context |
-| `HookRegistry` | Central registry — registers, dispatches, and logs hooks |
-| `HookExecutor` | Runs a `HookDefinition` against a context (async) |
-| `HookExecutorSync` | Synchronous wrapper around `HookExecutor` |
-
-### HookRegistry methods
-
-| Method | Purpose |
-|---|---|
-| `register(event, handler, description, matcher, priority)` | Register a Python callable; returns a `handler_id` string |
-| `unregister(handler_id)` | Remove a previously registered handler |
-| `load_config(config)` | Load a `HookConfig` into the registry |
-| `get_matching_hooks(event, context)` | Return rules and definitions that match the event and context |
-| `fire(event, context)` | Fire all matching hooks asynchronously |
-| `fire_sync(event, context)` | Fire all matching hooks synchronously |
-| `get_execution_log(limit, event_filter)` | Retrieve recent execution records |
-| `clear_execution_log()` | Reset the execution log |
-| `get_stats()` | Return aggregate dispatch statistics |
-
-### HookConfig methods
-
-| Method | Purpose |
-|---|---|
-| `get_hooks_for_event(event)` | Return all `HookRule` objects registered for an event |
-| `add_hook(event, hook, matcher, priority)` | Add a hook definition programmatically |
-| `from_yaml(yaml_path)` | Class method — load configuration from a YAML file |
-| `to_yaml(yaml_path)` | Persist current configuration to a YAML file |
-
-## Configuration
-
-Load hook configuration from a YAML file and hand it to the registry:
+### Register and fire an in-process hook
 
 ```python
-from hooks import HookConfig, HookRegistry
-
-config = HookConfig.from_yaml(".attune/hooks.yaml")
-registry = HookRegistry(config=config)
-```
-
-To save a programmatically built configuration for reuse:
-
-```python
-config = HookConfig()
-config.add_hook(event=HookEvent.PRE_COMPACT, hook=my_hook_def, priority=5)
-config.to_yaml(".attune/hooks.yaml")
-```
-
-## Integration patterns
-
-### Security validation on every Bash tool call
-
-Wire `scripts.security_guard` into the registry so it runs before any shell command executes:
-
-```python
-from hooks import HookEvent, HookRegistry
-from scripts.security_guard import main as security_guard
+from attune.hooks import HookRegistry, HookEvent
 
 registry = HookRegistry()
-registry.register(
-    event=HookEvent.PRE_TOOL,          # fires before a tool runs
-    handler=security_guard,
-    description="Validate bash commands and file paths",
-    priority=100,                       # high priority — run first
-)
+
+
+def guard(**context) -> dict:
+    return {"blocked": context.get("tool_name") == "Bash"}
+
+
+hook_id = registry.register(HookEvent.PRE_TOOL_USE, guard, priority=10)
+results = registry.fire_sync(HookEvent.PRE_TOOL_USE, {"tool_name": "Bash"})
+print(hook_id, results[0]["success"], results[0]["output"])
 ```
 
-`security_guard` calls `validate_bash_command` and `validate_file_path` internally and returns a result dict the registry collects alongside other handler results.
+**Verify:** `register(...)` returns a hook id (a `str`). `fire_sync`
+runs every matching handler — calling each as `handler(**context)` — and
+returns a list of result dicts (a success record carries `event`,
+`hook`, `description`, `success`, `output`, `error`, `duration_ms`; an
+error record is a subset). `fire(...)` is the async variant.
 
-### Session evaluation at end-of-session
+### Load hooks from YAML config
 
-Attach `run_evaluate_session` so the registry triggers learning analysis automatically when a session ends:
+**Goal:** declare hooks in a file instead of code.
+
+**Steps:** `HookConfig.from_yaml(path)` returns a `HookConfig`;
+`get_hooks_for_event(event)` lists the `HookRule`s for an event. Each
+rule's `hooks` are `HookDefinition`s an executor can run.
 
 ```python
-from hooks import HookEvent, HookRegistry
-from scripts.evaluate_session import run_evaluate_session
+from attune.hooks import HookConfig, HookEvent
 
-registry = HookRegistry()
-registry.register(
-    event=HookEvent.POST_SESSION,
-    handler=run_evaluate_session,
-    description="Evaluate session for learnable patterns",
-)
-
-# Later, retrieve what each handler returned
-log = registry.get_execution_log(limit=10, event_filter=HookEvent.POST_SESSION)
+config = HookConfig.from_yaml("hooks.yaml")
+for rule in config.get_hooks_for_event(HookEvent.PRE_TOOL_USE):
+    print(rule.description, rule.priority)
 ```
 
-Use `registry.get_stats()` to monitor dispatch counts and detect handlers that never fire.
+**Verify:** `from_yaml` is a constructor returning `HookConfig`;
+`get_hooks_for_event` returns `list[HookRule]`.
 
-## See also
+### Execute a configured hook
 
-- `scripts.pre_compact` — `run_pre_compact` and `generate_compaction_summary` for pre-compaction state preservation
-- `scripts.security_guard` — `validate_bash_command` and `validate_file_path` for security policy enforcement
-- `scripts.evaluate_session` — `run_evaluate_session`, `get_learning_summary`, `apply_learned_patterns` for session learning
+```python
+import asyncio
 
-## Unresolved references
+from attune.hooks import HookExecutor, HookDefinition
+from attune.hooks.config import HookType
 
-> Auto-generated by attune-author fact-check. Review and either
-> fix the source code, fix this doc, or add an override.
+hook = HookDefinition(type=HookType.COMMAND, command="echo hi", timeout=5)
+executor = HookExecutor()
+result = asyncio.run(executor.execute(hook, {"tool_name": "Bash"}))
+print(result)
+```
 
-| Location | Severity | Issue |
-|---|---|---|
-| Line 14 (code fence) | error | `from hooks import …` — module not importable |
-| Line 98 (code fence) | error | `from scripts.security_guard import …` — module not importable |
-| Line 117 (code fence) | error | `from scripts.evaluate_session import …` — module not importable |
+**Verify:** `HookExecutor.execute(hook, context)` is **async** — await
+it; it returns a result dict.
+
+## Reference
+
+| Symbol | Kind | Purpose |
+|--------|------|---------|
+| `HookEvent` | enum | `PRE_TOOL_USE`/`POST_TOOL_USE`/`SESSION_START`/`SESSION_END`/`PRE_COMPACT`/`POST_COMPACT`/`PRE_COMMAND`/`POST_COMMAND`/`STOP`; values are Claude Code event names. |
+| `HookRegistry(config=None)` | class | `register(event, handler, description="", matcher=None, priority=0) -> str`, `fire` (async) / `fire_sync`, `get_matching_hooks`, `unregister`, `get_execution_log`, `get_stats`, `load_config`. |
+| `HookExecutor(python_handlers=None)` | class | `execute(hook, context)` — **async**. |
+| `HookDefinition(type=HookType.PYTHON, command, description="", timeout=30, async_execution=False, on_error="log")` | pydantic model | A configured hook. |
+| `HookConfig(hooks={}, enabled=True, log_executions=True, default_timeout=30)` | pydantic model | `from_yaml(path)`, `add_hook(event, hook, matcher=None, priority=0)`, `get_hooks_for_event(event)`, `to_yaml`. |
+| `HookType` (`attune.hooks.config`) | enum | `COMMAND` / `PYTHON` / `WEBHOOK`. |
+| `HookRule` (`attune.hooks.config`) | pydantic model | `matcher`, `hooks`, `enabled`, `priority`, `description`. |
+
+<!-- attune-generated: source_hash=4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7 feature=hooks kind=how-to generated_at=2026-06-24 -->

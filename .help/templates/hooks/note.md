@@ -3,29 +3,79 @@ type: note
 name: hooks-note
 feature: hooks
 depth: note
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 92f76c4d4d77b21e59b9a6aed8e65dd221371f5ce10f2941171a5c0310c232c1
+generated_at: 2026-06-24T01:45:59.743282+00:00
+source_hash: 4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7
 status: generated
 ---
 
-# Note: hooks
+# The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config
 
-The `hooks` package manages lifecycle event dispatch for Attune AI. It exposes five public names at the package boundary: `HookConfig`, `HookDefinition`, `HookEvent`, `HookExecutor`, and `HookRegistry`.
+## Overview
 
-## How the package is structured
+`attune.hooks` is an **event system**: it lets code (and config) react
+to lifecycle events — before/after a tool runs, at session start/end,
+around compaction, and on stop. The public surface, exported from
+`attune.hooks`, is five symbols:
 
-Three modules divide the responsibilities:
+- **`HookEvent`** — the events you can hook (`PRE_TOOL_USE`,
+  `POST_TOOL_USE`, `SESSION_START`, `SESSION_END`, `PRE_COMPACT`,
+  `POST_COMPACT`, `PRE_COMMAND`, `POST_COMMAND`, `STOP`).
+- **`HookRegistry`** — register Python handlers for events and fire
+  them in-process.
+- **`HookExecutor`** — run a configured `HookDefinition` (command,
+  Python, or webhook).
+- **`HookConfig`** / **`HookDefinition`** — the declarative,
+  config-driven hooks (loaded from YAML).
 
-- **`hooks.config`** defines the data model: `HookEvent` (event types tied to the Claude Code lifecycle), `HookType`, `HookDefinition`, `HookMatcher`, `HookRule`, and `HookConfig`. `HookConfig` is the top-level container; you load it from a YAML file with `HookConfig.from_yaml()` and query it with `get_hooks_for_event()`.
+The plugin also ships concrete hook scripts under
+`attune/hooks/scripts/` (e.g. `security_guard`, `worktree_path_guard`,
+`lessons_reminder`) — these are the hooks Claude Code actually runs.
 
-- **`hooks.executor`** runs hook actions. `HookExecutor.execute()` accepts a `HookDefinition` and a context dict and returns a result dict. `HookExecutorSync` wraps the same interface for call sites that cannot use async code.
+## Concepts
 
-- **`hooks.registry`** is the dispatch layer. `HookRegistry` holds all registered hooks, matches them against incoming events via `get_matching_hooks()`, and fires them with `fire()` or `fire_sync()`. It also tracks execution history through `get_execution_log()` and exposes aggregate metrics through `get_stats()`.
+### `HookEvent`
 
-## Relationship to scripts
+The lifecycle events. Their **values are the Claude Code event names** —
+e.g. `HookEvent.PRE_TOOL_USE.value == "PreToolUse"` — so the same enum
+labels in-process registration and the Claude Code hook contract.
 
-The `scripts` package contains Python callables that plug into the registry as handlers. Examples include `run_evaluate_session`, `run_pre_compact`, `check_init`, and `suggest_compact`. You pass these callables to `HookRegistry.register()` as the `handler` argument. The registry assigns each registration a string ID that `unregister()` accepts later.
+### `HookRegistry` — in-process handlers
 
-## Execution log
+`HookRegistry(config=None)` is the programmatic surface.
+`register(event, handler, description="", matcher=None, priority=0)`
+adds a handler and returns a hook id. **Handlers receive the context
+dict unpacked as keyword arguments** — write `def handler(**context)`,
+not `def handler(context)`. Fire with `fire(event, context=None)`
+(async) or `fire_sync(event, context=None)` (sync); both return a list
+of per-hook result dicts — a success record carries `event`, `hook`,
+`description`, `success`, `output`, `error`, `duration_ms`; an error
+record is a subset (`event`, `hook`, `success`, `error`). `get_matching_hooks`, `unregister`,
+`get_execution_log`, `get_stats`, and `load_config` round it out.
 
-`HookRegistry.get_execution_log()` returns up to 100 entries by default. Pass `event_filter` to narrow results to a specific `HookEvent`. Call `clear_execution_log()` to reset it between test runs or sessions.
+### `HookExecutor` and `HookDefinition`
+
+`HookDefinition` (a pydantic model) describes a configured hook: `type`
+(`HookType.COMMAND` / `PYTHON` / `WEBHOOK`, default `PYTHON`),
+`command`, `description`, `timeout` (1–300 s, default 30),
+`async_execution` (default `False`), `on_error` (default `"log"`).
+`HookExecutor(python_handlers=None).execute(hook, context)` (async) runs
+one.
+
+### `HookConfig` — declarative, config-driven hooks
+
+`HookConfig` (pydantic) holds the declarative rules: `hooks` (a dict of
+event → list of `HookRule`), plus `enabled`, `log_executions`, and
+`default_timeout`. Load it with `HookConfig.from_yaml(yaml_path)`, build
+it with `add_hook(event, hook, matcher=None, priority=0)`, and query it
+with `get_hooks_for_event(event)`. A `HookRule` carries a `matcher`, its
+`hooks`, `enabled`, `priority`, and `description`.
+
+## Notes & tips
+
+- **`def handler(**context)`.** The single most common mistake is a
+  positional `context` parameter.
+- **`fire_sync` for synchronous code.** `fire` / `execute` are async.
+- **`HookEvent` values are the Claude Code names.** One enum spans the
+  in-process and Claude Code contracts.
+- **Declarative vs imperative.** `HookConfig`/`from_yaml` for config;
+  `HookRegistry` for embedded Python.

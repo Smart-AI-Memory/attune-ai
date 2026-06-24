@@ -3,9 +3,7 @@ type: faq
 name: hooks-faq
 feature: hooks
 depth: faq
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 92f76c4d4d77b21e59b9a6aed8e65dd221371f5ce10f2941171a5c0310c232c1
-status: generated
+status: manual
 ---
 
 # Hooks FAQ
@@ -25,6 +23,10 @@ Use hooks when you need your code to run automatically in response to lifecycle 
 ## How do I register a hook at runtime?
 
 Call `HookRegistry.register(event, handler, ...)`. It returns a `handler_id` string you can pass to `HookRegistry.unregister(handler_id)` later if you need to remove it.
+
+## How should a Python handler be written?
+
+The registry calls handlers with the fired context **unpacked as keyword arguments** — write `def handler(**context): ...`, not `def handler(context): ...`. A positional `context` parameter raises `TypeError: got an unexpected keyword argument`. Read individual values inside with `context.get("tool_name")`, etc.
 
 ## How do I load hooks from a config file?
 
