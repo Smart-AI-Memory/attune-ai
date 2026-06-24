@@ -1,14 +1,4 @@
----
-type: reference
-name: resilience-reference
-feature: resilience
-depth: reference
-generated_at: 2026-06-24T01:31:58.105100+00:00
-source_hash: 5cb46b75c64a21b6c79cd5a1c06a09a397f1048bd4e927af38e5c62d97a332d6
-status: generated
----
-
-# Fault-tolerance primitives — retries, circuit breakers, timeouts, fallbacks, and health checks
+# Resilience
 
 ## Reference
 
@@ -28,3 +18,5 @@ status: generated
 | `Fallback(name, functions, default_value=None)` | class | `add` / `execute`. |
 | `HealthCheck(version="unknown")` | class | `register(name, timeout=10.0, critical=False)` **decorator**, `run_all` (async), `run_all_sync`. |
 | `HealthStatus` / `SystemHealth` | enum / class | `HEALTHY`/`DEGRADED`/`UNHEALTHY`/`UNKNOWN`; aggregate result. |
+
+<!-- attune-generated: source_hash=5cb46b75c64a21b6c79cd5a1c06a09a397f1048bd4e927af38e5c62d97a332d6 feature=resilience kind=reference generated_at=2026-06-24 -->
