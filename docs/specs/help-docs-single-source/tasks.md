@@ -1,6 +1,11 @@
 # Tasks: Single-Source Help + Docs (pilot)
 
-**Status:** tasks (awaiting approval to execute)
+**Status:** complete (2026-06-24) — pilot executed and the full rollout
+landed. Every feature in `.help/features.yaml` is single-sourced
+(`status: manual`, projected from `content/features/<F>.md`); the
+`remaining` set is empty. The Tier-3 batch finished with help-system
+(#1043) and ops-dashboard (#1044). See the closeout note under Exit
+criteria.
 **Created:** 2026-06-21
 **Builds on:** [requirements.md](requirements.md),
 [decisions.md](decisions.md), [design.md](design.md)
@@ -161,3 +166,30 @@ CLI-reference projection, tables, and `cli_refs` fact-check.
   consumers, fact-check/grounding green, regen-overwrite defused.
 - The chain is repeatable and the rollout playbook is written.
 - No regression in the in-tool help system or `mkdocs build`.
+
+---
+
+## Closeout (2026-06-24) — rollout complete
+
+The pilot exit criteria were met and the full rollout ran to completion
+using the R7 playbook. Every feature in `.help/features.yaml` is now
+single-sourced (`status: manual`, no `files:`); the projector owns the
+`.help/templates/<F>/` kinds and the `docs/{how-to,architecture,
+reference}/<F>.md` pages; frozen `faq.md` files await the four-channel
+FAQ Generator (D6/D7).
+
+- **Tier-3 finishers:** help-system (#1043, the help ENGINE) and
+  ops-dashboard (#1044, the runner CORE). Earlier Tier-3: telemetry
+  #1034, configuration #1035, resilience #1036, hooks #1037, cli #1038,
+  orchestration #1040, plugin #1042.
+- **What the adversarial gate kept catching to the end:** behavioral and
+  scope fiction the static gates can't see — re-export/import paths,
+  async-vs-sync, property-vs-method, deprecated-as-canonical, and
+  invented APIs (e.g. ops-dashboard's non-existent `detect_candidates`/
+  `Candidate`). Mandatory subagent review stays the load-bearing step.
+
+**Not in scope of this spec (open follow-up):** the rollout edits
+repo-root `content/`/`.help/`/`docs/`, which reach ops/website/mkdocs
+but NOT `pip install attune-ai`. Delivering to pip users needs a
+release-prep-cadence pass that regenerates `plugin/help/generated/`
+under the wheel-packaged path. Tracked in the next-session handoff.

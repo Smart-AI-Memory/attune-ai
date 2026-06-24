@@ -1,9 +1,12 @@
 # R7 — Rollout Playbook: Single-Source Help + Docs
 
-**Status:** drafted from the pilot (2026-06-21); **nav/hub gate
-implemented** (P4/P6 done via the help-docs-rollout-gate spec,
-2026-06-21) — the per-feature loop no longer requires a manual
-`mkdocs.yml` edit · **Builds on:** [design.md](design.md),
+**Status:** rollout COMPLETE (2026-06-24) — every feature is
+single-sourced (`status: manual`); the `remaining` set in
+`.help/features.yaml` is empty. Drafted from the pilot (2026-06-21);
+**nav/hub gate implemented** (P4/P6 done via the help-docs-rollout-gate
+spec, 2026-06-21) — the per-feature loop no longer requires a manual
+`mkdocs.yml` edit. The recipe below stays the canonical procedure for
+single-sourcing any NEW feature. · **Builds on:** [design.md](design.md),
 [decisions.md](decisions.md) (D6–D13),
 [t2-projector-build.md](t2-projector-build.md),
 [follow-ups.md](follow-ups.md)
