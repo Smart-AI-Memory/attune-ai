@@ -1,6 +1,6 @@
 # Design: Interactive Orchestration Access
 
-**Status:** draft
+**Status:** approved
 **Requirements:** [requirements.md](requirements.md) ·
 **Decisions:** [decisions.md](decisions.md)
 

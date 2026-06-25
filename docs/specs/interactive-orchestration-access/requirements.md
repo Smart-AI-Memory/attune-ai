@@ -1,6 +1,7 @@
 # Requirements: Interactive Orchestration Access
 
-**Status:** draft
+**Status:** approved
+
 **Created:** 2026-06-25
 **Owner:** Patrick + agent
 
