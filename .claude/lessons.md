@@ -11300,3 +11300,43 @@ files.
   <branch> / Head sha can't be blank" — push the branch first. Pairs
   with the "verify-first applies to infra/config" family — here, verify
   which surface actually ships before claiming a capability is reachable.
+
+- **`sync_agents_skills.py` regenerates ALL `.agents/` mirrors, so a
+  full run sweeps in PRE-EXISTING `description` drift across skills you
+  never touched — and that drift is INVISIBLE to CI, so it belongs in a
+  separate chore PR, not your focused feature PR**: shipping bulk+catalog
+  (#1080, 2026-06-25), `git status` after `sync_agents_skills.py` showed
+  7 unrelated mirrors modified (coach, bug-predict, code-quality, …). Root
+  cause: the CI gate is `test_sync_agents_skills.py::
+  test_skill_body_content_matches`, which checks BODY content ONLY — the
+  frontmatter `description:` line is not compared, so when a
+  `plugin/skills/<x>/SKILL.md` description is edited without re-syncing,
+  the mirror drifts and CI stays GREEN (that's why a standing chore PR
+  #1078 "re-sync descriptions" exists). The script's own `--check` DOES
+  flag description drift ("[FAIL] <x>: out of sync", exit nonzero), BUT
+  `grep -rn sync_agents_skills .github/workflows .pre-commit-config.yaml`
+  shows `--check` is wired into NEITHER — only the body-content pytest
+  test gates it. So: (1) `--check` exit code ≠ CI status; don't treat its
+  red as a blocker on your PR. (2) After a full sync, KEEP only the
+  mirrors for skills your PR actually touched; revert the rest with
+  `git checkout -- .agents/skills/<unrelated>/SKILL.md` (confirm they're
+  pre-existing by diffing `git show origin/main:plugin/skills/<x>` vs
+  `:.agents/skills/<x>` description md5s). Committing the full sweep
+  bloats the diff and collides with the chore PR. Extends the existing
+  "edit skill → run sync → stage the `.agents` copy" lesson with the
+  body-vs-description gate asymmetry.
+
+- **Adding an MCP tool has MORE count gates than the obvious one —
+  `test_tool_schemas` asserts the EXACT per-category set, and the README
+  carries the count in ≥4 spots incl. a per-category breakdown**: adding
+  `list_capabilities` to `get_utility_tools()` (#1080) failed not just
+  `test_mcp_memory_tools` (core 42→43, redis 47→48) but also
+  `test_tool_schemas.py::TestGetUtilityTools::test_expected_tools_present`
+  (an EXACT `expected == set(tools.keys())` — a superset isn't enough; the
+  new tool must be added to the literal set). README needed: the headline
+  prose ("42 MCP tools" → 43, appears 3×), the comparison-table row, AND
+  the per-category heading + tool list (`### Utility (7)` → `(8)` plus the
+  backticked name). `grep -rniE "<old-count> (native |mcp )?tool"
+  README.md plugin/README.md` finds the prose; the category breakdown is
+  the easy miss. Sibling of the "Adding a plugin skill has THREE gates"
+  lesson, on the MCP-tool surface.
