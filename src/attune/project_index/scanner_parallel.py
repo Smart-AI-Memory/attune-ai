@@ -216,7 +216,16 @@ class ParallelProjectScanner(ProjectScanner):
         # Process files in parallel
         records: list[FileRecord] = []
 
-        with mp.Pool(processes=self.workers) as pool:
+        # Force the 'spawn' start method. 'fork' (the Linux default) makes
+        # each Pool child inherit a copy of every parent fd -- including the
+        # xdist worker's execnet socket -- and a lingering child holding that
+        # dup kept the controller from ever seeing the worker exit, wedging
+        # CI at ~99% (scanner-pool-fork-hang / ci-runner-hang spec). The
+        # _PARALLEL_MIN_FILES guard alone only narrows the window; 'spawn'
+        # starts clean children with no inherited fds and removes the hazard
+        # outright (macOS already defaults to spawn -- which is why the hang
+        # was Linux-only).
+        with mp.get_context("spawn").Pool(processes=self.workers) as pool:
             # Map file paths to string for pickling
             file_path_strs = [str(f) for f in all_files]
 
