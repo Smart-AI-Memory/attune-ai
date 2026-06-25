@@ -1,6 +1,6 @@
 ---
 name: attune-hub
-description: "Developer workflow hub — routes to the right skill based on what you need. Triggers on: attune, help me, what can you do, workflows, setup, configure, capabilities."
+description: "Developer workflow hub — routes to the right skill based on what you need. Triggers on: attune, what can attune do, what can you do, capabilities, where do I start, get started."
 ---
 # Attune Hub
 
