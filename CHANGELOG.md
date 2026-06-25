@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`wizard` skill — run guided wizards conversationally
+  (interactive-orchestration-access Phase 1).** The 5 wizards (debug,
+  refactor, release-prep, security, test-gen) were listable but not
+  runnable in the shipped plugin. New `BaseWizard.list_steps()` exposes a
+  wizard's steps declaratively, and `attune.wizards.driver`
+  (`describe_wizard_steps`, `run_wizard_prefilled`,
+  `prefilled_answer_callback`) lets the Claude-driven `wizard` skill
+  collect a wizard's question answers via `AskUserQuestion`, then run it
+  once with those answers — no engine `run()` refactor. Brings the count
+  to 23 skills. Agent-team access is Phase 2.
 - **Agent templates surfaced in the catalog + catalog-completeness
   guard.** `list_capabilities` now also enumerates the 14 builtin agent
   templates (via `get_all_templates()`) — previously it read only
@@ -44,6 +54,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `no_llm`) and a thin auto-triggering skill. Previously the workflow
   was reachable only from internal code. Brings the count to 42 MCP
   tools and 18 skills.
+
+### Fixed
+
+- **Wizard `confirm`/`review` steps crashed at runtime.**
+  `_run_confirm_step`/`_run_review_step` built
+  `FormQuestion(type="single_select")` with a plain string, but
+  `to_ask_user_format()` calls `self.type.value` — so any wizard
+  reaching a confirm or review step raised `AttributeError: 'str'
+  object has no attribute 'value'`. Latent because the full interactive
+  run was never dogfooded end-to-end. Fixed to use
+  `QuestionType.SINGLE_SELECT`; covered by an offline wizard-run test.
 
 ### Removed (BREAKING)
 
