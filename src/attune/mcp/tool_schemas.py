@@ -51,6 +51,36 @@ def get_workflow_tools() -> dict[str, dict[str, Any]]:
             param_desc="Path to directory or file to analyze",
             required=True,
         ),
+        "discovery_sweep": {
+            "description": (
+                "Run the discovery-sweep meta-workflow: fans out across all "
+                "audit sources (pattern scan, bug-predict, security, deps, "
+                "perf, docs, tests), dedups, and triages findings into "
+                "queue / questions / rejected buckets. Use for a full "
+                "'what should I fix' pass; single-purpose audits have their "
+                "own tools (security_audit, bug_predict, deep_review)."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Directory or file to sweep",
+                    },
+                    "budget_usd": {
+                        "type": "number",
+                        "description": "Total LLM spend cap (default 10.00)",
+                        "default": 10.0,
+                    },
+                    "no_llm": {
+                        "type": "boolean",
+                        "description": "Fast pattern-only sweep (skip LLM sources)",
+                        "default": False,
+                    },
+                },
+                "required": ["path"],
+            },
+        },
         "code_review": _pt(
             "Run code review workflow. Provides comprehensive code quality analysis with suggestions for improvement.",
             param_desc="Path to directory or file to review",
