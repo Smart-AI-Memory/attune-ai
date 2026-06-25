@@ -11340,3 +11340,30 @@ files.
   README.md plugin/README.md` finds the prose; the category breakdown is
   the easy miss. Sibling of the "Adding a plugin skill has THREE gates"
   lesson, on the MCP-tool surface.
+
+- **A drift-guard test that compares only the BODY (or only the dir
+  set) of a generated/mirrored file lets FRONTMATTER drift accumulate
+  silently — assert the FULL generated output**: hit 2026-06-25 on
+  `.agents/skills/`. `scripts/sync_agents_skills.py` mirrors
+  `plugin/skills/*/SKILL.md` into agentskills.io format, and
+  `tests/unit/plugins/test_sync_agents_skills.py` was the CI guard —
+  but its integration checks only compared (a) the body after the
+  closing `---` (`test_skill_body_content_matches`) and (b) the dir
+  set (`test_all_plugin_skills_synced`). Neither asserted the
+  frontmatter. So when 8 plugin `description:` fields were edited
+  without re-running the sync, the stale `.agents/` descriptions sailed
+  past green CI. Fix shipped in two PRs: (#1078) `python3
+  scripts/sync_agents_skills.py` to regenerate (description-only diff,
+  bodies untouched), then (#1081) a `test_frontmatter_in_sync` that
+  runs each source through `sync_one(..., check=True)` — which compares
+  the FULL generated file (frontmatter AND body) byte-for-byte, so it
+  catches drift in ANY allowed field, not just description. **General
+  rule:** when you write a regression guard for a generated mirror,
+  the assertion must cover the whole artifact the generator produces;
+  a body-only or name-only compare is a silent hole that widens over
+  time. The cheap proof the guard works: inject a one-char change into
+  the generated copy and confirm the test goes red before committing
+  it (did this — `coach: out of sync`). Pairs with the three-skill-dir
+  architecture lesson (same sync pipeline) and the "registered ≠
+  working — dogfood the live loop" family (a green test that doesn't
+  assert the thing that drifted is theater).
