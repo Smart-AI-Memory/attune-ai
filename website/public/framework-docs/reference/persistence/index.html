@@ -2747,34 +2747,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../empathy-os/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    EmpathyOS
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../configuration/" class="md-nav__link">
         
   
@@ -2783,34 +2755,6 @@
     
   
     Configuration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../core/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Core
   
 
     
@@ -6294,7 +6238,7 @@ print(f"Found {len(users)} users")</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><a class="autorefs autorefs-internal" title="attune.core.CollaborationState" href="../core/#attune.core.CollaborationState">CollaborationState</a> | None</code>
+                  <code><span title="attune.state_manager.CollaborationState">CollaborationState</span> | None</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6312,10 +6256,7 @@ print(f"Found {len(users)} users")</p>
 <blockquote>
 <blockquote>
 <p>manager = StateManager()
-state = manager.load_state("user123")
-if state:
-...     empathy = EmpathyOS(user_id="user123", target_level=4)
-...     empathy.collaboration_state = state</p>
+state = manager.load_state("user123")</p>
 </blockquote>
 </blockquote>
 </blockquote>
@@ -6371,7 +6312,7 @@ if state:
                 <code>state</code>
             </td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="attune.core.CollaborationState" href="../core/#attune.core.CollaborationState">CollaborationState</a></code>
+                  <code><span title="attune.state_manager.CollaborationState">CollaborationState</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7061,7 +7002,6 @@ collector.record_metric(
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../pattern-library/">Pattern Library API</a></li>
-<li><a href="../empathy-os/">EmpathyOS API</a></li>
 <li><a href="../config/">Configuration API</a></li>
 <li><a href="../../getting-started/">Getting Started</a></li>
 </ul>
