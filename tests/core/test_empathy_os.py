@@ -66,7 +66,6 @@ class TestEmpathyOS:
         empathy = EmpathyOS(user_id="test_user", target_level=4)
 
         assert hasattr(empathy, "feedback_detector")
-        assert hasattr(empathy, "emergence_detector")
         assert hasattr(empathy, "leverage_analyzer")
 
     def test_multiple_users(self):

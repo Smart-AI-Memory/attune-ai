@@ -22,7 +22,6 @@ from .core_modules.interaction import InteractionMixin
 from .core_modules.memory_interface import MemoryInterfaceMixin
 from .core_modules.shared_library import SharedLibraryMixin
 from .core_modules.short_term_memory import ShortTermMemoryMixin
-from .emergence import EmergenceDetector
 from .exceptions import ValidationError  # noqa: F401 - re-exported
 from .feedback_loops import FeedbackLoopDetector
 from .leverage_points import LeveragePoint, LeveragePointAnalyzer  # noqa: F401 - re-exported
@@ -225,7 +224,6 @@ class EmpathyOS(
 
         # System thinking components
         self.feedback_detector = FeedbackLoopDetector()
-        self.emergence_detector = EmergenceDetector()
         self.leverage_analyzer = LeveragePointAnalyzer()
 
         # Pattern storage for Level 3+
