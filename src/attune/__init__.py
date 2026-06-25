@@ -226,9 +226,39 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 _loaded_modules: dict[str, object] = {}
 
 
+# Legacy "Empathy" framework surface (EmpathyOS + the 5-level maturity
+# model). attune-ai now focuses on the Claude Code workflow plugin (MCP
+# tools), which does not use any of these at runtime. Deprecated as of
+# the plugin-focus decision (2026-06-25); slated for removal in a future
+# release. See CHANGELOG and docs/specs/empathy-framework-retirement/.
+_DEPRECATED_FRAMEWORK: frozenset[str] = frozenset(
+    {
+        "EmpathyOS",
+        "FeedbackLoopDetector",
+        "LeveragePointAnalyzer",
+        "Level1Reactive",
+        "Level2Guided",
+        "Level3Proactive",
+        "Level4Anticipatory",
+        "Level5Systems",
+    }
+)
+
+
 def __getattr__(name: str) -> object:
     """Lazy import handler - loads modules only when accessed."""
     if name in _LAZY_IMPORTS:
+        if name in _DEPRECATED_FRAMEWORK:
+            import warnings
+
+            warnings.warn(
+                f"attune.{name} belongs to the legacy Empathy framework and is "
+                "deprecated. attune-ai now focuses on the Claude Code workflow "
+                "plugin (MCP tools), which does not use it. The framework API "
+                "will be removed in a future release.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         module_path, attr_name = _LAZY_IMPORTS[name]
 
         # Check cache first
