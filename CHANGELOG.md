@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Agent templates surfaced in the catalog + catalog-completeness
+  guard.** `list_capabilities` now also enumerates the 14 builtin agent
+  templates (via `get_all_templates()`) — previously it read only
+  workflows/wizards/tools, so the whole agent-template registry was
+  invisible to the "what can attune do?" browse surface. The `catalog`
+  skill renders the new **Agents** group. A new `TestCatalogCompleteness`
+  guard (in `test_registry_coverage.py`) fails if any known registry
+  drops out of the catalog or its count drifts from the live registry —
+  registry-level coverage to complement the existing per-item
+  workflow->tool and tool->skill guards.
 - **`bulk` + `catalog` skills + `list_capabilities` MCP tool.** Two
   left-behind skills now ship in the plugin: `bulk` surfaces the
   existing `analyze_batch` tool for 50%-cost batch processing, and
