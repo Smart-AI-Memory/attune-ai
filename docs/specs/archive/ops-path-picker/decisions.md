@@ -1,6 +1,7 @@
 # Spec: Ops Path Picker — Decisions
 
-**Status:** approved
+**Status:** complete (shipped — scope picker in static/js/runner.js).
+Reconciled from stale "approved" and archived 2026-06-24.
 
 
 > Pre-committed decisions captured 2026-05-14. Triggered by QA
