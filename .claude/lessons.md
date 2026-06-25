@@ -11024,3 +11024,49 @@ files.
   satisfies directly) and the "registered ≠ working — dogfood" family
   (here: an independent security-reviewer pass corroborated the finding I
   spotted, which is the right belt-and-suspenders for self-authored code).
+
+- **`gh pr checks` rollup LAGS the real job conclusion — cross-check
+  `gh run view <run-id> --json jobs` before believing a check is still
+  pending**: 2026-06-24 watching PR #1056 CI. `gh pr checks 1056` showed
+  `test (ubuntu-latest, 3.12)  pending  0` while that job had ALREADY
+  completed `success` — confirmed by `gh run view <run-id> --json jobs
+  --jq '.jobs[] | select(.name=="test (ubuntu-latest, 3.12)")'`
+  returning `{"status":"completed","conclusion":"success"}`. The
+  statusCheckRollup that `gh pr checks` reads is updated asynchronously
+  from the underlying job state, so a job can read done at the run/jobs
+  level and still show pending in the PR-checks rollup for a minute or
+  two. Don't conclude "still waiting" (or, worse, "hung") from the
+  rollup alone — when a check sits pending while siblings finish, query
+  `gh run view --json jobs` for the authoritative per-job
+  status/conclusion. Pairs with the "Diagnosing CI from the `gh` CLI"
+  core lesson (field names / cancellation traps) — same theme: the `gh`
+  PR-level views are convenient but lossy; the run/jobs API is ground
+  truth. (Also reconfirmed the cosmetic-`security` pattern here: the row
+  read `fail 0` but `gh run view --json jobs` showed `conclusion:
+  cancelled`, and branch protection's `required_status_checks` did NOT
+  list it → non-required → ignore.)
+
+- **A single `null` from GitHub's GraphQL `licenseInfo` is NOT proof of
+  a license-detection defect — GitHub re-indexes `licensee` metadata
+  asynchronously after a push; re-query and cross-check REST before
+  asserting a problem (or "fixing" a non-problem)**: 2026-06-24, prepping
+  attune-ai for the community plugin-directory submission I flagged that
+  `gh repo view --json licenseInfo --jq .licenseInfo.spdxId` returned
+  `null` despite a present root `LICENSE` (standard Apache-2.0 text, only
+  the appendix copyright line filled in) and `Apache-2.0` declared in
+  every manifest. On investigation all THREE detection surfaces actually
+  agreed it's fine: REST `repos/<o>/<r>` `.license` → `apache-2.0`, REST
+  `repos/<o>/<r>/license` → `apache-2.0`, and re-running the SAME
+  GraphQL `licenseInfo` query → `apache-2.0`. The original `null` was a
+  transient post-push re-index window, not a defect — there was nothing
+  to fix, and manufacturing a LICENSE change would have been churn on a
+  healthy file. Rule: GitHub-derived repo metadata (`licenseInfo`,
+  language stats, topics, the repo object's `.license`) is computed
+  asynchronously and can lag or transiently read empty right after a
+  push; before treating an empty/null reading as a defect, (1) re-run
+  the query, and (2) cross-check the REST `/license` endpoint (most
+  lenient/authoritative for the sidebar). Report "no fix needed"
+  honestly rather than padding a change. Pairs with the "Verify-first
+  applies to infra/config diagnoses" core lesson (read the actual `gh
+  api` source of truth before asserting cause) — same discipline,
+  applied to GitHub's own derived metadata.
