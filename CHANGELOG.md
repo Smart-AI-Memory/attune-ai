@@ -7,18 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.10.0] — 2026-06-25
+
+attune-ai is now focused on being the **Claude Code workflow plugin**.
+This release removes ~18k LOC of dead framework code, deprecates the
+legacy "Empathy" framework, and sharpens the plugin's auto-trigger UX.
+The workflow tools, auth/tier routing, memory, and help systems are
+unaffected.
+
+### Removed
+
+- **~18k LOC of dead framework code.** The `socratic/` package (55
+  modules), `trust/` + `trust_building.py`, and `emergence.py` — all
+  confirmed off the product runtime path by a reachability audit (zero
+  imports from any CLI/MCP/plugin/workflow entry point). The
+  `TrustBuildingBehaviors` and `EmergenceDetector` public exports are
+  removed with them; nothing in the plugin used them.
+
 ### Deprecated
 
 - **Legacy "Empathy" framework API.** `EmpathyOS`, the five-level
   maturity model (`Level1Reactive`…`Level5Systems`),
-  `FeedbackLoopDetector`, and `LeveragePointAnalyzer` are deprecated.
-  attune-ai now focuses on the Claude Code workflow plugin (MCP tools),
-  which does not use any of these at runtime — a reachability audit
-  (2026-06-25) confirmed zero product-path imports. Accessing these
-  symbols via `from attune import …` now emits a `DeprecationWarning`.
-  They will be removed in a future release; migrate off them now. The
-  workflow tools, auth/tier routing, memory, and help systems are
-  unaffected.
+  `FeedbackLoopDetector`, and `LeveragePointAnalyzer` now emit a
+  `DeprecationWarning` and will be removed in a future release. Migrate
+  off them now.
+
+### Changed
+
+- The package now leads as the Claude Code workflow plugin (package
+  docstring + README), not a "five-level maturity model" framework.
+- **Skill auto-triggers disambiguated** so the right skill fires:
+  `workflow-orchestration` is now explicit-only (it was shadowing ~7
+  specific skills), and overlapping trigger words (bugs/predict, code
+  smell, remember, "help") each now belong to a single skill.
+
+### Fixed
+
+- macOS CI worker crash on the non-mocked version-check resilience
+  tests — marked `network` so they stay off the parallel xdist lane (a
+  real-socket test under `--timeout-method=thread` could crash a
+  worker; surfaced when removing test files reshuffled the xdist work
+  distribution).
+- README accuracy: added `attune-verify` to the ecosystem, corrected
+  the skill (17) and workflow (22) counts, and refreshed version
+  references.
 
 ## [8.9.2] — 2026-06-24
 
