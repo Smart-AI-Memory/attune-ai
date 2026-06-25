@@ -1,6 +1,6 @@
 ---
 name: workflow-orchestration
-description: "Run analysis workflows — security, code review, tests, perf, bugs, docs, release. Triggers on: workflow, run, execute, analyze, security, review, test, perf, release, bugs, docs, audit."
+description: "Run several analysis workflows together in one sweep. Triggers on: run all workflows, run multiple workflows, full analysis sweep, workflow orchestration."
 argument-hint: "<workflow: security, review, tests, perf, release, bugs, docs>"
 ---
 

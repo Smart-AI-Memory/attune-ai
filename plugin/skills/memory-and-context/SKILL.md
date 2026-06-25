@@ -1,6 +1,6 @@
 ---
 name: memory-and-context
-description: "Store, retrieve, search, and manage persistent memory across sessions. Triggers on: memory, store, remember, retrieve, forget, pattern, context."
+description: "Store, retrieve, search, and manage persistent memory across sessions. Triggers on: store memory, save this, retrieve, forget, manage memory, context, pattern."
 argument-hint: "<operation: store|retrieve|search|forget|empathy>"
 disable-model-invocation: true
 ---
