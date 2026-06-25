@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Deprecated
+
+- **Legacy "Empathy" framework API.** `EmpathyOS`, the five-level
+  maturity model (`Level1Reactive`…`Level5Systems`),
+  `FeedbackLoopDetector`, and `LeveragePointAnalyzer` are deprecated.
+  attune-ai now focuses on the Claude Code workflow plugin (MCP tools),
+  which does not use any of these at runtime — a reachability audit
+  (2026-06-25) confirmed zero product-path imports. Accessing these
+  symbols via `from attune import …` now emits a `DeprecationWarning`.
+  They will be removed in a future release; migrate off them now. The
+  workflow tools, auth/tier routing, memory, and help systems are
+  unaffected.
+
 ## [8.9.2] — 2026-06-24
 
 Help-delivery patch — ships the single-source content **in the bundled

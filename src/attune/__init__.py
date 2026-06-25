@@ -1,35 +1,18 @@
-"""Attune AI - AI-Human Collaboration Library
+"""Attune AI — AI developer workflows for Claude Code.
 
-A five-level maturity model for building AI systems that progress from
-reactive responses to anticipatory problem prevention.
+A Claude Code plugin for spec-driven development: code review, security
+audit, test generation, refactor planning, and more — run as
+auto-triggering skills and MCP tools, backed by multi-agent teams,
+cost-aware model routing, retrieval grounding, and memory that persists
+across sessions.
 
-QUICK START:
-    from attune import EmpathyOS
+The plugin is the primary interface — install it in Claude Code (see
+the README) and invoke ``/attune``, ``/security``, ``/smart-test``, etc.
+The ``attune`` Python package exposes the supporting building blocks:
 
-    # Create an EmpathyOS instance
-    empathy = EmpathyOS(user_id="developer@company.com")
-
-    # Use Level 4 (Anticipatory) for predictions
-    response = empathy.level_4_anticipatory(
-        user_input="How do I optimize database queries?",
-        context={"domain": "software"},
-        history=[]
-    )
-
-    print(f"Response: {response['response']}")
-    print(f"Predictions: {response.get('predictions', [])}")
-
-    # Store patterns in memory
-    empathy.stash("session_context", {"topic": "database optimization"})
-    empathy.persist_pattern(
-        content="Query optimization technique",
-        pattern_type="technique"
-    )
-
-MEMORY OPERATIONS:
     from attune import UnifiedMemory, Classification
 
-    # Initialize unified memory (auto-detects environment)
+    # Two-tier memory (auto-detects environment)
     memory = UnifiedMemory(user_id="agent@company.com")
 
     # Short-term (Redis-backed, TTL-based)
@@ -45,11 +28,15 @@ MEMORY OPERATIONS:
     pattern = memory.recall_pattern(result["pattern_id"])
 
 KEY EXPORTS:
-    - EmpathyOS: Main orchestration class
     - UnifiedMemory: Two-tier memory (short + long term)
     - MemoryConfig, Environment: Memory configuration
     - Classification, AccessTier: Security/access enums
-    - Level1-5 classes: Empathy level implementations
+    - AttuneConfig, EmpathyConfig: Configuration
+
+DEPRECATED — legacy "Empathy" framework (see CHANGELOG):
+    EmpathyOS, Level1Reactive…Level5Systems, FeedbackLoopDetector,
+    LeveragePointAnalyzer. The 5-level maturity model is no longer used
+    at runtime; these emit DeprecationWarning and will be removed.
 
 Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
@@ -226,9 +213,39 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 _loaded_modules: dict[str, object] = {}
 
 
+# Legacy "Empathy" framework surface (EmpathyOS + the 5-level maturity
+# model). attune-ai now focuses on the Claude Code workflow plugin (MCP
+# tools), which does not use any of these at runtime. Deprecated as of
+# the plugin-focus decision (2026-06-25); slated for removal in a future
+# release. See CHANGELOG and docs/specs/empathy-framework-retirement/.
+_DEPRECATED_FRAMEWORK: frozenset[str] = frozenset(
+    {
+        "EmpathyOS",
+        "FeedbackLoopDetector",
+        "LeveragePointAnalyzer",
+        "Level1Reactive",
+        "Level2Guided",
+        "Level3Proactive",
+        "Level4Anticipatory",
+        "Level5Systems",
+    }
+)
+
+
 def __getattr__(name: str) -> object:
     """Lazy import handler - loads modules only when accessed."""
     if name in _LAZY_IMPORTS:
+        if name in _DEPRECATED_FRAMEWORK:
+            import warnings
+
+            warnings.warn(
+                f"attune.{name} belongs to the legacy Empathy framework and is "
+                "deprecated. attune-ai now focuses on the Claude Code workflow "
+                "plugin (MCP tools), which does not use it. The framework API "
+                "will be removed in a future release.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         module_path, attr_name = _LAZY_IMPORTS[name]
 
         # Check cache first
