@@ -427,7 +427,6 @@ if best:
 
 ## See Also
 
-- [EmpathyOS API](empathy-os.md)
 - [Persistence API](persistence.md)
 - [Multi-Agent Coordination Example](../tutorials/examples/multi-agent-team-coordination.md)
 - [Adaptive Learning Example](../tutorials/examples/adaptive-learning-system.md)

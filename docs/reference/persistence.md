@@ -466,6 +466,5 @@ def batch_save_patterns(patterns, db_path):
 ## See Also
 
 - [Pattern Library API](pattern-library.md)
-- [EmpathyOS API](empathy-os.md)
 - [Configuration API](config.md)
 - [Getting Started](../getting-started/index.md)

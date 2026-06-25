@@ -276,13 +276,11 @@ class TestCostTracker:
 class TestImports:
     """Smoke tests for critical imports."""
 
-    def test_empathy_os_imports(self):
-        """Test main empathy_os imports work."""
-        from attune import EmpathyOS
+    def test_core_imports(self):
+        """Test main package imports work."""
         from attune.config import EmpathyConfig
         from attune.models import get_all_models
 
-        assert EmpathyOS is not None
         assert EmpathyConfig is not None
         assert callable(get_all_models)
 

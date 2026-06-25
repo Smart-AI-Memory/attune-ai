@@ -1,18 +1,16 @@
 # Licensed under the Apache License, Version 2.0
 # Copyright 2025 Smart AI Memory, LLC
 """Tests for health check scoring, pattern memory, workflow_morning,
-empathy levels, and workflow_learn — Batch 15.
+and workflow_learn — Batch 15.
 
 Covers: workflows/health_check_scoring, meta_workflows/pattern_memory,
-workflow_morning, core_modules/empathy_levels, workflow_learn.
+workflow_morning, workflow_learn.
 """
 
 from __future__ import annotations
 
 import sys
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 # === Module: workflows/health_check_scoring.py ===
 
@@ -379,186 +377,6 @@ class TestWorkflowMorning:
 
         for key in ("increasing", "decreasing", "stable", "unknown", "insufficient_data"):
             assert key in _TREND_MESSAGES
-
-
-# === Module: core_modules/empathy_levels.py ===
-
-
-class TestEmpathyLevelsMixin:
-    def _make_instance(self):
-        from attune.core_modules.empathy_levels import EmpathyLevelsMixin
-
-        class ConcreteEmpathy(EmpathyLevelsMixin):
-            def __init__(self):
-                self.user_id = "test_user"
-                self.logger = MagicMock()
-                self.current_empathy_level = 0
-                self.collaboration_state = MagicMock()
-                self.collaboration_state.total_interactions = 0
-                self.collaboration_state.shared_context = {}
-                self.leverage_analyzer = MagicMock()
-
-            async def _process_request(self, request):
-                return {"status": "success", "result": request}
-
-            async def _ask_calibrated_questions(self, request):
-                return {"needs_clarification": False, "questions": []}
-
-            def _refine_request(self, original, clarification):
-                return original
-
-            def _detect_active_patterns(self, context):
-                return []
-
-            def _design_proactive_action(self, pattern):
-                return {"action": "fix", "safe": True}
-
-            def _is_safe_to_execute(self, action):
-                return True
-
-            async def _execute_proactive_actions(self, actions):
-                return [{"success": True} for _ in actions]
-
-            def _predict_future_bottlenecks(self, trajectory):
-                return []
-
-            def _should_anticipate(self, bottleneck):
-                return True
-
-            def _design_anticipatory_intervention(self, bottleneck):
-                return {"intervention": "scale"}
-
-            async def _execute_anticipatory_interventions(self, interventions):
-                return [{"success": True} for _ in interventions]
-
-            def _identify_problem_classes(self, domain_context):
-                return []
-
-            def _design_framework(self, leverage_point):
-                return {"framework": "test"}
-
-            async def _implement_frameworks(self, frameworks):
-                return [{"success": True} for _ in frameworks]
-
-        return ConcreteEmpathy()
-
-    @pytest.mark.asyncio
-    async def test_level_1_reactive_success(self):
-        instance = self._make_instance()
-        result = await instance.level_1_reactive("fix my bug")
-        assert result["level"] == 1
-        assert result["type"] == "reactive"
-
-    @pytest.mark.asyncio
-    async def test_level_1_reactive_empty_raises(self):
-        from attune.exceptions import ValidationError
-
-        instance = self._make_instance()
-        with pytest.raises(ValidationError):
-            await instance.level_1_reactive("")
-
-    @pytest.mark.asyncio
-    async def test_level_1_reactive_non_string_raises(self):
-        from attune.exceptions import ValidationError
-
-        instance = self._make_instance()
-        with pytest.raises(ValidationError):
-            await instance.level_1_reactive(42)  # type: ignore[arg-type]
-
-    @pytest.mark.asyncio
-    async def test_level_1_updates_interaction_count(self):
-        instance = self._make_instance()
-        instance.collaboration_state.total_interactions = 0
-        await instance.level_1_reactive("do something")
-        assert instance.collaboration_state.total_interactions == 1
-
-    @pytest.mark.asyncio
-    async def test_level_2_guided_empty_raises(self):
-        from attune.exceptions import ValidationError
-
-        instance = self._make_instance()
-        with pytest.raises(ValidationError):
-            await instance.level_2_guided("")
-
-    @pytest.mark.asyncio
-    async def test_level_2_guided_clarification_needed(self):
-        instance = self._make_instance()
-
-        async def _ask_with_clarification(request):
-            return {"needs_clarification": True, "questions": ["What exactly?", "Why?"]}
-
-        instance._ask_calibrated_questions = _ask_with_clarification
-
-        result = await instance.level_2_guided("do something vague")
-        assert result["action"] == "clarify_first"
-        assert "questions" in result
-
-    @pytest.mark.asyncio
-    async def test_level_2_guided_no_clarification_proceeds(self):
-        instance = self._make_instance()
-        result = await instance.level_2_guided("fix the bug in utils.py")
-        assert result["action"] == "proceed"
-        assert result["level"] == 2
-
-    @pytest.mark.asyncio
-    async def test_level_3_proactive_empty_dict_raises(self):
-        from attune.exceptions import ValidationError
-
-        instance = self._make_instance()
-        with pytest.raises(ValidationError):
-            await instance.level_3_proactive({})
-
-    @pytest.mark.asyncio
-    async def test_level_3_proactive_non_dict_raises(self):
-        from attune.exceptions import ValidationError
-
-        instance = self._make_instance()
-        with pytest.raises(ValidationError):
-            await instance.level_3_proactive("not a dict")  # type: ignore[arg-type]
-
-    @pytest.mark.asyncio
-    async def test_level_3_proactive_success(self):
-        instance = self._make_instance()
-        result = await instance.level_3_proactive({"user": "active", "errors": 0})
-        assert result["level"] == 3
-        assert result["type"] == "proactive"
-
-    @pytest.mark.asyncio
-    async def test_level_4_anticipatory_empty_raises(self):
-        from attune.exceptions import ValidationError
-
-        instance = self._make_instance()
-        with pytest.raises(ValidationError):
-            await instance.level_4_anticipatory({})
-
-    @pytest.mark.asyncio
-    async def test_level_4_anticipatory_success(self):
-        instance = self._make_instance()
-        result = await instance.level_4_anticipatory({"growth_rate": 0.2, "current_load": 0.5})
-        assert result["level"] == 4
-        assert result["type"] == "anticipatory"
-
-    @pytest.mark.asyncio
-    async def test_level_5_systems_empty_raises(self):
-        from attune.exceptions import ValidationError
-
-        instance = self._make_instance()
-        with pytest.raises(ValidationError):
-            await instance.level_5_systems({})
-
-    @pytest.mark.asyncio
-    async def test_level_5_systems_success(self):
-        instance = self._make_instance()
-        result = await instance.level_5_systems({"domain": "testing", "patterns": []})
-        assert result["level"] == 5
-        assert result["type"] == "systems"
-
-    def test_empathy_level_set_by_each_method(self):
-        import asyncio
-
-        instance = self._make_instance()
-        asyncio.run(instance.level_1_reactive("test"))
-        assert instance.current_empathy_level == 1
 
 
 # === Module: workflow_learn.py ===

@@ -299,7 +299,6 @@ if team_stats["collaboration_efficiency"] < 0.3:
 ## See Also
 
 - [Pattern Library](pattern-library.md) - Pattern storage, retrieval, and sharing
-- [EmpathyOS](empathy-os.md) - Core agent API and configuration
 - [Configuration](config.md) - Agent configuration options
 - [Persistence](persistence.md) - Backend storage for shared patterns
 - [Agent Factory](../how-to/agent-factory.md) - Create custom agents

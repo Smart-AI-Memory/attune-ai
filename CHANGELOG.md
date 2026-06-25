@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   drops out of the catalog or its count drifts from the live registry —
   registry-level coverage to complement the existing per-item
   workflow->tool and tool->skill guards.
+- **`personal-memory` + `image-analysis` skills.** Two MCP tool
+  clusters that shipped working but had no model-discoverable skill are
+  now surfaced: `personal-memory` covers the curated cross-session
+  personal store (`personal_memory_capture` / `recall` / `topics` /
+  `forget`), and `image-analysis` covers `analyze_image` (vision over
+  screenshots/diagrams/mockups). This empties the registry-coverage
+  guard's orphan-tool backlog (only CLI-surfaced infra tools remain
+  allowlisted). Brings the count to 22 skills; no new MCP tools (the
+  tools already existed).
 - **`bulk` + `catalog` skills + `list_capabilities` MCP tool.** Two
   left-behind skills now ship in the plugin: `bulk` surfaces the
   existing `analyze_batch` tool for 50%-cost batch processing, and
@@ -35,6 +44,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `no_llm`) and a thin auto-triggering skill. Previously the workflow
   was reachable only from internal code. Brings the count to 42 MCP
   tools and 18 skills.
+
+### Removed (BREAKING)
+
+- **Legacy "Empathy" framework runtime (~3,400 LOC).** `EmpathyOS`
+  (`core.py` + the `core_modules/` mixins), the five-level maturity
+  model (`Level1Reactive`…`Level5Systems` / `levels.py`),
+  `FeedbackLoopDetector` (`feedback_loops.py`), and
+  `LeveragePointAnalyzer` (`leverage_points.py`) are deleted. These
+  emitted a `DeprecationWarning` since 8.10.0; accessing them from the
+  `attune` package now raises `AttributeError`. The Claude Code workflow
+  plugin (MCP tools), auth/tier routing, memory, and help systems are
+  unaffected.
+- The `EmpathyLLM` / `EmpathyLLMExecutor` LLM execution layer is **not**
+  affected — despite the shared "Empathy" name it is live workflow
+  infrastructure, not part of the retired framework.
+- Dead API reference pages `reference/empathy-os.md` and
+  `reference/core.md` (their `mkdocstrings` autogen blocks targeted the
+  removed modules).
+
+### Deprecated
+
+- **`StateManager`** (`state_manager.py`) and its `persistence.py`
+  re-export are retained but now emit a `DeprecationWarning` and are
+  slated for removal in a future release. `CollaborationState` was
+  relocated from the removed `core.py` into `state_manager.py`.
+  (`MetricsCollector` and `PatternPersistence` remain live and are
+  unaffected.)
 
 ## [8.10.0] — 2026-06-25
 

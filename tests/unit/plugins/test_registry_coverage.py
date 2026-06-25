@@ -176,13 +176,9 @@ TOOLS_WITHOUT_SKILL_SURFACE: dict[str, str] = {
     "auth_status": "Utility/infra; surfaced via CLI auth commands, not a skill.",
     "auth_recommend": "Utility/infra; surfaced via CLI auth commands, not a skill.",
     "telemetry_stats": "Utility/infra; surfaced via CLI telemetry commands.",
-    # Additive-access backlog — skills specced/planned, not yet shipped.
-    # (analyze_batch now surfaced by the bulk skill — removed from this list.)
-    "analyze_image": "Pending an image-analysis skill (orphan-tool skills runway).",
-    "personal_memory_capture": "Pending a personal-memory skill (orphan-tool runway).",
-    "personal_memory_recall": "Pending a personal-memory skill (orphan-tool runway).",
-    "personal_memory_topics": "Pending a personal-memory skill (orphan-tool runway).",
-    "personal_memory_forget": "Pending a personal-memory skill (orphan-tool runway).",
+    # The additive-access backlog is now empty: analyze_batch -> bulk skill,
+    # analyze_image -> image-analysis skill, personal_memory_* -> the
+    # personal-memory skill. Only the CLI-surfaced infra tools remain.
 }
 
 

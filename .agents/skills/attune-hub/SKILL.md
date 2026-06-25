@@ -100,6 +100,8 @@ rule (a single turn can't bundle multiple ambiguous decisions). See
 | verify | verify docs, fact-check, did the model hallucinate, check generated content |
 | bulk | batch, bulk process, 50% savings, overnight analysis |
 | catalog | catalog, list capabilities, browse, what can attune do |
+| personal-memory | remember this for me, capture this decision, save to personal memory, my saved topics, forget topic |
+| image-analysis | analyze this image, look at this screenshot, what's in this diagram, read this mockup |
 
 ## MCP Server Not Running
 
