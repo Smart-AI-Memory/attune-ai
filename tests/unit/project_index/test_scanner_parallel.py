@@ -80,3 +80,28 @@ class TestParallelMinFilesGuard:
         with patch(GET_CONTEXT) as get_ctx:
             scanner.scan(analyze_dependencies=False)
         get_ctx.assert_not_called()
+
+
+class TestRealSpawnPool:
+    """Exercise the REAL (unmocked) spawn Pool end-to-end.
+
+    The guard tests above mock ``mp.get_context`` and only pin the
+    *intent* (spawn is requested). This test actually spins up the
+    process Pool so CI executes the spawn path on every run: it proves
+    the worker target and its ``partial`` args are picklable, that the
+    spawned children re-import cleanly, and that records come back —
+    breakage a mock can't catch (e.g. an unpicklable arg added later).
+    It also confirms the parallel scan does not itself wedge. See the
+    ci-runner-hang spec: ``fork`` here once leaked the execnet socket
+    fd; ``spawn`` must work AND not hang.
+    """
+
+    def test_large_scan_runs_real_spawn_pool(self, tmp_path):
+        """A >=threshold scan completes via a real spawn Pool with records."""
+        n = _PARALLEL_MIN_FILES + 5
+        _make_py_files(tmp_path, n)
+        scanner = ParallelProjectScanner(str(tmp_path), workers=2)
+        # No patching: this forks/spawns a genuine multiprocessing.Pool.
+        records, summary = scanner.scan(analyze_dependencies=False)
+        assert summary.total_files == n
+        assert len(records) == n
