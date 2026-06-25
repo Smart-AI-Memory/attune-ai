@@ -46,7 +46,7 @@ developer workflow hub; `attune-gui` is the docs hub.
 | ------- | ---- | ------- |
 | **`attune-ai`** | Developer workflow hub (this package) | `pip install attune-ai` |
 | **`attune-gui`** | Living Docs dashboard — create, manage, search help content | standalone app |
-| **`attune-rag`** | RAG pipeline (core dep of attune-ai, v0.6+) | bundled |
+| **`attune-rag`** | RAG pipeline (core dep of attune-ai, v0.7+) | bundled |
 | **`attune-verify`** | Generation fact-checker — backs the `/verify` skill (core dep) | bundled |
 | **`attune-author`** | Help content authoring, staleness detection | `pip install 'attune-ai[author]'` |
 | **`attune-help`** | Progressive-depth template runtime | `pip install attune-help` |
