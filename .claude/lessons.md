@@ -11152,3 +11152,39 @@ files.
   applies to infra/config diagnoses" core lesson (read the actual `gh
   api` source of truth before asserting cause) — same discipline,
   applied to GitHub's own derived metadata.
+
+- **A pure dead-code DELETION PR can deterministically redden ONE OS
+  lane by reshuffling xdist's work distribution onto a latent
+  real-socket test — and `--timeout-method=thread` turns the symptom
+  into a "worker crashed", not a test failure (xdist worker-crash
+  source #4)**: 2026-06-25, PR #1060 removed ~70 socratic test files and
+  its macOS lanes failed 4/4 (original run AND the rerun) on
+  `test_version_check_resilience.py::test_real_http_timeout_degrades_to_none`
+  — a real-localhost-socket test UNTOUCHED by the PR; `main` and the
+  sibling deletion PRs (#1061/#1062) stayed green. Mechanism: CI runs
+  `pytest -n auto --timeout=60 --timeout-method=thread`; removing test
+  files changes how xdist partitions the *remaining* tests across
+  workers, and the real-socket timeout test landed where it hung —
+  `--timeout-method=thread` then `os._exit`s the worker (xdist reports
+  `worker 'gwN' crashed`, NOT an assertion). **Diagnostic discipline I
+  got WRONG first:** I dismissed it as ambient flake. It wasn't — when
+  only ONE PR's lane fails while `main` + sibling PRs are green, it's
+  PR-SPECIFIC (the redistribution), not ambient; compare across
+  PRs/main before calling "flake". **Fix = the project's own idiomatic
+  mechanism:** mark the file `pytestmark = pytest.mark.network`. Every
+  CI lane already runs `-m "not network"` *precisely* to keep
+  real-socket tests off the parallel xdist lane; the file just lacked
+  the marker (the mocked sibling keeps the code covered). **Two traps:**
+  (1) `@pytest.mark.xdist_group("...")` is a NO-OP under the default
+  `-n auto` (`--dist load`) — it only pins under `--dist loadgroup`, so
+  it's the wrong "isolate" lever here; (2) also harden the fixture
+  (single-threaded `HTTPServer` → `ThreadingHTTPServer`) so a slow
+  in-flight handler can't block `shutdown()` in teardown and race the
+  per-test timeout when the test IS run (`-m network`). Extends the
+  "xdist worker-crash source #1/#2/#3" series with the
+  test-set-distribution-shift trigger. Pairs with the "Admin-merging
+  before Windows lanes complete" core lesson — I merged #1060 with
+  Windows still pending (it passed, but that was luck). **Bonus:**
+  `filterwarnings = error` paired with an `ignore::DeprecationWarning`
+  line (check pytest.ini) means you CAN add `DeprecationWarning`s
+  without reddening the suite — verify the filter before adding them.
