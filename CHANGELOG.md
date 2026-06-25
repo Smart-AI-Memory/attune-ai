@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`personal-memory` + `image-analysis` skills.** Two MCP tool
+  clusters that shipped working but had no model-discoverable skill are
+  now surfaced: `personal-memory` covers the curated cross-session
+  personal store (`personal_memory_capture` / `recall` / `topics` /
+  `forget`), and `image-analysis` covers `analyze_image` (vision over
+  screenshots/diagrams/mockups). This empties the registry-coverage
+  guard's orphan-tool backlog (only CLI-surfaced infra tools remain
+  allowlisted). Brings the count to 22 skills; no new MCP tools (the
+  tools already existed).
+
 - **`bulk` + `catalog` skills + `list_capabilities` MCP tool.** Two
   left-behind skills now ship in the plugin: `bulk` surfaces the
   existing `analyze_batch` tool for 50%-cost batch processing, and
