@@ -9,34 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **`agent` skill — compose and run a multi-agent team
-  (interactive-orchestration-access Phase 2).** The 14 builtin agent
-  templates were listable via the catalog but not runnable. New
-  `attune.orchestration.team_driver` (`describe_team_for_task`,
-  `run_team_for_task`) gives the Claude-driven `agent` skill a
-  two-step bridge: `describe_team_for_task` composes a team plan
-  deterministically (no LLM — which agents, strategy, estimated cost)
-  for a preview, then `run_team_for_task` executes the composed team
-  after the user confirms the cost. Brings the count to 24 skills; new
-  guard `TestAgentRunSurface`.
-- **`wizard` skill — run guided wizards conversationally
-  (interactive-orchestration-access Phase 1).** The 5 wizards (debug,
-  refactor, release-prep, security, test-gen) were listable but not
-  runnable in the shipped plugin. New `BaseWizard.list_steps()` exposes a
-  wizard's steps declaratively, and `attune.wizards.driver`
-  (`describe_wizard_steps`, `run_wizard_prefilled`,
-  `prefilled_answer_callback`) lets the Claude-driven `wizard` skill
-  collect a wizard's question answers via `AskUserQuestion`, then run it
-  once with those answers — no engine `run()` refactor. Brings the count
-  to 23 skills. Agent-team access is Phase 2.
-- **Agent templates surfaced in the catalog + catalog-completeness
-  guard.** `list_capabilities` now also enumerates the 14 builtin agent
-  templates (via `get_all_templates()`) — previously it read only
-  workflows/wizards/tools, so the whole agent-template registry was
-  invisible to the "what can attune do?" browse surface. The `catalog`
-  skill renders the new **Agents** group. A new `TestCatalogCompleteness`
-  guard (in `test_registry_coverage.py`) fails if any known registry
-  drops out of the catalog or its count drifts from the live registry —
+- **Catalog-completeness guard.** A new `TestCatalogCompleteness` guard
+  (in `test_registry_coverage.py`) fails if any surfaced registry drops
+  out of `list_capabilities` or its count drifts from the live registry —
   registry-level coverage to complement the existing per-item
   workflow->tool and tool->skill guards.
 - **`personal-memory` + `image-analysis` skills.** Two MCP tool

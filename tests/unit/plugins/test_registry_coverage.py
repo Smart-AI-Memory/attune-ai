@@ -235,11 +235,16 @@ def test_guard_has_data_to_check() -> None:
 # The two suites above check per-item surfaces (workflow -> tool,
 # tool -> skill). This one checks the registry level: the catalog skill's
 # `list_capabilities` tool is the universal "what can attune do?" surface,
-# so a whole registry that exists but is not wired into it is hidden — which
-# is exactly how the 14 agent templates were invisible (the catalog read
-# workflows/wizards/tools but never agents). These tests fail if a known
-# registry drops out of the catalog or its count drifts from the live
-# registry, forcing the catalog to stay complete as new registries are added.
+# so a registry that exists, IS surfaced, but is not wired into it would be
+# hidden. These tests fail if a surfaced registry drops out of the catalog or
+# its count drifts from the live registry.
+#
+# IMPORTANT: surfacing is a privilege, not an obligation. Only registries
+# with a working, dogfooded run path belong in the catalog. The agent-template
+# registry was surfaced here (#1088) then REMOVED once dogfooding showed its
+# only run path (DynamicTeam -> StubAgent) was a fake-success stub — see
+# .claude/rules/attune/removing-dead-code.md. "Registered" never implies
+# "should be surfaced"; verify the capability actually works first.
 
 
 def _catalog_payload() -> dict:
@@ -259,9 +264,6 @@ def _live_registry_counts() -> dict[str, int]:
     from attune.workflows import list_workflows
 
     counts["workflows"] = len(list_workflows())
-    from attune.orchestration.agent_templates import get_all_templates
-
-    counts["agents"] = len(get_all_templates())
     try:
         from attune.wizards.registry import list_wizards
 
@@ -279,7 +281,7 @@ class TestCatalogCompleteness:
             cat = _catalog_payload()
         except ImportError:  # pragma: no cover - minimal env
             pytest.skip("MCP server not importable in this environment")
-        for group in ("workflows", "wizards", "agents", "tools"):
+        for group in ("workflows", "wizards", "tools"):
             assert group in cat, f"list_capabilities dropped the '{group}' group"
             assert group in cat.get("counts", {}), f"counts missing '{group}'"
 
@@ -294,79 +296,6 @@ class TestCatalogCompleteness:
                 f"catalog '{name}' count {counts.get(name)} != live registry "
                 f"{live} — list_capabilities is out of sync with the registry."
             )
-
-    def test_catalog_surfaces_agent_templates(self) -> None:
-        """Agents were the hidden registry; pin that they stay surfaced."""
-        try:
-            cat = _catalog_payload()
-        except ImportError:  # pragma: no cover - minimal env
-            pytest.skip("MCP server not importable in this environment")
-        assert cat["counts"]["agents"] >= 1, (
-            "agent templates registry surfaced but empty — expected the "
-            "builtin templates from get_all_templates()."
-        )
-
-
-# ---------------------------------------------------------------------------
-# Wizard RUN surface (not just discovery)
-# ---------------------------------------------------------------------------
-#
-# The catalog makes wizards DISCOVERABLE; this checks they are RUNNABLE.
-# The `wizard` skill is a generic driver (it runs any registered wizard via
-# describe_wizard_steps / run_wizard_prefilled), so the surface is the skill
-# existing and naming the driver — not a per-wizard skill. This is the
-# run-surface twin of catalog-completeness; it fails if the run skill is
-# removed while wizards still exist (the listable-but-not-runnable gap the
-# interactive-orchestration-access spec closed).
-
-
-class TestWizardRunSurface:
-    """Registered wizards have a run surface (the `wizard` skill), not just
-    a catalog listing."""
-
-    def test_wizard_run_skill_exists_and_names_the_driver(self) -> None:
-        body = SKILL_BODIES.get("wizard")
-        assert body is not None, (
-            "wizards are registered but there is no `wizard` run skill in "
-            "plugin/skills/ — they would be listable-but-not-runnable."
-        )
-        assert (
-            "run_wizard_prefilled" in body
-        ), "the `wizard` skill must drive runs via run_wizard_prefilled"
-        assert (
-            "describe_wizard_steps" in body or "list_wizards" in body
-        ), "the `wizard` skill must read wizards/steps live, not hand-author them"
-
-    def test_wizards_exist_to_run(self) -> None:
-        try:
-            from attune.wizards import list_wizards
-        except ImportError:  # pragma: no cover - minimal env
-            pytest.skip("wizards not importable in this environment")
-        assert len(list_wizards()) >= 1, "no wizards registered for the run skill to drive"
-
-
-class TestAgentRunSurface:
-    """Agent templates have a RUN surface (the `agent` skill), not just a
-    catalog listing — the Phase 2 twin of TestWizardRunSurface."""
-
-    def test_agent_run_skill_exists_and_names_the_driver(self) -> None:
-        body = SKILL_BODIES.get("agent")
-        assert body is not None, (
-            "agent templates are registered but there is no `agent` run skill "
-            "in plugin/skills/ — they would be listable-but-not-runnable."
-        )
-        assert "run_team_for_task" in body, "the `agent` skill must run teams via run_team_for_task"
-        assert "describe_team_for_task" in body, (
-            "the `agent` skill must preview the composed team via "
-            "describe_team_for_task before running (cost gate)"
-        )
-
-    def test_agent_templates_exist_to_run(self) -> None:
-        try:
-            from attune.orchestration.agent_templates import get_all_templates
-        except ImportError:  # pragma: no cover - minimal env
-            pytest.skip("agent templates not importable in this environment")
-        assert len(get_all_templates()) >= 1, "no agent templates for the run skill to compose"
 
 
 if __name__ == "__main__":  # pragma: no cover

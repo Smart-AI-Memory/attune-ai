@@ -578,15 +578,15 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         }
 
     async def _handle_list_capabilities(self) -> dict[str, Any]:
-        """Enumerate workflows, wizards, agents, and tools from the registries.
+        """Enumerate workflows, wizards, and tools from the live registries.
 
-        Read-only. Reads ``list_workflows()`` / ``list_wizards()`` /
-        ``get_all_templates()`` and this server's own dispatch keys so a
-        catalog renders from code, never a hand-maintained list.
+        Read-only. Reads ``list_workflows()`` / ``list_wizards()`` and this
+        server's own dispatch keys so a catalog renders from code, never a
+        hand-maintained list.
 
         Returns:
-            Dict with ``workflows``, ``wizards``, ``agents``, ``tools`` (each
-            a list of ``{name, description}``) plus a ``counts`` summary.
+            Dict with ``workflows``, ``wizards``, ``tools`` (each a list of
+            ``{name, description}``) plus a ``counts`` summary.
 
         """
         from attune.workflows import list_workflows
@@ -608,18 +608,6 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             # valid catalog rather than failing the whole call.
             logger.exception("list_wizards failed; returning empty wizard list")
 
-        agents: list[dict[str, str]] = []
-        try:
-            from attune.orchestration.agent_templates import get_all_templates
-
-            # AgentTemplate has no `description`; its `role` is the
-            # human-readable summary (e.g. "Test Coverage Expert").
-            agents = [{"name": t.id, "description": t.role} for t in get_all_templates()]
-        except Exception:  # noqa: BLE001
-            # INTENTIONAL: agent templates are optional; an empty list still
-            # yields a valid catalog rather than failing the whole call.
-            logger.exception("get_all_templates failed; returning empty agent list")
-
         tools = [
             {"name": name, "description": defn.get("description", "")}
             for name, defn in sorted(self.tools.items())
@@ -629,12 +617,10 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "success": True,
             "workflows": sorted(workflows, key=lambda c: c["name"]),
             "wizards": sorted(wizards, key=lambda c: c["name"]),
-            "agents": sorted(agents, key=lambda c: c["name"]),
             "tools": tools,
             "counts": {
                 "workflows": len(workflows),
                 "wizards": len(wizards),
-                "agents": len(agents),
                 "tools": len(tools),
             },
         }

@@ -1,6 +1,9 @@
 # Design: Interactive Orchestration Access
 
-**Status:** approved
+**Status:** ARCHIVED — feature removed after dogfooding showed both
+engines were dead. See [decisions.md](decisions.md) D-FINAL. The design
+below is preserved for historical context only; the shipped surfaces
+(`wizard`/`agent` skills, drivers) were removed, not maintained.
 **Requirements:** [requirements.md](requirements.md) ·
 **Decisions:** [decisions.md](decisions.md)
 

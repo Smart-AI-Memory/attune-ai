@@ -1,8 +1,47 @@
 # Decisions: Interactive Orchestration Access
 
-**Status:** approved
+**Status:** ARCHIVED — premise reversed by dogfooding (2026-06-25)
 **Requirements:** [requirements.md](requirements.md) ·
 **Design:** [design.md](design.md)
+
+---
+
+## D-FINAL — Archived: both engines were dead, so the feature was
+removed, not built (decided 2026-06-25)
+
+This spec set out to make the wizard and agent-team registries
+*runnable*, on the premise that the engines worked and only a run
+*surface* was missing. Phase 1 (#1091) and Phase 2 (#1092) shipped
+those surfaces. **Then we dogfooded them end-to-end through the real
+path — and both engines are dead:**
+
+- **Wizards crash on every real run.** `_run_llm_step` calls
+  `_call_llm(prompt, tier, step.id)` but the live signature is
+  `_call_llm(tier, system, user_message, …)` — positional misalignment →
+  `'str' object has no attribute 'value'`. Every shipped wizard has an
+  `llm_call` step, so none has ever completed. The "runnable" guard
+  passed only because the test fake omitted the `llm_call` step.
+- **Agent teams are a fake-success stub.** `DynamicTeam` runs
+  `StubAgent`, whose own docstring says it "replaces the **deleted**
+  `SDKAgent` scaffolding … not wired to a real execution backend." It
+  returns `success: True`, `sdk_used: False`, cost 0, empty findings.
+
+Both engines came from a healthcare project no longer in attune-ai
+(orphaned motivation). The run surfaces (`wizard`/`agent` skills,
+`attune.wizards.driver`, `attune.orchestration.team_driver`), the
+catalog agent enumeration (#1088), and the run-surface guards were
+**removed** rather than fixed — wiring a real backend for an
+unmotivated feature is not justified. The genuine engine bug fix
+surfaced by #1091 (confirm/review `FormQuestion` must use a
+`QuestionType` enum) was *kept*, with driver-free regression coverage.
+
+If general agent teams are ever wanted, generalize the **working**
+`ReleasePrepTeam` / `agent_factory` patterns (which thread the same
+redis/state plumbing) — do NOT resurrect the deleted `SDKAgent`.
+
+Pre-removal state tagged `archive/interactive-orchestration-pre-removal`.
+See `.claude/rules/attune/removing-dead-code.md` for the removal-signal
+rule this episode produced.
 
 ---
 
