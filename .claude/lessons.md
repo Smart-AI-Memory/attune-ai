@@ -11188,3 +11188,27 @@ files.
   `filterwarnings = error` paired with an `ignore::DeprecationWarning`
   line (check pytest.ini) means you CAN add `DeprecationWarning`s
   without reddening the suite — verify the filter before adding them.
+
+- **Tagging a `[skip ci]` commit SILENTLY skips the publish workflow —
+  tag the release MERGE SHA, never `main` HEAD**: 2026-06-25 publishing
+  8.10.0. The publish trigger is `on: push: tags: ['v*.*.*']`, and
+  GitHub honors `[skip ci]` in the tagged commit's message **even for
+  tag-push events**. Right after the release PR (#1069) merged, an
+  automated `chore(framework-docs): rebuild from docs/ [skip ci]` commit
+  landed on top of main. I tagged `origin/main` HEAD (that rebuild
+  commit) instead of the #1069 merge commit → `git push origin v8.10.0`
+  reported `* [new tag] v8.10.0` (looks successful) but **zero workflow
+  runs fired** (`gh run list --workflow=publish-pypi.yml --limit 1` still
+  showed the PRIOR version's tag). The `* [new tag]` push success is NOT
+  proof the workflow ran. Fix: `git tag -d vX; git push origin
+  :refs/tags/vX` (delete local + remote), re-tag the actual release
+  MERGE commit (which has no skip marker), push — the run then fires.
+  Durable rules: (1) **tag the merge SHA, never `main` HEAD** — a
+  `[skip ci]` docs/help auto-rebuild routinely lands on main between your
+  merge and your tag, and tagging it skips publish; (2) after pushing a
+  release tag ALWAYS confirm the run started (`gh run list
+  --workflow=publish-pypi.yml --limit 1` shows `ref=vX`) before assuming
+  publish is underway. Pairs with the "verify content IN the merge SHA
+  before tagging" release-gate lesson — same family, this one is the
+  trigger-fired half. (`workflow_dispatch --ref vX` is the manual
+  fallback if you can't re-tag, since dispatch ignores `[skip ci]`.)
