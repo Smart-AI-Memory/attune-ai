@@ -162,9 +162,6 @@ agent-sdk = []
 # NOTE: attune-software is bundled in this repo at attune_software/
 software = []
 
-# Socratic meta-workflows (no extra deps - uses core anthropic SDK)
-socratic = []
-
 # Backend API server (optional) - authentication
 backend = [
     "fastapi>=0.109.1,<1.0.0",  # CVE fix: PYSEC-2024-38
@@ -683,11 +680,6 @@ omit = [
     "attune_software/cli/*.py",  # Plugin CLI subcommands
     # Infrastructure requiring external deps
     # Deleted in v2.9.0: cli/, cli_unified.py, security/, pattern modules
-    # Socratic interactive modules (require user interaction / external LLM)
-    "*/socratic/cli.py",  # Interactive Socratic CLI
-    "*/socratic/collaboration.py",  # Requires external collaboration service
-    "*/socratic/collaboration_invitations.py",  # External service
-    "*/socratic/collaboration_sync.py",  # External service
     # Memory modules requiring Redis server
     "*/memory/cross_session.py",  # Requires Redis server
     "*/memory/control_panel_api.py",  # FastAPI REST server
