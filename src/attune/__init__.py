@@ -79,7 +79,6 @@ if TYPE_CHECKING:
     from .agent_monitoring import AgentMetrics, AgentMonitor, TeamMetrics
     from .config import AttuneConfig, EmpathyConfig, load_config
     from .core import EmpathyOS
-    from .emergence import EmergenceDetector
     from .exceptions import (
         CollaborationStateError,
         ConfidenceThresholdError,
@@ -140,7 +139,6 @@ if TYPE_CHECKING:
     )
     from .pattern_library import Pattern, PatternLibrary, PatternMatch
     from .persistence import MetricsCollector, PatternPersistence, StateManager
-    from .trust_building import TrustBuildingBehaviors
 
 # Mapping of attribute names to their module paths
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -155,8 +153,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     # coordination — removed in v6.8.0 (see src/attune/coordination.py shim)
     # core
     "EmpathyOS": (".core", "EmpathyOS"),
-    # emergence
-    "EmergenceDetector": (".emergence", "EmergenceDetector"),
     # exceptions
     "CollaborationStateError": (".exceptions", "CollaborationStateError"),
     "ConfidenceThresholdError": (".exceptions", "ConfidenceThresholdError"),
@@ -224,8 +220,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "MetricsCollector": (".persistence", "MetricsCollector"),
     "PatternPersistence": (".persistence", "PatternPersistence"),
     "StateManager": (".persistence", "StateManager"),
-    # trust_building
-    "TrustBuildingBehaviors": (".trust_building", "TrustBuildingBehaviors"),
 }
 
 # Cache for loaded modules
@@ -272,7 +266,6 @@ __all__ = [
     "CollaborationStateError",
     "ConfidenceThresholdError",
     "ConflictContext",
-    "EmergenceDetector",
     # Configuration
     "AttuneConfig",
     "EmpathyConfig",
@@ -325,7 +318,6 @@ __all__ = [
     "TTLStrategy",
     "TeamMetrics",
     # Trust
-    "TrustBuildingBehaviors",
     "TrustThresholdError",
     # Unified Memory Interface
     "UnifiedMemory",

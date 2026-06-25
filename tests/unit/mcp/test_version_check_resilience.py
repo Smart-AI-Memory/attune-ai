@@ -9,6 +9,14 @@ only the destination URL is redirected to the stub, behavior is not mocked.
 
 This is the receipt that "network failures are silently ignored"
 (the module's promise) actually holds against real failure modes.
+
+Marked ``network`` so CI's parallel unit lane skips it
+(``pytest -n auto --timeout-method=thread -m "not network"``): real
+sockets + ``--timeout-method=thread`` turn any scheduling-induced hang
+into an ``os._exit`` worker crash, and the work distribution that
+triggers it shifts whenever unrelated test files are added or removed.
+The mocked sibling ``test_version_check.py`` keeps the parse/compare
+logic covered in CI; run these locally with ``-m network``.
 """
 
 from __future__ import annotations
@@ -17,11 +25,15 @@ import json
 import threading
 import time
 import urllib.request
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 
 from attune.mcp import version_check
+
+# All tests here drive a real localhost socket; isolate them from the
+# parallel xdist lane (see module docstring).
+pytestmark = pytest.mark.network
 
 _REAL_URLOPEN = urllib.request.urlopen
 
@@ -50,9 +62,14 @@ class _StubHandler(BaseHTTPRequestHandler):
             self.wfile.write(b"not valid json {{{")
         elif self.path == "/slow":
             time.sleep(3)  # exceeds the check's hardcoded 2s timeout
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b"{}")
+            try:
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b"{}")
+            except OSError:
+                # The client already timed out at 2s and closed the
+                # socket; writing to it now is expected to fail.
+                pass
         else:
             self.send_response(404)
             self.end_headers()
@@ -60,8 +77,14 @@ class _StubHandler(BaseHTTPRequestHandler):
 
 @pytest.fixture
 def stub_server():
-    """A real localhost HTTP server; yields its base URL."""
-    server = HTTPServer(("127.0.0.1", 0), _StubHandler)
+    """A real localhost HTTP server; yields its base URL.
+
+    Threaded so a slow in-flight handler can't block ``shutdown()`` in
+    teardown (the single-threaded server would wait out the ``/slow``
+    sleep, racing the per-test timeout).
+    """
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _StubHandler)
+    server.daemon_threads = True
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     host, port = server.server_address

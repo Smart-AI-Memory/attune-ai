@@ -8,7 +8,7 @@ name: Auto-merge safe (tests/docs only)
 # REDUNDANT hung lane (e.g. `test (ubuntu-latest, 3.12)`) — never the
 # `coverage` gate, which re-runs the full suite.
 #
-# See docs/specs/auto-merge-safe-class/ for the class definition and
+# See docs/specs/archive/auto-merge-safe-class/ for the class definition and
 # the rejected alternatives.
 #
 # Credential: the merge job authenticates with ADMIN_MERGE_TOKEN, a

@@ -156,10 +156,6 @@ class TestEmpathyOSCore:
         assert hasattr(empathy, "feedback_detector")
         assert empathy.feedback_detector is not None
 
-        # Check emergence detector
-        assert hasattr(empathy, "emergence_detector")
-        assert empathy.emergence_detector is not None
-
         # Check leverage analyzer
         assert hasattr(empathy, "leverage_analyzer")
         assert empathy.leverage_analyzer is not None
@@ -256,18 +252,6 @@ class TestEmpathyOSCore:
         result = empathy.feedback_detector.detect_active_loop(history)
 
         assert "dominant_loop" in result
-
-    def test_integration_emergence_detection(self):
-        """Test integration with emergence detector"""
-        empathy = EmpathyOS(user_id="test_user")
-
-        baseline = {"trust": 0.3, "interactions": 10}
-        current = {"trust": 0.8, "interactions": 50, "patterns": 5}
-
-        # Use emergence detector
-        score = empathy.emergence_detector.measure_emergence(baseline, current)
-
-        assert 0.0 <= score <= 1.0
 
     def test_integration_leverage_analysis(self):
         """Test integration with leverage point analyzer"""

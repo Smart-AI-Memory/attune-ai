@@ -1,6 +1,8 @@
 # Auto-Merge-Safe Class — Tasks
 
-**Status:** in progress (2026-06-14)
+**Status:** complete — auto-merge-safe class working end-to-end (#881);
+`.github/workflows/auto-merge-safe.yml` live. Reconciled from stale
+"in progress (2026-06-14)" and archived 2026-06-24.
 
 ---
 
