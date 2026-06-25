@@ -94,6 +94,102 @@ if os.environ.get("CI"):
         # but safe.
         faulthandler.dump_traceback_later(_hang_secs, repeat=False)
 
+    # -------------------------------------------------------------------------
+    # ci-runner-hang Phase 2: process-tree + open-socket-fd probe.
+    # -------------------------------------------------------------------------
+    # The faulthandler dump above names the wedged *threads*, but the three
+    # captured hangs all show the controller idle in xdist loop_once with
+    # every worker idle in execnet serve() and NO test/Pool frame — the
+    # signature of an orphan child process (a fork/Pool child or subprocess)
+    # holding a *dup* of a worker's execnet socket fd, so the controller
+    # never sees EOF. That child is invisible to faulthandler (it dumps only
+    # the controller + named xdist workers). This probe names it: the global
+    # process tree (ps cmdlines reveal the culprit) plus, on the controller,
+    # a socket-inode -> pid map (a worker's execnet inode also held by an
+    # unexpected pid is the leaked fd). Daemon timer at the same threshold;
+    # the captured hangs release the GIL (queue.get / socket read) so a
+    # Python timer fires. Best-effort and self-contained — a failure here
+    # must never affect collection or a healthy run.
+    import threading as _threading
+
+    def _dump_process_state() -> None:
+        out: list[str] = [
+            f"# ci-runner-hang process-state probe "
+            f"(worker={_hang_worker} pid={os.getpid()} ppid={os.getppid()})",
+        ]
+        # This process's own open socket fds (Linux /proc).
+        try:
+            self_fd = Path("/proc/self/fd")
+            if self_fd.is_dir():
+                out.append("## own socket fds")
+                socks = []
+                for fd in sorted(self_fd.iterdir(), key=lambda p: p.name):
+                    try:
+                        target = os.readlink(str(fd))
+                    except OSError:
+                        continue
+                    if "socket:" in target:
+                        socks.append(f"  fd {fd.name} -> {target}")
+                out.extend(socks or ["  (none)"])
+        except Exception as exc:  # noqa: BLE001
+            out.append(f"## own socket fds unavailable: {exc!r}")
+        # Controller only: socket-inode -> pid map across all processes, so a
+        # leaked dup (same inode held by an unexpected pid) is visible.
+        if _hang_worker == "controller":
+            try:
+                out.append("## socket-inode -> pid map (all /proc)")
+                for proc in sorted(Path("/proc").glob("[0-9]*")):
+                    pid_s = proc.name
+                    try:
+                        cmd = (
+                            (proc / "cmdline")
+                            .read_bytes()
+                            .replace(b"\x00", b" ")
+                            .decode("utf-8", "replace")
+                            .strip()
+                        )
+                        inodes = []
+                        for fd in (proc / "fd").iterdir():
+                            try:
+                                t = os.readlink(str(fd))
+                            except OSError:
+                                continue
+                            if "socket:" in t:
+                                inodes.append(t)
+                        if inodes:
+                            out.append(f"  pid {pid_s} [{cmd[:120]}]")
+                            out.extend(f"    {i}" for i in sorted(inodes))
+                    except (OSError, ValueError):
+                        continue
+            except Exception as exc:  # noqa: BLE001
+                out.append(f"## inode map unavailable: {exc!r}")
+        # Cross-platform fallback / cmdline + ppid + etime view.
+        try:
+            import subprocess
+
+            ps = subprocess.run(
+                ["ps", "-ww", "-eo", "pid,ppid,pgid,stat,etime,args"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+            )
+            out.append("## ps tree")
+            out.append(ps.stdout or ps.stderr or "(no ps output)")
+        except Exception as exc:  # noqa: BLE001
+            out.append(f"## ps unavailable: {exc!r}")
+        try:
+            (_hang_dir / f"hang-{_hang_worker}-proc.txt").write_text("\n".join(out))
+        except OSError:
+            pass  # diagnostic only
+
+    try:
+        _proc_timer = _threading.Timer(_hang_secs, _dump_process_state)
+        _proc_timer.daemon = True
+        _proc_timer.start()
+    except Exception:  # noqa: BLE001
+        pass  # never break a run on a diagnostic
+
 # =============================================================================
 # Import Guard - Ensure workflows package is properly initialized
 # =============================================================================

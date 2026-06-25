@@ -300,3 +300,76 @@ sys.modules flake (the right fix was removing the `clear()`). The
 heartbeat thread remains only a (weakened) suspect for the H4
 finalize-wedge above, still gated on N>1 dumps — do not let the
 sys.modules symptom revive it.
+
+---
+
+## Phase 2 update — 3rd capture, heartbeat exonerated, spawn fix + FD probe (2026-06-25)
+
+A third hang was captured on the `coverage` lane of PR #1081 (run
+`28188352287`, a trivial test-only PR). Dumps saved under
+`evidence/run-28188352287/`.
+
+### The signature is now confirmed and stable across 3 captures
+
+All of `run-27541609728`, `run-27615182285`, and `run-28188352287`
+show the identical end-of-session shape:
+
+- **Controller:** wedged in `xdist/dsession.py loop_once -> queue.get()`
+  (waiting on a worker event that never arrives); its N `_thread_receiver`
+  threads all blocked in `execnet ... read`.
+- **Workers:** every worker idle in `execnet ... serve()`
+  (`integrate_as_primary_thread`) with **no test frame and no Pool
+  frame** — i.e. they finished their assigned tests and returned to the
+  execnet idle loop. Linux-only.
+
+### The leaked heartbeat thread is exonerated as the cause
+
+The `cross_session` heartbeat daemon thread (the prior "prime suspect")
+appears in **only the oldest** capture (`run-27541609728`,
+`coordinator.py:289 _heartbeat_loop`). The autouse
+`_stop_leaked_heartbeat_threads` fixture shipped in **#914**
+(2026-06-15); the two captures *after* it (06-16 and 06-25) contain
+**no** heartbeat thread, yet the **identical** hang recurs. It is also
+`daemon=True`, so it cannot block worker/process exit regardless.
+Conclusion: not the cause. Do not revive it (see the sys.modules note
+above for the prior near-miss).
+
+### The signature matches a previously-fixed bug class (#930)
+
+`tests.yml`'s coverage step documents the same shape, root-caused in
+**#930**: *a fork-based `multiprocessing.Pool` inside an xdist worker
+leaked the execnet socket fd, deadlocking the controller at ~99%;
+Linux-only because macOS uses spawn.* An orphan fork/Pool child holding
+a **dup** of a worker's execnet socket keeps the controller from ever
+seeing EOF — and such a child is **invisible to faulthandler** (it
+dumps only the controller + named workers), which is exactly why the
+workers look idle with nothing pending.
+
+#930's fix was a **threshold guard** (`_PARALLEL_MIN_FILES=50`) that
+only *narrows* the window — it left
+`scanner_parallel.py` building its Pool with the Linux-default **fork**.
+
+### Actions taken this PR
+
+1. **`scanner_parallel.py` -> `mp.get_context("spawn").Pool(...)`** —
+   removes the fork-fd-inheritance hazard outright (macOS already does
+   this). Verified a real 55-file parallel scan works under spawn.
+   Regression test `test_large_scan_uses_a_spawn_pool` pins
+   `get_context("spawn")`.
+2. **Process-state probe** added to the conftest hang-watchdog: at the
+   same threshold it writes `hang-dumps/hang-<worker>-proc.txt` with the
+   global `ps` tree (cmdlines name a leaking child) and, on the
+   controller, a socket-inode -> pid map (a worker's execnet inode held
+   by an unexpected pid is the leaked fd). The captured hangs release
+   the GIL (`queue.get` / socket `read`), so a Python timer fires.
+
+### Caveat / why the probe still matters
+
+The scanner Pool is **mocked in its unit tests** and `subprocess` calls
+are `close_fds`-safe by default, so static analysis does **not** confirm
+the scanner is the live trigger inside the coverage suite. The spawn fix
+closes the one *known* fork hazard; the probe is what will **name the
+actual orphan** on the next hang if a different fork/Pool path is
+responsible. Tar-pit guard: if the next captured `*-proc.txt` shows no
+leaked socket dup, the cause is genuinely xdist/execnet-internal and the
+spec should go `monitoring` rather than chase further.
