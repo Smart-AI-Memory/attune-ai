@@ -432,9 +432,16 @@ class TestTimeoutEdgeCases:
 
     @pytest.mark.asyncio
     async def test_concurrent_timeout_calls(self):
-        """Test concurrent calls with timeouts."""
+        """Test concurrent calls with timeouts.
 
-        @timeout(0.2)
+        The timeout budget is kept well above the work duration
+        (1.0s vs 0.05s) so this stays green on contended CI
+        runners, where event-loop starvation under xdist can push
+        a tight 0.2s budget past its limit (a timing flake, not a
+        real timeout). See clock-tz lane flake, 2026-06-25.
+        """
+
+        @timeout(1.0)
         async def slow_func(value):
             await asyncio.sleep(0.05)
             return value
