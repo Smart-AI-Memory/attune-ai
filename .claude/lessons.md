@@ -11419,3 +11419,41 @@ files.
     the process-fd probe alongside to NAME the real orphan if it recurs,
     and tar-pit-guard: if the next dump shows no leaked dup, the cause is
     xdist/execnet-internal → mark `monitoring`, don't chase.
+
+- **"Agents" in attune means TWO different things, and a capability
+  being *discoverable* (in the catalog) is NOT the same as being
+  *runnable* (has a skill/tool/CLI) — keep both axes straight when
+  asked "are the agents accessible?"**: surfaced 2026-06-25 during the
+  hidden-functionality audit. Two failure modes this prevents:
+  - **Two registries both called "agents."** (1) **Claude Code
+    subagents** live in `plugin/agents/*.md` (6: help-content-explainer,
+    refactor-planner, release-prep-auditor, security-reviewer,
+    setup-guide, spec-author) and are reached through the **Agent/Task
+    tool** surface — fully accessible, model-invoked by description. (2)
+    **Orchestration agent templates** live in
+    `src/attune/orchestration/agent_templates/` (14, via
+    `get_all_templates()`) and are a *meta-orchestration* registry. They
+    are different things; "are the agents accessible?" is ambiguous until
+    you say which. Verify with `ls plugin/agents/` vs
+    `python -c "from attune.orchestration.agent_templates import
+    get_all_templates; print(len(get_all_templates()))"`.
+  - **Discoverable ≠ runnable (the layering the registry-coverage guard
+    now splits).** `list_capabilities`/`catalog` surfaces a registry for
+    *discovery* (since #1088 it lists workflows + wizards + agents +
+    tools). But *running* a capability needs a separate invocation
+    surface: an MCP tool, a `plugin/skills/` skill that names it, or a
+    CLI subcommand. So the **orchestration agent templates and the 5
+    wizards are "listable-but-not-runnable"** — visible in the catalog,
+    but with no shipped run surface (only the non-shipped dev
+    `.claude/skills/{agent,wizard}` run them). This is **by design**:
+    they run on an *interactive* engine (`BaseWizard.run()` pauses for
+    human input), which a single-shot MCP tool can't drive — see the
+    `interactive-orchestration-access` spec (Phase 1 wizards, Phase 2
+    agents). The guard enforces both axes separately now:
+    `TestCatalogCompleteness` (discovery — every registry is in the
+    catalog) vs `TestToolSurfaceCoverage` (invocation — every tool is
+    named by a skill). When auditing "what's hidden?", check BOTH, and
+    treat the guard's allowlists as the living backlog. Pairs with the
+    three-skill-dir / "registered ≠ accessible, confirm which dir ships"
+    lesson — this adds the discovery-vs-invocation axis on top of the
+    which-surface axis.
