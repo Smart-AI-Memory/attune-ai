@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from attune.meta_workflows.form_engine import AskUserQuestionCallback, SocraticFormEngine
-from attune.meta_workflows.models import FormQuestion, FormSchema
+from attune.meta_workflows.models import FormQuestion, FormSchema, QuestionType
 from attune.prompts import PromptContext
 from attune.workflows.compat import ModelTier
 
@@ -174,6 +174,39 @@ class BaseWizard(ABC):
         )
 
     # -----------------------------------------------------------------
+    # Introspection (for the Claude-driven `wizard` skill)
+    # -----------------------------------------------------------------
+
+    def list_steps(self) -> list[dict[str, Any]]:
+        """Return a declarative, serializable view of this wizard's steps.
+
+        Lets a caller inspect what each step does — and, for ``QUESTION``
+        steps, the exact questions to ask — WITHOUT running the
+        interactive engine. The Claude-driven ``wizard`` skill uses this
+        to ask the user a wizard's questions up front (via
+        ``AskUserQuestion``), then feeds the answers back through
+        ``attune.wizards.driver.prefilled_answer_callback``.
+
+        Returns:
+            One dict per step with ``id``, ``name``, ``type`` (the
+            ``StepType`` value), and ``description``. ``QUESTION`` steps
+            also carry ``questions`` in ``AskUserQuestion`` format.
+
+        """
+        views: list[dict[str, Any]] = []
+        for step in self.steps:
+            view: dict[str, Any] = {
+                "id": step.id,
+                "name": step.name,
+                "type": step.step_type.value,
+                "description": step.description,
+            }
+            if step.step_type == StepType.QUESTION and step.questions:
+                view["questions"] = [q.to_ask_user_format() for q in step.questions]
+            views.append(view)
+        return views
+
+    # -----------------------------------------------------------------
     # Step dispatch
     # -----------------------------------------------------------------
 
@@ -313,7 +346,7 @@ class BaseWizard(ABC):
             review_question = FormQuestion(
                 id="review_approval",
                 text=(f"Here's what the analysis found:\n\n{summary}\n\n" "Does this look right?"),
-                type="single_select",
+                type=QuestionType.SINGLE_SELECT,
                 options=["Yes, continue", "No, try again"],
                 default="Yes, continue",
             )
@@ -458,7 +491,7 @@ class BaseWizard(ABC):
         confirm_question = FormQuestion(
             id="confirm",
             text=step.description or "Proceed with these changes?",
-            type="single_select",
+            type=QuestionType.SINGLE_SELECT,
             options=["Yes, proceed", "No, cancel"],
             default="Yes, proceed",
         )

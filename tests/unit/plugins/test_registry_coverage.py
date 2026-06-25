@@ -307,5 +307,43 @@ class TestCatalogCompleteness:
         )
 
 
+# ---------------------------------------------------------------------------
+# Wizard RUN surface (not just discovery)
+# ---------------------------------------------------------------------------
+#
+# The catalog makes wizards DISCOVERABLE; this checks they are RUNNABLE.
+# The `wizard` skill is a generic driver (it runs any registered wizard via
+# describe_wizard_steps / run_wizard_prefilled), so the surface is the skill
+# existing and naming the driver — not a per-wizard skill. This is the
+# run-surface twin of catalog-completeness; it fails if the run skill is
+# removed while wizards still exist (the listable-but-not-runnable gap the
+# interactive-orchestration-access spec closed).
+
+
+class TestWizardRunSurface:
+    """Registered wizards have a run surface (the `wizard` skill), not just
+    a catalog listing."""
+
+    def test_wizard_run_skill_exists_and_names_the_driver(self) -> None:
+        body = SKILL_BODIES.get("wizard")
+        assert body is not None, (
+            "wizards are registered but there is no `wizard` run skill in "
+            "plugin/skills/ — they would be listable-but-not-runnable."
+        )
+        assert (
+            "run_wizard_prefilled" in body
+        ), "the `wizard` skill must drive runs via run_wizard_prefilled"
+        assert (
+            "describe_wizard_steps" in body or "list_wizards" in body
+        ), "the `wizard` skill must read wizards/steps live, not hand-author them"
+
+    def test_wizards_exist_to_run(self) -> None:
+        try:
+            from attune.wizards import list_wizards
+        except ImportError:  # pragma: no cover - minimal env
+            pytest.skip("wizards not importable in this environment")
+        assert len(list_wizards()) >= 1, "no wizards registered for the run skill to drive"
+
+
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__, "-v"])
