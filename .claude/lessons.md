@@ -11212,3 +11212,91 @@ files.
   before tagging" release-gate lesson — same family, this one is the
   trigger-fired half. (`workflow_dispatch --ref vX` is the manual
   fallback if you can't re-tag, since dispatch ignores `[skip ci]`.)
+
+- **A removal/refactor scoped by a NAME PREFIX can be mis-scoped when
+  the prefix is OVERLOADED across dead AND live code — audit per-symbol
+  importers, never trust the name as a deadness proxy**: hit 2026-06-25
+  executing the 9.0.0 "Empathy framework" removal. The next-session
+  starter's plan led with "Phase 1 (smallest, lowest-risk): delete the
+  2-file LLM island `llm/core.py` + `llm/interaction.py`." A 60-second
+  per-symbol import audit (`grep -rn "llm\.core" src/attune --include=
+  '*.py' | grep -v test`) DISPROVED it: `EmpathyLLM` in `llm/core.py`
+  is the LIVE LLM wrapper that `EmpathyLLMExecutor`
+  (`models/empathy_executor.py`) constructs, and `EmpathyLLMExecutor`
+  is the **default workflow step executor**
+  (`workflows/executor_mixin._create_default_executor`) — also imported
+  by the escalation chain, `agent_factory/adapters/native.py`, and
+  `template_defs_web.py`. Deleting the "island" would have broken every
+  workflow that runs a step. **Root cause: the token "Empathy" names
+  THREE live classes** — `EmpathyLLM`, `EmpathyLLMExecutor`,
+  `EmpathyMCPServer` — none part of the dead `EmpathyOS` 5-level
+  framework. The plan's author pattern-matched on the prefix. **Rule:**
+  when a deletion is scoped by a module/class/name prefix, grep the
+  actual per-symbol importers (excluding `__init__` re-exports,
+  docstrings, and the deprecation `__getattr__` map) and use THAT set as
+  the scope; a shared name is not shared deadness. Verify-first applies
+  to deletion scope exactly as it does to SDK signatures and spec
+  premises. Corollaries that also bit this session: (a) two same-named
+  classes can be INCOMPATIBLE — `core.CollaborationState` (no required
+  fields) vs the live `llm/state.CollaborationState` (requires
+  `user_id`), so you can't blindly repoint an import when severing a
+  dependency; relocate/copy the dead one instead. (b) when HOLDING a
+  dead leaf for one release, it may still import a module you're
+  deleting NOW (`state_manager` imported `core.CollaborationState`) —
+  sever that edge in the same PR. (c) the mkdocstrings `:::` autogen
+  trap (the #279 `build`-breaker) fires on DELETIONS too: `grep -rn
+  ":::[[:space:]]*attune\.<removed_module>" docs` and delete/repoint
+  those pages + their nav + See-Also links, then `mkdocs build` locally
+  to confirm green (mkdocstrings raises a real import error, not a
+  warning, even under `strict: false`). (d) ruff `--fix` (incl. the
+  PostToolUse formatter) will DELETE an import you add BEFORE adding its
+  usages — add the usage first, or expect a `NameError` at test time.
+  Pairs with "Spec-named work-scope drifts from code reality — grep the
+  actual instances before executing the named scope" (same family;
+  this is the name-overload variant).
+
+- **The additive mirror of a dead-code audit is "built but
+  unsurfaced" capability — and in this repo, a skill existing does NOT
+  mean it ships; there are THREE skill dirs with different roles**:
+  surfaced 2026-06-25 turning the usual subtractive review additive.
+  Where subtractive audits find dead code, the additive lens finds
+  capability that is fully built but has no user-facing surface. **Find
+  it by cross-referencing every capability registry against every user
+  surface:** registries = `list_workflows()` (22), the MCP
+  `_build_dispatch_table()` keys (41 tools), `list_wizards()` (5),
+  `builtin_templates` agent templates (14), `attune` CLI subparsers
+  (19); surfaces = `plugin/skills/*/SKILL.md`, the MCP tools themselves,
+  `.claude/commands/`, the CLI. Two concrete gap-finding greps: (a) MCP
+  tools no skill names — `for t in <dispatch keys>: t not in any
+  SKILL.md` (found `discovery-sweep` had ZERO surfaces, plus orphans
+  `personal_memory_*`, `analyze_image`); (b) skills that exist only in
+  one dir. **The three-skill-dir architecture (non-obvious, load-
+  bearing):** `plugin/skills/*/SKILL.md` is the SHIPPED source of truth
+  (`plugin/.claude-plugin/plugin.json` roots the published plugin at
+  `plugin/`); `scripts/sync_agents_skills.py` MIRRORS it →
+  `.agents/skills/` in agentskills.io format (strips Claude-Code-only
+  frontmatter `argument-hint`/`disable-model-invocation`/`user-
+  invocable`; keeps only name/description/license/compatibility/
+  metadata/allowed-tools; CI-gated by `test_sync_agents_skills.py
+  --check`). `.claude/skills/` is a SEPARATE, OLDER dev-time set NOT in
+  the plugin pipeline at all — its polished `category: primary` skills
+  (`catalog`, `wizard`, `agent`, `bulk`) NEVER shipped (git-confirmed:
+  never in `plugin/skills/`, so left-behind not cut). **Rule: never
+  conclude "feature X is accessible" because a skill/command exists in
+  the repo — confirm WHICH dir, and that it's the shipped one.** To ship
+  a left-behind `.claude/skills/` skill you author a fresh
+  `plugin/skills/<name>/SKILL.md` in the shipped convention (the legacy
+  `category`/`aliases`/`version`/`question:` frontmatter is not carried)
+  and run the sync. **Interactivity constraint when surfacing
+  capability via MCP:** wizards/agents run on an INTERACTIVE engine
+  (`BaseWizard.run()` → `_form_engine.ask_questions()` across question/
+  review/confirm steps) — a single-shot MCP tool CANNOT drive them (no
+  pause-collect-resume). Don't scope an interactive multi-step flow as
+  "add a thin `run_X` MCP tool"; it needs a Claude-driven bridge. The
+  `analyze_batch`-backed `bulk` skill and the registry-read `catalog`
+  skill ARE thin (no interactivity); `wizard`/`agent` are a different,
+  harder class — split them out. **Micro-gotcha hit same session:** `gh
+  pr create` BEFORE `git push` fails with "No commits between main and
+  <branch> / Head sha can't be blank" — push the branch first. Pairs
+  with the "verify-first applies to infra/config" family — here, verify
+  which surface actually ships before claiming a capability is reachable.
