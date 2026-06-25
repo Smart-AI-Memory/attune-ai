@@ -11367,3 +11367,55 @@ files.
   architecture lesson (same sync pipeline) and the "registered ≠
   working — dogfood the live loop" family (a green test that doesn't
   assert the thing that drifted is theater).
+
+- **An xdist hang where the controller is wedged in `dsession.loop_once
+  → queue.get` and EVERY worker is idle in `execnet … serve()` with NO
+  test/Pool frame = an ORPHAN child process holding a *dup* of a
+  worker's execnet socket fd — invisible to faulthandler, Linux-only,
+  and the fix is `spawn` not a threshold guard**: the ci-runner-hang
+  investigation (2026-06-25, three captured stacks). The signature looks
+  like "everyone's idle, nothing pending, yet it never finishes" because
+  a fork/Pool/subprocess child inherited a copy of the worker's execnet
+  socket; the controller's receiver never sees EOF, so `loop_once` waits
+  forever. faulthandler dumps ONLY the controller + named xdist workers,
+  so the leaking child never appears in the stacks — which is exactly why
+  it reads as "idle workers." Durable takeaways, all transferable:
+  - **Diagnose with a process-tree + fd dump, not execnet message
+    tracing.** At hang time (the captured hangs release the GIL in
+    `queue.get`/socket `read`, so a Python timer fires) dump `ps -ww -eo
+    pid,ppid,pgid,stat,etime,args` (cmdlines name the orphan) plus, per
+    pid, `/proc/<pid>/fd` socket-inode links — a worker's execnet inode
+    also held by an unexpected pid IS the leaked fd. `EXECNET_DEBUG`
+    traces messages, not fd ownership, and perturbs timing (heisenbug).
+  - **A file-count/size threshold guard NARROWS the window; it doesn't
+    close it.** #930 added `_PARALLEL_MIN_FILES=50` but left
+    `mp.Pool(...)` on the Linux-default `fork`. The real fix is
+    `mp.get_context("spawn").Pool(...)` — spawn children inherit no fds
+    (which is why the hang was Linux-only; macOS already defaults to
+    spawn). Applies to any fork-a-pool/subprocess inside a multi-threaded
+    or xdist host.
+  - **A mock that asserts INTENT is not a test that exercises the
+    PATH.** The scanner's unit tests `patch()` the Pool and only assert
+    `get_context("spawn")` was *requested* — spawn-specific breakage (an
+    unpicklable `partial` arg, a child re-import side-effect, or a silent
+    revert to fork) would pass green. When you change a hard-to-reach
+    concurrency/IPC path, add at least one UNMOCKED real-run test (here:
+    a ≥threshold scan with `workers=2`, no patch, asserting records come
+    back) — verified passing nested inside an xdist worker. Otherwise the
+    "fix" is unverified.
+  - **Exonerate a suspect by timeline, not vibes.** The leaked
+    `cross_session` heartbeat thread (the long-standing "prime suspect")
+    appears only in the OLDEST capture; its cleanup fixture shipped in
+    #914, and both captures AFTER it show no such thread yet the
+    identical hang recurs — so it's exonerated. Diff the fix's merge date
+    against each capture's run `createdAt` before continuing to suspect
+    something. (It was also `daemon=True`, so it couldn't block exit
+    anyway — a second, independent tell.)
+  - **What's provable vs not:** the spawn change is a *demonstrated-safe*
+    fix for a *known* fork-fd hazard, but with the trigger not statically
+    confirmed (the Pool is mocked in tests; `subprocess` is
+    `close_fds`-safe by default), whether it *eliminates the intermittent
+    hang* is only knowable empirically (watch N coverage runs) — so ship
+    the process-fd probe alongside to NAME the real orphan if it recurs,
+    and tar-pit-guard: if the next dump shows no leaked dup, the cause is
+    xdist/execnet-internal → mark `monitoring`, don't chase.
