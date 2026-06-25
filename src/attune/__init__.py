@@ -33,10 +33,11 @@ KEY EXPORTS:
     - Classification, AccessTier: Security/access enums
     - AttuneConfig, EmpathyConfig: Configuration
 
-DEPRECATED — legacy "Empathy" framework (see CHANGELOG):
+REMOVED in 9.0.0 — legacy "Empathy" framework (see CHANGELOG):
     EmpathyOS, Level1Reactive…Level5Systems, FeedbackLoopDetector,
-    LeveragePointAnalyzer. The 5-level maturity model is no longer used
-    at runtime; these emit DeprecationWarning and will be removed.
+    LeveragePointAnalyzer. The 5-level maturity model is gone; attune-ai
+    is the Claude Code workflow plugin. StateManager is now deprecated and
+    will be removed in a future release.
 
 Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
@@ -65,7 +66,6 @@ if TYPE_CHECKING:
     # Type hints for IDE support (not evaluated at runtime)
     from .agent_monitoring import AgentMetrics, AgentMonitor, TeamMetrics
     from .config import AttuneConfig, EmpathyConfig, load_config
-    from .core import EmpathyOS
     from .exceptions import (
         CollaborationStateError,
         ConfidenceThresholdError,
@@ -77,15 +77,6 @@ if TYPE_CHECKING:
         TrustThresholdError,
         ValidationError,
     )
-    from .feedback_loops import FeedbackLoopDetector
-    from .levels import (
-        Level1Reactive,
-        Level2Guided,
-        Level3Proactive,
-        Level4Anticipatory,
-        Level5Systems,
-    )
-    from .leverage_points import LeveragePointAnalyzer
     from .logging_config import LoggingConfig, get_logger
     from .memory import (
         AccessTier,
@@ -138,8 +129,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "EmpathyConfig": (".config", "EmpathyConfig"),
     "load_config": (".config", "load_config"),
     # coordination — removed in v6.8.0 (see src/attune/coordination.py shim)
-    # core
-    "EmpathyOS": (".core", "EmpathyOS"),
+    # core — EmpathyOS removed in v9.0.0
     # exceptions
     "CollaborationStateError": (".exceptions", "CollaborationStateError"),
     "ConfidenceThresholdError": (".exceptions", "ConfidenceThresholdError"),
@@ -150,16 +140,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "PatternNotFoundError": (".exceptions", "PatternNotFoundError"),
     "TrustThresholdError": (".exceptions", "TrustThresholdError"),
     "ValidationError": (".exceptions", "ValidationError"),
-    # feedback_loops
-    "FeedbackLoopDetector": (".feedback_loops", "FeedbackLoopDetector"),
-    # levels
-    "Level1Reactive": (".levels", "Level1Reactive"),
-    "Level2Guided": (".levels", "Level2Guided"),
-    "Level3Proactive": (".levels", "Level3Proactive"),
-    "Level4Anticipatory": (".levels", "Level4Anticipatory"),
-    "Level5Systems": (".levels", "Level5Systems"),
-    # leverage_points
-    "LeveragePointAnalyzer": (".leverage_points", "LeveragePointAnalyzer"),
+    # feedback_loops, levels, leverage_points — removed in v9.0.0
     # logging_config
     "LoggingConfig": (".logging_config", "LoggingConfig"),
     "get_logger": (".logging_config", "get_logger"),
@@ -213,21 +194,15 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 _loaded_modules: dict[str, object] = {}
 
 
-# Legacy "Empathy" framework surface (EmpathyOS + the 5-level maturity
-# model). attune-ai now focuses on the Claude Code workflow plugin (MCP
-# tools), which does not use any of these at runtime. Deprecated as of
-# the plugin-focus decision (2026-06-25); slated for removal in a future
-# release. See CHANGELOG and docs/specs/empathy-framework-retirement/.
+# Legacy "Empathy" framework surface. The EmpathyOS core + 5-level
+# maturity model were REMOVED in 9.0.0. StateManager is the last vestige
+# still importable; it is not used by the Claude Code workflow plugin at
+# runtime and is slated for removal in a future release. Accessing it
+# emits DeprecationWarning. See CHANGELOG and
+# docs/specs/empathy-framework-retirement/.
 _DEPRECATED_FRAMEWORK: frozenset[str] = frozenset(
     {
-        "EmpathyOS",
-        "FeedbackLoopDetector",
-        "LeveragePointAnalyzer",
-        "Level1Reactive",
-        "Level2Guided",
-        "Level3Proactive",
-        "Level4Anticipatory",
-        "Level5Systems",
+        "StateManager",
     }
 )
 
@@ -289,17 +264,9 @@ __all__ = [
     # Exceptions
     "EmpathyFrameworkError",
     "EmpathyLevelError",
-    "EmpathyOS",
     "EncryptionManager",
     "Environment",
-    "FeedbackLoopDetector",
     "FeedbackLoopError",
-    "Level1Reactive",
-    "Level2Guided",
-    "Level3Proactive",
-    "Level4Anticipatory",
-    "Level5Systems",
-    "LeveragePointAnalyzer",
     "LeveragePointError",
     "LoggingConfig",
     "MemDocsStorage",

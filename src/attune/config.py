@@ -33,7 +33,7 @@ from attune.security.path_validation import _validate_file_path
 
 @dataclass
 class AttuneConfig:
-    """Configuration for EmpathyOS instance
+    """Configuration for an Attune instance
 
     Can be loaded from:
     - YAML file (.attune.yml, attune.config.yml)
@@ -116,7 +116,6 @@ class AttuneConfig:
 
         Example:
             >>> config = AttuneConfig.from_yaml("attune.config.yml")
-            >>> empathy = EmpathyOS(config=config)
 
         Note:
             Unknown fields in the YAML file are silently ignored.
@@ -168,7 +167,6 @@ class AttuneConfig:
 
         Example:
             >>> config = AttuneConfig.from_json("attune.config.json")
-            >>> empathy = EmpathyOS(config=config)
 
         Note:
             Unknown fields in the JSON file are silently ignored.

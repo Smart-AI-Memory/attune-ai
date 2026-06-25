@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from attune.core import CollaborationState
 from attune.pattern_library import Pattern, PatternLibrary
 from attune.persistence import MetricsCollector, PatternPersistence, StateManager
+from attune.state_manager import CollaborationState
 
 
 class TestPatternPersistence:
@@ -339,6 +339,81 @@ class TestStateManager:
         state = manager.load_state("corrupted")
 
         assert state is None
+
+
+class TestCollaborationState:
+    """Tests for the CollaborationState model relocated into state_manager."""
+
+    def test_defaults(self):
+        """A fresh state starts neutral with empty history."""
+        state = CollaborationState()
+
+        assert state.trust_level == 0.5
+        assert state.successful_interventions == 0
+        assert state.failed_interventions == 0
+        assert state.total_interactions == 0
+        assert state.trust_trajectory == []
+
+    def test_update_trust_success_increases_trust(self):
+        """A successful outcome raises trust and records the interaction."""
+        state = CollaborationState()
+
+        state.update_trust("success")
+
+        assert state.trust_level == 0.55  # 0.5 + 0.05 building rate
+        assert state.successful_interventions == 1
+        assert state.failed_interventions == 0
+        assert state.total_interactions == 1
+        assert state.trust_trajectory == [0.55]
+
+    def test_update_trust_failure_decreases_trust(self):
+        """A failed outcome erodes trust faster than success builds it."""
+        state = CollaborationState()
+
+        state.update_trust("failure")
+
+        assert state.trust_level == 0.4  # 0.5 - 0.10 erosion rate
+        assert state.failed_interventions == 1
+        assert state.successful_interventions == 0
+        assert state.total_interactions == 1
+        assert state.trust_trajectory == [0.4]
+
+    def test_update_trust_unknown_outcome_is_noop_on_stocks(self):
+        """An unrecognized outcome leaves trust unchanged but still counts."""
+        state = CollaborationState()
+
+        state.update_trust("ignored")
+
+        assert state.trust_level == 0.5
+        assert state.successful_interventions == 0
+        assert state.failed_interventions == 0
+        assert state.total_interactions == 1
+        assert state.trust_trajectory == [0.5]
+
+    def test_update_trust_clamps_to_upper_bound(self):
+        """Repeated successes never push trust above 1.0."""
+        state = CollaborationState()
+
+        for _ in range(50):
+            state.update_trust("success")
+
+        assert state.trust_level == 1.0
+
+    def test_update_trust_clamps_to_lower_bound(self):
+        """Repeated failures never push trust below 0.0."""
+        state = CollaborationState()
+
+        for _ in range(50):
+            state.update_trust("failure")
+
+        assert state.trust_level == 0.0
+
+    def test_current_level_aliases_trust_level(self):
+        """The current_level property mirrors trust_level."""
+        state = CollaborationState()
+        state.trust_level = 0.73
+
+        assert state.current_level == 0.73
 
 
 class TestMetricsCollector:

@@ -26,6 +26,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   was reachable only from internal code. Brings the count to 42 MCP
   tools and 18 skills.
 
+### Removed (BREAKING)
+
+- **Legacy "Empathy" framework runtime (~3,400 LOC).** `EmpathyOS`
+  (`core.py` + the `core_modules/` mixins), the five-level maturity
+  model (`Level1Reactive`…`Level5Systems` / `levels.py`),
+  `FeedbackLoopDetector` (`feedback_loops.py`), and
+  `LeveragePointAnalyzer` (`leverage_points.py`) are deleted. These
+  emitted a `DeprecationWarning` since 8.10.0; accessing them from the
+  `attune` package now raises `AttributeError`. The Claude Code workflow
+  plugin (MCP tools), auth/tier routing, memory, and help systems are
+  unaffected.
+- The `EmpathyLLM` / `EmpathyLLMExecutor` LLM execution layer is **not**
+  affected — despite the shared "Empathy" name it is live workflow
+  infrastructure, not part of the retired framework.
+- Dead API reference pages `reference/empathy-os.md` and
+  `reference/core.md` (their `mkdocstrings` autogen blocks targeted the
+  removed modules).
+
+### Deprecated
+
+- **`StateManager`** (`state_manager.py`) and its `persistence.py`
+  re-export are retained but now emit a `DeprecationWarning` and are
+  slated for removal in a future release. `CollaborationState` was
+  relocated from the removed `core.py` into `state_manager.py`.
+  (`MetricsCollector` and `PatternPersistence` remain live and are
+  unaffected.)
+
 ## [8.10.0] — 2026-06-25
 
 attune-ai is now focused on being the **Claude Code workflow plugin**.

@@ -13,13 +13,13 @@ from pathlib import Path
 import pytest
 
 from attune import (
-    EmpathyOS,
     MetricsCollector,
     Pattern,
     PatternLibrary,
     PatternPersistence,
     StateManager,
 )
+from attune.state_manager import CollaborationState
 
 
 @pytest.fixture
@@ -246,11 +246,11 @@ class TestStateManager:
         """Test saving collaboration state"""
         manager = StateManager(storage_path=temp_dir)
 
-        empathy = EmpathyOS(user_id="test_user", target_level=4)
-        empathy.collaboration_state.update_trust("success")
-        empathy.collaboration_state.update_trust("success")
+        state = CollaborationState()
+        state.update_trust("success")
+        state.update_trust("success")
 
-        manager.save_state("test_user", empathy.collaboration_state)
+        manager.save_state("test_user", state)
 
         # Verify file created
         filepath = Path(temp_dir) / "test_user.json"
@@ -269,9 +269,9 @@ class TestStateManager:
         manager = StateManager(storage_path=temp_dir)
 
         # Create and save state
-        empathy = EmpathyOS(user_id="test_user", target_level=4)
-        empathy.collaboration_state.update_trust("success")
-        manager.save_state("test_user", empathy.collaboration_state)
+        state = CollaborationState()
+        state.update_trust("success")
+        manager.save_state("test_user", state)
 
         # Load state
         loaded_state = manager.load_state("test_user")
@@ -294,8 +294,7 @@ class TestStateManager:
 
         # Save states for multiple users
         for user_id in ["user1", "user2", "user3"]:
-            empathy = EmpathyOS(user_id=user_id, target_level=3)
-            manager.save_state(user_id, empathy.collaboration_state)
+            manager.save_state(user_id, CollaborationState())
 
         users = manager.list_users()
 
@@ -309,8 +308,7 @@ class TestStateManager:
         manager = StateManager(storage_path=temp_dir)
 
         # Save state
-        empathy = EmpathyOS(user_id="test_user", target_level=4)
-        manager.save_state("test_user", empathy.collaboration_state)
+        manager.save_state("test_user", CollaborationState())
 
         # Delete
         deleted = manager.delete_state("test_user")
@@ -329,15 +327,15 @@ class TestStateManager:
         manager = StateManager(storage_path=temp_dir)
 
         # Create state with specific values
-        empathy = EmpathyOS(user_id="test_user", target_level=4)
-        empathy.collaboration_state.trust_level = 0.75
-        empathy.collaboration_state.total_interactions = 10
-        empathy.collaboration_state.successful_interventions = 8
-        empathy.collaboration_state.failed_interventions = 2
-        empathy.collaboration_state.shared_context = {"key": "value"}
+        state = CollaborationState()
+        state.trust_level = 0.75
+        state.total_interactions = 10
+        state.successful_interventions = 8
+        state.failed_interventions = 2
+        state.shared_context = {"key": "value"}
 
         # Save and load
-        manager.save_state("test_user", empathy.collaboration_state)
+        manager.save_state("test_user", state)
         loaded_state = manager.load_state("test_user")
 
         # Verify all fields

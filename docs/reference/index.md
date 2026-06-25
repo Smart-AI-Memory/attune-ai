@@ -39,8 +39,6 @@ quick reference materials for when you need to look something up.
 
 ### Core Modules
 
-- [EmpathyOS](empathy-os.md) - Main framework module
-- [Core](core.md) - Core functionality
 - [Config](config.md) - Configuration system
 - [Persistence](persistence.md) - Data persistence layer
 - [Pattern Library](pattern-library.md) - Pattern storage and retrieval
