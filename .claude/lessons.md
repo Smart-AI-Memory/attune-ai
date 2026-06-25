@@ -11025,6 +11025,88 @@ files.
   (here: an independent security-reviewer pass corroborated the finding I
   spotted, which is the right belt-and-suspenders for self-authored code).
 
+- **Executing a dead-code DELETION PR — the mechanics that bite (the
+  flip side of "detect dead code via inbound-import grep")**: 2026-06-24,
+  removing the dead `socratic/` (~16k LOC), `trust/`+`trust_building.py`,
+  and `emergence.py` as three reversible PRs surfaced a cluster of
+  non-obvious gotchas, all caught BEFORE commit by verifying against the
+  worktree (not main's editable-install mapping):
+  - **Mixed coverage-batch test files need surgical class excision, NOT
+    file deletion.** `test_coverage_batchN.py` files group unrelated
+    modules — `batch9` had 186 tests of which only the 6 `ab_testing`
+    classes were socratic; deleting the file would drop 180 live-code
+    tests. Excise the dead classes, keep the rest.
+  - **AST `ClassDef.lineno` points at `class`, NOT the decorator** —
+    a naive span removal leaves the `@pytest.mark.skipif(not HAS_X, …)`
+    decorator orphaned, so the deleted-module flag (`HAS_X`) is undefined
+    → `NameError` at COLLECTION (whole suite red). Include
+    `node.decorator_list` linenos in the removal start. (Caught only by
+    actually running the edited files; the edit itself "succeeded".)
+  - **Guarded imports self-skip, masking the need to act** — a
+    `try: from attune.socratic.ab_testing import … ; HAS_AB=True / except
+    ImportError: HAS_AB=False` block means deleting the module makes those
+    tests SKIP cleanly (no collection error), but leaves ~900 lines of
+    always-skip dead tests. Collect import names from try-nested imports
+    too (walk the whole tree, not just top-level `tree.body`), or they're
+    invisible to a literal `grep socratic`.
+  - **The substring trap (hit twice).** `grep trust` matched the
+    `trust_building_rate` / `trust_erosion_rate` config fields and the
+    `R1_trust_building` feedback-loop ID — a SEPARATE systems-thinking
+    stock/flow concept, not the deleted module. Precise trigger:
+    `trust_building|attune\.trust\b` — the `\b` matches the package
+    `attune.trust.circuit_breaker` but NOT `attune.trust_building` (the
+    `_` is a word char). Always confirm by grepping for the actual
+    `from attune.X import` / symbol names, never the bare stem. (Also:
+    `trust/circuit_breaker.py` was a THIRD, unused copy — the live ones
+    are `resilience/` and `models/`; a removal can delete a duplicate of
+    real infra.)
+  - **Ratchet the sys-modules-patch baseline.** Deleting tests that used
+    `patch.dict("sys.modules", …)` drops a file's count below the frozen
+    baseline in `tests/unit/ci/test_no_new_sys_modules_patch.py`, failing
+    `test_sys_modules_patch_baseline_is_not_stale` ("baseline N but now
+    M — lower it"). Remove deleted-file entries and ratchet changed ones
+    DOWN in the same PR.
+  - **Verify with a full `pytest --collect-only` sweep against the
+    WORKTREE src**, not just the files you touched:
+    `PYTHONPATH=<worktree>/src … pytest tests/ --collect-only -q`. A
+    construct-only attribute (`emergence.py` is built as
+    `EmpathyOS.emergence_detector` but never CALLED — `.emergence_detector.`
+    appears nowhere) is safe to drop, but only collection-against-the-
+    worktree proves no other file imports the deleted module (the editable
+    install resolves `import attune` to MAIN's src, which still HAS the
+    module — so a plain `python -c`/`pytest` would falsely pass). Keep
+    siblings with a real caller: `leverage_points.py` stayed because
+    `core_modules/empathy_levels.py` actually calls
+    `.find_leverage_points()`. Pairs with the "Passing tests don't prove
+    integration — inbound-import grep" lesson (that one is detection; this
+    is the execution checklist).
+
+- **A very-stale PR may be FULLY SUPERSEDED by main — resolving its
+  conflicts would regress main or ship a broken no-op; close it
+  instead**: 2026-06-24, asked to resolve conflicts on PR #1057 (SDK
+  failure-capture probe-fallback), 463 commits behind main. Main had
+  independently solved the same problem with RENAMED helpers: the PR
+  added `_fallback_probe_argv`; main has `_claude_health_probe_argv` +
+  an `_sdk_error_probe_enabled()` default-OFF gate (cleaner than the PR's
+  approach, and a superset of its tests, 4 vs 2). Tell-tale recipe before
+  resolving any stale-PR conflict: (1) `git grep -c 'def <helper>'
+  origin/main -- <file>` for BOTH the PR's new helpers and main's — if
+  the PR's are ABSENT from main and main has a renamed equivalent, the
+  PR's intent already landed; (2) resolve the conflicts to `--theirs`
+  (main) then `git diff --cached origin/main --stat` to measure the TRUE
+  remaining contribution — here it collapsed to a single `conftest.py`
+  fixture that was both redundant (main's gate already prevents the real
+  subprocess) AND broken (it patched `_find_claude_cli`, deleted from
+  main → `AttributeError` across the suite). Net: nothing unique to
+  salvage → `gh pr close` with the superseding refs, don't merge.
+  Extends the "stale PR's files-changed overstates scope — read the
+  two-dot diff" lesson: here the *entire* PR was superseded, and the
+  cheap way to prove it is resolve-to-theirs + `--cached` diff. Also:
+  when a PR's macOS-only lanes fail on a dead-code deletion, check the
+  failure is a `worker 'gwN' crashed` on a `*_real_http*` test (untouched
+  by the PR, passes locally) — an environmental xdist flake, not your
+  change — before treating red as blocking.
+
 - **`gh pr checks` rollup LAGS the real job conclusion — cross-check
   `gh run view <run-id> --json jobs` before believing a check is still
   pending**: 2026-06-24 watching PR #1056 CI. `gh pr checks 1056` showed
