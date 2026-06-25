@@ -11212,3 +11212,45 @@ files.
   before tagging" release-gate lesson — same family, this one is the
   trigger-fired half. (`workflow_dispatch --ref vX` is the manual
   fallback if you can't re-tag, since dispatch ignores `[skip ci]`.)
+
+- **A removal/refactor scoped by a NAME PREFIX can be mis-scoped when
+  the prefix is OVERLOADED across dead AND live code — audit per-symbol
+  importers, never trust the name as a deadness proxy**: hit 2026-06-25
+  executing the 9.0.0 "Empathy framework" removal. The next-session
+  starter's plan led with "Phase 1 (smallest, lowest-risk): delete the
+  2-file LLM island `llm/core.py` + `llm/interaction.py`." A 60-second
+  per-symbol import audit (`grep -rn "llm\.core" src/attune --include=
+  '*.py' | grep -v test`) DISPROVED it: `EmpathyLLM` in `llm/core.py`
+  is the LIVE LLM wrapper that `EmpathyLLMExecutor`
+  (`models/empathy_executor.py`) constructs, and `EmpathyLLMExecutor`
+  is the **default workflow step executor**
+  (`workflows/executor_mixin._create_default_executor`) — also imported
+  by the escalation chain, `agent_factory/adapters/native.py`, and
+  `template_defs_web.py`. Deleting the "island" would have broken every
+  workflow that runs a step. **Root cause: the token "Empathy" names
+  THREE live classes** — `EmpathyLLM`, `EmpathyLLMExecutor`,
+  `EmpathyMCPServer` — none part of the dead `EmpathyOS` 5-level
+  framework. The plan's author pattern-matched on the prefix. **Rule:**
+  when a deletion is scoped by a module/class/name prefix, grep the
+  actual per-symbol importers (excluding `__init__` re-exports,
+  docstrings, and the deprecation `__getattr__` map) and use THAT set as
+  the scope; a shared name is not shared deadness. Verify-first applies
+  to deletion scope exactly as it does to SDK signatures and spec
+  premises. Corollaries that also bit this session: (a) two same-named
+  classes can be INCOMPATIBLE — `core.CollaborationState` (no required
+  fields) vs the live `llm/state.CollaborationState` (requires
+  `user_id`), so you can't blindly repoint an import when severing a
+  dependency; relocate/copy the dead one instead. (b) when HOLDING a
+  dead leaf for one release, it may still import a module you're
+  deleting NOW (`state_manager` imported `core.CollaborationState`) —
+  sever that edge in the same PR. (c) the mkdocstrings `:::` autogen
+  trap (the #279 `build`-breaker) fires on DELETIONS too: `grep -rn
+  ":::[[:space:]]*attune\.<removed_module>" docs` and delete/repoint
+  those pages + their nav + See-Also links, then `mkdocs build` locally
+  to confirm green (mkdocstrings raises a real import error, not a
+  warning, even under `strict: false`). (d) ruff `--fix` (incl. the
+  PostToolUse formatter) will DELETE an import you add BEFORE adding its
+  usages — add the usage first, or expect a `NameError` at test time.
+  Pairs with "Spec-named work-scope drifts from code reality — grep the
+  actual instances before executing the named scope" (same family;
+  this is the name-overload variant).
