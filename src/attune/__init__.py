@@ -79,7 +79,6 @@ if TYPE_CHECKING:
     from .agent_monitoring import AgentMetrics, AgentMonitor, TeamMetrics
     from .config import AttuneConfig, EmpathyConfig, load_config
     from .core import EmpathyOS
-    from .emergence import EmergenceDetector
     from .exceptions import (
         CollaborationStateError,
         ConfidenceThresholdError,
@@ -154,8 +153,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     # coordination — removed in v6.8.0 (see src/attune/coordination.py shim)
     # core
     "EmpathyOS": (".core", "EmpathyOS"),
-    # emergence
-    "EmergenceDetector": (".emergence", "EmergenceDetector"),
     # exceptions
     "CollaborationStateError": (".exceptions", "CollaborationStateError"),
     "ConfidenceThresholdError": (".exceptions", "ConfidenceThresholdError"),
@@ -269,7 +266,6 @@ __all__ = [
     "CollaborationStateError",
     "ConfidenceThresholdError",
     "ConflictContext",
-    "EmergenceDetector",
     # Configuration
     "AttuneConfig",
     "EmpathyConfig",
