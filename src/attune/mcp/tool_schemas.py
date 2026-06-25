@@ -362,6 +362,18 @@ def get_utility_tools() -> dict[str, dict[str, Any]]:
                 "required": ["key", "value"],
             },
         },
+        "list_capabilities": {
+            "description": (
+                "Enumerate everything attune offers, read live from the "
+                "registries: every workflow (list_workflows), wizard "
+                "(list_wizards), and registered MCP tool. Returns grouped "
+                "name+description lists so a catalog never drifts from the "
+                "code. Use to answer 'what can attune do?' / 'list all "
+                "capabilities'. For routing to one workflow, use the "
+                "attune-hub skill instead."
+            ),
+            "input_schema": {"type": "object", "properties": {}},
+        },
     }
 
 

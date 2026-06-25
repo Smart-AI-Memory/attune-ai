@@ -1,6 +1,6 @@
 # Bulk + Catalog Access — Requirements
 
-**Status:** draft (2026-06-25)
+**Status:** implemented (2026-06-25) — OQ1/OQ2 resolved in decisions
 **Owner:** Patrick + agent
 **Scope:** ship two left-behind skills into the plugin surface.
 
@@ -70,15 +70,17 @@ harder design problem and are deferred to a separate
 
 ## Acceptance criteria (Done when)
 
-- [ ] `bulk` and `catalog` appear in `plugin/skills/`, lint clean, and
+- [x] `bulk` and `catalog` appear in `plugin/skills/`, lint clean, and
   `sync_agents_skills.py --check` passes (mirrors regenerated).
-- [ ] `bulk` invokes `analyze_batch`; verified end-to-end against a small
-  batch (or a structurally-valid dry call).
-- [ ] `catalog` output matches `list_workflows()` / `list_wizards()` /
-  live tool list at call time.
-- [ ] `test_plugin_reference_validation` and `test_sync_agents_skills`
-  pass; no count claims hand-authored.
-- [ ] README / catalog skill count claims (if any) are registry-derived.
+- [x] `bulk` invokes `analyze_batch`; the tool resolves and the skill
+  references only it.
+- [x] `catalog` output matches `list_workflows()` / `list_wizards()` /
+  live tool list at call time (via the `list_capabilities` tool;
+  dogfooded: 22 workflows / 5 wizards / 43 tools).
+- [x] `test_plugin_reference_validation` and `test_sync_agents_skills`
+  pass; no count claims hand-authored in the skills.
+- [x] README counts updated (43 tools, 20 skills); catalog renders
+  counts from the live registry, not hand-authored.
 
 ---
 

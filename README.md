@@ -26,7 +26,7 @@
 A spec-driven development platform for Claude Code. Four pillars — AI
 workflows, project memory, retrieval grounding, and verification — turn
 requirements into reliable software. 22 workflows (19 multi-stage),
-18 auto-triggering skills, and 42 MCP tools run specialist teams of 2–6
+20 auto-triggering skills, and 43 MCP tools run specialist teams of 2–6
 Claude subagents that review your code, surface vulnerabilities, generate
 tests, and plan refactors — grounded in your real source, with findings
 remembered across sessions. The same system doubles as the authoring and
@@ -170,7 +170,7 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 | 18 auto-triggering skills | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
-| 42 MCP tools | -- | Yes |
+| 43 MCP tools | -- | Yes |
 | `attune` CLI | -- | Yes |
 | Multi-agent workflows | -- | Yes |
 | Help system maintenance | -- | Yes |
@@ -234,7 +234,7 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 ## MCP Tools
 
-42 tools organized into 5 categories:
+43 tools organized into 5 categories:
 
 ### Workflow (22)
 
@@ -261,11 +261,11 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 `personal_memory_capture` `personal_memory_recall`
 `personal_memory_topics` `personal_memory_forget`
 
-### Utility (7)
+### Utility (8)
 
 `auth_status` `auth_recommend` `telemetry_stats`
 `context_get` `context_set` `attune_get_level`
-`attune_set_level`
+`attune_set_level` `list_capabilities`
 
 ---
 
@@ -311,8 +311,8 @@ from retrieval. Full methodology:
 | --- | --- | --- | --- | --- |
 | **Ready-to-use workflows** | 22 built-in | None | Build from scratch | None |
 | **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
-| **MCP integration** | 42 native tools | None | No | No |
-| **Auto-triggering skills** | 18 skills, natural language | None | None | None |
+| **MCP integration** | 43 native tools | None | No | No |
+| **Auto-triggering skills** | 20 skills, natural language | None | None | None |
 | **Socratic discovery** | Questions before execution | None | None | None |
 | **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
 

@@ -177,10 +177,7 @@ TOOLS_WITHOUT_SKILL_SURFACE: dict[str, str] = {
     "auth_recommend": "Utility/infra; surfaced via CLI auth commands, not a skill.",
     "telemetry_stats": "Utility/infra; surfaced via CLI telemetry commands.",
     # Additive-access backlog — skills specced/planned, not yet shipped.
-    "analyze_batch": (
-        "Pending the bulk skill (bulk-catalog-access spec, PR #1076). "
-        "Remove when the bulk skill ships."
-    ),
+    # (analyze_batch now surfaced by the bulk skill — removed from this list.)
     "analyze_image": "Pending an image-analysis skill (orphan-tool skills runway).",
     "personal_memory_capture": "Pending a personal-memory skill (orphan-tool runway).",
     "personal_memory_recall": "Pending a personal-memory skill (orphan-tool runway).",

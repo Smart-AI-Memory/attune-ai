@@ -303,6 +303,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "attune_set_level": self._handle_attune_set_level,
             "context_get": self._handle_context_get,
             "context_set": self._handle_context_set,
+            "list_capabilities": lambda _args: self._handle_list_capabilities(),
             "help_lookup": self._handle_help_lookup,
             "help_maintain": self._handle_help_maintain,
             "help_init": self._handle_help_init,
@@ -574,6 +575,54 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "level": self._attune_level,
             "name": ATTUNE_LEVEL_NAMES.get(self._attune_level, "Unknown"),
             "description": ATTUNE_LEVEL_DESCRIPTIONS.get(self._attune_level, ""),
+        }
+
+    async def _handle_list_capabilities(self) -> dict[str, Any]:
+        """Enumerate workflows, wizards, and tools from the live registries.
+
+        Read-only. Reads ``list_workflows()`` / ``list_wizards()`` and this
+        server's own dispatch keys so a catalog renders from code, never a
+        hand-maintained list.
+
+        Returns:
+            Dict with ``workflows``, ``wizards``, ``tools`` (each a list of
+            ``{name, description}``) plus a ``counts`` summary.
+
+        """
+        from attune.workflows import list_workflows
+
+        workflows = [
+            {"name": w.get("name", ""), "description": w.get("description", "")}
+            for w in list_workflows()
+        ]
+
+        wizards: list[dict[str, str]] = []
+        try:
+            from attune.wizards.registry import list_wizards
+
+            wizards = [
+                {"name": wz.wizard_id, "description": wz.description} for wz in list_wizards()
+            ]
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: wizards are optional; an empty list still yields a
+            # valid catalog rather than failing the whole call.
+            logger.exception("list_wizards failed; returning empty wizard list")
+
+        tools = [
+            {"name": name, "description": defn.get("description", "")}
+            for name, defn in sorted(self.tools.items())
+        ]
+
+        return {
+            "success": True,
+            "workflows": sorted(workflows, key=lambda c: c["name"]),
+            "wizards": sorted(wizards, key=lambda c: c["name"]),
+            "tools": tools,
+            "counts": {
+                "workflows": len(workflows),
+                "wizards": len(wizards),
+                "tools": len(tools),
+            },
         }
 
     async def _handle_attune_set_level(self, args: dict[str, Any]) -> dict[str, Any]:

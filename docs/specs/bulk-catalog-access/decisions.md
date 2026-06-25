@@ -45,12 +45,15 @@ follow-up, not a blocker.
 
 ---
 
-## Open for review
+## Resolved (was "Open for review")
 
-- **OQ1:** Confirm D-CAT-a (thin `list_capabilities` MCP tool) vs D-CAT-b
-  (CLI-only). The tool is the accurate path but is net-new (small) code.
-- **OQ2:** Should the standing **registry-coverage guard** (a test that
-  fails when a workflow/wizard/tool has no surface — would have caught
-  all of discovery-sweep, bulk, catalog) be folded into this spec, or
-  tracked as its own follow-up? Recommendation: its own follow-up, since
-  it is a process control, not part of shipping these two skills.
+- **OQ1 — RESOLVED (Patrick, 2026-06-25): D-CAT-a.** Ship the thin
+  read-only `list_capabilities` MCP tool. The accurate, registry-driven
+  path (wizards aren't in the CLI; NFR-2 forbids drift) outweighs the
+  small net-new code. Implemented in `get_utility_tools()` +
+  `_handle_list_capabilities` (`server.py`).
+- **OQ2 — RESOLVED: its own follow-up, and already shipped.** The
+  standing **registry-coverage guard** landed separately as PR #1079
+  (`tests/unit/plugins/test_registry_coverage.py`) before this work. It
+  actively guided this change: its hygiene check forced `analyze_batch`
+  out of the tool allowlist once the `bulk` skill surfaced it.
