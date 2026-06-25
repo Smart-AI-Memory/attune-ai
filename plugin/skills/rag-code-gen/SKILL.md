@@ -1,6 +1,6 @@
 ---
 name: rag-code-gen
-description: "RAG-grounded code generation with source citations. Triggers on: grounded code, ground this, cite sources, show me with sources, how do I with attune, reference attune docs, verify against attune."
+description: "RAG-grounded code generation with source citations. Triggers on: grounded code, ground this, cite sources, show me with sources, how do I with attune, reference attune docs, grounded against attune docs."
 argument-hint: "<what you want generated + any specifics>"
 ---
 

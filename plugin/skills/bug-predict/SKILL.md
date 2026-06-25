@@ -1,6 +1,6 @@
 ---
 name: bug-predict
-description: "Predict likely bug locations from code patterns and complexity. Triggers on: predict bugs, find bugs, risky code, code risk, what might break, likely bugs."
+description: "Predict likely bug locations from code patterns and complexity. Triggers on: predict bugs, find bugs, risky code, code risk, what might break, likely bugs, bug hotspots."
 argument-hint: "<path or directory to scan>"
 ---
 
