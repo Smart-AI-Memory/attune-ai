@@ -140,7 +140,6 @@ if TYPE_CHECKING:
     )
     from .pattern_library import Pattern, PatternLibrary, PatternMatch
     from .persistence import MetricsCollector, PatternPersistence, StateManager
-    from .trust_building import TrustBuildingBehaviors
 
 # Mapping of attribute names to their module paths
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -224,8 +223,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "MetricsCollector": (".persistence", "MetricsCollector"),
     "PatternPersistence": (".persistence", "PatternPersistence"),
     "StateManager": (".persistence", "StateManager"),
-    # trust_building
-    "TrustBuildingBehaviors": (".trust_building", "TrustBuildingBehaviors"),
 }
 
 # Cache for loaded modules
@@ -325,7 +322,6 @@ __all__ = [
     "TTLStrategy",
     "TeamMetrics",
     # Trust
-    "TrustBuildingBehaviors",
     "TrustThresholdError",
     # Unified Memory Interface
     "UnifiedMemory",
