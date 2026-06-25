@@ -108,6 +108,16 @@ class TestGetWorkflowTools:
         }
         assert expected.issubset(tools.keys())
 
+    def test_discovery_sweep_present_with_required_path(self) -> None:
+        """discovery_sweep is registered and requires only 'path'."""
+        tools = get_workflow_tools()
+        assert "discovery_sweep" in tools
+        schema = tools["discovery_sweep"]["input_schema"]
+        assert schema["required"] == ["path"]
+        props = schema["properties"]
+        assert "budget_usd" in props
+        assert "no_llm" in props
+
     def test_test_generation_has_module_required(self) -> None:
         """test_generation requires 'module' param."""
         schema = get_workflow_tools()["test_generation"]["input_schema"]

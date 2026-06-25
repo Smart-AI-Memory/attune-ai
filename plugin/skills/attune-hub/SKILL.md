@@ -55,6 +55,7 @@ intent so Claude matches the right skill:
 | "performance", "bottleneck", "optimize" | workflow-orchestration skill |
 | "release", "publish", "ship" | release-prep skill |
 | "bug", "predict", "risk" | bug-predict skill |
+| "run all audits", "full sweep", "what should I fix" | discovery-sweep skill |
 | "memory", "store", "remember" | memory-and-context skill |
 | "docs", "documentation" | doc-gen skill |
 | "plan", "feature", "architecture" | planning skill |
@@ -85,6 +86,7 @@ rule (a single turn can't bundle multiple ambiguous decisions). See
 | security-audit | security, vulnerability, audit, scan |
 | code-quality | review, quality, bugs, code smell |
 | bug-predict | predict bugs, risky code, what might break |
+| discovery-sweep | run all audits, full sweep, what should I fix, triage findings |
 | doc-gen | generate docs, documentation, README |
 | smart-test | generate tests, test gaps, coverage |
 | fix-test | fix test, broken test, debug test |

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`discovery_sweep` MCP tool + `discovery-sweep` skill.** The
+  discovery-sweep meta-workflow (fan-out across all audit sources →
+  dedup → triage into queue / questions / rejected buckets) now has a
+  user surface: an MCP tool taking `path` (+ optional `budget_usd`,
+  `no_llm`) and a thin auto-triggering skill. Previously the workflow
+  was reachable only from internal code. Brings the count to 42 MCP
+  tools and 18 skills.
+
 ## [8.10.0] — 2026-06-25
 
 attune-ai is now focused on being the **Claude Code workflow plugin**.

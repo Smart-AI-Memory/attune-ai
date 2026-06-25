@@ -268,6 +268,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         return {
             "security_audit": self._run_security_audit,
             "bug_predict": self._run_bug_predict,
+            "discovery_sweep": self._run_discovery_sweep,
             "code_review": self._run_code_review,
             "test_generation": self._run_test_generation,
             "performance_audit": self._run_performance_audit,
@@ -400,6 +401,55 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         result = await workflow.execute(path=validated_path)
 
         return _workflow_response(result, predictions=("predictions", []))
+
+    async def _run_discovery_sweep(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Run the discovery-sweep triage meta-workflow.
+
+        Unlike the single-audit handlers, discovery-sweep renders its
+        three buckets into ``final_output`` as a JSON *string*
+        (``output_format="json"``), so ``_workflow_response`` would see a
+        non-dict and yield empty buckets. The structured ``SweepResult``
+        lives on ``result.metadata["sweep"]`` instead — extract the
+        buckets from there.
+        """
+        from dataclasses import asdict
+
+        from attune.security.path_validation import _validate_file_path
+        from attune.workflows.discovery_sweep import DiscoverySweepWorkflow
+
+        validated_path = str(_validate_file_path(args["path"], allowed_dir=self._workspace_root))
+        workflow = DiscoverySweepWorkflow()
+        result = await workflow.execute(
+            path=validated_path,
+            budget_usd=float(args.get("budget_usd", 10.0)),
+            no_llm=bool(args.get("no_llm", False)),
+            output_format="json",
+        )
+
+        cost_report = getattr(result, "cost_report", None)
+        cost = cost_report.total_cost if cost_report is not None else 0.0
+
+        sweep = (getattr(result, "metadata", None) or {}).get("sweep")
+        if sweep is None:
+            # execute() returned an error result (e.g. empty path) — no
+            # sweep was built. Surface the message, keep buckets empty.
+            return {
+                "success": result.success,
+                "error": None if result.success else result.final_output,
+                "queue": [],
+                "questions": [],
+                "rejected": [],
+                "cost": cost,
+            }
+
+        return {
+            "success": result.success,
+            "queue": [asdict(f) for f in sweep.queue],
+            "questions": [asdict(q) for q in sweep.questions],
+            "rejected": [asdict(r) for r in sweep.rejected],
+            "metadata": asdict(sweep.metadata),
+            "cost": cost,
+        }
 
     async def _run_code_review(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run code review workflow."""

@@ -26,7 +26,7 @@
 A spec-driven development platform for Claude Code. Four pillars — AI
 workflows, project memory, retrieval grounding, and verification — turn
 requirements into reliable software. 22 workflows (19 multi-stage),
-17 auto-triggering skills, and 41 MCP tools run specialist teams of 2–6
+18 auto-triggering skills, and 42 MCP tools run specialist teams of 2–6
 Claude subagents that review your code, surface vulnerabilities, generate
 tests, and plan refactors — grounded in your real source, with findings
 remembered across sessions. The same system doubles as the authoring and
@@ -167,10 +167,10 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 | Capability | Plugin only | Plugin + pip |
 | ---------- | ----------- | ------------ |
-| 17 auto-triggering skills | Yes | Yes |
+| 18 auto-triggering skills | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
-| 41 MCP tools | -- | Yes |
+| 42 MCP tools | -- | Yes |
 | `attune` CLI | -- | Yes |
 | Multi-agent workflows | -- | Yes |
 | Help system maintenance | -- | Yes |
@@ -234,14 +234,14 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 ## MCP Tools
 
-41 tools organized into 5 categories:
+42 tools organized into 5 categories:
 
-### Workflow (21)
+### Workflow (22)
 
 `security_audit` `code_review` `bug_predict`
-`performance_audit` `refactor_plan` `simplify_code`
-`deep_review` `test_generation` `test_audit`
-`test_gen_parallel` `doc_gen` `doc_audit`
+`discovery_sweep` `performance_audit` `refactor_plan`
+`simplify_code` `deep_review` `test_generation`
+`test_audit` `test_gen_parallel` `doc_gen` `doc_audit`
 `doc_orchestrator` `release_notes` `health_check`
 `dependency_check` `secure_release` `research_synthesis`
 `analyze_batch` `analyze_image` `rag_knowledge_query`
@@ -311,8 +311,8 @@ from retrieval. Full methodology:
 | --- | --- | --- | --- | --- |
 | **Ready-to-use workflows** | 22 built-in | None | Build from scratch | None |
 | **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
-| **MCP integration** | 41 native tools | None | No | No |
-| **Auto-triggering skills** | 17 skills, natural language | None | None | None |
+| **MCP integration** | 42 native tools | None | No | No |
+| **Auto-triggering skills** | 18 skills, natural language | None | None | None |
 | **Socratic discovery** | Questions before execution | None | None | None |
 | **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
 
