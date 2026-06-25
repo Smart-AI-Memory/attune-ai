@@ -4,7 +4,7 @@
 
 Covers: agents_md/__init__, context/__init__, learning/__init__,
 optimization/__init__, project_index/__main__, test_generator/__main__,
-validation/__init__, socratic_router_patterns,
+validation/__init__,
 meta_workflows/cli_commands/__init__, telemetry/__main__.
 """
 
@@ -273,65 +273,6 @@ class TestValidationInit:
 
         v = XMLValidator()
         assert v is not None
-
-
-# === Module: socratic_router_patterns.py ===
-
-
-class TestSocraticRouterPatterns:
-    def test_intent_patterns_is_dict(self):
-        from attune.socratic_router_patterns import INTENT_PATTERNS
-
-        assert isinstance(INTENT_PATTERNS, dict)
-
-    def test_all_six_intent_categories_present(self):
-        from attune.socratic_router_models import IntentCategory
-        from attune.socratic_router_patterns import INTENT_PATTERNS
-
-        for cat in (
-            IntentCategory.FIX,
-            IntentCategory.IMPROVE,
-            IntentCategory.VALIDATE,
-            IntentCategory.SHIP,
-            IntentCategory.UNDERSTAND,
-            IntentCategory.CREATE,
-        ):
-            assert cat in INTENT_PATTERNS, f"Missing category {cat}"
-
-    def test_each_entry_has_keywords_list(self):
-        from attune.socratic_router_patterns import INTENT_PATTERNS
-
-        for cat, data in INTENT_PATTERNS.items():
-            assert "keywords" in data, f"Missing keywords for {cat}"
-            assert isinstance(data["keywords"], list)
-            assert len(data["keywords"]) > 0
-
-    def test_each_entry_has_question_string(self):
-        from attune.socratic_router_patterns import INTENT_PATTERNS
-
-        for cat, data in INTENT_PATTERNS.items():
-            assert "question" in data, f"Missing question for {cat}"
-            assert isinstance(data["question"], str)
-            assert len(data["question"]) > 0
-
-    def test_each_entry_has_options(self):
-        from attune.socratic_router_patterns import INTENT_PATTERNS
-
-        for cat, data in INTENT_PATTERNS.items():
-            assert "options" in data, f"Missing options for {cat}"
-            assert len(data["options"]) >= 2
-
-    def test_fix_category_has_debug_keyword(self):
-        from attune.socratic_router_models import IntentCategory
-        from attune.socratic_router_patterns import INTENT_PATTERNS
-
-        keywords = INTENT_PATTERNS[IntentCategory.FIX]["keywords"]
-        assert any(kw in keywords for kw in ("fix", "bug", "error", "broken", "debug"))
-
-    def test_six_categories_total(self):
-        from attune.socratic_router_patterns import INTENT_PATTERNS
-
-        assert len(INTENT_PATTERNS) == 6
 
 
 # === Module: meta_workflows/cli_commands/__init__.py ===

@@ -11,44 +11,6 @@ import inspect
 import re
 
 # ---------------------------------------------------------------------------
-# 1. Socratic MCP: every tool has a handler
-# ---------------------------------------------------------------------------
-
-
-class TestSocraticMCPWiring:
-    """Every tool in SOCRATIC_TOOLS must have a handler in handle_tool_call."""
-
-    def _tool_names(self) -> set[str]:
-        from attune.socratic.mcp_tools import SOCRATIC_TOOLS
-
-        return {t["name"] for t in SOCRATIC_TOOLS}
-
-    def _handler_keys(self) -> set[str]:
-        from attune.socratic.mcp_server import SocraticMCPServer
-
-        source = inspect.getsource(SocraticMCPServer.handle_tool_call)
-        # The handlers dict is defined as  "key": self._handle_...
-        return set(re.findall(r'"(socratic_\w+)"', source))
-
-    def test_every_tool_has_a_handler(self):
-        tools = self._tool_names()
-        handlers = self._handler_keys()
-        orphan_tools = tools - handlers
-        assert not orphan_tools, f"Tools registered but missing handlers: {orphan_tools}"
-
-    def test_every_handler_has_a_tool(self):
-        tools = self._tool_names()
-        handlers = self._handler_keys()
-        orphan_handlers = handlers - tools
-        assert (
-            not orphan_handlers
-        ), f"Handlers defined but missing tool definitions: {orphan_handlers}"
-
-    def test_sets_are_equal(self):
-        assert self._tool_names() == self._handler_keys()
-
-
-# ---------------------------------------------------------------------------
 # 2. Empathy MCP: every registered tool has a dispatch branch
 # ---------------------------------------------------------------------------
 

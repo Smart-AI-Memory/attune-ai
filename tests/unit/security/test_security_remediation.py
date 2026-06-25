@@ -116,34 +116,6 @@ class TestRandomUsageDocumentation:
         )
         assert "reproducible test" in content or "deterministic" in content
 
-    def test_ab_testing_has_security_comment(self):
-        """Test that ab_testing allocator documents random usage for simulation."""
-        # ab_testing is now a package; random import lives in allocator.py
-        ab_testing_path = (
-            Path(__file__).parent.parent.parent.parent
-            / "src"
-            / "attune"
-            / "socratic"
-            / "ab_testing"
-            / "allocator.py"
-        )
-
-        if not ab_testing_path.exists():
-            pytest.skip(f"allocator.py not found at {ab_testing_path}")
-
-        content = ab_testing_path.read_text(encoding="utf-8")
-
-        # Check for security note near random import
-        lines = content.split("\n")
-        for i, line in enumerate(lines):
-            if "import random" in line:
-                # Check surrounding lines for security note
-                context = "\n".join(lines[max(0, i - 2) : min(len(lines), i + 3)])
-                assert "Security Note" in context or "not cryptographic" in context.lower()
-                break
-        else:
-            pytest.fail("import random not found in ab_testing/allocator.py")
-
 
 class TestNoActualVulnerabilities:
     """Verify that flagged issues are not actual vulnerabilities."""
