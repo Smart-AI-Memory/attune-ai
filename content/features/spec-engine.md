@@ -434,7 +434,7 @@ yourself.
 > telemetry error-frequency, GitHub issues, and these author-curated
 > seeds — merged, deduplicated, and frequency-ranked by the FAQ
 > Generator (see doc-stack D3, and this spec's
-> [decisions.md](../../docs/specs/help-docs-single-source/decisions.md)
+> [decisions.md](../../docs/specs/archive/help-docs-single-source/decisions.md)
 > D6). This section is **not** projected verbatim as the FAQ; it
 > contributes the feature's author-curated seed questions to the
 > Generator. Keep entries to genuine, feature-specific seeds — do not

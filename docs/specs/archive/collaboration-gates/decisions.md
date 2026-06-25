@@ -5,8 +5,10 @@
 > `design.md` / `tasks.md`. Timestamps are the arbiter when a
 > later session wants to relitigate.
 
-**Status:** in progress
-**Last updated:** 2026-06-05
+**Status:** complete (2026-06-09) — spend gate R1–R8 shipped
+(#637/#638/#639); referent gate R9/R10 advisory (#694). Reconciled from
+stale "in progress" and archived 2026-06-24.
+**Last updated:** 2026-06-24
 
 ---
 

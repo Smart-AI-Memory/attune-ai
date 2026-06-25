@@ -1,6 +1,7 @@
 # claude-agent-sdk 0.2.x Migration — Tasks
 
-**Status:** approved (for review)
+**Status:** complete (2026-06-16) — migration shipped (#917, 8.7.0).
+Reconciled from stale "approved (for review)" and archived 2026-06-24.
 
 Tasks are ordered. T0 is a measurement that scopes T1 and T2 —
 its findings may shrink, grow, or re-prioritize them. Execute on a

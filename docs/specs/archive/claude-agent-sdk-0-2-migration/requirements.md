@@ -1,7 +1,8 @@
 # claude-agent-sdk 0.2.x Migration — Requirements
 
-**Status:** approved
-(requirements for review)
+**Status:** complete (2026-06-16) — 0.2.x adopted (#917, ships 8.7.0);
+pyproject pins `claude-agent-sdk>=0.2.101,<0.3.0`, lockfile at 0.2.105.
+Reconciled from stale "approved" and archived 2026-06-24.
 **Owner:** Patrick + agent
 **Created:** 2026-06-16
 
