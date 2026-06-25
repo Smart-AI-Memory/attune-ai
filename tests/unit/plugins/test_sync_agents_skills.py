@@ -400,6 +400,24 @@ class TestAgentSkillsIntegration:
                 f"Run: python scripts/sync_agents_skills.py"
             )
 
+    def test_frontmatter_in_sync(self) -> None:
+        """Test .agents/ SKILL.md matches sync output exactly.
+
+        ``sync_one`` in check mode compares the full generated
+        file (frontmatter *and* body) byte-for-byte. This guards
+        against frontmatter drift -- e.g. a ``description`` edited
+        in plugin/skills/ but never re-synced -- which the
+        body-only and dir-set checks above do not catch.
+        """
+        for skill_dir in PLUGIN_SKILLS.iterdir():
+            if not skill_dir.is_dir():
+                continue
+            plugin_file = skill_dir / "SKILL.md"
+            if not plugin_file.exists():
+                continue
+            ok, msg = sync_one(plugin_file, AGENTS_SKILLS, check=True)
+            assert ok, f"{msg}. Run: python scripts/sync_agents_skills.py"
+
     def test_no_claude_code_fields_in_agents(self) -> None:
         """Test .agents/ skills have no Claude Code fields."""
         for skill_dir in AGENTS_SKILLS.iterdir():
