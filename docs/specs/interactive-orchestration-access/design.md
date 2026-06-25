@@ -85,20 +85,26 @@ only if a non-Claude surface is required.
 
 ---
 
-## Phase 2 (agents) — sketch only
+## Phase 2 (agents) — IMPLEMENTED
 
 Agent-team access reuses the same "model drives, engine works"
-principle:
+principle, with a deterministic preview + a gated run:
 
-- Enumerate templates via `get_all_templates()` (already surfaced in
-  the catalog).
-- An `agent` skill: ask the user the goal → select matching templates
-  (`get_templates_by_capability` / `_by_tier`) → build a team
-  (`TeamBuilder` / meta-orchestrator) → run it → present results.
+- `attune.orchestration.team_driver.describe_team_for_task(task)` —
+  deterministic, **no LLM**. Wraps
+  `MetaOrchestrator().analyze_and_compose(task)` and serializes the
+  resulting `ExecutionPlan` (agents from the templates, composition
+  strategy, estimated cost/duration, quality gates) for a preview.
+- `team_driver.run_team_for_task(task, ...)` — composes AND executes:
+  `MetaOrchestrator().compose_team(task)` → `DynamicTeam.execute()`.
+  This is the LLM-heavy step.
+- The `agent` skill: goal → `describe_team_for_task` preview → confirm
+  the cost via `AskUserQuestion` → `run_team_for_task` → present the
+  `DynamicTeamResult`.
 
-The exact build/run API (`team_builder.py`, `meta_orchestrator.py`)
-is **not** pinned here — finalize it when Phase 1's seam is proven and
-the engine API has settled.
+Guard `TestAgentRunSurface` enforces the run surface. Tests cover the
+deterministic compose/preview offline; the LLM-heavy run is left to
+manual/integration use (cost + keyed-CI hazard), mirroring Phase 1.
 
 ---
 

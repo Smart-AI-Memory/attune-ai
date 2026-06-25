@@ -345,5 +345,29 @@ class TestWizardRunSurface:
         assert len(list_wizards()) >= 1, "no wizards registered for the run skill to drive"
 
 
+class TestAgentRunSurface:
+    """Agent templates have a RUN surface (the `agent` skill), not just a
+    catalog listing — the Phase 2 twin of TestWizardRunSurface."""
+
+    def test_agent_run_skill_exists_and_names_the_driver(self) -> None:
+        body = SKILL_BODIES.get("agent")
+        assert body is not None, (
+            "agent templates are registered but there is no `agent` run skill "
+            "in plugin/skills/ — they would be listable-but-not-runnable."
+        )
+        assert "run_team_for_task" in body, "the `agent` skill must run teams via run_team_for_task"
+        assert "describe_team_for_task" in body, (
+            "the `agent` skill must preview the composed team via "
+            "describe_team_for_task before running (cost gate)"
+        )
+
+    def test_agent_templates_exist_to_run(self) -> None:
+        try:
+            from attune.orchestration.agent_templates import get_all_templates
+        except ImportError:  # pragma: no cover - minimal env
+            pytest.skip("agent templates not importable in this environment")
+        assert len(get_all_templates()) >= 1, "no agent templates for the run skill to compose"
+
+
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__, "-v"])

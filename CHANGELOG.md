@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`agent` skill — compose and run a multi-agent team
+  (interactive-orchestration-access Phase 2).** The 14 builtin agent
+  templates were listable via the catalog but not runnable. New
+  `attune.orchestration.team_driver` (`describe_team_for_task`,
+  `run_team_for_task`) gives the Claude-driven `agent` skill a
+  two-step bridge: `describe_team_for_task` composes a team plan
+  deterministically (no LLM — which agents, strategy, estimated cost)
+  for a preview, then `run_team_for_task` executes the composed team
+  after the user confirms the cost. Brings the count to 24 skills; new
+  guard `TestAgentRunSurface`.
 - **`wizard` skill — run guided wizards conversationally
   (interactive-orchestration-access Phase 1).** The 5 wizards (debug,
   refactor, release-prep, security, test-gen) were listable but not
