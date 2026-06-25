@@ -228,5 +228,84 @@ def test_guard_has_data_to_check() -> None:
     assert len(SKILL_BODIES) >= 17, f"Expected >=17 skills, got {len(SKILL_BODIES)}"
 
 
+# ---------------------------------------------------------------------------
+# Catalog completeness: every capability REGISTRY has a browse-all surface
+# ---------------------------------------------------------------------------
+#
+# The two suites above check per-item surfaces (workflow -> tool,
+# tool -> skill). This one checks the registry level: the catalog skill's
+# `list_capabilities` tool is the universal "what can attune do?" surface,
+# so a whole registry that exists but is not wired into it is hidden — which
+# is exactly how the 14 agent templates were invisible (the catalog read
+# workflows/wizards/tools but never agents). These tests fail if a known
+# registry drops out of the catalog or its count drifts from the live
+# registry, forcing the catalog to stay complete as new registries are added.
+
+
+def _catalog_payload() -> dict:
+    """Run the real list_capabilities handler and return its payload."""
+    import asyncio
+
+    from attune.mcp.server import EmpathyMCPServer
+
+    return asyncio.run(EmpathyMCPServer()._handle_list_capabilities())
+
+
+# Registry name in the catalog payload -> a callable returning the live
+# registry's items. Adding a new capability registry to the product means
+# adding it here AND wiring it into list_capabilities, or this fails.
+def _live_registry_counts() -> dict[str, int]:
+    counts: dict[str, int] = {}
+    from attune.workflows import list_workflows
+
+    counts["workflows"] = len(list_workflows())
+    from attune.orchestration.agent_templates import get_all_templates
+
+    counts["agents"] = len(get_all_templates())
+    try:
+        from attune.wizards.registry import list_wizards
+
+        counts["wizards"] = len(list_wizards())
+    except Exception:  # noqa: BLE001 - wizards optional; handler degrades too
+        pass
+    return counts
+
+
+class TestCatalogCompleteness:
+    """list_capabilities must enumerate EVERY capability registry."""
+
+    def test_catalog_exposes_every_registry_group(self) -> None:
+        try:
+            cat = _catalog_payload()
+        except ImportError:  # pragma: no cover - minimal env
+            pytest.skip("MCP server not importable in this environment")
+        for group in ("workflows", "wizards", "agents", "tools"):
+            assert group in cat, f"list_capabilities dropped the '{group}' group"
+            assert group in cat.get("counts", {}), f"counts missing '{group}'"
+
+    def test_catalog_counts_match_live_registries(self) -> None:
+        try:
+            cat = _catalog_payload()
+        except ImportError:  # pragma: no cover - minimal env
+            pytest.skip("MCP server not importable in this environment")
+        counts = cat["counts"]
+        for name, live in _live_registry_counts().items():
+            assert counts.get(name) == live, (
+                f"catalog '{name}' count {counts.get(name)} != live registry "
+                f"{live} — list_capabilities is out of sync with the registry."
+            )
+
+    def test_catalog_surfaces_agent_templates(self) -> None:
+        """Agents were the hidden registry; pin that they stay surfaced."""
+        try:
+            cat = _catalog_payload()
+        except ImportError:  # pragma: no cover - minimal env
+            pytest.skip("MCP server not importable in this environment")
+        assert cat["counts"]["agents"] >= 1, (
+            "agent templates registry surfaced but empty — expected the "
+            "builtin templates from get_all_templates()."
+        )
+
+
 if __name__ == "__main__":  # pragma: no cover
     pytest.main([__file__, "-v"])

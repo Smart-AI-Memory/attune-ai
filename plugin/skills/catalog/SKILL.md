@@ -1,7 +1,7 @@
 ---
 name: catalog
-description: "Enumerate everything attune offers — every workflow, wizard, and tool, read live from the registries. Triggers on: catalog, list capabilities, browse, show all, what can attune do, list workflows, list wizards, what tools are there."
-argument-hint: "[workflows|wizards|tools]"
+description: "Enumerate everything attune offers — every workflow, wizard, agent, and tool, read live from the registries. Triggers on: catalog, list capabilities, browse, show all, what can attune do, list workflows, list agents, list tools."
+argument-hint: "[workflows|wizards|agents|tools]"
 ---
 
 # Capability Catalog
@@ -19,8 +19,8 @@ If the MCP call fails, fall back to:
 ## Scoping
 
 If the user named a category in the argument
-(`workflows`, `wizards`, or `tools`), show only that group.
-Otherwise show all three.
+(`workflows`, `wizards`, `agents`, or `tools`), show only that
+group. Otherwise show all four.
 
 ## Execution
 
@@ -30,11 +30,11 @@ Call the `list_capabilities` MCP tool (no arguments):
 list_capabilities()
 ```
 
-It returns `{workflows, wizards, tools}` — each a list of
+It returns `{workflows, wizards, agents, tools}` — each a list of
 `{name, description}` — plus a `counts` summary, all read from
-`list_workflows()`, `list_wizards()`, and the live MCP tool
-registry at call time. **Do not hand-author or cache these
-lists** — always render what the tool returns.
+`list_workflows()`, `list_wizards()`, `get_all_templates()`, and
+the live MCP tool registry at call time. **Do not hand-author or
+cache these lists** — always render what the tool returns.
 
 ## Output
 
@@ -49,9 +49,9 @@ the live `counts` in the headings:
 | ... | ... |
 ```
 
-Repeat for **Wizards** and **Tools**. For each row, where a
-dedicated skill exists for that capability, point the user to
-it (e.g. "run the `security-audit` skill"). Close by inviting
+Repeat for **Wizards**, **Agents**, and **Tools**. For each row,
+where a dedicated skill exists for that capability, point the user
+to it (e.g. "run the `security-audit` skill"). Close by inviting
 the user to pick one.
 
 ## Relationship to attune-hub
