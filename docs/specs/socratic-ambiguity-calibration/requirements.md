@@ -1,6 +1,7 @@
 # Socratic Ambiguity Calibration — Requirements
 
-**Status:** draft (2026-06-25) · **Owner:** Patrick + agent
+**Status:** approved (2026-06-25; design Q1–Q3 resolved — see
+[decisions.md](decisions.md)) · **Owner:** Patrick + agent
 **Sequencing:** queued **behind 9.0.0** (the Empathy framework removal).
 **Born:** the 8.10.0-ship session (2026-06-25). After a compound reply
 I'd *guessed* at, Patrick's feedback was "always query me on an
@@ -107,15 +108,13 @@ ambiguous; honor anything they already specified.
   (`src/attune/meta_workflows/form_engine.py`) if the calibration
   should reach the code-level questioning path too — design decision.
 
-## Open questions (for the design phase)
+## Open questions (resolved 2026-06-25 — see [decisions.md](decisions.md))
 
-- Q1. Is "always ask" a deliberate brand stance Patrick wants to keep,
-  or is the calibrated version strictly better? (This spec assumes
-  calibrated-is-better; confirm before executing.)
-- Q2. Does the calibration apply only to the agent-prompt skills, or
-  also to the Python `SocraticFormEngine` (the code-level form path)?
-- Q3. How is "genuinely ambiguous" operationalized in skill copy so
-  the agent applies it consistently without a runtime detector?
+- Q1. Always-ask vs calibrated? → **calibrated** (d1).
+- Q2. Reach the Python `SocraticFormEngine`? → **no — skills + rule
+  only**; engine is a deferred follow-up (d2).
+- Q3. How to operationalize "genuinely ambiguous"? → **shared one-line
+  test (rule + template) + per-skill conditional `Scoping` table** (d3).
 
 ## Related
 
