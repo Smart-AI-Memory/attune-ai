@@ -100,6 +100,8 @@ rule (a single turn can't bundle multiple ambiguous decisions). See
 | coach | coach, learn, explain, tell me more, deeper |
 | recall | recall, remember, what did I learn, prior session, past findings |
 | verify | verify docs, fact-check, did the model hallucinate, check generated content |
+| bulk | batch, bulk process, 50% savings, overnight analysis |
+| catalog | catalog, list capabilities, browse, what can attune do |
 
 ## MCP Server Not Running
 

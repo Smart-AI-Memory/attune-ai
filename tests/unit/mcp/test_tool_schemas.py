@@ -159,6 +159,7 @@ class TestGetUtilityTools:
             "attune_set_level",
             "context_get",
             "context_set",
+            "list_capabilities",
         }
         assert expected == set(tools.keys())
 

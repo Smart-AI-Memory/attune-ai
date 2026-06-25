@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`bulk` + `catalog` skills + `list_capabilities` MCP tool.** Two
+  left-behind skills now ship in the plugin: `bulk` surfaces the
+  existing `analyze_batch` tool for 50%-cost batch processing, and
+  `catalog` enumerates every workflow/wizard/tool. The catalog renders
+  from a new read-only `list_capabilities` MCP tool that reads
+  `list_workflows()` / `list_wizards()` / the live tool registry at call
+  time, so the listing never drifts from the code. Brings the count to
+  43 MCP tools and 20 skills. (`wizard` + `agent` — the interactive
+  pair — remain deferred to the interactive-orchestration-access spec.)
 - **`discovery_sweep` MCP tool + `discovery-sweep` skill.** The
   discovery-sweep meta-workflow (fan-out across all audit sources →
   dedup → triage into queue / questions / rejected buckets) now has a
