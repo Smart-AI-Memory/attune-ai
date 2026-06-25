@@ -7,12 +7,57 @@ Licensed under the Apache License, Version 2.0
 """
 
 import json
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
 from attune.security.path_validation import _validate_file_path
 
-from .core import CollaborationState
+
+@dataclass
+class CollaborationState:
+    """Stock & Flow model of AI-human collaboration state.
+
+    Relocated here from the retired Empathy framework ``core`` module so
+    ``StateManager`` stays self-contained. ``StateManager`` and this class
+    are themselves deprecated and slated for removal in a future release;
+    they are no longer used by the attune-ai workflow plugin at runtime.
+    """
+
+    # Stocks (accumulate over time)
+    trust_level: float = 0.5  # 0.0 to 1.0, start neutral
+    shared_context: dict = field(default_factory=dict)
+    successful_interventions: int = 0
+    failed_interventions: int = 0
+
+    # Flow rates (change stocks per interaction)
+    trust_building_rate: float = 0.05  # Per successful interaction
+    trust_erosion_rate: float = 0.10  # Per failed interaction (erosion faster)
+    context_accumulation_rate: float = 0.1
+
+    # Metadata
+    session_start: datetime = field(default_factory=datetime.now)
+    total_interactions: int = 0
+    trust_trajectory: list[float] = field(default_factory=list)
+
+    def update_trust(self, outcome: str) -> None:
+        """Update trust stock based on interaction outcome."""
+        if outcome == "success":
+            self.trust_level += self.trust_building_rate
+            self.successful_interventions += 1
+        elif outcome == "failure":
+            self.trust_level -= self.trust_erosion_rate
+            self.failed_interventions += 1
+
+        # Clamp to [0, 1]
+        self.trust_level = max(0.0, min(1.0, self.trust_level))
+        self.total_interactions += 1
+        self.trust_trajectory.append(self.trust_level)
+
+    @property
+    def current_level(self) -> float:
+        """Get current trust level (alias for trust_level)."""
+        return self.trust_level
 
 
 class StateManager:
@@ -76,9 +121,6 @@ class StateManager:
         Example:
             >>> manager = StateManager()
             >>> state = manager.load_state("user123")
-            >>> if state:
-            ...     empathy = EmpathyOS(user_id="user123", target_level=4)
-            ...     empathy.collaboration_state = state
 
         """
         filepath = self.storage_path / f"{user_id}.json"

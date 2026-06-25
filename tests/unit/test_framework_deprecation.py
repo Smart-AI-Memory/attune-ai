@@ -1,14 +1,17 @@
-"""Guard: legacy Empathy-framework exports emit ``DeprecationWarning``.
+"""Guard: the legacy Empathy framework is removed; only ``StateManager``
+remains, deprecated.
 
-attune-ai focuses on the Claude Code workflow plugin (MCP tools); the
-``EmpathyOS`` core and the 5-level maturity model are deprecated as of
-the plugin-focus decision (2026-06-25) and slated for removal. This
-test pins that:
+attune-ai focuses on the Claude Code workflow plugin (MCP tools). The
+``EmpathyOS`` core and the 5-level maturity model were REMOVED in 9.0.0.
+``StateManager`` is the last vestige still importable and emits
+``DeprecationWarning`` pending its own removal. This test pins that:
 
-1. every deprecated symbol warns on access (so the deprecation can't
-   silently regress before the planned removal), and
-2. a live product export (``EmpathyConfig``) does NOT warn (so the
-   deprecation set stays scoped to the vestigial framework).
+1. every removed framework symbol now raises ``AttributeError`` (so it
+   can't silently creep back into the public surface),
+2. ``StateManager`` still warns on access (deprecation can't regress
+   before the planned removal), and
+3. live product exports do NOT warn (the deprecation set stays scoped to
+   the vestigial framework).
 """
 
 from __future__ import annotations
@@ -20,21 +23,29 @@ import pytest
 import attune
 from attune import _DEPRECATED_FRAMEWORK
 
+# Symbols removed in 9.0.0 — must no longer be importable from ``attune``.
+REMOVED_FRAMEWORK_SYMBOLS = (
+    "EmpathyOS",
+    "FeedbackLoopDetector",
+    "LeveragePointAnalyzer",
+    "Level1Reactive",
+    "Level2Guided",
+    "Level3Proactive",
+    "Level4Anticipatory",
+    "Level5Systems",
+)
+
 
 def test_deprecation_set_matches_expected() -> None:
-    """The deprecated set is exactly the confirmed off-product-path API."""
-    assert _DEPRECATED_FRAMEWORK == frozenset(
-        {
-            "EmpathyOS",
-            "FeedbackLoopDetector",
-            "LeveragePointAnalyzer",
-            "Level1Reactive",
-            "Level2Guided",
-            "Level3Proactive",
-            "Level4Anticipatory",
-            "Level5Systems",
-        }
-    )
+    """Only ``StateManager`` remains in the deprecation set after 9.0.0."""
+    assert _DEPRECATED_FRAMEWORK == frozenset({"StateManager"})
+
+
+@pytest.mark.parametrize("name", REMOVED_FRAMEWORK_SYMBOLS)
+def test_removed_framework_symbol_raises_attribute_error(name: str) -> None:
+    """Accessing a removed framework symbol raises AttributeError."""
+    with pytest.raises(AttributeError):
+        getattr(attune, name)
 
 
 @pytest.mark.parametrize("name", sorted(_DEPRECATED_FRAMEWORK))
@@ -44,8 +55,9 @@ def test_framework_export_warns(name: str) -> None:
         getattr(attune, name)
 
 
-def test_live_product_export_does_not_warn() -> None:
-    """A live product export (EmpathyConfig) must not be deprecated."""
+@pytest.mark.parametrize("name", ["EmpathyConfig", "MetricsCollector", "PatternPersistence"])
+def test_live_product_export_does_not_warn(name: str) -> None:
+    """Live product exports must not be deprecated."""
     with warnings.catch_warnings():
         warnings.simplefilter("error", DeprecationWarning)
-        assert attune.EmpathyConfig is not None
+        assert getattr(attune, name) is not None

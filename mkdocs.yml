@@ -256,9 +256,7 @@ nav:
       - reference/index.md
       - API:
           - Overview: reference/API_REFERENCE.md
-          - EmpathyOS: reference/empathy-os.md
           - Configuration: reference/configuration.md
-          - Core: reference/core.md
           - Config: reference/config.md
           - Pattern Library: reference/pattern-library.md
           - Multi-Agent: reference/multi-agent.md

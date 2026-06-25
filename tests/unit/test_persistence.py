@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from attune.core import CollaborationState
 from attune.pattern_library import Pattern, PatternLibrary
 from attune.persistence import MetricsCollector, PatternPersistence, StateManager
+from attune.state_manager import CollaborationState
 
 
 class TestPatternPersistence:
