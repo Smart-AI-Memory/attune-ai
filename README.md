@@ -25,7 +25,7 @@
 
 A spec-driven development platform for Claude Code. Four pillars — AI
 workflows, project memory, retrieval grounding, and verification — turn
-requirements into reliable software. 21 workflows (17 multi-stage),
+requirements into reliable software. 22 workflows (19 multi-stage),
 17 auto-triggering skills, and 41 MCP tools run specialist teams of 2–6
 Claude subagents that review your code, surface vulnerabilities, generate
 tests, and plan refactors — grounded in your real source, with findings
@@ -47,13 +47,16 @@ developer workflow hub; `attune-gui` is the docs hub.
 | **`attune-ai`** | Developer workflow hub (this package) | `pip install attune-ai` |
 | **`attune-gui`** | Living Docs dashboard — create, manage, search help content | standalone app |
 | **`attune-rag`** | RAG pipeline (core dep of attune-ai, v0.6+) | bundled |
+| **`attune-verify`** | Generation fact-checker — backs the `/verify` skill (core dep) | bundled |
 | **`attune-author`** | Help content authoring, staleness detection | `pip install 'attune-ai[author]'` |
 | **`attune-help`** | Progressive-depth template runtime | `pip install attune-help` |
 
-`attune-rag` ships as a **core dependency** of `attune-ai`
-(v0.1.11, `>=0.1.5,<0.2`). `attune-help` is standalone — not pulled
-in by a standard `attune-ai` install, but available as an optional
-corpus for `attune-rag` via `pip install 'attune-rag[attune-help]'`.
+`attune-rag` and `attune-verify` both ship as **core dependencies** of
+`attune-ai` — retrieval grounding and generation fact-checking are
+on by default, no extra needed. `attune-help` is standalone — not
+pulled in by a standard `attune-ai` install, but available as an
+optional corpus for `attune-rag` via
+`pip install 'attune-rag[attune-help]'`.
 
 ---
 
@@ -164,7 +167,7 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 | Capability | Plugin only | Plugin + pip |
 | ---------- | ----------- | ------------ |
-| 15 auto-triggering skills | Yes | Yes |
+| 17 auto-triggering skills | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
 | 41 MCP tools | -- | Yes |
@@ -218,6 +221,7 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 | **refactor-plan** | debt-scanner, impact, plan-generator | Plans large-scale refactors |
 | **simplify-code** | complexity, simplification, safety | Proposes simplifications with safety review |
 | **release-prep** | health, security, changelog, assessor | Go/no-go readiness check |
+| **release-gate** | parallel agent team (4 stages) | Release readiness assessment / go-no-go gate |
 | **release-notes** | agent-prep | Drafts release notes + LLM readiness advice |
 | **doc-orchestrator** | inventory, outline, content, polish | Full-project documentation |
 | **secure-release** | security, health, dep-auditor, gater | Release pipeline with risk scoring |
@@ -305,10 +309,10 @@ from retrieval. Full methodology:
 
 | | Attune AI | Static Docs | Agent Frameworks | Coding CLIs |
 | --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 20 built-in | None | Build from scratch | None |
+| **Ready-to-use workflows** | 22 built-in | None | Build from scratch | None |
 | **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
 | **MCP integration** | 41 native tools | None | No | No |
-| **Auto-triggering skills** | 15 skills, natural language | None | None | None |
+| **Auto-triggering skills** | 17 skills, natural language | None | None | None |
 | **Socratic discovery** | Questions before execution | None | None | None |
 | **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
 
@@ -509,7 +513,7 @@ If you previously installed either from `attune-docs`:
 
 ## Links
 
-- [Full Documentation](https://smartaimemory.com/framework-docs/)
+- [Full Documentation](https://attune-ai.dev)
 - [Plugin Setup](https://github.com/Smart-AI-Memory/attune-ai/blob/main/plugin/README.md)
 - [attune-gui](https://github.com/Smart-AI-Memory/attune-gui) — Living Docs dashboard
 - [GitHub Repository](https://github.com/Smart-AI-Memory/attune-ai)
