@@ -39,6 +39,7 @@ from .agent_sdk_adapter import (
     get_subagent_model,
     get_task_budget,
     get_thinking_config,
+    iter_agent_messages,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -323,75 +324,81 @@ class CodeReviewWorkflow(BaseWorkflow):
             extra_opts["thinking"] = thinking
             extra_opts["effort"] = "high"
 
-        async for message in claude_agent_sdk.query(
-            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
-            options=claude_agent_sdk.ClaudeAgentOptions(
-                **sdk_isolation_kwargs(),
-                system_prompt=_SYSTEM_PROMPT,
-                cwd=resolve_cwd_for_path(resolved_path),
-                max_budget_usd=get_max_budget_usd(depth),
-                allowed_tools=["Read", "Glob", "Grep", "Agent"],
-                permission_mode="default",
-                max_turns=max_turns,
-                output_format=WORKFLOW_OUTPUT_SCHEMA,
-                **extra_opts,
-                agents={
-                    "security-reviewer": claude_agent_sdk.AgentDefinition(
-                        description=("Security reviewer that finds " "vulnerabilities."),
-                        prompt=(
-                            "You are a security reviewer. Focus on: "
-                            "eval/exec usage, injection "
-                            "vulnerabilities, path traversal, "
-                            "hardcoded secrets, and authentication "
-                            "issues. Report each finding with file "
-                            "path, line number, severity, and "
-                            "remediation advice."
+        async for message in iter_agent_messages(
+            claude_agent_sdk.query(
+                prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+                options=claude_agent_sdk.ClaudeAgentOptions(
+                    **sdk_isolation_kwargs(),
+                    system_prompt=_SYSTEM_PROMPT,
+                    cwd=resolve_cwd_for_path(resolved_path),
+                    max_budget_usd=get_max_budget_usd(depth),
+                    allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                    permission_mode="default",
+                    max_turns=max_turns,
+                    output_format=WORKFLOW_OUTPUT_SCHEMA,
+                    **extra_opts,
+                    agents={
+                        "security-reviewer": claude_agent_sdk.AgentDefinition(
+                            description=("Security reviewer that finds " "vulnerabilities."),
+                            prompt=(
+                                "You are a security reviewer. Focus on: "
+                                "eval/exec usage, injection "
+                                "vulnerabilities, path traversal, "
+                                "hardcoded secrets, and authentication "
+                                "issues. Report each finding with file "
+                                "path, line number, severity, and "
+                                "remediation advice."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("security-reviewer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("security-reviewer"),
-                    ),
-                    "quality-reviewer": claude_agent_sdk.AgentDefinition(
-                        description=("Code quality reviewer for standards " "and patterns."),
-                        prompt=(
-                            "You are a code quality reviewer. Focus "
-                            "on: code complexity, error handling "
-                            "patterns, naming conventions, "
-                            "duplication, and test coverage gaps. "
-                            "Report each finding with file path, "
-                            "severity, and improvement advice."
+                        "quality-reviewer": claude_agent_sdk.AgentDefinition(
+                            description=("Code quality reviewer for standards " "and patterns."),
+                            prompt=(
+                                "You are a code quality reviewer. Focus "
+                                "on: code complexity, error handling "
+                                "patterns, naming conventions, "
+                                "duplication, and test coverage gaps. "
+                                "Report each finding with file path, "
+                                "severity, and improvement advice."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("quality-reviewer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("quality-reviewer"),
-                    ),
-                    "perf-reviewer": claude_agent_sdk.AgentDefinition(
-                        description=("Performance reviewer for bottlenecks " "and inefficiencies."),
-                        prompt=(
-                            "You are a performance reviewer. Focus "
-                            "on: N+1 patterns, unnecessary list "
-                            "copies, blocking I/O in async code, "
-                            "and missing caching opportunities. "
-                            "Report each finding with file path, "
-                            "estimated impact, and fix."
+                        "perf-reviewer": claude_agent_sdk.AgentDefinition(
+                            description=(
+                                "Performance reviewer for bottlenecks " "and inefficiencies."
+                            ),
+                            prompt=(
+                                "You are a performance reviewer. Focus "
+                                "on: N+1 patterns, unnecessary list "
+                                "copies, blocking I/O in async code, "
+                                "and missing caching opportunities. "
+                                "Report each finding with file path, "
+                                "estimated impact, and fix."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("perf-reviewer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("perf-reviewer"),
-                    ),
-                    "architect-reviewer": claude_agent_sdk.AgentDefinition(
-                        description=("Architecture reviewer for design and " "coupling issues."),
-                        prompt=(
-                            "You are an architecture reviewer. "
-                            "Focus on: coupling between modules, "
-                            "SOLID violations, circular "
-                            "dependencies, API design issues, and "
-                            "abstraction level mismatches. Report "
-                            "each finding with affected modules "
-                            "and refactoring suggestions."
+                        "architect-reviewer": claude_agent_sdk.AgentDefinition(
+                            description=(
+                                "Architecture reviewer for design and " "coupling issues."
+                            ),
+                            prompt=(
+                                "You are an architecture reviewer. "
+                                "Focus on: coupling between modules, "
+                                "SOLID violations, circular "
+                                "dependencies, API design issues, and "
+                                "abstraction level mismatches. Report "
+                                "each finding with affected modules "
+                                "and refactoring suggestions."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("architect-reviewer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("architect-reviewer"),
-                    ),
-                },
-            ),
+                    },
+                ),
+            )
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:

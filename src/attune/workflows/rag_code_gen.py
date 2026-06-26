@@ -36,6 +36,7 @@ from .agent_sdk_adapter import (
     get_max_budget_usd,
     get_task_budget,
     get_thinking_config,
+    iter_agent_messages,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -387,9 +388,13 @@ class RagCodeGenWorkflow(BaseWorkflow):
             options_kwargs["thinking"] = thinking
             options_kwargs["effort"] = "high"
 
-        async for message in claude_agent_sdk.query(
-            prompt=augmented_prompt,
-            options=claude_agent_sdk.ClaudeAgentOptions(**sdk_isolation_kwargs(), **options_kwargs),
+        async for message in iter_agent_messages(
+            claude_agent_sdk.query(
+                prompt=augmented_prompt,
+                options=claude_agent_sdk.ClaudeAgentOptions(
+                    **sdk_isolation_kwargs(), **options_kwargs
+                ),
+            )
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:

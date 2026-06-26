@@ -32,6 +32,7 @@ from .agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
+    iter_agent_messages,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -222,67 +223,71 @@ class PerformanceAuditWorkflow(BaseWorkflow):
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
         system_prompt = _SYSTEM_PROMPT + (self._system_prompt_suffix or "")
-        async for message in claude_agent_sdk.query(
-            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
-            options=claude_agent_sdk.ClaudeAgentOptions(
-                **sdk_isolation_kwargs(),
-                system_prompt=system_prompt,
-                cwd=resolve_cwd_for_path(resolved_path),
-                max_budget_usd=get_max_budget_usd(depth),
-                allowed_tools=["Read", "Glob", "Grep", "Agent"],
-                permission_mode="default",
-                max_turns=max_turns,
-                agents={
-                    "complexity-analyzer": claude_agent_sdk.AgentDefinition(
-                        description=(
-                            "Complexity analyzer that measures " "code complexity metrics."
+        async for message in iter_agent_messages(
+            claude_agent_sdk.query(
+                prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+                options=claude_agent_sdk.ClaudeAgentOptions(
+                    **sdk_isolation_kwargs(),
+                    system_prompt=system_prompt,
+                    cwd=resolve_cwd_for_path(resolved_path),
+                    max_budget_usd=get_max_budget_usd(depth),
+                    allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                    permission_mode="default",
+                    max_turns=max_turns,
+                    agents={
+                        "complexity-analyzer": claude_agent_sdk.AgentDefinition(
+                            description=(
+                                "Complexity analyzer that measures " "code complexity metrics."
+                            ),
+                            prompt=(
+                                "You are a complexity analyzer. Focus "
+                                "on: cyclomatic complexity, nesting "
+                                "depth, large functions (>50 lines), "
+                                "overly complex conditionals, and deep "
+                                "class hierarchies. Report each finding "
+                                "with file path, line number, metric "
+                                "value, and simplification advice."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("complexity-analyzer"),
                         ),
-                        prompt=(
-                            "You are a complexity analyzer. Focus "
-                            "on: cyclomatic complexity, nesting "
-                            "depth, large functions (>50 lines), "
-                            "overly complex conditionals, and deep "
-                            "class hierarchies. Report each finding "
-                            "with file path, line number, metric "
-                            "value, and simplification advice."
+                        "bottleneck-finder": claude_agent_sdk.AgentDefinition(
+                            description=(
+                                "Bottleneck finder that identifies " "performance issues."
+                            ),
+                            prompt=(
+                                "You are a bottleneck finder. Focus "
+                                "on: N+1 query patterns, unnecessary "
+                                "list copies, blocking I/O in async "
+                                "code, missing caching opportunities, "
+                                "and inefficient data structures. "
+                                "Report each finding with file path, "
+                                "estimated performance impact, and a "
+                                "concrete fix."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("bottleneck-finder"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("complexity-analyzer"),
-                    ),
-                    "bottleneck-finder": claude_agent_sdk.AgentDefinition(
-                        description=("Bottleneck finder that identifies " "performance issues."),
-                        prompt=(
-                            "You are a bottleneck finder. Focus "
-                            "on: N+1 query patterns, unnecessary "
-                            "list copies, blocking I/O in async "
-                            "code, missing caching opportunities, "
-                            "and inefficient data structures. "
-                            "Report each finding with file path, "
-                            "estimated performance impact, and a "
-                            "concrete fix."
+                        "optimization-advisor": claude_agent_sdk.AgentDefinition(
+                            description=(
+                                "Optimization advisor that prioritizes " "and recommends fixes."
+                            ),
+                            prompt=(
+                                "You are an optimization advisor. "
+                                "Review the findings from the "
+                                "complexity analyzer and bottleneck "
+                                "finder. Prioritize them by estimated "
+                                "impact (high/medium/low), suggest "
+                                "concrete optimizations with code "
+                                "examples, and estimate the effort "
+                                "required for each fix."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("optimization-advisor"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("bottleneck-finder"),
-                    ),
-                    "optimization-advisor": claude_agent_sdk.AgentDefinition(
-                        description=(
-                            "Optimization advisor that prioritizes " "and recommends fixes."
-                        ),
-                        prompt=(
-                            "You are an optimization advisor. "
-                            "Review the findings from the "
-                            "complexity analyzer and bottleneck "
-                            "finder. Prioritize them by estimated "
-                            "impact (high/medium/low), suggest "
-                            "concrete optimizations with code "
-                            "examples, and estimate the effort "
-                            "required for each fix."
-                        ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("optimization-advisor"),
-                    ),
-                },
-            ),
+                    },
+                ),
+            )
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:

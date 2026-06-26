@@ -33,6 +33,7 @@ from .agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
+    iter_agent_messages,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -213,60 +214,62 @@ class ResearchSynthesisWorkflow(BaseWorkflow):
         assistant_parts: list[str] = []
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
-        async for message in claude_agent_sdk.query(
-            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
-            options=claude_agent_sdk.ClaudeAgentOptions(
-                **sdk_isolation_kwargs(),
-                system_prompt=_SYSTEM_PROMPT,
-                cwd=resolve_cwd_for_path(resolved_path),
-                max_budget_usd=get_max_budget_usd(depth),
-                allowed_tools=["Read", "Glob", "Grep", "Agent"],
-                permission_mode="default",
-                max_turns=max_turns,
-                agents={
-                    "source-summarizer": claude_agent_sdk.AgentDefinition(
-                        description="Source summarizer that reads and extracts key findings.",
-                        prompt=(
-                            "You are a source summarizer. Read and "
-                            "summarize source documents, extracting "
-                            "key findings and data points. For each "
-                            "source, report the document title, main "
-                            "arguments, supporting evidence, and "
-                            "notable data points. Organize by source."
+        async for message in iter_agent_messages(
+            claude_agent_sdk.query(
+                prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+                options=claude_agent_sdk.ClaudeAgentOptions(
+                    **sdk_isolation_kwargs(),
+                    system_prompt=_SYSTEM_PROMPT,
+                    cwd=resolve_cwd_for_path(resolved_path),
+                    max_budget_usd=get_max_budget_usd(depth),
+                    allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                    permission_mode="default",
+                    max_turns=max_turns,
+                    agents={
+                        "source-summarizer": claude_agent_sdk.AgentDefinition(
+                            description="Source summarizer that reads and extracts key findings.",
+                            prompt=(
+                                "You are a source summarizer. Read and "
+                                "summarize source documents, extracting "
+                                "key findings and data points. For each "
+                                "source, report the document title, main "
+                                "arguments, supporting evidence, and "
+                                "notable data points. Organize by source."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("source-summarizer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("source-summarizer"),
-                    ),
-                    "pattern-analyst": claude_agent_sdk.AgentDefinition(
-                        description="Pattern analyst that identifies themes and connections.",
-                        prompt=(
-                            "You are a pattern analyst. Identify "
-                            "patterns, themes, and connections across "
-                            "summarized sources. Look for recurring "
-                            "arguments, contradictions, complementary "
-                            "findings, and emerging trends. Report "
-                            "each pattern with supporting citations "
-                            "from multiple sources."
+                        "pattern-analyst": claude_agent_sdk.AgentDefinition(
+                            description="Pattern analyst that identifies themes and connections.",
+                            prompt=(
+                                "You are a pattern analyst. Identify "
+                                "patterns, themes, and connections across "
+                                "summarized sources. Look for recurring "
+                                "arguments, contradictions, complementary "
+                                "findings, and emerging trends. Report "
+                                "each pattern with supporting citations "
+                                "from multiple sources."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("pattern-analyst"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("pattern-analyst"),
-                    ),
-                    "synthesis-writer": claude_agent_sdk.AgentDefinition(
-                        description="Synthesis writer that produces a cohesive report.",
-                        prompt=(
-                            "You are a synthesis writer. Write a "
-                            "cohesive synthesis report combining all "
-                            "findings with citations. Integrate "
-                            "source summaries and identified patterns "
-                            "into a narrative that highlights key "
-                            "insights, resolves contradictions, and "
-                            "suggests areas for further investigation."
+                        "synthesis-writer": claude_agent_sdk.AgentDefinition(
+                            description="Synthesis writer that produces a cohesive report.",
+                            prompt=(
+                                "You are a synthesis writer. Write a "
+                                "cohesive synthesis report combining all "
+                                "findings with citations. Integrate "
+                                "source summaries and identified patterns "
+                                "into a narrative that highlights key "
+                                "insights, resolves contradictions, and "
+                                "suggests areas for further investigation."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("synthesis-writer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("synthesis-writer"),
-                    ),
-                },
-            ),
+                    },
+                ),
+            )
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:

@@ -28,6 +28,7 @@ from .agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
+    iter_agent_messages,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -221,48 +222,52 @@ class DependencyCheckWorkflow(BaseWorkflow):
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
         system_prompt = _SYSTEM_PROMPT + (self._system_prompt_suffix or "")
-        async for message in claude_agent_sdk.query(
-            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
-            options=claude_agent_sdk.ClaudeAgentOptions(
-                **sdk_isolation_kwargs(),
-                system_prompt=system_prompt,
-                cwd=resolve_cwd_for_path(resolved_path),
-                max_budget_usd=get_max_budget_usd(depth),
-                allowed_tools=["Read", "Glob", "Grep", "Bash", "Agent"],
-                permission_mode="default",
-                max_turns=max_turns,
-                agents={
-                    "inventory-assessor": claude_agent_sdk.AgentDefinition(
-                        description=("Dependency inventory assessor that catalogs all packages."),
-                        prompt=(
-                            "You are a dependency inventory assessor. "
-                            "Inventory all dependencies from pyproject.toml, "
-                            "requirements.txt, setup.cfg, and lock files. "
-                            "Use Bash to run pip list, pip show, and "
-                            "pip-audit (if available) to check for outdated "
-                            "or vulnerable packages. Report each dependency "
-                            "with name, installed version, latest version, "
-                            "and any known CVEs."
+        async for message in iter_agent_messages(
+            claude_agent_sdk.query(
+                prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+                options=claude_agent_sdk.ClaudeAgentOptions(
+                    **sdk_isolation_kwargs(),
+                    system_prompt=system_prompt,
+                    cwd=resolve_cwd_for_path(resolved_path),
+                    max_budget_usd=get_max_budget_usd(depth),
+                    allowed_tools=["Read", "Glob", "Grep", "Bash", "Agent"],
+                    permission_mode="default",
+                    max_turns=max_turns,
+                    agents={
+                        "inventory-assessor": claude_agent_sdk.AgentDefinition(
+                            description=(
+                                "Dependency inventory assessor that catalogs all packages."
+                            ),
+                            prompt=(
+                                "You are a dependency inventory assessor. "
+                                "Inventory all dependencies from pyproject.toml, "
+                                "requirements.txt, setup.cfg, and lock files. "
+                                "Use Bash to run pip list, pip show, and "
+                                "pip-audit (if available) to check for outdated "
+                                "or vulnerable packages. Report each dependency "
+                                "with name, installed version, latest version, "
+                                "and any known CVEs."
+                            ),
+                            tools=["Read", "Glob", "Grep", "Bash"],
+                            model=get_subagent_model("inventory-assessor"),
                         ),
-                        tools=["Read", "Glob", "Grep", "Bash"],
-                        model=get_subagent_model("inventory-assessor"),
-                    ),
-                    "update-advisor": claude_agent_sdk.AgentDefinition(
-                        description=("Update advisor that prioritizes dependency updates."),
-                        prompt=(
-                            "You are a dependency update advisor. "
-                            "Assess update urgency for each outdated "
-                            "dependency. Evaluate breaking change risk "
-                            "by reading changelogs and migration guides. "
-                            "Create a prioritized update plan: security "
-                            "patches first, then compatible updates, then "
-                            "major version upgrades with migration notes."
+                        "update-advisor": claude_agent_sdk.AgentDefinition(
+                            description=("Update advisor that prioritizes dependency updates."),
+                            prompt=(
+                                "You are a dependency update advisor. "
+                                "Assess update urgency for each outdated "
+                                "dependency. Evaluate breaking change risk "
+                                "by reading changelogs and migration guides. "
+                                "Create a prioritized update plan: security "
+                                "patches first, then compatible updates, then "
+                                "major version upgrades with migration notes."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("update-advisor"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("update-advisor"),
-                    ),
-                },
-            ),
+                    },
+                ),
+            )
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:

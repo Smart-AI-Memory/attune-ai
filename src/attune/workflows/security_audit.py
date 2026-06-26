@@ -37,6 +37,7 @@ from .agent_sdk_adapter import (
     get_subagent_model,
     get_task_budget,
     get_thinking_config,
+    iter_agent_messages,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -244,79 +245,81 @@ class SecurityAuditWorkflow(BaseWorkflow):
             extra_opts["effort"] = "high"
 
         system_prompt = _SYSTEM_PROMPT + (self._system_prompt_suffix or "")
-        async for message in claude_agent_sdk.query(
-            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
-            options=claude_agent_sdk.ClaudeAgentOptions(
-                **sdk_isolation_kwargs(),
-                system_prompt=system_prompt,
-                cwd=resolve_cwd_for_path(resolved_path),
-                max_budget_usd=get_max_budget_usd(depth),
-                allowed_tools=["Read", "Glob", "Grep", "Agent"],
-                permission_mode="default",
-                max_turns=max_turns,
-                output_format=WORKFLOW_OUTPUT_SCHEMA,
-                **extra_opts,
-                agents={
-                    "vuln-scanner": claude_agent_sdk.AgentDefinition(
-                        description=("Vulnerability scanner that finds " "injection flaws."),
-                        prompt=(
-                            "You are a vulnerability scanner. Focus "
-                            "on: eval/exec usage, SQL injection, "
-                            "XSS, path traversal, command injection, "
-                            "and insecure deserialization. Report "
-                            "each finding with file path, line "
-                            "number, severity (CRITICAL/HIGH/MEDIUM/"
-                            "LOW), and remediation advice."
+        async for message in iter_agent_messages(
+            claude_agent_sdk.query(
+                prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+                options=claude_agent_sdk.ClaudeAgentOptions(
+                    **sdk_isolation_kwargs(),
+                    system_prompt=system_prompt,
+                    cwd=resolve_cwd_for_path(resolved_path),
+                    max_budget_usd=get_max_budget_usd(depth),
+                    allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                    permission_mode="default",
+                    max_turns=max_turns,
+                    output_format=WORKFLOW_OUTPUT_SCHEMA,
+                    **extra_opts,
+                    agents={
+                        "vuln-scanner": claude_agent_sdk.AgentDefinition(
+                            description=("Vulnerability scanner that finds " "injection flaws."),
+                            prompt=(
+                                "You are a vulnerability scanner. Focus "
+                                "on: eval/exec usage, SQL injection, "
+                                "XSS, path traversal, command injection, "
+                                "and insecure deserialization. Report "
+                                "each finding with file path, line "
+                                "number, severity (CRITICAL/HIGH/MEDIUM/"
+                                "LOW), and remediation advice."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("vuln-scanner"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("vuln-scanner"),
-                    ),
-                    "secret-detector": claude_agent_sdk.AgentDefinition(
-                        description=("Secret detector that finds hardcoded " "credentials."),
-                        prompt=(
-                            "You are a secret detector. Focus on: "
-                            "hardcoded API keys, passwords, tokens, "
-                            "private keys, database credentials, and "
-                            "sensitive environment variables "
-                            "committed to source. Report each "
-                            "finding with file path, line number, "
-                            "secret type, and how to externalize it "
-                            "securely."
+                        "secret-detector": claude_agent_sdk.AgentDefinition(
+                            description=("Secret detector that finds hardcoded " "credentials."),
+                            prompt=(
+                                "You are a secret detector. Focus on: "
+                                "hardcoded API keys, passwords, tokens, "
+                                "private keys, database credentials, and "
+                                "sensitive environment variables "
+                                "committed to source. Report each "
+                                "finding with file path, line number, "
+                                "secret type, and how to externalize it "
+                                "securely."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("secret-detector"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("secret-detector"),
-                    ),
-                    "auth-reviewer": claude_agent_sdk.AgentDefinition(
-                        description=("Auth reviewer for authentication and " "authorization."),
-                        prompt=(
-                            "You are an authentication and "
-                            "authorization reviewer. Focus on: "
-                            "missing auth checks, broken access "
-                            "control, insecure session management, "
-                            "weak password policies, and privilege "
-                            "escalation risks. Report each finding "
-                            "with file path, severity, and "
-                            "remediation advice."
+                        "auth-reviewer": claude_agent_sdk.AgentDefinition(
+                            description=("Auth reviewer for authentication and " "authorization."),
+                            prompt=(
+                                "You are an authentication and "
+                                "authorization reviewer. Focus on: "
+                                "missing auth checks, broken access "
+                                "control, insecure session management, "
+                                "weak password policies, and privilege "
+                                "escalation risks. Report each finding "
+                                "with file path, severity, and "
+                                "remediation advice."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("auth-reviewer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("auth-reviewer"),
-                    ),
-                    "remediation-planner": claude_agent_sdk.AgentDefinition(
-                        description=("Remediation planner that prioritizes " "findings."),
-                        prompt=(
-                            "You are a remediation planner. Review "
-                            "all findings from other subagents and "
-                            "create a prioritized remediation plan. "
-                            "Group fixes by effort (quick wins, "
-                            "medium effort, major refactors). "
-                            "Estimate time for each fix and identify "
-                            "dependencies between remediations."
+                        "remediation-planner": claude_agent_sdk.AgentDefinition(
+                            description=("Remediation planner that prioritizes " "findings."),
+                            prompt=(
+                                "You are a remediation planner. Review "
+                                "all findings from other subagents and "
+                                "create a prioritized remediation plan. "
+                                "Group fixes by effort (quick wins, "
+                                "medium effort, major refactors). "
+                                "Estimate time for each fix and identify "
+                                "dependencies between remediations."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("remediation-planner"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("remediation-planner"),
-                    ),
-                },
-            ),
+                    },
+                ),
+            )
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:

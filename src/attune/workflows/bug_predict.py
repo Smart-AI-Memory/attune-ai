@@ -32,6 +32,7 @@ from .agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
+    iter_agent_messages,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -240,64 +241,68 @@ class BugPredictionWorkflow(BaseWorkflow):
             if self._system_prompt_suffix
             else _SYSTEM_PROMPT
         )
-        async for message in claude_agent_sdk.query(
-            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
-            options=claude_agent_sdk.ClaudeAgentOptions(
-                **sdk_isolation_kwargs(),
-                system_prompt=system_prompt,
-                cwd=resolve_cwd_for_path(resolved_path),
-                max_budget_usd=get_max_budget_usd(depth),
-                allowed_tools=["Read", "Glob", "Grep", "Agent"],
-                permission_mode="default",
-                max_turns=max_turns,
-                agents={
-                    "pattern-scanner": claude_agent_sdk.AgentDefinition(
-                        description=("Pattern scanner that finds common " "bug patterns."),
-                        prompt=(
-                            "You are a bug pattern scanner. Focus "
-                            "on: null references, type mismatches, "
-                            "race conditions, eval/exec usage, "
-                            "broad exception handlers, resource "
-                            "leaks, and off-by-one errors. Report "
-                            "each finding with file path, line "
-                            "number, pattern type, and severity."
+        async for message in iter_agent_messages(
+            claude_agent_sdk.query(
+                prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+                options=claude_agent_sdk.ClaudeAgentOptions(
+                    **sdk_isolation_kwargs(),
+                    system_prompt=system_prompt,
+                    cwd=resolve_cwd_for_path(resolved_path),
+                    max_budget_usd=get_max_budget_usd(depth),
+                    allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                    permission_mode="default",
+                    max_turns=max_turns,
+                    agents={
+                        "pattern-scanner": claude_agent_sdk.AgentDefinition(
+                            description=("Pattern scanner that finds common " "bug patterns."),
+                            prompt=(
+                                "You are a bug pattern scanner. Focus "
+                                "on: null references, type mismatches, "
+                                "race conditions, eval/exec usage, "
+                                "broad exception handlers, resource "
+                                "leaks, and off-by-one errors. Report "
+                                "each finding with file path, line "
+                                "number, pattern type, and severity."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("pattern-scanner"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("pattern-scanner"),
-                    ),
-                    "risk-correlator": claude_agent_sdk.AgentDefinition(
-                        description=("Risk correlator that assesses bug " "likelihood."),
-                        prompt=(
-                            "You are a risk correlator. Analyze "
-                            "findings from the pattern scanner and "
-                            "correlate them with file complexity, "
-                            "change frequency, and historical bug "
-                            "density. Assign risk scores to each "
-                            "file and identify the highest-risk "
-                            "modules. Report with file path, risk "
-                            "score, and contributing factors."
+                        "risk-correlator": claude_agent_sdk.AgentDefinition(
+                            description=("Risk correlator that assesses bug " "likelihood."),
+                            prompt=(
+                                "You are a risk correlator. Analyze "
+                                "findings from the pattern scanner and "
+                                "correlate them with file complexity, "
+                                "change frequency, and historical bug "
+                                "density. Assign risk scores to each "
+                                "file and identify the highest-risk "
+                                "modules. Report with file path, risk "
+                                "score, and contributing factors."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("risk-correlator"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("risk-correlator"),
-                    ),
-                    "prevention-advisor": claude_agent_sdk.AgentDefinition(
-                        description=("Prevention advisor that suggests " "mitigation strategies."),
-                        prompt=(
-                            "You are a prevention advisor. Review "
-                            "the correlated risk findings and "
-                            "prioritize them by impact. Suggest "
-                            "specific prevention strategies: code "
-                            "refactoring, additional tests, type "
-                            "annotations, error handling "
-                            "improvements, and architectural "
-                            "changes. Report with priority, "
-                            "affected files, and actionable steps."
+                        "prevention-advisor": claude_agent_sdk.AgentDefinition(
+                            description=(
+                                "Prevention advisor that suggests " "mitigation strategies."
+                            ),
+                            prompt=(
+                                "You are a prevention advisor. Review "
+                                "the correlated risk findings and "
+                                "prioritize them by impact. Suggest "
+                                "specific prevention strategies: code "
+                                "refactoring, additional tests, type "
+                                "annotations, error handling "
+                                "improvements, and architectural "
+                                "changes. Report with priority, "
+                                "affected files, and actionable steps."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("prevention-advisor"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("prevention-advisor"),
-                    ),
-                },
-            ),
+                    },
+                ),
+            )
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:
