@@ -73,7 +73,7 @@ exclude_docs: |
   examples/*.md
 
   # --- Orphaned files in mixed directories ---
-  # blog/ (keep only interactive-agent-creation-tutorial.md)
+  # blog/ orphans
   blog/social/
   blog/reddit/
   blog/0*.md
@@ -97,8 +97,7 @@ exclude_docs: |
   guides/trust-circuit-breaker.md
   guides/xml-enhanced-prompts.md
 
-  # tutorials/ (keep index.md, build-a-workflow.md,
-  # META_ORCHESTRATION_TUTORIAL.md, and examples/)
+  # tutorials/ (keep index.md, build-a-workflow.md, and examples/)
   tutorials/QUICKSTART_GUIDE.md
   tutorials/campaign-metrics-tracking.md
   tutorials/installation.md
@@ -199,7 +198,6 @@ nav:
   - Tutorials:
       - tutorials/index.md
       - Build a Workflow: tutorials/build-a-workflow.md
-      - Meta-Orchestration: tutorials/META_ORCHESTRATION_TUTORIAL.md
       - Ops Dashboard: tutorials/ops-dashboard.md
       - Examples:
           - Code Review Assistant: tutorials/examples/simple-chatbot.md
@@ -219,7 +217,6 @@ nav:
           - Smart Router: how-to/smart-router.md
           - Auto-Chaining: how-to/auto-chaining.md
       - Integration:
-          - Claude Code: integration/claude-code-integration.md
           - Hooks: hooks.md
           - Security: how-to/security-architecture.md
       - Patterns:

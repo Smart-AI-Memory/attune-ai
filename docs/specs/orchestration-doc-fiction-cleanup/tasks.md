@@ -1,6 +1,6 @@
 # Tasks — orchestration-doc-fiction-cleanup
 
-**Status:** draft (2026-06-26)
+**Status:** executed (2026-06-26) — pending PR
 
 Counts (`dyn` = DynamicTeam/SDKAgent refs, `meta` = MetaOrchestrator
 refs, `surv` = surviving-symbol refs) verified against `origin/main`

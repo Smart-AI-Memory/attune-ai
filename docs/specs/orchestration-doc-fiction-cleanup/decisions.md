@@ -1,6 +1,6 @@
 # Decisions — orchestration-doc-fiction-cleanup
 
-**Status:** draft (2026-06-26)
+**Status:** executed (2026-06-26) — pending PR
 
 ---
 
@@ -108,3 +108,74 @@ the acceptance grep.
   while salvaging.
 - OQ3 → **yes.** Nav/cross-link references to deleted files are pruned
   in the same execution PR to avoid `mkdocs build` breaks.
+
+---
+
+## D6 — `integration/claude-code-integration.md` reclassified excise → DELETE (execution, 2026-06-26)
+
+The `tasks.md` table classified this file **Excise** (10 meta refs, 0
+surv, "keep the doc"). Execution verification contradicted that: the
+**entire** doc documents `MetaOrchestrator.analyze_and_compose(
+interactive=True)` — every code example instantiates the removed
+`MetaOrchestrator`, and the IPC protocol / handler sections exist only
+to serve that one dead path. There is no surviving-symbol content to
+keep (the table's own `surv=0` confirms it), so "excise the dead
+sections" would empty the doc.
+
+The supporting primitive (`set_ask_user_question_handler`,
+`AskUserQuestion`, `scripts/claude_code_ipc_monitor.py`) still imports,
+but `git grep` shows **no live consumer** in `src/` other than its own
+definition/docstring — its only consumer was the removed interactive
+meta-orchestration. Writing a fresh doc for an orphaned primitive is
+out of scope (requirements "Out of scope": no new orchestration prose
+beyond removing/repointing dead symbols).
+
+Per `.claude/rules/attune/removing-dead-code.md` (surfacing trip-wire:
+making dead-feature docs coherent would require documenting orphaned
+infra), the file is **deleted** and its `mkdocs.yml` nav entry pruned,
+rather than excised. Inbound links exist only in append-only history
+(`docs/specs/**`), excluded by D5. Follows the "spec-named scope drifts
+from code reality — grep before executing" lesson.
+
+---
+
+## D7 — out-of-scope fiction found during execution (2026-06-26)
+
+Execution surfaced dead references outside this spec's acceptance-grep
+scope (`docs/ plugin/help/`). Disposition below.
+
+### `content/blog/multi-agent-orchestration-practical-guide.md` — DELETED (folded in, Patrick 2026-06-26)
+
+Initially deferred as a marketing delete-or-rewrite call. On inspection
+it is **fiction from publication, not stale-but-once-true**: dated
+`2026-03-07`, `published: true`, titled "A Practical Guide… Learn how to
+compose agents," but every code example imports invented symbols —
+`SequentialTeam`/`ParallelTeam`/`DebateTeam`/`TeachingTeam`/
+`RefinementTeam` from `attune.orchestration` and named agent classes
+(`CodeQualityReviewer`, `SecurityAuditor`, …) from `attune.agents`.
+`git log -S 'class SequentialTeam'` finds **no commit that ever defined
+them**; all ImportError today and always did. A "historical" banner
+would only timestamp fabricated code, so the choice collapsed to
+delete-or-rewrite-from-scratch. Patrick chose **delete** — it is
+published marketing whose every example mis-teaches the real API (which
+is templates-by-id + `ExecutionStrategy` classes + `AgentTeam`). Same
+call as `META_ORCHESTRATION_TUTORIAL.md`. Rendered on the website via
+`website/lib/blog.ts`; the only inbound link was this decisions note.
+
+### Broader blog-import integrity — separate sweep
+
+The same invented `ParallelTeam` appears in
+`content/blog/attune-ai-vs-crewai-vs-langchain.md` (and the single-line
+grep is a lower bound), so the hallucinated-API problem is not isolated
+to one post. Tracked as a separate "do the published blog code examples
+import?" audit (website-content-accuracy / `/verify` territory), not
+folded in.
+
+### Two unrelated stale imports — tracked separately
+
+- `docs/reference/API_REFERENCE.md` — `from attune import EmpathyOS`
+  (removed in the 9.0.0 empathy-framework retirement, PR #1073).
+- `docs/ARCHITECTURE.md` — `from attune.wizards import HealthcareWizard`
+  (labeled "Status: Planned"; symbol does not exist).
+
+Neither is an orchestration symbol; both tracked as a separate task.

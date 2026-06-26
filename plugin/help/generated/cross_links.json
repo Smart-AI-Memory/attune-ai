@@ -1,7 +1,7 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 1187,
+    "total_templates": 1186,
     "linked_templates": 877,
     "total_tags": 109
   },
@@ -319,12 +319,6 @@
       "tags": [
         "memory",
         "storage"
-      ]
-    },
-    "con-meta-orchestration": {
-      "tags": [
-        "architecture",
-        "workflow"
       ]
     },
     "con-models": {
@@ -11451,7 +11445,6 @@
       "com-workflow-vs-wizard",
       "con-audience-adaptation",
       "con-cross-linking",
-      "con-meta-orchestration",
       "con-sync-paradigm",
       "con-tier-routing",
       "con-tool-planning",
@@ -14201,7 +14194,6 @@
     ],
     "workflow": [
       "com-workflow-vs-wizard",
-      "con-meta-orchestration",
       "con-tool-security-audit",
       "con-tool-spec",
       "con-workflow-chain-prediction",

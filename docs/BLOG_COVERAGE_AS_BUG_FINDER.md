@@ -13,13 +13,13 @@ description: Branches that resist 100% coverage are signal, not noise. Across 78
 A public method in a codebase I was pushing toward 100% coverage crashed on every call. The test suite was green.
 
 ```python
-# in MetaOrchestrator.compose_team()
+# in a team-composition helper (since removed)
 plan_dict = {
     "name": f"team-{plan.strategy.value}",
     "strategy": plan.strategy.value,
     "agents": [{"template_id": t.id, "role": t.role} for t in plan.agents],
     "quality_gates": plan.quality_gates,
-    "phases": plan.phases,  # ExecutionPlan has no `phases` field
+    "phases": plan.phases,  # the plan object had no `phases` field
 }
 ```
 

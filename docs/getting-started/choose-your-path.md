@@ -15,7 +15,7 @@ You've installed the framework and run your first workflow. Now choose the appro
 | [CLI Power User](#path-1-cli-power-user) | Quick tasks, automation, CI/CD | Simple |
 | [MCP Integration](#path-2-mcp-integration) | Claude Desktop, conversational workflow building | Simple |
 | [Workflow Developer](#path-3-workflow-developer) | Custom automations, Python integration | Moderate |
-| [Meta-Orchestration](#path-4-meta-orchestration) | Complex tasks, multi-agent teams | Advanced |
+| [Multi-Agent Teams](#path-4-multi-agent-teams) | Fan out several workflows with quality gates | Advanced |
 
 ---
 
@@ -103,27 +103,37 @@ asyncio.run(audit())
 
 ---
 
-## Path 4: Meta-Orchestration
+## Path 4: Multi-Agent Teams
 
-**Best for:** Complex tasks needing multiple AI agents
+**Best for:** Running several workflows in parallel behind quality gates
 
-Describe what you want and let the framework compose agent teams.
+Fan out a fixed set of workflow-backed agents over a target, then gate
+on their real 0-100 scores with `AgentTeam`.
 
 ```python
-from attune.orchestration import MetaOrchestrator
+import asyncio
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.code_review import CodeReviewWorkflow
+from attune.workflows.security_audit import SecurityAuditWorkflow
 
-orchestrator = MetaOrchestrator()
-plan = orchestrator.analyze_and_compose(
-    task="Review code for security and suggest performance improvements",
-    context={"path": "./src"}
+team = AgentTeam(
+    agents=[
+        WorkflowAgent("code-review", CodeReviewWorkflow, files=["src/"]),
+        WorkflowAgent("security-audit", SecurityAuditWorkflow, files=["src/"]),
+    ],
+    gates=[
+        GateSpec("Code Quality", "code-review", 80.0),
+        GateSpec("Security", "security-audit", 80.0),
+    ],
 )
-result = await orchestrator.execute(plan)
+report = asyncio.run(team.run(["src/"]))
+print(report.passed, report.blockers)
 ```
 
 ### Next Steps
 
-- [Meta-Orchestration Tutorial](../tutorials/META_ORCHESTRATION_TUTORIAL.md)
-- Multi-Agent Philosophy
+- [Multi-Agent Teams example](../tutorials/examples/multi-agent-team-coordination.md)
+- Practical Patterns
 
 ---
 
@@ -134,6 +144,6 @@ result = await orchestrator.execute(plan)
 | Run quick tasks from terminal | CLI |
 | Use Claude Desktop | MCP Integration |
 | Build custom Python apps | Workflow Developer |
-| Orchestrate complex multi-agent tasks | Meta-Orchestration |
+| Run several workflows behind quality gates | Multi-Agent Teams |
 
-**Most users start with CLI or MCP.** Move to Workflow Developer when you need custom logic, and Meta-Orchestration when tasks get complex.
+**Most users start with CLI or MCP.** Move to Workflow Developer when you need custom logic, and Multi-Agent Teams when you want to fan several workflows out behind gates.

@@ -1,6 +1,6 @@
 # Requirements — orchestration-doc-fiction-cleanup
 
-**Status:** draft (2026-06-26)
+**Status:** executed (2026-06-26) — pending PR
 **Owner:** Patrick + agent
 **Origin:** documentation trailing edge of PR #1096
 (`feat(orchestration)!: remove dead DynamicTeam engine`), which
