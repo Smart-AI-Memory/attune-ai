@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.0.0] — 2026-06-26
+
+### Security
+
+- **`aiohttp` floor raised to `>=3.14.1`** in the `[all]` extra's
+  transitive-constraint overrides, clearing 20 GHSA advisories that the
+  prior `>=3.10.0` floor permitted (it resolved to 3.13.3). Dev/CI
+  scope — `aiohttp` is not a core runtime dependency.
+
 ### Fixed
 
 - **SDK workflows no longer report a false failure on a teardown
