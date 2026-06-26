@@ -249,6 +249,8 @@ nav:
   # Information-oriented
   - Reference:
       - reference/index.md
+      - Migration:
+          - Upgrade to 9.0.0: migration/9.0.0.md
       - API:
           - Overview: reference/API_REFERENCE.md
           - Configuration: reference/configuration.md
