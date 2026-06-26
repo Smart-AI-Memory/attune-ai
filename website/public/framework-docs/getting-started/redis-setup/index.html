@@ -873,10 +873,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#with-empathyos" class="md-nav__link">
+  <a href="#storing-workflow-data" class="md-nav__link">
     <span class="md-ellipsis">
       
-        With EmpathyOS
+        Storing Workflow Data
       
     </span>
   </a>
@@ -1300,62 +1300,6 @@
     
   
     Multi-Agent Teams
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../tutorials/examples/sbar-clinical-handoff/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    SBAR Clinical Handoff
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../tutorials/examples/adaptive-learning-system/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Adaptive Learning
   
 
     
@@ -4828,10 +4772,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#with-empathyos" class="md-nav__link">
+  <a href="#storing-workflow-data" class="md-nav__link">
     <span class="md-ellipsis">
       
-        With EmpathyOS
+        Storing Workflow Data
       
     </span>
   </a>
@@ -5064,21 +5008,16 @@
 <a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># Retrieve data</span>
 <a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="n">data</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">&quot;my_key&quot;</span><span class="p">)</span>
 </code></pre></div>
-<h3 id="with-empathyos">With EmpathyOS<a class="headerlink" href="#with-empathyos" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmpathyOS</span><span class="p">,</span> <span class="n">get_redis_memory</span>
+<h3 id="storing-workflow-data">Storing Workflow Data<a class="headerlink" href="#storing-workflow-data" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_redis_memory</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">memory</span> <span class="o">=</span> <span class="n">get_redis_memory</span><span class="p">()</span>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">empathy</span> <span class="o">=</span> <span class="n">EmpathyOS</span><span class="p">(</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;developer&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">short_term_memory</span><span class="o">=</span><span class="n">memory</span><span class="p">,</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="p">)</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1"># Store working data</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="n">empathy</span><span class="o">.</span><span class="n">stash</span><span class="p">(</span><span class="s2">&quot;analysis_results&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;files&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">})</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="c1"># Retrieve later</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="n">results</span> <span class="o">=</span> <span class="n">empathy</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">&quot;analysis_results&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># Store working data</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">memory</span><span class="o">.</span><span class="n">stash</span><span class="p">(</span><span class="s2">&quot;analysis_results&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;files&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;issues&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">})</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1"># Retrieve later</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">results</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">&quot;analysis_results&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="file-based-fallback">File-Based Fallback<a class="headerlink" href="#file-based-fallback" title="Permanent link">&para;</a></h3>
 <p>When Redis is not available, the framework automatically

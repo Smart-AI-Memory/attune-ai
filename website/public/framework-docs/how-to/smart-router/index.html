@@ -1002,62 +1002,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../tutorials/examples/sbar-clinical-handoff/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    SBAR Clinical Handoff
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../tutorials/examples/adaptive-learning-system/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Adaptive Learning
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -1670,17 +1614,6 @@
     <span class="md-ellipsis">
       
         CLI Usage
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#customizing-the-registry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Customizing the Registry
       
     </span>
   </a>
@@ -4944,17 +4877,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#customizing-the-registry" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Customizing the Registry
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5158,31 +5080,42 @@
 <a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reason: </span><span class="si">{</span><span class="n">decision</span><span class="o">.</span><span class="n">reasoning</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>        <span class="k">return</span>
 <a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>
-<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmpathyOS</span>
-<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>    <span class="n">empathy</span> <span class="o">=</span> <span class="n">EmpathyOS</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;cli&quot;</span><span class="p">)</span>
-<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">empathy</span><span class="o">.</span><span class="n">run_workflow</span><span class="p">(</span>
-<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>        <span class="n">decision</span><span class="o">.</span><span class="n">primary_wizard</span><span class="p">,</span>
-<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>        <span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">path</span><span class="p">},</span>
-<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>    <span class="p">)</span>
-<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">)</span>
-<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>
-<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">run_from_description</span><span class="p">(</span><span class="s2">&quot;Check for security issues in my API code&quot;</span><span class="p">))</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>    <span class="c1"># Map the router&#39;s suggestion to a concrete workflow class</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecurityAuditWorkflow</span><span class="p">,</span> <span class="n">CodeReviewWorkflow</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>    <span class="n">workflows</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>        <span class="s2">&quot;security-audit&quot;</span><span class="p">:</span> <span class="n">SecurityAuditWorkflow</span><span class="p">,</span>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>        <span class="s2">&quot;code-review&quot;</span><span class="p">:</span> <span class="n">CodeReviewWorkflow</span><span class="p">,</span>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>    <span class="p">}</span>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>    <span class="n">workflow_cls</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">decision</span><span class="o">.</span><span class="n">primary_wizard</span><span class="p">,</span> <span class="n">CodeReviewWorkflow</span><span class="p">)</span>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow_cls</span><span class="p">()</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">)</span>
+<a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+<a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>
+<a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">run_from_description</span><span class="p">(</span><span class="s2">&quot;Check for security issues in my API code&quot;</span><span class="p">))</span>
 </code></pre></div>
 <h3 id="pattern-2-multi-wizard-fan-out">Pattern 2: Multi-Wizard Fan-Out<a class="headerlink" href="#pattern-2-multi-wizard-fan-out" title="Permanent link">&para;</a></h3>
 <p>Run the primary wizard and all secondaries when the primary is a strong match.
 The secondary list is always narrower in scope than the primary, so a
 high primary confidence is a reasonable proxy for running them all:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">decision</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">route_sync</span><span class="p">(</span><span class="s2">&quot;Full quality pass on authentication module&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecurityAuditWorkflow</span><span class="p">,</span> <span class="n">CodeReviewWorkflow</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># Run secondaries only when the overall routing is high-confidence</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="n">wizards_to_run</span> <span class="o">=</span> <span class="p">[</span><span class="n">decision</span><span class="o">.</span><span class="n">primary_wizard</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">decision</span><span class="o">.</span><span class="n">secondary_wizards</span> <span class="k">if</span> <span class="n">decision</span><span class="o">.</span><span class="n">confidence</span> <span class="o">&gt;</span> <span class="mf">0.75</span> <span class="k">else</span> <span class="p">[]</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="p">)</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">workflows</span> <span class="o">=</span> <span class="p">{</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="s2">&quot;security-audit&quot;</span><span class="p">:</span> <span class="n">SecurityAuditWorkflow</span><span class="p">,</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="s2">&quot;code-review&quot;</span><span class="p">:</span> <span class="n">CodeReviewWorkflow</span><span class="p">,</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="p">}</span>
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="k">for</span> <span class="n">wizard_name</span> <span class="ow">in</span> <span class="n">wizards_to_run</span><span class="p">:</span>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;→ Running </span><span class="si">{</span><span class="n">wizard_name</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">empathy</span><span class="o">.</span><span class="n">run_workflow</span><span class="p">(</span><span class="n">wizard_name</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;src/auth/&quot;</span><span class="p">})</span>
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;summary&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;done&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="n">decision</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">route_sync</span><span class="p">(</span><span class="s2">&quot;Full quality pass on authentication module&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="c1"># Run secondaries only when the overall routing is high-confidence</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="n">wizards_to_run</span> <span class="o">=</span> <span class="p">[</span><span class="n">decision</span><span class="o">.</span><span class="n">primary_wizard</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>    <span class="n">decision</span><span class="o">.</span><span class="n">secondary_wizards</span> <span class="k">if</span> <span class="n">decision</span><span class="o">.</span><span class="n">confidence</span> <span class="o">&gt;</span> <span class="mf">0.75</span> <span class="k">else</span> <span class="p">[]</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="p">)</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="k">for</span> <span class="n">wizard_name</span> <span class="ow">in</span> <span class="n">wizards_to_run</span><span class="p">:</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;→ Running </span><span class="si">{</span><span class="n">wizard_name</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>    <span class="n">workflow_cls</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">wizard_name</span><span class="p">,</span> <span class="n">CodeReviewWorkflow</span><span class="p">)</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow_cls</span><span class="p">()</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/auth/&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="pattern-3-file-based-auto-routing">Pattern 3: File-Based Auto-Routing<a class="headerlink" href="#pattern-3-file-based-auto-routing" title="Permanent link">&para;</a></h3>
 <p>Automatically route to the right wizard when a file changes:</p>
@@ -5219,22 +5152,6 @@ dispatch:</p>
 <a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Or use the meta-router directly</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>attune<span class="w"> </span>route<span class="w"> </span><span class="s2">&quot;Fix performance in the database layer&quot;</span>
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="c1"># → Suggests: perf-audit (0.88 confidence)</span>
-</code></pre></div>
-<hr />
-<h2 id="customizing-the-registry">Customizing the Registry<a class="headerlink" href="#customizing-the-registry" title="Permanent link">&para;</a></h2>
-<p>Register a custom wizard or workflow to make it routable:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.routing</span><span class="w"> </span><span class="kn">import</span> <span class="n">SmartRouter</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="n">router</span> <span class="o">=</span> <span class="n">SmartRouter</span><span class="p">()</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">router</span><span class="o">.</span><span class="n">register_wizard</span><span class="p">(</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;compliance-check&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Check code for HIPAA and SOC2 compliance requirements&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a>    <span class="n">keywords</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;hipaa&quot;</span><span class="p">,</span> <span class="s2">&quot;compliance&quot;</span><span class="p">,</span> <span class="s2">&quot;soc2&quot;</span><span class="p">,</span> <span class="s2">&quot;audit&quot;</span><span class="p">,</span> <span class="s2">&quot;gdpr&quot;</span><span class="p">,</span> <span class="s2">&quot;phi&quot;</span><span class="p">],</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="p">)</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="c1"># Now routes naturally</span>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="n">decision</span> <span class="o">=</span> <span class="n">router</span><span class="o">.</span><span class="n">route_sync</span><span class="p">(</span><span class="s2">&quot;Check for HIPAA compliance issues&quot;</span><span class="p">)</span>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">decision</span><span class="o">.</span><span class="n">primary_wizard</span><span class="p">)</span>  <span class="c1"># → compliance-check</span>
 </code></pre></div>
 <hr />
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
