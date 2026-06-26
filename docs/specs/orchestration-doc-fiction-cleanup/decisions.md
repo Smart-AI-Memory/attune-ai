@@ -139,28 +139,43 @@ from code reality — grep before executing" lesson.
 
 ---
 
-## D7 — out-of-scope fiction found during execution, tracked separately (2026-06-26)
+## D7 — out-of-scope fiction found during execution (2026-06-26)
 
-Three dead references surfaced outside this spec's scope and are left
-untouched here (each tracked as its own follow-up task):
+Execution surfaced dead references outside this spec's acceptance-grep
+scope (`docs/ plugin/help/`). Disposition below.
 
-- `content/blog/multi-agent-orchestration-practical-guide.md` — a
-  ~550-line published blog (rendered on the website via
-  `website/lib/blog.ts`) whose entire premise is the removed
-  `MetaOrchestrator`. It is NOT under `docs/`/`plugin/help/` (the
-  acceptance-grep scope), NOT projected to `docs/`, NOT in `mkdocs.yml`
-  nav, and NOT in `tasks.md`. Unlike the deleted
-  `META_ORCHESTRATION_TUTORIAL.md`, cleaning it is a whole-article
-  delete-or-rewrite decision on published *marketing* content — a
-  positioning call for the owner, not a mechanical ref-swap.
-- `docs/reference/API_REFERENCE.md` — a fence does
-  `from attune import EmpathyOS` (removed in the 9.0.0 empathy-framework
-  retirement, PR #1073). Not an orchestration symbol.
-- `docs/ARCHITECTURE.md` — a fence does
-  `from attune.wizards import HealthcareWizard` (labeled "Status:
-  Planned"; symbol does not exist). Not an orchestration symbol.
+### `content/blog/multi-agent-orchestration-practical-guide.md` — DELETED (folded in, Patrick 2026-06-26)
 
-Per the decision-routine ("name drift explicitly; don't silently expand
-a one-PR spec"), none are folded into this PR. The acceptance grep
-(`docs/ plugin/help/`) is clean for the orchestration symbols this spec
-owns.
+Initially deferred as a marketing delete-or-rewrite call. On inspection
+it is **fiction from publication, not stale-but-once-true**: dated
+`2026-03-07`, `published: true`, titled "A Practical Guide… Learn how to
+compose agents," but every code example imports invented symbols —
+`SequentialTeam`/`ParallelTeam`/`DebateTeam`/`TeachingTeam`/
+`RefinementTeam` from `attune.orchestration` and named agent classes
+(`CodeQualityReviewer`, `SecurityAuditor`, …) from `attune.agents`.
+`git log -S 'class SequentialTeam'` finds **no commit that ever defined
+them**; all ImportError today and always did. A "historical" banner
+would only timestamp fabricated code, so the choice collapsed to
+delete-or-rewrite-from-scratch. Patrick chose **delete** — it is
+published marketing whose every example mis-teaches the real API (which
+is templates-by-id + `ExecutionStrategy` classes + `AgentTeam`). Same
+call as `META_ORCHESTRATION_TUTORIAL.md`. Rendered on the website via
+`website/lib/blog.ts`; the only inbound link was this decisions note.
+
+### Broader blog-import integrity — separate sweep
+
+The same invented `ParallelTeam` appears in
+`content/blog/attune-ai-vs-crewai-vs-langchain.md` (and the single-line
+grep is a lower bound), so the hallucinated-API problem is not isolated
+to one post. Tracked as a separate "do the published blog code examples
+import?" audit (website-content-accuracy / `/verify` territory), not
+folded in.
+
+### Two unrelated stale imports — tracked separately
+
+- `docs/reference/API_REFERENCE.md` — `from attune import EmpathyOS`
+  (removed in the 9.0.0 empathy-framework retirement, PR #1073).
+- `docs/ARCHITECTURE.md` — `from attune.wizards import HealthcareWizard`
+  (labeled "Status: Planned"; symbol does not exist).
+
+Neither is an orchestration symbol; both tracked as a separate task.
