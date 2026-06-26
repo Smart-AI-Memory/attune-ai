@@ -1,6 +1,6 @@
 # Decisions — orchestration-doc-fiction-cleanup
 
-**Status:** draft (2026-06-26)
+**Status:** executed (2026-06-26) — pending PR
 
 ---
 
