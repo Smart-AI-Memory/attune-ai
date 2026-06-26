@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Generic parallel agent-team infrastructure (`attune.agents.team`).**
+  A reusable `AgentTeam` coordinator + `WorkflowAgent` that wraps a
+  `BaseWorkflow`, fans agents out via `asyncio.gather`, aggregates their
+  0–100 scores, and gates on declarative `GateSpec`s (critical → blocker,
+  else warning). Generalizes the working `ReleasePrepTeam` pattern; does
+  not revive the dead engine removed in #1096. The `/spec` quality gate
+  (`pipeline.orchestrator._run_quality_gate`) is re-seated onto it as the
+  first consumer — behavior preserved (empty-file trivial pass, file cap,
+  per-file min, fail-closed-on-error). A non-mocked dogfood confirms a
+  real `code-review` + `security-audit` team blocks a vulnerable file
+  with real sub-threshold scores and non-zero cost. See
+  `docs/specs/generic-agent-teams/`.
 - **Catalog-completeness guard.** A new `TestCatalogCompleteness` guard
   (in `test_registry_coverage.py`) fails if any surfaced registry drops
   out of `list_capabilities` or its count drifts from the live registry —

@@ -115,6 +115,43 @@ escalation.
 
 ---
 
+## D9 — ReleasePrepTeam re-seat: take the R6 fallback (2026-06-26, execution)
+
+`ReleasePrepTeam` keeps its bespoke `_evaluate_quality_gates` /
+`_identify_issues` and is **not** re-seated onto `AgentTeam`. It already
+shares the single `QualityGate` definition (see the D6 clarification
+below). R6's documented fallback is exercised.
+
+**Why:** the release team's four gates are heterogeneous in a way the
+slim v1 `GateSpec` (D6: `actual >= threshold`) does not model:
+
+- **Security** is a *max* gate — `critical_issues <= max_critical_issues`
+  (lower is better), not a min-score threshold.
+- **Quality** is on a **0–10** scale (`min_quality_score = 7.0`), not the
+  0–100 the team scorer assumes.
+- Each gate reads a **different findings key** (`critical_issues`,
+  `coverage_percent`, `quality_score`), not a uniform `score`.
+
+Re-seating faithfully would require expanding `GateSpec` with a
+comparison direction and per-agent finding extractors — adding v1 design
+surface the primary consumer (`/spec`) never needed, and risking drift on
+a **working, fully-tested** release path (`test_release_prep_team.py`,
+`test_release_prep_team_report.py`) for **zero behavior change**. That is
+precisely the risk R6's fallback clause guards against. The richer
+comparator model is deferred to a follow-up if a second consumer needs it.
+
+**Realized D6 — shared home is `release_models`, not `team.py`.** D6/design
+proposed moving `QualityGate` into `team.py` with `release_models`
+re-exporting. Realized the other way: `QualityGate` stays defined in
+`agents/release/release_models.py` and `agents/team.py` imports it from
+there. Moving it into `team.py` would make `release_models` import from
+`team.py` while `team.py` imports from `release_models` — a circular
+import. Keeping the definition in `release_models` gives the single shared
+source D6 wanted with no cycle and no churn to the widely-imported
+release module.
+
+---
+
 ## Cross-references
 
 - `.claude/rules/attune/removing-dead-code.md` — generalize the working

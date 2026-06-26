@@ -132,7 +132,7 @@ base, never resurrects the stub.
 | R3 | `/spec` gate re-seated | `_run_quality_gate` builds an `AgentTeam`; trivial task still completes |
 | R4 | Gate honest on error | A review workflow raising → gate fails closed, not fake-pass (preserves #1094 behavior) |
 | R5 | Non-mocked dogfood | Real `code-review` + `security-audit` team on a bad file → blocked, scores < threshold, cost > 0 |
-| R6 | ReleasePrepTeam re-seated | `release-prep` output unchanged; team built on generic base |
+| R6 | ReleasePrepTeam (fallback taken) | `release-prep` output unchanged. Full re-seat fallback taken — see D9: heterogeneous gate comparators (max-gate, 0–10 scale, per-finding keys) make a faithful re-seat add v1 `GateSpec` surface for zero behavior change; `QualityGate` is already the single shared definition both consumers import |
 | R7 | No revived dead code | `grep -rn "StubAgent\|DynamicTeam\|SDKAgent" src/` stays empty |
 | R8 | No collateral damage | `health-check` runs; `import attune.orchestration` clean; full suite green |
 | R9 | Auditable | decisions.md records D1–D3 + generalize-not-revive + module location, references #1096 |
