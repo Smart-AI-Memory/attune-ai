@@ -1,6 +1,7 @@
 """Tests for pipeline orchestrator."""
 
 import subprocess
+from contextlib import contextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -41,13 +42,61 @@ def _make_task(
         task_id=task_id,
         name=name,
         objective="Test objective",
-        files_to_create=files_to_create
-        or [{"path": "src/attune/foo.py", "description": "New file"}],
+        files_to_create=(
+            [{"path": "src/attune/foo.py", "description": "New file"}]
+            if files_to_create is None
+            else files_to_create
+        ),
         files_to_modify=files_to_modify or [],
         validation_checks=["check1"],
         risks=[],
         dependencies=[],
     )
+
+
+def _fake_review_result(score, *, success=True, cost=0.01):
+    """Build a fake review WorkflowResult for gate tests."""
+    result = MagicMock()
+    result.success = success
+    result.final_output = {"score": score} if score is not None else "raw markdown"
+    result.cost_report.total_cost = cost
+    return result
+
+
+@contextmanager
+def _patch_reviews(
+    *,
+    code_score=None,
+    sec_score=None,
+    cost=0.01,
+    code_raises=False,
+    sec_raises=False,
+):
+    """Patch the gate's CodeReview + SecurityAudit workflows.
+
+    Each patched workflow's ``execute(path=...)`` returns a fake result
+    carrying the given score (or raises, to exercise fail-closed).
+    """
+
+    def _make_wf(score, raises):
+        wf = MagicMock()
+        if raises:
+            wf.execute = AsyncMock(side_effect=RuntimeError("review boom"))
+        else:
+            wf.execute = AsyncMock(return_value=_fake_review_result(score, cost=cost))
+        return wf
+
+    with (
+        patch(
+            "attune.workflows.code_review.CodeReviewWorkflow",
+            return_value=_make_wf(code_score, code_raises),
+        ),
+        patch(
+            "attune.workflows.security_audit.SecurityAuditWorkflow",
+            return_value=_make_wf(sec_score, sec_raises),
+        ),
+    ):
+        yield
 
 
 class TestPipelineOrchestratorInit:
@@ -101,7 +150,7 @@ class TestRunGatesForTask:
 
     @pytest.mark.asyncio
     async def test_gate_failure_stops_early(self):
-        """Failed quality gate prevents tests and simplify."""
+        """A below-threshold review score fails the gate and stops early."""
         orch = PipelineOrchestrator(
             ".claude/plans/pipeline-orchestrator.md",
             skip_tests=True,
@@ -109,18 +158,7 @@ class TestRunGatesForTask:
         )
         task = _make_task()
 
-        mock_result = MagicMock()
-        mock_result.success = False
-        mock_result.quality_gate_results = {"min_quality": False}
-        mock_result.agent_results = []
-        mock_result.total_cost = 0.01
-        mock_result.execution_time_ms = 100
-
-        with patch("attune.pipeline.orchestrator.DynamicTeamBuilder") as mock_builder_cls:
-            mock_team = AsyncMock()
-            mock_team.execute.return_value = mock_result
-            mock_builder_cls.return_value.build_from_plan.return_value = mock_team
-
+        with _patch_reviews(code_score=40.0, sec_score=90.0):
             result = await orch.run_gates_for_task(task)
 
         assert result.executed
@@ -129,7 +167,7 @@ class TestRunGatesForTask:
 
     @pytest.mark.asyncio
     async def test_gate_success(self):
-        """Successful quality gate records details."""
+        """Passing review scores record the real scores and summed cost."""
         orch = PipelineOrchestrator(
             ".claude/plans/pipeline-orchestrator.md",
             skip_tests=True,
@@ -137,30 +175,19 @@ class TestRunGatesForTask:
         )
         task = _make_task()
 
-        mock_result = MagicMock()
-        mock_result.success = True
-        mock_result.quality_gate_results = {
-            "min_quality": True,
-            "min_security": True,
-        }
-        mock_result.agent_results = [MagicMock(), MagicMock()]
-        mock_result.total_cost = 0.05
-        mock_result.execution_time_ms = 2000
-
-        with patch("attune.pipeline.orchestrator.DynamicTeamBuilder") as mock_builder_cls:
-            mock_team = AsyncMock()
-            mock_team.execute.return_value = mock_result
-            mock_builder_cls.return_value.build_from_plan.return_value = mock_team
-
+        with _patch_reviews(code_score=88.0, sec_score=92.0, cost=0.05):
             result = await orch.run_gates_for_task(task)
 
         assert result.quality_gate_passed
-        assert result.gate_details["team_success"]
-        assert result.cost == 0.05
+        gate = result.gate_details["gate_results"]
+        assert gate["min_quality"]["score"] == 88.0
+        assert gate["min_security"]["score"] == 92.0
+        # One file, two dimensions at 0.05 each.
+        assert result.cost == pytest.approx(0.10)
 
     @pytest.mark.asyncio
-    async def test_gate_exception_fails_gracefully(self):
-        """Exception in quality gate marks task as failed."""
+    async def test_gate_fails_closed_on_review_error(self):
+        """A review raising fails the gate closed — never a fake pass."""
         orch = PipelineOrchestrator(
             ".claude/plans/pipeline-orchestrator.md",
             skip_tests=True,
@@ -168,14 +195,79 @@ class TestRunGatesForTask:
         )
         task = _make_task()
 
-        with patch(
-            "attune.pipeline.orchestrator.DynamicTeamBuilder",
-            side_effect=RuntimeError("team build failed"),
-        ):
+        with _patch_reviews(code_score=95.0, sec_score=95.0, sec_raises=True):
             result = await orch.run_gates_for_task(task)
 
         assert result.quality_gate_passed is False
-        assert "Gate error" in result.error
+
+    @pytest.mark.asyncio
+    async def test_gate_no_score_fails_closed(self):
+        """A review with no parseable score fails the gate closed."""
+        orch = PipelineOrchestrator(
+            ".claude/plans/pipeline-orchestrator.md",
+            skip_tests=True,
+            skip_simplify=True,
+        )
+        task = _make_task()
+
+        # code_score=None -> final_output is raw text, no score.
+        with _patch_reviews(code_score=None, sec_score=95.0):
+            result = await orch.run_gates_for_task(task)
+
+        assert result.quality_gate_passed is False
+
+    @pytest.mark.asyncio
+    async def test_gate_no_target_files_passes(self):
+        """A task with no file changes passes the gate trivially."""
+        orch = PipelineOrchestrator(
+            ".claude/plans/pipeline-orchestrator.md",
+            skip_tests=True,
+            skip_simplify=True,
+        )
+        task = _make_task(files_to_create=[], files_to_modify=[])
+
+        result = await orch.run_gates_for_task(task)
+
+        assert result.quality_gate_passed
+
+
+class TestExtractScoreRealAdapter:
+    """Non-mocked receipt: _extract_score reads scores from the REAL
+    AgentSDKResultAdapter output, not just hand-built dicts.
+
+    Guards the regression where a clean review (score, no findings)
+    leaves final_output as raw markdown rather than a WorkflowReport
+    dict — without the raw-text fallback the gate would fail closed on
+    every such review, turning always-pass theater into always-fail.
+    """
+
+    def _real_result(self, text: str):
+        from datetime import datetime
+
+        from attune.workflows.agent_sdk_adapter import AgentSDKResultAdapter
+
+        return AgentSDKResultAdapter.from_agent_output(
+            report_title="Code review",
+            result_text=text,
+            subagent_names=[],
+            started_at=datetime.now(),
+            completed_at=datetime.now(),
+        )
+
+    def test_clean_review_no_findings_yields_score(self):
+        """A clean review (raw-text final_output) still yields a score."""
+        result = self._real_result("Overall assessment.\n\nScore: 95/100\n\nNo issues.")
+        assert PipelineOrchestrator._extract_score(result) == 95.0
+
+    def test_low_review_yields_score(self):
+        """A low-score review yields the real score for the gate."""
+        result = self._real_result("## Findings\n\n- CRITICAL: bad\n\nScore: 35/100")
+        assert PipelineOrchestrator._extract_score(result) == 35.0
+
+    def test_no_score_text_fails_closed(self):
+        """A review with no score string yields None (gate fails closed)."""
+        result = self._real_result("Looks fine to me, no number here.")
+        assert PipelineOrchestrator._extract_score(result) is None
 
 
 class TestRunTests:
@@ -352,18 +444,7 @@ class TestRunAll:
             skip_simplify=True,
         )
 
-        mock_result = MagicMock()
-        mock_result.success = False
-        mock_result.quality_gate_results = {"min_quality": False}
-        mock_result.agent_results = []
-        mock_result.total_cost = 0.01
-        mock_result.execution_time_ms = 100
-
-        with patch("attune.pipeline.orchestrator.DynamicTeamBuilder") as mock_builder_cls:
-            mock_team = AsyncMock()
-            mock_team.execute.return_value = mock_result
-            mock_builder_cls.return_value.build_from_plan.return_value = mock_team
-
+        with _patch_reviews(code_score=30.0, sec_score=95.0):
             result = await orch.run_all()
 
         # Should stop after first task fails

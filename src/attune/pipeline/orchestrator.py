@@ -1,9 +1,9 @@
 """Pipeline orchestrator.
 
 Executes an XML task spec with quality gates, per-task
-testing, and code simplification. Delegates to existing
-infrastructure (DynamicTeam, WorkflowComposer, agent
-templates) rather than reimplementing.
+testing, and code simplification. The quality gate runs the
+real ``CodeReviewWorkflow`` and ``SecurityAuditWorkflow`` over
+each task's target files and gates on their actual 0-100 scores.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -11,14 +11,15 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import re
 import subprocess
 import time
 from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any, Literal
 
-from attune.orchestration.team_builder import DynamicTeamBuilder
 from attune.pipeline.models import PipelineResult, TaskResult
 from attune.pipeline.spec_reader import read_spec
 from attune.wizards.decomposer import DecomposedTask
@@ -35,7 +36,7 @@ class PipelineOrchestrator:
 
     Args:
         spec_path: Path to a plan file with XML tasks.
-        skip_gates: Skip quality gate agent teams.
+        skip_gates: Skip the code-review + security-audit gate.
         skip_tests: Skip per-task test runs.
         skip_simplify: Skip code simplification.
 
@@ -222,65 +223,128 @@ class PipelineOrchestrator:
 
         return result
 
+    #: Minimum passing score (0-100) for each gate dimension.
+    _GATE_THRESHOLD: float = 70.0
+    #: Cap on files reviewed per gate to bound cost (logged when hit).
+    _GATE_MAX_FILES: int = 10
+    #: Fallback score parse for reviews that produced no findings dict.
+    _SCORE_RE = re.compile(r"\bscore:?\s*(\d{1,3})\s*/\s*100", re.IGNORECASE)
+
     async def _run_quality_gate(
         self,
         task: DecomposedTask,
     ) -> tuple[bool, dict[str, Any], float]:
-        """Run code_reviewer + security_auditor in parallel.
+        """Gate a task with real code review + security audit.
+
+        Runs ``CodeReviewWorkflow`` and ``SecurityAuditWorkflow`` over
+        the task's target files and gates on their actual 0-100 scores
+        against ``_GATE_THRESHOLD``. Fails closed: any review error or a
+        missing score yields a non-passing gate, never a fake pass.
 
         Returns:
             Tuple of (passed, details_dict, cost).
 
         """
+        from attune.workflows.code_review import CodeReviewWorkflow
+        from attune.workflows.security_audit import SecurityAuditWorkflow
+
         target_files = [f["path"] for f in task.files_to_create + task.files_to_modify]
+        if not target_files:
+            # No file changes — nothing to score, so the gate passes
+            # trivially rather than failing closed on an empty review.
+            return (True, {"reason": "no target files"}, 0.0)
 
-        plan = {
-            "name": f"pipeline-gate:{task.task_id}",
-            "agents": [
-                {"template_id": "code_reviewer"},
-                {"template_id": "security_auditor"},
-            ],
-            "strategy": "parallel",
-            "quality_gates": {
-                "min_quality": {
-                    "agent_role": "Code Quality Reviewer",
-                    "metric": "score",
-                    "threshold": 70.0,
-                    "required": True,
-                },
-                "min_security": {
-                    "agent_role": "Security Auditor",
-                    "metric": "score",
-                    "threshold": 70.0,
-                    "required": True,
-                },
-            },
-        }
+        files = target_files[: self._GATE_MAX_FILES]
+        if len(target_files) > self._GATE_MAX_FILES:
+            logger.warning(
+                "Quality gate capped at %d of %d files for task %s",
+                self._GATE_MAX_FILES,
+                len(target_files),
+                task.task_id,
+            )
 
-        builder = DynamicTeamBuilder()
-        team = builder.build_from_plan(plan)
+        code_review = CodeReviewWorkflow()
+        security_audit = SecurityAuditWorkflow()
 
-        input_data = {
-            "task_id": task.task_id,
-            "task_name": task.name,
-            "objective": task.objective,
-            "files": target_files,
-        }
+        async def _review(workflow: Any, path: str) -> tuple[float | None, float]:
+            """Return (score, cost) for one workflow over one file."""
+            try:
+                result = await workflow.execute(path=path)
+            except Exception as exc:  # noqa: BLE001
+                # INTENTIONAL: a review failure fails the gate closed,
+                # it must not crash the pipeline or fake a pass.
+                logger.error("Gate review failed for %s: %s", path, exc)
+                return (None, 0.0)
+            return (self._extract_score(result), self._result_cost(result))
 
-        team_result = await team.execute(input_data)
+        # Both dimensions over every file, concurrently.
+        jobs = [_review(code_review, p) for p in files]
+        jobs += [_review(security_audit, p) for p in files]
+        outcomes = await asyncio.gather(*jobs)
+
+        n = len(files)
+        quality_score = self._min_score(outcomes[:n])
+        security_score = self._min_score(outcomes[n:])
+        cost = sum(c for _, c in outcomes)
+
+        passed = (
+            quality_score is not None
+            and security_score is not None
+            and quality_score >= self._GATE_THRESHOLD
+            and security_score >= self._GATE_THRESHOLD
+        )
 
         details = {
-            "team_success": team_result.success,
-            "gate_results": team_result.quality_gate_results,
-            "agent_count": len(team_result.agent_results),
-            "execution_time_ms": team_result.execution_time_ms,
+            "gate_results": {
+                "min_quality": {
+                    "score": quality_score if quality_score is not None else 0.0,
+                    "threshold": self._GATE_THRESHOLD,
+                },
+                "min_security": {
+                    "score": security_score if security_score is not None else 0.0,
+                    "threshold": self._GATE_THRESHOLD,
+                },
+            },
+            "files_reviewed": files,
+            "scored": quality_score is not None and security_score is not None,
         }
+        return (passed, details, cost)
 
-        return (
-            team_result.success,
-            details,
-            team_result.total_cost,
-        )
+    @classmethod
+    def _extract_score(cls, result: Any) -> float | None:
+        """Pull the 0-100 score from a review ``WorkflowResult``.
+
+        ``final_output`` is a ``WorkflowReport`` dict (with a top-level
+        ``score``) only when the review parsed findings; a clean review
+        with no findings leaves ``final_output`` as raw markdown, so we
+        also regex the text for ``score: N/100``. Returns None when the
+        review did not succeed or carried no score, so the caller fails
+        the gate closed.
+        """
+        if not getattr(result, "success", False):
+            return None
+        output = getattr(result, "final_output", None)
+        if isinstance(output, dict) and output.get("score") is not None:
+            return float(output["score"])
+        if isinstance(output, str):
+            match = cls._SCORE_RE.search(output)
+            if match:
+                return float(match.group(1))
+        return None
+
+    @staticmethod
+    def _result_cost(result: Any) -> float:
+        """Best-effort cost of a review ``WorkflowResult``."""
+        report = getattr(result, "cost_report", None)
+        return float(getattr(report, "total_cost", 0.0) or 0.0)
+
+    @staticmethod
+    def _min_score(outcomes: list[tuple[float | None, float]]) -> float | None:
+        """Worst score across files; None if any file failed to score."""
+        scores = [s for s, _ in outcomes]
+        if not scores or any(s is None for s in scores):
+            return None
+        return min(s for s in scores if s is not None)
 
     def _find_test_files(
         self,
