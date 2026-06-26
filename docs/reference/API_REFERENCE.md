@@ -10,8 +10,6 @@
 
 - [Overview](#overview)
 - [Core Framework](#core-framework)
-  - [EmpathyOS](#empathyos)
-  - [InteractionResponse](#interactionresponse)
   - [Exceptions](#exceptions)
 - [Configuration](#configuration)
   - [AttuneConfig](#attuneconfig)
@@ -111,83 +109,6 @@ pip install 'attune-ai[redis]'       # Redis-backed memory + AMS plugin
 ---
 
 ## Core Framework
-
-### EmpathyOS
-
-`attune.core.EmpathyOS`
-
-Main orchestration class for the five-level empathy model.
-
-```python
-from attune import EmpathyOS
-
-empathy = EmpathyOS(user_id="developer@company.com")
-```
-
-#### Constructor
-
-```python
-EmpathyOS(user_id: str)
-```
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `user_id` | `str` | Unique identifier for the user |
-
-#### Methods
-
-```python
-# Level 1: Reactive (simple Q&A)
-response = empathy.level_1_reactive(
-    user_input: str,
-    context: dict | None = None
-) -> InteractionResponse
-
-# Level 2: Guided (contextual with clarifying questions)
-response = empathy.level_2_guided(
-    user_input: str,
-    context: dict,
-    history: list[dict]
-) -> InteractionResponse
-
-# Level 3: Proactive (pattern detection)
-response = empathy.level_3_proactive(
-    user_input: str,
-    context: dict,
-    history: list[dict]
-) -> InteractionResponse
-
-# Level 4: Anticipatory (trajectory prediction)
-response = empathy.level_4_anticipatory(
-    user_input: str,
-    context: dict,
-    history: list[dict]
-) -> InteractionResponse
-
-# Memory shortcuts
-empathy.stash(key: str, value: Any) -> bool
-empathy.persist_pattern(
-    content: str,
-    pattern_type: str
-) -> dict
-```
-
----
-
-### InteractionResponse
-
-`attune.core.InteractionResponse`
-
-Dataclass returned by all EmpathyOS level methods.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `level` | `int` | Empathy level used (1-5) |
-| `response` | `str` | Generated response text |
-| `confidence` | `float` | Confidence score (0.0-1.0) |
-| `predictions` | `list[str] \| None` | Predicted next actions (Level 4+) |
-
----
 
 ### Exceptions
 
@@ -1206,7 +1127,7 @@ msg = format_error(
 
 | Module | Purpose | Key Export |
 |--------|---------|-----------|
-| `attune` | Core framework | `EmpathyOS` |
+| `attune` | Core framework | `AttuneConfig` |
 | `attune.config` | Configuration | `AttuneConfig`, `load_config` |
 | `attune.memory` | Two-tier memory | `UnifiedMemory` |
 | `attune.workflows` | SDK-native pipelines | `BaseWorkflow`, 15 workflows |
