@@ -5,19 +5,24 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'content/**'
       - 'mkdocs.yml'
       - '.github/workflows/docs.yml'
-      # wiring-audit job — also fire on source / script changes that
-      # could break docs references (anchor links, mkdocstrings symbols).
+      # wiring-audit + doc-import-audit jobs — also fire on source /
+      # script changes that could break docs references (anchor links,
+      # mkdocstrings symbols, removed importable symbols).
       - 'src/**'
       - 'scripts/audit_docs_wiring.py'
+      - 'scripts/audit_doc_imports.py'
   pull_request:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'content/**'
       - 'mkdocs.yml'
       - 'src/**'
       - 'scripts/audit_docs_wiring.py'
+      - 'scripts/audit_doc_imports.py'
       # .help/** regen feeds rendered docs; include it so a regen PR
       # hits the mkdocs --strict pre-flight (docs-link-prevalidation
       # CI safety net — no separate workflow needed, this job already
@@ -56,6 +61,32 @@ jobs:
 
       - name: Run wiring audit
         run: python scripts/audit_docs_wiring.py --format json
+
+  # Doc-import gate — verifies every `attune` import in a doc code fence
+  # resolves against the installed package (the FINAL guard for the
+  # recurring "feature removed, docs still import it -> reader ImportError"
+  # failure; see docs/specs/{orchestration,empathy}-doc-fiction-cleanup/).
+  # ADVISORY: NOT in required_status_checks while the existing backlog
+  # (~21 findings on adoption) is cleared; promote to required once main
+  # holds green. Unlike wiring-audit this needs the package importable, so
+  # it installs the dev/developer extras to resolve the full import graph.
+  doc-import-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install package (import graph must resolve)
+        run: pip install -e ".[dev,developer]"
+
+      - name: Run doc-import audit
+        run: python scripts/audit_doc_imports.py --format markdown
 
   build:
     runs-on: ubuntu-latest
