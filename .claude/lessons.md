@@ -194,6 +194,22 @@ files.
   the import in the SAME edit that first uses it; (2) scope the
   import inside the function body that uses it (the detector
   never fires even mid-edit) — more robust for tests.
+  - **Confirmed actor (2026-06-26): Claude Code's harness-level
+    `ruff --fix`, NOT a project hook.** The project's PostToolUse
+    `Edit|Write` hooks only run `security_guard.py` (+
+    `worktree_path_guard.py`) — neither formats. A throwaway probe
+    (one unused `import os` + two used imports written out of order)
+    came back with `os` stripped AND the rest isort-reordered — both
+    fixes = `ruff --fix` (F401 + I), not autoflake (no reorder) or
+    black (neither). So the formatter is the harness running the
+    repo's ruff; there is no project "ruff hook" to reconfigure.
+  - **`unfixable = ["F401"]` in pyproject was investigated and
+    REJECTED — do not re-propose.** It would make ruff report but
+    not auto-remove unused imports, killing the strip — but it trades
+    a rare, bounded, multi-region-edit footgun for FREQUENT team-wide
+    manual import cleanup (every genuinely-unused import becomes a
+    hand-removal across all dev). Cure worse than disease; the
+    add-usage-first / same-edit discipline is the right answer.
 
 - **Ruff rule gotchas — rules that fire on correct code**:
   - **`pytest.ini` parsed as Python** — committing `pytest.ini`
