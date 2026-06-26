@@ -310,7 +310,7 @@ features:
     # fiction-cleanup spec. Overlaps the agents feature (agent factory)
     # — distinct: this is the templates + strategies + team-runner layer,
     # not the factory.
-    description: Agent templates, execution strategies, and parallel agent teams with gates
+    description: Agent-template registry, execution strategies, and parallel agent teams with quality gates
     tags: [orchestration, teams]
     status: manual
 
