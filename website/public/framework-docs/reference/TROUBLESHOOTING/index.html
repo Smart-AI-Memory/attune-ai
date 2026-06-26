@@ -5613,10 +5613,10 @@
 </code></pre></div></p>
 <p><strong>3. Check import statement matches docs:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Old (might be outdated):</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnthropicProvider</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.llm.providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnthropicProvider</span>
 <a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>
 <a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="c1"># Current (check docs for latest):</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmpathyLLM</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmpathyLLM</span>
 </code></pre></div></p>
 <hr />
 <h2 id="api-key-configuration">API Key Configuration<a class="headerlink" href="#api-key-configuration" title="Permanent link">&para;</a></h2>
@@ -5680,7 +5680,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
 <a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="n">load_dotenv</span><span class="p">()</span>  <span class="c1"># Call this BEFORE importing framework</span>
 <a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>
-<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmpathyLLM</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmpathyLLM</span>
 </code></pre></div></p>
 <p><strong>2. Export in shell before running:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span>sk-ant-your-key
@@ -5758,7 +5758,7 @@
 <a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a><span class="n">nest_asyncio</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>
 <a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>
 <a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmpathyLLM</span>
+<a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmpathyLLM</span>
 <a id="__codelineno-38-6" name="__codelineno-38-6" href="#__codelineno-38-6"></a>
 <a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
 <a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a>    <span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span> <span class="n">target_level</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
@@ -5800,7 +5800,7 @@
 <a id="__codelineno-40-13" name="__codelineno-40-13" href="#__codelineno-40-13"></a><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>2. Enable prompt caching (Claude only):</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnthropicProvider</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.llm.providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnthropicProvider</span>
 <a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>
 <a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a><span class="n">provider</span> <span class="o">=</span> <span class="n">AnthropicProvider</span><span class="p">(</span>
 <a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a>    <span class="n">use_prompt_caching</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># 90% faster on repeated prompts</span>
@@ -5896,7 +5896,7 @@
 <a id="__codelineno-49-11" name="__codelineno-49-11" href="#__codelineno-49-11"></a>    <span class="c1"># Memory freed after each iteration</span>
 </code></pre></div></p>
 <p><strong>2. Use Claude's 200K context window:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnthropicProvider</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.llm.providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnthropicProvider</span>
 <a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>
 <a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a><span class="n">provider</span> <span class="o">=</span> <span class="n">AnthropicProvider</span><span class="p">(</span>
 <a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-3-5-sonnet-20241022&quot;</span><span class="p">,</span>  <span class="c1"># 200K context</span>
@@ -6225,7 +6225,7 @@
 <a id="__codelineno-90-8" name="__codelineno-90-8" href="#__codelineno-90-8"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$OPENAI_API_KEY</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-c1-10
 <a id="__codelineno-90-9" name="__codelineno-90-9" href="#__codelineno-90-9"></a>
 <a id="__codelineno-90-10" name="__codelineno-90-10" href="#__codelineno-90-10"></a><span class="c1"># Test imports</span>
-<a id="__codelineno-90-11" name="__codelineno-90-11" href="#__codelineno-90-11"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from attune_llm import EmpathyLLM; print(&#39;Core: OK&#39;)&quot;</span>
+<a id="__codelineno-90-11" name="__codelineno-90-11" href="#__codelineno-90-11"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from attune.llm import EmpathyLLM; print(&#39;Core: OK&#39;)&quot;</span>
 <a id="__codelineno-90-12" name="__codelineno-90-12" href="#__codelineno-90-12"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from coach_wizards import SecurityWizard; print(&#39;Wizards: OK&#39;)&quot;</span>
 </code></pre></div>
 <h3 id="report-bugs">Report Bugs<a class="headerlink" href="#report-bugs" title="Permanent link">&para;</a></h3>
