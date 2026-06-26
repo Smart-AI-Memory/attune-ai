@@ -48,8 +48,6 @@ A numeric score (0.0 to 1.0) indicating how certain an agent is about a recommen
 ### Conflict Resolution
 The process of finding a synthesis when two agents make conflicting recommendations. The framework extracts the underlying *interests* behind each position and generates options that serve both.
 
-See: [Practical Patterns - Conflict Synthesizer](../how-to/practical-patterns.md#pattern-2-the-conflict-synthesizer)
-
 ### Contributor
 Access Tier Level 2. Can read patterns and propose new ones, but cannot validate or promote patterns to permanent storage. Most AI agents operate at this level.
 
@@ -80,8 +78,6 @@ A hash-based identifier used to detect duplicate patterns. Prevents the same pat
 
 ### Heartbeat
 A periodic signal sent by agents to indicate they're still functioning. Used by the monitoring system to detect unresponsive agents and reassign their work.
-
-See: [Practical Patterns - Heartbeat Monitor](../how-to/practical-patterns.md#pattern-4-the-heartbeat-monitor)
 
 ---
 
@@ -178,8 +174,6 @@ A collaborative context where multiple agents work together on a shared task. Se
 
 ### Trust Escalator
 A system for managing agent permissions based on demonstrated reliability. Agents start at Observer level and are promoted as they accumulate successful tasks and validated patterns.
-
-See: [Practical Patterns - Trust Escalator](../how-to/practical-patterns.md#pattern-5-the-trust-escalator)
 
 ### TTL
 **T**ime **T**o **L**ive. The duration before data in short-term memory expires automatically. Different data types have different TTLs:
