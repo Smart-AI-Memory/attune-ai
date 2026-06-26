@@ -640,8 +640,10 @@ this section only if core-worthy (and then keep both copies in sync).
   red check as blocking; (2) read the actual review gate; (3)
   grep workflow `if: github.actor ==` guards against the real
   `gh api user` login before trusting them. The cosmetic
-  CANCELLED noise (separate, low-priority) is quietable with
-  `cancel-in-progress: false` in the scan workflow.
+  CANCELLED noise (separate, low-priority) is policy-bound,
+  NOT config-fixable — `cancel-in-progress: false` is INVALID
+  (`tests/unit/ci/test_workflow_yaml.py` requires it `true`;
+  PR #1100 closed); clear it per-PR with `gh run rerun <run-id>`.
 
 - **Branch-vs-worktree commit tangle — committing from a worktree
   that's on the WRONG branch lands the commit elsewhere and ships
