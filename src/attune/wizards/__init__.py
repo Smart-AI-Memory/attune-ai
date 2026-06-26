@@ -27,11 +27,6 @@ Licensed under Apache 2.0
 from .base import BaseWizard, StepType, WizardConfig, WizardResult, WizardStep
 from .config_driven import ConfigDrivenWizard
 from .decomposer import DecomposedTask, TaskDecomposer
-from .driver import (
-    describe_wizard_steps,
-    prefilled_answer_callback,
-    run_wizard_prefilled,
-)
 from .registry import (
     delete_custom_wizard,
     get_wizard,
@@ -52,11 +47,8 @@ __all__ = [
     "WizardSession",
     "WizardStep",
     "delete_custom_wizard",
-    "describe_wizard_steps",
     "get_wizard",
     "list_wizards",
-    "prefilled_answer_callback",
     "register_wizard",
-    "run_wizard_prefilled",
     "save_custom_wizard",
 ]

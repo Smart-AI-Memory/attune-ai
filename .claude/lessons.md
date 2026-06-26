@@ -11457,3 +11457,53 @@ files.
     three-skill-dir / "registered ≠ accessible, confirm which dir ships"
     lesson — this adds the discovery-vs-invocation axis on top of the
     which-surface axis.
+    **CORRECTION (2026-06-25):** the "by design, build a run surface
+    later" framing above was WRONG. The interactive-orchestration-access
+    spec built those run surfaces (#1091 wizards, #1092 agents), and
+    dogfooding then showed BOTH engines were dead (wizard `_call_llm`
+    signature drift; agent `DynamicTeam`→`StubAgent` fake-success). The
+    feature was REMOVED, the #1088 agent catalog enumeration reverted,
+    and `TestCatalogCompleteness` no longer surfaces the agent registry.
+    The catalog now lists workflows + wizards + tools only. See the two
+    lessons immediately below and
+    `.claude/rules/attune/removing-dead-code.md`.
+
+- **Coverage/discoverability guards have a one-way "registered ⇒ surface
+  it" bias and will cheerfully make BROKEN code more reachable —
+  surfacing a capability is the moment to run a "should this exist /
+  does it work?" gate, not skip it.** The registry-coverage guard +
+  `catalog` audit reported the agent-template and wizard registries as
+  "listable but not runnable" and the reflexive fix was to *add run
+  surfaces* (#1088 catalog enumeration, #1091/#1092 `wizard`/`agent`
+  skills + drivers). Dogfooding then proved both engines dead, so the
+  effort had made non-working code more discoverable AND shipped guards
+  (`TestWizardRunSurface`/`TestAgentRunSurface`) that pinned the broken
+  surfaces in place. Rule: before surfacing or "fixing access to" any
+  registered capability, trace its REAL run path and check the removal
+  signals (never-worked / orphaned-motivation / zero-usage / stub-tell /
+  surfacing-trip-wire) in `.claude/rules/attune/removing-dead-code.md`.
+  If surfacing requires first fixing broken code for a feature nobody
+  asked for, that's a removal signal, not a fix task. The guards answer
+  "is it reachable?" — they never answer "should it exist?"; you must.
+
+- **"Runnable" is not runnable until dogfooded through the REAL path —
+  and a test fake that omits the costly step gives false GREEN.** Both
+  interactive-orch features shipped with passing unit tests and a
+  "runnable" guard, yet neither had ever completed a real run. The
+  wizard `runnable` test used an offline fake wizard with only
+  question + confirm steps — it deliberately OMITTED the `llm_call`
+  step, which is exactly the step that crashes (`_call_llm(prompt, tier,
+  step.id)` vs the live `_call_llm(tier, system, user_message, …)` →
+  `'str' has no attribute 'value'`). Every real wizard has an `llm_call`
+  step, so the fake's green told you nothing about real wizards. The
+  agent guard only asserted a *skill file naming the driver* existed —
+  not that the driver did real work (it called `StubAgent`, fake
+  success). Extends "registered ≠ working" / "dogfood the live loop":
+  a mocked/faked test that skips the expensive seam (LLM, network,
+  subprocess, real backend) is necessary-not-sufficient — ship at least
+  one non-mocked end-to-end run, and when you remove a "runnable" claim,
+  remove the fake-green guard with it. Also: when reverting an
+  unreleased feature that bundled a *genuine* bug fix (#1091's
+  confirm/review `FormQuestion` `QuestionType`-enum fix), KEEP the fix
+  with its own driver-free regression test — don't let it ride out with
+  the dead feature.

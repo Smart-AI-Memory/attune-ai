@@ -102,8 +102,6 @@ rule (a single turn can't bundle multiple ambiguous decisions). See
 | catalog | catalog, list capabilities, browse, what can attune do |
 | personal-memory | remember this for me, capture this decision, save to personal memory, my saved topics, forget topic |
 | image-analysis | analyze this image, look at this screenshot, what's in this diagram, read this mockup |
-| wizard | run a wizard, debug/refactor/security/test-gen wizard, walk me through, guided wizard |
-| agent | run an agent team, multi-agent, orchestrate agents, agent team for, build a team |
 
 ## MCP Server Not Running
 

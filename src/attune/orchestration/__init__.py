@@ -46,7 +46,6 @@ from attune.orchestration.meta_orchestrator import (
     TaskRequirements,
 )
 from attune.orchestration.team_builder import DynamicTeamBuilder
-from attune.orchestration.team_driver import describe_team_for_task, run_team_for_task
 from attune.orchestration.team_store import TeamSpecification, TeamStore
 from attune.orchestration.workflow_agent_adapter import WorkflowAgentAdapter
 from attune.orchestration.workflow_composer import WorkflowComposer
@@ -69,9 +68,6 @@ __all__ = [
     "DynamicTeamResult",
     "TeamSpecification",
     "TeamStore",
-    # Claude-driven team access (interactive-orchestration-access Phase 2)
-    "describe_team_for_task",
-    "run_team_for_task",
     # Workflow Composition
     "WorkflowAgentAdapter",
     "WorkflowComposer",

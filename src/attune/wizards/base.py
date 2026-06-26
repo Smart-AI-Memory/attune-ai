@@ -174,39 +174,6 @@ class BaseWizard(ABC):
         )
 
     # -----------------------------------------------------------------
-    # Introspection (for the Claude-driven `wizard` skill)
-    # -----------------------------------------------------------------
-
-    def list_steps(self) -> list[dict[str, Any]]:
-        """Return a declarative, serializable view of this wizard's steps.
-
-        Lets a caller inspect what each step does — and, for ``QUESTION``
-        steps, the exact questions to ask — WITHOUT running the
-        interactive engine. The Claude-driven ``wizard`` skill uses this
-        to ask the user a wizard's questions up front (via
-        ``AskUserQuestion``), then feeds the answers back through
-        ``attune.wizards.driver.prefilled_answer_callback``.
-
-        Returns:
-            One dict per step with ``id``, ``name``, ``type`` (the
-            ``StepType`` value), and ``description``. ``QUESTION`` steps
-            also carry ``questions`` in ``AskUserQuestion`` format.
-
-        """
-        views: list[dict[str, Any]] = []
-        for step in self.steps:
-            view: dict[str, Any] = {
-                "id": step.id,
-                "name": step.name,
-                "type": step.step_type.value,
-                "description": step.description,
-            }
-            if step.step_type == StepType.QUESTION and step.questions:
-                view["questions"] = [q.to_ask_user_format() for q in step.questions]
-            views.append(view)
-        return views
-
-    # -----------------------------------------------------------------
     # Step dispatch
     # -----------------------------------------------------------------
 
