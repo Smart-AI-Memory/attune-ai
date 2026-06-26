@@ -1475,6 +1475,42 @@ files.
   Useful when local main is strictly behind origin/main and
   you have unrelated in-flight work.
 
+- **The cosmetic `security` red ✗ is NOT quietable with
+  `cancel-in-progress: false` — a tested policy forbids it; correct
+  the stale advice in the core "verify-first infra" lesson**:
+  2026-06-26, the recurring red `security` check on PRs (job from
+  `security.yml`, conclusion `cancelled`, ~1s, `runner:""`, zero
+  steps) is the `cancel-in-progress: true` concurrency racing on a
+  SOLE run — a GitHub webhook quirk that cancels before a runner is
+  even assigned (distinct from the documented "rapid pushes cancel the
+  prior run" case: here there is only ONE run). It is NOT a required
+  check, so it never blocks. The obvious "fix" — set
+  `cancel-in-progress: false` on `security.yml` — is **invalid**:
+  `tests/unit/ci/test_workflow_yaml.py` enforces a deliberate policy
+  (`WORKFLOWS_REQUIRING_CONCURRENCY`, which includes `security.yml`)
+  that these PR/push workflows MUST keep `cancel-in-progress: true` to
+  cancel superseded runs and save CI minutes; only
+  `WORKFLOWS_FORBIDDING_CONCURRENCY` (`release.yml`,
+  `publish-pypi.yml`) may disable it. Setting it `false` breaks the
+  `coverage` + `test (ubuntu-latest, 3.12)` required checks (both run
+  that test). So there is NO policy-compatible workflow fix; the red ✗
+  is **accepted noise**. To clear it on a specific PR, re-run the
+  cancelled job: `gh run rerun <run-id>` (find it via `gh run list
+  --workflow=security.yml --branch=<name> --limit=1`). **This
+  corrects** the core CLAUDE.md "Verify-first applies to infra/config
+  diagnoses" lesson, whose last line claims the noise "is quietable
+  with `cancel-in-progress: false` in the scan workflow" — that advice
+  predates (or missed) `test_workflow_yaml.py` and is wrong; both
+  copies should be updated when the core mirror is next touched.
+  **Generalization**: before proposing ANY CI-workflow-hygiene change
+  (concurrency, triggers, timeouts, pinning), grep
+  `tests/unit/ci/test_workflow_yaml.py` for a tested policy on that
+  property first — a "harmless one-liner" can violate an encoded
+  policy and fail required checks by design. Pairs with the
+  "verify-first applies to infra/config diagnoses" lesson (read the
+  real gate) and "registered ≠ working" (the chip's one-line fix
+  looked right but its CI proved it wasn't).
+
 ### uv — lockfile, sync & editable installs
 
 - **uv lockfile & sync semantics — drift, enforcement, and
