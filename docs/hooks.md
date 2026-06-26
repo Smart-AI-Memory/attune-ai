@@ -97,7 +97,7 @@ registry = HookRegistry(config=config)
 Matchers determine when hooks fire:
 
 ```python
-from attune.hooks import HookMatcher
+from attune.hooks.config import HookMatcher
 
 # Match specific tool
 tool_matcher = HookMatcher(tool="Edit")

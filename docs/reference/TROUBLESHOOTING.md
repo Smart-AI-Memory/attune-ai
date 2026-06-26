@@ -207,10 +207,10 @@ pip install --upgrade attune-ai
 **3. Check import statement matches docs:**
 ```python
 # Old (might be outdated):
-from attune_llm.providers import AnthropicProvider
+from attune.llm.providers import AnthropicProvider
 
 # Current (check docs for latest):
-from attune_llm import EmpathyLLM
+from attune.llm import EmpathyLLM
 ```
 
 ---
@@ -295,7 +295,7 @@ curl https://api.anthropic.com/v1/messages \
 from dotenv import load_dotenv
 load_dotenv()  # Call this BEFORE importing framework
 
-from attune_llm import EmpathyLLM
+from attune.llm import EmpathyLLM
 ```
 
 **2. Export in shell before running:**
@@ -400,7 +400,7 @@ import nest_asyncio
 nest_asyncio.apply()
 
 import asyncio
-from attune_llm import EmpathyLLM
+from attune.llm import EmpathyLLM
 
 async def main():
     llm = EmpathyLLM(provider="anthropic", target_level=4)
@@ -453,7 +453,7 @@ llm = EmpathyLLM(
 
 **2. Enable prompt caching (Claude only):**
 ```python
-from attune_llm.providers import AnthropicProvider
+from attune.llm.providers import AnthropicProvider
 
 provider = AnthropicProvider(
     use_prompt_caching=True,  # 90% faster on repeated prompts
@@ -572,7 +572,7 @@ for file_path in large_codebase:
 
 **2. Use Claude's 200K context window:**
 ```python
-from attune_llm.providers import AnthropicProvider
+from attune.llm.providers import AnthropicProvider
 
 provider = AnthropicProvider(
     model="claude-3-5-sonnet-20241022",  # 200K context
@@ -1020,7 +1020,7 @@ echo $ANTHROPIC_API_KEY | cut -c1-10  # First 10 chars only
 echo $OPENAI_API_KEY | cut -c1-10
 
 # Test imports
-python -c "from attune_llm import EmpathyLLM; print('Core: OK')"
+python -c "from attune.llm import EmpathyLLM; print('Core: OK')"
 python -c "from coach_wizards import SecurityWizard; print('Wizards: OK')"
 ```
 

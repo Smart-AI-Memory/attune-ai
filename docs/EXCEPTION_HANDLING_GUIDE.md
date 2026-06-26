@@ -26,7 +26,7 @@ description: Exception Handling Best Practices: Step-by-step tutorial with examp
 ### Authentication Operations
 
 ```python
-from attune.exceptions import AuthenticationError, ServiceUnavailableError
+# Example exception types — replace with your application's exceptions
 
 try:
     user = authenticate_user(credentials)
@@ -44,7 +44,7 @@ except ValueError as e:
 ### Security Scanning
 
 ```python
-from attune.exceptions import SecurityScanException
+# Example exception types — replace with your application's exceptions
 
 try:
     vulnerabilities = scan_code(source_code)
@@ -64,7 +64,7 @@ except OSError as e:
 ### Compliance Operations
 
 ```python
-from attune.exceptions import ComplianceError
+# Example exception types — replace with your application's exceptions
 
 try:
     result = validate_compliance(data)
@@ -107,7 +107,7 @@ except UnicodeEncodeError as e:
 ### Database Operations
 
 ```python
-from attune.exceptions import DatabaseError
+# Example exception types — replace with your application's exceptions
 
 try:
     result = db.execute(query, params)
