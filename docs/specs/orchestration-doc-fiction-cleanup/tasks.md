@@ -34,11 +34,14 @@ refs, `surv` = surviving-symbol refs) verified against `origin/main`
 
 ## Phased execution
 
-### Phase 0 — resolve open questions
+### Phase 0 — open questions RESOLVED (2026-06-26)
 
-- Confirm OQ1 (rewrite vs delete multi-agent-team-coordination.md),
-  OQ2 (delete META_ORCHESTRATION_TUTORIAL.md whole), OQ3 (nav/cross-link
-  prune in same PR). Defaults in `decisions.md`.
+- OQ1 → rewrite `multi-agent-team-coordination.md` to AgentTeam.
+- OQ2 → delete `META_ORCHESTRATION_TUTORIAL.md` whole, salvaging its
+  template section into the canonical templates reference only if that
+  maintains/improves quality (no MetaOrchestrator framing).
+- OQ3 → prune nav/cross-links to deleted files in the execution PR.
+  See `decisions.md` for full text.
 
 ### Phase 1 — rewrite DynamicTeam → AgentTeam
 

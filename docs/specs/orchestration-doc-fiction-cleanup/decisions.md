@@ -93,14 +93,18 @@ the acceptance grep.
 
 ---
 
-## Open questions (resolve at spec review)
+## Open questions — RESOLVED (Patrick, 2026-06-26)
 
-- OQ1. `multi-agent-team-coordination.md` (18 DynamicTeam refs, a pure
-  team tutorial) — **rewrite** to AgentTeam, or **delete** as
-  redundant with the rewritten `ORCHESTRATION_API.md`? Lean: rewrite
-  (it's the only worked end-to-end team example).
-- OQ2. `META_ORCHESTRATION_TUTORIAL.md` carries 21 surviving-symbol
-  refs (templates) under a dead premise. Delete whole (lean), or
-  salvage the template section into an existing templates doc?
-- OQ3. Nav/index references to deleted files (mkdocs nav, cross-links)
-  — sweep and prune in the same PR (yes, to avoid build breaks).
+- OQ1 → **rewrite.** `multi-agent-team-coordination.md` (18 DynamicTeam
+  refs) is rewritten to the AgentTeam API — it is the only worked
+  end-to-end team example, worth keeping.
+- OQ2 → **delete whole, but salvage the template section** if it can be
+  folded into an existing templates doc in a way that maintains or
+  improves quality/efficiency. `META_ORCHESTRATION_TUTORIAL.md` is
+  deleted; before deleting, evaluate its 21 surviving-symbol (template)
+  references — if that template walkthrough is better than what current
+  templates docs carry, lift it into the canonical templates reference
+  rather than discarding it. Never resurrect MetaOrchestrator framing
+  while salvaging.
+- OQ3 → **yes.** Nav/cross-link references to deleted files are pruned
+  in the same execution PR to avoid `mkdocs build` breaks.
