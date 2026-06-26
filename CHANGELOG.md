@@ -80,6 +80,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed (BREAKING)
 
+> **Upgrading from 8.x?** See the
+> [9.0.0 migration guide](docs/migration/9.0.0.md) for before/after
+> code recipes (`EmpathyOS` → workflows, `DynamicTeam` → `AgentTeam`,
+> etc.).
+
 - **Legacy "Empathy" framework runtime (~3,400 LOC).** `EmpathyOS`
   (`core.py` + the `core_modules/` mixins), the five-level maturity
   model (`Level1Reactive`…`Level5Systems` / `levels.py`),
