@@ -68,6 +68,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dead API reference pages `reference/empathy-os.md` and
   `reference/core.md` (their `mkdocstrings` autogen blocks targeted the
   removed modules).
+- **Dead dynamic-team orchestration engine.** The
+  `attune.orchestration` public symbols `DynamicTeam`,
+  `DynamicTeamBuilder`, `DynamicTeamResult`, `TeamSpecification`,
+  `TeamStore`, `WorkflowComposer`, `WorkflowAgentAdapter`,
+  `MetaOrchestrator` (and its `TaskComplexity` / `TaskDomain` /
+  `TaskRequirements` / `ExecutionPlan` / `CompositionPattern` types) are
+  deleted, along with the underlying modules (`dynamic_team.py`,
+  `team_builder.py`, `workflow_composer.py`, `workflow_agent_adapter.py`,
+  `meta_orchestrator.py` + `meta_orch_*` helpers, `team_store.py`,
+  `agent_models.py` / `StubAgent`) and `workflows.multi_agent_mixin`
+  (`MultiAgentStageMixin` + `BaseWorkflow`'s `multi_agent_configs`
+  parameter). This engine only ever produced `StubAgent`s whose
+  `process()` returned a fake `success=True` with no work; it had no
+  live caller after `/spec` quality gates were rewired to call the real
+  `CodeReviewWorkflow` + `SecurityAuditWorkflow` (8.10.0, #1094).
+  **Still live and unaffected:** `attune.orchestration`'s agent-template
+  data (`get_template` / `get_all_templates` / …) and execution
+  strategies (`get_strategy`, `ParallelStrategy`, …) — the latter still
+  power the `health-check` workflow. The progressive-workflow
+  `MetaOrchestrator` (`attune.workflows.progressive.orchestrator`) is a
+  distinct, live tier-escalation class despite the name collision.
 
 ### Deprecated
 

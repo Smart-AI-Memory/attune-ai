@@ -1,8 +1,9 @@
-"""Meta-orchestration system for dynamic agent composition.
+"""Orchestration primitives: agent templates and execution strategies.
 
-This package provides the infrastructure for dynamically composing
-agent teams based on task requirements. It enables intelligent task
-analysis, agent spawning, and execution strategy selection.
+This package provides the live orchestration building blocks used by
+workflows: reusable agent-template *data* (consumed as prompt/routing
+metadata) and the execution-strategy implementations used by the
+``health-check`` orchestrated workflow.
 
 Example:
     >>> from attune.orchestration import AgentTemplate, get_template
@@ -29,7 +30,6 @@ from attune.orchestration.agent_templates import (
     register_custom_template,
     unregister_template,
 )
-from attune.orchestration.dynamic_team import DynamicTeam, DynamicTeamResult
 from attune.orchestration.execution_strategies import (
     DelegationChainStrategy,
     ExecutionStrategy,
@@ -37,18 +37,6 @@ from attune.orchestration.execution_strategies import (
     ToolEnhancedStrategy,
     get_strategy,
 )
-from attune.orchestration.meta_orchestrator import (
-    CompositionPattern,
-    ExecutionPlan,
-    MetaOrchestrator,
-    TaskComplexity,
-    TaskDomain,
-    TaskRequirements,
-)
-from attune.orchestration.team_builder import DynamicTeamBuilder
-from attune.orchestration.team_store import TeamSpecification, TeamStore
-from attune.orchestration.workflow_agent_adapter import WorkflowAgentAdapter
-from attune.orchestration.workflow_composer import WorkflowComposer
 
 __all__ = [
     # Agent Templates
@@ -62,15 +50,6 @@ __all__ = [
     "get_templates_by_tier",
     "register_custom_template",
     "unregister_template",
-    # Dynamic Teams
-    "DynamicTeam",
-    "DynamicTeamBuilder",
-    "DynamicTeamResult",
-    "TeamSpecification",
-    "TeamStore",
-    # Workflow Composition
-    "WorkflowAgentAdapter",
-    "WorkflowComposer",
     # Execution Strategies
     "ExecutionStrategy",
     "get_strategy",
@@ -78,11 +57,4 @@ __all__ = [
     "ToolEnhancedStrategy",
     "PromptCachedSequentialStrategy",
     "DelegationChainStrategy",
-    # Meta-Orchestrator & Types
-    "MetaOrchestrator",
-    "ExecutionPlan",
-    "CompositionPattern",
-    "TaskComplexity",
-    "TaskDomain",
-    "TaskRequirements",
 ]

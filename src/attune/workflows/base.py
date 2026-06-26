@@ -85,7 +85,6 @@ from .history_utils import (
     get_workflow_stats,  # noqa: F401 - re-exported
 )
 from .llm_mixin import LLMMixin
-from .multi_agent_mixin import MultiAgentStageMixin
 
 # Import parsing mixin (extracted for maintainability)
 from .parsing_mixin import ResponseParsingMixin
@@ -134,7 +133,6 @@ class BaseWorkflow(
     LLMMixin,
     CoordinationMixin,
     StatePersistenceMixin,
-    MultiAgentStageMixin,
     PromptMixin,
     ExecutorMixin,
     TierRoutingMixin,
@@ -202,7 +200,6 @@ class BaseWorkflow(
         enable_coordination: bool = False,
         agent_id: str | None = None,
         state_store: AgentStateStore | None = None,
-        multi_agent_configs: dict[str, dict[str, Any]] | None = None,
         ctx: WorkflowContext | None = None,
         enable_post_simplification: bool = False,
         simplification_min_complexity: int = 5,
@@ -256,11 +253,6 @@ class BaseWorkflow(
                      When provided, records workflow start/completion/failure and saves
                      stage-level checkpoints for observability and recovery.
                      Default None = no persistence (backwards-compatible).
-            multi_agent_configs: Optional per-stage DynamicTeam configurations.
-                     Dict mapping stage names to team config dicts. Workflow stages
-                     can then call ``self._run_multi_agent_stage()`` to delegate to
-                     a multi-agent team instead of a single LLM call.
-                     Default None = no multi-agent stages.
             ctx: Optional WorkflowContext for composition-based capabilities.
                      When provided, proxy methods delegate to ctx services instead
                      of mixin implementations. When None (default), all behavior
@@ -330,9 +322,6 @@ class BaseWorkflow(
         self._state_completed_stages: list[str] = []
         self._state_stage_costs: dict[str, float] = {}
         self._state_last_output: Any = None
-
-        # Multi-agent stage configs (Phase 4 - DynamicTeam integration)
-        self._multi_agent_configs = multi_agent_configs
 
         # Telemetry tracking (uses TelemetryMixin)
         self._init_telemetry(telemetry_backend)
