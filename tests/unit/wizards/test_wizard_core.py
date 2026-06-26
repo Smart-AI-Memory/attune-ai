@@ -240,7 +240,7 @@ class TestBaseWizardLLMStep:
         wizard = _SimpleWizard([step]).build()
 
         wizard._workflow._render_xml_prompt = MagicMock(return_value="<prompt/>")
-        wizard._workflow._call_llm = AsyncMock(return_value="<output>done</output>")
+        wizard._workflow._call_llm = AsyncMock(return_value=("<output>done</output>", 100, 50))
         wizard._workflow._parse_xml_response = MagicMock(return_value={"summary": "done"})
 
         result: WizardResult = await wizard.run()
