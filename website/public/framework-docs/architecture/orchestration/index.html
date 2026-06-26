@@ -865,34 +865,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/META_ORCHESTRATION_TUTORIAL/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Meta-Orchestration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../tutorials/ops-dashboard/" class="md-nav__link">
         
   
@@ -936,10 +908,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_5" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_4" >
         
           
-          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
             
   
   
@@ -957,8 +929,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_5">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1522,34 +1494,6 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../integration/claude-code-integration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Claude Code
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
             
               
                 
@@ -4478,10 +4422,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#meta-orchestration-metaorchestrator" class="md-nav__link">
+  <a href="#agent-templates-the-registry" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Meta-orchestration — MetaOrchestrator
+        Agent templates — the registry
       
     </span>
   </a>
@@ -4489,10 +4433,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#team-assembly-agent-templates-and-dynamic-teams" class="md-nav__link">
+  <a href="#execution-strategies-the-composition-library" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Team assembly — agent templates and dynamic teams
+        Execution strategies — the composition library
       
     </span>
   </a>
@@ -4500,21 +4444,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#execution-strategies" class="md-nav__link">
+  <a href="#agent-teams-fan-out-gate" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Execution — strategies
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#workflow-composition" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Workflow composition
+        Agent teams — fan-out + gate
       
     </span>
   </a>
@@ -4587,36 +4520,18 @@
 
 <h1 id="orchestration">Orchestration<a class="headerlink" href="#orchestration" title="Permanent link">&para;</a></h1>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p><code>attune.orchestration</code> assembles and runs <strong>multi-agent pipelines</strong>: it
-analyzes a task, picks a composition pattern, builds a team of agents,
-and executes them under a chosen strategy. It sits above the individual
-workflows — where a workflow is one analysis, orchestration coordinates
-<em>several</em> agents into one coordinated run.</p>
-<p>An orchestrated task moves through three layers:</p>
-<ol>
-<li><strong>Meta-orchestration</strong> — <code>MetaOrchestrator</code> analyzes the task
-   (complexity, domain, requirements) and chooses a <code>CompositionPattern</code>.</li>
-<li><strong>Team assembly</strong> — <code>AgentTemplate</code>s are matched by capability/tier
-   from the registry, or a <code>DynamicTeamBuilder</code> builds a team at runtime.</li>
-<li><strong>Execution</strong> — an <code>ExecutionStrategy</code> runs the agents and returns a
-   <code>StrategyResult</code>.</li>
-</ol>
+<p><code>attune.orchestration</code> supplies the <strong>composable building blocks</strong> for
+multi-agent work: a registry of reusable <strong>agent templates</strong> and a
+library of <strong>execution strategies</strong>. It sits above the individual
+workflows — where a workflow is one analysis, these parts let you
+describe and combine <em>several</em> agents.</p>
+<p>To actually run a team, use <code>attune.agents.team.AgentTeam</code>: it fans a
+fixed set of workflow-backed agents out in parallel, scores each, and
+gates the result. There is no task-analysis planner that picks agents
+for you — you choose the agents and the gates.</p>
 <h2 id="concepts">Concepts<a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h2>
-<h3 id="meta-orchestration-metaorchestrator">Meta-orchestration — <code>MetaOrchestrator</code><a class="headerlink" href="#meta-orchestration-metaorchestrator" title="Permanent link">&para;</a></h3>
-<p><code>MetaOrchestrator</code> is the planning layer. Its methods are synchronous:
-<code>analyze_task(...)</code> returns a <code>TaskRequirements</code> (carrying a
-<code>TaskComplexity</code> — <code>SIMPLE</code> / <code>MODERATE</code> / <code>COMPLEX</code> — and a <code>TaskDomain</code>
-— <code>TESTING</code> / <code>SECURITY</code> / <code>CODE_QUALITY</code> / <code>DOCUMENTATION</code> /
-<code>PERFORMANCE</code> / <code>ARCHITECTURE</code> / <code>REFACTORING</code> / <code>GENERAL</code>);
-<code>create_execution_plan(...)</code> returns an <code>ExecutionPlan</code>;
-<code>compose_team(...)</code> and <code>analyze_and_compose(...)</code> go from a task
-description to a composed team.</p>
-<p><code>CompositionPattern</code> enumerates the strategies the planner can pick:
-<code>SEQUENTIAL</code>, <code>PARALLEL</code>, <code>DEBATE</code>, <code>TEACHING</code>, <code>REFINEMENT</code>,
-<code>ADAPTIVE</code>, <code>CONDITIONAL</code>, <code>TOOL_ENHANCED</code>, <code>PROMPT_CACHED_SEQUENTIAL</code>,
-<code>DELEGATION_CHAIN</code>.</p>
-<h3 id="team-assembly-agent-templates-and-dynamic-teams">Team assembly — agent templates and dynamic teams<a class="headerlink" href="#team-assembly-agent-templates-and-dynamic-teams" title="Permanent link">&para;</a></h3>
-<p>The agent registry supplies reusable <code>AgentTemplate</code>s (each has an <code>id</code>,
+<h3 id="agent-templates-the-registry">Agent templates — the registry<a class="headerlink" href="#agent-templates-the-registry" title="Permanent link">&para;</a></h3>
+<p>The registry supplies reusable <code>AgentTemplate</code>s (each has an <code>id</code>,
 <code>role</code>, <code>capabilities</code>, <code>tools</code>, <code>tier_preference</code>, <code>quality_gates</code>, and
 <code>resource_requirements</code>). Query it with <code>get_all_templates()</code>,
 <code>get_template(template_id)</code>, <code>get_templates_by_capability(...)</code>,
@@ -4624,48 +4539,49 @@ description to a composed team.</p>
 <code>register_custom_template(...)</code> / <code>unregister_template(...)</code>.
 <code>AgentCapability</code> and <code>ResourceRequirements</code> model a template's
 capabilities and resource needs.</p>
-<p><code>DynamicTeamBuilder(state_store=None, redis_client=None)</code> builds a team
-at runtime — <code>build_from_spec(...)</code>, <code>build_from_plan(...)</code>,
-<code>build_from_config(...)</code> — producing a <code>DynamicTeam</code> /
-<code>DynamicTeamResult</code> from a <code>TeamSpecification</code>. <code>TeamStore</code> persists
-teams.</p>
-<h3 id="execution-strategies">Execution — strategies<a class="headerlink" href="#execution-strategies" title="Permanent link">&para;</a></h3>
-<p>An <code>ExecutionStrategy</code> runs the assembled agents:
-<code>execute(agents, context)</code> is <strong>async</strong> and returns a <code>StrategyResult</code>.
-<code>get_strategy(name)</code> returns a strategy by name. Nine names construct
-with <strong>no arguments</strong> — <code>sequential</code>, <code>parallel</code>, <code>debate</code>, <code>teaching</code>,
-<code>refinement</code>, <code>adaptive</code>, <code>tool_enhanced</code>, <code>prompt_cached_sequential</code>,
-<code>delegation_chain</code>. The registry also holds <code>conditional</code>,
-<code>multi_conditional</code>, <code>nested</code>, and <code>nested_sequential</code>, but those require
-constructor args, so fetching them bare via <code>get_strategy</code> raises
-<code>TypeError</code> — construct them directly. The classes exported directly from
-<code>attune.orchestration</code> are the base <code>ExecutionStrategy</code> plus
-<code>ToolEnhancedStrategy</code>, <code>PromptCachedSequentialStrategy</code>, and
-<code>DelegationChainStrategy</code>.</p>
-<h3 id="workflow-composition">Workflow composition<a class="headerlink" href="#workflow-composition" title="Permanent link">&para;</a></h3>
-<p><code>WorkflowComposer(state_store=None)</code> composes workflows —
-<code>compose(...)</code> and <code>compose_with_simplification(...)</code>.
-<code>WorkflowAgentAdapter</code> adapts a workflow so it can run as an agent
-inside a team.</p>
+<h3 id="execution-strategies-the-composition-library">Execution strategies — the composition library<a class="headerlink" href="#execution-strategies-the-composition-library" title="Permanent link">&para;</a></h3>
+<p>An <code>ExecutionStrategy</code> runs a list of agents:
+<code>execute(agents, context)</code> is <strong>async</strong> and returns a <code>StrategyResult</code>
+(<code>success</code>, <code>outputs</code>, <code>aggregated_output</code>, <code>total_duration</code>,
+<code>errors</code>). <code>get_strategy(name)</code> returns a strategy by name. Nine names
+construct with <strong>no arguments</strong> — <code>sequential</code>, <code>parallel</code>, <code>debate</code>,
+<code>teaching</code>, <code>refinement</code>, <code>adaptive</code>, <code>tool_enhanced</code>,
+<code>prompt_cached_sequential</code>, <code>delegation_chain</code>. The registry also holds
+<code>conditional</code>, <code>multi_conditional</code>, <code>nested</code>, and <code>nested_sequential</code>,
+but those require constructor args, so fetching them bare via
+<code>get_strategy</code> raises <code>TypeError</code> — construct them directly. The classes
+exported directly from <code>attune.orchestration</code> are the base
+<code>ExecutionStrategy</code> plus <code>ToolEnhancedStrategy</code>,
+<code>PromptCachedSequentialStrategy</code>, and <code>DelegationChainStrategy</code>.</p>
+<h3 id="agent-teams-fan-out-gate">Agent teams — fan-out + gate<a class="headerlink" href="#agent-teams-fan-out-gate" title="Permanent link">&para;</a></h3>
+<p><code>attune.agents.team.AgentTeam(agents, gates)</code> is the runnable team
+primitive. Each <code>WorkflowAgent(key, workflow_cls, *, files=...)</code> wraps a
+registered workflow and reports a real 0-100 score; each
+<code>GateSpec(name, agent_key, threshold, critical=True)</code> thresholds one
+agent's score. <code>await team.run(target)</code> runs the agents in parallel over
+a path (or list of paths) and returns a <code>TeamReport</code> (<code>passed</code>, <code>gates</code>,
+<code>results</code>, <code>blockers</code>, <code>warnings</code>, <code>cost</code>). It is <strong>fan-out + gate
+only</strong> — no sequential/two-phase/DAG topology and no auto-composition.</p>
 <h2 id="design-extension">Design &amp; extension<a class="headerlink" href="#design-extension" title="Permanent link">&para;</a></h2>
 <h3 id="design-decisions">Design decisions<a class="headerlink" href="#design-decisions" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Three separable layers.</strong> Planning (<code>MetaOrchestrator</code>), assembly
-  (templates + <code>DynamicTeamBuilder</code>), and execution
-  (<code>ExecutionStrategy</code>) are decoupled, so a strategy can be swapped
-  without touching the agents.</li>
+<li><strong>Building blocks over a planner.</strong> <code>attune.orchestration</code> provides
+  reusable templates and a strategy library; <code>AgentTeam</code> runs an
+  explicit team. There is no task-analysis layer choosing agents for you.</li>
 <li><strong>Templates over ad-hoc agents.</strong> Reusable <code>AgentTemplate</code>s matched by
   capability/tier keep team assembly declarative.</li>
-<li><strong>Sync planning, async execution.</strong> Planning is cheap and synchronous;
-  the actual multi-agent run is async.</li>
+<li><strong>Gates fail closed.</strong> A team only passes when every critical gate's
+  agent produced a passing score — never on a missing or errored score.</li>
 </ul>
 <h3 id="extension-points">Extension points<a class="headerlink" href="#extension-points" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Custom agent:</strong> <code>register_custom_template(...)</code>.</li>
-<li><strong>Custom team:</strong> a <code>TeamSpecification</code> → <code>DynamicTeamBuilder</code>.</li>
-<li><strong>Run a workflow as an agent:</strong> <code>WorkflowAgentAdapter</code>.</li>
+<li><strong>Custom template:</strong> <code>register_custom_template(...)</code>.</li>
+<li><strong>Custom team:</strong> assemble <code>WorkflowAgent</code>s + <code>GateSpec</code>s into an
+  <code>AgentTeam</code>.</li>
+<li><strong>Custom strategy:</strong> subclass <code>ExecutionStrategy</code> and implement the
+  async <code>execute(agents, context)</code>.</li>
 </ul>
-<!-- attune-generated: source_hash=8eeb348f730d4eaa712d0cf9b78905ce878837e5c821fc161778c91d1d163103 feature=orchestration kind=architecture generated_at=2026-06-24 -->
+<!-- attune-generated: source_hash=3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567 feature=orchestration kind=architecture generated_at=2026-06-26 -->
 
 
 

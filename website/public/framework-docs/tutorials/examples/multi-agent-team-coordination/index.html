@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Multi-Agent Team Coordination: Task distribution, shared patterns, conflict resolution, and team execution using Attune's coordination and SDK agent APIs.">
+        <meta name="description" content="Multi-Agent Team Coordination: run a team of workflow-backed agents in parallel, score each one, and gate the result with Attune's AgentTeam API.">
       
       
         <meta name="author" content="Patrick Roebuck">
@@ -874,34 +874,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../META_ORCHESTRATION_TUTORIAL/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Meta-Orchestration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../ops-dashboard/" class="md-nav__link">
         
   
@@ -948,10 +920,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
             
   
   
@@ -969,8 +941,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_3_5">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1097,144 +1069,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#part-1-task-distribution-with-agentcoordinator" class="md-nav__link">
+  <a href="#part-1-your-first-team" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Part 1: Task Distribution with AgentCoordinator
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Part 1: Task Distribution with AgentCoordinator">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#add-and-claim-tasks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Add and Claim Tasks
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#broadcast-messages" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Broadcast Messages
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#part-2-shared-context-with-teamsession" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Part 2: Shared Context with TeamSession
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Part 2: Shared Context with TeamSession">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#signaling-between-agents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Signaling Between Agents
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#part-3-shared-pattern-library" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Part 3: Shared Pattern Library
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Part 3: Shared Pattern Library">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#query-patterns-by-context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Query Patterns by Context
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#record-outcomes-and-link-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Record Outcomes and Link Patterns
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#part-4-conflict-resolution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Part 4: Conflict Resolution
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Part 4: Conflict Resolution">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#resolution-statistics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Resolution Statistics
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#part-5-team-execution-with-sdkagentteam" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Part 5: Team Execution with SDKAgentTeam
+        Part 1: Your First Team
       
     </span>
   </a>
@@ -1242,10 +1080,54 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#part-6-putting-it-all-together" class="md-nav__link">
+  <a href="#part-2-reading-the-report" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Part 6: Putting It All Together
+        Part 2: Reading the Report
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-3-critical-vs-advisory-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 3: Critical vs Advisory Gates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-4-scoping-agents-to-different-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 4: Scoping Agents to Different Files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-5-custom-scoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 5: Custom Scoring
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-6-a-release-gate-team" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 6: A Release-Gate Team
       
     </span>
   </a>
@@ -1276,10 +1158,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#connection-refused-errors" class="md-nav__link">
+  <a href="#workflows-return-empty-or-low-scores" class="md-nav__link">
     <span class="md-ellipsis">
       
-        "Connection refused" errors
+        Workflows return empty or low scores
       
     </span>
   </a>
@@ -1287,10 +1169,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#agent-claims-return-none" class="md-nav__link">
+  <a href="#a-gate-references-the-wrong-agent" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Agent claims return None
+        A gate references the wrong agent
       
     </span>
   </a>
@@ -1298,10 +1180,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#sdkagent-returns-empty-results" class="md-nav__link">
+  <a href="#teamrun-must-be-awaited" class="md-nav__link">
     <span class="md-ellipsis">
       
-        SDKAgent returns empty results
+        team.run() must be awaited
       
     </span>
   </a>
@@ -1831,34 +1713,6 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../integration/claude-code-integration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Claude Code
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
             
               
                 
@@ -4786,144 +4640,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#part-1-task-distribution-with-agentcoordinator" class="md-nav__link">
+  <a href="#part-1-your-first-team" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Part 1: Task Distribution with AgentCoordinator
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Part 1: Task Distribution with AgentCoordinator">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#add-and-claim-tasks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Add and Claim Tasks
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#broadcast-messages" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Broadcast Messages
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#part-2-shared-context-with-teamsession" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Part 2: Shared Context with TeamSession
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Part 2: Shared Context with TeamSession">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#signaling-between-agents" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Signaling Between Agents
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#part-3-shared-pattern-library" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Part 3: Shared Pattern Library
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Part 3: Shared Pattern Library">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#query-patterns-by-context" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Query Patterns by Context
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#record-outcomes-and-link-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Record Outcomes and Link Patterns
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#part-4-conflict-resolution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Part 4: Conflict Resolution
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Part 4: Conflict Resolution">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#resolution-statistics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Resolution Statistics
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#part-5-team-execution-with-sdkagentteam" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Part 5: Team Execution with SDKAgentTeam
+        Part 1: Your First Team
       
     </span>
   </a>
@@ -4931,10 +4651,54 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#part-6-putting-it-all-together" class="md-nav__link">
+  <a href="#part-2-reading-the-report" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Part 6: Putting It All Together
+        Part 2: Reading the Report
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-3-critical-vs-advisory-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 3: Critical vs Advisory Gates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-4-scoping-agents-to-different-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 4: Scoping Agents to Different Files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-5-custom-scoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 5: Custom Scoring
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-6-a-release-gate-team" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 6: A Release-Gate Team
       
     </span>
   </a>
@@ -4965,10 +4729,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#connection-refused-errors" class="md-nav__link">
+  <a href="#workflows-return-empty-or-low-scores" class="md-nav__link">
     <span class="md-ellipsis">
       
-        "Connection refused" errors
+        Workflows return empty or low scores
       
     </span>
   </a>
@@ -4976,10 +4740,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#agent-claims-return-none" class="md-nav__link">
+  <a href="#a-gate-references-the-wrong-agent" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Agent claims return None
+        A gate references the wrong agent
       
     </span>
   </a>
@@ -4987,10 +4751,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#sdkagent-returns-empty-results" class="md-nav__link">
+  <a href="#teamrun-must-be-awaited" class="md-nav__link">
     <span class="md-ellipsis">
       
-        SDKAgent returns empty results
+        team.run() must be awaited
       
     </span>
   </a>
@@ -5035,581 +4799,375 @@
 
 <h1 id="multi-agent-team-coordination">Multi-Agent Team Coordination<a class="headerlink" href="#multi-agent-team-coordination" title="Permanent link">&para;</a></h1>
 <p><strong>Difficulty</strong>: Advanced
-<strong>Time</strong>: 30 minutes
-<strong>Prerequisites</strong>: Redis running locally, <code>attune-ai</code>
-installed</p>
+<strong>Time</strong>: 20 minutes
+<strong>Prerequisites</strong>: <code>attune-ai</code> installed,
+<code>ANTHROPIC_API_KEY</code> set (or subscription auth configured)</p>
 <hr />
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>This tutorial shows how to coordinate multiple AI agents
-using Attune's real coordination primitives:</p>
+<p>This tutorial shows how to coordinate multiple AI agents with
+<code>AgentTeam</code>. The model is <strong>fan-out + gate</strong>:</p>
 <ul>
-<li><strong>AgentCoordinator</strong> — Redis-backed task queue with
-  agent registration, claiming, and broadcasting</li>
-<li><strong>TeamSession</strong> — Shared context and signaling between
-  agents in a collaborative session</li>
-<li><strong>PatternLibrary</strong> — Shared pattern discovery so one
-  agent's learning benefits the whole team</li>
-<li><strong>ConflictResolver</strong> — Weighted scoring to resolve
-  conflicting pattern recommendations</li>
-<li><strong>SDKAgentTeam</strong> — Parallel/sequential agent execution
-  with quality gates</li>
+<li>Each agent wraps a real Attune workflow (code review,
+  security audit, etc.) and runs over the same target.</li>
+<li>Every agent runs <strong>in parallel</strong> and produces a numeric
+  <strong>score</strong> plus details.</li>
+<li>A list of <strong>gates</strong> turns those scores into a pass/fail
+  verdict — critical gates become <em>blockers</em>, advisory gates
+  become <em>warnings</em>.</li>
+</ul>
+<p><code>AgentTeam</code> is intentionally simple: it does one thing well,
+fan-out with gating. There is no sequential pipeline, no DAG,
+and no two-phase topology — if you need those, compose teams
+yourself in Python. (An earlier auto-composing team engine
+offered those topologies; it was removed. <code>AgentTeam</code> is the
+supported path.)</p>
+<p>The three building blocks:</p>
+<ul>
+<li><strong><code>WorkflowAgent</code></strong> — binds an agent key to a workflow class
+  and the files it should analyze.</li>
+<li><strong><code>GateSpec</code></strong> — a named threshold against one agent's score;
+  <code>critical=True</code> blocks, <code>critical=False</code> warns.</li>
+<li><strong><code>AgentTeam</code></strong> — holds the agents and gates, and runs them
+  with <code>team.run(target)</code>.</li>
 </ul>
 <hr />
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>redis-server<span class="w">  </span><span class="c1"># Must be running for coordination</span>
 </code></pre></div>
+<p><code>AgentTeam</code> runs Attune workflows, which call an LLM. Set
+<code>ANTHROPIC_API_KEY</code> (or configure subscription auth) so the
+workflows can execute. Redis is <strong>not</strong> required.</p>
 <hr />
-<h2 id="part-1-task-distribution-with-agentcoordinator">Part 1: Task Distribution with AgentCoordinator<a class="headerlink" href="#part-1-task-distribution-with-agentcoordinator" title="Permanent link">&para;</a></h2>
-<p>The <code>AgentCoordinator</code> uses Redis to distribute tasks
-across agents. Agents register, claim pending tasks, and
-broadcast results.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.coordination</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentCoordinator</span><span class="p">,</span> <span class="n">AgentTask</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_redis_memory</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Connect to Redis</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">memory</span> <span class="o">=</span> <span class="n">get_redis_memory</span><span class="p">()</span>
+<h2 id="part-1-your-first-team">Part 1: Your First Team<a class="headerlink" href="#part-1-your-first-team" title="Permanent link">&para;</a></h2>
+<p>Start with two agents — one code-review agent and one
+security agent — both scanning <code>src/</code>. A gate on each turns
+their scores into a verdict.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agents.team</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentTeam</span><span class="p">,</span> <span class="n">GateSpec</span><span class="p">,</span> <span class="n">WorkflowAgent</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.code_review</span><span class="w"> </span><span class="kn">import</span> <span class="n">CodeReviewWorkflow</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.security_audit</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecurityAuditWorkflow</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Create a coordinator for a code review team</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">coordinator</span> <span class="o">=</span> <span class="n">AgentCoordinator</span><span class="p">(</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">short_term_memory</span><span class="o">=</span><span class="n">memory</span><span class="p">,</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">team_id</span><span class="o">=</span><span class="s2">&quot;code_review_team&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="p">)</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1"># Register three specialized agents</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="n">coordinator</span><span class="o">.</span><span class="n">register_agent</span><span class="p">(</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="s2">&quot;security_agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="n">capabilities</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;security_review&quot;</span><span class="p">,</span> <span class="s2">&quot;vulnerability_scan&quot;</span><span class="p">],</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="p">)</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="n">coordinator</span><span class="o">.</span><span class="n">register_agent</span><span class="p">(</span>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    <span class="s2">&quot;performance_agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    <span class="n">capabilities</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;performance_review&quot;</span><span class="p">,</span> <span class="s2">&quot;profiling&quot;</span><span class="p">],</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="p">)</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="n">coordinator</span><span class="o">.</span><span class="n">register_agent</span><span class="p">(</span>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>    <span class="s2">&quot;style_agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>    <span class="n">capabilities</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;style_review&quot;</span><span class="p">,</span> <span class="s2">&quot;linting&quot;</span><span class="p">],</span>
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="p">)</span>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Active agents: </span><span class="si">{</span><span class="n">coordinator</span><span class="o">.</span><span class="n">get_active_agents</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="c1"># Output: Active agents: [&#39;security_agent&#39;,</span>
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="c1">#   &#39;performance_agent&#39;, &#39;style_agent&#39;]</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">team</span> <span class="o">=</span> <span class="n">AgentTeam</span><span class="p">(</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="n">WorkflowAgent</span><span class="p">(</span><span class="s2">&quot;code-review&quot;</span><span class="p">,</span> <span class="n">CodeReviewWorkflow</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;src/&quot;</span><span class="p">]),</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="n">WorkflowAgent</span><span class="p">(</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>            <span class="s2">&quot;security-audit&quot;</span><span class="p">,</span> <span class="n">SecurityAuditWorkflow</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;src/&quot;</span><span class="p">]</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>        <span class="p">),</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="p">],</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="n">gates</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>        <span class="n">GateSpec</span><span class="p">(</span><span class="s2">&quot;Code Quality&quot;</span><span class="p">,</span> <span class="s2">&quot;code-review&quot;</span><span class="p">,</span> <span class="mf">80.0</span><span class="p">),</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>        <span class="n">GateSpec</span><span class="p">(</span><span class="s2">&quot;Security&quot;</span><span class="p">,</span> <span class="s2">&quot;security-audit&quot;</span><span class="p">,</span> <span class="mf">80.0</span><span class="p">),</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    <span class="p">],</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="p">)</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="n">report</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">team</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;src/&quot;</span><span class="p">]))</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Passed:&quot;</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">passed</span><span class="p">)</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Blockers:&quot;</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">blockers</span><span class="p">)</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warnings:&quot;</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">warnings</span><span class="p">)</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cost: $</span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">cost</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
-<h3 id="add-and-claim-tasks">Add and Claim Tasks<a class="headerlink" href="#add-and-claim-tasks" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Add tasks to the queue</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">coordinator</span><span class="o">.</span><span class="n">add_task</span><span class="p">(</span><span class="n">AgentTask</span><span class="p">(</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;review_auth_module&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">task_type</span><span class="o">=</span><span class="s2">&quot;security_review&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Review authentication module for vulns&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">priority</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;files&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;src/auth.py&quot;</span><span class="p">,</span> <span class="s2">&quot;src/tokens.py&quot;</span><span class="p">]},</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="p">))</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="n">coordinator</span><span class="o">.</span><span class="n">add_task</span><span class="p">(</span><span class="n">AgentTask</span><span class="p">(</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="n">task_id</span><span class="o">=</span><span class="s2">&quot;review_query_perf&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="n">task_type</span><span class="o">=</span><span class="s2">&quot;performance_review&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Check database query performance&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="n">priority</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;files&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;src/db/queries.py&quot;</span><span class="p">]},</span>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="p">))</span>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="c1"># Security agent claims the highest-priority task</span>
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="n">task</span> <span class="o">=</span> <span class="n">coordinator</span><span class="o">.</span><span class="n">claim_task</span><span class="p">(</span>
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>    <span class="s2">&quot;security_agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>    <span class="n">task_type</span><span class="o">=</span><span class="s2">&quot;security_review&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="p">)</span>
-<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>
-<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="k">if</span> <span class="n">task</span><span class="p">:</span>
-<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Claimed: </span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2"> (priority </span><span class="si">{</span><span class="n">task</span><span class="o">.</span><span class="n">priority</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>    <span class="c1"># Output: Claimed: Review authentication module for</span>
-<a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>    <span class="c1">#   vulns (priority 9)</span>
-<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a>
-<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a>    <span class="c1"># Do the work, then complete the task</span>
-<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a>    <span class="n">coordinator</span><span class="o">.</span><span class="n">complete_task</span><span class="p">(</span>
-<a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>        <span class="n">task</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span>
-<a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a>        <span class="n">result</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a>            <span class="s2">&quot;issues_found&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-<a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a>            <span class="s2">&quot;severity&quot;</span><span class="p">:</span> <span class="s2">&quot;high&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a>            <span class="s2">&quot;details&quot;</span><span class="p">:</span> <span class="s2">&quot;SQL injection in login endpoint&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a>        <span class="p">},</span>
-<a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a>        <span class="n">agent_id</span><span class="o">=</span><span class="s2">&quot;security_agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a>    <span class="p">)</span>
-</code></pre></div>
-<h3 id="broadcast-messages">Broadcast Messages<a class="headerlink" href="#broadcast-messages" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Broadcast an infrastructure change to all agents</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">coordinator</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">message_type</span><span class="o">=</span><span class="s2">&quot;infrastructure_change&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">data</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="s2">&quot;change&quot;</span><span class="p">:</span> <span class="s2">&quot;Database connection pool reduced&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="s2">&quot;old_value&quot;</span><span class="p">:</span> <span class="s2">&quot;max_connections=200&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="s2">&quot;new_value&quot;</span><span class="p">:</span> <span class="s2">&quot;max_connections=50&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>        <span class="s2">&quot;action_required&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="p">},</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="p">)</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="c1"># Aggregate results from all completed tasks</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="n">results</span> <span class="o">=</span> <span class="n">coordinator</span><span class="o">.</span><span class="n">aggregate_results</span><span class="p">()</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Completed: </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;total_completed&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;By agent: </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;by_agent&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</code></pre></div>
+<p>Both agents run <strong>concurrently</strong> over <code>src/</code>. Each gate names
+the agent it scores (<code>agent_key</code>) and the <code>threshold</code> the
+score must meet. If every critical gate passes, <code>report.passed</code>
+is <code>True</code>.</p>
 <hr />
-<h2 id="part-2-shared-context-with-teamsession">Part 2: Shared Context with TeamSession<a class="headerlink" href="#part-2-shared-context-with-teamsession" title="Permanent link">&para;</a></h2>
-<p>A <code>TeamSession</code> gives agents a shared workspace. Agents
-join a session, share data with <code>share()</code>, read it with
-<code>get()</code>, and communicate via <code>signal()</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.coordination</span><span class="w"> </span><span class="kn">import</span> <span class="n">TeamSession</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_redis_memory</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">memory</span> <span class="o">=</span> <span class="n">get_redis_memory</span><span class="p">()</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1"># Create a session for reviewing PR #42</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">session</span> <span class="o">=</span> <span class="n">TeamSession</span><span class="p">(</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">short_term_memory</span><span class="o">=</span><span class="n">memory</span><span class="p">,</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;pr_review_42&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="n">purpose</span><span class="o">=</span><span class="s2">&quot;Review PR #42: Add user profile images&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="p">)</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="c1"># Agents join the session</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="n">session</span><span class="o">.</span><span class="n">add_agent</span><span class="p">(</span><span class="s2">&quot;security_agent&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="n">session</span><span class="o">.</span><span class="n">add_agent</span><span class="p">(</span><span class="s2">&quot;performance_agent&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="c1"># Security agent shares its analysis scope</span>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="n">session</span><span class="o">.</span><span class="n">share</span><span class="p">(</span><span class="s2">&quot;analysis_scope&quot;</span><span class="p">,</span> <span class="p">{</span>
-<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>    <span class="s2">&quot;files&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;src/upload.py&quot;</span><span class="p">,</span> <span class="s2">&quot;src/images.py&quot;</span><span class="p">],</span>
-<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>    <span class="s2">&quot;lines_of_code&quot;</span><span class="p">:</span> <span class="mi">340</span><span class="p">,</span>
-<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>    <span class="s2">&quot;risk_areas&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;file upload validation&quot;</span><span class="p">,</span> <span class="s2">&quot;path handling&quot;</span><span class="p">],</span>
-<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="p">})</span>
-<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>
-<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="c1"># Performance agent reads the shared scope</span>
-<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="n">scope</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;analysis_scope&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reviewing </span><span class="si">{</span><span class="n">scope</span><span class="p">[</span><span class="s1">&#39;lines_of_code&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> lines&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Risk areas: </span><span class="si">{</span><span class="n">scope</span><span class="p">[</span><span class="s1">&#39;risk_areas&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a><span class="c1"># Output:</span>
-<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a><span class="c1"># Reviewing 340 lines</span>
-<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a><span class="c1"># Risk areas: [&#39;file upload validation&#39;, &#39;path handling&#39;]</span>
+<h2 id="part-2-reading-the-report">Part 2: Reading the Report<a class="headerlink" href="#part-2-reading-the-report" title="Permanent link">&para;</a></h2>
+<p><code>team.run()</code> returns a <code>TeamReport</code>. Its fields tell the whole
+story:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>passed</code></td>
+<td><code>True</code> if every critical gate met its threshold</td>
+</tr>
+<tr>
+<td><code>gates</code></td>
+<td>the gate specs that were evaluated</td>
+</tr>
+<tr>
+<td><code>results</code></td>
+<td>one <code>AgentResult</code> per agent</td>
+</tr>
+<tr>
+<td><code>blockers</code></td>
+<td>messages for failed <strong>critical</strong> gates</td>
+</tr>
+<tr>
+<td><code>warnings</code></td>
+<td>messages for failed <strong>advisory</strong> gates</td>
+</tr>
+<tr>
+<td><code>cost</code></td>
+<td>total LLM cost across all agents</td>
+</tr>
+</tbody>
+</table>
+<p>Each <code>AgentResult</code> carries the per-agent outcome:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agents.team</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentTeam</span><span class="p">,</span> <span class="n">GateSpec</span><span class="p">,</span> <span class="n">WorkflowAgent</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.code_review</span><span class="w"> </span><span class="kn">import</span> <span class="n">CodeReviewWorkflow</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">team</span> <span class="o">=</span> <span class="n">AgentTeam</span><span class="p">(</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="n">WorkflowAgent</span><span class="p">(</span><span class="s2">&quot;code-review&quot;</span><span class="p">,</span> <span class="n">CodeReviewWorkflow</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;src/&quot;</span><span class="p">]),</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="p">],</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="n">gates</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>        <span class="n">GateSpec</span><span class="p">(</span><span class="s2">&quot;Code Quality&quot;</span><span class="p">,</span> <span class="s2">&quot;code-review&quot;</span><span class="p">,</span> <span class="mf">80.0</span><span class="p">),</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="p">],</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="p">)</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="n">report</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">team</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;src/&quot;</span><span class="p">]))</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">results</span><span class="p">:</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>    <span class="nb">print</span><span class="p">(</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>        <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">] score=</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">score</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> &quot;</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>        <span class="sa">f</span><span class="s2">&quot;success=</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="si">}</span><span class="s2"> cost=$</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">cost</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>    <span class="p">)</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>    <span class="c1"># result.details holds the workflow&#39;s raw output dict</span>
 </code></pre></div>
-<h3 id="signaling-between-agents">Signaling Between Agents<a class="headerlink" href="#signaling-between-agents" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Security agent signals a finding</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">session</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">signal_type</span><span class="o">=</span><span class="s2">&quot;finding&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">data</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        <span class="s2">&quot;agent&quot;</span><span class="p">:</span> <span class="s2">&quot;security_agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="s2">&quot;severity&quot;</span><span class="p">:</span> <span class="s2">&quot;high&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>        <span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="s2">&quot;src/upload.py&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        <span class="s2">&quot;line&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">,</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>        <span class="s2">&quot;issue&quot;</span><span class="p">:</span> <span class="s2">&quot;No file type validation on upload&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="p">},</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="p">)</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="c1"># Performance agent checks for signals</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="n">signals</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get_signals</span><span class="p">(</span><span class="n">signal_type</span><span class="o">=</span><span class="s2">&quot;finding&quot;</span><span class="p">)</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">signals</span><span class="p">:</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>    <span class="n">data</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="p">{})</span>
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;agent&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;issue&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="c1"># Output:</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="c1"># [security_agent] No file type validation on upload</span>
-</code></pre></div>
+<p>The fields on an <code>AgentResult</code> are <code>key</code>, <code>score</code>, <code>cost</code>,
+<code>success</code>, and <code>details</code> (the workflow's raw output).</p>
 <hr />
-<h2 id="part-3-shared-pattern-library">Part 3: Shared Pattern Library<a class="headerlink" href="#part-3-shared-pattern-library" title="Permanent link">&para;</a></h2>
-<p>The <code>PatternLibrary</code> lets agents contribute reusable
-patterns and query for relevant ones. One agent's discovery
-benefits the entire team.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pattern_library</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pattern</span><span class="p">,</span> <span class="n">PatternLibrary</span>
+<h2 id="part-3-critical-vs-advisory-gates">Part 3: Critical vs Advisory Gates<a class="headerlink" href="#part-3-critical-vs-advisory-gates" title="Permanent link">&para;</a></h2>
+<p>A gate is <strong>critical</strong> by default (<code>critical=True</code>): if its
+agent's score is below the threshold, the team fails and a
+message lands in <code>report.blockers</code>. Set <code>critical=False</code> to
+make a gate <strong>advisory</strong> — a miss becomes a <code>warning</code> instead
+of a blocker, so the team can still pass.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agents.team</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentTeam</span><span class="p">,</span> <span class="n">GateSpec</span><span class="p">,</span> <span class="n">WorkflowAgent</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.code_review</span><span class="w"> </span><span class="kn">import</span> <span class="n">CodeReviewWorkflow</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.security_audit</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecurityAuditWorkflow</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">team</span> <span class="o">=</span> <span class="n">AgentTeam</span><span class="p">(</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        <span class="n">WorkflowAgent</span><span class="p">(</span><span class="s2">&quot;security&quot;</span><span class="p">,</span> <span class="n">SecurityAuditWorkflow</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;src/&quot;</span><span class="p">]),</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="n">WorkflowAgent</span><span class="p">(</span><span class="s2">&quot;quality&quot;</span><span class="p">,</span> <span class="n">CodeReviewWorkflow</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;src/&quot;</span><span class="p">]),</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="p">],</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="n">gates</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>        <span class="c1"># Security must pass — a miss blocks the team.</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>        <span class="n">GateSpec</span><span class="p">(</span><span class="s2">&quot;Security&quot;</span><span class="p">,</span> <span class="s2">&quot;security&quot;</span><span class="p">,</span> <span class="mf">80.0</span><span class="p">,</span> <span class="n">critical</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>        <span class="c1"># Quality is advisory — a miss only warns.</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>        <span class="n">GateSpec</span><span class="p">(</span><span class="s2">&quot;Quality&quot;</span><span class="p">,</span> <span class="s2">&quot;quality&quot;</span><span class="p">,</span> <span class="mf">90.0</span><span class="p">,</span> <span class="n">critical</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>    <span class="p">],</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="p">)</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="n">report</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">team</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;src/&quot;</span><span class="p">]))</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">blockers</span><span class="p">:</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Blocked by:&quot;</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">blockers</span><span class="p">)</span>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">warnings</span><span class="p">:</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warnings:&quot;</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">warnings</span><span class="p">)</span>
+</code></pre></div>
+<p>Use this to enforce a hard floor on the things you cannot ship
+without (security), while keeping aspirational targets
+(coverage, style) as non-blocking signals.</p>
+<hr />
+<h2 id="part-4-scoping-agents-to-different-files">Part 4: Scoping Agents to Different Files<a class="headerlink" href="#part-4-scoping-agents-to-different-files" title="Permanent link">&para;</a></h2>
+<p>Agents do not have to scan the same target. Give each
+<code>WorkflowAgent</code> its own <code>files</code> list so specialists focus on
+the areas they care about — the auth code gets a security
+pass, the data layer gets a performance pass.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agents.team</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentTeam</span><span class="p">,</span> <span class="n">GateSpec</span><span class="p">,</span> <span class="n">WorkflowAgent</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.security_audit</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecurityAuditWorkflow</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.perf_audit</span><span class="w"> </span><span class="kn">import</span> <span class="n">PerformanceAuditWorkflow</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">team</span> <span class="o">=</span> <span class="n">AgentTeam</span><span class="p">(</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="n">WorkflowAgent</span><span class="p">(</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>            <span class="s2">&quot;auth-security&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>            <span class="n">SecurityAuditWorkflow</span><span class="p">,</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>            <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;src/auth.py&quot;</span><span class="p">,</span> <span class="s2">&quot;src/tokens.py&quot;</span><span class="p">],</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>        <span class="p">),</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>        <span class="n">WorkflowAgent</span><span class="p">(</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>            <span class="s2">&quot;db-perf&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>            <span class="n">PerformanceAuditWorkflow</span><span class="p">,</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>            <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;src/db/queries.py&quot;</span><span class="p">],</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>        <span class="p">),</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>    <span class="p">],</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>    <span class="n">gates</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>        <span class="n">GateSpec</span><span class="p">(</span><span class="s2">&quot;Auth Security&quot;</span><span class="p">,</span> <span class="s2">&quot;auth-security&quot;</span><span class="p">,</span> <span class="mf">85.0</span><span class="p">),</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>        <span class="n">GateSpec</span><span class="p">(</span><span class="s2">&quot;DB Performance&quot;</span><span class="p">,</span> <span class="s2">&quot;db-perf&quot;</span><span class="p">,</span> <span class="mf">70.0</span><span class="p">,</span> <span class="n">critical</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>    <span class="p">],</span>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="p">)</span>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="n">report</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">team</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;src/&quot;</span><span class="p">]))</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Passed:&quot;</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">passed</span><span class="p">,</span> <span class="s2">&quot;| Cost:&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;$</span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">cost</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>The <code>target</code> passed to <code>team.run()</code> is the overall context;
+each agent's own <code>files</code> list scopes what <em>that</em> agent
+analyzes.</p>
+<hr />
+<h2 id="part-5-custom-scoring">Part 5: Custom Scoring<a class="headerlink" href="#part-5-custom-scoring" title="Permanent link">&para;</a></h2>
+<p>By default an agent scores itself from its workflow output. If
+you want different scoring logic, pass a <code>score_fn</code> that takes
+the workflow result and returns a float (or <code>None</code> to fall
+back to <code>default_score</code>). You can also set <code>escalate=True</code> to
+let the underlying workflow climb to a stronger model tier.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agents.team</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentTeam</span><span class="p">,</span> <span class="n">GateSpec</span><span class="p">,</span> <span class="n">WorkflowAgent</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.bug_predict</span><span class="w"> </span><span class="kn">import</span> <span class="n">BugPredictionWorkflow</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="k">def</span><span class="w"> </span><span class="nf">fewer_bugs_is_better</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Map predicted-bug count to a 0-100 score.&quot;&quot;&quot;</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>        <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;predictions&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">100.0</span> <span class="o">-</span> <span class="n">count</span> <span class="o">*</span> <span class="mf">10.0</span><span class="p">)</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="n">team</span> <span class="o">=</span> <span class="n">AgentTeam</span><span class="p">(</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>        <span class="n">WorkflowAgent</span><span class="p">(</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>            <span class="s2">&quot;bug-risk&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>            <span class="n">BugPredictionWorkflow</span><span class="p">,</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>            <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;src/&quot;</span><span class="p">],</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>            <span class="n">score_fn</span><span class="o">=</span><span class="n">fewer_bugs_is_better</span><span class="p">,</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>            <span class="n">default_score</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>            <span class="n">escalate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>        <span class="p">),</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>    <span class="p">],</span>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>    <span class="n">gates</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>        <span class="n">GateSpec</span><span class="p">(</span><span class="s2">&quot;Bug Risk&quot;</span><span class="p">,</span> <span class="s2">&quot;bug-risk&quot;</span><span class="p">,</span> <span class="mf">70.0</span><span class="p">),</span>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>    <span class="p">],</span>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="p">)</span>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="n">report</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">team</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;src/&quot;</span><span class="p">]))</span>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Passed:&quot;</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">passed</span><span class="p">)</span>
+</code></pre></div>
+<p><code>score_fn</code> runs against the workflow's raw output, so its
+shape depends on the workflow you wrapped. When it returns
+<code>None</code>, the agent uses <code>default_score</code>.</p>
+<hr />
+<h2 id="part-6-a-release-gate-team">Part 6: A Release-Gate Team<a class="headerlink" href="#part-6-a-release-gate-team" title="Permanent link">&para;</a></h2>
+<p>Putting it together: a three-agent team that acts as a
+pre-merge gate. Security is a hard blocker; quality and test
+health are advisory.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">library</span> <span class="o">=</span> <span class="n">PatternLibrary</span><span class="p">()</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># Security agent contributes a pattern it discovered</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">library</span><span class="o">.</span><span class="n">contribute_pattern</span><span class="p">(</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="s2">&quot;security_agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="n">Pattern</span><span class="p">(</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>        <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;validate_upload_type&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>        <span class="n">agent_id</span><span class="o">=</span><span class="s2">&quot;security_agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>        <span class="n">pattern_type</span><span class="o">=</span><span class="s2">&quot;security&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Validate file upload MIME type&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>            <span class="s2">&quot;Always validate MIME type and extension on &quot;</span>
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>            <span class="s2">&quot;file uploads. Reject executable types.&quot;</span>
-<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>        <span class="p">),</span>
-<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>        <span class="n">confidence</span><span class="o">=</span><span class="mf">0.92</span><span class="p">,</span>
-<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>        <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;security&quot;</span><span class="p">,</span> <span class="s2">&quot;file-upload&quot;</span><span class="p">,</span> <span class="s2">&quot;validation&quot;</span><span class="p">],</span>
-<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>        <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;domain&quot;</span><span class="p">:</span> <span class="s2">&quot;web&quot;</span><span class="p">,</span> <span class="s2">&quot;risk&quot;</span><span class="p">:</span> <span class="s2">&quot;high&quot;</span><span class="p">},</span>
-<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>    <span class="p">),</span>
-<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="p">)</span>
-<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>
-<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="c1"># Performance agent contributes a different pattern</span>
-<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a><span class="n">library</span><span class="o">.</span><span class="n">contribute_pattern</span><span class="p">(</span>
-<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>    <span class="s2">&quot;performance_agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>    <span class="n">Pattern</span><span class="p">(</span>
-<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>        <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;batch_image_processing&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>        <span class="n">agent_id</span><span class="o">=</span><span class="s2">&quot;performance_agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>        <span class="n">pattern_type</span><span class="o">=</span><span class="s2">&quot;performance&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a>        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Batch image processing with pipeline&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>            <span class="s2">&quot;Process uploaded images in batches using &quot;</span>
-<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>            <span class="s2">&quot;Redis pipeline instead of one-at-a-time.&quot;</span>
-<a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a>        <span class="p">),</span>
-<a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a>        <span class="n">confidence</span><span class="o">=</span><span class="mf">0.88</span><span class="p">,</span>
-<a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a>        <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;performance&quot;</span><span class="p">,</span> <span class="s2">&quot;redis&quot;</span><span class="p">,</span> <span class="s2">&quot;batch&quot;</span><span class="p">],</span>
-<a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a>        <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;domain&quot;</span><span class="p">:</span> <span class="s2">&quot;web&quot;</span><span class="p">,</span> <span class="s2">&quot;bottleneck&quot;</span><span class="p">:</span> <span class="s2">&quot;io&quot;</span><span class="p">},</span>
-<a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a>    <span class="p">),</span>
-<a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a><span class="p">)</span>
-<a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a>
-<a id="__codelineno-6-41" name="__codelineno-6-41" href="#__codelineno-6-41"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Library stats: </span><span class="si">{</span><span class="n">library</span><span class="o">.</span><span class="n">get_library_stats</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-6-42" name="__codelineno-6-42" href="#__codelineno-6-42"></a><span class="c1"># Output:</span>
-<a id="__codelineno-6-43" name="__codelineno-6-43" href="#__codelineno-6-43"></a><span class="c1"># Library stats: {</span>
-<a id="__codelineno-6-44" name="__codelineno-6-44" href="#__codelineno-6-44"></a><span class="c1">#   &#39;total_patterns&#39;: 2,</span>
-<a id="__codelineno-6-45" name="__codelineno-6-45" href="#__codelineno-6-45"></a><span class="c1">#   &#39;total_agents&#39;: 2,</span>
-<a id="__codelineno-6-46" name="__codelineno-6-46" href="#__codelineno-6-46"></a><span class="c1">#   &#39;total_usage&#39;: 0,</span>
-<a id="__codelineno-6-47" name="__codelineno-6-47" href="#__codelineno-6-47"></a><span class="c1">#   &#39;average_confidence&#39;: 0.9,</span>
-<a id="__codelineno-6-48" name="__codelineno-6-48" href="#__codelineno-6-48"></a><span class="c1">#   ...</span>
-<a id="__codelineno-6-49" name="__codelineno-6-49" href="#__codelineno-6-49"></a><span class="c1"># }</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agents.team</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentTeam</span><span class="p">,</span> <span class="n">GateSpec</span><span class="p">,</span> <span class="n">WorkflowAgent</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.code_review</span><span class="w"> </span><span class="kn">import</span> <span class="n">CodeReviewWorkflow</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.security_audit</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecurityAuditWorkflow</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.test_audit.workflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">TestAuditWorkflow</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">release_gate_team</span><span class="p">(</span><span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AgentTeam</span><span class="p">:</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a fan-out team that gates a release candidate.&quot;&quot;&quot;</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="k">return</span> <span class="n">AgentTeam</span><span class="p">(</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>        <span class="n">agents</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>            <span class="n">WorkflowAgent</span><span class="p">(</span><span class="s2">&quot;security&quot;</span><span class="p">,</span> <span class="n">SecurityAuditWorkflow</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="n">target</span><span class="p">]),</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>            <span class="n">WorkflowAgent</span><span class="p">(</span><span class="s2">&quot;quality&quot;</span><span class="p">,</span> <span class="n">CodeReviewWorkflow</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="n">target</span><span class="p">]),</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>            <span class="n">WorkflowAgent</span><span class="p">(</span><span class="s2">&quot;tests&quot;</span><span class="p">,</span> <span class="n">TestAuditWorkflow</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="n">target</span><span class="p">]),</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>        <span class="p">],</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>        <span class="n">gates</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>            <span class="n">GateSpec</span><span class="p">(</span><span class="s2">&quot;Security&quot;</span><span class="p">,</span> <span class="s2">&quot;security&quot;</span><span class="p">,</span> <span class="mf">85.0</span><span class="p">,</span> <span class="n">critical</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>            <span class="n">GateSpec</span><span class="p">(</span><span class="s2">&quot;Quality&quot;</span><span class="p">,</span> <span class="s2">&quot;quality&quot;</span><span class="p">,</span> <span class="mf">75.0</span><span class="p">,</span> <span class="n">critical</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>            <span class="n">GateSpec</span><span class="p">(</span><span class="s2">&quot;Test Health&quot;</span><span class="p">,</span> <span class="s2">&quot;tests&quot;</span><span class="p">,</span> <span class="mf">70.0</span><span class="p">,</span> <span class="n">critical</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>        <span class="p">],</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>    <span class="p">)</span>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">target</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;src/&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>    <span class="n">team</span> <span class="o">=</span> <span class="n">release_gate_team</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+<a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>    <span class="n">report</span> <span class="o">=</span> <span class="k">await</span> <span class="n">team</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="n">target</span><span class="p">])</span>
+<a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>
+<a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>    <span class="n">verdict</span> <span class="o">=</span> <span class="s2">&quot;READY&quot;</span> <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">passed</span> <span class="k">else</span> <span class="s2">&quot;BLOCKED&quot;</span>
+<a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Release </span><span class="si">{</span><span class="n">verdict</span><span class="si">}</span><span class="s2"> (cost $</span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">cost</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>
+<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">results</span><span class="p">:</span>
+<a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">score</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a>    <span class="k">for</span> <span class="n">blocker</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">blockers</span><span class="p">:</span>
+<a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  BLOCKER: </span><span class="si">{</span><span class="n">blocker</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a>    <span class="k">for</span> <span class="n">warning</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">warnings</span><span class="p">:</span>
+<a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  warning: </span><span class="si">{</span><span class="n">warning</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a>
+<a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a>
+<a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">(</span><span class="s2">&quot;src/&quot;</span><span class="p">))</span>
 </code></pre></div>
-<h3 id="query-patterns-by-context">Query Patterns by Context<a class="headerlink" href="#query-patterns-by-context" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># A new agent queries the library for relevant patterns</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">context</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="s2">&quot;domain&quot;</span><span class="p">:</span> <span class="s2">&quot;web&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="s2">&quot;task_type&quot;</span><span class="p">:</span> <span class="s2">&quot;file_upload&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="s2">&quot;tags&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;security&quot;</span><span class="p">,</span> <span class="s2">&quot;validation&quot;</span><span class="p">],</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p">}</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="n">matches</span> <span class="o">=</span> <span class="n">library</span><span class="o">.</span><span class="n">query_patterns</span><span class="p">(</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    <span class="s2">&quot;style_agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="n">context</span><span class="p">,</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="n">min_confidence</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="p">)</span>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>
-<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
-<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>    <span class="n">p</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">pattern</span>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    <span class="nb">print</span><span class="p">(</span>
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>        <span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (confidence: </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">confidence</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">, &quot;</span>
-<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>        <span class="sa">f</span><span class="s2">&quot;relevance: </span><span class="si">{</span><span class="n">match</span><span class="o">.</span><span class="n">relevance_score</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">)&quot;</span>
-<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>    <span class="p">)</span>
-<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    From: </span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">agent_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    Why: </span><span class="si">{</span><span class="n">match</span><span class="o">.</span><span class="n">matching_factors</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a>
-<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="c1"># Output:</span>
-<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="c1">#   Validate file upload MIME type (confidence: 92%,</span>
-<a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="c1">#     relevance: 70%)</span>
-<a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="c1">#     From: security_agent</span>
-<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="c1">#     Why: [&#39;1 context matches&#39;, &#39;1 tag matches&#39;]</span>
-</code></pre></div>
-<h3 id="record-outcomes-and-link-patterns">Record Outcomes and Link Patterns<a class="headerlink" href="#record-outcomes-and-link-patterns" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Record that using the pattern was successful</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">library</span><span class="o">.</span><span class="n">record_pattern_outcome</span><span class="p">(</span><span class="s2">&quot;validate_upload_type&quot;</span><span class="p">,</span> <span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Link related patterns so agents discover both</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">library</span><span class="o">.</span><span class="n">link_patterns</span><span class="p">(</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="s2">&quot;validate_upload_type&quot;</span><span class="p">,</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="s2">&quot;batch_image_processing&quot;</span><span class="p">,</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="p">)</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="c1"># Get related patterns</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="n">related</span> <span class="o">=</span> <span class="n">library</span><span class="o">.</span><span class="n">get_related_patterns</span><span class="p">(</span><span class="s2">&quot;validate_upload_type&quot;</span><span class="p">)</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Related: </span><span class="si">{</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">related</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="c1"># Output: Related: [&#39;Batch image processing with pipeline&#39;]</span>
-</code></pre></div>
-<hr />
-<h2 id="part-4-conflict-resolution">Part 4: Conflict Resolution<a class="headerlink" href="#part-4-conflict-resolution" title="Permanent link">&para;</a></h2>
-<p>When two agents recommend conflicting approaches, the
-<code>ConflictResolver</code> uses weighted scoring across confidence,
-success rate, recency, context match, and team priorities.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.coordination</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">ConflictResolver</span><span class="p">,</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">ResolutionStrategy</span><span class="p">,</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">TeamPriorities</span><span class="p">,</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="p">)</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pattern_library</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pattern</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1"># Configure team priorities</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="n">priorities</span> <span class="o">=</span> <span class="n">TeamPriorities</span><span class="p">(</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="n">security_weight</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="n">readability_weight</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    <span class="n">performance_weight</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
-<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>    <span class="n">maintainability_weight</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="p">)</span>
-<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
-<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="n">resolver</span> <span class="o">=</span> <span class="n">ConflictResolver</span><span class="p">(</span>
-<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>    <span class="n">default_strategy</span><span class="o">=</span><span class="n">ResolutionStrategy</span><span class="o">.</span><span class="n">WEIGHTED_SCORE</span><span class="p">,</span>
-<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>    <span class="n">team_priorities</span><span class="o">=</span><span class="n">priorities</span><span class="p">,</span>
-<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="p">)</span>
-<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>
-<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="c1"># Two agents disagree on approach</span>
-<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="n">security_pattern</span> <span class="o">=</span> <span class="n">Pattern</span><span class="p">(</span>
-<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>    <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;strict_validation&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a>    <span class="n">agent_id</span><span class="o">=</span><span class="s2">&quot;security_agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a>    <span class="n">pattern_type</span><span class="o">=</span><span class="s2">&quot;security&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Strict input validation with allowlist&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Validate all inputs against an allowlist&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a>    <span class="n">confidence</span><span class="o">=</span><span class="mf">0.90</span><span class="p">,</span>
-<a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a>    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;security&quot;</span><span class="p">,</span> <span class="s2">&quot;validation&quot;</span><span class="p">],</span>
-<a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a><span class="p">)</span>
-<a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a>
-<a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a><span class="n">perf_pattern</span> <span class="o">=</span> <span class="n">Pattern</span><span class="p">(</span>
-<a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a>    <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;lazy_validation&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-34" name="__codelineno-9-34" href="#__codelineno-9-34"></a>    <span class="n">agent_id</span><span class="o">=</span><span class="s2">&quot;performance_agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-35" name="__codelineno-9-35" href="#__codelineno-9-35"></a>    <span class="n">pattern_type</span><span class="o">=</span><span class="s2">&quot;performance&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-36" name="__codelineno-9-36" href="#__codelineno-9-36"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Lazy validation on hot path&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-37" name="__codelineno-9-37" href="#__codelineno-9-37"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Defer validation to reduce latency&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-38" name="__codelineno-9-38" href="#__codelineno-9-38"></a>    <span class="n">confidence</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span>
-<a id="__codelineno-9-39" name="__codelineno-9-39" href="#__codelineno-9-39"></a>    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;performance&quot;</span><span class="p">,</span> <span class="s2">&quot;optimization&quot;</span><span class="p">],</span>
-<a id="__codelineno-9-40" name="__codelineno-9-40" href="#__codelineno-9-40"></a><span class="p">)</span>
-<a id="__codelineno-9-41" name="__codelineno-9-41" href="#__codelineno-9-41"></a>
-<a id="__codelineno-9-42" name="__codelineno-9-42" href="#__codelineno-9-42"></a><span class="c1"># Resolve the conflict</span>
-<a id="__codelineno-9-43" name="__codelineno-9-43" href="#__codelineno-9-43"></a><span class="n">result</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">resolve_patterns</span><span class="p">(</span>
-<a id="__codelineno-9-44" name="__codelineno-9-44" href="#__codelineno-9-44"></a>    <span class="n">patterns</span><span class="o">=</span><span class="p">[</span><span class="n">security_pattern</span><span class="p">,</span> <span class="n">perf_pattern</span><span class="p">],</span>
-<a id="__codelineno-9-45" name="__codelineno-9-45" href="#__codelineno-9-45"></a>    <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;team_priority&quot;</span><span class="p">:</span> <span class="s2">&quot;security&quot;</span><span class="p">},</span>
-<a id="__codelineno-9-46" name="__codelineno-9-46" href="#__codelineno-9-46"></a><span class="p">)</span>
-<a id="__codelineno-9-47" name="__codelineno-9-47" href="#__codelineno-9-47"></a>
-<a id="__codelineno-9-48" name="__codelineno-9-48" href="#__codelineno-9-48"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Winner: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">winning_pattern</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-9-49" name="__codelineno-9-49" href="#__codelineno-9-49"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Strategy: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">strategy_used</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-9-50" name="__codelineno-9-50" href="#__codelineno-9-50"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Confidence: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">confidence</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-9-51" name="__codelineno-9-51" href="#__codelineno-9-51"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reasoning: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">reasoning</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-9-52" name="__codelineno-9-52" href="#__codelineno-9-52"></a><span class="c1"># Output:</span>
-<a id="__codelineno-9-53" name="__codelineno-9-53" href="#__codelineno-9-53"></a><span class="c1"># Winner: Strict input validation with allowlist</span>
-<a id="__codelineno-9-54" name="__codelineno-9-54" href="#__codelineno-9-54"></a><span class="c1"># Strategy: weighted_score</span>
-<a id="__codelineno-9-55" name="__codelineno-9-55" href="#__codelineno-9-55"></a><span class="c1"># Confidence: 72%</span>
-<a id="__codelineno-9-56" name="__codelineno-9-56" href="#__codelineno-9-56"></a><span class="c1"># Reasoning: Selected &#39;Strict input validation with</span>
-<a id="__codelineno-9-57" name="__codelineno-9-57" href="#__codelineno-9-57"></a><span class="c1">#   allowlist&#39; based on weighted scoring (top factors:</span>
-<a id="__codelineno-9-58" name="__codelineno-9-58" href="#__codelineno-9-58"></a><span class="c1">#   confidence: 90%, team_alignment: 80%). Preferred</span>
-<a id="__codelineno-9-59" name="__codelineno-9-59" href="#__codelineno-9-59"></a><span class="c1">#   over: Lazy validation on hot path</span>
-</code></pre></div>
-<h3 id="resolution-statistics">Resolution Statistics<a class="headerlink" href="#resolution-statistics" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">stats</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">get_resolution_stats</span><span class="p">()</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total resolutions: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_resolutions&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Strategies used: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;strategies_used&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Avg confidence: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;average_confidence&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</code></pre></div>
-<hr />
-<h2 id="part-5-team-execution-with-sdkagentteam">Part 5: Team Execution with SDKAgentTeam<a class="headerlink" href="#part-5-team-execution-with-sdkagentteam" title="Permanent link">&para;</a></h2>
-<p><code>SDKAgentTeam</code> runs multiple <code>SDKAgent</code> instances in
-parallel (or sequentially) and evaluates quality gates on
-their results.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agents.sdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">SDKAgent</span><span class="p">,</span> <span class="n">SDKAgentTeam</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agents.sdk.sdk_team</span><span class="w"> </span><span class="kn">import</span> <span class="n">QualityGate</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="c1"># Create specialized agents with system prompts</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="n">security_agent</span> <span class="o">=</span> <span class="n">SDKAgent</span><span class="p">(</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="n">agent_id</span><span class="o">=</span><span class="s2">&quot;security-reviewer&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="n">role</span><span class="o">=</span><span class="s2">&quot;Security Reviewer&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="p">(</span>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>        <span class="s2">&quot;You are a security code reviewer. Analyze code &quot;</span>
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>        <span class="s2">&quot;for vulnerabilities. Return JSON with &#39;score&#39; &quot;</span>
-<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>        <span class="s2">&quot;(0-100) and &#39;findings&#39; dict.&quot;</span>
-<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>    <span class="p">),</span>
-<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="p">)</span>
-<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>
-<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="n">perf_agent</span> <span class="o">=</span> <span class="n">SDKAgent</span><span class="p">(</span>
-<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>    <span class="n">agent_id</span><span class="o">=</span><span class="s2">&quot;perf-reviewer&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>    <span class="n">role</span><span class="o">=</span><span class="s2">&quot;Performance Reviewer&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="p">(</span>
-<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>        <span class="s2">&quot;You are a performance reviewer. Identify &quot;</span>
-<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>        <span class="s2">&quot;bottlenecks and inefficiencies. Return JSON &quot;</span>
-<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>        <span class="s2">&quot;with &#39;score&#39; (0-100) and &#39;findings&#39; dict.&quot;</span>
-<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a>    <span class="p">),</span>
-<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a><span class="p">)</span>
-<a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a>
-<a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a><span class="c1"># Build a team with quality gates</span>
-<a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a><span class="n">team</span> <span class="o">=</span> <span class="n">SDKAgentTeam</span><span class="p">(</span>
-<a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a>    <span class="n">team_name</span><span class="o">=</span><span class="s2">&quot;Code Review Team&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-29" name="__codelineno-11-29" href="#__codelineno-11-29"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span><span class="n">security_agent</span><span class="p">,</span> <span class="n">perf_agent</span><span class="p">],</span>
-<a id="__codelineno-11-30" name="__codelineno-11-30" href="#__codelineno-11-30"></a>    <span class="n">quality_gates</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-11-31" name="__codelineno-11-31" href="#__codelineno-11-31"></a>        <span class="n">QualityGate</span><span class="p">(</span>
-<a id="__codelineno-11-32" name="__codelineno-11-32" href="#__codelineno-11-32"></a>            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;min_security_score&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-33" name="__codelineno-11-33" href="#__codelineno-11-33"></a>            <span class="n">agent_role</span><span class="o">=</span><span class="s2">&quot;Security Reviewer&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-34" name="__codelineno-11-34" href="#__codelineno-11-34"></a>            <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;score&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-35" name="__codelineno-11-35" href="#__codelineno-11-35"></a>            <span class="n">threshold</span><span class="o">=</span><span class="mf">70.0</span><span class="p">,</span>
-<a id="__codelineno-11-36" name="__codelineno-11-36" href="#__codelineno-11-36"></a>            <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-11-37" name="__codelineno-11-37" href="#__codelineno-11-37"></a>        <span class="p">),</span>
-<a id="__codelineno-11-38" name="__codelineno-11-38" href="#__codelineno-11-38"></a>        <span class="n">QualityGate</span><span class="p">(</span>
-<a id="__codelineno-11-39" name="__codelineno-11-39" href="#__codelineno-11-39"></a>            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;min_perf_score&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-40" name="__codelineno-11-40" href="#__codelineno-11-40"></a>            <span class="n">agent_role</span><span class="o">=</span><span class="s2">&quot;Performance Reviewer&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-41" name="__codelineno-11-41" href="#__codelineno-11-41"></a>            <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;score&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-42" name="__codelineno-11-42" href="#__codelineno-11-42"></a>            <span class="n">threshold</span><span class="o">=</span><span class="mf">60.0</span><span class="p">,</span>
-<a id="__codelineno-11-43" name="__codelineno-11-43" href="#__codelineno-11-43"></a>            <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Advisory, not blocking</span>
-<a id="__codelineno-11-44" name="__codelineno-11-44" href="#__codelineno-11-44"></a>        <span class="p">),</span>
-<a id="__codelineno-11-45" name="__codelineno-11-45" href="#__codelineno-11-45"></a>    <span class="p">],</span>
-<a id="__codelineno-11-46" name="__codelineno-11-46" href="#__codelineno-11-46"></a>    <span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Run agents concurrently</span>
-<a id="__codelineno-11-47" name="__codelineno-11-47" href="#__codelineno-11-47"></a><span class="p">)</span>
-<a id="__codelineno-11-48" name="__codelineno-11-48" href="#__codelineno-11-48"></a>
-<a id="__codelineno-11-49" name="__codelineno-11-49" href="#__codelineno-11-49"></a>
-<a id="__codelineno-11-50" name="__codelineno-11-50" href="#__codelineno-11-50"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run_review</span><span class="p">():</span>
-<a id="__codelineno-11-51" name="__codelineno-11-51" href="#__codelineno-11-51"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">team</span><span class="o">.</span><span class="n">execute</span><span class="p">({</span>
-<a id="__codelineno-11-52" name="__codelineno-11-52" href="#__codelineno-11-52"></a>        <span class="s2">&quot;files&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;src/auth.py&quot;</span><span class="p">],</span>
-<a id="__codelineno-11-53" name="__codelineno-11-53" href="#__codelineno-11-53"></a>        <span class="s2">&quot;diff&quot;</span><span class="p">:</span> <span class="s2">&quot;def login(user, password): ...&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-54" name="__codelineno-11-54" href="#__codelineno-11-54"></a>    <span class="p">})</span>
-<a id="__codelineno-11-55" name="__codelineno-11-55" href="#__codelineno-11-55"></a>
-<a id="__codelineno-11-56" name="__codelineno-11-56" href="#__codelineno-11-56"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Team: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">team_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-11-57" name="__codelineno-11-57" href="#__codelineno-11-57"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Success: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-11-58" name="__codelineno-11-58" href="#__codelineno-11-58"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total cost: $</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">total_cost</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-11-59" name="__codelineno-11-59" href="#__codelineno-11-59"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Time: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">execution_time_ms</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">ms&quot;</span><span class="p">)</span>
-<a id="__codelineno-11-60" name="__codelineno-11-60" href="#__codelineno-11-60"></a>
-<a id="__codelineno-11-61" name="__codelineno-11-61" href="#__codelineno-11-61"></a>    <span class="k">for</span> <span class="n">gate</span><span class="p">,</span> <span class="n">passed</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">quality_gate_results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<a id="__codelineno-11-62" name="__codelineno-11-62" href="#__codelineno-11-62"></a>        <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;PASS&quot;</span> <span class="k">if</span> <span class="n">passed</span> <span class="k">else</span> <span class="s2">&quot;FAIL&quot;</span>
-<a id="__codelineno-11-63" name="__codelineno-11-63" href="#__codelineno-11-63"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Gate &#39;</span><span class="si">{</span><span class="n">gate</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-11-64" name="__codelineno-11-64" href="#__codelineno-11-64"></a>
-<a id="__codelineno-11-65" name="__codelineno-11-65" href="#__codelineno-11-65"></a>    <span class="k">for</span> <span class="n">agent_result</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">agent_results</span><span class="p">:</span>
-<a id="__codelineno-11-66" name="__codelineno-11-66" href="#__codelineno-11-66"></a>        <span class="nb">print</span><span class="p">(</span>
-<a id="__codelineno-11-67" name="__codelineno-11-67" href="#__codelineno-11-67"></a>            <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  [</span><span class="si">{</span><span class="n">agent_result</span><span class="o">.</span><span class="n">role</span><span class="si">}</span><span class="s2">] &quot;</span>
-<a id="__codelineno-11-68" name="__codelineno-11-68" href="#__codelineno-11-68"></a>            <span class="sa">f</span><span class="s2">&quot;score=</span><span class="si">{</span><span class="n">agent_result</span><span class="o">.</span><span class="n">score</span><span class="si">}</span><span class="s2">, &quot;</span>
-<a id="__codelineno-11-69" name="__codelineno-11-69" href="#__codelineno-11-69"></a>            <span class="sa">f</span><span class="s2">&quot;tier=</span><span class="si">{</span><span class="n">agent_result</span><span class="o">.</span><span class="n">tier_used</span><span class="si">}</span><span class="s2">, &quot;</span>
-<a id="__codelineno-11-70" name="__codelineno-11-70" href="#__codelineno-11-70"></a>            <span class="sa">f</span><span class="s2">&quot;escalated=</span><span class="si">{</span><span class="n">agent_result</span><span class="o">.</span><span class="n">escalated</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-11-71" name="__codelineno-11-71" href="#__codelineno-11-71"></a>        <span class="p">)</span>
-<a id="__codelineno-11-72" name="__codelineno-11-72" href="#__codelineno-11-72"></a>
-<a id="__codelineno-11-73" name="__codelineno-11-73" href="#__codelineno-11-73"></a>
-<a id="__codelineno-11-74" name="__codelineno-11-74" href="#__codelineno-11-74"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">run_review</span><span class="p">())</span>
-</code></pre></div>
-<p>Each <code>SDKAgent</code> uses progressive tier escalation: it
-starts on the CHEAP tier and automatically escalates to
-CAPABLE, then PREMIUM if the cheaper tier fails.</p>
-<hr />
-<h2 id="part-6-putting-it-all-together">Part 6: Putting It All Together<a class="headerlink" href="#part-6-putting-it-all-together" title="Permanent link">&para;</a></h2>
-<p>Here's a complete workflow combining all the primitives:</p>
-<ol>
-<li><strong>Coordinator</strong> distributes review tasks</li>
-<li><strong>TeamSession</strong> shares context between agents</li>
-<li><strong>SDKAgentTeam</strong> runs agents in parallel</li>
-<li><strong>PatternLibrary</strong> captures what agents learn</li>
-<li><strong>ConflictResolver</strong> resolves disagreements</li>
-</ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.coordination</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    <span class="n">AgentCoordinator</span><span class="p">,</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    <span class="n">AgentTask</span><span class="p">,</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="n">ConflictResolver</span><span class="p">,</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="n">TeamSession</span><span class="p">,</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="p">)</span>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agents.sdk</span><span class="w"> </span><span class="kn">import</span> <span class="n">SDKAgent</span><span class="p">,</span> <span class="n">SDKAgentTeam</span>
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_redis_memory</span>
-<a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pattern_library</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pattern</span><span class="p">,</span> <span class="n">PatternLibrary</span>
-<a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>
-<a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">coordinated_review</span><span class="p">(</span><span class="n">files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
-<a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Run a coordinated multi-agent code review.&quot;&quot;&quot;</span>
-<a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>    <span class="n">memory</span> <span class="o">=</span> <span class="n">get_redis_memory</span><span class="p">()</span>
-<a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>
-<a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>    <span class="c1"># 1. Set up coordination</span>
-<a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>    <span class="n">coordinator</span> <span class="o">=</span> <span class="n">AgentCoordinator</span><span class="p">(</span><span class="n">memory</span><span class="p">,</span> <span class="n">team_id</span><span class="o">=</span><span class="s2">&quot;review&quot;</span><span class="p">)</span>
-<a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>    <span class="n">session</span> <span class="o">=</span> <span class="n">TeamSession</span><span class="p">(</span><span class="n">memory</span><span class="p">,</span> <span class="n">session_id</span><span class="o">=</span><span class="s2">&quot;review_pr99&quot;</span><span class="p">)</span>
-<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>    <span class="n">library</span> <span class="o">=</span> <span class="n">PatternLibrary</span><span class="p">()</span>
-<a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>    <span class="n">resolver</span> <span class="o">=</span> <span class="n">ConflictResolver</span><span class="p">()</span>
-<a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>
-<a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>    <span class="c1"># 2. Share review scope</span>
-<a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>    <span class="n">session</span><span class="o">.</span><span class="n">share</span><span class="p">(</span><span class="s2">&quot;scope&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;files&quot;</span><span class="p">:</span> <span class="n">files</span><span class="p">})</span>
-<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a>
-<a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a>    <span class="c1"># 3. Run agents in parallel</span>
-<a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a>    <span class="n">team</span> <span class="o">=</span> <span class="n">SDKAgentTeam</span><span class="p">(</span>
-<a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a>        <span class="n">team_name</span><span class="o">=</span><span class="s2">&quot;PR Review&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a>        <span class="n">agents</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a>            <span class="n">SDKAgent</span><span class="p">(</span>
-<a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a>                <span class="n">role</span><span class="o">=</span><span class="s2">&quot;Security Reviewer&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a>                <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;Review for security issues.&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a>            <span class="p">),</span>
-<a id="__codelineno-12-33" name="__codelineno-12-33" href="#__codelineno-12-33"></a>            <span class="n">SDKAgent</span><span class="p">(</span>
-<a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a>                <span class="n">role</span><span class="o">=</span><span class="s2">&quot;Performance Reviewer&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-35" name="__codelineno-12-35" href="#__codelineno-12-35"></a>                <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;Review for performance.&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a>            <span class="p">),</span>
-<a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a>        <span class="p">],</span>
-<a id="__codelineno-12-38" name="__codelineno-12-38" href="#__codelineno-12-38"></a>        <span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-12-39" name="__codelineno-12-39" href="#__codelineno-12-39"></a>    <span class="p">)</span>
-<a id="__codelineno-12-40" name="__codelineno-12-40" href="#__codelineno-12-40"></a>
-<a id="__codelineno-12-41" name="__codelineno-12-41" href="#__codelineno-12-41"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">team</span><span class="o">.</span><span class="n">execute</span><span class="p">({</span><span class="s2">&quot;files&quot;</span><span class="p">:</span> <span class="n">files</span><span class="p">})</span>
-<a id="__codelineno-12-42" name="__codelineno-12-42" href="#__codelineno-12-42"></a>
-<a id="__codelineno-12-43" name="__codelineno-12-43" href="#__codelineno-12-43"></a>    <span class="c1"># 4. Capture patterns from findings</span>
-<a id="__codelineno-12-44" name="__codelineno-12-44" href="#__codelineno-12-44"></a>    <span class="k">for</span> <span class="n">agent_result</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">agent_results</span><span class="p">:</span>
-<a id="__codelineno-12-45" name="__codelineno-12-45" href="#__codelineno-12-45"></a>        <span class="k">if</span> <span class="n">agent_result</span><span class="o">.</span><span class="n">success</span> <span class="ow">and</span> <span class="n">agent_result</span><span class="o">.</span><span class="n">findings</span><span class="p">:</span>
-<a id="__codelineno-12-46" name="__codelineno-12-46" href="#__codelineno-12-46"></a>            <span class="n">library</span><span class="o">.</span><span class="n">contribute_pattern</span><span class="p">(</span>
-<a id="__codelineno-12-47" name="__codelineno-12-47" href="#__codelineno-12-47"></a>                <span class="n">agent_result</span><span class="o">.</span><span class="n">agent_id</span><span class="p">,</span>
-<a id="__codelineno-12-48" name="__codelineno-12-48" href="#__codelineno-12-48"></a>                <span class="n">Pattern</span><span class="p">(</span>
-<a id="__codelineno-12-49" name="__codelineno-12-49" href="#__codelineno-12-49"></a>                    <span class="nb">id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;review_</span><span class="si">{</span><span class="n">agent_result</span><span class="o">.</span><span class="n">agent_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-50" name="__codelineno-12-50" href="#__codelineno-12-50"></a>                    <span class="n">agent_id</span><span class="o">=</span><span class="n">agent_result</span><span class="o">.</span><span class="n">agent_id</span><span class="p">,</span>
-<a id="__codelineno-12-51" name="__codelineno-12-51" href="#__codelineno-12-51"></a>                    <span class="n">pattern_type</span><span class="o">=</span><span class="n">agent_result</span><span class="o">.</span><span class="n">role</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
-<a id="__codelineno-12-52" name="__codelineno-12-52" href="#__codelineno-12-52"></a>                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Finding from </span><span class="si">{</span><span class="n">agent_result</span><span class="o">.</span><span class="n">role</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-53" name="__codelineno-12-53" href="#__codelineno-12-53"></a>                    <span class="n">description</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">agent_result</span><span class="o">.</span><span class="n">findings</span><span class="p">),</span>
-<a id="__codelineno-12-54" name="__codelineno-12-54" href="#__codelineno-12-54"></a>                    <span class="n">confidence</span><span class="o">=</span><span class="n">agent_result</span><span class="o">.</span><span class="n">confidence</span><span class="p">,</span>
-<a id="__codelineno-12-55" name="__codelineno-12-55" href="#__codelineno-12-55"></a>                <span class="p">),</span>
-<a id="__codelineno-12-56" name="__codelineno-12-56" href="#__codelineno-12-56"></a>            <span class="p">)</span>
-<a id="__codelineno-12-57" name="__codelineno-12-57" href="#__codelineno-12-57"></a>
-<a id="__codelineno-12-58" name="__codelineno-12-58" href="#__codelineno-12-58"></a>    <span class="c1"># 5. Signal completion</span>
-<a id="__codelineno-12-59" name="__codelineno-12-59" href="#__codelineno-12-59"></a>    <span class="n">session</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="s2">&quot;review_complete&quot;</span><span class="p">,</span> <span class="p">{</span>
-<a id="__codelineno-12-60" name="__codelineno-12-60" href="#__codelineno-12-60"></a>        <span class="s2">&quot;success&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">,</span>
-<a id="__codelineno-12-61" name="__codelineno-12-61" href="#__codelineno-12-61"></a>        <span class="s2">&quot;cost&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">total_cost</span><span class="p">,</span>
-<a id="__codelineno-12-62" name="__codelineno-12-62" href="#__codelineno-12-62"></a>        <span class="s2">&quot;agents&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">agent_results</span><span class="p">),</span>
-<a id="__codelineno-12-63" name="__codelineno-12-63" href="#__codelineno-12-63"></a>    <span class="p">})</span>
-<a id="__codelineno-12-64" name="__codelineno-12-64" href="#__codelineno-12-64"></a>
-<a id="__codelineno-12-65" name="__codelineno-12-65" href="#__codelineno-12-65"></a>    <span class="c1"># 6. Broadcast results</span>
-<a id="__codelineno-12-66" name="__codelineno-12-66" href="#__codelineno-12-66"></a>    <span class="n">coordinator</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="s2">&quot;review_done&quot;</span><span class="p">,</span> <span class="p">{</span>
-<a id="__codelineno-12-67" name="__codelineno-12-67" href="#__codelineno-12-67"></a>        <span class="s2">&quot;files&quot;</span><span class="p">:</span> <span class="n">files</span><span class="p">,</span>
-<a id="__codelineno-12-68" name="__codelineno-12-68" href="#__codelineno-12-68"></a>        <span class="s2">&quot;passed&quot;</span><span class="p">:</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">,</span>
-<a id="__codelineno-12-69" name="__codelineno-12-69" href="#__codelineno-12-69"></a>    <span class="p">})</span>
-<a id="__codelineno-12-70" name="__codelineno-12-70" href="#__codelineno-12-70"></a>
-<a id="__codelineno-12-71" name="__codelineno-12-71" href="#__codelineno-12-71"></a>    <span class="k">return</span> <span class="n">result</span>
-<a id="__codelineno-12-72" name="__codelineno-12-72" href="#__codelineno-12-72"></a>
-<a id="__codelineno-12-73" name="__codelineno-12-73" href="#__codelineno-12-73"></a><span class="n">result</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">coordinated_review</span><span class="p">([</span><span class="s2">&quot;src/auth.py&quot;</span><span class="p">]))</span>
-<a id="__codelineno-12-74" name="__codelineno-12-74" href="#__codelineno-12-74"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Review </span><span class="si">{</span><span class="s1">&#39;passed&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;failed&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-12-75" name="__codelineno-12-75" href="#__codelineno-12-75"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cost: $</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">total_cost</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</code></pre></div>
+<p>The three agents fan out in parallel. Only the security gate
+can block; a low quality or test score surfaces as a warning
+while still letting the release through.</p>
 <hr />
 <h2 id="api-quick-reference">API Quick Reference<a class="headerlink" href="#api-quick-reference" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Class</th>
+<th>Symbol</th>
 <th>Import</th>
-<th>Key Methods</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>AgentCoordinator</code></td>
-<td><code>attune.coordination</code></td>
-<td><code>add_task()</code>, <code>claim_task()</code>, <code>complete_task()</code>, <code>broadcast()</code>, <code>register_agent()</code></td>
+<td><code>AgentTeam</code></td>
+<td><code>attune.agents.team</code></td>
+<td>Holds agents + gates; <code>await team.run(target)</code></td>
 </tr>
 <tr>
-<td><code>TeamSession</code></td>
-<td><code>attune.coordination</code></td>
-<td><code>add_agent()</code>, <code>share()</code>, <code>get()</code>, <code>signal()</code>, <code>get_signals()</code></td>
+<td><code>WorkflowAgent</code></td>
+<td><code>attune.agents.team</code></td>
+<td>Binds an agent key to a workflow class + files</td>
 </tr>
 <tr>
-<td><code>PatternLibrary</code></td>
-<td><code>attune.pattern_library</code></td>
-<td><code>contribute_pattern()</code>, <code>query_patterns()</code>, <code>link_patterns()</code>, <code>get_library_stats()</code></td>
+<td><code>GateSpec</code></td>
+<td><code>attune.agents.team</code></td>
+<td>Named score threshold; <code>critical=False</code> warns</td>
 </tr>
 <tr>
-<td><code>ConflictResolver</code></td>
-<td><code>attune.coordination</code></td>
-<td><code>resolve_patterns()</code>, <code>get_resolution_stats()</code></td>
+<td><code>TeamReport</code></td>
+<td><code>attune.agents.team</code></td>
+<td>Result: <code>passed</code>, <code>results</code>, <code>blockers</code>, <code>warnings</code>, <code>cost</code></td>
 </tr>
 <tr>
-<td><code>SDKAgent</code></td>
-<td><code>attune.agents.sdk</code></td>
-<td><code>process()</code></td>
-</tr>
-<tr>
-<td><code>SDKAgentTeam</code></td>
-<td><code>attune.agents.sdk</code></td>
-<td><code>execute()</code></td>
+<td><code>AgentResult</code></td>
+<td><code>attune.agents.team</code></td>
+<td>Per-agent: <code>key</code>, <code>score</code>, <code>cost</code>, <code>success</code>, <code>details</code></td>
 </tr>
 </tbody>
 </table>
+<p>Constructor signatures:</p>
+<ul>
+<li><code>WorkflowAgent(key, workflow_cls, *, files=None, score_fn=None,
+  default_score=None, escalate=False)</code></li>
+<li><code>GateSpec(name, agent_key, threshold, critical=True)</code></li>
+<li><code>AgentTeam(agents, gates)</code></li>
+<li><code>await team.run(target)</code> — <code>target</code> is a path string or a
+  list of paths.</li>
+</ul>
 <hr />
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<h3 id="connection-refused-errors">"Connection refused" errors<a class="headerlink" href="#connection-refused-errors" title="Permanent link">&para;</a></h3>
-<p>Redis must be running. Start it with:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>redis-server
-</code></pre></div>
-<h3 id="agent-claims-return-none">Agent claims return None<a class="headerlink" href="#agent-claims-return-none" title="Permanent link">&para;</a></h3>
-<p>No pending tasks match the requested <code>task_type</code>. Check
-that tasks were added with the correct type.</p>
-<h3 id="sdkagent-returns-empty-results">SDKAgent returns empty results<a class="headerlink" href="#sdkagent-returns-empty-results" title="Permanent link">&para;</a></h3>
-<p>Set <code>ANTHROPIC_API_KEY</code> in your environment. Without it,
-agents fall back to rule-based responses.</p>
+<h3 id="workflows-return-empty-or-low-scores">Workflows return empty or low scores<a class="headerlink" href="#workflows-return-empty-or-low-scores" title="Permanent link">&para;</a></h3>
+<p>Set <code>ANTHROPIC_API_KEY</code> in your environment, or configure
+subscription auth. Without credentials the workflows cannot
+call the model and produce no real findings.</p>
+<h3 id="a-gate-references-the-wrong-agent">A gate references the wrong agent<a class="headerlink" href="#a-gate-references-the-wrong-agent" title="Permanent link">&para;</a></h3>
+<p><code>GateSpec.agent_key</code> must exactly match a <code>WorkflowAgent.key</code>.
+A typo means the gate finds no score to evaluate.</p>
+<h3 id="teamrun-must-be-awaited"><code>team.run()</code> must be awaited<a class="headerlink" href="#teamrun-must-be-awaited" title="Permanent link">&para;</a></h3>
+<p><code>run()</code> is a coroutine. Call it inside an <code>async</code> function or
+wrap it with <code>asyncio.run(team.run(target))</code>.</p>
 <hr />
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/orchestration">Orchestration</a> —
-  DynamicTeam and MetaOrchestrator for automatic team
-  composition</li>
 <li><a href="https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/agents/state">Agent State</a> —
-  Persistent state and recovery for long-running agents</li>
+  persistent state and recovery for long-running agents</li>
+<li><a href="https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/workflows">Workflows</a> —
+  the full catalog of workflow classes you can wrap in a
+  <code>WorkflowAgent</code></li>
 </ul>
 
 

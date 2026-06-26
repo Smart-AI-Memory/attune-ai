@@ -865,34 +865,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/META_ORCHESTRATION_TUTORIAL/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Meta-Orchestration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../tutorials/ops-dashboard/" class="md-nav__link">
         
   
@@ -936,10 +908,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_5" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_4" >
         
           
-          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
             
   
   
@@ -957,8 +929,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_5">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1522,34 +1494,6 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../integration/claude-code-integration/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Claude Code
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
             
               
                 
@@ -4467,10 +4411,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#meta-orchestration" class="md-nav__link">
+  <a href="#agent-teams" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Meta-orchestration
+        Agent teams
       
     </span>
   </a>
@@ -4478,10 +4422,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#team-assembly" class="md-nav__link">
+  <a href="#agent-templates" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Team assembly
+        Agent templates
       
     </span>
   </a>
@@ -4489,10 +4433,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#execution-composition" class="md-nav__link">
+  <a href="#execution-strategies" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Execution &amp; composition
+        Execution strategies
       
     </span>
   </a>
@@ -4526,7 +4470,7 @@
 
 <h1 id="orchestration">Orchestration<a class="headerlink" href="#orchestration" title="Permanent link">&para;</a></h1>
 <h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
-<h3 id="meta-orchestration">Meta-orchestration<a class="headerlink" href="#meta-orchestration" title="Permanent link">&para;</a></h3>
+<h3 id="agent-teams">Agent teams<a class="headerlink" href="#agent-teams" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -4536,28 +4480,28 @@
 </thead>
 <tbody>
 <tr>
-<td><code>MetaOrchestrator()</code></td>
-<td><code>analyze_task</code>, <code>create_execution_plan</code>, <code>compose_team</code>, <code>analyze_and_compose</code> (all sync).</td>
+<td><code>AgentTeam(agents, gates)</code></td>
+<td>Fan-out + gate runner; <code>await run(target)</code> → <code>TeamReport</code>.</td>
 </tr>
 <tr>
-<td><code>TaskRequirements</code> / <code>ExecutionPlan</code></td>
-<td>Planner inputs/outputs.</td>
+<td><code>WorkflowAgent(key, workflow_cls, *, files=...)</code></td>
+<td>Wrap a workflow as a scored agent.</td>
 </tr>
 <tr>
-<td><code>TaskComplexity</code></td>
-<td><code>SIMPLE</code> / <code>MODERATE</code> / <code>COMPLEX</code>.</td>
+<td><code>GateSpec(name, agent_key, threshold, critical=True)</code></td>
+<td>Threshold one agent's score; <code>critical=False</code> → warning, not blocker.</td>
 </tr>
 <tr>
-<td><code>TaskDomain</code></td>
-<td><code>TESTING</code> / <code>SECURITY</code> / <code>CODE_QUALITY</code> / <code>DOCUMENTATION</code> / <code>PERFORMANCE</code> / <code>ARCHITECTURE</code> / <code>REFACTORING</code> / <code>GENERAL</code>.</td>
+<td><code>TeamReport</code></td>
+<td><code>passed</code>, <code>gates</code>, <code>results</code>, <code>blockers</code>, <code>warnings</code>, <code>cost</code>.</td>
 </tr>
 <tr>
-<td><code>CompositionPattern</code></td>
-<td>The 10 patterns (SEQUENTIAL … DELEGATION_CHAIN).</td>
+<td><code>AgentResult</code></td>
+<td>Per-agent <code>key</code>, <code>score</code>, <code>cost</code>, <code>success</code>, <code>details</code>.</td>
 </tr>
 </tbody>
 </table>
-<h3 id="team-assembly">Team assembly<a class="headerlink" href="#team-assembly" title="Permanent link">&para;</a></h3>
+<h3 id="agent-templates">Agent templates<a class="headerlink" href="#agent-templates" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -4586,17 +4530,9 @@
 <td><code>AgentCapability</code> / <code>ResourceRequirements</code></td>
 <td>Capability + resource models.</td>
 </tr>
-<tr>
-<td><code>DynamicTeamBuilder(state_store=None, redis_client=None)</code></td>
-<td><code>build_from_spec</code> / <code>build_from_plan</code> / <code>build_from_config</code>.</td>
-</tr>
-<tr>
-<td><code>DynamicTeam</code> / <code>DynamicTeamResult</code> / <code>TeamSpecification</code> / <code>TeamStore</code></td>
-<td>Team objects + persistence.</td>
-</tr>
 </tbody>
 </table>
-<h3 id="execution-composition">Execution &amp; composition<a class="headerlink" href="#execution-composition" title="Permanent link">&para;</a></h3>
+<h3 id="execution-strategies">Execution strategies<a class="headerlink" href="#execution-strategies" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -4617,17 +4553,9 @@
 <td><code>ToolEnhancedStrategy</code> / <code>PromptCachedSequentialStrategy</code> / <code>DelegationChainStrategy</code></td>
 <td>Exported concrete strategies.</td>
 </tr>
-<tr>
-<td><code>WorkflowComposer(state_store=None)</code></td>
-<td><code>compose</code> / <code>compose_with_simplification</code>.</td>
-</tr>
-<tr>
-<td><code>WorkflowAgentAdapter</code></td>
-<td>Run a workflow as a team agent.</td>
-</tr>
 </tbody>
 </table>
-<!-- attune-generated: source_hash=8eeb348f730d4eaa712d0cf9b78905ce878837e5c821fc161778c91d1d163103 feature=orchestration kind=reference generated_at=2026-06-24 -->
+<!-- attune-generated: source_hash=3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567 feature=orchestration kind=reference generated_at=2026-06-26 -->
 
 
 
