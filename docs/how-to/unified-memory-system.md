@@ -26,28 +26,29 @@ The `UnifiedMemory` class provides a single interface to both tiers, with automa
 ### Basic Usage
 
 ```python
-from attune import EmpathyOS
+from attune.memory import UnifiedMemory
 
-# Create an agent with unified memory (auto-configured)
-empathy = EmpathyOS(user_id="analyst@company.com")
+# Create the unified memory interface (auto-configured)
+memory = UnifiedMemory(user_id="analyst@company.com")
 
 # Short-term memory (working data, expires)
-empathy.stash("current_task", {"files": ["api.py"], "status": "analyzing"})
-task = empathy.retrieve("current_task")
+memory.stash("current_task", {"files": ["api.py"], "status": "analyzing"})
+task = memory.retrieve("current_task")
 
 # Long-term memory (persistent patterns)
-result = empathy.persist_pattern(
+result = memory.persist_pattern(
     content="When handling API errors, always include request_id for tracing",
     pattern_type="best_practice"
 )
-pattern = empathy.recall_pattern(result["pattern_id"])
+pattern = memory.recall_pattern(result["pattern_id"])
 ```
 
-### Direct Memory Access
+### Checking Tier Health
 
 ```python
-# Access the unified memory interface directly
-memory = empathy.memory
+from attune.memory import UnifiedMemory
+
+memory = UnifiedMemory(user_id="analyst@company.com")
 
 # Check health of both tiers
 health = memory.health_check()
@@ -89,7 +90,7 @@ dev_config = MemoryConfig(
 prod_config = MemoryConfig(
     environment=Environment.PRODUCTION,
     redis_url="redis://user:pass@host:6379",
-    storage_dir="/var/empathy/patterns",
+    storage_dir="/var/attune/patterns",
     encryption_enabled=True
 )
 
@@ -116,18 +117,22 @@ Short-term memory is for **working data** that expires automatically.
 ### Stash and Retrieve
 
 ```python
+from attune.memory import UnifiedMemory
+
+memory = UnifiedMemory(user_id="analyst@company.com")
+
 # Store with default TTL (1 hour)
-empathy.stash("analysis_results", {
+memory.stash("analysis_results", {
     "files_reviewed": 10,
     "issues_found": 3,
     "timestamp": "2025-12-10T10:00:00"
 })
 
 # Store with custom TTL (24 hours)
-empathy.memory.stash("weekly_summary", summary_data, ttl_seconds=86400)
+memory.stash("weekly_summary", {"summary": "..."}, ttl_seconds=86400)
 
 # Retrieve
-results = empathy.retrieve("analysis_results")
+results = memory.retrieve("analysis_results")
 ```
 
 ### Stage Patterns for Validation
@@ -135,8 +140,12 @@ results = empathy.retrieve("analysis_results")
 Before committing patterns to long-term memory, stage them for review:
 
 ```python
+from attune.memory import UnifiedMemory
+
+memory = UnifiedMemory(user_id="analyst@company.com")
+
 # Stage a discovered pattern
-staged_id = empathy.memory.stage_pattern(
+staged_id = memory.stage_pattern(
     pattern_data={
         "content": "Always validate user input at API boundaries",
         "code_example": "def validate(input): ...",
@@ -147,7 +156,7 @@ staged_id = empathy.memory.stage_pattern(
 )
 
 # View all staged patterns
-staged = empathy.memory.get_staged_patterns()
+staged = memory.get_staged_patterns()
 for p in staged:
     print(f"Pattern: {p['pattern_type']} - Confidence: {p.get('confidence', 'N/A')}")
 ```
@@ -161,8 +170,12 @@ Long-term memory is for **validated patterns** that persist across sessions.
 ### Persist Patterns
 
 ```python
+from attune.memory import UnifiedMemory
+
+memory = UnifiedMemory(user_id="analyst@company.com")
+
 # Basic pattern storage
-result = empathy.persist_pattern(
+result = memory.persist_pattern(
     content="Use dependency injection for testable code",
     pattern_type="architecture"
 )
@@ -170,19 +183,23 @@ print(f"Pattern ID: {result['pattern_id']}")
 print(f"Classification: {result['classification']}")  # AUTO-DETECTED
 
 # With explicit classification
-result = empathy.persist_pattern(
-    content="Patient data handling protocol for HIPAA compliance",
-    pattern_type="clinical_protocol",
+result = memory.persist_pattern(
+    content="Redact account numbers before storing support tickets",
+    pattern_type="data_handling",
     classification="SENSITIVE",  # Forces encryption
-    metadata={"compliance": ["HIPAA"], "author": "compliance_team"}
+    metadata={"author": "platform_team"}
 )
 ```
 
 ### Recall Patterns
 
 ```python
+from attune.memory import UnifiedMemory
+
+memory = UnifiedMemory(user_id="analyst@company.com")
+
 # Retrieve by ID
-pattern = empathy.recall_pattern("pat_abc123")
+pattern = memory.recall_pattern("pat_abc123")
 if pattern:
     print(f"Content: {pattern['content']}")
     print(f"Type: {pattern['pattern_type']}")
@@ -197,13 +214,15 @@ Patterns are automatically classified based on content:
 |----------------|-------------|------------|-----------|
 | `PUBLIC` | General patterns, shareable | No | 365 days |
 | `INTERNAL` | Proprietary patterns | Optional | 180 days |
-| `SENSITIVE` | Healthcare/PII patterns | **Required** (AES-256) | 90 days |
+| `SENSITIVE` | PII-bearing patterns | **Required** (AES-256) | 90 days |
 
 ```python
-from attune.memory import Classification
+from attune.memory import UnifiedMemory, Classification
+
+memory = UnifiedMemory(user_id="analyst@company.com")
 
 # Auto-classification (recommended)
-result = empathy.persist_pattern(
+result = memory.persist_pattern(
     content="JWT refresh pattern for auth tokens",
     pattern_type="security",
     auto_classify=True  # Default
@@ -211,9 +230,9 @@ result = empathy.persist_pattern(
 # Result: {"classification": "INTERNAL"}
 
 # Explicit classification
-result = empathy.persist_pattern(
-    content="Patient handoff protocol",
-    pattern_type="clinical",
+result = memory.persist_pattern(
+    content="Customer record handoff protocol",
+    pattern_type="data_handling",
     classification=Classification.SENSITIVE
 )
 # Result: {"classification": "SENSITIVE", "encrypted": True}
@@ -240,15 +259,16 @@ The pattern promotion workflow moves validated patterns from short-term to long-
 ### Example Workflow
 
 ```python
-from attune import EmpathyOS, AccessTier
+from attune import AccessTier
+from attune.memory import UnifiedMemory
 
 # 1. Contributor discovers a pattern
-contributor = EmpathyOS(
+contributor = UnifiedMemory(
     user_id="code_reviewer",
     access_tier=AccessTier.CONTRIBUTOR
 )
 
-staged_id = contributor.memory.stage_pattern(
+staged_id = contributor.stage_pattern(
     pattern_data={
         "content": "Use connection pooling for database access",
         "confidence": 0.92,
@@ -259,17 +279,17 @@ staged_id = contributor.memory.stage_pattern(
 print(f"Pattern staged: {staged_id}")
 
 # 2. Validator reviews and promotes
-validator = EmpathyOS(
+validator = UnifiedMemory(
     user_id="senior_architect",
     access_tier=AccessTier.VALIDATOR
 )
 
 # Review staged patterns
-staged = validator.memory.get_staged_patterns()
+staged = validator.get_staged_patterns()
 for p in staged:
     if p.get("confidence", 0) > 0.85:
         # Promote to long-term storage
-        result = validator.memory.promote_pattern(
+        result = validator.promote_pattern(
             staged_pattern_id=p["pattern_id"],
             classification="INTERNAL",  # Optional override
         )
@@ -287,8 +307,12 @@ The unified memory system includes enterprise-grade security controls.
 Content is automatically scrubbed before storage:
 
 ```python
+from attune.memory import UnifiedMemory
+
+memory = UnifiedMemory(user_id="analyst@company.com")
+
 # PII in content is automatically redacted
-result = empathy.persist_pattern(
+result = memory.persist_pattern(
     content="User john.doe@company.com reported issue with SSN 123-45-6789",
     pattern_type="support_pattern"
 )
@@ -300,8 +324,12 @@ result = empathy.persist_pattern(
 Secrets are detected and blocked:
 
 ```python
+from attune.memory import UnifiedMemory
+
+memory = UnifiedMemory(user_id="analyst@company.com")
+
 # This will trigger a security warning
-result = empathy.persist_pattern(
+result = memory.persist_pattern(
     content="API key: sk-proj-abc123...",
     pattern_type="api_integration"
 )
@@ -310,7 +338,7 @@ result = empathy.persist_pattern(
 
 ### Audit Logging
 
-All operations are logged for compliance:
+All operations are logged for traceability:
 
 ```python
 # Audit events are automatically generated for:
@@ -320,8 +348,8 @@ All operations are logged for compliance:
 # - Security violations
 
 # View audit events programmatically
-from attune.memory import AuditLogger
-logger = AuditLogger(log_file="/var/log/empathy/audit.jsonl")
+from attune.memory.security import AuditLogger
+logger = AuditLogger(log_file="/var/log/attune/audit.jsonl")
 ```
 
 ---
@@ -333,34 +361,30 @@ logger = AuditLogger(log_file="/var/log/empathy/audit.jsonl")
 Multi-agent system where agents discover and share patterns.
 """
 import asyncio
-from attune import EmpathyOS, AccessTier, get_redis_memory
+from attune import AccessTier
+from attune.memory import UnifiedMemory
 
 async def knowledge_building_demo():
-    # Shared memory for all agents
-    memory = get_redis_memory()
-
-    # Specialist agents discover patterns
-    security_agent = EmpathyOS(
+    # Specialist agents discover patterns. Each UnifiedMemory
+    # instance auto-wires a shared Redis short-term backend.
+    security_agent = UnifiedMemory(
         user_id="security_specialist",
-        short_term_memory=memory,
         access_tier=AccessTier.CONTRIBUTOR
     )
 
-    performance_agent = EmpathyOS(
+    performance_agent = UnifiedMemory(
         user_id="performance_specialist",
-        short_term_memory=memory,
         access_tier=AccessTier.CONTRIBUTOR
     )
 
     # Lead architect validates and promotes
-    architect = EmpathyOS(
+    architect = UnifiedMemory(
         user_id="lead_architect",
-        short_term_memory=memory,
         access_tier=AccessTier.VALIDATOR
     )
 
     # 1. Security agent discovers a pattern
-    security_agent.memory.stage_pattern(
+    security_agent.stage_pattern(
         pattern_data={
             "content": "Always sanitize SQL inputs using parameterized queries",
             "code": "cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))",
@@ -372,7 +396,7 @@ async def knowledge_building_demo():
     print("Security pattern staged")
 
     # 2. Performance agent discovers a pattern
-    performance_agent.memory.stage_pattern(
+    performance_agent.stage_pattern(
         pattern_data={
             "content": "Use bulk operations for batch database updates",
             "code": "session.bulk_insert_mappings(Model, data_list)",
@@ -384,7 +408,7 @@ async def knowledge_building_demo():
     print("Performance pattern staged")
 
     # 3. Architect reviews all staged patterns
-    staged = architect.memory.get_staged_patterns()
+    staged = architect.get_staged_patterns()
     print(f"\nPatterns awaiting review: {len(staged)}")
 
     for p in staged:
@@ -394,13 +418,13 @@ async def knowledge_building_demo():
 
         # Promote high-confidence patterns
         if p.get('confidence', 0) > 0.85:
-            result = architect.memory.promote_pattern(p['pattern_id'])
+            result = architect.promote_pattern(p['pattern_id'])
             print(f"PROMOTED -> Long-term ID: {result['pattern_id']}")
         else:
             print("NEEDS MORE VALIDATION")
 
     # 4. Check long-term library
-    health = architect.memory.health_check()
+    health = architect.health_check()
     print(f"\n=== Memory Health ===")
     print(f"Short-term: {health['short_term']['available']}")
     print(f"Long-term: {health['long_term']['available']}")
@@ -414,21 +438,18 @@ if __name__ == "__main__":
 
 ## Migration from Legacy APIs
 
-### From `short_term_memory` parameter
+### Sharing a short-term backend directly
 
 ```python
-# OLD (still works, but deprecated)
-from attune import EmpathyOS, get_redis_memory
-empathy = EmpathyOS(
-    user_id="agent",
-    short_term_memory=get_redis_memory()  # Manual setup
-)
-empathy.short_term_memory.stash(...)  # Direct access
+# Manual short-term backend (advanced)
+from attune import get_redis_memory
+backend = get_redis_memory()
+backend.stash("current_task", {"status": "analyzing"})
 
-# NEW (recommended)
-empathy = EmpathyOS(user_id="agent")
-empathy.stash(...)  # Convenience method
-empathy.memory.stash(...)  # Or via unified interface
+# Recommended: let UnifiedMemory wire the backend for you
+from attune.memory import UnifiedMemory
+memory = UnifiedMemory(user_id="agent")
+memory.stash("current_task", {"status": "analyzing"})
 ```
 
 ### From `attune.security`

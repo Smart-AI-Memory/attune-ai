@@ -11678,3 +11678,59 @@ files.
   for every affected query before pushing. The manifest reads
   features.yaml `description` directly — NOT the `content/features/*.md`
   `summary`, so only the features.yaml edit matters to routing.
+- **Doc-fiction cleanup: a grep "dead-symbol" pattern can over-match a
+  LIVE param — verify the signature before treating a doc pattern as
+  fiction, don't infer deadness from a related framework's removal.**
+  Executing `empathy-doc-fiction-cleanup` (trailing edge of #1073, which
+  removed the `EmpathyOS` god-object + the 5-level empathy MODEL), the
+  acceptance grep `target_level|Empathy Level` flagged `EmpathyLLM(
+  provider=, target_level=4)` as dead. But `inspect.signature(
+  attune.llm.EmpathyLLM.__init__)` showed `target_level: int = 3` is a
+  **live, surviving param** — the construct fails only on a missing API
+  key (a runtime gate, not an import error). I was one step from
+  mass-rewriting valid docs (`TROUBLESHOOTING.md`, `llm-toolkit.md`,
+  `persistence.md`). Rule: when a removed *framework* leaves a
+  same-named *class/param* behind (the "EmpathyLLM sub-island is live
+  while the EmpathyOS framework is dead" collision), `PYTHONPATH=src
+  python -c "from X import C; import inspect; print(inspect.signature(
+  C.__init__))"` before classifying any usage as fiction. Pairs with
+  "verify-first applies to infra, not just code APIs."
+- **Inventory a doc-fiction cleanup with the FULL acceptance grep, not
+  one symbol — or you discover scope mid-execution.** The empathy
+  inventory used `git grep -l 'import EmpathyOS'`, which undercounted:
+  it missed `EmpathyOS()` bare calls (`reference/config.md`), the
+  DISTINCT dead symbol `EmpathyLLMExecutor` (architecture doc + social
+  blogs + a generated help file), and `EmpathyOS` inside non-`import`
+  lines. The acceptance grep (the union of all dead patterns) is the
+  correct inventory query; running only one member of it means the
+  central verification pass (correctly) surfaces files the subagents
+  never saw. Direct extension of "spec-named scope drifts from code
+  reality — grep the actual property." Carve genuinely-distinct dead
+  symbols (here `EmpathyLLMExecutor`, on social + generated surfaces
+  needing a help-source regen) into a tracked follow-up rather than
+  sprawling the PR.
+- **Subagents that RUN example code mutate the working tree — check
+  `git status` for collateral before committing.** A doc-repoint
+  subagent verifying a `UnifiedMemory` fence ran the example, which
+  wrote to `./memdocs_storage/` and then `rm -rf`'d the dir — deleting
+  **pre-existing tracked** runtime-data files (`memdocs_storage/*.json`,
+  tracked on main) as a side effect. `git add -A` then staged those
+  deletions. Caught at the pre-commit `git status` review; recovered
+  with `git restore --staged memdocs_storage/ && git checkout --
+  memdocs_storage/`. Rule: after a batch of subagents that execute code,
+  scan `git status --short` for deletions/additions OUTSIDE the files
+  you assigned, and restore collateral before staging. (Those runtime
+  dirs should also be gitignored — a separate fix.)
+- **Deleting doc SECTIONS orphans inbound cross-file anchor links that
+  `mkdocs --strict` passes but `wiring-audit` fails.** The empathy
+  repoint deleted dead "Pattern 2/4/5" sections from
+  `how-to/practical-patterns.md`; `reference/glossary.md` had
+  `See: [...](../how-to/practical-patterns.md#pattern-2-...)` links to
+  them. `mkdocs build --strict` stayed green (the *file* still exists;
+  only the `#anchor` is gone — mkdocs doesn't validate cross-file
+  fragment anchors), but `scripts/audit_docs_wiring.py` flagged all
+  three. Rule: when a cleanup DELETES sections/headings, also `git grep`
+  for inbound `](...#<deleted-anchor>)` links across docs, and run
+  `python scripts/audit_docs_wiring.py` locally before pushing (it
+  catches cross-file anchor breaks that strict-mkdocs misses — same
+  tool that caught the TOC double-dash bug).

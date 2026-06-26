@@ -163,7 +163,6 @@ Ask these questions:
 
 | Transfer | From → To | Status |
 |----------|-----------|--------|
-| [Alerting → Empathy Levels](../../patterns/cross-domain/alerting-to-empathy-levels.md) | Observability → Empathy | Documented |
 | [Graceful Degradation → Conversation](../../patterns/cross-domain/graceful-degradation-to-conversation.md) | Reliability → UX | Documented |
 
 ## Contributing to the Catalog

@@ -202,8 +202,6 @@ nav:
       - Examples:
           - Code Review Assistant: tutorials/examples/simple-chatbot.md
           - Multi-Agent Teams: tutorials/examples/multi-agent-team-coordination.md
-          - SBAR Clinical Handoff: tutorials/examples/sbar-clinical-handoff.md
-          - Adaptive Learning: tutorials/examples/adaptive-learning-system.md
 
   # Task-oriented
   - How-to:

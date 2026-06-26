@@ -84,24 +84,18 @@ Manage user collaboration states.
 
 **Example:**
 ```python
-from attune import EmpathyOS
 from attune.persistence import StateManager
 
 # Initialize state manager
 state_manager = StateManager(state_dir=".attune/state")
 
-# Create agent and interact
-empathy = EmpathyOS(user_id="user_123", target_level=4)
-
-# ... interactions happen, trust builds ...
-
-# Save state
-state_manager.save_state("user_123", empathy.collaboration_state)
+# Save a user's collaboration state
+state = {"trust_level": 0.65, "interaction_count": 50}
+state_manager.save_state("user_123", state)
 
 # Later, load state
 saved_state = state_manager.load_state("user_123")
-print(f"Restored trust level: {saved_state.trust_level:.0%}")
-print(f"Restored empathy level: {saved_state.current_level}")
+print(f"Restored state: {saved_state}")
 
 # List all saved users
 users = state_manager.list_users()
@@ -127,21 +121,16 @@ Track usage metrics and performance.
 **Example:**
 ```python
 from attune.persistence import MetricsCollector
-import time
 
 # Initialize collector
 collector = MetricsCollector(db_path=".attune/metrics.db")
 
-# Record interactions
-start = time.time()
-response = empathy.interact(user_id="user_123", user_input="...", context={})
-duration_ms = (time.time() - start) * 1000
-
+# Record an interaction
 collector.record_interaction(
     user_id="user_123",
-    level=response.level,
+    level=3,
     success=True,
-    response_time_ms=duration_ms
+    response_time_ms=145.3
 )
 
 # Get user statistics
@@ -149,10 +138,6 @@ stats = collector.get_user_stats("user_123")
 print(f"Total interactions: {stats['total_operations']}")
 print(f"Success rate: {stats['success_rate']:.0%}")
 print(f"Avg response time: {stats['avg_response_time_ms']:.0f}ms")
-print(f"\nLevel usage:")
-for level in range(1, 6):
-    count = stats.get(f'level_{level}_count', 0)
-    print(f"  Level {level}: {count} times")
 
 # Get global statistics
 global_stats = collector.get_global_stats()
@@ -165,7 +150,7 @@ print(f"Total interactions: {global_stats['total_interactions']}")
 ### Complete Persistence Setup
 
 ```python
-from attune import EmpathyOS, AttuneConfig
+from attune import AttuneConfig
 from attune.pattern_library import PatternLibrary
 from attune.persistence import (
     PatternPersistence,
@@ -176,7 +161,6 @@ from attune.persistence import (
 # Initialize persistence components
 config = AttuneConfig(
     user_id="user_123",
-    target_level=4,
     persistence_enabled=True,
     persistence_path=".attune"
 )
@@ -192,38 +176,23 @@ try:
 except FileNotFoundError:
     print("No existing patterns, starting fresh")
 
-# Create agent with persistence
-empathy = EmpathyOS(
-    user_id=config.user_id,
-    target_level=config.target_level,
-    pattern_library=pattern_library
-)
-
 # Try to load saved state
 try:
     saved_state = state_manager.load_state(config.user_id)
-    empathy.collaboration_state = saved_state
-    print(f"Restored state: trust={saved_state.trust_level:.0%}, level={saved_state.current_level}")
+    print(f"Restored state: {saved_state}")
 except FileNotFoundError:
     print("No saved state, starting fresh")
 
-# Interaction with persistence
-response = empathy.interact(
-    user_id=config.user_id,
-    user_input="How do I deploy to production?",
-    context={"task": "deployment"}
-)
-
-# Record metrics
+# Record metrics for an interaction
 metrics.record_interaction(
     user_id=config.user_id,
-    level=response.level,
+    level=3,
     success=True,
     response_time_ms=145.3
 )
 
 # Save state after interaction
-state_manager.save_state(config.user_id, empathy.collaboration_state)
+state_manager.save_state(config.user_id, {"trust_level": 0.65})
 
 # Save patterns
 PatternPersistence.save_to_sqlite(pattern_library, ".attune/patterns.db")
@@ -348,7 +317,7 @@ CREATE INDEX idx_patterns_confidence ON patterns(confidence);
 CREATE TABLE interactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id TEXT NOT NULL,
-    empathy_level INTEGER NOT NULL,
+    level INTEGER NOT NULL,
     success BOOLEAN NOT NULL,
     response_time_ms REAL,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -414,7 +383,6 @@ CREATE INDEX idx_interactions_timestamp ON interactions(timestamp);
 ### Backup Strategy
 
 ```python
-import schedule
 from datetime import datetime
 from attune.persistence import PatternPersistence
 
@@ -429,8 +397,7 @@ def backup_patterns():
     PatternPersistence.save_to_json(library, backup_path)
     print(f"Backup saved: {backup_path}")
 
-# Schedule daily backups
-schedule.every().day.at("02:00").do(backup_patterns)
+# Call backup_patterns() from your scheduler of choice (e.g. cron)
 ```
 
 ### Performance Optimization

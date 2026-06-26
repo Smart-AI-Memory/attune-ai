@@ -94,23 +94,18 @@ memory.stash("my_key", {"data": "value"}, ttl=3600)
 data = memory.retrieve("my_key")
 ```
 
-### With EmpathyOS
+### Storing Workflow Data
 
 ```python
-from attune import EmpathyOS, get_redis_memory
+from attune import get_redis_memory
 
 memory = get_redis_memory()
 
-empathy = EmpathyOS(
-    user_id="developer",
-    short_term_memory=memory,
-)
-
 # Store working data
-empathy.stash("analysis_results", {"files": 10, "issues": 3})
+memory.stash("analysis_results", {"files": 10, "issues": 3})
 
 # Retrieve later
-results = empathy.retrieve("analysis_results")
+results = memory.retrieve("analysis_results")
 ```
 
 ### File-Based Fallback

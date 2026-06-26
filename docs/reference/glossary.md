@@ -20,10 +20,10 @@ A permission level that determines what an agent can do within the system. There
 See: Multi-Agent Philosophy
 
 ### Agent
-An AI instance that participates in the Empathy system. Agents can be specialized (security reviewer, performance analyst) or general-purpose. Multiple agents can coordinate through shared memory.
+An AI instance that participates in the Attune AI system. Agents can be specialized (security reviewer, performance analyst) or general-purpose. Multiple agents can coordinate through shared memory.
 
-### Anticipatory Empathy
-The ability to predict and address needs before they're expressed. Level 4 in the Attune AI's five-level model. Anticipatory systems don't just respond to problems—they prevent them.
+### Anticipatory
+The ability to predict and address needs before they're expressed. Anticipatory systems don't just respond to problems—they prevent them.
 
 ---
 
@@ -48,8 +48,6 @@ A numeric score (0.0 to 1.0) indicating how certain an agent is about a recommen
 ### Conflict Resolution
 The process of finding a synthesis when two agents make conflicting recommendations. The framework extracts the underlying *interests* behind each position and generates options that serve both.
 
-See: [Practical Patterns - Conflict Synthesizer](../how-to/practical-patterns.md#pattern-2-the-conflict-synthesizer)
-
 ### Contributor
 Access Tier Level 2. Can read patterns and propose new ones, but cannot validate or promote patterns to permanent storage. Most AI agents operate at this level.
 
@@ -67,14 +65,6 @@ The principle that users and enterprises own, version, and control all memories 
 ### Emergence
 Patterns that weren't explicitly taught but arise from collective agent operation. The framework treats emergent patterns as valuable and surfaces them for validation rather than filtering them out.
 
-### EmpathyOS
-The main interface class for interacting with the Attune AI. Provides methods for memory operations, pattern management, and agent coordination.
-
-```python
-from attune import EmpathyOS
-empathy = EmpathyOS(user_id="developer@company.com")
-```
-
 ---
 
 ## F
@@ -88,8 +78,6 @@ A hash-based identifier used to detect duplicate patterns. Prevents the same pat
 
 ### Heartbeat
 A periodic signal sent by agents to indicate they're still functioning. Used by the monitoring system to detect unresponsive agents and reassign their work.
-
-See: [Practical Patterns - Heartbeat Monitor](../how-to/practical-patterns.md#pattern-4-the-heartbeat-monitor)
 
 ---
 
@@ -106,16 +94,6 @@ Example:
 
 ## L
 
-### Level (Empathy Level)
-The Attune AI defines five levels of AI capability:
-- **Level 1 - Reactive**: Responds to explicit requests
-- **Level 2 - Informed**: Remembers context within a session
-- **Level 3 - Contextual**: Applies patterns from similar situations
-- **Level 4 - Anticipatory**: Predicts and prevents problems
-- **Level 5 - Generative**: Creates novel solutions from patterns
-
-Level 4 (Anticipatory) is the minimum standard for Empathy systems.
-
 ### Long-Term Memory
 Persistent storage for validated patterns that survive across sessions. Patterns in long-term memory have been reviewed and promoted from staging. Contrast with *Short-Term Memory*.
 
@@ -124,11 +102,7 @@ Persistent storage for validated patterns that survive across sessions. Patterns
 ## M
 
 ### Mock Mode
-A development mode where Redis is simulated in-memory. Useful for quick experiments but doesn't support multi-agent coordination or persistence.
-
-```python
-os.environ["ATTUNE_REDIS_MOCK"] = "true"
-```
+A development mode where Redis is simulated in-memory. Useful for quick experiments but doesn't support multi-agent coordination or persistence. Enable it by setting the `ATTUNE_REDIS_MOCK` environment variable to `true`.
 
 ---
 
@@ -179,19 +153,11 @@ Redis-backed working memory for active coordination. Data in short-term memory e
 ### Signal
 A message sent from one agent to another through short-term memory. Used to coordinate work, announce completion, or share findings.
 
-```python
-empathy.send_signal("analysis_complete", {"files": 10, "issues": 3})
-```
-
 ### Staged Pattern
 A pattern in the 24-hour staging area awaiting validation. Staged patterns have a TTL and will expire if not promoted.
 
 ### Stash
 To store data in short-term memory with automatic expiration.
-
-```python
-empathy.stash("current_task", {"status": "analyzing"})
-```
 
 ### Steward
 Access Tier Level 4. Full administrative access including the ability to modify access tiers, delete patterns, and configure system behavior. Typically reserved for system administrators or senior architects.
@@ -206,16 +172,8 @@ A solution that serves the interests of multiple conflicting recommendations. Wh
 ### Team Session
 A collaborative context where multiple agents work together on a shared task. Sessions provide shared state, signals, and coordination primitives.
 
-```python
-session = TeamSession(memory, session_id="pr_42", purpose="Review PR #42")
-session.add_agent("security_agent")
-session.add_agent("performance_agent")
-```
-
 ### Trust Escalator
 A system for managing agent permissions based on demonstrated reliability. Agents start at Observer level and are promoted as they accumulate successful tasks and validated patterns.
-
-See: [Practical Patterns - Trust Escalator](../how-to/practical-patterns.md#pattern-5-the-trust-escalator)
 
 ### TTL
 **T**ime **T**o **L**ive. The duration before data in short-term memory expires automatically. Different data types have different TTLs:
@@ -230,11 +188,6 @@ See: [Practical Patterns - Trust Escalator](../how-to/practical-patterns.md#patt
 ### Unified Memory
 The single API that provides access to both short-term (Redis) and long-term (persistent) memory tiers. Introduced in v1.10.0 to simplify the developer experience.
 
-```python
-empathy.stash(...)           # Short-term
-empathy.persist_pattern(...) # Long-term
-```
-
 ---
 
 ## V
@@ -247,7 +200,7 @@ Access Tier Level 3. Can review staged patterns and promote them to the permanen
 ## W
 
 ### Wizard
-A specialized component that encapsulates domain expertise and workflows. Examples include SecurityWizard, PerformanceWizard, and ClinicalProtocolMonitor. Wizards operate at Level 4 (Anticipatory) or higher.
+A specialized component that encapsulates domain expertise and workflows. Examples include SecurityWizard and PerformanceWizard.
 
 ### Working Memory
 Short-term storage for intermediate results during task execution. Expires after 1 hour by default.
