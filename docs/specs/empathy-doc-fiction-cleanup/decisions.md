@@ -47,9 +47,10 @@ are alive and are real workflow infra. The "Empathy" name collides with
 the dead framework but the code is current. `reference/llm-toolkit.md`
 is therefore **repoint/excise, NOT delete**: keep the `EmpathyLLM` /
 `PIIScrubber` / `SecretsDetector` / `AuditLogger` content; remove the
-dead `EmpathyOS` integration, the fictional `encrypt_phi`, the dead
-`EmpathyLLMExecutor`, and the unsupported HIPAA/GDPR/SOC2 "compliance
-feature" claims.
+dead `EmpathyOS` integration, the fictional `encrypt_phi`, and the
+unsupported HIPAA/GDPR/SOC2 "compliance feature" claims. (This line
+originally also listed `EmpathyLLMExecutor` as dead — it is NOT; see
+D7. llm-toolkit.md never documented it, so nothing changed in practice.)
 
 ---
 
@@ -99,3 +100,36 @@ set instead of the initial `import EmpathyOS` inventory:
    fix + regen), so it is tracked as its own follow-up rather than
    sprawling this PR. Lesson: inventory with the FULL acceptance grep,
    not one symbol (pairs with "spec scope drifts from code reality").
+
+---
+
+## D7 — CORRECTION of D6: `EmpathyLLMExecutor` is ALIVE, not dead (decisions-deadness-audit, 2026-06-26)
+
+D6 (and requirements.md G1 + the Deferred note + tasks.md) asserted
+`EmpathyLLMExecutor` is a "distinct dead symbol ... gone from
+`attune.models`." **That is wrong.** Verified:
+
+```text
+from attune.models import EmpathyLLMExecutor            # works
+from attune.models.empathy_executor import EmpathyLLMExecutor  # works
+type(EmpathyLLMExecutor) is type  # a real class, module attune.models.empathy_executor
+```
+
+Consequences, all benign:
+
+- **No content was lost.** `reference/llm-toolkit.md` never documented
+  `EmpathyLLMExecutor` (checked the pre-#1109 revision — zero mentions),
+  so the cleanup removed nothing real. Its `EmpathyLLM` / `PIIScrubber`
+  / `SecretsDetector` / `AuditLogger` content is intact and correct.
+- **The orphaned doc was never broken.**
+  `enhanced_escalation_architecture.md:365`'s
+  `from attune.models.empathy_executor import EmpathyLLMExecutor`
+  imports fine; the social/generated references likewise.
+- **The deferred chip (`task_673b87a1`) is moot** — there is no dead
+  `EmpathyLLMExecutor` to clean.
+
+Root cause: deadness was INFERRED from the empathy-framework removal +
+the shared "Empathy" name, not verified by import — the exact trap D6
+itself warned about for `target_level`, repeated one symbol over. This
+is why the doc-fiction triage now requires locating the symbol in `src/`
+(`grep "class <Sym>"` + probe submodule paths) before ANY "dead" label.

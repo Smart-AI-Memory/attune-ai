@@ -17,7 +17,7 @@ imported alongside `EmpathyOS`.
 | pitch/HEALTHCARE_ONE_PAGER.md | 0 | 46 | **Delete** (healthcare-feature pitch, no such feature) |
 | examples/adaptive-learning-system.md | 12 | 23 | **Delete** (empathy-level premise) + nav prune |
 | tutorials/examples/adaptive-learning-system.md | 11 | 23 | **Delete** (dup) + nav prune |
-| reference/llm-toolkit.md | 0 | 16 | **Repoint/excise** — keep EmpathyLLM/PIIScrubber/SecretsDetector/AuditLogger; drop EmpathyOS, encrypt_phi, EmpathyLLMExecutor, HIPAA/GDPR/SOC2 claims (D3) |
+| reference/llm-toolkit.md | 0 | 16 | **Repoint/excise** — keep EmpathyLLM/PIIScrubber/SecretsDetector/AuditLogger; drop EmpathyOS, encrypt_phi, HIPAA/GDPR/SOC2 claims (D3). (EmpathyLLMExecutor was listed here as dead — it is NOT; see D7. Moot: llm-toolkit never documented it.) |
 | reference/glossary.md | 4 | 5 | **Repoint/excise** — drop EmpathyOS; remove "Empathy Level" glossary entries |
 | reference/multi-agent.md | 0 | 0 | **Repoint** — drop EmpathyOS, keep PatternLibrary/Pattern |
 | reference/pattern-library.md | 0 | 0 | **Repoint** |

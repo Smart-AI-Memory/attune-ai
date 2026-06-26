@@ -80,6 +80,9 @@ generalize those, do not revive `SDKAgent`.)
 
 ## Cross-references
 
+- `.claude/rules/attune/doc-fiction-triage.md` — the pre-flight
+  checklist for DOC cleanups: confirm a symbol is actually dead (and
+  where its live form lives) BEFORE applying this delete-vs-rewrite gate.
 - `.claude/rules/attune/plugin-reference-validation.md` — the forward
   "references resolve" check; this rule is the reverse "should it exist"
   check.

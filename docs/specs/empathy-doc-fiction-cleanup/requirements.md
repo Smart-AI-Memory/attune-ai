@@ -46,16 +46,24 @@ Two fiction layers, two dispositions (see `decisions.md`):
   `attune.llm.EmpathyLLM`, `attune.memory.PIIScrubber`,
   `attune.memory.SecretsDetector`, `attune.memory.security.AuditLogger`.
 
-Also dead (remove, no successor): `AgentCoordinator`,
-`EmpathyLLMExecutor`, `encrypt_phi`, and HIPAA/GDPR/SOC2 "compliance
-feature" claims.
+Also dead (remove, no successor): `AgentCoordinator`, `encrypt_phi`,
+and HIPAA/GDPR/SOC2 "compliance feature" claims.
+
+> **CORRECTION (2026-06-26, decisions-deadness-audit):**
+> `EmpathyLLMExecutor` was originally listed here (and in G1 + the
+> Deferred note + `tasks.md`) as dead. **It is ALIVE** — a real class at
+> `attune.models.empathy_executor`, re-exported as
+> `attune.models.EmpathyLLMExecutor`; both import paths resolve. No
+> served doc lost content (`llm-toolkit.md` never documented it), and the
+> orphaned doc that imports it was never broken. See decisions.md D7.
 
 ---
 
 ## Goals
 
 - G1. No user-facing doc presents `EmpathyOS` (or `AgentCoordinator` /
-  `encrypt_phi` / `EmpathyLLMExecutor`) as a live API.
+  `encrypt_phi`) as a live API. (`EmpathyLLMExecutor` was struck from
+  this list — it is alive; see the correction above.)
 - G2. No user-facing doc is framed on the removed "Empathy Level N"
   model.
 - G3. Every surviving code fence imports against `origin/main`
@@ -90,12 +98,12 @@ feature" claims.
   --strict` green.
 - One PR, docs-only, CI green.
 
-**Deferred to a follow-up (decisions.md D6):** `EmpathyLLMExecutor` — a
-DISTINCT dead symbol from `EmpathyOS` — survives in
-`docs/architecture/enhanced_escalation_architecture.md`,
-`docs/blog/social/{reddit,twitter}_claude_costs.md`, and the generated
-`plugin/help/generated/faqs/models.md`. Separate cleanup (social +
-generated-help-regen surfaces), not folded into this PR.
+**~~Deferred to a follow-up (decisions.md D6): `EmpathyLLMExecutor`~~ —
+WITHDRAWN (2026-06-26 audit).** `EmpathyLLMExecutor` is NOT dead — it is
+a live class at `attune.models.empathy_executor`. The references in
+`enhanced_escalation_architecture.md` and the social/generated files
+import it correctly and were never broken. The "deferred cleanup" was
+based on a false premise; its chip is moot. See decisions.md D7.
 
 ---
 
