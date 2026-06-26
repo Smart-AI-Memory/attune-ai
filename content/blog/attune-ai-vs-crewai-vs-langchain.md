@@ -144,21 +144,28 @@ You need to understand agents, tools, chains, memory, and prompting. Lots of con
 All three support multi-agent teams, but in different ways.
 
 ### Attune AI
-Defines patterns explicitly:
-- **Sequential**: Agent A → Agent B → Agent C
-- **Parallel**: A, B, C run simultaneously, results merged
-- **Conditional**: If condition, run A, else run B
-- **Rollback**: If final result fails, restore previous state
+Runs a parallel team of workflow-backed agents behind quality gates
+(`AgentTeam`), plus a library of composition strategies:
+- **Parallel teams** (`AgentTeam`): agents run simultaneously, each
+  scored, then gated
+- **Execution strategies**: Sequential, Parallel, Debate, Teaching,
+  Refinement, Adaptive, Conditional — reusable `ExecutionStrategy`
+  classes
 
 Code:
 ```python
-from attune.orchestration import ParallelTeam
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.code_review import CodeReviewWorkflow
+from attune.workflows.security_audit import SecurityAuditWorkflow
 
-team = ParallelTeam(
-    agents=[ReviewAgent(), TestAgent(), DocAgent()],
-    merge_strategy="union"  # or "intersection", custom function
+team = AgentTeam(
+    agents=[
+        WorkflowAgent("code-review", CodeReviewWorkflow, files=["src/"]),
+        WorkflowAgent("security-audit", SecurityAuditWorkflow, files=["src/"]),
+    ],
+    gates=[GateSpec("Code Quality", "code-review", 80.0)],
 )
-result = team.execute(code)
+report = await team.run(["src/"])
 ```
 
 ### CrewAI
