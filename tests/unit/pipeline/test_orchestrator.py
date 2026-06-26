@@ -274,7 +274,14 @@ class TestRunGatesForTask:
 
     @pytest.mark.asyncio
     async def test_gate_constructor_error_fails_gracefully(self):
-        """An error constructing a review workflow is caught by the gate."""
+        """An error constructing a review workflow fails the gate closed.
+
+        Post-re-seat (generic-agent-teams T2) the WorkflowAgent catches
+        workflow construction/execution errors at the agent boundary and
+        reports ``success=False``, so the gate fails closed there rather
+        than propagating to the orchestrator's outer "Gate error" handler.
+        The R4 invariant — a review error never fake-passes — is preserved.
+        """
         orch = PipelineOrchestrator(
             ".claude/plans/pipeline-orchestrator.md",
             skip_tests=True,
@@ -286,7 +293,8 @@ class TestRunGatesForTask:
             result = await orch.run_gates_for_task(task)
 
         assert result.quality_gate_passed is False
-        assert "Gate error" in result.error
+        # The failing dimension scores 0.0 in the gate details.
+        assert result.gate_details["gate_results"]["min_quality"]["score"] == 0.0
 
 
 class TestExtractScoreRealAdapter:
