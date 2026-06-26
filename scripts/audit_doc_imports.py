@@ -194,14 +194,78 @@ def _resolve(statement: str) -> str | None:
 # --- driver ---------------------------------------------------------------
 
 
-def _in_scope(path: Path, repo: Path) -> bool:
-    rel = "/" + str(path.relative_to(repo)).replace("\\", "/")
-    return not any(sub in rel for sub in EXCLUDE_SUBSTRINGS)
+def _section_block(text: str, key: str) -> str:
+    """Return the indented block under a top-level ``key:`` in YAML text.
+
+    Reads every line after ``key:`` (or ``key: |``) until the next
+    non-indented line. Used to lift ``nav:`` and ``exclude_docs:`` out of
+    ``mkdocs.yml`` without a full YAML parse (which mkdocs custom tags can
+    break).
+    """
+    out: list[str] = []
+    in_block = False
+    for ln in text.splitlines():
+        if not in_block:
+            if re.match(rf"^{re.escape(key)}\s*(\|.*)?$", ln):
+                in_block = True
+            continue
+        if ln and not ln[0].isspace():  # next top-level key/comment
+            break
+        out.append(ln)
+    return "\n".join(out)
+
+
+def _mkdocs_doc_scope(repo: Path):
+    """Predicate over docs-relative paths: is this page PUBLISHED?
+
+    Scopes the gate to served surfaces. A ``docs/`` page is published if
+    it is referenced in mkdocs ``nav`` OR not matched by ``exclude_docs``
+    (nav wins the occasional nav-vs-exclude conflict). Returns ``None``
+    when ``mkdocs.yml`` is unavailable, so the caller falls back to the
+    coarse ``EXCLUDE_SUBSTRINGS`` only. ``content/**`` is always in scope
+    (it's the website source, not governed by mkdocs).
+    """
+    mk = repo / "mkdocs.yml"
+    if not mk.exists():
+        return None
+    text = mk.read_text(encoding="utf-8")
+    nav_paths = set(re.findall(r"([A-Za-z0-9_][\w./-]*\.md)", _section_block(text, "nav:")))
+    exc_lines = [
+        s
+        for s in (ln.strip() for ln in _section_block(text, "exclude_docs:").splitlines())
+        if s and not s.startswith("#")
+    ]
+    try:
+        import pathspec  # mkdocs's own exclude_docs matcher
+
+        spec = pathspec.PathSpec.from_lines("gitwildmatch", exc_lines)
+        excluded = spec.match_file
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: pathspec is optional. If absent, don't exclude
+        # anything (over-check rather than silently skip a real fence).
+        def excluded(_rel: str) -> bool:
+            return False
+
+    def is_published(rel: str) -> bool:
+        return rel in nav_paths or not excluded(rel)
+
+    return is_published
+
+
+def _in_scope(path: Path, repo: Path, published) -> bool:
+    rel = str(path.relative_to(repo)).replace("\\", "/")
+    if any(sub in "/" + rel for sub in EXCLUDE_SUBSTRINGS):
+        return False
+    # docs/ pages are scoped to served surfaces; content/** is always in.
+    if published is not None and rel.startswith("docs/"):
+        return published(rel[len("docs/") :])
+    return True
 
 
 def audit(repo: Path, paths: list[str] | None) -> tuple[list[Finding], Stats]:
     findings: list[Finding] = []
     stats = Stats()
+    published = _mkdocs_doc_scope(repo)
     if paths:
         files = []
         for p in paths:
@@ -212,7 +276,7 @@ def audit(repo: Path, paths: list[str] | None) -> tuple[list[Finding], Stats]:
         for g in INCLUDE_GLOBS:
             files.extend(repo.glob(g))
     for f in sorted(set(files)):
-        if not f.is_file() or f.suffix != ".md" or not _in_scope(f, repo):
+        if not f.is_file() or f.suffix != ".md" or not _in_scope(f, repo, published):
             continue
         text = f.read_text(encoding="utf-8")
         rel = str(f.relative_to(repo))

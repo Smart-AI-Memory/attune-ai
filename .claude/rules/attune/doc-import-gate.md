@@ -22,10 +22,20 @@ after the breakage); now it is enforced per-PR.
 
 ---
 
-## Scope
+## Scope — published surfaces only
 
-- **Checks:** `docs/**`, `content/features/**`, `content/blog/**`.
-- **Excludes:** `docs/specs/**` and any `**/archive/**` (history
+- **Checks:** `content/features/**`, `content/blog/**`, and the
+  **served** `docs/` pages. A `docs/` page is "served" if it is in the
+  mkdocs `nav` OR not matched by `exclude_docs` (nav wins the occasional
+  nav-vs-`exclude_docs` conflict, e.g. `hooks.md`). Read from `mkdocs.yml`
+  via `pathspec` (mkdocs's own matcher); falls back to the coarse
+  substring excludes if `mkdocs.yml`/`pathspec` is unavailable.
+- **Why scoped:** orphaned/internal docs (`docs/pitch/`,
+  `docs/blog/social/`, archived/excluded pages) are not served to
+  readers, so a stale import there is not a reader-facing bug. Policing
+  them is noise. `content/blog` IS the website source (the Next.js site
+  reads `content/blog`, NOT `docs/blog`), so it is always checked.
+- **Always excluded:** `docs/specs/**` and any `**/archive/**` (history
   legitimately names removed symbols), and generated bundles
   (`plugin/help/generated/**` — fix those at their source).
 - **Only `attune` imports** are verified. Stdlib/third-party imports are
@@ -33,6 +43,8 @@ after the breakage); now it is enforced per-PR.
 - **Import resolution only.** It does NOT check `obj.method()` accuracy
   or run code. That deeper layer is intentionally out of scope (high
   false-positive risk for low marginal signal).
+- **Fast:** ~0.9s for ~440 imports across ~380 fences (importlib caches
+  modules), well under the job's 8-minute budget.
 
 ---
 
@@ -73,16 +85,17 @@ a reason); exit `1` on any unresolved import. Needs `attune` importable
 
 The gate ships **advisory** — it runs on every docs/content/src PR and
 reports, but is NOT in `required_status_checks` yet, because adoption
-surfaced a pre-existing backlog (~21 unresolved imports across
-`TROUBLESHOOTING.md`, `extending-composition-patterns.md`,
-`EXCEPTION_HANDLING_GUIDE.md`, `blog/social/*`, `hooks.md`,
-`TECHNICAL_BRIEF.md` — `CostTracker`, `LLMClient`, the old `attune_llm`
-package name, `HookMatcher`, custom exceptions, …).
+surfaced a pre-existing backlog. After scoping to served surfaces the
+backlog is **11 findings** across three published docs —
+`reference/TROUBLESHOOTING.md` (the old `attune_llm` package name),
+`hooks.md` (`HookMatcher` not re-exported), and `EXCEPTION_HANDLING_GUIDE.md`
+(illustrative exceptions falsely attributed to `attune.exceptions`) —
+cleared by the backlog PR. (The other ~10 original findings were in
+orphaned/excluded docs and are now out of scope.)
 
 **Promote to required once `python scripts/audit_doc_imports.py` is
 clean on main** — same play as `wiring-audit` (advisory until a green
-streak, then added to branch protection). Clearing the backlog is a
-tracked follow-up; do NOT promote while it is red.
+streak, then added to branch protection). Do NOT promote while it is red.
 
 ---
 

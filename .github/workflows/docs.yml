@@ -66,10 +66,13 @@ jobs:
   # resolves against the installed package (the FINAL guard for the
   # recurring "feature removed, docs still import it -> reader ImportError"
   # failure; see docs/specs/{orchestration,empathy}-doc-fiction-cleanup/).
-  # ADVISORY: NOT in required_status_checks while the existing backlog
-  # (~21 findings on adoption) is cleared; promote to required once main
-  # holds green. Unlike wiring-audit this needs the package importable, so
-  # it installs the dev/developer extras to resolve the full import graph.
+  # Scoped to PUBLISHED surfaces: docs/ pages that are in the mkdocs nav
+  # or not in exclude_docs, plus content/{features,blog}. Orphaned/internal
+  # docs are not policed. ADVISORY: NOT in required_status_checks while the
+  # served-doc backlog (11 findings on adoption) is cleared; promote to
+  # required once main holds green. Unlike wiring-audit this needs the
+  # package importable, so it installs the dev/developer extras (plus
+  # pathspec, for matching mkdocs exclude_docs).
   doc-import-audit:
     runs-on: ubuntu-latest
     timeout-minutes: 8
@@ -83,7 +86,7 @@ jobs:
           cache: 'pip'
 
       - name: Install package (import graph must resolve)
-        run: pip install -e ".[dev,developer]"
+        run: pip install -e ".[dev,developer]" pathspec
 
       - name: Run doc-import audit
         run: python scripts/audit_doc_imports.py --format markdown

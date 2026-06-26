@@ -149,3 +149,52 @@ def test_audit_excludes_history_paths(tmp_path: Path, excluded: str):
     # Even when pointed straight at it, excluded paths yield no findings.
     findings, _ = adi.audit(repo, [excluded])
     assert findings == []
+
+
+# --- mkdocs-scoped (published surfaces only) ------------------------------
+
+
+def _write_mkdocs(repo: Path, nav: list[str], exclude: list[str]) -> None:
+    nav_block = "\n".join(f"  - Page: {p}" for p in nav)
+    exc_block = "\n".join(f"  {ln}" for ln in exclude)
+    (repo / "mkdocs.yml").write_text(
+        f"site_name: T\nexclude_docs: |\n{exc_block}\nnav:\n{nav_block}\n",
+        encoding="utf-8",
+    )
+
+
+def test_scope_skips_excluded_orphan(tmp_path: Path):
+    pytest.importorskip("pathspec")
+    repo = tmp_path
+    (repo / "docs").mkdir()
+    (repo / "docs" / "orphan.md").write_text(
+        "```python\nfrom attune import NotReal_xyz\n```\n", encoding="utf-8"
+    )
+    _write_mkdocs(repo, nav=[], exclude=["orphan.md"])
+    findings, _ = adi.audit(repo, None)
+    # excluded by exclude_docs AND not in nav -> not a published page.
+    assert findings == []
+
+
+def test_scope_checks_nav_page_even_if_excluded(tmp_path: Path):
+    repo = tmp_path
+    (repo / "docs").mkdir()
+    (repo / "docs" / "page.md").write_text(
+        "```python\nfrom attune import NotReal_xyz\n```\n", encoding="utf-8"
+    )
+    # In nav AND in exclude_docs (the real hooks.md conflict): nav wins.
+    _write_mkdocs(repo, nav=["page.md"], exclude=["page.md"])
+    findings, _ = adi.audit(repo, None)
+    assert len(findings) == 1
+
+
+def test_scope_content_blog_always_checked(tmp_path: Path):
+    repo = tmp_path
+    (repo / "content" / "blog").mkdir(parents=True)
+    (repo / "content" / "blog" / "x.md").write_text(
+        "```python\nfrom attune import NotReal_xyz\n```\n", encoding="utf-8"
+    )
+    # content/** is the website source — never governed by mkdocs exclude.
+    _write_mkdocs(repo, nav=[], exclude=["**"])
+    findings, _ = adi.audit(repo, None)
+    assert len(findings) == 1
