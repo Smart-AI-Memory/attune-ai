@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Orchestration FAQ — faq</title>
-  <meta name="description" content="A workflow is one analysis; orchestration coordinates **several** agents into one pipeline. `MetaOrchestrator` analyzes the task (complexity, domain, requirements), picks a `CompositionPattern`, a tea" />
+  <meta name="description" content="A workflow is one analysis. `attune.orchestration` supplies the composable parts — reusable `AgentTemplate`s and a library of `ExecutionStrategy` classes — and `attune.agents.team.AgentTeam` fans seve" />
   <meta property="og:title" content="Orchestration FAQ — faq" />
-  <meta property="og:description" content="A workflow is one analysis; orchestration coordinates **several** agents into one pipeline. `MetaOrchestrator` analyzes the task (complexity, domain, requirements), picks a `CompositionPattern`, a tea" />
+  <meta property="og:description" content="A workflow is one analysis. `attune.orchestration` supplies the composable parts — reusable `AgentTemplate`s and a library of `ExecutionStrategy` classes — and `attune.agents.team.AgentTeam` fans seve" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/faq" />
   <style>
@@ -273,12 +273,19 @@
   </nav>
   <article class="markdown-body">
 <h1>Orchestration FAQ</h1>
-<h2>What does orchestration do that a single workflow doesn't?</h2>
-<p>A workflow is one analysis; orchestration coordinates <strong>several</strong> agents
-into one pipeline. <code>MetaOrchestrator</code> analyzes the task (complexity,
-domain, requirements), picks a <code>CompositionPattern</code>, a team of
-<code>AgentTemplate</code>s is assembled, and an <code>ExecutionStrategy</code> runs them.</p>
-<h2>How do I see the available agents?</h2>
+<h2>What does orchestration give me beyond a single workflow?</h2>
+<p>A workflow is one analysis. <code>attune.orchestration</code> supplies the
+composable parts — reusable <code>AgentTemplate</code>s and a library of
+<code>ExecutionStrategy</code> classes — and <code>attune.agents.team.AgentTeam</code> fans
+several workflow-backed agents out in parallel behind quality gates.</p>
+<h2>How do I run a team of agents?</h2>
+<p>Build an <code>AgentTeam(agents, gates)</code> from <code>WorkflowAgent</code>s and
+<code>GateSpec</code>s, then <code>await team.run(target)</code>. Each <code>WorkflowAgent</code> wraps a
+registered workflow and reports a real 0-100 score; each <code>GateSpec</code>
+thresholds one agent's score. The run returns a <code>TeamReport</code> with
+<code>passed</code>, <code>blockers</code>, <code>warnings</code>, <code>results</code>, and <code>cost</code>. It is fan-out +
+gate only — there is no task-analysis planner picking agents for you.</p>
+<h2>How do I see the available agent templates?</h2>
 <p><code>get_all_templates()</code> returns the registry's <code>AgentTemplate</code>s (each has
 an <code>id</code>, <code>role</code>, <code>capabilities</code>, <code>tools</code>, <code>tier_preference</code>); fetch one
 with <code>get_template(template_id)</code>. Filter with
@@ -293,18 +300,12 @@ but those require constructor arguments — fetching them bare via
 <code>get_strategy</code> raises <code>TypeError</code>, so construct them directly. An
 unknown name raises <code>ValueError</code>.</p>
 <h2>Is orchestration synchronous or asynchronous?</h2>
-<p>Planning and assembly are synchronous — <code>MetaOrchestrator.analyze_task</code>
-/ <code>create_execution_plan</code> / <code>compose_team</code>, the <code>DynamicTeamBuilder</code>
-methods, and <code>WorkflowComposer.compose</code>. The actual run,
-<code>ExecutionStrategy.execute(agents, context)</code>, is <strong>async</strong> and returns a
-<code>StrategyResult</code>.</p>
-<h2>How do I analyze a task before running it?</h2>
-<p><code>MetaOrchestrator().analyze_task(description)</code> returns a
-<code>TaskRequirements</code> with a <code>complexity</code> (<code>TaskComplexity</code>:
-<code>SIMPLE</code>/<code>MODERATE</code>/<code>COMPLEX</code>) and a <code>domain</code> (<code>TaskDomain</code>).
-<code>create_execution_plan(...)</code> turns requirements into an <code>ExecutionPlan</code>.</p>
+<p>Building a team and listing templates are synchronous. The runs —
+<code>AgentTeam.run(target)</code> and <code>ExecutionStrategy.execute(agents, context)</code> — are <strong>async</strong> and must be awaited.</p>
 <h2>Where is the source?</h2>
-<p>All orchestration source lives under <code>src/attune/orchestration/</code>.</p>
+<p>The templates and strategies live under <code>src/attune/orchestration/</code>; the
+team runner is <code>attune.agents.team.AgentTeam</code>
+(<code>src/attune/agents/team.py</code>).</p>
 <p><strong>Tags:</strong> <code>orchestration</code>, <code>teams</code></p>
 
   </article>

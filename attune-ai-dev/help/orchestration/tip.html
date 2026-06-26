@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — tip</title>
-  <meta name="description" content="- **Plan sync, execute async.** `MetaOrchestrator` / builders are sync; `execute` is async. - **Start from templates.** `get_all_templates()` is the cheapest way to see what a team can be built from. " />
-  <meta property="og:title" content="Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — tip" />
-  <meta property="og:description" content="- **Plan sync, execute async.** `MetaOrchestrator` / builders are sync; `execute` is async. - **Start from templates.** `get_all_templates()` is the cheapest way to see what a team can be built from. " />
+  <title>Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates — tip</title>
+  <meta name="description" content="- **Await the run.** `AgentTeam.run` and `execute` are async. - **Start from templates.** `get_all_templates()` is the cheapest way to see what a team can be built from. - **`get_strategy` takes a reg" />
+  <meta property="og:title" content="Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates — tip" />
+  <meta property="og:description" content="- **Await the run.** `AgentTeam.run` and `execute` are async. - **Start from templates.** `get_all_templates()` is the cheapest way to see what a team can be built from. - **`get_strategy` takes a reg" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/tip" />
   <style>
@@ -272,15 +272,15 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines</h1>
+<h1>Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates</h1>
 <h2>Notes &amp; tips</h2>
 <ul>
-<li><strong>Plan sync, execute async.</strong> <code>MetaOrchestrator</code> / builders are sync;
-<code>execute</code> is async.</li>
+<li><strong>Await the run.</strong> <code>AgentTeam.run</code> and <code>execute</code> are async.</li>
 <li><strong>Start from templates.</strong> <code>get_all_templates()</code> is the cheapest way to
 see what a team can be built from.</li>
 <li><strong><code>get_strategy</code> takes a registry name</strong>, not a class.</li>
-<li><strong>Orchestration composes workflows; it doesn't replace them.</strong></li>
+<li><strong><code>AgentTeam</code> is fan-out + gate</strong>, not a planner — you pick the agents
+and the gates.</li>
 </ul>
 
   </article>

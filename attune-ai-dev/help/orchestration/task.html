@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — task</title>
-  <meta name="description" content="```python from attune.orchestration import MetaOrchestrator" />
-  <meta property="og:title" content="Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — task" />
-  <meta property="og:description" content="```python from attune.orchestration import MetaOrchestrator" />
+  <title>Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates — task</title>
+  <meta name="description" content="```python import asyncio from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent from attune.workflows.code_review import CodeReviewWorkflow from attune.workflows.security_audit import Secur" />
+  <meta property="og:title" content="Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates — task" />
+  <meta property="og:description" content="```python import asyncio from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent from attune.workflows.code_review import CodeReviewWorkflow from attune.workflows.security_audit import Secur" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/task" />
   <style>
@@ -272,19 +272,29 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines</h1>
+<h1>Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates</h1>
 <h2>Tasks</h2>
-<h3>Analyze a task and plan its orchestration</h3>
-<pre><code class="language-python">from attune.orchestration import MetaOrchestrator
+<h3>Run a multi-agent quality gate</h3>
+<pre><code class="language-python">import asyncio
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.code_review import CodeReviewWorkflow
+from attune.workflows.security_audit import SecurityAuditWorkflow
 
-orch = MetaOrchestrator()
-reqs = orch.analyze_task(&quot;audit security and add tests&quot;)
-print(reqs.complexity, reqs.domain)
+team = AgentTeam(
+    agents=[
+        WorkflowAgent(&quot;code-review&quot;, CodeReviewWorkflow, files=[&quot;src/&quot;]),
+        WorkflowAgent(&quot;security-audit&quot;, SecurityAuditWorkflow, files=[&quot;src/&quot;]),
+    ],
+    gates=[
+        GateSpec(&quot;Code Quality&quot;, &quot;code-review&quot;, 80.0),
+        GateSpec(&quot;Security&quot;, &quot;security-audit&quot;, 80.0),
+    ],
+)
+report = asyncio.run(team.run([&quot;src/&quot;]))
+print(report.passed, report.blockers, report.warnings)
 </code></pre>
-<p><strong>Verify:</strong> <code>analyze_task(...)</code> is synchronous and returns a
-<code>TaskRequirements</code> with a <code>complexity</code> (<code>TaskComplexity</code>) and <code>domain</code>
-(<code>TaskDomain</code>). <code>create_execution_plan(...)</code> turns that into an
-<code>ExecutionPlan</code>.</p>
+<p><strong>Verify:</strong> <code>team.run(target)</code> is <strong>async</strong> and returns a <code>TeamReport</code>
+with <code>passed</code>, <code>blockers</code>, <code>warnings</code>, <code>results</code>, and <code>cost</code>.</p>
 <h3>Find agent templates by capability or tier</h3>
 <pre><code class="language-python">from attune.orchestration import (
     get_all_templates,

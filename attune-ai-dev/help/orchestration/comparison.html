@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — comparison</title>
-  <meta name="description" content="| | a workflow | orchestration | the agents feature | |--|-----------|---------------|--------------------| | Scope | one analysis | coordinating several agents into a pipeline | the agent factory tha" />
-  <meta property="og:title" content="Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — comparison" />
-  <meta property="og:description" content="| | a workflow | orchestration | the agents feature | |--|-----------|---------------|--------------------| | Scope | one analysis | coordinating several agents into a pipeline | the agent factory tha" />
+  <title>Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates — comparison</title>
+  <meta name="description" content="| | a workflow | orchestration | the agents feature | |--|-----------|---------------|--------------------| | Scope | one analysis | the parts that combine agents | the agent factory that builds agent" />
+  <meta property="og:title" content="Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates — comparison" />
+  <meta property="og:description" content="| | a workflow | orchestration | the agents feature | |--|-----------|---------------|--------------------| | Scope | one analysis | the parts that combine agents | the agent factory that builds agent" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/comparison" />
   <style>
@@ -272,7 +272,7 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines</h1>
+<h1>Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates</h1>
 <h2>Comparison</h2>
 <table>
 <thead>
@@ -287,25 +287,25 @@
 <tr>
 <td>Scope</td>
 <td>one analysis</td>
-<td>coordinating several agents into a pipeline</td>
+<td>the parts that combine agents</td>
 <td>the agent factory that builds agents</td>
 </tr>
 <tr>
 <td>Entry</td>
 <td><code>attune workflow run</code></td>
-<td><code>MetaOrchestrator</code> / <code>DynamicTeamBuilder</code></td>
+<td><code>AgentTeam</code> / <code>get_strategy</code> / templates</td>
 <td>the agent factory</td>
 </tr>
 <tr>
 <td>Output</td>
 <td>a result</td>
-<td>a <code>StrategyResult</code> over a team</td>
+<td>a <code>TeamReport</code> or <code>StrategyResult</code></td>
 <td>an agent</td>
 </tr>
 </tbody>
 </table>
-<p>Orchestration consumes agent templates and runs them; it does not
-replace the per-workflow analyses — it composes them.</p>
+<p>Orchestration consumes agent templates and workflows and runs them; it
+does not replace the per-workflow analyses — it composes them.</p>
 
   </article>
   <footer>

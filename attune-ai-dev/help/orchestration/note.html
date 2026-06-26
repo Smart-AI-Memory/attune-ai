@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — note</title>
-  <meta name="description" content="`attune.orchestration` assembles and runs **multi-agent pipelines**: it analyzes a task, picks a composition pattern, builds a team of agents, and executes them under a chosen strategy. It sits above " />
-  <meta property="og:title" content="Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — note" />
-  <meta property="og:description" content="`attune.orchestration` assembles and runs **multi-agent pipelines**: it analyzes a task, picks a composition pattern, builds a team of agents, and executes them under a chosen strategy. It sits above " />
+  <title>Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates — note</title>
+  <meta name="description" content="`attune.orchestration` supplies the **composable building blocks** for multi-agent work: a registry of reusable **agent templates** and a library of **execution strategies**. It sits above the individ" />
+  <meta property="og:title" content="Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates — note" />
+  <meta property="og:description" content="`attune.orchestration` supplies the **composable building blocks** for multi-agent work: a registry of reusable **agent templates** and a library of **execution strategies**. It sits above the individ" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/note" />
   <style>
@@ -272,38 +272,20 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines</h1>
+<h1>Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates</h1>
 <h2>Overview</h2>
-<p><code>attune.orchestration</code> assembles and runs <strong>multi-agent pipelines</strong>: it
-analyzes a task, picks a composition pattern, builds a team of agents,
-and executes them under a chosen strategy. It sits above the individual
-workflows — where a workflow is one analysis, orchestration coordinates
-<em>several</em> agents into one coordinated run.</p>
-<p>An orchestrated task moves through three layers:</p>
-<ol>
-<li><strong>Meta-orchestration</strong> — <code>MetaOrchestrator</code> analyzes the task
-(complexity, domain, requirements) and chooses a <code>CompositionPattern</code>.</li>
-<li><strong>Team assembly</strong> — <code>AgentTemplate</code>s are matched by capability/tier
-from the registry, or a <code>DynamicTeamBuilder</code> builds a team at runtime.</li>
-<li><strong>Execution</strong> — an <code>ExecutionStrategy</code> runs the agents and returns a
-<code>StrategyResult</code>.</li>
-</ol>
+<p><code>attune.orchestration</code> supplies the <strong>composable building blocks</strong> for
+multi-agent work: a registry of reusable <strong>agent templates</strong> and a
+library of <strong>execution strategies</strong>. It sits above the individual
+workflows — where a workflow is one analysis, these parts let you
+describe and combine <em>several</em> agents.</p>
+<p>To actually run a team, use <code>attune.agents.team.AgentTeam</code>: it fans a
+fixed set of workflow-backed agents out in parallel, scores each, and
+gates the result. There is no task-analysis planner that picks agents
+for you — you choose the agents and the gates.</p>
 <h2>Concepts</h2>
-<h3>Meta-orchestration — <code>MetaOrchestrator</code></h3>
-<p><code>MetaOrchestrator</code> is the planning layer. Its methods are synchronous:
-<code>analyze_task(...)</code> returns a <code>TaskRequirements</code> (carrying a
-<code>TaskComplexity</code> — <code>SIMPLE</code> / <code>MODERATE</code> / <code>COMPLEX</code> — and a <code>TaskDomain</code>
-— <code>TESTING</code> / <code>SECURITY</code> / <code>CODE_QUALITY</code> / <code>DOCUMENTATION</code> /
-<code>PERFORMANCE</code> / <code>ARCHITECTURE</code> / <code>REFACTORING</code> / <code>GENERAL</code>);
-<code>create_execution_plan(...)</code> returns an <code>ExecutionPlan</code>;
-<code>compose_team(...)</code> and <code>analyze_and_compose(...)</code> go from a task
-description to a composed team.</p>
-<p><code>CompositionPattern</code> enumerates the strategies the planner can pick:
-<code>SEQUENTIAL</code>, <code>PARALLEL</code>, <code>DEBATE</code>, <code>TEACHING</code>, <code>REFINEMENT</code>,
-<code>ADAPTIVE</code>, <code>CONDITIONAL</code>, <code>TOOL_ENHANCED</code>, <code>PROMPT_CACHED_SEQUENTIAL</code>,
-<code>DELEGATION_CHAIN</code>.</p>
-<h3>Team assembly — agent templates and dynamic teams</h3>
-<p>The agent registry supplies reusable <code>AgentTemplate</code>s (each has an <code>id</code>,
+<h3>Agent templates — the registry</h3>
+<p>The registry supplies reusable <code>AgentTemplate</code>s (each has an <code>id</code>,
 <code>role</code>, <code>capabilities</code>, <code>tools</code>, <code>tier_preference</code>, <code>quality_gates</code>, and
 <code>resource_requirements</code>). Query it with <code>get_all_templates()</code>,
 <code>get_template(template_id)</code>, <code>get_templates_by_capability(...)</code>,
@@ -311,37 +293,37 @@ description to a composed team.</p>
 <code>register_custom_template(...)</code> / <code>unregister_template(...)</code>.
 <code>AgentCapability</code> and <code>ResourceRequirements</code> model a template's
 capabilities and resource needs.</p>
-<p><code>DynamicTeamBuilder(state_store=None, redis_client=None)</code> builds a team
-at runtime — <code>build_from_spec(...)</code>, <code>build_from_plan(...)</code>,
-<code>build_from_config(...)</code> — producing a <code>DynamicTeam</code> /
-<code>DynamicTeamResult</code> from a <code>TeamSpecification</code>. <code>TeamStore</code> persists
-teams.</p>
-<h3>Execution — strategies</h3>
-<p>An <code>ExecutionStrategy</code> runs the assembled agents:
-<code>execute(agents, context)</code> is <strong>async</strong> and returns a <code>StrategyResult</code>.
-<code>get_strategy(name)</code> returns a strategy by name. Nine names construct
-with <strong>no arguments</strong> — <code>sequential</code>, <code>parallel</code>, <code>debate</code>, <code>teaching</code>,
-<code>refinement</code>, <code>adaptive</code>, <code>tool_enhanced</code>, <code>prompt_cached_sequential</code>,
-<code>delegation_chain</code>. The registry also holds <code>conditional</code>,
-<code>multi_conditional</code>, <code>nested</code>, and <code>nested_sequential</code>, but those require
-constructor args, so fetching them bare via <code>get_strategy</code> raises
-<code>TypeError</code> — construct them directly. The classes exported directly from
-<code>attune.orchestration</code> are the base <code>ExecutionStrategy</code> plus
-<code>ToolEnhancedStrategy</code>, <code>PromptCachedSequentialStrategy</code>, and
-<code>DelegationChainStrategy</code>.</p>
-<h3>Workflow composition</h3>
-<p><code>WorkflowComposer(state_store=None)</code> composes workflows —
-<code>compose(...)</code> and <code>compose_with_simplification(...)</code>.
-<code>WorkflowAgentAdapter</code> adapts a workflow so it can run as an agent
-inside a team.</p>
+<h3>Execution strategies — the composition library</h3>
+<p>An <code>ExecutionStrategy</code> runs a list of agents:
+<code>execute(agents, context)</code> is <strong>async</strong> and returns a <code>StrategyResult</code>
+(<code>success</code>, <code>outputs</code>, <code>aggregated_output</code>, <code>total_duration</code>,
+<code>errors</code>). <code>get_strategy(name)</code> returns a strategy by name. Nine names
+construct with <strong>no arguments</strong> — <code>sequential</code>, <code>parallel</code>, <code>debate</code>,
+<code>teaching</code>, <code>refinement</code>, <code>adaptive</code>, <code>tool_enhanced</code>,
+<code>prompt_cached_sequential</code>, <code>delegation_chain</code>. The registry also holds
+<code>conditional</code>, <code>multi_conditional</code>, <code>nested</code>, and <code>nested_sequential</code>,
+but those require constructor args, so fetching them bare via
+<code>get_strategy</code> raises <code>TypeError</code> — construct them directly. The classes
+exported directly from <code>attune.orchestration</code> are the base
+<code>ExecutionStrategy</code> plus <code>ToolEnhancedStrategy</code>,
+<code>PromptCachedSequentialStrategy</code>, and <code>DelegationChainStrategy</code>.</p>
+<h3>Agent teams — fan-out + gate</h3>
+<p><code>attune.agents.team.AgentTeam(agents, gates)</code> is the runnable team
+primitive. Each <code>WorkflowAgent(key, workflow_cls, *, files=...)</code> wraps a
+registered workflow and reports a real 0-100 score; each
+<code>GateSpec(name, agent_key, threshold, critical=True)</code> thresholds one
+agent's score. <code>await team.run(target)</code> runs the agents in parallel over
+a path (or list of paths) and returns a <code>TeamReport</code> (<code>passed</code>, <code>gates</code>,
+<code>results</code>, <code>blockers</code>, <code>warnings</code>, <code>cost</code>). It is <strong>fan-out + gate
+only</strong> — no sequential/two-phase/DAG topology and no auto-composition.</p>
 <h2>Notes &amp; tips</h2>
 <ul>
-<li><strong>Plan sync, execute async.</strong> <code>MetaOrchestrator</code> / builders are sync;
-<code>execute</code> is async.</li>
+<li><strong>Await the run.</strong> <code>AgentTeam.run</code> and <code>execute</code> are async.</li>
 <li><strong>Start from templates.</strong> <code>get_all_templates()</code> is the cheapest way to
 see what a team can be built from.</li>
 <li><strong><code>get_strategy</code> takes a registry name</strong>, not a class.</li>
-<li><strong>Orchestration composes workflows; it doesn't replace them.</strong></li>
+<li><strong><code>AgentTeam</code> is fan-out + gate</strong>, not a planner — you pick the agents
+and the gates.</li>
 </ul>
 
   </article>

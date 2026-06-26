@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — reference</title>
-  <meta name="description" content="| Symbol | Purpose | |--------|---------| | `MetaOrchestrator()` | `analyze_task`, `create_execution_plan`, `compose_team`, `analyze_and_compose` (all sync). | | `TaskRequirements` / `ExecutionPlan` |" />
-  <meta property="og:title" content="Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — reference" />
-  <meta property="og:description" content="| Symbol | Purpose | |--------|---------| | `MetaOrchestrator()` | `analyze_task`, `create_execution_plan`, `compose_team`, `analyze_and_compose` (all sync). | | `TaskRequirements` / `ExecutionPlan` |" />
+  <title>Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates — reference</title>
+  <meta name="description" content="| Symbol | Purpose | |--------|---------| | `AgentTeam(agents, gates)` | Fan-out + gate runner; `await run(target)` → `TeamReport`. | | `WorkflowAgent(key, workflow_cls, *, files=...)` | Wrap a workfl" />
+  <meta property="og:title" content="Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates — reference" />
+  <meta property="og:description" content="| Symbol | Purpose | |--------|---------| | `AgentTeam(agents, gates)` | Fan-out + gate runner; `await run(target)` → `TeamReport`. | | `WorkflowAgent(key, workflow_cls, *, files=...)` | Wrap a workfl" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/reference" />
   <style>
@@ -272,9 +272,9 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines</h1>
+<h1>Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates</h1>
 <h2>Reference</h2>
-<h3>Meta-orchestration</h3>
+<h3>Agent teams</h3>
 <table>
 <thead>
 <tr>
@@ -284,28 +284,28 @@
 </thead>
 <tbody>
 <tr>
-<td><code>MetaOrchestrator()</code></td>
-<td><code>analyze_task</code>, <code>create_execution_plan</code>, <code>compose_team</code>, <code>analyze_and_compose</code> (all sync).</td>
+<td><code>AgentTeam(agents, gates)</code></td>
+<td>Fan-out + gate runner; <code>await run(target)</code> → <code>TeamReport</code>.</td>
 </tr>
 <tr>
-<td><code>TaskRequirements</code> / <code>ExecutionPlan</code></td>
-<td>Planner inputs/outputs.</td>
+<td><code>WorkflowAgent(key, workflow_cls, *, files=...)</code></td>
+<td>Wrap a workflow as a scored agent.</td>
 </tr>
 <tr>
-<td><code>TaskComplexity</code></td>
-<td><code>SIMPLE</code> / <code>MODERATE</code> / <code>COMPLEX</code>.</td>
+<td><code>GateSpec(name, agent_key, threshold, critical=True)</code></td>
+<td>Threshold one agent's score; <code>critical=False</code> → warning, not blocker.</td>
 </tr>
 <tr>
-<td><code>TaskDomain</code></td>
-<td><code>TESTING</code> / <code>SECURITY</code> / <code>CODE_QUALITY</code> / <code>DOCUMENTATION</code> / <code>PERFORMANCE</code> / <code>ARCHITECTURE</code> / <code>REFACTORING</code> / <code>GENERAL</code>.</td>
+<td><code>TeamReport</code></td>
+<td><code>passed</code>, <code>gates</code>, <code>results</code>, <code>blockers</code>, <code>warnings</code>, <code>cost</code>.</td>
 </tr>
 <tr>
-<td><code>CompositionPattern</code></td>
-<td>The 10 patterns (SEQUENTIAL … DELEGATION_CHAIN).</td>
+<td><code>AgentResult</code></td>
+<td>Per-agent <code>key</code>, <code>score</code>, <code>cost</code>, <code>success</code>, <code>details</code>.</td>
 </tr>
 </tbody>
 </table>
-<h3>Team assembly</h3>
+<h3>Agent templates</h3>
 <table>
 <thead>
 <tr>
@@ -334,17 +334,9 @@
 <td><code>AgentCapability</code> / <code>ResourceRequirements</code></td>
 <td>Capability + resource models.</td>
 </tr>
-<tr>
-<td><code>DynamicTeamBuilder(state_store=None, redis_client=None)</code></td>
-<td><code>build_from_spec</code> / <code>build_from_plan</code> / <code>build_from_config</code>.</td>
-</tr>
-<tr>
-<td><code>DynamicTeam</code> / <code>DynamicTeamResult</code> / <code>TeamSpecification</code> / <code>TeamStore</code></td>
-<td>Team objects + persistence.</td>
-</tr>
 </tbody>
 </table>
-<h3>Execution &amp; composition</h3>
+<h3>Execution strategies</h3>
 <table>
 <thead>
 <tr>
@@ -364,14 +356,6 @@
 <tr>
 <td><code>ToolEnhancedStrategy</code> / <code>PromptCachedSequentialStrategy</code> / <code>DelegationChainStrategy</code></td>
 <td>Exported concrete strategies.</td>
-</tr>
-<tr>
-<td><code>WorkflowComposer(state_store=None)</code></td>
-<td><code>compose</code> / <code>compose_with_simplification</code>.</td>
-</tr>
-<tr>
-<td><code>WorkflowAgentAdapter</code></td>
-<td>Run a workflow as a team agent.</td>
 </tr>
 </tbody>
 </table>

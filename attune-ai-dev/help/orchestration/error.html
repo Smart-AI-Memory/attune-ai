@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — error</title>
-  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;execute&#x27; was never awaited` | `ExecutionStrategy.execute` called without `await` | it is async — `await` it | high " />
-  <meta property="og:title" content="Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines — error" />
-  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;execute&#x27; was never awaited` | `ExecutionStrategy.execute` called without `await` | it is async — `await` it | high " />
+  <title>Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;run&#x27; was never awaited` | `AgentTeam.run` / `ExecutionStrategy.execute` called without `await` | both are async — `" />
+  <meta property="og:title" content="Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;run&#x27; was never awaited` | `AgentTeam.run` / `ExecutionStrategy.execute` called without `await` | both are async — `" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/error" />
   <style>
@@ -272,7 +272,7 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines</h1>
+<h1>Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates</h1>
 <h2>Failure modes</h2>
 <table>
 <thead>
@@ -285,9 +285,9 @@
 </thead>
 <tbody>
 <tr>
-<td><code>RuntimeWarning: coroutine 'execute' was never awaited</code></td>
-<td><code>ExecutionStrategy.execute</code> called without <code>await</code></td>
-<td>it is async — <code>await</code> it</td>
+<td><code>RuntimeWarning: coroutine 'run' was never awaited</code></td>
+<td><code>AgentTeam.run</code> / <code>ExecutionStrategy.execute</code> called without <code>await</code></td>
+<td>both are async — <code>await</code> them</td>
 <td>high</td>
 </tr>
 <tr>
@@ -303,31 +303,30 @@
 <td>low</td>
 </tr>
 <tr>
-<td>Team build fails</td>
-<td>a <code>TeamSpecification</code> references an unknown template/capability</td>
-<td>check the spec against <code>get_all_templates()</code></td>
+<td>A gate blocks but the agent never ran</td>
+<td>a <code>GateSpec.agent_key</code> does not match any <code>WorkflowAgent.key</code></td>
+<td>the agent has no score so the gate fails closed — align the keys</td>
 <td>medium</td>
 </tr>
 </tbody>
 </table>
 <h3>Risk areas</h3>
 <ul>
-<li><strong>Planning is sync; execution is async.</strong> <code>MetaOrchestrator</code> methods
-and the builders are synchronous; <code>ExecutionStrategy.execute</code> is
-async.</li>
+<li><strong><code>run</code> and <code>execute</code> are async.</strong> <code>AgentTeam.run</code> and
+<code>ExecutionStrategy.execute</code> must be awaited.</li>
 <li><strong><code>get_strategy</code> resolves the nine no-arg strategies.</strong> The registry
 also holds <code>conditional</code>/<code>multi_conditional</code>/<code>nested</code>/
 <code>nested_sequential</code>, which require constructor args (fetching them bare
 raises <code>TypeError</code>).</li>
-<li><strong>Templates are matched by capability/tier.</strong> A team is only as good
-as the templates the registry can supply.</li>
+<li><strong>Gates fail closed.</strong> A <code>GateSpec</code> whose agent errored or produced no
+score fails the gate rather than passing silently.</li>
 </ul>
 <h3>Diagnosis order</h3>
 <ol>
-<li><code>get_all_templates()</code> — what agents are available?</li>
-<li><code>MetaOrchestrator().analyze_task(...)</code> — what does the planner infer?</li>
+<li><code>get_all_templates()</code> — what agents/templates are available?</li>
+<li>Are <code>GateSpec.agent_key</code>s aligned with <code>WorkflowAgent.key</code>s?</li>
 <li><code>get_strategy(name)</code> — is the strategy name valid?</li>
-<li>Async-not-awaited? <code>execute</code> must be awaited.</li>
+<li>Async-not-awaited? <code>run</code> / <code>execute</code> must be awaited.</li>
 </ol>
 
   </article>
