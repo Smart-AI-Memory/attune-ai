@@ -23,14 +23,44 @@
 
 ---
 
-A spec-driven development platform for Claude Code. Four pillars — AI
-workflows, project memory, retrieval grounding, and verification — turn
-requirements into reliable software. 22 workflows (19 multi-stage),
-20 auto-triggering skills, and 43 MCP tools run specialist teams of 2–6
-Claude subagents that review your code, surface vulnerabilities, generate
-tests, and plan refactors — grounded in your real source, with findings
-remembered across sessions. The same system doubles as the authoring and
-assistance toolkit for building and maintaining knowledge bases at scale.
+**Attune AI** is a spec-driven, multi-agent framework that puts a
+deterministic quality-gate layer between autonomous LLM agents and a
+production codebase. Four definitions, for the systems-minded:
+
+1. **A staleness-aware source mirror.** Most AI tools treat code
+   generation as prompt-and-forget, losing context between sessions.
+   Attune binds help templates and `features.yaml` definitions to
+   source via sha256 source hashes, so drift between docs and code is
+   *detected* rather than silently accumulated — and a cross-session
+   memory loop carries decisions, bugs, and references from one
+   session into the next.
+2. **An MCP-native team coordinator.** Attune runs as a Model Context
+   Protocol server that turns Claude Code into a managed multi-agent
+   platform. Instead of one monolithic prompt, it dispatches 2–6
+   domain-specific subagents in parallel — code readers, validators,
+   test designers, refactor planners — across 22 workflows and 43 MCP
+   tools, and an orchestrator synthesizes their findings into one
+   result.
+3. **A Socratic quality-gate engine.** Multi-stage workflows ask
+   before they act: the `/spec` flow brainstorms, plans, then executes
+   behind declarative quality gates that block on real code-review and
+   security-audit scores — not blind agent autonomy. This front-loads
+   constraints and cuts the most expensive failure mode: confidently
+   solving the wrong problem.
+4. **An active knowledge engine.** Documentation is a runtime asset,
+   not a byproduct. Through decoupled modules (`attune-author`,
+   `attune-rag`, `attune-help`), a citation-per-claim retrieval
+   contract delivers 0.996 mean per-claim faithfulness on the
+   benchmark set — grounding that both engineers and agents use to
+   verify implementation dependencies.
+
+In short: the infrastructure to move AI from conversational
+autocomplete to a grounded, multi-agent software-engineering utility.
+The same system doubles as an authoring-and-assistance toolkit for
+knowledge bases at scale — and we run our own on it: the docs, help
+templates, and 380+ engineering lessons at
+[attune-ai.dev](https://attune-ai.dev) are authored, grounded, and
+maintained entirely by Attune's own stack.
 
 **Managing and creating help content and docs?**
 That's [`attune-gui`](https://github.com/Smart-AI-Memory/attune-gui)
@@ -167,7 +197,7 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 | Capability | Plugin only | Plugin + pip |
 | ---------- | ----------- | ------------ |
-| 18 auto-triggering skills | Yes | Yes |
+| 22 auto-triggering skills | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
 | 43 MCP tools | -- | Yes |
@@ -312,7 +342,7 @@ from retrieval. Full methodology:
 | **Ready-to-use workflows** | 22 built-in | None | Build from scratch | None |
 | **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
 | **MCP integration** | 43 native tools | None | No | No |
-| **Auto-triggering skills** | 20 skills, natural language | None | None | None |
+| **Auto-triggering skills** | 22 skills, natural language | None | None | None |
 | **Socratic discovery** | Questions before execution | None | None | None |
 | **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
 
