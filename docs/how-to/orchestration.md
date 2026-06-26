@@ -16,21 +16,6 @@ print(type(strategy).__name__)
 
 ## Tasks
 
-### Analyze a task and plan its orchestration
-
-```python
-from attune.orchestration import MetaOrchestrator
-
-orch = MetaOrchestrator()
-reqs = orch.analyze_task("audit security and add tests")
-print(reqs.complexity, reqs.domain)
-```
-
-**Verify:** `analyze_task(...)` is synchronous and returns a
-`TaskRequirements` with a `complexity` (`TaskComplexity`) and `domain`
-(`TaskDomain`). `create_execution_plan(...)` turns that into an
-`ExecutionPlan`.
-
 ### Find agent templates by capability or tier
 
 ```python
@@ -62,17 +47,35 @@ print(type(strategy).__name__)
 above to a strategy. Running it — `await strategy.execute(agents,
 context)` — is **async** and returns a `StrategyResult`.
 
+### Run a multi-agent quality gate
+
+```python
+import asyncio
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.code_review import CodeReviewWorkflow
+from attune.workflows.security_audit import SecurityAuditWorkflow
+
+team = AgentTeam(
+    agents=[
+        WorkflowAgent("code-review", CodeReviewWorkflow, files=["src/"]),
+        WorkflowAgent("security-audit", SecurityAuditWorkflow, files=["src/"]),
+    ],
+    gates=[
+        GateSpec("Code Quality", "code-review", 80.0),
+        GateSpec("Security", "security-audit", 80.0),
+    ],
+)
+report = asyncio.run(team.run(["src/"]))
+print(report.passed, report.blockers, report.warnings, report.cost)
+```
+
+**Verify:** `AgentTeam` fans out each `WorkflowAgent` over the target,
+then applies the `GateSpec` thresholds. `team.run(target)` is **async**
+and returns a `TeamReport` (`passed`, `gates`, `results`, `blockers`,
+`warnings`, `cost`). This is fan-out + gate only — no sequential,
+two-phase, or DAG topology.
+
 ## Reference
-
-### Meta-orchestration
-
-| Symbol | Purpose |
-|--------|---------|
-| `MetaOrchestrator()` | `analyze_task`, `create_execution_plan`, `compose_team`, `analyze_and_compose` (all sync). |
-| `TaskRequirements` / `ExecutionPlan` | Planner inputs/outputs. |
-| `TaskComplexity` | `SIMPLE` / `MODERATE` / `COMPLEX`. |
-| `TaskDomain` | `TESTING` / `SECURITY` / `CODE_QUALITY` / `DOCUMENTATION` / `PERFORMANCE` / `ARCHITECTURE` / `REFACTORING` / `GENERAL`. |
-| `CompositionPattern` | The 10 patterns (SEQUENTIAL … DELEGATION_CHAIN). |
 
 ### Team assembly
 
@@ -83,17 +86,23 @@ context)` — is **async** and returns a `StrategyResult`.
 | `register_custom_template(...)` / `unregister_template(...)` / `get_registry()` | Extend/inspect the registry. |
 | `AgentTemplate` | `id`, `role`, `capabilities`, `tools`, `tier_preference`, `quality_gates`, `resource_requirements`. |
 | `AgentCapability` / `ResourceRequirements` | Capability + resource models. |
-| `DynamicTeamBuilder(state_store=None, redis_client=None)` | `build_from_spec` / `build_from_plan` / `build_from_config`. |
-| `DynamicTeam` / `DynamicTeamResult` / `TeamSpecification` / `TeamStore` | Team objects + persistence. |
 
-### Execution & composition
+### Multi-agent quality gates
+
+| Symbol | Purpose |
+|--------|---------|
+| `AgentTeam(agents, gates)` | Fan-out + gate runner. `run(target)` is **async** → `TeamReport`. |
+| `WorkflowAgent(key, workflow_cls, *, files=None, score_fn=None, default_score=None, escalate=False)` | Wrap a workflow as a team agent. |
+| `GateSpec(name, agent_key, threshold, critical=True)` | Threshold gate over one agent's score. |
+| `TeamReport` | `passed`, `gates`, `results`, `blockers`, `warnings`, `cost`. |
+| `AgentResult` | `key`, `score`, `cost`, `success`, `details`. |
+
+### Execution strategies
 
 | Symbol | Purpose |
 |--------|---------|
 | `ExecutionStrategy` | Base; `execute(agents, context)` is **async** → `StrategyResult`. |
 | `get_strategy(name)` | Resolve a no-arg strategy (9 names). `conditional`/`multi_conditional`/`nested`/`nested_sequential` are registered too but need constructor args. |
 | `ToolEnhancedStrategy` / `PromptCachedSequentialStrategy` / `DelegationChainStrategy` | Exported concrete strategies. |
-| `WorkflowComposer(state_store=None)` | `compose` / `compose_with_simplification`. |
-| `WorkflowAgentAdapter` | Run a workflow as a team agent. |
 
 <!-- attune-generated: source_hash=8eeb348f730d4eaa712d0cf9b78905ce878837e5c821fc161778c91d1d163103 feature=orchestration kind=how-to generated_at=2026-06-24 -->

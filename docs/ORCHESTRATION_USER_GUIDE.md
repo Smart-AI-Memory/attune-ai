@@ -1,8 +1,8 @@
 ---
-description: Meta-Orchestration User Guide: Step-by-step tutorial with examples, best practices, and common patterns. Learn by doing with hands-on examples.
+description: Orchestration User Guide: Step-by-step tutorial with examples, best practices, and common patterns. Learn by doing with hands-on examples.
 ---
 
-# Meta-Orchestration User Guide
+# Orchestration User Guide
 
 **Version:** 8.0.1
 **Last Updated:** June 9, 2026
@@ -17,7 +17,7 @@ description: Meta-Orchestration User Guide: Step-by-step tutorial with examples,
 3. [CLI Reference](#cli-reference)
 4. [Python API](#python-api)
 5. [Agent Templates](#agent-templates)
-6. [Composition Patterns](#composition-patterns)
+6. [Execution Strategies](#execution-strategies)
 7. [Configuration Store](#configuration-store)
 8. [Advanced Usage](#advanced-usage)
 9. [Troubleshooting](#troubleshooting)
@@ -26,44 +26,26 @@ description: Meta-Orchestration User Guide: Step-by-step tutorial with examples,
 
 ## Overview
 
-### What is Meta-Orchestration?
+### What is Orchestration?
 
-**Meta-orchestration is intelligent agent team composition.** Instead of manually coordinating multiple AI agents, the meta-orchestrator:
+**Orchestration is running multiple AI agents together against a
+shared target.** Attune ships ready-made orchestration-backed
+workflows (release prep, test generation, …) and the lower-level
+building blocks they are made from:
 
-1. **Analyzes your task** to understand complexity and requirements
-2. **Selects appropriate agents** from a library of expert templates
-3. **Chooses composition patterns** (sequential, parallel, debate, etc.)
-4. **Executes the team** with quality gates and monitoring
-5. **Learns from outcomes** to improve future compositions
+- **Agent templates** — reusable agent archetypes with capabilities,
+  tools, and quality gates.
+- **Execution strategies** — the patterns that define how agents run
+  together (sequential, parallel, debate, …).
+- **Agent teams** — fan-out a set of workflow-backed agents over a
+  target, then gate the results against thresholds.
+- **Configuration store** — a learning/memory layer that records which
+  compositions worked.
 
-Think of it as a **conductor for AI agents** - it knows which agents to use, in what order, and how to coordinate them for optimal results.
+The fastest way in is to run a registered workflow:
 
-### Why Use Meta-Orchestration?
-
-**Manual agent coordination is complex:**
 ```python
-# Manual approach - 50+ lines of coordination code
-analyzer = SecurityAnalyzer()
-tester = TestAnalyzer()
-reviewer = CodeReviewer()
-docs = DocWriter()
-
-# Run in parallel
-results = await asyncio.gather(
-    analyzer.run(), tester.run(), reviewer.run(), docs.run()
-)
-
-# Aggregate results
-if all(r.passed for r in results):
-    # Check quality gates
-    if results[0].critical_issues == 0 and results[1].coverage >= 80:
-        # Generate report...
-        pass
-```
-
-**Meta-orchestration simplifies this:**
-```python
-# Meta-orchestration approach - resolve and run a registered workflow
+# Resolve and run a registered workflow
 from attune.workflows import get_workflow
 
 workflow = get_workflow("release-prep")()
@@ -84,7 +66,7 @@ result = await workflow.execute({"path": "."})  # Done!
 
 ### Installation
 
-Meta-orchestration ships with Attune AI:
+Orchestration ships with Attune AI:
 
 ```bash
 pip install 'attune-ai[developer]'
@@ -188,63 +170,38 @@ asyncio.run(main())
 
 ### Composing workflows into a team
 
-`WorkflowComposer` wraps `BaseWorkflow` subclasses as agents and
-composes them into a runnable `DynamicTeam`:
+`AgentTeam` fans out a set of workflow-backed agents over a target,
+then gates each agent's score against a threshold. Build agents with
+`WorkflowAgent`, declare thresholds with `GateSpec`, and run the team
+against one or more paths:
 
 ```python
-from attune.orchestration import WorkflowComposer
-from attune.workflows.security_audit import SecurityAuditWorkflow
+import asyncio
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
 from attune.workflows.code_review import CodeReviewWorkflow
+from attune.workflows.security_audit import SecurityAuditWorkflow
 
-composer = WorkflowComposer()
-team = composer.compose(
-    team_name="comprehensive-review",
-    workflows=[
-        {"workflow": SecurityAuditWorkflow},
-        {"workflow": CodeReviewWorkflow},
+team = AgentTeam(
+    agents=[
+        WorkflowAgent("code-review", CodeReviewWorkflow, files=["src/"]),
+        WorkflowAgent("security-audit", SecurityAuditWorkflow, files=["src/"]),
     ],
-    strategy="parallel",                  # parallel | sequential | two_phase
-    quality_gates={"min_score": 70},
+    gates=[
+        GateSpec("Code Quality", "code-review", 80.0),
+        GateSpec("Security", "security-audit", 80.0),
+    ],
 )
 
-result = await team.execute({"target": "src/"})
-print(f"Success: {result.success}")
-print(f"Quality gates: {result.quality_gate_results}")
-print(f"Cost: {result.total_cost}")
+report = asyncio.run(team.run(["src/"]))
+print(f"Passed: {report.passed}")
+print(f"Blockers: {report.blockers}")
+print(f"Cost: {report.cost}")
 ```
 
-### Direct Meta-Orchestrator Usage
-
-**For custom compositions — analyze a task, then run the chosen
-strategy:**
-
-```python
-from attune.orchestration.meta_orchestrator import MetaOrchestrator
-from attune.orchestration.execution_strategies import get_strategy
-
-orchestrator = MetaOrchestrator()
-
-# Analyze task and create an execution plan
-context = {
-    "current_quality_score": 6.5,
-    "performance_baseline": "10s",
-}
-plan = orchestrator.analyze_and_compose(
-    task="Improve code quality and performance",
-    context=context,
-)
-
-print(f"Selected agents: {[a.id for a in plan.agents]}")
-print(f"Strategy: {plan.strategy.value}")
-print(f"Estimated cost: {plan.estimated_cost}")
-
-# Execute the plan's strategy
-strategy = get_strategy(plan.strategy.value)
-result = await strategy.execute(plan.agents, context)
-
-print(f"Success: {result.success}")
-print(f"Duration: {result.total_duration:.2f}s")
-```
+`team.run(target)` accepts a path string or a list of paths and
+returns a `TeamReport(passed, gates, results, blockers, warnings,
+cost)`. Each entry in `report.results` is an `AgentResult(key, score,
+cost, success, details)`.
 
 ---
 
@@ -332,13 +289,15 @@ cheap_templates = get_templates_by_tier("CHEAP")
 
 ---
 
-## Composition Patterns
+## Execution Strategies
 
 ### Overview
 
-**Composition patterns define HOW agents work together.** The meta-orchestrator automatically selects the best pattern based on task characteristics.
+**Execution strategies define HOW agents work together.** Resolve a
+strategy by name with `get_strategy(...)` (or import the class
+directly) and call `await strategy.execute(agents, context)`.
 
-**10 composition patterns (13 strategy classes in the registry):**
+**10 strategy patterns (13 strategy classes in the registry):**
 
 1. **Sequential** (A → B → C) - Pipeline processing
 2. **Parallel** (A ‖ B ‖ C) - Independent validation
@@ -377,10 +336,9 @@ result = await strategy.execute(agents, context)
 **Example:**
 Coverage Analyzer → Test Generator → Test Validator
 
-**When selected:**
-- Task is sequential (contains "generate", "create", "refactor")
-- Testing domain with multiple agents
-- Default for most multi-agent tasks
+**Use when:**
+- Each step depends on the previous step's output
+- The task is a pipeline (generate, then validate)
 
 ---
 
@@ -403,10 +361,9 @@ result = await strategy.execute(agents, context)
 **Example:**
 Security Audit ‖ Performance Check ‖ Code Quality ‖ Docs Check
 
-**When selected:**
-- Task contains "release", "audit", "check", "validate", "review"
-- Security or architecture domain
-- Task marked as parallelizable
+**Use when:**
+- Validations are independent of one another
+- Time optimization matters (bounded by the slowest agent)
 
 **Benefits:**
 - Fastest execution (bounded by slowest agent)
@@ -436,10 +393,9 @@ consensus = result.aggregated_output["consensus"]
 **Example:**
 Architect(scale) ‖ Architect(cost) ‖ Architect(simplicity) → Synthesizer
 
-**When selected:**
-- Multiple agents with same capability detected
-- Architecture decisions requiring debate
-- Complex tasks needing multi-perspective analysis
+**Use when:**
+- Multiple expert opinions are needed on the same question
+- Architecture decisions require tradeoff analysis
 
 **Output structure:**
 ```python
@@ -480,10 +436,9 @@ outcome = result.aggregated_output["outcome"]
 **Example:**
 Junior Writer(CHEAP) → Quality Gate → (pass ? done : Expert Review(CAPABLE))
 
-**When selected:**
-- Documentation domain
-- Simple tasks with review needed
-- Cost optimization desired
+**Use when:**
+- Cost-effective generation is desired
+- A cheaper first attempt can often clear a quality gate
 
 **Cost savings:**
 - Junior success: ~70% cost reduction
@@ -513,10 +468,9 @@ final_output = result.aggregated_output["final_output"]
 **Example:**
 Drafter(CHEAP) → Reviewer(CAPABLE) → Polisher(PREMIUM)
 
-**When selected:**
-- Refactoring domain
-- Multi-stage refinement beneficial
-- Quality progression desired
+**Use when:**
+- Iterative improvement across multiple stages is beneficial
+- A quality ladder (draft → review → polish) is desired
 
 **Benefits:**
 - Progressive quality improvement
@@ -545,10 +499,9 @@ selected = result.aggregated_output["selected_specialist"]
 **Example:**
 Classifier(CHEAP) → route(simple|moderate|complex) → Specialist(tier)
 
-**When selected:**
-- Complex tasks (contains "architecture", "migrate", "redesign")
-- Variable task complexity
-- Right-sizing important
+**Use when:**
+- Task complexity varies run to run
+- Right-sizing the model tier to the task matters
 
 **Routing logic:**
 - High confidence (>0.8) → Simple task → CHEAP specialist
@@ -561,33 +514,23 @@ Classifier(CHEAP) → route(simple|moderate|complex) → Specialist(tier)
 
 ---
 
-### Pattern Selection Rules
+### Selecting a Strategy
 
-**How the meta-orchestrator chooses:**
-
-```python
-# Priority order (first match wins):
-
-1. If task is parallelizable → PARALLEL
-2. If security/architecture domain → PARALLEL (even 1 agent)
-3. If documentation domain → TEACHING
-4. If refactoring domain → REFINEMENT
-5. If single agent → SEQUENTIAL
-6. If duplicate capabilities → DEBATE
-7. If testing domain → SEQUENTIAL
-8. If complex task → ADAPTIVE
-9. Default → SEQUENTIAL
-```
-
-**Override pattern:**
+Choose a strategy by name with `get_strategy(...)` and run it
+directly:
 
 ```python
 from attune.orchestration.execution_strategies import get_strategy
 
-# Force specific pattern
+# Pick the strategy that fits the task
 strategy = get_strategy("parallel")
 result = await strategy.execute(agents, context)
 ```
+
+Valid names include `sequential`, `parallel`, `debate`, `teaching`,
+`refinement`, `adaptive`, `conditional`, `multi_conditional`,
+`nested`, `nested_sequential`, `tool_enhanced`,
+`prompt_cached_sequential`, and `delegation_chain`.
 
 ---
 
@@ -595,7 +538,7 @@ result = await strategy.execute(agents, context)
 
 ### Overview
 
-The **Configuration Store** is the learning/memory system for meta-orchestration. It:
+The **Configuration Store** is the learning/memory system for orchestration. It:
 - Saves successful agent compositions
 - Tracks performance metrics over time
 - Retrieves proven solutions for similar tasks
@@ -724,30 +667,29 @@ workflow = get_workflow("release-prep")()
 # On subsequent runs:
 # 1. Checks store for proven composition
 # 2. Reuses if found (faster, more reliable)
-# 3. Falls back to meta-orchestrator if needed
+# 3. Falls back to a default composition if none found
 ```
 
 **Manual integration:**
 
 ```python
 from attune.orchestration.config_store import ConfigurationStore
-from attune.orchestration.meta_orchestrator import MetaOrchestrator
+from attune.orchestration import get_template
+from attune.orchestration.execution_strategies import get_strategy
 
 store = ConfigurationStore()
-orchestrator = MetaOrchestrator()
 
-# Try to load proven composition
+# Try to load a proven composition; fall back to a default
 best = store.get_best_for_task("release_prep")
 
 if best and best.success_rate >= 0.8:
-    # Reuse proven composition
+    # Reuse the proven composition
     agents = [get_template(a["role"]) for a in best.agents]
     strategy = get_strategy(best.strategy)
 else:
-    # Use meta-orchestrator to create new composition
-    plan = orchestrator.analyze_and_compose(task, context)
-    agents = plan.agents
-    strategy = get_strategy(plan.strategy.value)
+    # Compose a default team and strategy
+    agents = [get_template("security_auditor"), get_template("code_reviewer")]
+    strategy = get_strategy("parallel")
 
 # Execute...
 ```
@@ -784,12 +726,11 @@ store.save(config)
 
 ### Custom Workflows
 
-**Create your own meta-orchestrated workflows:**
+**Pick templates, run a strategy, and record the outcome:**
 
 ```python
-import asyncio
 from dataclasses import dataclass
-from attune.orchestration.meta_orchestrator import MetaOrchestrator
+from attune.orchestration import get_template
 from attune.orchestration.execution_strategies import get_strategy
 from attune.orchestration.config_store import (
     ConfigurationStore,
@@ -800,32 +741,27 @@ from attune.orchestration.config_store import (
 class CustomWorkflowResult:
     success: bool
     quality_score: float
-    outputs: dict
 
 class CustomWorkflow:
-    """Custom workflow using meta-orchestration."""
+    """Custom workflow composed from templates and a strategy."""
 
     def __init__(self):
-        self.orchestrator = MetaOrchestrator()
         self.config_store = ConfigurationStore()
 
     async def execute(self, context: dict) -> CustomWorkflowResult:
-        # Step 1: Check for proven composition
+        # Step 1: Reuse a proven composition, or pick a default team
         task_pattern = "custom_workflow"
         best = self.config_store.get_best_for_task(task_pattern)
 
         if best and best.success_rate >= 0.8:
-            # Reuse proven composition
             agents = [get_template(a["role"]) for a in best.agents]
             strategy = get_strategy(best.strategy)
         else:
-            # Create new composition
-            plan = self.orchestrator.analyze_and_compose(
-                task="Your task description",
-                context=context,
-            )
-            agents = plan.agents
-            strategy = get_strategy(plan.strategy.value)
+            agents = [
+                get_template("security_auditor"),
+                get_template("code_reviewer"),
+            ]
+            strategy = get_strategy("parallel")
 
         # Step 2: Execute
         result = await strategy.execute(agents, context)
@@ -843,7 +779,7 @@ class CustomWorkflow:
                     "role": a.id,
                     "tier": a.tier_preference,
                 } for a in agents],
-                strategy=strategy.__class__.__name__.replace("Strategy", "").lower(),
+                strategy="parallel",
                 quality_gates={"min_quality": 70.0},
             )
 
@@ -853,7 +789,6 @@ class CustomWorkflow:
         return CustomWorkflowResult(
             success=success,
             quality_score=quality_score,
-            outputs={r.agent_id: r.output for r in result.outputs},
         )
 
     def _calculate_quality(self, result) -> float:
@@ -863,10 +798,6 @@ class CustomWorkflow:
     def _generate_id(self) -> str:
         import uuid
         return str(uuid.uuid4())[:8]
-
-# Usage
-workflow = CustomWorkflow()
-result = await workflow.execute({"param": "value"})
 ```
 
 ---
@@ -913,37 +844,32 @@ Focus on production-ready, maintainable solutions.
     ),
 )
 
-# Use in custom workflow
-from attune.orchestration.meta_orchestrator import MetaOrchestrator
+# Register so get_template("data_pipeline_expert") resolves it
+from attune.orchestration import register_custom_template
 
-orchestrator = MetaOrchestrator()
-plan = orchestrator.analyze_and_compose(
-    task="Build ETL pipeline for customer data",
-    context={"data_sources": ["postgres", "s3"]}
-)
-
-# Manually add custom agent
-plan.agents.append(custom_template)
+register_custom_template(custom_template)
 ```
 
 ---
 
 ### Multi-Stage Workflows
 
-**Combine multiple orchestration patterns:**
+**Chain strategies, feeding each stage's output into the next:**
 
 ```python
+from attune.orchestration import get_template
+from attune.orchestration.execution_strategies import get_strategy
+
 async def multi_stage_workflow(context: dict):
-    """Complex workflow with multiple orchestration stages."""
+    """Complex workflow with multiple strategy stages."""
 
     # Stage 1: Parallel analysis
-    analysis_plan = orchestrator.analyze_and_compose(
-        task="Analyze codebase for issues",
-        context=context,
-    )
-    analysis_strategy = get_strategy("parallel")
-    analysis_result = await analysis_strategy.execute(
-        analysis_plan.agents,
+    analysis_agents = [
+        get_template("security_auditor"),
+        get_template("code_reviewer"),
+    ]
+    analysis_result = await get_strategy("parallel").execute(
+        analysis_agents,
         context,
     )
 
@@ -952,25 +878,17 @@ async def multi_stage_workflow(context: dict):
         **context,
         "analysis": analysis_result.aggregated_output,
     }
-    fix_plan = orchestrator.analyze_and_compose(
-        task="Fix identified issues",
-        context=fix_context,
-    )
-    fix_strategy = get_strategy("sequential")
-    fix_result = await fix_strategy.execute(
-        fix_plan.agents,
+    fix_agents = [get_template("refactoring_specialist")]
+    fix_result = await get_strategy("sequential").execute(
+        fix_agents,
         fix_context,
     )
 
     # Stage 3: Validation (parallel)
-    validation_plan = orchestrator.analyze_and_compose(
-        task="Validate all fixes",
-        context={**fix_context, "fixes": fix_result.aggregated_output},
-    )
-    validation_strategy = get_strategy("parallel")
-    validation_result = await validation_strategy.execute(
-        validation_plan.agents,
-        fix_context,
+    validation_agents = [get_template("test_validator")]
+    validation_result = await get_strategy("parallel").execute(
+        validation_agents,
+        {**fix_context, "fixes": fix_result.aggregated_output},
     )
 
     return {
@@ -986,19 +904,19 @@ async def multi_stage_workflow(context: dict):
 
 ### Common Issues
 
-#### 1. "No agents available for domain"
+#### 1. "Template not found"
 
-**Problem:** Meta-orchestrator can't find agents for your task.
+**Problem:** `get_template(...)` was called with an unknown id.
 
 **Solution:**
 ```python
 # Check available templates
-from attune.orchestration.agent_templates import get_all_templates
+from attune.orchestration import get_all_templates
 
 templates = get_all_templates()
 print(f"Available: {[t.id for t in templates]}")
 
-# Or compose explicitly from chosen templates and run a strategy
+# Compose explicitly from chosen templates and run a strategy
 from attune.orchestration import get_template
 from attune.orchestration.execution_strategies import get_strategy
 
@@ -1008,22 +926,24 @@ result = await get_strategy("parallel").execute(agents, {"path": "."})
 
 #### 2. Quality gates always failing
 
-**Problem:** Default quality gates too strict for your project.
+**Problem:** Gate thresholds too strict for your project.
 
 **Solution:**
 ```python
-# Relax quality gates when composing a team
-from attune.orchestration import WorkflowComposer
+# Lower the GateSpec thresholds when building an AgentTeam
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.code_review import CodeReviewWorkflow
+from attune.workflows.security_audit import SecurityAuditWorkflow
 
-quality_gates = {
-    "min_coverage": 60.0,        # Lower from 80
-    "min_quality_score": 6.0,    # Lower from 7
-    "max_critical_issues": 2,    # Allow 2 instead of 0
-}
-
-composer = WorkflowComposer()
-team = composer.compose(
-    "release", workflows=[...], quality_gates=quality_gates
+team = AgentTeam(
+    agents=[
+        WorkflowAgent("code-review", CodeReviewWorkflow, files=["src/"]),
+        WorkflowAgent("security-audit", SecurityAuditWorkflow, files=["src/"]),
+    ],
+    gates=[
+        GateSpec("Code Quality", "code-review", 60.0),  # lower from 80
+        GateSpec("Security", "security-audit", 60.0),
+    ],
 )
 ```
 
@@ -1082,24 +1002,6 @@ from attune.workflows import get_workflow
 
 workflow = get_workflow("release-prep")()
 result = await workflow.execute({"path": "."})
-```
-
-**Inspect execution plan:**
-
-```python
-orchestrator = MetaOrchestrator()
-
-# Complexity/domain live on TaskRequirements (from analyze_task):
-requirements = orchestrator.analyze_task(task, context)
-print(f"Task complexity: {requirements.complexity}")
-print(f"Task domain: {requirements.domain}")
-
-# The plan carries the agents, strategy, and estimates:
-plan = orchestrator.analyze_and_compose(task, context)
-print(f"Selected agents: {[a.id for a in plan.agents]}")
-print(f"Strategy: {plan.strategy.value}")
-print(f"Estimated cost: {plan.estimated_cost}")
-print(f"Estimated duration: {plan.estimated_duration}s")
 ```
 
 **Validate agent results:**

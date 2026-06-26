@@ -1,8 +1,8 @@
 ---
-description: Meta-Orchestration API Reference — task analysis, agent templates, composition patterns, execution strategies, dynamic teams, and workflow composition.
+description: Orchestration API Reference — agent templates, execution strategies, configuration store, agent teams, and agent state persistence.
 ---
 
-# Meta-Orchestration API Reference
+# Orchestration API Reference
 
 **Version:** 8.0.1
 **Last Updated:** June 9, 2026
@@ -13,13 +13,11 @@ description: Meta-Orchestration API Reference — task analysis, agent templates
 
 1. [Core Components](#core-components)
 2. [Agent Templates](#agent-templates)
-3. [Meta-Orchestrator](#meta-orchestrator)
-4. [Execution Strategies](#execution-strategies)
-5. [Configuration Store](#configuration-store)
-6. [Dynamic Teams](#dynamic-teams)
-7. [Workflow Composition](#workflow-composition)
-8. [Agent State Persistence](#agent-state-persistence)
-9. [Workflows](#workflows)
+3. [Execution Strategies](#execution-strategies)
+4. [Configuration Store](#configuration-store)
+5. [Agent Teams](#agent-teams)
+6. [Agent State Persistence](#agent-state-persistence)
+7. [Workflows](#workflows)
 
 ---
 
@@ -27,22 +25,19 @@ description: Meta-Orchestration API Reference — task analysis, agent templates
 
 ### Overview
 
-The meta-orchestration system is organized into the following modules:
+The orchestration system is organized into the following modules:
 
 ```text
 attune.orchestration/
 ├── agent_templates/             # Agent archetypes and capabilities (14 templates)
-├── meta_orchestrator.py         # Task analysis and agent selection
 ├── execution_strategies.py      # 10 composition patterns (13 strategy classes)
 ├── _strategies/                 # Strategy implementations + registry
 ├── config_store.py              # Learning and memory system
-├── dynamic_team.py              # Dynamic team execution (parallel/sequential/two_phase)
-├── team_builder.py              # Build teams from specs, plans, or saved configs
-├── team_store.py                # Persistent team configuration storage
-├── workflow_agent_adapter.py    # Wrap workflows as agents for team composition
-├── workflow_composer.py         # Compose workflows into DynamicTeam instances
-├── pattern_learner.py           # Learn successful composition patterns
 └── __init__.py
+
+attune.agents/
+├── team.py                      # AgentTeam: fan-out workflows + quality gates
+└── state.py                     # Agent execution history and recovery
 ```
 
 ---
@@ -265,254 +260,6 @@ capable_templates = get_templates_by_tier("CAPABLE")
 12. `synthesizer` (CAPABLE)
 13. `code_simplifier` (CAPABLE)
 14. `generic_agent` (CAPABLE)
-
----
-
-## Meta-Orchestrator
-
-**Module:** `attune.orchestration.meta_orchestrator`
-
-### Enums
-
-#### `TaskComplexity`
-
-**Task complexity classification.**
-
-```python
-class TaskComplexity(Enum):
-    SIMPLE = "simple"      # Single agent, straightforward
-    MODERATE = "moderate"  # 2-3 agents, some coordination
-    COMPLEX = "complex"    # 4+ agents, multi-phase execution
-```
-
----
-
-#### `TaskDomain`
-
-**Task domain classification.**
-
-```python
-class TaskDomain(Enum):
-    TESTING = "testing"
-    SECURITY = "security"
-    CODE_QUALITY = "code_quality"
-    DOCUMENTATION = "documentation"
-    PERFORMANCE = "performance"
-    ARCHITECTURE = "architecture"
-    REFACTORING = "refactoring"
-    GENERAL = "general"
-```
-
----
-
-#### `CompositionPattern`
-
-**Available composition patterns (grammar rules).**
-
-```python
-class CompositionPattern(Enum):
-    SEQUENTIAL = "sequential"  # A → B → C
-    PARALLEL = "parallel"      # A ‖ B ‖ C
-    DEBATE = "debate"          # A ⇄ B ⇄ C → Synthesis
-    TEACHING = "teaching"      # Junior → Expert validation
-    REFINEMENT = "refinement"  # Draft → Review → Polish
-    ADAPTIVE = "adaptive"      # Classifier → Specialist
-    CONDITIONAL = "conditional"  # If-then-else routing
-    # Anthropic-inspired patterns (8-10)
-    TOOL_ENHANCED = "tool_enhanced"  # Single agent with tools
-    PROMPT_CACHED_SEQUENTIAL = "prompt_cached_sequential"  # Shared cached context
-    DELEGATION_CHAIN = "delegation_chain"  # Hierarchical delegation (≤3 levels)
-```
-
----
-
-### Dataclasses
-
-#### `TaskRequirements`
-
-**Extracted requirements from task analysis.**
-
-```python
-@dataclass
-class TaskRequirements:
-    complexity: TaskComplexity
-    domain: TaskDomain
-    capabilities_needed: list[str]
-    parallelizable: bool = False
-    quality_gates: dict[str, Any] = field(default_factory=dict)
-    context: dict[str, Any] = field(default_factory=dict)
-```
-
-**Attributes:**
-- `complexity` (TaskComplexity): Task complexity level
-- `domain` (TaskDomain): Primary task domain
-- `capabilities_needed` (list[str]): Required capabilities
-- `parallelizable` (bool): Whether task can be parallelized
-- `quality_gates` (dict[str, Any]): Quality thresholds
-- `context` (dict[str, Any]): Additional context
-
----
-
-#### `ExecutionPlan`
-
-**Plan for agent execution.**
-
-```python
-@dataclass
-class ExecutionPlan:
-    agents: list[AgentTemplate]
-    strategy: CompositionPattern
-    quality_gates: dict[str, Any] = field(default_factory=dict)
-    estimated_cost: float = 0.0
-    estimated_duration: int = 0
-```
-
-**Attributes:**
-- `agents` (list[AgentTemplate]): Agents to execute
-- `strategy` (CompositionPattern): Composition pattern
-- `quality_gates` (dict[str, Any]): Quality thresholds
-- `estimated_cost` (float): Estimated execution cost (arbitrary units)
-- `estimated_duration` (int): Estimated time in seconds
-
----
-
-### Classes
-
-#### `MetaOrchestrator`
-
-**Intelligent task analyzer and agent composition engine.**
-
-```python
-class MetaOrchestrator:
-    def __init__(self): ...
-
-    def analyze_task(
-        self, task: str, context: dict[str, Any] | None = None
-    ) -> TaskRequirements: ...
-
-    def create_execution_plan(
-        self,
-        requirements: TaskRequirements,
-        agents: list[AgentTemplate],
-        strategy: CompositionPattern,
-    ) -> ExecutionPlan: ...
-
-    def analyze_and_compose(
-        self,
-        task: str,
-        context: dict[str, Any] | None = None,
-        interactive: bool = False,
-    ) -> ExecutionPlan: ...
-
-    def compose_team(
-        self,
-        task: str,
-        context: dict[str, Any] | None = None,
-        state_store: Any | None = None,
-        redis_client: Any | None = None,
-    ) -> Any: ...
-```
-
-**Methods:**
-
-##### `__init__()`
-
-**Initialize meta-orchestrator.**
-
-**Example:**
-```python
-orchestrator = MetaOrchestrator()
-```
-
----
-
-##### `analyze_task(task: str, context: dict[str, Any] | None = None) -> TaskRequirements`
-
-**Classify a task into structured requirements** (complexity, domain,
-capabilities needed) without selecting agents. Useful when you want to
-inspect or adjust requirements before composing a plan.
-
-**Returns:**
-- `TaskRequirements`: complexity, domain, capabilities, parallelizability
-
----
-
-##### `create_execution_plan(requirements, agents, strategy) -> ExecutionPlan`
-
-**Assemble an `ExecutionPlan` from already-resolved requirements,
-selected agents, and a composition pattern.** Used internally by
-`analyze_and_compose`, but exposed for callers that select agents
-themselves.
-
-**Parameters:**
-- `requirements` (TaskRequirements): Task requirements with quality gates
-- `agents` (list[AgentTemplate]): Selected agents for execution
-- `strategy` (CompositionPattern): Composition pattern to use
-
-**Returns:**
-- `ExecutionPlan`: Plan with agents, strategy, and cost/duration estimates
-
----
-
-##### `analyze_and_compose(task, context=None, interactive=False) -> ExecutionPlan`
-
-**Analyze task and create execution plan.**
-
-This is the main entry point for meta-orchestration.
-
-**Parameters:**
-- `task` (str): Task description (e.g., "Boost test coverage to 90%")
-- `context` (dict[str, Any] | None): Optional context dictionary
-- `interactive` (bool): If `True`, prompts the user to disambiguate
-  low-confidence classifications (default `False`)
-
-**Returns:**
-- `ExecutionPlan`: Plan with agents and strategy
-
-**Raises:**
-- `ValueError`: If task is invalid (empty or not a string)
-
-**Example:**
-```python
-orchestrator = MetaOrchestrator()
-
-plan = orchestrator.analyze_and_compose(
-    task="Boost test coverage to 90%",
-    context={"current_coverage": 75.0},
-)
-
-print(f"Agents: {[a.id for a in plan.agents]}")
-print(f"Strategy: {plan.strategy.value}")
-print(f"Cost: {plan.estimated_cost}")
-print(f"Duration: {plan.estimated_duration}s")
-```
-
-> **Note:** the returned `ExecutionPlan` carries `agents`, `strategy`,
-> `quality_gates`, `estimated_cost`, and `estimated_duration`. The
-> task's `complexity`/`domain` classification lives on the
-> `TaskRequirements` returned by `analyze_task`, not on `ExecutionPlan`.
-
-**Algorithm:**
-1. Classify task complexity (simple/moderate/complex)
-2. Classify task domain (testing/security/etc.)
-3. Extract required capabilities
-4. Select appropriate agents
-5. Choose composition pattern
-6. Estimate cost and duration
-
----
-
-##### `compose_team(task, context=None, state_store=None, redis_client=None)`
-
-**End-to-end convenience: analyze the task and build a runnable team**
-(rather than just a plan). Optionally wires in an `AgentStateStore` and
-a Redis client for persistence.
-
-**Parameters:**
-- `task` (str): Task description
-- `context` (dict[str, Any] | None): Optional context dictionary
-- `state_store` (Any | None): Optional agent state store
-- `redis_client` (Any | None): Optional Redis client for persistence
 
 ---
 
@@ -1177,208 +924,124 @@ for config in all_configs:
 
 ---
 
-## Dynamic Teams
+## Agent Teams
 
-**Module:** `attune.orchestration.dynamic_team`
+**Module:** `attune.agents.team`
+
+`AgentTeam` fans several workflows out over a target, then applies
+quality gates to their results. It is a fan-out + gate model: each
+agent runs the same target independently and each gate checks one
+agent's score against a threshold. There is no sequential, two-phase,
+or DAG topology and no pluggable strategy — for ordered composition,
+use the strategy classes in
+[Execution Strategies](#execution-strategies) directly.
 
 ### Classes
 
-#### `DynamicTeam`
+#### `WorkflowAgent`
 
-**Executes a team of agents with configurable strategy and quality gates.**
+**Wraps a workflow class so a team can run it as one agent.**
 
 ```python
-class DynamicTeam:
+class WorkflowAgent:
     def __init__(
         self,
-        team_name: str,
-        agents: list[SDKAgent | WorkflowAgentAdapter],
-        strategy: str = "parallel",
-        quality_gates: list[QualityGate] | None = None,
-        phases: list[dict[str, Any]] | None = None,
+        key: str,
+        workflow_cls: type,
+        *,
+        files: list[str] | None = None,
+        score_fn=None,
+        default_score=None,
+        escalate: bool = False,
     ) -> None: ...
-
-    async def execute(self, input_data: dict[str, Any]) -> DynamicTeamResult: ...
 ```
 
 **Parameters:**
 
-- `team_name` (str): Human-readable team name
-- `agents` (list): SDKAgent or WorkflowAgentAdapter instances
-- `strategy` (str): Execution strategy (`parallel`, `sequential`, `two_phase`)
-- `quality_gates` (list[QualityGate]): Quality thresholds to enforce
-- `phases` (list[dict]): Phase definitions for `two_phase` strategy
-
-**Strategies:**
-
-| Strategy | Description |
-|----------|-------------|
-| `parallel` | Execute all agents concurrently via `asyncio.gather()` |
-| `sequential` | Execute agents one after another, passing results forward |
-| `two_phase` | Split agents into gatherer and reasoner phases with a gate between them |
-
-**Example:**
-
-```python
-from attune.orchestration import DynamicTeam, DynamicTeamBuilder
-
-builder = DynamicTeamBuilder(state_store=state_store)
-team = builder.build_from_spec(spec)
-result = await team.execute({"target": "src/"})
-
-print(f"Success: {result.success}")
-print(f"Quality gate results: {result.quality_gate_results}")
-```
+- `key` (str): Unique identifier for this agent within the team
+- `workflow_cls` (type): Workflow class to run (e.g.
+  `CodeReviewWorkflow`)
+- `files` (list[str] | None): Files or paths the workflow scans
+- `score_fn` (callable | None): Extracts a numeric score from the
+  workflow result; defaults to a built-in extractor
+- `default_score` (float | None): Score used when extraction fails
+- `escalate` (bool): Escalate the model tier on retry
 
 ---
 
-#### `DynamicTeamResult`
+#### `GateSpec`
 
-**Aggregated result from team execution.**
-
-```python
-@dataclass
-class DynamicTeamResult:
-    team_name: str
-    strategy: str
-    success: bool = True
-    agent_results: list[SDKAgentResult] = field(default_factory=list)
-    quality_gate_results: dict[str, bool] = field(default_factory=dict)
-    total_cost: float = 0.0
-    execution_time_ms: float = 0.0
-    phase_results: list[dict[str, Any]] = field(default_factory=list)
-```
-
----
-
-### `DynamicTeamBuilder`
-
-**Module:** `attune.orchestration.team_builder`
-
-**Builds runnable `DynamicTeam` instances from various sources.**
+**Declares a quality gate against one agent's score.**
 
 ```python
-class DynamicTeamBuilder:
+class GateSpec:
     def __init__(
         self,
-        state_store: AgentStateStore | None = None,
-        redis_client: Any | None = None,
+        name: str,
+        agent_key: str,
+        threshold: float,
+        critical: bool = True,
+    ) -> None: ...
+```
+
+**Parameters:**
+
+- `name` (str): Human-readable gate name
+- `agent_key` (str): Which agent's score this gate checks
+- `threshold` (float): Minimum passing score
+- `critical` (bool): If `True`, a failure is a blocker; otherwise a
+  warning
+
+---
+
+#### `AgentTeam`
+
+**Runs a list of `WorkflowAgent`s and applies the gates.**
+
+```python
+class AgentTeam:
+    def __init__(
+        self,
+        agents: list[WorkflowAgent],
+        gates: list[GateSpec],
     ) -> None: ...
 
-    def build_from_spec(self, spec: TeamSpecification) -> DynamicTeam: ...
-    def build_from_plan(self, plan: dict[str, Any]) -> DynamicTeam: ...
-    def build_from_config(self, config: AgentConfiguration) -> DynamicTeam: ...
+    async def run(self, target: str | list[str]) -> TeamReport: ...
 ```
 
-**Methods:**
+**Parameters:**
 
-- `build_from_spec()` - Build from a `TeamSpecification` dataclass
-- `build_from_plan()` - Build from a `MetaOrchestrator` execution plan dict
-- `build_from_config()` - Build from a saved `AgentConfiguration`
+- `agents` (list[WorkflowAgent]): Agents to run
+- `gates` (list[GateSpec]): Quality gates to apply to agent results
 
----
-
-### `TeamStore`
-
-**Module:** `attune.orchestration.team_store`
-
-**Persistent storage for team specifications.**
-
-```python
-class TeamStore:
-    def __init__(self, storage_dir: str | None = None) -> None: ...
-
-    def save(self, spec: TeamSpecification) -> Path: ...
-    def load(self, name: str) -> TeamSpecification | None: ...
-    def list_all(self) -> list[TeamSpecification]: ...
-    def delete(self, name: str) -> bool: ...
-```
-
-Storage location: `.attune/orchestration/teams/{name}.json`
-
----
-
-## Workflow Composition
-
-**Module:** `attune.orchestration.workflow_composer`
-
-### `WorkflowComposer`
-
-**Composes `BaseWorkflow` subclasses into a `DynamicTeam`.**
-
-Each workflow is wrapped via `WorkflowAgentAdapter` so that the `DynamicTeam` executor can call `adapter.process(input_data)` uniformly for both SDK agents and workflows.
-
-```python
-class WorkflowComposer:
-    def __init__(self, state_store: Any | None = None) -> None: ...
-
-    def compose(
-        self,
-        team_name: str,
-        workflows: list[dict[str, Any]],
-        strategy: str = "parallel",
-        quality_gates: dict[str, Any] | None = None,
-        phases: list[dict[str, Any]] | None = None,
-    ) -> DynamicTeam: ...
-```
-
-**Parameters (compose):**
-
-- `team_name` (str): Human-readable name for the composed team
-- `workflows` (list[dict]): Workflow specifications. Each dict must have:
-  - `workflow`: A `BaseWorkflow` subclass (type)
-  - `kwargs` (optional): Dict of keyword arguments for the workflow constructor
-  - `role` (optional): Human-readable role name
-  - `agent_id` (optional): Unique agent identifier
-- `strategy` (str): Execution strategy (`parallel`, `sequential`, `two_phase`)
-- `quality_gates` (dict): Quality gate specifications
-- `phases` (list[dict]): Phase definitions for `two_phase` strategy
-
-**Raises:**
-
-- `ValueError`: If `workflows` is empty
+`run(target)` is async; `target` is a path string or list of paths. It
+returns a `TeamReport(passed, gates, results, blockers, warnings,
+cost)`, where `results` is a list of `AgentResult(key, score, cost,
+success, details)`.
 
 **Example:**
 
 ```python
-from attune.orchestration import WorkflowComposer
+import asyncio
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.code_review import CodeReviewWorkflow
+from attune.workflows.security_audit import SecurityAuditWorkflow
 
-composer = WorkflowComposer(state_store=state_store)
-team = composer.compose(
-    team_name="comprehensive-review",
-    workflows=[
-        {"workflow": SecurityAuditWorkflow, "kwargs": {"cost_tracker": ct}},
-        {"workflow": CodeReviewWorkflow, "kwargs": {"cost_tracker": ct}},
+team = AgentTeam(
+    agents=[
+        WorkflowAgent("code-review", CodeReviewWorkflow, files=["src/"]),
+        WorkflowAgent(
+            "security-audit", SecurityAuditWorkflow, files=["src/"]
+        ),
     ],
-    strategy="parallel",
-    quality_gates={"min_score": 70},
+    gates=[
+        GateSpec("Code Quality", "code-review", 80.0),
+        GateSpec("Security", "security-audit", 80.0),
+    ],
 )
-result = await team.execute({"target": "src/"})
+report = asyncio.run(team.run(["src/"]))
+print(report.passed, report.blockers, report.warnings, report.cost)
 ```
-
----
-
-### `WorkflowAgentAdapter`
-
-**Module:** `attune.orchestration.workflow_agent_adapter`
-
-**Adapts a `BaseWorkflow` to the `SDKAgent.process()` interface.**
-
-```python
-class WorkflowAgentAdapter:
-    def __init__(
-        self,
-        workflow_class: type,
-        workflow_kwargs: dict[str, Any] | None = None,
-        agent_id: str | None = None,
-        role: str | None = None,
-        state_store: Any | None = None,
-    ) -> None: ...
-
-    def process(self, input_data: dict[str, Any]) -> SDKAgentResult: ...
-```
-
-Bridges the async/sync boundary using `asyncio.run()` in a thread when called from an existing event loop (same pattern as `DynamicTeam._execute_parallel()`).
 
 ---
 
@@ -1443,55 +1106,59 @@ class AgentRecoveryManager:
 > Run any of them via `attune workflow run <name>` or the MCP tools.
 > See the [API Reference](reference/API_REFERENCE.md) for the current
 > workflow catalog, and use this document for the orchestration
-> primitives (`MetaOrchestrator`, strategies, `DynamicTeam`) that those
+> primitives (agent templates, strategies, `AgentTeam`) that those
 > workflows compose with.
 
 ---
 
 ## Complete Example
 
-**Putting it all together:**
+**Putting it all together** — run an agent team, then record the
+outcome in the configuration store for future reuse:
 
 ```python
 import asyncio
-from attune.orchestration import get_template
-from attune.orchestration.meta_orchestrator import MetaOrchestrator
-from attune.orchestration.execution_strategies import get_strategy
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.code_review import CodeReviewWorkflow
+from attune.workflows.security_audit import SecurityAuditWorkflow
 from attune.orchestration.config_store import (
     ConfigurationStore,
     AgentConfiguration,
 )
 
 async def main():
-    # Manual orchestration: analyze a task, reuse a proven
-    # composition if one exists, otherwise compose a fresh plan.
-    orchestrator = MetaOrchestrator()
+    team = AgentTeam(
+        agents=[
+            WorkflowAgent(
+                "code-review", CodeReviewWorkflow, files=["src/"]
+            ),
+            WorkflowAgent(
+                "security-audit", SecurityAuditWorkflow, files=["src/"]
+            ),
+        ],
+        gates=[
+            GateSpec("Code Quality", "code-review", 80.0),
+            GateSpec("Security", "security-audit", 80.0),
+        ],
+    )
+
+    report = await team.run(["src/"])
+    print(f"Passed: {report.passed}")
+    print(f"Blockers: {report.blockers}")
+    print(f"Cost: {report.cost}")
+
+    # Record the outcome for future reuse
     store = ConfigurationStore()
-
-    # Check for proven composition
-    best = store.get_best_for_task("release_prep")
-
-    if best and best.success_rate >= 0.8:
-        # Reuse proven composition
-        agents = [get_template(a["role"]) for a in best.agents]
-        strategy = get_strategy(best.strategy)
-    else:
-        # Create new composition
-        plan = orchestrator.analyze_and_compose(
-            task="Prepare for release",
-            context={"version": "8.0.1"}
-        )
-        agents = plan.agents
-        strategy = get_strategy(plan.strategy.value)
-
-    # Execute
-    result = await strategy.execute(agents, {"path": "."})
-
-    # Record outcome
-    if best:
-        quality_score = 85.0  # Calculate from result
-        best.record_outcome(result.success, quality_score)
-        store.save(best)
+    config = AgentConfiguration(
+        id="comprehensive_review",
+        task_pattern="release_prep",
+        agents=[{"role": "code-review"}, {"role": "security-audit"}],
+        strategy="parallel",
+        quality_gates={"min_score": 80.0},
+    )
+    quality_score = 85.0 if report.passed else 50.0
+    config.record_outcome(report.passed, quality_score)
+    store.save(config)
 
 asyncio.run(main())
 ```
@@ -1503,7 +1170,11 @@ asyncio.run(main())
 **All public APIs have complete type hints:**
 
 ```python
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
+
+from attune.orchestration import AgentTemplate
+from attune.orchestration.execution_strategies import StrategyResult
+from attune.orchestration.config_store import AgentConfiguration
 
 # Aliases for backward compatibility
 Context = Dict[str, Any]
@@ -1511,8 +1182,8 @@ AgentList = List[AgentTemplate]
 QualityGates = Dict[str, Any]
 
 # Return types
-async def execute(...) -> StrategyResult: ...
-def search(...) -> list[AgentConfiguration]: ...
+def make_result() -> StrategyResult: ...
+def search() -> list[AgentConfiguration]: ...
 ```
 
 ---
@@ -1522,18 +1193,23 @@ def search(...) -> list[AgentConfiguration]: ...
 **All functions validate inputs and raise appropriate exceptions:**
 
 ```python
-try:
-    template = get_template("invalid_id")
-except ValueError as e:
-    print(f"Invalid template ID: {e}")
+import asyncio
+
+from attune.orchestration import get_template
+from attune.orchestration.execution_strategies import get_strategy
+
+template = get_template("invalid_id")
+if template is None:
+    print("Template not found")
 
 try:
-    plan = orchestrator.analyze_and_compose("", context)
+    strategy = get_strategy("not_a_strategy")
 except ValueError as e:
-    print(f"Invalid task: {e}")
+    print(f"Invalid strategy: {e}")
 
 try:
-    result = await strategy.execute([], context)
+    strategy = get_strategy("parallel")
+    asyncio.run(strategy.execute([], {}))
 except ValueError as e:
     print(f"Empty agents list: {e}")
 ```

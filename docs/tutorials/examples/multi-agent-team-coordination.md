@@ -1,33 +1,46 @@
 ---
-description: "Multi-Agent Team Coordination: Task distribution,
-  shared patterns, conflict resolution, and team execution
-  using Attune's coordination and SDK agent APIs."
+description: "Multi-Agent Team Coordination: run a team of
+  workflow-backed agents in parallel, score each one, and gate
+  the result with Attune's AgentTeam API."
 ---
 
 # Multi-Agent Team Coordination
 
 **Difficulty**: Advanced
-**Time**: 30 minutes
-**Prerequisites**: Redis running locally, `attune-ai`
-installed
+**Time**: 20 minutes
+**Prerequisites**: `attune-ai` installed,
+`ANTHROPIC_API_KEY` set (or subscription auth configured)
 
 ---
 
 ## Overview
 
-This tutorial shows how to coordinate multiple AI agents
-using Attune's real coordination primitives:
+This tutorial shows how to coordinate multiple AI agents with
+`AgentTeam`. The model is **fan-out + gate**:
 
-- **AgentCoordinator** — Redis-backed task queue with
-  agent registration, claiming, and broadcasting
-- **TeamSession** — Shared context and signaling between
-  agents in a collaborative session
-- **PatternLibrary** — Shared pattern discovery so one
-  agent's learning benefits the whole team
-- **ConflictResolver** — Weighted scoring to resolve
-  conflicting pattern recommendations
-- **SDKAgentTeam** — Parallel/sequential agent execution
-  with quality gates
+- Each agent wraps a real Attune workflow (code review,
+  security audit, etc.) and runs over the same target.
+- Every agent runs **in parallel** and produces a numeric
+  **score** plus details.
+- A list of **gates** turns those scores into a pass/fail
+  verdict — critical gates become *blockers*, advisory gates
+  become *warnings*.
+
+`AgentTeam` is intentionally simple: it does one thing well,
+fan-out with gating. There is no sequential pipeline, no DAG,
+and no two-phase topology — if you need those, compose teams
+yourself in Python. (An earlier auto-composing team engine
+offered those topologies; it was removed. `AgentTeam` is the
+supported path.)
+
+The three building blocks:
+
+- **`WorkflowAgent`** — binds an agent key to a workflow class
+  and the files it should analyze.
+- **`GateSpec`** — a named threshold against one agent's score;
+  `critical=True` blocks, `critical=False` warns.
+- **`AgentTeam`** — holds the agents and gates, and runs them
+  with `team.run(target)`.
 
 ---
 
@@ -35,586 +48,335 @@ using Attune's real coordination primitives:
 
 ```bash
 pip install attune-ai
-redis-server  # Must be running for coordination
 ```
+
+`AgentTeam` runs Attune workflows, which call an LLM. Set
+`ANTHROPIC_API_KEY` (or configure subscription auth) so the
+workflows can execute. Redis is **not** required.
 
 ---
 
-## Part 1: Task Distribution with AgentCoordinator
+## Part 1: Your First Team
 
-The `AgentCoordinator` uses Redis to distribute tasks
-across agents. Agents register, claim pending tasks, and
-broadcast results.
-
-```python
-from attune.coordination import AgentCoordinator, AgentTask
-from attune.memory import get_redis_memory
-
-# Connect to Redis
-memory = get_redis_memory()
-
-# Create a coordinator for a code review team
-coordinator = AgentCoordinator(
-    short_term_memory=memory,
-    team_id="code_review_team",
-)
-
-# Register three specialized agents
-coordinator.register_agent(
-    "security_agent",
-    capabilities=["security_review", "vulnerability_scan"],
-)
-coordinator.register_agent(
-    "performance_agent",
-    capabilities=["performance_review", "profiling"],
-)
-coordinator.register_agent(
-    "style_agent",
-    capabilities=["style_review", "linting"],
-)
-
-print(f"Active agents: {coordinator.get_active_agents()}")
-# Output: Active agents: ['security_agent',
-#   'performance_agent', 'style_agent']
-```
-
-### Add and Claim Tasks
-
-```python
-# Add tasks to the queue
-coordinator.add_task(AgentTask(
-    task_id="review_auth_module",
-    task_type="security_review",
-    description="Review authentication module for vulns",
-    priority=9,
-    context={"files": ["src/auth.py", "src/tokens.py"]},
-))
-
-coordinator.add_task(AgentTask(
-    task_id="review_query_perf",
-    task_type="performance_review",
-    description="Check database query performance",
-    priority=7,
-    context={"files": ["src/db/queries.py"]},
-))
-
-# Security agent claims the highest-priority task
-task = coordinator.claim_task(
-    "security_agent",
-    task_type="security_review",
-)
-
-if task:
-    print(f"Claimed: {task.description} (priority {task.priority})")
-    # Output: Claimed: Review authentication module for
-    #   vulns (priority 9)
-
-    # Do the work, then complete the task
-    coordinator.complete_task(
-        task.task_id,
-        result={
-            "issues_found": 2,
-            "severity": "high",
-            "details": "SQL injection in login endpoint",
-        },
-        agent_id="security_agent",
-    )
-```
-
-### Broadcast Messages
-
-```python
-# Broadcast an infrastructure change to all agents
-coordinator.broadcast(
-    message_type="infrastructure_change",
-    data={
-        "change": "Database connection pool reduced",
-        "old_value": "max_connections=200",
-        "new_value": "max_connections=50",
-        "action_required": True,
-    },
-)
-
-# Aggregate results from all completed tasks
-results = coordinator.aggregate_results()
-print(f"Completed: {results['total_completed']}")
-print(f"By agent: {results['by_agent']}")
-```
-
----
-
-## Part 2: Shared Context with TeamSession
-
-A `TeamSession` gives agents a shared workspace. Agents
-join a session, share data with `share()`, read it with
-`get()`, and communicate via `signal()`.
-
-```python
-from attune.coordination import TeamSession
-from attune.memory import get_redis_memory
-
-memory = get_redis_memory()
-
-# Create a session for reviewing PR #42
-session = TeamSession(
-    short_term_memory=memory,
-    session_id="pr_review_42",
-    purpose="Review PR #42: Add user profile images",
-)
-
-# Agents join the session
-session.add_agent("security_agent")
-session.add_agent("performance_agent")
-
-# Security agent shares its analysis scope
-session.share("analysis_scope", {
-    "files": ["src/upload.py", "src/images.py"],
-    "lines_of_code": 340,
-    "risk_areas": ["file upload validation", "path handling"],
-})
-
-# Performance agent reads the shared scope
-scope = session.get("analysis_scope")
-print(f"Reviewing {scope['lines_of_code']} lines")
-print(f"Risk areas: {scope['risk_areas']}")
-# Output:
-# Reviewing 340 lines
-# Risk areas: ['file upload validation', 'path handling']
-```
-
-### Signaling Between Agents
-
-```python
-# Security agent signals a finding
-session.signal(
-    signal_type="finding",
-    data={
-        "agent": "security_agent",
-        "severity": "high",
-        "file": "src/upload.py",
-        "line": 42,
-        "issue": "No file type validation on upload",
-    },
-)
-
-# Performance agent checks for signals
-signals = session.get_signals(signal_type="finding")
-for s in signals:
-    data = s.get("data", {})
-    print(f"[{data.get('agent')}] {data.get('issue')}")
-# Output:
-# [security_agent] No file type validation on upload
-```
-
----
-
-## Part 3: Shared Pattern Library
-
-The `PatternLibrary` lets agents contribute reusable
-patterns and query for relevant ones. One agent's discovery
-benefits the entire team.
-
-```python
-from attune.pattern_library import Pattern, PatternLibrary
-
-library = PatternLibrary()
-
-# Security agent contributes a pattern it discovered
-library.contribute_pattern(
-    "security_agent",
-    Pattern(
-        id="validate_upload_type",
-        agent_id="security_agent",
-        pattern_type="security",
-        name="Validate file upload MIME type",
-        description=(
-            "Always validate MIME type and extension on "
-            "file uploads. Reject executable types."
-        ),
-        confidence=0.92,
-        tags=["security", "file-upload", "validation"],
-        context={"domain": "web", "risk": "high"},
-    ),
-)
-
-# Performance agent contributes a different pattern
-library.contribute_pattern(
-    "performance_agent",
-    Pattern(
-        id="batch_image_processing",
-        agent_id="performance_agent",
-        pattern_type="performance",
-        name="Batch image processing with pipeline",
-        description=(
-            "Process uploaded images in batches using "
-            "Redis pipeline instead of one-at-a-time."
-        ),
-        confidence=0.88,
-        tags=["performance", "redis", "batch"],
-        context={"domain": "web", "bottleneck": "io"},
-    ),
-)
-
-print(f"Library stats: {library.get_library_stats()}")
-# Output:
-# Library stats: {
-#   'total_patterns': 2,
-#   'total_agents': 2,
-#   'total_usage': 0,
-#   'average_confidence': 0.9,
-#   ...
-# }
-```
-
-### Query Patterns by Context
-
-```python
-# A new agent queries the library for relevant patterns
-context = {
-    "domain": "web",
-    "task_type": "file_upload",
-    "tags": ["security", "validation"],
-}
-
-matches = library.query_patterns(
-    "style_agent",
-    context,
-    min_confidence=0.8,
-)
-
-for match in matches:
-    p = match.pattern
-    print(
-        f"  {p.name} (confidence: {p.confidence:.0%}, "
-        f"relevance: {match.relevance_score:.0%})"
-    )
-    print(f"    From: {p.agent_id}")
-    print(f"    Why: {match.matching_factors}")
-
-# Output:
-#   Validate file upload MIME type (confidence: 92%,
-#     relevance: 70%)
-#     From: security_agent
-#     Why: ['1 context matches', '1 tag matches']
-```
-
-### Record Outcomes and Link Patterns
-
-```python
-# Record that using the pattern was successful
-library.record_pattern_outcome("validate_upload_type", success=True)
-
-# Link related patterns so agents discover both
-library.link_patterns(
-    "validate_upload_type",
-    "batch_image_processing",
-)
-
-# Get related patterns
-related = library.get_related_patterns("validate_upload_type")
-print(f"Related: {[p.name for p in related]}")
-# Output: Related: ['Batch image processing with pipeline']
-```
-
----
-
-## Part 4: Conflict Resolution
-
-When two agents recommend conflicting approaches, the
-`ConflictResolver` uses weighted scoring across confidence,
-success rate, recency, context match, and team priorities.
-
-```python
-from attune.coordination import (
-    ConflictResolver,
-    ResolutionStrategy,
-    TeamPriorities,
-)
-from attune.pattern_library import Pattern
-
-# Configure team priorities
-priorities = TeamPriorities(
-    security_weight=0.4,
-    readability_weight=0.3,
-    performance_weight=0.2,
-    maintainability_weight=0.1,
-)
-
-resolver = ConflictResolver(
-    default_strategy=ResolutionStrategy.WEIGHTED_SCORE,
-    team_priorities=priorities,
-)
-
-# Two agents disagree on approach
-security_pattern = Pattern(
-    id="strict_validation",
-    agent_id="security_agent",
-    pattern_type="security",
-    name="Strict input validation with allowlist",
-    description="Validate all inputs against an allowlist",
-    confidence=0.90,
-    tags=["security", "validation"],
-)
-
-perf_pattern = Pattern(
-    id="lazy_validation",
-    agent_id="performance_agent",
-    pattern_type="performance",
-    name="Lazy validation on hot path",
-    description="Defer validation to reduce latency",
-    confidence=0.75,
-    tags=["performance", "optimization"],
-)
-
-# Resolve the conflict
-result = resolver.resolve_patterns(
-    patterns=[security_pattern, perf_pattern],
-    context={"team_priority": "security"},
-)
-
-print(f"Winner: {result.winning_pattern.name}")
-print(f"Strategy: {result.strategy_used.value}")
-print(f"Confidence: {result.confidence:.0%}")
-print(f"Reasoning: {result.reasoning}")
-# Output:
-# Winner: Strict input validation with allowlist
-# Strategy: weighted_score
-# Confidence: 72%
-# Reasoning: Selected 'Strict input validation with
-#   allowlist' based on weighted scoring (top factors:
-#   confidence: 90%, team_alignment: 80%). Preferred
-#   over: Lazy validation on hot path
-```
-
-### Resolution Statistics
-
-```python
-stats = resolver.get_resolution_stats()
-print(f"Total resolutions: {stats['total_resolutions']}")
-print(f"Strategies used: {stats['strategies_used']}")
-print(f"Avg confidence: {stats['average_confidence']:.0%}")
-```
-
----
-
-## Part 5: Team Execution with SDKAgentTeam
-
-`SDKAgentTeam` runs multiple `SDKAgent` instances in
-parallel (or sequentially) and evaluates quality gates on
-their results.
+Start with two agents — one code-review agent and one
+security agent — both scanning `src/`. A gate on each turns
+their scores into a verdict.
 
 ```python
 import asyncio
-from attune.agents.sdk import SDKAgent, SDKAgentTeam
-from attune.agents.sdk.sdk_team import QualityGate
 
-# Create specialized agents with system prompts
-security_agent = SDKAgent(
-    agent_id="security-reviewer",
-    role="Security Reviewer",
-    system_prompt=(
-        "You are a security code reviewer. Analyze code "
-        "for vulnerabilities. Return JSON with 'score' "
-        "(0-100) and 'findings' dict."
-    ),
-)
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.code_review import CodeReviewWorkflow
+from attune.workflows.security_audit import SecurityAuditWorkflow
 
-perf_agent = SDKAgent(
-    agent_id="perf-reviewer",
-    role="Performance Reviewer",
-    system_prompt=(
-        "You are a performance reviewer. Identify "
-        "bottlenecks and inefficiencies. Return JSON "
-        "with 'score' (0-100) and 'findings' dict."
-    ),
-)
-
-# Build a team with quality gates
-team = SDKAgentTeam(
-    team_name="Code Review Team",
-    agents=[security_agent, perf_agent],
-    quality_gates=[
-        QualityGate(
-            name="min_security_score",
-            agent_role="Security Reviewer",
-            metric="score",
-            threshold=70.0,
-            required=True,
-        ),
-        QualityGate(
-            name="min_perf_score",
-            agent_role="Performance Reviewer",
-            metric="score",
-            threshold=60.0,
-            required=False,  # Advisory, not blocking
+team = AgentTeam(
+    agents=[
+        WorkflowAgent("code-review", CodeReviewWorkflow, files=["src/"]),
+        WorkflowAgent(
+            "security-audit", SecurityAuditWorkflow, files=["src/"]
         ),
     ],
-    parallel=True,  # Run agents concurrently
+    gates=[
+        GateSpec("Code Quality", "code-review", 80.0),
+        GateSpec("Security", "security-audit", 80.0),
+    ],
 )
 
+report = asyncio.run(team.run(["src/"]))
 
-async def run_review():
-    result = await team.execute({
-        "files": ["src/auth.py"],
-        "diff": "def login(user, password): ...",
-    })
-
-    print(f"Team: {result.team_name}")
-    print(f"Success: {result.success}")
-    print(f"Total cost: ${result.total_cost:.4f}")
-    print(f"Time: {result.execution_time_ms:.0f}ms")
-
-    for gate, passed in result.quality_gate_results.items():
-        status = "PASS" if passed else "FAIL"
-        print(f"  Gate '{gate}': {status}")
-
-    for agent_result in result.agent_results:
-        print(
-            f"\n  [{agent_result.role}] "
-            f"score={agent_result.score}, "
-            f"tier={agent_result.tier_used}, "
-            f"escalated={agent_result.escalated}"
-        )
-
-
-asyncio.run(run_review())
+print("Passed:", report.passed)
+print("Blockers:", report.blockers)
+print("Warnings:", report.warnings)
+print(f"Cost: ${report.cost:.4f}")
 ```
 
-Each `SDKAgent` uses progressive tier escalation: it
-starts on the CHEAP tier and automatically escalates to
-CAPABLE, then PREMIUM if the cheaper tier fails.
+Both agents run **concurrently** over `src/`. Each gate names
+the agent it scores (`agent_key`) and the `threshold` the
+score must meet. If every critical gate passes, `report.passed`
+is `True`.
 
 ---
 
-## Part 6: Putting It All Together
+## Part 2: Reading the Report
 
-Here's a complete workflow combining all the primitives:
+`team.run()` returns a `TeamReport`. Its fields tell the whole
+story:
 
-1. **Coordinator** distributes review tasks
-2. **TeamSession** shares context between agents
-3. **SDKAgentTeam** runs agents in parallel
-4. **PatternLibrary** captures what agents learn
-5. **ConflictResolver** resolves disagreements
+| Field | Meaning |
+| ----- | ------- |
+| `passed` | `True` if every critical gate met its threshold |
+| `gates` | the gate specs that were evaluated |
+| `results` | one `AgentResult` per agent |
+| `blockers` | messages for failed **critical** gates |
+| `warnings` | messages for failed **advisory** gates |
+| `cost` | total LLM cost across all agents |
+
+Each `AgentResult` carries the per-agent outcome:
 
 ```python
 import asyncio
-from attune.coordination import (
-    AgentCoordinator,
-    AgentTask,
-    ConflictResolver,
-    TeamSession,
+
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.code_review import CodeReviewWorkflow
+
+team = AgentTeam(
+    agents=[
+        WorkflowAgent("code-review", CodeReviewWorkflow, files=["src/"]),
+    ],
+    gates=[
+        GateSpec("Code Quality", "code-review", 80.0),
+    ],
 )
-from attune.agents.sdk import SDKAgent, SDKAgentTeam
-from attune.memory import get_redis_memory
-from attune.pattern_library import Pattern, PatternLibrary
 
-async def coordinated_review(files: list[str]):
-    """Run a coordinated multi-agent code review."""
-    memory = get_redis_memory()
+report = asyncio.run(team.run(["src/"]))
 
-    # 1. Set up coordination
-    coordinator = AgentCoordinator(memory, team_id="review")
-    session = TeamSession(memory, session_id="review_pr99")
-    library = PatternLibrary()
-    resolver = ConflictResolver()
+for result in report.results:
+    print(
+        f"[{result.key}] score={result.score:.1f} "
+        f"success={result.success} cost=${result.cost:.4f}"
+    )
+    # result.details holds the workflow's raw output dict
+```
 
-    # 2. Share review scope
-    session.share("scope", {"files": files})
+The fields on an `AgentResult` are `key`, `score`, `cost`,
+`success`, and `details` (the workflow's raw output).
 
-    # 3. Run agents in parallel
-    team = SDKAgentTeam(
-        team_name="PR Review",
+---
+
+## Part 3: Critical vs Advisory Gates
+
+A gate is **critical** by default (`critical=True`): if its
+agent's score is below the threshold, the team fails and a
+message lands in `report.blockers`. Set `critical=False` to
+make a gate **advisory** — a miss becomes a `warning` instead
+of a blocker, so the team can still pass.
+
+```python
+import asyncio
+
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.code_review import CodeReviewWorkflow
+from attune.workflows.security_audit import SecurityAuditWorkflow
+
+team = AgentTeam(
+    agents=[
+        WorkflowAgent("security", SecurityAuditWorkflow, files=["src/"]),
+        WorkflowAgent("quality", CodeReviewWorkflow, files=["src/"]),
+    ],
+    gates=[
+        # Security must pass — a miss blocks the team.
+        GateSpec("Security", "security", 80.0, critical=True),
+        # Quality is advisory — a miss only warns.
+        GateSpec("Quality", "quality", 90.0, critical=False),
+    ],
+)
+
+report = asyncio.run(team.run(["src/"]))
+
+if report.blockers:
+    print("Blocked by:", report.blockers)
+if report.warnings:
+    print("Warnings:", report.warnings)
+```
+
+Use this to enforce a hard floor on the things you cannot ship
+without (security), while keeping aspirational targets
+(coverage, style) as non-blocking signals.
+
+---
+
+## Part 4: Scoping Agents to Different Files
+
+Agents do not have to scan the same target. Give each
+`WorkflowAgent` its own `files` list so specialists focus on
+the areas they care about — the auth code gets a security
+pass, the data layer gets a performance pass.
+
+```python
+import asyncio
+
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.security_audit import SecurityAuditWorkflow
+from attune.workflows.perf_audit import PerformanceAuditWorkflow
+
+team = AgentTeam(
+    agents=[
+        WorkflowAgent(
+            "auth-security",
+            SecurityAuditWorkflow,
+            files=["src/auth.py", "src/tokens.py"],
+        ),
+        WorkflowAgent(
+            "db-perf",
+            PerformanceAuditWorkflow,
+            files=["src/db/queries.py"],
+        ),
+    ],
+    gates=[
+        GateSpec("Auth Security", "auth-security", 85.0),
+        GateSpec("DB Performance", "db-perf", 70.0, critical=False),
+    ],
+)
+
+report = asyncio.run(team.run(["src/"]))
+print("Passed:", report.passed, "| Cost:", f"${report.cost:.4f}")
+```
+
+The `target` passed to `team.run()` is the overall context;
+each agent's own `files` list scopes what *that* agent
+analyzes.
+
+---
+
+## Part 5: Custom Scoring
+
+By default an agent scores itself from its workflow output. If
+you want different scoring logic, pass a `score_fn` that takes
+the workflow result and returns a float (or `None` to fall
+back to `default_score`). You can also set `escalate=True` to
+let the underlying workflow climb to a stronger model tier.
+
+```python
+import asyncio
+
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.bug_predict import BugPredictionWorkflow
+
+
+def fewer_bugs_is_better(result) -> float:
+    """Map predicted-bug count to a 0-100 score."""
+    count = 0
+    if isinstance(result, dict):
+        count = len(result.get("predictions", []))
+    return max(0.0, 100.0 - count * 10.0)
+
+
+team = AgentTeam(
+    agents=[
+        WorkflowAgent(
+            "bug-risk",
+            BugPredictionWorkflow,
+            files=["src/"],
+            score_fn=fewer_bugs_is_better,
+            default_score=50.0,
+            escalate=True,
+        ),
+    ],
+    gates=[
+        GateSpec("Bug Risk", "bug-risk", 70.0),
+    ],
+)
+
+report = asyncio.run(team.run(["src/"]))
+print("Passed:", report.passed)
+```
+
+`score_fn` runs against the workflow's raw output, so its
+shape depends on the workflow you wrapped. When it returns
+`None`, the agent uses `default_score`.
+
+---
+
+## Part 6: A Release-Gate Team
+
+Putting it together: a three-agent team that acts as a
+pre-merge gate. Security is a hard blocker; quality and test
+health are advisory.
+
+```python
+import asyncio
+
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.code_review import CodeReviewWorkflow
+from attune.workflows.security_audit import SecurityAuditWorkflow
+from attune.workflows.test_audit.workflow import TestAuditWorkflow
+
+
+def release_gate_team(target: str) -> AgentTeam:
+    """Build a fan-out team that gates a release candidate."""
+    return AgentTeam(
         agents=[
-            SDKAgent(
-                role="Security Reviewer",
-                system_prompt="Review for security issues.",
-            ),
-            SDKAgent(
-                role="Performance Reviewer",
-                system_prompt="Review for performance.",
-            ),
+            WorkflowAgent("security", SecurityAuditWorkflow, files=[target]),
+            WorkflowAgent("quality", CodeReviewWorkflow, files=[target]),
+            WorkflowAgent("tests", TestAuditWorkflow, files=[target]),
         ],
-        parallel=True,
+        gates=[
+            GateSpec("Security", "security", 85.0, critical=True),
+            GateSpec("Quality", "quality", 75.0, critical=False),
+            GateSpec("Test Health", "tests", 70.0, critical=False),
+        ],
     )
 
-    result = await team.execute({"files": files})
 
-    # 4. Capture patterns from findings
-    for agent_result in result.agent_results:
-        if agent_result.success and agent_result.findings:
-            library.contribute_pattern(
-                agent_result.agent_id,
-                Pattern(
-                    id=f"review_{agent_result.agent_id}",
-                    agent_id=agent_result.agent_id,
-                    pattern_type=agent_result.role.lower(),
-                    name=f"Finding from {agent_result.role}",
-                    description=str(agent_result.findings),
-                    confidence=agent_result.confidence,
-                ),
-            )
+async def main(target: str = "src/") -> None:
+    team = release_gate_team(target)
+    report = await team.run([target])
 
-    # 5. Signal completion
-    session.signal("review_complete", {
-        "success": result.success,
-        "cost": result.total_cost,
-        "agents": len(result.agent_results),
-    })
+    verdict = "READY" if report.passed else "BLOCKED"
+    print(f"Release {verdict} (cost ${report.cost:.4f})")
 
-    # 6. Broadcast results
-    coordinator.broadcast("review_done", {
-        "files": files,
-        "passed": result.success,
-    })
+    for result in report.results:
+        print(f"  {result.key}: {result.score:.0f}")
+    for blocker in report.blockers:
+        print(f"  BLOCKER: {blocker}")
+    for warning in report.warnings:
+        print(f"  warning: {warning}")
 
-    return result
 
-result = asyncio.run(coordinated_review(["src/auth.py"]))
-print(f"Review {'passed' if result.success else 'failed'}")
-print(f"Cost: ${result.total_cost:.4f}")
+asyncio.run(main("src/"))
 ```
+
+The three agents fan out in parallel. Only the security gate
+can block; a low quality or test score surfaces as a warning
+while still letting the release through.
 
 ---
 
 ## API Quick Reference
 
-| Class | Import | Key Methods |
-| ----- | ------ | ----------- |
-| `AgentCoordinator` | `attune.coordination` | `add_task()`, `claim_task()`, `complete_task()`, `broadcast()`, `register_agent()` |
-| `TeamSession` | `attune.coordination` | `add_agent()`, `share()`, `get()`, `signal()`, `get_signals()` |
-| `PatternLibrary` | `attune.pattern_library` | `contribute_pattern()`, `query_patterns()`, `link_patterns()`, `get_library_stats()` |
-| `ConflictResolver` | `attune.coordination` | `resolve_patterns()`, `get_resolution_stats()` |
-| `SDKAgent` | `attune.agents.sdk` | `process()` |
-| `SDKAgentTeam` | `attune.agents.sdk` | `execute()` |
+| Symbol | Import | Purpose |
+| ------ | ------ | ------- |
+| `AgentTeam` | `attune.agents.team` | Holds agents + gates; `await team.run(target)` |
+| `WorkflowAgent` | `attune.agents.team` | Binds an agent key to a workflow class + files |
+| `GateSpec` | `attune.agents.team` | Named score threshold; `critical=False` warns |
+| `TeamReport` | `attune.agents.team` | Result: `passed`, `results`, `blockers`, `warnings`, `cost` |
+| `AgentResult` | `attune.agents.team` | Per-agent: `key`, `score`, `cost`, `success`, `details` |
+
+Constructor signatures:
+
+- `WorkflowAgent(key, workflow_cls, *, files=None, score_fn=None,
+  default_score=None, escalate=False)`
+- `GateSpec(name, agent_key, threshold, critical=True)`
+- `AgentTeam(agents, gates)`
+- `await team.run(target)` — `target` is a path string or a
+  list of paths.
 
 ---
 
 ## Troubleshooting
 
-### "Connection refused" errors
+### Workflows return empty or low scores
 
-Redis must be running. Start it with:
+Set `ANTHROPIC_API_KEY` in your environment, or configure
+subscription auth. Without credentials the workflows cannot
+call the model and produce no real findings.
 
-```bash
-redis-server
-```
+### A gate references the wrong agent
 
-### Agent claims return None
+`GateSpec.agent_key` must exactly match a `WorkflowAgent.key`.
+A typo means the gate finds no score to evaluate.
 
-No pending tasks match the requested `task_type`. Check
-that tasks were added with the correct type.
+### `team.run()` must be awaited
 
-### SDKAgent returns empty results
-
-Set `ANTHROPIC_API_KEY` in your environment. Without it,
-agents fall back to rule-based responses.
+`run()` is a coroutine. Call it inside an `async` function or
+wrap it with `asyncio.run(team.run(target))`.
 
 ---
 
 ## Next Steps
 
-- [Orchestration](https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/orchestration) —
-  DynamicTeam and MetaOrchestrator for automatic team
-  composition
 - [Agent State](https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/agents/state) —
-  Persistent state and recovery for long-running agents
+  persistent state and recovery for long-running agents
+- [Workflows](https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/workflows) —
+  the full catalog of workflow classes you can wrap in a
+  `WorkflowAgent`

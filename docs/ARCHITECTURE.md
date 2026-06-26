@@ -14,38 +14,45 @@ description: Attune AI - Architecture Overview: System architecture overview wit
 1. [System Overview](#system-overview)
 2. [Module Dependency Map](#module-dependency-map)
 3. [Core Components](#core-components)
-4. [Meta-Orchestration System](#meta-orchestration-system)
+4. [Agent Templates & Strategies](#agent-templates--strategies)
 5. [Claude-Native LLM System](#claude-native-llm-system)
 6. [MCP Server Integration](#mcp-server-integration)
 7. [Memory Architecture](#memory-architecture)
 8. [Workflow System](#workflow-system)
-9. [Agent State & Dynamic Teams](#agent-state-dynamic-teams)
+9. [Agent State & Teams](#agent-state--teams)
 10. [Hook System](#hook-system)
-11. [Pipeline System](#pipeline-system)
-12. [Caching Strategy](#caching-strategy)
-13. [Security Model](#security-model)
-14. [Deployment Architecture](#deployment-architecture)
-15. [Performance Characteristics](#performance-characteristics)
+11. [Caching Strategy](#caching-strategy)
+12. [Security Model](#security-model)
+13. [Deployment Architecture](#deployment-architecture)
+14. [Performance Characteristics](#performance-characteristics)
 
 ---
 
 ## System Overview
 
-Attune AI is a meta-orchestration system for AI agent collaboration. The framework enables:
+Attune AI is a workflow-and-agent system for AI-assisted
+development. The framework enables:
 
-- **Dynamic agent team composition** - Automatically selects and coordinates optimal agents for tasks
-- **Agent state persistence** - Execution history, checkpoints, and recovery across sessions
-- **Workflow composition** - Compose workflows into multi-agent teams with quality gates
-- **Cost optimization** - 34-86% savings through intelligent tier routing
-- **Production-ready security** - Path validation, audit logging, HIPAA compliance options
+- **Workflow execution** - SDK-native workflows with quality
+  gates and tier routing
+- **Agent teams** - Fan-out workflow agents with score-based
+  quality gates (`AgentTeam`)
+- **Agent state persistence** - Execution history, checkpoints,
+  and recovery across sessions
+- **Cost optimization** - 34-86% savings through intelligent
+  tier routing
+- **Production-ready security** - Path validation, audit logging,
+  HIPAA compliance options
 
 ### Design Principles
 
-1. **Meta-orchestration over hard-coding** - Let AI analyze tasks and compose agent teams
-2. **Cost-awareness by default** - Route to cheapest model that meets quality requirements
-3. **Privacy-first** - Local telemetry, encrypted long-term memory, user data stays local
-4. **Fail gracefully** - Degrade functionality rather than crash
-5. **Learn from outcomes** - Save successful compositions and improve over time
+1. **Cost-awareness by default** - Route to cheapest model that
+   meets quality requirements
+2. **Privacy-first** - Local telemetry, encrypted long-term
+   memory, user data stays local
+3. **Fail gracefully** - Degrade functionality rather than crash
+4. **Quality gates** - Enforce score thresholds before passing
+   results downstream
 
 ---
 
@@ -75,7 +82,7 @@ Tier 3 — Infrastructure
 Tier 4 — Domain Logic
   workflows/ (145 files)      13+ workflow implementations
   meta_workflows/             Intent detection, routing
-  orchestration/              Dynamic teams, composition
+  orchestration/              Agent templates, strategies
   socratic/                   Guided agent generation
 
 Tier 5 — Entry Points
@@ -98,7 +105,7 @@ Tier 5 — Entry Points
      workflows ──────→ models        orchestration
           ↑               │               ↑
           │               │               │
-   meta_workflows    telemetry      agent_factory
+   meta_workflows    telemetry         agents
           ↑                               ↑
           │                               │
      cli_router ←── commands ──→ wizards
@@ -141,12 +148,12 @@ Tier 5 — Entry Points
           │                  │                  │
 ┌─────────┼──────────────────┼──────────────────┼─────────────┐
 │         ▼                  ▼                  ▼              │
-│              Meta-Orchestration Engine (v4.0)               │
+│                  Agent & Strategy Layer                     │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │  Task Analyzer → Agent Selector → Strategy Picker   │   │
-│  │       ↓               ↓                  ↓            │   │
-│  │  Complexity       Agent Templates    6 Composition   │   │
-│  │  Assessment       (13 pre-built)     Patterns        │   │
+│  │  Agent Templates  →  Execution Strategies  →  Teams  │   │
+│  │       ↓                    ↓                   ↓       │   │
+│  │  14 pre-built     Sequential/Parallel/    AgentTeam   │   │
+│  │  templates        Debate/Refinement/…     (fan-out)   │   │
 │  └──────────────────────────────────────────────────────┘   │
 └─────────────────────────────┬───────────────────────────────┘
                               │
@@ -184,49 +191,18 @@ Tier 5 — Entry Points
 
 ---
 
-## Meta-Orchestration System
+## Agent Templates & Strategies
 
-The meta-orchestration system is the framework's breakthrough feature - it analyzes tasks and composes optimal agent teams automatically.
-
-### Architecture
-
-```python
-┌────────────────────────────────────────────────────────┐
-│              MetaOrchestrator                          │
-│                                                        │
-│  1. analyze_task(description) → TaskAnalysis          │
-│     - Complexity: SIMPLE/MODERATE/COMPLEX             │
-│     - Domain: security/testing/docs/etc.              │
-│     - Required capabilities                           │
-│                                                        │
-│  2. select_agents(analysis) → List[AgentTemplate]     │
-│     - Match capabilities to requirements              │
-│     - Apply quality gates                             │
-│     - Consider cost constraints                       │
-│                                                        │
-│  3. choose_strategy(agents, analysis) → Strategy      │
-│     - Sequential: Pipeline processing                 │
-│     - Parallel: Independent validation                │
-│     - Debate: Consensus building                      │
-│     - Teaching: Junior → Expert escalation            │
-│     - Refinement: Draft → Review → Polish             │
-│     - Adaptive: Classifier → Specialist               │
-│                                                        │
-│  4. execute(strategy, agents, task) → Result          │
-│     - Run composition pattern                         │
-│     - Enforce quality gates                           │
-│     - Collect outcomes                                │
-│                                                        │
-│  5. learn(outcome) → Store to ConfigurationStore      │
-│     - Save successful compositions                    │
-│     - Track success rates                             │
-│     - Improve future selections                       │
-└────────────────────────────────────────────────────────┘
-```
+The `attune.orchestration` package provides the reusable
+building blocks for agent work: pre-built agent templates and
+a library of execution strategies. Workflows and agent teams
+draw on these directly.
 
 ### Pre-Built Agent Templates
 
-The framework includes 14 specialized agent templates:
+The framework includes 14 specialized agent templates,
+available via `get_template`, `get_all_templates`,
+`get_templates_by_capability`, and `get_templates_by_tier`:
 
 1. **Security Auditor** - Vulnerability scanning, OWASP checks, dependency audits
 2. **Test Coverage Analyzer** - Gap analysis, edge case detection, assertion suggestions
@@ -243,7 +219,11 @@ The framework includes 14 specialized agent templates:
 13. **DevOps Engineer** - CI/CD, infrastructure, deployment automation
 14. **Code Simplifier** - Complexity reduction, inline helpers, flatten conditionals
 
-### Composition Patterns
+### Execution Strategies
+
+The `attune.orchestration.execution_strategies` module
+provides composable strategies, selected via `get_strategy`.
+Each describes how a set of agents combine their work.
 
 **Sequential (Pipeline)**
 ```
@@ -504,7 +484,7 @@ class BaseWorkflow:
 
 ---
 
-## Agent State & Dynamic Teams
+## Agent State & Teams
 
 ### Agent State Persistence
 
@@ -523,47 +503,45 @@ attune.agents.state/
 - Accumulated metrics (success rate, cost, timing)
 - Uses `_validate_file_path()` with `allowed_dir` for security
 
-### Dynamic Team Composition
+### Agent Teams
 
-```text
-attune.orchestration/
-├── dynamic_team.py           # DynamicTeam - 4 execution strategies
-├── team_builder.py           # DynamicTeamBuilder - build from specs/plans/configs
-├── team_store.py             # TeamStore - persistent team configurations
-├── workflow_agent_adapter.py # Wrap workflows as agents
-├── workflow_composer.py      # Compose workflows into teams
-└── ...existing modules...
+`AgentTeam` (`attune.agents.team`) runs several workflow agents
+in a single fan-out pass, then enforces score-based quality
+gates. It is fan-out plus gates only — there is no sequential,
+two-phase, or DAG topology and no strategy parameter.
+
+```python
+import asyncio
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.code_review import CodeReviewWorkflow
+from attune.workflows.security_audit import SecurityAuditWorkflow
+
+team = AgentTeam(
+    agents=[
+        WorkflowAgent("code-review", CodeReviewWorkflow, files=["src/"]),
+        WorkflowAgent("security-audit", SecurityAuditWorkflow, files=["src/"]),
+    ],
+    gates=[
+        GateSpec("Code Quality", "code-review", 80.0),
+        GateSpec("Security", "security-audit", 80.0),
+    ],
+)
+report = asyncio.run(team.run(["src/"]))
+print(report.passed, report.blockers, report.warnings, report.cost)
 ```
 
-**Execution flow:**
+**Building blocks:**
 
-```text
-MetaOrchestrator.compose_team(task)
-  → DynamicTeamBuilder.build_from_plan(plan)
-    → DynamicTeam(agents, strategy, quality_gates)
-      → team.execute(input_data) → DynamicTeamResult
-```
-
-**Strategies:** parallel, sequential, two_phase, delegation
-
-### Workflow Integration Mixins
-
-```text
-BaseWorkflow MRO (v2.5.0):
-  BaseWorkflow
-  ├── ExecutionMixin        # Core execute() loop
-  ├── TierMixin             # CHEAP → CAPABLE → PREMIUM escalation
-  ├── CoordinationMixin     # Heartbeat & signal coordination
-  ├── StatePersistenceMixin # NEW: Stage-level checkpoints
-  ├── MultiAgentStageMixin  # NEW: Delegate stages to DynamicTeam
-  ├── PromptMixin           # Prompt building
-  └── CacheMixin            # Response caching
-```
-
-**Opt-in via constructor parameters:**
-
-- `state_store=AgentStateStore(...)` enables state persistence
-- `multi_agent_configs={...}` enables multi-agent stage delegation
+- `WorkflowAgent(key, workflow_cls, *, files=None, score_fn=None,
+  default_score=None, escalate=False)` — wraps a workflow class
+  as a team member.
+- `GateSpec(name, agent_key, threshold, critical=True)` — a
+  score threshold an agent must meet.
+- `team.run(target)` is async; `target` is a path string or a
+  list of path strings.
+- `TeamReport(passed, gates, results, blockers, warnings, cost)`
+  carries the outcome; each `AgentResult(key, score, cost,
+  success, details)` records one agent's run.
 
 ---
 
@@ -600,35 +578,6 @@ HookExecutor
 **Security:** Python hooks restricted to `attune.*` module
 prefix. Shell hooks use `create_subprocess_exec` (no
 `shell=True`). Rate limiting on all hook invocations.
-
----
-
-## Pipeline System
-
-Spec-driven development lifecycle — reads XML task
-specifications and executes them with agent teams.
-
-### Flow
-
-```text
-XML Spec → SpecReader → PipelineOrchestrator
-    │
-    ├── Task 1 → Agent Team → Result
-    ├── Task 2 → Agent Team → Result
-    └── Task N → Agent Team → Result
-    │
-    ▼
-PipelineResult (with quality gates)
-```
-
-### Key Features
-
-- XML task decomposition with dependency tracking
-- Quality gates between pipeline stages
-- Parallel execution for independent tasks
-- Error recovery and checkpoint support
-- Integration with orchestration layer for team
-  composition
 
 ---
 

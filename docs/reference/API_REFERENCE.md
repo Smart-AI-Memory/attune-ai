@@ -43,8 +43,7 @@
   - [Tool Schemas](#tool-schemas)
   - [RateLimiter](#ratelimiter)
 - [Orchestration](#orchestration)
-  - [MetaOrchestrator](#metaorchestrator)
-  - [DynamicTeam](#dynamicteam)
+  - [AgentTeam](#agentteam)
   - [AgentTemplate](#agenttemplate)
   - [ExecutionStrategy](#executionstrategy)
 - [Meta-Workflows](#meta-workflows)
@@ -634,33 +633,42 @@ Request rate limiting for MCP tool calls.
 
 ## Orchestration
 
-### MetaOrchestrator
+### AgentTeam
 
-`attune.orchestration.MetaOrchestrator`
+`attune.agents.team.AgentTeam`
 
-Analyzes tasks and composes agent teams dynamically.
+Fan-out a target across workflow agents, then gate the results.
+Each agent runs its workflow; each gate asserts a minimum score.
 
 ```python
-from attune.orchestration import MetaOrchestrator
+import asyncio
+from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
+from attune.workflows.code_review import CodeReviewWorkflow
+from attune.workflows.security_audit import SecurityAuditWorkflow
 
-orchestrator = MetaOrchestrator()
-plan = orchestrator.analyze_and_compose(
-    task="Review auth module for security issues",
-    context={"path": "src/auth/"}
+team = AgentTeam(
+    agents=[
+        WorkflowAgent("code-review", CodeReviewWorkflow, files=["src/"]),
+        WorkflowAgent("security-audit", SecurityAuditWorkflow, files=["src/"]),
+    ],
+    gates=[
+        GateSpec("Code Quality", "code-review", 80.0),
+        GateSpec("Security", "security-audit", 80.0),
+    ],
 )
+report = asyncio.run(team.run(["src/"]))
+print(report.passed, report.blockers, report.warnings, report.cost)
 ```
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `analyze_and_compose(task, context)` | `ExecutionPlan` | Plan agent team |
+| Symbol | Description |
+|--------|-------------|
+| `WorkflowAgent(key, workflow_cls, *, files=None)` | One workflow agent |
+| `GateSpec(name, agent_key, threshold, critical=True)` | Score gate |
+| `AgentTeam(agents, gates)` | Fan-out team with gates |
+| `team.run(target)` | Async; `target` is a path or `list[str]` |
 
----
-
-### DynamicTeam
-
-`attune.orchestration.DynamicTeam`
-
-Executable agent team built from an execution plan.
+`team.run(...)` returns a `TeamReport(passed, gates, results,
+blockers, warnings, cost)`.
 
 ---
 
@@ -689,9 +697,7 @@ from attune.orchestration import (
 )
 
 templates = get_all_templates()  # 14 built-in templates
-security = get_templates_by_capability(
-    AgentCapability.security_analysis
-)
+security = get_templates_by_capability("vulnerability_scan")
 ```
 
 ---
@@ -1212,7 +1218,7 @@ msg = format_error(
 | `attune.workflows` | SDK-native pipelines | `BaseWorkflow`, 15 workflows |
 | `attune.models` | Model registry + execution | `MODEL_REGISTRY`, `LLMResponse` |
 | `attune.mcp` | MCP server for Claude Code | `create_server` |
-| `attune.orchestration` | Dynamic agent teams | `MetaOrchestrator` |
+| `attune.orchestration` | Agent templates + strategies | `get_all_templates` |
 | `attune.meta_workflows` | Socratic discovery | `MetaWorkflow` |
 | `attune.agents` | State + release agents | `AgentStateStore` |
 | `attune.wizards` | Interactive wizards | `list_wizards`, `BaseWizard` |
