@@ -95,13 +95,13 @@ For quick experiments without Redis:
 
 ```python
 import os
+
 os.environ["ATTUNE_REDIS_MOCK"] = "true"
 
-from attune import EmpathyOS
-empathy = EmpathyOS(user_id="test")  # Uses in-memory mock
+import attune  # In-memory mock backend is used automatically
 ```
 
-**Limitations**: Mock mode doesn't persist across restarts or support multi-agent coordination.
+**Limitations**: Mock mode doesn't persist across restarts.
 
 ---
 
@@ -132,7 +132,8 @@ pip install 'attune-ai[ops]'
 
 **Verify installation**:
 ```python
-from attune import EmpathyOS
+import attune
+
 print("Attune AI installed successfully!")
 ```
 
@@ -200,9 +201,10 @@ def check_api_keys():
     print("       Get your key at console.anthropic.com")
     return False
 
-def check_empathy():
+def check_attune():
     try:
-        from attune import EmpathyOS
+        import attune  # noqa: F401
+
         print("[OK] Attune AI installed")
         return True
     except ImportError:
@@ -215,7 +217,7 @@ if __name__ == "__main__":
 
     results = [
         check_python(),
-        check_empathy(),
+        check_attune(),
         check_redis(),
         check_api_keys(),
     ]

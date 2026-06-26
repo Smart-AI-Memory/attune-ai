@@ -45,28 +45,15 @@ graph TB
 ## Quick Start
 
 ```python
-from attune import (
-    EmpathyOS,
-    PatternLibrary,
-    AgentMonitor,
-)
+from attune import PatternLibrary, AgentMonitor
 
 # 1. Create shared infrastructure
 library = PatternLibrary()
 monitor = AgentMonitor(pattern_library=library)
 
-# 2. Create agent team with shared library
-code_reviewer = EmpathyOS(
-    user_id="code_reviewer",
-    target_level=4,
-    shared_library=library
-)
-
-test_generator = EmpathyOS(
-    user_id="test_generator",
-    target_level=3,
-    shared_library=library
-)
+# 2. Agents share a pattern library and report to the monitor
+#    using consistent agent IDs (e.g. "code_reviewer",
+#    "test_generator")
 
 # 3. Agents discover and share patterns
 # (Code reviewer finds a pattern, test generator can use it)
@@ -232,40 +219,33 @@ print(metrics.collaboration_efficiency)  # 0.6 (30/50)
 
 ---
 
-## Integration with EmpathyOS
+## Sharing Patterns Across Agents
 
-EmpathyOS includes built-in support for shared pattern libraries:
+A shared `PatternLibrary` lets agents contribute and reuse each
+other's patterns:
 
 ```python
-from attune import EmpathyOS, PatternLibrary, Pattern
+from attune import PatternLibrary, Pattern
 
 # Create shared library
 library = PatternLibrary()
 
-# Create agent with shared library
-agent = EmpathyOS(
-    user_id="code_reviewer",
-    target_level=4,
-    shared_library=library  # Enable multi-agent coordination
+# Contribute a pattern discovered by one agent
+pattern = Pattern(
+    id="pat_001",
+    agent_id="code_reviewer",
+    pattern_type="best_practice",
+    name="Test Pattern",
+    description="A discovered pattern"
 )
+library.contribute_pattern("code_reviewer", pattern)
 
-# Check if agent has shared library
-if agent.has_shared_library():
-    # Contribute a pattern
-    pattern = Pattern(
-        id="pat_001",
-        agent_id="code_reviewer",
-        pattern_type="best_practice",
-        name="Test Pattern",
-        description="A discovered pattern"
-    )
-    agent.contribute_pattern(pattern)
-
-    # Query patterns from other agents
-    matches = agent.query_patterns(
-        context={"language": "python"},
-        min_confidence=0.7
-    )
+# Query patterns on behalf of another agent
+matches = library.query_patterns(
+    agent_id="test_generator",
+    context={"language": "python"},
+    min_confidence=0.7
+)
 ```
 
 ---
@@ -276,11 +256,11 @@ if agent.has_shared_library():
 
 ```python
 # Good: Descriptive, consistent naming
-code_reviewer = EmpathyOS(user_id="code_reviewer", ...)
-test_generator = EmpathyOS(user_id="test_generator", ...)
+monitor.record_interaction("code_reviewer", response_time_ms=150.0)
+monitor.record_interaction("test_generator", response_time_ms=120.0)
 
 # Bad: Generic or inconsistent names
-agent1 = EmpathyOS(user_id="agent1", ...)
+monitor.record_interaction("agent1", response_time_ms=150.0)
 ```
 
 ### 2. Monitor Collaboration Efficiency

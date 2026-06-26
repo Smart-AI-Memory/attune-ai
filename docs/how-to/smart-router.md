@@ -198,13 +198,16 @@ async def run_from_description(description: str, path: str = "."):
         print(f"Reason: {decision.reasoning}")
         return
 
-    from attune import EmpathyOS
-    empathy = EmpathyOS(user_id="cli")
-    result = await empathy.run_workflow(
-        decision.primary_wizard,
-        {"path": path},
-    )
-    print(result.final_output)
+    # Map the router's suggestion to a concrete workflow class
+    from attune.workflows import SecurityAuditWorkflow, CodeReviewWorkflow
+
+    workflows = {
+        "security-audit": SecurityAuditWorkflow,
+        "code-review": CodeReviewWorkflow,
+    }
+    workflow_cls = workflows.get(decision.primary_wizard, CodeReviewWorkflow)
+    result = await workflow_cls().execute(path=path)
+    print(result)
 
 asyncio.run(run_from_description("Check for security issues in my API code"))
 ```
@@ -216,6 +219,13 @@ The secondary list is always narrower in scope than the primary, so a
 high primary confidence is a reasonable proxy for running them all:
 
 ```python
+from attune.workflows import SecurityAuditWorkflow, CodeReviewWorkflow
+
+workflows = {
+    "security-audit": SecurityAuditWorkflow,
+    "code-review": CodeReviewWorkflow,
+}
+
 decision = router.route_sync("Full quality pass on authentication module")
 
 # Run secondaries only when the overall routing is high-confidence
@@ -225,8 +235,9 @@ wizards_to_run = [decision.primary_wizard] + (
 
 for wizard_name in wizards_to_run:
     print(f"→ Running {wizard_name}...")
-    result = await empathy.run_workflow(wizard_name, {"path": "src/auth/"})
-    print(f"  {result.final_output.get('summary', 'done')}")
+    workflow_cls = workflows.get(wizard_name, CodeReviewWorkflow)
+    result = await workflow_cls().execute(path="src/auth/")
+    print(f"  {result}")
 ```
 
 ### Pattern 3: File-Based Auto-Routing
@@ -276,27 +287,6 @@ attune workflow run "$(attune route 'check security in auth module')"
 # Or use the meta-router directly
 attune route "Fix performance in the database layer"
 # → Suggests: perf-audit (0.88 confidence)
-```
-
----
-
-## Customizing the Registry
-
-Register a custom wizard or workflow to make it routable:
-
-```python
-from attune.routing import SmartRouter
-
-router = SmartRouter()
-router.register_wizard(
-    name="compliance-check",
-    description="Check code for HIPAA and SOC2 compliance requirements",
-    keywords=["hipaa", "compliance", "soc2", "audit", "gdpr", "phi"],
-)
-
-# Now routes naturally
-decision = router.route_sync("Check for HIPAA compliance issues")
-print(decision.primary_wizard)  # → compliance-check
 ```
 
 ---

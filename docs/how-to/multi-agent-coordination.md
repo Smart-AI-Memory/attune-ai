@@ -1,46 +1,49 @@
 ---
-description: Multi-Agent Coordination: Enable multiple AI agents to work together on complex tasks through shared pattern libraries and coordinated workflows.
+description: "Multi-Agent Coordination: run specialized Attune workflows together, sharing discovered patterns through a common PatternLibrary."
 ---
 
 # Multi-Agent Coordination
 
-Enable multiple AI agents to work together on complex tasks through shared pattern libraries and coordinated workflows.
+Run multiple specialized Attune workflows together on complex tasks,
+sharing discovered patterns through a common `PatternLibrary` and
+tracking activity with `AgentMonitor`.
 
 ---
 
 ## Overview
 
-**Multi-agent systems** allow specialized AI agents to collaborate:
+Specialized workflows can collaborate on a change set:
 
-- **Code Review Agent** - Reviews PRs for bugs and style
-- **Test Generation Agent** - Creates unit and integration tests
-- **Documentation Agent** - Maintains up-to-date docs
-- **Security Agent** - Scans for vulnerabilities
-- **Performance Agent** - Optimizes slow code
+- **Code Review** - reviews diffs for bugs and style
+- **Test Generation** - creates unit and integration tests
+- **Documentation** - maintains up-to-date docs
+- **Security Audit** - scans for vulnerabilities
+- **Performance Audit** - finds slow code
 
-**Result**: **80% faster feature delivery** through parallel work and shared learnings.
+Running them in parallel and sharing learnings through one pattern
+library means each workflow benefits from what the others discover.
 
 ---
 
 ## Architecture
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────┐
 │                    Shared Pattern Library                     │
 │  ┌────────────────────────────────────────────────────────┐  │
-│  │ • Code patterns discovered by any agent                │  │
-│  │ • Best practices learned from team                     │  │
+│  │ • Code patterns discovered by any workflow             │  │
+│  │ • Best practices learned from the team                 │  │
 │  │ • Security vulnerabilities and fixes                   │  │
 │  │ • Performance optimizations                            │  │
 │  └────────────────────────────────────────────────────────┘  │
 └──────────────────────┬────────────────────────────────────────┘
                        │ (Shared Knowledge)
-        ┌──────────────┼──────────────┬────────────┐
+        ┌──────────────┼───────────────┬────────────┐
         │              │               │            │
         ▼              ▼               ▼            ▼
 ┌──────────────┐ ┌──────────┐ ┌──────────────┐ ┌────────────┐
 │ Code Review  │ │   Test   │ │ Documentation │ │  Security  │
-│    Agent     │ │Generation│ │     Agent     │ │   Agent    │
+│   Workflow   │ │Generation│ │   Workflow    │ │   Audit    │
 └──────┬───────┘ └────┬─────┘ └──────┬───────┘ └─────┬──────┘
        │              │                │              │
        │ (Results)    │                │              │
@@ -56,71 +59,52 @@ Enable multiple AI agents to work together on complex tasks through shared patte
 
 ## Quick Start
 
-### Create Agent Team
+### Create a Shared Pattern Library
 
 ```python
-from attune import EmpathyOS
-from attune.pattern_library import PatternLibrary
+from attune import PatternLibrary
 
-# Shared pattern library for all agents
-shared_library = PatternLibrary(name="team_library")
+# One shared pattern library for every workflow on the team
+shared_library = PatternLibrary()
 
-# Create specialized agents
-code_reviewer = EmpathyOS(
-    user_id="code_reviewer",
-    target_level=4,
-    shared_library=shared_library  # Share learnings
-)
-
-test_generator = EmpathyOS(
-    user_id="test_generator",
-    target_level=3,
-    shared_library=shared_library
-)
-
-doc_writer = EmpathyOS(
-    user_id="doc_writer",
-    target_level=3,
-    shared_library=shared_library
-)
+# Inspect what the library holds
+stats = shared_library.get_library_stats()
+print(stats)
 ```
 
-### Run Coordinated Workflow
+### Run a Coordinated Workflow
 
 ```python
-async def process_pull_request(pr_number):
+import asyncio
+
+from attune.workflows import (
+    CodeReviewWorkflow,
+    ParallelTestGenerationWorkflow,
+    DocumentManagerWorkflow,
+)
+
+
+async def process_pull_request(pr_number: int):
     # 1. Code review (parallel)
-    review_task = code_reviewer.interact(
-        user_id="developer_123",
-        user_input=f"Review PR #{pr_number}",
-        context={"pr": pr_number}
-    )
+    review_task = CodeReviewWorkflow().execute(pr=pr_number)
 
     # 2. Generate tests (parallel)
-    test_task = test_generator.interact(
-        user_id="developer_123",
-        user_input=f"Generate tests for PR #{pr_number}",
-        context={"pr": pr_number}
-    )
+    test_task = ParallelTestGenerationWorkflow().execute()
 
     # 3. Update docs (parallel)
-    doc_task = doc_writer.interact(
-        user_id="developer_123",
-        user_input=f"Update docs for PR #{pr_number}",
-        context={"pr": pr_number}
-    )
+    doc_task = DocumentManagerWorkflow().execute(pr=pr_number)
 
-    # Wait for all agents to complete
+    # Wait for all workflows to complete
     review, tests, docs = await asyncio.gather(
         review_task,
         test_task,
-        doc_task
+        doc_task,
     )
 
     return {
         "review": review,
         "tests": tests,
-        "documentation": docs
+        "documentation": docs,
     }
 ```
 
@@ -130,158 +114,62 @@ async def process_pull_request(pr_number):
 
 ### How It Works
 
-1. **Agent A** discovers a useful pattern
-2. Pattern added to **shared library** with confidence score
-3. **Agent B** encounters similar context
-4. Pattern suggested if confidence > threshold
-5. Success/failure feedback updates pattern confidence
+1. A workflow discovers a useful pattern.
+2. The pattern is contributed to the **shared library** with a
+   confidence score.
+3. Another workflow encounters a similar context.
+4. The pattern is suggested if its confidence clears the threshold.
+5. Success/failure feedback updates the pattern's confidence.
 
 ### Example: Code Pattern
 
 ```python
-from attune.pattern_library import Pattern
+from attune import PatternLibrary, Pattern
 
-# Code Review Agent discovers pattern
+shared_library = PatternLibrary()
+
+# Code review discovers a pattern
 pattern = Pattern(
     id="avoid_mutable_defaults",
     agent_id="code_reviewer",
     pattern_type="warning",
+    name="Avoid mutable default arguments",
+    description="Mutable default arguments are shared across calls.",
     context={
         "language": "python",
-        "issue": "mutable_default_argument"
+        "issue": "mutable_default_argument",
     },
-    code="""
-# Bad (mutable default)
-def append_to_list(item, my_list=[]):
-    my_list.append(item)
-    return my_list
-
-# Good (immutable default)
-def append_to_list(item, my_list=None):
-    if my_list is None:
-        my_list = []
-    my_list.append(item)
-    return my_list
-""",
+    code=(
+        "# Bad (mutable default)\n"
+        "def append_to_list(item, my_list=[]):\n"
+        "    my_list.append(item)\n"
+        "    return my_list\n"
+        "\n"
+        "# Good (immutable default)\n"
+        "def append_to_list(item, my_list=None):\n"
+        "    if my_list is None:\n"
+        "        my_list = []\n"
+        "    my_list.append(item)\n"
+        "    return my_list\n"
+    ),
     confidence=0.95,
-    times_applied=23,
-    success_rate=0.96
+    tags=["python", "defaults"],
 )
 
-# Add to shared library
-shared_library.add_pattern(pattern)
+# Contribute it to the shared library
+shared_library.contribute_pattern("code_reviewer", pattern)
 
-# Later, Test Generator Agent finds similar code
-matches = shared_library.find_matching_patterns(
-    context={"language": "python", "function_has_default": True}
+# Later, another workflow queries for similar context
+matches = shared_library.query_patterns(
+    agent_id="test_generator",
+    context={"language": "python", "function_has_default": True},
 )
 
-if matches:
-    print(f"⚠️  Pattern from Code Review Agent:")
-    print(f"   {matches[0].code}")
-```
+for match in matches:
+    print(f"Suggested pattern: {match.pattern.name}")
 
----
-
-## Agent Specialization
-
-### Code Review Agent
-
-```python
-code_reviewer = EmpathyOS(
-    user_id="code_reviewer",
-    target_level=4,
-    specialization={
-        "focus": "code_quality",
-        "checks": [
-            "bug_detection",
-            "style_consistency",
-            "best_practices",
-            "performance_issues"
-        ],
-        "severity_threshold": "medium"
-    },
-    shared_library=shared_library
-)
-
-# Use for PR reviews
-review = await code_reviewer.interact(
-    user_id="developer_123",
-    user_input="Review changes in auth.py",
-    context={"files": ["auth.py"], "pr": 123}
-)
-
-print(review['suggestions'])
-# Output:
-# [
-#   {
-#     "type": "security",
-#     "severity": "high",
-#     "line": 45,
-#     "issue": "Plaintext password in logs",
-#     "fix": "Use logger.debug('[REDACTED]') for sensitive data"
-#   },
-#   {
-#     "type": "performance",
-#     "severity": "medium",
-#     "line": 78,
-#     "issue": "N+1 database queries",
-#     "fix": "Use select_related() to prefetch related objects"
-#   }
-# ]
-```
-
-### Test Generation Agent
-
-```python
-test_generator = EmpathyOS(
-    user_id="test_generator",
-    target_level=3,
-    specialization={
-        "focus": "test_coverage",
-        "types": ["unit", "integration"],
-        "frameworks": ["pytest", "unittest"],
-        "coverage_target": 0.8
-    },
-    shared_library=shared_library
-)
-
-# Generate tests for new code
-tests = await test_generator.interact(
-    user_id="developer_123",
-    user_input="Generate tests for calculate_discount()",
-    context={"function": "calculate_discount", "file": "pricing.py"}
-)
-
-print(tests['generated_tests'])
-# Output: Complete pytest tests with fixtures, edge cases, mocks
-```
-
-### Security Agent
-
-```python
-security_agent = EmpathyOS(
-    user_id="security_agent",
-    target_level=4,  # Anticipatory - predict vulnerabilities
-    specialization={
-        "focus": "security",
-        "checks": ["sql_injection", "xss", "csrf", "secrets_in_code"],
-        "compliance": ["owasp_top_10", "cwe_top_25"]
-    },
-    shared_library=shared_library
-)
-
-# Scan for vulnerabilities
-scan = await security_agent.interact(
-    user_id="developer_123",
-    user_input="Scan for security issues",
-    context={"branch": "feature/user-auth"}
-)
-
-if scan['vulnerabilities']:
-    for vuln in scan['vulnerabilities']:
-        print(f"🔒 {vuln['type']}: {vuln['description']}")
-        print(f"   Fix: {vuln['remediation']}")
+# Record whether applying the pattern worked
+shared_library.record_pattern_outcome("avoid_mutable_defaults", success=True)
 ```
 
 ---
@@ -290,167 +178,62 @@ if scan['vulnerabilities']:
 
 ### Sequential Workflow
 
-Agents work in sequence, each building on previous results:
+Workflows run in sequence, each gating the next:
 
 ```python
-async def sequential_workflow(code_changes):
+from attune.workflows import (
+    SecurityAuditWorkflow,
+    ParallelTestGenerationWorkflow,
+    CodeReviewWorkflow,
+)
+
+
+async def sequential_workflow():
     # 1. Security scan first
-    security_result = await security_agent.interact(
-        user_id="dev",
-        user_input="Scan for vulnerabilities",
-        context={"changes": code_changes}
-    )
+    security = await SecurityAuditWorkflow().execute()
 
-    if security_result['vulnerabilities']:
-        return {"status": "blocked", "reason": "security_issues"}
+    # 2. Generate tests
+    tests = await ParallelTestGenerationWorkflow().execute()
 
-    # 2. Generate tests (if security passes)
-    tests = await test_generator.interact(
-        user_id="dev",
-        user_input="Generate tests",
-        context={"changes": code_changes}
-    )
-
-    # 3. Review code (if tests generated)
-    review = await code_reviewer.interact(
-        user_id="dev",
-        user_input="Review code and tests",
-        context={"changes": code_changes, "tests": tests}
-    )
-
-    return {
-        "status": "complete",
-        "security": security_result,
-        "tests": tests,
-        "review": review
-    }
-```
-
-### Parallel Workflow
-
-Agents work simultaneously for speed:
-
-```python
-async def parallel_workflow(code_changes):
-    # All agents work in parallel
-    results = await asyncio.gather(
-        security_agent.interact(user_id="dev", user_input="Scan", context={"changes": code_changes}),
-        test_generator.interact(user_id="dev", user_input="Generate tests", context={"changes": code_changes}),
-        code_reviewer.interact(user_id="dev", user_input="Review", context={"changes": code_changes}),
-        doc_writer.interact(user_id="dev", user_input="Update docs", context={"changes": code_changes})
-    )
-
-    security, tests, review, docs = results
+    # 3. Review code and tests
+    review = await CodeReviewWorkflow().execute()
 
     return {
         "security": security,
         "tests": tests,
         "review": review,
-        "documentation": docs
     }
 ```
 
-### Hierarchical Workflow
+### Parallel Workflow
 
-Coordinator agent manages sub-agents:
-
-```python
-async def hierarchical_workflow(task):
-    # Coordinator decides which agents to use
-    coordinator = EmpathyOS(
-        user_id="coordinator",
-        target_level=4
-    )
-
-    # Analyze task
-    plan = await coordinator.interact(
-        user_id="dev",
-        user_input=f"Plan: {task}",
-        context={"available_agents": ["security", "test", "review", "docs"]}
-    )
-
-    # Execute sub-agents based on plan
-    results = {}
-    for agent_name in plan['agents_needed']:
-        agent = get_agent(agent_name)
-        results[agent_name] = await agent.interact(
-            user_id="dev",
-            user_input=plan[f'{agent_name}_task'],
-            context=plan['context']
-        )
-
-    # Coordinator synthesizes results
-    final = await coordinator.interact(
-        user_id="dev",
-        user_input="Synthesize results",
-        context={"results": results}
-    )
-
-    return final
-```
-
----
-
-## Performance Benefits
-
-### Before Multi-Agent (Single Developer)
-
-| Task | Time | Total |
-|------|------|-------|
-| Write code | 4 hours | 4h |
-| Write tests | 2 hours | 6h |
-| Code review | 1 hour | 7h |
-| Update docs | 1 hour | 8h |
-| **TOTAL** | | **8 hours** |
-
-### After Multi-Agent (Parallel Execution)
-
-| Task | Agent | Time | Parallel |
-|------|-------|------|----------|
-| Write code | Developer | 4 hours | ─────┐ |
-| Generate tests | Test Agent | 15 min | ─────┤ |
-| Code review | Review Agent | 10 min | ─────┼─ **4 hours** |
-| Update docs | Doc Agent | 10 min | ─────┤ |
-| Security scan | Security Agent | 5 min | ─────┘ |
-| **TOTAL** | | | **4 hours** (-50%) |
-
-**Additional benefits**:
-- ✅ Consistent code quality (agents never tired)
-- ✅ No forgotten documentation
-- ✅ Immediate security feedback
-- ✅ 100% test coverage
-
----
-
-## Conflict Resolution
-
-### Pattern Conflicts
-
-When agents disagree:
+Workflows run simultaneously for speed:
 
 ```python
-# Code Review Agent suggests one approach
-review_pattern = Pattern(
-    id="use_list_comprehension",
-    recommendation="Use list comprehension for better performance",
-    confidence=0.85
+import asyncio
+
+from attune.workflows import (
+    SecurityAuditWorkflow,
+    ParallelTestGenerationWorkflow,
+    CodeReviewWorkflow,
+    DocumentManagerWorkflow,
 )
 
-# Style Agent prefers readability
-style_pattern = Pattern(
-    id="use_explicit_loop",
-    recommendation="Use explicit loop for better readability",
-    confidence=0.80
-)
 
-# Conflict resolver
-resolver = ConflictResolver()
-resolution = resolver.resolve_patterns(
-    patterns=[review_pattern, style_pattern],
-    context={"team_priority": "readability", "code_complexity": "high"}
-)
+async def parallel_workflow():
+    security, tests, review, docs = await asyncio.gather(
+        SecurityAuditWorkflow().execute(),
+        ParallelTestGenerationWorkflow().execute(),
+        CodeReviewWorkflow().execute(),
+        DocumentManagerWorkflow().execute(),
+    )
 
-# Result: Choose style_pattern (higher team priority match)
+    return {
+        "security": security,
+        "tests": tests,
+        "review": review,
+        "documentation": docs,
+    }
 ```
 
 ---
@@ -459,14 +242,21 @@ resolution = resolver.resolve_patterns(
 
 ### Agent Performance
 
+`AgentMonitor` shares the same pattern library so monitoring and
+pattern sharing stay in sync.
+
 ```python
+from attune import PatternLibrary
 from attune.monitoring import AgentMonitor
 
-monitor = AgentMonitor()
+monitor = AgentMonitor(pattern_library=PatternLibrary())
 
-# Track agent metrics
+# Record activity as workflows run
+monitor.record_interaction("code_reviewer", response_time_ms=120.0)
+monitor.record_pattern_discovery("code_reviewer", pattern_id="p1")
+
+# Read per-agent metrics
 stats = monitor.get_agent_stats("code_reviewer")
-
 print(f"Interactions: {stats['total_interactions']}")
 print(f"Avg response time: {stats['avg_response_time_ms']}ms")
 print(f"Patterns discovered: {stats['patterns_discovered']}")
@@ -476,6 +266,10 @@ print(f"Success rate: {stats['success_rate']:.0%}")
 ### Team Metrics
 
 ```python
+from attune.monitoring import AgentMonitor
+
+monitor = AgentMonitor()
+
 team_stats = monitor.get_team_stats()
 
 print(f"Active agents: {team_stats['active_agents']}")
@@ -488,38 +282,26 @@ print(f"Collaboration efficiency: {team_stats['collaboration_efficiency']:.0%}")
 
 ## Best Practices
 
-### ✅ Do
+### Do
 
-1. **Specialize agents** - Each agent focuses on one area
-2. **Share patterns** - Use shared pattern library
-3. **Run in parallel** when possible - Maximize speed
-4. **Monitor performance** - Track agent effectiveness
-5. **Resolve conflicts** - Handle pattern disagreements
+1. **Specialize workflows** - each focuses on one area.
+2. **Share patterns** - use a single shared pattern library.
+3. **Run in parallel** when possible to maximize speed.
+4. **Monitor performance** - track workflow effectiveness.
+5. **Record outcomes** - feed success/failure back into patterns.
 
-### ❌ Don't
+### Don't
 
-1. **Don't duplicate work** - Check pattern library first
-2. **Don't ignore low-confidence patterns** - Provide feedback
-3. **Don't create too many agents** - Start with 3-5
-4. **Don't skip coordination** - Agents need orchestration
-
----
-
-## Examples
-
-See the complete [Multi-Agent Team Coordination Example](../tutorials/examples/multi-agent-team-coordination.md) for a full implementation with:
-
-- PR review automation
-- Automated test generation
-- Documentation updates
-- Security scanning
-- Performance optimization
+1. **Don't duplicate work** - query the pattern library first.
+2. **Don't ignore low-confidence patterns** - provide feedback.
+3. **Don't create too many workflows at once** - start with 3-5.
+4. **Don't skip coordination** - workflows need orchestration.
 
 ---
 
 ## See Also
 
-- Adaptive Learning - How agents learn
-- [Pattern Library API](../reference/pattern-library.md) - Pattern management
-- [Multi-Agent Example](../tutorials/examples/multi-agent-team-coordination.md) - Full implementation
-- [EmpathyOS API](../reference/empathy-os.md) - Agent configuration
+- [Pattern Library API](../reference/pattern-library.md) - pattern
+  management
+- [Multi-Agent Example](../tutorials/examples/multi-agent-team-coordination.md)
+  - full implementation

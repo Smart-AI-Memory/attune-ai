@@ -205,22 +205,32 @@ print(f"Last scanned: {index.last_scanned_at}")
 ## Integration with Workflows
 
 The `health-check` and `code-review` workflows use the project index
-internally. If you are already running a workflow and want to inspect
-the index it built, access it through the workflow result rather than
-re-scanning:
+internally. Run them directly through their workflow classes:
 
 ```python
-from attune import EmpathyOS  # main entry point for workflow execution
+from attune.workflows import OrchestratedHealthCheckWorkflow
 
-empathy = EmpathyOS(user_id="dev")
-result = await empathy.run_workflow(
-    "health-check",
-    {"path": "."},
-)
+report = await OrchestratedHealthCheckWorkflow().execute(path=".")
+print(report)
+```
 
-# The workflow populates the index as a side effect — no second scan
-index = empathy.project_index
+```python
+from attune.workflows import CodeReviewWorkflow
+
+result = await CodeReviewWorkflow().execute(path="src/attune")
+print(result)
+```
+
+To inspect the underlying index yourself, scan it directly with
+`ProjectIndex` as shown in the Quick Start section above:
+
+```python
+from attune.project_index import ProjectIndex
+
+index = ProjectIndex(project_root=".")
+index.scan()
 summary = index.get_summary()
+print(f"Health score: {summary.health_score:.0f}/100")
 ```
 
 ---

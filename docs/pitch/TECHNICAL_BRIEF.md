@@ -175,14 +175,8 @@ health, research) ships as the 17 workflows.
 | PII Scrubbing | Automatic detection and redaction before LLM calls |
 | Secrets Detection | Pre-commit hooks, runtime scanning |
 | Path Validation | All file operations validated against traversal attacks |
-| Audit Logging | All LLM interactions logged for compliance |
+| Audit Logging | All LLM interactions logged locally |
 | Input Sanitization | No eval/exec, parameterized operations only |
-
-### Compliance Readiness
-
-- **SOC2:** Audit trails, access controls, encryption
-- **HIPAA:** PII handling, data retention policies, BAA-ready
-- **GDPR:** Data minimization, right to erasure support
 
 ---
 
@@ -267,14 +261,14 @@ Full source available under Apache License 2.0 for enterprise deployment.
 
 ### Run a Workflow
 ```python
-from attune import EmpathyOS
+import asyncio
 
-empathy = EmpathyOS()
-result = empathy.workflow.run(
-    "security-scan",
-    input={"path": "./src"}
+from attune.workflows import SecurityAuditWorkflow
+
+result = asyncio.run(
+    SecurityAuditWorkflow().execute({"path": "./src"})
 )
-print(result.findings)
+print(result)
 ```
 
 ### Create Custom Agent

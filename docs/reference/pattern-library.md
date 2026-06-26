@@ -191,85 +191,6 @@ for match in matches:
 
 ## Usage Patterns
 
-### Single-Agent Pattern Learning
-
-```python
-from attune import EmpathyOS
-from attune.pattern_library import PatternLibrary
-
-# Create agent with pattern learning
-library = PatternLibrary()
-empathy = EmpathyOS(
-    user_id="user_123",
-    target_level=4,
-    pattern_library=library,
-    pattern_learning_enabled=True
-)
-
-# Agent discovers patterns from successful interactions
-for i in range(100):
-    response = empathy.interact(
-        user_id="user_123",
-        user_input=f"Task {i}",
-        context={"iteration": i}
-    )
-
-    # Record success/failure
-    empathy.record_success(success=user_was_satisfied)
-
-# Check discovered patterns
-patterns = library.get_top_patterns(n=10)
-for pattern in patterns:
-    print(f"{pattern.name}: {pattern.confidence:.0%} confidence")
-```
-
-### Multi-Agent Pattern Sharing
-
-```python
-from attune import EmpathyOS
-from attune.pattern_library import PatternLibrary
-
-# Shared library for team coordination
-shared_library = PatternLibrary()
-
-# Create multiple specialized agents
-frontend_agent = EmpathyOS(
-    user_id="frontend_agent",
-    target_level=4,
-    pattern_library=shared_library  # Same library
-)
-
-backend_agent = EmpathyOS(
-    user_id="backend_agent",
-    target_level=4,
-    pattern_library=shared_library  # Same library
-)
-
-devops_agent = EmpathyOS(
-    user_id="devops_agent",
-    target_level=4,
-    pattern_library=shared_library  # Same library
-)
-
-# Frontend agent discovers a pattern
-frontend_response = frontend_agent.interact(
-    user_id="developer_1",
-    user_input="How do I optimize this API call?",
-    context={"task": "api_optimization"}
-)
-
-# Pattern is saved to shared library
-# Now backend agent can use it!
-backend_response = backend_agent.interact(
-    user_id="developer_2",
-    user_input="My API is slow",
-    context={"task": "api_optimization"}
-)
-
-# Backend agent benefits from frontend agent's learning
-print("Backend agent used pattern discovered by frontend agent!")
-```
-
 ### Pattern Persistence
 
 ```python
@@ -318,15 +239,12 @@ def discover_pattern_from_interaction(user_input, response, success, context):
         return pattern
     return None
 
-# Use in interaction loop
-response = empathy.interact(user_id="user_123", user_input="...", context={})
-empathy.record_success(success=True)
-
+# Use after a successful interaction
 pattern = discover_pattern_from_interaction(
     user_input="How do I deploy?",
-    response=response.response,
+    response="Use the staged deployment workflow",
     success=True,
-    context={"confidence": response.confidence}
+    context={"confidence": 0.88}
 )
 
 if pattern:
@@ -429,4 +347,3 @@ if best:
 
 - [Persistence API](persistence.md)
 - [Multi-Agent Coordination Example](../tutorials/examples/multi-agent-team-coordination.md)
-- [Adaptive Learning Example](../tutorials/examples/adaptive-learning-system.md)

@@ -77,15 +77,25 @@ feature" claims.
 
 ## Acceptance criteria (Done when)
 
-- `git grep -nE 'import EmpathyOS|EmpathyOS\(|AgentCoordinator|
-  encrypt_phi|EmpathyLLMExecutor' -- docs/ plugin/help/` returns only
-  matches inside append-only history (`docs/specs/**`) — zero in
-  user-facing docs.
-- No "Empathy Level [1-5]" framing remains in surviving docs.
+- `git grep -nE 'import EmpathyOS|EmpathyOS\(|EmpathyOS\.|AgentCoordinator|
+  encrypt_phi' -- docs/` returns only matches inside append-only history
+  (`docs/specs/**`) — zero `EmpathyOS` god-object in user-facing docs.
+- No "Empathy Level 1-5" *model framing* (the Reactive→Generative ladder)
+  remains in surviving docs. **NOTE:** `target_level` is a LIVE parameter
+  on `attune.llm.EmpathyLLM` (default 3); `EmpathyLLM(provider=,
+  target_level=)` imports + constructs — it is NOT fiction and is
+  preserved. Only the removed model/framework exposition is excised.
 - Every code fence in the touched docs imports against `origin/main`.
 - mkdocs nav/cross-links to deleted files pruned; `mkdocs build
   --strict` green.
 - One PR, docs-only, CI green.
+
+**Deferred to a follow-up (decisions.md D6):** `EmpathyLLMExecutor` — a
+DISTINCT dead symbol from `EmpathyOS` — survives in
+`docs/architecture/enhanced_escalation_architecture.md`,
+`docs/blog/social/{reddit,twitter}_claude_costs.md`, and the generated
+`plugin/help/generated/faqs/models.md`. Separate cleanup (social +
+generated-help-regen surfaces), not folded into this PR.
 
 ---
 

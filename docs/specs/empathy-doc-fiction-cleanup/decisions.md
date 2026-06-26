@@ -68,3 +68,34 @@ rewritten (no successor for "empathy levels").
 `docs/specs/**` (incl. this spec and the archived `doc-fiction-cleanup`)
 and bug logs legitimately name the removed symbols as history. Excluded
 from the acceptance grep.
+
+---
+
+## D6 — scope corrected at execution: `target_level` is LIVE; `EmpathyLLMExecutor` deferred (2026-06-26)
+
+Two execution-time corrections, both from grepping the FULL dead-symbol
+set instead of the initial `import EmpathyOS` inventory:
+
+1. **`target_level` is NOT fiction — it is a live param.** The initial
+   plan flagged `target_level=N` / `EmpathyLLM(provider=…)` as dead
+   (empathy-level model). Verifying the signature corrected this:
+   `attune.llm.EmpathyLLM.__init__(provider='anthropic',
+   target_level: int = 3, …)` — `EmpathyLLM(provider='anthropic',
+   target_level=4)` imports and constructs (a no-API-key ValueError is a
+   runtime gate, not an import error). The 5-level *model framing* (the
+   Reactive→Generative ladder prose) was removed; the surviving
+   `target_level` param and `EmpathyLLM(...)` usages are PRESERVED.
+   `docs/reference/TROUBLESHOOTING.md`, `llm-toolkit.md:33`, and
+   `persistence.md:372` were nearly mass-rewritten on the bad grep —
+   verifying the signature first avoided breaking valid docs.
+
+2. **`EmpathyLLMExecutor` is a DISTINCT dead symbol — deferred.** The
+   `import EmpathyOS` inventory undercounted: `EmpathyLLMExecutor`
+   (gone from `attune.models`) still appears in
+   `architecture/enhanced_escalation_architecture.md`, two
+   `blog/social/*_claude_costs.md` drafts, and the generated
+   `plugin/help/generated/faqs/models.md`. It is a separate symbol on
+   social + generated surfaces (the generated one needs a help-source
+   fix + regen), so it is tracked as its own follow-up rather than
+   sprawling this PR. Lesson: inventory with the FULL acceptance grep,
+   not one symbol (pairs with "spec scope drifts from code reality").

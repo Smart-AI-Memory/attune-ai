@@ -341,25 +341,6 @@ class TrustAwareLLM:
             self.trust.record_damage(TrustDamageType.WRONG_ANSWER)
 ```
 
-### With Empathy Levels
-
-```python
-from attune.trust import TrustCircuitBreaker, TrustState
-
-def get_empathy_level_adjustment(trust: TrustCircuitBreaker) -> int:
-    """
-    Adjust empathy level based on trust state.
-
-    Returns adjustment to apply to base empathy level.
-    """
-    if trust.state == TrustState.FULL_AUTONOMY:
-        return 0  # No adjustment
-    elif trust.state == TrustState.SUPERVISED:
-        return +1  # Slightly more supportive
-    else:  # REDUCED_AUTONOMY
-        return +2  # Much more confirmatory
-```
-
 ## UI Integration
 
 ### Displaying Trust Status
