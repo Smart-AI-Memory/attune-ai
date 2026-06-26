@@ -701,13 +701,13 @@ class HybridCache:
 
 For healthcare deployments:
 
-```python
-from attune.wizards import HealthcareWizard
-
-wizard = HealthcareWizard()
-# Automatic PHI detection and de-identification
-# Encrypted storage with 90-day retention
-# Comprehensive audit trail (HIPAA §164.312(b))
+```text
+# PLANNED — not yet implemented; illustrative pseudocode only.
+# A future `HealthcareWizard` would provide, for healthcare
+# deployments:
+#   - Automatic PHI detection and de-identification
+#   - Encrypted storage with 90-day retention
+#   - Comprehensive audit trail (HIPAA §164.312(b))
 ```
 
 ---
