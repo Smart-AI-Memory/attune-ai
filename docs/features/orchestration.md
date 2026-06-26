@@ -1,6 +1,6 @@
 # Orchestration
 
-Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines
+Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates
 
 !!! tip "Start here"
 

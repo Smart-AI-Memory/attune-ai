@@ -175,28 +175,6 @@ _CONCEPTS: list[dict] = [
         "source": "src/attune/help/transformers.py",
     },
     {
-        "name": "meta-orchestration",
-        "title": "Meta-orchestration patterns",
-        "what": (
-            "Six composition patterns for combining workflows into "
-            "pipelines: Sequential, Parallel, Debate, Teaching, "
-            "Refinement, and Adaptive."
-        ),
-        "why": (
-            "Complex tasks require multiple analysis passes. A release "
-            "prep combines security audit, test generation, and "
-            "documentation review in a single orchestrated pipeline."
-        ),
-        "how": (
-            "The orchestration module composes BaseWorkflow instances "
-            "using the selected pattern. Each pattern defines execution "
-            "order, data flow between stages, and quality gates."
-        ),
-        "example": "Secure Release uses Sequential: security_audit -> dependency_check -> release_prep.",
-        "tags": ["architecture", "workflow"],
-        "source": "src/attune/orchestration/",
-    },
-    {
         "name": "template-composition",
         "title": "Template composition",
         "what": (

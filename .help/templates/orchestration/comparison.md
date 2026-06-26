@@ -3,20 +3,20 @@ type: comparison
 name: orchestration-comparison
 feature: orchestration
 depth: comparison
-generated_at: 2026-06-24T04:42:36.420317+00:00
-source_hash: 8eeb348f730d4eaa712d0cf9b78905ce878837e5c821fc161778c91d1d163103
+generated_at: 2026-06-26T16:19:58.397279+00:00
+source_hash: 3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567
 status: generated
 ---
 
-# Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines
+# Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates
 
 ## Comparison
 
 | | a workflow | orchestration | the agents feature |
 |--|-----------|---------------|--------------------|
-| Scope | one analysis | coordinating several agents into a pipeline | the agent factory that builds agents |
-| Entry | `attune workflow run` | `MetaOrchestrator` / `DynamicTeamBuilder` | the agent factory |
-| Output | a result | a `StrategyResult` over a team | an agent |
+| Scope | one analysis | the parts that combine agents | the agent factory that builds agents |
+| Entry | `attune workflow run` | `AgentTeam` / `get_strategy` / templates | the agent factory |
+| Output | a result | a `TeamReport` or `StrategyResult` | an agent |
 
-Orchestration consumes agent templates and runs them; it does not
-replace the per-workflow analyses — it composes them.
+Orchestration consumes agent templates and workflows and runs them; it
+does not replace the per-workflow analyses — it composes them.

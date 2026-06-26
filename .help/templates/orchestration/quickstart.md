@@ -3,12 +3,12 @@ type: quickstart
 name: orchestration-quickstart
 feature: orchestration
 depth: quickstart
-generated_at: 2026-06-24T04:42:36.420317+00:00
-source_hash: 8eeb348f730d4eaa712d0cf9b78905ce878837e5c821fc161778c91d1d163103
+generated_at: 2026-06-26T16:19:58.397279+00:00
+source_hash: 3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567
 status: generated
 ---
 
-# Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines
+# Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates
 
 ## Quickstart
 

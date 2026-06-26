@@ -7,21 +7,21 @@ tags:
 type: reference
 ---
 
-# Dynamic agent teams, workflow composition, and meta-orchestration of multi-agent pipelines
+# Reusable agent templates, a library of execution strategies, and parallel agent teams with quality gates
 
 ## Reference
 
-### Meta-orchestration
+### Agent teams
 
 | Symbol | Purpose |
 |--------|---------|
-| `MetaOrchestrator()` | `analyze_task`, `create_execution_plan`, `compose_team`, `analyze_and_compose` (all sync). |
-| `TaskRequirements` / `ExecutionPlan` | Planner inputs/outputs. |
-| `TaskComplexity` | `SIMPLE` / `MODERATE` / `COMPLEX`. |
-| `TaskDomain` | `TESTING` / `SECURITY` / `CODE_QUALITY` / `DOCUMENTATION` / `PERFORMANCE` / `ARCHITECTURE` / `REFACTORING` / `GENERAL`. |
-| `CompositionPattern` | The 10 patterns (SEQUENTIAL … DELEGATION_CHAIN). |
+| `AgentTeam(agents, gates)` | Fan-out + gate runner; `await run(target)` → `TeamReport`. |
+| `WorkflowAgent(key, workflow_cls, *, files=...)` | Wrap a workflow as a scored agent. |
+| `GateSpec(name, agent_key, threshold, critical=True)` | Threshold one agent's score; `critical=False` → warning, not blocker. |
+| `TeamReport` | `passed`, `gates`, `results`, `blockers`, `warnings`, `cost`. |
+| `AgentResult` | Per-agent `key`, `score`, `cost`, `success`, `details`. |
 
-### Team assembly
+### Agent templates
 
 | Symbol | Purpose |
 |--------|---------|
@@ -30,15 +30,11 @@ type: reference
 | `register_custom_template(...)` / `unregister_template(...)` / `get_registry()` | Extend/inspect the registry. |
 | `AgentTemplate` | `id`, `role`, `capabilities`, `tools`, `tier_preference`, `quality_gates`, `resource_requirements`. |
 | `AgentCapability` / `ResourceRequirements` | Capability + resource models. |
-| `DynamicTeamBuilder(state_store=None, redis_client=None)` | `build_from_spec` / `build_from_plan` / `build_from_config`. |
-| `DynamicTeam` / `DynamicTeamResult` / `TeamSpecification` / `TeamStore` | Team objects + persistence. |
 
-### Execution & composition
+### Execution strategies
 
 | Symbol | Purpose |
 |--------|---------|
 | `ExecutionStrategy` | Base; `execute(agents, context)` is **async** → `StrategyResult`. |
 | `get_strategy(name)` | Resolve a no-arg strategy (9 names). `conditional`/`multi_conditional`/`nested`/`nested_sequential` are registered too but need constructor args. |
 | `ToolEnhancedStrategy` / `PromptCachedSequentialStrategy` / `DelegationChainStrategy` | Exported concrete strategies. |
-| `WorkflowComposer(state_store=None)` | `compose` / `compose_with_simplification`. |
-| `WorkflowAgentAdapter` | Run a workflow as a team agent. |

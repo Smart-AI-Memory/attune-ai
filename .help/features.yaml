@@ -302,13 +302,15 @@ features:
 
   orchestration:
     # Single-sourced via content/features/orchestration.md (projector).
-    # Scope = the attune.orchestration package: MetaOrchestrator
-    # (planning), AgentTemplate registry + DynamicTeamBuilder (assembly),
-    # ExecutionStrategy/get_strategy (execution), WorkflowComposer.
-    # Overlaps the agents feature (agent factory) — distinct: this is the
-    # team-assembly/agent-template layer, not the factory. Old concept/faq
-    # claimed a public register_strategy (NOT exported) — corrected here.
-    description: Dynamic teams, workflow composition, and agent models
+    # Scope = the attune.orchestration package (AgentTemplate registry +
+    # ExecutionStrategy/get_strategy) plus the runnable team primitive
+    # attune.agents.team.AgentTeam (WorkflowAgent/GateSpec/TeamReport).
+    # The dead MetaOrchestrator/DynamicTeam/WorkflowComposer engine was
+    # removed in #1096; the docs were cleaned in the orchestration-doc-
+    # fiction-cleanup spec. Overlaps the agents feature (agent factory)
+    # — distinct: this is the templates + strategies + team-runner layer,
+    # not the factory.
+    description: Agent templates, execution strategies, and parallel agent teams with gates
     tags: [orchestration, teams]
     status: manual
 

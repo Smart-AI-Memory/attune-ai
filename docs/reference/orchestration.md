@@ -2,7 +2,17 @@
 
 ## Reference
 
-### Team templates
+### Agent teams
+
+| Symbol | Purpose |
+|--------|---------|
+| `AgentTeam(agents, gates)` | Fan-out + gate runner; `await run(target)` → `TeamReport`. |
+| `WorkflowAgent(key, workflow_cls, *, files=...)` | Wrap a workflow as a scored agent. |
+| `GateSpec(name, agent_key, threshold, critical=True)` | Threshold one agent's score; `critical=False` → warning, not blocker. |
+| `TeamReport` | `passed`, `gates`, `results`, `blockers`, `warnings`, `cost`. |
+| `AgentResult` | Per-agent `key`, `score`, `cost`, `success`, `details`. |
+
+### Agent templates
 
 | Symbol | Purpose |
 |--------|---------|
@@ -12,40 +22,6 @@
 | `AgentTemplate` | `id`, `role`, `capabilities`, `tools`, `tier_preference`, `quality_gates`, `resource_requirements`. |
 | `AgentCapability` / `ResourceRequirements` | Capability + resource models. |
 
-### Agent teams
-
-`AgentTeam` (`attune.agents.team`) fans out workflow agents over a
-target and applies score gates. It is fan-out + gate only — no
-sequential, two-phase, or DAG topology.
-
-| Symbol | Purpose |
-|--------|---------|
-| `AgentTeam(agents, gates)` | `run(target)` is **async** → `TeamReport`. |
-| `WorkflowAgent(key, workflow_cls, *, files=None, score_fn=None, default_score=None, escalate=False)` | Wrap a workflow as a team agent. |
-| `GateSpec(name, agent_key, threshold, critical=True)` | Pass/fail gate on an agent's score. |
-| `TeamReport` | `passed`, `gates`, `results`, `blockers`, `warnings`, `cost`. |
-| `AgentResult` | `key`, `score`, `cost`, `success`, `details`. |
-
-```python
-import asyncio
-from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
-from attune.workflows.code_review import CodeReviewWorkflow
-from attune.workflows.security_audit import SecurityAuditWorkflow
-
-team = AgentTeam(
-    agents=[
-        WorkflowAgent("code-review", CodeReviewWorkflow, files=["src/"]),
-        WorkflowAgent("security-audit", SecurityAuditWorkflow, files=["src/"]),
-    ],
-    gates=[
-        GateSpec("Code Quality", "code-review", 80.0),
-        GateSpec("Security", "security-audit", 80.0),
-    ],
-)
-report = asyncio.run(team.run(["src/"]))
-print(report.passed, report.blockers, report.warnings, report.cost)
-```
-
 ### Execution strategies
 
 | Symbol | Purpose |
@@ -54,4 +30,4 @@ print(report.passed, report.blockers, report.warnings, report.cost)
 | `get_strategy(name)` | Resolve a no-arg strategy (9 names). `conditional`/`multi_conditional`/`nested`/`nested_sequential` are registered too but need constructor args. |
 | `ToolEnhancedStrategy` / `PromptCachedSequentialStrategy` / `DelegationChainStrategy` | Exported concrete strategies. |
 
-<!-- attune-generated: source_hash=8eeb348f730d4eaa712d0cf9b78905ce878837e5c821fc161778c91d1d163103 feature=orchestration kind=reference generated_at=2026-06-24 -->
+<!-- attune-generated: source_hash=3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567 feature=orchestration kind=reference generated_at=2026-06-26 -->

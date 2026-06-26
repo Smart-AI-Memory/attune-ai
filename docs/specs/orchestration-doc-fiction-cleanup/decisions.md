@@ -136,3 +136,31 @@ infra), the file is **deleted** and its `mkdocs.yml` nav entry pruned,
 rather than excised. Inbound links exist only in append-only history
 (`docs/specs/**`), excluded by D5. Follows the "spec-named scope drifts
 from code reality — grep before executing" lesson.
+
+---
+
+## D7 — out-of-scope fiction found during execution, tracked separately (2026-06-26)
+
+Three dead references surfaced outside this spec's scope and are left
+untouched here (each tracked as its own follow-up task):
+
+- `content/blog/multi-agent-orchestration-practical-guide.md` — a
+  ~550-line published blog (rendered on the website via
+  `website/lib/blog.ts`) whose entire premise is the removed
+  `MetaOrchestrator`. It is NOT under `docs/`/`plugin/help/` (the
+  acceptance-grep scope), NOT projected to `docs/`, NOT in `mkdocs.yml`
+  nav, and NOT in `tasks.md`. Unlike the deleted
+  `META_ORCHESTRATION_TUTORIAL.md`, cleaning it is a whole-article
+  delete-or-rewrite decision on published *marketing* content — a
+  positioning call for the owner, not a mechanical ref-swap.
+- `docs/reference/API_REFERENCE.md` — a fence does
+  `from attune import EmpathyOS` (removed in the 9.0.0 empathy-framework
+  retirement, PR #1073). Not an orchestration symbol.
+- `docs/ARCHITECTURE.md` — a fence does
+  `from attune.wizards import HealthcareWizard` (labeled "Status:
+  Planned"; symbol does not exist). Not an orchestration symbol.
+
+Per the decision-routine ("name drift explicitly; don't silently expand
+a one-PR spec"), none are folded into this PR. The acceptance grep
+(`docs/ plugin/help/`) is clean for the orchestration symbols this spec
+owns.

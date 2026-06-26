@@ -9,14 +9,23 @@ type: faq
 
 # Orchestration FAQ
 
-## What does orchestration do that a single workflow doesn't?
+## What does orchestration give me beyond a single workflow?
 
-A workflow is one analysis; orchestration coordinates **several** agents
-into one pipeline. `MetaOrchestrator` analyzes the task (complexity,
-domain, requirements), picks a `CompositionPattern`, a team of
-`AgentTemplate`s is assembled, and an `ExecutionStrategy` runs them.
+A workflow is one analysis. `attune.orchestration` supplies the
+composable parts — reusable `AgentTemplate`s and a library of
+`ExecutionStrategy` classes — and `attune.agents.team.AgentTeam` fans
+several workflow-backed agents out in parallel behind quality gates.
 
-## How do I see the available agents?
+## How do I run a team of agents?
+
+Build an `AgentTeam(agents, gates)` from `WorkflowAgent`s and
+`GateSpec`s, then `await team.run(target)`. Each `WorkflowAgent` wraps a
+registered workflow and reports a real 0-100 score; each `GateSpec`
+thresholds one agent's score. The run returns a `TeamReport` with
+`passed`, `blockers`, `warnings`, `results`, and `cost`. It is fan-out +
+gate only — there is no task-analysis planner picking agents for you.
+
+## How do I see the available agent templates?
 
 `get_all_templates()` returns the registry's `AgentTemplate`s (each has
 an `id`, `role`, `capabilities`, `tools`, `tier_preference`); fetch one
@@ -36,21 +45,14 @@ unknown name raises `ValueError`.
 
 ## Is orchestration synchronous or asynchronous?
 
-Planning and assembly are synchronous — `MetaOrchestrator.analyze_task`
-/ `create_execution_plan` / `compose_team`, the `DynamicTeamBuilder`
-methods, and `WorkflowComposer.compose`. The actual run,
-`ExecutionStrategy.execute(agents, context)`, is **async** and returns a
-`StrategyResult`.
-
-## How do I analyze a task before running it?
-
-`MetaOrchestrator().analyze_task(description)` returns a
-`TaskRequirements` with a `complexity` (`TaskComplexity`:
-`SIMPLE`/`MODERATE`/`COMPLEX`) and a `domain` (`TaskDomain`).
-`create_execution_plan(...)` turns requirements into an `ExecutionPlan`.
+Building a team and listing templates are synchronous. The runs —
+`AgentTeam.run(target)` and `ExecutionStrategy.execute(agents,
+context)` — are **async** and must be awaited.
 
 ## Where is the source?
 
-All orchestration source lives under `src/attune/orchestration/`.
+The templates and strategies live under `src/attune/orchestration/`; the
+team runner is `attune.agents.team.AgentTeam`
+(`src/attune/agents/team.py`).
 
 **Tags:** `orchestration`, `teams`
