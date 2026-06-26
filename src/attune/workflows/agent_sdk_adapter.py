@@ -16,6 +16,7 @@ import re
 import shutil
 import subprocess
 import time
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -166,6 +167,73 @@ def collect_agent_output(
         )
 
     return None
+
+
+def _is_benign_teardown_exit(exc: Exception) -> bool:
+    """True for the SDK's bare post-result 'Command failed' teardown exit.
+
+    ``claude_agent_sdk`` raises a bare
+    ``Exception("Command failed with exit code N")`` when the underlying
+    ``claude`` subprocess exits non-zero — including on teardown, AFTER a
+    successful run has already streamed its ``ResultMessage``. This matches
+    that shape conservatively; it is only ever consulted once a successful
+    result has already been observed (see :func:`iter_agent_messages`).
+    """
+    return "command failed" in str(exc).lower()
+
+
+async def iter_agent_messages(query: AsyncIterator[Any]) -> AsyncIterator[Any]:
+    """Yield SDK messages, recovering from a teardown exit after success.
+
+    Wraps ``claude_agent_sdk.query(...)``. Every message is passed through
+    unchanged so :func:`collect_agent_output` works exactly as before. If
+    the underlying stream raises a benign teardown "Command failed"
+    exception AFTER a ``ResultMessage(subtype="success")`` was already
+    yielded, the iteration stops cleanly so the caller returns its
+    already-captured result instead of discarding it.
+
+    Any other exception — or one raised before a successful result — is
+    re-raised unchanged, preserving fail-closed semantics: a genuine
+    auth/quota/startup/runtime failure never becomes a false pass. The
+    success signal is ``subtype == "success"`` (not ``not is_error``),
+    which is the marker that stayed correct across the SDK 0.2.102 /
+    bundled CLI 2.1.178 window where ``is_error`` was wrongly ``True`` on
+    success. ``BaseException`` (KeyboardInterrupt / SystemExit /
+    CancelledError) is never caught.
+
+    Args:
+        query: The async iterable returned by ``claude_agent_sdk.query()``.
+
+    Yields:
+        Each message from the underlying stream, unchanged.
+    """
+    saw_success = False
+    iterator = query.__aiter__()
+    while True:
+        try:
+            message = await iterator.__anext__()
+        except StopAsyncIteration:
+            return
+        except Exception as exc:  # noqa: BLE001
+            # INTENTIONAL: a non-zero teardown exit AFTER a successful
+            # ResultMessage is benign — the work completed and its result
+            # was already yielded; recover it. Anything else (including a
+            # failure before success) re-raises so a genuine error never
+            # fake-passes.
+            if saw_success and _is_benign_teardown_exit(exc):
+                logger.warning(
+                    "SDK exited non-zero after a successful ResultMessage; "
+                    "surfacing the captured result (%s)",
+                    exc,
+                )
+                return
+            raise
+        if (
+            isinstance(message, claude_agent_sdk.ResultMessage)
+            and getattr(message, "subtype", None) == "success"
+        ):
+            saw_success = True
+        yield message
 
 
 async def collect_subagent_transcripts(
