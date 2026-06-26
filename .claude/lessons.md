@@ -11734,3 +11734,44 @@ files.
   `python scripts/audit_docs_wiring.py` locally before pushing (it
   catches cross-file anchor breaks that strict-mkdocs misses — same
   tool that caught the TOC double-dash bug).
+- **A grep "dead-symbol" finding in a doc is OFTEN a wrong import PATH,
+  not a dead symbol — READ THE SOURCE (locate the symbol) before
+  deleting/rewriting, or you invent a SECOND fiction.** Clearing the
+  doc-import-gate backlog, several "broken" imports were LIVE symbols at
+  a different path: `HookMatcher` is real in `attune.hooks.config` (just
+  not re-exported from `attune.hooks` — `from attune.hooks import
+  HookMatcher` fails, `from attune.hooks.config import HookMatcher`
+  works, and the whole "Hook Matchers" doc section is accurate); SONNET_
+  TO_OPUS_FALLBACK lives in `attune.models.fallback` (doc imported it
+  from `attune.models`); `EmpathyLLMExecutor` is alive in `attune.models`
+  (I'd mislabeled it dead in empathy-spec D6 + a chip); and `from
+  attune_llm import …` is just the OLD package name (pre-rename to
+  `attune` → `attune.llm`). In every case the fix was a ONE-LINE REPOINT,
+  not a delete — and reading `src/` first stopped me from deleting a
+  section that documents a real class. Triage rule before treating a
+  non-importing doc symbol as removed: `grep -rn "class <Sym>\b\|def
+  <Sym>\b\|^<Sym> =" src/` + probe submodule paths + `inspect.signature`.
+  Distinguish (a) wrong-path / not-re-exported, (b) old package name,
+  (c) genuinely removed — only (c) is a delete. Some doc imports are also
+  illustrative (`from attune.exceptions import AuthenticationError` in a
+  patterns guide where the surrounding `DatabaseConnectionError` etc. are
+  clearly "your app's" exceptions) → drop the false attune import, label
+  as examples. Pairs with "verify the signature before treating a doc
+  pattern as fiction" (`target_level`) and "grep the full property, not
+  one symbol."
+- **A doc-accuracy CI gate must scope to PUBLISHED surfaces, and mkdocs
+  `nav` vs `exclude_docs` can CONFLICT — use `in-nav OR not-excluded`.**
+  The doc-import gate over-flagged orphaned/internal docs until scoped:
+  a `docs/` page is "served" iff it is in mkdocs `nav` OR not matched by
+  `exclude_docs`. The two genuinely conflict — `docs/hooks.md` is in
+  BOTH the nav AND `exclude_docs`; nav forces inclusion, so it IS served
+  (scoping by `exclude_docs`/pathspec alone wrongly drops it; scoping by
+  nav alone drops served-but-unlisted orphans). Also: the Next.js site
+  reads `content/blog`, NOT `docs/blog` — so `docs/blog/social/*` is an
+  orphaned UNPUBLISHED copy (don't police) while `content/blog` must
+  ALWAYS be policed. Parse `nav` + `exclude_docs` from `mkdocs.yml`
+  (regex-lift the blocks; match excludes with `pathspec`'s gitwildmatch,
+  fallback-safe if absent). Scoping dropped the gate's adoption backlog
+  21→11 (the 10 dropped were all orphaned/excluded). Implementation note:
+  in-process `importlib` resolution is fast enough for CI (~0.9s for
+  ~440 imports across ~380 fences — modules cache), no subprocess needed.
