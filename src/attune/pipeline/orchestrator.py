@@ -11,9 +11,7 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
-import asyncio
 import logging
-import re
 import subprocess
 import time
 from collections.abc import Awaitable, Callable
@@ -227,24 +225,24 @@ class PipelineOrchestrator:
     _GATE_THRESHOLD: float = 70.0
     #: Cap on files reviewed per gate to bound cost (logged when hit).
     _GATE_MAX_FILES: int = 10
-    #: Fallback score parse for reviews that produced no findings dict.
-    _SCORE_RE = re.compile(r"\bscore:?\s*(\d{1,3})\s*/\s*100", re.IGNORECASE)
 
     async def _run_quality_gate(
         self,
         task: DecomposedTask,
     ) -> tuple[bool, dict[str, Any], float]:
-        """Gate a task with real code review + security audit.
+        """Gate a task with a real code-review + security-audit team.
 
-        Runs ``CodeReviewWorkflow`` and ``SecurityAuditWorkflow`` over
-        the task's target files and gates on their actual 0-100 scores
-        against ``_GATE_THRESHOLD``. Fails closed: any review error or a
-        missing score yields a non-passing gate, never a fake pass.
+        Builds a two-agent ``AgentTeam`` (``code-review`` +
+        ``security-audit``) over the task's target files and gates on
+        their actual 0-100 scores against ``_GATE_THRESHOLD``. Fails
+        closed: any review error or a missing score makes the relevant
+        agent unsuccessful, which fails the gate — never a fake pass.
 
         Returns:
             Tuple of (passed, details_dict, cost).
 
         """
+        from attune.agents.team import AgentTeam, GateSpec, WorkflowAgent
         from attune.workflows.code_review import CodeReviewWorkflow
         from attune.workflows.security_audit import SecurityAuditWorkflow
 
@@ -263,36 +261,25 @@ class PipelineOrchestrator:
                 task.task_id,
             )
 
-        code_review = CodeReviewWorkflow()
-        security_audit = SecurityAuditWorkflow()
-
-        async def _review(workflow: Any, path: str) -> tuple[float | None, float]:
-            """Return (score, cost) for one workflow over one file."""
-            try:
-                result = await workflow.execute(path=path)
-            except Exception as exc:  # noqa: BLE001
-                # INTENTIONAL: a review failure fails the gate closed,
-                # it must not crash the pipeline or fake a pass.
-                logger.error("Gate review failed for %s: %s", path, exc)
-                return (None, 0.0)
-            return (self._extract_score(result), self._result_cost(result))
-
-        # Both dimensions over every file, concurrently.
-        jobs = [_review(code_review, p) for p in files]
-        jobs += [_review(security_audit, p) for p in files]
-        outcomes = await asyncio.gather(*jobs)
-
-        n = len(files)
-        quality_score = self._min_score(outcomes[:n])
-        security_score = self._min_score(outcomes[n:])
-        cost = sum(c for _, c in outcomes)
-
-        passed = (
-            quality_score is not None
-            and security_score is not None
-            and quality_score >= self._GATE_THRESHOLD
-            and security_score >= self._GATE_THRESHOLD
+        # Each agent runs its workflow over the file set and reports the
+        # worst (min) score; fail-closed-on-error lives in WorkflowAgent.
+        team = AgentTeam(
+            agents=[
+                WorkflowAgent("code-review", CodeReviewWorkflow, files=files),
+                WorkflowAgent("security-audit", SecurityAuditWorkflow, files=files),
+            ],
+            gates=[
+                GateSpec("Code Quality", "code-review", self._GATE_THRESHOLD),
+                GateSpec("Security", "security-audit", self._GATE_THRESHOLD),
+            ],
         )
+        report = await team.run(files)
+
+        by_key = {r.key: r for r in report.results}
+        quality = by_key.get("code-review")
+        security = by_key.get("security-audit")
+        quality_score = quality.score if quality and quality.success else None
+        security_score = security.score if security and security.success else None
 
         details = {
             "gate_results": {
@@ -308,43 +295,21 @@ class PipelineOrchestrator:
             "files_reviewed": files,
             "scored": quality_score is not None and security_score is not None,
         }
-        return (passed, details, cost)
+        return (report.passed, details, report.cost)
 
     @classmethod
     def _extract_score(cls, result: Any) -> float | None:
         """Pull the 0-100 score from a review ``WorkflowResult``.
 
-        ``final_output`` is a ``WorkflowReport`` dict (with a top-level
-        ``score``) only when the review parsed findings; a clean review
-        with no findings leaves ``final_output`` as raw markdown, so we
-        also regex the text for ``score: N/100``. Returns None when the
-        review did not succeed or carried no score, so the caller fails
-        the gate closed.
+        Delegates to the shared ``attune.agents.team.extract_score`` (D5),
+        the single canonical extractor both the team and this gate use.
+        Retained as a stable entry point for callers and tests. Returns
+        None when the review did not succeed or carried no score, so the
+        caller fails the gate closed.
         """
-        if not getattr(result, "success", False):
-            return None
-        output = getattr(result, "final_output", None)
-        if isinstance(output, dict) and output.get("score") is not None:
-            return float(output["score"])
-        if isinstance(output, str):
-            match = cls._SCORE_RE.search(output)
-            if match:
-                return float(match.group(1))
-        return None
+        from attune.agents.team import extract_score
 
-    @staticmethod
-    def _result_cost(result: Any) -> float:
-        """Best-effort cost of a review ``WorkflowResult``."""
-        report = getattr(result, "cost_report", None)
-        return float(getattr(report, "total_cost", 0.0) or 0.0)
-
-    @staticmethod
-    def _min_score(outcomes: list[tuple[float | None, float]]) -> float | None:
-        """Worst score across files; None if any file failed to score."""
-        scores = [s for s, _ in outcomes]
-        if not scores or any(s is None for s in scores):
-            return None
-        return min(s for s in scores if s is not None)
+        return extract_score(result)
 
     def _find_test_files(
         self,
