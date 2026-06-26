@@ -108,3 +108,31 @@ the acceptance grep.
   while salvaging.
 - OQ3 → **yes.** Nav/cross-link references to deleted files are pruned
   in the same execution PR to avoid `mkdocs build` breaks.
+
+---
+
+## D6 — `integration/claude-code-integration.md` reclassified excise → DELETE (execution, 2026-06-26)
+
+The `tasks.md` table classified this file **Excise** (10 meta refs, 0
+surv, "keep the doc"). Execution verification contradicted that: the
+**entire** doc documents `MetaOrchestrator.analyze_and_compose(
+interactive=True)` — every code example instantiates the removed
+`MetaOrchestrator`, and the IPC protocol / handler sections exist only
+to serve that one dead path. There is no surviving-symbol content to
+keep (the table's own `surv=0` confirms it), so "excise the dead
+sections" would empty the doc.
+
+The supporting primitive (`set_ask_user_question_handler`,
+`AskUserQuestion`, `scripts/claude_code_ipc_monitor.py`) still imports,
+but `git grep` shows **no live consumer** in `src/` other than its own
+definition/docstring — its only consumer was the removed interactive
+meta-orchestration. Writing a fresh doc for an orphaned primitive is
+out of scope (requirements "Out of scope": no new orchestration prose
+beyond removing/repointing dead symbols).
+
+Per `.claude/rules/attune/removing-dead-code.md` (surfacing trip-wire:
+making dead-feature docs coherent would require documenting orphaned
+infra), the file is **deleted** and its `mkdocs.yml` nav entry pruned,
+rather than excised. Inbound links exist only in append-only history
+(`docs/specs/**`), excluded by D5. Follows the "spec-named scope drifts
+from code reality — grep before executing" lesson.

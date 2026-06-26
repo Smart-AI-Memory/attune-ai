@@ -102,9 +102,10 @@ session = builder.submit_answers(session, answers)
 workflow = builder.generate_workflow(session)
 ```
 
-### 3. MetaOrchestrator
+### 3. Composition Strategy Library
 
-Automatically composes agent teams using 10 composition patterns:
+Reusable `ExecutionStrategy` classes covering 10 composition patterns
+for combining agents:
 
 | Pattern | Use Case |
 |---------|----------|
