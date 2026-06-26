@@ -336,11 +336,22 @@ class TestTaskDecomposerDecompose:
         mock_workflow._call_llm.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_decompose_non_tuple_result(self):
-        """Test decompose handles non-tuple LLM result."""
+    async def test_decompose_sends_schema_in_user_message(self):
+        """Test decompose folds the schema into the user message.
+
+        The EmpathyLLM interaction layer overrides the ``system`` argument
+        with its own level-based prompt, so the decomposition schema must
+        travel in the user turn to actually reach the model.
+        """
+        from attune.wizards.decomposer import DECOMPOSITION_SYSTEM_PROMPT
+
         mock_workflow = MagicMock()
         mock_workflow._call_llm = AsyncMock(
-            return_value='<tasks><task id="1" name="t"><objective>O</objective></task></tasks>'
+            return_value=(
+                '<tasks><task id="1" name="t"><objective>O</objective></task></tasks>',
+                10,
+                5,
+            )
         )
         decomposer = TaskDecomposer(workflow=mock_workflow)
 
@@ -350,6 +361,9 @@ class TestTaskDecomposerDecompose:
         )
 
         assert len(tasks) == 1
+        call_args = mock_workflow._call_llm.call_args
+        assert call_args.kwargs["system"] == ""
+        assert DECOMPOSITION_SYSTEM_PROMPT in call_args.kwargs["user_message"]
 
     @pytest.mark.asyncio
     async def test_decompose_llm_failure(self):
@@ -393,7 +407,7 @@ class TestTaskDecomposerDecompose:
 
         # Verify codebase context section is not in prompt
         call_args = mock_workflow._call_llm.call_args
-        prompt = call_args[0][0]
+        prompt = call_args.kwargs["user_message"]
         assert "Codebase context:" not in prompt
 
 
@@ -677,7 +691,7 @@ class TestDecomposeWithParams:
         )
 
         call_args = mock_workflow._call_llm.call_args
-        prompt = call_args[0][0]
+        prompt = call_args.kwargs["user_message"]
         assert "No breaking changes" in prompt
         assert "Keep coverage > 80%" in prompt
 
@@ -694,7 +708,7 @@ class TestDecomposeWithParams:
         )
 
         call_args = mock_workflow._call_llm.call_args
-        prompt = call_args[0][0]
+        prompt = call_args.kwargs["user_message"]
         assert "Flask app with Postgres" in prompt
         assert "Codebase context:" in prompt
 
@@ -712,7 +726,7 @@ class TestDecomposeWithParams:
         )
 
         call_args = mock_workflow._call_llm.call_args
-        prompt = call_args[0][0]
+        prompt = call_args.kwargs["user_message"]
         assert "Constraints:" not in prompt
 
     @pytest.mark.asyncio
@@ -728,7 +742,7 @@ class TestDecomposeWithParams:
         )
 
         call_args = mock_workflow._call_llm.call_args
-        prompt = call_args[0][0]
+        prompt = call_args.kwargs["user_message"]
         assert "Implement OAuth2 login flow" in prompt
 
     @pytest.mark.asyncio
@@ -746,7 +760,7 @@ class TestDecomposeWithParams:
         )
 
         call_args = mock_workflow._call_llm.call_args
-        tier_arg = call_args[0][1]
+        tier_arg = call_args.kwargs["tier"]
         assert tier_arg == ModelTier.CAPABLE
 
     @pytest.mark.asyncio
@@ -762,5 +776,5 @@ class TestDecomposeWithParams:
         )
 
         call_args = mock_workflow._call_llm.call_args
-        step_id_arg = call_args[0][2]
+        step_id_arg = call_args.kwargs["stage_name"]
         assert step_id_arg == "decompose"

@@ -556,7 +556,7 @@ class TestBaseWizardLLMStep:
         wizard._session = WizardSession(wizard_id="cov-test")
 
         wizard._workflow._render_xml_prompt = MagicMock(return_value="<prompt/>")
-        wizard._workflow._call_llm = AsyncMock(return_value="plain response")
+        wizard._workflow._call_llm = AsyncMock(return_value=("plain response", 100, 50))
         wizard._workflow._parse_xml_response = MagicMock(return_value=None)
 
         step = WizardStep(id="llm2", name="LLM Step", step_type=StepType.LLM_CALL)

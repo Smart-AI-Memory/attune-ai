@@ -7,9 +7,10 @@ linear stage-pipeline execution model.
 
 Wizards call mixin methods directly via ``self._workflow``:
 
-    response = await self._workflow._call_llm(prompt, tier, "analyze")
-    prompt   = self._workflow._render_xml_prompt(role=..., goal=..., ...)
-    parsed   = self._workflow._parse_xml_response(response_text)
+    text, _in, _out = await self._workflow._call_llm(
+        tier=tier, system=..., user_message=..., stage_name="analyze")
+    prompt = self._workflow._render_xml_prompt(role=..., goal=..., ...)
+    parsed = self._workflow._parse_xml_response(text)
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0

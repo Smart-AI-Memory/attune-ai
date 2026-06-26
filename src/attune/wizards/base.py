@@ -255,12 +255,15 @@ class BaseWizard(ABC):
 
         tier = _resolve_tier(step.tier)
 
-        # Call LLM — returns tuple[str, int, int] or str depending on executor
-        result = await self._workflow._call_llm(prompt, tier, step.id)
-        if isinstance(result, tuple):
-            response_text, _input_tokens, _output_tokens = result
-        else:
-            response_text = str(result)
+        # Call LLM — _call_llm(tier, system, user_message, ...) returns
+        # (text, input_tokens, output_tokens). The rendered XML prompt carries
+        # the role/goal/instructions, so it is the user message.
+        response_text, _input_tokens, _output_tokens = await self._workflow._call_llm(
+            tier=tier,
+            system="Follow the XML task specification precisely.",
+            user_message=prompt,
+            stage_name=step.id,
+        )
 
         # Parse response
         parsed = self._workflow._parse_xml_response(response_text)

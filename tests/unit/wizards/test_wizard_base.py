@@ -472,7 +472,7 @@ class TestRunLlmStep:
             ),
         ]
         wizard._workflow._render_xml_prompt = MagicMock(return_value="<prompt/>")
-        wizard._workflow._call_llm = AsyncMock(return_value="plain text response")
+        wizard._workflow._call_llm = AsyncMock(return_value=("plain text response", 10, 5))
         wizard._workflow._parse_xml_response = MagicMock(return_value=None)
 
         result = await wizard.run()

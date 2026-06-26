@@ -26,7 +26,15 @@ DECOMPOSITION_SYSTEM_PROMPT = """\
 You are a task decomposition specialist. Given a problem description and
 codebase context, break the work into self-contained sub-tasks.
 
-Respond ONLY with XML in this format (no other text):
+CRITICAL OUTPUT RULES — follow exactly:
+- Output ONLY the XML document. No prose, no markdown, no headings, no
+  code fences, no commentary before or after the XML.
+- Your response MUST begin with the literal characters `<tasks>` and end
+  with `</tasks>`.
+- Do NOT ask clarifying questions. If details are missing or ambiguous,
+  make reasonable assumptions and proceed.
+
+Use exactly this XML format:
 
 <tasks>
   <task id="1" name="short-name">
@@ -203,30 +211,31 @@ class TaskDecomposer:
         """
         constraints = constraints or []
 
-        prompt_parts = [
-            DECOMPOSITION_SYSTEM_PROMPT,
-            "",
-            f"Problem: {problem_description}",
-            "",
-        ]
+        # The schema and the problem go together in the user message: the
+        # EmpathyLLM interaction layer builds its own level-based system
+        # prompt and ignores the ``system`` argument, so the decomposition
+        # schema must travel in the user turn to actually reach the model.
+        user_parts = [DECOMPOSITION_SYSTEM_PROMPT, "", f"Problem: {problem_description}", ""]
 
         if codebase_context:
-            prompt_parts.append(f"Codebase context:\n{codebase_context}")
-            prompt_parts.append("")
+            user_parts.append(f"Codebase context:\n{codebase_context}")
+            user_parts.append("")
 
         if constraints:
-            prompt_parts.append("Constraints:")
+            user_parts.append("Constraints:")
             for c in constraints:
-                prompt_parts.append(f"- {c}")
+                user_parts.append(f"- {c}")
 
-        prompt = "\n".join(prompt_parts)
+        user_message = "\n".join(user_parts)
 
+        # _call_llm(tier, system, user_message, ...) -> (text, in_tokens, out_tokens).
         try:
-            result = await self._workflow._call_llm(prompt, ModelTier.CAPABLE, "decompose")
-            if isinstance(result, tuple):
-                response_text = result[0]
-            else:
-                response_text = str(result)
+            response_text, _in_tokens, _out_tokens = await self._workflow._call_llm(
+                tier=ModelTier.CAPABLE,
+                system="",
+                user_message=user_message,
+                stage_name="decompose",
+            )
         except Exception as e:  # noqa: BLE001
             logger.error("Task decomposition LLM call failed: %s", e)
             return []

@@ -11507,3 +11507,36 @@ files.
   confirm/review `FormQuestion` `QuestionType`-enum fix), KEEP the fix
   with its own driver-free regression test — don't let it ride out with
   the dead feature.
+
+- **The EmpathyLLM `interact()` path SILENTLY DROPS the caller's
+  `system` prompt and applies a level-based Socratic system prompt
+  instead — so structured output via `_call_llm` through
+  `WizardInternalWorkflow` must put the schema in the USER message, not
+  `system`.** Fixing the wizard `_call_llm` arg-drift (#1097) was
+  necessary-not-sufficient: with args corrected, the live call reached
+  the API but the model answered with "## Clarifying Questions" prose,
+  not `<tasks>` XML. Root cause chain (introspected, not guessed):
+  `_call_llm(tier, system, user_message)` → `empathy_executor.run`
+  stuffs `system` into `full_context["system_prompt"]` → `EmpathyLLM
+  .interact()` routes by `_determine_level(state)` (defaults to **level
+  2 "guided — ask clarifying questions"**) → every `_level_N_*` handler
+  builds its prompt from `_build_system_prompt(level)` =
+  `EmpathyLevel.get_system_prompt(level)` (+ Claude memory) and NEVER
+  reads `context["system_prompt"]`. So the task schema is discarded and
+  a Socratic system prompt is substituted. Two diagnostic tells: (1) the
+  response is byte-identical across system-prompt changes → `_call_llm`
+  caches and the cache key excludes `system` (vary `user_message`/
+  `stage_name` to bust); (2) `out_tokens` reported as 0 despite real
+  text. Fix that WORKED (dogfood: 2 parsed `<tasks>` for "add --dry-run
+  flag"): fold the schema into `user_message` (`system=""`) and tighten
+  it to forbid prose/questions and require output to begin with
+  `<tasks>`. This affects ANY structured-output use of `_call_llm` via
+  that executor — workflows that rely on `system` to carry a schema are
+  also at risk; the broader fix (honor `system`, or a non-Socratic
+  completion mode / `force_level=1`) is deferred. Pairs with the
+  "runnable ≠ runnable until dogfooded" lesson: the arg fix passed 467
+  mocked tests while the live feature still produced 0 tasks — only the
+  real-API dogfood exposed the second bug. Also: subscription mode ≠ raw
+  API — this path uses the `anthropic` SDK and needs a funded API key; a
+  stale repo-root `.env` (108-char dead key) shadowed the live key in
+  `~/.attune/anthropic.env` and 401'd until sourced explicitly.
