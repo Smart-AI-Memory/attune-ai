@@ -1,5 +1,4 @@
 # Lessons Corpus via RAG — Tasks
-
 **Status:** complete (2026-06-12) — T1–T6 done; D6 fresh-session
 receipt captured post-cutover (decisions.md).
 Bounded PRs; each task names its receipt.
