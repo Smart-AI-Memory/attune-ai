@@ -11655,3 +11655,26 @@ files.
   (single dash), NOT `#agent-templates--strategies`. A subagent
   rewriting the TOC guessed double-dash and broke both links (caught by
   wiring-audit on the first PR push, after mkdocs --strict passed).
+- **Editing a feature's `.help/features.yaml` `description` can STEAL a
+  golden-query from another feature — `resolve_topic` substring-matches
+  descriptions (step 3) BEFORE tags (step 4).** `resolve_topic`
+  (`src/attune/help/manifest.py`) is sequential, return-on-first-unique:
+  exact name → name substring → **`query in f.description`** → tag
+  match. So a query owned by feature A *via a tag* silently re-routes to
+  feature B the moment B's `description` gains that word as a substring.
+  Hit executing orchestration-doc-fiction-cleanup: rewriting
+  orchestration's description to the accurate "Agent **templates**, …"
+  made the golden query `templates` resolve to `orchestration` (step 3)
+  instead of `help-system` (which owned it via a `templates` tag, step
+  4) — `tests/unit/help/test_golden_queries.py::test_medium_queries
+  _resolve[query18]` went red, and it is a REQUIRED check (runs in the
+  full unit suite + the `clock-tz` lanes). Note the singular/plural
+  trap: help-system's description said "template management" (no plural
+  `templates` substring), so only orchestration's plural matched. Fix:
+  reword the new description to avoid the colliding substring (here
+  "Agent-template registry, …") while KEEPING the words its own golden
+  queries need (orchestration's `or-002 teams` needs "teams" in the
+  description). Verify with `resolve_topic(<query>, load_manifest('.help'))`
+  for every affected query before pushing. The manifest reads
+  features.yaml `description` directly — NOT the `content/features/*.md`
+  `summary`, so only the features.yaml edit matters to routing.
