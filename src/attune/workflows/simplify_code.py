@@ -33,6 +33,7 @@ from .agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
+    iter_agent_messages,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -207,66 +208,69 @@ class SimplifyCodeWorkflow(BaseWorkflow):
         assistant_parts: list[str] = []
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
-        async for message in claude_agent_sdk.query(
-            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
-            options=claude_agent_sdk.ClaudeAgentOptions(
-                **sdk_isolation_kwargs(),
-                system_prompt=_SYSTEM_PROMPT,
-                cwd=resolve_cwd_for_path(resolved_path),
-                max_budget_usd=get_max_budget_usd(depth),
-                allowed_tools=["Read", "Glob", "Grep", "Agent"],
-                permission_mode="default",
-                max_turns=max_turns,
-                agents={
-                    "complexity-scanner": claude_agent_sdk.AgentDefinition(
-                        description="Complexity scanner that finds overly complex code.",
-                        prompt=(
-                            "You are a complexity scanner. Focus on: "
-                            "deep nesting (3+ levels), long functions "
-                            "(50+ lines), unnecessary abstractions, "
-                            "dead code paths, and over-engineered "
-                            "patterns. Report each finding with file "
-                            "path, line number, complexity metric, and "
-                            "why it should be simplified."
+        async for message in iter_agent_messages(
+            claude_agent_sdk.query(
+                prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+                options=claude_agent_sdk.ClaudeAgentOptions(
+                    **sdk_isolation_kwargs(),
+                    system_prompt=_SYSTEM_PROMPT,
+                    cwd=resolve_cwd_for_path(resolved_path),
+                    max_budget_usd=get_max_budget_usd(depth),
+                    allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                    permission_mode="default",
+                    max_turns=max_turns,
+                    agents={
+                        "complexity-scanner": claude_agent_sdk.AgentDefinition(
+                            description="Complexity scanner that finds overly complex code.",
+                            prompt=(
+                                "You are a complexity scanner. Focus on: "
+                                "deep nesting (3+ levels), long functions "
+                                "(50+ lines), unnecessary abstractions, "
+                                "dead code paths, and over-engineered "
+                                "patterns. Report each finding with file "
+                                "path, line number, complexity metric, and "
+                                "why it should be simplified."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("complexity-scanner"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("complexity-scanner"),
-                    ),
-                    "simplification-designer": claude_agent_sdk.AgentDefinition(
-                        description=(
-                            "Simplification designer that proposes refactoring approaches."
+                        "simplification-designer": claude_agent_sdk.AgentDefinition(
+                            description=(
+                                "Simplification designer that proposes refactoring approaches."
+                            ),
+                            prompt=(
+                                "You are a simplification designer. For "
+                                "each complexity finding, design a concrete "
+                                "simplification approach: flatten nested "
+                                "conditionals with early returns, inline "
+                                "trivial helper functions used only once, "
+                                "reduce class hierarchies when a function "
+                                "suffices, and remove dead code. Show "
+                                "before/after examples."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("simplification-designer"),
                         ),
-                        prompt=(
-                            "You are a simplification designer. For "
-                            "each complexity finding, design a concrete "
-                            "simplification approach: flatten nested "
-                            "conditionals with early returns, inline "
-                            "trivial helper functions used only once, "
-                            "reduce class hierarchies when a function "
-                            "suffices, and remove dead code. Show "
-                            "before/after examples."
+                        "safety-reviewer": claude_agent_sdk.AgentDefinition(
+                            description=(
+                                "Safety reviewer that verifies simplifications"
+                                " won't break behavior."
+                            ),
+                            prompt=(
+                                "You are a safety reviewer. For each "
+                                "proposed simplification, verify it does "
+                                "not break existing behavior, public APIs, "
+                                "or tests. Check for side effects, changed "
+                                "return types, removed error handling, and "
+                                "altered control flow. Flag any risky "
+                                "changes that need manual review."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("safety-reviewer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("simplification-designer"),
-                    ),
-                    "safety-reviewer": claude_agent_sdk.AgentDefinition(
-                        description=(
-                            "Safety reviewer that verifies simplifications" " won't break behavior."
-                        ),
-                        prompt=(
-                            "You are a safety reviewer. For each "
-                            "proposed simplification, verify it does "
-                            "not break existing behavior, public APIs, "
-                            "or tests. Check for side effects, changed "
-                            "return types, removed error handling, and "
-                            "altered control flow. Flag any risky "
-                            "changes that need manual review."
-                        ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("safety-reviewer"),
-                    ),
-                },
-            ),
+                    },
+                ),
+            )
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:

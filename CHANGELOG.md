@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **SDK workflows no longer report a false failure on a teardown
+  exit-1.** When `claude_agent_sdk.query()` streamed a successful run's
+  `ResultMessage` and the `claude` subprocess then exited non-zero on
+  teardown, the SDK raised `Command failed with exit code 1` and the
+  workflow discarded its already-captured result (`success=False`, cost
+  `0.0`). A new `iter_agent_messages` guard (in `agent_sdk_adapter`)
+  recovers the result by swallowing that teardown exit **only after** a
+  `subtype="success"` `ResultMessage` was observed — never masking a
+  genuine pre-success failure. Adopted across all eight SDK workflows
+  (code-review, security-audit, perf-audit, dependency-check,
+  bug-predict, rag-code-gen, research-synthesis, simplify-code). See
+  `docs/specs/sdk-teardown-exit-guard/`.
+
 ### Added
 
 - **Generic parallel agent-team infrastructure (`attune.agents.team`).**
