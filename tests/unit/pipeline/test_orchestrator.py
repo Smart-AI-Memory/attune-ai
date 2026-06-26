@@ -71,31 +71,38 @@ def _patch_reviews(
     cost=0.01,
     code_raises=False,
     sec_raises=False,
+    code_success=True,
+    sec_success=True,
+    code_ctor_raises=False,
 ):
     """Patch the gate's CodeReview + SecurityAudit workflows.
 
     Each patched workflow's ``execute(path=...)`` returns a fake result
     carrying the given score (or raises, to exercise fail-closed).
+    ``code_ctor_raises`` makes the CodeReviewWorkflow *constructor*
+    raise, exercising the orchestrator's outer gate-exception handler.
     """
 
-    def _make_wf(score, raises):
+    def _make_wf(score, raises, success):
         wf = MagicMock()
         if raises:
             wf.execute = AsyncMock(side_effect=RuntimeError("review boom"))
         else:
-            wf.execute = AsyncMock(return_value=_fake_review_result(score, cost=cost))
+            wf.execute = AsyncMock(
+                return_value=_fake_review_result(score, success=success, cost=cost)
+            )
         return wf
 
-    with (
-        patch(
-            "attune.workflows.code_review.CodeReviewWorkflow",
-            return_value=_make_wf(code_score, code_raises),
-        ),
-        patch(
-            "attune.workflows.security_audit.SecurityAuditWorkflow",
-            return_value=_make_wf(sec_score, sec_raises),
-        ),
-    ):
+    code_patch = patch(
+        "attune.workflows.code_review.CodeReviewWorkflow",
+        side_effect=RuntimeError("ctor boom") if code_ctor_raises else None,
+        return_value=_make_wf(code_score, code_raises, code_success),
+    )
+    sec_patch = patch(
+        "attune.workflows.security_audit.SecurityAuditWorkflow",
+        return_value=_make_wf(sec_score, sec_raises, sec_success),
+    )
+    with code_patch, sec_patch:
         yield
 
 
@@ -229,6 +236,57 @@ class TestRunGatesForTask:
         result = await orch.run_gates_for_task(task)
 
         assert result.quality_gate_passed
+
+    @pytest.mark.asyncio
+    async def test_gate_caps_file_count(self):
+        """More than _GATE_MAX_FILES files are capped before review."""
+        orch = PipelineOrchestrator(
+            ".claude/plans/pipeline-orchestrator.md",
+            skip_tests=True,
+            skip_simplify=True,
+        )
+        many = [
+            {"path": f"src/attune/f{i}.py", "description": "f"}
+            for i in range(orch._GATE_MAX_FILES + 3)
+        ]
+        task = _make_task(files_to_create=many)
+
+        with _patch_reviews(code_score=95.0, sec_score=95.0):
+            result = await orch.run_gates_for_task(task)
+
+        assert result.quality_gate_passed
+        assert len(result.gate_details["files_reviewed"]) == orch._GATE_MAX_FILES
+
+    @pytest.mark.asyncio
+    async def test_gate_unsuccessful_review_fails_closed(self):
+        """A review result with success=False fails the gate closed."""
+        orch = PipelineOrchestrator(
+            ".claude/plans/pipeline-orchestrator.md",
+            skip_tests=True,
+            skip_simplify=True,
+        )
+        task = _make_task()
+
+        with _patch_reviews(code_score=95.0, sec_score=95.0, code_success=False):
+            result = await orch.run_gates_for_task(task)
+
+        assert result.quality_gate_passed is False
+
+    @pytest.mark.asyncio
+    async def test_gate_constructor_error_fails_gracefully(self):
+        """An error constructing a review workflow is caught by the gate."""
+        orch = PipelineOrchestrator(
+            ".claude/plans/pipeline-orchestrator.md",
+            skip_tests=True,
+            skip_simplify=True,
+        )
+        task = _make_task()
+
+        with _patch_reviews(code_ctor_raises=True, sec_score=95.0):
+            result = await orch.run_gates_for_task(task)
+
+        assert result.quality_gate_passed is False
+        assert "Gate error" in result.error
 
 
 class TestExtractScoreRealAdapter:
