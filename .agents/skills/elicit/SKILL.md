@@ -1,6 +1,6 @@
 ---
 name: elicit
-description: "Form-driven Socratic discovery — batch independent decision dimensions into one multi-select-capable form instead of N button-turns. Triggers on: scope this, discovery form, ask me everything at once, multi-select question, gather requirements as a form."
+description: "Form-driven Socratic discovery — batch independent decision dimensions into one multi-select-capable form instead of N button-turns. Triggers on: scope this, discovery form, ask me everything at once, multi-select question."
 ---
 # Elicit — form-driven Socratic discovery
 
@@ -87,7 +87,13 @@ Also:
 - **>4 options** — use the two-tier picker (category → item), don't
   overflow a single question.
 
-Then call `AskUserQuestion` with all the batch's entries at once.
+Then call `AskUserQuestion` with all the batch's entries at once. When a
+batch has **more than one question**, set `metadata` to
+`{"source": "elicit-form"}` — that marker is the deliberate opt-in the
+one-question-per-turn guard requires for a §4 batched form. Without it,
+a multi-question call is blocked (the default discipline). Multi-select
+questions need no "(Recommended)" first option; single-select questions
+still lead with the recommended choice.
 
 ## Step 4 — collect and validate (R4)
 
