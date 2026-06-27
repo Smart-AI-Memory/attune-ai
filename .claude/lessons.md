@@ -11797,3 +11797,26 @@ files.
   — why the slim matrix keeps the required `test (ubuntu-latest, 3.12)`
   lane) and the "mergeStateStatus is the first read" merge-diagnosis
   lesson.
+
+- **Measuring coverage from a worktree with `--rcfile=/dev/null`
+  silently drops `exclude_lines`, so `if __name__ == "__main__":` blocks
+  (and `pragma: no cover`, `if TYPE_CHECKING:`, etc.) read as falsely
+  uncovered**: the consolidated worktree lesson's coverage workaround
+  uses `--rcfile=/dev/null` to bypass the source-filter-maps-wrong
+  problem — but `/dev/null` also discards pyproject's
+  `[tool.coverage.report] exclude_lines`, so coverage counts the
+  `__main__` guard as missing and overstates the gap. Hit 2026-06-27
+  on `starter_reconciler.py` (#1124): local report flagged the
+  12-line `__main__` block (lines 289–300) as "Missing," but real
+  CI/codecov exclude it via the rcfile — the genuine gaps were only the
+  helper bodies. Fix: replicate the excludes in a tiny temp rcfile
+  (`printf '[run]\nbranch = True\n[report]\nexclude_lines =\n    pragma:
+  no cover\n    if __name__ == .__main__.:\n' > /tmp/cov.ini` then
+  `coverage run --rcfile=/tmp/cov.ini --source=<dir> -m pytest …`),
+  rather than `/dev/null`; or mentally discount the `__main__`/pragma
+  lines. Diagnostic tell: a local "missing" range that is exactly an
+  entry-point guard or a `# pragma: no cover` block, while codecov's
+  patch % disagrees, means the local run lost the excludes — trust
+  codecov's number, not the `/dev/null` run. Extends the consolidated
+  "editable install's MAPPING points at the main checkout" worktree
+  lesson (coverage-measurement bullet).
