@@ -208,7 +208,7 @@ def reconcile(text: str, pkg: str | None, cwd: Path | None) -> dict:
             results["prs"][key] = value
         elif kind == "branch":
             results["branches"][key] = value
-        elif kind == "pypi":
+        else:  # kind == "pypi" — the only remaining submitted kind
             results["pypi"] = value
 
     # Don't block the session on stragglers — their subprocesses are
