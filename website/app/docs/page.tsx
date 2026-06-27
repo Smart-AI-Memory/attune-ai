@@ -176,7 +176,7 @@ export default function DocsPage() {
                   <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
                     The whole platform: spec engine, AI workflows, project
                     memory, retrieval grounding, and verification.
-                    17 multi-stage workflows, 17 skills, 41 MCP tools.
+                    19 multi-stage workflows, 23 skills, 47 MCP tools.
                   </p>
                   <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
                     <span className="text-white/50">$ </span>pip install attune-ai
@@ -505,7 +505,7 @@ export default function DocsPage() {
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
                 Install from the marketplace. Progressive help, project
-                bootstrapping, and 17 skills right in your terminal.
+                bootstrapping, and 23 skills right in your terminal.
               </p>
 
               <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-8 mb-8">
@@ -571,9 +571,9 @@ export default function DocsPage() {
                 Workflows &amp; Skills
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                The build half of the loop: 17 multi-stage workflows
-                (20 workflows total), 17 auto-triggering Claude Code skills,
-                and an MCP server with 41 registered tools — review, tests,
+                The build half of the loop: 19 multi-stage workflows
+                (22 workflows total), 23 auto-triggering Claude Code skills,
+                and an MCP server with 47 registered tools — review, tests,
                 bug prediction, refactor, and release prep.
               </p>
 
@@ -599,7 +599,7 @@ export default function DocsPage() {
 
                 <div>
                   <h3 className="font-bold text-lg mb-4">
-                    17 Claude Code Skills
+                    23 Claude Code Skills
                   </h3>
                   <p className="text-sm text-[var(--text-secondary)] mb-4">
                     Skills auto-invoke from natural language. Type the topic

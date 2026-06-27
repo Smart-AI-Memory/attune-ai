@@ -30,11 +30,11 @@ const faqData: FAQCategory[] = [
       },
       {
         question: 'What are the four pillars?',
-        answer: 'Attune AI is built on four pillars, each a real, shipped capability: AI workflows (17 multi-stage workflows for review, tests, bug prediction, and refactors), Project memory (cross-session findings and a retrievable lessons corpus), Retrieval grounding (citations back to your source via attune-rag), and Verification (fact-checking generated content before it reaches main).',
+        answer: 'Attune AI is built on four pillars, each a real, shipped capability: AI workflows (19 multi-stage workflows for review, tests, bug prediction, and refactors), Project memory (cross-session findings and a retrievable lessons corpus), Retrieval grounding (citations back to your source via attune-rag), and Verification (fact-checking generated content before it reaches main).',
       },
       {
         question: 'What can Attune AI do, in numbers?',
-        answer: 'Attune AI ships 20 workflows (17 multi-stage), 41 MCP tools, 17 auto-triggering skills, 5 wizards, and 15 template kinds. The spec engine runs via /spec, progressive help via /coach, and cross-session recall via /recall.',
+        answer: 'Attune AI ships 22 workflows (19 multi-stage), 47 MCP tools, 23 auto-triggering skills, 5 wizards, and 15 template kinds. The spec engine runs via /spec, progressive help via /coach, and cross-session recall via /recall.',
       },
       {
         question: "What's the difference between attune-ai and attune-gui?",

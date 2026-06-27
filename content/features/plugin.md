@@ -75,7 +75,7 @@ component type:
 | `.mcp.json` | MCP server registration | 1 server |
 
 `commands/` ships `handoff` (the `/handoff` resume-prompt command).
-The 17 skills are the developer-workflow surface (`spec`,
+The 23 skills are the developer-workflow surface (`spec`,
 `security-audit`, `code-quality`, `smart-test`, `release-prep`, …). The
 6 agents are read-only or planning subagents
 (`security-reviewer`, `refactor-planner`, `release-prep-auditor`,
@@ -95,7 +95,7 @@ are part of the bundle.
 
 `plugin/core/` exists so the plugin can carry a version for standalone
 operation; `plugin/core/__init__.py` is just
-`__version__ = "8.9.2"`. The real runtime is the pip-installed
+`__version__ = "9.1.0"`. The real runtime is the pip-installed
 `attune-ai` package, which the `.mcp.json` server pulls via
 `uvx --from attune-ai`.
 
@@ -110,7 +110,7 @@ claude plugin install attune-ai@attune-ai
 
 The first command registers this repo as a marketplace; the second
 installs the `attune-ai` plugin from it. After install, Claude Code
-auto-discovers the components — the slash command, the 17 skills, the 6
+auto-discovers the components — the slash command, the 23 skills, the 6
 agents, the hooks, and the MCP server — and they become available in
 your session.
 
@@ -152,7 +152,7 @@ cat plugin/.claude-plugin/plugin.json
 
 **Verify:** `name` is `attune-ai`, `license` is `Apache-2.0`, and
 `keywords` include `claude-code`. The `version` here is the plugin
-bundle version (`8.9.2`); the sibling `marketplace.json` carries a
+bundle version (`9.1.0`); the sibling `marketplace.json` carries a
 matching version in `metadata.version` and `plugins[0].version`.
 
 ### List the components Claude Code will discover
@@ -183,7 +183,7 @@ and the component folder layout.
 | Field | Value / Purpose |
 |-------|-----------------|
 | `name` | `attune-ai` — the plugin name. |
-| `version` | Plugin bundle version (`8.9.2`). |
+| `version` | Plugin bundle version (`9.1.0`). |
 | `description` | One-line plugin summary shown in Claude Code. |
 | `author` | `{name, email}` — Smart AI Memory. |
 | `homepage` / `repository` | Project links. |
@@ -289,7 +289,7 @@ inside it. Install the box and Claude Code unpacks every component.
   `attune-ai` plugin — so the plugin name appears on both sides.
 - **Q:** What does the plugin actually contain?
   **A:** A manifest plus auto-discovered components: 1 slash command
-  (`/handoff`), 17 skills, 6 agents, the hook scripts, the help bundle,
+  (`/handoff`), 23 skills, 6 agents, the hook scripts, the help bundle,
   and an `.mcp.json` that registers the MCP server.
 - **Q:** Is the plugin the same as the MCP server?
   **A:** No. The plugin is the bundle; the MCP server is one component

@@ -46,8 +46,8 @@ export const PRODUCTS: Product[] = [
       "Generate concept, task, and reference templates",
       "Staleness detection via source hashing",
       "Auto-regeneration of stale templates",
-      "17 Claude Code skills included",
-      "MCP server with 41 registered tools",
+      "23 Claude Code skills included",
+      "MCP server with 47 registered tools",
     ],
   },
   {
@@ -117,7 +117,7 @@ export const PRODUCTS: Product[] = [
       "/coach status — check template freshness",
       "/coach maintain — regenerate stale templates",
       "Auto-triggers on natural language (help, explain, learn)",
-      "17 auto-triggering skills (security, testing, review, etc.)",
+      "23 auto-triggering skills (security, testing, review, etc.)",
     ],
   },
 ];
@@ -262,9 +262,9 @@ export const DIFFERENTIATORS: Differentiator[] = [
  * and no page consumed them.)
  */
 export const CAPABILITIES = {
-  workflows: 17,
-  skills: 17,
-  mcpTools: 41,
+  workflows: 19,
+  skills: 23,
+  mcpTools: 47,
   templateKinds: 15,
   wizards: 5,
 } as const;
@@ -305,7 +305,7 @@ export const RELIABILITY_LOOP: LoopStage[] = [
     n: "03",
     name: "Build",
     description:
-      "17 multi-stage workflows: review, tests, bug prediction, refactor.",
+      "19 multi-stage workflows: review, tests, bug prediction, refactor.",
   },
   {
     n: "04",
@@ -343,7 +343,7 @@ export const PILLARS: Pillar[] = [
     tag: "AI workflows",
     title: "Specialist teams, not one prompt",
     description:
-      "17 multi-stage workflows run teams of 2–6 Claude subagents to " +
+      "19 multi-stage workflows run teams of 2–6 Claude subagents to " +
       "review code, surface vulnerabilities, generate tests, and plan " +
       "refactors — with cost-tiered model routing.",
     points: [
