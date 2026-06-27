@@ -123,6 +123,37 @@ Patrick signed off on the v1 design as drafted:
 Build scope now fully specified: a declarative-form renderer onto
 `AskUserQuestion` + the §4 batching rule. No new infrastructure.
 
+## D6 — Salvage: reuse the existing form model; the live wiring is the gap
+
+**Date:** 2026-06-27 · **Status:** decided · see
+[salvage-assessment.md](salvage-assessment.md)
+
+A bounded salvage pass found that most of v1 **already exists** and is
+proven, so v1 is even smaller than D5 implied:
+
+- **REUSE** `meta_workflows/models.py` — `FormSchema`/`FormQuestion`/
+  `QuestionType` (incl. `MULTI_SELECT`)/`FormResponse` +
+  `to_ask_user_format()` + `get_question_batches(4)` + validation. This
+  *is* the D3 artifact + the D5 §2 renderer mapping. Do not duplicate.
+- **The gap is the live wiring.** `SocraticFormEngine`'s
+  `ask_user_callback` path has **no live caller** (no `/wizard` skill /
+  command / CLI handler — confirmed; only a docstring placeholder +
+  test mocks). `AskUserQuestion` is an agent tool, not a Python API, so
+  the engine never reaches the user; today's questioning is
+  markdown-driven. v1's real new work = the model→tool bridge.
+- **Florence (`Deep-Study-AI/ai-nurse-florence-v3.1`) proves D3.** The
+  in-repo model was built (pre-AskUserQuestion) to support that app's
+  ~20 clinical multi-step web forms — the same declarative model
+  already drove a *web* surface in production. That web rendering is
+  the **v2 target**; v1 just drives the same model through
+  `AskUserQuestion`.
+
+**Open — bridge nature (deferred per Patrick, decide before building):**
+**A** pure-markdown skill (model unused at runtime; defers D3 to v2) vs
+**B** skill + thin Python bridge (an MCP tool runs the real model →
+`AskUserQuestion` → validated `FormResponse`; the true stepping stone).
+Agent recommends **B**. See salvage-assessment.md.
+
 ## Open
 
 - **Confirm CC elicitation support** — low priority (elicitation is
