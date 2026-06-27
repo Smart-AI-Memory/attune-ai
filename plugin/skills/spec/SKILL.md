@@ -84,13 +84,42 @@ When the user chooses "Import a spec file":
 
 When the user chooses "Start a new spec":
 
-1. Run the brainstorm conversation flow (same phases
-   as brainstorm: Context, Problem, Goals, End State)
-2. When the end state is clear, auto-decompose the
+1. **Kickoff form (one batched turn).** Gather the
+   *independent* dimensions of the kickoff as a single
+   form via the `elicit` skill, instead of asking them
+   one button at a time. The dimensions:
+
+   - `outcome` — what should be true when done (one line)
+   - `scope` — where it focuses (area / files / subsystem)
+   - `concerns` — which quality dimensions matter
+     (multi-select: correctness, security, performance,
+     tests, docs)
+
+   Build the declarative form, render it with
+   `elicitation_render_form`, ask the batch in one
+   `AskUserQuestion` call with `metadata:
+   {"source": "elicit-form"}` (the opt-in the
+   one-question-per-turn guard requires), then validate
+   the answers with `elicitation_collect_response`. The
+   `elicit` skill owns the exact render → ask → collect
+   steps; this stage just supplies the three fields.
+
+   **Omit any dimension the user already stated** — the
+   `<what to build>` argument usually answers `outcome`,
+   so drop that field rather than re-ask. If only one
+   dimension is left open, ask it as a single question —
+   never force a one-field form (the §4 batching rule:
+   batch only genuinely-open, independent dimensions).
+
+2. Run the brainstorm conversation flow for the parts a
+   form can't batch — Problem → Goals → End State build on
+   each other, so they stay **sequential** — seeded by the
+   kickoff answers.
+3. When the end state is clear, auto-decompose the
    approach into XML `<task>` blocks
-3. Save to `.claude/plans/{topic-slug}.md` with both
+4. Save to `.claude/plans/{topic-slug}.md` with both
    prose summary and XML task blocks
-4. Use `AskUserQuestion`: "Spec saved with N tasks.
+5. Use `AskUserQuestion`: "Spec saved with N tasks.
    Ready to review?"
 
 ## Stage 2: Review
@@ -192,6 +221,13 @@ If resumable plans exist, show them with
 
 ## Critical Rules
 
+- **Batch the kickoff, not the gates.** Stage 1's kickoff
+  (outcome + scope + concerns) is the ONE place to batch
+  fields into a single form (via `elicit`). Every other
+  prompt — the mode picker and the review / approve /
+  execute gates — stays a **single** `AskUserQuestion`:
+  they're sequential decisions that branch on the prior
+  answer, so the §4 rule keeps them one at a time.
 - **ALWAYS use AskUserQuestion** between stages
 - **ALWAYS save_state()** after each task approval
 - **Show progress bar** before each task
