@@ -56,17 +56,30 @@ Field `type` is one of `single_select`, `multi_select`, `boolean`,
 `text_input`, `number` (with `minimum`/`maximum`), `date` (ISO
 `YYYY-MM-DD`), or `textarea` (with `max_length`). `id` is the stable key
 the answer comes back under. The last three are **rich controls** — they
-only render on the native elicitation surface below, not AskUserQuestion.
+render on the native elicitation (`elicitation_ask`) and widget
+(`elicitation_render_widget`) surfaces below, but degrade to plain text
+on AskUserQuestion.
 
 ## Choosing a surface
 
 - **Rich / native — one call:** `elicitation_ask` renders the form as a
   native MCP elicitation dialog (supports number/date/textarea +
   multi-select with a structured return) and returns the validated
-  answers in a single call — no manual `AskUserQuestion` mapping. Prefer
-  it when the client supports elicitation or the form uses a rich
-  control. It returns `{success: false, action: "unsupported"}` if the
-  client can't elicit — then fall back to the portable path.
+  answers in a single call — no manual `AskUserQuestion` mapping. It
+  returns `{success: false, action: "unsupported"}` when the client
+  can't elicit. **Caveat (Claude Code, observed 2026-06-27, decisions
+  D10):** some clients advertise elicitation but **auto-decline form
+  requests without rendering** — you get `action: "decline"` and no
+  dialog. Treat a `decline` you didn't see the user make as
+  "surface unavailable" and fall back; don't report it as the user
+  saying no.
+- **Rich / widget — `show_widget`:** `elicitation_render_widget` returns
+  inline HTML that renders ALL 7 controls richly (number spinner, date
+  picker, multi-line textarea, multi-select checkboxes). Pass its `html`
+  straight to `mcp__visualize__show_widget`; the user submits and the
+  widget posts the answers back (see "Widget surface" below). Best
+  rich surface on widget-capable clients (Cowork/claude.ai) when native
+  elicitation doesn't render.
 - **Portable — AskUserQuestion:** steps 2–4 below map the form onto
   `AskUserQuestion` (selects/booleans/short text only). Use this as the
   fallback, or when you want the recommendation-first button UX.
@@ -123,6 +136,25 @@ call `elicitation_collect_response` with `{ "form": <the form>,
 - Failure → `{ "success": false, "problems": [ … ] }` names exactly
   which fields are missing-required or out-of-option. **Re-ask only
   those fields** (a one-field form) — never silently proceed.
+
+## Widget surface — `show_widget` round-trip
+
+Use this instead of steps 2–4 when you want the rich controls on a
+widget-capable client:
+
+1. Call `elicitation_render_widget` with `{ "form": <the form> }`. On
+   success you get `{ "html", "title", "field_ids" }`; on a bad form,
+   `{ "success": false, "problems": [...] }` — fix and re-render.
+2. Pass `html` verbatim to `mcp__visualize__show_widget`.
+3. The user fills the form and submits. The widget posts a chat message
+   containing a fenced JSON block marked `__elicitation_response__`,
+   e.g. `{"__elicitation_response__": true, "title": "...", "answers":
+   {<field_id>: <value>}}` (multi-select → list, number → number,
+   date → `YYYY-MM-DD`, boolean → `"Yes"`/`"No"`).
+4. When that message arrives, parse the JSON block and call
+   `elicitation_collect_response` with `{ "form": <the same form>,
+   "answers": <the payload's answers> }` to validate (R4). Re-ask only
+   the fields it flags as problems — never proceed on raw widget output.
 
 ## Worked example — `/attune` discovery in one turn
 

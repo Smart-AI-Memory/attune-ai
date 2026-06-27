@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from attune.mcp.tool_schemas import (
     _path_tool,
+    get_elicitation_tools,
     get_help_tools,
     get_memory_tools,
     get_prompts,
@@ -24,6 +25,13 @@ from attune.mcp.tool_schemas import (
     get_utility_tools,
     get_workflow_tools,
 )
+
+
+def _field_types(tools: dict, name: str) -> list[str]:
+    """Return the field-type enum for a tool's form schema."""
+    items = tools[name]["input_schema"]["properties"]["form"]["properties"]["fields"]["items"]
+    return items["properties"]["type"]["enum"]
+
 
 # -- _path_tool ------------------------------------------------------
 
@@ -299,3 +307,48 @@ class TestGetPrompts:
         prompt = get_prompts()["test-gen"]
         batch_arg = next(a for a in prompt["arguments"] if a["name"] == "batch")
         assert batch_arg.get("required") is False
+
+
+# -- get_elicitation_tools -------------------------------------------
+
+
+class TestGetElicitationTools:
+    """Field-type enum surfaces: v2 rich tools expose 7, v1 stays at 4."""
+
+    def test_v2_tools_present(self) -> None:
+        tools = get_elicitation_tools()
+        assert "elicitation_render_widget" in tools
+        assert "elicitation_ask" in tools
+
+    def test_v1_render_form_stays_four_types(self) -> None:
+        # AskUserQuestion has no native number/date — v1 must NOT claim them.
+        assert _field_types(get_elicitation_tools(), "elicitation_render_form") == [
+            "text_input",
+            "single_select",
+            "multi_select",
+            "boolean",
+        ]
+
+    def test_v2_tools_expose_all_seven_types(self) -> None:
+        # D10 enum-honesty fix: render_widget / ask accept the rich controls.
+        tools = get_elicitation_tools()
+        expected = {
+            "text_input",
+            "textarea",
+            "single_select",
+            "multi_select",
+            "boolean",
+            "number",
+            "date",
+        }
+        assert set(_field_types(tools, "elicitation_render_widget")) == expected
+        assert set(_field_types(tools, "elicitation_ask")) == expected
+
+    def test_v2_field_schema_has_numeric_bounds(self) -> None:
+        tools = get_elicitation_tools()
+        items = tools["elicitation_render_widget"]["input_schema"]["properties"]["form"][
+            "properties"
+        ]["fields"]["items"]["properties"]
+        assert "minimum" in items
+        assert "maximum" in items
+        assert "max_length" in items

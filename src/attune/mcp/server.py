@@ -309,6 +309,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "elicitation_render_form": self._handle_elicitation_render_form,
             "elicitation_collect_response": self._handle_elicitation_collect_response,
             "elicitation_ask": self._handle_elicitation_ask,
+            "elicitation_render_widget": self._handle_elicitation_render_widget,
             "help_lookup": self._handle_help_lookup,
             "help_maintain": self._handle_help_maintain,
             "help_init": self._handle_help_init,
@@ -718,6 +719,43 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "title": form.title,
             "description": form.description,
             "batches": form_to_askuserquestion(form),
+        }
+
+    async def _handle_elicitation_render_widget(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Render a declarative form as inline HTML for ``show_widget`` (S1).
+
+        Live wiring of :func:`attune.elicitation.form_to_widget_html` — the
+        v2 escape-hatch surface (D8). Returns the self-contained HTML for
+        ``mcp__visualize__show_widget``; on submit the widget posts a
+        sentinel-marked JSON block via ``sendPrompt`` which the agent
+        validates through ``elicitation_collect_response`` (R4). A malformed
+        form definition returns ``{"success": False, "problems": [...]}``.
+
+        Args:
+            args: ``form`` (the declarative form dict) and optional
+                ``message`` (prompt shown above the form).
+
+        Returns:
+            ``{"success": True, "html", "title", "field_ids"}`` or
+            ``{"success": False, "problems": [...]}``.
+
+        """
+        from attune.elicitation import (
+            FormValidationError,
+            form_from_dict,
+            form_to_widget_html,
+        )
+
+        try:
+            form = form_from_dict(args.get("form", {}))
+        except FormValidationError as e:
+            return {"success": False, "problems": e.problems}
+
+        return {
+            "success": True,
+            "html": form_to_widget_html(form, args.get("message") or ""),
+            "title": form.title,
+            "field_ids": [q.id for q in form.questions],
         }
 
     async def _handle_elicitation_collect_response(self, args: dict[str, Any]) -> dict[str, Any]:
