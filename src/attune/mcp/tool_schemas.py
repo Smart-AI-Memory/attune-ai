@@ -498,7 +498,14 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "form": form_schema,
+                    # rich_form_schema (7 types): collect_response is the
+                    # shared validator for BOTH the v1 AskUserQuestion path
+                    # (4-type forms) AND the widget round-trip, which posts
+                    # back number/date/textarea answers — so its input enum
+                    # must accept the rich controls or the round-trip breaks
+                    # at the validation step (the underlying
+                    # collect_form_response already validates all 7).
+                    "form": rich_form_schema,
                     "answers": {
                         "type": "object",
                         "description": "{field_id: value} the user selected/typed",
