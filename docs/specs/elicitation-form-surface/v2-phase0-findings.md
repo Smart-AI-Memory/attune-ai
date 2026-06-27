@@ -89,3 +89,24 @@ schema-mapping transform. Keep **S1 (show_widget)** as the escape hatch
 for controls elicitation can't express (true slider, color, rich
 layout). **S3** stays the North-star horizon (V2.3), not a v2 build
 target. Final pick is **D8** after the task v2.0-3 PoC.
+
+## PoC results (task v2.0-3)
+
+Both surfaces were proven with a real round-trip (R5), not a mock.
+
+- **S2 (elicitation) — schema transform + clean return.** A thin
+  `form_to_elicitation_schema(form)` mapped the declarative artifact to a
+  valid MCP `requestedSchema`: single-select → `string`+`enum`,
+  **multi-select → `array`+`items.enum`+`minItems`**, boolean →
+  `boolean`. The elicitation `accept` response's keyed `content` (e.g.
+  `{"goal":"Add a feature","focus":["tests","docs"],"ship_today":"Yes"}`)
+  passed **straight into `collect_form_response` with zero parsing** —
+  `success: true`. This is the C2 win, demonstrated.
+- **S1 (show_widget) — live form + free-text postback.** A real
+  interactive widget rendered the same artifact (radio goal, checkbox
+  multi-select focus, Yes/No toggle), previewed its payload, and on
+  submit called `sendPrompt(...)` carrying the answers as a chat message
+  — confirming S1's return path works but is free-text-carrying-JSON, not
+  structured.
+
+Conclusion → **D8** (decisions.md): S2 leads, S1 is the escape hatch.
