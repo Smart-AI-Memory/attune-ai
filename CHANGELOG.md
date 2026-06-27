@@ -7,8 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.1.0] — 2026-06-27
+
+### Added
+
+- **Declarative form elicitation.** A new `elicit` skill and MCP tool
+  family for gathering several inputs as one form instead of asking one
+  question at a time. Forms are plain data (a `FormSchema`), so the same
+  definition renders on whichever surface the client supports:
+  - `elicitation_render_form` — maps a form onto `AskUserQuestion`
+    (portable; works in any client, including the terminal).
+  - `elicitation_ask` — renders a form as a **native MCP elicitation**
+    dialog with a structured return, where the client supports it.
+  - `elicitation_render_widget` — renders a form as an inline HTML
+    **widget** (`show_widget`) with the full control palette, for
+    widget-capable clients (Cowork / claude.ai).
+  - `elicitation_collect_response` — validates answers (R4): enforces
+    required fields, option membership, number bounds, and date format,
+    and names exactly which fields to re-ask — never silently accepts
+    malformed input.
+- **Rich form controls** on the artifact: `number` (with
+  `minimum`/`maximum`), `date` (ISO `YYYY-MM-DD`), and `textarea` (with
+  `max_length`), alongside text, single-/multi-select, and boolean.
+
+### Changed
+
+- **`/spec` kickoff is now a single form.** Starting a new spec gathers
+  its independent dimensions — outcome, scope, concerns — in one batched
+  turn via the `elicit` skill, instead of sequential button-presses. The
+  mode picker and the review/approve/execute gates remain single
+  questions (they branch on the prior answer).
+
 ### Fixed
 
+- **The widget round-trip rejected rich controls.** Forms containing
+  `number`/`date`/`textarea` were rejected at the MCP boundary;
+  `elicitation_collect_response` and the rich surfaces now accept all
+  seven control types.
 - **Plugin no longer shows a false "help templates may be stale"
   notice on session start.** The `help_freshness_check.py` SessionStart
   hook resolved the help bundle's `source_manifest.json` paths (which
@@ -21,6 +56,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   versioned artifact in a user's world and can't drift relative to
   anything they control; repo-side staleness is already covered by the
   dev `.help` freshness nudge plus pre-commit regen and CI.
+
+### Security
+
+- The widget renderer escapes all form-supplied text and never
+  interpolates form data into executable JavaScript, so untrusted form
+  definitions (labels, options) cannot inject markup or script.
 
 ## [9.0.0] — 2026-06-26
 
