@@ -26,6 +26,7 @@ from mcp.types import (
 from attune.mcp.memory_handlers import MemoryHandlersMixin
 from attune.mcp.rate_limiter import RateLimiter
 from attune.mcp.tool_schemas import (
+    get_elicitation_tools,
     get_help_tools,
     get_memory_tools,
     get_personal_memory_tools,
@@ -186,6 +187,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         tools.update(get_memory_tools())
         tools.update(get_personal_memory_tools())
         tools.update(get_utility_tools())
+        tools.update(get_elicitation_tools())
         tools.update(get_help_tools())
         return tools
 
@@ -304,6 +306,8 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "context_get": self._handle_context_get,
             "context_set": self._handle_context_set,
             "list_capabilities": lambda _args: self._handle_list_capabilities(),
+            "elicitation_render_form": self._handle_elicitation_render_form,
+            "elicitation_collect_response": self._handle_elicitation_collect_response,
             "help_lookup": self._handle_help_lookup,
             "help_maintain": self._handle_help_maintain,
             "help_init": self._handle_help_init,
@@ -679,6 +683,75 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "success": True,
             "key": key,
             "value": value,
+        }
+
+    async def _handle_elicitation_render_form(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Validate a declarative form and return batched question payloads.
+
+        Live wiring of :func:`attune.elicitation.form_from_dict` and
+        :func:`attune.elicitation.form_to_askuserquestion`. A malformed
+        form definition returns ``{"success": False, "problems": [...]}``
+        rather than raising, so the agent can re-fix the definition.
+
+        Args:
+            args: Must contain ``form`` (the declarative form dict).
+
+        Returns:
+            ``{"success": True, "title", "description", "batches"}`` or
+            ``{"success": False, "problems": [...]}``.
+
+        """
+        from attune.elicitation import (
+            FormValidationError,
+            form_from_dict,
+            form_to_askuserquestion,
+        )
+
+        try:
+            form = form_from_dict(args.get("form", {}))
+        except FormValidationError as e:
+            return {"success": False, "problems": e.problems}
+
+        return {
+            "success": True,
+            "title": form.title,
+            "description": form.description,
+            "batches": form_to_askuserquestion(form),
+        }
+
+    async def _handle_elicitation_collect_response(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Validate user answers against a declarative form (R4).
+
+        Live wiring of :func:`attune.elicitation.collect_form_response`.
+        Missing-required or out-of-option answers return
+        ``{"success": False, "problems": [...]}`` naming exactly which
+        fields to re-ask — never silently accepts malformed input.
+
+        Args:
+            args: Must contain ``form`` (the form dict) and ``answers``
+                (``{field_id: value}``).
+
+        Returns:
+            ``{"success": True, "responses", "response_id"}`` or
+            ``{"success": False, "problems": [...]}``.
+
+        """
+        from attune.elicitation import (
+            FormValidationError,
+            collect_form_response,
+            form_from_dict,
+        )
+
+        try:
+            form = form_from_dict(args.get("form", {}))
+            response = collect_form_response(form, args.get("answers", {}))
+        except FormValidationError as e:
+            return {"success": False, "problems": e.problems}
+
+        return {
+            "success": True,
+            "responses": response.responses,
+            "response_id": response.response_id,
         }
 
     async def _handle_help_lookup(self, args: dict[str, Any]) -> dict[str, Any]:

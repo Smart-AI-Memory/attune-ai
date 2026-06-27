@@ -377,6 +377,91 @@ def get_utility_tools() -> dict[str, dict[str, Any]]:
     }
 
 
+def get_elicitation_tools() -> dict[str, dict[str, Any]]:
+    """Tool definitions for the declarative-form ↔ AskUserQuestion bridge.
+
+    Live wiring of ``attune.elicitation`` (the salvaged, surface-agnostic
+    ``FormSchema`` model). ``render_form`` validates a declarative form
+    and returns batched question payloads; ``collect_response`` validates
+    the answers. The agent calls the real ``AskUserQuestion`` tool in
+    between — the surface mapping rules live in the driving skill (D6).
+    """
+    field_schema = {
+        "type": "object",
+        "properties": {
+            "id": {"type": "string", "description": "Stable key for the answer"},
+            "text": {"type": "string", "description": "Question text shown to the user"},
+            "type": {
+                "type": "string",
+                "enum": ["text_input", "single_select", "multi_select", "boolean"],
+                "description": "Control type; multi_select is the headline v1 control",
+            },
+            "options": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Choices for (multi_)select fields",
+            },
+            "default": {"type": "string", "description": "Default value if unanswered"},
+            "help_text": {"type": "string", "description": "Supplemental help"},
+            "required": {"type": "boolean", "description": "Defaults to true"},
+        },
+        "required": ["id", "text", "type"],
+    }
+    form_schema = {
+        "type": "object",
+        "description": "Declarative form artifact (data, not code — D3).",
+        "properties": {
+            "title": {"type": "string", "description": "Form title"},
+            "description": {"type": "string", "description": "Optional form description"},
+            "fields": {
+                "type": "array",
+                "items": field_schema,
+                "description": "The form's fields (alias: 'questions')",
+            },
+        },
+        "required": ["title", "fields"],
+    }
+    return {
+        "elicitation_render_form": {
+            "description": (
+                "Validate a declarative form and return batched question "
+                "payloads (<=4 per batch) ready for the AskUserQuestion tool. "
+                "Use to turn N sequential button-turns into one multi-question "
+                "form for Socratic discovery. Returns {success, batches} or "
+                "{success: false, problems} so you re-fix the definition. "
+                "Map each payload to AskUserQuestion per the driving skill: "
+                "type multi_select -> multiSelect true; recommendation-first; "
+                "free text via the built-in 'Other' option."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {"form": form_schema},
+                "required": ["form"],
+            },
+        },
+        "elicitation_collect_response": {
+            "description": (
+                "Validate the user's answers against a declarative form and "
+                "return a normalized {field_id: value} response. Enforces "
+                "required fields and option membership (R4 — never silently "
+                "accept malformed input); returns {success: false, problems} "
+                "listing exactly which fields to re-ask."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "form": form_schema,
+                    "answers": {
+                        "type": "object",
+                        "description": "{field_id: value} the user selected/typed",
+                    },
+                },
+                "required": ["form", "answers"],
+            },
+        },
+    }
+
+
 def get_help_tools() -> dict[str, dict[str, Any]]:
     """Tool definitions for contextual help and progressive documentation."""
     return {
