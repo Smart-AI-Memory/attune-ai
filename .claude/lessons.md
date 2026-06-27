@@ -11775,3 +11775,25 @@ files.
   21→11 (the 10 dropped were all orphaned/excluded). Implementation note:
   in-process `importlib` resolution is fast enough for CI (~0.9s for
   ~440 imports across ~380 fences — modules cache), no subprocess needed.
+- **A workflow-only PR (editing just `.github/workflows/*.yml`) leaves
+  PATH-GATED required checks UNREPORTED → `mergeStateStatus=BLOCKED`
+  forever → needs `--admin` merge; and a CI watch-loop must treat an
+  ABSENT required context as non-blocking, not "pending."**: 2026-06-26,
+  PR #1119 (comment-only edit to `tests.yml`). Branch protection requires
+  10 contexts incl. `doc-import-audit` + `wiring-audit`, but those run
+  only from `docs.yml`, which triggers on docs/content/src paths. A
+  workflow-only diff touches none, so those two NEVER report; the PR
+  stays `BLOCKED` ("Expected — waiting for status") even though every
+  check that RAN (incl. the full Windows matrix) is green. Resolution:
+  `gh pr merge --admin` overrides BOTH the never-reported required checks
+  and the self-review gate. Companion bug: a background watch that waited
+  for all 10 required contexts to reach SUCCESS counted the 2 absent ones
+  as "pending" and timed out at 40 min on an already-green PR. Rule for
+  watch scripts: gate on "every PRESENT required context is SUCCESS and
+  none FAILED/CANCELLED," NOT "all N required contexts are present and
+  green" — an untriggered (path-gated) required check is neither a
+  failure nor pending. Pairs with `tests.yml`'s setup-matrix comment ("a
+  required check that never runs reports as missing → PR blocked forever"
+  — why the slim matrix keeps the required `test (ubuntu-latest, 3.12)`
+  lane) and the "mergeStateStatus is the first read" merge-diagnosis
+  lesson.
