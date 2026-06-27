@@ -52,14 +52,113 @@ architectural choice locked this session; the designer and data binding
 themselves are explicitly out of v1 scope. Also makes forms
 surface-agnostic, which de-risks the Phase 0 surface fork (D1).
 
-## Open (to be decided in design, after Phase 0)
+## D4 — Phase 0 outcome: AskUserQuestion-first; elicitation rejected, widget deferred
 
-- **First integrated flow (G3)** — leaning Socratic discovery flow
-  (Patrick 2026-06-27); confirmed in design.
-- **Result-return mechanism + parsing** — delegated to the agent's
-  design-time judgement after Phase 0 grounds the surfaces (Patrick
-  2026-06-27); R6/D3 (declarative artifact) holds regardless.
-- **Final surface decision** (Phase 0 Q0.4).
+**Date:** 2026-06-27 · **Status:** decided (Phase 0 Q0.4) · **Resolves D1**
+
+Phase 0 research (cited findings below) **overturned the spec's
+premise** and resolves the surface fork. v1 builds on the built-in
+**`AskUserQuestion`** tool; MCP elicitation is rejected; the rendered
+widget is deferred to a later enhancement.
+
+**Findings (verify-first; confidence flagged):**
+
+- **`AskUserQuestion` already supports the two priority controls.**
+  `multiSelect: true` per question = choose-many; the `questions` array
+  takes **up to 4 questions in one call** = multi-field in a single
+  pass; the return is a clean structured dict (no message-parsing).
+  *Confirmed against the live tool schema — documented.* The premise
+  that "AskUserQuestion is buttons-only, one question per turn" was
+  wrong: the one-question habit is **attune's own question-shape rule**
+  (`feedback_question_shape` / `ask_question_format_guard`), not a
+  platform limit.
+- **MCP elicitation cannot express multi-select.** The 2025-06-18 spec
+  restricts `requestedSchema` to flat objects of primitives
+  (string/number/boolean/enum); arrays/multi-select are excluded *by
+  design*. *Documented.* And Claude Code client support for elicitation
+  is **unconfirmed (likely absent)** — undocumented in the CC/SDK docs.
+  Either way it fails the priority-1 control, so it is rejected.
+- **The rich palette (slider/textarea/date) has no portable surface.**
+  Only the `visualize`-style widget renders it, and that is an
+  Anthropic surface with a fragile post-JSON-back return — **not an
+  MCP-server capability** attune can own. Deferred, not core.
+
+**Decision:** v1 = a declarative form (D3) rendered onto
+`AskUserQuestion` at its full extent (multi-select + ≤4 questions/pass),
+plus **relaxing attune's one-question rule** where a genuinely compound
+intake warrants a multi-question turn. Rich-control widget = deferred
+enhancement off the *same* declarative artifact. This collapses the
+build to a renderer + a rule change — no new infrastructure — and
+re-fuses the spec with its sibling
+[socratic-ambiguity-calibration](../socratic-ambiguity-calibration/requirements.md)
+(the lever is *how we question*, not new plumbing).
+
+**Sources:** MCP spec 2025-06-18 elicitation
+(`modelcontextprotocol.io/.../client/elicitation`); Claude Code Agent
+SDK user-input docs (`code.claude.com/.../agent-sdk/user-input`);
+live `AskUserQuestion` tool schema.
+
+## D5 — v1 design approved (first-target + rule relaxation)
+
+**Date:** 2026-06-27 · **Status:** decided · see [design.md](design.md)
+
+Patrick signed off on the v1 design as drafted:
+
+- **First integrated flow (G3) = the `/attune` Socratic discovery
+  scoping turn** (goal + scope + focus — today sequential buttons).
+  Dogfooded end-to-end per R5.
+- **One-question-rule relaxation (design §4) approved.** Batch 2–4
+  fields into one form-turn *only when all hold*: independent
+  dimensions of one decision · answers don't branch · each field is
+  genuinely ambiguous per `socratic-ambiguity-calibration`; otherwise
+  stay single-question. Composition: the sibling rule decides *which*
+  fields are worth asking, the form decides *whether* they're batched —
+  the form never adds a field the ambiguity rule wouldn't already ask.
+  This is the guardrail against richer forms amplifying Socratic
+  fatigue.
+- **v1 artifact types** = select / multiselect / text (via the "Other"
+  free-text escape). slider/date/number/color are valid artifact types
+  but deferred to the widget enhancement (D4).
+
+Build scope now fully specified: a declarative-form renderer onto
+`AskUserQuestion` + the §4 batching rule. No new infrastructure.
+
+## D6 — Salvage: reuse the existing form model; the live wiring is the gap
+
+**Date:** 2026-06-27 · **Status:** decided · see
+[salvage-assessment.md](salvage-assessment.md)
+
+A bounded salvage pass found that most of v1 **already exists** and is
+proven, so v1 is even smaller than D5 implied:
+
+- **REUSE** `meta_workflows/models.py` — `FormSchema`/`FormQuestion`/
+  `QuestionType` (incl. `MULTI_SELECT`)/`FormResponse` +
+  `to_ask_user_format()` + `get_question_batches(4)` + validation. This
+  *is* the D3 artifact + the D5 §2 renderer mapping. Do not duplicate.
+- **The gap is the live wiring.** `SocraticFormEngine`'s
+  `ask_user_callback` path has **no live caller** (no `/wizard` skill /
+  command / CLI handler — confirmed; only a docstring placeholder +
+  test mocks). `AskUserQuestion` is an agent tool, not a Python API, so
+  the engine never reaches the user; today's questioning is
+  markdown-driven. v1's real new work = the model→tool bridge.
+- **Florence (`Deep-Study-AI/ai-nurse-florence-v3.1`) proves D3.** The
+  in-repo model was built (pre-AskUserQuestion) to support that app's
+  ~20 clinical multi-step web forms — the same declarative model
+  already drove a *web* surface in production. That web rendering is
+  the **v2 target**; v1 just drives the same model through
+  `AskUserQuestion`.
+
+**Open — bridge nature (deferred per Patrick, decide before building):**
+**A** pure-markdown skill (model unused at runtime; defers D3 to v2) vs
+**B** skill + thin Python bridge (an MCP tool runs the real model →
+`AskUserQuestion` → validated `FormResponse`; the true stepping stone).
+Agent recommends **B**. See salvage-assessment.md.
+
+## Open
+
+- **Confirm CC elicitation support** — low priority (elicitation is
+  rejected regardless for lacking multi-select), but worth nailing if
+  the widget/enhancement phase is ever revisited.
 - **Revisit the `socratic-ambiguity-calibration` "ask only when
   genuinely ambiguous" rule** — Patrick endorses it now but is open to
   changing it with more feedback. Future discussion, not a v1 change.
