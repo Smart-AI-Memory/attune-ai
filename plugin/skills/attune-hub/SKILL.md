@@ -61,6 +61,12 @@ intent so Claude matches the right skill:
 | "plan", "feature", "architecture" | planning skill |
 | "refactor", "tech debt", "simplify" | refactor-plan skill |
 | "spec", "brainstorm", "plan and execute" | spec skill |
+| "scope this", "ask me everything at once", "discovery form" | elicit skill |
+
+When the scoping turn has **2–4 independent, non-branching, genuinely
+open dimensions** (e.g. goal + scope + focus), gather them as one form
+via the `elicit` skill instead of sequential buttons. Stay
+single-question when only one dimension is unknown or answers branch.
 
 ## Single-referent resolution
 
@@ -104,6 +110,7 @@ rule (a single turn can't bundle multiple ambiguous decisions). See
 | catalog | catalog, list capabilities, browse, what can attune do |
 | personal-memory | remember this for me, capture this decision, save to personal memory, my saved topics, forget topic |
 | image-analysis | analyze this image, look at this screenshot, what's in this diagram, read this mockup |
+| elicit | scope this, discovery form, ask me everything at once, multi-select question |
 
 ## MCP Server Not Running
 
