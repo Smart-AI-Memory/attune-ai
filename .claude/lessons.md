@@ -11820,3 +11820,37 @@ files.
   codecov's number, not the `/dev/null` run. Extends the consolidated
   "editable install's MAPPING points at the main checkout" worktree
   lesson (coverage-measurement bullet).
+
+- **A targeted local test subset that passes can still leave the CI
+  matrix RED on every lane — adding a plugin SKILL is gated by
+  `tests/unit/plugins/test_plugin_config_validation.py` (description
+  ≤250 chars + exact `test_skill_count`), which a hand-picked subset
+  easily omits**: 2026-06-27, the elicitation Option B build (PR #1128).
+  I ran a targeted set (`test_mcp_memory_tools`,
+  `test_plugin_reference_validation`, `test_registry_coverage`,
+  `test_sync_agents_skills`, `elicitation/`) → 128 green, but the full
+  matrix went red on ALL 14 lanes with two failures in a file NOT in my
+  subset: (1) `test_descriptions_under_250_chars` — the new `elicit`
+  skill's frontmatter `description` was 254 chars (Anthropic truncates
+  >250, breaking auto-trigger); (2) `test_skill_count` — asserts the
+  EXACT skill count (22→23). Durable rules: (1) when adding/renaming a
+  plugin skill, ALWAYS run `tests/unit/plugins/
+  test_plugin_config_validation.py` AND `test_sync_agents_skills.py`
+  (regenerate `.agents/` via `python scripts/sync_agents_skills.py`)
+  locally before pushing, and keep skill `description` ≤250 chars; the
+  count test and description-length test are the two adding-a-skill
+  gotchas. (2) A UNIFORM red matrix — every OS×Python lane failing fast
+  with identical counts — signals a DETERMINISTIC assertion/config gate,
+  not a platform bug; don't panic at "a lot of red," it's usually one or
+  two assertions. (3) Pull the failing test name from a COMPLETED job
+  mid-run via `gh api repos/<o>/<r>/actions/jobs/<job-id>/logs | grep -E
+  "FAILED tests|short test summary"` — the per-job raw `logs` endpoint
+  RETURNS for a finished job even while the overall run is still
+  `in_progress`, unlike `gh run view --log-failed` (which refuses until
+  the WHOLE run completes). This refines the existing "log-failed returns
+  nothing in flight" lesson: the job-level logs API is the in-flight
+  escape hatch. Minor companion gotcha hit the same session: the
+  PostToolUse formatter (autoflake) STRIPS a just-added import as
+  "unused" if you add the `from x import y` in one Edit before adding
+  its first usage in the next Edit — re-add the import after wiring the
+  usage, or add usage and import in the same Edit.
