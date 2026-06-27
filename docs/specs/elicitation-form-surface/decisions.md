@@ -98,13 +98,33 @@ re-fuses the spec with its sibling
 SDK user-input docs (`code.claude.com/.../agent-sdk/user-input`);
 live `AskUserQuestion` tool schema.
 
-## Open (to be decided in design)
+## D5 — v1 design approved (first-target + rule relaxation)
 
-- **First integrated flow (G3)** — leaning Socratic discovery flow
-  (Patrick 2026-06-27); confirmed in design.
-- **One-question-rule relaxation** — define *when* a multi-question
-  `AskUserQuestion` turn is warranted (compound intake) vs the default
-  single ask; must compose with `socratic-ambiguity-calibration`.
+**Date:** 2026-06-27 · **Status:** decided · see [design.md](design.md)
+
+Patrick signed off on the v1 design as drafted:
+
+- **First integrated flow (G3) = the `/attune` Socratic discovery
+  scoping turn** (goal + scope + focus — today sequential buttons).
+  Dogfooded end-to-end per R5.
+- **One-question-rule relaxation (design §4) approved.** Batch 2–4
+  fields into one form-turn *only when all hold*: independent
+  dimensions of one decision · answers don't branch · each field is
+  genuinely ambiguous per `socratic-ambiguity-calibration`; otherwise
+  stay single-question. Composition: the sibling rule decides *which*
+  fields are worth asking, the form decides *whether* they're batched —
+  the form never adds a field the ambiguity rule wouldn't already ask.
+  This is the guardrail against richer forms amplifying Socratic
+  fatigue.
+- **v1 artifact types** = select / multiselect / text (via the "Other"
+  free-text escape). slider/date/number/color are valid artifact types
+  but deferred to the widget enhancement (D4).
+
+Build scope now fully specified: a declarative-form renderer onto
+`AskUserQuestion` + the §4 batching rule. No new infrastructure.
+
+## Open
+
 - **Confirm CC elicitation support** — low priority (elicitation is
   rejected regardless for lacking multi-select), but worth nailing if
   the widget/enhancement phase is ever revisited.
