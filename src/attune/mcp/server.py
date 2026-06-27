@@ -308,6 +308,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "list_capabilities": lambda _args: self._handle_list_capabilities(),
             "elicitation_render_form": self._handle_elicitation_render_form,
             "elicitation_collect_response": self._handle_elicitation_collect_response,
+            "elicitation_ask": self._handle_elicitation_ask,
             "help_lookup": self._handle_help_lookup,
             "help_maintain": self._handle_help_maintain,
             "help_init": self._handle_help_init,
@@ -750,6 +751,93 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
         return {
             "success": True,
+            "responses": response.responses,
+            "response_id": response.response_id,
+        }
+
+    @staticmethod
+    def _elicitation_session() -> tuple[Any, Any]:
+        """Return ``(session, request_id)`` for the in-flight request.
+
+        The live MCP request context (set by the SDK during a tool call)
+        carries the session that can send an ``elicitation/create``
+        request. Returns ``(None, None)`` outside a request — the handler
+        treats that as "client can't elicit" and signals a fallback.
+        """
+        try:
+            ctx = _mcp_server.request_context
+        except (LookupError, RuntimeError, NameError):
+            return None, None
+        return getattr(ctx, "session", None), getattr(ctx, "request_id", None)
+
+    async def _handle_elicitation_ask(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Render a form as a native MCP elicitation and return answers.
+
+        The v2 rich surface (decision D8): builds an elicitation
+        ``requestedSchema`` from the declarative artifact, sends
+        ``elicitation/create`` via the live session, and on ``accept``
+        validates the structured response through
+        :func:`attune.elicitation.collect_form_response` (R4). On
+        ``decline``/``cancel`` returns that status; if the client cannot
+        elicit, returns ``action: "unsupported"`` so the caller can fall
+        back to ``elicitation_render_form`` (AskUserQuestion).
+
+        Args:
+            args: ``form`` (the declarative form dict) and optional
+                ``message`` (prompt shown above the form).
+
+        Returns:
+            ``{"success": True, "action": "accept", "responses", ...}`` or
+            ``{"success": False, "action"|"problems": ...}``.
+
+        """
+        from attune.elicitation import (
+            FormValidationError,
+            collect_form_response,
+            form_from_dict,
+            form_to_elicitation_schema,
+        )
+
+        try:
+            form = form_from_dict(args.get("form", {}))
+        except FormValidationError as e:
+            return {"success": False, "problems": e.problems}
+
+        schema = form_to_elicitation_schema(form)
+        message = args.get("message") or form.title or "Please complete this form."
+
+        session, request_id = self._elicitation_session()
+        if session is None:
+            return {
+                "success": False,
+                "action": "unsupported",
+                "error": "No MCP elicitation session available (client cannot elicit).",
+            }
+
+        try:
+            result = await session.elicit_form(message, schema, request_id)
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: any elicit failure (unsupported capability,
+            # transport) degrades to a fallback signal, never crashes.
+            logger.exception("Elicitation request failed")
+            return {
+                "success": False,
+                "action": "error",
+                "error": f"Elicitation failed: {type(e).__name__}",
+            }
+
+        action = getattr(result, "action", None)
+        if action != "accept":
+            return {"success": False, "action": action or "cancel", "responses": {}}
+
+        try:
+            response = collect_form_response(form, getattr(result, "content", None) or {})
+        except FormValidationError as e:
+            return {"success": False, "action": "accept", "problems": e.problems}
+
+        return {
+            "success": True,
+            "action": "accept",
             "responses": response.responses,
             "response_id": response.response_id,
         }

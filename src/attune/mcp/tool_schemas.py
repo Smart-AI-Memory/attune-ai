@@ -459,6 +459,31 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                 "required": ["form", "answers"],
             },
         },
+        "elicitation_ask": {
+            "description": (
+                "Render a declarative form as a NATIVE MCP elicitation "
+                "dialog and return the user's validated answers in one call "
+                "(the v2 rich surface — supports number/date/textarea + "
+                "multi-select with a structured return). Builds the "
+                "requestedSchema, sends elicitation/create, and on accept "
+                "validates the response via collect_form_response. Returns "
+                "{success, action, responses} or {success: false, problems}. "
+                "If the client can't elicit, returns {success: false, "
+                "action: 'unsupported'} — fall back to elicitation_render_form "
+                "(AskUserQuestion)."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "form": form_schema,
+                    "message": {
+                        "type": "string",
+                        "description": "Optional prompt shown above the form",
+                    },
+                },
+                "required": ["form"],
+            },
+        },
     }
 
 
