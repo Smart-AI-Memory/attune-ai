@@ -32,7 +32,19 @@ record pass/fail with evidence:
 5. **Security** — a quick scan for `eval(`/`exec(`/`subprocess(... shell=True`/
    hardcoded secrets in changed code (defer a deep pass to `security-reviewer`).
 6. **Dependencies** — lockfile in sync (no drift); a vuln audit if available
-   (`pip-audit`), noting known-broken tooling rather than blocking on it.
+   (`pip-audit`). Two rules, both verify-first — never report a dependency
+   fact from memory:
+   - **Classify by section, by READING `pyproject.toml`.** For every
+     flagged dependency, state whether it lives in `[project].dependencies`
+     (a **core** dep — exposed to every `pip install <pkg>` user) or under
+     `[project.optional-dependencies].<extra>` (only reaches users who opt
+     into that `<extra>`). `grep` the actual section; do not assume from the
+     package name. A vuln in an optional extra has a smaller blast radius
+     than the same vuln in core — say which, and who is exposed.
+   - **Counts and fix versions come from `pip-audit` output, not memory.**
+     Report the exact advisory count and the minimum fixed version each
+     advisory names, quoting the tool. If `pip-audit` itself is broken,
+     note it as known-infra (not a vuln) rather than blocking or guessing.
 7. **Version-bump consistency** — if a bump is intended, the version is
    consistent across all the files that must change together
    (e.g. `pyproject.toml` + `plugin.json` + lockfile).
@@ -61,6 +73,12 @@ End with a single verdict the human can act on:
 
 Distinguish **real blockers** from **known-infra noise** (e.g. a flaky non-required
 check, broken pip-audit) — don't fail a release on a non-required flake.
+
+Keep the final report compact — the verdict line, the table, and the blockers
+list. Put evidence in the table's Notes cells, not in long per-check transcripts;
+a verbose dump risks the structured verdict being truncated. If you need to show
+raw `pip-audit` / CI output, summarize it to the count and the fix version rather
+than pasting it whole.
 
 ## Examples
 

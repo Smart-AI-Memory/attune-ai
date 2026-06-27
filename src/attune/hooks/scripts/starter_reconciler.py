@@ -1,0 +1,300 @@
+#!/usr/bin/env python3
+"""SessionStart hook: reconcile next_session_starter.md threads vs reality.
+
+The companion to ``starter_prompt_nudge.py``. That hook *surfaces* the
+cross-session handoff file; this one *fact-checks* it. A handoff goes
+stale on arrival when its headline "do this big thing" item is already
+done — e.g. the starter says "merge PR #1118" but #1118 merged hours
+ago, or "ship 9.0.0" but 9.0.0 is already on PyPI. Reconciling that by
+hand (branch exists? PR merged? version published?) is ~5 minutes of
+archaeology every session. This hook turns it into a glance.
+
+It parses the starter's *named threads* — ``#PR`` numbers, branch names,
+and ``X.Y.Z`` version strings — and checks each against git / ``gh`` /
+PyPI in parallel, then prints a one-block freshness banner:
+
+    [starter-reconcile] ~/.attune/next_session_starter.md
+      PRs: #1116 MERGED · #1117 MERGED · #1121 MERGED
+      branches: claude/foo GONE
+      PyPI attune-ai latest=9.0.0 (starter mentions: 9.0.0, 8.5.0)
+
+A MERGED PR / GONE branch / already-published version is the tell that
+the headline action is done — read the banner before trusting the lead.
+
+Bounded for SessionStart: thread counts are capped and all network
+checks run concurrently under a hard wall-clock budget; anything that
+doesn't finish (or errors) is reported ``unverified`` rather than
+blocking. Exit code is always 0 — a reconciler failure must never stop
+a session from starting.
+
+Lives under the enforcement framework at
+``docs/specs/enforcement-vs-documentation/`` as a soft, informational
+surfacing (no exit 2), so it doesn't count against the enforcement cap.
+
+Copyright 2026 Smart-AI-Memory
+Licensed under Apache 2.0
+"""
+
+from __future__ import annotations
+
+import concurrent.futures
+import json
+import re
+import subprocess
+import sys
+import urllib.request
+from pathlib import Path
+
+STARTER_PATH = Path.home() / ".attune" / "next_session_starter.md"
+
+#: Relative location of a per-repo handoff, under the git toplevel.
+PROJECT_STARTER_RELPATH = Path(".attune") / "next_session_starter.md"
+
+# --- Bounds (keep SessionStart snappy) -------------------------------
+#: Cap how many of each thread we verify, newest-mentioned first.
+MAX_PRS = 6
+MAX_BRANCHES = 4
+#: Per-subprocess timeout for a single git/gh call (seconds).
+SUBPROC_TIMEOUT = 4
+#: Total wall-clock budget for ALL network checks combined (seconds).
+WALL_BUDGET = 8
+#: urlopen timeout for the single PyPI lookup (seconds).
+HTTP_TIMEOUT = 4
+
+# --- Thread extraction patterns --------------------------------------
+#: ``#1121`` PR references (markdown headings always have a space after
+#: ``#`` so ``# Heading`` never matches; ``#1121`` does).
+PR_RE = re.compile(r"#(\d{1,6})\b")
+#: Branch names — restricted to the prefixes this project actually uses
+#: for branches, to avoid matching doc paths like ``docs/specs/...``.
+BRANCH_RE = re.compile(r"\b(?:release|hotfix|claude|feat|fix)/[A-Za-z0-9._/-]+")
+#: ``X.Y.Z`` semantic versions.
+VERSION_RE = re.compile(r"\b\d+\.\d+\.\d+\b")
+
+
+def _find_project_starter(start: Path | None = None) -> Path | None:
+    """Return ``<git-toplevel>/.attune/next_session_starter.md`` or None.
+
+    Mirrors ``starter_prompt_nudge._find_project_starter`` — walks up
+    from ``start`` (default cwd) to the repo root and returns the
+    project-local starter if it exists. ``start`` is a parameter so
+    tests can pin the search root.
+    """
+    if start is None:
+        start = Path.cwd()
+    for parent in [start, *start.parents]:
+        if (parent / ".git").exists():
+            candidate = parent / PROJECT_STARTER_RELPATH
+            return candidate if candidate.is_file() else None
+    return None
+
+
+def _dedupe(items: list[str]) -> list[str]:
+    """De-duplicate preserving first-seen order."""
+    return list(dict.fromkeys(items))
+
+
+def extract_threads(text: str) -> tuple[list[int], list[str], list[str]]:
+    """Pull (pr_numbers, branches, versions) from starter ``text``.
+
+    PR numbers and branches are capped (``MAX_PRS`` / ``MAX_BRANCHES``)
+    so the reconciler's network fan-out stays bounded; versions are not
+    capped (no per-version network call — one PyPI lookup serves all).
+    """
+    prs = [int(n) for n in _dedupe(PR_RE.findall(text))][:MAX_PRS]
+    branches = _dedupe(BRANCH_RE.findall(text))[:MAX_BRANCHES]
+    versions = _dedupe(VERSION_RE.findall(text))
+    return prs, branches, versions
+
+
+def _package_name(repo_root: Path | None) -> str | None:
+    """Best-effort package name from ``pyproject.toml`` (regex, no toml).
+
+    Avoids a ``tomllib`` dependency so the hook runs under the user's
+    ``python`` even when that's < 3.11. Returns None if no pyproject /
+    no ``name = "..."`` line is found.
+    """
+    if repo_root is None:
+        return None
+    pyproject = repo_root / "pyproject.toml"
+    try:
+        text = pyproject.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    match = re.search(r'(?m)^\s*name\s*=\s*["\']([^"\']+)["\']', text)
+    return match.group(1) if match else None
+
+
+def _run(cmd: list[str], cwd: Path | None) -> subprocess.CompletedProcess | None:
+    """Run ``cmd``, returning the result or None on timeout / OS error."""
+    try:
+        return subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=SUBPROC_TIMEOUT,
+            cwd=str(cwd) if cwd else None,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+
+
+def check_pr(num: int, cwd: Path | None) -> str:
+    """Return a PR's state (``MERGED`` / ``OPEN`` / ``CLOSED``) or ``unverified``."""
+    result = _run(["gh", "pr", "view", str(num), "--json", "state", "-q", ".state"], cwd)
+    if result is None or result.returncode != 0:
+        return "unverified"
+    return result.stdout.strip().upper() or "unverified"
+
+
+def check_branch(name: str, cwd: Path | None) -> str:
+    """Return ``exists`` / ``gone`` for a remote branch, or ``unverified``."""
+    result = _run(["git", "ls-remote", "--heads", "origin", name], cwd)
+    if result is None or result.returncode != 0:
+        return "unverified"
+    return "exists" if result.stdout.strip() else "gone"
+
+
+def pypi_latest(pkg: str) -> str | None:
+    """Return the latest version string for ``pkg`` on PyPI, or None."""
+    url = f"https://pypi.org/pypi/{pkg}/json"
+    try:
+        # noqa: S310 / nosec B310 — hardcoded https PyPI URL, scheme is fixed.
+        with urllib.request.urlopen(url, timeout=HTTP_TIMEOUT) as resp:  # noqa: S310  # nosec B310
+            data = json.load(resp)
+        return data["info"]["version"]
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: any PyPI hiccup (offline, 404, parse) is non-fatal
+        # — the version line is simply omitted from the banner.
+        return None
+
+
+def reconcile(text: str, pkg: str | None, cwd: Path | None) -> dict:
+    """Check every extracted thread concurrently under ``WALL_BUDGET``.
+
+    Returns a dict with ``prs`` / ``branches`` (name → status), the
+    ``pypi`` latest version (or None), and the ``versions`` mentioned in
+    the starter. Threads whose check doesn't finish within the budget
+    are reported ``unverified``.
+    """
+    prs, branches, versions = extract_threads(text)
+    results: dict = {
+        "prs": dict.fromkeys(prs, "unverified"),
+        "branches": dict.fromkeys(branches, "unverified"),
+        "pypi": None,
+        "versions": versions,
+    }
+    if not prs and not branches and not pkg:
+        return results
+
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=8)
+    futures: dict = {}
+    for num in prs:
+        futures[executor.submit(check_pr, num, cwd)] = ("pr", num)
+    for branch in branches:
+        futures[executor.submit(check_branch, branch, cwd)] = ("branch", branch)
+    if pkg:
+        futures[executor.submit(pypi_latest, pkg)] = ("pypi", None)
+
+    done, _ = concurrent.futures.wait(futures, timeout=WALL_BUDGET)
+    for future in done:
+        kind, key = futures[future]
+        try:
+            value = future.result()
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: a single check raising must not sink the others.
+            continue
+        if kind == "pr":
+            results["prs"][key] = value
+        elif kind == "branch":
+            results["branches"][key] = value
+        elif kind == "pypi":
+            results["pypi"] = value
+
+    # Don't block the session on stragglers — their subprocesses are
+    # already timeout-bounded; abandon any still running.
+    executor.shutdown(wait=False, cancel_futures=True)
+    return results
+
+
+def format_banner(results: dict, label: str, path: Path) -> str | None:
+    """Render the freshness banner, or None if nothing to report."""
+    prs = results["prs"]
+    branches = results["branches"]
+    pypi = results["pypi"]
+    versions = results["versions"]
+    if not prs and not branches and pypi is None:
+        return None
+
+    lines = [f"[starter-reconcile:{label}] {path}"]
+    if prs:
+        joined = " · ".join(f"#{num} {state}" for num, state in prs.items())
+        lines.append(f"  PRs: {joined}")
+    if branches:
+        joined = " · ".join(f"{name} {state}" for name, state in branches.items())
+        lines.append(f"  branches: {joined}")
+    if pypi is not None:
+        suffix = f" (starter mentions: {', '.join(versions)})" if versions else ""
+        pkg = results.get("pkg") or ""
+        label_pkg = f"PyPI {pkg}".rstrip()
+        lines.append(f"  {label_pkg} latest={pypi}{suffix}")
+    return "\n".join(lines)
+
+
+def _reconcile_and_emit(path: Path, label: str, repo_root: Path | None) -> bool:
+    """Reconcile a single starter file and print its banner if any.
+
+    Returns True if a banner was printed, False on any no-op.
+    """
+    try:
+        if not path.is_file() or path.stat().st_size == 0:
+            return False
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return False
+
+    pkg = _package_name(repo_root)
+    results = reconcile(text, pkg, repo_root)
+    results["pkg"] = pkg or ""
+    banner = format_banner(results, label, path)
+    if banner is None:
+        return False
+    print(banner)
+    return True
+
+
+def _repo_root(start: Path | None = None) -> Path | None:
+    """Return the git toplevel walking up from ``start`` (default cwd)."""
+    if start is None:
+        start = Path.cwd()
+    for parent in [start, *start.parents]:
+        if (parent / ".git").exists():
+            return parent
+    return None
+
+
+def main() -> int:
+    """Reconcile the project-local then global starter, if present."""
+    repo_root = _repo_root()
+    project_path = _find_project_starter()
+    if project_path is not None:
+        _reconcile_and_emit(project_path, "project", repo_root)
+
+    if project_path is None or STARTER_PATH.resolve() != project_path.resolve():
+        _reconcile_and_emit(STARTER_PATH, "global", repo_root)
+    return 0
+
+
+if __name__ == "__main__":
+    from _sdk_gate import exit_if_sdk_subprocess
+
+    exit_if_sdk_subprocess()
+    try:
+        sys.exit(main())
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL: hook errors must never block session start.
+        print(
+            f"[starter-reconcile] hook error (continuing): " f"{type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(0)
