@@ -154,6 +154,41 @@ proven, so v1 is even smaller than D5 implied:
 `AskUserQuestion` → validated `FormResponse`; the true stepping stone).
 Agent recommends **B**. See salvage-assessment.md.
 
+## D7 — Option B built; two MCP tools + skill-driven mapping; §4 needs a guard relaxation
+
+**Date:** 2026-06-27 · **Status:** decided · built in PR #1128
+
+The bridge-nature fork (open at the end of D6) is resolved as **B**, and
+Option B is built ([PR #1128](https://github.com/Smart-AI-Memory/attune-ai/pull/1128)).
+Shape of the build:
+
+- **Two MCP tools, pure reuse of the bridge's three functions** — no new
+  surface-specific translation to retest: `elicitation_render_form`
+  (validate definition + batched payloads) and
+  `elicitation_collect_response` (validate answers, R4). The bridge core
+  (`attune.elicitation`, 26 tests, 100% line+branch) is the locked spine.
+- **The surface mapping lives in the skill, not Python (D6).**
+  `AskUserQuestion` is an agent tool, not a Python API, so the new
+  `elicit` skill carries the mapping rules (type→`multiSelect`,
+  recommendation-first, "Other" free-text escape, ≤4 batching, two-tier
+  picker for >4 options). attune-hub routes to it.
+
+**The dogfood (R5) caught a real conflict — the §4 enforcement, not just
+the habit.** A live, **global** PreToolUse guard
+(`~/.claude/hooks/ask_question_format_guard.py`) hard-blocks any
+`AskUserQuestion` with >1 question. Consequences:
+
+- **Multi-select itself (D2, priority-1) is unaffected** — `multiSelect:
+  true` is one question and ships today.
+- **§4 multi-*field* batching was blocked** until the guard was relaxed.
+  Patrick approved §4 and the relaxation: the guard now permits a
+  **deliberate** batched form — opt-in via `metadata.source` containing
+  "form" (the `elicit` skill sets `"elicit-form"`), still capped at 4 —
+  while the one-question default holds for everything else; multi-select
+  questions are exempted from the recommendation-first requirement. The
+  relaxed guard + the real batched round-trip were dogfooded green. (The
+  guard is personal config, not in the repo.)
+
 ## Open
 
 - **Confirm CC elicitation support** — low priority (elicitation is
