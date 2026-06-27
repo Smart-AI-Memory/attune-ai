@@ -344,6 +344,24 @@ class TestGetElicitationTools:
         assert set(_field_types(tools, "elicitation_render_widget")) == expected
         assert set(_field_types(tools, "elicitation_ask")) == expected
 
+    def test_collect_response_accepts_rich_controls(self) -> None:
+        # collect_response is the shared validator for the widget round-trip,
+        # which posts back number/date/textarea — its input enum must accept
+        # the rich controls or the round-trip breaks at validation. Regression
+        # guard for the gap found dogfooding the v2 demo.
+        expected = {
+            "text_input",
+            "textarea",
+            "single_select",
+            "multi_select",
+            "boolean",
+            "number",
+            "date",
+        }
+        assert (
+            set(_field_types(get_elicitation_tools(), "elicitation_collect_response")) == expected
+        )
+
     def test_v2_field_schema_has_numeric_bounds(self) -> None:
         tools = get_elicitation_tools()
         items = tools["elicitation_render_widget"]["input_schema"]["properties"]["form"][
