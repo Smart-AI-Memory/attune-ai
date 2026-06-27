@@ -353,6 +353,44 @@ D9/D10). Next session: render a form, submit it, confirm the
 `sendPrompt` JSON parses → `collect_form_response`. Tests prove the
 transform + emit; the live receipt is deferred.
 
+## D12 — adoption gap: the enhanced form is consumed by ONE path, and most features are not fits
+
+**Date:** 2026-06-27 · **Status:** finding (recorded at Patrick's
+request) · grounded by grep, not assumed
+
+The v1/v2 elicitation surface is built and validated standalone, but a
+grep of `plugin/skills` + `plugin/commands` for consumers shows
+**adoption = one path**: the `elicit` skill itself, reachable only via
+the `attune-hub` routing table (`"scope this" → elicit`). **No feature
+workflow has adopted it**, and the design's named first integration —
+`/attune` discovery (design.md §5, G3, "for sign-off") — was never
+wired. Classic "registered ≠ working" adoption gap.
+
+But "wire it everywhere" is the wrong conclusion — the §4 batching rule
+itself says stay single-question when only one dimension is unknown.
+The features split:
+
+- **Genuine fits (multi-dimension intake) — the real adoption targets:**
+  - `/spec` — does the heaviest interactive scoping of any feature, all
+    **raw one-at-a-time `AskUserQuestion`** (mode / plan-approval /
+    between-stage gates). Its kickoff (goal + scope + focus) is
+    *literally* the elicit worked example, yet unconverted. Highest
+    payoff.
+  - `/attune` discovery — goal + scope + concerns; design's named first
+    target.
+  - `/planning` — feature/tdd/architecture + scope (maybe).
+- **Not fits (single-arg / path-scoped) — should stay one-question:**
+  `/code-quality`, `/security-audit`, `/bug-predict`, `/smart-test`,
+  `/release-prep` each take one `argument-hint` (a path/version). At
+  most one genuine question; a multi-field form there is the
+  "bureaucratic intake" the rule warns against.
+
+**Takeaway:** the gap is ~2–3 genuinely multi-dimension flows (not 22),
+and the highest-value one (`/spec`) is the design's own showcase still
+running the old way. A real first-consumer integration — not another
+surface — is the next move that would prove the form earns its keep.
+Needs its own scoping (which flow, behind the §4 rule); not started.
+
 ## Open
 
 - **Confirm CC elicitation support** — low priority (elicitation is
