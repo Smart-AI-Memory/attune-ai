@@ -24,15 +24,19 @@ multiple-choice primitive. Two costs:
    sequential button-questions. A single intake form would collect all
    of it in one pass. (Observed live: one session asked ~8 separate
    button-questions to gather less than a single form holds.)
-2. **The control palette is impoverished.** HTML forms have text,
-   textarea, number, range, select, multi-select, radio, checkbox,
-   toggle, date, color. `AskUserQuestion` has buttons. Inputs that are
-   natural as a slider (budget cap, fan-out, severity threshold), a
-   multi-select (the concerns palette), or free text (spec outcome) are
-   today either coerced into buttons or parsed out of prose.
+2. **The control palette is narrow** — but less than first assumed
+   (corrected by Phase 0, see [decisions.md](decisions.md) D4).
+   `AskUserQuestion` is *not* buttons-only: it natively supports
+   **multi-select** (`multiSelect: true`) and **up to 4 questions in one
+   pass**, with a clean structured return. The genuine remaining gaps
+   are (a) richer controls HTML has and it lacks — slider (budget cap,
+   fan-out), free textarea (spec outcome), date/number — and (b)
+   attune's own one-question-per-turn habit, which suppresses the
+   multi-question capability the platform already offers.
 
-Multi-select is the headline gap: it is the control Patrick reached for
-first and the one buttons most obviously cannot express.
+Multi-select is still the headline want — but Phase 0 found it already
+delivered by `AskUserQuestion`'s `multiSelect`, so v1 is mostly about
+*using the surface fully*, not building a new one.
 
 ## Goals
 
@@ -58,12 +62,21 @@ first and the one buttons most obviously cannot express.
 - Building every HTML control. Color and other low-value inputs are
   explicitly out of the v1 target set (G2).
 
-## Phase 0 — Research spike (gate before requirements firm up)
+## Phase 0 — Research spike (DONE 2026-06-27 → see decisions.md D4)
+
+**Outcome:** the spike overturned the premise. `AskUserQuestion` already
+delivers the two priority controls (multi-select + ≤4 questions/pass,
+clean return); MCP elicitation cannot express multi-select (spec
+excludes arrays) and its Claude-Code client support is unconfirmed;
+the rich-control widget has no portable MCP-owned surface. **Surface
+decision: AskUserQuestion-first; elicitation rejected; widget
+deferred** — full rationale + citations in
+[decisions.md](decisions.md) D4. The original research questions are
+retained below for the record.
 
 Chosen 2026-06-27: do not spec on unverified assumptions about the
-delivery surface. Phase 0 grounds the surface decision; R-numbers below
-are provisional until it lands. Verify against real docs/SDK, never
-from memory (the claims in the bullets are the *questions*, not facts).
+delivery surface. Phase 0 grounded the surface decision; verify against
+real docs/SDK, never from memory.
 
 - **Q0.1 — MCP elicitation reality.** Does MCP native elicitation
   exist in the client(s) attune targets? What JSON-schema field types

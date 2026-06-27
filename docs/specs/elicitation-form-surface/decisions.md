@@ -52,14 +52,62 @@ architectural choice locked this session; the designer and data binding
 themselves are explicitly out of v1 scope. Also makes forms
 surface-agnostic, which de-risks the Phase 0 surface fork (D1).
 
-## Open (to be decided in design, after Phase 0)
+## D4 — Phase 0 outcome: AskUserQuestion-first; elicitation rejected, widget deferred
+
+**Date:** 2026-06-27 · **Status:** decided (Phase 0 Q0.4) · **Resolves D1**
+
+Phase 0 research (cited findings below) **overturned the spec's
+premise** and resolves the surface fork. v1 builds on the built-in
+**`AskUserQuestion`** tool; MCP elicitation is rejected; the rendered
+widget is deferred to a later enhancement.
+
+**Findings (verify-first; confidence flagged):**
+
+- **`AskUserQuestion` already supports the two priority controls.**
+  `multiSelect: true` per question = choose-many; the `questions` array
+  takes **up to 4 questions in one call** = multi-field in a single
+  pass; the return is a clean structured dict (no message-parsing).
+  *Confirmed against the live tool schema — documented.* The premise
+  that "AskUserQuestion is buttons-only, one question per turn" was
+  wrong: the one-question habit is **attune's own question-shape rule**
+  (`feedback_question_shape` / `ask_question_format_guard`), not a
+  platform limit.
+- **MCP elicitation cannot express multi-select.** The 2025-06-18 spec
+  restricts `requestedSchema` to flat objects of primitives
+  (string/number/boolean/enum); arrays/multi-select are excluded *by
+  design*. *Documented.* And Claude Code client support for elicitation
+  is **unconfirmed (likely absent)** — undocumented in the CC/SDK docs.
+  Either way it fails the priority-1 control, so it is rejected.
+- **The rich palette (slider/textarea/date) has no portable surface.**
+  Only the `visualize`-style widget renders it, and that is an
+  Anthropic surface with a fragile post-JSON-back return — **not an
+  MCP-server capability** attune can own. Deferred, not core.
+
+**Decision:** v1 = a declarative form (D3) rendered onto
+`AskUserQuestion` at its full extent (multi-select + ≤4 questions/pass),
+plus **relaxing attune's one-question rule** where a genuinely compound
+intake warrants a multi-question turn. Rich-control widget = deferred
+enhancement off the *same* declarative artifact. This collapses the
+build to a renderer + a rule change — no new infrastructure — and
+re-fuses the spec with its sibling
+[socratic-ambiguity-calibration](../socratic-ambiguity-calibration/requirements.md)
+(the lever is *how we question*, not new plumbing).
+
+**Sources:** MCP spec 2025-06-18 elicitation
+(`modelcontextprotocol.io/.../client/elicitation`); Claude Code Agent
+SDK user-input docs (`code.claude.com/.../agent-sdk/user-input`);
+live `AskUserQuestion` tool schema.
+
+## Open (to be decided in design)
 
 - **First integrated flow (G3)** — leaning Socratic discovery flow
   (Patrick 2026-06-27); confirmed in design.
-- **Result-return mechanism + parsing** — delegated to the agent's
-  design-time judgement after Phase 0 grounds the surfaces (Patrick
-  2026-06-27); R6/D3 (declarative artifact) holds regardless.
-- **Final surface decision** (Phase 0 Q0.4).
+- **One-question-rule relaxation** — define *when* a multi-question
+  `AskUserQuestion` turn is warranted (compound intake) vs the default
+  single ask; must compose with `socratic-ambiguity-calibration`.
+- **Confirm CC elicitation support** — low priority (elicitation is
+  rejected regardless for lacking multi-select), but worth nailing if
+  the widget/enhancement phase is ever revisited.
 - **Revisit the `socratic-ambiguity-calibration` "ask only when
   genuinely ambiguous" rule** — Patrick endorses it now but is open to
   changing it with more feedback. Future discussion, not a v1 change.
