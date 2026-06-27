@@ -1,7 +1,6 @@
 """Tests for plugin help hooks.
 
 Covers:
-- help_freshness_check.py (SessionStart hook)
 - help_on_error.py (PostToolUse hook)
 - help_post_commit.py (PostToolUse hook)
 
@@ -11,125 +10,12 @@ All hooks exit 0 always (informational, never block).
 
 from __future__ import annotations
 
-import hashlib
 import json
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
-# ── help_freshness_check ─────────────────────────────────
-
-
-class TestHelpFreshnessCheck:
-    """Tests for plugin/hooks/help_freshness_check.py."""
-
-    def _run_main(self, plugin_root: Path) -> str:
-        """Run freshness check main() and capture stderr."""
-        import importlib
-
-        # Load the module from the plugin hooks directory
-        spec_path = (
-            Path(__file__).resolve().parents[3] / "plugin" / "hooks" / "help_freshness_check.py"
-        )
-        spec = importlib.util.spec_from_file_location("help_freshness_check", spec_path)
-        mod = importlib.util.module_from_spec(spec)
-
-        stderr_capture = StringIO()
-        with (
-            patch.object(mod, "__file__", str(plugin_root / "hooks" / "check.py")),
-            patch("sys.stderr", stderr_capture),
-        ):
-            # Patch the Path(__file__) resolution inside main
-            with patch(
-                "pathlib.Path.resolve",
-                side_effect=lambda self: (
-                    plugin_root / "hooks" / "check.py"
-                    if "check" in str(self) or "freshness" in str(self)
-                    else Path.resolve(self)
-                ),
-            ):
-                spec.loader.exec_module(mod)  # type: ignore[union-attr]
-                mod.main()
-
-        return stderr_capture.getvalue()
-
-    def test_returns_early_when_no_manifest(self, tmp_path: Path) -> None:
-        """Exits silently when source_manifest.json absent."""
-        import importlib.util
-
-        spec_path = (
-            Path(__file__).resolve().parents[3] / "plugin" / "hooks" / "help_freshness_check.py"
-        )
-        spec = importlib.util.spec_from_file_location("help_freshness_check", spec_path)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)  # type: ignore[union-attr]
-
-        # Create a fake plugin structure with no manifest
-        hooks_dir = tmp_path / "plugin" / "hooks"
-        hooks_dir.mkdir(parents=True)
-        generated_dir = tmp_path / "plugin" / "help" / "generated"
-        generated_dir.mkdir(parents=True)
-        # No source_manifest.json
-
-        stderr_capture = StringIO()
-        with (
-            patch("sys.stderr", stderr_capture),
-            patch.object(Path, "resolve", return_value=hooks_dir / "check.py"),
-        ):
-            mod.main()
-
-        assert stderr_capture.getvalue() == ""
-
-    def test_returns_early_when_manifest_fresh(self, tmp_path: Path) -> None:
-        """Exits silently when mtime < 24h old."""
-        import importlib.util
-
-        spec_path = (
-            Path(__file__).resolve().parents[3] / "plugin" / "hooks" / "help_freshness_check.py"
-        )
-        spec = importlib.util.spec_from_file_location("help_freshness_check", spec_path)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)  # type: ignore[union-attr]
-
-        # Build fake plugin structure
-        plugin_root = tmp_path / "plugin"
-        hooks_dir = plugin_root / "hooks"
-        hooks_dir.mkdir(parents=True)
-        generated_dir = plugin_root / "help" / "generated"
-        generated_dir.mkdir(parents=True)
-        manifest_path = generated_dir / "source_manifest.json"
-        manifest_path.write_text("{}", encoding="utf-8")
-        # mtime is now (< 24h)
-
-        stderr_capture = StringIO()
-        with (
-            patch("sys.stderr", stderr_capture),
-            patch.object(Path, "resolve", return_value=hooks_dir / "check.py"),
-        ):
-            mod.main()
-
-        assert stderr_capture.getvalue() == ""
-
-    def test_hash_file(self, tmp_path: Path) -> None:
-        """Verifies correct SHA-256 hash."""
-        import importlib.util
-
-        spec_path = (
-            Path(__file__).resolve().parents[3] / "plugin" / "hooks" / "help_freshness_check.py"
-        )
-        spec = importlib.util.spec_from_file_location("help_freshness_check", spec_path)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)  # type: ignore[union-attr]
-
-        test_file = tmp_path / "test.txt"
-        content = b"hello world"
-        test_file.write_bytes(content)
-
-        expected = hashlib.sha256(content).hexdigest()
-        assert mod._hash_file(test_file) == expected
-
 
 # ── help_on_error ─────────────────────────────────────────
 

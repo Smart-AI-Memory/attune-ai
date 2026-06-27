@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Plugin no longer shows a false "help templates may be stale"
+  notice on session start.** The `help_freshness_check.py` SessionStart
+  hook resolved the help bundle's `source_manifest.json` paths (which
+  are repo-relative — `src/`, `content/`, `.claude/`) against a plugin
+  user's environment, where those source files don't ship (the
+  marketplace installs only `./plugin`). After the manifest crossed 24h
+  old it reported nearly every sampled template "stale" and told users
+  to run `/coach maintain` — a regeneration action a consumer can't
+  meaningfully perform. Removed the hook: attune's help is a static,
+  versioned artifact in a user's world and can't drift relative to
+  anything they control; repo-side staleness is already covered by the
+  dev `.help` freshness nudge plus pre-commit regen and CI.
+
 ## [9.0.0] — 2026-06-26
 
 ### Security
