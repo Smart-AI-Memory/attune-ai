@@ -421,6 +421,54 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
         },
         "required": ["title", "fields"],
     }
+    # The v2 rich surfaces (elicitation_ask, render_widget) render all 7
+    # controls, so their field schema exposes the full type enum + the
+    # v2.1 numeric/length bounds. v1 (render_form/collect_response) stays on
+    # the 4-type schema above — AskUserQuestion has no native number/date,
+    # so it would only degrade them to free text (D10 enum-honesty fix).
+    rich_field_schema = {
+        "type": "object",
+        "properties": {
+            **field_schema["properties"],
+            "type": {
+                "type": "string",
+                "enum": [
+                    "text_input",
+                    "textarea",
+                    "single_select",
+                    "multi_select",
+                    "boolean",
+                    "number",
+                    "date",
+                ],
+                "description": (
+                    "Control type. v1: text_input/single_select/multi_select/"
+                    "boolean. v2.1 rich: textarea, number (min/max), date "
+                    "(YYYY-MM-DD)."
+                ),
+            },
+            "minimum": {"type": "number", "description": "Lower bound for number"},
+            "maximum": {"type": "number", "description": "Upper bound for number"},
+            "max_length": {
+                "type": "integer",
+                "description": "Max length for text_input/textarea",
+            },
+        },
+        "required": ["id", "text", "type"],
+    }
+    rich_form_schema = {
+        "type": "object",
+        "description": "Declarative form artifact (data, not code — D3).",
+        "properties": {
+            **form_schema["properties"],
+            "fields": {
+                "type": "array",
+                "items": rich_field_schema,
+                "description": "The form's fields (alias: 'questions')",
+            },
+        },
+        "required": ["title", "fields"],
+    }
     return {
         "elicitation_render_form": {
             "description": (
@@ -475,7 +523,34 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    "form": form_schema,
+                    "form": rich_form_schema,
+                    "message": {
+                        "type": "string",
+                        "description": "Optional prompt shown above the form",
+                    },
+                },
+                "required": ["form"],
+            },
+        },
+        "elicitation_render_widget": {
+            "description": (
+                "Render a declarative form as an inline HTML form for "
+                "show_widget (the v2 rich surface for clients that render "
+                "widgets, e.g. Cowork/claude.ai). Returns {success, html, "
+                "title, field_ids} — pass 'html' straight to "
+                "mcp__visualize__show_widget. The form renders ALL 7 controls "
+                "richly (number spinner, date picker, multi-line textarea, "
+                "multi-select checkboxes) and posts answers back via "
+                "sendPrompt as a sentinel-marked JSON block "
+                "('__elicitation_response__'); parse that block and validate "
+                "it with elicitation_collect_response (R4). Returns {success: "
+                "false, problems} on a malformed form. Use when native MCP "
+                "elicitation is unavailable but the client can render widgets."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "form": rich_form_schema,
                     "message": {
                         "type": "string",
                         "description": "Optional prompt shown above the form",

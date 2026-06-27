@@ -260,6 +260,137 @@ boots the updated server. This is the v2 build's renderer — V2.0–V2.2
 (the three build phases) are now complete; V2.3 (designer/data-binding)
 stays held.
 
+## D10 — live R5 dogfood: native form rendering NOT supported by the CC client
+
+**Date:** 2026-06-27 · **Status:** decided (Patrick observed the live run)
+
+The deferred R5 receipt from D9 finally ran: a fresh session booted the
+MCP server on V2.2 code, so `mcp__attune-ai__elicitation_ask` was live.
+Two declarative forms were sent through it.
+
+**Result — the lead surface (D8) does NOT render on Claude Code today.**
+The client advertises an elicitation session (so the handler did *not*
+short-circuit to `unsupported` — `session is not None`), `elicit_form`
+was sent, and the client returned `action: "decline"` with **no dialog
+shown** (Patrick confirmed nothing appeared on screen). So:
+
+- Server-side mechanics are proven live: artifact → `requestedSchema`
+  → `elicit_form` → structured `ElicitResult` → clean non-accept
+  handling, no crash. The emit + decline path round-trips end to end.
+- Native form **rendering** is unproven — this CC build auto-declines
+  form elicitation instead of presenting it. D8's "MCP elicitation
+  leads" bet is **not validated on this client**; the AskUserQuestion
+  fallback (v1's choice) remains the only working surface here.
+- **Design gap:** `elicitation_ask` only self-falls-back when
+  `session is None` (→ `unsupported`). An unrendered auto-`decline`
+  is indistinguishable from a real user "no", so the caller never
+  falls back to `elicitation_render_form`. The lead surface silently
+  no-ops as a decline. (server.py:810–831.)
+
+**Bug found — rich controls unreachable through the MCP front door.**
+A form with a `date`/`number` field is rejected at input validation:
+`'date' is not one of ['text_input','single_select','multi_select',
+'boolean']`. `elicitation_ask` reuses the v1 `field_schema`
+(tool_schemas.py:389–409, shared with the AskUserQuestion bridge),
+whose `type` enum was never widened — even though V2.1 added
+number/date/textarea to the artifact, V2.2's
+`form_to_elicitation_schema` handles all 7, and the tool's own
+description advertises them. Fix is NOT a global enum widen (v1
+`render_form`/`collect_response` intentionally support 4 — AskUser
+Question has no native number/date); `elicitation_ask` needs its own
+7-type field schema.
+
+This closes the "registered ≠ working" gap for v2 honestly: the
+plumbing works, the lead-surface premise does not hold on CC, and the
+front door rejects the very controls V2.1 added.
+
+## D11 — S1 (`show_widget`) built as the rich surface; D10 enum fix shipped with it
+
+**Date:** 2026-06-27 · **Status:** decided (Patrick chose "build S1,
+existing 7 first")
+
+D10 showed native elicitation does not render on Claude Code, which
+promotes S1 (`show_widget`) from "escape hatch" to the **working rich
+surface**. Scope chosen: render the existing **7** controls; the new
+`slider`/`color` types stay deferred (they'd touch the locked D3 model
+— a clean follow-up).
+
+Shipped:
+
+- **`form_to_widget_html(form, message)`** (`attune.elicitation.widget`)
+  — the pure `FormSchema → HTML` transform. Self-contained (scoped
+  CDS-token styles, transparent bg, no `position:fixed`), one control
+  per type (number spinner / date picker / multi-line textarea /
+  multi-select checkboxes / Yes-No select). Injection-safe: all
+  form text is `html.escape`d and the submit script reads the DOM by
+  `data-*` attributes — no form data is interpolated into executable JS.
+- **Postback shape (S1, per D4/D8):** on submit the widget calls the
+  global `sendPrompt` with a sentinel-marked fenced JSON block
+  (`__elicitation_response__`, `WIDGET_RESPONSE_MARKER`); number →
+  number, multi-select → list, date → `YYYY-MM-DD`, boolean →
+  `Yes`/`No`. The agent parses it and validates through the EXISTING
+  `collect_form_response` (R4) — no new collection logic.
+- **`elicitation_render_widget` MCP tool** — returns `{html, title,
+  field_ids}`; agent passes `html` to `mcp__visualize__show_widget`.
+- **`elicit` skill** — added the "Choosing a surface" widget bullet +
+  a "Widget surface" round-trip section, and the D10 caveat (a CC
+  `decline` you didn't see the user make = surface unavailable, fall
+  back; don't read it as the user saying no).
+
+**D10 finding #2 fixed as a prerequisite.** `elicitation_render_widget`
+(and `elicitation_ask`) now use a **`rich_form_schema`** whose `type`
+enum lists all 7 controls + `minimum`/`maximum`/`max_length`; v1
+`render_form`/`collect_response` stay on the 4-type schema
+(AskUserQuestion has no native number/date). Without this the rich
+controls
+were rejected at the MCP boundary for the widget tool too, so the fix
+had to land here. Guarded by `test_tool_schemas` (v2 = 7, v1 = 4).
+
+**Not done (live S1 dogfood):** the show_widget round-trip itself is
+unproven *this* session — `elicitation_render_widget` reaches the MCP
+server only after a restart (same per-session-server constraint as
+D9/D10). Next session: render a form, submit it, confirm the
+`sendPrompt` JSON parses → `collect_form_response`. Tests prove the
+transform + emit; the live receipt is deferred.
+
+## D12 — adoption gap: the enhanced form is consumed by ONE path, and most features are not fits
+
+**Date:** 2026-06-27 · **Status:** finding (recorded at Patrick's
+request) · grounded by grep, not assumed
+
+The v1/v2 elicitation surface is built and validated standalone, but a
+grep of `plugin/skills` + `plugin/commands` for consumers shows
+**adoption = one path**: the `elicit` skill itself, reachable only via
+the `attune-hub` routing table (`"scope this" → elicit`). **No feature
+workflow has adopted it**, and the design's named first integration —
+`/attune` discovery (design.md §5, G3, "for sign-off") — was never
+wired. Classic "registered ≠ working" adoption gap.
+
+But "wire it everywhere" is the wrong conclusion — the §4 batching rule
+itself says stay single-question when only one dimension is unknown.
+The features split:
+
+- **Genuine fits (multi-dimension intake) — the real adoption targets:**
+  - `/spec` — does the heaviest interactive scoping of any feature, all
+    **raw one-at-a-time `AskUserQuestion`** (mode / plan-approval /
+    between-stage gates). Its kickoff (goal + scope + focus) is
+    *literally* the elicit worked example, yet unconverted. Highest
+    payoff.
+  - `/attune` discovery — goal + scope + concerns; design's named first
+    target.
+  - `/planning` — feature/tdd/architecture + scope (maybe).
+- **Not fits (single-arg / path-scoped) — should stay one-question:**
+  `/code-quality`, `/security-audit`, `/bug-predict`, `/smart-test`,
+  `/release-prep` each take one `argument-hint` (a path/version). At
+  most one genuine question; a multi-field form there is the
+  "bureaucratic intake" the rule warns against.
+
+**Takeaway:** the gap is ~2–3 genuinely multi-dimension flows (not 22),
+and the highest-value one (`/spec`) is the design's own showcase still
+running the old way. A real first-consumer integration — not another
+surface — is the next move that would prove the form earns its keep.
+Needs its own scoping (which flow, behind the §4 rule); not started.
+
 ## Open
 
 - **Confirm CC elicitation support** — low priority (elicitation is

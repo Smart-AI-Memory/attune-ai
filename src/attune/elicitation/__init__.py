@@ -30,11 +30,14 @@ from attune.elicitation.bridge import (
     form_to_askuserquestion,
 )
 from attune.elicitation.elicitation_schema import form_to_elicitation_schema
+from attune.elicitation.widget import WIDGET_RESPONSE_MARKER, form_to_widget_html
 
 __all__ = [
+    "WIDGET_RESPONSE_MARKER",
     "FormValidationError",
     "collect_form_response",
     "form_from_dict",
     "form_to_askuserquestion",
     "form_to_elicitation_schema",
+    "form_to_widget_html",
 ]
