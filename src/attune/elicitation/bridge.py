@@ -12,6 +12,7 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from attune.meta_workflows.models import (
@@ -24,6 +25,14 @@ from attune.meta_workflows.models import (
 #: The answer values accepted for a BOOLEAN question (its
 #: ``to_ask_user_format`` renders as a Yes/No single-select).
 _BOOLEAN_OPTIONS = ("Yes", "No")
+
+#: ISO-8601 calendar-date format used by DATE questions.
+_DATE_FORMAT = "%Y-%m-%d"
+
+
+def _is_number(value: Any) -> bool:
+    """True if ``value`` is a real number (int or float, but not bool)."""
+    return isinstance(value, int | float) and not isinstance(value, bool)
 
 
 class FormValidationError(ValueError):
@@ -107,6 +116,24 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
         if qtype in (QuestionType.SINGLE_SELECT, QuestionType.MULTI_SELECT) and not options:
             problems.append(f"{where} type {qtype.value} requires non-empty 'options'")
 
+        # v2.1 rich-control constraints (number range, text length).
+        minimum = raw.get("minimum")
+        if minimum is not None and not _is_number(minimum):
+            problems.append(f"{where} 'minimum' must be a number")
+            minimum = None
+        maximum = raw.get("maximum")
+        if maximum is not None and not _is_number(maximum):
+            problems.append(f"{where} 'maximum' must be a number")
+            maximum = None
+        if _is_number(minimum) and _is_number(maximum) and minimum > maximum:
+            problems.append(f"{where} 'minimum' {minimum} exceeds 'maximum' {maximum}")
+        max_length = raw.get("max_length")
+        if max_length is not None and (
+            not isinstance(max_length, int) or isinstance(max_length, bool) or max_length <= 0
+        ):
+            problems.append(f"{where} 'max_length' must be a positive integer")
+            max_length = None
+
         if fid and text and isinstance(fid, str) and isinstance(text, str):
             questions.append(
                 FormQuestion(
@@ -117,6 +144,9 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
                     default=raw.get("default"),
                     help_text=raw.get("help_text"),
                     required=bool(raw.get("required", True)),
+                    minimum=minimum,
+                    maximum=maximum,
+                    max_length=max_length,
                 )
             )
 
@@ -170,9 +200,29 @@ def _validate_answer(question: FormQuestion, value: Any) -> str | None:
             return f"{question.id!r} boolean value {value!r} must be 'Yes' or 'No'"
         return None
 
-    # TEXT_INPUT
+    if question.type == QuestionType.NUMBER:
+        if not _is_number(value):
+            return f"{question.id!r} expects a number"
+        if question.minimum is not None and value < question.minimum:
+            return f"{question.id!r} {value} is below minimum {question.minimum}"
+        if question.maximum is not None and value > question.maximum:
+            return f"{question.id!r} {value} is above maximum {question.maximum}"
+        return None
+
+    if question.type == QuestionType.DATE:
+        if not isinstance(value, str):
+            return f"{question.id!r} expects an ISO date string (YYYY-MM-DD)"
+        try:
+            datetime.strptime(value, _DATE_FORMAT)
+        except ValueError:
+            return f"{question.id!r} {value!r} is not a valid YYYY-MM-DD date"
+        return None
+
+    # TEXT_INPUT / TEXTAREA — a string, optionally length-bounded.
     if not isinstance(value, str):
         return f"{question.id!r} expects a string"
+    if question.max_length is not None and len(value) > question.max_length:
+        return f"{question.id!r} exceeds max_length {question.max_length}"
     return None
 
 

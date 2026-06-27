@@ -22,12 +22,21 @@ from typing import Any
 
 
 class QuestionType(str, Enum):
-    """Types of form questions supported."""
+    """Types of form questions supported.
+
+    The first four are v1 controls (rendered via AskUserQuestion). The
+    last three are v2.1 rich controls — natively expressible on the MCP
+    elicitation surface (D8): number (with min/max), date (ISO-8601
+    string), and textarea (multi-line string with max_length).
+    """
 
     TEXT_INPUT = "text_input"
     SINGLE_SELECT = "single_select"
     MULTI_SELECT = "multi_select"
     BOOLEAN = "boolean"
+    NUMBER = "number"
+    DATE = "date"
+    TEXTAREA = "textarea"
 
 
 class TierStrategy(str, Enum):
@@ -56,6 +65,9 @@ class FormQuestion:
         default: Default value if user doesn't provide one
         help_text: Additional help text shown to user
         required: Whether this question must be answered
+        minimum: Lower bound for NUMBER answers (inclusive); None = none
+        maximum: Upper bound for NUMBER answers (inclusive); None = none
+        max_length: Max character length for TEXT_INPUT/TEXTAREA; None = none
 
     """
 
@@ -66,6 +78,9 @@ class FormQuestion:
     default: str | None = None
     help_text: str | None = None
     required: bool = True
+    minimum: float | None = None
+    maximum: float | None = None
+    max_length: int | None = None
 
     def to_ask_user_format(self) -> dict[str, Any]:
         """Convert to format compatible with AskUserQuestion tool.
