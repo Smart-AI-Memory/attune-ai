@@ -14,6 +14,12 @@
             "command": "python $(git rev-parse --show-toplevel)/src/attune/hooks/scripts/starter_prompt_nudge.py",
             "timeout": 3,
             "statusMessage": "Checking for cross-session handoff..."
+          },
+          {
+            "type": "command",
+            "command": "python $(git rev-parse --show-toplevel)/src/attune/hooks/scripts/starter_reconciler.py",
+            "timeout": 12,
+            "statusMessage": "Reconciling handoff freshness..."
           }
         ]
       }
