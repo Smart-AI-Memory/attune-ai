@@ -227,6 +227,39 @@ D4 verdict: **(a) elicitation-lacks-multi-select OVERTURNED;
 lead.** V2.1 (rich controls on the artifact) and V2.2 (the elicitation
 renderer + live round-trip) inherit this.
 
+## D9 — V2.2 renderer shipped; live round-trip pending a server restart
+
+**Date:** 2026-06-27 · **Status:** decided · see
+[v2-2-requirements.md](v2-2-requirements.md)
+
+V2.2 productionizes the elicitation renderer on the lead surface (D8).
+Grounded against the installed MCP SDK (verify-first):
+``ServerSession.elicit_form(message, requestedSchema, related_request_id)
+-> ElicitResult{action, content}``, reachable from a tool handler via
+``Server.request_context`` (`.session`, `.request_id`).
+
+Shipped:
+
+- **`form_to_elicitation_schema(form)`** (`attune.elicitation`) — the
+  artifact → elicitation ``requestedSchema`` transform for all 7
+  controls; 100% line+branch.
+- **`elicitation_ask` MCP tool** — the full server-side round-trip: build
+  the schema, ``await session.elicit_form(...)``, and on ``accept``
+  validate the structured ``content`` through ``collect_form_response``
+  (R4). ``decline``/``cancel`` return cleanly; a missing/incapable
+  session returns ``action: "unsupported"``/``"error"`` so the caller
+  falls back to ``elicitation_render_form`` (AskUserQuestion). Validated
+  with a mocked session across every path.
+
+**R5 caveat (as in V2.0):** the *true* live round-trip needs an
+elicitation-capable client AND the MCP server running V2.2 code (the
+session's server is started per-session; new tools appear only after a
+restart). The mocked-session test proves the transform + emit + collect
+path end to end; the live dogfood is deferred to the next session that
+boots the updated server. This is the v2 build's renderer — V2.0–V2.2
+(the three build phases) are now complete; V2.3 (designer/data-binding)
+stays held.
+
 ## Open
 
 - **Confirm CC elicitation support** — low priority (elicitation is

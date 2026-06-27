@@ -53,7 +53,23 @@ A form is plain serializable data:
 ```
 
 Field `type` is one of `single_select`, `multi_select`, `boolean`,
-`text_input`. `id` is the stable key the answer comes back under.
+`text_input`, `number` (with `minimum`/`maximum`), `date` (ISO
+`YYYY-MM-DD`), or `textarea` (with `max_length`). `id` is the stable key
+the answer comes back under. The last three are **rich controls** — they
+only render on the native elicitation surface below, not AskUserQuestion.
+
+## Choosing a surface
+
+- **Rich / native — one call:** `elicitation_ask` renders the form as a
+  native MCP elicitation dialog (supports number/date/textarea +
+  multi-select with a structured return) and returns the validated
+  answers in a single call — no manual `AskUserQuestion` mapping. Prefer
+  it when the client supports elicitation or the form uses a rich
+  control. It returns `{success: false, action: "unsupported"}` if the
+  client can't elicit — then fall back to the portable path.
+- **Portable — AskUserQuestion:** steps 2–4 below map the form onto
+  `AskUserQuestion` (selects/booleans/short text only). Use this as the
+  fallback, or when you want the recommendation-first button UX.
 
 ## Step 2 — render it
 

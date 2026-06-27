@@ -29,10 +29,12 @@ from attune.elicitation.bridge import (
     form_from_dict,
     form_to_askuserquestion,
 )
+from attune.elicitation.elicitation_schema import form_to_elicitation_schema
 
 __all__ = [
     "FormValidationError",
     "collect_form_response",
     "form_from_dict",
     "form_to_askuserquestion",
+    "form_to_elicitation_schema",
 ]
