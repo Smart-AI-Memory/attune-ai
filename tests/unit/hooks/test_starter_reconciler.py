@@ -277,3 +277,115 @@ class TestMain:
                 raise OSError("vanished")
 
         assert hook_module._reconcile_and_emit(_Boom(), "global", None) is False
+
+    def test_emits_banner_for_project(self, hook_module, tmp_path, monkeypatch, capsys):
+        proj = tmp_path / "proj_starter.md"
+        proj.write_text("Merged PR #42.\n", encoding="utf-8")
+        monkeypatch.setattr(hook_module, "_find_project_starter", lambda *a, **k: proj)
+        # Absent global file → the global emit no-ops.
+        monkeypatch.setattr(hook_module, "STARTER_PATH", tmp_path / "absent_global.md")
+        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: None)
+        monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
+        hook_module.main()
+        out = capsys.readouterr().out
+        assert "[starter-reconcile:project]" in out
+        assert "#42 MERGED" in out
+
+    def test_global_equal_to_project_skips_global_emit(
+        self, hook_module, tmp_path, monkeypatch, capsys
+    ):
+        # When the global STARTER_PATH IS the project file, the global
+        # emit is skipped (no double banner).
+        proj = tmp_path / "proj.md"
+        proj.write_text("PR #7 merged.\n", encoding="utf-8")
+        monkeypatch.setattr(hook_module, "_find_project_starter", lambda *a, **k: proj)
+        monkeypatch.setattr(hook_module, "STARTER_PATH", proj)
+        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: None)
+        monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
+        hook_module.main()
+        out = capsys.readouterr().out
+        assert "[starter-reconcile:project]" in out
+        assert "[starter-reconcile:global]" not in out
+
+
+# --- helper coverage: find/repo-root, pypi success, empty emit --------
+
+
+class TestFindProjectStarter:
+    """Cover _find_project_starter (the walk + default-cwd branch)."""
+
+    def _make_repo(self, tmp_path, with_starter):
+        (tmp_path / ".git").mkdir()
+        if with_starter is not None:
+            d = tmp_path / ".attune"
+            d.mkdir()
+            (d / "next_session_starter.md").write_text(with_starter, encoding="utf-8")
+        return tmp_path
+
+    def test_finds_starter_at_git_toplevel(self, hook_module, tmp_path):
+        repo = self._make_repo(tmp_path, "handoff")
+        nested = repo / "src" / "deep"
+        nested.mkdir(parents=True)
+        found = hook_module._find_project_starter(start=nested)
+        assert found == repo / ".attune" / "next_session_starter.md"
+
+    def test_none_when_no_repo(self, hook_module, tmp_path):
+        assert hook_module._find_project_starter(start=tmp_path) is None
+
+    def test_none_when_repo_but_no_starter(self, hook_module, tmp_path):
+        repo = self._make_repo(tmp_path, None)
+        assert hook_module._find_project_starter(start=repo) is None
+
+    def test_default_start_uses_cwd(self, hook_module, tmp_path, monkeypatch):
+        repo = self._make_repo(tmp_path, "# cwd handoff\n")
+        monkeypatch.chdir(repo)
+        found = hook_module._find_project_starter()  # no start= → cwd
+        assert found == repo / ".attune" / "next_session_starter.md"
+
+
+class TestRepoRoot:
+    """Cover _repo_root (found, not-found, default-cwd)."""
+
+    def test_finds_git_toplevel(self, hook_module, tmp_path):
+        (tmp_path / ".git").mkdir()
+        nested = tmp_path / "a" / "b"
+        nested.mkdir(parents=True)
+        assert hook_module._repo_root(start=nested) == tmp_path
+
+    def test_none_when_no_repo(self, hook_module, tmp_path):
+        assert hook_module._repo_root(start=tmp_path) is None
+
+    def test_default_start_uses_cwd(self, hook_module, tmp_path, monkeypatch):
+        (tmp_path / ".git").mkdir()
+        monkeypatch.chdir(tmp_path)
+        assert hook_module._repo_root() == tmp_path
+
+
+class TestPypiLatestSuccess:
+    """Cover pypi_latest success path (json.load → version)."""
+
+    def test_returns_version_from_json(self, hook_module, monkeypatch):
+        import io
+
+        payload = b'{"info": {"version": "9.0.0"}}'
+
+        class _FakeResp:
+            def __enter__(self):
+                return io.BytesIO(payload)
+
+            def __exit__(self, *exc):
+                return False
+
+        monkeypatch.setattr(hook_module.urllib.request, "urlopen", lambda *a, **k: _FakeResp())
+        assert hook_module.pypi_latest("attune-ai") == "9.0.0"
+
+
+class TestReconcileAndEmitNoThreads:
+    """Cover _reconcile_and_emit's None-banner return (no threads, no pkg)."""
+
+    def test_returns_false_and_silent(self, hook_module, tmp_path, capsys):
+        starter = tmp_path / "s.md"
+        starter.write_text("just prose, nothing to reconcile here\n", encoding="utf-8")
+        # repo_root=None → pkg=None → no PyPI lookup → empty banner → False.
+        assert hook_module._reconcile_and_emit(starter, "global", None) is False
+        assert capsys.readouterr().out == ""
