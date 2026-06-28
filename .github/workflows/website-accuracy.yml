@@ -43,6 +43,9 @@ jobs:
       - name: Install pytest
         run: pip install pytest
       - name: Deterministic version guard (features.ts vs pyproject)
-        run: python -m pytest tests/unit/test_website_version_accuracy.py -q
+        # --noconftest: this guard is self-contained (reads files + imports
+        # the audit script via importlib, no attune/pydantic), so skip the
+        # repo conftest's dependency-heavy warm-up and keep the job dep-light.
+        run: python -m pytest tests/unit/test_website_version_accuracy.py -q --noconftest
       - name: PyPI version audit (external packages)
         run: python scripts/audit_website_versions.py
