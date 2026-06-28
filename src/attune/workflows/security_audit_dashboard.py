@@ -21,24 +21,16 @@ main they collapse into one shared ``findings_widget`` primitive
 
 from __future__ import annotations
 
-import html
 from typing import Any
 
-# Severity → accent colour. Mid-tone hues legible on both light and dark
-# backgrounds; used only for a dot / left border / chip border, never as
-# text colour, so contrast never depends on the hue.
-_SEV_COLOUR: dict[str, str] = {
-    "critical": "#e5484d",
-    "high": "#f76808",
-    "medium": "#ffb224",
-    "low": "#46a758",
-    "info": "#8b8d98",
-}
-_SEV_ORDER = ["critical", "high", "medium", "low", "info"]
-
-
-def _esc(value: Any) -> str:
-    return html.escape("" if value is None else str(value))
+# Shared findings-widget primitives (spec FR-1). Private aliases keep the
+# rest of this module unchanged — a pure de-dup, no behaviour change.
+from attune.workflows.findings_widget import SEV_COLOUR as _SEV_COLOUR
+from attune.workflows.findings_widget import SEV_ORDER as _SEV_ORDER
+from attune.workflows.findings_widget import esc as _esc
+from attune.workflows.findings_widget import location as _location
+from attune.workflows.findings_widget import severity_of as _sev
+from attune.workflows.findings_widget import severity_rank as _sev_rank
 
 
 def _normalize(finding: Any) -> dict[str, Any]:
@@ -58,24 +50,6 @@ def _normalize(finding: Any) -> dict[str, Any]:
         "line": None,
         "code": None,
     }
-
-
-def _sev(finding: dict[str, Any]) -> str:
-    return str(finding.get("severity", "info")).lower()
-
-
-def _location(finding: dict[str, Any]) -> str:
-    file = finding.get("file")
-    if not file:
-        return "—"
-    line = finding.get("line")
-    loc = f"{file}:{line}" if line else str(file)
-    return _esc(loc)
-
-
-def _sev_rank(finding: dict[str, Any]) -> int:
-    sev = _sev(finding)
-    return _SEV_ORDER.index(sev) if sev in _SEV_ORDER else len(_SEV_ORDER)
 
 
 def _chip(label: str, count: int, colour: str) -> str:

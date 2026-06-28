@@ -14,40 +14,20 @@ The agent passes the returned HTML straight to
 
 from __future__ import annotations
 
-import html
 from typing import Any
 
-# Severity → accent colour. Mid-tone hues that stay legible on both
-# light and dark backgrounds; used only for a small dot + left border,
-# never as text colour, so contrast never depends on the hue.
-_SEV_COLOUR: dict[str, str] = {
-    "critical": "#e5484d",
-    "high": "#f76808",
-    "medium": "#ffb224",
-    "low": "#46a758",
-    "info": "#8b8d98",
-}
-_SEV_ORDER = ["critical", "high", "medium", "low", "info"]
-
-
-def _esc(value: Any) -> str:
-    """HTML-escape any value (None → empty string)."""
-    return html.escape("" if value is None else str(value))
-
-
-def _location(finding: dict[str, Any]) -> str:
-    """``file:line`` (escaped) or ``"—"`` when the finding has no location."""
-    file = finding.get("file")
-    if not file:
-        return "—"
-    line = finding.get("line")
-    loc = f"{file}:{line}" if line else str(file)
-    return _esc(loc)
+# Shared findings-widget primitives (spec FR-1). Private aliases keep the
+# rest of this module unchanged — a pure de-dup, no behaviour change.
+from attune.workflows.findings_widget import SEV_ORDER as _SEV_ORDER
+from attune.workflows.findings_widget import colour_for as _colour_for
+from attune.workflows.findings_widget import esc as _esc
+from attune.workflows.findings_widget import location as _location
+from attune.workflows.findings_widget import severity_of as _severity_of
 
 
 def _finding_card(finding: dict[str, Any], extra: str = "") -> str:
-    sev = str(finding.get("severity", "info")).lower()
-    colour = _SEV_COLOUR.get(sev, _SEV_COLOUR["info"])
+    sev = _severity_of(finding)
+    colour = _colour_for(finding)
     conf = finding.get("confidence")
     conf_txt = f" · {round(float(conf) * 100)}% conf" if conf is not None else ""
     return (
