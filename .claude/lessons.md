@@ -11922,3 +11922,31 @@ files.
     `timeout-minutes` per job, a `concurrency` block with
     `cancel-in-progress: true`, and `cache: 'pip'` on setup-python —
     copy an existing workflow's exact pins rather than `@v4`.
+
+- **A "drift guard" only guards the field(s) it actually asserts —
+  its existence is NOT proof the adjacent claims are accurate**: hit
+  2026-06-28. PR #1141 refreshed the website to 9.1.0, added a "drift
+  guard," and declared the capability counts "unchanged (correct)."
+  But the guard (`tests/unit/test_website_version_accuracy.py` Layer 1)
+  only asserts the attune-ai *version* in `features.ts` equals
+  `pyproject.toml` — it never looked at the *counts*. So `features.ts`
+  kept advertising **17** skills while `plugin/skills/` shipped **23**
+  (itself test-enforced by `test_plugin_config_validation.py::
+  test_skill_count == 23`, green the whole time), and the enumeration
+  in `docs/page.tsx` silently omitted 6 real skills (bulk, catalog,
+  discovery-sweep, elicit, image-analysis, personal-memory). The
+  version-only guard stayed green because the two facts are
+  independent. **Durable fix (#1143 + the count-guard PR):** correct
+  the count, then EXTEND the guard to assert every `CAPABILITIES` field
+  against its live registry (skills → `plugin/skills/` dirs; workflows
+  → multi-stage `list_workflows()`; wizards → `list_wizards()`;
+  mcpTools → `tool_schemas` `get_*_tools()` total; templateKinds →
+  `attune_author._ALL_TEMPLATE_NAMES`, `importorskip` since that
+  package isn't in attune-ai CI). General rule: when you see "guard
+  added," read WHICH fields it asserts before trusting any neighbor;
+  a guard that covers one dimension is a *false-safety* surface for
+  the others. The meta-version of `website-content-accuracy.md`
+  (verify counts against live code) — here, verify the *verifier's*
+  scope. Pairs with the existing `norecursedirs` sub-lesson above
+  (a guard that silently doesn't run is the same failure: green ≠
+  guarding).

@@ -5,20 +5,30 @@ Lives flat in tests/unit/ (NOT tests/unit/website/) because pytest.ini's
 would be silently uncollected (caught by test_workflow_yaml's
 norecursedirs guard).
 
-Two layers:
+Three layers:
 
-1. **Deterministic, network-free** — the attune-ai version claimed in
-   ``website/lib/features.ts`` (and the homepage badge) MUST equal this
-   repo's own ``pyproject.toml`` version. This is the guard that prevents
-   the exact drift caught 2026-06-28 (website stuck at 8.7.0 while the
-   package shipped 9.1.0). It runs in the normal suite — so any release
-   that advances pyproject past the website turns this red.
+1. **Deterministic version sync, network-free** — the attune-ai version
+   claimed in ``website/lib/features.ts`` (and the homepage badge) MUST
+   equal this repo's own ``pyproject.toml`` version. This is the guard
+   that prevents the exact drift caught 2026-06-28 (website stuck at
+   8.7.0 while the package shipped 9.1.0). It runs in the normal suite —
+   so any release that advances pyproject past the website turns this red.
 
 2. **Hermetic tests of the PyPI audit script** —
    ``scripts/audit_website_versions.py`` parses the PRODUCTS list and
    compares every package (incl. external attune-help/-author) to PyPI;
    here its parse + compare logic is exercised with an injected fetch
    (no network).
+
+3. **Deterministic count sync, network-free** — every field of
+   ``features.ts`` ``CAPABILITIES`` MUST equal the live Python registry
+   it claims to mirror (skills → ``plugin/skills/`` dirs; workflows →
+   multi-stage ``list_workflows()``; wizards → ``list_wizards()``;
+   mcpTools → ``tool_schemas`` ``get_*_tools()`` total; templateKinds →
+   ``attune_author.generator._ALL_TEMPLATE_NAMES``). This closes the
+   blind spot that let the website advertise 17 skills while the plugin
+   shipped 23: the version-only guard (Layer 1) was green the whole time
+   because it never looked at the counts.
 """
 
 from __future__ import annotations
@@ -128,3 +138,78 @@ class TestAuditScript:
         dup = SAMPLE + SAMPLE  # attune-ai + attune-help appear twice
         audit_module.audit(dup, fetch=counting_fetch)
         assert calls["n"] == 2  # cached: one lookup per distinct name
+
+
+# --- Layer 3: deterministic CAPABILITIES count sync -------------------
+
+
+def _capabilities() -> dict[str, int]:
+    """Parse the integer fields of features.ts ``CAPABILITIES``."""
+    text = FEATURES.read_text(encoding="utf-8")
+    block = re.search(r"export const CAPABILITIES = \{(.*?)\} as const;", text, re.S)
+    assert block, "CAPABILITIES object not found in features.ts"
+    caps = {k: int(v) for k, v in re.findall(r"(\w+):\s*(\d+)", block.group(1))}
+    assert caps, "CAPABILITIES parsed empty — check the object shape"
+    return caps
+
+
+def _live_skill_count() -> int:
+    skills_dir = REPO / "plugin" / "skills"
+    return sum(1 for d in skills_dir.iterdir() if d.is_dir() and (d / "SKILL.md").exists())
+
+
+@pytest.mark.skipif(not FEATURES.is_file(), reason="website/ not present")
+class TestCapabilityCountsSync:
+    """features.ts CAPABILITIES MUST equal the live registries it mirrors.
+
+    The mapping is documented in the CAPABILITIES doc-comment in
+    features.ts. Each field is checked independently so a drift names the
+    exact count that went stale. Registries are imported lazily inside
+    each test (no import cost at collection, no failure if an optional
+    registry is absent).
+    """
+
+    def test_skills_count_matches_plugin_dir(self):
+        assert _capabilities()["skills"] == _live_skill_count(), (
+            "features.ts CAPABILITIES.skills != plugin/skills/ dir count — "
+            "update website/lib/features.ts (and the prose on faq/docs/home). "
+            "This is the exact drift caught 2026-06-28 (advertised 17, shipped 23)."
+        )
+
+    def test_workflows_count_matches_registry(self):
+        from attune.workflows import list_workflows
+
+        live = sum(1 for w in list_workflows() if w.get("stages"))
+        assert _capabilities()["workflows"] == live, (
+            f"CAPABILITIES.workflows != live multi-stage workflow count ({live}) — "
+            "update website/lib/features.ts"
+        )
+
+    def test_wizards_count_matches_registry(self):
+        from attune.wizards import list_wizards
+
+        live = len(list_wizards())
+        assert _capabilities()["wizards"] == live, (
+            f"CAPABILITIES.wizards != live list_wizards() count ({live}) — "
+            "update website/lib/features.ts"
+        )
+
+    def test_mcp_tools_count_matches_schemas(self):
+        from attune.mcp import tool_schemas as ts
+
+        getters = [getattr(ts, n) for n in dir(ts) if n.startswith("get_") and n.endswith("_tools")]
+        live = sum(len(fn()) for fn in getters)
+        assert _capabilities()["mcpTools"] == live, (
+            f"CAPABILITIES.mcpTools != live get_*_tools() total ({live}) — "
+            "update website/lib/features.ts"
+        )
+
+    def test_template_kinds_matches_generator(self):
+        pytest.importorskip("attune_author", reason="attune_author not installed")
+        from attune_author.generator import _ALL_TEMPLATE_NAMES
+
+        live = len(_ALL_TEMPLATE_NAMES)
+        assert _capabilities()["templateKinds"] == live, (
+            f"CAPABILITIES.templateKinds != _ALL_TEMPLATE_NAMES length ({live}) — "
+            "update website/lib/features.ts"
+        )
