@@ -405,6 +405,10 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         response["dashboard_html"] = security_findings_dashboard_html(
             response.get("findings") or [],
             score=response.get("health_score"),
+            # A failed audit with empty findings must NOT render as
+            # "clean" — that would be a false all-clear on a security
+            # surface (observed when the workflow can't auth).
+            succeeded=bool(response.get("success", True)),
         )
         return response
 

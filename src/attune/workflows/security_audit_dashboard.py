@@ -82,6 +82,7 @@ def security_findings_dashboard_html(
     findings: list[dict[str, Any]],
     score: int | None = None,
     message: str = "",
+    succeeded: bool = True,
 ) -> str:
     """Render a list of security findings as a severity dashboard.
 
@@ -90,10 +91,25 @@ def security_findings_dashboard_html(
             ``security_audit`` tool's ``findings`` list (already dicts).
         score: Optional health score (0-100) for the header chip.
         message: Optional caption shown above the dashboard.
+        succeeded: Whether the audit actually ran. When ``False``, an
+            empty ``findings`` list means the run FAILED, not that the
+            code is clean — render an explicit "did not complete" state
+            instead of a false "no findings — clean" all-clear.
 
     Returns:
         Self-contained HTML for ``mcp__visualize__show_widget``.
     """
+    if not succeeded:
+        caption = f'<p class="sa-msg-top">{_esc(message)}</p>' if message else ""
+        return (
+            '<div id="sa-dash">'
+            + _STYLE
+            + caption
+            + '<div class="sa-summary"><span class="sa-fail">⚠ Audit did not '
+            + "complete — no results to show. This is NOT a clean bill of "
+            + "health; check the run/auth status and re-run.</span></div></div>"
+        )
+
     findings = [_normalize(f) for f in (findings or [])]
 
     # Counts by severity, in canonical order; skip zero-count severities.
@@ -141,6 +157,7 @@ _STYLE = """<style>
   color:var(--text-primary); background:var(--bg-accent);
   border:1px solid var(--border-accent); border-radius:var(--radius); }
 #sa-dash .sa-empty { font-size:13px; color:var(--text-muted); font-style:italic; }
+#sa-dash .sa-fail { font-size:13.5px; font-weight:500; color:#e5484d; }
 #sa-dash .sa-dot { width:.55em; height:.55em; border-radius:50%; flex:0 0 auto;
   display:inline-block; }
 #sa-dash .sa-list { display:flex; flex-direction:column; gap:.5rem; }
