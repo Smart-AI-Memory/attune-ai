@@ -263,7 +263,12 @@ class TestHandlerReportPath:
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("_bypass_path_validation")
     async def test_legacy_flat_dict_shape_unchanged(self):
-        """Pre-report workflows keep the exact legacy response shape."""
+        """Pre-report workflows keep the legacy response keys.
+
+        security-audit additionally attaches a ``dashboard_html`` rich
+        surface (docs/specs/security-audit-rich-output/); the legacy
+        keys must stay byte-for-byte unchanged alongside it.
+        """
         server = _make_server()
         result = _make_result(
             final_output={"health_score": 85, "findings": ["issue-1"]},
@@ -275,6 +280,10 @@ class TestHandlerReportPath:
 
         with patch.dict(sys.modules, {"attune.workflows.security_audit": mod}):
             out = await server._run_security_audit({"path": "/src"})
+
+        # Additive rich-output field — a non-empty HTML string.
+        dashboard = out.pop("dashboard_html", None)
+        assert isinstance(dashboard, str) and dashboard.startswith('<div id="sa-dash"')
 
         assert out == {
             "success": True,
