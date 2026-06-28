@@ -1,0 +1,42 @@
+name: Website Accuracy
+
+# Guards the website's package-version claims against PyPI for the
+# EXTERNAL packages (attune-help / attune-author) that the main suite
+# can't check. The deterministic features.ts-vs-pyproject guard for
+# attune-ai's own version runs in the normal test suite
+# (tests/unit/test_website_version_accuracy.py) with full deps, so it is
+# NOT duplicated here — this job stays stdlib-only and dep-free.
+# Advisory (not in required_status_checks): a confirmed drift turns it
+# red so it's caught in review; a PyPI hiccup reports "unverified" and
+# passes.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/lib/features.ts'
+      - 'scripts/audit_website_versions.py'
+      - '.github/workflows/website-accuracy.yml'
+  pull_request:
+    paths:
+      - 'website/lib/features.ts'
+      - 'scripts/audit_website_versions.py'
+      - '.github/workflows/website-accuracy.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  website-accuracy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: PyPI version audit (external packages)
+        # Stdlib-only (urllib/json/re) — no pip install needed.
+        run: python scripts/audit_website_versions.py
