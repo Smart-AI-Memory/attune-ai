@@ -42,6 +42,13 @@ uv run attune workflow run bug-predict --path <target>
 
 ## Output
 
+**Prefer the rich panel.** If the tool response includes `panel_html`,
+pass it to `mcp__visualize__show_widget` — the universal report panel
+(title, score, findings/category sections; from
+`attune.workflows.report_panel`). It shows an explicit "did not
+complete" state on failure, never a false "clean". Fall back to the
+markdown below when the widget surface is unavailable.
+
 Present results as a markdown table grouped by severity
 (HIGH first):
 
