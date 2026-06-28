@@ -11854,3 +11854,65 @@ files.
   "unused" if you add the `from x import y` in one Edit before adding
   its first usage in the next Edit — re-add the import after wiring the
   usage, or add usage and import in the same Edit.
+
+- **Gathering repo-state FACTS from a worktree session: read `git show
+  origin/main:<file>`, NEVER `cat`/`tail` the main checkout's working
+  tree — it can be commits behind origin/main and yields PHANTOM
+  "findings"**: hit THREE times in one session (2026-06-28), each from a
+  reflexive `cd ~/attune-ai && <read>`. (1) Auditing marketplace
+  submission-readiness, the main checkout's `marketplace.json` showed
+  version `8.5.0` + a stale `attune-docs` ref → I wrote up "two accuracy
+  bugs" and started a prep PR; the main checkout was 3 commits behind
+  (`git -C ~/attune-ai rev-parse HEAD` ≠ `git rev-parse origin/main`),
+  and on origin/main the manifests were already `9.1.0` with the ref
+  gone — the whole detour evaporated. (2) Minutes later, `cd ~/attune-ai
+  && grep features.ts` read `8.4.0` while the worktree (= origin/main)
+  was `8.7.0`. (3) `tail`-ing `.claude/lessons.md` from the main checkout
+  showed a DIFFERENT (shorter) file end than the worktree's — I anchored
+  an append on the wrong "EOF" and corrupted a lesson mid-sentence. This
+  is the READ-side member of the worktree-vs-main family (execute-side
+  `PYTHONPATH`, write-side `Write`-to-main-path, commit-destination, and
+  cwd-hygiene are the others). Rules: (a) from a worktree, gather a
+  file's CANONICAL state with `git show origin/main:<path>` or by reading
+  the WORKTREE copy — never `cd <main> && cat/tail/grep`; (b) when a
+  finding looks like drift, FIRST diff the heads (`git -C <main>
+  rev-parse HEAD` vs `git rev-parse origin/main`) before asserting a bug
+  — a behind-by-N main checkout is the likeliest cause; (c) for live
+  package versions use `git show origin/main:pyproject.toml` or PyPI,
+  never the main checkout's pyproject. The editable-install MAPPING
+  already aims `attune` at the main checkout, and a reflexive `cd
+  ~/attune-ai` aims your READS there too.
+
+- **A new CI job that runs `pytest` inherits the repo `conftest.py`'s
+  collection-time imports — a dep-light job (`pip install pytest` only)
+  dies with `ModuleNotFoundError` before any test runs; use
+  `--noconftest` for a self-contained test, AND never nest the test in a
+  `tests/unit/website/` dir (norecursedirs silently drops it)**: both
+  hit building `website-accuracy.yml` (2026-06-28), a small advisory
+  workflow guarding the site's version/count claims.
+  - **conftest deps:** `tests/conftest.py` does `import
+    pydantic.root_model` (a sys.modules warm-up) at COLLECTION time, so
+    `python -m pytest <test>` fails `ModuleNotFoundError: No module named
+    'pydantic'` even though the TEST imports nothing heavy (reads files +
+    `importlib`-loads a script). Fixes: install the package (`pip install
+    -e .`, heavy) OR — when the test is genuinely self-contained (no
+    conftest fixtures, no `attune`/`pydantic`) — `pytest <test>
+    --noconftest` to skip the warm-up and keep the job dep-light. In the
+    MAIN suite (full deps) the same test runs normally WITH conftest, so
+    behavior stays consistent; `--noconftest` is only for the dedicated
+    lightweight lane.
+  - **norecursedirs swallows `website/`:** `pytest.ini` lists `website`
+    in `norecursedirs` (to skip the top-level Next.js dir), so a new
+    `tests/unit/website/` package is SILENTLY uncollected — the guard
+    would never run (false green). Caught by `test_workflow_yaml.py::
+    TestPytestConfig::test_norecursedirs_does_not_exclude_real_test_dirs`.
+    Fix: put website-related tests FLAT in `tests/unit/`
+    (`test_website_*.py`), not under a `website/` subdir (and adjust the
+    test's `Path(...).parents[N]` repo-root depth). Always run a brand-new
+    guard `-v` ONCE to confirm PASSED (not SKIPPED/uncollected) — a
+    self-version guard that silently doesn't run defeats its own purpose.
+  - **New-workflow conventions:** `test_workflow_yaml.py` also enforces
+    SHA-pinned `uses:` (full 40-char SHA + `# vX.Y.Z` comment),
+    `timeout-minutes` per job, a `concurrency` block with
+    `cancel-in-progress: true`, and `cache: 'pip'` on setup-python —
+    copy an existing workflow's exact pins rather than `@v4`.
