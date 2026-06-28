@@ -105,3 +105,27 @@ class TestInjectionSafety:
 
     def test_no_script_tag_in_output(self):
         assert "<script" not in security_findings_dashboard_html([_f()]).lower()
+
+
+class TestFailedAudit:
+    """A failed/incomplete audit must never read as a clean all-clear."""
+
+    def test_failed_empty_is_not_clean(self):
+        html = security_findings_dashboard_html([], succeeded=False)
+        assert "did not complete" in html
+        assert "no findings — clean" not in html
+        assert "sa-fail" in html
+
+    def test_failed_ignores_any_leaked_findings(self):
+        html = security_findings_dashboard_html([_f()], succeeded=False)
+        assert "did not complete" in html
+        # the normal severity card list is NOT rendered on failure
+        assert '<div class="sa-list">' not in html
+
+    def test_succeeded_empty_still_reads_clean(self):
+        html = security_findings_dashboard_html([], succeeded=True)
+        assert "no findings — clean" in html
+
+    def test_default_succeeded_true(self):
+        # back-compat: omitting succeeded keeps the clean path
+        assert "no findings — clean" in security_findings_dashboard_html([])
