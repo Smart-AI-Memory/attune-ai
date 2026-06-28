@@ -14,20 +14,16 @@ on:
       - 'src/**'
       - 'scripts/audit_docs_wiring.py'
       - 'scripts/audit_doc_imports.py'
+  # PRs: trigger on EVERY PR to main — NO path filter. doc-import-audit and
+  # wiring-audit are REQUIRED status checks; a path-filtered required check
+  # is "missing" on a PR that touches none of its paths, which blocks the
+  # PR forever (the website-/test-only-PR trap hit 2026-06-28 by #1141,
+  # #1143, #1144 — each needed an admin-merge). Instead the workflow always
+  # runs and the `changes` job decides whether the audit jobs do real work
+  # or no-op-but-report-green — same discipline as tests.yml's website_only
+  # guard. Push stays path-filtered so deploy only rebuilds on real changes.
   pull_request:
     branches: [main]
-    paths:
-      - 'docs/**'
-      - 'content/**'
-      - 'mkdocs.yml'
-      - 'src/**'
-      - 'scripts/audit_docs_wiring.py'
-      - 'scripts/audit_doc_imports.py'
-      # .help/** regen feeds rendered docs; include it so a regen PR
-      # hits the mkdocs --strict pre-flight (docs-link-prevalidation
-      # CI safety net — no separate workflow needed, this job already
-      # runs `mkdocs build --strict`).
-      - '.help/**'
   workflow_dispatch:
 
 permissions:
@@ -38,18 +34,66 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Wiring-audit job — advisory mode per docs/specs/docs-wiring-audit/
-  # tasks.md Task 7. NOT yet in required_status_checks; Task 8 will
-  # promote once main has held 3 consecutive green runs. Script is
-  # stdlib-only so this job needs no dependency install — just
-  # checkout + a Python interpreter (any 3.10+).
+  # Decide whether the docs-relevant jobs need to do real work. On a PR
+  # that touches no docs/source path the audit jobs still RUN (so the
+  # required checks doc-import-audit + wiring-audit are present and green)
+  # but skip their actual steps. Non-PR events always do the real work.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      docs: ${{ steps.filter.outputs.docs }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+
+      - id: filter
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          # Non-PR events (push to main, manual dispatch) always do the
+          # real work — the no-op path is a PR-iteration optimization.
+          if [ "$EVENT" != "pull_request" ] || [ -z "${BASE_REF:-}" ]; then
+            echo "event=$EVENT -> docs=true"
+            echo "docs=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git fetch --no-tags --quiet origin "$BASE_REF" || true
+          if ! CHANGED=$(git diff --name-only "origin/$BASE_REF...HEAD"); then
+            echo "diff failed -> docs=true (fail-safe)"
+            echo "docs=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "changed files:"; printf '%s\n' "$CHANGED"
+          # Any path that could affect the rendered docs or the audit
+          # results: docs/content sources, mkdocs config, importable
+          # source, .help regen, the audit scripts, or THIS workflow.
+          if printf '%s\n' "$CHANGED" | grep -qE '^(docs/|content/|mkdocs\.yml|src/|\.help/|scripts/audit_docs_wiring\.py|scripts/audit_doc_imports\.py|\.github/workflows/docs\.yml)'; then
+            echo "docs=true (docs/source touched) -> run audits"
+            echo "docs=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "docs=false (no docs/source change) -> audit jobs no-op"
+            echo "docs=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Wiring-audit job — anchor/link + mkdocstrings reference integrity.
+  # Script is stdlib-only so this job needs no dependency install — just
+  # checkout + a Python interpreter (any 3.10+). Steps gate on changes.docs
+  # so the required check always reports (green no-op on non-docs PRs).
   wiring-audit:
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        if: needs.changes.outputs.docs == 'true'
 
       - name: Set up Python
+        if: needs.changes.outputs.docs == 'true'
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.11'
@@ -60,7 +104,12 @@ jobs:
           cache: 'pip'
 
       - name: Run wiring audit
+        if: needs.changes.outputs.docs == 'true'
         run: python scripts/audit_docs_wiring.py --format json
+
+      - name: No-op (no docs/source change)
+        if: needs.changes.outputs.docs != 'true'
+        run: echo "No docs/source change — wiring-audit not applicable; reporting green."
 
   # Doc-import gate — verifies every `attune` import in a doc code fence
   # resolves against the installed package (the FINAL guard for the
@@ -68,30 +117,39 @@ jobs:
   # failure; see docs/specs/{orchestration,empathy}-doc-fiction-cleanup/).
   # Scoped to PUBLISHED surfaces: docs/ pages that are in the mkdocs nav
   # or not in exclude_docs, plus content/{features,blog}. Orphaned/internal
-  # docs are not policed. ADVISORY: NOT in required_status_checks while the
-  # served-doc backlog (11 findings on adoption) is cleared; promote to
-  # required once main holds green. Unlike wiring-audit this needs the
-  # package importable, so it installs the dev/developer extras (plus
-  # pathspec, for matching mkdocs exclude_docs).
+  # docs are not policed. Needs the package importable, so it installs the
+  # dev/developer extras (plus pathspec, for matching mkdocs exclude_docs).
+  # Steps gate on changes.docs so the required check always reports.
   doc-import-audit:
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        if: needs.changes.outputs.docs == 'true'
 
       - name: Set up Python
+        if: needs.changes.outputs.docs == 'true'
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.11'
           cache: 'pip'
 
       - name: Install package (import graph must resolve)
+        if: needs.changes.outputs.docs == 'true'
         run: pip install -e ".[dev,developer]" pathspec
 
       - name: Run doc-import audit
+        if: needs.changes.outputs.docs == 'true'
         run: python scripts/audit_doc_imports.py --format markdown
 
+      - name: No-op (no docs/source change)
+        if: needs.changes.outputs.docs != 'true'
+        run: echo "No docs/source change — doc-import audit not applicable; reporting green."
+
   build:
+    needs: changes
+    if: needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
