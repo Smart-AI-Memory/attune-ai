@@ -38,9 +38,9 @@ production codebase. Four definitions, for the systems-minded:
    Protocol server that turns Claude Code into a managed multi-agent
    platform. Instead of one monolithic prompt, it dispatches 2–6
    domain-specific subagents in parallel — code readers, validators,
-   test designers, refactor planners — across 22 workflows and 43 MCP
-   tools, and an orchestrator synthesizes their findings into one
-   result.
+   test designers, refactor planners — across 22 workflows
+   (19 multi-stage) and 47 MCP tools, and an orchestrator synthesizes
+   their findings into one result.
 3. **A Socratic quality-gate engine.** Multi-stage workflows ask
    before they act: the `/spec` flow brainstorms, plans, then executes
    behind declarative quality gates that block on real code-review and
@@ -50,9 +50,9 @@ production codebase. Four definitions, for the systems-minded:
 4. **An active knowledge engine.** Documentation is a runtime asset,
    not a byproduct. Through decoupled modules (`attune-author`,
    `attune-rag`, `attune-help`), a citation-per-claim retrieval
-   contract delivers 0.996 mean per-claim faithfulness on the
-   benchmark set — grounding that both engineers and agents use to
-   verify implementation dependencies.
+   contract keeps mean per-claim faithfulness CI-gated at ≥ 0.97
+   (0.996 measured on the benchmark set) — grounding that both
+   engineers and agents use to verify implementation dependencies.
 
 In short: the infrastructure to move AI from conversational
 autocomplete to a grounded, multi-agent software-engineering utility.
@@ -197,10 +197,10 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 | Capability | Plugin only | Plugin + pip |
 | ---------- | ----------- | ------------ |
-| 22 auto-triggering skills | Yes | Yes |
+| 23 auto-triggering skills | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
-| 43 MCP tools | -- | Yes |
+| 47 MCP tools | -- | Yes |
 | `attune` CLI | -- | Yes |
 | Multi-agent workflows | -- | Yes |
 | Help system maintenance | -- | Yes |
@@ -264,7 +264,7 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 ## MCP Tools
 
-43 tools organized into 5 categories:
+47 tools organized into 6 categories:
 
 ### Workflow (22)
 
@@ -296,6 +296,11 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 `auth_status` `auth_recommend` `telemetry_stats`
 `context_get` `context_set` `attune_get_level`
 `attune_set_level` `list_capabilities`
+
+### Elicitation (4)
+
+`elicitation_ask` `elicitation_render_form`
+`elicitation_collect_response` `elicitation_render_widget`
 
 ---
 
@@ -341,8 +346,8 @@ from retrieval. Full methodology:
 | --- | --- | --- | --- | --- |
 | **Ready-to-use workflows** | 22 built-in | None | Build from scratch | None |
 | **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
-| **MCP integration** | 43 native tools | None | No | No |
-| **Auto-triggering skills** | 22 skills, natural language | None | None | None |
+| **MCP integration** | 47 native tools | None | No | No |
+| **Auto-triggering skills** | 23 skills, natural language | None | None | None |
 | **Socratic discovery** | Questions before execution | None | None | None |
 | **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
 
