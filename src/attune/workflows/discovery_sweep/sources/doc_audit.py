@@ -93,6 +93,8 @@ class DocAuditSource(LLMSource):
                 findings.append(_path_failed_finding(self.name, path, exc))
                 continue
 
+            self._record_cost(result)
+
             if not getattr(result, "success", False):
                 findings.append(_workflow_unsuccessful_finding(self.name, path, result))
                 continue

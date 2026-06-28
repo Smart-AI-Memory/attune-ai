@@ -253,3 +253,26 @@ class LLMSource:
 
     is_llm: bool = True
     budget_multiplier: float = 1.0
+    spent_usd: float = 0.0
+
+    def _record_cost(self, result: object) -> None:
+        """Accumulate one workflow result's API cost onto this source.
+
+        After the fan-out, the sweep engine sums ``spent_usd`` across
+        sources to populate ``SweepMetadata.spent_usd`` (the footer's
+        ``$X / $Y`` line and the workflow ``CostReport``). Without this
+        the wrapped workflows' real spend is silently discarded and the
+        sweep always reports ``$0.00``.
+
+        Sources are constructed fresh per sweep by ``default_sources()``,
+        so the running total never leaks across runs. A result with no
+        ``cost_report`` (or a zero cost) contributes nothing.
+
+        Args:
+            result: A WorkflowResult (or duck-typed equivalent) whose
+                ``cost_report.total_cost`` is the API spend to record.
+        """
+        cost_report = getattr(result, "cost_report", None)
+        if cost_report is None:
+            return
+        self.spent_usd += float(getattr(cost_report, "total_cost", 0.0) or 0.0)

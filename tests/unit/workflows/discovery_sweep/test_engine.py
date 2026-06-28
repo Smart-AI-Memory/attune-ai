@@ -40,6 +40,9 @@ class FakeSource:
     raises: BaseException | None = None
     received_budget: float | None = None
     received_paths: list[str] | None = None
+    # Mirrors LLMSource.spent_usd — what each real source accumulates via
+    # ``_record_cost`` and the engine sums into ``SweepMetadata.spent_usd``.
+    spent_usd: float = 0.0
 
     def __post_init__(self) -> None:
         if self.budget_multiplier is None:
@@ -151,6 +154,58 @@ class TestBudgetAllocation:
 
     def test_default_budget_is_ten_dollars(self) -> None:
         assert DEFAULT_BUDGET_USD == 10.00
+
+
+class TestSpentUsdTracking:
+    """Regression guard: real per-source API spend must reach both the
+    ``SweepMetadata`` footer and the ``WorkflowResult`` cost_report.
+
+    Before this guard, ``_build_sweep_result`` hardcoded
+    ``spent_usd=0.0`` and every LLM source discarded its
+    ``result.cost_report``, so a sweep that spent real money always
+    reported ``$0.00``.
+    """
+
+    def test_engine_sums_source_spent_usd(self) -> None:
+        # Two LLM sources accumulated spend during their fan-out; the
+        # non-LLM source carries the default 0.0.
+        a = FakeSource(name="a", is_llm=True, findings=[], spent_usd=1.50)
+        b = FakeSource(name="b", is_llm=True, findings=[], spent_usd=2.25)
+        pattern = FakeSource(name="pattern", is_llm=False, findings=[])
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[a, b, pattern]))
+        sweep: SweepResult = res.metadata["sweep"]
+        assert sweep.metadata.spent_usd == pytest.approx(3.75)
+        # The WorkflowResult cost_report mirrors the same total.
+        assert res.cost_report.total_cost == pytest.approx(3.75)
+
+    def test_zero_spend_reports_zero(self) -> None:
+        # Pattern-only / --no-llm sweep: no source accrued cost.
+        src = FakeSource(name="pattern", is_llm=False, findings=[])
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[src]))
+        sweep: SweepResult = res.metadata["sweep"]
+        assert sweep.metadata.spent_usd == pytest.approx(0.0)
+
+    def test_llmsource_record_cost_accumulates(self) -> None:
+        from types import SimpleNamespace
+
+        from attune.workflows.discovery_sweep.llm_source_base import LLMSource
+
+        source = LLMSource()
+        source._record_cost(SimpleNamespace(cost_report=SimpleNamespace(total_cost=0.40)))
+        source._record_cost(SimpleNamespace(cost_report=SimpleNamespace(total_cost=1.10)))
+        assert source.spent_usd == pytest.approx(1.50)
+
+    def test_record_cost_ignores_missing_or_null_cost_report(self) -> None:
+        from types import SimpleNamespace
+
+        from attune.workflows.discovery_sweep.llm_source_base import LLMSource
+
+        source = LLMSource()
+        source._record_cost(SimpleNamespace())  # no cost_report attribute
+        source._record_cost(SimpleNamespace(cost_report=None))
+        assert source.spent_usd == pytest.approx(0.0)
 
 
 class TestPathExpansion:

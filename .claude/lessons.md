@@ -12121,3 +12121,45 @@ files.
   CWE badges, file:line pills — `html.escape` FIRST so the regex only
   ever wraps already-escaped runs; verify with a `<script>`-in-a-bullet
   test.)
+
+- **A fan-out meta-workflow can silently drop its sub-workflows' cost,
+  reporting $0.00 while spending real money — and a $0.00-derived budget
+  cap is non-functional**: dogfooding `discovery-sweep` (full LLM, 7
+  sources, 5.7 min) the board footer read `$0.00 / $8.00 spent`. Root
+  cause was a two-link drop: each LLM source's `discover()` called
+  `workflow.execute()` (whose `result.cost_report.total_cost` is live)
+  but extracted ONLY findings via `findings_from_workflow_result(result,
+  …)`, discarding cost; and `_build_sweep_result` then HARDCODED
+  `spent_usd=0.0` with a stale comment ("no sources ran") on the SUCCESS
+  path. Because the cap reads `spent_usd`, a sweep could overspend its
+  `budget_usd` without limit (separately, the per-source allocation is a
+  documented v1 no-op — sources receive `budget_usd` but call
+  `execute(path, depth)`). Fix: `LLMSource._record_cost(result)`
+  accumulates `cost_report.total_cost` per instance; the engine sums
+  `getattr(s,"spent_usd",0.0)` post-`gather` into the metadata + the
+  `WorkflowResult.cost_report`. **General rule**: when a meta-workflow
+  aggregates sub-results, the cost channel is the easiest thing to drop
+  at the adapter boundary (the return type is usually `list[Finding]`,
+  not `(findings, cost)`) — assert non-zero spend in a dogfood, never
+  trust a green unit suite whose fixtures don't carry cost. Same
+  "registered ≠ working / dogfood the real loop" family; the cost-
+  tracking instance. Found ONLY because the footer was inspected on a
+  REAL run.
+
+- **CORRECTION to the prior "nested SDK workflows can't auth" lesson —
+  the de-nest workaround makes them run inside a Claude Code session**:
+  the widget-shape lesson's point (4) ("nested SDK workflows can't auth
+  from a direct python run OR the MCP tool … capturing a real payload
+  needs CI or a normal auth'd session") is now SUPERSEDED for local
+  dogfooding. Scrubbing the inherited gateway/OAuth env
+  (`ANTHROPIC_BASE_URL`, `ANTHROPIC_AUTH_TOKEN`, the
+  `CLAUDE_CODE_SDK_HAS_*_REFRESH` flags, `CLAUDECODE`,
+  `CLAUDE_CODE_ENTRYPOINT/SESSION_ID/EXECPATH`) and sourcing a raw
+  `sk-ant-` key from `~/.attune/anthropic.env` lets the spawned CLI run
+  as a fresh non-nested session — `security-audit` returned
+  `success:true, cost=$1.42`, and the full sweep populated all buckets.
+  Write the result (incl. `panel_html`/`board_html`) to disk INSIDE the
+  coroutine before `asyncio.run` returns, so a teardown exit-1 can't
+  discard it. See [[project_sdk_workflows_blocked_nested]] (workaround
+  confirmed 2026-06-26, re-confirmed this session for the widget
+  dogfood). Real API spend — keep runs single-shot.
