@@ -11981,3 +11981,27 @@ files.
   Shipped in `fix/docs-checks-always-report`. Pairs with the
   `tests.yml` matrix comment ("a required check that never runs reports
   as missing → the PR is blocked forever").
+
+- **Read the owning spec's `decisions.md` BEFORE presenting scope
+  OPTIONS to the user — an option you offer can contradict a ratified
+  decision, and the user may pick it.** 2026-06-28, scoping "use more
+  advanced elicitation features in `spec` amongst others": I offered
+  "analysis skills" (`code-quality`/`security-audit`/`smart-test`/…) as
+  an `AskUserQuestion` option and Patrick selected it — only THEN did
+  reading `docs/specs/elicitation-form-surface/decisions.md` **D12**
+  reveal those skills were explicitly ruled OUT ("not fits — a
+  multi-field form there is the 'bureaucratic intake' the §4 rule warns
+  against"); the named fits were `/spec`, `/attune`, `/planning`. Caught
+  before building, but only after a wasted option-turn and a
+  contradiction I had to walk back. **Rule:** when a feature has an
+  owning spec, read its `decisions.md` (not just requirements/design)
+  BEFORE constructing the `AskUserQuestion` options — the options you
+  present must be consistent with ratified decisions, or you risk the
+  user choosing a path their own spec argues against. If you DO offer an
+  option a decision rules out, label it an override ("overrides D12") so
+  the choice is informed. Extends "re-validate a spec's premise before
+  executing" to the earlier *option-presentation* step: the premise
+  check belongs before you frame the choices, not just before you act on
+  them. Surfacing the conflict (rather than silently building the
+  chosen-but-contradicting scope) is the pushback discipline working —
+  but reading decisions first would have avoided the detour entirely.
