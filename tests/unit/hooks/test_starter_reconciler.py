@@ -172,6 +172,8 @@ class TestReconcile:
         monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
         monkeypatch.setattr(hook_module, "check_branch", lambda b, c: "gone")
         monkeypatch.setattr(hook_module, "pypi_latest", lambda p: "9.0.0")
+        # Keep the widening's git call hermetic.
+        monkeypatch.setattr(hook_module, "merged_prs_on_main", lambda c: [])
         text = "PR #1118 on branch claude/foo shipped 9.0.0"
         results = hook_module.reconcile(text, "attune-ai", None)
         assert results["prs"] == {1118: "MERGED"}
@@ -199,6 +201,7 @@ class TestReconcile:
 
         monkeypatch.setattr(hook_module, "check_pr", boom)
         monkeypatch.setattr(hook_module, "pypi_latest", lambda p: "1.2.3")
+        monkeypatch.setattr(hook_module, "merged_prs_on_main", lambda c: [])
         results = hook_module.reconcile("#42 v1.2.3", "pkg", None)
         # PR stays at its "unverified" seed; PyPI still resolves.
         assert results["prs"][42] == "unverified"
@@ -389,3 +392,137 @@ class TestReconcileAndEmitNoThreads:
         # repo_root=None → pkg=None → no PyPI lookup → empty banner → False.
         assert hook_module._reconcile_and_emit(starter, "global", None) is False
         assert capsys.readouterr().out == ""
+
+
+# --- widening: newer-merges-on-main staleness -------------------------
+
+
+class TestMergedPrsOnMain:
+    def test_parses_pr_markers_newest_first(self, hook_module, monkeypatch):
+        log = (
+            "feat(x): a (#1136)\n"
+            "fix(y): b (#1135)\n"
+            "chore: no marker here\n"
+            "feat(z): c (#1133)\n"
+        )
+        monkeypatch.setattr(hook_module, "_run", lambda *a, **k: _FakeProc(log, 0))
+        assert hook_module.merged_prs_on_main(None) == [1136, 1135, 1133]
+
+    def test_empty_on_git_error(self, hook_module, monkeypatch):
+        monkeypatch.setattr(hook_module, "_run", lambda *a, **k: _FakeProc("", 1))
+        assert hook_module.merged_prs_on_main(None) == []
+
+    def test_empty_when_run_none(self, hook_module, monkeypatch):
+        monkeypatch.setattr(hook_module, "_run", lambda *a, **k: None)
+        assert hook_module.merged_prs_on_main(None) == []
+
+    def test_bare_hash_without_parens_ignored(self, hook_module, monkeypatch):
+        # A bare '#1140' (cross-ref, not a squash marker) is NOT counted;
+        # only the parenthesized '(#1141)' is.
+        monkeypatch.setattr(
+            hook_module,
+            "_run",
+            lambda *a, **k: _FakeProc("revert: drop #1140 hack (#1141)\n", 0),
+        )
+        assert hook_module.merged_prs_on_main(None) == [1141]
+
+
+class TestNewerUnmentioned:
+    def test_returns_newer_than_ceiling(self, hook_module):
+        text = "Merged #1130, #1132. Working on #1127."
+        merged = [1136, 1135, 1134, 1133, 1132, 1130, 1127]
+        assert hook_module.newer_unmentioned(text, merged) == [1136, 1135, 1134, 1133]
+
+    def test_high_mentioned_pr_raises_the_bar(self, hook_module):
+        # The ceiling is max over ALL mentioned PRs, so mentioning #1135
+        # raises the bar — #1134 (below it) is no longer "newer", and the
+        # mentioned #1135 itself is excluded.
+        text = "ceiling #1132 and also #1135"
+        merged = [1136, 1135, 1134]
+        assert hook_module.newer_unmentioned(text, merged) == [1136]
+
+    def test_empty_when_no_prs_mentioned(self, hook_module):
+        assert hook_module.newer_unmentioned("no prs", [1, 2, 3]) == []
+
+    def test_empty_when_no_merged(self, hook_module):
+        assert hook_module.newer_unmentioned("#10", []) == []
+
+    def test_capped_at_max(self, hook_module):
+        merged = list(range(200, 180, -1))  # 20 numbers, all > 100
+        out = hook_module.newer_unmentioned("#100", merged)
+        assert len(out) == hook_module.MAX_NEWER_MERGES
+        assert out[0] == 200  # newest first
+
+    def test_uses_full_text_ceiling_not_capped_extract(self, hook_module):
+        # >MAX_PRS mentions; the true max (#900) is beyond the first 6, so
+        # the ceiling must come from the full text, not extract_threads.
+        text = " ".join(f"#{n}" for n in [10, 11, 12, 13, 14, 15, 900])
+        merged = [901, 900, 800]
+        assert hook_module.newer_unmentioned(text, merged) == [901]
+
+
+class TestFormatBannerNewerMerges:
+    def test_renders_newer_merges_line(self, hook_module, tmp_path):
+        results = {
+            "prs": {1132: "MERGED"},
+            "branches": {},
+            "pypi": None,
+            "versions": [],
+            "pkg": "",
+            "newer_merges": [1136, 1135, 1133],
+            "pr_ceiling": 1132,
+        }
+        out = hook_module.format_banner(results, "global", tmp_path / "s.md")
+        assert "NEWER merges the starter omits: #1136 #1135 #1133" in out
+        assert "starter's newest: #1132" in out
+
+    def test_newer_merges_alone_still_emits(self, hook_module, tmp_path):
+        # A newer-merge finding alone (no verifiable PR/branch/pypi state)
+        # is enough to surface a banner.
+        results = {
+            "prs": {},
+            "branches": {},
+            "pypi": None,
+            "versions": [],
+            "pkg": "",
+            "newer_merges": [1136],
+            "pr_ceiling": 1132,
+        }
+        out = hook_module.format_banner(results, "global", tmp_path / "s.md")
+        assert out is not None
+        assert "#1136" in out
+
+    def test_no_line_when_no_newer_merges(self, hook_module, tmp_path):
+        results = {
+            "prs": {1132: "MERGED"},
+            "branches": {},
+            "pypi": None,
+            "versions": [],
+            "pkg": "",
+            "newer_merges": [],
+            "pr_ceiling": 1132,
+        }
+        out = hook_module.format_banner(results, "global", tmp_path / "s.md")
+        assert "NEWER merges" not in out
+
+
+class TestReconcileWidening:
+    def test_flags_newer_merges(self, hook_module, monkeypatch):
+        monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
+        monkeypatch.setattr(hook_module, "merged_prs_on_main", lambda c: [1136, 1135, 1134, 1132])
+        results = hook_module.reconcile("Merged #1132.", None, None)
+        assert results["newer_merges"] == [1136, 1135, 1134]
+        assert results["pr_ceiling"] == 1132
+
+    def test_no_git_call_without_mentioned_prs(self, hook_module, monkeypatch):
+        called = {"n": 0}
+
+        def tracker(*a, **k):
+            called["n"] += 1
+            return []
+
+        monkeypatch.setattr(hook_module, "merged_prs_on_main", tracker)
+        results = hook_module.reconcile("no prs here", None, None)
+        assert called["n"] == 0
+        assert results["newer_merges"] == []
+        assert results["pr_ceiling"] is None

@@ -17,9 +17,16 @@ PyPI in parallel, then prints a one-block freshness banner:
       PRs: #1116 MERGED · #1117 MERGED · #1121 MERGED
       branches: claude/foo GONE
       PyPI attune-ai latest=9.0.0 (starter mentions: 9.0.0, 8.5.0)
+      ⚠ main has NEWER merges the starter omits: #1136 #1135 #1134 #1133
+        (starter's newest: #1132) — work may have landed since it was written
 
 A MERGED PR / GONE branch / already-published version is the tell that
 the headline action is done — read the banner before trusting the lead.
+The ``⚠ NEWER merges`` line catches the *other* staleness shape: the
+starter is behind reality because PRs landed on ``main`` that it never
+names — exactly what a named-thread check can't see (you can't verify a
+thread the starter forgot to mention). Newest-PR-on-main > the starter's
+highest mentioned PR is the tell.
 
 Bounded for SessionStart: thread counts are capped and all network
 checks run concurrently under a hard wall-clock budget; anything that
@@ -54,6 +61,10 @@ PROJECT_STARTER_RELPATH = Path(".attune") / "next_session_starter.md"
 #: Cap how many of each thread we verify, newest-mentioned first.
 MAX_PRS = 6
 MAX_BRANCHES = 4
+#: How many recent ``origin/main`` commits to scan for merged-PR markers.
+MAIN_LOG_SCAN = 40
+#: Cap how many newer-than-starter merges we list in the banner.
+MAX_NEWER_MERGES = 6
 #: Per-subprocess timeout for a single git/gh call (seconds).
 SUBPROC_TIMEOUT = 4
 #: Total wall-clock budget for ALL network checks combined (seconds).
@@ -70,6 +81,10 @@ PR_RE = re.compile(r"#(\d{1,6})\b")
 BRANCH_RE = re.compile(r"\b(?:release|hotfix|claude|feat|fix)/[A-Za-z0-9._/-]+")
 #: ``X.Y.Z`` semantic versions.
 VERSION_RE = re.compile(r"\b\d+\.\d+\.\d+\b")
+#: ``(#NNNN)`` PR markers in squash-merge commit subjects on main, e.g.
+#: ``feat(x): thing (#1133)``. The parentheses distinguish a real merge
+#: marker from an inline ``#1133`` cross-reference in prose.
+MERGE_PR_RE = re.compile(r"\(#(\d{1,6})\)")
 
 
 def _find_project_starter(start: Path | None = None) -> Path | None:
@@ -155,6 +170,48 @@ def check_branch(name: str, cwd: Path | None) -> str:
     return "exists" if result.stdout.strip() else "gone"
 
 
+def merged_prs_on_main(cwd: Path | None, limit: int = MAIN_LOG_SCAN) -> list[int]:
+    """Return PR numbers squash-merged to ``origin/main``, newest first.
+
+    Parses ``(#NNNN)`` markers from the most recent ``limit``
+    ``origin/main`` commit subjects. Pure-git and offline — it reads
+    whatever ``origin/main`` the last fetch left, so a stale ref simply
+    yields fewer/older numbers (it can never invent a *newer* one, so it
+    cannot produce a false staleness warning). Returns ``[]`` on any git
+    error — the widening is best-effort and never blocks.
+    """
+    result = _run(["git", "log", "origin/main", f"-{limit}", "--format=%s"], cwd)
+    if result is None or result.returncode != 0:
+        return []
+    nums: list[int] = []
+    for line in result.stdout.splitlines():
+        match = MERGE_PR_RE.search(line)
+        if match:
+            nums.append(int(match.group(1)))
+    return nums
+
+
+def newer_unmentioned(text: str, merged_main_prs: list[int]) -> list[int]:
+    """Merged-on-main PRs newer than the starter's highest mentioned PR.
+
+    The named-thread checks can only verify PRs the starter *names*; this
+    catches the inverse blind spot — PRs that landed on ``main`` which
+    the starter never mentions, the tell that work shipped after it was
+    written. ``text`` is the full starter (we read every ``#NNNN``, not
+    the capped/extracted subset, so the ceiling is the true frontier).
+
+    Returns the unmentioned numbers above that ceiling, newest first,
+    capped at ``MAX_NEWER_MERGES``. Empty when the starter names no PR
+    (no frontier to compare) or git yielded nothing.
+    """
+    mentioned = {int(n) for n in PR_RE.findall(text)}
+    if not mentioned or not merged_main_prs:
+        return []
+    ceiling = max(mentioned)
+    newer = {n for n in merged_main_prs if n > ceiling and n not in mentioned}
+    return sorted(newer, reverse=True)[:MAX_NEWER_MERGES]
+
+
 def pypi_latest(pkg: str) -> str | None:
     """Return the latest version string for ``pkg`` on PyPI, or None."""
     url = f"https://pypi.org/pypi/{pkg}/json"
@@ -183,7 +240,18 @@ def reconcile(text: str, pkg: str | None, cwd: Path | None) -> dict:
         "branches": dict.fromkeys(branches, "unverified"),
         "pypi": None,
         "versions": versions,
+        "newer_merges": [],
+        "pr_ceiling": None,
     }
+    # Widening: a starter is also stale when newer PRs landed on main that
+    # it never names. Only worth a git call if it names *any* PR (else
+    # there's no frontier to compare against) — keeps the no-threads path
+    # network-free. The ceiling is the true max over ALL mentioned PRs
+    # (not the capped extract), matching what newer_unmentioned compares.
+    if prs:
+        all_mentioned = [int(n) for n in PR_RE.findall(text)]
+        results["pr_ceiling"] = max(all_mentioned)
+        results["newer_merges"] = newer_unmentioned(text, merged_prs_on_main(cwd))
     if not prs and not branches and not pkg:
         return results
 
@@ -223,7 +291,8 @@ def format_banner(results: dict, label: str, path: Path) -> str | None:
     branches = results["branches"]
     pypi = results["pypi"]
     versions = results["versions"]
-    if not prs and not branches and pypi is None:
+    newer = results.get("newer_merges") or []
+    if not prs and not branches and pypi is None and not newer:
         return None
 
     lines = [f"[starter-reconcile:{label}] {path}"]
@@ -233,6 +302,14 @@ def format_banner(results: dict, label: str, path: Path) -> str | None:
     if branches:
         joined = " · ".join(f"{name} {state}" for name, state in branches.items())
         lines.append(f"  branches: {joined}")
+    if newer:
+        ceiling = results.get("pr_ceiling")
+        listed = " ".join(f"#{n}" for n in newer)
+        tail = f" (starter's newest: #{ceiling})" if ceiling is not None else ""
+        lines.append(
+            f"  ⚠ main has NEWER merges the starter omits: {listed}{tail}"
+            " — work may have landed since it was written"
+        )
     if pypi is not None:
         suffix = f" (starter mentions: {', '.join(versions)})" if versions else ""
         pkg = results.get("pkg") or ""
