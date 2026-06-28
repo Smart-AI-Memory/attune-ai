@@ -207,6 +207,19 @@ class ConfigLoader:
                 continue
 
             section_name, setting_name = parts
+
+            # Skip standalone ATTUNE_* vars that aren't section overrides
+            # (e.g. ATTUNE_MAX_BUDGET_USD, ATTUNE_SPEND_GATE) — these are
+            # read directly by their consumers, not mapped to a config
+            # section, so a missing section here is expected, not an error.
+            if getattr(config, section_name, None) is None:
+                logger.debug(
+                    "Skipping non-section env var %s (no '%s' config section)",
+                    key,
+                    section_name,
+                )
+                continue
+
             dot_key = f"{section_name}.{setting_name}"
 
             try:

@@ -1,6 +1,7 @@
 """Tests for attune.config.loader module."""
 
 import json
+import logging
 
 import pytest
 
@@ -119,6 +120,24 @@ class TestConfigLoaderEnvOverrides:
         monkeypatch.setenv("ATTUNE_JUSTONEPART", "value")
         result = ConfigLoader.apply_env_overrides(config)
         assert isinstance(result, UnifiedConfig)
+
+    def test_non_section_var_skipped_without_warning(self, monkeypatch, caplog):
+        """Standalone ATTUNE_* knobs (read directly by their consumers,
+        not config-section overrides) are skipped silently — no warning."""
+        config = UnifiedConfig()
+        monkeypatch.setenv("ATTUNE_MAX_BUDGET_USD", "10.00")
+        with caplog.at_level(logging.WARNING, logger="attune.config.loader"):
+            ConfigLoader.apply_env_overrides(config)
+        assert "ATTUNE_MAX_BUDGET_USD" not in caplog.text
+
+    def test_known_section_bad_setting_still_warns(self, monkeypatch, caplog):
+        """A real section with a bogus setting is a genuine misconfig and
+        must still warn — the skip above must not over-suppress."""
+        config = UnifiedConfig()
+        monkeypatch.setenv("ATTUNE_AUTH_BOGUSSETTING", "x")
+        with caplog.at_level(logging.WARNING, logger="attune.config.loader"):
+            ConfigLoader.apply_env_overrides(config)
+        assert "ATTUNE_AUTH_BOGUSSETTING" in caplog.text
 
 
 class TestConvenienceFunctions:
