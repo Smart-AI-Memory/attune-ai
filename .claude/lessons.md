@@ -12058,3 +12058,39 @@ files.
   "markdown-only PR failing coverage+test+clock-tz together is ONE
   shared failure" and the `sync_agents_skills` lessons above — same
   "broad red, single cause" family.
+
+- **An output widget/consumer "tested" against hand-built fixtures that
+  match its OWN assumed input shape proves nothing about the real
+  PRODUCER's payload — dogfood the actual workflow output before
+  building, or you ship a widget that degrades on real data.** 2026-06-28,
+  the analysis-workflow-output-widgets program: I shipped #1148
+  (discovery-sweep board) and #1149 (security-audit severity dashboard)
+  with helpers consuming `Finding{severity,file,line,message}` dicts, and
+  unit-tested them with hand-authored structured findings matching the
+  helper's expected shape — all green, demoed beautifully via
+  `show_widget`. Then a live dogfood + reading
+  `agent_sdk_adapter._parse_findings` revealed the REAL output of every
+  SDK-native workflow (security-audit, perf-audit, bug-predict,
+  code-review, …) is `dict[category → list[str]]`
+  (security/quality/performance/architecture → bullet STRINGS), NOT
+  structured Findings. ONLY discovery-sweep builds real `Finding` objects
+  (deterministic source adapters). So #1149's dashboard degrades on real
+  data — `_normalize` wraps each bullet as a flat `info` card, none of the
+  demo's severity colours / `file:line` / sorting. The synthetic fixtures
+  passed precisely because they assumed the shape the widget wanted: they
+  tested the consumer against ITSELF, never the producer. Rules: (1)
+  before building a consumer that assumes input shape X, dogfood the REAL
+  producer ONCE and inspect the actual payload — markdown→structure
+  extraction (`_parse_findings`) rarely yields the rich shape you'd design
+  for; (2) a unit test whose fixture you hand-authored to match the
+  consumer is necessary-not-sufficient — it cannot catch a
+  producer/consumer shape mismatch; (3) **empty output on FAILURE must not
+  render as success** — #1149 showed "no findings — clean" when the audit
+  returned `success:false, findings:[]` (auth failure), a false all-clear
+  on a security surface (fixed #1152 with a `succeeded` flag). (4)
+  **nested SDK workflows can't auth** from a direct `python` run OR the
+  MCP tool inside a worktree session (both returned `success:false`,
+  cost 0) — capturing a real payload needs a CI `integration-auth` job or
+  the user running it in a normal auth'd session. Same "dogfood the real
+  loop, not synthetic data" family as the "registered ≠ working" core
+  lesson — this is the output-widget-shape instance.
