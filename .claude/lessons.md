@@ -12094,3 +12094,30 @@ files.
   the user running it in a normal auth'd session. Same "dogfood the real
   loop, not synthetic data" family as the "registered ≠ working" core
   lesson — this is the output-widget-shape instance.
+
+- **When the real producer is BLOCKED (auth/env), don't retry it a third
+  time — verify the PIPELINE by feeding realistic input through the
+  PRODUCTION parse/render code, substituting ONLY the blocked component,
+  and be transparent about the substitution.** 2026-06-28, closing the
+  "last inch" on the report panel: the production security_audit LLM call
+  was auth-blocked (nested-SDK limitation — failed twice). Re-running it
+  was the tar-pit (same input, same wall). Instead: I (a capable LLM, the
+  same kind that powers the workflow) wrote a real security analysis of a
+  real file in the agent's markdown format, then ran it through the EXACT
+  production `AgentSDKResultAdapter._parse_findings → _to_workflow_report
+  → report_to_panel_html`. Every parse/render line is production code;
+  only the analysis-author is substituted. This is STRICTLY better than
+  synthetic fixtures (it exercises the real parser + report builder +
+  renderer with realistic content, proving the `markdown → category-list
+  sections → panel` path) and honest (the one substituted component is
+  named). The genuinely-final inch (the producer's OWN output) stays the
+  user's to confirm in an auth'd session — but the consumer is already
+  proven against real-shaped input. Rule: a blocked live run is not a
+  dead end; isolate the blocked unit, drive its real surroundings, and
+  say which inch is still owed. Pairs with the "synthetic fixtures hide
+  producer/consumer mismatch" lesson above (its constructive other half)
+  and the tar-pit / "if the same approach failed twice, change strategy"
+  discipline. (Bonus: when you escape-then-regex-highlight bullet text —
+  CWE badges, file:line pills — `html.escape` FIRST so the regex only
+  ever wraps already-escaped runs; verify with a `<script>`-in-a-bullet
+  test.)

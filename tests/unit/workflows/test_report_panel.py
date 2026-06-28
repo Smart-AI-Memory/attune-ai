@@ -37,7 +37,9 @@ class TestCategoryBullets:
         assert [s["kind"] for s in d["sections"]] == ["list", "list"]
         html = report_to_panel_html(d)
         assert "Security" in html and "Quality" in html
-        assert "Hardcoded key in config.py:88" in html
+        assert "Hardcoded key in" in html
+        # file:line refs are accented into their own span
+        assert 'class="rp-ref">config.py:88' in html
         assert "bare except" in html
         assert "<ul" in html
 
@@ -51,6 +53,35 @@ class TestCategoryBullets:
         html = report_to_panel_html(d)
         assert "Performance" not in html
         assert "Security" in html
+
+
+class TestPolish:
+    """The 'wonderful' touches — category accents, CWE badges, file refs."""
+
+    def test_cwe_codes_badged(self):
+        html = report_to_panel_html(_report({"security": ["leak (CWE-798) bad"]}))
+        assert 'class="rp-cwe">CWE-798</span>' in html
+
+    def test_file_line_refs_accented(self):
+        html = report_to_panel_html(_report({"security": ["issue at src/app.py:42 here"]}))
+        assert 'class="rp-ref">src/app.py:42</span>' in html
+
+    def test_category_dot_and_count(self):
+        html = report_to_panel_html(_report({"security": ["a", "b", "c"]}))
+        assert "rp-cat-dot" in html
+        assert 'class="rp-cat-n">3</span>' in html
+
+    def test_known_category_gets_colour(self):
+        # security category → red accent on the section border
+        html = report_to_panel_html(_report({"security": ["x"]}))
+        assert "border-left:3px solid #e5484d" in html
+
+    def test_highlight_escapes_before_wrapping(self):
+        # a CWE inside an injection attempt: tag escaped, CWE still badged
+        html = report_to_panel_html(_report({"security": ["<b>x</b> CWE-1"]}))
+        assert "<b>x</b>" not in html
+        assert "&lt;b&gt;" in html
+        assert 'class="rp-cwe">CWE-1</span>' in html
 
 
 class TestStructuredFindings:
