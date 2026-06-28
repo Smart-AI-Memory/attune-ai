@@ -587,10 +587,18 @@ class DiscoverySweepWorkflow(BaseWorkflow):
         duration_ms = int((time.perf_counter() - t0) * 1000)
         completed_at = datetime.now()
 
+        # Sum the API spend each LLM source accumulated during the
+        # fan-out (LLMSource._record_cost). Non-LLM / deterministic
+        # sources carry no spent_usd attribute and default to 0.0.
+        # Without this the wrapped workflows' real cost is discarded
+        # and the sweep always reports $0.00 spent.
+        spent_usd = sum(getattr(s, "spent_usd", 0.0) for s in sources)
+
         sweep = self._build_sweep_result(
             gathered=gathered,
             budget_usd=budget_usd,
             duration_ms=duration_ms,
+            spent_usd=spent_usd,
         )
 
         # Phase 1b: emit the final SweepResult JSON as the last
@@ -660,6 +668,7 @@ class DiscoverySweepWorkflow(BaseWorkflow):
         gathered: list[tuple[str, list[Finding] | BaseException]],
         budget_usd: float,
         duration_ms: int,
+        spent_usd: float = 0.0,
     ) -> SweepResult:
         all_findings: list[Finding] = []
         failures: list[str] = []
@@ -692,7 +701,10 @@ class DiscoverySweepWorkflow(BaseWorkflow):
                 rejected.append(RejectedFinding(finding=finding, rule=decision.rule))
 
         metadata = SweepMetadata(
-            spent_usd=0.0,  # error/empty path — no sources ran, no spend.
+            # Real API spend summed from each LLM source's cost_report
+            # by the engine (see execute()). 0.0 only when no LLM source
+            # ran (--no-llm, error/empty path) or all costs were zero.
+            spent_usd=spent_usd,
             budget_usd=budget_usd,
             sources=ran,
             failures=failures,
