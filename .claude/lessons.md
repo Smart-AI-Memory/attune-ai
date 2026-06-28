@@ -12032,3 +12032,29 @@ files.
   return a failed job's full log mid-run — fetch it and grep `^FAILED `.
   Pairs with "a skill can live at `.agents/skills/` OR `plugin/skills/`
   — check both dirs".
+
+- **Adding a field to a workflow's MCP response breaks any
+  exact-dict-equality (`out == {...}`) assertion on that handler — and
+  that test often lives in a DIFFERENT file than the handler's own test,
+  so a per-handler local run misses it; one such failure paints EVERY
+  matrix lane red (one bug, lots of red).** 2026-06-28 (#1149): added
+  `dashboard_html` to `_run_security_audit`'s response. Locally I ran
+  `tests/unit/mcp/handlers/test_workflow_handlers.py` (passed) but NOT
+  `tests/unit/mcp/handlers/test_workflow_response.py`, whose
+  `TestHandlerReportPath::test_legacy_flat_dict_shape_unchanged` asserts
+  the EXACT 5-key dict via `assert out == {...}`. The additive key broke
+  the equality; because that one test runs in every lane, the PR showed
+  ~18 red `test (...)` lanes + `coverage` + both `clock-tz` — yet the
+  failed-job log had a single `FAILED` line. Rules: (1) when adding a
+  field to ANY handler response, grep the WHOLE mcp test tree for
+  exact-equality + handler refs (`grep -rn "_run_<handler>\|== {"
+  tests/unit/mcp/`), not just the same-named test file; (2)
+  "many identical red lanes" = ONE root-cause test, not N bugs — fetch
+  one lane's failed-job log (`gh api .../actions/jobs/<id>/logs`) and
+  grep `^FAILED ` to find the single cause before touching anything;
+  (3) when updating such a guard, keep its intent — pop the new key and
+  validate it separately, leave the legacy-keys `==` exact (don't
+  loosen the whole assertion to a subset check). Pairs with the
+  "markdown-only PR failing coverage+test+clock-tz together is ONE
+  shared failure" and the `sync_agents_skills` lessons above — same
+  "broad red, single cause" family.
