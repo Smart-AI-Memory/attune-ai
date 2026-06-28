@@ -65,8 +65,12 @@ intent so Claude matches the right skill:
 
 When the scoping turn has **2–4 independent, non-branching, genuinely
 open dimensions** (e.g. goal + scope + focus), gather them as one form
-via the `elicit` skill instead of sequential buttons. Stay
-single-question when only one dimension is unknown or answers branch.
+via the `elicit` skill instead of sequential buttons — **preferring the
+rich widget surface** (`elicitation_render_widget` → `show_widget`, so
+free-text dimensions are textareas and concerns are multi-select
+checkboxes), with the AskUserQuestion mapping as the fallback (see the
+`elicit` skill's "Choosing a surface"). Stay single-question when only
+one dimension is unknown or answers branch.
 
 ## Single-referent resolution
 

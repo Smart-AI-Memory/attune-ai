@@ -403,6 +403,40 @@ running the old way. A real first-consumer integration — not another
 surface — is the next move that would prove the form earns its keep.
 Needs its own scoping (which flow, behind the §4 rule); not started.
 
+## D13 — first-consumer adoption: S1 widget surface wired into the 3 D12-fit flows
+
+**Date:** 2026-06-28 · **Status:** decided (Patrick chose "Follow D12:
+attune + planning", after an initial "analysis skills" pick was
+reconciled against D12)
+
+D12 named the genuine multi-dimension fits (`/spec`, `/attune`
+discovery, `/planning`) and explicitly ruled the path-scoped analysis
+skills (`code-quality`/`security-audit`/`smart-test`/`bug-predict`/
+`release-prep`) **out** — a multi-field form there is the "bureaucratic
+intake" the §4 rule warns against. When the adoption work was scoped,
+the first instinct was to add forms to the analysis skills; reading D12
+overturned that. We wire the **S1 `show_widget` rich surface** (the
+only one that renders on Claude Code — D10) into exactly the three D12
+fits, no further:
+
+- **`spec`** — kickoff (`outcome`/`scope` textareas + `concerns`
+  multi-select) now **prefers** `elicitation_render_widget` →
+  `show_widget`, falling back to the AskUserQuestion-portable mapping
+  when the widget surface is unavailable (and per D10, an unseen
+  `decline` = surface unavailable, not a user "no").
+- **`attune-hub`** — the existing "2–4 open dimensions → one form" note
+  now prefers the widget surface (textareas + multi-select) with the
+  AskUserQuestion fallback.
+- **`planning`** — the **Subject** phrasing branches on **Type**, so it
+  is NOT a clean 3-field batch: ask **Type** first (or take it from the
+  argument), then gather the independent **Subject** + **Scope** as one
+  widget form. Faithful to §4; D12 flagged planning "(maybe)" for this
+  reason.
+
+Native MCP elicitation (`elicitation_ask`) stays a non-option until a
+CC client renders it (D10). The analysis skills stay single-question.
+Surface-only change (skill markdown) — the engine (D11) is unchanged.
+
 ## Open
 
 - **Confirm CC elicitation support** — low priority (elicitation is
