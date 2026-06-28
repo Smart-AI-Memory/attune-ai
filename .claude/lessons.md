@@ -11981,3 +11981,54 @@ files.
   Shipped in `fix/docs-checks-always-report`. Pairs with the
   `tests.yml` matrix comment ("a required check that never runs reports
   as missing → the PR is blocked forever").
+
+- **Read the owning spec's `decisions.md` BEFORE presenting scope
+  OPTIONS to the user — an option you offer can contradict a ratified
+  decision, and the user may pick it.** 2026-06-28, scoping "use more
+  advanced elicitation features in `spec` amongst others": I offered
+  "analysis skills" (`code-quality`/`security-audit`/`smart-test`/…) as
+  an `AskUserQuestion` option and Patrick selected it — only THEN did
+  reading `docs/specs/elicitation-form-surface/decisions.md` **D12**
+  reveal those skills were explicitly ruled OUT ("not fits — a
+  multi-field form there is the 'bureaucratic intake' the §4 rule warns
+  against"); the named fits were `/spec`, `/attune`, `/planning`. Caught
+  before building, but only after a wasted option-turn and a
+  contradiction I had to walk back. **Rule:** when a feature has an
+  owning spec, read its `decisions.md` (not just requirements/design)
+  BEFORE constructing the `AskUserQuestion` options — the options you
+  present must be consistent with ratified decisions, or you risk the
+  user choosing a path their own spec argues against. If you DO offer an
+  option a decision rules out, label it an override ("overrides D12") so
+  the choice is informed. Extends "re-validate a spec's premise before
+  executing" to the earlier *option-presentation* step: the premise
+  check belongs before you frame the choices, not just before you act on
+  them. Surfacing the conflict (rather than silently building the
+  chosen-but-contradicting scope) is the pushback discipline working —
+  but reading decisions first would have avoided the detour entirely.
+
+- **Editing any `plugin/skills/<n>/SKILL.md` requires running
+  `scripts/sync_agents_skills.py` and committing the regenerated
+  `.agents/skills/<n>/SKILL.md` mirror — NO pre-commit hook syncs it, so
+  the edit passes pre-commit + the plugin validators locally yet fails
+  `test_sync_agents_skills` in CI across `coverage` + every `test`/
+  `clock-tz` lane.** 2026-06-28, the spec/attune-hub/planning widget
+  edits (#1147) were markdown-only and green on
+  `test_plugin_reference_validation` / `test_plugin_config_validation`
+  locally, but CI failed `coverage` + `test (ubuntu-latest, 3.12)` +
+  both `clock-tz` lanes with `AssertionError: spec: out of sync. Run:
+  python scripts/sync_agents_skills.py` (and `spec/SKILL.md body
+  differs`). The `.agents/skills/` copies are GENERATED mirrors of
+  `plugin/skills/`, guarded by `test_sync_agents_skills.py`
+  (`test_frontmatter_in_sync` + `test_skill_body_content_matches`), and
+  the sync is enforced only at test time — not at pre-commit (unlike the
+  `.help` regen hook). **Rule:** after editing any `plugin/skills`
+  SKILL.md, run `PYTHONPATH=src python scripts/sync_agents_skills.py` and
+  stage the regenerated `.agents/skills/` files in the SAME commit.
+  **Diagnostic tells:** (1) a markdown-only PR failing `coverage` +
+  `test` + `clock-tz` *together* is a real shared test failure, not a
+  flake/runner-hang (hangs show `pending`/`cancelled`, not `fail`); (2)
+  `gh run view --log-failed` returns nothing while the run is
+  `in_progress`, but `gh api repos/<o>/<r>/actions/jobs/<id>/logs` DOES
+  return a failed job's full log mid-run — fetch it and grep `^FAILED `.
+  Pairs with "a skill can live at `.agents/skills/` OR `plugin/skills/`
+  — check both dirs".

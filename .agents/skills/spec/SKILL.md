@@ -93,14 +93,30 @@ When the user chooses "Start a new spec":
      (multi-select: correctness, security, performance,
      tests, docs)
 
-   Build the declarative form, render it with
-   `elicitation_render_form`, ask the batch in one
-   `AskUserQuestion` call with `metadata:
-   {"source": "elicit-form"}` (the opt-in the
-   one-question-per-turn guard requires), then validate
-   the answers with `elicitation_collect_response`. The
-   `elicit` skill owns the exact render → ask → collect
-   steps; this stage just supplies the three fields.
+   Build the declarative form, then **prefer the rich
+   widget surface** so the kickoff renders as one form
+   with the controls each dimension deserves —
+   `outcome`/`scope` as multi-line textareas and
+   `concerns` as a multi-select checkbox group, instead
+   of three flat button turns. Render it with
+   `elicitation_render_widget` and pass the returned
+   `html` to `mcp__visualize__show_widget`; when the
+   user submits, parse the `__elicitation_response__`
+   postback and validate with
+   `elicitation_collect_response`.
+
+   **Fall back to the portable AskUserQuestion mapping**
+   — `elicitation_render_form` → one `AskUserQuestion`
+   call with `metadata: {"source": "elicit-form"}` (the
+   opt-in the one-question-per-turn guard requires) →
+   `elicitation_collect_response` — when the widget
+   surface is unavailable. Per decisions D10, treat an
+   elicitation `decline` you did **not** see the user
+   make as "surface unavailable" and fall back; never
+   read it as the user saying no. The `elicit` skill
+   owns both round-trips (its "Widget surface" section
+   and steps 2–4); this stage just supplies the three
+   fields.
 
    **Omit any dimension the user already stated** — the
    `<what to build>` argument usually answers `outcome`,
