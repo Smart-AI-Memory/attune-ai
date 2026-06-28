@@ -2,8 +2,8 @@
 
 Lives outside ``workflow.py`` so the engine doesn't import the
 sources (and their transitive dependencies) until the user actually
-runs a sweep. Phase 1 returns the pattern source only; Phase 2A+
-appends LLM adapters.
+runs a sweep. ``default_sources()`` returns all seven adapters
+(Phase 2B): the non-LLM pattern scanner plus six LLM adapters.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0

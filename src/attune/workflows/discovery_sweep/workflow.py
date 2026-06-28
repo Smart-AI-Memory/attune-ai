@@ -460,10 +460,10 @@ def _failure_to_question(source_name: str, exc: BaseException) -> QuestionFindin
 class DiscoverySweepWorkflow(BaseWorkflow):
     """Meta-workflow that fans out across audit sources and triages.
 
-    Phase 1 wires the engine, the PatternScanSource, and CLI
-    registration. LLM source adapters land in Phase 2A+; until they
-    do, ``default_sources()`` returns the pattern source only and
-    ``--no-llm`` is effectively a no-op (no LLM sources to filter).
+    Phase 2B: ``default_sources()`` returns all seven adapters — the
+    non-LLM ``PatternScanSource`` plus six LLM adapters (bug-predict,
+    security-audit, dependency-check, perf-audit, doc-audit, test-audit).
+    ``--no-llm`` filters to the non-LLM sources (``is_llm = False``).
 
     See ``docs/specs/discovery-sweep/`` for the approved spec.
     """
@@ -692,7 +692,7 @@ class DiscoverySweepWorkflow(BaseWorkflow):
                 rejected.append(RejectedFinding(finding=finding, rule=decision.rule))
 
         metadata = SweepMetadata(
-            spent_usd=0.0,  # Phase 1: pattern source only, no spend.
+            spent_usd=0.0,  # error/empty path — no sources ran, no spend.
             budget_usd=budget_usd,
             sources=ran,
             failures=failures,
