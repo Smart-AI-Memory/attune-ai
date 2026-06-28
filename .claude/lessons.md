@@ -11950,3 +11950,34 @@ files.
   scope. Pairs with the existing `norecursedirs` sub-lesson above
   (a guard that silently doesn't run is the same failure: green ≠
   guarding).
+
+- **A path-filtered REQUIRED status check permanently BLOCKS any PR
+  that doesn't touch its trigger paths** — the check is *missing*
+  (never reports), and GitHub treats a missing required check as
+  blocking (`mergeStateStatus=BLOCKED`), forcing an admin-merge every
+  time. Hit 2026-06-28: `docs.yml` produces `doc-import-audit` +
+  `wiring-audit` (both REQUIRED) but is path-filtered to
+  `docs/**`,`src/**`,`mkdocs.yml`,`content/**`,the audit scripts. A
+  website-only or tests-only PR (#1141, #1143, #1144) matches none of
+  those → the two contexts never appear → permanently BLOCKED despite
+  every applicable check green and 0 required reviews. **Diagnostic:**
+  `gh pr checks <n>` shows the required context simply ABSENT (not
+  `fail`/`pending`) — cross-check `gh api
+  .../branches/main/protection/required_status_checks` to confirm it's
+  required, then read the producing workflow's `on.pull_request.paths`.
+  Do NOT confuse with a job-level `if:` *skip* (that DOES report
+  skipped=success and is fine) — the trap is specifically the WORKFLOW
+  not triggering at all, so no check object is created. **Fix (the
+  repo's established pattern, already used by `tests.yml`'s
+  `website_only`/slim-matrix):** make the workflow ALWAYS trigger on
+  `pull_request` (drop the `on.pull_request.paths` filter), add a
+  `changes` job that computes a relevance flag via `git diff
+  origin/$BASE_REF...HEAD`, and gate the EXPENSIVE STEPS of the
+  required jobs with `if: needs.changes.outputs.<flag> == 'true'` plus
+  a trailing no-op `echo` step for the else branch — the job always
+  RUNS and reports green, so the required context is never missing.
+  Keep the `push` paths filter (deploy/rebuild should stay
+  change-scoped; required checks gate PRs, not post-merge pushes).
+  Shipped in `fix/docs-checks-always-report`. Pairs with the
+  `tests.yml` matrix comment ("a required check that never runs reports
+  as missing → the PR is blocked forever").
