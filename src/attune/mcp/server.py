@@ -389,12 +389,24 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         workflow = SecurityAuditWorkflow()
         result = await workflow.execute(path=validated_path)
 
-        return _workflow_response(
+        response = _workflow_response(
             result,
             include_provider=True,
             score="health_score",
             findings=("findings", []),
         )
+        # Rich severity dashboard for mcp__visualize__show_widget (spec:
+        # docs/specs/security-audit-rich-output/). Display-only,
+        # injection-safe; the skill's Output step renders it.
+        from attune.workflows.security_audit_dashboard import (
+            security_findings_dashboard_html,
+        )
+
+        response["dashboard_html"] = security_findings_dashboard_html(
+            response.get("findings") or [],
+            score=response.get("health_score"),
+        )
+        return response
 
     async def _run_bug_predict(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run bug prediction workflow."""
