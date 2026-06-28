@@ -177,6 +177,18 @@ class TestWorkflowResponseReport:
         assert out["predictions"] == out["findings"]
         assert len(out["predictions"]) == 2
 
+    def test_panel_html_attached_on_report_path(self):
+        # the universal rich panel rides every WorkflowReport response
+        result = _make_result(final_output=_make_report().to_dict())
+        out = _workflow_response(result)
+        assert isinstance(out.get("panel_html"), str)
+        assert 'id="rp-panel"' in out["panel_html"]
+
+    def test_panel_html_failure_state(self):
+        result = _make_result(success=False, final_output=_make_report().to_dict())
+        out = _workflow_response(result)
+        assert "did not complete" in out["panel_html"]
+
     def test_score_like_picks_resolve_to_report_score(self):
         result = _make_result(final_output=_make_report().to_dict())
         out = _workflow_response(result, health_score="health_score")
@@ -263,11 +275,12 @@ class TestHandlerReportPath:
     @pytest.mark.asyncio
     @pytest.mark.usefixtures("_bypass_path_validation")
     async def test_legacy_flat_dict_shape_unchanged(self):
-        """Pre-report workflows keep the legacy response keys.
+        """Pre-report (legacy flat-dict) workflows keep the exact shape.
 
-        security-audit additionally attaches a ``dashboard_html`` rich
-        surface (docs/specs/security-audit-rich-output/); the legacy
-        keys must stay byte-for-byte unchanged alongside it.
+        A flat-dict final_output never hits the report path, so it gets
+        no ``panel_html`` — the legacy keys stay exactly as before. (The
+        universal ``panel_html`` only attaches on the WorkflowReport path,
+        tested in TestWorkflowResponseReport.)
         """
         server = _make_server()
         result = _make_result(
@@ -280,10 +293,6 @@ class TestHandlerReportPath:
 
         with patch.dict(sys.modules, {"attune.workflows.security_audit": mod}):
             out = await server._run_security_audit({"path": "/src"})
-
-        # Additive rich-output field — a non-empty HTML string.
-        dashboard = out.pop("dashboard_html", None)
-        assert isinstance(dashboard, str) and dashboard.startswith('<div id="sa-dash"')
 
         assert out == {
             "success": True,

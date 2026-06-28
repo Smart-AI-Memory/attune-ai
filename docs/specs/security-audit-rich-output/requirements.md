@@ -1,6 +1,14 @@
 # Security-Audit Rich Output — requirements
 
-**Status:** draft (2026-06-28) · **Owner:** Patrick + agent
+**Status:** SUPERSEDED (2026-06-28) — the bespoke severity dashboard this
+spec described was retired. Dogfooding showed security-audit emits
+category-bullets, not the structured `Finding{severity,file,line}` shape
+the dashboard assumed, so it rendered degraded on real output. Replaced
+by the **universal `report_panel`** that renders any workflow's report
+sections; see `docs/specs/analysis-workflow-output-widgets/` D4. Kept for
+history.
+
+**Owner:** Patrick + agent
 
 The second consumer of the rich `show_widget` output pattern (after the
 discovery-sweep triage board). security-audit is **output-only** —

@@ -1,11 +1,10 @@
 """Shared primitives for findings-based ``show_widget`` surfaces.
 
 Extracted (spec: docs/specs/analysis-workflow-output-widgets/ FR-1) from
-the two shipped consumers — the discovery-sweep triage board
-(``discovery_sweep.board``) and the security-audit severity dashboard
-(``security_audit_dashboard``) — which each carried a private copy of
-the severity palette + escaping + location helpers. This is the one
-place to change them; every Family-A widget builds on it.
+the discovery-sweep triage board (``discovery_sweep.board``), which had a
+private copy of the severity palette + escaping + location helpers. Now
+shared by the board and the universal ``report_panel`` (findings-section
+cards). This is the one place to change them.
 
 All consumers keep the same injection-safety contract: display-only (no
 ``<script>``), every finding-derived string ``html.escape``d, CDS design

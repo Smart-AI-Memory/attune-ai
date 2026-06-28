@@ -389,28 +389,17 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         workflow = SecurityAuditWorkflow()
         result = await workflow.execute(path=validated_path)
 
-        response = _workflow_response(
+        # security-audit's findings are category-bullets, not the
+        # structured Finding shape — so it uses the UNIVERSAL panel_html
+        # added by _workflow_response (spec D4), NOT a bespoke severity
+        # dashboard (retired: the dashboard assumed file/line/severity the
+        # real output doesn't carry). The skill renders response["panel_html"].
+        return _workflow_response(
             result,
             include_provider=True,
             score="health_score",
             findings=("findings", []),
         )
-        # Rich severity dashboard for mcp__visualize__show_widget (spec:
-        # docs/specs/security-audit-rich-output/). Display-only,
-        # injection-safe; the skill's Output step renders it.
-        from attune.workflows.security_audit_dashboard import (
-            security_findings_dashboard_html,
-        )
-
-        response["dashboard_html"] = security_findings_dashboard_html(
-            response.get("findings") or [],
-            score=response.get("health_score"),
-            # A failed audit with empty findings must NOT render as
-            # "clean" — that would be a false all-clear on a security
-            # surface (observed when the workflow can't auth).
-            succeeded=bool(response.get("success", True)),
-        )
-        return response
 
     async def _run_bug_predict(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run bug prediction workflow."""

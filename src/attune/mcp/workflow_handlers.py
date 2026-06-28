@@ -96,6 +96,15 @@ def _workflow_response(
         response["report"] = fo
         response["score"] = report.score
         response["findings"] = findings
+        # Universal rich panel for mcp__visualize__show_widget — renders
+        # the report's sections (findings / category-bullets / next-steps)
+        # for EVERY SDK-native workflow at once (spec
+        # analysis-workflow-output-widgets D4). Display-only, injection-safe.
+        from attune.workflows.report_panel import report_to_panel_html
+
+        response["panel_html"] = report_to_panel_html(
+            fo, succeeded=bool(getattr(result, "success", True))
+        )
         if raw_output:
             response["output"] = response["summary_markdown"]
         for key, source in field_picks.items():
