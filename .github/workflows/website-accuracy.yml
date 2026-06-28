@@ -1,0 +1,48 @@
+name: Website Accuracy
+
+# Guards the website's version/count claims against reality. Two checks:
+#   - the deterministic pytest guard (features.ts attune-ai version ==
+#     this repo's pyproject.toml; homepage badge matches), and
+#   - the PyPI audit script for the external packages (attune-help/-author).
+# Advisory (not in required_status_checks): a confirmed drift turns it red
+# so it's caught in review; a PyPI hiccup reports "unverified" and passes.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/lib/features.ts'
+      - 'website/app/page.tsx'
+      - 'pyproject.toml'
+      - 'scripts/audit_website_versions.py'
+      - 'tests/unit/test_website_version_accuracy.py'
+      - '.github/workflows/website-accuracy.yml'
+  pull_request:
+    paths:
+      - 'website/lib/features.ts'
+      - 'website/app/page.tsx'
+      - 'pyproject.toml'
+      - 'scripts/audit_website_versions.py'
+      - 'tests/unit/test_website_version_accuracy.py'
+      - '.github/workflows/website-accuracy.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  website-accuracy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install pytest
+        run: pip install pytest
+      - name: Deterministic version guard (features.ts vs pyproject)
+        run: python -m pytest tests/unit/test_website_version_accuracy.py -q
+      - name: PyPI version audit (external packages)
+        run: python scripts/audit_website_versions.py

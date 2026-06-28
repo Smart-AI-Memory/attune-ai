@@ -32,7 +32,7 @@ export const PRODUCTS: Product[] = [
     id: "attune-ai",
     name: "Attune AI",
     pypiName: "attune-ai",
-    version: "8.7.0",
+    version: "9.1.0",
     tagline: "Generate, maintain, and serve help from your code",
     installCommand: "pip install attune-ai",
     marketplaceInstall:
@@ -47,7 +47,7 @@ export const PRODUCTS: Product[] = [
       "Staleness detection via source hashing",
       "Auto-regeneration of stale templates",
       "17 Claude Code skills included",
-      "MCP server with 41 registered tools",
+      "MCP server with 47 registered tools",
     ],
   },
   {
@@ -76,7 +76,7 @@ export const PRODUCTS: Product[] = [
     id: "attune-author",
     name: "Attune Author",
     pypiName: "attune-author",
-    version: "0.21.0",
+    version: "0.22.0",
     tagline: "Author and polish help content with AI",
     installCommand: "pip install 'attune-author[plugin]'",
     marketplaceInstall:
@@ -101,7 +101,7 @@ export const PRODUCTS: Product[] = [
     id: "claude-code-plugin",
     name: "Claude Code Plugin",
     pypiName: "attune-ai",
-    version: "8.7.0",
+    version: "9.1.0",
     tagline: "Progressive help right in your terminal",
     installCommand:
       "claude plugin marketplace add Smart-AI-Memory/attune-ai",
@@ -248,8 +248,8 @@ export const DIFFERENTIATORS: Differentiator[] = [
 /**
  * Counts that appear in prose and stat callouts across the
  * site. Verified against the live Python code per the
- * website-content-accuracy rule (last verified 2026-06-22,
- * attune-ai 8.7.0):
+ * website-content-accuracy rule (last verified 2026-06-28,
+ * attune-ai 9.1.0):
  *
  *   workflows: attune.workflows.list_workflows() with stages
  *   skills: plugin/skills/ directory count (test_skill_count)
@@ -262,9 +262,9 @@ export const DIFFERENTIATORS: Differentiator[] = [
  * and no page consumed them.)
  */
 export const CAPABILITIES = {
-  workflows: 17,
+  workflows: 19,
   skills: 17,
-  mcpTools: 41,
+  mcpTools: 47,
   templateKinds: 15,
   wizards: 5,
 } as const;
@@ -305,7 +305,7 @@ export const RELIABILITY_LOOP: LoopStage[] = [
     n: "03",
     name: "Build",
     description:
-      "17 multi-stage workflows: review, tests, bug prediction, refactor.",
+      "19 multi-stage workflows: review, tests, bug prediction, refactor.",
   },
   {
     n: "04",
@@ -343,7 +343,7 @@ export const PILLARS: Pillar[] = [
     tag: "AI workflows",
     title: "Specialist teams, not one prompt",
     description:
-      "17 multi-stage workflows run teams of 2–6 Claude subagents to " +
+      "19 multi-stage workflows run teams of 2–6 Claude subagents to " +
       "review code, surface vulnerabilities, generate tests, and plan " +
       "refactors — with cost-tiered model routing.",
     points: [

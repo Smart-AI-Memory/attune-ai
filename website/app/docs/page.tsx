@@ -176,7 +176,7 @@ export default function DocsPage() {
                   <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
                     The whole platform: spec engine, AI workflows, project
                     memory, retrieval grounding, and verification.
-                    17 multi-stage workflows, 17 skills, 41 MCP tools.
+                    19 multi-stage workflows, 17 skills, 47 MCP tools.
                   </p>
                   <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
                     <span className="text-white/50">$ </span>pip install attune-ai
@@ -571,9 +571,9 @@ export default function DocsPage() {
                 Workflows &amp; Skills
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                The build half of the loop: 17 multi-stage workflows
-                (20 workflows total), 17 auto-triggering Claude Code skills,
-                and an MCP server with 41 registered tools — review, tests,
+                The build half of the loop: 19 multi-stage workflows
+                (22 workflows total), 17 auto-triggering Claude Code skills,
+                and an MCP server with 47 registered tools — review, tests,
                 bug prediction, refactor, and release prep.
               </p>
 
