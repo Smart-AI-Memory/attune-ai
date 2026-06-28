@@ -449,12 +449,21 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 "cost": cost,
             }
 
-        return {
-            "success": result.success,
+        from attune.workflows.discovery_sweep.board import sweep_to_board_html
+
+        buckets = {
             "queue": [asdict(f) for f in sweep.queue],
             "questions": [asdict(q) for q in sweep.questions],
             "rejected": [asdict(r) for r in sweep.rejected],
             "metadata": asdict(sweep.metadata),
+        }
+        return {
+            "success": result.success,
+            **buckets,
+            # Rich triage board for mcp__visualize__show_widget (spec:
+            # docs/specs/discovery-sweep-rich-surface/). Display-only,
+            # injection-safe; the skill's Output step renders it.
+            "board_html": sweep_to_board_html(buckets),
             "cost": cost,
         }
 
