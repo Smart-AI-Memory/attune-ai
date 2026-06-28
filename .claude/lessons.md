@@ -11894,13 +11894,19 @@ files.
     pydantic.root_model` (a sys.modules warm-up) at COLLECTION time, so
     `python -m pytest <test>` fails `ModuleNotFoundError: No module named
     'pydantic'` even though the TEST imports nothing heavy (reads files +
-    `importlib`-loads a script). Fixes: install the package (`pip install
-    -e .`, heavy) OR — when the test is genuinely self-contained (no
-    conftest fixtures, no `attune`/`pydantic`) — `pytest <test>
-    --noconftest` to skip the warm-up and keep the job dep-light. In the
-    MAIN suite (full deps) the same test runs normally WITH conftest, so
-    behavior stays consistent; `--noconftest` is only for the dedicated
-    lightweight lane.
+    `importlib`-loads a script). `--noconftest` skips the warm-up — but
+    that is NOT the end: a dep-light job ALSO trips `pytest.ini`'s
+    `addopts = -n auto --cov …` (xdist/coverage plugins absent →
+    `error: unrecognized arguments: -n`), needing `-o addopts=""` on top.
+    Two layers deep, the real lesson is ARCHITECTURAL, not another flag:
+    **if the test already runs in the main suite (full deps, correct
+    config), do NOT re-run it in a dedicated dep-light workflow** — have
+    that workflow run only the thing the main suite can't (here a
+    stdlib-only PyPI check), and let the main suite own the pytest guard.
+    I patched twice (`--noconftest`, then `-o addopts=""`) before deleting
+    the pytest step entirely; the deletion was the fix. Tar-pit tell:
+    when a CI job needs its 2nd flag-patch to satisfy the repo's pytest
+    config, stop and ask whether that job should run pytest at all.
   - **norecursedirs swallows `website/`:** `pytest.ini` lists `website`
     in `norecursedirs` (to skip the top-level Next.js dir), so a new
     `tests/unit/website/` package is SILENTLY uncollected — the guard
