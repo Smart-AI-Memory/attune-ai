@@ -1,0 +1,117 @@
+"""Tests for the universal report panel (spec analysis-workflow-output-widgets D4).
+
+Built against the REAL producer: reports are constructed via the
+production ``AgentSDKResultAdapter._to_workflow_report`` from the exact
+``{category: [strings]}`` shape ``_parse_findings`` emits — not synthetic
+dicts (the verification gap that let #1149 ship the wrong widget).
+"""
+
+from __future__ import annotations
+
+import pytest
+
+from attune.workflows.agent_sdk_adapter import AgentSDKResultAdapter as A
+from attune.workflows.report_panel import report_to_panel_html
+
+pytestmark = pytest.mark.unit
+
+
+def _report(findings, *, title="Security audit", summary="s", score=72, suggestions=None):
+    return A._to_workflow_report(
+        title=title,
+        summary=summary,
+        score=score,
+        findings=findings,
+        suggestions=suggestions or [],
+        total_cost=None,
+        duration_ms=1500,
+    ).to_dict()
+
+
+class TestCategoryBullets:
+    """The common SDK-native case: category → bullet strings → list sections."""
+
+    def test_renders_category_list_sections(self):
+        d = _report({"security": ["Hardcoded key in config.py:88"], "quality": ["bare except"]})
+        # the real producer makes these `list` sections, not `findings`
+        assert [s["kind"] for s in d["sections"]] == ["list", "list"]
+        html = report_to_panel_html(d)
+        assert "Security" in html and "Quality" in html
+        assert "Hardcoded key in config.py:88" in html
+        assert "bare except" in html
+        assert "<ul" in html
+
+    def test_score_and_summary_in_header(self):
+        html = report_to_panel_html(_report({"security": ["x"]}, summary="2 issues found."))
+        assert "score 72/100" in html
+        assert "2 issues found." in html
+
+    def test_empty_category_skipped(self):
+        d = _report({"security": ["real"], "performance": []})
+        html = report_to_panel_html(d)
+        assert "Performance" not in html
+        assert "Security" in html
+
+
+class TestStructuredFindings:
+    """When a workflow DOES emit dict findings, they render as cards."""
+
+    def test_dict_findings_render_as_cards(self):
+        d = _report(
+            {
+                "security": [
+                    {"severity": "critical", "file": "a.py", "line": 5, "description": "eval()"}
+                ]
+            }
+        )
+        assert d["sections"][0]["kind"] == "findings"
+        html = report_to_panel_html(d)
+        assert "rp-card" in html
+        assert "critical" in html
+        assert "a.py:5" in html
+        assert "eval()" in html
+
+
+class TestNextSteps:
+    def test_next_steps_section(self):
+        from attune.workflows.data_classes import NextAction
+
+        d = _report(
+            {"security": ["x"]},
+            suggestions=[
+                NextAction(
+                    workflow_name="security-audit",
+                    description="Rotate the leaked key",
+                    reasoning="hardcoded secret found",
+                )
+            ],
+        )
+        html = report_to_panel_html(d)
+        assert "Rotate the leaked key" in html
+
+
+class TestFailureState:
+    def test_failed_run_not_clean(self):
+        d = _report({"security": ["x"]})
+        html = report_to_panel_html(d, succeeded=False)
+        assert "did not complete" in html
+        assert "NOT a clean" in html
+        # the normal section elements are NOT rendered on failure
+        # (".rp-sec-head" appears in the <style> block, so match the element)
+        assert '<div class="rp-sec">' not in html
+
+    def test_empty_report_says_none(self):
+        html = report_to_panel_html({"title": "X", "summary": "", "score": None, "sections": []})
+        assert "no findings reported" in html
+
+
+class TestInjectionSafety:
+    def test_bullet_text_escaped(self):
+        d = _report({"security": ["<script>alert(1)</script>"]})
+        html = report_to_panel_html(d)
+        assert "<script>alert(1)</script>" not in html
+        assert "&lt;script&gt;" in html
+
+    def test_no_script_tag(self):
+        html = report_to_panel_html(_report({"security": ["x"]}))
+        assert "<script" not in html.lower()
