@@ -346,12 +346,24 @@ controls
 were rejected at the MCP boundary for the widget tool too, so the fix
 had to land here. Guarded by `test_tool_schemas` (v2 = 7, v1 = 4).
 
-**Not done (live S1 dogfood):** the show_widget round-trip itself is
-unproven *this* session — `elicitation_render_widget` reaches the MCP
-server only after a restart (same per-session-server constraint as
-D9/D10). Next session: render a form, submit it, confirm the
-`sendPrompt` JSON parses → `collect_form_response`. Tests prove the
-transform + emit; the live receipt is deferred.
+**Live S1 dogfood — DONE (2026-06-28).** The round-trip that was
+deferred at write-time is now proven end to end against the released
+9.1.0 server (the per-session-server constraint cleared once 9.1.0 was
+on main). Receipt:
+
+1. `elicitation_render_widget` on a 3-field form (`number` 1–5,
+   `date`, `multi_select`) → `success: true`, valid HTML.
+2. `show_widget` rendered all three rich controls (number spinner,
+   native date picker, multi-select checkboxes).
+3. Submit fired `sendPrompt` with the sentinel
+   `__elicitation_response__` JSON block; it arrived intact.
+4. `elicitation_collect_response` validated it → `success: true`,
+   `response_id: resp-20260628-010916`.
+
+Type fidelity across the JSON hop held: number came back as typed `1`
+(not `"1"`), date as ISO `2026-06-29`, multi_select as a 3-element
+array — all passed R4 required + option-membership validation. The
+"registered ≠ working" gap for the S1 surface is closed.
 
 ## D12 — adoption gap: the enhanced form is consumed by ONE path, and most features are not fits
 
