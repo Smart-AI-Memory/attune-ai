@@ -1,29 +1,26 @@
 name: Website Accuracy
 
-# Guards the website's version/count claims against reality. Two checks:
-#   - the deterministic pytest guard (features.ts attune-ai version ==
-#     this repo's pyproject.toml; homepage badge matches), and
-#   - the PyPI audit script for the external packages (attune-help/-author).
-# Advisory (not in required_status_checks): a confirmed drift turns it red
-# so it's caught in review; a PyPI hiccup reports "unverified" and passes.
+# Guards the website's package-version claims against PyPI for the
+# EXTERNAL packages (attune-help / attune-author) that the main suite
+# can't check. The deterministic features.ts-vs-pyproject guard for
+# attune-ai's own version runs in the normal test suite
+# (tests/unit/test_website_version_accuracy.py) with full deps, so it is
+# NOT duplicated here — this job stays stdlib-only and dep-free.
+# Advisory (not in required_status_checks): a confirmed drift turns it
+# red so it's caught in review; a PyPI hiccup reports "unverified" and
+# passes.
 
 on:
   push:
     branches: [main]
     paths:
       - 'website/lib/features.ts'
-      - 'website/app/page.tsx'
-      - 'pyproject.toml'
       - 'scripts/audit_website_versions.py'
-      - 'tests/unit/test_website_version_accuracy.py'
       - '.github/workflows/website-accuracy.yml'
   pull_request:
     paths:
       - 'website/lib/features.ts'
-      - 'website/app/page.tsx'
-      - 'pyproject.toml'
       - 'scripts/audit_website_versions.py'
-      - 'tests/unit/test_website_version_accuracy.py'
       - '.github/workflows/website-accuracy.yml'
 
 concurrency:
@@ -40,12 +37,6 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
-      - name: Install pytest
-        run: pip install pytest
-      - name: Deterministic version guard (features.ts vs pyproject)
-        # --noconftest: this guard is self-contained (reads files + imports
-        # the audit script via importlib, no attune/pydantic), so skip the
-        # repo conftest's dependency-heavy warm-up and keep the job dep-light.
-        run: python -m pytest tests/unit/test_website_version_accuracy.py -q --noconftest
       - name: PyPI version audit (external packages)
+        # Stdlib-only (urllib/json/re) — no pip install needed.
         run: python scripts/audit_website_versions.py
