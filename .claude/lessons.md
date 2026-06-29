@@ -12206,3 +12206,61 @@ files.
   before pushing). Diagnostic tell: the CI "All changes made by hooks"
   uv.lock diff contains lines your local `uv lock` did NOT produce ⇒
   uv-version skew, not a content bug.
+
+- **POSIX file-mode assertions (`st_mode & 0o777 == 0o600`) FAIL on the
+  Windows CI lane — gate them `if sys.platform != "win32"`; and a
+  non-required Windows-lane FAILURE can be a REAL test failure masquerading
+  as the known xdist runner-hang**: 2026-06-29, the per-install `.secret`
+  test from #1167 (`assert (secret_file.stat().st_mode & 0o777) == 0o600`)
+  passed on macOS/Ubuntu but failed `test (windows-latest, *)` with
+  `assert (33206 & 511) == 384` — Windows reports `0o666` for an
+  `os.open(..., 0o600)`-created file because NTFS doesn't map POSIX mode
+  bits. The PRODUCTION code is correct (file created + private on POSIX);
+  only the assertion is platform-specific. Two durable points: (1) any
+  test asserting `st_mode`/`chmod`/`0o600`/`0o700` must skip or gate on
+  win32 (keep the file-exists + content asserts cross-platform; gate ONLY
+  the mode line); (2) the Windows lane is non-required, so it merged red on
+  main via auto-merge — and the red FIRST looked like the systemic xdist
+  end-of-session runner-hang (job ran ~19min then "failure", log full of
+  test-START lines with no verdicts). Distinguish hang from real failure by
+  grepping the FULL log (`gh run view --job <id> --log`) for `FAILED tests`
+  / `short test summary info` / `^E  ` — a real pytest failure prints those;
+  a pure hang does not. Don't assume Windows-red = hang. Pairs with the
+  "admin-merge before Windows lanes complete buries a bug on main" lesson —
+  same surface (non-required Windows red lands on main), this is the
+  POSIX-mode-assertion root cause + the hang-vs-real triage.
+
+- **The PostToolUse autofix hook (ruff `--fix`) STRIPS a just-added import
+  if its first USE isn't already in the file — add the import in the SAME
+  edit as its first use, or add the use FIRST then the import**: 2026-06-29
+  on `usage_tracker.py`, edit #1 added `import secrets` + named constants
+  (constants used secrets nowhere yet); the PostToolUse formatter ran
+  ruff-fix, saw `secrets` unused, and removed it. The `_get_hmac_secret`
+  method using it landed in a LATER edit → `NameError: name 'secrets' is
+  not defined` at test time (41 failures from one missing import). Rule:
+  when adding an import for code you'll write in a subsequent edit, either
+  (a) bundle import+use in one edit, or (b) make the usage edit first
+  (ruff-fix won't remove an import whose name is already referenced) then
+  add the import. Diagnostic: a broad sweep of `NameError: name 'X' is not
+  defined` right after a multi-edit change ⇒ check whether the autofix
+  stripped the import (`grep -n "^import X"` the file). Pairs with the
+  "pre-commit black/ruff auto-fix vs staging" core lesson — same hook
+  family, this is the add-import-before-use timing trap.
+
+- **Concurrent `flush()` that appends via `json.dump(entry, f)` OUTSIDE a
+  lock corrupts JSONL lines — `json.dump` streams one record over MANY
+  `write()` calls, so two threads' appends interleave into invalid JSON
+  that `_iter_jsonl` silently drops on read**: surfaced 2026-06-29 writing
+  a unique-`seq` concurrency regression test for `usage_tracker` — 8
+  threads × 40 calls expected 320 entries but `get_recent_entries` returned
+  316 (4 records eaten by interleaved partial writes), even though every
+  seq present was unique. The seq-uniqueness fix (increment under the lock)
+  was correct; the count shortfall is a SEPARATE latent data-loss bug
+  (`flush` writes outside `self._lock`). Two takeaways: (1) to isolate a
+  counter/uniqueness test from this write-race confound, use a HUGE
+  `buffer_size` so nothing flushes mid-test (all entries stay in the
+  in-memory buffer); (2) the real fix (deferred to the layering spec) is to
+  serialize each record to a string and emit it under the lock (or one
+  atomic `write()` per record) so concurrent appends can't interleave. A
+  count-mismatch-but-all-unique result in a concurrency test is the tell
+  for partial-write corruption, not a counter race.
