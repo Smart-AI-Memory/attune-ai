@@ -468,3 +468,45 @@ class TestHandleMemoryForget:
         result = await server._handle_memory_forget({"key": "target_key"})
 
         assert result["key"] == "target_key"
+
+
+# ---------------------------------------------------------------------------
+# Non-mocked regression guard
+# ---------------------------------------------------------------------------
+
+
+class TestGetMemoryRealConstruction:
+    """Construct the REAL UnifiedMemory through _get_memory().
+
+    Every other test in this module mocks UnifiedMemory, so a constructor
+    signature drift (e.g. passing a kwarg the dataclass does not accept)
+    slips through green. These tests exercise the actual class to guard the
+    `_get_memory()` call shape — see the `environment=` kwarg regression
+    (TypeError: UnifiedMemory.__init__() got an unexpected keyword
+    argument 'environment').
+    """
+
+    def test_get_memory_constructs_real_unified_memory(self, tmp_path, monkeypatch):
+        """_get_memory() builds a real UnifiedMemory without TypeError."""
+        # Real UnifiedMemory creates a storage dir in cwd; isolate it.
+        monkeypatch.chdir(tmp_path)
+        server = _make_server()
+
+        memory = server._get_memory()
+
+        from attune.memory import UnifiedMemory
+
+        assert isinstance(memory, UnifiedMemory)
+        assert server._memory is memory
+
+    @pytest.mark.asyncio
+    async def test_memory_search_round_trip_real_backend(self, tmp_path, monkeypatch):
+        """memory_search runs end-to-end against the real backend."""
+        monkeypatch.chdir(tmp_path)
+        server = _make_server()
+
+        result = await server._handle_memory_search({"query": "code review"})
+
+        assert result["success"] is True
+        assert "results" in result
+        assert "count" in result
