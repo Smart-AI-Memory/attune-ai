@@ -13,6 +13,7 @@ import hmac
 import json
 import logging
 import os
+import secrets
 import threading
 from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
@@ -23,6 +24,15 @@ logger = logging.getLogger(__name__)
 
 # Magic limit sentinel — callers that need "all entries" use this
 _ALL_ENTRIES = 1_000_000
+
+# Anthropic prompt-cache reads are billed at 10% of the base input rate,
+# so a cache read saves 90% of what the tokens would otherwise have cost.
+# https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching
+_CACHE_READ_DISCOUNT = 0.9
+
+# Fallback per-call PREMIUM cost (USD) used only when no PREMIUM entries
+# exist to derive a real average from. Rough order-of-magnitude baseline.
+_DEFAULT_PREMIUM_COST_USD = 0.05
 
 
 class UsageTracker:
@@ -87,9 +97,23 @@ class UsageTracker:
         # Pre-aggregated daily stats keyed by "YYYY-MM-DD"
         self._daily_summary: dict[str, dict[str, Any]] = {}
 
-        # Create directory if needed (gracefully handle permission errors)
+        # Cached HMAC secret (resolved once per instance) and per-user-id
+        # hash memo — _hash_user_id runs on every tracked call, so neither
+        # the env/secret-file lookup nor the HMAC is repeated.
+        self._hmac_secret: bytes | None = None
+        self._hash_cache: dict[str, str] = {}
+
+        # Create directory if needed (gracefully handle permission errors).
+        # mode=0o700 keeps telemetry (token counts, hashed ids) unreadable by
+        # co-tenants on shared/CI hosts; a 0700 parent protects every file
+        # inside regardless of per-file umask. exist_ok=True won't tighten an
+        # already-loose dir, so chmod it explicitly too (best-effort).
         try:
-            self.telemetry_dir.mkdir(parents=True, exist_ok=True)
+            self.telemetry_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+            try:
+                self.telemetry_dir.chmod(0o700)
+            except OSError:
+                pass  # best-effort hardening; not fatal
         except (OSError, PermissionError):
             # Can't create directory - telemetry will be disabled
             logger.debug("Failed to create telemetry directory: %s", self.telemetry_dir)
@@ -227,6 +251,26 @@ class UsageTracker:
         """Return current UTC time as ISO 8601 string."""
         return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
+    @staticmethod
+    def _parse_ts(ts: str | None) -> datetime | None:
+        """Parse a stored ISO-8601 timestamp to an aware UTC datetime.
+
+        Single source of truth for reading the ``ts`` field (entries are
+        written with a trailing ``Z`` by :meth:`_utcnow_iso`). Accepts the
+        ``Z`` suffix or an explicit offset, and coerces a naive value to
+        UTC so comparisons never raise. Returns ``None`` for missing or
+        unparseable values, which callers treat as "skip this entry".
+        """
+        if not ts:
+            return None
+        try:
+            parsed = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        except (AttributeError, ValueError):
+            return None
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed
+
     # =========================================================================
     # Summary file — fast stats without full JSONL scans
     # =========================================================================
@@ -244,6 +288,9 @@ class UsageTracker:
         raise — the same contract as the guarded ``mkdir`` in __init__.
         """
         try:
+            # Computed at most once and reused for the rebuild below, so the
+            # stale path doesn't fingerprint the logs twice.
+            source_sig: dict[str, int] | None = None
             if self._summary_file.exists():
                 data = None
                 try:
@@ -260,12 +307,14 @@ class UsageTracker:
                 # concurrent-writer race that persisted an incomplete
                 # summary), so rebuild instead of silently undercounting.
                 # Legacy summaries with no ``source_sig`` always rebuild.
-                if data is not None and data.get("source_sig") == self._source_signature():
+                source_sig = self._source_signature()
+                if data is not None and data.get("source_sig") == source_sig:
                     self._daily_summary = data.get("days", {})
                     return
 
-            # No summary file, unreadable, or stale — rebuild from disk.
-            self._rebuild_summary_from_disk()
+            # No summary file, unreadable, or stale — rebuild from disk,
+            # reusing the signature already computed on the stale path.
+            self._rebuild_summary_from_disk(source_sig=source_sig)
         except OSError:
             # Telemetry dir unreadable (e.g. read-only) — disable gracefully.
             logger.debug("Failed to load telemetry summary: %s", self.telemetry_dir)
@@ -292,7 +341,7 @@ class UsageTracker:
             return {}
         return sig
 
-    def _rebuild_summary_from_disk(self) -> None:
+    def _rebuild_summary_from_disk(self, source_sig: dict[str, int] | None = None) -> None:
         """Scan all JSONL files to build the daily summary from scratch.
 
         The authoritative path: a full scan of the append-only logs always
@@ -301,12 +350,17 @@ class UsageTracker:
         that is what allowed concurrent writers to corrupt it). Result is
         saved with a source signature so subsequent loads take the fast
         O(days) path until the logs change again.
+
+        Args:
+            source_sig: Signature captured by the caller BEFORE this scan
+                (``_load_summary`` reuses the one it computed for the
+                staleness check). When ``None`` it is computed here.
         """
         # Capture the signature BEFORE scanning. If a writer appends during
         # the scan, the saved signature is smaller than the real file, so the
         # next load sees a mismatch and rebuilds — a harmless re-scan, never a
         # silent under-count (fail toward rebuild, never toward stale-trust).
-        sig = self._source_signature()
+        sig = source_sig if source_sig is not None else self._source_signature()
         self._daily_summary = {}
         for file in sorted(self.telemetry_dir.glob("usage*.jsonl")):
             for entry in self._iter_jsonl(file):
@@ -400,12 +454,13 @@ class UsageTracker:
             prompt_cache_read_tokens: Tokens read from Anthropic cache
 
         """
-        # Build entry
-        UsageTracker._seq_counter += 1
+        # Build entry. The monotonic seq is assigned under the lock below
+        # (with the buffer append) — incrementing the shared class counter
+        # here would race: two threads could read the same value and emit
+        # duplicate seqs, corrupting the timestamp-tiebreaker sort.
         entry: dict[str, Any] = {
             "v": "1.0",
             "ts": self._utcnow_iso(),
-            "seq": UsageTracker._seq_counter,
             "workflow": workflow,
             "tier": tier,
             "model": model,
@@ -431,9 +486,12 @@ class UsageTracker:
                 "read_tokens": prompt_cache_read_tokens,
             }
 
-        # Buffer entry (no disk I/O per-call)
+        # Buffer entry (no disk I/O per-call). Assign seq inside the lock so
+        # the shared counter increment and the buffer append are atomic.
         should_flush = False
         with self._lock:
+            UsageTracker._seq_counter += 1
+            entry["seq"] = UsageTracker._seq_counter
             self._buffer.append(entry)
             should_flush = len(self._buffer) >= self.buffer_size
 
@@ -489,11 +547,63 @@ class UsageTracker:
 
         return len(entries)
 
+    def _get_hmac_secret(self) -> bytes:
+        """Resolve the HMAC secret used to hash user ids, once per instance.
+
+        Resolution order:
+        1. ``TELEMETRY_SECRET`` env var, if set (explicit deployment secret).
+        2. A per-install random secret persisted at ``<dir>/.secret`` (0600),
+           generated on first use. Reused across runs so the same user id
+           hashes stably on one machine.
+        3. An ephemeral process-local random secret if the file can't be
+           read/written (e.g. read-only dir) — still per-process-unique,
+           never a shared constant.
+
+        A per-install random secret (not a constant baked into the repo) is
+        what actually makes the hash resist a precomputed/rainbow-table
+        reversal: without the secret, an attacker can't recompute the digest
+        of a guessed user id.
+        """
+        if self._hmac_secret is not None:
+            return self._hmac_secret
+
+        from attune.config.env_compat import get_attune_env
+
+        env_secret = get_attune_env("TELEMETRY_SECRET")
+        if env_secret:
+            self._hmac_secret = env_secret.encode()
+            return self._hmac_secret
+
+        secret_file = self.telemetry_dir / ".secret"
+        try:
+            if secret_file.exists():
+                self._hmac_secret = secret_file.read_bytes()
+            else:
+                generated = secrets.token_bytes(32)
+                # O_EXCL so a concurrent creator doesn't get clobbered; 0600
+                # so the secret itself is owner-only even within the 0700 dir.
+                try:
+                    fd = os.open(secret_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                    with os.fdopen(fd, "wb") as f:
+                        f.write(generated)
+                    self._hmac_secret = generated
+                except FileExistsError:
+                    # Lost the create race — read the winner's secret.
+                    self._hmac_secret = secret_file.read_bytes()
+        except OSError:
+            # Can't persist (read-only dir, etc.) — ephemeral per-process
+            # secret. Still far better than a shared committed constant.
+            self._hmac_secret = secrets.token_bytes(32)
+
+        return self._hmac_secret
+
     def _hash_user_id(self, user_id: str) -> str:
         """Hash user ID with HMAC-SHA256 for privacy.
 
-        Uses a deployment-specific secret to prevent rainbow table
-        attacks. Falls back to a default key if no secret is configured.
+        Uses a per-install secret (see :meth:`_get_hmac_secret`) so the
+        digest can't be reversed via a precomputed table. The result is
+        memoized per ``user_id`` — this runs on every tracked call and the
+        identity is constant within a process.
 
         Args:
             user_id: User identifier to hash
@@ -502,10 +612,15 @@ class UsageTracker:
             First 16 characters of HMAC-SHA256 hex digest
 
         """
-        from attune.config.env_compat import get_attune_env
+        cached = self._hash_cache.get(user_id)
+        if cached is not None:
+            return cached
 
-        secret = (get_attune_env("TELEMETRY_SECRET") or "attune-default-telemetry-key").encode()
-        return hmac.new(secret, user_id.encode(), hashlib.sha256).hexdigest()[:16]
+        digest = hmac.new(self._get_hmac_secret(), user_id.encode(), hashlib.sha256).hexdigest()[
+            :16
+        ]
+        self._hash_cache[user_id] = digest
+        return digest
 
     def _write_entry(self, entry: dict[str, Any]) -> None:
         """Write a single entry directly to disk (bypasses buffer).
@@ -528,15 +643,16 @@ class UsageTracker:
         Rotates usage.jsonl -> usage.YYYY-MM-DD.jsonl
         Also cleans up files older than retention_days.
         """
-        if not self.usage_file.exists():
-            return
-
-        # Check file size
-        size_mb = self.usage_file.stat().st_size / (1024 * 1024)
-        if size_mb < self.max_file_size_mb:
-            return
-
         with self._lock:
+            # Re-validate existence AND size INSIDE the lock: a check outside
+            # it is a TOCTOU — two threads could both pass the size guard and
+            # then race on replace(), rotating twice / losing the new file.
+            if not self.usage_file.exists():
+                return
+            size_mb = self.usage_file.stat().st_size / (1024 * 1024)
+            if size_mb < self.max_file_size_mb:
+                return
+
             # Rotate: usage.jsonl -> usage.YYYY-MM-DD.jsonl
             timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
             rotated_file = self.telemetry_dir / f"usage.{timestamp}.jsonl"
@@ -553,15 +669,37 @@ class UsageTracker:
             # Clean up old files
             self._cleanup_old_files()
 
+    @staticmethod
+    def _rotated_file_date(name: str) -> datetime | None:
+        """Extract the rotation date from ``usage.YYYY-MM-DD[.N].jsonl``.
+
+        Returns an aware UTC datetime at midnight of that date, or ``None``
+        if the name carries no parseable date (e.g. the live ``usage.jsonl``).
+        """
+        parts = name.split(".")
+        if len(parts) < 3:
+            return None  # e.g. "usage.jsonl" — the live file, not rotated
+        try:
+            return datetime.strptime(parts[1], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+
     def _cleanup_old_files(self) -> None:
-        """Remove files older than retention_days."""
-        cutoff = datetime.now(timezone.utc) - timedelta(days=self.retention_days)
+        """Remove rotated files older than retention_days.
+
+        Retention is keyed off the date embedded in the rotated filename,
+        not mtime — mtime is mutable (a ``touch`` or a restore-from-backup
+        resets it and lets a stale file escape retention forever). Falls
+        back to mtime only when the name has no parseable date.
+        """
+        cutoff = self._utcnow() - timedelta(days=self.retention_days)
 
         for file in self.telemetry_dir.glob("usage.*.jsonl"):
             try:
-                # Get file modification time
-                mtime = datetime.fromtimestamp(file.stat().st_mtime, tz=timezone.utc)
-                if mtime < cutoff:
+                file_dt = self._rotated_file_date(file.name)
+                if file_dt is None:
+                    file_dt = datetime.fromtimestamp(file.stat().st_mtime, tz=timezone.utc)
+                if file_dt < cutoff:
                     file.unlink()
                     logger.debug("Deleted old telemetry file: %s", file.name)
             except (OSError, ValueError):
@@ -595,11 +733,8 @@ class UsageTracker:
         for file in files:
             for entry in self._iter_jsonl(file):
                 if cutoff_time:
-                    try:
-                        ts = datetime.fromisoformat(entry["ts"].replace("Z", "+00:00"))
-                        if ts < cutoff_time:
-                            continue
-                    except (KeyError, ValueError):
+                    ts = self._parse_ts(entry.get("ts"))
+                    if ts is None or ts < cutoff_time:
                         continue
                 entries.append(entry)
 
@@ -609,13 +744,8 @@ class UsageTracker:
 
         for entry in buffer_snapshot:
             if cutoff_time:
-                try:
-                    ts = datetime.fromisoformat(entry["ts"].rstrip("Z")).replace(
-                        tzinfo=timezone.utc
-                    )
-                    if ts < cutoff_time:
-                        continue
-                except (KeyError, ValueError):
+                ts = self._parse_ts(entry.get("ts"))
+                if ts is None or ts < cutoff_time:
                     continue
             entries.append(entry)
 
@@ -681,11 +811,8 @@ class UsageTracker:
 
         # Include buffered entries not yet reflected in the summary
         for entry in buffer_snapshot:
-            try:
-                ts = datetime.fromisoformat(entry["ts"].replace("Z", "+00:00"))
-            except (KeyError, ValueError):
-                continue
-            if ts < cutoff_dt:
+            ts = self._parse_ts(entry.get("ts"))
+            if ts is None or ts < cutoff_dt:
                 continue
             self._accumulate_entry(acc, entry)
 
@@ -744,7 +871,11 @@ class UsageTracker:
 
         # Calculate baseline cost (all PREMIUM)
         premium_costs = [e.get("cost", 0.0) for e in entries if e.get("tier") == "PREMIUM"]
-        avg_premium_cost = (sum(premium_costs) / len(premium_costs)) if premium_costs else 0.05
+        avg_premium_cost = (
+            (sum(premium_costs) / len(premium_costs))
+            if premium_costs
+            else _DEFAULT_PREMIUM_COST_USD
+        )
         baseline_cost = len(entries) * avg_premium_cost
 
         # Tier distribution
@@ -865,7 +996,7 @@ class UsageTracker:
                     pricing_cache[model_id] = get_pricing_for_model(model_id) if model_id else None
                 pricing = pricing_cache[model_id]
                 cost_per_token = (pricing["input"] if pricing else 3.00) / 1_000_000
-                total_savings += read_tokens * cost_per_token * 0.9
+                total_savings += read_tokens * cost_per_token * _CACHE_READ_DISCOUNT
 
             # Per-workflow stats
             workflow = entry.get("workflow", "unknown")
