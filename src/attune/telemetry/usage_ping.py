@@ -91,6 +91,17 @@ def _env_truthy(value: str | None) -> bool:
     return value is not None and value.strip().lower() in _TRUTHY
 
 
+def _is_do_not_track(env: Mapping[str, str]) -> bool:
+    """True if ``DO_NOT_TRACK`` is set to a non-empty, non-false value.
+
+    Single source of truth for the opt-out predicate. Duplicating this
+    check invites divergence, and divergence in a privacy opt-out is a
+    privacy regression by definition.
+    """
+    dnt = env.get("DO_NOT_TRACK")
+    return dnt is not None and dnt.strip().lower() not in {"", "0", "false"}
+
+
 def is_enabled(usage_ping_flag: bool, env: Mapping[str, str] | None = None) -> bool:
     """Return whether usage pinging is enabled.
 
@@ -111,8 +122,7 @@ def is_enabled(usage_ping_flag: bool, env: Mapping[str, str] | None = None) -> b
         True if pings should be sent.
     """
     env = os.environ if env is None else env
-    dnt = env.get("DO_NOT_TRACK")
-    if dnt is not None and dnt.strip().lower() not in {"", "0", "false"}:
+    if _is_do_not_track(env):
         return False
     override = env.get("ATTUNE_USAGE_PING")
     if override is not None:
@@ -370,8 +380,7 @@ def run_sync_at_exit(
     try:
         env = os.environ if env is None else env
         # Hard opt-outs short-circuit before touching disk.
-        dnt = env.get("DO_NOT_TRACK")
-        if dnt is not None and dnt.strip().lower() not in {"", "0", "false"}:
+        if _is_do_not_track(env):
             return 0
         override = env.get("ATTUNE_USAGE_PING")
         if override is not None and not _env_truthy(override):
@@ -531,8 +540,7 @@ def maybe_prompt_consent(
     env = os.environ if env is None else env
 
     # An explicit env signal already settles it — never prompt over one.
-    dnt = env.get("DO_NOT_TRACK")
-    if dnt is not None and dnt.strip().lower() not in {"", "0", "false"}:
+    if _is_do_not_track(env):
         return None
     if env.get("ATTUNE_USAGE_PING") is not None:
         return None

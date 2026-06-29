@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -150,10 +152,14 @@ class AuthStrategy:
         # Polish: premium tier, ~10K tokens
         # API Reference: cheap tier, ~5K tokens
 
-        outline_cost = 0.003 * 0.00025  # 3K tokens * $0.25/M input
-        write_cost = 0.015 * 0.003  # 15K tokens * $3/M input
-        polish_cost = 0.010 * 0.015  # 10K tokens * $15/M input
-        api_ref_cost = 0.005 * 0.00025  # 5K tokens * $0.25/M input
+        # Each term is (tokens-in-millions) * ($-per-million-input-tokens).
+        # The rate factors were previously 1000x too small (e.g. 0.00025
+        # instead of 0.25 for $0.25/M), making the estimate read ~$0.0002
+        # when the real figure is ~$0.20 — see get_pros_cons prose.
+        outline_cost = 0.003 * 0.25  # 3K tokens * $0.25/M input
+        write_cost = 0.015 * 3.0  # 15K tokens * $3/M input
+        polish_cost = 0.010 * 15.0  # 10K tokens * $15/M input
+        api_ref_cost = 0.005 * 0.25  # 5K tokens * $0.25/M input
 
         total_api_cost = outline_cost + write_cost + polish_cost + api_ref_cost
 
@@ -215,7 +221,7 @@ class AuthStrategy:
                 ],
                 "cons": [
                     "Requires API key setup",
-                    "Pay-per-token ($0.10-0.15 per module)",
+                    "Pay-per-token (~$0.20 per module)",
                     "Separate authentication",
                 ],
                 "estimate": api_estimate,
@@ -269,13 +275,35 @@ class AuthStrategy:
         )
 
     def save(self, path: Path | None = None) -> None:
-        """Save authentication strategy to file."""
+        """Save authentication strategy to file (owner-only, atomic).
+
+        The config records the resolved auth tier/mode, so it is written
+        0600 inside a 0700 directory to keep it unreadable by co-tenants on
+        shared/CI hosts. The path is validated BEFORE any directory is
+        created, so a rejected path can never create attacker-controlled
+        directories first.
+        """
         if path is None:
             path = AUTH_STRATEGY_FILE
-        path.parent.mkdir(parents=True, exist_ok=True)
         validated_path = _validate_file_path(str(path))
-        with open(validated_path, "w") as f:
-            json.dump(self.to_dict(), f, indent=2)
+        validated_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+
+        payload = json.dumps(self.to_dict(), indent=2)
+        # mkstemp creates the temp file 0600; write then atomically replace
+        # so a partial write never leaves a half-readable config.
+        fd, tmp_name = tempfile.mkstemp(
+            dir=str(validated_path.parent), prefix=".auth_strategy.", suffix=".tmp"
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(payload)
+            os.replace(tmp_name, validated_path)
+        except OSError:
+            try:
+                os.unlink(tmp_name)
+            except OSError:
+                pass
+            raise
 
     @classmethod
     def load(cls, path: Path | None = None) -> AuthStrategy:

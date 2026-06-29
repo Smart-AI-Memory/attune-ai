@@ -146,7 +146,10 @@ def get_usage_weights(days: int = 30) -> dict[str, float]:
     try:
         from attune.telemetry.usage_tracker import UsageTracker
 
-        tracker = UsageTracker()
+        # Use the singleton — a fresh UsageTracker() re-pays constructor I/O
+        # (mkdir + summary load/scan) on every search_by_tag/list_tags call
+        # that sorts by usage.
+        tracker = UsageTracker.get_instance()
         stats = tracker.get_stats(days=days)
     except Exception:  # noqa: BLE001
         # INTENTIONAL: telemetry is optional

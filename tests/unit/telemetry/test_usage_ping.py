@@ -602,3 +602,18 @@ def test_run_sync_at_exit_swallows_all_errors(monkeypatch, tmp_path):
 
     monkeypatch.setattr(ConfigLoader, "load", _boom)
     assert usage_ping.run_sync_at_exit(env={"ATTUNE_USAGE_ENDPOINT": "https://x/api"}) == 0
+
+
+class TestIsDoNotTrack:
+    """The single opt-out predicate (deduplicated from three call sites)."""
+
+    @pytest.mark.parametrize("value", ["1", "true", "TRUE", "yes", " on "])
+    def test_set_to_truthy_opts_out(self, value):
+        assert usage_ping._is_do_not_track({"DO_NOT_TRACK": value}) is True
+
+    @pytest.mark.parametrize("value", ["", "0", "false", "FALSE", " "])
+    def test_empty_or_false_does_not_opt_out(self, value):
+        assert usage_ping._is_do_not_track({"DO_NOT_TRACK": value}) is False
+
+    def test_unset_does_not_opt_out(self):
+        assert usage_ping._is_do_not_track({}) is False
