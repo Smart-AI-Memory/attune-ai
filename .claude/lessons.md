@@ -12163,3 +12163,46 @@ files.
   discard it. See [[project_sdk_workflows_blocked_nested]] (workaround
   confirmed 2026-06-26, re-confirmed this session for the widget
   dogfood). Real API spend — keep runs single-shot.
+
+- **A version-bump release PR must also bump the WEBSITE version refs
+  (`website/lib/features.ts` + `website/app/page.tsx`), because the
+  REQUIRED unit test couples website→pyproject while the NON-required CI
+  job couples website→live PyPI — they deliberately diverge during the
+  release window**: hit on the 9.2.0 release (PR #1165). The canonical
+  bump set learned from the prior release commit (pyproject, both
+  `marketplace.json`, `plugin.json`, `plugin/core/__init__.py`,
+  `.claude/CLAUDE.md`, `docs/reference/API_REFERENCE.md`, `uv.lock`,
+  `CHANGELOG.md`) is INCOMPLETE for the version surface: `tests/unit/
+  test_website_version_accuracy.py` (runs in the required `coverage` /
+  `test` lanes) asserts `website/lib/features.ts` `version:` fields AND
+  the `website/app/page.tsx` `<span>vX.Y.Z</span>` badge equal the
+  pyproject version — so leaving the website at the old version FAILS a
+  REQUIRED check. Conversely the `website-accuracy` CI job (NOT in
+  `required_status_checks`) runs `scripts/audit_website_versions.py`
+  which compares the site to LIVE PyPI, so once you bump the site to the
+  new version it goes RED until the package publishes — that red is
+  EXPECTED, transient, and self-heals post-publish. Net rule: bump the
+  two website files IN the release PR (satisfies the required test);
+  ignore the resulting non-required `website-accuracy` failure until
+  PyPI catches up. Prior releases looked like they didn't touch the
+  website only because the site was synced in a SEPARATE earlier PR
+  (e.g. #1141 for 9.1.0) before the bump landed.
+
+- **Fixing a dependabot Python dep-constraint bump's `uv.lock` drift
+  must use the SAME uv version CI uses (unpinned ⇒ latest), or the
+  regenerated lock still differs and CI fails again**: extends the
+  existing "Dependabot pip bumps fail `check-docs-freshness` via uv.lock
+  drift — fix with `uv lock` on the branch" lesson with the version
+  nuance. On #1163/#1164, local `uv lock` (uv 0.9.22, ~6mo old) produced
+  ONLY the constraint change, but CI's `pre-commit.yml` does
+  `pip install pre-commit uv` (UNPINNED ⇒ uv 0.11.25) and its `uv run`
+  hooks regenerate the lock with an ADDITIONAL normalization (dropped the
+  `typing-extensions` `python_full_version < '3.11'` marker on
+  `exceptiongroup`). Pushing the 0.9.22 lock would have left CI's uv to
+  re-rewrite it → pre-commit "files modified" → red again. Fix: install
+  latest uv into a throwaway venv (`python3 -m venv … && pip install -U
+  uv`) and re-lock; the resulting lock matched CI's `index` hash exactly
+  (verified against the failing job's `--show-diff-on-failure` diff
+  before pushing). Diagnostic tell: the CI "All changes made by hooks"
+  uv.lock diff contains lines your local `uv lock` did NOT produce ⇒
+  uv-version skew, not a content bug.
