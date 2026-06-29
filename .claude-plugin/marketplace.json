@@ -7,14 +7,14 @@
   },
   "metadata": {
     "description": "Developer workflow tool for building AI-powered products. Security audits, code review, test generation, release prep — skills-first, auto-triggering from natural language.",
-    "version": "9.1.0"
+    "version": "9.2.0"
   },
   "plugins": [
     {
       "name": "attune-ai",
       "description": "17 auto-triggering skills for the developer workflows behind building AI products: security audits, code reviews, test generation, bug prediction, and release preparation. For help content tools, also install attune-help and attune-author from this marketplace.",
       "source": "./plugin",
-      "version": "9.1.0",
+      "version": "9.2.0",
       "author": {
         "name": "Smart AI Memory",
         "email": "patrick.roebuck@smartaimemory.com"
