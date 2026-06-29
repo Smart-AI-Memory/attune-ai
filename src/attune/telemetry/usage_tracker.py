@@ -245,40 +245,91 @@ class UsageTracker:
         """
         try:
             if self._summary_file.exists():
+                data = None
                 try:
                     with open(self._summary_file, encoding="utf-8") as f:
                         data = json.load(f)
+                except (OSError, json.JSONDecodeError):
+                    data = None
+
+                # The summary is a DERIVED cache of ``usage*.jsonl``. Trust it
+                # only when it was built against the current log files —
+                # compare the source signature. A mismatch means the logs
+                # changed since the summary was written (appends from this or
+                # another process, log rotation, manual edits, or a
+                # concurrent-writer race that persisted an incomplete
+                # summary), so rebuild instead of silently undercounting.
+                # Legacy summaries with no ``source_sig`` always rebuild.
+                if data is not None and data.get("source_sig") == self._source_signature():
                     self._daily_summary = data.get("days", {})
                     return
-                except (OSError, json.JSONDecodeError):
-                    self._daily_summary = {}
 
-            # No summary file — build from existing disk data (migration path)
+            # No summary file, unreadable, or stale — rebuild from disk.
             self._rebuild_summary_from_disk()
         except OSError:
             # Telemetry dir unreadable (e.g. read-only) — disable gracefully.
             logger.debug("Failed to load telemetry summary: %s", self.telemetry_dir)
             self._daily_summary = {}
 
-    def _rebuild_summary_from_disk(self) -> None:
-        """Scan all JSONL files to build the daily summary.
+    def _source_signature(self) -> dict[str, int]:
+        """Cheap fingerprint of the source JSONL logs (filename -> byte size).
 
-        Called once when no summary file exists. Result is saved to disk
-        so subsequent runs use the fast O(days) load path.
+        The daily summary is a derived cache; this signature lets a reader
+        detect when ``usage*.jsonl`` changed since the summary was built so
+        a stale or race-corrupted summary is rebuilt rather than trusted.
+        Byte size (not mtime) is used because the logs are append-only: any
+        new record grows the file, and size avoids mtime-resolution flukes.
+        Best-effort — returns ``{}`` if the directory is unreadable.
         """
+        sig: dict[str, int] = {}
+        try:
+            for f in sorted(self.telemetry_dir.glob("usage*.jsonl")):
+                try:
+                    sig[f.name] = f.stat().st_size
+                except OSError:
+                    continue
+        except OSError:
+            return {}
+        return sig
+
+    def _rebuild_summary_from_disk(self) -> None:
+        """Scan all JSONL files to build the daily summary from scratch.
+
+        The authoritative path: a full scan of the append-only logs always
+        produces a COMPLETE summary, so it is the only writer of the summary
+        file (the buffered write path never persists a partial summary —
+        that is what allowed concurrent writers to corrupt it). Result is
+        saved with a source signature so subsequent loads take the fast
+        O(days) path until the logs change again.
+        """
+        # Capture the signature BEFORE scanning. If a writer appends during
+        # the scan, the saved signature is smaller than the real file, so the
+        # next load sees a mismatch and rebuilds — a harmless re-scan, never a
+        # silent under-count (fail toward rebuild, never toward stale-trust).
+        sig = self._source_signature()
+        self._daily_summary = {}
         for file in sorted(self.telemetry_dir.glob("usage*.jsonl")):
             for entry in self._iter_jsonl(file):
                 self._update_summary_entry(entry)
 
         if self._daily_summary:
-            self._save_summary()
+            self._save_summary(source_sig=sig)
 
-    def _save_summary(self) -> None:
-        """Persist daily summary to disk atomically (best-effort)."""
+    def _save_summary(self, source_sig: dict[str, int] | None = None) -> None:
+        """Persist daily summary to disk atomically (best-effort).
+
+        Args:
+            source_sig: The source-log signature this summary was built
+                against (see :meth:`_source_signature`). Persisted so a
+                later load can detect staleness. When ``None`` it is
+                computed now — only correct for callers that have just
+                folded in every on-disk record.
+        """
         try:
             data = {
                 "v": "1.0",
                 "updated": self._utcnow_iso(),
+                "source_sig": source_sig if source_sig is not None else self._source_signature(),
                 "days": self._daily_summary,
             }
             tmp = self._summary_file.with_suffix(".tmp")
@@ -425,10 +476,16 @@ class UsageTracker:
                 self._buffer = entries + self._buffer
             raise
 
-        # Update in-memory summary and persist it (after successful disk write)
+        # Update the IN-MEMORY summary for this process's own get_stats()
+        # fast path. Deliberately do NOT persist the summary here: another
+        # process may have appended records this instance never saw, so its
+        # in-memory summary is incomplete relative to the shared log —
+        # writing it would clobber the file with partial data (the original
+        # lost-update bug). The summary file is written only by a full
+        # rebuild (_rebuild_summary_from_disk), which always sees every
+        # record; readers self-heal via the signature check in _load_summary.
         with self._lock:
             self._update_summary(entries)
-            self._save_summary()
 
         return len(entries)
 

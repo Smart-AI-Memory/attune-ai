@@ -1468,13 +1468,19 @@ class TestGetCacheStats:
 
 class TestSummaryLoadSave:
     def test_load_existing_summary_file(self, temp_dir):
-        """Lines 190-191: existing summary file is parsed and assigned."""
+        """A summary whose source_sig matches the logs is parsed and assigned.
+
+        With no ``usage*.jsonl`` in the dir the signature is empty, so a
+        summary carrying ``source_sig: {}`` is current and taken via the
+        fast path (not rebuilt).
+        """
         summary_path = temp_dir / "usage_summary.json"
         summary_path.write_text(
             json.dumps(
                 {
                     "v": "1.0",
                     "updated": "2025-01-01T00:00:00Z",
+                    "source_sig": {},
                     "days": {
                         "2025-01-01": {
                             "calls": 5,
@@ -1509,6 +1515,145 @@ class TestSummaryLoadSave:
         with patch("builtins.open", side_effect=OSError("disk full")):
             # Should not raise
             tracker._save_summary()
+
+    @staticmethod
+    def _rec(ts: str, cost: float) -> dict:
+        """A minimal usage record for log-reconciliation tests."""
+        return {
+            "ts": ts,
+            "workflow": "w",
+            "tier": "SDK",
+            "provider": "anthropic",
+            "cost": cost,
+            "tokens": {"input": 1, "output": 1},
+            "cache": {"hit": False},
+        }
+
+    def test_stale_summary_is_rebuilt_when_log_has_more(self, temp_dir):
+        """Regression: a summary out of sync with the log is rebuilt, not trusted.
+
+        Reproduces the MCP/dashboard under-count — a summary persisted while
+        the log was shorter (or a concurrent writer clobbered it with partial
+        data) carries a stale ``source_sig``; the reader must reconcile
+        against the full log instead of reporting the stale total.
+        """
+        usage = temp_dir / "usage.jsonl"
+        usage.write_text(
+            json.dumps(self._rec("2025-02-01T00:00:00Z", 1.0))
+            + "\n"
+            + json.dumps(self._rec("2025-02-01T01:00:00Z", 2.0))
+            + "\n"
+        )
+        # Stale summary: knows only the first record, wrong source_sig.
+        (temp_dir / "usage_summary.json").write_text(
+            json.dumps(
+                {
+                    "v": "1.0",
+                    "updated": "2025-02-01T00:00:01Z",
+                    "source_sig": {"usage.jsonl": 1},  # wrong size → stale
+                    "days": {
+                        "2025-02-01": {
+                            **UsageTracker._empty_day(),
+                            "calls": 1,
+                            "cost": 1.0,
+                        }
+                    },
+                }
+            )
+        )
+
+        t = UsageTracker(telemetry_dir=temp_dir, retention_days=3650)
+        stats = t.get_stats(days=3650)
+
+        # Reconciled with the full log: both records ($3.00), not stale $1.00.
+        assert stats["total_calls"] == 2
+        assert stats["total_cost"] == 3.0
+
+    def test_legacy_summary_without_sig_is_rebuilt(self, temp_dir):
+        """A pre-fix summary (no ``source_sig``) is never trusted — rebuilt."""
+        usage = temp_dir / "usage.jsonl"
+        usage.write_text(json.dumps(self._rec("2025-03-01T00:00:00Z", 5.0)) + "\n")
+        (temp_dir / "usage_summary.json").write_text(
+            json.dumps(
+                {
+                    "v": "1.0",
+                    "updated": "x",
+                    "days": {
+                        "2025-03-01": {
+                            **UsageTracker._empty_day(),
+                            "calls": 99,
+                            "cost": 99.0,
+                        }
+                    },
+                }
+            )
+        )
+
+        t = UsageTracker(telemetry_dir=temp_dir, retention_days=3650)
+        stats = t.get_stats(days=3650)
+
+        assert stats["total_calls"] == 1
+        assert stats["total_cost"] == 5.0
+
+    def test_flush_does_not_persist_partial_summary(self, tracker, temp_dir):
+        """flush updates the in-memory summary but does NOT write the file.
+
+        The summary file is owned solely by full rebuilds; a buffered flush
+        from a process that hasn't seen other writers' records must not
+        clobber it with partial data (the lost-update root cause).
+        """
+        tracker.track_llm_call(
+            workflow="w",
+            stage=None,
+            tier="SDK",
+            model="m",
+            provider="anthropic",
+            cost=1.0,
+            tokens={"input": 1, "output": 1},
+            cache_hit=False,
+            cache_type=None,
+            duration_ms=1,
+        )
+        tracker.flush()
+
+        # No summary file written by flush...
+        assert not (temp_dir / "usage_summary.json").exists()
+        # ...but the same process still sees its own data via the in-memory path.
+        assert tracker.get_stats(days=3650)["total_calls"] == 1
+
+    def test_load_summary_swallows_oserror_from_unreadable_dir(self, tracker):
+        """Outer OSError guard: an unreadable telemetry dir disables gracefully."""
+        from unittest.mock import MagicMock
+
+        bad = MagicMock()
+        bad.exists.side_effect = OSError("dir unreadable")
+        tracker._summary_file = bad
+        tracker._daily_summary = {"2025-01-01": tracker._empty_day()}
+
+        tracker._load_summary()  # must not raise
+
+        assert tracker._daily_summary == {}
+
+    def test_source_signature_skips_unstatable_file(self, tracker):
+        """Per-file OSError on stat() is skipped (glob succeeds), not fatal."""
+        from unittest.mock import MagicMock
+
+        # glob succeeds and yields a file, but stat() on it fails — exercises
+        # the per-file inner guard (not the outer glob guard).
+        bad_file = MagicMock()
+        bad_file.name = "usage.jsonl"
+        bad_file.stat.side_effect = OSError("no stat")
+
+        with patch.object(Path, "glob", return_value=[bad_file]):
+            sig = tracker._source_signature()
+
+        # The single file was skipped → empty signature, no raise.
+        assert sig == {}
+
+    def test_source_signature_returns_empty_on_glob_error(self, tracker):
+        """A glob() failure on the telemetry dir degrades to an empty signature."""
+        with patch.object(Path, "glob", side_effect=OSError("glob failed")):
+            assert tracker._source_signature() == {}
 
 
 class TestFlushEdgeCases:
