@@ -2003,14 +2003,19 @@ class TestHmacSecret:
     OLD_CONSTANT = b"attune-default-telemetry-key"
 
     def test_per_install_secret_file_created_0600(self, temp_dir):
-        """First hash with no env secret writes a 0600 per-install .secret."""
+        """First hash with no env secret writes a per-install .secret (0600 on POSIX)."""
+        import sys
+
         with patch("attune.config.env_compat.get_attune_env", return_value=None):
             digest = UsageTracker(telemetry_dir=temp_dir)._hash_user_id("default")
 
         secret_file = temp_dir / ".secret"
         assert secret_file.exists()
-        assert (secret_file.stat().st_mode & 0o777) == 0o600
         assert isinstance(digest, str) and len(digest) == 16
+        # File-mode bits are POSIX-only — Windows maps os.open() modes to
+        # 0o666 regardless, so the permission assertion is gated to POSIX.
+        if sys.platform != "win32":
+            assert (secret_file.stat().st_mode & 0o777) == 0o600
 
     def test_secret_stable_across_instances_same_dir(self, temp_dir):
         """Two installs sharing a dir reuse the .secret → identical hash."""
