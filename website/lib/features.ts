@@ -32,7 +32,7 @@ export const PRODUCTS: Product[] = [
     id: "attune-ai",
     name: "Attune AI",
     pypiName: "attune-ai",
-    version: "9.1.0",
+    version: "9.2.0",
     tagline: "Generate, maintain, and serve help from your code",
     installCommand: "pip install attune-ai",
     marketplaceInstall:
@@ -101,7 +101,7 @@ export const PRODUCTS: Product[] = [
     id: "claude-code-plugin",
     name: "Claude Code Plugin",
     pypiName: "attune-ai",
-    version: "9.1.0",
+    version: "9.2.0",
     tagline: "Progressive help right in your terminal",
     installCommand:
       "claude plugin marketplace add Smart-AI-Memory/attune-ai",
@@ -249,7 +249,7 @@ export const DIFFERENTIATORS: Differentiator[] = [
  * Counts that appear in prose and stat callouts across the
  * site. Verified against the live Python code per the
  * website-content-accuracy rule (last verified 2026-06-28,
- * attune-ai 9.1.0):
+ * attune-ai 9.2.0):
  *
  *   workflows: attune.workflows.list_workflows() with stages
  *   skills: plugin/skills/ directory count (test_skill_count)

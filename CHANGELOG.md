@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.2.0] — 2026-06-28
+
+### Added
+
+- **Rich analysis-workflow output.** Analysis workflows now render
+  structured visual reports via `show_widget` instead of plain text:
+  - A **universal report panel** (`panel_html`) gives every workflow a
+    consistent rich surface (#1153), built on a shared `findings_widget`
+    primitive (#1151).
+  - **Security-audit** renders a severity dashboard (High / Medium /
+    Low / Secrets) with file:line cards (#1149).
+  - **Discovery-sweep** renders a triage board — act-now / needs-a-look
+    / dismissed (#1148).
+  - Panel polish: category colours, CWE badges, and clickable file
+    references (#1155).
+  - The `spec`, `attune`, and `planning` skill kickoffs adopt the rich
+    surface (#1147).
+- **Discovery-sweep per-source budget cap.** `discovery_sweep` enforces
+  a hard per-source spend ceiling (explicit > env > depth), with a
+  floor-guard that skips doomed runs and a cost-proximity cap-hit note
+  (#1159, #1157).
+- **Starter-reconciler hook** flags next-session-starter threads that
+  are already superseded by newer merges on `main` (#1139).
+
+### Fixed
+
+- **Telemetry under-reporting.** `telemetry_stats` no longer trusts a
+  stale `usage_summary.json`; the summary is treated as a derived cache
+  validated against the append-only log via a source signature, so
+  concurrent-writer lost updates self-heal on the next read (#1160).
+- **MCP memory tools crash.** Dropped a nonexistent `environment` kwarg
+  that crashed the memory tools (#1158).
+- **Discovery-sweep cost tracking** now records real per-source API
+  spend rather than an estimate (#1156).
+- **Security-audit** no longer renders a failed audit as "clean" (#1152).
+- **Config loader** skips non-section `ATTUNE_*` environment variables
+  instead of mis-parsing them (#1140).
+- **Website accuracy.** Corrected stale package versions and capability
+  counts and added a drift guard (#1141); corrected the skills count to
+  23 (#1143).
+
+### Dependencies
+
+- Bump `actions/setup-python` 6.2.0 → 6.3.0 (#1161) and `actions/cache`
+  5.0.5 → 6.1.0 (#1162).
+- Widen dev constraints: `pymdown-extensions` < 12.0 (#1163),
+  `attune-author` < 0.23 (#1164).
+
 ## [9.1.0] — 2026-06-27
 
 ### Added
