@@ -21,7 +21,10 @@ import pytest
 
 from attune.workflows.discovery_sweep import Finding
 from attune.workflows.discovery_sweep.cli_workflow import default_sources
-from attune.workflows.discovery_sweep.llm_source_base import STRUCTURED_EMIT_FOOTER
+from attune.workflows.discovery_sweep.llm_source_base import (
+    MIN_PER_CALL_BUDGET_USD,
+    STRUCTURED_EMIT_FOOTER,
+)
 from attune.workflows.discovery_sweep.sources.dependency_check import (
     DependencyCheckSource,
 )
@@ -35,6 +38,7 @@ class _FakeResult:
 
     success: bool = True
     final_output: str = ""
+    cost_report: object | None = None
 
 
 @dataclass
@@ -149,7 +153,11 @@ async def test_single_path_returns_parsed_findings() -> None:
         )
     ]
     assert len(factory.calls) == 1
-    assert factory.calls[0].execute_kwargs == {"path": "./", "depth": "standard"}
+    assert factory.calls[0].execute_kwargs == {
+        "path": "./",
+        "depth": "standard",
+        "max_budget_usd": 0.5,
+    }
 
 
 @pytest.mark.asyncio
@@ -183,7 +191,11 @@ async def test_custom_depth_is_passed_to_execute() -> None:
     ):
         await DependencyCheckSource(depth="quick").discover(["./"], budget_usd=0.5)
 
-    assert factory.calls[0].execute_kwargs == {"path": "./", "depth": "quick"}
+    assert factory.calls[0].execute_kwargs == {
+        "path": "./",
+        "depth": "quick",
+        "max_budget_usd": 0.5,
+    }
 
 
 @pytest.mark.asyncio
@@ -350,3 +362,64 @@ async def test_empty_final_output_falls_back() -> None:
 
     assert len(findings) == 1
     assert findings[0].tags == ("text-only-fallback",)
+
+
+# ---------------------------------------------------------------------------
+# discover() budget-enforcement paths
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class _FakeCostReport:
+    """Minimal stand-in for ``WorkflowResult.cost_report``."""
+
+    total_cost: float = 0.0
+
+
+@pytest.mark.asyncio
+async def test_budget_below_floor_skips_runs_and_emits_finding() -> None:
+    """Per-call share under the floor → skip every run, one info finding."""
+    factory = _FakeWorkflowFactory()
+
+    with patch(
+        "attune.workflows.dependency_check.DependencyCheckWorkflow",
+        new=factory,
+    ):
+        findings = await DependencyCheckSource().discover(
+            ["./"], budget_usd=MIN_PER_CALL_BUDGET_USD / 2
+        )
+
+    assert factory.calls == []
+    assert len(findings) == 1
+    only = findings[0]
+    assert only.severity == "info"
+    assert only.tags == ("budget-cap",)
+    assert only.file is None
+
+
+@pytest.mark.asyncio
+async def test_run_at_budget_ceiling_appends_cap_finding() -> None:
+    """Cost ≥95% of the per-call share → append an info 'ceiling' finding."""
+    factory = _FakeWorkflowFactory(
+        results=[
+            _FakeResult(
+                success=True,
+                final_output=_wrap_json(_wellformed_payload()),
+                cost_report=_FakeCostReport(total_cost=1.0),
+            )
+        ],
+    )
+
+    with patch(
+        "attune.workflows.dependency_check.DependencyCheckWorkflow",
+        new=factory,
+    ):
+        findings = await DependencyCheckSource().discover(["./"], budget_usd=1.0)
+
+    # The path's own finding plus one appended cap-ceiling note.
+    assert len(findings) == 2
+    cap = findings[-1]
+    assert cap.severity == "info"
+    assert cap.tags == ("budget-cap",)
+    assert cap.file is None
+    assert "./" in cap.description

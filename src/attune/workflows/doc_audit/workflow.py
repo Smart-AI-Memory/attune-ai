@@ -133,11 +133,17 @@ class DocAuditWorkflow(BaseWorkflow):
 
         resolved_path = str(Path(path_arg).resolve())
         max_turns = _DEPTH_MAX_TURNS.get(depth, 20)
+        # Optional explicit per-call USD cap (discovery-sweep plumbs each
+        # source's allocation down here; budget-enforcement spec FR-1).
+        # None → today's depth-derived cap, no behavior change.
+        max_budget_usd: float | None = kwargs.get("max_budget_usd")
 
         started_at = datetime.now()
 
         try:
-            run_result = await self._run_agent_audit(resolved_path, max_turns, depth=depth)
+            run_result = await self._run_agent_audit(
+                resolved_path, max_turns, depth=depth, max_budget_usd=max_budget_usd
+            )
             self._track_sdk_run_telemetry(stage="agent", agent_run_result=run_result)
 
             completed_at = datetime.now()
@@ -179,7 +185,11 @@ class DocAuditWorkflow(BaseWorkflow):
             )
 
     async def _run_agent_audit(
-        self, resolved_path: str, max_turns: int, depth: str = "standard"
+        self,
+        resolved_path: str,
+        max_turns: int,
+        depth: str = "standard",
+        max_budget_usd: float | None = None,
     ) -> AgentRunResult:
         """Run the Agent SDK audit and return result text.
 
@@ -202,7 +212,7 @@ class DocAuditWorkflow(BaseWorkflow):
                 **sdk_isolation_kwargs(),
                 system_prompt=system_prompt,
                 cwd=resolve_cwd_for_path(resolved_path),
-                max_budget_usd=get_max_budget_usd(depth),
+                max_budget_usd=get_max_budget_usd(depth, explicit=max_budget_usd),
                 allowed_tools=["Read", "Glob", "Grep", "Agent"],
                 permission_mode="default",
                 max_turns=max_turns,

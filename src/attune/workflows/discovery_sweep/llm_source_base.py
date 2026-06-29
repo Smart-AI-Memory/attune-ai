@@ -39,6 +39,22 @@ _VALID_SEVERITIES = frozenset(
     {"critical", "high", "medium", "low", "info"},
 )
 
+# Budget-enforcement spec (D2 floor guard + FR-3). Below this per-call
+# USD cap a wrapped workflow truncates before doing useful work, so the
+# source skips the run(s) and surfaces one info Finding instead of firing
+# N doomed near-zero runs. Best-effort, not a contract — tune from
+# telemetry. The common single-path sweep never trips it (share ==
+# whole allocation, well above the floor).
+MIN_PER_CALL_BUDGET_USD: float = 0.05
+
+# A per-call run whose real cost reaches this fraction of its cap was
+# almost certainly budget-bound (truncated with partial findings) rather
+# than finishing naturally under budget — surfaced as an info Finding so
+# the user knows results for that path may be partial (FR-3). SDK-version
+# independent: keyed off the truthful ``cost_report`` (PR #1156), never a
+# guessed SDK ``subtype``/``stop_reason`` string.
+_CAP_PROXIMITY: float = 0.95
+
 # Non-greedy + DOTALL per design.md so multiple blocks parse cleanly
 # and re.findall returns them in source order (we use the last).
 _JSON_BLOCK_RE = re.compile(r"```json\s*(\{.*?\})\s*```", re.DOTALL)
@@ -239,6 +255,107 @@ def findings_from_workflow_result(result: object, source_name: str) -> list[Find
         final_output = str(final_output)
 
     return parse_findings_json(raw_text or final_output, source_name)
+
+
+def budget_too_small_finding(
+    source_name: str,
+    n_paths: int,
+    share: float,
+    allocation: float,
+) -> Finding:
+    """Floor-guard Finding: the per-call share is below the useful minimum.
+
+    Emitted (per FR-3 / D2) when a source's budget allocation divided
+    across its ``paths`` falls below :data:`MIN_PER_CALL_BUDGET_USD`, so
+    the source skips its runs entirely rather than firing N runs that
+    truncate before doing useful work. ``file=None`` + no ``file-level``
+    tag routes this to the sweep's ``questions`` bucket (verification
+    rule 1 — an ``info`` finding WITH a file would fail rule 2's
+    severity threshold and land in ``rejected``), where the user sees
+    the sweep was under-funded.
+
+    Args:
+        source_name: The calling adapter's ``name``.
+        n_paths: Number of paths the allocation was split across.
+        share: The computed per-call share (``allocation / n_paths``).
+        allocation: This source's total budget allocation.
+
+    Returns:
+        A single ``info``-severity Finding.
+    """
+    return Finding(
+        source=source_name,
+        severity="info",
+        title=f"{source_name}: budget too small to scan {n_paths} path(s)",
+        description=(
+            f"This source's ${allocation:.4f} allocation split across "
+            f"{n_paths} path(s) is ${share:.4f} each — below the "
+            f"${MIN_PER_CALL_BUDGET_USD:.2f} minimum for a useful run. "
+            f"Skipped to avoid spending on runs that truncate immediately. "
+            f"Raise --budget or narrow the path glob."
+        ),
+        file=None,
+        line=None,
+        evidence=None,
+        confidence=1.0,
+        tags=("budget-cap",),
+    )
+
+
+def cap_hit_finding_if_bound(
+    source_name: str,
+    path: str,
+    result: object,
+    share: float | None,
+) -> Finding | None:
+    """Return an info Finding when a run spent ~all of its cap, else None.
+
+    Per FR-3: when a wrapped workflow's real cost reaches
+    :data:`_CAP_PROXIMITY` of its per-call ``max_budget_usd`` share, the
+    source maxed its allocation on ``path`` — the run sat at the budget
+    ceiling and its findings may be partial. Worded as "at the ceiling"
+    rather than "was truncated" because cost alone cannot distinguish a
+    truncated run from one that finished naturally at its allocation;
+    either way "this source spent its whole allocation, raise --budget
+    for more" is the true, useful message. Keyed off the truthful
+    ``cost_report.total_cost`` (PR #1156), never a guessed SDK signal.
+
+    ``file=None`` (path goes in the description) so this routes to the
+    ``questions`` bucket via verification rule 1 — an ``info`` finding
+    WITH a file would be rejected by the severity threshold (rule 2).
+
+    Args:
+        source_name: The calling adapter's ``name``.
+        path: The path whose run is being assessed.
+        result: The WorkflowResult (or duck-typed equivalent).
+        share: The per-call USD cap passed to this run, or ``None`` when
+            no cap was applied (returns ``None`` — nothing to note).
+
+    Returns:
+        An ``info``-severity Finding, or ``None`` when the run finished
+        comfortably under its cap (or no cap was set).
+    """
+    if share is None or share <= 0.0:
+        return None
+    cost_report = getattr(result, "cost_report", None)
+    cost = float(getattr(cost_report, "total_cost", 0.0) or 0.0)
+    if cost < share * _CAP_PROXIMITY:
+        return None
+    return Finding(
+        source=source_name,
+        severity="info",
+        title=f"{source_name}: budget allocation exhausted on {path}",
+        description=(
+            f"This run spent ${cost:.4f} of its ${share:.4f} allocation "
+            f"(≥{_CAP_PROXIMITY:.0%}) — at the budget ceiling; findings "
+            f"for {path} may be partial. Raise --budget for a fuller scan."
+        ),
+        file=None,
+        line=None,
+        evidence=None,
+        confidence=1.0,
+        tags=("budget-cap",),
+    )
 
 
 class LLMSource:

@@ -28,8 +28,11 @@ import logging
 from dataclasses import dataclass
 
 from ..llm_source_base import (
+    MIN_PER_CALL_BUDGET_USD,
     STRUCTURED_EMIT_FOOTER,
     LLMSource,
+    budget_too_small_finding,
+    cap_hit_finding_if_bound,
     findings_from_workflow_result,
 )
 from ..workflow import Finding
@@ -59,17 +62,24 @@ class DocAuditSource(LLMSource):
     async def discover(self, paths: list[str], budget_usd: float) -> list[Finding]:
         """Run DocAuditWorkflow on each path and parse findings.
 
-        ``budget_usd`` is informational for v1 — the wrapped
-        workflow self-limits via the SDK's own
-        ``max_budget_usd`` derived from ``depth``. A later PR can
-        plumb the per-source share down once the wrapped workflows
-        accept an explicit per-call cap.
+        ``budget_usd`` is this source's allocation from the sweep
+        engine. Per the budget-enforcement spec (FR-2 / D2) it is split
+        evenly across ``paths`` and passed down as each wrapped
+        ``execute()``'s ``max_budget_usd``, so the source self-limits to
+        its allocation. Below the per-call floor the source skips its
+        runs and surfaces one info Finding (FR-3) instead of firing N
+        runs that truncate before doing useful work.
         """
-        del budget_usd  # See docstring — wrapped workflow caps itself.
-
         if not paths:
             logger.warning("doc-audit: no paths to scan")
             return [_empty_paths_finding(self.name)]
+
+        # Budget-enforcement spec FR-2 / D2: even-split the allocation
+        # across paths. Single-path sweeps (the common case) get the
+        # whole allocation. Below the floor, skip rather than truncate.
+        share = budget_usd / len(paths)
+        if share < MIN_PER_CALL_BUDGET_USD:
+            return [budget_too_small_finding(self.name, len(paths), share, budget_usd)]
 
         # Late import keeps ``claude_agent_sdk`` out of this
         # module's import graph and lets unit tests patch the
@@ -83,7 +93,7 @@ class DocAuditSource(LLMSource):
                 system_prompt_suffix=STRUCTURED_EMIT_FOOTER,
             )
             try:
-                result = await workflow.execute(path=path, depth=self.depth)
+                result = await workflow.execute(path=path, depth=self.depth, max_budget_usd=share)
             except Exception as exc:  # noqa: BLE001
                 # INTENTIONAL: per spec NFR-1 a single path failure
                 # must not abort the whole source — log and
@@ -100,6 +110,11 @@ class DocAuditSource(LLMSource):
                 continue
 
             findings.extend(findings_from_workflow_result(result, self.name))
+
+            # FR-3: note when this path's run sat at its budget ceiling.
+            cap_note = cap_hit_finding_if_bound(self.name, path, result, share)
+            if cap_note is not None:
+                findings.append(cap_note)
 
         return findings
 

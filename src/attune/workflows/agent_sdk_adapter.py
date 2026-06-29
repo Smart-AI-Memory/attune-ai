@@ -952,17 +952,29 @@ def _last_subprocess_argv(exc: BaseException) -> list[str]:
     return []
 
 
-def get_max_budget_usd(depth: str = "standard") -> float | None:
+def get_max_budget_usd(
+    depth: str = "standard",
+    explicit: float | None = None,
+) -> float | None:
     """Get budget cap for a workflow depth.
 
     Acts as a cost cap for API-key users and a complexity
     bound for subscription users. Priority:
 
-    1. ``ATTUNE_MAX_BUDGET_USD`` env var (set to 0 to disable)
-    2. Depth-based default from ``_DEFAULT_BUDGET_USD``
+    1. ``explicit`` caller-supplied cap (e.g. a discovery-sweep
+       source's per-call allocation). When not ``None`` it wins
+       outright — the caller has already decided the ceiling.
+    2. ``ATTUNE_MAX_BUDGET_USD`` env var (set to 0 to disable)
+    3. Depth-based default from ``_DEFAULT_BUDGET_USD``
 
     Args:
         depth: Analysis depth — "quick", "standard", or "deep".
+        explicit: Caller-supplied USD cap that overrides both the
+            env var and the depth default. Used by discovery-sweep
+            to plumb each source's budget allocation down into the
+            wrapped workflow (budget-enforcement spec, FR-1). A
+            non-sweep caller passes ``None`` and gets today's
+            env/depth-derived behavior unchanged.
 
     Returns:
         Budget cap in USD, or None if caps are disabled.
@@ -971,8 +983,15 @@ def get_max_budget_usd(depth: str = "standard") -> float | None:
         For pre-release audits where the default caps feel too
         restrictive, export ``ATTUNE_MAX_BUDGET_USD=0`` to let
         multi-subagent workflows run to completion. Subscription
-        users pay no per-request cost for these runs.
+        users pay no per-request cost for these runs. The env
+        var is NOT a hard ceiling over ``explicit`` — a sweep
+        passing a per-source allocation overrides it (the sweep's
+        ``budget_usd`` is the user's ceiling for that sweep). See
+        the budget-enforcement spec ``decisions.md`` for the
+        precedence rationale.
     """
+    if explicit is not None:
+        return explicit
     override = os.environ.get("ATTUNE_MAX_BUDGET_USD")
     if override is not None:
         val = float(override)
