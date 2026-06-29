@@ -9,6 +9,8 @@ Tests the core telemetry tracking functionality including:
 - Savings calculation
 """
 
+import hashlib
+import hmac
 import json
 import os
 import tempfile
@@ -678,61 +680,37 @@ class TestRetentionPolicy:
             tracker._cleanup_old_files()
 
 
-class TestAtomicWrites:
-    """Test atomic write operations."""
+class TestWriteEntry:
+    """Test the direct-to-disk write helper (`_write_entry`).
 
-    def test_write_entry_atomic_rename(self, tracker):
-        """Test that write uses atomic rename when file doesn't exist."""
-        entry = {
-            "v": "1.0",
-            "ts": datetime.now(timezone.utc).isoformat(),
-            "workflow": "test",
-            "tier": "CAPABLE",
-            "model": "model",
-            "cost": 0.01,
-        }
+    `_write_entry` is an APPEND helper (one JSON line per call) — it does
+    NOT do a temp-file + atomic-rename. These tests assert that real
+    behavior; the previous suite asserted a temp-file dance that never
+    existed, so it passed vacuously.
+    """
 
-        # Ensure usage file doesn't exist
+    def test_write_entry_appends_one_line_per_call(self, tracker):
+        """Each call appends exactly one JSON line; no temp file is created."""
         if tracker.usage_file.exists():
             tracker.usage_file.unlink()
 
-        tracker._write_entry(entry)
+        first = {"v": "1.0", "ts": datetime.now(timezone.utc).isoformat(), "workflow": "a"}
+        second = {"v": "1.0", "ts": datetime.now(timezone.utc).isoformat(), "workflow": "b"}
+        tracker._write_entry(first)
+        tracker._write_entry(second)
 
-        # File should exist
-        assert tracker.usage_file.exists()
+        lines = tracker.usage_file.read_text(encoding="utf-8").splitlines()
+        assert len(lines) == 2
+        assert [json.loads(line)["workflow"] for line in lines] == ["a", "b"]
 
-        # Temp file should be cleaned up
-        temp_file = tracker.usage_file.with_suffix(".tmp")
-        assert not temp_file.exists()
+        # It is a plain append — there is no sibling .tmp file.
+        assert not tracker.usage_file.with_suffix(".tmp").exists()
 
-    def test_write_entry_cleanup_on_error(self, tracker):
-        """Test that temp file is cleaned up on write error."""
-        entry = {"test": "data"}
-
-        # Mock file operations to trigger cleanup path
+    def test_write_entry_propagates_oserror(self, tracker):
+        """A write failure propagates (no silent swallow)."""
         with patch("builtins.open", side_effect=OSError("Write failed")):
-            with pytest.raises(OSError):
-                tracker._write_entry(entry)
-
-        # Temp file should be cleaned up
-        temp_file = tracker.usage_file.with_suffix(".tmp")
-        assert not temp_file.exists()
-
-    def test_write_entry_handles_temp_file_cleanup_error(self, tracker):
-        """Test that errors during temp file cleanup are handled."""
-        entry = {"test": "data"}
-        temp_file = tracker.usage_file.with_suffix(".tmp")
-
-        # Create a temp file
-        temp_file.write_text("test")
-
-        # Mock open to raise error on write
-        with patch("builtins.open", side_effect=OSError("Write failed")):
-            # Mock unlink to also fail (simulating nested error handling)
-            with patch.object(Path, "unlink", side_effect=OSError("Cleanup failed")):
-                # The outer OSError should still be raised
-                with pytest.raises(OSError, match="Write failed"):
-                    tracker._write_entry(entry)
+            with pytest.raises(OSError, match="Write failed"):
+                tracker._write_entry({"test": "data"})
 
 
 class TestDataRetrieval:
@@ -1052,6 +1030,48 @@ class TestConcurrency:
         entries = tracker.get_recent_entries(limit=100)
         assert len(entries) == 50
 
+    def test_concurrent_writes_produce_unique_seq(self, temp_dir):
+        """Regression: seq numbers must be unique under concurrency.
+
+        The seq counter is now incremented inside the lock alongside the
+        buffer append. Before the fix it was incremented outside the lock,
+        so two threads could read the same value and emit duplicate seqs —
+        corrupting the timestamp tiebreaker in get_recent_entries.
+
+        A large buffer keeps every entry in memory (no auto-flush) so this
+        isolates the counter race from disk-write concurrency.
+        """
+        import threading
+
+        tracker = UsageTracker(telemetry_dir=temp_dir, buffer_size=10_000)
+        per_thread, n_threads = 40, 8
+
+        def track_many(thread_id):
+            for _ in range(per_thread):
+                tracker.track_llm_call(
+                    workflow=f"t{thread_id}",
+                    stage=None,
+                    tier="CAPABLE",
+                    model="model",
+                    provider="test",
+                    cost=0.01,
+                    tokens={"input": 1, "output": 1},
+                    cache_hit=False,
+                    cache_type=None,
+                    duration_ms=1,
+                )
+
+        threads = [threading.Thread(target=track_many, args=(i,)) for i in range(n_threads)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        expected = per_thread * n_threads
+        seqs = [e["seq"] for e in tracker.get_recent_entries(limit=10_000)]
+        assert len(seqs) == expected
+        assert len(set(seqs)) == expected, "duplicate seq — counter raced outside the lock"
+
 
 class TestEdgeCases:
     """Test edge cases and corner scenarios."""
@@ -1075,17 +1095,22 @@ class TestEdgeCases:
             tracker._cleanup_old_files()
 
     def test_cleanup_with_value_error(self, tracker, temp_dir):
-        """Test cleanup handles ValueError from timestamp parsing."""
-        # Create a file
-        test_file = temp_dir / "usage.2020-01-01.jsonl"
-        test_file.write_text('{"test": "data"}\n')
+        """Cleanup swallows a ValueError from the mtime fallback.
 
-        # Mock fromtimestamp to raise ValueError
+        A name with no parseable date (``usage.notadate.jsonl``) falls back
+        to mtime; if ``fromtimestamp`` raises, cleanup must not propagate.
+        Real ``strptime``/``now`` are kept so only the fallback path fails.
+        """
+        bad = temp_dir / "usage.notadate.jsonl"
+        bad.write_text('{"test": "data"}\n')
+
         with patch("attune.telemetry.usage_tracker.datetime") as mock_dt:
-            mock_dt.now.return_value = datetime.now()
+            mock_dt.now.return_value = datetime.now(timezone.utc)
+            mock_dt.strptime.side_effect = datetime.strptime  # real -> None for bad name
             mock_dt.fromtimestamp.side_effect = ValueError("Invalid timestamp")
-            # Should not raise exception
-            tracker._cleanup_old_files()
+            tracker._cleanup_old_files()  # must not raise
+
+        assert bad.exists()  # not deleted when its age is unknown
 
     def test_get_recent_entries_with_deleted_file_during_iteration(self, tracker, temp_dir):
         """Test handling when file is deleted during iteration."""
@@ -1970,3 +1995,97 @@ class TestUsagePingAtExitWiring:
         monkeypatch.setattr(usage_ping, "run_sync_at_exit", _boom)
         # Must not propagate — telemetry can't affect process exit.
         UsageTracker._atexit_usage_ping()
+
+
+class TestHmacSecret:
+    """Per-install HMAC secret (replaces the shared committed constant)."""
+
+    OLD_CONSTANT = b"attune-default-telemetry-key"
+
+    def test_per_install_secret_file_created_0600(self, temp_dir):
+        """First hash with no env secret writes a 0600 per-install .secret."""
+        with patch("attune.config.env_compat.get_attune_env", return_value=None):
+            digest = UsageTracker(telemetry_dir=temp_dir)._hash_user_id("default")
+
+        secret_file = temp_dir / ".secret"
+        assert secret_file.exists()
+        assert (secret_file.stat().st_mode & 0o777) == 0o600
+        assert isinstance(digest, str) and len(digest) == 16
+
+    def test_secret_stable_across_instances_same_dir(self, temp_dir):
+        """Two installs sharing a dir reuse the .secret → identical hash."""
+        with patch("attune.config.env_compat.get_attune_env", return_value=None):
+            h1 = UsageTracker(telemetry_dir=temp_dir)._hash_user_id("alice")
+            h2 = UsageTracker(telemetry_dir=temp_dir)._hash_user_id("alice")
+        assert h1 == h2
+
+    def test_secret_differs_across_installs(self, temp_dir):
+        """Different install dirs get different secrets → uncorrelatable hashes."""
+        with patch("attune.config.env_compat.get_attune_env", return_value=None):
+            h1 = UsageTracker(telemetry_dir=temp_dir / "i1")._hash_user_id("alice")
+            h2 = UsageTracker(telemetry_dir=temp_dir / "i2")._hash_user_id("alice")
+        assert h1 != h2
+
+    def test_env_secret_overrides_file(self, temp_dir):
+        """TELEMETRY_SECRET wins and no .secret file is written."""
+        with patch("attune.config.env_compat.get_attune_env", return_value="my-secret"):
+            digest = UsageTracker(telemetry_dir=temp_dir)._hash_user_id("alice")
+        assert not (temp_dir / ".secret").exists()
+        expected = hmac.new(b"my-secret", b"alice", hashlib.sha256).hexdigest()[:16]
+        assert digest == expected
+
+    def test_not_the_old_constant_key(self, temp_dir):
+        """Regression: the digest is no longer the reversible shared constant."""
+        with patch("attune.config.env_compat.get_attune_env", return_value=None):
+            digest = UsageTracker(telemetry_dir=temp_dir)._hash_user_id("default")
+        old = hmac.new(self.OLD_CONSTANT, b"default", hashlib.sha256).hexdigest()[:16]
+        assert digest != old
+
+    def test_hash_is_memoized(self, temp_dir):
+        """Repeat hashes of the same id don't recompute the HMAC."""
+        with patch("attune.config.env_compat.get_attune_env", return_value=None):
+            tracker = UsageTracker(telemetry_dir=temp_dir)
+            tracker._hash_user_id("bob")  # populate cache
+            with patch("attune.telemetry.usage_tracker.hmac.new") as mock_new:
+                again = tracker._hash_user_id("bob")
+                mock_new.assert_not_called()
+        assert isinstance(again, str)
+
+
+class TestParseTs:
+    """The single timestamp-parsing helper."""
+
+    def test_parses_z_suffix(self):
+        dt = UsageTracker._parse_ts("2024-01-15T12:00:00.000000Z")
+        assert dt is not None and dt.tzinfo is not None and dt.year == 2024
+
+    def test_parses_explicit_offset(self):
+        dt = UsageTracker._parse_ts("2024-01-15T12:00:00+00:00")
+        assert dt is not None and dt.utcoffset().total_seconds() == 0
+
+    def test_naive_coerced_to_utc(self):
+        dt = UsageTracker._parse_ts("2024-01-15T12:00:00")
+        assert dt is not None and dt.tzinfo == timezone.utc
+
+    def test_missing_or_garbage_returns_none(self):
+        assert UsageTracker._parse_ts(None) is None
+        assert UsageTracker._parse_ts("") is None
+        assert UsageTracker._parse_ts("not-a-timestamp") is None
+
+
+class TestRotatedFileDate:
+    """Filename-date parsing used for retention."""
+
+    def test_parses_dated_name(self):
+        dt = UsageTracker._rotated_file_date("usage.2024-01-15.jsonl")
+        assert dt is not None and (dt.year, dt.month, dt.day) == (2024, 1, 15)
+
+    def test_parses_dated_name_with_counter(self):
+        dt = UsageTracker._rotated_file_date("usage.2024-01-15.3.jsonl")
+        assert dt is not None and dt.day == 15
+
+    def test_live_file_returns_none(self):
+        assert UsageTracker._rotated_file_date("usage.jsonl") is None
+
+    def test_unparseable_date_returns_none(self):
+        assert UsageTracker._rotated_file_date("usage.notadate.jsonl") is None
