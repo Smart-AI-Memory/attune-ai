@@ -152,7 +152,11 @@ async def test_single_path_returns_parsed_findings() -> None:
         )
     ]
     assert len(factory.calls) == 1
-    assert factory.calls[0].execute_kwargs == {"path": "src/", "depth": "standard"}
+    assert factory.calls[0].execute_kwargs == {
+        "path": "src/",
+        "depth": "standard",
+        "max_budget_usd": 1.0,
+    }
 
 
 @pytest.mark.asyncio
@@ -186,7 +190,11 @@ async def test_custom_depth_is_passed_to_execute() -> None:
     ):
         await BugPredictSource(depth="quick").discover(["src/"], budget_usd=1.0)
 
-    assert factory.calls[0].execute_kwargs == {"path": "src/", "depth": "quick"}
+    assert factory.calls[0].execute_kwargs == {
+        "path": "src/",
+        "depth": "quick",
+        "max_budget_usd": 1.0,
+    }
 
 
 @pytest.mark.asyncio

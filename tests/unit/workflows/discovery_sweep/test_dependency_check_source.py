@@ -149,7 +149,11 @@ async def test_single_path_returns_parsed_findings() -> None:
         )
     ]
     assert len(factory.calls) == 1
-    assert factory.calls[0].execute_kwargs == {"path": "./", "depth": "standard"}
+    assert factory.calls[0].execute_kwargs == {
+        "path": "./",
+        "depth": "standard",
+        "max_budget_usd": 0.5,
+    }
 
 
 @pytest.mark.asyncio
@@ -183,7 +187,11 @@ async def test_custom_depth_is_passed_to_execute() -> None:
     ):
         await DependencyCheckSource(depth="quick").discover(["./"], budget_usd=0.5)
 
-    assert factory.calls[0].execute_kwargs == {"path": "./", "depth": "quick"}
+    assert factory.calls[0].execute_kwargs == {
+        "path": "./",
+        "depth": "quick",
+        "max_budget_usd": 0.5,
+    }
 
 
 @pytest.mark.asyncio

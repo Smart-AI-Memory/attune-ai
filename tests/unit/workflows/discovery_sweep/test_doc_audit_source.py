@@ -143,7 +143,11 @@ async def test_single_path_returns_parsed_findings() -> None:
         )
     ]
     assert len(factory.calls) == 1
-    assert factory.calls[0].execute_kwargs == {"path": "docs/", "depth": "standard"}
+    assert factory.calls[0].execute_kwargs == {
+        "path": "docs/",
+        "depth": "standard",
+        "max_budget_usd": 1.0,
+    }
 
 
 @pytest.mark.asyncio
@@ -177,7 +181,11 @@ async def test_custom_depth_is_passed_to_execute() -> None:
     ):
         await DocAuditSource(depth="quick").discover(["docs/"], budget_usd=1.0)
 
-    assert factory.calls[0].execute_kwargs == {"path": "docs/", "depth": "quick"}
+    assert factory.calls[0].execute_kwargs == {
+        "path": "docs/",
+        "depth": "quick",
+        "max_budget_usd": 1.0,
+    }
 
 
 @pytest.mark.asyncio
