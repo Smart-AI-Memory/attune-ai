@@ -42,7 +42,6 @@ class MemoryHandlersMixin:
 
             self._memory = UnifiedMemory(
                 user_id=getattr(self, "_user_id", "mcp-session"),
-                environment="development",
             )
         return self._memory
 
