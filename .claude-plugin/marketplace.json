@@ -12,7 +12,7 @@
   "plugins": [
     {
       "name": "attune-ai",
-      "description": "17 auto-triggering skills for the developer workflows behind building AI products: security audits, code reviews, test generation, bug prediction, and release preparation. For help content tools, also install attune-help and attune-author from this marketplace.",
+      "description": "23 auto-triggering skills for the developer workflows behind building AI products: security audits, code reviews, test generation, bug prediction, and release preparation. For help content tools, also install attune-help and attune-author from this marketplace.",
       "source": "./plugin",
       "version": "9.2.0",
       "author": {
