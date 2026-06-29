@@ -12,7 +12,7 @@
   "plugins": [
     {
       "name": "attune-ai",
-      "description": "17 auto-triggering skills for the developer workflows behind building AI products: security audits, code reviews, test generation, bug prediction, and release preparation. For help content tools, also install attune-help and attune-author from this marketplace.",
+      "description": "23 auto-triggering skills for the developer workflows behind building AI products: security audits, code reviews, test generation, bug prediction, and release preparation. For help content tools, also install attune-help and attune-author from this marketplace.",
       "source": "./plugin",
       "version": "9.2.0",
       "author": {
@@ -51,7 +51,7 @@
       "name": "attune-author",
       "source": "./plugins/attune-author",
       "description": "AI-powered authoring companion for attune-help. Generates, maintains, and validates .help/ templates through a 3-stage pipeline with staleness detection. Pairs with attune-help to build and ship context-sensitive help content.",
-      "version": "0.21.0",
+      "version": "0.22.0",
       "author": {
         "name": "Smart AI Memory",
         "email": "patrick.roebuck@smartaimemory.com"
