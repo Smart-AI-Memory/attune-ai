@@ -1621,6 +1621,40 @@ class TestSummaryLoadSave:
         # ...but the same process still sees its own data via the in-memory path.
         assert tracker.get_stats(days=3650)["total_calls"] == 1
 
+    def test_load_summary_swallows_oserror_from_unreadable_dir(self, tracker):
+        """Outer OSError guard: an unreadable telemetry dir disables gracefully."""
+        from unittest.mock import MagicMock
+
+        bad = MagicMock()
+        bad.exists.side_effect = OSError("dir unreadable")
+        tracker._summary_file = bad
+        tracker._daily_summary = {"2025-01-01": tracker._empty_day()}
+
+        tracker._load_summary()  # must not raise
+
+        assert tracker._daily_summary == {}
+
+    def test_source_signature_skips_unstatable_file(self, tracker):
+        """Per-file OSError on stat() is skipped (glob succeeds), not fatal."""
+        from unittest.mock import MagicMock
+
+        # glob succeeds and yields a file, but stat() on it fails — exercises
+        # the per-file inner guard (not the outer glob guard).
+        bad_file = MagicMock()
+        bad_file.name = "usage.jsonl"
+        bad_file.stat.side_effect = OSError("no stat")
+
+        with patch.object(Path, "glob", return_value=[bad_file]):
+            sig = tracker._source_signature()
+
+        # The single file was skipped → empty signature, no raise.
+        assert sig == {}
+
+    def test_source_signature_returns_empty_on_glob_error(self, tracker):
+        """A glob() failure on the telemetry dir degrades to an empty signature."""
+        with patch.object(Path, "glob", side_effect=OSError("glob failed")):
+            assert tracker._source_signature() == {}
+
 
 class TestFlushEdgeCases:
     def test_flush_empty_buffer_returns_zero(self, tracker):
