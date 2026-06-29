@@ -266,9 +266,10 @@ class TestAuthStrategyCostEstimationExactness:
 
         result = strategy.estimate_cost(1000, AuthMode.API)
 
-        # 0.003*0.00025 + 0.015*0.003 + 0.010*0.015 + 0.005*0.00025
-        # = 0.000197, rounded to 4 places.
-        assert result["monetary_cost"] == 0.0002
+        # (tokens-in-millions) * ($/M input), summed across the four stages:
+        # 0.003*0.25 + 0.015*3.0 + 0.010*15.0 + 0.005*0.25
+        # = 0.00075 + 0.045 + 0.15 + 0.00125 = 0.197
+        assert result["monetary_cost"] == 0.197
         assert result["quota_cost"] is None
 
     def test_estimate_cost_subscription_fits_in_context_boundary(self):
@@ -666,6 +667,22 @@ class TestAuthStrategyPersistence:
             strategy.save(filepath)
 
             assert filepath.exists()
+
+    def test_save_writes_owner_only_file_in_private_dir(self):
+        """Regression: config is 0600 inside a 0700 dir (no co-tenant reads)."""
+        import sys
+
+        if sys.platform == "win32":
+            pytest.skip("POSIX file modes")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            filepath = Path(tmpdir) / "telemetry" / "auth_strategy.json"
+
+            AuthStrategy().save(filepath)
+
+            assert (filepath.stat().st_mode & 0o777) == 0o600
+            assert (filepath.parent.stat().st_mode & 0o777) == 0o700
+            # No leftover temp file from the atomic write.
+            assert not list(filepath.parent.glob(".auth_strategy.*.tmp"))
 
     def test_save_creates_parent_directories(self):
         """Test that save creates parent directories if needed."""

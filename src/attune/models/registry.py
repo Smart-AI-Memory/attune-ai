@@ -20,9 +20,9 @@ from typing import Any
 class ModelTier(Enum):
     """Model tier classification for routing.
 
-    CHEAP: Fast, low-cost models for simple tasks (~$0.15-1.00/M input)
-    CAPABLE: Balanced models for most development work (~$2.50-3.00/M input)
-    PREMIUM: Highest capability for complex reasoning (~$15.00/M input)
+    CHEAP: Fast, low-cost models for simple tasks (~$1.00/M input)
+    CAPABLE: Balanced models for most development work (~$3.00/M input)
+    PREMIUM: Highest capability for complex reasoning (~$5.00/M input)
     """
 
     CHEAP = "cheap"
@@ -125,7 +125,7 @@ class ModelInfo:
 MODEL_REGISTRY: dict[str, dict[str, ModelInfo]] = {
     # -------------------------------------------------------------------------
     # Anthropic Claude Models
-    # Intelligent fallback: Sonnet 4.6 → Opus 4.6 (5x cost increase for complex tasks)
+    # Intelligent fallback: Sonnet 4.6 → Opus 4.8 (~1.67x input cost: $3 → $5/M)
     # -------------------------------------------------------------------------
     "anthropic": {
         "cheap": ModelInfo(
@@ -366,7 +366,7 @@ class ModelRegistry:
 
             >>> pricing = registry.get_pricing_for_model("claude-opus-4-8")
             >>> print(f"${pricing['input']}/M input, ${pricing['output']}/M output")
-            $15.0/M input, $75.0/M output
+            $5.0/M input, $25.0/M output
 
         """
         model = self.get_model_by_id(model_id)

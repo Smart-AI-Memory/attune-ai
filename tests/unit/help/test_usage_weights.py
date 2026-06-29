@@ -39,7 +39,7 @@ class TestGetUsageWeightsImportFailure:
         mock_tracker.get_stats.side_effect = RuntimeError("boom")
 
         mock_module = MagicMock()
-        mock_module.UsageTracker.return_value = mock_tracker
+        mock_module.UsageTracker.get_instance.return_value = mock_tracker
 
         with patch.dict(
             "sys.modules",
@@ -61,7 +61,7 @@ class TestGetUsageWeightsEmpty:
         mock_tracker.get_stats.return_value = {"by_workflow": {}}
 
         mock_module = MagicMock()
-        mock_module.UsageTracker.return_value = mock_tracker
+        mock_module.UsageTracker.get_instance.return_value = mock_tracker
 
         with patch.dict(
             "sys.modules",
@@ -84,7 +84,7 @@ class TestGetUsageWeightsEmpty:
         }
 
         mock_module = MagicMock()
-        mock_module.UsageTracker.return_value = mock_tracker
+        mock_module.UsageTracker.get_instance.return_value = mock_tracker
 
         with patch.dict(
             "sys.modules",
@@ -111,7 +111,7 @@ class TestGetUsageWeightsNormalization:
         }
 
         mock_module = MagicMock()
-        mock_module.UsageTracker.return_value = mock_tracker
+        mock_module.UsageTracker.get_instance.return_value = mock_tracker
 
         # Mock cross_links to map workflows to template IDs
         cross_links = {
@@ -148,7 +148,7 @@ class TestGetUsageWeightsNormalization:
         mock_tracker.get_stats.return_value = {"by_workflow": {}}
 
         mock_module = MagicMock()
-        mock_module.UsageTracker.return_value = mock_tracker
+        mock_module.UsageTracker.get_instance.return_value = mock_tracker
 
         with patch.dict(
             "sys.modules",
@@ -171,7 +171,7 @@ class TestGetUsageWeightsNormalization:
         }
 
         mock_module = MagicMock()
-        mock_module.UsageTracker.return_value = mock_tracker
+        mock_module.UsageTracker.get_instance.return_value = mock_tracker
 
         cross_links = {
             "workflow_map": {
