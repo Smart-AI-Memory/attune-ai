@@ -194,17 +194,21 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
             else:
                 valid_status = {"done", "in_flight", "blocked"}
                 blocked_labels = []
-                for idx, item in enumerate(progress_items):
+                for progress_idx, item in enumerate(progress_items):
                     label = item.get("label")
                     status = item.get("status")
                     if not isinstance(label, str) or not label:
-                        problems.append(f"{where} progress_items[{idx}] needs a 'label' string")
+                        problems.append(
+                            f"{where} progress_items[{progress_idx}] needs a 'label' string"
+                        )
                     if status not in valid_status:
                         problems.append(
-                            f"{where} progress_items[{idx}] 'status' must be one of {valid_status}"
+                            f"{where} progress_items[{progress_idx}] 'status' must be one of {valid_status}"
                         )
                     if "detail" in item and not isinstance(item["detail"], str):
-                        problems.append(f"{where} progress_items[{idx}] 'detail' must be a string")
+                        problems.append(
+                            f"{where} progress_items[{progress_idx}] 'detail' must be a string"
+                        )
                     if status == "blocked" and isinstance(label, str):
                         blocked_labels.append(label)
                 if qtype is QuestionType.PROGRESS and set(blocked_labels) != set(options):
