@@ -1,9 +1,9 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 1186,
-    "linked_templates": 877,
-    "total_tags": 109
+    "total_templates": 1196,
+    "linked_templates": 880,
+    "total_tags": 113
   },
   "links": {
     "com-agents": {
@@ -66,6 +66,15 @@
         "docs",
         "documentation",
         "generation"
+      ]
+    },
+    "com-elicitation-forms": {
+      "tags": [
+        "elicitation",
+        "forms",
+        "communication",
+        "ux",
+        "widget"
       ]
     },
     "com-fix-test": {
@@ -278,6 +287,15 @@
         "docs",
         "documentation",
         "generation"
+      ]
+    },
+    "con-elicitation-forms": {
+      "tags": [
+        "elicitation",
+        "forms",
+        "communication",
+        "ux",
+        "widget"
       ]
     },
     "con-feedback-loop": {
@@ -1576,6 +1594,27 @@
         "testing",
         "security",
         "claude-code"
+      ]
+    },
+    "err-elicitation-forms": {
+      "related_warning": [
+        "war-elicitation-forms"
+      ],
+      "prevented_by": [
+        "tip-elicitation-forms"
+      ],
+      "tags": [
+        "elicitation",
+        "forms",
+        "communication",
+        "ux",
+        "widget"
+      ],
+      "embeds": [
+        {
+          "id": "tip-elicitation-forms",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-enforce-admins-false-defeats-code-review-scorecard-check": {
@@ -7221,6 +7260,18 @@
         "generation"
       ]
     },
+    "not-elicitation-forms": {
+      "related_reference": [
+        "ref-elicitation-forms"
+      ],
+      "tags": [
+        "elicitation",
+        "forms",
+        "communication",
+        "ux",
+        "widget"
+      ]
+    },
     "not-fix-test": {
       "related_reference": [
         "ref-deep-review",
@@ -7568,6 +7619,15 @@
         "generation"
       ]
     },
+    "qui-elicitation-forms": {
+      "tags": [
+        "elicitation",
+        "forms",
+        "communication",
+        "ux",
+        "widget"
+      ]
+    },
     "qui-fix-test": {
       "tags": [
         "tests",
@@ -7873,6 +7933,15 @@
         "docs",
         "documentation",
         "generation"
+      ]
+    },
+    "ref-elicitation-forms": {
+      "tags": [
+        "elicitation",
+        "forms",
+        "communication",
+        "ux",
+        "widget"
       ]
     },
     "ref-fix-test": {
@@ -8588,6 +8657,15 @@
         "generation"
       ]
     },
+    "tas-elicitation-forms": {
+      "tags": [
+        "elicitation",
+        "forms",
+        "communication",
+        "ux",
+        "widget"
+      ]
+    },
     "tas-export-telemetry": {
       "tags": [
         "cli",
@@ -9007,6 +9085,15 @@
         "generation"
       ]
     },
+    "tip-elicitation-forms": {
+      "tags": [
+        "elicitation",
+        "forms",
+        "communication",
+        "ux",
+        "widget"
+      ]
+    },
     "tip-fix-test": {
       "tags": [
         "tests",
@@ -9215,6 +9302,15 @@
         "docs",
         "documentation",
         "generation"
+      ]
+    },
+    "tro-elicitation-forms": {
+      "tags": [
+        "elicitation",
+        "forms",
+        "communication",
+        "ux",
+        "widget"
       ]
     },
     "tro-fix-test": {
@@ -9857,6 +9953,18 @@
         "testing",
         "security",
         "claude-code"
+      ]
+    },
+    "war-elicitation-forms": {
+      "related_error": [
+        "err-elicitation-forms"
+      ],
+      "tags": [
+        "elicitation",
+        "forms",
+        "communication",
+        "ux",
+        "widget"
       ]
     },
     "war-exclude-hard-queries-from-aggregate-p-1-metrics-in-benchmark": {
@@ -11927,6 +12035,18 @@
       "tro-cli",
       "war-cli"
     ],
+    "communication": [
+      "com-elicitation-forms",
+      "con-elicitation-forms",
+      "err-elicitation-forms",
+      "not-elicitation-forms",
+      "qui-elicitation-forms",
+      "ref-elicitation-forms",
+      "tas-elicitation-forms",
+      "tip-elicitation-forms",
+      "tro-elicitation-forms",
+      "war-elicitation-forms"
+    ],
     "complexity": [
       "com-refactor-plan",
       "con-refactor-plan",
@@ -12091,6 +12211,18 @@
       "tro-doc-gen",
       "war-doc-gen"
     ],
+    "elicitation": [
+      "com-elicitation-forms",
+      "con-elicitation-forms",
+      "err-elicitation-forms",
+      "not-elicitation-forms",
+      "qui-elicitation-forms",
+      "ref-elicitation-forms",
+      "tas-elicitation-forms",
+      "tip-elicitation-forms",
+      "tro-elicitation-forms",
+      "war-elicitation-forms"
+    ],
     "events": [
       "com-hooks",
       "con-hooks",
@@ -12146,6 +12278,18 @@
     ],
     "formatting": [
       "not-markdown-formatting"
+    ],
+    "forms": [
+      "com-elicitation-forms",
+      "con-elicitation-forms",
+      "err-elicitation-forms",
+      "not-elicitation-forms",
+      "qui-elicitation-forms",
+      "ref-elicitation-forms",
+      "tas-elicitation-forms",
+      "tip-elicitation-forms",
+      "tro-elicitation-forms",
+      "war-elicitation-forms"
     ],
     "generation": [
       "com-doc-gen",
@@ -14137,9 +14281,19 @@
       "ref-tool-telemetry-stats"
     ],
     "ux": [
+      "com-elicitation-forms",
+      "con-elicitation-forms",
       "con-progressive-depth",
       "con-socratic-discovery",
-      "not-socratic-interaction-rule"
+      "err-elicitation-forms",
+      "not-elicitation-forms",
+      "not-socratic-interaction-rule",
+      "qui-elicitation-forms",
+      "ref-elicitation-forms",
+      "tas-elicitation-forms",
+      "tip-elicitation-forms",
+      "tro-elicitation-forms",
+      "war-elicitation-forms"
     ],
     "webhooks": [
       "com-hooks",
@@ -14153,6 +14307,18 @@
       "tip-hooks",
       "tro-hooks",
       "war-hooks"
+    ],
+    "widget": [
+      "com-elicitation-forms",
+      "con-elicitation-forms",
+      "err-elicitation-forms",
+      "not-elicitation-forms",
+      "qui-elicitation-forms",
+      "ref-elicitation-forms",
+      "tas-elicitation-forms",
+      "tip-elicitation-forms",
+      "tro-elicitation-forms",
+      "war-elicitation-forms"
     ],
     "windows": [
       "err-bare-manifest-in-gitignore-silently-excludes-any-manifest",
