@@ -449,7 +449,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-bold mb-3">attune-ai</h3>
               <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                Full framework. Workflows, staleness detection, MCP server, and 23 auto-triggering skills for Claude Code.
+                Full framework. Workflows, staleness detection, MCP server, and 24 auto-triggering skills for Claude Code.
               </p>
             </div>
 
