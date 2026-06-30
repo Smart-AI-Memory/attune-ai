@@ -70,17 +70,17 @@ developer workflow hub; `attune-gui` is the docs hub.
 
 ---
 
-## New in 9.3.0 — Dynamic communication
+## New in 9.3.0 — Dynamic forms that improve human/AI communication
 
-**The agent adapts how it talks to you.** A deliberate effort to
-*improve human/AI communication*: instead of a fixed wall of prose,
-Attune now *dynamically* shapes each exchange to fit the moment —
-rendering an interactive form in response to your prompt whenever a
-structured turn communicates better than text. A multi-part question
-becomes one form you answer with a click; a recommendation arrives as
-weighable cards; a disagreement is shown side-by-side so you can
-overrule it in one tap. The back-and-forth gets faster, clearer, and
-less ambiguous. The agent picks the right *construct* for the moment:
+**Attune now improves how you and the AI communicate by dynamically
+using interactive forms.** The form *is* the improvement: instead of a
+fixed wall of prose, Attune renders the right form in response to your
+prompt whenever a structured turn communicates better than text — so a
+multi-part question becomes one form you answer with a click, a
+recommendation arrives as weighable cards, and a disagreement is shown
+side-by-side so you can overrule it in one tap. The exchange gets
+faster, clearer, and less ambiguous. The agent picks the right *form*
+for the moment:
 
 - **intake** — gather several independent decisions in one form
 - **decision** — a recommended option with rationale + per-option
