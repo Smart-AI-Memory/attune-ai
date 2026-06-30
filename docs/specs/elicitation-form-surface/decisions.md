@@ -528,17 +528,26 @@ validation. The unit test `test_collect_rejects_out_of_option` caught
 it; fixed by adding `PUSHBACK` to that tuple. "Reuse the answer path"
 needed one explicit line, not zero.
 
-**AC3 receipt status:** function-level + `show_widget`-level round-trip
-proven this session with a **real human submit** — real
-`form_to_widget_html` output rendered via `show_widget` (dissent
-framing intact), Patrick picked the alternative (a "switch"), the
-`__elicitation_response__` sentinel posted back, and
-`collect_form_response` validated it (`resp-20260630-013130`); it also
-rejects out-of-option picks. The full **MCP-tool** path
-(`elicitation_render_widget` / `elicitation_collect_response`) is
-blocked until this merges and the server reboots — the running server's
-enums lack `pushback` (the same D10/D11 / D15 pattern). Closes
-next-session like D15 did for `decision`.
+**AC3 receipt status — CLOSED 2026-06-30.** Proven on both surfaces
+with **real human submits**:
+
+- **`show_widget` / function level** (build session): real
+  `form_to_widget_html` output rendered via `show_widget`, dissent
+  framing intact, Patrick picked the alternative (a "switch"), the
+  `__elicitation_response__` sentinel posted back, and
+  `collect_form_response` validated it (`resp-20260630-013130`); it also
+  rejects out-of-option picks.
+- **Full MCP-tool path** (next session, after #1178 merged
+  `1cd7707be` and the server rebooted on main): the live
+  `mcp__attune-ai__elicitation_render_widget` schema enum now carries
+  `"pushback"` (9 types) + `user_position`/`recommended`/`rationale`/
+  `option_notes`. Rendered a real pushback form through that tool →
+  `show_widget` → Patrick submitted → `elicitation_collect_response`
+  validated it: `success: true`, `resp-20260630-015652`. This submit
+  was an **overrule** (Patrick kept his own approach — "Build construct
+  #4"), the complementary arm to the build session's "switch", so both
+  pushback outcomes are now exercised end-to-end. The D10/D11 / D15
+  "registered ≠ working until the server reboots" pattern held exactly.
 
 ## Open
 
