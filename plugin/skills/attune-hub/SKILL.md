@@ -115,6 +115,7 @@ rule (a single turn can't bundle multiple ambiguous decisions). See
 | personal-memory | remember this for me, capture this decision, save to personal memory, my saved topics, forget topic |
 | image-analysis | analyze this image, look at this screenshot, what's in this diagram, read this mockup |
 | elicit | scope this, discovery form, ask me everything at once, multi-select question |
+| author-feature | author a feature page, single-source doc, new feature master, draft docs without an api |
 
 ## MCP Server Not Running
 

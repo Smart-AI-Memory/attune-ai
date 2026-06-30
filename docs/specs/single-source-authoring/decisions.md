@@ -44,11 +44,37 @@ the skill, reproduces the #1188 outcome (a green, code-accurate page) with
 no out-of-band knowledge. That dogfood (T3) is the receipt — consistent
 with "registered ≠ working; dogfood the live loop."
 
+## D6 — Name: `author-feature`; T1 shipped against post-consolidation paths
+
+**Decided (2026-06-30).** The skill is named **`author-feature`** —
+verb-noun, matching the existing family (`bug-predict`, `fix-test`,
+`refactor-plan`, `security-audit`), and most distinct from the
+LLM-based `doc-gen` skill. T1 (author the skill + `.agents/` mirror)
+landed: `plugin/skills/author-feature/SKILL.md` encodes the #1188/#1189
+playbook with verification as the spine (D2), referencing the
+**post-consolidation in-repo** projector (`attune.authoring.projector`
+via `scripts/project_features.py`), the bundle sync
+(`scripts/sync_help_bundle.py`), and the audits
+(`audit_doc_imports.py`, `audit_docs_wiring.py`). Because the projector
+already moved in-repo (#1193), D4's "repoint on consolidation" is
+already satisfied for the projector path — the skill names
+`attune.authoring`, not `attune_author`. The scaffolder
+(`new_feature.py`) is **not** built yet, so the skill names the manual
+project→sync→audit steps (D4 baseline); repoint to the scaffolder when
+it lands. Guards: `plugin/skills` count 23→24; attune-hub Skills
+Reference row added; 131 plugin tests green. The skill's own ENV/verify
+gotchas were dogfood-confirmed live (bare `python -c` fails on the
+editable mapping; `PYTHONPATH=src` + the audit resolve correctly).
+
+**Still open:** T3 dogfood (R5/D5 self-demonstration — a fresh session
+authors a throwaway feature page green on the first real attempt) and
+T4 (retire #1189's playbook lesson into the skill) remain.
+
 ## Open
 
-- **Skill name** — `single-source-authoring` vs. `author-feature` vs.
-  folding into the existing `elicit`/docs skill family. Naming call for
-  the design review.
+- **Boundary with the scaffolder** — the skill *calls* the scaffolder
+  (once built); confirm at build time there's no overlap where both try
+  to own the `features.yaml` entry or the build chain.
 - **Boundary with the scaffolder** — the skill *calls* the scaffolder;
   confirm at build time there's no overlap where both try to own the
   features.yaml entry or the build chain. (They shouldn't: scaffolder owns
