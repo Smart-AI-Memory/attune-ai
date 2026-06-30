@@ -12344,3 +12344,38 @@ files.
   the worktree and commit there; if you disturbed the main checkout,
   restore it to its found state (`git checkout <found-sha>` +
   `git stash pop`) so a parallel session is undisturbed.
+
+- **Adding a NEW single-source feature page is a DETERMINISTIC, API-FREE
+  procedure — don't reach for `attune-author generate` (LLM/credits); use
+  the projector.** The full playbook (worked: PR #1188, elicitation-forms
+  page, 2026-06-30): (1) hand-author `content/features/<F>.md` —
+  frontmatter `feature`/`summary`/`tags`/`source_globs`/`nav`; copy a
+  canonical projected page like `content/features/security-audit.md` for
+  structure, and declare nav `how-to`/`architecture`/`reference` but NOT
+  `tutorial` (the projector drops tutorial — a guided tutorial resists
+  pure section projection). (2) Add a `.help/features.yaml` entry under
+  `features:` (`description`, `tags`, `status: manual`, and NO `files:` —
+  `manual` means projector-owned, so staleness/maintenance never
+  overwrites it with LLM output). (3) Project with `python
+  scripts/project_features.py <F>` — explicitly "no LLM, no AST", writes
+  10 `.help` kinds + 4 `docs/` pages. (4) `python
+  scripts/sync_help_bundle.py` to copy the templates into the SERVED
+  bundle `plugin/help/generated/` — REQUIRED, else
+  `tests/unit/help/test_help_bundle_sync.py` fails "N bundle file(s) out
+  of sync" (the served bundle is what reaches pip users; `.help/templates`
+  is only the source). (5) Verify: `scripts/audit_doc_imports.py`,
+  `scripts/audit_docs_wiring.py`, `pytest tests/unit/help
+  tests/unit/elicitation`. **ENV gotcha:** the projector imports
+  `attune_author`, which the WORKTREE venv LACKS (synced with only
+  dev/developer extras) — run it with the MAIN venv python
+  (`/Users/<you>/attune-ai/.venv/bin/python`), which has it. **Verify
+  gotcha:** a bare `python -c 'from attune.X import …'` from the main venv
+  can falsely `ModuleNotFoundError` (stale editable MAPPING → main's
+  possibly-old src) WHILE the authoritative `scripts/audit_doc_imports.py`
+  (which adds the worktree `src/` to `sys.path`) reports all imports
+  resolve — trust the audit, not the `python -c` (extends the "never infer
+  from a convenient python -c" worktree lesson). The mkdocs `build` job
+  auto-wires the new hub via `docs/hooks/feature_nav.py` — no manual
+  `mkdocs.yml` nav edit needed. Whole flow spends zero API credits and the
+  prose is hand-authored, satisfying a "draft polished docs without an
+  api" request.
