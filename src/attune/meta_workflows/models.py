@@ -42,6 +42,13 @@ class QuestionType(str, Enum):
     # tradeoffs; the answer is one selected option (validated exactly as a
     # single-select). The rich card layout is widget-surface only.
     DECISION = "decision"
+    # v4 (communication grammar member #3): a pushback — the agent
+    # disagrees with the user's stated approach (``user_position``) and
+    # offers a concrete alternative (``recommended``) + a disagreement
+    # ``rationale``. Same enriched-single-select answer path as DECISION;
+    # only the dissent framing (your-approach tag, "I'd suggest instead"
+    # badge, "Why I'd push back" callout) differs. Widget-surface only.
+    PUSHBACK = "pushback"
 
 
 class TierStrategy(str, Enum):
@@ -77,8 +84,12 @@ class FormQuestion:
             rendered beneath the options; None = none
         option_notes: DECISION only — {option: one-line tradeoff} shown
             under each option card; None = none
-        recommended: DECISION only — the option to badge as recommended
-            and order first; must be one of options; None = none
+        recommended: DECISION/PUSHBACK — the option to badge (recommended,
+            or the agent's alternative for PUSHBACK) and order first; must
+            be one of options; None = none
+        user_position: PUSHBACK only — the option that is the user's stated
+            approach (tagged "your approach"); must be one of options;
+            None = none
 
     """
 
@@ -95,6 +106,7 @@ class FormQuestion:
     rationale: str | None = None
     option_notes: dict[str, str] | None = None
     recommended: str | None = None
+    user_position: str | None = None
 
     def to_ask_user_format(self) -> dict[str, Any]:
         """Convert to format compatible with AskUserQuestion tool.
@@ -103,10 +115,11 @@ class FormQuestion:
             Dictionary with question data for AskUserQuestion
 
         """
-        # Decision (v3) falls back to a single-select with the recommended
-        # option ordered first (the richer card layout is widget-only); the
-        # answer is one selected option.
-        if self.type == QuestionType.DECISION:
+        # Decision (v3) and pushback (v4) both fall back to a single-select
+        # with the recommended option (the agent's alternative, for pushback)
+        # ordered first — the richer card layout is widget-only; the answer
+        # is one selected option either way.
+        if self.type in (QuestionType.DECISION, QuestionType.PUSHBACK):
             opts = list(self.options)
             if self.recommended and self.recommended in opts:
                 opts = [self.recommended] + [o for o in opts if o != self.recommended]

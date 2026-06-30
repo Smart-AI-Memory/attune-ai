@@ -114,7 +114,13 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
             problems.append(f"{where} 'options' must be a list of strings")
             options = []
         if (
-            qtype in (QuestionType.SINGLE_SELECT, QuestionType.MULTI_SELECT, QuestionType.DECISION)
+            qtype
+            in (
+                QuestionType.SINGLE_SELECT,
+                QuestionType.MULTI_SELECT,
+                QuestionType.DECISION,
+                QuestionType.PUSHBACK,
+            )
             and not options
         ):
             problems.append(f"{where} type {qtype.value} requires non-empty 'options'")
@@ -162,6 +168,16 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
             if stray:
                 problems.append(f"{where} 'option_notes' keys not in options: {stray}")
 
+        # v4 PUSHBACK extra: user_position — the option that is the user's
+        # stated approach (tagged "your approach"). Parsed generically; only
+        # PUSHBACK renders it. Must be one of options when set.
+        user_position = raw.get("user_position")
+        if user_position is not None and not isinstance(user_position, str):
+            problems.append(f"{where} 'user_position' must be a string")
+            user_position = None
+        elif user_position is not None and options and user_position not in options:
+            problems.append(f"{where} 'user_position' {user_position!r} not in options")
+
         if fid and text and isinstance(fid, str) and isinstance(text, str):
             questions.append(
                 FormQuestion(
@@ -178,6 +194,7 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
                     rationale=rationale,
                     option_notes=option_notes,
                     recommended=recommended,
+                    user_position=user_position,
                 )
             )
 
@@ -221,7 +238,11 @@ def _validate_answer(question: FormQuestion, value: Any) -> str | None:
             return f"{question.id!r} has out-of-option value(s): {bad}"
         return None
 
-    if question.type in (QuestionType.SINGLE_SELECT, QuestionType.DECISION):
+    if question.type in (
+        QuestionType.SINGLE_SELECT,
+        QuestionType.DECISION,
+        QuestionType.PUSHBACK,
+    ):
         if value not in question.options:
             return f"{question.id!r} value {value!r} not in options"
         return None

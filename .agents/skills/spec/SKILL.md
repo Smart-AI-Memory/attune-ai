@@ -165,6 +165,23 @@ When the user chooses "Start a new spec":
    - "I want to edit the plan file"
    - "Start over"
 
+5. **Pushback gate — a `pushback` construct.** If the user's
+   edit/rejection makes the plan *weaker* than what you drafted
+   AND you can render the concrete alternative (the
+   decision-routine "pushback discipline"), do not silently
+   comply — surface the disagreement as a `pushback` construct
+   (the user's approach tagged "your approach", your alternative
+   badged "I'd suggest instead", a "Why I'd push back"
+   rationale) via the `elicit` skill's widget surface
+   (`elicitation_render_widget` → `show_widget`), falling back to
+   its `AskUserQuestion` mapping (alternative first, rationale as
+   the lead-in) when the widget surface is unavailable. The
+   `elicit` skill owns the round-trip and validation — see its
+   "pushback construct" section. The user overrules (keeps their
+   edit) or switches with one pick. Skip this gate when you
+   genuinely agree with the edit, or when you cannot render a
+   concrete alternative — pushback without an artifact is hedging.
+
 ## Stage 3: Approve
 
 Show final summary: task count, scope, risks. Then:

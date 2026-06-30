@@ -62,12 +62,30 @@ validated exactly as a single-select. Extra `FormQuestion` slots:
 tradeoffs + rationale) on the widget surface; falls back to a
 recommendation-first single-select on `AskUserQuestion`.
 
+### pushback (v4)
+
+The agent **disagrees** with the user's stated approach and offers a
+concrete alternative + a disagreement rationale; the user picks one
+(overrule = keep their approach, or switch). A `QuestionType.PUSHBACK`
+is — like `decision` — a presentation-enriched single-select; the
+answer is one option, validated exactly as a single-select. It adds one
+optional slot, `user_position` (the option that is the user's stated
+approach), and reuses `recommended` (= the agent's alternative),
+`rationale`, and `option_notes`. The dissent framing is what
+distinguishes it from `decision`: the `user_position` card is tagged
+"your approach", the `recommended` card is badged "I'd suggest instead"
+(not "Recommended") and ordered first, and the rationale callout is
+headed "Why I'd push back". Falls back to a recommendation-first
+single-select on `AskUserQuestion`. When the pushback construct fires is
+governed by [decision-routine.md](decision-routine.md)'s pushback
+discipline — this is the shape, not the when.
+
 ---
 
-## How to add the next construct (#3)
+## How to add the next construct (#4)
 
-Keep it additive and substrate-reusing. The decision construct (v3) is
-the worked example to copy.
+Keep it additive and substrate-reusing. The decision (v3) and pushback
+(v4) constructs are the worked examples to copy.
 
 1. **Decide the shape.** Does it compose existing question types, or
    need a new `QuestionType`? Prefer composing. A new type is justified

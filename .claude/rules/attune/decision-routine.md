@@ -129,6 +129,15 @@ without a concrete artifact is hedging, creates friction, and
 carries no value. If I can't render the alternative, execute the
 user's plan and learn the boundary later.
 
+The concrete artifact this discipline requires has a first-class
+shape: the **pushback construct** (communication grammar member #3 —
+see [communication-grammar.md](communication-grammar.md)). When the
+surface can render it, present the disagreement AS a `pushback` (the
+user's approach tagged "your approach", my alternative badged "I'd
+suggest instead", a "Why I'd push back" rationale) rather than as
+prose — the user overrules or switches with one pick. `/spec`'s
+Stage 2 review is the worked consumer.
+
 ---
 
 ## Cross-references
