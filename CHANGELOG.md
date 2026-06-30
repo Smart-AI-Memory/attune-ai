@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.3.0] — 2026-06-30
+
+The communication grammar — the agent-to-user construct family on the
+elicitation form surface — grows from one member to four: `decision`
+(V3), `pushback` (V4), and `progress` (V5) join the original `intake`
+form. Each is additive and backward-compatible: a new `QuestionType`,
+optional `FormQuestion` fields, and a widget renderer, reusing the
+existing validation and round-trip untouched. See
+`.claude/rules/attune/communication-grammar.md`.
+
 ### Added
 
 - **Decision construct (communication grammar).** The elicitation form
@@ -17,7 +27,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   one selected option, validated like a single-select — no new
   round-trip. New optional `FormQuestion` fields: `rationale`,
   `option_notes`, `recommended`. Folded into the elicitation-form-surface
-  spec as V3; see `.claude/rules/attune/communication-grammar.md`.
+  spec as V3 (#1176).
+- **Pushback construct (communication grammar).** A `pushback` control
+  (`QuestionType.PUSHBACK`) for when the agent disagrees with the user's
+  stated approach: the user's approach is tagged "your approach", the
+  agent's alternative is badged "I'd suggest instead" and ordered first,
+  under a "Why I'd push back" rationale. Like `decision` it is a
+  presentation-enriched single-select — the answer is one option,
+  validated identically — and adds one optional field, `user_position`.
+  Falls back to a recommendation-first single-select on `AskUserQuestion`.
+  Spec V4 (#1178).
+- **Progress construct (communication grammar).** A `progress` control
+  (`QuestionType.PROGRESS`): the agent reports a set of items by status
+  (`done` / `in_flight` / `blocked`) as a three-bucket status board,
+  surfacing the blocked items as a single-select picker. The first member
+  that is a *report* rather than a fork; when nothing is blocked it
+  degrades to a pure status display. New optional `FormQuestion` field
+  `progress_items`; the MCP tool-schema `type` enum grows 9 → 10. The
+  widget render is dogfooded and unit-tested (85 tests); the full-MCP
+  served round-trip (AC3 receipt) is pending a server reboot to expose
+  the new enum. Spec V5 (#1181).
 
 ### Changed
 
@@ -27,6 +56,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `AskUserQuestion` menu — high-severity gates recommend "Fix and
   retry", medium/low recommend "Approve and continue". The first
   real consumer of the V3 construct.
+- **`/spec` Stage 2 review uses the `pushback` construct.** When the
+  agent disagrees with a user-stated approach during plan review, the
+  disagreement renders as a `pushback` (overrule = keep their approach,
+  or switch) instead of prose. The first real consumer of V4.
+- **`/spec` execute gate uses the `progress` construct.** The execute
+  loop's done / in-flight / blocked task shape renders as a `progress`
+  board, the blocked-item picker mapping onto "which blocked task to
+  fix/retry". The first real consumer of V5.
 
 ## [9.2.0] — 2026-06-28
 
