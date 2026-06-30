@@ -70,6 +70,33 @@ developer workflow hub; `attune-gui` is the docs hub.
 
 ---
 
+## New in 9.3.0 — Dynamic communication
+
+**The agent adapts how it talks to you.** A deliberate effort to
+*improve human/AI communication*: instead of a fixed wall of prose,
+Attune now *dynamically* shapes each exchange to fit the moment —
+rendering an interactive form in response to your prompt whenever a
+structured turn communicates better than text. A multi-part question
+becomes one form you answer with a click; a recommendation arrives as
+weighable cards; a disagreement is shown side-by-side so you can
+overrule it in one tap. The back-and-forth gets faster, clearer, and
+less ambiguous. The agent picks the right *construct* for the moment:
+
+- **intake** — gather several independent decisions in one form
+- **decision** — a recommended option with rationale + per-option
+  tradeoffs (`/spec` approval gate)
+- **pushback** — agent dissent shown as "your approach" vs "I'd suggest
+  instead"; overrule or switch in one pick (`/spec` plan review)
+- **progress** — a done / in-progress / blocked board whose blocked
+  items are a fix-next picker (`/spec` execute)
+
+All constructs share one declarative form model and validator, render
+richly on widget-capable surfaces (e.g. claude.ai / Cowork) and degrade
+gracefully to a recommendation-first menu elsewhere. The terse reply
+vocab (`y` / `go` / `1`) answers any of them.
+
+---
+
 ## Ecosystem
 
 | Package | Role | Install |
@@ -128,33 +155,6 @@ Workflows ask questions before executing, not after. The `spec`
 workflow brainstorms, then plans, then executes. `planning` clarifies
 scope before writing a line of code. This eliminates the most common
 failure mode: confidently solving the wrong problem.
-
-**Dynamic communication — the agent adapts how it talks to you.**
-A deliberate effort to *improve human/AI communication*: instead of a
-fixed wall of prose, Attune now *dynamically* shapes each exchange to
-fit the moment — rendering an interactive form in response to your
-prompt whenever a structured turn communicates better than text. A
-multi-part question becomes one form you answer with a click; a
-recommendation arrives as weighable cards; a disagreement is shown
-side-by-side so you can overrule it in one tap. The back-and-forth gets
-faster, clearer, and less ambiguous. The agent picks the right
-*construct* for the moment:
-
-- **intake** — gathers several independent decisions as a single
-  (multi-select-capable) form, instead of N back-and-forth questions.
-- **decision** — offers a *recommended* option with a rationale and
-  per-option tradeoffs, rendered as cards (consumed by the `/spec`
-  approval gate).
-- **pushback** — when the agent disagrees with your stated approach, it
-  shows "your approach" beside "I'd suggest instead" with a "why", and
-  you overrule or switch with one pick (`/spec` plan review).
-- **progress** — a done / in-progress / blocked status board whose
-  blocked items are a picker for what to fix next (`/spec` execute).
-
-All constructs share one declarative form model and validator, render
-richly on widget-capable surfaces (e.g. claude.ai / Cowork) and degrade
-gracefully to a recommendation-first menu elsewhere. The terse reply
-vocab (`y` / `go` / `1`) answers any of them.
 
 ### 4. RAG-grounded generation
 

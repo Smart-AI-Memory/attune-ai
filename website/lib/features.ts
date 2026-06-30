@@ -339,6 +339,26 @@ export interface Pillar {
 
 export const PILLARS: Pillar[] = [
   {
+    id: "communication",
+    tag: "Dynamic communication",
+    title: "The agent adapts how it talks to you",
+    description:
+      "A deliberate effort to improve human/AI communication: instead " +
+      "of a fixed wall of prose, Attune dynamically shapes each " +
+      "exchange to fit the moment — rendering an interactive form " +
+      "whenever a structured turn communicates better than text. A " +
+      "multi-part question becomes one click; a recommendation arrives " +
+      "as weighable cards; a disagreement is shown side-by-side so you " +
+      "overrule it in one tap.",
+    points: [
+      "Intake, decision, pushback, and progress constructs",
+      "Rich on widget surfaces, graceful menu fallback elsewhere",
+      "Answer with one click — or the terse y / go / 1 vocab",
+    ],
+    icon: "💬",
+    color: "primary",
+  },
+  {
     id: "workflows",
     tag: "AI workflows",
     title: "Specialist teams, not one prompt",
@@ -353,24 +373,6 @@ export const PILLARS: Pillar[] = [
     ],
     icon: "⚙️",
     color: "primary",
-  },
-  {
-    id: "communication",
-    tag: "Dynamic communication",
-    title: "The agent adapts how it talks to you",
-    description:
-      "When a structured turn communicates better than prose, Attune " +
-      "renders the exchange as an interactive form — a multi-part " +
-      "question becomes one click, a recommendation arrives as " +
-      "weighable cards, a disagreement is shown side-by-side. A " +
-      "deliberate effort to improve human/AI communication.",
-    points: [
-      "Intake, decision, pushback, and progress constructs",
-      "Rich on widget surfaces, graceful menu fallback elsewhere",
-      "Answer with one click — or the terse y / go / 1 vocab",
-    ],
-    icon: "💬",
-    color: "accent",
   },
   {
     id: "memory",
