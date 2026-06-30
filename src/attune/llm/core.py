@@ -231,7 +231,7 @@ class EmpathyLLM(SecurityMixin, InteractionMixin):
         if provider == "anthropic":
             return AnthropicProvider(
                 api_key=api_key,
-                model=model or "claude-sonnet-4-6",
+                model=model or "claude-sonnet-5",
                 **kwargs,
             )
         raise ValueError(f"Unknown provider: {provider}")

@@ -125,7 +125,7 @@ class ModelInfo:
 MODEL_REGISTRY: dict[str, dict[str, ModelInfo]] = {
     # -------------------------------------------------------------------------
     # Anthropic Claude Models
-    # Intelligent fallback: Sonnet 4.6 → Opus 4.8 (~1.67x input cost: $3 → $5/M)
+    # Intelligent fallback: Sonnet 5 → Opus 4.8 (~1.67x input cost: $3 → $5/M)
     # -------------------------------------------------------------------------
     "anthropic": {
         "cheap": ModelInfo(
@@ -139,7 +139,7 @@ MODEL_REGISTRY: dict[str, dict[str, ModelInfo]] = {
             supports_tools=True,
         ),
         "capable": ModelInfo(
-            id="claude-sonnet-4-6",
+            id="claude-sonnet-5",
             provider="anthropic",
             tier="capable",
             input_cost_per_million=3.00,
@@ -177,7 +177,7 @@ class ModelRegistry:
         >>> registry = ModelRegistry()
         >>> model = registry.get_model("anthropic", "capable")
         >>> print(model.id)
-        claude-sonnet-4-6
+        claude-sonnet-5
 
         >>> models = registry.get_models_by_tier("cheap")
         >>> print(len(models))
@@ -239,7 +239,7 @@ class ModelRegistry:
             >>> registry = ModelRegistry()
             >>> model = registry.get_model("anthropic", "capable")
             >>> print(model.id)
-            claude-sonnet-4-6
+            claude-sonnet-5
 
         """
         if provider.lower() != "anthropic":
@@ -360,7 +360,7 @@ class ModelRegistry:
 
         Example:
             >>> registry = ModelRegistry()
-            >>> pricing = registry.get_pricing_for_model("claude-sonnet-4-6")
+            >>> pricing = registry.get_pricing_for_model("claude-sonnet-5")
             >>> print(pricing)
             {'input': 3.0, 'output': 15.0}
 
@@ -463,6 +463,9 @@ def get_tiers() -> list[str]:
 
 TIER_PRICING: dict[str, dict[str, float]] = {
     "cheap": {"input": 1.00, "output": 5.00},  # Haiku 4.5 pricing
-    "capable": {"input": 3.00, "output": 15.00},  # Sonnet 4.6 pricing
+    "capable": {
+        "input": 3.00,
+        "output": 15.00,
+    },  # Sonnet 5 pricing (std; intro $2/$10 until 2026-08-31)
     "premium": {"input": 5.00, "output": 25.00},  # Opus 4.8 pricing
 }

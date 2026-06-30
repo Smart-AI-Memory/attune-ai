@@ -23,13 +23,13 @@ class TestLLMResponse:
         """Test creating LLMResponse with required fields."""
         response = LLMResponse(
             content="Test response",
-            model_id="claude-sonnet-4-6",
+            model_id="claude-sonnet-5",
             provider="anthropic",
             tier="capable",
         )
 
         assert response.content == "Test response"
-        assert response.model_id == "claude-sonnet-4-6"
+        assert response.model_id == "claude-sonnet-5"
         assert response.provider == "anthropic"
         assert response.tier == "capable"
 

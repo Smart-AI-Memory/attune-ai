@@ -356,7 +356,7 @@ Return ONLY the Python test code, starting with imports. No markdown, no explana
             # latest Sonnet checkpoint. The old claude-3-5-sonnet-2024xxxx
             # dated snapshots were retired by Anthropic 2025-10-28.
             models_to_try = [
-                "claude-sonnet-4-6",  # Sonnet 4.6 (stable alias)
+                "claude-sonnet-5",  # Sonnet 5 (stable alias)
             ]
 
             response = None

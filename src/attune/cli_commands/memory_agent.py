@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # CAPABLE-tier stable alias — tracks the latest Sonnet minor, never retires
 # (avoids pinning a dated snapshot that EOLs).
-_DEFAULT_MODEL = "claude-sonnet-4-6"
+_DEFAULT_MODEL = "claude-sonnet-5"
 # Required beta header for the memory_20250818 tool + context management.
 _MEMORY_BETA = "context-management-2025-06-27"
 _DEFAULT_MAX_TOKENS = 4096

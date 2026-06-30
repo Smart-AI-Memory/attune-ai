@@ -250,7 +250,7 @@ class TestGetLLM:
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         adapter = LangChainAdapter(provider="anthropic", api_key=None)
         with patch("langchain_anthropic.ChatAnthropic"), pytest.raises(ValueError):
-            adapter._get_llm(_cfg(model_override="claude-sonnet-4-6"))
+            adapter._get_llm(_cfg(model_override="claude-sonnet-5"))
 
     def test_openai_branch(self, monkeypatch):
         monkeypatch.setattr(mod, "_langchain_available", True)

@@ -43,7 +43,7 @@ class TestLangChainAdapterGetLLMNormalization:
         """Sonnet still accepts temperature → passed through."""
         with patch("langchain_anthropic.ChatAnthropic") as mock_chat:
             adapter = LangChainAdapter(provider="anthropic", api_key="sk-test")
-            adapter._get_llm(_config("claude-sonnet-4-6"))
+            adapter._get_llm(_config("claude-sonnet-5"))
         assert "temperature" in mock_chat.call_args.kwargs
 
     def test_anthropic_keeps_temperature_for_opus_4_6(self):

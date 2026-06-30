@@ -4,11 +4,11 @@ Anthropic retires dated model snapshots (e.g. ``claude-3-5-sonnet-20241022``)
 on published dates; once retired they 404 at invocation time. The
 ``models_to_try`` fallback lists in the orchestration test-generation tools
 once carried two retired 3.5 Sonnet snapshots as Capable-tier fallbacks
-(latent 404 behind the primary ``claude-sonnet-4-6`` alias). This test fails
+(latent 404 behind the primary ``claude-sonnet-5`` alias). This test fails
 if any retired dated snapshot reappears as an invocation target in those
 files.
 
-Stable aliases (e.g. ``claude-sonnet-4-6``) never retire and are the correct
+Stable aliases (e.g. ``claude-sonnet-5``) never retire and are the correct
 form for in-code invocation targets.
 """
 
@@ -49,5 +49,5 @@ def test_no_retired_snapshot_in_invocation_targets(rel_path: str) -> None:
     found = sorted(snap for snap in RETIRED_DATED_SNAPSHOTS if snap in text)
     assert not found, (
         f"{rel_path} references retired model snapshot(s) {found}; "
-        f"use a stable alias (e.g. 'claude-sonnet-4-6') instead"
+        f"use a stable alias (e.g. 'claude-sonnet-5') instead"
     )

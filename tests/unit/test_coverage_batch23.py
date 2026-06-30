@@ -42,8 +42,8 @@ class TestCostTrackerLogRequest:
         from attune.cost_tracker import CostTracker
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=100)
-        record = tracker.log_request("claude-sonnet-4-6", 1000, 500, "summarize")
-        assert record["model"] == "claude-sonnet-4-6"
+        record = tracker.log_request("claude-sonnet-5", 1000, 500, "summarize")
+        assert record["model"] == "claude-sonnet-5"
         assert record["input_tokens"] == 1000
         assert record["output_tokens"] == 500
         assert record["task_type"] == "summarize"
@@ -56,7 +56,7 @@ class TestCostTrackerLogRequest:
         from attune.cost_tracker import CostTracker
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=100)
-        tracker.log_request("claude-sonnet-4-6", 100, 50, "test")
+        tracker.log_request("claude-sonnet-5", 100, 50, "test")
         assert len(tracker._buffer) == 1
         tracker.flush()
 
@@ -65,7 +65,7 @@ class TestCostTrackerLogRequest:
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=3)
         for _ in range(3):
-            tracker.log_request("claude-sonnet-4-6", 100, 50, "test")
+            tracker.log_request("claude-sonnet-5", 100, 50, "test")
         # Buffer should be flushed
         assert len(tracker._buffer) == 0
 
@@ -89,7 +89,7 @@ class TestCostTrackerLogRequest:
         from attune.cost_tracker import CostTracker
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=100)
-        record = tracker.log_request("claude-sonnet-4-6", 100, 50, tier="cheap")
+        record = tracker.log_request("claude-sonnet-5", 100, 50, tier="cheap")
         assert record["tier"] == "cheap"
         tracker.flush()
 
@@ -99,7 +99,7 @@ class TestCostTrackerCalculateCost:
         from attune.cost_tracker import CostTracker
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=100)
-        cost = tracker._calculate_cost("claude-sonnet-4-6", 1_000_000, 0)
+        cost = tracker._calculate_cost("claude-sonnet-5", 1_000_000, 0)
         assert cost == pytest.approx(3.0)
         tracker.flush()
 
@@ -134,7 +134,7 @@ class TestCostTrackerSummary:
         from attune.cost_tracker import CostTracker
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=100)
-        tracker.log_request("claude-sonnet-4-6", 1000, 500, "summarize")
+        tracker.log_request("claude-sonnet-5", 1000, 500, "summarize")
         summary = tracker.get_summary(days=7)
         assert summary["requests"] == 1
         tracker.flush()
@@ -143,7 +143,7 @@ class TestCostTrackerSummary:
         from attune.cost_tracker import CostTracker
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=1)
-        tracker.log_request("claude-sonnet-4-6", 1000, 500, "summarize")
+        tracker.log_request("claude-sonnet-5", 1000, 500, "summarize")
         # Auto-flushed at batch_size=1
         tracker2 = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=100)
         summary = tracker2.get_summary(days=7)
@@ -163,7 +163,7 @@ class TestCostTrackerSummary:
         from attune.cost_tracker import CostTracker
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=100)
-        tracker.log_request("claude-sonnet-4-6", 1000, 500, "summarize")
+        tracker.log_request("claude-sonnet-5", 1000, 500, "summarize")
         summary = tracker.get_summary(days=7, include_breakdown=False)
         assert "requests" in summary
         tracker.flush()
@@ -202,7 +202,7 @@ class TestCostTrackerGetToday:
         from attune.cost_tracker import CostTracker
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=100)
-        tracker.log_request("claude-sonnet-4-6", 1000, 500, "test")
+        tracker.log_request("claude-sonnet-5", 1000, 500, "test")
         today = tracker.get_today()
         assert today["requests"] == 1
         tracker.flush()
@@ -221,7 +221,7 @@ class TestCostTrackerFlushAndPersist:
 
         storage = tmp_path / "t"
         tracker = CostTracker(storage_dir=str(storage), batch_size=100)
-        tracker.log_request("claude-sonnet-4-6", 1000, 500)
+        tracker.log_request("claude-sonnet-5", 1000, 500)
         tracker.flush()
         assert (storage / "costs.jsonl").exists()
 
@@ -229,7 +229,7 @@ class TestCostTrackerFlushAndPersist:
         from attune.cost_tracker import CostTracker
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=1)
-        tracker.log_request("claude-sonnet-4-6", 1000, 500)
+        tracker.log_request("claude-sonnet-5", 1000, 500)
         # After auto-flush, access requests property
         _ = tracker.requests
         assert tracker._requests_loaded is True
@@ -239,7 +239,7 @@ class TestModelPricingConstant:
     def test_has_anthropic_models(self):
         from attune.cost_tracker import MODEL_PRICING
 
-        assert "claude-sonnet-4-6" in MODEL_PRICING
+        assert "claude-sonnet-5" in MODEL_PRICING
         assert "claude-haiku-4-5" in MODEL_PRICING
         assert "claude-opus-4-8" in MODEL_PRICING
 
@@ -275,5 +275,5 @@ class TestCostTrackerHelpers:
             "get_tracker",
             lambda storage_dir=".attune": ct.CostTracker(str(tmp_path / "t"), batch_size=100),
         )
-        record = ct.log_request("claude-sonnet-4-6", 100, 50)
+        record = ct.log_request("claude-sonnet-5", 100, 50)
         assert "actual_cost" in record

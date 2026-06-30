@@ -28,9 +28,9 @@ class TestModelConfig:
 
     def test_basic_creation(self):
         """ModelConfig can be created with required fields."""
-        mc = ModelConfig(name="claude-sonnet-4-6", provider="anthropic", tier="capable")
+        mc = ModelConfig(name="claude-sonnet-5", provider="anthropic", tier="capable")
 
-        assert mc.name == "claude-sonnet-4-6"
+        assert mc.name == "claude-sonnet-5"
         assert mc.provider == "anthropic"
         assert mc.tier == "capable"
         assert mc.max_tokens == 4096
@@ -110,7 +110,7 @@ class TestWorkflowConfig:
         """Returns None when no pricing override."""
         config = WorkflowConfig()
 
-        assert config.get_pricing("claude-sonnet-4-6") is None
+        assert config.get_pricing("claude-sonnet-5") is None
 
     def test_get_pricing_with_override(self):
         """Returns custom pricing dict."""

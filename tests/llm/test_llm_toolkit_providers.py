@@ -247,7 +247,7 @@ class TestAnthropicProvider:
         mock_block.type = "text"
         mock_block.text = "ok"
         mock_response.content = [mock_block]
-        mock_response.model = "claude-sonnet-4-6"
+        mock_response.model = "claude-sonnet-5"
         mock_response.usage = MagicMock(input_tokens=10, output_tokens=5)
         mock_response.stop_reason = "end_turn"
 
@@ -279,7 +279,7 @@ class TestAnthropicProvider:
         mock_block.type = "text"
         mock_block.text = "ok"
         mock_response.content = [mock_block]
-        mock_response.model = "claude-sonnet-4-6"
+        mock_response.model = "claude-sonnet-5"
         mock_response.usage = MagicMock(input_tokens=10, output_tokens=5)
         mock_response.stop_reason = "end_turn"
 
@@ -365,7 +365,7 @@ class TestAnthropicBatchProvider:
         requests = [
             {
                 "custom_id": "task_1",
-                "model": "claude-sonnet-4-6",
+                "model": "claude-sonnet-5",
                 "messages": [{"role": "user", "content": "Test"}],
                 "max_tokens": 100,
             },

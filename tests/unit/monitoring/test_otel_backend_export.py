@@ -41,7 +41,7 @@ def _ready() -> OTELBackend:
 def _call_record() -> MagicMock:
     r = MagicMock()
     r.provider = "anthropic"
-    r.model_id = "claude-sonnet-4-6"
+    r.model_id = "claude-sonnet-5"
     r.tier = "CAPABLE"
     r.task_type = "generation"
     r.input_tokens = 100

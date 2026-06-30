@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Default "capable" model is now Claude Sonnet 5
+  (`claude-sonnet-5`).** Replaces `claude-sonnet-4-6` across the model
+  registry, adaptive routing, providers, telemetry, and token
+  estimation. Pricing is unchanged ($3/$15 per MTok standard;
+  introductory $2/$10 through 2026-08-31). 1M context, 128K max output,
+  adaptive thinking; `effort` defaults to `high`.
+
 ## [9.3.0] — 2026-06-30
 
 **Dynamic communication to improve the human/AI exchange.** Attune now

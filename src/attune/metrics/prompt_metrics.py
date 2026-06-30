@@ -31,7 +31,7 @@ class PromptMetrics:
         workflow: Workflow name (e.g., "code_review", "bug_predict")
         agent_role: Role of the agent (e.g., "Code Reviewer")
         task_description: Brief description of task (truncated to 100 chars)
-        model: Model name (e.g., "claude-sonnet-4-6", "claude-haiku-4-5")
+        model: Model name (e.g., "claude-sonnet-5", "claude-haiku-4-5")
         prompt_tokens: Number of input tokens
         completion_tokens: Number of output tokens
         total_tokens: Total tokens (input + output)

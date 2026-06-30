@@ -213,7 +213,7 @@ class TestAnthropicProvider:
         with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
             provider = AnthropicProvider(api_key="test-key")
 
-            assert provider.model == "claude-sonnet-4-6"
+            assert provider.model == "claude-sonnet-5"
 
     def test_anthropic_get_model_info_opus(self):
         """Test get_model_info for Claude Opus"""
@@ -620,7 +620,7 @@ class TestSamplingParamNormalization:
     def test_normalize_keeps_sampling_params_for_sonnet_and_opus_46(self):
         from attune.llm.providers.anthropic import _normalize_api_kwargs_for_model
 
-        for model in ("claude-sonnet-4-6", "claude-haiku-4-5", "claude-opus-4-6"):
+        for model in ("claude-sonnet-5", "claude-haiku-4-5", "claude-opus-4-6"):
             kw = {"model": model, "temperature": 0.7}
             _normalize_api_kwargs_for_model(kw)
             assert kw["temperature"] == 0.7, model
@@ -662,7 +662,7 @@ class TestSamplingParamNormalization:
         mock_client = MagicMock()
         mock_anthropic.AsyncAnthropic.return_value = mock_client
         mock_response = MagicMock()
-        mock_response.model = "claude-sonnet-4-6"
+        mock_response.model = "claude-sonnet-5"
         mock_response.stop_reason = "end_turn"
         mock_response.usage = MagicMock(input_tokens=1, output_tokens=1)
         block = MagicMock()
@@ -672,7 +672,7 @@ class TestSamplingParamNormalization:
         mock_client.messages.create = AsyncMock(return_value=mock_response)
 
         with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
-            provider = AnthropicProvider(api_key="test-key", model="claude-sonnet-4-6")
+            provider = AnthropicProvider(api_key="test-key", model="claude-sonnet-5")
             await provider.generate([{"role": "user", "content": "hi"}], temperature=0.3)
 
         sent = mock_client.messages.create.await_args.kwargs

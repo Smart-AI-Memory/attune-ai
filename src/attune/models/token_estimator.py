@@ -43,7 +43,7 @@ def _get_encoding(model_id: str) -> Any:
     return tiktoken.get_encoding("cl100k_base")
 
 
-def estimate_tokens(text: str, model_id: str = "claude-sonnet-4-6") -> int:
+def estimate_tokens(text: str, model_id: str = "claude-sonnet-5") -> int:
     """Estimate token count for text using accurate token counting.
 
     Uses empathy_llm_toolkit's token counter which leverages tiktoken for fast,

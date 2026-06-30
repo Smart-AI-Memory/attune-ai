@@ -130,7 +130,7 @@ def _bucket(starting_at: str, *rows: dict) -> dict:
     }
 
 
-def _row(amount_cents: str, *, cost_type: str = "tokens", model: str = "claude-sonnet-4-6") -> dict:
+def _row(amount_cents: str, *, cost_type: str = "tokens", model: str = "claude-sonnet-5") -> dict:
     return {"amount": amount_cents, "cost_type": cost_type, "model": model}
 
 
@@ -180,14 +180,14 @@ def test_summarize_groups_by_model_descending():
                 "2026-05-18",
                 _row("1000", model="claude-haiku-4-5"),
                 _row("5000", model="claude-opus-4-7"),
-                _row("3000", model="claude-sonnet-4-6"),
+                _row("3000", model="claude-sonnet-5"),
             )
         ]
     }
     s = anthropic_cost._summarize(payload, today=today)
     assert s.by_model == [
         ("claude-opus-4-7", 50.0),
-        ("claude-sonnet-4-6", 30.0),
+        ("claude-sonnet-5", 30.0),
         ("claude-haiku-4-5", 10.0),
     ]
 
@@ -306,7 +306,7 @@ def test_fetch_summary_happy_path(monkeypatch, tmp_path):
                             {
                                 "amount": "12345",
                                 "cost_type": "tokens",
-                                "model": "claude-sonnet-4-6",
+                                "model": "claude-sonnet-5",
                             }
                         ],
                     }

@@ -18,7 +18,7 @@ class TestModelInfo:
         from attune.models.registry import ModelInfo
 
         self.info = ModelInfo(
-            id="claude-sonnet-4-6",
+            id="claude-sonnet-5",
             provider="anthropic",
             tier="capable",
             input_cost_per_million=3.0,
@@ -29,13 +29,13 @@ class TestModelInfo:
         )
 
     def test_id(self):
-        assert self.info.id == "claude-sonnet-4-6"
+        assert self.info.id == "claude-sonnet-5"
 
     def test_model_id_alias(self):
-        assert self.info.model_id == "claude-sonnet-4-6"
+        assert self.info.model_id == "claude-sonnet-5"
 
     def test_name_alias(self):
-        assert self.info.name == "claude-sonnet-4-6"
+        assert self.info.name == "claude-sonnet-5"
 
     def test_cost_per_1k_input(self):
         assert self.info.cost_per_1k_input == pytest.approx(0.003)
@@ -45,13 +45,13 @@ class TestModelInfo:
 
     def test_to_router_config(self):
         cfg = self.info.to_router_config()
-        assert cfg["model_id"] == "claude-sonnet-4-6"
+        assert cfg["model_id"] == "claude-sonnet-5"
         assert "cost_per_1k_input" in cfg
         assert "max_tokens" in cfg
 
     def test_to_workflow_config(self):
         cfg = self.info.to_workflow_config()
-        assert cfg["name"] == "claude-sonnet-4-6"
+        assert cfg["name"] == "claude-sonnet-5"
         assert cfg["tier"] == "capable"
 
     def test_to_cost_tracker_pricing(self):
@@ -68,7 +68,7 @@ class TestModelRegistry:
     def test_get_model_anthropic_capable(self):
         model = self.registry.get_model("anthropic", "capable")
         assert model is not None
-        assert model.id == "claude-sonnet-4-6"
+        assert model.id == "claude-sonnet-5"
 
     def test_get_model_anthropic_cheap(self):
         model = self.registry.get_model("anthropic", "cheap")
@@ -89,7 +89,7 @@ class TestModelRegistry:
         assert result is None
 
     def test_get_model_by_id_found(self):
-        model = self.registry.get_model_by_id("claude-sonnet-4-6")
+        model = self.registry.get_model_by_id("claude-sonnet-5")
         assert model is not None
         assert model.tier == "capable"
 
@@ -121,7 +121,7 @@ class TestModelRegistry:
         assert "anthropic" in all_models
 
     def test_get_pricing_for_model_found(self):
-        pricing = self.registry.get_pricing_for_model("claude-sonnet-4-6")
+        pricing = self.registry.get_pricing_for_model("claude-sonnet-5")
         assert pricing is not None
         assert pricing["input"] == 3.0
         assert pricing["output"] == 15.0
@@ -325,14 +325,14 @@ class TestEstimateTokens:
     def test_nonempty_text_returns_positive(self):
         from attune.models.token_estimator import estimate_tokens
 
-        count = estimate_tokens("Hello, world!", model_id="claude-sonnet-4-6")
+        count = estimate_tokens("Hello, world!", model_id="claude-sonnet-5")
         assert count > 0
 
     def test_longer_text_more_tokens(self):
         from attune.models.token_estimator import estimate_tokens
 
-        short = estimate_tokens("hi", model_id="claude-sonnet-4-6")
-        long = estimate_tokens("hi " * 100, model_id="claude-sonnet-4-6")
+        short = estimate_tokens("hi", model_id="claude-sonnet-5")
+        long = estimate_tokens("hi " * 100, model_id="claude-sonnet-5")
         assert long > short
 
 
@@ -466,7 +466,7 @@ class TestModelPerformance:
         from attune.models.adaptive_routing import ModelPerformance
 
         perf = ModelPerformance(
-            model_id="claude-sonnet-4-6",
+            model_id="claude-sonnet-5",
             tier="capable",
             success_rate=1.0,
             avg_latency_ms=500,
@@ -519,7 +519,7 @@ class TestAdaptiveModelRouterWithHistory:
                 {
                     "workflow": workflow,
                     "stage": stage,
-                    "model": "claude-sonnet-4-6",
+                    "model": "claude-sonnet-5",
                     "tier": "capable",
                     "success": True,
                     "cost": 0.001,
@@ -531,7 +531,7 @@ class TestAdaptiveModelRouterWithHistory:
                 {
                     "workflow": workflow,
                     "stage": stage,
-                    "model": "claude-sonnet-4-6",
+                    "model": "claude-sonnet-5",
                     "tier": "capable",
                     "success": False,
                     "cost": 0.001,
@@ -546,7 +546,7 @@ class TestAdaptiveModelRouterWithHistory:
         entries = self._make_entries(15, 0)
         router = AdaptiveModelRouter(FakeTelemetry(entries))
         model = router.get_best_model("code-review", "analysis", min_success_rate=0.8)
-        assert model == "claude-sonnet-4-6"
+        assert model == "claude-sonnet-5"
 
     def test_get_best_model_all_filtered_returns_default(self):
         from unittest.mock import patch
@@ -585,7 +585,7 @@ class TestAdaptiveModelRouterWithHistory:
         router = AdaptiveModelRouter(FakeTelemetry(entries))
         stats = router.get_routing_stats("code-review", stage="analysis")
         assert stats["total_calls"] == 10
-        assert "claude-sonnet-4-6" in stats["models_used"]
+        assert "claude-sonnet-5" in stats["models_used"]
         assert stats["avg_success_rate"] == 1.0
 
     def test_get_routing_stats_all_stages(self):

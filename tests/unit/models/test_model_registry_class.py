@@ -88,7 +88,7 @@ class TestModelRegistryInitialization:
 
         # Should have cache entries for all Anthropic models
         assert "claude-haiku-4-5" in registry._model_id_cache
-        assert "claude-sonnet-4-6" in registry._model_id_cache
+        assert "claude-sonnet-5" in registry._model_id_cache
         assert "claude-opus-4-8" in registry._model_id_cache
 
 
@@ -111,10 +111,10 @@ class TestGetModelById:
         """Test retrieving Sonnet model by ID."""
         registry = ModelRegistry()
 
-        model = registry.get_model_by_id("claude-sonnet-4-6")
+        model = registry.get_model_by_id("claude-sonnet-5")
 
         assert model is not None
-        assert model.id == "claude-sonnet-4-6"
+        assert model.id == "claude-sonnet-5"
         assert model.provider == "anthropic"
         assert model.tier == "capable"
 
@@ -142,10 +142,10 @@ class TestGetModelById:
         registry = ModelRegistry()
 
         # First call
-        model1 = registry.get_model_by_id("claude-sonnet-4-6")
+        model1 = registry.get_model_by_id("claude-sonnet-5")
 
         # Second call should return same object from cache
-        model2 = registry.get_model_by_id("claude-sonnet-4-6")
+        model2 = registry.get_model_by_id("claude-sonnet-5")
 
         assert model1 is model2  # Same object reference
 
@@ -384,7 +384,7 @@ class TestGetPricingForModel:
         """Test getting pricing for Sonnet model."""
         registry = ModelRegistry()
 
-        pricing = registry.get_pricing_for_model("claude-sonnet-4-6")
+        pricing = registry.get_pricing_for_model("claude-sonnet-5")
 
         assert pricing is not None
         assert pricing["input"] == 3.00
@@ -433,10 +433,10 @@ class TestRegistryPerformance:
 
         # Multiple calls should all hit cache
         for _ in range(100):
-            model = registry.get_model_by_id("claude-sonnet-4-6")
+            model = registry.get_model_by_id("claude-sonnet-5")
             assert model is not None
 
         # All calls should return same object reference (cache hit)
-        model1 = registry.get_model_by_id("claude-sonnet-4-6")
-        model2 = registry.get_model_by_id("claude-sonnet-4-6")
+        model1 = registry.get_model_by_id("claude-sonnet-5")
+        model2 = registry.get_model_by_id("claude-sonnet-5")
         assert model1 is model2

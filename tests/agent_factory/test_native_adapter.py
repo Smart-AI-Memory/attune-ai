@@ -53,7 +53,7 @@ def mock_llm() -> AsyncMock:
         return_value={
             "response": "LLM says hello",
             "level": 4,
-            "model": "claude-sonnet-4-6",
+            "model": "claude-sonnet-5",
             "patterns_used": ["greeting"],
         }
     )
