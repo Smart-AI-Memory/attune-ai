@@ -623,18 +623,32 @@ enforces `set(blocked labels) == set(options)` in `form_from_dict`, and a
 unit test (`test_blocked_subset_must_equal_options`) guards it — the
 picker can never offer a non-existent blocker or omit a real one.
 
-**AC3 receipt status — widget render PROVEN; full MCP path PENDING reboot.**
-The widget path makes no API call, so the production render was dogfooded
-live this session: real `form_to_widget_html` output (8 tasks: 6 done, 1
-in-flight, 1 blocked) rendered via `show_widget` — three buckets, the
-"suggested next" badge on the blocked picker, the "Summary" callout, all
-intact. `collect_form_response` round-trip + the empty-blocked degrade
-are proven by unit tests (85 pass). The full
-`mcp__attune-ai__elicitation_render_widget` → human submit →
-`elicitation_collect_response` receipt closes next session once #<this PR>
-merges and the live server reboots with the `"progress"` enum (10 types)
-— the exact D15/D16 "registered ≠ working until the server reboots"
-pattern.
+**AC3 receipt status — FULLY CLOSED 2026-06-30 (real rendered-widget
+human click).** Function-level
+render was dogfooded at build time: real `form_to_widget_html` output
+(8 tasks: 6 done, 1 in-flight, 1 blocked) via `show_widget` — three
+buckets, "suggested next" badge, "Summary" callout intact; plus unit
+coverage (85 tests) for `collect_form_response` + the empty-blocked
+degrade. After v9.3.0 published and the MCP server reconnected on 9.3.0,
+the **full MCP-tool path** was exercised — verified first (the D15/D16
+"registered ≠ working until reboot" gate) that the live
+`mcp__attune-ai__elicitation_render_widget` schema enum carries
+`"progress"` (10 types) + `progress_items`. A real progress form
+(4 done / 1 in_flight / 3 blocked) rendered through that tool →
+`success: true` with the correct three-bucket HTML; the postback then
+validated live through `mcp__attune-ai__elicitation_collect_response` →
+`success: true`, `next_action` membership-checked,
+**`resp-20260630-055649`**. Then the **rendered-widget human click** —
+the V3/V4-parity atom — landed same-session: `mcp__visualize__show_widget`
+was available after all (the earlier "not connected" was a deferred-only
+ToolSearch miss — `show_widget` is a primary tool, not a deferred one,
+so ToolSearch returning nothing is not evidence of absence). The same
+progress form rendered live in chat via `show_widget`, Patrick clicked a
+blocked card and Submit, the `__elicitation_response__` sentinel posted
+back through `sendPrompt`, and `elicitation_collect_response` validated it
+— `success: true`, **`resp-20260630-060453`**. All three V5 surfaces
+(function-level, full MCP tool, rendered-widget human click) are now
+receipted, matching V3/V4. AC3 is closed.
 
 ## Open
 
