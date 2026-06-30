@@ -549,7 +549,34 @@ with **real human submits**:
   pushback outcomes are now exercised end-to-end. The D10/D11 / D15
   "registered ≠ working until the server reboots" pattern held exactly.
 
-## D17 — V5: the progress construct (grammar member #4)
+## D17 — forms-by-default with on-demand keyboard mode (product direction)
+
+**Date:** 2026-06-30 · **Status:** direction (not built) · **owner:**
+patrick
+
+Forward-looking call on how the grammar surfaces to different users.
+Reached via a live **pushback** form (`resp-20260630-021445`) — Patrick
+proposed a 30-day unlock, I pushed back on the timer, he **switched**
+to the alternative.
+
+- **Default = forms.** The elicitation forms (intake / decision /
+  pushback) are the default surface — built for beginners and
+  mouse-preferring users.
+- **Keyboard-centric mode = on-demand opt-in from day one.** A more
+  keyboard-driven interaction style is an opt-in setting available
+  immediately. **No 30-day timer and no per-user tenure state** — the
+  rejected arm. The timer added nothing once the mode is available on
+  demand; it only delayed the power users who want it fastest.
+- **Discovery = usage-triggered, not calendar.** Surface a one-time
+  hint about keyboard mode after N form submissions, so people who'd
+  benefit find it without gating access behind tenure.
+
+Not built. "Keyboard mode" is a design direction, not a live feature;
+the terse-reply vocab (`y` / `go` / `1`,
+[feedback_response_shorthand]) is the closest thing shipping today.
+Promote to its own spec when ready to build.
+
+## D18 — V5: the progress construct (grammar member #4)
 
 **Date:** 2026-06-30 · **Status:** built · see
 [v5-requirements.md](v5-requirements.md)
