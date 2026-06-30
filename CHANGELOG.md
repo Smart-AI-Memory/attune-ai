@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Decision construct (communication grammar).** The elicitation form
+  surface gains a `decision` control (`QuestionType.DECISION`): the agent
+  offers a recommended option with a rationale and per-option tradeoffs,
+  rendered as cards on the `show_widget` surface and degrading to a
+  recommendation-first single-select on `AskUserQuestion`. The answer is
+  one selected option, validated like a single-select — no new
+  round-trip. New optional `FormQuestion` fields: `rationale`,
+  `option_notes`, `recommended`. Folded into the elicitation-form-surface
+  spec as V3; see `.claude/rules/attune/communication-grammar.md`.
+
 ## [9.2.0] — 2026-06-28
 
 ### Added

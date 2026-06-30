@@ -440,11 +440,13 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                     "boolean",
                     "number",
                     "date",
+                    "decision",
                 ],
                 "description": (
                     "Control type. v1: text_input/single_select/multi_select/"
                     "boolean. v2.1 rich: textarea, number (min/max), date "
-                    "(YYYY-MM-DD)."
+                    "(YYYY-MM-DD). v3: decision (a recommended single-select "
+                    "with rationale + per-option tradeoffs, widget surface)."
                 ),
             },
             "minimum": {"type": "number", "description": "Lower bound for number"},
@@ -452,6 +454,18 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
             "max_length": {
                 "type": "integer",
                 "description": "Max length for text_input/textarea",
+            },
+            "rationale": {
+                "type": "string",
+                "description": "decision: the 'why this recommendation' callout",
+            },
+            "recommended": {
+                "type": "string",
+                "description": "decision: option to badge recommended (must be in options)",
+            },
+            "option_notes": {
+                "type": "object",
+                "description": "decision: {option: one-line tradeoff} shown under each card",
             },
         },
         "required": ["id", "text", "type"],

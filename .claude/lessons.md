@@ -12264,3 +12264,29 @@ files.
   atomic `write()` per record) so concurrent appends can't interleave. A
   count-mismatch-but-all-unique result in a concurrency test is the tell
   for partial-write corruption, not a counter race.
+
+- **A session that explores a "new" idea may actually be the next phase
+  of an EXISTING, far-more-advanced spec hidden by a STALE WORKTREE —
+  check `origin/main` (not just the worktree) for prior work BEFORE
+  drafting a fresh spec**: 2026-06-29, a session to spec "dynamic
+  conversations to enhance agent↔user communication" nearly became a
+  greenfield `communication-grammar` spec. The worktree was **327
+  commits behind main** (8.5.0 vs 9.2.0), so the user's "we've done a
+  lot of work on this" was invisible: a repo-wide `grep elicit` in the
+  worktree found nothing, while `origin/main` carried a heavily-iterated
+  `docs/specs/elicitation-form-surface/` (D1–D13 + v2-1/v2-2/phase0) plus
+  shipped `attune.elicitation` code, a live `elicit` skill, and a proven
+  widget round-trip. The "new" idea was just the next construct (a
+  decision/opening-shape form) on that existing substrate; the spec
+  folded in as V3 instead of duplicating shipped work. Diagnostic recipe
+  before speccing anything that "feels new" (especially when the user
+  says we've worked on it): (1) `git rev-list --count HEAD..origin/main`
+  — a large number means the worktree cannot see recent work; (2) `git
+  ls-tree -r --name-only origin/main | grep <topic>` to find existing
+  specs/code; (3) `git show origin/main:<path>` to read them WITHOUT a
+  checkout; (4) relocate to a fresh branch off origin/main before
+  building. The user's recollection was RIGHT — the stale worktree just
+  hid the receipts. Pairs with the worktree-vs-main MAPPING lessons
+  (execute-side), "spec-named scope drifts from code reality", and
+  "next-session starter can be stale on arrival" — same family: main is
+  ground truth; the worktree (and memory of "we worked on this") is not.

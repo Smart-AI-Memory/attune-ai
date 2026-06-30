@@ -437,6 +437,33 @@ Native MCP elicitation (`elicitation_ask`) stays a non-option until a
 CC client renders it (D10). The analysis skills stay single-question.
 Surface-only change (skill markdown) — the engine (D11) is unchanged.
 
+## D14 — V3: the decision construct (communication grammar)
+
+**Date:** 2026-06-29 · **Status:** decided (Patrick chose "fold") ·
+see [v3-requirements.md](v3-requirements.md)
+
+A session exploring "dynamic conversations to enhance agent-user
+communication" produced a live decision form (recommendation +
+rationale + ranked alternatives) Patrick flagged as a breakthrough.
+Grounding it against this spec showed it is not greenfield — it is the
+next member of THIS spec's declarative-form family. Folded in as
+**V3**.
+
+Reconciles three premises from the exploratory draft:
+
+- schema home → already `FormSchema` / `attune.elicitation`; extend,
+  do not invent.
+- renderer → the S1 widget (D11), not MCP elicitation (D10).
+- "second construct = scope form" → the scope/intake form already
+  ships and is adopted (D13); the genuinely new construct is the
+  **decision** (opening-shape) itself.
+
+Design: a decision is a presentation-enriched `SINGLE_SELECT` — the
+answer path (round-trip + `collect_form_response`) is unchanged; V3
+adds a model field-set + a widget card renderer + the grammar doc.
+The widget surface makes no Anthropic API call, so V3 is fully
+buildable and dogfoodable without API credits.
+
 ## Open
 
 - **Confirm CC elicitation support** — low priority (elicitation is

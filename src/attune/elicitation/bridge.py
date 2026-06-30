@@ -113,7 +113,10 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
         if not isinstance(options, list) or not all(isinstance(o, str) for o in options):
             problems.append(f"{where} 'options' must be a list of strings")
             options = []
-        if qtype in (QuestionType.SINGLE_SELECT, QuestionType.MULTI_SELECT) and not options:
+        if (
+            qtype in (QuestionType.SINGLE_SELECT, QuestionType.MULTI_SELECT, QuestionType.DECISION)
+            and not options
+        ):
             problems.append(f"{where} type {qtype.value} requires non-empty 'options'")
 
         # v2.1 rich-control constraints (number range, text length).
@@ -134,6 +137,31 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
             problems.append(f"{where} 'max_length' must be a positive integer")
             max_length = None
 
+        # v3 DECISION extras: rationale callout + recommended option +
+        # per-option tradeoffs. Parsed generically; only DECISION renders
+        # them. recommended must be an option; option_notes keys too.
+        rationale = raw.get("rationale")
+        if rationale is not None and not isinstance(rationale, str):
+            problems.append(f"{where} 'rationale' must be a string")
+            rationale = None
+        recommended = raw.get("recommended")
+        if recommended is not None and not isinstance(recommended, str):
+            problems.append(f"{where} 'recommended' must be a string")
+            recommended = None
+        elif recommended is not None and options and recommended not in options:
+            problems.append(f"{where} 'recommended' {recommended!r} not in options")
+        option_notes = raw.get("option_notes")
+        if option_notes is not None and (
+            not isinstance(option_notes, dict)
+            or not all(isinstance(k, str) and isinstance(v, str) for k, v in option_notes.items())
+        ):
+            problems.append(f"{where} 'option_notes' must be a map of strings")
+            option_notes = None
+        elif isinstance(option_notes, dict) and options:
+            stray = [k for k in option_notes if k not in options]
+            if stray:
+                problems.append(f"{where} 'option_notes' keys not in options: {stray}")
+
         if fid and text and isinstance(fid, str) and isinstance(text, str):
             questions.append(
                 FormQuestion(
@@ -147,6 +175,9 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
                     minimum=minimum,
                     maximum=maximum,
                     max_length=max_length,
+                    rationale=rationale,
+                    option_notes=option_notes,
+                    recommended=recommended,
                 )
             )
 
@@ -190,7 +221,7 @@ def _validate_answer(question: FormQuestion, value: Any) -> str | None:
             return f"{question.id!r} has out-of-option value(s): {bad}"
         return None
 
-    if question.type == QuestionType.SINGLE_SELECT:
+    if question.type in (QuestionType.SINGLE_SELECT, QuestionType.DECISION):
         if value not in question.options:
             return f"{question.id!r} value {value!r} not in options"
         return None

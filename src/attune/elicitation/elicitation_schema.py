@@ -30,7 +30,7 @@ def _property_for(question: FormQuestion) -> dict[str, Any]:
     """
     prop: dict[str, Any] = {"title": question.text}
 
-    if question.type == QuestionType.SINGLE_SELECT:
+    if question.type in (QuestionType.SINGLE_SELECT, QuestionType.DECISION):
         prop.update(type="string", enum=list(question.options))
     elif question.type == QuestionType.MULTI_SELECT:
         prop.update(type="array", items={"type": "string", "enum": list(question.options)})
