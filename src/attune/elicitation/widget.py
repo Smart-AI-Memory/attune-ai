@@ -100,6 +100,60 @@ def _control_html(q: FormQuestion) -> str:
             )
         return f'<div class="ae-cards" role="radiogroup">{cards}</div>'
 
+    if q.type == QuestionType.PROGRESS:
+        # A status report: done/in_flight items render as static rows; the
+        # blocked items become the radiogroup picker (recommended first,
+        # "suggested next" badge). With no blocked items the picker is
+        # omitted and the control is a pure status display.
+        items = q.progress_items or []
+        notes = q.option_notes or {}
+        by_status: dict[str, list[dict[str, str]]] = {"done": [], "in_flight": [], "blocked": []}
+        for it in items:
+            st = it.get("status", "")
+            if st in by_status:
+                by_status[st].append(it)
+        rows = ""
+        for status_key, icon, sr in (("done", "✓", "done"), ("in_flight", "◐", "in progress")):
+            for it in by_status[status_key]:
+                detail = (
+                    f'<span class="ae-prog-detail">{_esc(it["detail"])}</span>'
+                    if it.get("detail")
+                    else ""
+                )
+                rows += (
+                    f'<div class="ae-prog-row ae-prog-{status_key}">'
+                    f'<span class="ae-prog-icon" aria-hidden="true">{icon}</span>'
+                    f'<span class="ae-prog-label">{_esc(it.get("label", ""))}</span>{detail}'
+                    f'<span class="sr-only"> ({sr})</span></div>'
+                )
+        ordered = list(q.options)
+        if q.recommended and q.recommended in ordered:
+            ordered = [q.recommended] + [o for o in ordered if o != q.recommended]
+        detail_by_label = {it.get("label"): it.get("detail") for it in by_status["blocked"]}
+        cards = ""
+        for opt in ordered:
+            is_rec = opt == q.recommended
+            badge = '<span class="ae-rec-badge">suggested next</span>' if is_rec else ""
+            note_text = notes.get(opt) or detail_by_label.get(opt)
+            note = f'<span class="ae-card-note">{_esc(note_text)}</span>' if note_text else ""
+            checked = " checked" if q.default == opt else ""
+            cls = "ae-card ae-card-rec" if is_rec else "ae-card"
+            cards += (
+                f'<label class="{cls}">'
+                f'<input type="radio" name="{_esc(q.id)}" data-control '
+                f'value="{_esc(opt)}"{checked}>'
+                f'<span class="ae-prog-icon ae-prog-blocked" aria-hidden="true">✕</span>'
+                f'{badge}<span class="ae-card-title">{_esc(opt)}</span>{note}</label>'
+            )
+        picker = (
+            '<div class="ae-prog-blocked-h">Blocked — pick one to tackle:</div>'
+            f'<div class="ae-cards" role="radiogroup">{cards}</div>'
+            if cards
+            else ""
+        )
+        rows_html = f'<div class="ae-prog-rows">{rows}</div>' if rows else ""
+        return f'<div class="ae-progress">{rows_html}{picker}</div>'
+
     if q.type == QuestionType.MULTI_SELECT:
         boxes = "".join(
             f'<label class="ae-check"><input type="checkbox" data-control '
@@ -166,11 +220,16 @@ def _field_html(q: FormQuestion) -> str:
 
     For a DECISION question a ``rationale`` callout ("why this
     recommendation") is rendered beneath the option cards; for a PUSHBACK
-    the same callout is headed "Why I'd push back".
+    the same callout is headed "Why I'd push back"; for a PROGRESS report
+    it is headed "Summary".
     """
     req = '<span class="ae-req" title="required">*</span>' if q.required else ""
     help_html = f'<div class="ae-help">{_esc(q.help_text)}</div>' if q.help_text else ""
-    rationale_h = "Why I&#x27;d push back" if q.type == QuestionType.PUSHBACK else "Why"
+    rationale_headers = {
+        QuestionType.PUSHBACK: "Why I&#x27;d push back",
+        QuestionType.PROGRESS: "Summary",
+    }
+    rationale_h = rationale_headers.get(q.type, "Why")
     rationale_html = (
         f'<div class="ae-rationale"><span class="ae-rationale-h">{rationale_h}</span>'
         f"{_esc(q.rationale)}</div>"
@@ -258,6 +317,22 @@ def form_to_widget_html(form: FormSchema, message: str = "") -> str:
 #attune-elicit-form .ae-rationale-h {{ display:block; font-weight:600;
   font-size:11px; text-transform:uppercase; letter-spacing:.03em;
   color:var(--text-accent); margin-bottom:.15rem; }}
+#attune-elicit-form .ae-progress {{ display:flex; flex-direction:column; gap:.5rem; }}
+#attune-elicit-form .ae-prog-rows {{ display:flex; flex-direction:column; gap:.25rem; }}
+#attune-elicit-form .ae-prog-row {{ display:flex; align-items:baseline; gap:.5rem;
+  font-size:14px; color:var(--text-secondary); }}
+#attune-elicit-form .ae-prog-icon {{ flex:none; font-weight:700; width:1.1em;
+  text-align:center; }}
+#attune-elicit-form .ae-prog-done .ae-prog-icon {{ color:var(--text-success,#3fb950); }}
+#attune-elicit-form .ae-prog-in_flight .ae-prog-icon {{ color:var(--text-accent); }}
+#attune-elicit-form .ae-prog-blocked {{ color:var(--text-accent); }}
+#attune-elicit-form .ae-prog-detail {{ font-size:13px; color:var(--text-muted); }}
+#attune-elicit-form .ae-prog-label {{ color:var(--text-primary); }}
+#attune-elicit-form .ae-prog-done .ae-prog-label {{ text-decoration:line-through;
+  color:var(--text-muted); }}
+#attune-elicit-form .ae-prog-blocked-h {{ font-size:11px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.03em; color:var(--text-accent); }}
+#attune-elicit-form .ae-card .ae-prog-icon {{ margin-right:.15rem; }}
 #attune-elicit-form .ae-submit {{ margin-top:.5rem; padding:.55rem 1.1rem;
   font-size:15px; font-weight:500; cursor:pointer; color:var(--text-primary);
   background:var(--bg-accent); border:1px solid var(--border-accent);
@@ -288,7 +363,9 @@ def form_to_widget_html(form: FormSchema, message: str = "") -> str:
           vals.push(c.value);
         }});
         answers[fid] = vals;
-      }} else if (ftype === 'decision' || ftype === 'pushback') {{
+      }} else if (ftype === 'decision' || ftype === 'pushback' || ftype === 'progress') {{
+        // progress: the answer is the selected blocked item; when nothing
+        // is blocked there is no radio and no answer is posted (display-only).
         var picked = f.querySelector('[data-control]:checked');
         if (picked) answers[fid] = picked.value;
       }} else {{

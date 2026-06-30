@@ -549,6 +549,66 @@ with **real human submits**:
   pushback outcomes are now exercised end-to-end. The D10/D11 / D15
   "registered ≠ working until the server reboots" pattern held exactly.
 
+## D17 — V5: the progress construct (grammar member #4)
+
+**Date:** 2026-06-30 · **Status:** built · see
+[v5-requirements.md](v5-requirements.md)
+
+Construct #4 is the **progress** construct: agent-to-user, reports a set
+of items by status (`done` / `in_flight` / `blocked`) and surfaces the
+blocked items as a single-select picker. It is the first member that is a
+*report* rather than a fork. Three product choices Patrick made
+(2026-06-30, all via the live decision construct — dogfooding the grammar
+to extend it):
+
+- **Build construct #4**, not stop the grammar. (The "Build construct #4"
+  click in the D16 AC3 dogfood was a throwaway receipt, per the
+  next-session starter; this is the real directive made via a fresh
+  decision form.)
+- **Answer path = report + blocked-item picker**, not a pure display or a
+  bare acknowledge. This keeps the construct answer-validated: the
+  blocked items become the `options` of a `SINGLE_SELECT`, so the answer
+  is one selected blocker, validated by membership — the V3/V4 answer
+  path reused untouched. A pure display would never run the validator
+  (markdown-in-a-form, the weakest substrate fit). A consequence falls
+  out cleanly: when **nothing is blocked**, `options` is empty and the
+  construct degrades to a pure status display — so "pure display" is a
+  sub-state of one construct, not a separate member.
+- **First consumer = the `/spec` execute gate**, not session-start
+  orientation or the workflow sweep. The execute loop already has the
+  done/in_flight/blocked shape natively (completed tasks, the current
+  task, tasks that fail a quality gate), and the blocked-item picker maps
+  exactly onto "which blocked task to fix/retry". Tightest, most
+  dogfoodable wiring — mirrors how V4 wired into the Stage 2 review gate.
+
+A new `QuestionType.PROGRESS` is justified on the rendering axis
+(`communication-grammar.md` step 1): the three-bucket status board with
+static done/in_flight rows + a blocked radiogroup is genuinely new
+rendering, even though the answer-meaning is a single-select. V5 adds one
+optional field (`progress_items`), a widget branch, the enum
+(`tool_schemas` 9→10), and the consumer wiring. No Anthropic API call on
+any surface.
+
+**Build note — invariant caught at design, not after.** Because
+`options` carries only the *answerable* (blocked) subset while
+`progress_items` carries *all* items, the two can disagree. The bridge
+enforces `set(blocked labels) == set(options)` in `form_from_dict`, and a
+unit test (`test_blocked_subset_must_equal_options`) guards it — the
+picker can never offer a non-existent blocker or omit a real one.
+
+**AC3 receipt status — widget render PROVEN; full MCP path PENDING reboot.**
+The widget path makes no API call, so the production render was dogfooded
+live this session: real `form_to_widget_html` output (8 tasks: 6 done, 1
+in-flight, 1 blocked) rendered via `show_widget` — three buckets, the
+"suggested next" badge on the blocked picker, the "Summary" callout, all
+intact. `collect_form_response` round-trip + the empty-blocked degrade
+are proven by unit tests (85 pass). The full
+`mcp__attune-ai__elicitation_render_widget` → human submit →
+`elicitation_collect_response` receipt closes next session once #<this PR>
+merges and the live server reboots with the `"progress"` enum (10 types)
+— the exact D15/D16 "registered ≠ working until the server reboots"
+pattern.
+
 ## Open
 
 - **Confirm CC elicitation support** — low priority (elicitation is

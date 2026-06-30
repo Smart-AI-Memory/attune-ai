@@ -150,6 +150,58 @@ clearly as the user's current approach, fold each `option_notes` tradeoff
 into the matching option's `description`, and use the `rationale` (the
 disagreement) as the question's lead-in.
 
+## The progress construct (v5)
+
+A `progress` is a **report**, not a fork: the agent reports a set of items
+by status — `done` / `in_flight` / `blocked` — and surfaces the **blocked**
+items as a single-select picker ("which blocker do you want to tackle?").
+Use it to report where multi-step work stands while keeping the next move
+one pick away. Same single-select answer path as `decision` (the answer is
+one blocked item); when nothing is blocked it degrades to a pure status
+display with no answer.
+
+Extra field keys (all optional; reuses the decision keys plus one):
+
+- `progress_items` — the reported items as `{label, status, detail?}` dicts,
+  `status` ∈ `done` / `in_flight` / `blocked`. **The blocked subset's labels
+  must equal `options`** (the picker offers exactly the actionable items);
+  `done`/`in_flight` items are reported but not pickable.
+- `recommended` — the blocked item to suggest tackling first; badged
+  "suggested next" and ordered first (must be one of `options`).
+- `rationale` — a one-line report summary, shown under a "Summary" header.
+- `option_notes` — `{blocked-option: one-line detail}` shown under each card
+  (a blocked item's `detail` is used as a fallback note when absent).
+
+```json
+{
+  "title": "Spec execution",
+  "fields": [
+    {"id": "exec", "text": "Where execution stands", "type": "progress",
+     "options": ["T6 consumer wiring"],
+     "recommended": "T6 consumer wiring",
+     "rationale": "1 of 8 tasks blocked on a quality gate.",
+     "progress_items": [
+       {"label": "T1 model", "status": "done"},
+       {"label": "T3 widget", "status": "in_flight", "detail": "rendering cards"},
+       {"label": "T6 consumer wiring", "status": "blocked", "detail": "gate failed: score 42"}
+     ]}
+  ]
+}
+```
+
+When nothing is blocked, set `options: []` and `required: false` — the
+report renders as a status display with no picker.
+
+**Surface:** the three-bucket layout (static done/in_flight rows + the
+blocked radiogroup picker) renders on the **widget** surface
+(`elicitation_render_widget` → `show_widget`); the answer is the one
+selected blocked item, validated like a single-select.
+
+**AskUserQuestion fallback:** a `progress` folds the done/in_flight/blocked
+summary into the question text and maps the **blocked** items to a
+`single_select` with the `recommended` item ordered first. When there are
+no blocked items there is nothing to ask — just narrate the report.
+
 ## Choosing a surface
 
 - **Rich / native — one call:** `elicitation_ask` renders the form as a

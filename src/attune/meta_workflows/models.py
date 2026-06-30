@@ -49,6 +49,13 @@ class QuestionType(str, Enum):
     # only the dissent framing (your-approach tag, "I'd suggest instead"
     # badge, "Why I'd push back" callout) differs. Widget-surface only.
     PUSHBACK = "pushback"
+    # v5 (communication grammar member #4): a progress report — the agent
+    # reports a set of items by status (done / in_flight / blocked) via
+    # ``progress_items`` and offers the blocked items as a single-select
+    # picker ("which blocker to tackle?"). The answer is one selected
+    # blocked option (validated exactly as a single-select); when nothing
+    # is blocked it degrades to a pure status display. Widget-surface only.
+    PROGRESS = "progress"
 
 
 class TierStrategy(str, Enum):
@@ -90,6 +97,10 @@ class FormQuestion:
         user_position: PUSHBACK only — the option that is the user's stated
             approach (tagged "your approach"); must be one of options;
             None = none
+        progress_items: PROGRESS only — the reported items as a list of
+            {label, status, detail?} dicts, status ∈ {done, in_flight,
+            blocked}. The blocked subset must equal options (the picker);
+            done/in_flight items are reported but not answerable. None = none
 
     """
 
@@ -107,6 +118,7 @@ class FormQuestion:
     option_notes: dict[str, str] | None = None
     recommended: str | None = None
     user_position: str | None = None
+    progress_items: list[dict[str, str]] | None = None
 
     def to_ask_user_format(self) -> dict[str, Any]:
         """Convert to format compatible with AskUserQuestion tool.
@@ -115,11 +127,18 @@ class FormQuestion:
             Dictionary with question data for AskUserQuestion
 
         """
-        # Decision (v3) and pushback (v4) both fall back to a single-select
-        # with the recommended option (the agent's alternative, for pushback)
-        # ordered first — the richer card layout is widget-only; the answer
-        # is one selected option either way.
-        if self.type in (QuestionType.DECISION, QuestionType.PUSHBACK):
+        # Decision (v3), pushback (v4), and progress (v5) all fall back to a
+        # single-select with the recommended option ordered first — the
+        # richer card layout is widget-only; the answer is one selected
+        # option either way. For progress the options are the blocked items
+        # (done/in_flight items are reported in the text, not pickable); when
+        # options is empty there is nothing to ask and the caller narrates
+        # the report instead.
+        if self.type in (
+            QuestionType.DECISION,
+            QuestionType.PUSHBACK,
+            QuestionType.PROGRESS,
+        ):
             opts = list(self.options)
             if self.recommended and self.recommended in opts:
                 opts = [self.recommended] + [o for o in opts if o != self.recommended]

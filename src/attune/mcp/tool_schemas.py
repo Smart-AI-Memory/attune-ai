@@ -442,6 +442,7 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                     "date",
                     "decision",
                     "pushback",
+                    "progress",
                 ],
                 "description": (
                     "Control type. v1: text_input/single_select/multi_select/"
@@ -449,7 +450,9 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                     "(YYYY-MM-DD). v3: decision (a recommended single-select "
                     "with rationale + per-option tradeoffs, widget surface). "
                     "v4: pushback (decision framed as dissent — the user's "
-                    "approach vs the agent's alternative, widget surface)."
+                    "approach vs the agent's alternative, widget surface). "
+                    "v5: progress (a done/in_flight/blocked status report whose "
+                    "blocked items are a single-select picker, widget surface)."
                 ),
             },
             "minimum": {"type": "number", "description": "Lower bound for number"},
@@ -474,6 +477,11 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                 "type": "string",
                 "description": "pushback: the option that is the user's stated approach "
                 "(tagged 'your approach'; must be in options)",
+            },
+            "progress_items": {
+                "type": "array",
+                "description": "progress: reported items as {label, status, detail?} dicts, "
+                "status in done/in_flight/blocked; the blocked subset must equal options",
             },
         },
         "required": ["id", "text", "type"],

@@ -313,7 +313,7 @@ class TestGetPrompts:
 
 
 class TestGetElicitationTools:
-    """Field-type enum surfaces: v2 rich tools expose 9, v1 stays at 4."""
+    """Field-type enum surfaces: v2 rich tools expose 10, v1 stays at 4."""
 
     def test_v2_tools_present(self) -> None:
         tools = get_elicitation_tools()
@@ -329,10 +329,10 @@ class TestGetElicitationTools:
             "boolean",
         ]
 
-    def test_v2_tools_expose_all_nine_types(self) -> None:
-        # D10 enum-honesty fix + V3 decision + V4 pushback constructs:
-        # render_widget / ask accept the rich controls plus decision and
-        # pushback.
+    def test_v2_tools_expose_all_ten_types(self) -> None:
+        # D10 enum-honesty fix + V3 decision + V4 pushback + V5 progress
+        # constructs: render_widget / ask accept the rich controls plus
+        # decision, pushback, and progress.
         tools = get_elicitation_tools()
         expected = {
             "text_input",
@@ -344,6 +344,7 @@ class TestGetElicitationTools:
             "date",
             "decision",
             "pushback",
+            "progress",
         }
         assert set(_field_types(tools, "elicitation_render_widget")) == expected
         assert set(_field_types(tools, "elicitation_ask")) == expected
@@ -363,6 +364,7 @@ class TestGetElicitationTools:
             "date",
             "decision",
             "pushback",
+            "progress",
         }
         assert (
             set(_field_types(get_elicitation_tools(), "elicitation_collect_response")) == expected
