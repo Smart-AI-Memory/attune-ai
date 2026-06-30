@@ -37,6 +37,11 @@ class QuestionType(str, Enum):
     NUMBER = "number"
     DATE = "date"
     TEXTAREA = "textarea"
+    # v3 (communication grammar): a presentation-enriched single-select.
+    # The agent offers a recommended option with rationale + per-option
+    # tradeoffs; the answer is one selected option (validated exactly as a
+    # single-select). The rich card layout is widget-surface only.
+    DECISION = "decision"
 
 
 class TierStrategy(str, Enum):
@@ -68,6 +73,12 @@ class FormQuestion:
         minimum: Lower bound for NUMBER answers (inclusive); None = none
         maximum: Upper bound for NUMBER answers (inclusive); None = none
         max_length: Max character length for TEXT_INPUT/TEXTAREA; None = none
+        rationale: DECISION only — the "why this recommendation" callout
+            rendered beneath the options; None = none
+        option_notes: DECISION only — {option: one-line tradeoff} shown
+            under each option card; None = none
+        recommended: DECISION only — the option to badge as recommended
+            and order first; must be one of options; None = none
 
     """
 
@@ -81,6 +92,9 @@ class FormQuestion:
     minimum: float | None = None
     maximum: float | None = None
     max_length: int | None = None
+    rationale: str | None = None
+    option_notes: dict[str, str] | None = None
+    recommended: str | None = None
 
     def to_ask_user_format(self) -> dict[str, Any]:
         """Convert to format compatible with AskUserQuestion tool.
@@ -89,6 +103,22 @@ class FormQuestion:
             Dictionary with question data for AskUserQuestion
 
         """
+        # Decision (v3) falls back to a single-select with the recommended
+        # option ordered first (the richer card layout is widget-only); the
+        # answer is one selected option.
+        if self.type == QuestionType.DECISION:
+            opts = list(self.options)
+            if self.recommended and self.recommended in opts:
+                opts = [self.recommended] + [o for o in opts if o != self.recommended]
+            return {
+                "question_id": self.id,
+                "question": self.text,
+                "type": "single_select",
+                "options": opts,
+                "default": self.default or self.recommended,
+                "help_text": self.help_text,
+            }
+
         # Boolean questions convert to Yes/No select
         if self.type == QuestionType.BOOLEAN:
             return {

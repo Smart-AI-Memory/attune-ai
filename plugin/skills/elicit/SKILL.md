@@ -56,11 +56,55 @@ A form is plain serializable data:
 
 Field `type` is one of `single_select`, `multi_select`, `boolean`,
 `text_input`, `number` (with `minimum`/`maximum`), `date` (ISO
-`YYYY-MM-DD`), or `textarea` (with `max_length`). `id` is the stable key
-the answer comes back under. The last three are **rich controls** — they
-render on the native elicitation (`elicitation_ask`) and widget
+`YYYY-MM-DD`), `textarea` (with `max_length`), or `decision` (see "The
+decision construct" below). `id` is the stable key the answer comes back
+under. The rich controls — `number`/`date`/`textarea` — render on the
+native elicitation (`elicitation_ask`) and widget
 (`elicitation_render_widget`) surfaces below, but degrade to plain text
 on AskUserQuestion.
+
+## The decision construct (v3)
+
+A `decision` is a presentation-enriched single-select: the agent offers
+a **recommended** option with a **rationale** and per-option
+**tradeoffs**, and the user picks one. Use it to *offer a choice*, not to
+*gather intake* — it is the agent-to-user half of the grammar (the
+constructs above gather input). See
+`.claude/rules/attune/communication-grammar.md`.
+
+Extra field keys (all optional):
+
+- `recommended` — the option to badge "Recommended" and order first
+  (must be one of `options`).
+- `rationale` — the "why this recommendation" callout shown beneath the
+  cards.
+- `option_notes` — `{option: one-line tradeoff}` shown under each card.
+
+```json
+{
+  "title": "Focused session plan",
+  "fields": [
+    {"id": "approach", "text": "How should we spend this session?",
+     "type": "decision",
+     "options": ["Verifiable backlog loop", "Behind a verify gate",
+                 "Non-LLM backlog"],
+     "recommended": "Verifiable backlog loop",
+     "rationale": "Building LLM features blind manufactures unverified work.",
+     "option_notes": {"Verifiable backlog loop": "Real progress now",
+                      "Behind a verify gate": "Parked until the key returns",
+                      "Non-LLM backlog": "Fully provable today"}}
+  ]
+}
+```
+
+**Surface:** the rich card layout (badge + tradeoffs + rationale) renders
+on the **widget** surface (`elicitation_render_widget` → `show_widget`);
+the answer is one selected option, validated like a single-select.
+
+**AskUserQuestion fallback:** a `decision` maps to a `single_select` with
+the recommended option ordered first and " (Recommended)" appended to its
+label; fold each `option_notes` tradeoff into that option's
+`description`, and use the `rationale` as the question's lead-in.
 
 ## Choosing a surface
 

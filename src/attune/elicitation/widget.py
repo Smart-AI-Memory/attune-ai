@@ -54,6 +54,26 @@ def _control_html(q: FormQuestion) -> str:
     Returns:
         An HTML fragment for the control.
     """
+    if q.type == QuestionType.DECISION:
+        notes = q.option_notes or {}
+        ordered = list(q.options)
+        if q.recommended and q.recommended in ordered:
+            ordered = [q.recommended] + [o for o in ordered if o != q.recommended]
+        cards = ""
+        for opt in ordered:
+            is_rec = opt == q.recommended
+            badge = '<span class="ae-rec-badge">Recommended</span>' if is_rec else ""
+            note = f'<span class="ae-card-note">{_esc(notes[opt])}</span>' if opt in notes else ""
+            checked = " checked" if q.default == opt else ""
+            cls = "ae-card ae-card-rec" if is_rec else "ae-card"
+            cards += (
+                f'<label class="{cls}">'
+                f'<input type="radio" name="{_esc(q.id)}" data-control '
+                f'value="{_esc(opt)}"{checked}>'
+                f'{badge}<span class="ae-card-title">{_esc(opt)}</span>{note}</label>'
+            )
+        return f'<div class="ae-cards" role="radiogroup">{cards}</div>'
+
     if q.type == QuestionType.MULTI_SELECT:
         boxes = "".join(
             f'<label class="ae-check"><input type="checkbox" data-control '
@@ -116,14 +136,24 @@ def _selected(q: FormQuestion, opt: str) -> str:
 
 
 def _field_html(q: FormQuestion) -> str:
-    """Render one labelled field (label + optional help + control)."""
+    """Render one labelled field (label + optional help + control).
+
+    For a DECISION question a ``rationale`` callout ("why this
+    recommendation") is rendered beneath the option cards.
+    """
     req = '<span class="ae-req" title="required">*</span>' if q.required else ""
     help_html = f'<div class="ae-help">{_esc(q.help_text)}</div>' if q.help_text else ""
+    rationale_html = (
+        f'<div class="ae-rationale"><span class="ae-rationale-h">Why</span>'
+        f"{_esc(q.rationale)}</div>"
+        if q.rationale
+        else ""
+    )
     return (
         f'<div class="ae-field" data-fid="{_esc(q.id)}" '
         f'data-ftype="{_esc(q.type.value)}">'
         f'<label class="ae-label">{_esc(q.text)}{req}</label>'
-        f"{help_html}{_control_html(q)}</div>"
+        f"{help_html}{_control_html(q)}{rationale_html}</div>"
     )
 
 
@@ -181,6 +211,23 @@ def form_to_widget_html(form: FormSchema, message: str = "") -> str:
   gap:.35rem; }}
 #attune-elicit-form .ae-check {{ display:flex; align-items:center; gap:.5rem;
   font-weight:400; }}
+#attune-elicit-form .ae-cards {{ display:flex; flex-direction:column; gap:.5rem; }}
+#attune-elicit-form .ae-card {{ position:relative; display:flex;
+  flex-direction:column; gap:.15rem; padding:.6rem 1.9rem .6rem .75rem;
+  border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; }}
+#attune-elicit-form .ae-card:hover {{ border-color:var(--text-muted); }}
+#attune-elicit-form .ae-card-rec {{ border-color:var(--border-accent); }}
+#attune-elicit-form .ae-card input {{ position:absolute; top:.7rem; right:.6rem; }}
+#attune-elicit-form .ae-card-title {{ font-weight:500; }}
+#attune-elicit-form .ae-card-note {{ font-size:13px; color:var(--text-muted); }}
+#attune-elicit-form .ae-rec-badge {{ font-size:11px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.03em; color:var(--text-accent); }}
+#attune-elicit-form .ae-rationale {{ margin:.6rem 0 0; padding:.4rem 0 .4rem .75rem;
+  font-size:13px; color:var(--text-secondary);
+  border-left:2px solid var(--border-accent); }}
+#attune-elicit-form .ae-rationale-h {{ display:block; font-weight:600;
+  font-size:11px; text-transform:uppercase; letter-spacing:.03em;
+  color:var(--text-accent); margin-bottom:.15rem; }}
 #attune-elicit-form .ae-submit {{ margin-top:.5rem; padding:.55rem 1.1rem;
   font-size:15px; font-weight:500; cursor:pointer; color:var(--text-primary);
   background:var(--bg-accent); border:1px solid var(--border-accent);
@@ -211,6 +258,9 @@ def form_to_widget_html(form: FormSchema, message: str = "") -> str:
           vals.push(c.value);
         }});
         answers[fid] = vals;
+      }} else if (ftype === 'decision') {{
+        var picked = f.querySelector('[data-control]:checked');
+        if (picked) answers[fid] = picked.value;
       }} else {{
         var el = f.querySelector('[data-control]');
         if (!el || el.value === '') return;
