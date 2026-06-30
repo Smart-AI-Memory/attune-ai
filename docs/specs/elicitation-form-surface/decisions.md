@@ -623,18 +623,28 @@ enforces `set(blocked labels) == set(options)` in `form_from_dict`, and a
 unit test (`test_blocked_subset_must_equal_options`) guards it — the
 picker can never offer a non-existent blocker or omit a real one.
 
-**AC3 receipt status — widget render PROVEN; full MCP path PENDING reboot.**
-The widget path makes no API call, so the production render was dogfooded
-live this session: real `form_to_widget_html` output (8 tasks: 6 done, 1
-in-flight, 1 blocked) rendered via `show_widget` — three buckets, the
-"suggested next" badge on the blocked picker, the "Summary" callout, all
-intact. `collect_form_response` round-trip + the empty-blocked degrade
-are proven by unit tests (85 pass). The full
-`mcp__attune-ai__elicitation_render_widget` → human submit →
-`elicitation_collect_response` receipt closes next session once #<this PR>
-merges and the live server reboots with the `"progress"` enum (10 types)
-— the exact D15/D16 "registered ≠ working until the server reboots"
-pattern.
+**AC3 receipt status — MCP render + collect PROVEN LIVE on 9.3.0
+(2026-06-30); human pixel-click still surface-gated.** Function-level
+render was dogfooded at build time: real `form_to_widget_html` output
+(8 tasks: 6 done, 1 in-flight, 1 blocked) via `show_widget` — three
+buckets, "suggested next" badge, "Summary" callout intact; plus unit
+coverage (85 tests) for `collect_form_response` + the empty-blocked
+degrade. After v9.3.0 published and the MCP server reconnected on 9.3.0,
+the **full MCP-tool path** was exercised — verified first (the D15/D16
+"registered ≠ working until reboot" gate) that the live
+`mcp__attune-ai__elicitation_render_widget` schema enum carries
+`"progress"` (10 types) + `progress_items`. A real progress form
+(4 done / 1 in_flight / 3 blocked) rendered through that tool →
+`success: true` with the correct three-bucket HTML; the postback then
+validated live through `mcp__attune-ai__elicitation_collect_response` →
+`success: true`, `next_action` membership-checked,
+**`resp-20260630-055649`**. Honest gap vs. V3/V4: those receipts include
+a real **rendered-widget human click**; this session ran in a terminal
+where `mcp__visualize__show_widget` was NOT connected, so the literal
+pixel-render + mouse-click atom is still owed — it needs a widget-capable
+surface (claude.ai/code or Cowork). Render-logic + validation are proven
+end-to-end live on 9.3.0; only the human click on a rendered widget
+remains.
 
 ## Open
 

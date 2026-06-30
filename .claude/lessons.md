@@ -12318,3 +12318,29 @@ files.
   catches the miss. Pairs with "Registered ≠ working — dogfood the live
   loop" (same discipline, applied to the validation layer of a
   pure-logic reuse).
+
+- **A `cd /path/to/MAIN-checkout && git commit …` inside a single Bash
+  tool call from a WORKTREE session commits to the MAIN checkout, not
+  your worktree — and the harness resets cwd back to the worktree AFTER
+  the command, so it looks like you never left.** Hit 2026-06-30 amending
+  a README commit during the 9.3.0 ship: the edit was made (via the Edit
+  tool) in the worktree, but the commit command was prefixed
+  `cd /Users/patrickroebuck/attune-ai && git commit …`, so git ran in the
+  MAIN checkout (which happened to be detached on a PARALLEL session's
+  HEAD). It printed `no changes added to commit` (the worktree's modified
+  README wasn't there) and the would-be commit landed nowhere; the
+  worktree edit sat uncommitted. Distinct from two existing lessons:
+  "Write to an absolute /Users/.../attune-ai path lands on main" is the
+  WRITE surface; "branch-vs-worktree commit tangle" is wrong-branch-
+  SAME-checkout. THIS one is the `cd` in a COMPOUND Bash command silently
+  retargeting git to a DIFFERENT checkout. Diagnostic: after a surprising
+  `no changes added` or an unexpected HEAD SHA, run `git branch
+  --show-current` and `git log --oneline -1` with NO `cd` (they use the
+  worktree cwd) and compare against what the cd'd command reported —
+  divergence = you committed in the wrong tree. Fix: never `cd` to the
+  main checkout for git WRITE ops in a worktree session; run git from the
+  worktree cwd (the harness keeps you there). Reserve `cd /main` for
+  read-only `gh`/inspection only. Recovery: re-create the branch+edit in
+  the worktree and commit there; if you disturbed the main checkout,
+  restore it to its found state (`git checkout <found-sha>` +
+  `git stash pop`) so a parallel session is undisturbed.
