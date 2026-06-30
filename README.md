@@ -129,6 +129,28 @@ workflow brainstorms, then plans, then executes. `planning` clarifies
 scope before writing a line of code. This eliminates the most common
 failure mode: confidently solving the wrong problem.
 
+**Dynamic forms — a communication grammar.** When a prompt calls for
+it, Attune renders the exchange as an interactive form instead of a
+wall of prose, so a multi-part question becomes one structured turn you
+answer with a click. The agent picks the right *construct* for the
+moment:
+
+- **intake** — gathers several independent decisions as a single
+  (multi-select-capable) form, instead of N back-and-forth questions.
+- **decision** — offers a *recommended* option with a rationale and
+  per-option tradeoffs, rendered as cards (consumed by the `/spec`
+  approval gate).
+- **pushback** — when the agent disagrees with your stated approach, it
+  shows "your approach" beside "I'd suggest instead" with a "why", and
+  you overrule or switch with one pick (`/spec` plan review).
+- **progress** — a done / in-progress / blocked status board whose
+  blocked items are a picker for what to fix next (`/spec` execute).
+
+All constructs share one declarative form model and validator, render
+richly on widget-capable surfaces (e.g. claude.ai / Cowork) and degrade
+gracefully to a recommendation-first menu elsewhere. The terse reply
+vocab (`y` / `go` / `1`) answers any of them.
+
 ### 4. RAG-grounded generation
 
 `attune-rag` (core dep) grounds LLM generation in retrieved corpus
