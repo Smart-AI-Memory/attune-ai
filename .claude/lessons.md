@@ -12422,3 +12422,35 @@ files.
   byte-identical FIRST (re-project a known master, expect an empty
   `git diff` modulo the `generated_at` timestamp) so the omit is provably
   hiding tested-elsewhere code, not untested risk.
+
+- **A module marked `DEPRECATED` (emitting a `DeprecationWarning`) is NOT
+  safe to delete — nor to drop a dependency it pulls — while it is still
+  IMPORTED by live modules; grep the importers FIRST.** 2026-06-30,
+  exploring "we author content now, so the jinja templates are redundant
+  — deprecate jinja2?": `attune.help.generator` is jinja-based AND
+  self-documents as `DEPRECATED` (its `generate_feature_templates` emits a
+  `DeprecationWarning`), which read as "safe to remove ⇒ drop jinja". But
+  it is still imported by `help/engine.py` + `help/maintenance.py` (core
+  Help) and `mcp/server.py` — so jinja is load-bearing for Help, and
+  removing it would break a live import. Patrick caught it ("don't
+  deprecate jinja if Help needs it"). Rule: **"deprecated" is a migration
+  INTENT, not a usage fact** — `git grep` the live importers of the module
+  (and of any dependency it is the sole consumer of) BEFORE deleting it or
+  dropping its dep. The premise "the projector is jinja-free" is true but
+  does NOT generalize to "the project no longer needs jinja" — a different
+  subsystem (Help templates, the test-generator's `unit_test.py.jinja2`)
+  can share the library. Extends the removing-dead-code "is it actually
+  dead?" gate: a `DeprecationWarning` is necessary-not-sufficient evidence
+  of deadness. Pairs with "verify-first applies to infra/config".
+
+- **A zsh unmatched glob aborts the WHOLE compound Bash command before ANY
+  of it runs — a literal `*.py` pattern that might not match, buried in a
+  multi-step `&&`/`;` line, silently kills the steps before it too.**
+  2026-06-30, a survey command ended with `… tests/test_projector*.py`
+  (no such file); zsh's `no matches found` failed the entire line at
+  glob-expansion time, so a `for`-loop and greps EARLIER in the same
+  command never executed — and the empty output read as "found nothing"
+  (a false negative that nearly led to a wrong conclusion). Fixes: use
+  `find` / `git grep` instead of bare shell globs for "maybe-absent"
+  patterns; or `setopt nullglob` / the `(N)` qualifier; or isolate the
+  risky glob in its own command so its failure can't take down the rest.
