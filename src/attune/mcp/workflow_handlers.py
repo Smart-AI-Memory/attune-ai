@@ -127,6 +127,29 @@ def _workflow_response(
     response["cost"] = cost_report.total_cost if cost_report is not None else 0.0
     if include_provider:
         response["provider"] = result.provider
+
+    # Surface the real failure reason. Without this, an errored run is
+    # indistinguishable from a clean empty result (success=false,
+    # findings=[], cost=0) — the swallowed-error trap (see
+    # removing-dead-code.md "fake-success signature"). The canonical
+    # signal is result.error; SDK-native runs leave that None and carry
+    # the message in metadata instead (is_error + raw_result_text), e.g.
+    # an auth failure surfacing as "Invalid API key". Only str messages
+    # are accepted so a mocked result never injects a spurious key.
+    meta = getattr(result, "metadata", None) or {}
+    if result.success is False or meta.get("is_error"):
+        candidates = (
+            getattr(result, "error", None),
+            meta.get("raw_result_text") if meta.get("is_error") else None,
+            meta.get("errors"),
+        )
+        error_msg = next((c for c in candidates if isinstance(c, str) and c.strip()), None)
+        if error_msg is not None:
+            response["error"] = error_msg
+            error_type = getattr(result, "error_type", None)
+            if isinstance(error_type, str):
+                response["error_type"] = error_type
+
     return response
 
 
