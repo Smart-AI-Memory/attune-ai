@@ -340,16 +340,16 @@ export interface Pillar {
 export const PILLARS: Pillar[] = [
   {
     id: "communication",
-    tag: "Dynamic communication",
-    title: "The agent adapts how it talks to you",
+    tag: "Dynamic forms",
+    title: "Forms that improve how you and the AI talk",
     description:
-      "A deliberate effort to improve human/AI communication: instead " +
-      "of a fixed wall of prose, Attune dynamically shapes each " +
-      "exchange to fit the moment — rendering an interactive form " +
-      "whenever a structured turn communicates better than text. A " +
-      "multi-part question becomes one click; a recommendation arrives " +
-      "as weighable cards; a disagreement is shown side-by-side so you " +
-      "overrule it in one tap.",
+      "Attune improves human/AI communication by dynamically using " +
+      "interactive forms: instead of a fixed wall of prose, it renders " +
+      "the right form in response to your prompt whenever a structured " +
+      "turn communicates better than text. A multi-part question " +
+      "becomes one click; a recommendation arrives as weighable cards; " +
+      "a disagreement is shown side-by-side so you overrule it in one " +
+      "tap.",
     points: [
       "Intake, decision, pushback, and progress constructs",
       "Rich on widget surfaces, graceful menu fallback elsewhere",
