@@ -129,11 +129,16 @@ workflow brainstorms, then plans, then executes. `planning` clarifies
 scope before writing a line of code. This eliminates the most common
 failure mode: confidently solving the wrong problem.
 
-**Dynamic forms — a communication grammar.** When a prompt calls for
-it, Attune renders the exchange as an interactive form instead of a
-wall of prose, so a multi-part question becomes one structured turn you
-answer with a click. The agent picks the right *construct* for the
-moment:
+**Dynamic communication — the agent adapts how it talks to you.**
+A deliberate effort to *improve human/AI communication*: instead of a
+fixed wall of prose, Attune now *dynamically* shapes each exchange to
+fit the moment — rendering an interactive form in response to your
+prompt whenever a structured turn communicates better than text. A
+multi-part question becomes one form you answer with a click; a
+recommendation arrives as weighable cards; a disagreement is shown
+side-by-side so you can overrule it in one tap. The back-and-forth gets
+faster, clearer, and less ambiguous. The agent picks the right
+*construct* for the moment:
 
 - **intake** — gathers several independent decisions as a single
   (multi-select-capable) form, instead of N back-and-forth questions.

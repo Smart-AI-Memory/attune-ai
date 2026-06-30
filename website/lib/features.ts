@@ -355,6 +355,24 @@ export const PILLARS: Pillar[] = [
     color: "primary",
   },
   {
+    id: "communication",
+    tag: "Dynamic communication",
+    title: "The agent adapts how it talks to you",
+    description:
+      "When a structured turn communicates better than prose, Attune " +
+      "renders the exchange as an interactive form — a multi-part " +
+      "question becomes one click, a recommendation arrives as " +
+      "weighable cards, a disagreement is shown side-by-side. A " +
+      "deliberate effort to improve human/AI communication.",
+    points: [
+      "Intake, decision, pushback, and progress constructs",
+      "Rich on widget surfaces, graceful menu fallback elsewhere",
+      "Answer with one click — or the terse y / go / 1 vocab",
+    ],
+    icon: "💬",
+    color: "accent",
+  },
+  {
     id: "memory",
     tag: "Project memory",
     title: "Your agent stops starting from zero",
