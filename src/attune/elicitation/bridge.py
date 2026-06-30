@@ -219,6 +219,21 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
         elif qtype is QuestionType.PROGRESS:
             problems.append(f"{where} type progress requires 'progress_items'")
 
+        # Render variant: list_style — render select options as an
+        # ordered/unordered selectable list. Only valid on the select types;
+        # pure presentation, the answer and its validation are unchanged.
+        list_style = raw.get("list_style")
+        if list_style is not None:
+            if list_style not in ("ordered", "unordered"):
+                problems.append(f"{where} 'list_style' must be 'ordered' or 'unordered'")
+                list_style = None
+            elif qtype not in (QuestionType.SINGLE_SELECT, QuestionType.MULTI_SELECT):
+                problems.append(
+                    f"{where} 'list_style' is only valid on single_select / "
+                    f"multi_select (got {qtype.value})"
+                )
+                list_style = None
+
         if fid and text and isinstance(fid, str) and isinstance(text, str):
             questions.append(
                 FormQuestion(
@@ -237,6 +252,7 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
                     recommended=recommended,
                     user_position=user_position,
                     progress_items=progress_items,
+                    list_style=list_style,
                 )
             )
 

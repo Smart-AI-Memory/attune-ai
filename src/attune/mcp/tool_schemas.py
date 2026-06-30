@@ -483,6 +483,13 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                 "description": "progress: reported items as {label, status, detail?} dicts, "
                 "status in done/in_flight/blocked; the blocked subset must equal options",
             },
+            "list_style": {
+                "type": "string",
+                "enum": ["ordered", "unordered"],
+                "description": "single/multi_select only: render options as an ordered "
+                "(numbered) or unordered (bulleted) selectable list instead of the "
+                "default dropdown/checkboxes. Presentation only; answer unchanged.",
+            },
         },
         "required": ["id", "text", "type"],
     }

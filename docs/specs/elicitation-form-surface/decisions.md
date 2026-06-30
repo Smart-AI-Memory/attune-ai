@@ -652,7 +652,7 @@ receipted, matching V3/V4. AC3 is closed.
 
 ## D19 — construct #5 REJECTED: a list element is a render variant of select, not a new member
 
-**Date:** 2026-06-30 · **Status:** decided (build parked) · **owner:**
+**Date:** 2026-06-30 · **Status:** decided + BUILT (same PR) · **owner:**
 patrick · reached via a live **pushback** form, Patrick **switched** to
 the agent's alternative (`resp-20260630-061842`).
 
@@ -686,9 +686,14 @@ grammar) and Patrick agreed.
   "validate new infrastructure against user value before extending"
   discipline.
 
-Build PARKED (Patrick's `record`-and-revisit call at the end of a long
-session). Pick up as a focused PR: the `list_style` field + `widget.py`
-branch + a render test.
+BUILT in this PR (Patrick said "build"): an optional `list_style`
+(`"ordered"` | `"unordered"`) on `FormQuestion`, rendered by `widget.py`
+as an `<ol>`/`<ul>` of radios (single) or checkboxes (multi); the submit
+script reads a checked radio for single-select-as-list. Bridge validates
+it (select-only, value-checked); MCP tool-schema carries it; the `elicit`
+skill documents it; `tests/unit/elicitation/test_list_style.py` covers
+render + round-trip + definition validation (11 tests). Zero new
+`QuestionType`, zero answer-path change.
 
 ## Open
 
