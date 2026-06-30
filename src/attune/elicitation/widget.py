@@ -40,6 +40,38 @@ def _esc(value: object) -> str:
     return escape(str(value), quote=True)
 
 
+def _list_html(q: FormQuestion, *, multi: bool) -> str:
+    """Render select options as an ordered/unordered selectable list.
+
+    A presentation variant of SINGLE_SELECT (radios) / MULTI_SELECT
+    (checkboxes) used when ``q.list_style`` is set: the items render as
+    ``<ol>``/``<ul>`` entries, each pickable by mouse or keyboard. The
+    answer path is unchanged — the inputs still carry ``data-control`` and
+    the submit script reads them the same way it reads any select.
+
+    Args:
+        q: The select question to render.
+        multi: True for MULTI_SELECT (checkboxes), False for SINGLE_SELECT
+            (radios).
+
+    Returns:
+        An HTML fragment for the list control.
+    """
+    tag = "ol" if q.list_style == "ordered" else "ul"
+    input_type = "checkbox" if multi else "radio"
+    name = "" if multi else f' name="{_esc(q.id)}"'
+    role = "" if multi else ' role="radiogroup"'
+    items = ""
+    for opt in q.options:
+        items += (
+            f'<li class="ae-list-item"><label>'
+            f'<input type="{input_type}"{name} data-control '
+            f'value="{_esc(opt)}"{_checked(q, opt)}> '
+            f"<span>{_esc(opt)}</span></label></li>"
+        )
+    return f'<{tag} class="ae-list"{role}>{items}</{tag}>'
+
+
 def _control_html(q: FormQuestion) -> str:
     """Render the input control for one question (no label/wrapper).
 
@@ -155,6 +187,8 @@ def _control_html(q: FormQuestion) -> str:
         return f'<div class="ae-progress">{rows_html}{picker}</div>'
 
     if q.type == QuestionType.MULTI_SELECT:
+        if q.list_style:
+            return _list_html(q, multi=True)
         boxes = "".join(
             f'<label class="ae-check"><input type="checkbox" data-control '
             f'value="{_esc(opt)}"{_checked(q, opt)}> {_esc(opt)}</label>'
@@ -163,6 +197,8 @@ def _control_html(q: FormQuestion) -> str:
         return f'<div class="ae-checks">{boxes}</div>'
 
     if q.type == QuestionType.SINGLE_SELECT:
+        if q.list_style:
+            return _list_html(q, multi=False)
         opts = '<option value="">— choose —</option>' + "".join(
             f'<option value="{_esc(opt)}"{_selected(q, opt)}>{_esc(opt)}</option>'
             for opt in q.options
@@ -298,6 +334,10 @@ def form_to_widget_html(form: FormSchema, message: str = "") -> str:
   gap:.35rem; }}
 #attune-elicit-form .ae-check {{ display:flex; align-items:center; gap:.5rem;
   font-weight:400; }}
+#attune-elicit-form .ae-list {{ margin:0; padding-left:1.6rem;
+  display:flex; flex-direction:column; gap:.3rem; }}
+#attune-elicit-form .ae-list-item label {{ display:inline-flex;
+  align-items:baseline; gap:.45rem; cursor:pointer; font-weight:400; }}
 #attune-elicit-form .ae-cards {{ display:flex; flex-direction:column; gap:.5rem; }}
 #attune-elicit-form .ae-card {{ position:relative; display:flex;
   flex-direction:column; gap:.15rem; padding:.6rem 1.9rem .6rem .75rem;
@@ -370,8 +410,15 @@ def form_to_widget_html(form: FormSchema, message: str = "") -> str:
         if (picked) answers[fid] = picked.value;
       }} else {{
         var el = f.querySelector('[data-control]');
-        if (!el || el.value === '') return;
-        answers[fid] = (ftype === 'number') ? Number(el.value) : el.value;
+        if (!el) return;
+        if (el.type === 'radio') {{
+          // single_select rendered as a list (list_style) — read the
+          // checked radio, not the first control.
+          var picked = f.querySelector('[data-control]:checked');
+          if (picked) answers[fid] = picked.value;
+        }} else if (el.value !== '') {{
+          answers[fid] = (ftype === 'number') ? Number(el.value) : el.value;
+        }}
       }}
     }});
     var payload = {{ {WIDGET_RESPONSE_MARKER!r}: true,

@@ -63,6 +63,14 @@ native elicitation (`elicitation_ask`) and widget
 (`elicitation_render_widget`) surfaces below, but degrade to plain text
 on AskUserQuestion.
 
+**List render (`list_style`).** On a `single_select` or `multi_select`,
+set `"list_style": "ordered"` (numbered) or `"unordered"` (bulleted) to
+render the options as the familiar intro-sentence-plus-list shape —
+each item pickable by mouse or the `1`/`2`/`3` reply vocab — instead of
+the default dropdown/checkboxes. Presentation only: the answer and its
+validation are unchanged (it is **not** a separate construct — see
+decisions.md D19). Only valid on the two select types.
+
 ## The decision construct (v3)
 
 A `decision` is a presentation-enriched single-select: the agent offers

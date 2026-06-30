@@ -101,6 +101,11 @@ class FormQuestion:
             {label, status, detail?} dicts, status ∈ {done, in_flight,
             blocked}. The blocked subset must equal options (the picker);
             done/in_flight items are reported but not answerable. None = none
+        list_style: SINGLE_SELECT/MULTI_SELECT only — render the options as
+            an "ordered" (numbered) or "unordered" (bulleted) selectable
+            list instead of the default dropdown/checkboxes. Pure
+            presentation: the answer and its validation are unchanged.
+            None = the default render.
 
     """
 
@@ -119,6 +124,7 @@ class FormQuestion:
     recommended: str | None = None
     user_position: str | None = None
     progress_items: list[dict[str, str]] | None = None
+    list_style: str | None = None
 
     def to_ask_user_format(self) -> dict[str, Any]:
         """Convert to format compatible with AskUserQuestion tool.

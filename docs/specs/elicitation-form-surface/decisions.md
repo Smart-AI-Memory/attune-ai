@@ -650,6 +650,51 @@ back through `sendPrompt`, and `elicitation_collect_response` validated it
 (function-level, full MCP tool, rendered-widget human click) are now
 receipted, matching V3/V4. AC3 is closed.
 
+## D19 — construct #5 REJECTED: a list element is a render variant of select, not a new member
+
+**Date:** 2026-06-30 · **Status:** decided + BUILT (same PR) · **owner:**
+patrick · reached via a live **pushback** form, Patrick **switched** to
+the agent's alternative (`resp-20260630-061842`).
+
+Patrick proposed a fifth construct: an introductory sentence that
+introduces an ordered/unordered list whose items are easy to select by
+keyboard or mouse — a shape he reaches for constantly. The agent pushed
+back (dogfooding the `pushback` construct to decide whether to extend the
+grammar) and Patrick agreed.
+
+- **Not a 5th `QuestionType`.** An "intro + selectable list" is already a
+  `single_select` / `multi_select`: the intro sentence is the field
+  `text`, the list items are the `options`, each pickable by mouse or the
+  `1`/`2`/`3` terse-reply vocab. The grammar's how-to-extend gate
+  (`communication-grammar.md` step 1) only justifies a new member when
+  **rendering OR answer-meaning genuinely differs** — here the
+  answer-meaning is identical to select and only the *look* differs.
+- **Most "intro + list" responses are expository** (no answer expected) —
+  those stay plain markdown (zero tool calls, render everywhere including
+  a bare terminal); wrapping them in a form would only add a Submit step.
+  So the value is in the *interactive* subset, which select already
+  covers.
+- **Chosen shape — a list-render option on the existing select types.** A
+  field hint (e.g. `list_style: "ordered" | "unordered"`, default = the
+  current card render); `widget.py` renders the options as a
+  numbered/bulleted selectable list instead of cards. **Zero** new
+  `QuestionType`, **zero** changes to the answer path or validators — a
+  render branch + one optional field, ~1/5 the surface of a new member.
+- **Meta-note worth keeping:** the grammar earned its keep here by
+  *shrinking* the work — a live `pushback` talked the owner out of
+  writing unnecessary code, the inverse of feature-creep. Pairs with the
+  "validate new infrastructure against user value before extending"
+  discipline.
+
+BUILT in this PR (Patrick said "build"): an optional `list_style`
+(`"ordered"` | `"unordered"`) on `FormQuestion`, rendered by `widget.py`
+as an `<ol>`/`<ul>` of radios (single) or checkboxes (multi); the submit
+script reads a checked radio for single-select-as-list. Bridge validates
+it (select-only, value-checked); MCP tool-schema carries it; the `elicit`
+skill documents it; `tests/unit/elicitation/test_list_style.py` covers
+render + round-trip + definition validation (11 tests). Zero new
+`QuestionType`, zero answer-path change.
+
 ## Open
 
 - **Confirm CC elicitation support** — low priority (elicitation is
