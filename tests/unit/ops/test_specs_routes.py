@@ -194,12 +194,19 @@ def test_specrecord_post_init_computes_lifecycle():
         SpecPhase(name="tasks", file="tasks.md", exists=False, status=None),
         SpecPhase(name="decisions", file="decisions.md", exists=False, status=None),
     ]
+    # Use a recently-modified timestamp (1 day ago) rather than a fixed
+    # calendar date: derive_lifecycle marks anything older than
+    # STALE_THRESHOLD_DAYS (30) as "stale", so a hardcoded date eventually
+    # ages past the window and flips this test from "active" to "stale".
+    from datetime import datetime, timedelta, timezone
+
+    recent = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
     record = SpecRecord(
         slug="example",
         root="/r",
         path="/r/example",
         phases=phases,
-        last_modified="2026-05-31T00:00:00+00:00",
+        last_modified=recent,
     )
     # requirements approved, no tasks file → falls to Rule 6 (Active)
     assert record.lifecycle == "active"
