@@ -663,6 +663,12 @@ omit = [
     "*/agent_factory/memory_integration.py",  # Optional integration module
     "*/agent_factory/resilient.py",  # Optional resilience module
     "*/*_example.py",  # Example files
+    # attune-author consolidation (docs/specs/attune-author-consolidation/):
+    # absorbed VERBATIM from attune-author, golden-verified byte-identical;
+    # the upstream native test suites are brought in a follow-up slice, at
+    # which point this omit is removed. tests/unit/authoring/ guards the
+    # public surface meanwhile. (justified-other — transitional)
+    "*/attune/authoring/*",  # absorbed verbatim; upstream-tested; native tests follow
     # Utility modules with low criticality
     "*/utils/tokens.py",  # Token utilities
     "*/memory/security/audit_logger.py",  # Optional audit logging

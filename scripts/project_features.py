@@ -52,7 +52,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     try:
-        from attune_author.projector import project_feature, validate_master_file
+        from attune.authoring.projector import project_feature, validate_master_file
     except ImportError:
         print(
             "error: attune-author not installed "
