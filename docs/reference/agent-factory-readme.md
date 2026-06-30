@@ -225,7 +225,7 @@ Override with a specific model:
 ```python
 agent = factory.create_agent(
     name="specific",
-    model_override="claude-sonnet-4-6",
+    model_override="claude-sonnet-5",
 )
 ```
 

@@ -413,7 +413,7 @@ Central registry of available LLM models.
 ```python
 from attune.models import MODEL_REGISTRY
 
-model = MODEL_REGISTRY.get_model("claude-sonnet-4-6")
+model = MODEL_REGISTRY.get_model("claude-sonnet-5")
 models = MODEL_REGISTRY.list_models(tier="capable")
 ```
 
@@ -812,7 +812,7 @@ from attune.telemetry import UsageTracker
 
 tracker = UsageTracker()
 tracker.log_llm_call(
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     input_tokens=1500,
     output_tokens=800,
     cost=0.012,

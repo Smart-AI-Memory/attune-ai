@@ -232,7 +232,7 @@ importable) maps:
 | Tier      | Fallback model (Anthropic) |
 |-----------|----------------------------|
 | `cheap`   | `claude-haiku-4-5-20251001` |
-| `capable` | `claude-sonnet-4-6`         |
+| `capable` | `claude-sonnet-5`         |
 | `premium` | `claude-opus-4-8`           |
 
 These IDs are fallback constants — the live mapping is whatever
