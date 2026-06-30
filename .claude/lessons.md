@@ -12454,3 +12454,51 @@ files.
   `find` / `git grep` instead of bare shell globs for "maybe-absent"
   patterns; or `setopt nullglob` / the `(N)` qualifier; or isolate the
   risky glob in its own command so its failure can't take down the rest.
+
+- **Two auth layers: a valid `ANTHROPIC_API_KEY` fixes DIRECT-provider
+  workflows but NOT claude-agent-sdk (SDK-native) ones — and
+  `_workflow_response` USED to swallow the real error so the difference
+  was invisible**: surfaced 2026-06-29 in a QA/dogfood session. Every
+  SDK-native MCP workflow (`security_audit`, `bug_predict`,
+  `discovery_sweep`, …) returned `{success:false, findings:[], cost:0}`
+  with NO error field. `cost:0` = it never reached an LLM (setup-time
+  failure, not teardown). Root-cause chain, each step verified:
+  - **`~/.attune/anthropic.env` held a REVOKED key.** Importing `attune`
+    runs `load_dotenv`, injecting that key into every attune process
+    (and any subprocess it spawns). Direct API call → `401
+    authentication_error` (`invalid x-api-key`). Replacing it with a
+    valid key (validate with a 1-token `messages` call, print STATUS
+    ONLY, never the value) → HTTP 200, which unblocked the
+    **direct-Anthropic-SDK** workflows (`analyze_image` via
+    `attune.llm.providers.anthropic`, x-api-key path).
+  - **SDK-native workflows still 401.** They route through
+    `claude-agent-sdk`, which spawns the `claude` CLI subprocess. That
+    subprocess auths through Claude Code's OWN credentials
+    (OAuth/subscription + the api-key approval cache), NOT the raw
+    `ANTHROPIC_API_KEY`. Proof: `claude -p` returned an identical 401
+    WITH the valid env key and WITHOUT it (`env -u ANTHROPIC_API_KEY`),
+    while the SDK path gave the distinct "Invalid API key · Fix external
+    API key" (the CLI's unapproved-key message). So a valid env key is
+    necessary-not-sufficient for SDK-native workflows; they need a CLI
+    re-auth / key approval (the user's interactive action — don't drive
+    a login flow). (The EXACT subprocess blocker — expired OAuth vs
+    unapproved-new-key — was NOT fully pinned; verify before asserting a
+    mechanism.)
+  - **The swallow that hid all of it (the product bug, fixed in #1173):**
+    `attune.mcp.workflow_handlers._workflow_response` built the response
+    from `success`/score/findings/cost but never read the error. The
+    canonical signal is `result.error`; SDK-native failures leave that
+    `None` and carry the message in `result.metadata`
+    (`is_error` + `raw_result_text`). Fix: surface `error`/`error_type`
+    when `result.success is False or metadata["is_error"]`, accepting
+    only `str` messages (so a `MagicMock` result can't inject a spurious
+    key — the existing strict-equality success-path tests stay green).
+    A `success:false / cost:0 / empty-findings / no-error` MCP result is
+    the tell for an SDK setup failure — repro directly
+    (`PYTHONPATH=<worktree>/src <main-venv>/bin/python -c "... await
+    Workflow().execute(path=...)"`) and read `metadata['raw_result_text']`
+    for the real reason. Also seen: the SDK adapter can report
+    `success:True` while `is_error:True` (subtype-based logic) — a
+    separate, deeper mislabel left out of #1173's scope. Pairs with the
+    "registered ≠ working" and `removing-dead-code.md`
+    fake-success-signature lessons.

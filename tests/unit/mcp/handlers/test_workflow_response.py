@@ -224,6 +224,71 @@ class TestWorkflowResponseReport:
 
 
 # ==================================================================
+# _workflow_response — errored runs surface the real reason
+# ==================================================================
+
+
+class TestWorkflowResponseError:
+    """An errored run must carry the real failure message, never swallow it.
+
+    Regression for the QA session 2026-06-29 finding: an SDK-native auth
+    failure came back as {success:false, findings:[], cost:0} with NO
+    error field, indistinguishable from a clean empty result.
+    """
+
+    def test_sdk_is_error_surfaces_raw_result_text(self):
+        # SDK-native failure: result.error is None, message lives in metadata.
+        result = _make_result(
+            success=False,
+            final_output="",
+            total_cost=0.0,
+            metadata={"is_error": True, "raw_result_text": "Invalid API key"},
+        )
+        result.error = None
+        out = _workflow_response(result, findings=("findings", []))
+
+        assert out["success"] is False
+        assert out["error"] == "Invalid API key"
+
+    def test_is_error_surfaces_even_when_success_true(self):
+        # Adapter can mark success=True while is_error=True; still surface it.
+        result = _make_result(
+            success=True,
+            final_output="",
+            metadata={"is_error": True, "raw_result_text": "boom"},
+        )
+        result.error = None
+        out = _workflow_response(result)
+
+        assert out["error"] == "boom"
+
+    def test_canonical_error_field_takes_precedence(self):
+        result = _make_result(success=False, final_output="")
+        result.error = "config: missing path"
+        result.error_type = "config"
+        out = _workflow_response(result)
+
+        assert out["error"] == "config: missing path"
+        assert out["error_type"] == "config"
+
+    def test_clean_success_has_no_error_key(self):
+        result = _make_result(final_output={"health_score": 90})
+        result.error = None
+        out = _workflow_response(result, score="health_score")
+
+        assert "error" not in out
+        assert "error_type" not in out
+
+    def test_errored_without_message_omits_error_key(self):
+        # No extractable str message -> don't inject a garbage/empty error.
+        result = _make_result(success=False, final_output="")
+        result.error = None
+        out = _workflow_response(result)
+
+        assert "error" not in out
+
+
+# ==================================================================
 # Handler-level round-trips
 # ==================================================================
 
