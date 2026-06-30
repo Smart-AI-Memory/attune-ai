@@ -464,6 +464,32 @@ adds a model field-set + a widget card renderer + the grammar doc.
 The widget surface makes no Anthropic API call, so V3 is fully
 buildable and dogfoodable without API credits.
 
+## D15 — AC3 receipt: live MCP round-trip for the decision construct
+
+**Date:** 2026-06-30 · **Status:** done (live receipt)
+
+AC3 was blocked at the V3 handoff only because the running MCP server
+had booted before #1174 merged, so its `elicitation_render_widget`
+enum lacked `decision` (the D10/D11 "registered ≠ working until the
+server reboots" pattern). A fresh session rebooted the server on
+merged-main code and the live round-trip went through end to end:
+
+1. **Enum confirmed** — live
+   `mcp__attune-ai__elicitation_render_widget` schema now advertises 8
+   types including `decision` (was 7).
+2. **render_widget** — a real `decision` form (recommended option +
+   rationale + per-option tradeoffs) returned `success: true` with the
+   V3 card markup (`ae-card-rec`, `ae-rec-badge`, `ae-rationale`).
+3. **show_widget** — rendered the card; user picked an option and
+   submitted via the `__elicitation_response__` sentinel.
+4. **collect_response** — `success: true`,
+   `{construct_3: "pushback construct"}`, `response_id`
+   `resp-20260630-010914` (R4 validation against the live tool).
+
+The dogfood doubled as the parked construct-#3 product question
+(below): Patrick chose the **pushback construct**. No Anthropic API
+call on any step — the entire receipt cost zero credits.
+
 ## Open
 
 - **Confirm CC elicitation support** — low priority (elicitation is
