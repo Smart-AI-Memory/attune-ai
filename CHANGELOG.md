@@ -9,8 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [9.3.0] — 2026-06-30
 
-The communication grammar — the agent-to-user construct family on the
-elicitation form surface — grows from one member to four: `decision`
+**Dynamic communication to improve the human/AI exchange.** Attune now
+dynamically shapes each exchange to fit the moment — rendering an
+interactive form in response to a prompt whenever a structured turn
+communicates better than prose (one-click multi-part questions, weighable
+recommendation cards, side-by-side disagreements). The mechanism is a
+communication grammar that grows from one member to four: `decision`
 (V3), `pushback` (V4), and `progress` (V5) join the original `intake`
 form. Each is additive and backward-compatible: a new `QuestionType`,
 optional `FormQuestion` fields, and a widget renderer, reusing the
