@@ -85,6 +85,8 @@ def _installed_version(cli: str) -> str:
         if out:
             return out.splitlines()[0]
     except (OSError, subprocess.SubprocessError):
+        # INTENTIONAL: if the CLI can't be spawned or times out, the
+        # version is simply unknown — never fail the check on it.
         pass
     return "unknown"
 
