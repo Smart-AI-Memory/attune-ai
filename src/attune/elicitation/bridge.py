@@ -178,6 +178,47 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
         elif user_position is not None and options and user_position not in options:
             problems.append(f"{where} 'user_position' {user_position!r} not in options")
 
+        # v5 PROGRESS extra: progress_items — the reported items keyed by
+        # status. Parsed generically; only PROGRESS renders them. Each item
+        # is {label, status, detail?}; status ∈ {done, in_flight, blocked};
+        # the blocked subset's labels must equal options (the picker offers
+        # exactly the actionable items). PROGRESS allows empty options (when
+        # nothing is blocked it degrades to a pure status display).
+        progress_items = raw.get("progress_items")
+        if progress_items is not None:
+            if not isinstance(progress_items, list) or not all(
+                isinstance(it, dict) for it in progress_items
+            ):
+                problems.append(f"{where} 'progress_items' must be a list of dicts")
+                progress_items = None
+            else:
+                valid_status = {"done", "in_flight", "blocked"}
+                blocked_labels = []
+                for progress_idx, item in enumerate(progress_items):
+                    label = item.get("label")
+                    status = item.get("status")
+                    if not isinstance(label, str) or not label:
+                        problems.append(
+                            f"{where} progress_items[{progress_idx}] needs a 'label' string"
+                        )
+                    if status not in valid_status:
+                        problems.append(
+                            f"{where} progress_items[{progress_idx}] 'status' must be one of {valid_status}"
+                        )
+                    if "detail" in item and not isinstance(item["detail"], str):
+                        problems.append(
+                            f"{where} progress_items[{progress_idx}] 'detail' must be a string"
+                        )
+                    if status == "blocked" and isinstance(label, str):
+                        blocked_labels.append(label)
+                if qtype is QuestionType.PROGRESS and set(blocked_labels) != set(options):
+                    problems.append(
+                        f"{where} PROGRESS blocked items {sorted(set(blocked_labels))} "
+                        f"must equal options {sorted(set(options))}"
+                    )
+        elif qtype is QuestionType.PROGRESS:
+            problems.append(f"{where} type progress requires 'progress_items'")
+
         if fid and text and isinstance(fid, str) and isinstance(text, str):
             questions.append(
                 FormQuestion(
@@ -195,6 +236,7 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
                     option_notes=option_notes,
                     recommended=recommended,
                     user_position=user_position,
+                    progress_items=progress_items,
                 )
             )
 
@@ -242,6 +284,10 @@ def _validate_answer(question: FormQuestion, value: Any) -> str | None:
         QuestionType.SINGLE_SELECT,
         QuestionType.DECISION,
         QuestionType.PUSHBACK,
+        # PROGRESS: a provided answer is one selected blocked item, validated
+        # by membership. When nothing is blocked the form is built display-
+        # only (required=False, empty options) and no answer is collected.
+        QuestionType.PROGRESS,
     ):
         if value not in question.options:
             return f"{question.id!r} value {value!r} not in options"

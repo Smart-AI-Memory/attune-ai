@@ -80,12 +80,36 @@ single-select on `AskUserQuestion`. When the pushback construct fires is
 governed by [decision-routine.md](decision-routine.md)'s pushback
 discipline — this is the shape, not the when.
 
+### progress (v5)
+
+The agent **reports** a set of items by status — `done` / `in_flight` /
+`blocked` — and surfaces the **blocked** items as a single-select picker
+("which blocker do you want to tackle?"); the user picks one. It is the
+first member that is a *report* rather than a fork. A
+`QuestionType.PROGRESS` is — like `decision` / `pushback` — a
+presentation-enriched single-select whose answer is one blocked option,
+validated exactly as a single-select. It adds one optional slot,
+`progress_items` (the reported items as `{label, status, detail?}` dicts;
+the `blocked` subset's labels must equal `options`), and reuses
+`recommended` (= the blocked item to tackle first, badged "suggested
+next"), `rationale` (= a "Summary" callout), and `option_notes`. The
+widget renders three buckets: `done`/`in_flight` items as static rows,
+`blocked` items as the radiogroup picker. When **nothing is blocked**
+(`options` empty) it degrades to a pure status display with no answer —
+so "pure display" is a sub-state of one construct, not a separate member,
+and the substrate stays answer-validated whenever there is something
+actionable. Falls back to a recommendation-first single-select over the
+blocked items on `AskUserQuestion` (the done/in_flight summary folds into
+the question text). First consumer: the `/spec` execute gate (done =
+completed tasks, in_flight = current task, blocked = quality-gate
+failures; the picker = "which blocked task to fix/retry").
+
 ---
 
-## How to add the next construct (#4)
+## How to add the next construct (#5)
 
-Keep it additive and substrate-reusing. The decision (v3) and pushback
-(v4) constructs are the worked examples to copy.
+Keep it additive and substrate-reusing. The decision (v3), pushback
+(v4), and progress (v5) constructs are the worked examples to copy.
 
 1. **Decide the shape.** Does it compose existing question types, or
    need a new `QuestionType`? Prefer composing. A new type is justified

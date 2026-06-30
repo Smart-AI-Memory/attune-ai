@@ -262,6 +262,36 @@ For each pending task:
    save_state(state)
    ```
 
+### Execution status report — a `progress` construct
+
+At a multi-task checkpoint — **on resume** (Stage 5), and **after an
+"Auto-run remaining tasks" batch finishes** — report where the run
+stands as a `progress` construct rather than prose. This is the
+multi-task overview; it complements the per-task `decision` gate above
+(that gates ONE task; this summarizes ALL of them).
+
+Build one `progress` field and render it via the `elicit` skill's widget
+surface (`elicitation_render_widget` → `show_widget`), falling back to
+its `AskUserQuestion` mapping — see the `elicit` skill's "progress
+construct" section:
+
+- `progress_items`: one `{label, status, detail?}` per task — `done`
+  for completed tasks, `in_flight` for the current task, `blocked` for
+  any task that failed a high-severity gate and was deferred
+  ("Acknowledge risk and continue"). Use the task name as `label` and
+  the failing gate + score as `detail`.
+- `options`: the labels of the `blocked` tasks (must equal the blocked
+  subset). The picker asks **"which blocked task to fix/retry?"** —
+  selecting one re-enters the per-task implement + gate flow for it.
+- `recommended`: the blocked task to tackle first (e.g. highest
+  severity); badged "suggested next".
+- `rationale`: a one-line run summary (e.g. "6/8 done, 2 deferred on
+  gate failures").
+
+When **no task is blocked**, build it display-only (`options: []`,
+`required: false`) — it renders as a clean done/in_flight status board
+with no picker.
+
 ## Stage 5: Resume
 
 On invocation, check for resumable plans:

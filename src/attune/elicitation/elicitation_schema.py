@@ -34,6 +34,10 @@ def _property_for(question: FormQuestion) -> dict[str, Any]:
         QuestionType.SINGLE_SELECT,
         QuestionType.DECISION,
         QuestionType.PUSHBACK,
+        # PROGRESS's answer is one blocked option — a string enum, like the
+        # other enriched single-selects (forward-compat; native elicitation
+        # is a non-renderer on CC, D10).
+        QuestionType.PROGRESS,
     ):
         prop.update(type="string", enum=list(question.options))
     elif question.type == QuestionType.MULTI_SELECT:
