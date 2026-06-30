@@ -623,8 +623,8 @@ enforces `set(blocked labels) == set(options)` in `form_from_dict`, and a
 unit test (`test_blocked_subset_must_equal_options`) guards it — the
 picker can never offer a non-existent blocker or omit a real one.
 
-**AC3 receipt status — MCP render + collect PROVEN LIVE on 9.3.0
-(2026-06-30); human pixel-click still surface-gated.** Function-level
+**AC3 receipt status — FULLY CLOSED 2026-06-30 (real rendered-widget
+human click).** Function-level
 render was dogfooded at build time: real `form_to_widget_html` output
 (8 tasks: 6 done, 1 in-flight, 1 blocked) via `show_widget` — three
 buckets, "suggested next" badge, "Summary" callout intact; plus unit
@@ -638,13 +638,17 @@ the **full MCP-tool path** was exercised — verified first (the D15/D16
 `success: true` with the correct three-bucket HTML; the postback then
 validated live through `mcp__attune-ai__elicitation_collect_response` →
 `success: true`, `next_action` membership-checked,
-**`resp-20260630-055649`**. Honest gap vs. V3/V4: those receipts include
-a real **rendered-widget human click**; this session ran in a terminal
-where `mcp__visualize__show_widget` was NOT connected, so the literal
-pixel-render + mouse-click atom is still owed — it needs a widget-capable
-surface (claude.ai/code or Cowork). Render-logic + validation are proven
-end-to-end live on 9.3.0; only the human click on a rendered widget
-remains.
+**`resp-20260630-055649`**. Then the **rendered-widget human click** —
+the V3/V4-parity atom — landed same-session: `mcp__visualize__show_widget`
+was available after all (the earlier "not connected" was a deferred-only
+ToolSearch miss — `show_widget` is a primary tool, not a deferred one,
+so ToolSearch returning nothing is not evidence of absence). The same
+progress form rendered live in chat via `show_widget`, Patrick clicked a
+blocked card and Submit, the `__elicitation_response__` sentinel posted
+back through `sendPrompt`, and `elicitation_collect_response` validated it
+— `success: true`, **`resp-20260630-060453`**. All three V5 surfaces
+(function-level, full MCP tool, rendered-widget human click) are now
+receipted, matching V3/V4. AC3 is closed.
 
 ## Open
 
