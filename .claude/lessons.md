@@ -12379,3 +12379,46 @@ files.
   `mkdocs.yml` nav edit needed. Whole flow spends zero API credits and the
   prose is hand-authored, satisfying a "draft polished docs without an
   api" request.
+
+- **`ToolSearch` only indexes DEFERRED tools — a PRIMARY tool returning no
+  ToolSearch match is NOT evidence it's unavailable.** 2026-06-30, mid-AC3
+  dogfood I ran `ToolSearch select:mcp__visualize__show_widget` → "No
+  matching deferred tools found" and wrongly told the user the
+  rendered-widget receipt "can't" be done because `show_widget` "isn't
+  connected this session." It was connected the whole time:
+  `mcp__visualize__show_widget` + `read_me` are PRIMARY tools in the
+  top-of-prompt function list. ToolSearch indexes ONLY the deferred/lazy
+  set announced in `<system-reminder>`s, so a null ToolSearch result rules
+  out the deferred set and nothing else. The user pushed back ("can you
+  resolve this?"); the fix was simply to call the primary tool, which
+  worked first try. Rule: before declaring a capability unavailable, check
+  BOTH (1) the primary tool list at the top of the prompt AND (2)
+  ToolSearch for deferred tools — and never assert absence from one
+  partial signal. Pairs with the "verify the live state before asserting"
+  family.
+
+- **Absorbing a sibling package's modules verbatim DROPS coverage (their
+  upstream tests don't travel with the code) — bring the EXISTING tests
+  (free, proven, golden), don't `/test-gen` new ones.** 2026-06-30,
+  consolidation T1 (#1193) moved ~2,200 LOC (projector + fact_check +
+  source-introspection extracted from generator.py) from attune-author
+  into `attune.authoring`. All 20,484 tests PASSED but the `coverage` gate
+  FAILED (93.45% < 94.00% fail-under) — the absorbed lines entered the
+  denominator with ~0 coverage. Two-part handling: (1) IMMEDIATE — a
+  DOCUMENTED `[tool.coverage.run] omit` entry (`*/attune/authoring/*`,
+  category justified-other, marked TRANSITIONAL) clears the gate;
+  `scripts/check_coverage_omits.py` enforces the inline-reason format
+  (per docs/specs/coverage-exclusion-policy/). (2) REAL fix — the absorbed
+  modules ALREADY HAVE upstream tests in the source repo (~2.3k LOC:
+  `test_projector.py` + golden snapshots, `test_source_extractors.py`, the
+  whole `fact_check/` suite); BRING and repoint those
+  (`attune_author`→`attune.authoring`), then DELETE the omit. Bringing
+  existing tests beats `/test-gen` for absorbed code: generated tests are
+  characterization tests that lock in CURRENT behavior (incl. bugs) as
+  "correct", cost API spend, and miss the edge cases the original authors
+  encoded; existing tests assert INTENDED behavior, carry golden snapshots
+  (the strongest regression net — worth MORE in a solo-dev setup with no
+  second reviewer), and are free. Always golden-verify the move is
+  byte-identical FIRST (re-project a known master, expect an empty
+  `git diff` modulo the `generated_at` timestamp) so the omit is provably
+  hiding tested-elsewhere code, not untested risk.
