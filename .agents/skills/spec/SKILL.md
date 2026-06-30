@@ -197,18 +197,45 @@ For each pending task:
    ```
 
 5. Show result with `present_task_result(task, result)`
-6. **Severity-gated approval:**
+6. **Severity-gated approval — a `decision` gate.** You have
+   just run the quality gates, so you hold a *recommendation*,
+   not a neutral menu. Render this as a `decision` construct
+   (recommended option + rationale + per-option tradeoffs) via
+   the `elicit` skill's widget surface
+   (`elicitation_render_widget` → `show_widget`), and fall back
+   to its `AskUserQuestion` mapping (recommended option first
+   with `" (Recommended)"`, each tradeoff folded into that
+   option's description, `rationale` as the lead-in) when the
+   widget surface is unavailable. The `elicit` skill owns the
+   round-trip and validation — see its "decision construct"
+   section. It stays ONE question: the cards are presentation,
+   not extra fields.
 
-   If `"high"` severity (score < 50):
-   Use `AskUserQuestion` with 2 options:
-   - "Fix and retry"
-   - "Acknowledge risk and continue"
+   If `"high"` severity (score < 50) — recommend **Fix and
+   retry**:
 
-   If `"medium"` or `"low"` severity:
-   Use `AskUserQuestion` with 3 options:
-   - "Approve and continue"
-   - "Redo with new instructions"
-   - "Auto-run remaining tasks"
+   - options: "Fix and retry", "Acknowledge risk and continue"
+   - `recommended`: "Fix and retry"
+   - `rationale`: name the gate(s) that failed and the score —
+     a high-severity task shipped forward compounds risk.
+   - `option_notes`:
+     - "Fix and retry": "Address the finding now, before it lands"
+     - "Acknowledge risk and continue": "Ship as-is — risk moves
+       downstream"
+
+   If `"medium"` or `"low"` severity — recommend **Approve and
+   continue**:
+
+   - options: "Approve and continue", "Redo with new
+     instructions", "Auto-run remaining tasks"
+   - `recommended`: "Approve and continue"
+   - `rationale`: gates passed at acceptable severity — the task
+     is ready to land.
+   - `option_notes`:
+     - "Approve and continue": "Accept this task, move to the next"
+     - "Redo with new instructions": "Re-run the task with changes"
+     - "Auto-run remaining tasks": "Stop gating; run the rest
+       unattended"
 
 7. Save state after each decision:
 
@@ -239,9 +266,13 @@ If resumable plans exist, show them with
   (outcome + scope + concerns) is the ONE place to batch
   fields into a single form (via `elicit`). Every other
   prompt — the mode picker and the review / approve /
-  execute gates — stays a **single** `AskUserQuestion`:
-  they're sequential decisions that branch on the prior
-  answer, so the §4 rule keeps them one at a time.
+  execute gates — stays a **single** question: they're
+  sequential decisions that branch on the prior answer, so
+  the §4 rule keeps them one at a time. A single question
+  may still be a `decision` construct (Stage 4's approval
+  gate) — that enriches one choice with a recommendation
+  and tradeoffs; it does **not** batch multiple fields, so
+  it honours the one-question rule.
 - **ALWAYS use AskUserQuestion** between stages
 - **ALWAYS save_state()** after each task approval
 - **Show progress bar** before each task
