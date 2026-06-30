@@ -12290,3 +12290,31 @@ files.
   (execute-side), "spec-named scope drifts from code reality", and
   "next-session starter can be stale on arrival" — same family: main is
   ground truth; the worktree (and memory of "we worked on this") is not.
+
+- **Adding a communication-grammar construct that "reuses the
+  single-select answer path" still requires registering the new
+  `QuestionType` at SEVERAL enumeration sites — "reuse the answer path"
+  is not zero-touch**: building the V4 `pushback` construct (a
+  `decision`-shaped single-select, 2026-06-30), the model + widget +
+  field-definition validation all worked and 79/80 tests passed — but
+  `test_collect_rejects_out_of_option` FAILED because
+  `bridge.py::_validate_answer` listed only `(SINGLE_SELECT, DECISION)`
+  in its option-membership branch, so a PUSHBACK answer skipped
+  membership validation entirely (accepted garbage). The
+  `communication-grammar.md` how-to-extend step 3 ("map the answer to an
+  existing validator… only add validation logic for a genuinely new
+  answer shape") UNDERSOLD it: even when the answer shape is identical,
+  the new enum member must be ADDED to every type-tuple that enumerates
+  select-likes. In this codebase that is FOUR sites beyond the model:
+  (1) `bridge.py::_validate_answer` membership branch, (2)
+  `bridge.py::form_from_dict` options-required tuple, (3) `widget.py`
+  submit-script `ftype === 'decision'` reader condition, (4)
+  `elicitation_schema.py` string-enum tuple — plus the
+  `mcp/tool_schemas.py` rich enum and its `test_tool_schemas.py` count
+  guard. Diagnostic before declaring a new construct done: `grep -rn
+  "QuestionType.DECISION" src/attune/{elicitation,meta_workflows,mcp}`
+  and confirm the new member sits beside `DECISION` at EACH hit. A
+  per-type reject-out-of-option unit test is the cheap guard that
+  catches the miss. Pairs with "Registered ≠ working — dogfood the live
+  loop" (same discipline, applied to the validation layer of a
+  pure-logic reuse).

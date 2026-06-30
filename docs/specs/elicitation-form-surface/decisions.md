@@ -490,6 +490,56 @@ The dogfood doubled as the parked construct-#3 product question
 (below): Patrick chose the **pushback construct**. No Anthropic API
 call on any step — the entire receipt cost zero credits.
 
+## D16 — V4: the pushback construct (grammar member #3)
+
+**Date:** 2026-06-30 · **Status:** built · see
+[v4-requirements.md](v4-requirements.md)
+
+Construct #3 is the **pushback** construct: agent-to-user, surfaces a
+disagreement with the user's stated approach + a concrete alternative
+and rationale. Two product choices Patrick made (2026-06-30, both via
+the live decision construct — dogfooding the grammar to extend it):
+
+- **#3 = pushback**, not a status/progress construct. Pushback reuses
+  the V3 substrate almost verbatim and encodes the standing
+  "pushback welcomed" working agreement.
+- **A new `QuestionType.PUSHBACK`**, not composing `decision`. The
+  value of pushback over decision is the *dissent framing* (the user's
+  approach shown as the status quo, the alternative badged "I'd suggest
+  instead", a "Why I'd push back" rationale). Composing `decision`
+  would be a doc convention, not a visible construct —
+  `communication-grammar.md` step 1 ("a new type is justified when
+  rendering OR answer-meaning genuinely differ") is cleared on the
+  rendering axis.
+- **Scope = substrate + one consumer.** Mirrors V3's footprint (model
+  + widget + round-trip + tests + dogfood) AND wires one real
+  consumer — the `/spec` Stage 2 review gate — so the construct proves
+  end-to-end value, the way `decision` got its consumer in #1176.
+
+Design parallels V3 exactly: the answer is one selected option, so
+`SINGLE_SELECT` validation and the round-trip are reused — V4 adds one
+optional field (`user_position`), a widget branch, and the consumer
+wiring. No Anthropic API call on any surface.
+
+**Build note — reuse gap caught by the dogfood discipline:**
+`_validate_answer` (`bridge.py`) listed only `SINGLE_SELECT`/`DECISION`
+for option-membership, so a PUSHBACK answer initially skipped
+validation. The unit test `test_collect_rejects_out_of_option` caught
+it; fixed by adding `PUSHBACK` to that tuple. "Reuse the answer path"
+needed one explicit line, not zero.
+
+**AC3 receipt status:** function-level + `show_widget`-level round-trip
+proven this session with a **real human submit** — real
+`form_to_widget_html` output rendered via `show_widget` (dissent
+framing intact), Patrick picked the alternative (a "switch"), the
+`__elicitation_response__` sentinel posted back, and
+`collect_form_response` validated it (`resp-20260630-013130`); it also
+rejects out-of-option picks. The full **MCP-tool** path
+(`elicitation_render_widget` / `elicitation_collect_response`) is
+blocked until this merges and the server reboots — the running server's
+enums lack `pushback` (the same D10/D11 / D15 pattern). Closes
+next-session like D15 did for `decision`.
+
 ## Open
 
 - **Confirm CC elicitation support** — low priority (elicitation is

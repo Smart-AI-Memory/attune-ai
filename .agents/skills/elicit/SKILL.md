@@ -104,6 +104,52 @@ the recommended option ordered first and " (Recommended)" appended to its
 label; fold each `option_notes` tradeoff into that option's
 `description`, and use the `rationale` as the question's lead-in.
 
+## The pushback construct (v4)
+
+A `pushback` is a `decision` framed as **dissent**: the agent disagrees
+with the user's stated approach and offers a concrete alternative. Use it
+when a user-stated choice looks weaker than an alternative you can render
+concretely — the decision-routine "pushback discipline". Same
+single-select answer path as `decision`; only the framing differs. When
+it fires is governed by
+`.claude/rules/attune/decision-routine.md`.
+
+Extra field keys (all optional; reuses the decision keys plus one):
+
+- `user_position` — the option that is the user's stated approach; it is
+  tagged "your approach" (must be one of `options`).
+- `recommended` — the agent's alternative; badged "I'd suggest instead"
+  and ordered first (must be one of `options`).
+- `rationale` — the disagreement, shown beneath the cards under a "Why
+  I'd push back" header.
+- `option_notes` — `{option: one-line tradeoff}` shown under each card.
+
+```json
+{
+  "title": "Retry strategy",
+  "fields": [
+    {"id": "retries", "text": "How should we handle transient failures?",
+     "type": "pushback",
+     "options": ["Fixed 3x retry", "Exponential backoff + jitter"],
+     "user_position": "Fixed 3x retry",
+     "recommended": "Exponential backoff + jitter",
+     "rationale": "Fixed retries hammer a struggling service; backoff is gentler and avoids a thundering herd.",
+     "option_notes": {"Exponential backoff + jitter": "Industry default"}}
+  ]
+}
+```
+
+**Surface:** the dissent card layout renders on the **widget** surface
+(`elicitation_render_widget` → `show_widget`); the answer is one selected
+option (overrule = the user's approach, switch = the alternative),
+validated like a single-select.
+
+**AskUserQuestion fallback:** a `pushback` maps to a `single_select` with
+the agent's alternative ordered first; label the `user_position` option
+clearly as the user's current approach, fold each `option_notes` tradeoff
+into the matching option's `description`, and use the `rationale` (the
+disagreement) as the question's lead-in.
+
 ## Choosing a surface
 
 - **Rich / native — one call:** `elicitation_ask` renders the form as a

@@ -441,12 +441,15 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                     "number",
                     "date",
                     "decision",
+                    "pushback",
                 ],
                 "description": (
                     "Control type. v1: text_input/single_select/multi_select/"
                     "boolean. v2.1 rich: textarea, number (min/max), date "
                     "(YYYY-MM-DD). v3: decision (a recommended single-select "
-                    "with rationale + per-option tradeoffs, widget surface)."
+                    "with rationale + per-option tradeoffs, widget surface). "
+                    "v4: pushback (decision framed as dissent — the user's "
+                    "approach vs the agent's alternative, widget surface)."
                 ),
             },
             "minimum": {"type": "number", "description": "Lower bound for number"},
@@ -466,6 +469,11 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
             "option_notes": {
                 "type": "object",
                 "description": "decision: {option: one-line tradeoff} shown under each card",
+            },
+            "user_position": {
+                "type": "string",
+                "description": "pushback: the option that is the user's stated approach "
+                "(tagged 'your approach'; must be in options)",
             },
         },
         "required": ["id", "text", "type"],
