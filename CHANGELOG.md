@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `option_notes`, `recommended`. Folded into the elicitation-form-surface
   spec as V3; see `.claude/rules/attune/communication-grammar.md`.
 
+### Changed
+
+- **`/spec` approval gate uses the `decision` construct.** Stage 4's
+  severity-gated approval now renders as a `decision` (recommended
+  option + rationale + per-option tradeoffs) instead of a neutral
+  `AskUserQuestion` menu — high-severity gates recommend "Fix and
+  retry", medium/low recommend "Approve and continue". The first
+  real consumer of the V3 construct.
+
 ## [9.2.0] — 2026-06-28
 
 ### Added
