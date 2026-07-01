@@ -163,3 +163,76 @@ class TestAdaptiveRoutingLogging:
 
         assert len(perfs) == 1
         assert perfs[0].recent_failures == 5
+
+
+@pytest.mark.unit
+class TestAdaptiveRoutingFetchCache:
+    """M3: the telemetry-window fetch is cached per ``days`` window."""
+
+    def _entries(self):
+        return [{"workflow": "w", "stage": "s"} for _ in range(3)]
+
+    def test_second_fetch_uses_cache(self):
+        telemetry = MagicMock()
+        telemetry.get_recent_entries.return_value = self._entries()
+        router = AdaptiveModelRouter(telemetry)  # default TTL > 0
+
+        router._get_workflow_stage_entries("w", "s", days=7)
+        router._get_workflow_stage_entries("w", "s", days=7)  # cache hit
+
+        # Underlying scan happened only once despite two routing decisions.
+        assert telemetry.get_recent_entries.call_count == 1
+
+    def test_ttl_zero_disables_cache(self):
+        telemetry = MagicMock()
+        telemetry.get_recent_entries.return_value = self._entries()
+        router = AdaptiveModelRouter(telemetry, cache_ttl_seconds=0)
+
+        router._get_workflow_stage_entries("w", "s", days=7)
+        router._get_workflow_stage_entries("w", "s", days=7)
+
+        # With caching disabled, every decision re-scans.
+        assert telemetry.get_recent_entries.call_count == 2
+
+
+@pytest.mark.unit
+class TestSsrfGuardBranches:
+    """M5: cover the remaining address-classification branches."""
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "http://224.0.0.1/x",  # multicast
+            "http://240.0.0.1/x",  # reserved
+            "http://0.0.0.0/x",  # unspecified
+        ],
+    )
+    def test_blocks_other_internal_classes(self, url):
+        assert _endpoint_host_blocked(url) is True
+
+    def test_allows_public_ip(self):
+        assert _endpoint_host_blocked("http://8.8.8.8/x") is False
+
+    def test_url_without_host_is_allowed(self):
+        # No parseable host -> not a literal IP -> left to the transport.
+        assert _endpoint_host_blocked("not-a-url") is False
+
+    def test_sync_blocks_internal_endpoint_without_posting(self):
+        from attune.telemetry.usage_ping import sync
+
+        posted: list[str] = []
+
+        def poster(url, batch, timeout):
+            posted.append(url)
+            return True
+
+        sent = sync(
+            [{"workflow": "x", "ts": "2026-01-01T00:00:00Z"}],
+            endpoint="http://127.0.0.1:9000/collect",
+            install_id="i",
+            version="v",
+            poster=poster,
+        )
+
+        assert sent == 0
+        assert posted == []  # the SSRF guard short-circuits before any POST
