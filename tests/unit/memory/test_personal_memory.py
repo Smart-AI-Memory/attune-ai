@@ -242,8 +242,46 @@ class TestCapture:
 # ---------------------------------------------------------------------------
 
 
-def _make_fake_rag(hits: list[dict]):
-    """Return a (DirectoryCorpus, RagPipeline) tuple with stubbed run()."""
+class _FakeCitedSource:
+    """Mirrors attune_rag.provenance.CitedSource's public shape."""
+
+    def __init__(self, template_path: str, score: float, category: str = "", excerpt: str = ""):
+        self.template_path = template_path
+        self.category = category
+        self.score = score
+        self.excerpt = excerpt
+
+
+class _FakeCitation:
+    def __init__(self, hits: list[_FakeCitedSource]):
+        self.hits = tuple(hits)
+
+
+class _FakeRagResult:
+    """Mirrors attune_rag.pipeline.RagResult's public shape (citation.hits)."""
+
+    def __init__(self, hits: list[_FakeCitedSource]):
+        self.citation = _FakeCitation(hits)
+
+
+def _make_fake_rag(hit_dicts: list[dict]):
+    """Return a (DirectoryCorpus, RagPipeline) tuple with stubbed run().
+
+    ``hit_dicts`` uses the same {"path", "score", ...} shape the tests
+    already use for readability; wrapped into the real RagResult/
+    CitedSource shape that RagPipeline.run() actually returns (see
+    PersonalMemory.query()'s fix - it reads rag_result.citation.hits,
+    not a plain list).
+    """
+    fake_hits = [
+        _FakeCitedSource(
+            template_path=h["path"],
+            score=h["score"],
+            category=h.get("category", ""),
+            excerpt=h.get("excerpt", ""),
+        )
+        for h in hit_dicts
+    ]
 
     class _FakeCorpus:
         def __init__(self, root, summaries_file, glob):
@@ -257,7 +295,7 @@ def _make_fake_rag(hits: list[dict]):
             pass
 
         def run(self, query, k):
-            return hits
+            return _FakeRagResult(fake_hits)
 
     return _FakeCorpus, _FakePipeline
 
@@ -299,6 +337,7 @@ class TestQuery:
         with patch("attune.memory.personal._load_rag", return_value=_make_fake_rag(hits)):
             result = pm.query("q", kind_filter="decision")
 
+        assert len(result) == 1
         assert all(r["path"].endswith("/decision.md") for r in result)
 
     def test_project_hits_win_ties(self, tmp_path):
@@ -312,8 +351,8 @@ class TestQuery:
         (project_root / "t").mkdir()
         (project_root / "t" / "decision.md").write_text("x", encoding="utf-8")
 
-        global_hits = [{"path": "t/decision.md", "summary": "", "excerpt": "", "score": 0.8}]
-        project_hits = [{"path": "t/decision.md", "summary": "", "excerpt": "", "score": 0.8}]
+        global_hits = _FakeRagResult([_FakeCitedSource(template_path="t/decision.md", score=0.8)])
+        project_hits = _FakeRagResult([_FakeCitedSource(template_path="t/decision.md", score=0.8)])
 
         call_count = 0
 
@@ -344,6 +383,28 @@ class TestQuery:
 
         # project hit has score boosted by 0.001 so it should sort first
         assert len(result) >= 1
+
+    def test_query_round_trips_against_real_attune_rag(self, tmp_path):
+        """Regression guard: before the fix, query() did `for hit in
+        pipeline.run(...)`, but the installed attune_rag's
+        RagPipeline.run() returns a RagResult (not iterable), raising
+        `TypeError: 'RagResult' object is not iterable` on every call.
+        That was swallowed by query()'s broad except and silently
+        returned []. Exercises the REAL attune_rag dependency (no
+        mocking of _load_rag) end to end: capture, then query."""
+        pm = PersonalMemory(global_root=tmp_path, project_root=tmp_path / "no_project")
+        pm.capture(
+            "redis-timeout-config",
+            "We set the Redis connection timeout to 30 seconds after "
+            "seeing intermittent failures under load.",
+            kind="decision",
+        )
+
+        result = pm.query("Why did we set the Redis timeout?", k=3)
+
+        assert result, "query() returned no hits against a real attune_rag pipeline"
+        assert result[0]["path"] == "redis-timeout-config/decision.md"
+        assert result[0]["score"] > 0
 
 
 # ---------------------------------------------------------------------------

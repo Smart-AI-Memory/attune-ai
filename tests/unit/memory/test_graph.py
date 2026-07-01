@@ -149,6 +149,7 @@ class TestGraphInitialization:
         graph2 = MemoryGraph(path=temp_graph_path)
 
         assert graph2.nodes[feedback_id].type == NodeType.FEEDBACK
+        assert graph2.nodes[feedback_id].status == "active"
         assert graph2.nodes[project_id].type == NodeType.PROJECT_CONTEXT
         related = graph2.find_related(project_id, edge_types=[EdgeType.RELATED_TO])
         assert [n.id for n in related] == [feedback_id]
