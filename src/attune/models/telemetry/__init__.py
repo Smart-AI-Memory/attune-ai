@@ -40,12 +40,12 @@ def get_telemetry_store() -> TelemetryStore:
 
 def log_llm_call(record: LLMCallRecord):
     """Log an LLM API call."""
-    get_telemetry_store().log_llm_call(record)
+    get_telemetry_store().log_call(record)
 
 
 def log_workflow_run(record: WorkflowRunRecord):
     """Log a workflow run."""
-    get_telemetry_store().log_workflow_run(record)
+    get_telemetry_store().log_workflow(record)
 
 
 __all__ = [

@@ -8,10 +8,13 @@ Licensed under the Apache License, Version 2.0
 
 import json
 import logging
+from collections import deque
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 from typing import Any, TypeVar
+
+from attune.security.path_validation import _validate_file_path
 
 from .backend import _parse_timestamp
 from .data_models import (
@@ -44,8 +47,14 @@ class TelemetryStore:
         Args:
             storage_dir: Directory for telemetry files
 
+        Raises:
+            ValueError: If storage_dir is invalid or targets a system directory
+                (prevents CWE-22 arbitrary-write via a caller-supplied path).
+
         """
-        self.storage_dir = Path(storage_dir)
+        # Validate before any filesystem op — storage_dir may come from a CLI
+        # arg (`--storage-dir`) or other caller-controlled input.
+        self.storage_dir = _validate_file_path(str(storage_dir))
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
         # Core telemetry files
@@ -87,17 +96,22 @@ class TelemetryStore:
             record_cls: Record class with a from_dict() classmethod
             since: Only return records after this time
             timestamp_field: Name of the timestamp attribute on the record
-            limit: Maximum records to return
+            limit: Maximum records to return (the MOST RECENT ``limit``)
             extra_filter: Optional predicate — return True to include
 
         Returns:
-            List of parsed and filtered records
+            The most recent ``limit`` matching records, oldest-first.
 
         """
         if not file.exists():
             return []
 
-        records: list[T] = []
+        # JSONL is appended chronologically (oldest first). A top-down read
+        # with an early ``break`` at ``limit`` returned the OLDEST matches —
+        # wrong for the "recent" contract callers rely on (e.g. records[-1]
+        # is meant to be the latest). A bounded deque keeps the last ``limit``
+        # matching records in O(limit) memory in a single pass.
+        records: deque[T] = deque(maxlen=limit)
         with file.open(encoding="utf-8") as f:
             for line in f:
                 if not line.strip():
@@ -115,13 +129,11 @@ class TelemetryStore:
                         continue
 
                     records.append(record)
-                    if len(records) >= limit:
-                        break
                 except (json.JSONDecodeError, KeyError):
                     logger.debug("Skipping malformed record in %s", file.name)
                     continue
 
-        return records
+        return list(records)
 
     # ------------------------------------------------------------------
     # Log methods

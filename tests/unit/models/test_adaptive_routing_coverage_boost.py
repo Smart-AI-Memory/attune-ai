@@ -329,8 +329,9 @@ class TestRecommendTierUpgrade:
         """Test that upgrade is recommended when failure rate exceeds threshold."""
         mock_telemetry = MagicMock()
 
-        # 25 calls with 6 failures in last 20 (30% failure rate)
-        entries = [{"workflow": "test", "stage": "analysis", "success": i < 19} for i in range(25)]
+        # 25 calls, newest-first (matching UsageTracker.get_recent_entries):
+        # the 6 most-recent calls fail → 6/20 = 30% in the recent window.
+        entries = [{"workflow": "test", "stage": "analysis", "success": i >= 6} for i in range(25)]
         mock_telemetry.get_recent_entries.return_value = entries
 
         router = AdaptiveModelRouter(mock_telemetry)
@@ -344,8 +345,8 @@ class TestRecommendTierUpgrade:
         """Test that no upgrade when failure rate is acceptable."""
         mock_telemetry = MagicMock()
 
-        # 25 calls with only 2 failures in last 20 (10% failure rate)
-        entries = [{"workflow": "test", "stage": "analysis", "success": i < 23} for i in range(25)]
+        # 25 calls, newest-first: the 2 most-recent calls fail → 2/20 = 10%.
+        entries = [{"workflow": "test", "stage": "analysis", "success": i >= 2} for i in range(25)]
         mock_telemetry.get_recent_entries.return_value = entries
 
         router = AdaptiveModelRouter(mock_telemetry)
@@ -658,14 +659,14 @@ class TestAnalyzeModelPerformance:
         """Test that _analyze_model_performance counts recent failures."""
         mock_telemetry = MagicMock()
 
-        # 30 calls with 5 failures in last 20
+        # 30 calls, newest-first: the 5 most-recent calls fail → recent_failures == 5.
         entries = [
             {
                 "workflow": "test",
                 "stage": "analysis",
                 "model": "model1",
                 "tier": "CHEAP",
-                "success": i < 25,  # Last 5 are failures
+                "success": i >= 5,  # First 5 (most recent) are failures
                 "cost": 0.001,
                 "duration_ms": 500,
             }

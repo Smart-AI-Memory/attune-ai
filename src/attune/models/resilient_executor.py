@@ -7,7 +7,7 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-import time
+import asyncio
 from collections.abc import Callable
 from typing import Any, cast
 
@@ -172,7 +172,7 @@ class ResilientExecutor:
 
                     if retry_policy.should_retry(error_type, attempt_num):
                         delay = retry_policy.get_delay_ms(attempt_num)
-                        time.sleep(delay / 1000)
+                        await asyncio.sleep(delay / 1000)
                         continue
 
                     # Record failure and move to next fallback
@@ -301,7 +301,7 @@ class ResilientExecutor:
 
                     if self.retry_policy.should_retry(error_type, attempt):
                         delay = self.retry_policy.get_delay_ms(attempt)
-                        time.sleep(delay / 1000)
+                        await asyncio.sleep(delay / 1000)
                         continue
 
                     # Record failure and move to next fallback

@@ -169,25 +169,3 @@ class TelemetryBackend(Protocol):
     def get_latest_file_test(self, file_path: str) -> "FileTestRecord | None":
         """Get the most recent test record for a specific file."""
         ...
-
-
-def _parse_timestamp(timestamp_str: str) -> datetime:
-    """Parse ISO format timestamp, handling 'Z' suffix for Python 3.10 compatibility.
-
-    Args:
-        timestamp_str: ISO format timestamp string, possibly with 'Z' suffix
-
-    Returns:
-        Parsed datetime object (timezone-aware UTC)
-
-    """
-    # Python 3.10's fromisoformat() doesn't handle 'Z' suffix
-    timestamp_str = timestamp_str.replace("Z", "+00:00")
-
-    dt = datetime.fromisoformat(timestamp_str)
-
-    # Ensure timezone-aware (assume UTC for naive timestamps)
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-
-    return dt

@@ -449,7 +449,9 @@ def count_lines_of_code(file_path: str | Path) -> int:
         Number of lines (excluding blank lines and comments)
 
     """
-    path = Path(file_path)
+    # Validate before reading — file_path may be caller-controlled; block
+    # traversal / system paths per the "ALWAYS validate file paths" rule.
+    path = _validate_file_path(str(file_path))
     if not path.exists():
         return 0
 

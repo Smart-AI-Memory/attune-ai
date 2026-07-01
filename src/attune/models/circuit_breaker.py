@@ -21,6 +21,7 @@ class CircuitBreakerState:
     last_failure: datetime | None = None
     is_open: bool = False
     opened_at: datetime | None = None
+    half_open_calls: int = 0
 
 
 class CircuitBreaker:
@@ -89,12 +90,17 @@ class CircuitBreaker:
         if not state.is_open:
             return True
 
-        # Check if recovery timeout has passed
-        if state.opened_at:
-            time_since_open = datetime.now() - state.opened_at
-            if time_since_open >= self.recovery_timeout:
-                # Half-open: allow limited calls
+        # Open: after the recovery timeout, enter the half-open state and
+        # allow up to ``half_open_calls`` probe calls to test recovery. A
+        # success closes the circuit; a failure re-opens it (see
+        # record_success / record_failure). Without this cap, every call
+        # after the timeout was let through — defeating the point of the
+        # half-open state under load.
+        if state.opened_at and (datetime.now() - state.opened_at) >= self.recovery_timeout:
+            if state.half_open_calls < self.half_open_calls:
+                state.half_open_calls += 1
                 return True
+            return False  # probe budget spent; wait for a probe result
 
         return False
 
@@ -108,10 +114,11 @@ class CircuitBreaker:
         """
         state = self._get_state(provider, tier)
 
-        # Reset on success
+        # Reset on success (closes the circuit).
         state.failure_count = 0
         state.is_open = False
         state.opened_at = None
+        state.half_open_calls = 0
 
     def record_failure(self, provider: str, tier: str | None = None) -> None:
         """Record a failed call.
@@ -129,6 +136,9 @@ class CircuitBreaker:
         if state.failure_count >= self.failure_threshold:
             state.is_open = True
             state.opened_at = datetime.now()
+            # Reset the probe budget so the next recovery window starts fresh
+            # (a failed half-open probe re-opens the circuit).
+            state.half_open_calls = 0
 
     def get_status(self) -> dict[str, dict[str, Any]]:
         """Get status of all tracked providers."""
