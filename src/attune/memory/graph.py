@@ -154,8 +154,14 @@ class MemoryGraph:
     def add_finding(self, workflow: str, finding: dict[str, Any]) -> str:
         """Add a finding from any workflow, return node ID.
 
+        Also accepts curated cross-session memory (no workflow origin) via
+        the ``USER_CONTEXT``/``FEEDBACK``/``PROJECT_CONTEXT``/``REFERENCE``
+        node types - pass ``workflow=""`` for those (see
+        ``attune.memory.nodes`` module docstring).
+
         Args:
-            workflow: Name of the workflow adding this finding
+            workflow: Name of the workflow adding this finding, or "" for
+                a curated-memory node with no workflow origin.
             finding: Dict with at least 'type' and 'name' keys
 
         Returns:

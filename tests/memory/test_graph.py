@@ -56,8 +56,9 @@ class TestNodeTypeEnum:
         """Test total number of node types."""
         # FILE, FUNCTION, CLASS, MODULE, BUG, VULNERABILITY, PERFORMANCE_ISSUE,
         # CODE_SMELL, TECH_DEBT, PATTERN, FIX, REFACTOR, TEST, TEST_CASE,
-        # COVERAGE_GAP, DOC, API_ENDPOINT, DEPENDENCY, LICENSE
-        assert len(NodeType) == 19
+        # COVERAGE_GAP, DOC, API_ENDPOINT, DEPENDENCY, LICENSE,
+        # USER_CONTEXT, FEEDBACK, PROJECT_CONTEXT, REFERENCE
+        assert len(NodeType) == 23
 
     def test_node_type_from_string(self):
         """Test creating NodeType from string."""
