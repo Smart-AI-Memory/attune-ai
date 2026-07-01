@@ -202,6 +202,7 @@ class MemoryGraph:
             confidence=finding.get("confidence", 1.0),
             metadata=finding.get("metadata", {}),
             tags=finding.get("tags", []),
+            status=finding.get("status", "open"),
         )
 
         self.nodes[node_id] = node
