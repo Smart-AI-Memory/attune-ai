@@ -12502,3 +12502,25 @@ files.
     separate, deeper mislabel left out of #1173's scope. Pairs with the
     "registered ≠ working" and `removing-dead-code.md`
     fake-success-signature lessons.
+
+- **zsh does NOT word-split an unquoted `$var` in a `for` loop — a
+  multi-line file list runs the loop body ONCE with the whole blob as a
+  single argument, so a `sed`/`grep` sweep silently no-ops (looks like
+  it ran)**: 2026-06-30 doing the Sonnet-4.6→5 sweep, `files=$(grep -rl
+  … ); for f in $files; do sed -i '' 's/…/…/g' "$f"; done` printed
+  `sed: <all 65 filenames concatenated> : File name too long` and
+  changed NOTHING (the 169 target occurrences all remained). Root cause:
+  unlike bash, zsh performs NO word splitting on unquoted parameter
+  expansion, so `for f in $files` iterates a single time with `$f` = the
+  entire newline-joined list. The error is easy to skim past as "some
+  path issue" — the tell is the post-sweep verify count being unchanged
+  (always re-grep the target after a sweep; never trust the loop ran).
+  **Fix — pipe to `while IFS= read -r`:** `grep -rl … | grep -v <excl> |
+  while IFS= read -r f; do sed -i '' 's/…/…/g' "$f"; done` splits on
+  newlines correctly and tolerates spaces in paths. Pairs with the "zsh
+  unmatched-glob trap" lesson (#1196) — same family: this shell defaults
+  to different word-handling than bash, and the failure is a SILENT
+  no-op, not an error. (Companion footgun same session: an UNANCHORED
+  grep exclusion `grep -vE "…|site/"` also matched `webSITE/` and
+  silently dropped every `website/` path from a file list — anchor
+  path-segment excludes with a leading slash: `/site/`.)
