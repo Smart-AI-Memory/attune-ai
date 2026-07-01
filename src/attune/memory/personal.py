@@ -227,17 +227,17 @@ class PersonalMemory:
                     glob="**/*.md",
                 )
                 pipeline = RagPipeline(corpus=corpus)
-                results = pipeline.run(query, k=k * 2)
-                for hit in results:
-                    path_str = str(hit.get("path", ""))
+                rag_result = pipeline.run(query, k=k * 2)
+                for hit in rag_result.citation.hits:
+                    path_str = hit.template_path
                     if kind_filter and not path_str.endswith(f"/{kind_filter}.md"):
                         continue
                     hits.append(
                         {
                             "path": path_str,
-                            "summary": hit.get("summary", ""),
-                            "excerpt": hit.get("excerpt", ""),
-                            "score": hit.get("score", 0.0) + (0.001 if is_project else 0.0),
+                            "summary": hit.excerpt or "",
+                            "excerpt": hit.excerpt or "",
+                            "score": hit.score + (0.001 if is_project else 0.0),
                         }
                     )
             except Exception:  # noqa: BLE001
