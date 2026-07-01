@@ -7279,7 +7279,7 @@ CLI or programmatic API:</p>
 <p>Central registry of available LLM models.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MODEL_REGISTRY</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">MODEL_REGISTRY</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s2">&quot;claude-sonnet-4-6&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">MODEL_REGISTRY</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s2">&quot;claude-sonnet-5&quot;</span><span class="p">)</span>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">models</span> <span class="o">=</span> <span class="n">MODEL_REGISTRY</span><span class="o">.</span><span class="n">list_models</span><span class="p">(</span><span class="n">tier</span><span class="o">=</span><span class="s2">&quot;capable&quot;</span><span class="p">)</span>
 </code></pre></div>
 <table>
@@ -7780,7 +7780,7 @@ class method.</p>
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="n">tracker</span> <span class="o">=</span> <span class="n">UsageTracker</span><span class="p">()</span>
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="n">tracker</span><span class="o">.</span><span class="n">log_llm_call</span><span class="p">(</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-sonnet-4-6&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-sonnet-5&quot;</span><span class="p">,</span>
 <a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="n">input_tokens</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span>
 <a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>    <span class="n">output_tokens</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span>
 <a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>    <span class="n">cost</span><span class="o">=</span><span class="mf">0.012</span><span class="p">,</span>
