@@ -64,10 +64,87 @@ and then rewriting in one move would balloon the change and couple a
 mechanical migration to a behavioral redesign. Absorb first; the staleness
 hardening is a tracked follow-on.
 
+## D8 — Dogfooding the absorb reframes T2: it is a bug-fix + design call, not a mechanical repoint
+
+**Decided (2026-07-01).** Refines D7. Copied `staleness.py` +
+`manifest.py` + `freshness/symbols.py` verbatim into `attune.authoring`
+(imports repointed, provenance headers, imports clean). Then dogfooded the
+absorbed `check_staleness` against this repo's real `.help/` — and against
+the *current* live behavior of the `help_data` consumer — and found two
+facts that make a "behavior-preserving repoint" of `help_data` impossible:
+
+1. **The current dashboard staleness signal is a masked crash.** The
+   `attune-author` CLI shim on this machine points at a Python without
+   `attune_author` installed → `ModuleNotFoundError`. `help_data`'s
+   `_attune_author_stale_features` runs it via `subprocess.run(check=False)`,
+   the subprocess exits non-zero with an empty stdout, and
+   `_parse_status_output("")` returns `frozenset()`. So a **crash reads as
+   "nothing stale"**, and because the return is an empty set (not `None`),
+   callers never reach the age-based fallback. This is a latent bug the
+   absorb surfaced — a broken CLI silently reports every feature fresh.
+2. **Hash-staleness is N/A for this repo.** Post single-source rollout all
+   27 features are `status: manual` with **no `files:` globs**
+   (projector-owned from `content/features/*.md`). `manifest.py` doesn't
+   even parse the `status` field — manual-skip lives in the generator layer,
+   not in `check_staleness`. So a faithful `check_staleness` computes the
+   empty-input hash for every feature and flags **all 27 stale** (leftover
+   stored hash ≠ empty). Faithful behavior is pure noise here.
+
+So T2 is not "absorb → repoint, behavior-preserving." The current behavior
+is a bug; the faithful behavior is noise. Doing it right means teaching
+staleness to treat glob-less/manual features as **untracked (N/A)** — a
+product-semantics decision. **Parked** (Patrick, ~5am) to make that call
+rested. The three absorbed modules live on branch `feat/authoring-staleness`
+(WIP, no PR) for the next session. Pairs with the "registered ≠ working /
+dogfood the real path" and "should-this-exist" (removing-dead-code) lessons.
+
+## D9 — Both D8 blockers resolved
+
+**Decided (2026-07-01).** The two facts D8 parked on are now settled, and
+T2a executes the absorb on top of both.
+
+- **(a) Masked-crash: FIXED + SHIPPED standalone in #1203** (merged,
+  `383a252c1`). `help_data`'s subprocess wrapper now treats an
+  `attune-author status` non-zero exit as "unknown" (→ `None` → age
+  fallback), not "clean" (→ `frozenset()`). T2a then removes that
+  subprocess path entirely (the CLI is severed), so the class of bug is
+  gone at the root, not just guarded.
+- **(b) Glob-less/manual staleness semantics: DECIDED — filter in the
+  `help_data` consumer.** Manual features with no `files:` globs report as
+  *untracked (N/A)*, not *stale*: `_stale_features` excludes glob-less
+  features from the drift check (and from the result), so the all-manual
+  repo reports zero drift instead of a wall of 27 false positives. The
+  absorbed `check_staleness` / `manifest.py` stay **byte-identical to
+  upstream** (preserves golden verification). **Rejected:** teaching the
+  module itself to skip glob-less features — the semantics belong to the
+  consumer, not the shared hashing primitive.
+
+## D10 — LLM polish is preserved but moves UPSTREAM onto the master
+
+**Decided (2026-07-01).** Reverses D6; refines the D3 / Step-4 "retire"
+scope. The pipeline is `content/features/<slug>.md` (reviewed prose master
+= single source of truth) → deterministic golden projector →
+`.help/templates/...` (served). LLM polish runs at **authoring time on the
+master** (reviewed, committed), NOT on the projected output — serve-time
+polish would break single-source (served ≠ reviewed master) and golden
+reproducibility (the −207/+149 regen churn). Concretely: **absorb** the
+generator/polish machinery into `attune.authoring` (do NOT delete it),
+repoint its LLM calls to **`attune.models`** (tier routing +
+subscription-first auth + telemetry), and wire it into the
+master-authoring flow (`author-feature` skill / a polish-master action
+producing a reviewable diff). Keep `anthropic` / `claude-agent-sdk`
+(workflows already carry the SDK). Splits cleanly on the thesis seam:
+*authoring* = LLM polish on the master; *mechanics* = deterministic
+projection. This supersedes the earlier Stop-hook-stashed "retire the LLM
+regen backend" finding. **Executed by T3**, not T2a.
+
 ## Open
 
-- **Where exactly the absorbed module lives** — `attune.authoring` vs.
-  `attune.single_source` vs. folding into an existing package. Naming
-  decision for the design review; doesn't change the substance.
 - **Shim vs. archive** for the package (T4) — decide with the (near-zero)
   download numbers in hand at execution time.
+- **Resolver fold-in (spec T2 / #1191)** — extract `audit_doc_imports.py`'s
+  `src`-on-`sys.path` resolver into a shared `fact_check/imports.py` and
+  repoint the absorbed `python_refs.py` at it (kills the line-115 false
+  positive). Split OUT of T2a to keep the staleness absorb focused; it
+  touches disjoint files (`fact_check/`, `scripts/`) with its own
+  regression test. Tracked as its own follow-up.
