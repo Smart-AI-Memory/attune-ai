@@ -62,7 +62,7 @@ templates, and 380+ engineering lessons at
 [attune-ai.dev](https://attune-ai.dev) are authored, grounded, and
 maintained entirely by Attune's own stack.
 
-**Managing and creating help content and docs?**
+**Managing and creating help-content, docs, or knowledge-bases?**
 That's [`attune-gui`](https://github.com/Smart-AI-Memory/attune-gui)
 — a dedicated Living Docs dashboard wrapping `attune-rag`,
 `attune-help`, and `attune-author` in a single UI. `attune-ai` is the
@@ -148,6 +148,14 @@ test-gen       → identifier + designer + writer
 Subagents are assigned models by task complexity — Opus for deep
 reasoning, Sonnet for analysis, Haiku for fast scanning — keeping
 cost proportional to value.
+
+**A head start on `/agents`, too.** Beyond the workflow teams above,
+attune-ai ships a curated set of Claude Code subagents —
+`security-reviewer`, `spec-author`, `refactor-planner`,
+`release-prep-auditor`, and more — that appear in your `/agents` list the
+moment the plugin installs. Claude Code gives you the *mechanism* to build
+subagents; attune-ai gives you a *running start* — use them as-is, or fork
+one as the scaffold for your own.
 
 ### 3. Socratic before execution
 
