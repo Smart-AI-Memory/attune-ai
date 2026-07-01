@@ -749,6 +749,38 @@ class TestStaleFeatures:
         help_data._stale_features(tmp_path, help_dir)
         assert calls["n"] == 1
 
+    def test_authoring_unavailable_returns_none(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """If ``attune.authoring`` can't be imported, fall back to age-based."""
+        import sys
+
+        from attune.ops import help_data
+
+        monkeypatch.setitem(sys.modules, "attune.authoring.staleness", None)
+        help_data._clear_staleness_cache()
+        assert help_data._stale_features(tmp_path, tmp_path / ".help") is None
+
+    def test_check_staleness_raising_returns_none(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """A raising ``check_staleness`` falls back to age-based (advisory,
+        never 500-ing the dashboard)."""
+        import attune.authoring.staleness as staleness_mod
+        from attune.ops import help_data
+
+        help_dir = tmp_path / ".help"
+        _write_features_yaml(help_dir, {"tracked-feat": {"files": ["mod.py"]}})
+        (tmp_path / "mod.py").write_text("x = 1\n", encoding="utf-8")
+        _write_hash_template(help_dir, "tracked-feat", "0" * 64)
+
+        def _boom(*_a, **_kw):
+            raise RuntimeError("boom")
+
+        monkeypatch.setattr(staleness_mod, "check_staleness", _boom)
+        help_data._clear_staleness_cache()
+        assert help_data._stale_features(tmp_path, help_dir) is None
+
     def test_drift_set_used_for_feature_staleness(
         self, monkeypatch: pytest.MonkeyPatch, cfg: Config, corpus: Path
     ) -> None:
