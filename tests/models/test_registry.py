@@ -179,7 +179,7 @@ class TestModelInfo:
     def test_to_workflow_config(self):
         """Test to_workflow_config method."""
         model = ModelInfo(
-            id="claude-sonnet-4-6",
+            id="claude-sonnet-5",
             provider="anthropic",
             tier="capable",
             input_cost_per_million=2.5,
@@ -189,7 +189,7 @@ class TestModelInfo:
             supports_tools=True,
         )
         config = model.to_workflow_config()
-        assert config["name"] == "claude-sonnet-4-6"
+        assert config["name"] == "claude-sonnet-5"
         assert config["provider"] == "anthropic"
         assert config["tier"] == "capable"
         assert config["input_cost_per_million"] == 2.5

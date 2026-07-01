@@ -20,7 +20,7 @@ class TestRegistryPricingLookup:
 
     def test_sonnet_pricing(self) -> None:
         """Sonnet 4.5 returns $3/M input, $15/M output."""
-        pricing = get_pricing_for_model("claude-sonnet-4-6")
+        pricing = get_pricing_for_model("claude-sonnet-5")
         assert pricing is not None
         assert pricing["input"] == pytest.approx(3.0)
         assert pricing["output"] == pytest.approx(15.0)
@@ -57,7 +57,7 @@ class TestCacheSavingsMath:
         """Opus at $5/M should yield 5/3x savings vs Sonnet at $3/M for same tokens."""
         tokens = 10_000
         opus_pricing = get_pricing_for_model("claude-opus-4-8")
-        sonnet_pricing = get_pricing_for_model("claude-sonnet-4-6")
+        sonnet_pricing = get_pricing_for_model("claude-sonnet-5")
 
         assert opus_pricing is not None
         assert sonnet_pricing is not None
@@ -71,7 +71,7 @@ class TestCacheSavingsMath:
         """Haiku at $1/M should yield 1/3 savings vs Sonnet at $3/M."""
         tokens = 10_000
         haiku_pricing = get_pricing_for_model("claude-haiku-4-5")
-        sonnet_pricing = get_pricing_for_model("claude-sonnet-4-6")
+        sonnet_pricing = get_pricing_for_model("claude-sonnet-5")
 
         assert haiku_pricing is not None
         assert sonnet_pricing is not None

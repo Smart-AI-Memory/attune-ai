@@ -111,7 +111,7 @@ class TestBatchProcessingWorkflow:
                     "message": {
                         "content": [{"type": "text", "text": "Analysis complete"}],
                         "usage": {"input_tokens": 100, "output_tokens": 50},
-                        "model": "claude-sonnet-4-6",
+                        "model": "claude-sonnet-5",
                         "stop_reason": "end_turn",
                     },
                 },
@@ -161,7 +161,7 @@ class TestBatchProcessingWorkflow:
                     "message": {
                         "content": [{"type": "text", "text": "Success"}],
                         "usage": {},
-                        "model": "claude-sonnet-4-6",
+                        "model": "claude-sonnet-5",
                         "stop_reason": "end_turn",
                     },
                 },
@@ -330,7 +330,7 @@ class TestBatchProcessingCostSavings:
             with patch("attune.workflows.batch_processing.get_model") as mock_get_model:
                 # Mock model responses
                 mock_cheap = MagicMock(id="claude-haiku-4-5")
-                mock_capable = MagicMock(id="claude-sonnet-4-6")
+                mock_capable = MagicMock(id="claude-sonnet-5")
                 mock_premium = MagicMock(id="claude-opus-4-20250514")
 
                 def get_model_side_effect(provider, tier):

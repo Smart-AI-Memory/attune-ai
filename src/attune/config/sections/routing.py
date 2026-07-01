@@ -33,7 +33,7 @@ class RoutingConfig:
 
     default_tier: Literal["cheap", "capable", "premium"] = "capable"
     cheap_model: str = "claude-haiku-4-5"
-    capable_model: str = "claude-sonnet-4-6"
+    capable_model: str = "claude-sonnet-5"
     premium_model: str = "claude-opus-4-8"
     auto_tier_selection: bool = True
     cost_optimization: bool = True
@@ -67,7 +67,7 @@ class RoutingConfig:
         return cls(
             default_tier=data.get("default_tier", "capable"),
             cheap_model=data.get("cheap_model", "claude-haiku-4-5"),
-            capable_model=data.get("capable_model", "claude-sonnet-4-6"),
+            capable_model=data.get("capable_model", "claude-sonnet-5"),
             premium_model=data.get("premium_model", "claude-opus-4-8"),
             auto_tier_selection=data.get("auto_tier_selection", True),
             cost_optimization=data.get("cost_optimization", True),

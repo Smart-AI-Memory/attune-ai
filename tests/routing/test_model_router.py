@@ -84,7 +84,7 @@ class TestModelRouter:
     def test_route_capable_task(self, router):
         """Test routing capable task to capable model."""
         model = router.route("fix_bug")
-        assert model == "claude-sonnet-4-6"
+        assert model == "claude-sonnet-5"
 
     def test_route_premium_task(self, router):
         """Test routing premium task to premium model."""
@@ -103,7 +103,7 @@ class TestModelRouter:
         """Test getting full model config."""
         config = router.get_config("fix_bug")
 
-        assert config.model_id == "claude-sonnet-4-6"
+        assert config.model_id == "claude-sonnet-5"
         assert config.cost_per_1k_input == 0.003
         assert config.cost_per_1k_output == 0.015
         assert config.max_tokens == 8192

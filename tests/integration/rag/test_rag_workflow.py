@@ -73,7 +73,7 @@ def _make_assistant_message(text: str):
 
     return claude_agent_sdk.AssistantMessage(
         content=[claude_agent_sdk.types.TextBlock(text=text)],
-        model="claude-sonnet-4-6",
+        model="claude-sonnet-5",
         parent_tool_use_id=None,
     )
 

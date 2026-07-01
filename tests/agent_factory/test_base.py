@@ -646,7 +646,7 @@ class TestGetModelForTierImportError:
 
         with patch("builtins.__import__", side_effect=fake_import):
             model = adapter.get_model_for_tier("capable", "unknown-provider")
-        assert model == "claude-sonnet-4-6"
+        assert model == "claude-sonnet-5"
 
     def test_fallback_with_unknown_tier(self):
         """Line 316: unknown tier returns the default sonnet."""
@@ -671,4 +671,4 @@ class TestGetModelForTierImportError:
 
         with patch("builtins.__import__", side_effect=fake_import):
             model = adapter.get_model_for_tier("ultra-tier", "anthropic")
-        assert model == "claude-sonnet-4-6"
+        assert model == "claude-sonnet-5"

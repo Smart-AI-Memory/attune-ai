@@ -113,7 +113,7 @@ def _call_llm(
         # Stable alias — claude-sonnet-4-20250514 retires 2026-06-15.
         # The stable alias routes to the same checkpoint and stays
         # valid across model upgrades.
-        model="claude-sonnet-4-6",
+        model="claude-sonnet-5",
         max_tokens=4096,
         system=_SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_message}],

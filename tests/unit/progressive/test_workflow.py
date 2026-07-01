@@ -62,7 +62,7 @@ class TestLoadModelConfig:
         config = _load_model_config()
 
         assert config["cheap"] == "gpt-4o-mini"
-        assert config["capable"] == "claude-sonnet-4-6"
+        assert config["capable"] == "claude-sonnet-5"
         assert config["premium"] == "claude-opus-4-8"
 
     def test_load_model_config_env_override(self, monkeypatch):
@@ -314,7 +314,7 @@ class TestProgressiveWorkflow:
         workflow = ProgressiveWorkflow()
 
         assert workflow._get_model_for_tier(Tier.CHEAP) == "gpt-4o-mini"
-        assert workflow._get_model_for_tier(Tier.CAPABLE) == "claude-sonnet-4-6"
+        assert workflow._get_model_for_tier(Tier.CAPABLE) == "claude-sonnet-5"
         assert workflow._get_model_for_tier(Tier.PREMIUM) == "claude-opus-4-8"
 
     def test_analyze_tier_result_empty(self):
@@ -396,7 +396,7 @@ class TestProgressiveWorkflowEdgeCases:
         # Cheap should use override
         assert workflow._get_model_for_tier(Tier.CHEAP) == "custom-cheap-model"
         # Others should use defaults
-        assert workflow._get_model_for_tier(Tier.CAPABLE) in ["claude-sonnet-4-6", "gpt-4o"]
+        assert workflow._get_model_for_tier(Tier.CAPABLE) in ["claude-sonnet-5", "gpt-4o"]
 
     def test_analyze_tier_result_with_missing_fields(self):
         """Test analyzing items with missing optional fields."""

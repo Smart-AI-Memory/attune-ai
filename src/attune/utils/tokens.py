@@ -94,7 +94,7 @@ def _count_tokens_heuristic(text: str) -> int:
     return max(1, len(text) // 4)
 
 
-def count_tokens(text: str, model: str = "claude-sonnet-4-6", use_api: bool = False) -> int:
+def count_tokens(text: str, model: str = "claude-sonnet-5", use_api: bool = False) -> int:
     """Count tokens using best available method.
 
     By default, uses tiktoken for fast local estimation (~98% accurate).
@@ -149,7 +149,7 @@ def count_tokens(text: str, model: str = "claude-sonnet-4-6", use_api: bool = Fa
 def count_message_tokens(
     messages: list[dict[str, str]],
     system_prompt: str | None = None,
-    model: str = "claude-sonnet-4-6",
+    model: str = "claude-sonnet-5",
     use_api: bool = False,
 ) -> dict[str, int]:
     """Count tokens in a conversation.
@@ -231,7 +231,7 @@ def count_message_tokens(
     return counts
 
 
-def estimate_cost(input_tokens: int, output_tokens: int, model: str = "claude-sonnet-4-6") -> float:
+def estimate_cost(input_tokens: int, output_tokens: int, model: str = "claude-sonnet-5") -> float:
     """Estimate cost in USD based on token counts.
 
     Args:
@@ -275,7 +275,7 @@ def calculate_cost_with_cache(
     output_tokens: int,
     cache_creation_tokens: int,
     cache_read_tokens: int,
-    model: str = "claude-sonnet-4-6",
+    model: str = "claude-sonnet-5",
 ) -> dict[str, Any]:
     """Calculate cost including Anthropic prompt caching.
 

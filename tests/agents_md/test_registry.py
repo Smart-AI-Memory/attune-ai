@@ -250,7 +250,7 @@ class TestUnifiedAgentConfigModelIds:
         """Test Anthropic model IDs for each tier."""
         for tier, expected in [
             (ModelTier.CHEAP, "claude-haiku-4-5"),
-            (ModelTier.CAPABLE, "claude-sonnet-4-6"),
+            (ModelTier.CAPABLE, "claude-sonnet-5"),
             (ModelTier.PREMIUM, "claude-opus-4-8"),
         ]:
             config = UnifiedAgentConfig(name="test", provider=Provider.ANTHROPIC, model_tier=tier)
@@ -269,4 +269,4 @@ class TestUnifiedAgentConfigModelIds:
         """Test fallback model for unrecognized provider/tier."""
         config = UnifiedAgentConfig(name="test")
         # Default provider is anthropic/capable
-        assert config.get_model_id() == "claude-sonnet-4-6"
+        assert config.get_model_id() == "claude-sonnet-5"

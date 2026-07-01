@@ -743,7 +743,7 @@ class TestGetDefaultModel:
         mock_registry = {
             "anthropic": {
                 "cheap": MagicMock(id="claude-haiku-4-5"),
-                "capable": MagicMock(id="claude-sonnet-4-6"),
+                "capable": MagicMock(id="claude-sonnet-5"),
             },
         }
         mock_get_registry.return_value = mock_registry

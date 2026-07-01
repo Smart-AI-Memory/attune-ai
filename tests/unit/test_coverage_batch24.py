@@ -403,7 +403,7 @@ def _make_metric(**overrides):
         "workflow": "code_review",
         "agent_role": "Code Reviewer",
         "task_description": "Review code",
-        "model": "claude-sonnet-4-6",
+        "model": "claude-sonnet-5",
         "prompt_tokens": 1000,
         "completion_tokens": 500,
         "total_tokens": 1500,

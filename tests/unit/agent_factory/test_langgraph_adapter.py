@@ -574,7 +574,7 @@ class TestLangGraphAdapterGetLLM:
         with patch("langchain_anthropic.ChatAnthropic") as mock_chat:
             adapter = LangGraphAdapter(provider="anthropic", api_key="sk-test")
             config = AgentConfig(
-                name="t", role=AgentRole.COORDINATOR, model_override="claude-sonnet-4-6"
+                name="t", role=AgentRole.COORDINATOR, model_override="claude-sonnet-5"
             )
             adapter._get_llm(config)
         kwargs = mock_chat.call_args.kwargs

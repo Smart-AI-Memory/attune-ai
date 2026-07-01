@@ -307,11 +307,11 @@ class BaseAdapter(ABC):
             defaults = {
                 "anthropic": {
                     "cheap": "claude-haiku-4-5",
-                    "capable": "claude-sonnet-4-6",
+                    "capable": "claude-sonnet-5",
                     "premium": "claude-opus-4-8",
                 },
             }
             return defaults.get(provider, defaults["anthropic"]).get(
                 tier,
-                "claude-sonnet-4-6",
+                "claude-sonnet-5",
             )

@@ -50,7 +50,7 @@ def _load_model_config() -> dict[str, str]:
     # Default models
     defaults = {
         "cheap": "gpt-4o-mini",
-        "capable": "claude-sonnet-4-6",
+        "capable": "claude-sonnet-5",
         "premium": "claude-opus-4-8",
     }
 
@@ -733,4 +733,4 @@ class ProgressiveWorkflow:
         """
         model_config = _load_model_config()
         tier_key = tier.value.lower()  # "cheap", "capable", "premium"
-        return model_config.get(tier_key, "claude-sonnet-4-6")
+        return model_config.get(tier_key, "claude-sonnet-5")

@@ -45,7 +45,7 @@ def api_key():
 @pytest.fixture
 def anthropic_provider(api_key):
     """Create real Anthropic provider"""
-    return AnthropicProvider(api_key=api_key, model="claude-sonnet-4-6")
+    return AnthropicProvider(api_key=api_key, model="claude-sonnet-5")
 
 
 @pytest.fixture
@@ -54,7 +54,7 @@ def empathy_llm(api_key):
     return EmpathyLLM(
         provider="anthropic",
         api_key=api_key,
-        model="claude-sonnet-4-6",
+        model="claude-sonnet-5",
         target_level=4,
     )
 

@@ -455,7 +455,7 @@ def _add_misc_subparsers(subparsers: argparse._SubParsersAction) -> None:
         "--path", help="Memory namespace root the agent addresses (default /memories)"
     )
     memory_agent_parser.add_argument(
-        "--model", help="Model id (default: claude-sonnet-4-6, the CAPABLE tier)"
+        "--model", help="Model id (default: claude-sonnet-5, the CAPABLE tier)"
     )
     memory_agent_parser.add_argument("--user-id", dest="user_id", help="Namespace memory per user")
     memory_agent_parser.add_argument(

@@ -229,7 +229,7 @@ class TestAnthropicCalculateActualCost:
     @pytest.mark.asyncio
     async def test_cost_breakdown_with_caching(self):
         with patch.dict("sys.modules", {"anthropic": _make_mock_anthropic(MagicMock())}):
-            provider = AnthropicProvider(api_key="test-key", model="claude-sonnet-4-6")
+            provider = AnthropicProvider(api_key="test-key", model="claude-sonnet-5")
 
         cost = provider.calculate_actual_cost(
             input_tokens=1_000_000,

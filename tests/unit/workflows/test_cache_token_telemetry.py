@@ -147,7 +147,7 @@ class TestRunStepWithExecutorPullsCacheFromMetadata:
                     response.tokens_output = 50
                     response.cost_estimate = 0.01
                     response.tier = "capable"
-                    response.model_id = "claude-sonnet-4-6"
+                    response.model_id = "claude-sonnet-5"
                     response.metadata = {
                         "cache_creation_tokens": 1200,
                         "cache_read_tokens": 0,

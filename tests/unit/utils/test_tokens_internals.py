@@ -80,7 +80,7 @@ class TestTiktokenEncoding:
         monkeypatch.setattr(tokens_mod, "TIKTOKEN_AVAILABLE", False)
         _get_tiktoken_encoding.cache_clear()
 
-        assert _get_tiktoken_encoding("claude-sonnet-4-6") is None
+        assert _get_tiktoken_encoding("claude-sonnet-5") is None
 
         _get_tiktoken_encoding.cache_clear()
 
@@ -101,19 +101,19 @@ class TestCountTokensTiktoken:
     """Cover _count_tokens_tiktoken() branches."""
 
     def test_empty_text_returns_zero(self):
-        assert _count_tokens_tiktoken("", "claude-sonnet-4-6") == 0
+        assert _count_tokens_tiktoken("", "claude-sonnet-5") == 0
 
     def test_returns_zero_when_no_encoding(self, monkeypatch):
         """No encoding available -> 0."""
         monkeypatch.setattr(tokens_mod, "_get_tiktoken_encoding", lambda model: None)
-        assert _count_tokens_tiktoken("hello", "claude-sonnet-4-6") == 0
+        assert _count_tokens_tiktoken("hello", "claude-sonnet-5") == 0
 
     def test_returns_zero_on_encode_error(self, monkeypatch):
         """encoding.encode raising -> warning + 0."""
         bad_encoding = MagicMock()
         bad_encoding.encode.side_effect = RuntimeError("encode failed")
         monkeypatch.setattr(tokens_mod, "_get_tiktoken_encoding", lambda model: bad_encoding)
-        assert _count_tokens_tiktoken("hello", "claude-sonnet-4-6") == 0
+        assert _count_tokens_tiktoken("hello", "claude-sonnet-5") == 0
 
 
 class TestCountTokensHeuristic:

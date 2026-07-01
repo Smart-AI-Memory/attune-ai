@@ -116,7 +116,7 @@ class TestModelAllowlist:
     def test_known_model_passes_validation(self):
         """A real registry ID gets past the model check (reaches query guard)."""
         workflow = RagCodeGenWorkflow()
-        result = asyncio.run(workflow.execute(model="claude-sonnet-4-6", query=""))
+        result = asyncio.run(workflow.execute(model="claude-sonnet-5", query=""))
         assert result.success is False
         # Reached the empty-query guard → model passed.
         assert "query argument is required" in result.error

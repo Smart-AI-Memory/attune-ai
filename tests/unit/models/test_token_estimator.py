@@ -370,7 +370,7 @@ class TestEstimateTokensFallbacks:
             _patch("builtins.__import__", side_effect=fake_import),
             _patch.object(mod, "TIKTOKEN_AVAILABLE", True),
         ):
-            result = mod.estimate_tokens("hello world", model_id="claude-sonnet-4-6")
+            result = mod.estimate_tokens("hello world", model_id="claude-sonnet-5")
         assert result > 0
 
     def test_tiktoken_fallback_with_encoding_exception(self, monkeypatch):
@@ -589,7 +589,7 @@ class TestGetEncodingPathsNoTiktoken:
             assert mod._get_encoding("gpt-4-turbo") is None
             assert mod._get_encoding("o1-preview") is None
             assert mod._get_encoding("unknown-model") is None
-            assert mod._get_encoding("claude-sonnet-4-6") is None
+            assert mod._get_encoding("claude-sonnet-5") is None
         mod._get_encoding.cache_clear()
 
 

@@ -154,14 +154,14 @@ class TestConsoleProgressReporterTierInfo:
             name="analyze",
             status=ProgressStatus.RUNNING,
             tier="capable",
-            model="claude-sonnet-4-6",
+            model="claude-sonnet-5",
         )
         update = _make_update(current_stage="analyze", stages=[stage])
         # When
         reporter.report(update)
         # Then
         captured = capsys.readouterr()
-        assert "(claude-sonnet-4-6)" in captured.out
+        assert "(claude-sonnet-5)" in captured.out
 
     def test_completed_stage_no_tier_label(self, capsys: pytest.CaptureFixture) -> None:
         """Given a completed stage, tier info is not appended."""

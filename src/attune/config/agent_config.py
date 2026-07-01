@@ -149,14 +149,14 @@ class UnifiedAgentConfig(BaseModel):
         models = {
             Provider.ANTHROPIC: {
                 ModelTier.CHEAP: "claude-haiku-4-5",
-                ModelTier.CAPABLE: "claude-sonnet-4-6",
+                ModelTier.CAPABLE: "claude-sonnet-5",
                 ModelTier.PREMIUM: "claude-opus-4-8",
             },
         }
 
         return models.get(self.provider, {}).get(
             self.model_tier,
-            "claude-sonnet-4-6",  # Fallback
+            "claude-sonnet-5",  # Fallback
         )
 
     def for_book_production(self) -> "BookProductionConfig":
