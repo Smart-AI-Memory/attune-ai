@@ -12524,3 +12524,26 @@ files.
   grep exclusion `grep -vE "…|site/"` also matched `webSITE/` and
   silently dropped every `website/` path from a file list — anchor
   path-segment excludes with a leading slash: `/site/`.)
+
+- **The format-on-write hook (ruff --fix) STRIPS an import that is
+  momentarily unused — so adding an import and its usage in SEPARATE
+  Edit calls loses the import, surfacing later as a runtime NameError,
+  not an import error**: hit repeatedly 2026-07-01 fixing the models/
+  review (asyncio, structlog, time, ipaddress, deque, _validate_file_path
+  across 5 files). The pattern: Edit #1 adds `import asyncio`; the
+  PostToolUse formatter runs ruff --fix, sees `asyncio` unused (the
+  usage isn't written yet) and DELETES the import; Edit #2 adds `await
+  asyncio.sleep(...)`. Result: the module imports fine (NameError is
+  runtime, not import-time), a smoke `import x` passes, and the failure
+  only appears when the function actually runs (tests: `NameError: name
+  'asyncio' is not defined`). Cost this session: a 101-failed / 79-error
+  cascade whose root was one stripped import (`_validate_file_path`),
+  plus three more stripped imports found only by exercising the code.
+  **Fixes:** (1) add the import AND its first usage in the SAME Edit
+  (ruff sees it used, keeps it); or (2) after any add-an-import Edit,
+  before moving on, `grep -n "^import <name>\|^from .* <name>"` the file
+  to confirm it survived; or (3) run an actual test that EXERCISES the
+  new line — a bare `python -c "import module"` is NOT enough (the
+  import resolves; the stripped-symbol call is what NameErrors). Pairs
+  with the "registered ≠ working — dogfood the live loop" lesson: the
+  module importing clean is necessary-not-sufficient; run the code.
