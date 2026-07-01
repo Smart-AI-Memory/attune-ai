@@ -12547,3 +12547,29 @@ files.
   import resolves; the stripped-symbol call is what NameErrors). Pairs
   with the "registered ≠ working — dogfood the live loop" lesson: the
   module importing clean is necessary-not-sufficient; run the code.
+
+- **The `worktree_path_guard.py` PreToolUse hook now BLOCKS Edit/Write
+  to a path in a DIFFERENT worktree than the session's — you can't
+  record a decision on a parked branch checked out elsewhere; capture
+  it in the global handoff file instead**: 2026-07-01, closing the two
+  D8 blockers of the attune-author consolidation. The parked
+  `feat/authoring-staleness` branch (which owns that spec's
+  `decisions.md`) was checked out in a sibling worktree
+  (`pensive-newton-b374a4`); editing its `decisions.md` from this
+  session to add a D9 was blocked by `worktree_path_guard`
+  ("Write would land in a different tree than the one you're working
+  in"). This is the enforcement counterpart to the earlier
+  "`Write` to an absolute `~/attune-ai/...` path from a worktree lands
+  on MAIN" lesson — that footgun is now a hard guard, and it fires for
+  ANY cross-worktree target, not just main. **Options when you need to
+  touch a branch that lives in another worktree:** (1) do the edit from
+  a session actually in that worktree (git refuses two worktrees on one
+  branch, so it must be that worktree's own session); or (2) if it's a
+  decision/handoff note, record it in the GLOBAL, worktree-free file
+  `~/.attune/next_session_starter.md` (the guard doesn't fire outside
+  the repo tree) and let the branch's next session write it into the
+  spec's `decisions.md`. Don't try to `--override` the guard for a
+  convenience cross-write — the guard is correct; the work belongs in
+  the other tree. Pairs with the worktree-Write-absolute-path and
+  "create a new worktree to continue" lessons (same family: locating
+  the right tree for a piece of work).
