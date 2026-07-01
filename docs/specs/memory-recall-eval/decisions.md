@@ -130,3 +130,27 @@ a measured fact. The single-process default (`--phase all`) reproduces
 the same numbers, so the two methodologies are interchangeable for
 future runs; use `--phase persistence` when the change under test
 touches serialization or file layout.
+
+## 2026-07-01 — Sanity check: `MemoryGraph.find_similar` (deferred non-goal, spot-checked)
+
+The non-goals deferred `MemoryGraph` recall to a future experiment;
+given Run 1 found `PersonalMemory.query()` silently dead, a cheap
+spot-check was worth it. Done during the first real curated-memory
+captures (see
+`docs/specs/memory-nodetype-friction-log/decisions.md`, Friction C):
+
+- **Not the dead-path class.** A verbatim node name self-matches at
+  score 1.0 — the mechanism (Jaccard word-overlap over
+  name/description, type/file bonuses) works.
+- **But the default `threshold=0.5` mutes realistic queries.** A
+  natural paraphrase ("recall benchmark persistence numbers") scored
+  0.301 / 0.125 against nodes it should plausibly find — both filtered
+  at the default. Callers get `[]` for anything short of near-verbatim
+  names, which *reads* like the query() bug from the outside.
+- **Workaround:** pass `threshold≈0.25`, or use
+  `PersonalMemory.query()` for text recall.
+
+No full ground-truthed benchmark run for `find_similar` yet — this was
+a spot-check, not Run 4. If curated-graph usage grows (friction-log
+spec), rerun this corpus's methodology against `find_similar` with a
+tuned threshold.
