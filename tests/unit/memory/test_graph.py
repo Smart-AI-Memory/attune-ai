@@ -121,6 +121,38 @@ class TestGraphInitialization:
         graph = MemoryGraph(path=temp_graph_path)
         assert len(graph.nodes) == 0
 
+    def test_loads_curated_memory_node_via_real_add_finding(self, temp_graph_path):
+        """Regression guard: before NodeType.FEEDBACK/USER_CONTEXT/
+        PROJECT_CONTEXT/REFERENCE existed, reloading a graph containing one
+        of these types raised
+        ``ValueError: 'feedback' is not a valid NodeType`` inside
+        MemoryGraph._load() -> Node.from_dict() -> NodeType(data["type"]).
+        Exercises the real public API (add_finding, not manual Node
+        construction) end to end: add, save, reload in a fresh instance,
+        traverse via find_related."""
+        graph1 = MemoryGraph(path=temp_graph_path)
+        feedback_id = graph1.add_finding(
+            workflow="",
+            finding={
+                "type": "feedback",
+                "name": "Standing commitments to Patrick",
+                "status": "active",
+            },
+        )
+        project_id = graph1.add_finding(
+            workflow="",
+            finding={"type": "project_context", "name": "Memory subsystem motivation"},
+        )
+        graph1.add_edge(project_id, feedback_id, EdgeType.RELATED_TO)
+
+        # A fresh instance must reload without raising.
+        graph2 = MemoryGraph(path=temp_graph_path)
+
+        assert graph2.nodes[feedback_id].type == NodeType.FEEDBACK
+        assert graph2.nodes[project_id].type == NodeType.PROJECT_CONTEXT
+        related = graph2.find_related(project_id, edge_types=[EdgeType.RELATED_TO])
+        assert [n.id for n in related] == [feedback_id]
+
 
 # =============================================================================
 # NODE OPERATIONS

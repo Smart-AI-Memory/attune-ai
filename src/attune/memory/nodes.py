@@ -1,7 +1,14 @@
 """Memory Graph Node Types
 
-Defines node types for the cross-workflow knowledge graph.
-Each node represents an entity discovered by a workflow.
+Defines node types for the cross-workflow knowledge graph. Most nodes
+represent an entity discovered by a workflow (a bug, a fix, a test).
+The "Curated memory" category (below) is the exception: those nodes
+represent hand-curated cross-session memory - decisions, standing
+feedback, project context - that has no workflow origin and no
+resolution lifecycle. ``source_workflow`` stays empty and ``severity``
+stays unset for curated-memory nodes; ``status`` is reinterpreted as
+active/superseded/stale rather than open/investigating/resolved/wontfix
+(same field, no schema change).
 
 Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
@@ -46,6 +53,12 @@ class NodeType(Enum):
     # Dependencies
     DEPENDENCY = "dependency"
     LICENSE = "license"
+
+    # Curated memory (not workflow findings - see module docstring)
+    USER_CONTEXT = "user_context"
+    FEEDBACK = "feedback"
+    PROJECT_CONTEXT = "project_context"
+    REFERENCE = "reference"
 
 
 @dataclass

@@ -63,6 +63,14 @@ class TestNodeTypeEnum:
         assert NodeType.DEPENDENCY.value == "dependency"
         assert NodeType.LICENSE.value == "license"
 
+    def test_node_type_enum_has_curated_memory_types(self):
+        """Test that NodeType enum includes curated cross-session memory
+        types (not workflow findings - see module docstring)."""
+        assert NodeType.USER_CONTEXT.value == "user_context"
+        assert NodeType.FEEDBACK.value == "feedback"
+        assert NodeType.PROJECT_CONTEXT.value == "project_context"
+        assert NodeType.REFERENCE.value == "reference"
+
     def test_node_type_can_be_created_from_string_value(self):
         """Test that NodeType can be created from string value."""
         node_type = NodeType("bug")
@@ -350,6 +358,33 @@ class TestNodeSerialization:
         assert restored.created_at == original.created_at
         assert restored.updated_at == original.updated_at
         assert restored.status == original.status
+
+    def test_curated_memory_node_roundtrip_serialization(self):
+        """Regression guard: before the curated-memory NodeType members
+        existed, Node.from_dict(node.to_dict()) on a FEEDBACK/USER_CONTEXT/
+        PROJECT_CONTEXT/REFERENCE node raised
+        ``ValueError: '<value>' is not a valid NodeType`` at reload time
+        (from_dict calls NodeType(data["type"]) against whatever the enum
+        actually contains). severity stays unset and status is
+        reinterpreted (active, not open/resolved) for these node types -
+        see the module docstring."""
+        original = Node(
+            id="feedback_my_commitments_to_patrick",
+            type=NodeType.FEEDBACK,
+            name="Standing commitments to Patrick",
+            description="Neutral curiosity, full attention, correction without ego.",
+            source_file="/memory/feedback_my_commitments_to_patrick.md",
+            severity="",
+            status="active",
+            tags=["relationship", "standing-commitment"],
+        )
+
+        restored = Node.from_dict(original.to_dict())
+
+        assert restored.type == NodeType.FEEDBACK
+        assert restored.severity == ""
+        assert restored.status == "active"
+        assert restored.source_workflow == ""
 
 
 @pytest.mark.unit
