@@ -26,11 +26,13 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import logging
 import os
 import platform
 import sys
+import urllib.parse
 import urllib.request
 import uuid
 from collections.abc import Callable, Iterable, Mapping
@@ -134,6 +136,35 @@ def resolve_endpoint(env: Mapping[str, str] | None = None) -> str:
     """Return the collection endpoint (env override or default)."""
     env = os.environ if env is None else env
     return (env.get("ATTUNE_USAGE_ENDPOINT") or DEFAULT_ENDPOINT).strip()
+
+
+def _endpoint_host_blocked(url: str) -> bool:
+    """Return True if the endpoint host is a private/loopback/link-local
+    address that usage pings must never target (SSRF guard).
+
+    ``ATTUNE_USAGE_ENDPOINT`` is operator/env-controlled; without this a
+    misconfigured or compromised env could point pings at the cloud
+    metadata service (169.254.169.254) or an internal host. Blocks
+    loopback, link-local, and RFC-1918/ULA ranges plus ``localhost``. DNS
+    names are not resolved here, so a name resolving to a private IP is
+    not caught — the guard covers literal-IP and localhost endpoints, the
+    realistic misconfiguration.
+    """
+    host = (urllib.parse.urlparse(url).hostname or "").lower()
+    if host in {"localhost", "ip6-localhost", "ip6-loopback"}:
+        return True
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return False  # not a literal IP; leave DNS names to the transport
+    return (
+        ip.is_loopback
+        or ip.is_link_local
+        or ip.is_private
+        or ip.is_reserved
+        or ip.is_multicast
+        or ip.is_unspecified
+    )
 
 
 def new_install_id() -> str:
@@ -241,6 +272,9 @@ def sync(
         return 0
     if not (endpoint.startswith("https://") or endpoint.startswith("http://")):
         logger.debug("usage-ping: endpoint scheme not allowed: %r", endpoint)
+        return 0
+    if _endpoint_host_blocked(endpoint):
+        logger.debug("usage-ping: endpoint host not allowed: %r", endpoint)
         return 0
 
     sent = 0

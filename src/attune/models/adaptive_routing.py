@@ -15,11 +15,13 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
-import logging
+import time
 from dataclasses import dataclass
 from typing import Any
 
-logger = logging.getLogger(__name__)
+import structlog
+
+logger = structlog.get_logger(__name__)
 
 # Lazy import to avoid circular dependency
 _model_registry = None
@@ -114,14 +116,21 @@ class AdaptiveModelRouter:
     # Recent window size for failure detection
     RECENT_WINDOW_SIZE = 20
 
-    def __init__(self, telemetry: Any):
+    def __init__(self, telemetry: Any, *, cache_ttl_seconds: float = 5.0):
         """Initialize adaptive router.
 
         Args:
             telemetry: UsageTracker instance for telemetry data access
+            cache_ttl_seconds: How long to reuse a fetched telemetry window
+                across routing decisions. ``recommend_tier_upgrade`` runs per
+                workflow stage; without this each stage re-scans up to 10k
+                entries. Set to 0 to disable caching (e.g. in tests).
 
         """
         self.telemetry = telemetry
+        self._cache_ttl = cache_ttl_seconds
+        # days -> (monotonic_fetch_time, entries oldest-first)
+        self._entries_cache: dict[int, tuple[float, list[dict[str, Any]]]] = {}
 
     def _get_default_model(self, tier: str = "CHEAP") -> str:
         """Get default Anthropic model for a tier from registry.
@@ -436,17 +445,40 @@ class AdaptiveModelRouter:
             List of telemetry entries
 
         """
-        # Get recent entries from telemetry tracker
-        all_entries = self.telemetry.get_recent_entries(limit=10000, days=days)
+        # Fetch the recent window once per (days) and reuse it across routing
+        # decisions within the TTL (recommend_tier_upgrade runs per stage).
+        all_entries = self._fetch_recent(days)
 
-        # Filter to this workflow
+        # Filter to this workflow (and stage). Entries are oldest-first, so a
+        # caller's ``entries[-RECENT_WINDOW_SIZE:]`` yields the MOST RECENT
+        # window.
         workflow_entries = [e for e in all_entries if e.get("workflow") == workflow]
-
-        # Filter to this stage if specified
         if stage is not None:
             workflow_entries = [e for e in workflow_entries if e.get("stage") == stage]
 
         return workflow_entries
+
+    def _fetch_recent(self, days: int) -> list[dict[str, Any]]:
+        """Fetch the recent telemetry window (oldest-first), cached by ``days``.
+
+        ``UsageTracker.get_recent_entries`` returns entries NEWEST-first; this
+        normalizes them to chronological (oldest-first) order so the callers'
+        ``[-RECENT_WINDOW_SIZE:]`` slices select the most recent calls, and
+        memoizes the result for ``cache_ttl_seconds`` to avoid re-scanning up
+        to 10k entries on every routing decision.
+        """
+        if self._cache_ttl > 0:
+            cached = self._entries_cache.get(days)
+            if cached is not None and (time.monotonic() - cached[0]) < self._cache_ttl:
+                return cached[1]
+
+        entries = self.telemetry.get_recent_entries(limit=10000, days=days)
+        # get_recent_entries is newest-first; normalize to chronological.
+        entries = list(reversed(entries))
+
+        if self._cache_ttl > 0:
+            self._entries_cache[days] = (time.monotonic(), entries)
+        return entries
 
 
 __all__ = ["AdaptiveModelRouter", "ModelPerformance"]
