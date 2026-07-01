@@ -130,26 +130,25 @@ def corpus(tmp_path: Path) -> Path:
 
 @pytest.fixture(autouse=True)
 def _inject_stale_features(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Inject the attune-author authority set used by the corpus.
+    """Inject the source-hash drift authority set used by the corpus.
 
     Staleness is hash-based only (no date fallback). The synthetic
     corpus marks ``stale-feature`` and ``mixed-feature`` as the
     features whose source has drifted; this fixture stubs
-    ``_attune_author_stale_features`` to return that exact set so
-    tests run deterministically without needing the real
-    attune-author CLI on PATH.
+    ``_stale_features`` to return that exact set so tests run
+    deterministically without needing a real manifest on disk.
 
-    Skipped for ``TestAttuneAuthorStaleFeatures`` — those tests
-    exercise the real ``_attune_author_stale_features`` body, so
-    they need to see the un-stubbed function. Tests in other
-    classes that need a different authority set re-monkeypatch
-    ``_attune_author_stale_features`` themselves.
+    Skipped for ``TestStaleFeatures`` — those tests exercise the
+    real ``_stale_features`` body, so they need to see the
+    un-stubbed function. Tests in other classes that need a
+    different authority set re-monkeypatch ``_stale_features``
+    themselves.
     """
-    if request.cls is not None and request.cls.__name__ == "TestAttuneAuthorStaleFeatures":
+    if request.cls is not None and request.cls.__name__ == "TestStaleFeatures":
         return
     monkeypatch.setattr(
         help_data_mod,
-        "_attune_author_stale_features",
+        "_stale_features",
         lambda *_args, **_kwargs: frozenset({"stale-feature", "mixed-feature"}),
     )
     help_data_mod._clear_staleness_cache()
@@ -644,249 +643,162 @@ class TestIsTemplateStale:
 
 
 # ---------------------------------------------------------------------------
-# attune-author authority path
+# Source-hash drift authority path (in-process)
 # ---------------------------------------------------------------------------
 
 
-_REAL_STATUS_OUTPUT = """## Help Templates
+def _write_features_yaml(help_dir: Path, features: dict) -> None:
+    """Write a minimal ``.help/features.yaml`` for the given feature specs."""
+    import yaml
 
-**24** current, **2** stale
-
-### Stale
-
-| Feature | Description | Files Changed |
-|---------|-------------|---------------|
-| spec-engine | The spec engine | 8 source files |
-| smart-test | Find test gaps | 3 source files |
+    help_dir.mkdir(parents=True, exist_ok=True)
+    (help_dir / "features.yaml").write_text(
+        yaml.safe_dump({"version": 1, "features": features}), encoding="utf-8"
+    )
 
 
-### Current
+def _write_hash_template(help_dir: Path, feature: str, source_hash: str | None) -> None:
+    """Write ``.help/templates/<feature>/concept.md`` with an optional stored hash."""
+    tdir = help_dir / "templates" / feature
+    tdir.mkdir(parents=True, exist_ok=True)
+    fm = "---\ntype: concept\n"
+    if source_hash is not None:
+        fm += f"source_hash: {source_hash}\n"
+    fm += "---\n\n# Concept\n"
+    (tdir / "concept.md").write_text(fm, encoding="utf-8")
 
-- **security-audit** — desc
-- **code-quality** — desc
-"""
 
+class TestStaleFeatures:
+    """Tests for the in-process source-hash drift check (``_stale_features``).
 
-class TestParseStatusOutput:
-    def test_extracts_stale_features(self) -> None:
-        from attune.ops.help_data import _parse_status_output
+    Exercises the real function body (no subprocess) — the autouse
+    ``_inject_stale_features`` fixture skips this class so the
+    un-stubbed function runs.
+    """
 
-        stale = _parse_status_output(_REAL_STATUS_OUTPUT)
-        assert stale == frozenset({"spec-engine", "smart-test"})
+    def test_returns_none_when_manifest_missing(self, tmp_path: Path) -> None:
+        """No ``features.yaml`` -> ``None`` (callers fall back to age-based)."""
+        from attune.ops import help_data
 
-    def test_no_stale_section_returns_empty(self) -> None:
-        from attune.ops.help_data import _parse_status_output
+        help_data._clear_staleness_cache()
+        assert help_data._stale_features(tmp_path, tmp_path / ".help") is None
 
-        text = "## Help Templates\n\n**25** current, **0** stale\n"
-        assert _parse_status_output(text) == frozenset()
+    def test_manual_features_reported_untracked_not_stale(self, tmp_path: Path) -> None:
+        """Regression (decisions D9): features with no ``files:`` globs are
+        untracked (N/A), never stale -- even though a faithful hash check
+        would flag every one (stored hash != empty-input hash). Guards the
+        all-manual single-sourced repo from a wall of false 'stale'."""
+        from attune.ops import help_data
 
-    def test_empty_string(self) -> None:
-        from attune.ops.help_data import _parse_status_output
+        help_dir = tmp_path / ".help"
+        _write_features_yaml(help_dir, {"manual-feat": {"description": "no globs"}})
+        _write_hash_template(help_dir, "manual-feat", "deadbeef")  # stale-looking hash
+        help_data._clear_staleness_cache()
+        assert help_data._stale_features(tmp_path, help_dir) == frozenset()
 
-        assert _parse_status_output("") == frozenset()
+    def test_tracked_feature_in_sync_not_stale(self, tmp_path: Path) -> None:
+        """A tracked feature whose stored hash matches current source is not stale."""
+        from attune.authoring.manifest import Feature
+        from attune.authoring.staleness import compute_source_hash
+        from attune.ops import help_data
 
-    def test_ignores_table_header_and_divider(self) -> None:
-        """Header row (Feature/Description/Files) and the |---|---| divider
-        don't match the slug regex, so they're correctly skipped."""
-        from attune.ops.help_data import _parse_status_output
-
-        text = (
-            "### Stale\n\n"
-            "| Feature | Description | Files Changed |\n"
-            "|---------|-------------|---------------|\n"
-            "| valid-slug | desc | 1 file |\n"
+        (tmp_path / "mod.py").write_text("def f(x: int) -> int:\n    return x\n", encoding="utf-8")
+        help_dir = tmp_path / ".help"
+        _write_features_yaml(help_dir, {"tracked-feat": {"files": ["mod.py"]}})
+        current, _ = compute_source_hash(
+            Feature(name="tracked-feat", description="", files=["mod.py"]), tmp_path
         )
-        assert _parse_status_output(text) == frozenset({"valid-slug"})
+        _write_hash_template(help_dir, "tracked-feat", current)
+        help_data._clear_staleness_cache()
+        assert help_data._stale_features(tmp_path, help_dir) == frozenset()
 
-    def test_current_section_ignored(self) -> None:
-        """Bullets in the ### Current section don't pollute the stale set."""
-        from attune.ops.help_data import _parse_status_output
-
-        text = (
-            "### Stale\n\n"
-            "| a-feature | x | 1 |\n\n"
-            "### Current\n\n"
-            "- **other-feature** — desc\n"
-        )
-        assert _parse_status_output(text) == frozenset({"a-feature"})
-
-    def test_project_docs_stale_section_ignored(self) -> None:
-        """``## Project Docs`` is a SEPARATE corpus from
-        ``.help/templates/``. Its stale section must NOT contribute
-        to the dashboard's help-templates stale set — otherwise
-        clicking "Regenerate all stale" can never bring the count
-        down (regenerate only touches .help/, not docs/).
-
-        This is the bug PR #494 fixed: pre-fix the parser walked
-        every "### Stale" section regardless of its parent h2,
-        rolling project-docs drift into help-templates staleness.
-        """
-        from attune.ops.help_data import _parse_status_output
-
-        text = (
-            "## Help Templates\n\n"
-            "**1** current, **1** stale\n\n"
-            "### Stale\n\n"
-            "| help-only-feat | foo | 1 |\n\n"
-            "## Project Docs\n\n"
-            "**0** current, **2** stale\n\n"
-            "### Stale\n\n"
-            "| docs-only-feat | bar | 2 |\n"
-            "| another-docs-feat | baz | 1 |\n"
-        )
-        # Only the help-templates feature appears; the project-docs
-        # features are silently dropped.
-        assert _parse_status_output(text) == frozenset({"help-only-feat"})
-
-    def test_help_templates_implicit_when_no_h2(self) -> None:
-        """If no ``## `` h2 appears, default to Help Templates context.
-
-        Backward compat with older attune-author versions whose
-        status output didn't include section headers.
-        """
-        from attune.ops.help_data import _parse_status_output
-
-        text = "### Stale\n\n| legacy-feat | foo | 1 |\n"
-        assert _parse_status_output(text) == frozenset({"legacy-feat"})
-
-
-class TestAttuneAuthorStaleFeatures:
-    """Tests for the subprocess wrapper. We mock subprocess.run to
-    keep tests fast and deterministic — no dependency on the real
-    attune-author CLI being installed in the venv."""
-
-    def test_returns_none_when_binary_missing(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        """When ``shutil.which`` reports the binary missing,
-        ``_attune_author_stale_features`` returns ``None`` (the
-        signal callers use to mean 'cannot determine drift')."""
+    def test_tracked_feature_drift_detected(self, tmp_path: Path) -> None:
+        """A tracked feature whose stored hash != current source hash is stale."""
         from attune.ops import help_data
 
-        monkeypatch.setattr(help_data.shutil, "which", lambda _: None)
+        (tmp_path / "mod.py").write_text("def f(x: int) -> int:\n    return x\n", encoding="utf-8")
+        help_dir = tmp_path / ".help"
+        _write_features_yaml(help_dir, {"tracked-feat": {"files": ["mod.py"]}})
+        _write_hash_template(help_dir, "tracked-feat", "0" * 64)  # wrong hash
         help_data._clear_staleness_cache()
-        result = help_data._attune_author_stale_features(tmp_path, tmp_path / ".help")
-        assert result is None
+        assert help_data._stale_features(tmp_path, help_dir) == frozenset({"tracked-feat"})
 
-    def test_parses_subprocess_output(
+    def test_cache_hits_skip_recompute(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
+        """A second call within the TTL returns the cached set without
+        re-running ``check_staleness``."""
+        import attune.authoring.staleness as staleness_mod
         from attune.ops import help_data
 
-        monkeypatch.setattr(help_data.shutil, "which", lambda _: "/fake/attune-author")
+        help_dir = tmp_path / ".help"
+        _write_features_yaml(help_dir, {"tracked-feat": {"files": ["mod.py"]}})
+        (tmp_path / "mod.py").write_text("x = 1\n", encoding="utf-8")
+        _write_hash_template(help_dir, "tracked-feat", "0" * 64)
 
-        class _FakeResult:
-            stdout = _REAL_STATUS_OUTPUT
-            stderr = ""
-            returncode = 0
+        calls = {"n": 0}
+        real = staleness_mod.check_staleness
 
-        monkeypatch.setattr(help_data.subprocess, "run", lambda *a, **kw: _FakeResult())
+        def _counting(*a, **kw):
+            calls["n"] += 1
+            return real(*a, **kw)
+
+        monkeypatch.setattr(staleness_mod, "check_staleness", _counting)
         help_data._clear_staleness_cache()
-        result = help_data._attune_author_stale_features(tmp_path, tmp_path / ".help")
-        assert result == frozenset({"spec-engine", "smart-test"})
+        help_data._stale_features(tmp_path, help_dir)
+        help_data._stale_features(tmp_path, help_dir)
+        assert calls["n"] == 1
 
-    def test_nonzero_exit_returns_none_not_empty_set(
+    def test_authoring_unavailable_returns_none(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
-        """Regression: a CLI that runs but exits non-zero (e.g. a broken
-        shim raising ModuleNotFoundError) must return ``None`` (→ age
-        fallback), NOT ``frozenset()``. Previously ``check=False`` let the
-        crash's empty stdout parse to an empty set, masking the failure as
-        'nothing stale' and denying callers the fallback."""
-        from attune.ops import help_data
-
-        monkeypatch.setattr(help_data.shutil, "which", lambda _: "/fake/attune-author")
-
-        class _CrashResult:
-            stdout = ""
-            stderr = "ModuleNotFoundError: No module named 'attune_author'"
-            returncode = 1
-
-        monkeypatch.setattr(help_data.subprocess, "run", lambda *a, **kw: _CrashResult())
-        help_data._clear_staleness_cache()
-        result = help_data._attune_author_stale_features(tmp_path, tmp_path / ".help")
-        assert result is None
-
-    def test_subprocess_failure_returns_none(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        import subprocess as _sp
+        """If ``attune.authoring`` can't be imported, fall back to age-based."""
+        import sys
 
         from attune.ops import help_data
 
-        monkeypatch.setattr(help_data.shutil, "which", lambda _: "/fake/attune-author")
-
-        def _raise(*_a, **_kw):
-            raise _sp.SubprocessError("boom")
-
-        monkeypatch.setattr(help_data.subprocess, "run", _raise)
+        monkeypatch.setitem(sys.modules, "attune.authoring.staleness", None)
         help_data._clear_staleness_cache()
-        result = help_data._attune_author_stale_features(tmp_path, tmp_path / ".help")
-        assert result is None
+        assert help_data._stale_features(tmp_path, tmp_path / ".help") is None
 
-    def test_cache_hits_skip_subprocess(
+    def test_check_staleness_raising_returns_none(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
+        """A raising ``check_staleness`` falls back to age-based (advisory,
+        never 500-ing the dashboard)."""
+        import attune.authoring.staleness as staleness_mod
         from attune.ops import help_data
 
-        monkeypatch.setattr(help_data.shutil, "which", lambda _: "/fake/attune-author")
+        help_dir = tmp_path / ".help"
+        _write_features_yaml(help_dir, {"tracked-feat": {"files": ["mod.py"]}})
+        (tmp_path / "mod.py").write_text("x = 1\n", encoding="utf-8")
+        _write_hash_template(help_dir, "tracked-feat", "0" * 64)
 
-        call_count = {"n": 0}
+        def _boom(*_a, **_kw):
+            raise RuntimeError("boom")
 
-        class _FakeResult:
-            stdout = _REAL_STATUS_OUTPUT
-            returncode = 0
-            stderr = ""
-
-        def _counting_run(*a, **kw):
-            call_count["n"] += 1
-            return _FakeResult()
-
-        monkeypatch.setattr(help_data.subprocess, "run", _counting_run)
+        monkeypatch.setattr(staleness_mod, "check_staleness", _boom)
         help_data._clear_staleness_cache()
-        # First call: subprocess fires
-        help_data._attune_author_stale_features(tmp_path, tmp_path / ".help")
-        # Second call within TTL: cache hit, no subprocess
-        help_data._attune_author_stale_features(tmp_path, tmp_path / ".help")
-        assert call_count["n"] == 1
+        assert help_data._stale_features(tmp_path, help_dir) is None
 
     def test_drift_set_used_for_feature_staleness(
         self, monkeypatch: pytest.MonkeyPatch, cfg: Config, corpus: Path
     ) -> None:
-        """End-to-end: with attune-author saying 'complete-feature' is
-        stale, list_features() should mark it stale (and no other)."""
+        """End-to-end: with the drift set saying 'complete-feature' is
+        stale, ``list_features()`` marks it stale (and no other)."""
         from attune.ops import help_data
 
-        # Override the autouse fallback to return a known stale set.
+        # Override the autouse fallback to return a known drift set.
         monkeypatch.setattr(
             help_data,
-            "_attune_author_stale_features",
+            "_stale_features",
             lambda *_a, **_kw: frozenset({"complete-feature"}),
         )
         feats = {f.name: f for f in help_data.list_features(cfg)}
-        # Authority says complete-feature is stale → every kind it has
-        # is treated as stale. stale-feature (which has only old
-        # generated_at timestamps) is NOT in the authority set →
-        # zero stale.
+        # Authority says complete-feature is stale -> every kind it has
+        # is treated as stale. stale-feature (only old generated_at
+        # timestamps) is NOT in the authority set -> zero stale.
         assert feats["complete-feature"].has_any_stale is True
         assert feats["complete-feature"].stale_count == 11
         assert feats["stale-feature"].has_any_stale is False
         assert feats["stale-feature"].stale_count == 0
-
-
-class TestIsTemplateStaleAuthorityMode:
-    def test_in_authority_set_returns_true(self, tmp_path: Path) -> None:
-        from attune.ops.help_data import _is_template_stale
-
-        p = tmp_path / "my-feat" / "concept.md"
-        p.parent.mkdir()
-        p.write_text("# x\n", encoding="utf-8")
-        assert _is_template_stale(p, stale_features=frozenset({"my-feat"})) is True
-
-    def test_not_in_authority_set_returns_false(self, tmp_path: Path) -> None:
-        from attune.ops.help_data import _is_template_stale
-
-        p = tmp_path / "my-feat" / "concept.md"
-        p.parent.mkdir()
-        p.write_text("# x\n", encoding="utf-8")
-        assert _is_template_stale(p, stale_features=frozenset({"other-feat"})) is False

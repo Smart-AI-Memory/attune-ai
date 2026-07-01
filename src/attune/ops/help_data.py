@@ -15,8 +15,6 @@ from __future__ import annotations
 
 import logging
 import re
-import shutil
-import subprocess
 import time
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
@@ -26,13 +24,13 @@ from attune.ops.config import Config
 
 logger = logging.getLogger(__name__)
 
-# Authority cache TTL for attune-author status. Short enough that
-# regen jobs that change staleness state surface promptly; long
-# enough that a page-refresh burst doesn't re-spawn the subprocess
-# per request.
+# Authority cache TTL for the in-process source-hash drift check.
+# Short enough that regen jobs that change staleness state surface
+# promptly; long enough that a page-refresh burst doesn't re-hash
+# every feature's source per request.
 _STALENESS_CACHE_TTL_SECONDS = 5.0
 
-# Process-lifetime cache for attune-author status. Keyed on the
+# Process-lifetime cache for the drift check. Keyed on the
 # (project_root, help_dir) pair so multiple dashboards in one
 # process don't cross-contaminate.
 _staleness_cache: dict[tuple[str, str], tuple[float, frozenset[str]]] = {}
@@ -187,14 +185,14 @@ def corpus_root(config: Config) -> Path:
 def list_features(config: Config) -> list[FeatureSummary]:
     """All features in the corpus, alphabetical.
 
-    Staleness comes from ``attune-author status`` when available
-    (the authoritative source-hash drift signal). Falls back to
-    per-template age-based check when attune-author isn't on PATH.
+    Staleness comes from an in-process source-hash drift check
+    (the authoritative signal). Falls back to per-template
+    age-based check when the manifest can't be loaded.
     """
     root = corpus_root(config)
     if not root.exists():
         return []
-    stale = _attune_author_stale_features(config.project_root, config.project_root / ".help")
+    stale = _stale_features(config.project_root, config.project_root / ".help")
     out: list[FeatureSummary] = []
     for feat_dir in sorted(p for p in root.iterdir() if p.is_dir()):
         out.append(_summarize_feature(feat_dir, stale_features=stale))
@@ -204,8 +202,8 @@ def list_features(config: Config) -> list[FeatureSummary]:
 def get_template(config: Config, feature: str, kind: str) -> TemplateRecord | None:
     """Load one template by feature + kind. None if missing.
 
-    Staleness uses the attune-author authority when available;
-    falls back to age-based when the CLI isn't on PATH.
+    Staleness uses the in-process source-hash drift check; falls
+    back to age-based when the manifest can't be loaded.
     """
     if not _safe_slug(feature) or not _safe_slug(kind):
         return None
@@ -217,7 +215,7 @@ def get_template(config: Config, feature: str, kind: str) -> TemplateRecord | No
     except OSError as exc:
         logger.warning("help_data: cannot read %s: %s", path, exc)
         return None
-    stale = _attune_author_stale_features(config.project_root, config.project_root / ".help")
+    stale = _stale_features(config.project_root, config.project_root / ".help")
     return _parse_template(feature, kind, path, raw, stale_features=stale)
 
 
@@ -414,9 +412,9 @@ def _summarize_feature(
     """Scan a feature directory for its kinds + freshness.
 
     ``stale_features`` is the authoritative set from
-    :func:`_attune_author_stale_features` (drift-based). When
-    ``None`` the function falls back to per-template age-based
-    staleness — used in tests and when attune-author isn't on PATH.
+    :func:`_stale_features` (source-hash drift). When ``None`` the
+    function falls back to per-template age-based staleness — used
+    in tests and when the manifest can't be loaded.
     """
     name = feat_dir.name
     kinds: list[str] = []
@@ -431,8 +429,8 @@ def _summarize_feature(
             if _is_template_stale(path):
                 stale_count += 1
     else:
-        # Authority path: if the feature is in attune-author's
-        # stale set, every kind it has is treated as stale (the
+        # Authority path: if the feature is in the source-hash
+        # drift set, every kind it has is treated as stale (the
         # source files drifted; all derived templates need
         # regen). If not in the set, nothing is stale.
         for kind in EXPECTED_KINDS:
@@ -454,9 +452,9 @@ def _is_template_stale(path: Path, *, stale_features: frozenset[str] | None = No
     """Per-template freshness check (hash-based only).
 
     A template is stale iff its parent feature is in
-    ``stale_features`` — attune-author's source-hash drift set.
-    When ``stale_features`` is ``None`` (attune-author unavailable),
-    the dashboard cannot determine drift, so it reports
+    ``stale_features`` — the source-hash drift set. When
+    ``stale_features`` is ``None`` (drift undeterminable), the
+    dashboard cannot determine drift, so it reports
     ``False`` (assume fresh). The previous age-based fallback was
     dropped: a template's age in days is not a proxy for whether
     its content matches the current source.
@@ -469,32 +467,36 @@ def _is_template_stale(path: Path, *, stale_features: frozenset[str] | None = No
 
 
 # ---------------------------------------------------------------------------
-# attune-author authority — source-hash drift, the real staleness signal
+# Source-hash drift — the real staleness signal (in-process)
 # ---------------------------------------------------------------------------
 
 
-# Markdown table-row pattern from attune-author's ``status``
-# output. Format:
-#   | <feature> | <description> | <files-changed> |
-# The header + divider rows are filtered by the surrounding
-# parser context (only rows AFTER "### Stale" + the divider row).
-_TABLE_ROW_RE = re.compile(r"^\s*\|\s*([a-z][a-z0-9-]*)\s*\|")
+def _stale_features(project_root: Path, help_dir: Path) -> frozenset[str] | None:
+    """Return features whose ``.help/`` templates have drifted from source.
 
+    Computes source-hash drift **in-process** via
+    :func:`attune.authoring.staleness.check_staleness` — the same
+    semantic-hash algorithm the retired ``attune-author status`` CLI
+    used, now absorbed into :mod:`attune.authoring`. Result cached
+    for :data:`_STALENESS_CACHE_TTL_SECONDS` per
+    ``(project_root, help_dir)`` key.
 
-def _attune_author_stale_features(project_root: Path, help_dir: Path) -> frozenset[str] | None:
-    """Return the set of features attune-author reports as stale.
-
-    Shells out to ``attune-author status`` and parses the markdown
-    output. Result cached for :data:`_STALENESS_CACHE_TTL_SECONDS`
-    per ``(project_root, help_dir)`` key.
+    Manual / single-sourced features with no ``files:`` globs are
+    reported as *untracked (N/A)*, not stale: hash-drift is
+    undefined for a feature with no source to hash, so evaluating
+    them would flag every projector-owned feature as permanently
+    stale (leftover stored hash ≠ the empty-input hash — see
+    ``docs/specs/attune-author-consolidation/decisions.md`` D9).
+    They are excluded from the drift check and from the result.
 
     Returns:
-        - ``frozenset[str]``: feature names with source-hash drift,
-          including the empty set when everything is in sync.
-        - ``None`` when attune-author isn't on PATH, its subprocess
-          raises, or the CLI exits non-zero — callers fall back to
-          age-based staleness in that case. A non-zero exit is treated
-          as "cannot determine drift", never as "nothing stale".
+        - ``frozenset[str]``: feature names with source-hash drift
+          in their ``.help/`` templates (empty set = all in sync,
+          which now includes the all-manual repo).
+        - ``None`` when the manifest can't be loaded (no ``.help/``
+          manifest, parse error) or the drift check raises —
+          callers fall back to age-based staleness, the same signal
+          the old code returned when the CLI was unavailable.
     """
     key = (str(project_root), str(help_dir))
     now = time.monotonic()
@@ -502,92 +504,43 @@ def _attune_author_stale_features(project_root: Path, help_dir: Path) -> frozens
     if cached is not None and (now - cached[0]) < _STALENESS_CACHE_TTL_SECONDS:
         return cached[1]
 
-    binary = shutil.which("attune-author")
-    if binary is None:
-        logger.info("help_data: attune-author not on PATH; using age fallback")
-        return None
-    cmd = [
-        binary,
-        "status",
-        "--project-root",
-        str(project_root),
-        "--help-dir",
-        str(help_dir),
-    ]
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=15,
-            check=False,
-        )
-    except (OSError, subprocess.SubprocessError) as exc:
-        logger.warning("help_data: attune-author status failed: %s", exc)
+        from attune.authoring.manifest import load_manifest
+        from attune.authoring.staleness import check_staleness
+    except ImportError as exc:
+        logger.warning("help_data: attune.authoring unavailable: %s", exc)
         return None
-    if result.returncode != 0:
-        # A non-zero exit means the CLI itself failed (e.g. a broken
-        # shim raising ModuleNotFoundError), NOT "everything is in
-        # sync". Parsing the (typically empty) stdout here would return
-        # frozenset(), masking the crash as "nothing stale" and denying
-        # callers the age-based fallback. Return None so callers fall
-        # back — same signal as a missing binary or a raised exception.
-        logger.warning(
-            "help_data: attune-author status exited %s; using age fallback (stderr: %s)",
-            result.returncode,
-            (result.stderr or "").strip()[:200],
+
+    try:
+        manifest = load_manifest(help_dir)
+    except (OSError, ValueError) as exc:
+        logger.info(
+            "help_data: cannot load manifest from %s: %s; using age fallback",
+            help_dir,
+            exc,
         )
         return None
-    stale = _parse_status_output(result.stdout)
+
+    # Manual/single-sourced features (no ``files:`` globs) have no
+    # source to hash — report as untracked (N/A), not stale (D9).
+    tracked = [name for name, feat in manifest.features.items() if feat.files]
+    if not tracked:
+        stale = frozenset()
+        _staleness_cache[key] = (now, stale)
+        return stale
+
+    try:
+        report = check_staleness(manifest, help_dir, project_root, features=tracked)
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL: staleness is advisory. Any failure (unreadable
+        # source, malformed glob) falls back to age-based staleness
+        # rather than 500-ing the dashboard.
+        logger.warning("help_data: check_staleness failed: %s; using age fallback", exc)
+        return None
+
+    stale = frozenset(report.stale_features)
     _staleness_cache[key] = (now, stale)
     return stale
-
-
-def _parse_status_output(text: str) -> frozenset[str]:
-    """Extract stale feature names from ``attune-author status`` output.
-
-    The status command emits two top-level sections:
-
-    - ``## Help Templates`` — drift in ``.help/templates/`` files,
-      which ``attune-author regenerate`` can fix.
-    - ``## Project Docs`` — drift in ``docs/`` files (``docs/how-to/``,
-      ``docs/reference/``, etc.) which is a SEPARATE corpus that
-      ``regenerate`` does NOT touch.
-
-    The dashboard only manages ``.help/templates/``, so this parser
-    collects feature names ONLY from the Stale section under
-    ``## Help Templates``. Including Project Docs stale features
-    here caused the dashboard to flag all templates of those
-    features as stale, but "Regenerate all stale" couldn't fix
-    them (the regenerate command leaves ``docs/`` alone) — so the
-    count never went down. Default behavior when no ``## `` headers
-    appear: assume Help Templates context (backward compat with
-    older attune-author versions that omitted the header).
-
-    Skips the table header and divider rows automatically because
-    they don't match :data:`_TABLE_ROW_RE` (they begin with
-    ``Feature`` or ``-----``).
-    """
-    out: set[str] = set()
-    in_project_docs = False
-    in_stale = False
-    for line in text.splitlines():
-        stripped = line.strip()
-        if stripped.startswith("## "):
-            in_project_docs = "Project Docs" in stripped
-            in_stale = False  # h2 boundary resets h3 state
-            continue
-        if stripped.startswith("###"):
-            in_stale = stripped == "### Stale"
-            continue
-        if not in_stale or in_project_docs:
-            continue
-        m = _TABLE_ROW_RE.match(line)
-        if m:
-            out.add(m.group(1))
-    return frozenset(out)
 
 
 def _clear_staleness_cache() -> None:
@@ -606,10 +559,10 @@ def _parse_template(
     """Split frontmatter + body, build a TemplateRecord.
 
     Staleness is hash-based only: a template is stale iff its
-    parent feature is in ``stale_features`` (attune-author's
-    source-hash drift set). When ``stale_features`` is ``None``
-    (attune-author unavailable), the dashboard cannot determine
-    drift and reports ``is_stale=False`` — see ``_is_template_stale``.
+    parent feature is in ``stale_features`` (the source-hash drift
+    set). When ``stale_features`` is ``None`` (drift undeterminable),
+    the dashboard cannot determine drift and reports
+    ``is_stale=False`` — see ``_is_template_stale``.
     """
     m = _FRONTMATTER_RE.match(raw)
     if m:
