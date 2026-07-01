@@ -12547,3 +12547,30 @@ files.
   import resolves; the stripped-symbol call is what NameErrors). Pairs
   with the "registered ≠ working — dogfood the live loop" lesson: the
   module importing clean is necessary-not-sufficient; run the code.
+
+- **A `subprocess.run(..., check=False)` consumer that parses stdout
+  turns a SUBPROCESS CRASH into a false "clean/empty" result — verify
+  the exit code (or that the CLI is even importable) before trusting
+  parsed-empty output**: 2026-07-01, absorbing attune-author's staleness
+  machinery, dogfooding the live consumer
+  (`attune.ops.help_data._attune_author_stale_features`) revealed it
+  shells `attune-author status` via `subprocess.run(check=False)` and
+  feeds `result.stdout` to a markdown parser. On this machine the
+  `attune-author` PATH shim points at a Python without `attune_author`
+  installed → the subprocess dies with `ModuleNotFoundError`, exits
+  non-zero, stdout empty. `_parse_status_output("")` returns
+  `frozenset()`, so a **crash reads as "nothing stale"** — and because
+  the function returns an empty set (not `None`), callers never reach
+  their age-based fallback. The graceful-degradation shape
+  (`check=False` + parse-whatever-came-back) silently converts "the tool
+  is broken" into "the tool says everything's fine." Rules: (1) a
+  subprocess whose EMPTY output is a valid answer MUST check
+  `returncode` (or `check=True` + catch) — treat non-zero as *unknown*,
+  not as the empty answer; (2) map *unknown* to the real fallback
+  (here: `None` → age-based), never to the same value as a genuine empty
+  result; (3) when a consumer "returns nothing wrong," confirm the
+  underlying tool actually RAN — `which <tool>` finding a shim is not
+  proof it's importable/runnable. Pairs with "registered ≠ working —
+  dogfood the live loop" (a broken dependency masquerading as success)
+  and the workflow-failure-exit-propagation family (swallowed non-zero
+  exits). Recorded in attune-author-consolidation decisions.md D8.
