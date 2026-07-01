@@ -45,7 +45,7 @@ import anthropic
 client = anthropic.Anthropic()
 
 response = client.messages.create(
-    model="claude-sonnet-4-6",
+    model="claude-sonnet-5",
     max_tokens=1024,
     system=[
         {
@@ -76,7 +76,7 @@ for user_input in conversation_turns:
     messages.append({"role": "user", "content": user_input})
 
     response = client.messages.create(
-        model="claude-sonnet-4-6",
+        model="claude-sonnet-5",
         max_tokens=1024,
         system=[
             {

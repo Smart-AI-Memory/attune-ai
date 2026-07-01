@@ -72,7 +72,7 @@ python -m attune.models.cli provider
 Expected output:
 ```
 Current provider: anthropic
-Available models: claude-opus-4-8, claude-sonnet-4-6, claude-haiku-4-5
+Available models: claude-opus-4-8, claude-sonnet-5, claude-haiku-4-5
 API key configured
 ```
 
