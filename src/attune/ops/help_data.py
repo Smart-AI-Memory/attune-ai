@@ -491,9 +491,10 @@ def _attune_author_stale_features(project_root: Path, help_dir: Path) -> frozens
     Returns:
         - ``frozenset[str]``: feature names with source-hash drift,
           including the empty set when everything is in sync.
-        - ``None`` when attune-author isn't on PATH or its
-          subprocess fails — callers fall back to age-based
-          staleness in that case.
+        - ``None`` when attune-author isn't on PATH, its subprocess
+          raises, or the CLI exits non-zero — callers fall back to
+          age-based staleness in that case. A non-zero exit is treated
+          as "cannot determine drift", never as "nothing stale".
     """
     key = (str(project_root), str(help_dir))
     now = time.monotonic()
@@ -525,6 +526,19 @@ def _attune_author_stale_features(project_root: Path, help_dir: Path) -> frozens
         )
     except (OSError, subprocess.SubprocessError) as exc:
         logger.warning("help_data: attune-author status failed: %s", exc)
+        return None
+    if result.returncode != 0:
+        # A non-zero exit means the CLI itself failed (e.g. a broken
+        # shim raising ModuleNotFoundError), NOT "everything is in
+        # sync". Parsing the (typically empty) stdout here would return
+        # frozenset(), masking the crash as "nothing stale" and denying
+        # callers the age-based fallback. Return None so callers fall
+        # back — same signal as a missing binary or a raised exception.
+        logger.warning(
+            "help_data: attune-author status exited %s; using age fallback (stderr: %s)",
+            result.returncode,
+            (result.stderr or "").strip()[:200],
+        )
         return None
     stale = _parse_status_output(result.stdout)
     _staleness_cache[key] = (now, stale)

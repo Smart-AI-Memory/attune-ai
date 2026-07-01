@@ -785,6 +785,28 @@ class TestAttuneAuthorStaleFeatures:
         result = help_data._attune_author_stale_features(tmp_path, tmp_path / ".help")
         assert result == frozenset({"spec-engine", "smart-test"})
 
+    def test_nonzero_exit_returns_none_not_empty_set(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """Regression: a CLI that runs but exits non-zero (e.g. a broken
+        shim raising ModuleNotFoundError) must return ``None`` (→ age
+        fallback), NOT ``frozenset()``. Previously ``check=False`` let the
+        crash's empty stdout parse to an empty set, masking the failure as
+        'nothing stale' and denying callers the fallback."""
+        from attune.ops import help_data
+
+        monkeypatch.setattr(help_data.shutil, "which", lambda _: "/fake/attune-author")
+
+        class _CrashResult:
+            stdout = ""
+            stderr = "ModuleNotFoundError: No module named 'attune_author'"
+            returncode = 1
+
+        monkeypatch.setattr(help_data.subprocess, "run", lambda *a, **kw: _CrashResult())
+        help_data._clear_staleness_cache()
+        result = help_data._attune_author_stale_features(tmp_path, tmp_path / ".help")
+        assert result is None
+
     def test_subprocess_failure_returns_none(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
