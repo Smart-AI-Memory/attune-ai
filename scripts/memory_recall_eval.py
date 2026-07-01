@@ -210,7 +210,6 @@ def run_benchmark() -> dict:
 
         hit_at_1 = 0
         hit_at_3 = 0
-        false_positives = 0
         positive_queries = [q for q in QUERIES if q.expected_topic is not None]
         negative_queries = [q for q in QUERIES if q.expected_topic is None]
         failures: list[dict] = []
