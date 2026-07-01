@@ -97,3 +97,36 @@ Precision has a soft edge case inherent to keyword-only retrieval, not
 worth chasing given `attune.memory.PersonalMemory` is still lightly
 used; revisit if/when real usage surfaces an actual bad-match incident,
 or if `attune_rag` grows a semantic retriever option.
+
+## 2026-07-01 — Run 3: cross-process persistence confirmed
+
+**Question:** Runs 1–2 captured and queried within the *same*
+`PersonalMemory` instance and process. Does recall survive process
+death — i.e., is the store genuinely file-backed with no hidden
+in-process state?
+
+**Method:** added `--phase persistence` to
+[scripts/memory_recall_eval.py](../../../scripts/memory_recall_eval.py):
+the corpus is captured by one subprocess, which then **exits** (taking
+its `PersonalMemory` instance with it); a second subprocess constructs
+a brand-new instance pointed at the same on-disk `global_root` and runs
+the identical query set. Results pass back via a JSON file (not stdout
+— `attune_rag`'s structlog lines print to stdout and corrupt inline
+JSON; noted here in case a future consumer tries to pipe it).
+
+**Result: identical to Run 2 in every dimension.**
+
+- hit@1 = 18/18 (100%), hit@3 = 18/18 (100%)
+- Positive top-1 scores: `[4.5, 7.0, 8.0, 9.0, 10.0, 10.0, 10.0, 11.5,
+  12.0, 12.5, 13.0, 14.0, 14.0, 14.5, 16.5, 18.5, 18.5, 21.0]` — same
+- Negative top-1 scores: `[0.0, 2.5, 2.5, 3.0, 5.5]` — same, including
+  the same soft-overlap case (`test-flake-quarantine-policy` at 5.5)
+
+**Verdict: persistence holds.** Capture-side writes are durable and the
+query side reconstructs retrieval purely from disk — no warm-instance
+advantage, no cold-start penalty, no state lost at process exit. The
+"probably fine mechanically" assumption from the session handoff is now
+a measured fact. The single-process default (`--phase all`) reproduces
+the same numbers, so the two methodologies are interchangeable for
+future runs; use `--phase persistence` when the change under test
+touches serialization or file layout.

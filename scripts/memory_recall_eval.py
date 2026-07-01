@@ -6,13 +6,28 @@ PersonalMemory.capture(), then runs hand-authored ground-truth queries
 against PersonalMemory.query() and reports hit@1 / hit@3 / false-positive
 rate. See docs/specs/memory-recall-eval/requirements.md for the design.
 
+Modes (--phase):
+  all          capture + evaluate in one process (default; Runs 1-2)
+  persistence  capture and evaluate in two SEPARATE OS processes against
+               the same global root, so the query side starts from a
+               brand-new PersonalMemory instance with nothing in memory
+               - proves recall survives process death (Run 3)
+  capture      write the corpus into --root (used by persistence mode)
+  evaluate     query against an already-captured --root (used by
+               persistence mode; --json-out FILE for machine-readable
+               output)
+
 Never touches real memory (~/.attune/personal_memory or a project's
-.attune/memory/) - both roots are isolated temp directories.
+.attune/memory/) - the orchestrating modes use isolated temp
+directories; capture/evaluate take an explicit --root.
 """
 
 from __future__ import annotations
 
+import argparse
+import json
 import shutil
+import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -196,82 +211,131 @@ QUERIES: list[Query] = [
 ]
 
 
-def run_benchmark() -> dict:
-    tmp_root = Path(tempfile.mkdtemp(prefix="attune_memory_recall_eval_"))
-    global_root = tmp_root / "global"
-    unused_project_root = tmp_root / "no_project_dir"  # deliberately never created
-    global_root.mkdir(parents=True, exist_ok=True)
+def capture_corpus(global_root: Path) -> None:
+    """Write the benchmark corpus into ``global_root`` via PersonalMemory."""
+    unused_project_root = global_root.parent / "no_project_dir"  # never created
+    pm = PersonalMemory(global_root=global_root, project_root=unused_project_root)
+    for entry in CORPUS:
+        pm.capture(entry.topic, entry.content, kind=entry.kind)
 
-    try:
-        pm = PersonalMemory(global_root=global_root, project_root=unused_project_root)
 
-        for entry in CORPUS:
-            pm.capture(entry.topic, entry.content, kind=entry.kind)
+def evaluate(global_root: Path) -> dict:
+    """Run the ground-truth queries against an already-captured root."""
+    unused_project_root = global_root.parent / "no_project_dir"  # never created
+    pm = PersonalMemory(global_root=global_root, project_root=unused_project_root)
 
-        hit_at_1 = 0
-        hit_at_3 = 0
-        positive_queries = [q for q in QUERIES if q.expected_topic is not None]
-        negative_queries = [q for q in QUERIES if q.expected_topic is None]
-        failures: list[dict] = []
+    hit_at_1 = 0
+    hit_at_3 = 0
+    positive_queries = [q for q in QUERIES if q.expected_topic is not None]
+    negative_queries = [q for q in QUERIES if q.expected_topic is None]
+    failures: list[dict] = []
 
-        positive_top_scores: list[float] = []
-        for q in positive_queries:
-            results = pm.query(q.text, k=3)
-            topics_returned = [Path(r["path"]).parent.name for r in results]
-            if results:
-                positive_top_scores.append(results[0]["score"])
-            if topics_returned[:1] == [q.expected_topic]:
-                hit_at_1 += 1
-            if q.expected_topic in topics_returned:
-                hit_at_3 += 1
-            else:
-                failures.append(
-                    {
-                        "query": q.text,
-                        "expected": q.expected_topic,
-                        "got": topics_returned,
-                    }
-                )
-
-        # NOTE: `score` is an unbounded raw keyword-overlap count (not a
-        # normalized [0,1] confidence), so there is no universal absolute
-        # threshold for "confident false positive." We report the actual
-        # top-1 score distributions for positive vs. negative queries and
-        # let the reader judge separation, rather than picking an arbitrary
-        # cutoff that could over- or under-state precision.
-        negative_top_scores: list[float] = []
-        negative_hits: list[dict] = []
-        for q in negative_queries:
-            results = pm.query(q.text, k=3)
-            top_score = results[0]["score"] if results else 0.0
-            negative_top_scores.append(top_score)
-            negative_hits.append(
+    positive_top_scores: list[float] = []
+    for q in positive_queries:
+        results = pm.query(q.text, k=3)
+        topics_returned = [Path(r["path"]).parent.name for r in results]
+        if results:
+            positive_top_scores.append(results[0]["score"])
+        if topics_returned[:1] == [q.expected_topic]:
+            hit_at_1 += 1
+        if q.expected_topic in topics_returned:
+            hit_at_3 += 1
+        else:
+            failures.append(
                 {
                     "query": q.text,
-                    "top_result": results[0]["path"] if results else None,
-                    "score": top_score,
+                    "expected": q.expected_topic,
+                    "got": topics_returned,
                 }
             )
 
-        return {
-            "corpus_size": len(CORPUS),
-            "positive_queries": len(positive_queries),
-            "negative_queries": len(negative_queries),
-            "hit_at_1": hit_at_1,
-            "hit_at_1_rate": hit_at_1 / len(positive_queries),
-            "hit_at_3": hit_at_3,
-            "hit_at_3_rate": hit_at_3 / len(positive_queries),
-            "positive_top_scores": positive_top_scores,
-            "negative_top_scores": negative_top_scores,
-            "failures": failures,
-            "negative_hits": negative_hits,
-        }
+    # NOTE: `score` is an unbounded raw keyword-overlap count (not a
+    # normalized [0,1] confidence), so there is no universal absolute
+    # threshold for "confident false positive." We report the actual
+    # top-1 score distributions for positive vs. negative queries and
+    # let the reader judge separation, rather than picking an arbitrary
+    # cutoff that could over- or under-state precision.
+    negative_top_scores: list[float] = []
+    negative_hits: list[dict] = []
+    for q in negative_queries:
+        results = pm.query(q.text, k=3)
+        top_score = results[0]["score"] if results else 0.0
+        negative_top_scores.append(top_score)
+        negative_hits.append(
+            {
+                "query": q.text,
+                "top_result": results[0]["path"] if results else None,
+                "score": top_score,
+            }
+        )
+
+    return {
+        "corpus_size": len(CORPUS),
+        "positive_queries": len(positive_queries),
+        "negative_queries": len(negative_queries),
+        "hit_at_1": hit_at_1,
+        "hit_at_1_rate": hit_at_1 / len(positive_queries),
+        "hit_at_3": hit_at_3,
+        "hit_at_3_rate": hit_at_3 / len(positive_queries),
+        "positive_top_scores": positive_top_scores,
+        "negative_top_scores": negative_top_scores,
+        "failures": failures,
+        "negative_hits": negative_hits,
+    }
+
+
+def run_benchmark() -> dict:
+    """Capture + evaluate within a single process (Runs 1-2 methodology)."""
+    tmp_root = Path(tempfile.mkdtemp(prefix="attune_memory_recall_eval_"))
+    global_root = tmp_root / "global"
+    global_root.mkdir(parents=True, exist_ok=True)
+    try:
+        capture_corpus(global_root)
+        return evaluate(global_root)
     finally:
         shutil.rmtree(tmp_root, ignore_errors=True)
 
 
-def main() -> None:
-    results = run_benchmark()
+def run_persistence_benchmark() -> dict:
+    """Capture and evaluate in two SEPARATE OS processes (Run 3 methodology).
+
+    The capture subprocess exits (taking its PersonalMemory instance and
+    any process state with it) before the evaluate subprocess starts from
+    a brand-new instance pointed at the same on-disk global root. Identical
+    numbers to run_benchmark() prove recall is fully file-backed and
+    survives process death.
+    """
+    tmp_root = Path(tempfile.mkdtemp(prefix="attune_memory_recall_eval_persist_"))
+    global_root = tmp_root / "global"
+    global_root.mkdir(parents=True, exist_ok=True)
+    script = str(Path(__file__).resolve())
+    try:
+        subprocess.run(
+            [sys.executable, script, "--phase", "capture", "--root", str(global_root)],
+            check=True,
+        )
+        # Results go through a file, not stdout - attune_rag's structlog
+        # lines print to stdout and would corrupt inline JSON.
+        json_out = tmp_root / "results.json"
+        subprocess.run(
+            [
+                sys.executable,
+                script,
+                "--phase",
+                "evaluate",
+                "--root",
+                str(global_root),
+                "--json-out",
+                str(json_out),
+            ],
+            check=True,
+        )
+        return json.loads(json_out.read_text(encoding="utf-8"))
+    finally:
+        shutil.rmtree(tmp_root, ignore_errors=True)
+
+
+def print_report(results: dict) -> None:
     print(f"Corpus size:        {results['corpus_size']}")
     print(f"Positive queries:   {results['positive_queries']}")
     print(f"Negative queries:   {results['negative_queries']}")
@@ -300,6 +364,52 @@ def main() -> None:
     for f in results["negative_hits"]:
         print(f"  Q: {f['query']!r}")
         print(f"     top_result={f['top_result']!r} score={f['score']:.3f}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--phase",
+        choices=("all", "persistence", "capture", "evaluate"),
+        default="all",
+        help="all = single-process benchmark (default); persistence = "
+        "capture and evaluate in separate subprocesses; capture/evaluate "
+        "= one half, against an explicit --root",
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        help="global-root directory (required for capture/evaluate phases)",
+    )
+    parser.add_argument(
+        "--json-out",
+        type=Path,
+        help="write raw JSON results to this file instead of printing the "
+        "human report (evaluate phase)",
+    )
+    args = parser.parse_args()
+
+    if args.phase in ("capture", "evaluate") and args.root is None:
+        parser.error(f"--phase {args.phase} requires --root")
+
+    if args.phase == "capture":
+        capture_corpus(args.root)
+        return
+    if args.phase == "evaluate":
+        results = evaluate(args.root)
+        if args.json_out:
+            args.json_out.write_text(json.dumps(results), encoding="utf-8")
+        else:
+            print_report(results)
+        return
+
+    if args.phase == "persistence":
+        results = run_persistence_benchmark()
+        print("Mode: PERSISTENCE - capture and query ran in separate OS processes;")
+        print("the query side used a brand-new PersonalMemory instance.\n")
+    else:
+        results = run_benchmark()
+    print_report(results)
 
 
 if __name__ == "__main__":
