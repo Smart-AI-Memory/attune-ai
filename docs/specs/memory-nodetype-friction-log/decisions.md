@@ -148,7 +148,21 @@ a fresh session surfaces at least the USER_CONTEXT priority node and
 any PROJECT_CONTEXT nodes relevant to the working repo without a
 manual query. Open question for the spec pass: relevance signal at
 session start (no query text yet — recency + type-weighting vs. cwd/
-repo tags). Not started — needs its own tasks entry or small spec.
+repo tags). **Prototyped 2026-07-02** (Patrick's fuller vision:
+git long-term → Redis short-term → widget recall): the private repo
+`silversurfer562/attune-agent-memory` (= `~/.attune/memory/`, so
+`MemoryGraph.curated()`'s path is unchanged) carries its own
+`hydrate.py` (rebuilds `attune:memory:*` hashes/sets + a RediSearch
+index) and `functions.lua` (`recall_digest` stored procedure via
+FCALL). Measured: FCALL median 86μs, FT.SEARCH median 181μs; the
+digest rendered live through `form_from_dict` →
+`form_to_widget_html` (progress construct, pure-display sub-state).
+Widget-shape evidence: memory facts aren't "done tasks" — the
+strikethrough styling reads wrong, which is early evidence for a
+dedicated recall-digest grammar primitive rather than reusing
+`progress`. Productionization (SessionStart hook registration,
+git-pull-before-hydrate, targeted FT.SEARCH procedures, the new
+primitive) goes to a spec written from this evidence.
 
 ---
 
