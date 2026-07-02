@@ -183,10 +183,26 @@ bundles "do you need a break?" with "what direction next?" the
 human's answer to one collapses the other. The questions interact
 and corrupt each other. The discipline is to separate them,
 sequence them, ask the load-bearing one first, and use a structured
-decision-point surface (AskUserQuestion in our tooling) as the
-default form. Number the options A/B/C, label A as Recommended
-where applicable, keep alternatives short. This is mechanical — not
-deep — but mechanical things compound.
+decision-point surface as the default form. Number the options,
+label the recommendation, keep alternatives short. This is
+mechanical — not deep — but mechanical things compound.
+
+The surface for those questions matures with the collaboration. It
+starts as a numbered list in chat. It can grow into a small
+*grammar* of rendered forms, one shape per kind of fork: a
+**decision** form (the recommended option with its rationale and
+per-option tradeoffs — pick one), a **pushback** form (the human's
+stated approach and the agent's alternative side by side, under a
+"why I'd push back" — overrule or switch with one pick), a
+**progress** form (done, in-flight, and blocked items, with the
+blocked ones as the picker for "which do we tackle?"). The shapes
+matter less than the property they share: the fork is *rendered*,
+with the recommendation and tradeoffs visible at the moment of
+choice, and the answer collapses to one pick instead of a
+paragraph. Any tooling that can put a structured choice in front of
+a human can do this; ours renders them as forms in the chat
+surface. This is the contract's decision points getting a surface
+of their own.
 
 > **Pattern: shorthand as vocabulary primitive.** A human
 > collaborator says "give me feedback" — singular phrase, no
@@ -250,6 +266,16 @@ agent owes the human that pushback before executing. Hedging
 without an alternative is cosmetic and creates friction without
 value. The contract welcomes real pushback and rejects the
 imitation kind.
+
+This stopped being hypothetical the day a pushback form changed a
+real infrastructure decision. The human had pinned a session-start
+hook to the development environment's interpreter; the agent's
+form showed why that pin would rot silently (the dev environment
+gets rebuilt routinely, and the dependency the hook needs isn't in
+its default set) and offered a dedicated, non-churning interpreter
+instead. The human read the rendered disagreement and switched.
+One form, one pick, one infrastructure decision corrected before
+it could fail silently.
 
 The contract has an asynchronous mode, too — for when the human
 steps away and the agent keeps working. Everything above governs
@@ -605,6 +631,38 @@ in a task manager, not a memory file. Snapshots of repo state
 ("here are the files in src/") — these are guaranteed stale within
 hours.
 
+The three classes sort *what* to save. A second cut sorts *where* —
+and it earns its own rule because the two destinations fail in
+opposite ways. **Durable memory** holds only what passes a
+thirty-day test: will this still be true, and worth carrying, in a
+month? Preferences, validated approaches, decisions with their
+reasons. **Operational handoff** holds the short-term state one
+session leaves for the next: in-flight PRs, open threads, standing
+authorizations. Keep them separate, because they need opposite
+truth-maintenance regimes. Stale operational memory is *worse than
+none* — a stale "merge PR X" causes a wrong action — so its regime
+is machine verification against ground truth (the git log, the PR
+tracker, the package index) at load time, every time. Stale durable
+memory fails *softly* — a preference drifts out of date — so its
+regime is human review over time: periodic verdicts of keep, wrong,
+or needs-sharpening. Merge the two layers and you break both: the
+review loop drowns in expiring churn, and operational truth ends up
+policed by a mechanism too slow for it.
+
+In our setup this loop is now closed end-to-end: the durable layer
+is a git-versioned graph of curated nodes, each with provenance;
+sessions hydrate it into a fast store at startup; the handoff layer
+is machine-reconciled against git and the package index at session
+start; and the first human review pass returned its verdicts
+through a rendered form — six keeps, one sharpened, zero wrong.
+This layer is also the honest answer to the deepest asymmetry in
+§2 — one party cannot natively remember past sessions. The
+asymmetry doesn't disappear; it gets scaffolded. And the
+scaffolding has a property human memory never has: what the agent
+knows at minute zero of a session is a curated, reviewed, versioned
+artifact — inspectable, diffable, and correctable by the review
+loop above.
+
 Proactive persistence is the rule that makes memory actually work.
 When the human teaches the agent something non-obvious —
 preference, pattern, validated approach — the agent's job is to
@@ -917,7 +975,23 @@ are slower than unit tests by orders of magnitude, but they operate
 at the *meaning* layer where the hallucinations live: a unit test
 asserts the function returned the expected type; the dogfood run
 asserts it returned something *true*. Both are needed; neither
-replaces the other. Its durable companion is **the regression
+replaces the other.
+
+The sharpest recent receipt of the gap: a release shipped with its
+memory-recall round-trip broken — capture succeeded, recall
+returned nothing — and every unit test was green, because the tests
+mocked the exact layer that was broken. What caught it was not a
+test run but a dogfood probe of the *shipped artifact* in a clean
+environment with a fresh home directory: install exactly what a
+user installs, run exactly what a user runs. The probe turned an
+opinion ("recall feels off") into a receipt (recall *is* broken,
+with the trace), the fix became the next release's headline, and
+the closure was verified the same way — fresh install of the fixed
+release, recall returns the captured content. Green CI never saw
+any of it, coming or going. Dogfood the artifact you actually ship,
+not the code you happen to have checked out.
+
+The dogfood principle's durable companion is **the regression
 guard** — after fixing a bug, write a test whose only purpose is to
 fail loudly if the bug returns. It need not be beautiful; it needs
 to fail when the bug is back. The best ones nail a specific past
@@ -965,6 +1039,12 @@ the verification passed is trusting a check, and that trust
 accumulates because the check does the work of being trustworthy.
 Verification offloads trust from the relationship to the artifact,
 where it belongs.
+
+The same split now polices memory (§5): machine reconciliation
+verifies the operational layer against ground truth at every
+session start, and human review verdicts verify the durable layer
+over time — each layer checked by the mechanism matched to how it
+fails.
 
 **The receipt.** The discipline produces measurable artifacts, and
 the strongest is the one that says the work is *true*, not merely
@@ -1100,17 +1180,31 @@ that was already visible on the dashboard, no fatigue-grinding past
 the productive window. Six disciplines, each boring in isolation,
 compounding into a morning where the work *moved*.
 
-And that morning wasn't a one-off. Across the two weeks ending
-2026-06-02, the same one-developer-plus-agent setup merged
-**130 pull requests — roughly nine per calendar day** — into the
-attune-ai repository. The composition matters more than the
-headline: about fifty were feature and fix code; the rest were
-documentation, specs, and release work the discipline keeps
-moving in lockstep with the code. That lockstep is the point —
-§5's memory and §4's artifacts mean the docs and specs *keep
-pace* rather than accruing as debt behind the shipping. The
-number is a dated snapshot of what the discipline produced here,
-not a multiplier anyone is promised.
+A single ordinary day near this revision (2026-07-02) shows the
+mix: a full human review pass over the durable memory layer,
+verdicts returned through a rendered form; a cross-layer memory
+protocol ratified and recorded the same day — as a memory node,
+governed by the protocol it records; an audit of the memory
+system's three rings that turned a vague "recall feels off" into a
+broken-round-trip receipt; and a release to PyPI carrying the fix
+that receipt demanded. None of it a crunch. That is what a
+compounding day looks like.
+
+And that morning wasn't a one-off — and the pace has *risen* as the
+disciplines compounded. Across the two weeks ending 2026-06-02,
+this one-developer-plus-agent setup merged 134 pull requests into
+the attune-ai repository — roughly ten per calendar day. Across the
+two weeks ending 2026-07-02, the same setup merged **277 — roughly
+twenty per calendar day**. The composition matters more than the
+headline: 74 of the 277 were feature and fix code (about five a
+day); the rest were documentation, tests, specs, and release work
+the discipline keeps moving in lockstep with the code. That
+lockstep is the point — §5's memory and §4's artifacts mean the
+docs and specs *keep pace* rather than accruing as debt behind the
+shipping. These are dated snapshots of what the discipline produced
+here (windows counted retrospectively in UTC calendar days), not a
+multiplier anyone is promised — and they are re-measured every time
+this article is revised, because §7 applies to the article too.
 
 The closing point is simple. This is a learnable skill. The
 discipline above is six bullet-points worth of vocabulary, not a
@@ -1121,15 +1215,19 @@ from §6. Adopt the verification gates from §7. Practice each one
 boring-ly until they compound. The mornings that result are
 unremarkable in any single moment, and remarkable across a week.
 
-There is a tell in how this article got written. The attune-\*
-family is these disciplines turned into software — attune-ai
-builds and maintains the others — and the disciplines, once
-named, keep generating the next thing. Drafting this piece
-surfaced a friction none of the six quite covered; naming it
-produced a new spec by the end of the session. The discipline
-didn't only describe the work. It generated more of it. That is
-the synergy — tied to the discipline itself, not to any one
-tool.
+There is a tell in how this system evolves. The attune-\* family
+is these disciplines turned into software — attune-ai builds and
+maintains the others — and the loop has begun closing on itself.
+The rule that governs what durable memory may hold was itself
+recorded as a durable memory node, governed by the rule it states.
+The form that renders the agent's disagreement was used to fix the
+infrastructure that loads the memory the forms render from.
+Drafting an earlier revision of this piece surfaced a friction
+none of the six disciplines quite covered; naming it produced a
+new spec by the end of that session. The discipline doesn't only
+describe the work. It constrains and improves its own
+construction. That is the synergy — tied to the discipline itself,
+not to any one tool.
 
 That is the discipline of agent collaboration. We are still
 learning it. We hope this is useful.
