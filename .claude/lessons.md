@@ -12787,8 +12787,8 @@ files.
   any CLI smoke: exit codes and boot are necessary-not-sufficient —
   round-trip one real feature and assert on its output content, via
   the SHIPPED artifact.
-- **bump_version.py covers the website version sites as of PR #1216
 
+- **bump_version.py covers the website version sites as of PR #1216
   (2026-07-02) — the "bump features.ts/page.tsx by hand on release"
   remedy is obsolete**: epilogue to the 9.2.0/9.4.0 website-version
   lessons. The script now writes 9 files including

@@ -1,15 +1,16 @@
 # The Discipline of Agent Collaboration
 
-> A counter-thesis to vibe coding, from someone shipping real work
+> An answer to vibe coding, from someone shipping real work
 > this way.
 
-"Vibe coding" is the shorthand the discourse has settled on for
+"Vibe coding" is the shorthand the blogs have settled on for
 AI-assisted development — and it's a real thing, useful for
 prototypes, exploration, and the bottom of the experience curve.
 This piece is about the other 80%: the work that needs to ship,
 persist across sessions, coordinate across packages, and not break
-under multi-month load. That work isn't vibing. It's a discipline.
-The good news: it's a learnable one.
+under multi-month load. Work that isn't vibing in that sense. It's
+an approach that delegates the actual coding to the AI as part of
+a collaborative team. The good news: it's a learnable one.
 
 ---
 
@@ -30,7 +31,7 @@ couldn't otherwise see. That space requires a different posture
 from both sides. This piece is the field manual for that other
 space.
 
-The thesis in one line: collaboration with an AI agent is not a
+The point in one line: collaboration with an AI agent is not a
 *tool* problem (find a better model, write better prompts) — it is
 a *discipline* problem. A mutual contract, a shared vocabulary,
 agreed artifact shapes, named failure modes. The disciplines are
@@ -39,8 +40,8 @@ individually boring. They compound.
 And the posture isn't exotic — it's ordinary team management
 applied to a teammate who happens to be an agent: an explicit
 contract, clear handoffs, named boundaries. Practiced together,
-the disciplines produce synergies tied to the discipline
-itself; the compounding is the point, not a bonus.
+the disciplines reinforce each other; the compounding is the
+point, not a bonus.
 
 Here is what that looks like on a real morning. The ops dashboard
 is up in a browser tab. The family snapshot shows five PyPI
@@ -85,11 +86,13 @@ proactive memory write that did not exist that morning.
 What made this efficient was not magic. Five mechanisms compound.
 **Clean small PRs** — each one single-purpose, easy to scope, easy
 to review, no mega-PRs that bundle six unrelated concerns.
-**AskUserQuestion at real decision points only** — scope expansion,
-version-bump shape, release-trigger choice, admin-merge
-authorization. Never at mechanical points like "should I now run
-pytest?" The agent does not interrupt the human to ask permission
-to do its job. **Admin-merge authorization durability** — granted
+**Decision surfaces at real decision points only** — scope
+expansion, version-bump shape, release-trigger choice, admin-merge
+authorization — each rendered in the form the fork deserves, from
+a plain option list up to a dynamically built form or interactive
+report. Never at mechanical points like "should I now run pytest?"
+The agent does not interrupt the human to ask permission to do its
+job. **Admin-merge authorization durability** — granted
 once at the top of a batch, persists for similar future merges,
 zero re-asking friction within the session. **Parallel work while
 CI runs** — the agent moves to the next surfaced thing while a
@@ -109,7 +112,7 @@ incrementally, on its own or together:
   and human-approves-every-line; and its asynchronous mode for the
   work an agent does while you're away.
 - **§3 — Pacing.** Sustainability as a skill: agents don't tire,
-  the humans they work with do; clean stops and a rested cadence
+  the humans they work with do; clean stops and a rested rhythm
   raise throughput over weeks rather than lowering it.
 - **§4 — Artifact discipline.** Specs nest XML-enhanced prompts
   nest implementation; pre-committed decision matrices route
@@ -136,25 +139,25 @@ High-functioning engineering teams have used explicit working
 agreements for decades — when the team will pair, how reviews work,
 what counts as a blocker, when interrupts are okay. What we are
 doing in this section is applying the same shape to human-agent
-collaboration. The asymmetries between the two parties force a more
+collaboration. The imbalances between the two parties force a more
 explicit version of the contract than human-only teams usually
 need: one party never tires; one party cannot read past sessions
 natively; one party owns all the side effects (commits, pushes,
 releases, merges); one party can be replaced wholesale at any
 moment without warning. The contract has to do more work because of
-those asymmetries, not less.
+those imbalances, not less.
 
 The contract has two halves.
 
 The human's half is *make the agent's job possible*. Concretely:
 declare the working mode at session start — advancing a measurable
 scope, executing a planned spec, firefighting a CI issue, or
-meta-reflection with no code changes expected. State the project
+reflection and planning with no code changes expected. State the project
 (the cwd is often not the project being worked on, especially with
 worktrees). State the outcome in one sentence — what should be true
 at the end of this session that isn't true now. State the done-when
 criteria — the acceptance condition that lets either side say the
-session has finished its scoped work. None of this is performative.
+session has finished its scoped work. None of this is for show.
 Each line saves the agent from inventing wrong context and lets the
 agent push back when the work begins drifting.
 
@@ -182,35 +185,22 @@ size suggests: **ask one question at a time**. When the agent
 bundles "do you need a break?" with "what direction next?" the
 human's answer to one collapses the other. The questions interact
 and corrupt each other. The discipline is to separate them,
-sequence them, ask the load-bearing one first, and use a structured
-decision-point surface as the default form. Number the options,
-label the recommendation, keep alternatives short. This is
-mechanical — not deep — but mechanical things compound.
+sequence them, ask the load-bearing one first, and put the
+question on a structured decision surface rather than burying it
+in prose. The floor of that surface is a plain option list
+(AskUserQuestion in our tooling) — options numbered, the
+recommended one labeled, alternatives short. The floor is the
+fallback, not the default; the second pattern below names what
+sits above it. This is mechanical — not deep — but mechanical
+things compound.
 
-The surface for those questions matures with the collaboration. It
-starts as a numbered list in chat. It can grow into a small
-*grammar* of rendered forms, one shape per kind of fork: a
-**decision** form (the recommended option with its rationale and
-per-option tradeoffs — pick one), a **pushback** form (the human's
-stated approach and the agent's alternative side by side, under a
-"why I'd push back" — overrule or switch with one pick), a
-**progress** form (done, in-flight, and blocked items, with the
-blocked ones as the picker for "which do we tackle?"). The shapes
-matter less than the property they share: the fork is *rendered*,
-with the recommendation and tradeoffs visible at the moment of
-choice, and the answer collapses to one pick instead of a
-paragraph. Any tooling that can put a structured choice in front of
-a human can do this; ours renders them as forms in the chat
-surface. This is the contract's decision points getting a surface
-of their own.
-
-> **Pattern: shorthand as vocabulary primitive.** A human
+> **Pattern: shorthand as a building block.** A human
 > collaborator says "give me feedback" — singular phrase, no
 > parameters. The agent reads it as a request for the full
 > discovery kit: opportunities, options, next steps, pros and
 > cons, anything load-bearing the agent noticed but didn't
 > surface. Re-specifying the kit each time would waste the
-> primitive — the shorthand IS the contract. The pattern
+> building block — the shorthand IS the contract. The pattern
 > generalizes: any phrase the human uses repeatedly should be
 > readable by the agent as a structured invocation, not as a
 > literal-string request. The agent's job is to learn the human's
@@ -218,6 +208,27 @@ of their own.
 > owes a memory write the first time it notices the shorthand
 > pattern — so future sessions inherit the vocabulary instead of
 > relearning it from scratch.
+
+> **Pattern: the form grammar.** The shorthand pattern above is
+> the human's half of a shared vocabulary. The agent's half is a
+> small grammar of structured surfaces it composes at forks: an
+> intake form that batches the independent dimensions of one
+> decision into a single multi-select surface; a decision card
+> carrying the recommended option, the rationale, and per-option
+> tradeoffs; a pushback card that sets the human's stated approach
+> beside the agent's alternative under "why I'd push back"; a
+> progress report that buckets work into done, in-flight, and
+> blocked, and makes the blocked items pickable. The shapes matter
+> less than the property they share: the fork is *rendered*, with
+> the recommendation and tradeoffs visible at the moment of
+> choice, and the answer collapses to one pick instead of a
+> paragraph. When the fork outgrows a list, the agent owes the
+> richer surface — a dynamically built form, a dashboard, an
+> interactive report — rather than the floor. Any tooling that can
+> put a structured choice in front of a human can do this; ours
+> renders forms in the chat surface. None of this violates
+> one-question-at-a-time: dimensions that are independent batch
+> into one form; questions that interact stay sequenced.
 
 The PR-and-approve cycle is where the contract lives at the
 day-to-day level. There are two failure modes flanking it. On one
@@ -294,8 +305,8 @@ altitude is the tell — tasks-level work survives an away-window;
 design-level work belongs in the synchronous window where you're
 present to answer. A compact invocation helps: in our tooling
 `auto: <specs or PRs>` reads as "these are execution-ready, run
-them to the boundary" — the same shorthand-as-vocabulary primitive
-from earlier in this section.
+them to the boundary" — the same shorthand-as-building-block
+pattern from earlier in this section.
 
 The agent's half is to narrow to what is genuinely safe and fresh;
 hold hard guardrails (no irreversible or outward-facing act — no
@@ -326,8 +337,8 @@ death-march anti-pattern and its predictably brittle output. The
 standard expectation in mature teams that velocity must be averaged
 over recovery time rather than measured in sprint peaks. The same
 evidence applies to human-agent collaboration, even though the
-asymmetry has shifted. Agents do not tire. The humans they work
-with do. Ignoring that asymmetry produces the downstream quality
+imbalance has shifted. Agents do not tire. The humans they work
+with do. Ignoring that imbalance produces the downstream quality
 cost it always has — but the cost can land later than expected
 because the agent's energy masks the human's exhaustion for hours
 past where the work should have stopped.
@@ -391,7 +402,7 @@ Because the shape of the work changes when you optimize for
 sustainability over throughput. You write better artifacts when you
 write them rested. You make fewer desperate decisions when you have
 the option to defer until tomorrow. The agent learns your real
-cadence rather than averaging across grinds, which means future
+rhythm rather than averaging across grinds, which means future
 sessions calibrate against the work you do *well* rather than the
 work you do *exhausted*. The compounding here is across weeks: the
 team (you, the agent, the codebase) gets better-shaped when each
@@ -493,8 +504,8 @@ formality for its own sake — each one pays specific rent:
 
 The four-file structure is small and the editing cost is low —
 most spec edits touch one or two files at a time. The discipline
-is that the files exist *before* implementation starts, not after
-as rationalization-of-already-shipped work.
+is that the files exist *before* implementation starts, not after,
+as excuses written for work that already shipped.
 
 **XML-enhanced prompt.** Right artifact when the work touches
 three or more files with dependencies, when the unit will be
@@ -562,8 +573,8 @@ unit. Each one stands alone (a locked design constraint). When a
 future session picks up the derivative-form work (LinkedIn post
 from §8, Discord drops from §3/§5/§7, Twitter thread from §6), the
 foundation piece is the source-of-truth and the derivative work
-reads one section at a time. The structure makes the work
-compositional.
+reads one section at a time. The structure lets each piece stand
+alone and combine.
 
 One more property to name: artifact discipline is what makes
 *handoffs* possible. A session ending at "spec approved, three
@@ -670,7 +681,7 @@ When the human teaches the agent something non-obvious —
 preference, pattern, validated approach — the agent's job is to
 *name the memory type AND implement the write*, in the same
 response. "I'll save this as a feedback memory" without the actual
-write is performative. The write without the naming leaves the
+write is for show. The write without the naming leaves the
 human guessing whether the agent actually got it. Both halves
 required. Both in the same response.
 
@@ -813,9 +824,9 @@ asks. Authorization durability is *not* permission to expand. It is
 permission to repeat the same pattern.
 
 > **Before adopting this pattern.** Admin-merge authorization
-> durability is an advanced move. It presumes preconditions an
-> inexperienced operator may not have, and adopting it without
-> them turns a safety mechanism into theater.
+> durability is an advanced move. It assumes conditions an
+> inexperienced operator may not yet have in place, and adopting
+> it without them turns a safety mechanism into theater.
 >
 > - **Trust history.** The human has watched the agent operate
 >   over many prior decision points — observed it push back, ask
@@ -890,7 +901,7 @@ opened as
 [attune-ai #469](https://github.com/Smart-AI-Memory/attune-ai/pull/469).
 
 The point of the worked example is the meta-shape. The article's
-central thesis — discipline produces better work faster — gets
+central claim — discipline produces better work faster — gets
 demonstrated by the act of using the discipline to address the
 discipline's own friction. The spec design AND the implementation
 AND this paragraph are all products of the same multi-hour session.
@@ -1011,7 +1022,7 @@ then X, if B then Y" matrix *before* measurement and the
 measurement automatically routes the decision: nothing to "review,"
 because the matrix says what to do, the measurement says which
 branch fires, and the decision follows mechanically. This
-eliminates the post-hoc rationalization where the human or the
+removes the after-the-fact excuse-making where the human or the
 agent finds reasons to favor the more interesting path against what
 the data actually says.
 
@@ -1054,7 +1065,7 @@ the strongest is the one that says the work is *true*, not merely
 faithfulness** on attune-rag's golden set — better than
 ninety-nine parts in a hundred of the individual claims the system
 makes are checkably traceable to a source. And it got there by
-structure, not by exhortation. That is what verification buys that
+structure, not by asking the model to try harder. That is what verification buys that
 taste cannot.
 
 ---
@@ -1172,7 +1183,8 @@ pace with the work instead of trailing it. A handful of clean stops
 at completion boundaries when the human signaled fatigue.
 
 The point of the case study is not that the morning was
-breathtaking. No single decision in that sequence was virtuoso. The
+breathtaking. No single decision in that sequence was a showpiece.
+The
 shipped releases were routine. The spec was small. The
 implementation was an hour and a half of focused work. What made
 the morning unusual was the *absence* of friction: no parallel-push
@@ -1228,8 +1240,8 @@ Drafting an earlier revision of this piece surfaced a friction
 none of the six disciplines quite covered; naming it produced a
 new spec by the end of that session. The discipline doesn't only
 describe the work. It constrains and improves its own
-construction. That is the synergy — tied to the discipline itself,
-not to any one tool.
+construction. That is the compounding — tied to the discipline
+itself, not to any one tool.
 
 That is the discipline of agent collaboration. We are still
 learning it. We hope this is useful.
@@ -1241,8 +1253,8 @@ learning it. We hope this is useful.
 This piece was written collaboratively. Patrick Roebuck (founder,
 Smart AI Memory) drafting, directing, and making every irreversible
 call; an AI agent helping to author under the discipline this
-article describes. Patrick brings three decades of software
-development plus earlier years in coordination-heavy roles outside
+article describes. Patrick brings two decades of developing online
+solutions plus earlier years in coordination-heavy roles outside
 engineering — patterns that shape his approach to contracts,
 pacing, and multi-party work. The past year-plus has been spent
 building the [attune-\* ecosystem](https://github.com/Smart-AI-Memory)
