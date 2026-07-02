@@ -12623,3 +12623,44 @@ files.
   data on stdout will be corrupted by structlog's PrintLogger default;
   either pass files/fds for data or reconfigure structlog to stderr in
   the child.
+
+- **No threshold rescues a scoring-function mismatch — short free-text
+  queries against verbose documents are structurally near-zero under
+  Jaccard; switch to containment (query-side normalization), don't
+  keep lowering the cutoff**: 2026-07-02, PR #1212. After fixing
+  `find_similar`'s default threshold 0.5 → 0.25 for dict paraphrase
+  queries, the very first live receipt (a question-shaped query
+  against the real curated graph) still returned `[]`: raw scores
+  topped out at 0.06–0.17 because Jaccard's union term grows with
+  node text length, so a 7-word query vs a 60-word node can never
+  score well no matter how good the match. The tell that it's a
+  scoring-shape problem, not a tuning problem: the ceiling moves with
+  DOCUMENT length, not with match quality. Fix: score free text by
+  containment — |query ∩ node| / |query| — which normalizes by the
+  query side only (the same reason IR uses asymmetric measures for
+  short-query-vs-document). Found ONLY because the capture script
+  included a live recall receipt after the write ("registered ≠
+  working" applied to a fix I had just shipped — receipt your own
+  fixes, not just features). Remaining known gap, logged as R4
+  evidence not fixed: no stemming ("fixes"/"fixed" miss) and
+  containment mildly favors verbose nodes.
+
+- **Local redis-stack 7.4 supports FUNCTION LOAD/FCALL (Lua stored
+  procedures) fine, and Redis-side recall is microsecond-class —
+  measured baselines: FCALL ~86μs median / FT.SEARCH ~181μs median,
+  but the FIRST FCALL costs ~3.6ms (warm it)**: 2026-07-02, memory
+  hydration prototype. Extends the existing "redis-stack 7.4 has
+  RediSearch 2.10, no INT8" lesson with what DOES work: `FUNCTION
+  LOAD REPLACE` via `redis-cli -x < file.lua` (shebang `#!lua
+  name=lib`), `redis.register_function{..., flags={'no-writes'}}`,
+  and module commands callable per normal. AMS already maintains FT
+  indexes (`memory_records`, `working_memory_idx`) — namespace new
+  ones (`idx:attune_memory`) and prefix keys (`attune:memory:*`) to
+  coexist. Also the repo-in-place pattern: when a durable data dir
+  (`~/.attune/memory/`) needs versioning, `git init` it where it
+  stands and `gh repo create --private --source <dir> --push` —
+  existing code paths that point at it stay valid, no migration.
+  Related: `attune.elicitation.form_from_dict` takes
+  `{"title", "fields": [{"id", "text", "type", ...}]}` — "questions"/
+  "label" are accepted aliases, but "question" as the text key is
+  not; the error message names the real keys.

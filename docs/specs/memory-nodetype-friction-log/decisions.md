@@ -102,6 +102,105 @@ it lives) — cost one failed import.
 
 ---
 
+## 2026-07-02 — Alignment pause + Frictions A and C fixed
+
+**Alignment (Patrick's answers, batched decision form):**
+
+- **Goal framing:** attune memory is the product; the harness
+  auto-memory files are scaffolding. Judge the curated graph against
+  "could this carry the agent's continuity." (A complementary
+  routing-rule framing was discussed as the *transition* protocol —
+  proposal pending Patrick's reaction, not yet a decision.)
+- **Fix order:** Friction A now, then Friction C. Friction B (edge
+  direction) deliberately stays open as R4 evidence.
+- **Read-side wiring:** scope it soon — R4 should judge a living
+  read/write loop, not a write-only log (see scope below).
+- **Verdict posture:** negative findings are acceptable but carry a
+  fix-first bias — propose "what would make it earn its keep" before
+  removal talk.
+
+**Friction A — FIXED.** `MemoryGraph.curated()` classmethod opens the
+graph at `~/.attune/memory/curated_graph.json` (the same durable home
+`personal.py` already uses as `_GLOBAL_ROOT`), leaving the constructor's
+cwd-relative default untouched for per-project workflow findings.
+Round-trip test across fresh instances included
+([graph.py](../../../src/attune/memory/graph.py),
+[test_graph.py](../../../tests/unit/memory/test_graph.py)).
+
+**Friction C — FIXED.** `find_similar` now accepts `dict | str`: a node
+ID builds the query from that node's fields and excludes it from
+results (mirroring `find_related`'s id-based signature); any other
+string is free text matched against name and description. Default
+`threshold` lowered 0.5 → 0.25 so natural paraphrases match (the
+observed 0.301 paraphrase score now clears the default). The one
+production caller (`agent_factory/memory_integration.py`) passes an
+explicit threshold, so the default change is additive. Regression
+guard asserts a paraphrase scoring < 0.5 matches at the default.
+
+**Read-side wiring — SCOPED (no engine work yet):** a session-start
+surface that queries the curated graph and injects relevant `active`
+nodes into agent context, so curated memory is READ under real
+conditions before the R4 verdict. Shape: reuse the existing
+SessionStart-hook pattern (the stash/recall hook), query
+`MemoryGraph.curated()` via `find_similar`/`find_by_type`, cap the
+injection (~5 nodes), and label provenance per node type. Acceptance:
+a fresh session surfaces at least the USER_CONTEXT priority node and
+any PROJECT_CONTEXT nodes relevant to the working repo without a
+manual query. Open question for the spec pass: relevance signal at
+session start (no query text yet — recency + type-weighting vs. cwd/
+repo tags). **Prototyped 2026-07-02** (Patrick's fuller vision:
+git long-term → Redis short-term → widget recall): the private repo
+`silversurfer562/attune-agent-memory` (= `~/.attune/memory/`, so
+`MemoryGraph.curated()`'s path is unchanged) carries its own
+`hydrate.py` (rebuilds `attune:memory:*` hashes/sets + a RediSearch
+index) and `functions.lua` (`recall_digest` stored procedure via
+FCALL). Measured: FCALL median 86μs, FT.SEARCH median 181μs; the
+digest rendered live through `form_from_dict` →
+`form_to_widget_html` (progress construct, pure-display sub-state).
+Widget-shape evidence: memory facts aren't "done tasks" — the
+strikethrough styling reads wrong, which is early evidence for a
+dedicated recall-digest grammar primitive rather than reusing
+`progress`. Productionization (SessionStart hook registration,
+git-pull-before-hydrate, targeted FT.SEARCH procedures, the new
+primitive) goes to a spec written from this evidence.
+
+---
+
+## 2026-07-02 — Second real captures: 2 nodes via the NEW curated() path
+
+**What was recorded** (via `MemoryGraph.curated()` — dogfooding the
+friction-A fix itself, receipt-verified from a fresh instance):
+
+- `USER_CONTEXT` — the alignment decisions (goal framing: attune
+  memory is the product; fix-first verdict bias; read-wiring scoped)
+- `PROJECT_CONTEXT` — Frictions A+C fixed (PR #1212), B open by choice
+- Two `RELATED_TO` edges, including one linking the new goal-framing
+  node to the prior standing-priority node.
+
+**Clean fits:** `curated()` resolved the right path with no explicit
+path argument; both nodes round-tripped with `status="active"`; the
+taxonomy again matched without forcing.
+
+**New friction (found by the receipt, FIXED in-PR):** free-text
+`find_similar` queries scored by Jaccard topped out at ~0.06–0.17
+against these verbose curated nodes — a realistic question-shaped
+query ("what fixes shipped for the memory frictions") returned `[]`
+even at the new 0.25 default, because the union term grows with node
+text length. No threshold fixes that class. Fix: the free-text form
+(new in PR #1212, so no back-compat) scores by **containment** — the
+fraction of query words found in the node's name or description. The
+same query now returns 5 hits; "goal framing memory product" ranks the
+goal-framing node top at 0.50.
+
+**Remaining evidence for R4 (not fixed):** (a) no stemming —
+"fixes"/"fixed" and "friction"/"frictions" still count as misses, and
+containment ranking mildly favors verbose nodes (the dead query's top
+hit is the wordy priority node, not the frictions node); (b) Friction
+B's `direction="both"` read-time workaround still in use for the edge
+follow-up. If either keeps biting, they're the adjust/extend evidence.
+
+---
+
 ## Adjacent observations (not R1-scope — different subsystem)
 
 - **2026-07-01 — cross-project recall noise in the stash/recall

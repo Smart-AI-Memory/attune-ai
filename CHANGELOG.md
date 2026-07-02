@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Curated memory gets a durable default home.**
+  `MemoryGraph.curated()` opens the cross-session curated-memory graph
+  at `~/.attune/memory/curated_graph.json` instead of the cwd-relative,
+  typically git-tracked `patterns/memory_graph.json` default (which is
+  shaped for per-project workflow findings). Friction A from the
+  memory-nodetype friction log.
+- **`find_similar` now accepts a node ID or free text and matches
+  paraphrases at the default threshold.** Passing a node ID builds the
+  query from that node (excluding it from results, mirroring
+  `find_related`) instead of raising `AttributeError`; free text is
+  scored by query-word containment against name and description
+  (short queries against verbose nodes score near zero under Jaccard,
+  so word-overlap scoring would return `[]` for realistic questions
+  at any sane threshold). The default `threshold`
+  drops from 0.5 (near-verbatim only — realistic paraphrases were
+  silently filtered) to 0.25. Friction C from the memory-nodetype
+  friction log.
+
 ### Changed
 
 - **Default "capable" model is now Claude Sonnet 5
