@@ -12730,3 +12730,15 @@ files.
   pyenv shim (`ModuleNotFoundError: attune_author`) even when `which`
   finds it — probe the module, not the shim, before relying on the
   docs-regen step.
+
+- **Right after a PyPI publish, `uv pip install <pkg>==<new>` fails
+  "no version of <pkg>==<new>" from uv's OWN index cache even while
+  the simple index already serves the wheel — add
+  `--refresh-package <pkg>`**: hit closing the 9.4.0 loop (2026-07-02):
+  the simple-index poll had confirmed wheel+sdist live, yet the
+  clean-venv verification install errored "we can conclude that your
+  requirements are unsatisfiable." Not a PyPI propagation delay — a
+  local uv cache; `uv pip install --refresh-package attune-ai -U
+  attune-ai==9.4.0` succeeded immediately. Applies to every
+  post-publish verification step; don't misread it as "publish didn't
+  work" (the simple-index poll is the authority on that).
