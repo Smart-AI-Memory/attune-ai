@@ -154,17 +154,29 @@ def cmd_memory_recall(args: Namespace) -> int:
         0 on success, 1 on failure.
 
     """
+    import contextlib
+    import io
     import json as json_mod
+    import sys
 
     from attune.memory.personal import PersonalMemory
 
     try:
         pm = PersonalMemory(project_root=None)
-        hits = pm.query(
-            args.query,
-            k=getattr(args, "k", 3),
-            kind_filter=getattr(args, "kind_filter", None),
-        )
+        # The RAG layer logs to stdout (structlog's default PrintLogger),
+        # which pollutes `--json` output and breaks machine consumers
+        # (`attune memory recall ... --json | jq` fails on the log line).
+        # Capture anything the query writes to stdout and forward it to
+        # stderr, keeping stdout pure result output in both modes.
+        log_noise = io.StringIO()
+        with contextlib.redirect_stdout(log_noise):
+            hits = pm.query(
+                args.query,
+                k=getattr(args, "k", 3),
+                kind_filter=getattr(args, "kind_filter", None),
+            )
+        if log_noise.getvalue():
+            print(log_noise.getvalue(), file=sys.stderr, end="")
         if getattr(args, "json", False):
             print(json_mod.dumps(hits, indent=2))
             return 0
