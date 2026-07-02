@@ -12664,3 +12664,35 @@ files.
   `{"title", "fields": [{"id", "text", "type", ...}]}` — "questions"/
   "label" are accepted aliases, but "question" as the text key is
   not; the error message names the real keys.
+
+- **Runner-hang epilogue — treat an end-of-session hang failure as
+  rerun-and-move-on, NOT an investigation**: the 4th captured hang
+  (2026-07-02, run 28566485306, PR #1212) fired on **windows-latest**
+  — a spawn-only platform where the fork-Pool fd-leak hypothesis is
+  structurally impossible — with the same signature as the 3 Linux
+  captures (tests ~99% done and passing, controller execnet
+  `_thread_receiver` threads blocked in `read`, watchdog timeout).
+  Conclusion recorded in ci-runner-hang D3: cause is xdist/execnet-
+  internal, spec is `monitoring`. Operational rule now: a `test (...)`
+  lane failing at its timeout with passing tests and a hang-dumps
+  artifact = this class; recover with `gh run rerun <id> --failed`
+  and do NOT start diagnosing (reopen only on a capture with a real
+  test frame). Also: the #1085 process-fd probe is Linux-shaped
+  (`/proc` + GNU ps) and writes a useless `hang-*-proc.txt` on
+  Windows — deliberately not fixed (tar-pit guard).
+
+- **The MAIN checkout itself can be on a detached/stale HEAD — then
+  the editable install serves OLD code to every consumer while
+  looking normal**: 2026-07-02, `~/attune-ai` sat detached at
+  `b04be41d6` (old enough to predate `attune.elicitation` entirely),
+  so a grep/ls against "main's src" found nothing for a module that
+  had been on origin/main for weeks, and the live `attune` CLI /
+  editable install was serving stale code. Extends the worktree
+  MAPPING lesson family: those lessons assume main's checkout IS
+  main. Diagnostics: `git -C ~/attune-ai branch --show-current`
+  prints EMPTY when detached; `git -C ~/attune-ai log --oneline -1`
+  vs `origin/main`. Fix: `git checkout main && git pull` (carry or
+  restore any local working-tree edits deliberately), then
+  `uv sync --all-extras` so the venv matches. Rule: before concluding
+  "main doesn't have X" from the main checkout's tree, confirm the
+  checkout is actually on main.
