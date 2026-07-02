@@ -16,6 +16,15 @@ against it. Meets all three promotion criteria (recurrence ≥2
 distinct sessions, cost ≥10 min recovery, mechanical check
 available).
 
+Some non-project trees are deliberate Write/Edit targets (e.g. the
+curated-memory repo at ``~/.attune/memory`` — a second git tree that
+is the R1 deliverable home for
+docs/specs/curated-memory-productionization/). Those roots are
+allowlisted via ``DEFAULT_ALLOWED_EXTERNAL_ROOTS`` and can be
+extended per-machine with the ``ATTUNE_WORKTREE_GUARD_ALLOW`` env
+var (``os.pathsep``-separated roots). Everything else stays
+default-deny.
+
 Claude Code Protocol:
     stdin: JSON with tool_name and tool_input
     exit 0: allow tool call
@@ -32,6 +41,7 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -40,6 +50,46 @@ from typing import Any
 
 ENFORCEMENT_NAME = "worktree_path_guard"
 METRICS_LOG = Path.home() / ".attune" / "enforcement-metrics.jsonl"
+
+# Roots OUTSIDE any session worktree that are legitimate Write/Edit
+# targets. ~/.attune/memory is the curated-memory repo — a deliberate
+# second git tree (docs/specs/curated-memory-productionization/, D4).
+DEFAULT_ALLOWED_EXTERNAL_ROOTS: tuple[str, ...] = ("~/.attune/memory",)
+
+# Extend the allowlist without editing code: an os.pathsep-separated
+# list of additional allowed root directories.
+ALLOWLIST_ENV_VAR = "ATTUNE_WORKTREE_GUARD_ALLOW"
+
+
+def _allowed_external_roots() -> list[Path]:
+    """Return the allowlisted external roots, ``~``-expanded.
+
+    Combines ``DEFAULT_ALLOWED_EXTERNAL_ROOTS`` with any roots in the
+    ``ATTUNE_WORKTREE_GUARD_ALLOW`` env var (``os.pathsep``-separated).
+    """
+    raw = list(DEFAULT_ALLOWED_EXTERNAL_ROOTS)
+    raw.extend(os.environ.get(ALLOWLIST_ENV_VAR, "").split(os.pathsep))
+    return [Path(entry.strip()).expanduser() for entry in raw if entry.strip()]
+
+
+def _matched_allowlist_root(target: Path) -> Path | None:
+    """Return the allowlisted root containing ``target``, or ``None``.
+
+    Containment is checked on resolved paths so symlinks and ``..``
+    segments can't dodge (or spoof) a match, and a sibling like
+    ``~/.attune/memory-evil`` never matches ``~/.attune/memory``.
+    """
+    try:
+        resolved = target.resolve()
+    except (OSError, RuntimeError):
+        return None
+    for root in _allowed_external_roots():
+        try:
+            resolved.relative_to(root.resolve())
+        except (ValueError, OSError):
+            continue
+        return root
+    return None
 
 
 def _git_toplevel(start: Path) -> Path | None:
@@ -75,6 +125,8 @@ def _log_metric(outcome: str, session_root: Path | None, target_root: Path | Non
 
     - ``"fired"``: the hook blocked a wrong-tree write
     - ``"allowed"``: the hook ran and the paths matched (no block)
+    - ``"allowlisted"``: the target is under an allowlisted external
+      root (deliberate non-project tree; no block)
     - ``"unknown"``: couldn't determine session or target worktree
       (degraded mode; do not block in this case)
     """
@@ -114,6 +166,13 @@ def main(context: dict[str, Any]) -> int:
     if not target_path.is_absolute():
         return 0
 
+    # Allowlisted external trees (e.g. the curated-memory repo) are
+    # deliberate non-project targets — allow before any git comparison.
+    allowed_root = _matched_allowlist_root(target_path)
+    if allowed_root is not None:
+        _log_metric("allowlisted", None, allowed_root)
+        return 0
+
     # Determine the session's worktree (from cwd at hook invocation).
     session_root = _git_toplevel(Path.cwd())
 
@@ -138,6 +197,7 @@ def main(context: dict[str, Any]) -> int:
 
     # Mismatch — block.
     _log_metric("fired", session_root, target_root)
+    allow_roots = ", ".join(str(r) for r in _allowed_external_roots())
     msg = (
         f"\n[worktree-path-guard] BLOCKED Write/Edit to {file_path}\n"
         f"  Session worktree:  {session_root}\n"
@@ -146,8 +206,11 @@ def main(context: dict[str, Any]) -> int:
         "tree than the one you're working in.\n"
         "  Fix: change the path to use this session's worktree, "
         "or switch your session if you intended the other tree.\n"
-        "  Override: re-issue with the path you intended; if the "
-        "mismatch is intentional this hook will need tuning.\n"
+        "  Intentional external tree? Allowlisted roots bypass this "
+        f"guard (currently: {allow_roots}).\n"
+        f"  Extend via the {ALLOWLIST_ENV_VAR} env var "
+        "(os.pathsep-separated roots) or "
+        "DEFAULT_ALLOWED_EXTERNAL_ROOTS in worktree_path_guard.py.\n"
         "\n  (See docs/specs/enforcement-vs-documentation/ for "
         "the framework this enforcement runs under.)\n"
     )
