@@ -411,6 +411,42 @@ class TestCmdMemoryRecall:
         parsed = json_mod.loads(out)
         assert parsed[0]["score"] == 0.9
 
+    @patch(_PERSONAL_MEM)
+    def test_json_output_survives_stdout_log_noise(self, MockPM, capsys) -> None:
+        """--json stdout stays parseable when the query layer logs to stdout.
+
+        Regression guard: the RAG layer logs via structlog's default
+        PrintLogger, which writes to stdout. That polluted `--json` output
+        (a `rag.run` info line ahead of the JSON), breaking machine
+        consumers like `attune memory recall ... --json | jq`. The handler
+        must forward that noise to stderr and keep stdout pure JSON.
+        """
+        import json as json_mod
+
+        from attune.cli_commands.memory_commands import cmd_memory_recall
+
+        hits = [{"path": "auth-design/decision.md", "score": 0.9}]
+
+        def noisy_query(*_args, **_kwargs):
+            print("2026-07-02 [info] rag.run retriever=KeywordRetriever")
+            return hits
+
+        MockPM.return_value.query.side_effect = noisy_query
+
+        args = MagicMock()
+        args.query = "auth"
+        args.k = 3
+        args.kind_filter = None
+        args.json = True
+
+        result = cmd_memory_recall(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        parsed = json_mod.loads(captured.out)  # raises if stdout is polluted
+        assert parsed[0]["score"] == 0.9
+        assert "rag.run" in captured.err  # noise forwarded, not swallowed
+
 
 class TestCmdMemoryTopics:
     """Tests for cmd_memory_topics."""

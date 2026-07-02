@@ -533,7 +533,11 @@ jobs:
     # transitively imports an extras-only dependency (e.g. fastapi from the
     # [ops] extra) and crashes on startup — invisible to the rest of the
     # suite, which always installs the extras. 8.5.0 shipped exactly this
-    # (attune --help -> ModuleNotFoundError: fastapi). Self-contained (it
+    # (attune --help -> ModuleNotFoundError: fastapi). Also probes the
+    # personal-memory capture -> recall round-trip under a fake HOME,
+    # asserting on recall CONTENT: 9.3.0 shipped with recall broken
+    # (exit 0, "No results found.") while unit tests stayed green because
+    # they mocked the broken RAG layer. Self-contained (it
     # builds its own wheel) so it never skips on an upstream failure — a
     # skipped required check would block every merge.
     name: default-install-smoke

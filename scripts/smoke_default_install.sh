@@ -15,6 +15,13 @@
 # This gate reproduces the real default-install environment and boots the
 # CLI, so that class can never ship again.
 #
+# It also probes the personal-memory capture -> recall round-trip against
+# the shipped wheel. 9.3.0 shipped with `attune memory recall` broken
+# (capture succeeded; recall printed "No results found." and exited 0)
+# while every unit test was green — the tests mocked the RAG layer that
+# was broken. The probe asserts on recall CONTENT under a fake HOME,
+# never on the exit code, so that class can't ship again either.
+#
 # Usage:
 #   scripts/smoke_default_install.sh [path/to/attune_ai-*.whl]
 #
@@ -61,4 +68,48 @@ ATTUNE="$WORK/venv/bin/attune"
 "$ATTUNE" --help >/dev/null
 "$ATTUNE" version
 
-echo "PASS: default-install CLI boots without extras"
+echo "== smoke: personal-memory capture -> recall must round-trip =="
+# The 9.3.0 regression class: recall exits 0 even with zero hits, so a
+# boot-only smoke can't see it. Probe under a fake HOME (isolated global
+# memory root, exactly the clean-venv + fake-HOME audit that caught the
+# original bug) and assert on the returned content. ANTHROPIC_API_KEY is
+# set EMPTY (not unset) so dotenv cannot inject a real key; the whole
+# round-trip is keyless (polish degrades gracefully without attune-author).
+PROBE_HOME="$WORK/home"
+mkdir -p "$PROBE_HOME"
+SENTINEL="smoke sentinel: the quarterly fox prefers decaf espresso"
+
+(
+  cd "$WORK"
+  HOME="$PROBE_HOME" ANTHROPIC_API_KEY="" \
+    "$ATTUNE" memory capture smoke-recall-probe "$SENTINEL" --kind reference
+)
+CAPTURED="$PROBE_HOME/.attune/memory/smoke-recall-probe/reference.md"
+if [[ ! -f "$CAPTURED" ]]; then
+  echo "FAIL: capture wrote nothing at $CAPTURED"
+  exit 1
+fi
+
+RECALL_JSON="$(
+  cd "$WORK"
+  HOME="$PROBE_HOME" ANTHROPIC_API_KEY="" \
+    "$ATTUNE" memory recall "quarterly fox decaf espresso" --json
+)"
+# NOTE: `python - <<HEREDOC` would consume stdin for the script itself,
+# leaving json.load(sys.stdin) an empty stream — pipe into `-c` instead.
+printf '%s' "$RECALL_JSON" | "$VPY" -c '
+import json
+import sys
+
+hits = json.load(sys.stdin)
+if not hits:
+    sys.exit(
+        "FAIL: recall returned zero hits for freshly captured content "
+        "(the 9.3.0 broken-round-trip class - exit code alone would not catch this)"
+    )
+if not any("smoke-recall-probe" in hit.get("path", "") for hit in hits):
+    sys.exit("FAIL: recall hits do not include the captured topic: %r" % hits)
+print("confirmed: recall round-trips (%d hit(s), top: %s)" % (len(hits), hits[0]["path"]))
+'
+
+echo "PASS: default-install CLI boots and personal memory round-trips without extras"
