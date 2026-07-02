@@ -1,6 +1,6 @@
 # Decisions: CI Runner-Hang Root Cause and Fix
 
-**Status:** draft
+**Status:** monitoring (D3, 2026-07-02)
 **Created:** 2026-06-14
 **Requirements:** [requirements.md](requirements.md) ·
 **Design:** [design.md](design.md)
@@ -32,6 +32,25 @@ failure. This alone removes most of the human-intervention tax the
 **Open:** exact `timeout-minutes` value — start at 25 (test p99 ~4 min,
 coverage ~8 min; 2–3× headroom). Tune after observing a week of normal
 runtimes.
+
+### D3 — Spec goes `monitoring`; cause is xdist/execnet-internal
+(decided 2026-07-02)
+
+The 4th captured hang (run `28566485306`, PR #1212) fired on
+**windows-latest** — a spawn-only platform where the fork-Pool
+fd-leak hypothesis is structurally impossible — with the same
+end-of-session signature as the three Linux captures. This is the
+stronger form of the tar-pit exit condition written into the
+3rd-capture update: the cause is xdist/execnet-internal, not ours to
+fix. Phase-1 deliverables (job `timeout-minutes` + hang-dump capture)
+already bound the tax; recovery is `gh run rerun <id> --failed`.
+The #1085 probe was additionally found blind on Windows (`/proc` +
+GNU-ps assumptions); deliberately NOT building a Windows probe.
+See `phase2-findings.md` "Phase 2 close-out" and
+`evidence/run-28566485306/`.
+
+**Reopen when:** a capture shows a test frame (not end-of-session),
+or an adoptable upstream pytest-xdist/execnet fix appears.
 
 ---
 

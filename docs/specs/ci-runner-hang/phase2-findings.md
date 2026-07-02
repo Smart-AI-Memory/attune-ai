@@ -373,3 +373,45 @@ actual orphan** on the next hang if a different fork/Pool path is
 responsible. Tar-pit guard: if the next captured `*-proc.txt` shows no
 leaked socket dup, the cause is genuinely xdist/execnet-internal and the
 spec should go `monitoring` rather than chase further.
+
+## Phase 2 close-out — 4th capture is WINDOWS; spec goes monitoring (2026-07-02)
+
+A fourth hang was captured on PR #1212's `test (windows-latest, 3.12)`
+lane (run `28566485306`). Dumps saved under
+`evidence/run-28566485306/`. This capture changes the conclusion.
+
+### The capture breaks two premises at once
+
+- **"Linux-only" is falsified.** All three prior captures were Linux;
+  this one is `windows-latest`. Same end-of-session shape: all tests
+  passing, ~99% done, controller's execnet `_thread_receiver` threads
+  blocked in `read`, worker in plain `threading.wait`, watchdog
+  timeout at 20 min.
+- **The fork-Pool fd-leak hypothesis cannot explain THIS hang.**
+  Windows `multiprocessing` is spawn-only — `fork` does not exist on
+  the platform — so a fork-dup'd execnet socket fd is impossible
+  here. The one known fork hazard (already converted to spawn in
+  #1085) is not the mechanism behind this capture.
+
+### The #1085 probe was blind on Windows
+
+`hang-controller-proc.txt` contains only `ps: unknown option -- w`
+and an empty socket-inode map: the probe is built on `/proc` and
+GNU `ps`, both Linux-only. So this capture cannot rule a leaked-fd
+orphan in or out *on Windows* — but it doesn't need to: the platform
+itself rules out fork.
+
+### Conclusion: xdist/execnet-internal; spec -> `monitoring`
+
+Per the tar-pit guard written into the 3rd-capture update ("if the
+next capture shows no dup, the cause is genuinely
+xdist/execnet-internal and the spec should go monitoring"): the 4th
+capture, on a platform where the fork hypothesis is structurally
+impossible, is the stronger version of that outcome. The
+Phase-1 deliverables already bound the tax (job `timeout-minutes`
+converts the wedge into a visible 20-min failure; `gh run rerun
+--failed` recovered PR #1212 in one pass). Not building a
+Windows-compatible probe (psutil/PowerShell) — that would be chasing
+an unreproducible upstream bug past confirmed evidence. Reopen only
+if a capture arrives with a test frame (not end-of-session) or an
+upstream pytest-xdist/execnet fix becomes adoptable.

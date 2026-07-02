@@ -1,0 +1,5 @@
+# ci-runner-hang process-state probe (worker=controller pid=7296 ppid=2680)
+## socket-inode -> pid map (all /proc)
+## ps tree
+ps: unknown option -- w
+Try `ps --help' for more information.

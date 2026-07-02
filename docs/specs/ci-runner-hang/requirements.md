@@ -9,7 +9,7 @@
 > future hang is self-documenting and auto-recoverable instead of a
 > silent multi-minute stall.
 
-**Status:** draft
+**Status:** monitoring (see decisions.md D3, 2026-07-02)
 **Created:** 2026-06-14
 **Owner:** Patrick + agent
 **Related:**
@@ -29,7 +29,7 @@
 
 ## Phase 1: Requirements
 
-**Status:** draft
+**Status:** shipped; spec in monitoring (D3)
 
 ### Problem statement
 
