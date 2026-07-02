@@ -7,14 +7,14 @@
   },
   "metadata": {
     "description": "Developer workflow tools for Claude Code — run security audits, code reviews, and test generation from /attune",
-    "version": "9.3.0"
+    "version": "9.4.0"
   },
   "plugins": [
     {
       "name": "attune-ai",
       "description": "Run security audits, code reviews, test generation, and release preparation through a single /attune command with cost-optimized model routing",
       "source": "./",
-      "version": "9.3.0",
+      "version": "9.4.0",
       "author": {
         "name": "Smart AI Memory",
         "email": "patrick.roebuck@smartaimemory.com"
