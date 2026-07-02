@@ -15,14 +15,21 @@ surface). Writes, in one validated pass:
    footer (``**Version:** X``)
 7. ``docs/reference/API_REFERENCE.md`` — header and footer
    (``**Version:** X``)
+8. ``website/lib/features.ts`` — the two attune-ai product entries
+   (``pypiName: "attune-ai"`` + ``version: "X"``; other products'
+   versions are independent and never touched)
+9. ``website/app/page.tsx`` — homepage badge (``<span>vX</span>``)
 
 Every replacement is count-checked against the expected number of
 occurrences BEFORE any file is written; a mismatch aborts with no
 partial state. After writing, all sites are re-read and verified.
 
-Backstop guard: ``tests/unit/plugins/test_plugin_config_validation.py
+Backstop guards: ``tests/unit/plugins/test_plugin_config_validation.py
 ::TestVersionConsistency::test_all_versions_match`` (asserts all
-sites equal — fails with a pointer to this script).
+sites equal — fails with a pointer to this script) and
+``tests/unit/test_website_version_accuracy.py::TestFeaturesVersionSync``
+(website sites vs pyproject — the guard that turned every CI lane red
+on the 9.4.0 release when this script didn't yet cover the website).
 
 Usage:
     python scripts/bump_version.py 8.5.0
@@ -94,6 +101,21 @@ def _sites(root: Path) -> list[Site]:
             "**Version:** {v}",
             2,
             min_count=True,
+        ),
+        # Website sites — enforced by tests/unit/
+        # test_website_version_accuracy.py in the required CI lanes.
+        # The pattern is anchored on pypiName so the other products'
+        # independent versions (attune-help, attune-author) are never
+        # matched even if one coincides with the attune-ai version.
+        Site(
+            root / "website" / "lib" / "features.ts",
+            'pypiName: "attune-ai",\n    version: "{v}"',
+            2,
+        ),
+        Site(
+            root / "website" / "app" / "page.tsx",
+            "<span>v{v}</span>",
+            1,
         ),
     ]
 
