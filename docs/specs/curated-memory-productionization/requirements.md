@@ -6,7 +6,7 @@
 > Patrick's prototype-first decision — every requirement below traces
 > to a measured receipt, not speculation.
 
-**Status:** requirements draft (2026-07-02)
+**Status:** requirements approved (Patrick, 2026-07-02)
 **Owner:** Patrick + agent
 **Related:**
 

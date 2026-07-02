@@ -1,6 +1,6 @@
 # Decisions: Curated-Memory Productionization
 
-**Status:** requirements draft (2026-07-02)
+**Status:** requirements approved (Patrick, 2026-07-02)
 **Created:** 2026-07-02
 **Requirements:** [requirements.md](requirements.md)
 
@@ -34,3 +34,15 @@ Evidence: `hydrate.py` failed with `ModuleNotFoundError: No module
 named 'redis'` under the worktree venv on first productionization
 contact (2026-07-02). Worktree venvs are synced with a minimal extras
 set and will recur.
+
+### D3 — Requirements approved as written; R-ordering left to
+execution (decided 2026-07-02)
+
+Patrick approved requirements.md the same day it was drafted, without
+narrowing R2 (targeted recall procedures) or R4 (promotion path) out
+of phase 1. Execution order is therefore an implementation call;
+recommended sequence: R1 (SessionStart hook — highest leverage, makes
+every later receipt automatic) -> R3 (recall-digest primitive, fixes
+the known progress-construct semantics mismatch) -> R4 (promotion
+path) -> R2 (only when a consumer demonstrates the need, per its own
+text). R5 (receipts) applies to every item as it lands.
