@@ -12787,3 +12787,38 @@ files.
   any CLI smoke: exit codes and boot are necessary-not-sufficient —
   round-trip one real feature and assert on its output content, via
   the SHIPPED artifact.
+- **bump_version.py covers the website version sites as of PR #1216
+
+  (2026-07-02) — the "bump features.ts/page.tsx by hand on release"
+  remedy is obsolete**: epilogue to the 9.2.0/9.4.0 website-version
+  lessons. The script now writes 9 files including
+  `website/lib/features.ts` (both attune-ai product entries, anchored
+  on `pypiName: "attune-ai"` so sibling products' independent versions
+  are never touched) and `website/app/page.tsx` (the `<span>vX.Y.Z</span>`
+  badge), and `TestVersionConsistency._get_versions` mirrors both so
+  the local `test_all_versions_match` backstop names website drift
+  without waiting for CI. If a future release still trips
+  `TestFeaturesVersionSync`, the site list drifted — fix the script,
+  don't hand-bump.
+
+- **"This published claim is factually wrong/stale" about VERSION
+  NUMBERS in an article may just be a dated case study — verify
+  against PyPI `upload_time` before editing**: 2026-07-02, the
+  discipline article's "Three PyPI releases (attune-author 0.14.1,
+  attune-gui 0.8.0, attune-ai 7.1.2)" was asserted wrong-or-stale;
+  all three verified as real same-morning uploads (2026-05-25,
+  13:36–13:57 UTC via `pypi.org/pypi/<pkg>/json` →
+  `releases[ver][0].upload_time`), cross-checked against local git
+  tags + CHANGELOG dates. Historical narrative doesn't go stale —
+  old versions in a dated case study are correct, not drift. The
+  REAL defect class to look for: the passage lacking its date at the
+  point of use (§1 said "one morning"; the date sat ~900 lines later
+  in §8), which invites the misreading. Extends doc-fiction-triage
+  §2 (verify deadness/staleness as a fact, never infer it) to
+  published version claims.
+
+- **zsh compound-command micro-traps: bare `===` separators and
+  `set -- $var`**: `echo ===` dies in zsh with `== not found` (`=cmd`
+  filename expansion) — use `echo ---`; and `set -- $spec` does NOT
+  word-split in zsh (unquoted vars don't split), so `$1` gets the
+  whole string — loop over explicit pairs in python instead.
