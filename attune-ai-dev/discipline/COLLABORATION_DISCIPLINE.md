@@ -677,9 +677,9 @@ sessions hydrate it into a fast store at startup; the handoff layer
 is machine-reconciled against git and the package index at session
 start; and the first human review pass returned its verdicts
 through a rendered form — six keeps, one sharpened, zero wrong.
-This layer is also the honest answer to the deepest asymmetry in
+This layer is also the honest answer to the deepest imbalance in
 §2 — one party cannot natively remember past sessions. The
-asymmetry doesn't disappear; it gets scaffolded. And the
+imbalance doesn't disappear; it gets scaffolded. And the
 scaffolding has a property human memory never has: what the agent
 knows at minute zero of a session is a curated, reviewed, versioned
 artifact — inspectable, diffable, and correctable by the review
