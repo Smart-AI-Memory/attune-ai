@@ -58,6 +58,27 @@ deliberate follow-up rather than ad-hoc workarounds:
    doing its job; recorded so the R1 "done" claim is honest about
    which half is live.
 
+### D5 — Hook pins a dedicated memory-repo venv, not the dev venv;
+no-op is loud (decided 2026-07-02, via pushback form) — R1 SHIPPED
+
+Patrick initially registered the hook with the main attune-ai venv's
+python; the agent pushed back (rendered as a `pushback` construct —
+grammar member #3's second live use): the main venv is rebuilt by
+`uv sync` and `redis` is not in the dev/developer extras, so one
+narrower sync would leave the hook silently no-oping on every session
+("registered != working" in hook form). Patrick switched to the
+dedicated venv. Refines D2: "pinned interpreter" now means an
+interpreter the dev repo cannot churn — `~/.attune/memory/.venv`
+(uv venv + redis only, ~10MB, `.gitignore`d). The degrade paths also
+now PRINT to stdout (`[memory-hydrate] skipped:`/`FAILED`) so a no-op
+lands in session context instead of only the log.
+
+**R1 receipts (all live 2026-07-02):** hook registered in
+`~/.claude/settings.json` SessionStart (jq-validated); clean-tree run:
+`pull: ok`, 7 nodes hydrated, warm FCALL 128us, exit 0; memory-repo
+commits `40e77d6`/`dce08d4`. Remaining R1 proof at next real session
+start: the `[memory-hydrate]` line appearing in fresh-session context.
+
 ### D3 — Requirements approved as written; R-ordering left to
 execution (decided 2026-07-02)
 
