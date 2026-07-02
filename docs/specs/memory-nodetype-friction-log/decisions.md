@@ -259,3 +259,21 @@ awareness; the curated path (human-reviewed, status-bearing) is the
 mechanism that catches this class. Same subsystem caveat as the
 2026-07-01 cross-project-noise entry: not `add_finding()` scope,
 logged as adjacent evidence.
+
+---
+
+## 2026-07-02 — Transition protocol ratified (closes the open
+"talk to me more about 2" discussion)
+
+Patrick ratified the two-layer protocol after an explicit
+amnesia-centered deep dive: **curated graph = durable-only** (nodes
+must pass the 30-day test), **operational handoff = short-term
+memory** (separate artifact; starter file today, Redis-native TTL'd
+records as the evolution path), bridged by handoff items citing
+curated node IDs. Full rationale and the named future R-item
+(crash-safe continuous handoff) recorded in
+`docs/specs/curated-memory-productionization/decisions.md` D6.
+Consequence for THIS log: R1's "real usage" bar now has a sharper
+admission filter — a candidate curated node that fails the 30-day
+test is routed to the handoff layer, and that routing decision is
+itself loggable evidence here.

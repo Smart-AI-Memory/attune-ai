@@ -79,6 +79,36 @@ lands in session context instead of only the log.
 commits `40e77d6`/`dce08d4`. Remaining R1 proof at next real session
 start: the `[memory-hydrate]` line appearing in fresh-session context.
 
+### D6 — Two-layer transition protocol RATIFIED: curated graph is
+durable-only (30-day test); operational handoff is short-term memory
+(decided 2026-07-02, Patrick; closes the open "talk to me more
+about 2" thread)
+
+The curated graph takes ONLY nodes that pass the 30-day test — "will
+this still be true and worth carrying in a month?" Operational
+handoff state (in-flight PRs, grants, session gotchas) stays a
+separate artifact: today the starter file + reconciler hook, with a
+named evolution path to Redis-native short-term records (TTL'd,
+written continuously during the session, reconciled against
+git/gh/PyPI at load).
+
+**Why (the load-bearing argument):** the two layers fail in opposite
+ways and need opposite truth-maintenance regimes. Stale operational
+memory is worse than no memory (a stale "merge PR X" causes wrong
+actions) — its regime is machine verification against ground truth
+at load time. Stale durable memory fails softly — its regime is
+human review verdicts over time (keep/wrong/sharper). Merging them
+would drown the review loop in expiring churn AND leave operational
+truth policed by a mechanism too slow for it — breaking both.
+
+**Bridge:** handoff items cite curated node IDs — short-term says
+what's open, long-term says why it matters. **Named future R-item
+(evidence-first, not now):** crash-safe continuous handoff — today's
+starter exists only if the prior session ended cleanly; a session
+that dies mid-flight leaves no handoff. This maps directly onto the
+architecture node's "git long-term / Redis short-term" framing — the
+protocol is the architecture, not a compromise on it.
+
 ### D3 — Requirements approved as written; R-ordering left to
 execution (decided 2026-07-02)
 
