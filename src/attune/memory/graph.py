@@ -85,6 +85,24 @@ class MemoryGraph:
 
         self._load()
 
+    @classmethod
+    def curated(cls) -> "MemoryGraph":
+        """Open the durable curated cross-session memory graph.
+
+        Curated memory (``USER_CONTEXT``/``FEEDBACK``/``PROJECT_CONTEXT``/
+        ``REFERENCE`` nodes - see ``attune.memory.nodes``) must survive
+        across sessions, repos, and worktrees, so it lives under the
+        user's home directory. The constructor's cwd-relative default
+        (``patterns/memory_graph.json``) is shaped for per-project
+        workflow findings and is typically git-tracked - the wrong home
+        for cross-session memory.
+
+        Returns:
+            MemoryGraph backed by ``~/.attune/memory/curated_graph.json``
+
+        """
+        return cls(path=Path.home() / ".attune" / "memory" / "curated_graph.json")
+
     def _load(self) -> None:
         """Load graph from JSON file."""
         if not self.path.exists():
@@ -157,7 +175,9 @@ class MemoryGraph:
         Also accepts curated cross-session memory (no workflow origin) via
         the ``USER_CONTEXT``/``FEEDBACK``/``PROJECT_CONTEXT``/``REFERENCE``
         node types - pass ``workflow=""`` for those (see
-        ``attune.memory.nodes`` module docstring).
+        ``attune.memory.nodes`` module docstring) and store them in the
+        durable home-directory graph (``MemoryGraph.curated()``), not a
+        cwd-relative per-project graph.
 
         Args:
             workflow: Name of the workflow adding this finding, or "" for
@@ -332,23 +352,45 @@ class MemoryGraph:
 
     def find_similar(
         self,
-        finding: dict[str, Any],
-        threshold: float = 0.5,
+        finding: dict[str, Any] | str,
+        threshold: float = 0.25,
         limit: int = 10,
     ) -> list[tuple[Node, float]]:
         """Find similar past findings.
 
-        Uses simple text similarity on name and description.
+        Uses simple text similarity (word overlap) on name and
+        description, with bonuses for type and file matches.
 
         Args:
-            finding: Dict with 'name' and/or 'description'
-            threshold: Minimum similarity score (0.0 - 1.0)
+            finding: What to match against. A dict with 'name' and/or
+                'description' (plus optional 'type'/'file'); a node ID
+                (the query is built from that node's fields and the node
+                itself is excluded from results, mirroring
+                ``find_related``); or free text (matched against both
+                name and description).
+            threshold: Minimum similarity score (0.0 - 1.0). The default
+                is tuned so natural-language paraphrases match; word
+                overlap above ~0.5 requires near-verbatim wording.
             limit: Maximum results to return
 
         Returns:
             List of (node, similarity_score) tuples
 
         """
+        exclude_id: str | None = None
+        if isinstance(finding, str):
+            source_node = self.nodes.get(finding)
+            if source_node is not None:
+                exclude_id = source_node.id
+                finding = {
+                    "name": source_node.name,
+                    "description": source_node.description,
+                    "type": source_node.type.value,
+                    "file": source_node.source_file,
+                }
+            else:
+                finding = {"name": finding, "description": finding}
+
         query_name = finding.get("name", "").lower()
         query_desc = finding.get("description", "").lower()
         query_type = finding.get("type")
@@ -357,6 +399,9 @@ class MemoryGraph:
         results: list[tuple[Node, float]] = []
 
         for node in self.nodes.values():
+            if node.id == exclude_id:
+                continue
+
             score = 0.0
             factors = 0.0
 

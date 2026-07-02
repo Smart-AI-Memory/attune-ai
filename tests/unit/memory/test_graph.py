@@ -637,3 +637,85 @@ class TestClearOperation:
         assert len(graph._nodes_by_type) == 0
         assert len(graph._nodes_by_workflow) == 0
         assert len(graph._edges_by_source) == 0
+
+
+# =============================================================================
+# CURATED MEMORY HOME (friction A) AND find_similar ERGONOMICS (friction C)
+# =============================================================================
+
+
+class TestCuratedGraphHome:
+    """Test the durable home-directory factory for curated memory."""
+
+    def test_curated_lives_under_home_attune_memory(self, monkeypatch, tmp_path):
+        """Test curated() resolves to ~/.attune/memory/curated_graph.json."""
+        from pathlib import Path
+
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        graph = MemoryGraph.curated()
+
+        assert graph.path == tmp_path / ".attune" / "memory" / "curated_graph.json"
+        assert graph.path.exists()
+
+    def test_curated_round_trips_across_instances(self, monkeypatch, tmp_path):
+        """Test a curated node written via one instance reloads in a fresh one."""
+        from pathlib import Path
+
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        writer = MemoryGraph.curated()
+        node_id = writer.add_finding(
+            workflow="",
+            finding={
+                "type": "feedback",
+                "name": "Prefer real round-trip tests over mocks",
+                "description": "Mock-blind bugs in attune.memory, 2026-07-01",
+                "status": "active",
+            },
+        )
+
+        reader = MemoryGraph.curated()
+        node = reader.get_node(node_id)
+
+        assert node is not None
+        assert node.type == NodeType.FEEDBACK
+        assert node.status == "active"
+
+
+class TestFindSimilarErgonomics:
+    """Test find_similar's string forms and paraphrase-friendly default."""
+
+    def test_accepts_node_id_and_excludes_self(self, populated_graph):
+        """Test passing a node ID builds the query from that node."""
+        graph, bug_id, fix_id, _ = populated_graph
+
+        results = graph.find_similar(bug_id, threshold=0.0)
+
+        returned_ids = [node.id for node, _score in results]
+        assert bug_id not in returned_ids  # self-match excluded
+        assert fix_id in returned_ids  # shares file + null-check wording
+
+    def test_accepts_free_text_query(self, populated_graph):
+        """Test a non-ID string is treated as free text."""
+        graph, bug_id, _, _ = populated_graph
+
+        results = graph.find_similar("null pointer in auth code", threshold=0.1)
+
+        assert any(node.id == bug_id for node, _score in results)
+
+    def test_default_threshold_admits_paraphrase(self, populated_graph):
+        """Test a natural paraphrase clears the default threshold.
+
+        Regression guard for the friction-log finding that the old
+        default (0.5) muted realistic paraphrases: this query scores
+        between 0.25 and 0.5 against the bug node, so it must match at
+        the default but would have been silently filtered before.
+        """
+        graph, bug_id, _, _ = populated_graph
+
+        results = graph.find_similar({"name": "null pointer error auth"})
+
+        match = next(((node, score) for node, score in results if node.id == bug_id), None)
+        assert match is not None
+        assert match[1] < 0.5  # would have been filtered at the old default

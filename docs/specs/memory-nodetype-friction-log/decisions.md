@@ -102,6 +102,56 @@ it lives) — cost one failed import.
 
 ---
 
+## 2026-07-02 — Alignment pause + Frictions A and C fixed
+
+**Alignment (Patrick's answers, batched decision form):**
+
+- **Goal framing:** attune memory is the product; the harness
+  auto-memory files are scaffolding. Judge the curated graph against
+  "could this carry the agent's continuity." (A complementary
+  routing-rule framing was discussed as the *transition* protocol —
+  proposal pending Patrick's reaction, not yet a decision.)
+- **Fix order:** Friction A now, then Friction C. Friction B (edge
+  direction) deliberately stays open as R4 evidence.
+- **Read-side wiring:** scope it soon — R4 should judge a living
+  read/write loop, not a write-only log (see scope below).
+- **Verdict posture:** negative findings are acceptable but carry a
+  fix-first bias — propose "what would make it earn its keep" before
+  removal talk.
+
+**Friction A — FIXED.** `MemoryGraph.curated()` classmethod opens the
+graph at `~/.attune/memory/curated_graph.json` (the same durable home
+`personal.py` already uses as `_GLOBAL_ROOT`), leaving the constructor's
+cwd-relative default untouched for per-project workflow findings.
+Round-trip test across fresh instances included
+([graph.py](../../../src/attune/memory/graph.py),
+[test_graph.py](../../../tests/unit/memory/test_graph.py)).
+
+**Friction C — FIXED.** `find_similar` now accepts `dict | str`: a node
+ID builds the query from that node's fields and excludes it from
+results (mirroring `find_related`'s id-based signature); any other
+string is free text matched against name and description. Default
+`threshold` lowered 0.5 → 0.25 so natural paraphrases match (the
+observed 0.301 paraphrase score now clears the default). The one
+production caller (`agent_factory/memory_integration.py`) passes an
+explicit threshold, so the default change is additive. Regression
+guard asserts a paraphrase scoring < 0.5 matches at the default.
+
+**Read-side wiring — SCOPED (no engine work yet):** a session-start
+surface that queries the curated graph and injects relevant `active`
+nodes into agent context, so curated memory is READ under real
+conditions before the R4 verdict. Shape: reuse the existing
+SessionStart-hook pattern (the stash/recall hook), query
+`MemoryGraph.curated()` via `find_similar`/`find_by_type`, cap the
+injection (~5 nodes), and label provenance per node type. Acceptance:
+a fresh session surfaces at least the USER_CONTEXT priority node and
+any PROJECT_CONTEXT nodes relevant to the working repo without a
+manual query. Open question for the spec pass: relevance signal at
+session start (no query text yet — recency + type-weighting vs. cwd/
+repo tags). Not started — needs its own tasks entry or small spec.
+
+---
+
 ## Adjacent observations (not R1-scope — different subsystem)
 
 - **2026-07-01 — cross-project recall noise in the stash/recall

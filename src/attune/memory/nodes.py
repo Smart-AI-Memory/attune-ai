@@ -8,7 +8,9 @@ feedback, project context - that has no workflow origin and no
 resolution lifecycle. ``source_workflow`` stays empty and ``severity``
 stays unset for curated-memory nodes; ``status`` is reinterpreted as
 active/superseded/stale rather than open/investigating/resolved/wontfix
-(same field, no schema change).
+(same field, no schema change). Store curated nodes in the durable
+home-directory graph (``MemoryGraph.curated()``), not the cwd-relative
+per-project default.
 
 Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
