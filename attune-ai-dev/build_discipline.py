@@ -62,7 +62,7 @@ TEMPLATE = """<!doctype html>
 </head>
 <body>
   <div class="draft-banner">
-    {draft_label} &middot; final edits in progress &middot;
+    {banner_line}
     <a href="/">attune-ai.dev</a>
   </div>
   <article>
@@ -101,8 +101,16 @@ def _neutralize_relative_links(body_html: str) -> str:
     return _ANCHOR_RE.sub(repl, body_html)
 
 
-def render(draft_label: str) -> str:
-    """Render the source markdown into the branded HTML page."""
+def render(draft_label: str, published_label: str | None = None) -> str:
+    """Render the source markdown into the branded HTML page.
+
+    Args:
+        draft_label: Draft marker (e.g. "Draft v5"); banner reads
+            "<label> · final edits in progress".
+        published_label: When set (e.g. "Revised 2026-07-02"), publish
+            mode — the banner drops "final edits in progress" and shows
+            only this label.
+    """
     if not SOURCE.is_file():
         raise SystemExit(f"source not found: {SOURCE}")
 
@@ -111,12 +119,17 @@ def render(draft_label: str) -> str:
     md = MarkdownIt("commonmark", {"html": False, "linkify": True}).enable("table")
     body_html = _neutralize_relative_links(md.render(md_text))
 
+    if published_label:
+        banner_line = f"{published_label} &middot;"
+    else:
+        banner_line = f"{draft_label} &middot; final edits in progress &middot;"
+
     return TEMPLATE.format(
         brand_css=BRAND_CSS,
         title=PAGE_TITLE,
         desc=PAGE_DESC,
         canonical=CANONICAL,
-        draft_label=draft_label,
+        banner_line=banner_line,
         body=body_html,
     )
 
@@ -128,9 +141,18 @@ def main() -> int:
         default="Draft v4",
         help="Draft marker shown in the banner (default: 'Draft v4').",
     )
+    parser.add_argument(
+        "--published",
+        metavar="LABEL",
+        default=None,
+        help=(
+            "Publish mode: replace the draft banner with this label "
+            '(e.g. "Revised 2026-07-02") and drop "final edits in progress".'
+        ),
+    )
     args = parser.parse_args()
 
-    html = render(args.draft_label)
+    html = render(args.draft_label, published_label=args.published)
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"wrote {OUTPUT} ({len(html):,} bytes)")
     return 0
