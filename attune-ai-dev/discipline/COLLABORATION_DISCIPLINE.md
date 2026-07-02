@@ -635,8 +635,10 @@ The three classes sort *what* to save. A second cut sorts *where* —
 and it earns its own rule because the two destinations fail in
 opposite ways. **Durable memory** holds only what passes a
 thirty-day test: will this still be true, and worth carrying, in a
-month? Preferences, validated approaches, decisions with their
-reasons. **Operational handoff** holds the short-term state one
+month? (The number matters less than that it outlives any single
+piece of work in flight — that margin is what keeps the two layers
+cleanly separate.) Preferences, validated approaches, decisions
+with their reasons. **Operational handoff** holds the short-term state one
 session leaves for the next: in-flight PRs, open threads, standing
 authorizations. Keep them separate, because they need opposite
 truth-maintenance regimes. Stale operational memory is *worse than
