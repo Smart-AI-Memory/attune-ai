@@ -152,6 +152,41 @@ repo tags). Not started — needs its own tasks entry or small spec.
 
 ---
 
+## 2026-07-02 — Second real captures: 2 nodes via the NEW curated() path
+
+**What was recorded** (via `MemoryGraph.curated()` — dogfooding the
+friction-A fix itself, receipt-verified from a fresh instance):
+
+- `USER_CONTEXT` — the alignment decisions (goal framing: attune
+  memory is the product; fix-first verdict bias; read-wiring scoped)
+- `PROJECT_CONTEXT` — Frictions A+C fixed (PR #1212), B open by choice
+- Two `RELATED_TO` edges, including one linking the new goal-framing
+  node to the prior standing-priority node.
+
+**Clean fits:** `curated()` resolved the right path with no explicit
+path argument; both nodes round-tripped with `status="active"`; the
+taxonomy again matched without forcing.
+
+**New friction (found by the receipt, FIXED in-PR):** free-text
+`find_similar` queries scored by Jaccard topped out at ~0.06–0.17
+against these verbose curated nodes — a realistic question-shaped
+query ("what fixes shipped for the memory frictions") returned `[]`
+even at the new 0.25 default, because the union term grows with node
+text length. No threshold fixes that class. Fix: the free-text form
+(new in PR #1212, so no back-compat) scores by **containment** — the
+fraction of query words found in the node's name or description. The
+same query now returns 5 hits; "goal framing memory product" ranks the
+goal-framing node top at 0.50.
+
+**Remaining evidence for R4 (not fixed):** (a) no stemming —
+"fixes"/"fixed" and "friction"/"frictions" still count as misses, and
+containment ranking mildly favors verbose nodes (the dead query's top
+hit is the wordy priority node, not the frictions node); (b) Friction
+B's `direction="both"` read-time workaround still in use for the edge
+follow-up. If either keeps biting, they're the adjust/extend evidence.
+
+---
+
 ## Adjacent observations (not R1-scope — different subsystem)
 
 - **2026-07-01 — cross-project recall noise in the stash/recall

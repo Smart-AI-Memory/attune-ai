@@ -704,6 +704,20 @@ class TestFindSimilarErgonomics:
 
         assert any(node.id == bug_id for node, _score in results)
 
+    def test_free_text_question_matches_at_default_threshold(self, populated_graph):
+        """Test a question-shaped query clears the default threshold.
+
+        Regression guard for the dogfood finding that free text scored
+        by Jaccard tops out near 0.1 against verbose nodes (the union
+        term dominates), silently returning [] at any sane threshold.
+        Free text scores by query-word containment instead.
+        """
+        graph, bug_id, _, _ = populated_graph
+
+        results = graph.find_similar("what fixed the null pointer")
+
+        assert any(node.id == bug_id for node, _score in results)
+
     def test_default_threshold_admits_paraphrase(self, populated_graph):
         """Test a natural paraphrase clears the default threshold.
 

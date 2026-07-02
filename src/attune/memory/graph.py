@@ -366,8 +366,10 @@ class MemoryGraph:
                 'description' (plus optional 'type'/'file'); a node ID
                 (the query is built from that node's fields and the node
                 itself is excluded from results, mirroring
-                ``find_related``); or free text (matched against both
-                name and description).
+                ``find_related``); or free text (scored by containment -
+                the fraction of query words found in a node's name or
+                description - since short queries against verbose nodes
+                score near zero under word-overlap Jaccard).
             threshold: Minimum similarity score (0.0 - 1.0). The default
                 is tuned so natural-language paraphrases match; word
                 overlap above ~0.5 requires near-verbatim wording.
@@ -389,7 +391,7 @@ class MemoryGraph:
                     "file": source_node.source_file,
                 }
             else:
-                finding = {"name": finding, "description": finding}
+                return self._find_by_text(finding, threshold, limit)
 
         query_name = finding.get("name", "").lower()
         query_desc = finding.get("description", "").lower()
@@ -448,6 +450,33 @@ class MemoryGraph:
                 results.append((node, score))
 
         # Sort by score descending
+        results.sort(key=lambda x: x[1], reverse=True)
+        return results[:limit]
+
+    def _find_by_text(
+        self,
+        text: str,
+        threshold: float,
+        limit: int,
+    ) -> list[tuple[Node, float]]:
+        """Score nodes by query-word containment for free-text recall.
+
+        Short queries against verbose nodes score near zero under
+        Jaccard (the union term grows with node text length), so free
+        text scores by containment instead: the fraction of query words
+        present in the node's name or description.
+        """
+        query_words = set(text.lower().split())
+        if not query_words:
+            return []
+
+        results: list[tuple[Node, float]] = []
+        for node in self.nodes.values():
+            node_words = set(node.name.lower().split()) | set(node.description.lower().split())
+            score = len(query_words & node_words) / len(query_words)
+            if score >= threshold:
+                results.append((node, score))
+
         results.sort(key=lambda x: x[1], reverse=True)
         return results[:limit]
 

@@ -18,8 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`find_similar` now accepts a node ID or free text and matches
   paraphrases at the default threshold.** Passing a node ID builds the
   query from that node (excluding it from results, mirroring
-  `find_related`) instead of raising `AttributeError`; free text
-  matches against name and description. The default `threshold`
+  `find_related`) instead of raising `AttributeError`; free text is
+  scored by query-word containment against name and description
+  (short queries against verbose nodes score near zero under Jaccard,
+  so word-overlap scoring would return `[]` for realistic questions
+  at any sane threshold). The default `threshold`
   drops from 0.5 (near-verbatim only — realistic paraphrases were
   silently filtered) to 0.25. Friction C from the memory-nodetype
   friction log.
