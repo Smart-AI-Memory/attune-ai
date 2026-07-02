@@ -109,6 +109,22 @@ that dies mid-flight leaves no handoff. This maps directly onto the
 architecture node's "git long-term / Redis short-term" framing — the
 protocol is the architecture, not a compromise on it.
 
+### D7 — R1 convergence receipt landed; three-ring audit regenerated
+as a durable spec doc (recorded 2026-07-02)
+
+The remaining R1 proof named in D5 — the `[memory-hydrate]` line
+appearing in fresh-session context — landed: a fresh worktree session
+on 2026-07-02 opened with `[memory-hydrate] 9 active curated nodes
+warm in Redis` in its SessionStart context. R1 is fully receipted.
+
+Same entry, second fact: the 2026-07-02 three-ring memory audit's
+artifact (`memory-three-rings`) turned out to be conversation-only —
+it persisted nowhere (curated graph, disk, Redis all checked). It was
+regenerated from receipts and re-verified as
+[three-ring-audit.md](three-ring-audit.md) in this spec dir. Meta:
+"presented" != "persisted" — audit artifacts must land in a git tree
+or the curated graph at creation time.
+
 ### D3 — Requirements approved as written; R-ordering left to
 execution (decided 2026-07-02)
 
