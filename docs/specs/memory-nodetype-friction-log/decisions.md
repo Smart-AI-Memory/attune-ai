@@ -215,3 +215,47 @@ follow-up. If either keeps biting, they're the adjust/extend evidence.
   is logged here as adjacent evidence only — but it is the same
   product question this spec exists to answer (does recalled memory
   read as trustworthy?), and today the answer on that surface was no.
+
+---
+
+## 2026-07-02 — First human review pass: 6 keep / 1 sharper / 0 wrong
+
+**What happened (the R4 core event):** the full 7-node curated graph
+was rendered as a widget review form through the production pipeline
+(`form_from_dict` -> `form_to_widget_html`, one `single_select`
+keep/wrong/sharper per node with the node's description as
+`help_text`). Patrick submitted verdicts; the payload validated clean
+through `collect_form_response` (`resp-20260702-100356`). Verdicts:
+**6 keep, 1 sharper** (the architecture-vision node; note: "7 just
+needs refinement and work and it seems you are doing that"), 0 wrong.
+
+**Applied via the real API:** `MemoryGraph.curated()` +
+`update_node()` — review provenance merged into every node's
+`metadata` (`reviewed_at`, `review_verdict`, `review_response_id`),
+and the sharper node's `description` rewritten (vision / method /
+receipts / open items separated; marked "refining as prototype
+evidence lands"). Redis re-hydrated (7 nodes, 5 edges); memory repo
+committed and pushed (`6aba3ff`).
+
+**Clean fits:** `update_node`'s metadata **merge** (not replace)
+carried review provenance without a schema change — the graph itself
+now records that a human judged it, which is R4 evidence in the data.
+The review-form shape (verdict enum + one notes textarea) was
+sufficient; no per-node notes field was missed in practice.
+
+**Friction:** none new in the NodeType taxonomy this pass. The
+first-review outcome itself is R4 signal: zero "wrong" verdicts on
+nodes written by the agent without templates or prompting.
+
+## Adjacent observation (stash/recall subsystem, 2026-07-02)
+
+The Stop-hook auto-stash captured a `[pattern]` finding carrying a
+hypothesis ("matches #930 fork-Pool execnet-fd-leak") that the SAME
+session's evidence had just superseded — alongside a `[bug]` finding
+correctly recording the new conclusion. The stash now holds a
+contradictory pair, and recency-ranked recall would surface both with
+equal confidence. Auto-extraction has no in-session supersession
+awareness; the curated path (human-reviewed, status-bearing) is the
+mechanism that catches this class. Same subsystem caveat as the
+2026-07-01 cross-project-noise entry: not `add_finding()` scope,
+logged as adjacent evidence.
