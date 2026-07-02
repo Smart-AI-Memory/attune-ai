@@ -12742,3 +12742,48 @@ files.
   attune-ai==9.4.0` succeeded immediately. Applies to every
   post-publish verification step; don't misread it as "publish didn't
   work" (the simple-index poll is the authority on that).
+
+- **PyPI's package-level JSON endpoint (`/pypi/<pkg>/json`) can serve
+  a STALE cached `info.version` (~1h+ after publish) — verify releases
+  via the version-specific endpoint or the simple index**: hit
+  2026-07-02 fact-checking the discipline article: `/pypi/attune-ai/
+  json` said latest=9.3.0 with "9.4.0 NOT ON PYPI" a while after
+  9.4.0's wheel was live, and I wrongly flagged the release claim as
+  failing verification. Authoritative checks: `/pypi/<pkg>/<ver>/json`
+  (200 + upload_time), the simple index (wheel filename listed),
+  `git ls-remote --tags`, and the publish run conclusion. Sibling of
+  the existing uv-cache lesson (local cache, opposite direction) —
+  BOTH directions of "the convenient endpoint lies near a publish
+  boundary": never assert a release exists/is-missing from the
+  package-level JSON alone.
+
+- **Two shell diagnostics that lie: `python - <<HEREDOC` eats the
+  stdin you piped in, and zsh MULTIOS invalidates `2>&1 1>/dev/null`
+  stream isolation**: both hit 2026-07-02 debugging the smoke-gate
+  recall probe. (1) `printf '%s' "$DATA" | python - <<'PY' ...
+  json.load(sys.stdin)` reads EMPTY — with `python -`, stdin IS the
+  script source (the heredoc overrides the pipe), so after the script
+  is read, sys.stdin is at EOF; symptom is `JSONDecodeError: Expecting
+  value: line 1 column 1 (char 0)`. Pipe into `python -c '<code>'`
+  instead. (2) Testing "is this on stderr?" with `cmd 2>&1 1>/dev/null
+  | head` under zsh shows stdout ANYWAY — zsh multios tees stdout to
+  both `/dev/null` AND the pipe, so the "stderr-only" view contains
+  stdout and you misattribute streams (I briefly concluded JSON was
+  printed to stderr). Use bash for stream-isolation tests, or
+  `1>/dev/null` via a wrapper script.
+
+- **A boot-only install smoke gate passes broken features — assert on
+  CONTENT of a real round-trip, because "no results" paths exit 0**:
+  9.3.0's broken `attune memory recall` (capture ok, recall empty)
+  sailed through the required default-install-smoke because the gate
+  only ran `attune --help` / `version`, and recall's zero-hit path
+  prints "No results found." with exit 0. Fixed 2026-07-02 (#1219):
+  the gate now does a fake-HOME capture -> `recall --json` and parses
+  the output asserting the captured topic is IN it. Dogfooding that
+  probe surfaced a second live bug: structlog's default PrintLogger
+  writes to STDOUT, so `recall --json` emitted a `rag.run` log line
+  ahead of the JSON (unparseable for `| jq`); fixed by forwarding
+  query-time stdout noise to stderr + regression test. Pattern for
+  any CLI smoke: exit codes and boot are necessary-not-sufficient —
+  round-trip one real feature and assert on its output content, via
+  the SHIPPED artifact.

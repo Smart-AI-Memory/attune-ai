@@ -52,6 +52,11 @@ const nextConfig: NextConfig = {
       { source: '/book/', destination: '/docs/', permanent: true },
       { source: '/chapter-23/', destination: '/docs/', permanent: true },
       { source: '/plugins/', destination: '/docs/#plugin', permanent: true },
+      // The Discipline of Agent Collaboration — canonical home is
+      // attune-ai.dev/discipline (deployed from attune-ai-dev/ on every
+      // merge to main); this alias keeps the smartaimemory.com URL live.
+      { source: '/discipline/', destination: 'https://attune-ai.dev/discipline/', permanent: true },
+      { source: '/discipline/:path*/', destination: 'https://attune-ai.dev/discipline/:path*/', permanent: true },
     ];
   },
 };
