@@ -1,7 +1,8 @@
 """Tests for scripts/bump_version.py (drift-guards-to-generators R4).
 
 Covers:
-- happy path: all 7 files / 9 sites rewritten, old version returned;
+- happy path: all 9 files rewritten (14 occurrences), old version
+  returned;
 - dry-run: validation runs, nothing written;
 - semver / same-version rejection;
 - count-mismatch aborts BEFORE any write (no partial state);
@@ -77,6 +78,36 @@ def fixture_root(tmp_path: Path) -> Path:
         f"# API\n\n**Version:** {OLD}\n\nbody\n\n**Version:** {OLD} | tail\n",
         encoding="utf-8",
     )
+    web_lib = tmp_path / "website" / "lib"
+    web_lib.mkdir(parents=True)
+    # Two attune-ai product entries plus a sibling product whose
+    # version must NOT be touched (the pypiName anchor guards it).
+    (web_lib / "features.ts").write_text(
+        "export const PRODUCTS = [\n"
+        "  {\n"
+        '    id: "attune-ai",\n'
+        '    pypiName: "attune-ai",\n'
+        f'    version: "{OLD}",\n'
+        "  },\n"
+        "  {\n"
+        '    id: "attune-help",\n'
+        '    pypiName: "attune-help",\n'
+        '    version: "0.1.0",\n'
+        "  },\n"
+        "  {\n"
+        '    id: "claude-code-plugin",\n'
+        '    pypiName: "attune-ai",\n'
+        f'    version: "{OLD}",\n'
+        "  },\n"
+        "];\n",
+        encoding="utf-8",
+    )
+    web_app = tmp_path / "website" / "app"
+    web_app.mkdir(parents=True)
+    (web_app / "page.tsx").write_text(
+        f"<div>\n  <span>v{OLD}</span>\n</div>\n",
+        encoding="utf-8",
+    )
     return tmp_path
 
 
@@ -91,6 +122,8 @@ def _all_texts(root: Path) -> str:
             root / "plugin" / "core" / "__init__.py",
             root / ".claude" / "CLAUDE.md",
             root / "docs" / "reference" / "API_REFERENCE.md",
+            root / "website" / "lib" / "features.ts",
+            root / "website" / "app" / "page.tsx",
         ]
     )
 
@@ -102,8 +135,12 @@ class TestBump:
         combined = _all_texts(fixture_root)
         assert OLD not in combined
         # 1 pyproject + 1 plugin.json + 2+2 marketplace + 1 __init__
-        # + 2 CLAUDE.md + 2 API_REFERENCE = 11 occurrences
-        assert combined.count(NEW) == 11
+        # + 2 CLAUDE.md + 2 API_REFERENCE + 2 features.ts
+        # + 1 page.tsx = 14 occurrences
+        assert combined.count(NEW) == 14
+        # The sibling product's independent version is untouched.
+        features = fixture_root / "website" / "lib" / "features.ts"
+        assert 'version: "0.1.0"' in features.read_text(encoding="utf-8")
 
     def test_dry_run_writes_nothing(self, mod, fixture_root: Path) -> None:
         before = _all_texts(fixture_root)

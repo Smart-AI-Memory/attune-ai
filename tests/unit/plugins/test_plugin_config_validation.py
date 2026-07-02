@@ -420,6 +420,32 @@ class TestVersionConsistency:
         versions["docs/reference/API_REFERENCE.md:header"] = found[0]
         versions["docs/reference/API_REFERENCE.md:footer"] = found[-1]
 
+        # Website surfaces — the drift that turned every CI lane red on
+        # the 9.4.0 release (PR #1215): bump_version.py covered the
+        # package/plugin sites but not these, and the coupling test
+        # (tests/unit/test_website_version_accuracy.py) only caught it
+        # in CI. Mirrored here so this single local backstop names them
+        # too. Guarded like the sibling test: skip if website/ absent.
+        features = REPO_ROOT / "website" / "lib" / "features.ts"
+        if features.is_file():
+            text = features.read_text(encoding="utf-8")
+            found = re.findall(
+                r'pypiName: "attune-ai",\s+version: "(\d+\.\d+\.\d+)"',
+                text,
+            )
+            assert len(found) >= 2, "features.ts attune-ai version entries missing"
+            for i, v in enumerate(found):
+                versions[f"website/lib/features.ts:attune-ai[{i}]"] = v
+
+        homepage = REPO_ROOT / "website" / "app" / "page.tsx"
+        if homepage.is_file():
+            badge = re.search(
+                r"<span>v(\d+\.\d+\.\d+)</span>",
+                homepage.read_text(encoding="utf-8"),
+            )
+            assert badge, "page.tsx homepage version badge missing"
+            versions["website/app/page.tsx:badge"] = badge.group(1)
+
         return versions
 
     def test_all_versions_match(self) -> None:
