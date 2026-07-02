@@ -12696,3 +12696,37 @@ files.
   `uv sync --all-extras` so the venv matches. Rule: before concluding
   "main doesn't have X" from the main checkout's tree, confirm the
   checkout is actually on main.
+
+- **"Fixed" ≠ "shipped" — audit user-facing features against the PyPI
+  artifact in a clean venv with an ISOLATED $HOME, not against the
+  checkout**: 2026-07-02, the three-ring memory audit found `attune
+  memory recall` broken on shipped 9.3.0 (`personal_memory_query_failed`
+  → "No results found" for content captured seconds earlier) while the
+  identical command against main worked — the #1208 fix had merged
+  2026-07-01 but v9.3.0 was tagged 2026-06-30, and ALL local testing
+  runs main so nobody noticed the release gap. Recipe that caught it:
+  `uv venv && uv pip install <pkg>` (real PyPI), then run the
+  round-trip with `HOME=<scratch>/fakehome` — the fake HOME matters
+  twice: (a) it simulates the true new-user condition, (b)
+  PersonalMemory's storage root is the GLOBAL shared `~/.attune/memory/`
+  — an un-isolated probe wrote `demo/decision.md` straight into the
+  curated-memory git repo and dirtied `summaries_by_path.json`
+  (recovered with `rm` + `git checkout --`). Standing rule: when a
+  user-facing bug is fixed, immediately ask "is the fix RELEASED?" —
+  if not, that's release pressure, and the bug is still live for every
+  real user.
+
+- **Release-prep must diff `git log v<last>..origin/main` against the
+  changelog — `[Unreleased]` completeness cannot be trusted**:
+  2026-07-02, preparing 9.4.0, `[Unreleased]` carried only 3 entries
+  while the tag-to-main log held ~40 commits including 11 user-facing
+  PRs with NO changelog entry (the headline recall fix #1208 among
+  them; also #1173, #1187, #1193/#1195/#1205, #1197, #1200/#1201,
+  #1203, #1207, #1209). Several sessions' PRs simply skipped the
+  changelog. Release step: enumerate the full commit list since the
+  last TAG (not since the last changelog section date), classify
+  user-facing vs internal, and write the missing entries as part of
+  the release PR. Related env note: `attune-author` can be a BROKEN
+  pyenv shim (`ModuleNotFoundError: attune_author`) even when `which`
+  finds it — probe the module, not the shim, before relying on the
+  docs-regen step.
