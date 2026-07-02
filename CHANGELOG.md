@@ -7,25 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.4.0] — 2026-07-02
+
+Memory repair release: the headline fix restores `attune memory recall`
+(broken on 9.3.0 — captures succeeded but recall returned no results),
+alongside the curated cross-session memory foundation, the Sonnet 5
+default, and the in-process authoring consolidation.
+
 ### Fixed
 
+- **`attune memory recall` (PersonalMemory) returned "No results
+  found" for content it had just captured.** `PersonalMemory.query()`
+  read the RAG pipeline's result as a list of dicts, but
+  `RagPipeline.run()` returns a `RagResult` whose hits live at
+  `result.citation.hits` — every recall raised internally and was
+  swallowed into an empty answer (`personal_memory_query_failed`).
+  Capture, topics, and forget were unaffected. Verified by the
+  cross-process recall benchmark (hit@1 18/18). (#1208)
+- **`MemoryGraph.add_finding()` silently dropped `status`.** Every
+  node created through the public API got the dataclass default
+  instead of the caller's value — falsifying the curated-memory
+  design (#1207) for real writes. (#1208)
 - **Curated memory gets a durable default home.**
   `MemoryGraph.curated()` opens the cross-session curated-memory graph
   at `~/.attune/memory/curated_graph.json` instead of the cwd-relative,
   typically git-tracked `patterns/memory_graph.json` default (which is
-  shaped for per-project workflow findings). Friction A from the
-  memory-nodetype friction log.
+  shaped for per-project workflow findings). (#1212)
 - **`find_similar` now accepts a node ID or free text and matches
   paraphrases at the default threshold.** Passing a node ID builds the
   query from that node (excluding it from results, mirroring
   `find_related`) instead of raising `AttributeError`; free text is
   scored by query-word containment against name and description
-  (short queries against verbose nodes score near zero under Jaccard,
-  so word-overlap scoring would return `[]` for realistic questions
-  at any sane threshold). The default `threshold`
-  drops from 0.5 (near-verbatim only — realistic paraphrases were
-  silently filtered) to 0.25. Friction C from the memory-nodetype
-  friction log.
+  (short queries against verbose nodes score near zero under Jaccard).
+  The default `threshold` drops from 0.5 to 0.25. (#1212)
+- **MCP workflow tools no longer swallow workflow errors.**
+  `_workflow_response` surfaced a generic success shape even when the
+  underlying workflow failed; the real error now reaches the caller.
+  (#1173)
+- **models/ review findings resolved.** The HIGH and MEDIUM findings
+  from the models-layer code review (error-handling and validation
+  gaps), with follow-up branch coverage. (#1200, #1201)
+- **ops dashboard: a failing `attune-author status` probe now reads
+  "unknown" instead of "clean".** Non-zero exits were being treated
+  as a clean report. (#1203)
+
+### Added
+
+- **Curated cross-session memory NodeTypes.** `USER_CONTEXT`,
+  `FEEDBACK`, `PROJECT_CONTEXT`, and `REFERENCE` join the
+  `MemoryGraph` taxonomy so curated personal/project memory can be
+  modeled first-class alongside workflow findings, with
+  `active`/`superseded`/`stale` lifecycle statuses. (#1207)
+- **Elicitation forms: `list_style` render variant** for
+  single-select questions rendered as a compact radio list. (#1187)
+- **`author-feature` plugin skill** — single-source feature-page
+  authoring driven by the consolidated in-process pipeline. (#1197)
+- **Recall benchmark: cross-process persistence mode**
+  (`scripts/memory_recall_eval.py --phase persistence`) proving
+  file-backed recall survives process death. (#1209)
 
 ### Changed
 
@@ -34,7 +73,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   registry, adaptive routing, providers, telemetry, and token
   estimation. Pricing is unchanged ($3/$15 per MTok standard;
   introductory $2/$10 through 2026-08-31). 1M context, 128K max output,
-  adaptive thinking; `effort` defaults to `high`.
+  adaptive thinking; `effort` defaults to `high`. (#1198, #1199)
+- **attune-author's deterministic mechanics absorbed in-process.**
+  The projector and staleness modules now live in `attune.authoring`
+  (with their upstream tests), and `help_data` resolves in-process —
+  part of the attune-author consolidation (T1/T2a). (#1193, #1195,
+  #1205)
 
 ## [9.3.0] — 2026-06-30
 
