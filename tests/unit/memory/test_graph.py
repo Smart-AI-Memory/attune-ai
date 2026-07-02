@@ -704,6 +704,13 @@ class TestFindSimilarErgonomics:
 
         assert any(node.id == bug_id for node, _score in results)
 
+    def test_empty_free_text_returns_no_results(self, populated_graph):
+        """Test empty and whitespace-only free-text queries return []."""
+        graph, _, _, _ = populated_graph
+
+        assert graph.find_similar("") == []
+        assert graph.find_similar("   ") == []
+
     def test_free_text_question_matches_at_default_threshold(self, populated_graph):
         """Test a question-shaped query clears the default threshold.
 
