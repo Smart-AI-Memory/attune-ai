@@ -83,7 +83,7 @@ pushback on the agent's own plan (running code-review on a
 config-only PR produces no signal — skip it, save the budget). One
 proactive memory write that did not exist that morning.
 
-What made this efficient was not magic. Five mechanisms compound.
+What made this efficient was not magic. Six mechanisms compound.
 **Clean small PRs** — each one single-purpose, easy to scope, easy
 to review, no mega-PRs that bundle six unrelated concerns.
 **Decision surfaces at real decision points only** — scope
@@ -100,8 +100,13 @@ twelve-platform matrix cycles, never serializing waiting time,
 because waiting is wasted human attention. **The dashboard as live
 state** — surfacing what changed, what's ready, what's anomalous,
 so the agent doesn't have to ask the human to re-explain context
-that is visible on screen. None of these is clever in isolation.
-The compounding is the discipline.
+that is visible on screen. **Verification attached to every
+"done"** — the agent does not report finished; it reports finished
+*with the receipt*: the CI state, the test output, the smoke-test
+result. The human approves on evidence, not on the agent's
+confidence. §7 gives this its own section because it is the
+discipline the others lean on. None of these is clever in
+isolation. The compounding is the discipline.
 
 The rest of this piece names the six disciplines that produce
 mornings like that — each its own section, each adoptable
@@ -255,6 +260,10 @@ human picks. The agent executes the mechanical span until the next
 decision point. Today's session had roughly twelve decision points
 across eight PRs. Each was a discrete surface from the agent, each
 got a discrete answer, the mechanical work between was hands-off.
+What made each approval cheap was the evidence attached to it —
+the CI state, the test run, the diff. An approval that rests on
+the agent's say-so is a guess with extra steps; an approval that
+rests on a receipt is a decision.
 
 The shape that makes this work is *the agent earning the human's
 trust at the mechanical layer*. When the human approves "go ship
