@@ -12886,3 +12886,14 @@ files.
   reference `$CLAUDE_SCRATCHPAD` inside Bash. Pairs with the
   "interrupted compound command may have partially executed" lesson —
   same reconciliation discipline, env-var-shaped trigger.
+  **Inter-agent addendum (probed live 2026-07-03):** subagents spawned
+  via the Agent tool get the SAME literal scratchpad path in their own
+  system prompt (the dir is keyed by the parent session id, which IS
+  exported as `CLAUDE_CODE_SESSION_ID`) — a marker file written by a
+  haiku subagent was immediately readable by the parent. So the
+  scratchpad IS a working same-session inter-agent file channel;
+  address it by literal path in prompts (each agent reads its own
+  system prompt), never via the env var (unset in every agent's Bash,
+  parent and child alike). Cross-session agents get DIFFERENT session
+  dirs — for cross-session handoff use the starter file / memory, not
+  the scratchpad.
