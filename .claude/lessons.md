@@ -12822,3 +12822,38 @@ files.
   filename expansion) — use `echo ---`; and `set -- $spec` does NOT
   word-split in zsh (unquoted vars don't split), so `$1` gets the
   whole string — loop over explicit pairs in python instead.
+
+- **After rebasing a prose/docs branch onto a PARALLEL revision of
+  the same document, re-run the session's editorial pass over the
+  MERGED text — resolving the conflict hunks is not enough**:
+  2026-07-02, the discipline article was revised by two sessions the
+  same day (#1216's plain-English pass + grammar callout vs #1218's
+  independent revision). Three sub-lessons: (a) the two sessions
+  independently added near-identical content (a form-grammar
+  treatment) — resolve by keeping ONE treatment and folding the
+  other's best lines in, not by letting both survive in different
+  shapes; (b) upstream's NEW auto-merged text silently escapes the
+  session's editorial pass — #1218's memory-loop passage carried two
+  'asymmetry' uses the approved plain-English sweep never saw; grep
+  the swap classes over the merged file after every such rebase;
+  (c) generated artifacts (index.html) conflict on every replayed
+  commit — resolve by REBUILDING from the resolved source, never
+  hand-merging, and verify afterwards that a fresh rebuild leaves
+  `git status` clean (rebuilt == committed is the receipt).
+
+- **LinkedIn article export of an attune-ai-dev article: rich-text
+  paste from rendered HTML, not markdown — and one-off transform
+  scripts must assert every replacement landed**: recipe from the
+  discipline article's LinkedIn derivative (2026-07-02). Transform
+  the markdown (strip H1/epigraph — the title goes in LinkedIn's
+  title field; `§N` → "Part N" everywhere; tables → bold lists,
+  LinkedIn articles cannot render tables; absolutize relative repo
+  links; prepend an italic canonical-source line pointing at
+  attune-ai.dev), render with markdown-it, and have the user
+  browser-copy the rendered page into the article editor — rich
+  paste carries headings/bold/lists; raw markdown pastes as literal
+  `**`/`##`. Trap that bit: `str.replace` is a silent no-op on a
+  curly-vs-ASCII apostrophe mismatch — one replacement quietly
+  missed; assert `old in text` for EVERY replacement in one-off
+  transform scripts, and grep the output for the negated patterns
+  (old text absent, new text present) as the verify step.
