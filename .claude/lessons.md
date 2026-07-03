@@ -12907,3 +12907,59 @@ files.
   deliverable, prefer synchronous waits or write agent outputs to
   scratchpad files the orchestrator owns; (3) treat "No task found"
   as re-derive, not retry.
+- **The Bash tool's shell is zsh — unquoted `$FILES` does NOT
+  word-split, so a space-separated file list passes as ONE argument**:
+  hit 2026-07-03 pre-flighting the pinned hooks. `FILES="a.py b.py";
+  pre-commit run black --files $FILES` reported "(no files to check)
+  Skipped" (the single mega-path matched no hook filter) and `ruff
+  check $FILES` errored on a path containing spaces. Both looked like
+  tool misconfiguration, not a quoting bug. Fix: pass explicit
+  space-separated args in the command itself, use an array
+  (`files=(a.py b.py); cmd $files`), or `${=FILES}` to force
+  splitting. Symptom to recognize: "no files to check" from
+  pre-commit when you KNOW you passed .py files, or a tool error
+  whose reported path is several filenames concatenated.
+
+- **`$CLAUDE_SCRATCHPAD` is NOT set in the Bash tool's environment —
+  a heredoc redirect to `"$CLAUDE_SCRATCHPAD/file"` writes to
+  `/file` (read-only fs) and everything downstream silently
+  no-ops**: hit 2026-07-03 during a `git commit -F` dance. The
+  scratchpad path exists (it's in the system prompt) but only as a
+  LITERAL path, not an env var. The compound command's tail then
+  failed (`fatal: could not read log file '/commit_msg.txt'`) while
+  the pre-commit hook output made the whole thing LOOK like the
+  commit ran — only the trailing `git log --oneline -1` (per the
+  existing verify-commit-landed lesson) caught that HEAD hadn't
+  moved. Fixes: write message files with the Write tool to the
+  literal scratchpad path, then `git commit -F <literal path>`; never
+  reference `$CLAUDE_SCRATCHPAD` inside Bash. Pairs with the
+  "interrupted compound command may have partially executed" lesson —
+  same reconciliation discipline, env-var-shaped trigger.
+  **Inter-agent addendum (probed live 2026-07-03):** subagents spawned
+  via the Agent tool get the SAME literal scratchpad path in their own
+  system prompt (the dir is keyed by the parent session id, which IS
+  exported as `CLAUDE_CODE_SESSION_ID`) — a marker file written by a
+  haiku subagent was immediately readable by the parent. So the
+  scratchpad IS a working same-session inter-agent file channel;
+  address it by literal path in prompts (each agent reads its own
+  system prompt), never via the env var (unset in every agent's Bash,
+  parent and child alike). Cross-session agents get DIFFERENT session
+  dirs — for cross-session handoff use the starter file / memory, not
+  the scratchpad.
+
+- **The PostToolUse ruff-autofix hook strips a just-added import
+  BETWEEN two Edit calls — add the usage before (or with) the
+  import, never import-first**: hit twice on 2026-07-03. Pattern:
+  Edit #1 adds `from x import Y` (usage coming in Edit #2); the
+  formatter hook runs after EACH Edit, sees Y unused, and deletes
+  the import; Edit #2 then adds the usage → NameError at test time
+  (or worse, silently at runtime). Same race with `cat >>` appends:
+  a header Edit adding imports + helpers for code appended later
+  loses the imports (helpers/classes survive — ruff only autofixes
+  unused IMPORTS, not unused classes). Remedies: (a) single Write
+  with imports + usages together; (b) append the usage code FIRST,
+  then add imports; (c) after any import-adding Edit, grep the
+  import line before running tests — the PostToolUse "file was
+  modified by a hook" notice is the tell. Pairs with the "user-
+  rejected Edit may have partially landed" lesson — same
+  file-state-drifted-under-you family, formatter-shaped trigger.

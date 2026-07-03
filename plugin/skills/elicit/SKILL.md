@@ -202,6 +202,29 @@ Extra field keys (all optional; reuses the decision keys plus one):
 When nothing is blocked, set `options: []` and `required: false` — the
 report renders as a status display with no picker.
 
+### The "report" style (v5.1)
+
+`"progress_style": "report"` renders a **neutral digest** instead of a
+task report: item `status` is a free-form category tag (e.g. a memory
+node type — no done/blocked semantics, no strikethrough), and `options`
+may be **any subset** of item labels, offered as a "Pick one to go
+deeper" picker (items not in `options` render as static tagged rows).
+Pure presentation — the answer is still one selected option, validated
+as a single-select. Set `required: false` when a pick is optional.
+First consumer: the curated-memory recall digest
+(`python -m attune.memory.recall_digest` renders the live Redis digest
+as this form).
+
+```json
+{"id": "digest", "text": "Pull more on a topic?", "type": "progress",
+ "progress_style": "report", "required": false,
+ "options": ["Memory architecture"],
+ "progress_items": [
+   {"label": "Memory architecture", "status": "project context", "detail": "git + Redis"},
+   {"label": "Recall benchmarks", "status": "reference"}
+ ]}
+```
+
 **Surface:** the three-bucket layout (static done/in_flight rows + the
 blocked radiogroup picker) renders on the **widget** surface
 (`elicitation_render_widget` → `show_widget`); the answer is the one
