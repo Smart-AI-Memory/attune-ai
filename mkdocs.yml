@@ -207,6 +207,7 @@ nav:
   - How-to:
       - how-to/index.md
       - Memory System:
+          - Which Memory Is Which: how-to/which-memory-is-which.md
           - Unified Memory: how-to/unified-memory-system.md
           - Memory Graph: how-to/memory-graph.md
           - Lessons Workflow: how-to/lessons-workflow.md

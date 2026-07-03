@@ -18,7 +18,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
@@ -29,10 +29,19 @@ jobs:
           cache: 'pip'
 
       - name: Install build dependencies
-        run: pip install build
+        run: pip install build uv
 
       - name: Build package
         run: python -m build
+
+      # Artifact-level recall gate (curated-memory spec T7): installs the
+      # just-built wheel into a clean venv with an isolated $HOME and
+      # proves the user-facing `attune memory capture` -> `recall`
+      # round-trip. Exists because 9.3.0 shipped with recall 100% broken
+      # while the full mocked test matrix was green — the checkout was
+      # tested, the artifact never was. A failure here means DO NOT SHIP.
+      - name: Recall gate (built artifact)
+        run: python scripts/release_recall_gate.py --wheel 'dist/attune_ai-*.whl'
 
       - name: Upload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

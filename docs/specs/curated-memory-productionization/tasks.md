@@ -105,16 +105,22 @@ lacked `[redis]` — `redis_health_check` failed until a manual
   fresh-session context.
 
 ## T7 — Recall-eval as a release gate
+   — **DONE 2026-07-02** (this branch; chosen over a broad
+   docs+testing pass via a live pushback form, Patrick's pick)
 
 9.3.0 shipped with `PersonalMemory.query()` 100% broken (hit@1 0/18)
 and no gate caught it — all local testing ran main, not the artifact.
-Golden queries already exist (`docs/specs/lessons-corpus-rag/golden_queries.json`;
-the memory-recall-eval spec has the harness).
 
-- Wire a recall smoke-eval against the BUILT artifact (clean venv,
-  isolated `$HOME`) into release-prep — pass/fail on hit@3 above a
-  floor, not a benchmark.
-- **Receipt:** the gate run visible in the next release's prep log.
+- `scripts/release_recall_gate.py`: builds/accepts the wheel,
+  installs into a clean venv with isolated `$HOME` and
+  `ANTHROPIC_API_KEY=""`, runs 3 capture→recall round-trips through
+  the user-facing CLI, asserts hit@3 = 3/3 and no duplicate paths
+  (the 9.4.x dedup class). Exit 1 = do not publish.
+- Enforced in `publish-pypi.yml` (build job, before artifact upload)
+  AND advisory in the release-execute skill (pre-tag, so failures
+  surface before tagging).
+- **Receipt:** maiden run against the 9.4.0 wheel passed 3/3
+  (2026-07-02); next release exercises the CI enforcement.
 
 ---
 

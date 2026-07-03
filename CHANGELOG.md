@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Release recall gate** (`scripts/release_recall_gate.py`): every
+  publish now installs the built wheel into a clean venv with an
+  isolated `$HOME` and proves the `attune memory capture` → `recall`
+  round-trip (hit@3 + no duplicate paths) before artifacts upload —
+  the gate that would have caught 9.3.0's broken recall. Enforced in
+  `publish-pypi.yml`.
+- **"Which memory is which" orientation doc**
+  (`docs/how-to/which-memory-is-which.md`): maps the memory rings —
+  personal memory, memory graph, Redis/AMS session memory, host-agent
+  memory — to what they store and which command reaches each.
+
 ### Fixed
 
 - **`PersonalMemory.query()` returned every hit twice when the process
