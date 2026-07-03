@@ -158,6 +158,10 @@ def promote(
             "description": proposal.get("description", ""),
             "tags": proposal.get("tags", []),
             "metadata": provenance,
+            # add_finding defaults to "open"; hydration + the recall digest
+            # only carry "active" nodes — an "open" promotion would be
+            # invisible to recall (caught live in the R4 dogfood).
+            "status": "active",
         },
     )
     logger.info("promoted stash %s -> curated node %s", source.get("id"), node_id)

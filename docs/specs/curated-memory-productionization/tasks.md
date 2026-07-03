@@ -34,6 +34,7 @@ tasks).
   tests in `tests/unit/memory/test_recall_digest.py` green.
 
 ## T2 — R4: stash → curated promotion path
+   — **SHIPPED 2026-07-03** (see D10)
 
 A deliberate, reviewable step proposing auto-stashed findings for
 promotion into the curated graph (agent proposes, Patrick verdicts).
@@ -41,9 +42,16 @@ Bulk import is explicitly wrong (the 2026-07-02 supersession
 contradiction is the evidence).
 
 - Promotion writes provenance metadata (source stash entry, review
-  verdict, date) onto the resulting node.
+  verdict, date) onto the resulting node. → `attune.memory.promotion`
+  (`promotion_candidates` via the hook's own backend resolution;
+  per-candidate `decision` verdict form; `promote()` with the
+  `promoted_from_*`/`review_*` provenance keys; no promote-all path).
 - **Receipt:** one real stashed finding promoted with provenance
-  visible on the node.
+  visible on the node. → 2026-07-03: TWO real findings promoted via a
+  live widget verdict (`resp-widget-resp-20260703-013922`), provenance
+  on both nodes, memory-repo commits `914f376`/`fbf774c`, re-hydrated
+  digest carries them first (11 active nodes). Dogfood also caught and
+  fixed the status="open" recall-invisibility bug (D10).
 
 ## T3 — R2: targeted recall procedures (on demand)
 

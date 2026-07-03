@@ -174,6 +174,40 @@ through `show_widget` in the build session from production
 `form_to_widget_html` output. Grammar extension recipe step 7's
 dogfood receipt (submit round-trip) recorded in tasks.md T1.
 
+### D10 — R4 shipped: per-candidate decision-form verdicts; the live
+dogfood caught the status="open" invisibility bug (decided 2026-07-03)
+
+The promotion path (`attune.memory.promotion`) is deliberately
+verdict-per-candidate: `promotion_form_dict` renders one Promote/Skip
+`decision` card per drafted node (rationale = draft + source stash id),
+and `promote()` writes exactly one verdicted node — there is no
+promote-all path, making bulk import structurally impossible (the D8 /
+supersession evidence). Candidates read through the SAME backend
+resolution the stash hook writes through (`recent_entries` /
+`recall_entries` — file or AMS), so the path works wherever the stash
+landed. Provenance keys on the node extend the existing `review_*`
+convention: `promoted_from_stash_id`, `promoted_from_session`,
+`promoted_from_ts`, `promoted_at`, `review_verdict`,
+`review_response_id`.
+
+**Live receipt (2026-07-03, the R5 non-mocked round-trip):** two real
+stashed findings (stash `5cc2eea0…`, `2b9a2153…`) were drafted as
+`project_context` nodes, verdicted Promote by Patrick through the live
+widget form, validated via `collect_form_response`
+(`resp-widget-resp-20260703-013922`), written with provenance, edged to
+the architecture and D6 nodes, committed to the memory repo
+(`914f376`/`fbf774c`), and confirmed in the re-hydrated digest (11
+active nodes, both promotions first).
+
+**Bug the dogfood caught:** `add_finding` defaults `status` to
+`"open"`, but hydration + the recall digest carry only `"active"`
+nodes — the first promotion run produced nodes invisible to recall
+(hydrate log said 11, digest said 9). `promote()` now writes
+`status="active"` with a regression test; the two live nodes were
+repaired via `update_node`. This also validates the stashed
+"curated-memory callers need a status setter" finding — `add_finding`
+accepts `status` via the finding dict.
+
 ### D3 — Requirements approved as written; R-ordering left to
 execution (decided 2026-07-02)
 

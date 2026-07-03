@@ -94,6 +94,10 @@ class TestPromote:
         assert meta["review_verdict"] == "promote"
         assert meta["review_response_id"] == "resp-1"
         assert meta["promoted_at"]  # date stamped
+        # Regression (caught live 2026-07-03): add_finding defaults status
+        # to "open", which hydration/recall filter out — promotions must
+        # land "active" or they are invisible to the digest.
+        assert node.status == "active"
 
     def test_persists_across_reload(self, tmp_path) -> None:
         path = tmp_path / "curated.json"
