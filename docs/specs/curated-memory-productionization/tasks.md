@@ -49,6 +49,7 @@ T1's digest pull is the first; add procedures as consumers appear.
 ## Audit riders (2026-07-02 memory-suite audit — see D8)
 
 ## T4 — Harness-corpus hygiene pass + `memory_lint.py` default fix
+   — **DONE 2026-07-02** (personal infra, same session as the audit)
 
 The per-project corpus (`~/.claude/projects/-Users-patrickroebuck-attune-ai/memory/`,
 78 files) carries **134 violations** (31× R1 name/stem drift, 76× R2
@@ -63,17 +64,29 @@ so any future promotion/unification inherits the mess.
   nesting, drop `originSessionId`, repair link slugs.
 - **Receipt:** `memory_lint.py --check-all <project dir>` → 0
   violations, run explicitly against the per-project path.
+- **Done receipt (2026-07-02):** bare `--check-all` now sweeps the
+  global dir + all `~/.claude/projects/*/memory` dirs; the attune-ai
+  corpus was already clean (a parallel task fixed the 134), but the
+  multi-dir sweep surfaced 153 MORE hidden violations across six
+  other project corpora — `--fix-all` migrated 74 files; R3 relaxed
+  to accept table-form indexes; all 10 corpora now lint 0. Backup:
+  `~/.attune/memory-corpus-backup-20260702-210218.tgz`.
 
 ## T5 — `personal_memory_recall` dedup fix
+   — **DONE 2026-07-02** (commit `b38c2ed08` on this branch)
 
 Live observation (2026-07-02): recall for a store containing ONE
 topic returned the same file twice (`dispatch_test/decision.md`,
-scores 7.501 / 7.5). Find the double-indexing (summary vs excerpt, or
-duplicate ingestion) in `src/attune/memory/personal.py` / the MCP
-handler and dedup by path.
+scores 7.501 / 7.5). Root cause (controlled repro, not the guessed
+double-indexing): with cwd = home, the project-root default
+(`cwd/.attune/memory`) IS the global root — the corpus was scanned
+twice, project boost accounting for the exact 0.001 score gap.
 
-- **Receipt:** regression test naming the pre-fix failure (two
-  results, one file) + live MCP recall returning one.
+- Fix: constructor collapses an identical project root; `query()`
+  dedups by path (best score wins).
+- **Receipt:** two non-mocked regression tests against real
+  attune_rag (54/54 green); live MCP re-verify needs the plugin
+  server restarted (it holds the pre-fix module).
 
 ## T6 — "Registered ≠ working" drift self-report for the MCP surface
 
