@@ -125,6 +125,29 @@ regenerated from receipts and re-verified as
 "presented" != "persisted" — audit artifacts must land in a git tree
 or the curated graph at creation time.
 
+### D8 — Memory-suite audit folded in as tasks.md riders
+(recorded 2026-07-02)
+
+Patrick asked for a suite-level audit ("is the memory suite strongly
+serving users by empowering the agent?"). Verdict: **barbell** — the
+hook-driven layers (lessons recall, jit recall, session stash/recall,
+R1 hydration) demonstrably empower in-session; the structured layers
+(MemoryGraph, personal memory, Redis-via-MCP, Memory-tool bridge) are
+mature but unoccupied — empty stores, and failures go unnoticed
+(9.3.0 shipped recall broken; the plugin MCP server couldn't reach
+Redis in the same session whose hook hydrated it). Removal test:
+losing the hooks would hurt immediately; losing the structured half
+would go nearly unnoticed today.
+
+The audit's ranked opportunities were mapped into
+[tasks.md](tasks.md): #1 (execute this spec) = T1–T3 as already
+ordered by D3; hygiene pass = T4; dedup bug = T5; drift self-report
+= T6; release-gate eval = T7; consolidation review = deferred-note.
+Live receipts from the audit session: `personal_memory_topics` → 1
+topic; `memory_search` → 0 results; `redis_health_check` failed →
+fixed by `uv sync --extra dev --extra developer --extra redis` in the
+worktree; recall works post-9.4.0 but duplicates results (T5).
+
 ### D3 — Requirements approved as written; R-ordering left to
 execution (decided 2026-07-02)
 

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`PersonalMemory.query()` returned every hit twice when the process
+  cwd was the home directory.** The project-root default
+  (`cwd/.attune/memory`) resolved to the global root itself, so both
+  scans surfaced the same files (scores exactly 0.001 apart — the
+  project boost). The constructor now collapses an identical project
+  root, and `query()` dedups hits by path keeping the best score.
+
 ## [9.4.0] — 2026-07-02
 
 Memory repair release: the headline fix restores `attune memory recall`

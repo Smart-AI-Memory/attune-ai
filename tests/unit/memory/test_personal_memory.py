@@ -406,6 +406,43 @@ class TestQuery:
         assert result[0]["path"] == "redis-timeout-config/decision.md"
         assert result[0]["score"] > 0
 
+    def test_query_same_root_twice_returns_each_file_once(self, tmp_path):
+        """Regression guard (2026-07-02 live observation): when the
+        process cwd is the home directory, the project-root default
+        (`cwd/.attune/memory`) resolves to the global root itself, so
+        every file was scanned twice and recall returned the same path
+        twice with scores exactly 0.001 apart (the project boost).
+        Real attune_rag, no mocking."""
+        (tmp_path / "dispatch-test").mkdir(parents=True)
+        (tmp_path / "dispatch-test" / "decision.md").write_text(
+            "# dispatch-test\n\nverifying dispatch works\n", encoding="utf-8"
+        )
+
+        pm = PersonalMemory(global_root=tmp_path, project_root=tmp_path)
+
+        assert pm._project_root is None  # identity guard collapsed it
+        result = pm.query("verifying dispatch", k=3)
+        paths = [r["path"] for r in result]
+        assert len(paths) == len(set(paths)), f"duplicate paths: {paths}"
+        assert paths == ["dispatch-test/decision.md"]
+
+    def test_query_dedups_identical_relative_path_across_roots(self, tmp_path):
+        """Two DISTINCT roots holding the same relative path must yield
+        one result (best score wins — the project-boosted hit)."""
+        global_root = tmp_path / "global"
+        project_root = tmp_path / "project"
+        for root in (global_root, project_root):
+            (root / "shared-topic").mkdir(parents=True)
+            (root / "shared-topic" / "decision.md").write_text(
+                "# shared-topic\n\nshared decision content\n", encoding="utf-8"
+            )
+
+        pm = PersonalMemory(global_root=global_root, project_root=project_root)
+        result = pm.query("shared decision", k=3)
+
+        paths = [r["path"] for r in result]
+        assert paths == ["shared-topic/decision.md"]
+
 
 # ---------------------------------------------------------------------------
 # list_topics / forget_topic

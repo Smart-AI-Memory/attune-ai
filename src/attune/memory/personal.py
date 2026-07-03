@@ -133,6 +133,13 @@ class PersonalMemory:
         self._project_root: Path | None = project_root or (
             _project_default if _project_default.is_dir() else None
         )
+        # When cwd is the home directory, the project default resolves to
+        # the global root itself — scanning it twice duplicates every hit.
+        if (
+            self._project_root is not None
+            and self._project_root.resolve() == self._global_root.resolve()
+        ):
+            self._project_root = None
 
     # ------------------------------------------------------------------
     # Public API
@@ -243,8 +250,16 @@ class PersonalMemory:
             except Exception:  # noqa: BLE001
                 logger.warning("personal_memory_query_failed root=%s", root)
 
-        hits.sort(key=lambda h: h["score"], reverse=True)
-        return hits[:k]
+        # Dedup by path (keep best score) — two roots can surface the same
+        # relative path, and returning it twice is useless to the caller.
+        best: dict[str, dict[str, Any]] = {}
+        for hit in hits:
+            prior = best.get(hit["path"])
+            if prior is None or hit["score"] > prior["score"]:
+                best[hit["path"]] = hit
+
+        deduped = sorted(best.values(), key=lambda h: h["score"], reverse=True)
+        return deduped[:k]
 
     def list_topics(self) -> list[str]:
         """Return sorted list of topic slugs across global and project memory."""
