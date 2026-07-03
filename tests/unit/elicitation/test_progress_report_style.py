@@ -87,6 +87,11 @@ class TestReportStyleFormFromDict:
         with pytest.raises(FormValidationError, match="non-empty tag string"):
             form_from_dict(_report(options=[], progress_items=bad))
 
+    def test_detail_must_be_string(self) -> None:
+        bad = [{"label": "X", "status": "reference", "detail": 123}]
+        with pytest.raises(FormValidationError, match="'detail' must be a string"):
+            form_from_dict(_report(options=[], progress_items=bad))
+
     def test_options_may_be_subset_of_labels(self) -> None:
         # Only one of three items pickable — invalid in task style, fine here.
         form = form_from_dict(_report(options=["Goal framing"]))
