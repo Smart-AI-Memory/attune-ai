@@ -12897,3 +12897,20 @@ files.
   parent and child alike). Cross-session agents get DIFFERENT session
   dirs — for cross-session handoff use the starter file / memory, not
   the scratchpad.
+
+- **The PostToolUse ruff-autofix hook strips a just-added import
+  BETWEEN two Edit calls — add the usage before (or with) the
+  import, never import-first**: hit twice on 2026-07-03. Pattern:
+  Edit #1 adds `from x import Y` (usage coming in Edit #2); the
+  formatter hook runs after EACH Edit, sees Y unused, and deletes
+  the import; Edit #2 then adds the usage → NameError at test time
+  (or worse, silently at runtime). Same race with `cat >>` appends:
+  a header Edit adding imports + helpers for code appended later
+  loses the imports (helpers/classes survive — ruff only autofixes
+  unused IMPORTS, not unused classes). Remedies: (a) single Write
+  with imports + usages together; (b) append the usage code FIRST,
+  then add imports; (c) after any import-adding Edit, grep the
+  import line before running tests — the PostToolUse "file was
+  modified by a hook" notice is the tell. Pairs with the "user-
+  rejected Edit may have partially landed" lesson — same
+  file-state-drifted-under-you family, formatter-shaped trigger.
