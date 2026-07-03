@@ -12963,3 +12963,31 @@ files.
   modified by a hook" notice is the tell. Pairs with the "user-
   rejected Edit may have partially landed" lesson — same
   file-state-drifted-under-you family, formatter-shaped trigger.
+
+- **The Windows runner-hang class can recur on an immediate rerun with
+  an identical fingerprint — on a no-code diff with all required
+  checks green, the second recurrence is the signal to admin-merge,
+  not to rerun a third time**: 2026-07-03, the 9.5.0 release-prep PR
+  (#1230, version-strings + changelog + lockfile only) failed
+  `test (windows-latest, 3.12)` twice with byte-identical signatures:
+  exit code 139, tests streaming PASSED to the end, zero FAILED lines,
+  hang-dumps artifacts for every Windows lane. Decision rule that
+  resolved it: (a) confirm the lane is NOT in
+  `required_status_checks`; (b) confirm the diff has no code (a
+  version bump can't introduce a Windows bug); (c) confirm the
+  fingerprint matches the certified class (exit 139/timeout +
+  hang-dumps + no FAILED tests) — then admin-merge and move on. A
+  third rerun is the tar-pit. Extends the runner-hang operational
+  rule (rerun once, don't diagnose) with the recurrence branch.
+
+- **After a multi-file codemod (bump_version.py etc.), stage from
+  `git status --short`, never from the tool's printed file list —
+  especially not one you truncated with `tail`**: the 9.5.0 bump
+  modified 9 files but the reviewed output was `tail -8`'d, so the
+  root `.claude-plugin/marketplace.json` sat unstaged while the
+  release-prep commit went in; pre-commit even flagged "Unstaged
+  files detected" and stashed around it. Caught by the
+  `git status --short` after commit (one straggler `M` line). The
+  general rule: the staging set for a codemod commit is defined by
+  the working tree, not by the tool's (or your pipe-truncated) claim
+  of what it touched.
