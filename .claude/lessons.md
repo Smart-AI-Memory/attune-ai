@@ -12857,3 +12857,53 @@ files.
   missed; assert `old in text` for EVERY replacement in one-off
   transform scripts, and grep the output for the negated patterns
   (old text absent, new text present) as the verify step.
+
+- **A duplicate-results gap EXACTLY equal to a tie-break boost
+  fingerprints a double-scan — and cwd-relative defaults can alias the
+  global default they were meant to complement**: the 9.4.1
+  `PersonalMemory.query()` dedup bug returned the same file twice with
+  scores 7.501/7.5 — the 0.001 gap IS the project-root boost, which
+  named the mechanism before reading any code: the "project" default
+  (`Path.cwd()/.attune/memory`) resolves to the GLOBAL root itself
+  when the process cwd is `~` (true for MCP servers launched from
+  home), so both root scans surfaced one corpus. Two durable rules:
+  (1) when duplicate results differ by exactly a known boost/epsilon,
+  suspect the same source scanned via two aliased roots, not a data
+  bug; (2) any cwd-relative default that coexists with a HOME-relative
+  default needs a `resolve()`-identity guard at construction (`if
+  project.resolve() == global.resolve(): project = None`) — and the
+  dedup-by-key at the merge point as the belt-and-suspenders.
+  Controlled-repro discipline paid off: the first hypothesis
+  (double-indexing) was wrong; the tmpdir repro with both roots equal
+  reproduced the exact live scores.
+
+- **A lint tool whose BARE default scans only one of N documented
+  corpora manufactures false confidence — sweep every documented
+  location by default, and split format-vs-substance before "fixing"
+  the findings**: `memory_lint.py --check-all` defaulted to the global
+  `~/.claude/memory/` only, reporting 0 violations while the
+  per-project dirs it never scanned carried 134 (attune-ai) + 153 (six
+  other projects) real violations. Fix shape: bare invocation now
+  enumerates global + every `~/.claude/projects/*/memory`; an explicit
+  DIR still scopes. Second half: 4 "violations" surviving `--fix-all`
+  were format-vs-substance false positives — the R3 "pointer in
+  MEMORY.md" check required the `](stem.md)` link syntax while that
+  project's index was a legitimate TABLE listing the same files;
+  relax the check to the requirement's substance (file is indexed),
+  not one rendering of it. Generalizes to any guard with a
+  default-scoped path argument: the default is a claim about coverage
+  — make it cover what the docs say it covers.
+
+- **Async background Agent results are NOT durably retrievable across
+  many intervening turns — harvest the result when the completion
+  notification arrives, or budget to re-derive**: three parallel
+  Explore agents were launched for the memory-suite audit; several
+  user turns later `TaskOutput(<id>)` returned "No task found" for all
+  three (task registry gone, no completion notifications had appeared
+  in-turn). The audit was re-derived with direct greps at ~10 min
+  cost. Rules: (1) when a background agent completes, pull the result
+  into the conversation IMMEDIATELY (the notification turn), don't
+  bank on later retrieval; (2) for fan-out research feeding a
+  deliverable, prefer synchronous waits or write agent outputs to
+  scratchpad files the orchestrator owns; (3) treat "No task found"
+  as re-derive, not retry.
