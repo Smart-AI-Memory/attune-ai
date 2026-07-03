@@ -12858,6 +12858,55 @@ files.
   transform scripts, and grep the output for the negated patterns
   (old text absent, new text present) as the verify step.
 
+- **A duplicate-results gap EXACTLY equal to a tie-break boost
+  fingerprints a double-scan — and cwd-relative defaults can alias the
+  global default they were meant to complement**: the 9.4.1
+  `PersonalMemory.query()` dedup bug returned the same file twice with
+  scores 7.501/7.5 — the 0.001 gap IS the project-root boost, which
+  named the mechanism before reading any code: the "project" default
+  (`Path.cwd()/.attune/memory`) resolves to the GLOBAL root itself
+  when the process cwd is `~` (true for MCP servers launched from
+  home), so both root scans surfaced one corpus. Two durable rules:
+  (1) when duplicate results differ by exactly a known boost/epsilon,
+  suspect the same source scanned via two aliased roots, not a data
+  bug; (2) any cwd-relative default that coexists with a HOME-relative
+  default needs a `resolve()`-identity guard at construction (`if
+  project.resolve() == global.resolve(): project = None`) — and the
+  dedup-by-key at the merge point as the belt-and-suspenders.
+  Controlled-repro discipline paid off: the first hypothesis
+  (double-indexing) was wrong; the tmpdir repro with both roots equal
+  reproduced the exact live scores.
+
+- **A lint tool whose BARE default scans only one of N documented
+  corpora manufactures false confidence — sweep every documented
+  location by default, and split format-vs-substance before "fixing"
+  the findings**: `memory_lint.py --check-all` defaulted to the global
+  `~/.claude/memory/` only, reporting 0 violations while the
+  per-project dirs it never scanned carried 134 (attune-ai) + 153 (six
+  other projects) real violations. Fix shape: bare invocation now
+  enumerates global + every `~/.claude/projects/*/memory`; an explicit
+  DIR still scopes. Second half: 4 "violations" surviving `--fix-all`
+  were format-vs-substance false positives — the R3 "pointer in
+  MEMORY.md" check required the `](stem.md)` link syntax while that
+  project's index was a legitimate TABLE listing the same files;
+  relax the check to the requirement's substance (file is indexed),
+  not one rendering of it. Generalizes to any guard with a
+  default-scoped path argument: the default is a claim about coverage
+  — make it cover what the docs say it covers.
+
+- **Async background Agent results are NOT durably retrievable across
+  many intervening turns — harvest the result when the completion
+  notification arrives, or budget to re-derive**: three parallel
+  Explore agents were launched for the memory-suite audit; several
+  user turns later `TaskOutput(<id>)` returned "No task found" for all
+  three (task registry gone, no completion notifications had appeared
+  in-turn). The audit was re-derived with direct greps at ~10 min
+  cost. Rules: (1) when a background agent completes, pull the result
+  into the conversation IMMEDIATELY (the notification turn), don't
+  bank on later retrieval; (2) for fan-out research feeding a
+  deliverable, prefer synchronous waits or write agent outputs to
+  scratchpad files the orchestrator owns; (3) treat "No task found"
+  as re-derive, not retry.
 - **The Bash tool's shell is zsh — unquoted `$FILES` does NOT
   word-split, so a space-separated file list passes as ONE argument**:
   hit 2026-07-03 pre-flighting the pinned hooks. `FILES="a.py b.py";
@@ -12914,3 +12963,31 @@ files.
   modified by a hook" notice is the tell. Pairs with the "user-
   rejected Edit may have partially landed" lesson — same
   file-state-drifted-under-you family, formatter-shaped trigger.
+
+- **The Windows runner-hang class can recur on an immediate rerun with
+  an identical fingerprint — on a no-code diff with all required
+  checks green, the second recurrence is the signal to admin-merge,
+  not to rerun a third time**: 2026-07-03, the 9.5.0 release-prep PR
+  (#1230, version-strings + changelog + lockfile only) failed
+  `test (windows-latest, 3.12)` twice with byte-identical signatures:
+  exit code 139, tests streaming PASSED to the end, zero FAILED lines,
+  hang-dumps artifacts for every Windows lane. Decision rule that
+  resolved it: (a) confirm the lane is NOT in
+  `required_status_checks`; (b) confirm the diff has no code (a
+  version bump can't introduce a Windows bug); (c) confirm the
+  fingerprint matches the certified class (exit 139/timeout +
+  hang-dumps + no FAILED tests) — then admin-merge and move on. A
+  third rerun is the tar-pit. Extends the runner-hang operational
+  rule (rerun once, don't diagnose) with the recurrence branch.
+
+- **After a multi-file codemod (bump_version.py etc.), stage from
+  `git status --short`, never from the tool's printed file list —
+  especially not one you truncated with `tail`**: the 9.5.0 bump
+  modified 9 files but the reviewed output was `tail -8`'d, so the
+  root `.claude-plugin/marketplace.json` sat unstaged while the
+  release-prep commit went in; pre-commit even flagged "Unstaged
+  files detected" and stashed around it. Caught by the
+  `git status --short` after commit (one straggler `M` line). The
+  general rule: the staging set for a codemod commit is defined by
+  the working tree, not by the tool's (or your pipe-truncated) claim
+  of what it touched.
