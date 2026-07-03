@@ -16,6 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   project boost). The constructor now collapses an identical project
   root, and `query()` dedups hits by path keeping the best score.
 
+### Changed
+
+- `[dev]` extra now mirrors the `[redis]` deps (`redis`,
+  `agent-memory-client`), so worktree/dev syncs carry what the
+  plugin MCP server's `redis_memory_*` tools need — closes the
+  hook-hydrates-Redis / MCP-tools-can't drift class (curated-memory
+  spec T6).
+
 ## [9.4.0] — 2026-07-02
 
 Memory repair release: the headline fix restores `attune memory recall`
