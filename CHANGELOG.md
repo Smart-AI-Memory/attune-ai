@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.5.0] — 2026-07-03
+
+The curated-memory loop closes: recall renders live from Redis as a
+purpose-built widget, and stashed session findings can be promoted
+into the durable curated graph through a reviewed, provenance-stamped
+path (curated-memory-productionization R3 + R4).
+
+### Added
+
+- **Recall-digest render** (`attune.memory.recall_digest`): renders
+  the curated-memory digest as a report-style progress form, pulling
+  nodes live from the `recall_digest` Redis Function (never the JSON
+  file). `python -m attune.memory.recall_digest` prints widget HTML.
+  Infrastructure for the curated-memory loop — requires a Redis
+  instance with the curated-memory function loaded and hydrated (see
+  `docs/specs/curated-memory-productionization/`), not a turnkey
+  feature on a bare install.
+- **`progress_style: "report"`** on the `progress` construct: a
+  pure-presentation digest variant — item `status` becomes a
+  free-form category tag (no task semantics, no strikethrough) and
+  `options` may be any subset of item labels, offered as a "go
+  deeper" picker. Answer path, `AskUserQuestion` fallback, and
+  elicitation-schema mapping unchanged.
+- **Stash → curated promotion path** (`attune.memory.promotion`):
+  proposes recent auto-stashed findings for promotion into the
+  curated graph via per-candidate Promote/Skip decision cards —
+  there is no bulk-import path by design. Each promotion writes
+  provenance metadata onto the node (`promoted_from_stash_id`,
+  source session, `promoted_at`, `review_verdict`,
+  `review_response_id`) and lands `status="active"` so it is
+  immediately visible to hydration and recall.
+
 ## [9.4.1] — 2026-07-02
 
 Memory-suite hardening release, from the 2026-07-02 suite audit: fixes
