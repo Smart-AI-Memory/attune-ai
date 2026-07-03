@@ -342,6 +342,7 @@ backend = [
     { name = "uvicorn" },
 ]
 dev = [
+    { name = "agent-memory-client" },
     { name = "attune-rag" },
     { name = "bandit" },
     { name = "black" },
@@ -448,6 +449,7 @@ windows = [
 
 [package.metadata]
 requires-dist = [
+    { name = "agent-memory-client", marker = "extra == 'dev'", specifier = ">=0.14.0" },
     { name = "agent-memory-client", marker = "extra == 'redis'", specifier = ">=0.14.0" },
     { name = "aiohttp", marker = "extra == 'all'", specifier = ">=3.14.1,<4.0.0" },
     { name = "anthropic", specifier = ">=0.40.0,<1.0.0" },
