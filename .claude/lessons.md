@@ -12857,3 +12857,32 @@ files.
   missed; assert `old in text` for EVERY replacement in one-off
   transform scripts, and grep the output for the negated patterns
   (old text absent, new text present) as the verify step.
+
+- **The Bash tool's shell is zsh — unquoted `$FILES` does NOT
+  word-split, so a space-separated file list passes as ONE argument**:
+  hit 2026-07-03 pre-flighting the pinned hooks. `FILES="a.py b.py";
+  pre-commit run black --files $FILES` reported "(no files to check)
+  Skipped" (the single mega-path matched no hook filter) and `ruff
+  check $FILES` errored on a path containing spaces. Both looked like
+  tool misconfiguration, not a quoting bug. Fix: pass explicit
+  space-separated args in the command itself, use an array
+  (`files=(a.py b.py); cmd $files`), or `${=FILES}` to force
+  splitting. Symptom to recognize: "no files to check" from
+  pre-commit when you KNOW you passed .py files, or a tool error
+  whose reported path is several filenames concatenated.
+
+- **`$CLAUDE_SCRATCHPAD` is NOT set in the Bash tool's environment —
+  a heredoc redirect to `"$CLAUDE_SCRATCHPAD/file"` writes to
+  `/file` (read-only fs) and everything downstream silently
+  no-ops**: hit 2026-07-03 during a `git commit -F` dance. The
+  scratchpad path exists (it's in the system prompt) but only as a
+  LITERAL path, not an env var. The compound command's tail then
+  failed (`fatal: could not read log file '/commit_msg.txt'`) while
+  the pre-commit hook output made the whole thing LOOK like the
+  commit ran — only the trailing `git log --oneline -1` (per the
+  existing verify-commit-landed lesson) caught that HEAD hadn't
+  moved. Fixes: write message files with the Write tool to the
+  literal scratchpad path, then `git commit -F <literal path>`; never
+  reference `$CLAUDE_SCRATCHPAD` inside Bash. Pairs with the
+  "interrupted compound command may have partially executed" lesson —
+  same reconciliation discipline, env-var-shaped trigger.
