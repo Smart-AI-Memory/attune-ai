@@ -132,6 +132,57 @@ def _control_html(q: FormQuestion) -> str:
             )
         return f'<div class="ae-cards" role="radiogroup">{cards}</div>'
 
+    if q.type == QuestionType.PROGRESS and q.progress_style == "report":
+        # v5.1 "report" style: a neutral digest. Item status is a free-form
+        # category tag (no task semantics, no strikethrough); items named in
+        # options render as pickable "go deeper" cards, the rest as static
+        # tagged rows. Same radio answer path as the default style.
+        items = q.progress_items or []
+        notes = q.option_notes or {}
+        by_label = {it.get("label"): it for it in items}
+        rows = ""
+        for it in items:
+            if it.get("label") in q.options:
+                continue
+            tag = f'<span class="ae-prog-tag">{_esc(it.get("status", ""))}</span>'
+            detail = (
+                f'<span class="ae-prog-detail">{_esc(it["detail"])}</span>'
+                if it.get("detail")
+                else ""
+            )
+            rows += (
+                f'<div class="ae-prog-row ae-prog-report">'
+                f'{tag}<span class="ae-prog-label">{_esc(it.get("label", ""))}</span>'
+                f"{detail}</div>"
+            )
+        ordered = list(q.options)
+        if q.recommended and q.recommended in ordered:
+            ordered = [q.recommended] + [o for o in ordered if o != q.recommended]
+        cards = ""
+        for opt in ordered:
+            it = by_label.get(opt, {})
+            is_rec = opt == q.recommended
+            badge = '<span class="ae-rec-badge">suggested next</span>' if is_rec else ""
+            tag = f'<span class="ae-prog-tag">{_esc(it.get("status", ""))}</span>'
+            note_text = notes.get(opt) or it.get("detail")
+            note = f'<span class="ae-card-note">{_esc(note_text)}</span>' if note_text else ""
+            checked = " checked" if q.default == opt else ""
+            cls = "ae-card ae-card-rec" if is_rec else "ae-card"
+            cards += (
+                f'<label class="{cls}">'
+                f'<input type="radio" name="{_esc(q.id)}" data-control '
+                f'value="{_esc(opt)}"{checked}>'
+                f'{badge}{tag}<span class="ae-card-title">{_esc(opt)}</span>{note}</label>'
+            )
+        picker = (
+            '<div class="ae-prog-blocked-h">Pick one to go deeper:</div>'
+            f'<div class="ae-cards" role="radiogroup">{cards}</div>'
+            if cards
+            else ""
+        )
+        rows_html = f'<div class="ae-prog-rows">{rows}</div>' if rows else ""
+        return f'<div class="ae-progress">{rows_html}{picker}</div>'
+
     if q.type == QuestionType.PROGRESS:
         # A status report: done/in_flight items render as static rows; the
         # blocked items become the radiogroup picker (recommended first,
@@ -372,6 +423,10 @@ def form_to_widget_html(form: FormSchema, message: str = "") -> str:
   color:var(--text-muted); }}
 #attune-elicit-form .ae-prog-blocked-h {{ font-size:11px; font-weight:600;
   text-transform:uppercase; letter-spacing:.03em; color:var(--text-accent); }}
+#attune-elicit-form .ae-prog-tag {{ flex:none; font-size:10px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted);
+  border:1px solid var(--border); border-radius:3px; padding:0 .3em; }}
+#attune-elicit-form .ae-card .ae-prog-tag {{ align-self:flex-start; }}
 #attune-elicit-form .ae-card .ae-prog-icon {{ margin-right:.15rem; }}
 #attune-elicit-form .ae-submit {{ margin-top:.5rem; padding:.55rem 1.1rem;
   font-size:15px; font-weight:500; cursor:pointer; color:var(--text-primary);

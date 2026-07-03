@@ -178,12 +178,29 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
         elif user_position is not None and options and user_position not in options:
             problems.append(f"{where} 'user_position' {user_position!r} not in options")
 
+        # v5.1 render variant: progress_style — "report" renders a neutral
+        # digest (status = free-form category tag, options = any subset of
+        # item labels offered as a "go deeper" picker). Pure presentation;
+        # the answer path is unchanged. Parsed before progress_items so the
+        # item validation below can branch on it.
+        progress_style = raw.get("progress_style")
+        if progress_style is not None:
+            if progress_style != "report":
+                problems.append(f"{where} 'progress_style' must be 'report'")
+                progress_style = None
+            elif qtype is not QuestionType.PROGRESS:
+                problems.append(
+                    f"{where} 'progress_style' is only valid on progress (got {qtype.value})"
+                )
+                progress_style = None
+
         # v5 PROGRESS extra: progress_items — the reported items keyed by
         # status. Parsed generically; only PROGRESS renders them. Each item
-        # is {label, status, detail?}; status ∈ {done, in_flight, blocked};
-        # the blocked subset's labels must equal options (the picker offers
-        # exactly the actionable items). PROGRESS allows empty options (when
-        # nothing is blocked it degrades to a pure status display).
+        # is {label, status, detail?}. Default (task) style: status ∈ {done,
+        # in_flight, blocked}; the blocked subset's labels must equal options
+        # (the picker offers exactly the actionable items). "report" style:
+        # status is any non-empty category tag; options may be any subset of
+        # item labels. Both allow empty options (a pure status display).
         progress_items = raw.get("progress_items")
         if progress_items is not None:
             if not isinstance(progress_items, list) or not all(
@@ -194,6 +211,7 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
             else:
                 valid_status = {"done", "in_flight", "blocked"}
                 blocked_labels = []
+                all_labels = []
                 for progress_idx, item in enumerate(progress_items):
                     label = item.get("label")
                     status = item.get("status")
@@ -201,7 +219,15 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
                         problems.append(
                             f"{where} progress_items[{progress_idx}] needs a 'label' string"
                         )
-                    if status not in valid_status:
+                    else:
+                        all_labels.append(label)
+                    if progress_style == "report":
+                        if not isinstance(status, str) or not status:
+                            problems.append(
+                                f"{where} progress_items[{progress_idx}] 'status' must be "
+                                f"a non-empty tag string in report style"
+                            )
+                    elif status not in valid_status:
                         problems.append(
                             f"{where} progress_items[{progress_idx}] 'status' must be one of {valid_status}"
                         )
@@ -211,11 +237,19 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
                         )
                     if status == "blocked" and isinstance(label, str):
                         blocked_labels.append(label)
-                if qtype is QuestionType.PROGRESS and set(blocked_labels) != set(options):
-                    problems.append(
-                        f"{where} PROGRESS blocked items {sorted(set(blocked_labels))} "
-                        f"must equal options {sorted(set(options))}"
-                    )
+                if qtype is QuestionType.PROGRESS:
+                    if progress_style == "report":
+                        stray = [o for o in options if o not in all_labels]
+                        if stray:
+                            problems.append(
+                                f"{where} PROGRESS report options must be item labels; "
+                                f"not items: {stray}"
+                            )
+                    elif set(blocked_labels) != set(options):
+                        problems.append(
+                            f"{where} PROGRESS blocked items {sorted(set(blocked_labels))} "
+                            f"must equal options {sorted(set(options))}"
+                        )
         elif qtype is QuestionType.PROGRESS:
             problems.append(f"{where} type progress requires 'progress_items'")
 
@@ -252,6 +286,7 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
                     recommended=recommended,
                     user_position=user_position,
                     progress_items=progress_items,
+                    progress_style=progress_style,
                     list_style=list_style,
                 )
             )

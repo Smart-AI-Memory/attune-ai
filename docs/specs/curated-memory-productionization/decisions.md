@@ -148,6 +148,32 @@ topic; `memory_search` → 0 results; `redis_health_check` failed →
 fixed by `uv sync --extra dev --extra developer --extra redis` in the
 worktree; recall works post-9.4.0 but duplicates results (T5).
 
+### D9 — R3 composition check PASSED: recall digest is a "report"
+style of `progress`, not grammar member #6 (decided 2026-07-03)
+
+T1's composition-check-first constraint ran and **composition won**.
+The digest's structure — static tagged rows + an optional "go deeper"
+picker whose answer is one option validated as a single-select — is
+exactly `progress`'s shape; the misrender was purely presentational
+(task-status vocabulary, done-strikethrough, "Blocked" picker header).
+The fix follows the `list_style` precedent (a pure-presentation field):
+`progress_style: "report"` on a PROGRESS question renders a neutral
+digest — item `status` becomes a free-form category tag, `options` may
+be any subset of item labels, no task semantics. Answer path, fallback,
+and elicitation-schema mapping are untouched; no new `QuestionType`.
+
+Second half: the render shipped as **Redis's first real consumer** —
+`attune.memory.recall_digest` pulls from `FCALL recall_digest` (the R1
+hook's warm data), never the curated JSON file, proving R2's foundation
+en route. `python -m attune.memory.recall_digest` prints widget HTML.
+
+**Receipts (live 2026-07-03):** the two real-Redis tests in
+`tests/unit/memory/test_recall_digest.py` ran non-mocked against the
+warm function (skip-guarded for CI); the live 9-node digest rendered
+through `show_widget` in the build session from production
+`form_to_widget_html` output. Grammar extension recipe step 7's
+dogfood receipt (submit round-trip) recorded in tasks.md T1.
+
 ### D3 — Requirements approved as written; R-ordering left to
 execution (decided 2026-07-02)
 

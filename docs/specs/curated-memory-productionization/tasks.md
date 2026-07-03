@@ -11,7 +11,8 @@ can interleave. R5 (non-mocked receipt) applies to every task.
 
 ---
 
-## T1 — R3: recall-digest render (NEXT)
+## T1 — R3: recall-digest render
+   — **SHIPPED 2026-07-03** (see D9)
 
 Build the "here is what memory carries" surface, replacing the
 `progress`-construct misrender (memory facts strike through as done
@@ -19,12 +20,18 @@ tasks).
 
 - **Composition check FIRST**: try a display variant of `progress`
   before minting grammar member #6 (extension recipe: compose before
-  new `QuestionType`).
+  new `QuestionType`). → **Composition won** (D9): shipped as
+  `progress_style: "report"` (a `list_style`-class presentation
+  field), no new QuestionType, answer path unchanged.
 - Build as **Redis's first real consumer**: the render pulls from
   `FCALL recall_digest` (86us warm), not the JSON file — proving R2's
-  foundation en route.
+  foundation en route. → `attune.memory.recall_digest` (fetch via
+  FCALL + pure transform + `python -m` entry printing widget HTML).
 - **Receipt:** a live widget render + submit round-trip in a real
-  session, sourced from the Redis function call.
+  session, sourced from the Redis function call. → 2026-07-03: live
+  9-node digest fetched from warm Redis, rendered via `show_widget`
+  from production `form_to_widget_html` output; non-mocked real-Redis
+  tests in `tests/unit/memory/test_recall_digest.py` green.
 
 ## T2 — R4: stash → curated promotion path
 
