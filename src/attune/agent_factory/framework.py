@@ -132,7 +132,7 @@ def get_framework_info(framework: Framework) -> dict[str, object]:
             "description": "Built-in agent system with EmpathyLLM integration",
             "best_for": ["Simple agents", "Cost optimization", "Pattern learning"],
             "install_command": None,
-            "docs_url": "https://smartaimemory.com/docs/agents",
+            "docs_url": "https://smartaimemory.com/framework-docs/reference/multi-agent/",
         },
         Framework.LANGCHAIN: {
             "name": "LangChain",
