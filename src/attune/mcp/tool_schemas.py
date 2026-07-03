@@ -481,7 +481,16 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
             "progress_items": {
                 "type": "array",
                 "description": "progress: reported items as {label, status, detail?} dicts, "
-                "status in done/in_flight/blocked; the blocked subset must equal options",
+                "status in done/in_flight/blocked; the blocked subset must equal options. "
+                "With progress_style 'report': status is a free-form category tag and "
+                "options may be any subset of item labels",
+            },
+            "progress_style": {
+                "type": "string",
+                "enum": ["report"],
+                "description": "progress only: 'report' renders a neutral digest (status = "
+                "category tag, no task semantics; options = 'go deeper' picker). "
+                "Presentation only; answer unchanged.",
             },
             "list_style": {
                 "type": "string",
