@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.4.1] — 2026-07-02
+
+Memory-suite hardening release, from the 2026-07-02 suite audit: fixes
+the last known recall defect (duplicate hits), adds the artifact-level
+recall gate that makes the 9.3.0 ship-broken class structurally
+unshippable, and orients users across the memory rings.
+
 ### Added
 
 - **Release recall gate** (`scripts/release_recall_gate.py`): every
