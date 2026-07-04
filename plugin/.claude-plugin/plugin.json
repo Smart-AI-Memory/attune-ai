@@ -1,7 +1,7 @@
 {
   "name": "attune-ai",
   "version": "9.5.0",
-  "description": "Developer workflow tools for Claude Code — run security audits, code reviews, test generation, and release preparation from /attune",
+  "description": "Spec-driven development for Claude Code — /spec plans, reviews, and executes with quality gates; plus security audits, code reviews, test generation, and release prep from /attune.",
   "author": {
     "name": "Smart AI Memory",
     "email": "patrick.roebuck@smartaimemory.com"
