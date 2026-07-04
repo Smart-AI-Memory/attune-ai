@@ -13216,3 +13216,23 @@ files.
   proof of absence — re-probe with a distinctive term, a wider
   limit, the other corpus prefix, and `FT.INFO` indexing state
   before believing a miss.
+
+- **A CI gate that compares repo state to a LIVE external registry
+  (PyPI, a marketplace catalog, pypistats) fails BY CONSTRUCTION on
+  the very PR that advances the repo past that registry — design
+  such gates direction-aware**: hit on the 9.6.0 release-prep PR
+  (2026-07-04): `website-accuracy` compared `features.ts` (bumped to
+  9.6.0 in lockstep by `bump_version.py`, correctly) against live
+  PyPI (still 9.5.0 until publish) and failed — and would have
+  failed on EVERY future release-prep PR. Repo AHEAD of the
+  registry = a release in flight (advisory, self-heals on publish);
+  repo BEHIND = the real staleness bug the gate exists for. Fix
+  shape in `scripts/audit_website_versions.py`: an `ahead` status
+  (numeric-tuple version compare; unparseable stays a loud failure)
+  with exit-code tests for both directions. Audit any future gate
+  that reads a live external source at PR time for the same
+  by-construction collision. Companion test gotcha: `audit()`'s
+  def-time default `fetch=pypi_latest` binds the ORIGINAL function,
+  so `mock.patch.object(module, "pypi_latest", ...)` never reached
+  it — make injectable defaults lazy (`fetch=None` → resolve in the
+  body) so module-level patching works.
