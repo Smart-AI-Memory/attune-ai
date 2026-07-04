@@ -13196,3 +13196,23 @@ files.
   snapshot diff IS the D4 receipt. Pair with a LIVE write-path
   dogfood (promote → file → hydrate → served → delete probe) since
   parity only covers the read side.
+
+- **Two MORE false-miss classes on the memory recall surfaces —
+  digest top-K scoring window and wrong-corpus recall_related ids —
+  completing the family (stopwords/hyphens, FT background scan)**:
+  both hit live in the 2026-07-04 dogfood. (a) A freshly-promoted
+  curated node can be hydrated, active, and FT-searchable yet ABSENT
+  from `FCALL recall_digest 0` — the digest is top-5 scored against
+  the SESSION context, so a node that doesn't match the current
+  session's terms loses the window. Absence from the default digest
+  ≠ not hydrated: verify with `FCALL recall_digest 0 <n>` (limit
+  arg) or `FT.SEARCH "@layer:{curated} <distinctive term>"`.
+  (b) `FCALL recall_related 0 file:<corpus>:<stem>` returns EMPTY
+  (not an error) when the corpus segment is wrong — a project-dir
+  memory queried as `file:global:<stem>` silently yields nothing.
+  Check which corpus the stem lives in before concluding it has no
+  neighbors. General rule for all four classes: on the memory
+  surfaces, an empty result is a DIAGNOSTIC starting point, never
+  proof of absence — re-probe with a distinctive term, a wider
+  limit, the other corpus prefix, and `FT.INFO` indexing state
+  before believing a miss.
