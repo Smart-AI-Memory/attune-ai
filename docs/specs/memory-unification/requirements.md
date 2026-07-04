@@ -1,8 +1,8 @@
 # Memory Unification — Requirements
 
-**Status:** draft (2026-07-04) — Patrick form-locked "start
-unification now," overruling the defer-to-evidence pushback; D1
-below still needs his architectural lock before Phase 4 code.
+**Status:** approved (2026-07-04) — Patrick locked D1 (files +
+Redis, NO graph middle layer), OQ1 (harness memory dirs), OQ2
+(retire curated_graph.json) same day. Phase 4 un-gated.
 **Owner:** patrick + agent
 
 ---
@@ -47,13 +47,14 @@ layers); the WRITE side is not.
   declared in file frontmatter (opt-in field), not by duplicating
   content into `curated_graph.json`. The 30-day admission test
   applies to setting the marker.
-- **R3 — Graph is derived.** Node identity, NodeType, and edges
-  (from `[[links]]`) are DERIVED from files at hydration/promotion
-  time. `curated_graph.json` becomes a build artifact or is
-  retired; it is never hand-authored after migration.
+- **R3 — Serving is derived, no middle store.** Node identity,
+  type, status, and edges (from `[[links]]`) are derived from
+  files at hydration time, straight into Redis. No MemoryGraph
+  object, no `curated_graph.json` (retired per OQ2 lock).
 - **R4 — Promotion lands as a file.** The stash→curated promotion
   path (`promote()`) writes/updates a `.md` file (with provenance
-  frontmatter) instead of writing graph JSON, then re-derives.
+  frontmatter) in the harness memory dirs instead of writing graph
+  JSON, then re-derives.
   Receipts unchanged (status=active, R4 receipts per
   curated-memory-productionization D10).
 - **R5 — Serving contract unchanged.** `recall_digest`,
@@ -79,13 +80,9 @@ layers); the WRITE side is not.
   untouched.
 - New recall surfaces or Lua procedures — serving stays as-is (R5).
 
-## Open questions (for Patrick at D1 lock)
+## Open questions — RESOLVED 2026-07-04
 
-- OQ1: Do migrated curated files live in the per-project memory
-  dirs (visible to the harness) or a dedicated
-  `~/.attune/memory/curated/` dir (visible only to attune)? The
-  former makes them recallable by BOTH systems natively; the
-  latter keeps the harness index lean.
-- OQ2: Retire `curated_graph.json` entirely (derive in-memory at
-  hydrate) or keep it as a committed build artifact for
-  inspection/versioning?
+- OQ1: **harness memory dirs** — one corpus, `curated: true`
+  marker (decisions.md).
+- OQ2: **retired** — hydrate derives from files; git history keeps
+  the old JSON.
