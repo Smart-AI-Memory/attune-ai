@@ -1,8 +1,9 @@
 """Tests for the stash → curated promotion path (curated-memory R4).
 
 Non-mocked throughout: a real FileStashBackend on tmp_path feeds
-candidates, a real MemoryGraph on tmp_path receives promotions, and
-the verdict form round-trips through the real elicitation pipeline.
+candidates, promotions land as real curated ``.md`` files on tmp_path
+(memory-unification D1 — files are the store), and the verdict form
+round-trips through the real elicitation pipeline.
 """
 
 from __future__ import annotations
@@ -13,14 +14,27 @@ import pytest
 
 from attune.elicitation import collect_form_response, form_from_dict, form_to_widget_html
 from attune.memory.file_stash import FileStashBackend
-from attune.memory.graph import MemoryGraph
 from attune.memory.promotion import (
     CURATED_TYPES,
+    TYPE_TO_META,
     promote,
     promotion_candidates,
     promotion_form_dict,
 )
 from attune.memory.session_stash import SessionStashEntry, stash_entry
+
+
+def _frontmatter(path) -> dict[str, str]:
+    """Flat first-wins parse of `k: v` frontmatter lines (matches hydrate)."""
+    raw = path.read_text(encoding="utf-8")
+    inner = raw[3 : raw.find("\n---", 3)]
+    meta: dict[str, str] = {}
+    for line in inner.splitlines():
+        if ":" in line:
+            k, v = line.strip().split(":", 1)
+            meta.setdefault(k.strip(), v.strip())
+    return meta
+
 
 PROPOSAL = {
     "source_id": "stash-123",
@@ -114,34 +128,55 @@ class TestPromotionFormDict:
 
 
 class TestPromote:
-    def test_writes_node_with_provenance(self, tmp_path) -> None:
-        graph = MemoryGraph(path=tmp_path / "curated.json")
-        node_id = promote(PROPOSAL, SOURCE, response_id="resp-1", graph=graph)
-        node = graph.nodes[node_id]
-        assert node.type.value == "project_context"
-        assert node.name == PROPOSAL["name"]
-        meta = node.metadata
+    def test_writes_curated_file_with_provenance(self, tmp_path) -> None:
+        node_id = promote(PROPOSAL, SOURCE, response_id="resp-1", curated_dir=tmp_path)
+        files = list(tmp_path.glob("*.md"))
+        assert len(files) == 1
+        f = files[0]
+        meta = _frontmatter(f)
+        # Hydration contract (load_curated in the memory repo reads these).
+        assert meta["node_id"] == node_id
+        assert meta["node_type"] == "project_context"
+        assert meta["type"] == TYPE_TO_META["project_context"]
+        assert meta["curated"] == "true"
+        assert meta["description"] == PROPOSAL["name"]
+        assert meta["name"] == f.stem  # lint R1: name ≡ filename stem
+        assert meta["updated_at"]
+        # Provenance.
         assert meta["promoted_from_stash_id"] == "stash-123"
         assert meta["promoted_from_session"] == "sess-abc"
         assert meta["review_verdict"] == "promote"
         assert meta["review_response_id"] == "resp-1"
         assert meta["promoted_at"]  # date stamped
-        # Regression (caught live 2026-07-03): add_finding defaults status
-        # to "open", which hydration/recall filter out — promotions must
-        # land "active" or they are invisible to the digest.
-        assert node.status == "active"
+        # Regression (caught live 2026-07-03): non-active promotions are
+        # invisible to hydration/recall — must land "active".
+        assert meta["status"] == "active"
+        # Body carries the drafted description.
+        body = f.read_text().split("---", 2)[2]
+        assert PROPOSAL["description"] in body
 
-    def test_persists_across_reload(self, tmp_path) -> None:
-        path = tmp_path / "curated.json"
-        node_id = promote(PROPOSAL, SOURCE, graph=MemoryGraph(path=path))
-        reloaded = MemoryGraph(path=path)
-        assert node_id in reloaded.nodes
-        assert reloaded.nodes[node_id].metadata["promoted_from_stash_id"] == "stash-123"
+    def test_persists_and_reparses(self, tmp_path) -> None:
+        node_id = promote(PROPOSAL, SOURCE, curated_dir=tmp_path)
+        f = next(iter(tmp_path.glob("*.md")))
+        meta = _frontmatter(f)  # fresh parse from disk — no warm state
+        assert meta["node_id"] == node_id
+        assert meta["promoted_from_stash_id"] == "stash-123"
+
+    def test_stem_collision_gets_suffix(self, tmp_path) -> None:
+        first = promote(PROPOSAL, SOURCE, curated_dir=tmp_path)
+        second = promote(PROPOSAL, SOURCE, curated_dir=tmp_path)
+        assert first != second
+        stems = sorted(p.stem for p in tmp_path.glob("*.md"))
+        assert len(stems) == 2
+        assert stems[1] == stems[0] + "_x"
+        # R1 holds for both: name ≡ stem.
+        for p in tmp_path.glob("*.md"):
+            assert _frontmatter(p)["name"] == p.stem
 
     def test_rejects_non_curated_type(self, tmp_path) -> None:
-        graph = MemoryGraph(path=tmp_path / "curated.json")
         with pytest.raises(ValueError, match="curated node type"):
-            promote({**PROPOSAL, "type": "bug"}, SOURCE, graph=graph)
+            promote({**PROPOSAL, "type": "bug"}, SOURCE, curated_dir=tmp_path)
+        assert list(tmp_path.glob("*.md")) == []
 
     def test_curated_types_are_the_four(self) -> None:
         assert set(CURATED_TYPES) == {

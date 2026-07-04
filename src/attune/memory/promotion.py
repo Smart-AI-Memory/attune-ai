@@ -1,11 +1,15 @@
 """Stash → curated promotion path (curated-memory R4).
 
 A deliberate, reviewable step that moves auto-stashed session findings
-into the durable curated graph: the agent drafts a curated node per
+into the durable curated corpus: the agent drafts a curated node per
 candidate (the 30-day test — "will this still be true and worth
 carrying in a month?"), the reviewer verdicts each one through a
 decision form, and every promotion writes provenance metadata (source
 stash entry, review verdict, date) onto the resulting node.
+
+Promotions land as one ``.md`` file per node in the curated directory
+(memory-unification D1/OQ1, 2026-07-04 — files are the store, Redis is
+the derived serving layer; the graph JSON middle layer is retired).
 
 Bulk import is explicitly wrong (the 2026-07-02 auto-stash
 supersession contradiction is the evidence) — this module has no
@@ -19,15 +23,18 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import logging
+import re
+import uuid
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
-from attune.memory.graph import MemoryGraph
 from attune.memory.session_stash import recent_entries
+from attune.security.path_validation import _validate_file_path
 
 logger = logging.getLogger(__name__)
 
-#: Node types admissible in the curated graph (see attune.memory.nodes).
+#: Node types admissible in the curated corpus (see attune.memory.nodes).
 CURATED_TYPES = ("user_context", "feedback", "project_context", "reference")
 
 
@@ -113,13 +120,32 @@ def promotion_form_dict(proposals: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+#: metadata.type value (harness 4-way schema) per curated node type.
+TYPE_TO_META = {
+    "user_context": "user",
+    "feedback": "feedback",
+    "project_context": "project",
+    "reference": "reference",
+}
+
+
+def default_curated_dir() -> Path:
+    """The curated corpus directory (memory-unification OQ1 re-lock)."""
+    return Path.home() / ".attune" / "memory" / "curated"
+
+
+def _slug(name: str, max_words: int = 8) -> str:
+    words = re.findall(r"[a-z0-9]+", name.lower())
+    return "_".join(words[:max_words]) or "curated_node"
+
+
 def promote(
     proposal: dict[str, Any],
     source: dict[str, Any],
     response_id: str = "",
-    graph: MemoryGraph | None = None,
+    curated_dir: Path | str | None = None,
 ) -> str:
-    """Write one verdicted proposal into the curated graph with provenance.
+    """Write one verdicted proposal as a curated ``.md`` file with provenance.
 
     Args:
         proposal: The drafted node — ``{type, name, description, tags?}``;
@@ -128,41 +154,71 @@ def promote(
             :func:`promotion_candidates`) — recorded as provenance.
         response_id: The review response id (the form submission that
             carried the "Promote" verdict).
-        graph: Target graph; defaults to :meth:`MemoryGraph.curated`.
+        curated_dir: Target directory; defaults to
+            :func:`default_curated_dir`.
 
     Returns:
-        The created node id.
+        The created node id (the file records it as ``metadata.node_id``;
+        hydration serves the node under that id).
 
     Raises:
-        ValueError: If ``proposal['type']`` is not a curated node type.
+        ValueError: If ``proposal['type']`` is not a curated node type,
+            or the target path fails validation.
     """
     node_type = proposal.get("type", "")
     if node_type not in CURATED_TYPES:
         raise ValueError(
             f"promotion requires a curated node type {CURATED_TYPES}, got {node_type!r}"
         )
-    target = graph if graph is not None else MemoryGraph.curated()
-    provenance = {
-        "promoted_from_stash_id": str(source.get("id", "")),
-        "promoted_from_session": str(source.get("session_id", "")),
-        "promoted_from_ts": source.get("ts"),
-        "promoted_at": datetime.now().strftime("%Y-%m-%d"),
-        "review_verdict": "promote",
-        "review_response_id": response_id,
-    }
-    node_id = target.add_finding(
-        workflow="",
-        finding={
-            "type": node_type,
-            "name": proposal.get("name", ""),
-            "description": proposal.get("description", ""),
-            "tags": proposal.get("tags", []),
-            "metadata": provenance,
-            # add_finding defaults to "open"; hydration + the recall digest
-            # only carry "active" nodes — an "open" promotion would be
-            # invisible to recall (caught live in the R4 dogfood).
-            "status": "active",
-        },
+    base = Path(curated_dir) if curated_dir is not None else default_curated_dir()
+    base.mkdir(parents=True, exist_ok=True)
+
+    now = datetime.now()
+    node_id = f"{node_type}_{now:%Y%m%d%H%M%S}_{uuid.uuid4().hex[:12]}"
+    stem = _slug(str(proposal.get("name", "")))
+    while (base / f"{stem}.md").exists():
+        stem += "_x"
+    path = _validate_file_path(str(base / f"{stem}.md"))
+
+    # One-line frontmatter values must stay one line.
+    one_line_name = " ".join(str(proposal.get("name", "")).split())
+    iso = now.isoformat()
+    lines = [
+        "---",
+        f"name: {stem}",
+        f"description: {one_line_name}",
+        "metadata:",
+        f"  type: {TYPE_TO_META[node_type]}",
+        "  curated: true",
+        f"  node_type: {node_type}",
+        f"  node_id: {node_id}",
+        # hydration + the recall digest only carry "active" nodes — a
+        # non-active promotion would be invisible to recall (caught live
+        # in the R4 dogfood).
+        "  status: active",
+        f"  created_at: {iso}",
+        f"  updated_at: {iso}",
+    ]
+    tags = proposal.get("tags") or []
+    if tags:
+        lines.append(f"  tags: {', '.join(tags)}")
+    lines += [
+        f"  promoted_from_stash_id: {source.get('id', '')}",
+        f"  promoted_from_session: {source.get('session_id', '')}",
+        f"  promoted_from_ts: {source.get('ts', '')}",
+        f"  promoted_at: {now:%Y-%m-%d}",
+        "  review_verdict: promote",
+        f"  review_response_id: {response_id}",
+        "---",
+        "",
+        str(proposal.get("description", "")).strip(),
+        "",
+    ]
+    path.write_text("\n".join(lines), encoding="utf-8")
+    logger.info(
+        "promoted stash %s -> curated file %s (node %s)",
+        source.get("id"),
+        path.name,
+        node_id,
     )
-    logger.info("promoted stash %s -> curated node %s", source.get("id"), node_id)
     return node_id
