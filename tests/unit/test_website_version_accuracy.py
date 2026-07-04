@@ -139,6 +139,32 @@ class TestAuditScript:
         audit_module.audit(dup, fetch=counting_fetch)
         assert calls["n"] == 2  # cached: one lookup per distinct name
 
+    def test_site_ahead_of_pypi_is_ahead_not_drift(self, audit_module):
+        """Regression for the 9.6.0 release-prep collision: the prep PR
+        bumps features.ts BEFORE publish, so site > PyPI is a release in
+        flight — advisory ``ahead``, never a failing ``drift``. Site
+        BEHIND PyPI (the 2026-06-28 staleness bug) must stay drift."""
+        latest = {"attune-ai": "9.0.0", "attune-help": "0.11.0"}
+        rows = audit_module.audit(SAMPLE, fetch=lambda pkg: latest[pkg])
+        assert all(r["status"] == "ahead" for r in rows)
+
+    def test_ahead_exits_zero_drift_exits_one(self, audit_module, tmp_path):
+        import unittest.mock as mock
+
+        features = tmp_path / "features.ts"
+        features.write_text(SAMPLE, encoding="utf-8")
+        # every site version AHEAD of PyPI -> advisory only -> exit 0
+        ahead = {"attune-ai": "9.0.0", "attune-help": "0.11.0"}
+        with mock.patch.object(audit_module, "pypi_latest", ahead.__getitem__):
+            assert audit_module.main(["--features", str(features)]) == 0
+        # every site version BEHIND PyPI -> staleness bug -> exit 1
+        with mock.patch.object(audit_module, "pypi_latest", lambda pkg: "9.9.9"):
+            assert audit_module.main(["--features", str(features)]) == 1
+
+    def test_unparseable_pypi_version_stays_drift(self, audit_module):
+        rows = audit_module.audit(SAMPLE, fetch=lambda pkg: "not-a-version")
+        assert all(r["status"] == "drift" for r in rows)
+
 
 # --- Layer 3: deterministic CAPABILITIES count sync -------------------
 

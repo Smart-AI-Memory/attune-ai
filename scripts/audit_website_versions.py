@@ -47,6 +47,14 @@ def parse_products(text: str) -> list[tuple[str, str]]:
     return PAIR_RE.findall(text)
 
 
+def _ver_key(version: str) -> tuple[int, ...] | None:
+    """Parse ``X.Y.Z`` into a comparable tuple; None when non-numeric."""
+    try:
+        return tuple(int(part) for part in version.split("."))
+    except ValueError:
+        return None
+
+
 def pypi_latest(pkg: str) -> str | None:
     """Return the latest version of ``pkg`` on PyPI, or None on any error."""
     url = f"https://pypi.org/pypi/{pkg}/json"
@@ -60,13 +68,17 @@ def pypi_latest(pkg: str) -> str | None:
         return None
 
 
-def audit(text: str, fetch=pypi_latest) -> list[dict]:
+def audit(text: str, fetch=None) -> list[dict]:
     """Compare each product's claimed version to PyPI.
 
-    ``fetch`` is injectable so tests can run hermetically. One PyPI
-    lookup per distinct package (cached). Each row is
-    ``{package, site, pypi, status}`` where status is ok/drift/unverified.
+    ``fetch`` is injectable so tests can run hermetically (``None``
+    resolves to :func:`pypi_latest` at call time, so module-level
+    patching works too). One PyPI lookup per distinct package (cached).
+    Each row is ``{package, site, pypi, status}`` where status is
+    ok/ahead/drift/unverified.
     """
+    if fetch is None:
+        fetch = pypi_latest
     rows: list[dict] = []
     cache: dict[str, str | None] = {}
     for name, version in parse_products(text):
@@ -78,7 +90,16 @@ def audit(text: str, fetch=pypi_latest) -> list[dict]:
         elif latest == version:
             status = "ok"
         else:
-            status = "drift"
+            # Site AHEAD of PyPI = a release in flight (the prep PR bumps
+            # website/lib/features.ts in lockstep BEFORE publish; PyPI
+            # catches up minutes later). Only site BEHIND PyPI is the
+            # staleness bug this gate exists for. Unparseable versions
+            # stay "drift" — fail loud rather than guess.
+            site_key, pypi_key = _ver_key(version), _ver_key(latest)
+            if site_key is not None and pypi_key is not None and site_key > pypi_key:
+                status = "ahead"
+            else:
+                status = "drift"
         rows.append({"package": name, "site": version, "pypi": latest, "status": status})
     return rows
 
@@ -99,9 +120,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.format == "json":
         print(json.dumps(rows, indent=2))
     else:
-        marks = {"ok": "✓", "drift": "✗", "unverified": "?"}
+        marks = {"ok": "✓", "drift": "✗", "unverified": "?", "ahead": "↑"}
         for r in rows:
             print(f"  {marks[r['status']]} {r['package']:16} site={r['site']:8} pypi={r['pypi']}")
+
+    ahead = [r for r in rows if r["status"] == "ahead"]
+    if ahead:
+        names = ", ".join(f"{r['package']} ({r['site']} > {r['pypi']})" for r in ahead)
+        print(
+            f"\n{len(ahead)} version(s) ahead of PyPI (release in flight, "
+            f"self-heals on publish): {names}"
+        )
 
     drift = [r for r in rows if r["status"] == "drift"]
     if drift:
