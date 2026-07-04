@@ -7,6 +7,8 @@ the verdict form round-trips through the real elicitation pipeline.
 
 from __future__ import annotations
 
+import time
+
 import pytest
 
 from attune.elicitation import collect_form_response, form_from_dict, form_to_widget_html
@@ -58,6 +60,36 @@ class TestPromotionCandidates:
     def test_empty_backend_yields_no_candidates(self, tmp_path) -> None:
         cands = promotion_candidates(backend=FileStashBackend(base_dir=tmp_path))
         assert cands == []
+
+    def test_candidates_carry_ts_newest_first(self, tmp_path) -> None:
+        """Regression for the 2026-07-04 R4 failure: every candidate came
+        back with ``ts: None`` (the backends dropped the timestamp from the
+        ``recent()`` record shape), so the docstring's "newest first" could
+        not be working. Non-mocked round-trip: real backend writes, then
+        promotion_candidates must return populated ``ts`` in strictly
+        newest-first order."""
+        backend = FileStashBackend(base_dir=tmp_path)
+        for i, text in enumerate(
+            ["an older stashed finding", "a middle stashed finding", "the newest finding"]
+        ):
+            entry = SessionStashEntry.create(
+                session_id=f"sess-{i}",
+                cwd=str(tmp_path),
+                type="note",
+                content=text,
+            )
+            assert stash_entry(entry, backend=backend)
+            time.sleep(0.01)  # distinct write timestamps
+
+        cands = promotion_candidates(top_k=10, backend=backend)
+        assert [c["text"] for c in cands] == [
+            "the newest finding",
+            "a middle stashed finding",
+            "an older stashed finding",
+        ]
+        ts_values = [c["ts"] for c in cands]
+        assert all(isinstance(t, float) for t in ts_values), f"ts missing: {ts_values}"
+        assert ts_values == sorted(ts_values, reverse=True)
 
 
 class TestPromotionFormDict:

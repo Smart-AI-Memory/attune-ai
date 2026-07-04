@@ -35,6 +35,13 @@ _DEFAULT_TTL_DAYS = 30
 #: clamp. Every search/recency call must bound its limit by this.
 _AMS_MAX_SEARCH_LIMIT = 100
 
+#: Max search requests one ``recent()`` call may issue while walking
+#: created_at windows backward. Typical calls need 1-3 (the newest window
+#: usually holds enough); a 1k-record namespace with a lagging prune needs
+#: ~10-25. Hitting the cap logs a warning — older records may then be
+#: missed, which is exactly the failure this bound guards from being silent.
+_RECENT_MAX_REQUESTS = 40
+
 
 class _PersistentLoop:
     """A single event loop running in a daemon thread.
@@ -464,42 +471,115 @@ class AMSMemoryBackend:
             logger.error("search_failed: query=%s error=%s", query, e)
             return []
 
+    def _fetch_created_between(self, lo: Any, hi: Any) -> list[Any]:
+        """One empty-text search bounded to ``created_at`` in [lo, hi].
+
+        The ``created_at`` bound MUST be a ``CreatedAt`` model built from
+        datetime objects — a ``{"gte": <iso-string>}`` dict serializes
+        incorrectly and silently drops matches (verified live on AMS 0.14.0).
+        """
+        from agent_memory_client.filters import CreatedAt
+
+        results = _run_sync(
+            self._client.search_long_term_memory(
+                text="",
+                namespace={"eq": self._namespace},
+                created_at=CreatedAt(gte=lo, lte=hi),
+                limit=_AMS_MAX_SEARCH_LIMIT,
+            )
+        )
+        return list(results.memories)
+
     def recent(self, limit: int = 5, **filters: Any) -> list[dict]:
         """Most-recent long-term findings (no query) — powers SessionStart recall.
 
         Mirrors the file backend's ``recent``: newest-first, with same-project
         findings surfaced ahead of others when ``cwd`` is given (soft priority).
-        Returns the same record shape as ``search`` (minus ``score``).
+        Returns the same record shape as ``search`` plus ``ts`` (epoch float,
+        the recency key promotion consumers order by).
 
-        AMS has no query-less recency *list* primitive, but an empty-text
-        ``search_long_term_memory`` returns the namespace's memories, and the
-        server's ordering is relevance-based (verified not reliably recency-
-        sorted even with ``server_side_recency``), so the recency ordering is
-        applied client-side by ``created_at``. We over-fetch a bounded window
-        (the server can't sort by recency for us) and truncate after sorting.
-        Best-effort; returns ``[]`` on any AMS error, never raises.
+        AMS has no query-less recency *list* primitive, and (verified live on
+        0.14.0) every listing affordance breaks on a namespace larger than one
+        100-record page: the server's ordering is relevance-based (not recency,
+        even with ``server_side_recency``), a single page can simply omit the
+        newest records (the 2026-07-04 R4 failure: 1000+ records, 5 fresh
+        findings absent), and ``offset`` pagination re-serves earlier records
+        instead of the missing ones. The one primitive that behaves is the
+        ``created_at`` range filter: a window matching <=100 records returns
+        ALL of them. So recency is reconstructed client-side by walking
+        disjoint time windows backward from now (exponentially widening, then
+        an unbounded tail), bisecting any window that fills a whole page
+        (truncation ⇒ arbitrary selection ⇒ split until complete), and
+        stopping once ``limit`` records are collected — every window still
+        unvisited is strictly older, so the collected set IS the newest.
+        Request-capped by :data:`_RECENT_MAX_REQUESTS`. Best-effort; returns
+        ``[]`` on any AMS error, never raises.
         """
+        from collections import deque
+        from datetime import datetime, timedelta, timezone
+
         cwd = filters.get("cwd")
-        # Over-fetch: server ordering isn't recency, so pull a window wide
-        # enough that the true most-recent ``limit`` are within it, then sort
-        # client-side. 30-day pruning keeps per-namespace counts bounded.
-        # Server can't recency-sort for us, so the window must hold the true
-        # most-recent ``limit`` while staying under AMS's search-limit cap.
-        overscan = min(max(limit * 10, 50), _AMS_MAX_SEARCH_LIMIT)
+        now = datetime.now(timezone.utc)
+        epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
+        min_slice = timedelta(seconds=1)
+
+        # Disjoint windows, newest first: 6h, then x4 wider each step until
+        # past the 30d TTL (+grace), then one unbounded tail for anything a
+        # lagging prune left behind. Shared boundaries are deduped by id.
+        bands: list[tuple[Any, Any]] = []
+        hi = now + timedelta(minutes=5)  # tolerate small clock skew
+        span = timedelta(hours=6)
+        while (now - hi) < timedelta(days=45):
+            lo = hi - span
+            bands.append((lo, hi))
+            hi = lo
+            span *= 4
+        bands.append((epoch, hi))
+
+        collected: dict[str, Any] = {}
+        requests = 0
         try:
-            results = _run_sync(
-                self._client.search_long_term_memory(
-                    text="",
-                    namespace={"eq": self._namespace},
-                    limit=overscan,
+            for band in bands:
+                # LIFO stack, newer half pushed last so it is fetched first.
+                stack = deque([band])
+                while stack:
+                    if requests >= _RECENT_MAX_REQUESTS:
+                        logger.warning(
+                            "recent: request cap (%d) hit scanning %s; " "older records skipped",
+                            _RECENT_MAX_REQUESTS,
+                            self._namespace,
+                        )
+                        break
+                    lo, hi = stack.pop()
+                    page = self._fetch_created_between(lo, hi)
+                    requests += 1
+                    if len(page) >= _AMS_MAX_SEARCH_LIMIT and (hi - lo) > min_slice:
+                        mid = lo + (hi - lo) / 2
+                        stack.append((lo, mid))
+                        stack.append((mid, hi))
+                        continue
+                    for m in page:
+                        collected.setdefault(m.id, m)
+                if len(collected) >= limit or requests >= _RECENT_MAX_REQUESTS:
+                    break
+            if len(collected) < limit and requests < _RECENT_MAX_REQUESTS:
+                # Catch records the created_at filter can't see (created_at
+                # unset) via one unfiltered page; they sort last anyway.
+                results = _run_sync(
+                    self._client.search_long_term_memory(
+                        text="",
+                        namespace={"eq": self._namespace},
+                        limit=_AMS_MAX_SEARCH_LIMIT,
+                    )
                 )
-            )
+                for m in results.memories:
+                    collected.setdefault(m.id, m)
         except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Graceful degradation for AMS HTTP errors
             logger.error("recent_failed: limit=%s error=%s", limit, e)
             return []
 
-        memories = list(results.memories)
+        memories = list(collected.values())
         # Newest-first by created_at (None sorts last via epoch-0 fallback).
         memories.sort(
             key=lambda m: (m.created_at.timestamp() if m.created_at else 0.0),
@@ -515,6 +595,8 @@ class AMSMemoryBackend:
                 "topics": m.topics,
                 "cwd": _cwd_from_topics(m.topics),
                 "session_id": m.session_id,
+                "ts": (m.created_at.timestamp() if m.created_at else None),
+                "created_at": (m.created_at.isoformat() if m.created_at else None),
             }
             for m in memories[:limit]
         ]

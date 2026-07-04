@@ -229,11 +229,87 @@ class TestRecentLongTerm:
             assert out_alpha[0]["cwd"] == "/proj/alpha"
             assert out_alpha[1]["cwd"] == "/proj/alpha"
 
-            # File-backend record shape (no score).
-            assert set(out[0].keys()) == {"id", "text", "topics", "cwd", "session_id"}
+            # File-backend record shape (no score) plus the recency keys.
+            assert set(out[0].keys()) == {
+                "id",
+                "text",
+                "topics",
+                "cwd",
+                "session_id",
+                "ts",
+                "created_at",
+            }
+            assert isinstance(out[0]["ts"], float), "ts must carry the created_at epoch"
 
             # Limit honored.
             assert len(b.recent(limit=2)) == 2
+        finally:
+            b.close()
+
+    def test_recent_surfaces_fresh_finding_in_large_namespace(self):
+        """Regression for the 2026-07-04 R4 promotion failure: a namespace
+        holding more records than one AMS search page (100) must still
+        surface a just-written finding, newest-first with populated ``ts``.
+
+        The old single-page recent() asked the server for one relevance-
+        ordered page; fresh findings outside that page were unrecoverable.
+        This seeds 110 backdated records through the raw client (one batched
+        write), then stashes one fresh finding via remember() and requires it
+        to lead recent().
+        """
+        import time
+        from datetime import datetime, timedelta, timezone
+
+        from agent_memory_client.models import ClientMemoryRecord
+
+        from attune_redis.memory import AMSMemoryBackend, _run_sync
+
+        ns = f"recent-page-itest-{uuid.uuid4().hex[:8]}"
+        config = RedisPluginConfig(
+            ams_base_url=os.environ.get("AMS_BASE_URL", "http://localhost:8000"),
+            ams_namespace=ns,
+        )
+        b = AMSMemoryBackend(config=config)
+        try:
+            backdated = datetime.now(timezone.utc) - timedelta(days=20)
+            seeds = [
+                ClientMemoryRecord(
+                    id=f"seed-{i:03d}",
+                    text=f"aged seed finding number {i} with distinct token tk{i}",
+                    namespace=ns,
+                    created_at=backdated + timedelta(seconds=i),
+                    topics=["cwd:/proj/seeded"],
+                )
+                for i in range(110)
+            ]
+            _run_sync(b._client.create_long_term_memory(seeds, deduplicate=False))
+
+            # Wait for the seeds to index before writing the fresh finding.
+            for _ in range(30):
+                time.sleep(1.0)
+                if len(b.recent(limit=100)) >= 100:
+                    break
+
+            assert b.remember(
+                "the freshly stashed finding that must win recency",
+                topics=["cwd:/proj/fresh"],
+            )
+
+            out: list = []
+            for _ in range(20):
+                time.sleep(1.0)
+                out = b.recent(limit=10)
+                if out and out[0]["text"].startswith("the freshly stashed"):
+                    break
+            assert out, "recent() returned nothing"
+            assert out[0]["text"].startswith(
+                "the freshly stashed"
+            ), f"fresh finding lost to aged seeds; got {out[0]['text']!r}"
+            assert isinstance(out[0]["ts"], float)
+            # cwd scoping must not go stale either: scoping to the fresh
+            # finding's project surfaces it even among 110 other-cwd records.
+            scoped = b.recent(limit=5, cwd="/proj/fresh")
+            assert scoped and scoped[0]["cwd"] == "/proj/fresh"
         finally:
             b.close()
 
