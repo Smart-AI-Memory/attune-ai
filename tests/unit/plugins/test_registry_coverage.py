@@ -243,7 +243,7 @@ def test_guard_has_data_to_check() -> None:
 # with a working, dogfooded run path belong in the catalog. The agent-template
 # registry was surfaced here (#1088) then REMOVED once dogfooding showed its
 # only run path (the DynamicTeam -> StubAgent engine) was a fake-success stub —
-# see .claude/rules/attune/removing-dead-code.md. That dead engine has since
+# see .claude/rules-tail/attune/removing-dead-code.md. That dead engine has since
 # been deleted (spec-gate-real-review). "Registered" never implies
 # "should be surfaced"; verify the capability actually works first.
 

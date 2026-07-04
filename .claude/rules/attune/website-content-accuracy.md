@@ -1,3 +1,10 @@
+---
+paths:
+  - "website/**"
+  - "content/**"
+  - "attune-ai-dev/**"
+---
+
 # Website Content Accuracy Rule
 
 **Created:** 2026-02-27

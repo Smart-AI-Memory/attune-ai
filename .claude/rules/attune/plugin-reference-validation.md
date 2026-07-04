@@ -1,3 +1,10 @@
+---
+paths:
+  - "plugin/**"
+  - ".agents/**"
+  - "src/attune/mcp/**"
+---
+
 # Plugin Reference Validation
 
 **Created:** 2026-03-25

@@ -408,7 +408,7 @@ Use this checklist during code review:
 
 - [Python heapq documentation](https://docs.python.org/3/library/heapq.html)
 - [Attune AI Coding Standards](./../../../docs/CODING_STANDARDS.md)
-- [Advanced Optimization Plan](./../../../.claude/rules/attune/advanced-optimization-plan.md)
+- [Advanced Optimization Plan](../../../docs/archive/planning/advanced-optimization-plan.md)
 - [List copy optimization PR #XXX](https://github.com/Smart-AI-Memory/attune-ai/pulls)
 
 ---

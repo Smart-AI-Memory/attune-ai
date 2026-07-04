@@ -144,7 +144,7 @@ class TestFalsePositiveFilters:
     Discovered via dogfood runs against
     ``src/attune/workflows/discovery_sweep/`` (scanner self-match) and
     ``src/attune/memory/short_term/`` (noqa BLE001 acknowledged
-    broad-except). See ``.claude/rules/attune/scanner-patterns.md``.
+    broad-except). See ``.claude/rules-tail/attune/scanner-patterns.md``.
     """
 
     def test_eval_inside_double_quoted_string_skipped(self, tmp_path: Path) -> None:

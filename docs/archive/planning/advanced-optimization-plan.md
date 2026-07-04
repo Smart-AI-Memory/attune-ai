@@ -1,5 +1,9 @@
 # Advanced Optimization Plan - Attune AI
 
+> **Archived 2026-07-04** (rules-corpus-jit): Jan-2026 Phase-2
+> planning doc, not a rule; moved out of always-loaded
+> `.claude/rules/`. Historical reference only.
+
 **Version:** 1.0
 **Created:** January 10, 2026
 **Owner:** Engineering Team

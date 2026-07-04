@@ -1,5 +1,8 @@
 # VSCode Extension Limitations
 
+> **Archived 2026-07-04** (rules-corpus-jit): was already marked
+> archived in-body; `vscode-extension/` no longer exists.
+
 **Version:** 1.0
 **Created:** January 24, 2026
 **Status:** Archived — `vscode-extension/` directory no longer

@@ -44,14 +44,14 @@ Transform Attune AI into a high-performance, memory-efficient AI development pla
 - Mathematical formulas instead of `list(range())` antipattern
 
 **Documentation Created:**
-- `.claude/rules/attune/list-copy-guidelines.md` - Comprehensive review guidelines
+- `.claude/rules-tail/attune/list-copy-guidelines.md` - Comprehensive review guidelines
 - Decision matrices, benchmarks, anti-patterns catalog
 
 ---
 
 ### Phase 2: Advanced Optimizations 🔄 PLANNING (Starting Jan 13, 2026)
 
-**Planning Document:** `.claude/rules/attune/advanced-optimization-plan.md`
+**Planning Document:** `docs/archive/planning/advanced-optimization-plan.md`
 
 **Four Optimization Tracks:**
 
@@ -137,13 +137,13 @@ Transform Attune AI into a high-performance, memory-efficient AI development pla
 ## 📚 Documentation Index
 
 ### Phase 1 (Completed)
-- [List Copy Guidelines](./../.claude/rules/attune/list-copy-guidelines.md)
+- [List Copy Guidelines](./../.claude/rules-tail/attune/list-copy-guidelines.md)
   - Pattern detection, decision matrices, benchmarks
   - Code review checklist, anti-patterns catalog
   - Training examples and best practices
 
 ### Phase 2 (In Planning)
-- [Advanced Optimization Plan](./../.claude/rules/attune/advanced-optimization-plan.md)
+- [Advanced Optimization Plan](./archive/planning/advanced-optimization-plan.md)
   - Detailed track-by-track implementation guide
   - Profiling infrastructure setup
   - Caching strategies and monitoring
@@ -212,7 +212,7 @@ pip install memory_profiler line_profiler py-spy snakeviz pytest-benchmark
 
 **Questions about optimizations?**
 - Open GitHub issue: [Performance] tag
-- Engineering Team: See `.claude/rules/attune/advanced-optimization-plan.md`
+- Engineering Team: See `docs/archive/planning/advanced-optimization-plan.md`
 
 **Contributing:**
 - Follow optimization guidelines
@@ -225,8 +225,8 @@ pip install memory_profiler line_profiler py-spy snakeviz pytest-benchmark
 ## 🔗 Quick Links
 
 - [Phase 1 Commit (f928d9aa)](https://github.com/Smart-AI-Memory/attune-ai/commit/f928d9aa)
-- [List Copy Guidelines](./../.claude/rules/attune/list-copy-guidelines.md)
-- [Advanced Optimization Plan](./../.claude/rules/attune/advanced-optimization-plan.md)
+- [List Copy Guidelines](./../.claude/rules-tail/attune/list-copy-guidelines.md)
+- [Advanced Optimization Plan](./archive/planning/advanced-optimization-plan.md)
 - [GitHub Issues - Performance Tag](https://github.com/Smart-AI-Memory/attune-ai/labels/performance)
 
 ---

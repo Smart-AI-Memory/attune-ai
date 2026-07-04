@@ -1139,7 +1139,7 @@ pre-commit run <hook-id>               # Run specific hook
 - [EXCEPTION_HANDLING_GUIDE.md](../../../docs/EXCEPTION_HANDLING_GUIDE.md) - Exception patterns (630 lines)
 - [SECURITY.md](../../../SECURITY.md) - Security policy and vulnerability reporting
 - [scanner-patterns.md](./scanner-patterns.md) - Bug prediction scanner patterns
-- [debugging.md](./debugging.md) - Historical debugging patterns
+- [debugging.md](../../../docs/archive/rules/debugging.md) - Historical debugging patterns
 
 ---
 
