@@ -6,7 +6,7 @@ pattern; it must never resurrect the fake-success engine removed in
 anywhere under ``src/`` — if a future change re-introduces one (even in
 a docstring), this test fails loudly.
 
-See ``.claude/rules/attune/removing-dead-code.md`` and
+See ``.claude/rules-tail/attune/removing-dead-code.md`` and
 ``docs/specs/generic-agent-teams/decisions.md``.
 
 Copyright 2026 Smart-AI-Memory

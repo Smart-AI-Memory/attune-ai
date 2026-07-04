@@ -1,3 +1,9 @@
+---
+paths:
+  - "docs/**"
+  - "mkdocs.yml"
+---
+
 # Documentation Patterns
 
 Auto-generated from session evaluation.

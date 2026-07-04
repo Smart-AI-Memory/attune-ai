@@ -1,5 +1,9 @@
 # Debugging Patterns
 
+> **Archived 2026-07-04** (rules-corpus-jit): auto-mined commit
+> patterns (mostly the retired website/ tree). If pattern-mining
+> returns, feed the lessons corpus instead.
+
 Auto-generated from Attune AI learned patterns.
 Total patterns: 84
 **Last validated:** 2026-02-22

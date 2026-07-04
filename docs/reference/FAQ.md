@@ -127,7 +127,7 @@ except (ValueError, SyntaxError) as e:
 
 Yes! Our production standards file is available:
 
-**Location:** `.claude/rules/attune/coding-standards-index.md`
+**Location:** `.claude/rules-tail/attune/coding-standards-index.md`
 
 #### Contents
 

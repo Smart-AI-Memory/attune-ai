@@ -1,3 +1,11 @@
+---
+paths:
+  - "src/attune/elicitation/**"
+  - "src/attune/meta_workflows/**"
+  - "plugin/skills/elicit/**"
+  - ".agents/skills/elicit/**"
+---
+
 # Communication Grammar
 
 **Created:** 2026-06-29

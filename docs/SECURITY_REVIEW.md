@@ -178,7 +178,7 @@ The `alerts.py` module demonstrates strong security practices:
 ## Related Files
 
 - Security implementation: `src/attune/monitoring/alerts.py`
-- Security standards: `.claude/rules/attune/coding-standards-index.md`
+- Security standards: `.claude/rules-tail/attune/coding-standards-index.md`
 - Security policy: `SECURITY.md`
 
 ---

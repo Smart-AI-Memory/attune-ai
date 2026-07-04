@@ -1,3 +1,11 @@
+---
+paths:
+  - "docs/**"
+  - "content/**"
+  - "scripts/audit_doc_imports.py"
+  - ".github/workflows/docs.yml"
+---
+
 # Doc-Import Gate — the FINAL guard against doc fiction
 
 **Created:** 2026-06-26
