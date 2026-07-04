@@ -269,8 +269,7 @@ class TestRecentLongTerm:
             ams_base_url=os.environ.get("AMS_BASE_URL", "http://localhost:8000"),
             ams_namespace=ns,
         )
-        b = AMSMemoryBackend(config=config)
-        try:
+        with AMSMemoryBackend(config=config) as b:
             backdated = datetime.now(timezone.utc) - timedelta(days=20)
             seeds = [
                 ClientMemoryRecord(
@@ -310,8 +309,6 @@ class TestRecentLongTerm:
             # finding's project surfaces it even among 110 other-cwd records.
             scoped = b.recent(limit=5, cwd="/proj/fresh")
             assert scoped and scoped[0]["cwd"] == "/proj/fresh"
-        finally:
-            b.close()
 
 
 class TestRememberDedup:
