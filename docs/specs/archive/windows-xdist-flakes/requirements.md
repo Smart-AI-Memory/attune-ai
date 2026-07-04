@@ -7,8 +7,7 @@
 > appeared in three distinct test files. Time to identify the shared
 > polluter and decide on a structural fix rather than continuing to
 > add xfails one test at a time.
-
-**Status:** draft
+**Status:** approved
 **Created:** 2026-06-02
 **Owner:** —
 **Related:**

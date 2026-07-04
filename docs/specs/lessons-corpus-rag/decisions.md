@@ -1,5 +1,8 @@
 # Lessons Corpus via RAG — Decisions
 
+**Status:** approved
+
+
 ## D1 — Phase 0 go/no-go matrix (PRE-COMMITTED 2026-06-11)
 
 Committed BEFORE the benchmark runs, per the "pre-committed decision

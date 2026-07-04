@@ -1,6 +1,5 @@
 # Lessons Corpus via RAG — Design
-
-**Status:** draft (2026-06-11) — authored after Phase 0 GO (D2).
+**Status:** approved (2026-06-11) — authored after Phase 0 GO (D2).
 Grounded in the measured numbers: 375 lessons / ~116k tokens / 58%
 of window; keyword P@3 84%, high-severity 7/7.
 
