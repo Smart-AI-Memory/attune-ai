@@ -6,7 +6,6 @@ excerpt: "I priced a full afternoon Claude Code session from its transcript: 14.
 tags: ["token economics", "prompt caching", "Claude Code", "memory", "Redis"]
 published: true
 ---
-
 # What One Long AI Coding Session Actually Costs
 
 I just ran a long Claude Code session in one of my repos. One afternoon, 135 assistant messages, and a conversation that ended at about 138,000 tokens of context. When I added up the token counts from the transcript, the totals surprised me — not the output, but the re-reading.
@@ -37,6 +36,8 @@ My session ran on a Claude Code subscription, so none of this hit a per-token bi
 - Fresh input: $0.89
 
 **Without caching — every one of those 14.0 million input tokens at full price — it would have cost about $146.03.**
+
+Cost is only half the story — the other half is waiting, which is what users actually feel. Because the API is stateless, the model has to process the entire re-sent history before it can emit the first token of a reply. Uncached, every one of these 135 messages would pay a fresh pass over roughly 98,000 tokens of history before anything appears on screen — the session would spend a large share of its afternoon in that silent pre-processing, and it would get worse with every message. Cache reads collapse it: the prefix the model has already seen is served from cache, so the wait scales with what's new in the message, not with everything that came before. Anthropic doesn't publish a percentage here — their docs say caching "significantly reduces processing time" and improves time-to-first-token for long documents — but the shape is the point: without caching, a long session doesn't just cost 5x more, it feels slower with every message, because the price of statelessness is paid before the first token, every time.
 
 So caching cut the input cost roughly 6x, and the whole session about 5x. That's a real saving. It's also not the whole story, and I want to be straight about it: even with caching, one afternoon of serious agentic work would cost about $28 on the API. The biggest single line item is still the cache reads — the discounted re-reading of context is cheap per token and expensive in bulk, because there's so much of it.
 
