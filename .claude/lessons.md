@@ -12991,3 +12991,63 @@ files.
   general rule: the staging set for a codemod commit is defined by
   the working tree, not by the tool's (or your pipe-truncated) claim
   of what it touched.
+
+- **RediSearch FT.SEARCH false-misses: stopwords and hyphens make a
+  freshly-indexed node look absent — verify with a distinctive
+  single-word term before concluding it isn't indexed**: 2026-07-04,
+  twice in one session on `idx:attune_memory`. `FT.SEARCH ... "both
+  sequenced"` returned 0 for a node literally named "both, sequenced"
+  ("both" is a default RediSearch STOPWORD; the query reduces to one
+  term that scores differently than expected), and `"query-first
+  discipline"` returned 0 while `"recall discipline"` and
+  `"projections"` hit (hyphenated terms tokenize as separate words —
+  the hyphen form in the query doesn't match as typed). Rule: after
+  hydrating/promoting a node, verify recall with a distinctive
+  non-stopword single term from its text; a 0 on a multi-word or
+  hyphenated query is NOT evidence the node is missing. Pairs with
+  the memory-hydration lessons (FCALL/FT.SEARCH baselines).
+
+- **Stop-hook stash entries land in AMS long-term (searchable via
+  `FT.SEARCH memory_records`) but `promotion_candidates()` may not
+  surface them — locate stash entries by content search, not the
+  recency API**: 2026-07-04, live R4 promotion run. The Stop hook had
+  stashed 5 findings minutes earlier (present in `memory_idx:*`,
+  `created_at` populated), yet `promotion_candidates(top_k=100)`
+  returned 100 candidates with none of the 5 and `ts: None` on every
+  candidate — the "newest first" contract can't hold with ts None
+  (bug filed as a spawn-task). Workaround that worked: `redis-cli
+  FT.SEARCH memory_records "<distinctive phrase>" RETURN 1 text` to
+  get the `memory_idx:<uuid>` id, then hand-build the `source` dict
+  for `promote()`. Also the operational recipe for making a promotion
+  durable+warm: `promote()` writes `~/.attune/memory/
+  curated_graph.json` only — then `git -C ~/.attune/memory add/commit/
+  push` + re-run `session_hydrate.py` + FT.SEARCH-verify (per the
+  stopword lesson above). Partial widget form answers raise
+  `FormValidationError` naming the field — re-ask ONLY that field,
+  and execute the fields that did validate.
+
+- **`json.dump` round-trips on hand-formatted JSON manifests reflow
+  unrelated arrays (inline lists explode to one-per-line) — for
+  copy-only manifest PRs, use targeted string Edits, not a
+  parse-modify-dump script**: 2026-07-04, SDD directory-copy PR
+  (#1232). A python json round-trip to change 3 description fields
+  produced a 38-insertion diff because the OTHER plugins' inline
+  `"tags": [...]` arrays got exploded to multi-line — cosmetic noise
+  that reads as scope creep in review. `git checkout --` the files
+  and redo with exact-string Edits; the same 3 changes landed as a
+  7-line diff. General rule: when a JSON file's existing formatting
+  is mixed (some arrays inline, some multi-line), any serializer
+  round-trip will normalize it — surgical text edits are the
+  formatting-preserving path.
+
+- **A prior session's un-committed draft (copy text, plan, form) is
+  recoverable from `~/.claude/projects/<project-slug>/<session>.jsonl`
+  — grep for a distinctive token, then json-parse assistant text
+  blocks**: 2026-07-04, recovering the Patrick-locked SDD manifest
+  copy from the previous worktree session's transcript. Recipe:
+  `grep -rl "<token>" ~/.claude/projects/<slug>*/ --include="*.jsonl"`
+  to find the session file, then iterate lines, `json.loads` each,
+  filter `type == "assistant"`, and scan `message.content[].text` for
+  the token. Beats re-drafting (which risks drifting from what the
+  user actually approved). The transcript is the authoritative record
+  of presented-but-not-yet-committed artifacts.
