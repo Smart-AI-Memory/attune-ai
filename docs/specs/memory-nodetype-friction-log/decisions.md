@@ -277,3 +277,19 @@ Consequence for THIS log: R1's "real usage" bar now has a sharper
 admission filter — a candidate curated node that fails the 30-day
 test is routed to the handoff layer, and that routing decision is
 itself loggable evidence here.
+
+---
+
+## 2026-07-04 — AMS namespace stays SHARED across projects (Patrick, form-locked)
+
+Surfaced by the memory retest: `recent()` on the default namespace
+returns stash findings from other projects (memdocs) alongside
+attune-ai ones. Options were partition-per-project, scope-default-
+views, or keep-shared. **Patrick locked keep-shared**: cross-project
+carry-over IS the continuity goal (the memdocs "Smart AI Memory
+thesis" finding surfacing in an attune-ai session is signal, not
+noise); partitioning would break that and re-multiply the >100-record
+pagination surface PR #1234 just tamed. Consumers wanting
+project-local views use the existing `cwd` scoping (`recent(cwd=...)`
+/ topic filter). The mixing is deliberate, not drift — do not
+re-open without new evidence of harm.
