@@ -459,7 +459,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'enterprise'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
-    { name = "attune-author", marker = "extra == 'author'", specifier = ">=0.21.0,<0.23" },
+    { name = "attune-author", marker = "extra == 'author'", specifier = ">=0.23,<0.24" },
     { name = "attune-help", marker = "extra == 'author'", specifier = ">=0.10.0" },
     { name = "attune-rag", specifier = ">=0.1.5,<0.8" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<0.8" },
@@ -607,16 +607,16 @@ provides-extras = ["rag", "author", "memory", "redis", "anthropic", "llm", "memd
 
 [[package]]
 name = "attune-author"
-version = "0.21.0"
+version = "0.23.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
     { name = "python-frontmatter" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0d/8c/8993902abd03466e6afd074fb2adc2c21d997fc1c026685d933767e4bbe7/attune_author-0.21.0.tar.gz", hash = "sha256:5f79605bf239711e8b0593b4c6035dd369c0cfb730a500709755c30d50a875f5", size = 278615, upload-time = "2026-06-21T20:23:39.751Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a4/0c/ce5106d66a96fa4711f6aab4b2b986a56c4f908333aef7acfec6c29bb1c0/attune_author-0.23.0.tar.gz", hash = "sha256:8ec430663e1094bc81a735ac84bbcb38f8e6947917f85fa59c5bcf09bbba0aa4", size = 282217, upload-time = "2026-07-04T21:56:41.667Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c4/e6/3ac9979e43627d911cd3de99cf54ee31d00b15223ac14c64d520fcdd5039/attune_author-0.21.0-py3-none-any.whl", hash = "sha256:a526b4a34629ed0a80b25a99e861bbbe7a9ddc3aa629c536cfb277cfc8a2390d", size = 213011, upload-time = "2026-06-21T20:23:38.116Z" },
+    { url = "https://files.pythonhosted.org/packages/8e/e0/43a4f011de187feabc3ad6be82e3e42922851f157df10bdf1c2595926b0a/attune_author-0.23.0-py3-none-any.whl", hash = "sha256:0ac002adb0e8c834b1402f24134fc39ad183015f492e5619a2db720718ecc321", size = 214590, upload-time = "2026-07-04T21:56:40.145Z" },
 ]
 
 [[package]]
