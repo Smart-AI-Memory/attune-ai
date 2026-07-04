@@ -191,6 +191,12 @@ durable findings, and every new session can pull them back:
 - **Recall at the door** — a `SessionStart` hook surfaces the most
   recent findings for your project, and warns when the memory
   backend is unreachable instead of degrading silently.
+- **Promote what endures** — a reviewed stash→curated path: the
+  agent drafts a node per candidate, you verdict each one (the
+  30-day test), and promotion lands a git-tracked `.md` file in
+  the curated corpus. Files are the store; Redis serves them —
+  recall pulls a few hundred exactly-relevant tokens on demand
+  instead of re-reading whole files into context.
 - **Lessons at the trap moment** — a `UserPromptSubmit` hook
   retrieves your project's engineering lessons (from
   `.claude/lessons.md` or `CLAUDE.md`) when a prompt hits a known
