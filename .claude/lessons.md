@@ -13051,3 +13051,34 @@ files.
   the token. Beats re-drafting (which risks drifting from what the
   user actually approved). The transcript is the authoritative record
   of presented-but-not-yet-committed artifacts.
+
+- **AMS 0.14.0 long-term LISTING is broken past one page — offset
+  pagination re-serves earlier records instead of the missing ones,
+  page-1 `total` lies, and the only reliable enumeration primitive is
+  the `created_at` range filter passed as a `CreatedAt(gte=<datetime>)`
+  MODEL**: found fixing the 2026-07-04 R4 promotion failure (5 fresh
+  stash findings invisible to `promotion_candidates`; namespace held
+  1k+ records). Live-verified on a 120-record namespace: (a)
+  `search_long_term_memory(text="", limit=100, offset=100)` returned
+  records 0-19 AGAIN — records 100-119 were unreachable at ANY offset,
+  so offset pagination (and the client's `search_all_long_term_memories`
+  helper, which is just offset under the hood) cannot enumerate a
+  namespace; (b) the page-1 response reports `total == len(page)` (100
+  for a 120-record namespace) — terminating on `offset >= total` stops
+  one page in; (c) a single unfiltered page OMITS the newest records
+  (server selection is relevance/arbitrary), which was the R4 root
+  cause; (d) `created_at={"gte": iso_string}` (dict-of-string) silently
+  drops matches — build `agent_memory_client.filters.CreatedAt` from
+  datetime objects; then a window matching <=100 records returns ALL of
+  them. Working recency recipe (now in `AMSMemoryBackend.recent()`):
+  walk disjoint created_at windows backward from now (exponentially
+  widening + unbounded tail), bisect any window that fills a whole page
+  (full page ⇒ arbitrary truncation ⇒ split until complete), dedupe by
+  id across shared boundaries, stop once `limit` collected (unvisited
+  windows are strictly older), request-capped with a WARNING (only the
+  oldest tail is sacrificed). Companion fix: `recent()` must carry
+  `ts`/`created_at` in its record shape — both backends dropped it, so
+  candidates surfaced with `ts: None` and no consumer could order by
+  recency. Extends the "AMS ordering is relevance-based, sort
+  client-side by created_at" lesson — sorting is NOT enough when the
+  fetch window itself can exclude the newest records.

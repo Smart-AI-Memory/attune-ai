@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 import os
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -60,6 +61,14 @@ def _cwd_from_topics(topics: list[str]) -> str | None:
         if t.startswith("cwd:"):
             return t[len("cwd:") :]
     return None
+
+
+def _iso_from_ts(ts: Any) -> str | None:
+    """ISO-8601 UTC string for an epoch-seconds value, or ``None``."""
+    try:
+        return datetime.fromtimestamp(float(ts), tz=timezone.utc).isoformat()
+    except (TypeError, ValueError, OSError, OverflowError):
+        return None
 
 
 class FileStashBackend:
@@ -206,7 +215,9 @@ class FileStashBackend:
 
         Sorted newest-first; when ``cwd`` is given, same-project findings
         are surfaced ahead of others (soft priority, mirroring ``search``).
-        Returns the same record shape as ``search`` (minus ``score``).
+        Returns the ``search`` record shape (minus ``score``) plus ``ts``
+        (epoch float) and ``created_at`` (ISO-8601) — the recency keys
+        promotion consumers order and display by.
         """
         cwd = filters.get("cwd")
         records = self._load_records()  # already TTL-pruned
@@ -221,6 +232,8 @@ class FileStashBackend:
                 "topics": r.get("topics", []),
                 "cwd": r.get("cwd"),
                 "session_id": r.get("session_id"),
+                "ts": r.get("ts"),
+                "created_at": _iso_from_ts(r.get("ts")),
             }
             for r in records[:limit]
         ]

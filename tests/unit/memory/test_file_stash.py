@@ -368,6 +368,10 @@ def test_recent_empty_when_no_records(backend):
 
 
 def test_recent_returns_search_shape(backend):
+    """Search shape (no score) plus the recency keys promotion orders by —
+    ``ts`` was absent from the record shape in the 2026-07-04 R4 failure."""
     backend.remember("a finding", memory_id="m1", topics=["cwd:/p"])
     hit = backend.recent()[0]
-    assert set(hit) == {"id", "text", "topics", "cwd", "session_id"}
+    assert set(hit) == {"id", "text", "topics", "cwd", "session_id", "ts", "created_at"}
+    assert isinstance(hit["ts"], float)
+    assert isinstance(hit["created_at"], str)

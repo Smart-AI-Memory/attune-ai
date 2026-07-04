@@ -418,14 +418,104 @@ class TestRecent:
         assert len(backend.recent(limit=2)) == 2
 
     def test_recent_maps_record_shape(self, backend, mock_ams_client):
-        """recent() returns the file-backend record shape (no score)."""
+        """recent() returns the file-backend record shape (no score) plus the
+        recency keys (``ts`` epoch float, ``created_at`` ISO) that promotion
+        consumers order by — their absence was half of the 2026-07-04 R4 bug
+        (every candidate surfaced with ``ts: None``)."""
         mock_ams_client.search_long_term_memory.return_value = FakeMemoryRecordResults(
             memories=[_rec("m1", "a finding", 5, topics=["cwd:/p", "tag"])]
         )
         out = backend.recent(limit=1)
-        assert set(out[0].keys()) == {"id", "text", "topics", "cwd", "session_id"}
+        assert set(out[0].keys()) == {
+            "id",
+            "text",
+            "topics",
+            "cwd",
+            "session_id",
+            "ts",
+            "created_at",
+        }
         assert out[0]["cwd"] == "/p"
         assert out[0]["topics"] == ["cwd:/p", "tag"]
+        assert isinstance(out[0]["ts"], float)
+        assert out[0]["created_at"].startswith("2026-01-01")
+
+    def test_recent_finds_fresh_records_in_large_namespace(self, backend, mock_ams_client):
+        """Regression for the 2026-07-04 R4 failure: on a namespace larger
+        than one 100-record page, the newest findings must still surface.
+
+        The fake emulates the live AMS 0.14.0 behaviors that broke every
+        naive listing (verified live): ``created_at`` range filters are
+        honored, but any query matching >100 records is truncated to an
+        ARBITRARY 100 — adversarially the oldest here, the selection that
+        actually hid the fresh findings. Only a window-walk that bisects
+        truncated windows recovers the true newest records."""
+        from datetime import datetime, timedelta, timezone
+
+        now = datetime.now(timezone.utc)
+        old_cluster = [
+            FakeMemoryRecord(
+                record_id=f"old-{i:03d}",
+                text=f"aged finding {i}",
+                created_at=now - timedelta(days=20) + timedelta(seconds=i * 144),
+            )
+            for i in range(150)  # spread over 6h, 20 days ago
+        ]
+        fresh = [
+            FakeMemoryRecord(
+                record_id=f"fresh-{i}",
+                text=f"fresh finding {i}",
+                created_at=now - timedelta(minutes=10 - i),
+            )
+            for i in range(5)
+        ]
+        corpus = old_cluster + fresh
+
+        def _serve(**kwargs):
+            matches = list(corpus)
+            ca = kwargs.get("created_at")
+            if ca is not None:
+                matches = [
+                    m
+                    for m in matches
+                    if (ca.gte is None or m.created_at >= ca.gte)
+                    and (ca.lte is None or m.created_at <= ca.lte)
+                ]
+            # Adversarial truncation: oldest-first, as observed live.
+            matches.sort(key=lambda m: m.created_at)
+            return FakeMemoryRecordResults(memories=matches[: kwargs.get("limit", 10)])
+
+        mock_ams_client.search_long_term_memory.side_effect = _serve
+        out = backend.recent(limit=10)
+        assert [d["id"] for d in out[:5]] == [
+            "fresh-4",
+            "fresh-3",
+            "fresh-2",
+            "fresh-1",
+            "fresh-0",
+        ], "the 5 fresh findings must lead, newest first"
+        assert [d["id"] for d in out[5:]] == [
+            "old-149",
+            "old-148",
+            "old-147",
+            "old-146",
+            "old-145",
+        ], "then the newest of the aged cluster (lost to truncation pre-fix)"
+        assert all(isinstance(d["ts"], float) for d in out), "ts populated on every record"
+
+    def test_recent_request_cap_bounds_pathological_server(self, backend, mock_ams_client):
+        """A server that returns a full page for EVERY window (ignoring the
+        created_at filter) must not loop: the request cap terminates the walk
+        and recent() still returns ``limit`` records."""
+        full_page = FakeMemoryRecordResults(
+            memories=[_rec(f"m-{i}", f"finding {i}", i) for i in range(100)]
+        )
+        mock_ams_client.search_long_term_memory.return_value = full_page
+        out = backend.recent(limit=5)
+        from attune_redis.memory import _RECENT_MAX_REQUESTS
+
+        assert mock_ams_client.search_long_term_memory.call_count <= _RECENT_MAX_REQUESTS + 1
+        assert len(out) == 5
 
     def test_recent_handles_missing_created_at(self, backend, mock_ams_client):
         """recent() tolerates records with created_at=None (sorts them last)."""
