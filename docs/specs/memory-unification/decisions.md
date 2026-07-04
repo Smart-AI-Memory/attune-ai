@@ -29,14 +29,32 @@ exercise behind the removing-dead-code / subsystem-value gate
 (usage evidence, PersonalMemory dependency check, breaking-change
 versioning) — tracked as T6, not bundled here.
 
-## OQ1 — Curated files live in the harness memory dirs (LOCKED)
+## OQ1 — Curated files live in `~/.attune/memory/curated/` (RE-LOCKED 2026-07-04)
 
-The 13 nodes migrate into the existing global/per-project memory
-dirs as normal lint-conforming files with `curated: true`. ONE
-corpus: harness recall, MEMORY.md, lint, and the Redis digest all
-read the same files. (Rejected: a dedicated `~/.attune/memory/
-curated/` dir — keeps the two-place split this spec exists to
-kill.)
+**Correction, same day:** the first lock (harness memory dirs, on
+the agent's "one corpus" recommendation) was reversed by Patrick on
+review — recorded here in place, not rewritten. Four reasons, the
+first decisive:
+
+1. **Git source of truth.** `~/.attune/memory` is a pushed git
+   repo; the harness memory dirs are un-versioned. The first lock
+   would have retired the git-tracked graph JSON and moved the most
+   durable memories OUTSIDE version control.
+2. **Cross-project nature.** Curated nodes are machine-wide (cf.
+   the same-day shared-namespace decision); per-project harness
+   dirs force arbitrary project assignment.
+3. **Context cost.** Every file in the harness dirs adds a
+   MEMORY.md pointer line loaded into context each session —
+   eroding the rules-corpus-jit savings for zero recall benefit.
+4. **Write-layer ownership.** `promote()` stays inside attune's own
+   store; no cross-system writes into harness-owned paths.
+
+The real unification is the SERVING layer (one Redis index over
+all corpora, already live) — physical co-location bought
+aesthetics, not capability. Residuals accepted: curated facts are
+not in MEMORY.md's browse index (digest + FT.SEARCH are the
+curated read paths; one static MEMORY.md line points at the dir),
+and `memory_lint` adds the curated dir to its sweep list (T1).
 
 ## OQ2 — `curated_graph.json` retired (LOCKED, "go")
 

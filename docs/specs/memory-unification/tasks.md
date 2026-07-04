@@ -6,19 +6,21 @@ Architecture: files + Redis, no graph middle layer.
 - [ ] **T1 — Schema + lint.** Add `curated`/`status`/`node_id`/
   `promoted_from` to the memory frontmatter schema;
   `memory_lint.py` validates them (and still rejects other unknown
-  keys).
+  keys) and adds `~/.attune/memory/curated/` to its bare
+  `--check-all` sweep list.
 - [ ] **T2 — Migration (one-time, receipted).** The 13 curated
-  nodes → lint-conforming `.md` files in the harness memory dirs
-  (OQ1) with `curated: true` + provenance `node_id`; edges become
-  `[[links]]`; MEMORY.md pointers added. Receipt (node-id ↔
-  file-stem map) lands in this spec dir.
+  nodes → lint-conforming `.md` files in `~/.attune/memory/curated/`
+  (OQ1 re-lock) with `curated: true` + provenance `node_id`; edges
+  become `[[links]]`; one static MEMORY.md line points at the dir.
+  Receipt (node-id ↔ file-stem map) lands in this spec dir;
+  committed + pushed in the memory repo.
 - [ ] **T3 — Hydrate cutover + typed digest (D4).**
   hydrate.py derives the curated layer (nodes, status sets, edges)
   from curated-marked files; `curated_graph.json` read path
   removed (OQ2). Verify `recall_digest` output matches the
   pre-migration render on the same 13 nodes.
 - [ ] **T4 — Promotion writes files.** `promote()` in
-  `src/attune/memory/` lands a `.md` file + MEMORY.md pointer with
+  `src/attune/memory/` lands a `.md` file in the curated dir with
   provenance frontmatter instead of writing graph JSON; R4
   receipts preserved (status=active). attune-ai PR + tests.
 - [ ] **T5 — Round-trip guard + R5 gate.** Non-mocked file →

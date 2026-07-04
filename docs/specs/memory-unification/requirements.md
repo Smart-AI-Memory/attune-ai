@@ -1,8 +1,9 @@
 # Memory Unification — Requirements
 
 **Status:** approved (2026-07-04) — Patrick locked D1 (files +
-Redis, NO graph middle layer), OQ1 (harness memory dirs), OQ2
-(retire curated_graph.json) same day. Phase 4 un-gated.
+Redis, NO graph middle layer), OQ1 (dedicated curated dir —
+RE-LOCKED same day after reversing the first call, see
+decisions.md), OQ2 (retire curated_graph.json). Phase 4 un-gated.
 **Owner:** patrick + agent
 
 ---
@@ -53,8 +54,8 @@ layers); the WRITE side is not.
   object, no `curated_graph.json` (retired per OQ2 lock).
 - **R4 — Promotion lands as a file.** The stash→curated promotion
   path (`promote()`) writes/updates a `.md` file (with provenance
-  frontmatter) in the harness memory dirs instead of writing graph
-  JSON, then re-derives.
+  frontmatter) in `~/.attune/memory/curated/` instead of writing
+  graph JSON, then re-derives.
   Receipts unchanged (status=active, R4 receipts per
   curated-memory-productionization D10).
 - **R5 — Serving contract unchanged.** `recall_digest`,
@@ -82,7 +83,7 @@ layers); the WRITE side is not.
 
 ## Open questions — RESOLVED 2026-07-04
 
-- OQ1: **harness memory dirs** — one corpus, `curated: true`
-  marker (decisions.md).
+- OQ1: **`~/.attune/memory/curated/`** — re-locked same day
+  (first call reversed; rationale in decisions.md).
 - OQ2: **retired** — hydrate derives from files; git history keeps
   the old JSON.
