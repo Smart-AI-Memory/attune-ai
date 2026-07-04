@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.6.0] — 2026-07-04
+
+The memory-unification release: the curated corpus becomes plain
+git-tracked markdown files served through Redis — no graph middle
+layer — and cross-project recall survives large AMS namespaces.
+
+### Fixed
+
+- **memory:** `recent()` now survives namespaces larger than one AMS
+  search page (100 records). Offset pagination re-serves earlier
+  records past page one, so `recent()` walks disjoint `created_at`
+  windows backward instead, bisecting any window that fills a whole
+  page; records now carry `ts`/`created_at` so promotion candidates
+  order newest-first. Fresh session findings are no longer invisible
+  to `promotion_candidates()` in 1k+-record namespaces. (#1234)
+
+### Changed
+
+- **memory unification (breaking for the 9.5.0 promotion API):**
+  the curated corpus is now one lint-conforming `.md` file per node
+  in the curated directory — files are the store, Redis is the
+  derived serving layer, and the graph-JSON middle layer is retired.
+  `promote()` writes curated files with full stash provenance; its
+  `graph` keyword argument is replaced by `curated_dir`. Migration
+  receipts and the locked architecture decisions live in
+  `docs/specs/memory-unification/`. (#1239)
+
+### Added
+
+- **rules-corpus JIT (repo-side):** the always-loaded
+  `.claude/rules/` corpus is demoted to path-scoped and JIT tiers
+  behind a resident INDEX (~89% fewer eager context bytes per
+  session), with a residency-budget drift guard at
+  `tests/unit/rules/test_rules_residency_budget.py`. (#1236)
+
 ## [9.5.0] — 2026-07-03
 
 The curated-memory loop closes: recall renders live from Redis as a
