@@ -13103,3 +13103,48 @@ files.
   (keep both sides), and marker-hunting greps must tolerate PROSE
   mentions of `<<<<<<<` inside earlier lessons — match `^=======$`
   and exact line numbers, not bare substrings.
+
+- **Always-loaded context is a budget — `.claude/rules/*.md` load
+  EAGERLY unless they carry `paths:` YAML frontmatter, and scoped
+  rules fire on READS of matching files, never on writes**: the
+  2026-07-04 rules-corpus-jit cutover (PR #1236,
+  `docs/specs/rules-corpus-jit/`) cut eager rules context 116.6KB →
+  12.9KB (~26k tokens/session). Durable mechanics: (a) rules
+  discovery is recursive and eager by default; (b) `paths:` globs
+  are the only lazy-load mechanism, and authoring a NEW file never
+  triggers them — a resident INDEX.md trigger line must carry the
+  write-path gap; (c) a drift-guard test
+  (`tests/unit/rules/test_rules_residency_budget.py`) pins the
+  eager allowlist + byte budget — re-promote a rule by widening the
+  allowlist, don't revert the cutover. When adding any new rules
+  file, the gate forces the tier choice up front.
+
+- **The MAIN checkout (`~/attune-ai`) runs DETACHED HEAD by design
+  (the `main` branch is held by a sibling worktree) and can carry
+  STRANDED local-only commits — pull it with explicit refs +
+  autostash, then check for and rescue strandees**: 2026-07-04,
+  syncing main for rules-tail hydration. `git pull` alone fails
+  ("git pull <remote> <branch>" hint — detached HEAD has no
+  upstream); the working recipe is `git -C ~/attune-ai -c
+  rebase.autoStash=true pull --rebase origin main`. The rebase then
+  replayed TWO stranded commits from Jun 26: one fully superseded
+  upstream (its README content had landed via another path AND its
+  replay would have deleted a newer section — `git show
+  origin/main:<file> | grep "<distinctive phrase>"` is the
+  supersession check; keep `--ours`, `git rebase --skip`), one
+  genuinely unlanded (rescued via `git branch rescue/<name> <sha>`
+  + push + PR #1237). Rule: after any main-checkout rebase, run
+  `git log origin/main..HEAD --oneline` — anything listed is
+  stranded work needing a rescue-PR or a documented discard, not
+  silent detachment. (Related: stale tracked-file deletions there
+  may be no-ops — check `git log -1 -- <path>` for an upstream
+  untracking commit before preserving them.)
+
+- **A fresh FT.CREATE indexes in the BACKGROUND — an immediate
+  FT.SEARCH returning 0 right after hydration is a timing artifact,
+  not a missing doc**: 2026-07-04, verifying the new
+  `@layer:{rule}` docs seconds after re-running hydrate.py returned
+  0 hits; two seconds later the same query hit. Check `FT.INFO
+  <index>` (`num_docs`, `indexing`) or just re-probe before
+  concluding a doc isn't indexed. Extends the stopword/hyphen
+  false-miss lesson with the post-hydration timing class.
