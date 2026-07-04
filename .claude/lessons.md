@@ -13148,3 +13148,51 @@ files.
   <index>` (`num_docs`, `indexing`) or just re-probe before
   concluding a doc isn't indexed. Extends the stopword/hyphen
   false-miss lesson with the post-hydration timing class.
+
+- **redis-py 8.x defaults to RESP3, which returns FT.SEARCH (and other
+  module replies) as structured DICTS — any raw `execute_command`
+  parser assuming the RESP2 flat array crashes with `KeyError: <int>`,
+  and a venv upgrade flips this with no code change**: 2026-07-04, the
+  pointer-index eval harness (green that morning) crashed at
+  `res[1]` after the memory venv picked up redis-py 8.0.1
+  (`HELLO` → proto 3). Diagnostic tell: `KeyError: 1` on an integer
+  index = dict reply (RESP3); `IndexError` would be an empty RESP2
+  array. Fix pattern — normalize both shapes at every raw FT reply
+  site: `if isinstance(res, dict): keys = [row["id"] for row in
+  res["results"]] else: keys = res[1::2]`. redis-cli output is
+  unaffected (its own renderer), so CLI probes working while Python
+  parsers crash is another tell. Audit any script doing raw
+  `execute_command("FT.SEARCH"|"FT.INFO", ...)` when bumping
+  redis-py past 7.
+
+- **A format-on-save PostToolUse hook (ruff autofix) STRIPS imports
+  that are unused at the moment of the edit — adding imports in Edit
+  1 and their usage in Edit 2 leaves the file importless and crashing
+  with NameError**: hit twice in one hour, 2026-07-04
+  (`promotion.py`: Path/re/uuid/_validate_file_path removed between
+  the header edit and the body edit; the test file lost
+  `TYPE_TO_META` the same way). The hook fires per-Edit, so the
+  window exists whenever a multi-Edit sequence introduces a symbol
+  before its use. Rules: (a) when restructuring a module with new
+  imports, put the imports and their first usage in the SAME Edit
+  call, or edit the body first and imports last; (b) on any
+  NameError-for-something-you-just-added, suspect the formatter
+  hook, not your memory — `grep -n "^import\|^from" <file>` before
+  re-debugging; (c) the PostToolUse "hook modified the file after
+  your edit" notice is the breadcrumb — treat it as "re-verify
+  imports" when the next edit adds usages.
+
+- **Store-cutover verification pattern — "parity by construction":
+  make the NEW loader emit the exact data shape the OLD store
+  produced and feed the unchanged downstream, then diff the FULL
+  derived state (every key), not sampled fields**: the 2026-07-04
+  memory-unification cutover (curated_graph.json → curated/*.md)
+  wrote `load_curated()` to return the same `{nodes, edges}` dict
+  the JSON load produced, left hydration untouched, and compared a
+  complete before/after snapshot of all attune:memory node/edge/set
+  keys — 22/22 byte-identical, so the consumer contract (recall
+  digest) was proven unchanged without testing it separately.
+  Cheaper and stronger than field-by-field re-verification; the
+  snapshot diff IS the D4 receipt. Pair with a LIVE write-path
+  dogfood (promote → file → hydrate → served → delete probe) since
+  parity only covers the read side.
