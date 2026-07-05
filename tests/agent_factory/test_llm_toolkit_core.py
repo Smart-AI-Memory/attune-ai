@@ -134,21 +134,6 @@ class TestAgentConfig:
         assert config.retry_max_attempts == 3
         assert config.timeout_seconds == 60.0
 
-    def test_memory_graph_options(self):
-        """Test memory graph configuration options."""
-        config = AgentConfig(
-            name="memory_agent",
-            memory_graph_enabled=True,
-            memory_graph_path="custom/path/graph.json",
-            store_findings=False,
-            query_similar=False,
-        )
-
-        assert config.memory_graph_enabled is True
-        assert config.memory_graph_path == "custom/path/graph.json"
-        assert config.store_findings is False
-        assert config.query_similar is False
-
 
 class TestWorkflowConfig:
     """Tests for WorkflowConfig dataclass."""

@@ -160,11 +160,6 @@ class AgentFactory:
         circuit_breaker_threshold: int = 3,
         retry_max_attempts: int = 2,
         timeout_seconds: float = 30.0,
-        # Memory Graph options
-        memory_graph_enabled: bool = False,
-        memory_graph_path: str = "patterns/memory_graph.json",
-        store_findings: bool = True,
-        query_similar: bool = True,
     ) -> BaseAgent:
         """Create an agent using the configured framework.
 
@@ -189,10 +184,6 @@ class AgentFactory:
             circuit_breaker_threshold: Number of failures before circuit opens
             retry_max_attempts: Maximum retry attempts
             timeout_seconds: Timeout for agent invocations
-            memory_graph_enabled: Enable Memory Graph integration
-            memory_graph_path: Path to memory graph JSON file
-            store_findings: Store agent findings in memory graph
-            query_similar: Query similar findings before invocation
 
         Returns:
             Agent implementing BaseAgent interface
@@ -228,33 +219,10 @@ class AgentFactory:
             circuit_breaker_threshold=circuit_breaker_threshold,
             retry_max_attempts=retry_max_attempts,
             timeout_seconds=timeout_seconds,
-            # Memory Graph
-            memory_graph_enabled=memory_graph_enabled,
-            memory_graph_path=memory_graph_path,
-            store_findings=store_findings,
-            query_similar=query_similar,
         )
 
         # Create agent
         agent = self._adapter.create_agent(config)
-
-        # Apply Memory Graph wrapper (if enabled)
-        if memory_graph_enabled:
-            try:
-                from attune.agent_factory.memory_integration import MemoryAwareAgent
-
-                agent = MemoryAwareAgent(
-                    agent,
-                    graph_path=memory_graph_path,
-                    store_findings=store_findings,
-                    query_similar=query_similar,
-                )
-            except ImportError:
-                import logging
-
-                logging.getLogger(__name__).warning(
-                    "Memory integration not available, memory_graph_enabled ignored",
-                )
 
         # Apply Resilience wrapper (if enabled) - outermost wrapper
         if resilience_enabled:

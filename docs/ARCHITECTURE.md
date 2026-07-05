@@ -351,7 +351,7 @@ Claude Code
 │  ┌────────────────────────────────────────┐  │
 │  │  MemoryHandlersMixin                  │  │
 │  │  - recall, save, delete patterns      │  │
-│  │  - memory graph queries               │  │
+│  │  - unified memory stash and search    │  │
 │  └────────────────────────────────────────┘  │
 │  ┌────────────────────────────────────────┐  │
 │  │  Security Guards                      │  │
@@ -418,15 +418,14 @@ The framework uses a two-tier memory system: short-term (Redis) and long-term (e
 │   │   └── null_reference_20260110.enc
 │   └── fixes/
 │       └── add_null_check_20260110.enc
-├── graph/
-│   └── relationships.db  # SQLite graph database
 └── keys/
     └── master.key  # AES-256-GCM encryption key
 ```
 
 **Encryption**: AES-256-GCM with authenticated encryption
 **Format**: JSON serialized, then encrypted
-**Access**: Only via Memory Graph API (validates permissions)
+**Access**: Only via the long-term memory API (validates
+classification)
 
 ---
 

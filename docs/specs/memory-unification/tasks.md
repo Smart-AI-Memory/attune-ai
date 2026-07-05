@@ -31,9 +31,8 @@ migration-receipt.md.**
   dogfood — promote() → file → hydrate → active curated node
   served, probe removed clean. Non-mocked promote() suite: 11
   passed (tests/unit/memory/test_promotion.py).
-- [ ] **T6 — MemoryGraph value-gate (separate exercise).** With
-  the curated pipeline off the graph, run the removing-dead-code /
-  subsystem-value gate on `attune.memory.MemoryGraph` in the
-  shipped package: usage evidence, PersonalMemory dependency
-  check, breaking-change versioning. Own spec/PR if removal is
-  warranted — NOT bundled into T1–T5.
+- [x] **T6 — MemoryGraph value-gate (separate exercise).** DONE
+  2026-07-05: gate run, removal warranted (4 signals; Personal-
+  Memory dependency check clean) and executed — own spec at
+  `docs/specs/memorygraph-value-gate/` (D1 straight removal →
+  10.0.0, D2 full drag).

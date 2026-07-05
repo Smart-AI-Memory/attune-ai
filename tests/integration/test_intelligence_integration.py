@@ -7,7 +7,6 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -15,7 +14,6 @@ import pytest
 # Check if workflow_chains.yaml exists for chain executor tests
 CHAIN_CONFIG_EXISTS = Path(".attune/workflow_chains.yaml").exists()
 
-from attune.memory import EdgeType, MemoryGraph  # noqa: E402
 from attune.routing import (  # noqa: E402
     ChainExecutor,
     ClassificationResult,
@@ -99,109 +97,6 @@ class TestSmartRouterIntegration:
 
         suggestions = router.suggest_for_error("SecurityException: Access denied")
         assert "security-audit" in suggestions
-
-
-class TestMemoryGraphIntegration:
-    """Integration tests for Memory Graph with wizards."""
-
-    @pytest.fixture
-    def temp_graph(self):
-        """Create a temporary graph for testing."""
-        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
-            path = Path(f.name)
-        graph = MemoryGraph(path=path)
-        yield graph
-        if path.exists():
-            path.unlink()
-
-    def test_cross_wizard_knowledge_sharing(self, temp_graph):
-        """Test that findings from one wizard are accessible to others."""
-        # Security wizard finds a vulnerability
-        _vuln_id = temp_graph.add_finding(
-            workflow="security-audit",
-            finding={
-                "type": "vulnerability",
-                "name": "SQL Injection in login",
-                "severity": "critical",
-                "file": "auth.py",
-                "line": 42,
-            },
-        )
-
-        # Bug predict wizard should be able to find related issues
-        similar = temp_graph.find_similar(
-            {"name": "SQL Injection", "type": "vulnerability"},
-            threshold=0.3,
-        )
-
-        assert len(similar) >= 1
-        assert similar[0][0].source_workflow == "security-audit"
-
-    def test_finding_relationships(self, temp_graph):
-        """Test creating and querying relationships between findings."""
-        # Create a bug finding
-        bug_id = temp_graph.add_finding(
-            workflow="bug-predict",
-            finding={"type": "bug", "name": "Null reference error"},
-        )
-
-        # Create a fix
-        fix_id = temp_graph.add_finding(
-            workflow="bug-predict",
-            finding={"type": "fix", "name": "Add null check"},
-        )
-
-        # Connect them
-        temp_graph.add_edge(bug_id, fix_id, EdgeType.FIXED_BY)
-
-        # Query relationship
-        fixes = temp_graph.find_related(bug_id, edge_types=[EdgeType.FIXED_BY])
-        assert len(fixes) == 1
-        assert fixes[0].name == "Add null check"
-
-    def test_wizard_findings_isolation(self, temp_graph):
-        """Test that wizard findings can be queried by source."""
-        # Add findings from different wizards
-        temp_graph.add_finding(
-            workflow="security-audit",
-            finding={"type": "vulnerability", "name": "XSS"},
-        )
-        temp_graph.add_finding(
-            workflow="security-audit",
-            finding={"type": "vulnerability", "name": "CSRF"},
-        )
-        temp_graph.add_finding(
-            workflow="perf-audit",
-            finding={"type": "performance_issue", "name": "Slow query"},
-        )
-
-        # Query by workflow
-        security_findings = temp_graph.find_by_workflow("security-audit")
-        assert len(security_findings) == 2
-
-        perf_findings = temp_graph.find_by_workflow("perf-audit")
-        assert len(perf_findings) == 1
-
-    def test_graph_statistics(self, temp_graph):
-        """Test graph statistics for monitoring."""
-        temp_graph.add_finding(
-            workflow="security-audit",
-            finding={"type": "vulnerability", "name": "V1", "severity": "high"},
-        )
-        temp_graph.add_finding(
-            workflow="security-audit",
-            finding={"type": "vulnerability", "name": "V2", "severity": "critical"},
-        )
-        temp_graph.add_finding(
-            workflow="bug-predict",
-            finding={"type": "bug", "name": "B1", "severity": "medium"},
-        )
-
-        stats = temp_graph.get_statistics()
-
-        assert stats["total_nodes"] == 3
-        assert stats["nodes_by_workflow"]["security-audit"] == 2
-        assert stats["nodes_by_workflow"]["bug-predict"] == 1
 
 
 @pytest.mark.skipif(not CHAIN_CONFIG_EXISTS, reason=".attune/workflow_chains.yaml not found")
@@ -292,35 +187,14 @@ class TestFullIntegration:
 
             assert execution.initial_workflow == decision.primary_workflow
 
-    def test_wizard_findings_inform_routing(self):
-        """Test that memory graph findings influence routing."""
-        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
-            path = Path(f.name)
+    def test_file_history_informs_routing(self):
+        """Test that file-based suggestions influence routing."""
+        router = SmartRouter()
+        router.route_sync("Review db/queries.py for issues")
 
-        try:
-            # Add historical security findings
-            graph = MemoryGraph(path=path)
-            graph.add_finding(
-                workflow="security-audit",
-                finding={
-                    "type": "vulnerability",
-                    "name": "Previous SQL Injection",
-                    "file": "db/queries.py",
-                    "severity": "critical",
-                },
-            )
-
-            # New request about similar file
-            router = SmartRouter()
-            _decision = router.route_sync("Review db/queries.py for issues")
-
-            # Should suggest security wizard given history
-            suggestions = router.suggest_for_file("db/queries.py")
-            assert "security-audit" in suggestions
-
-        finally:
-            if path.exists():
-                path.unlink()
+        # Should suggest security wizard for a db query file
+        suggestions = router.suggest_for_file("db/queries.py")
+        assert "security-audit" in suggestions
 
     def test_registry_wizard_info_completeness(self):
         """Test that all registered wizards have complete information."""
@@ -363,23 +237,6 @@ class TestResilienceIntegration:
 
         assert decision is not None
         assert decision.primary_workflow  # Should have a default
-
-    def test_memory_graph_handles_corrupt_file(self):
-        """Test memory graph handles corrupt JSON gracefully."""
-        with tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode="w") as f:
-            f.write("not valid json {{{")
-            path = Path(f.name)
-
-        try:
-            # Should not crash, should create empty graph
-            graph = MemoryGraph(path=path)
-            assert len(graph.nodes) == 0
-        except Exception:
-            # If it raises, that's also acceptable
-            pass
-        finally:
-            if path.exists():
-                path.unlink()
 
     def test_chain_executor_handles_missing_config(self):
         """Test chain executor handles missing config file."""

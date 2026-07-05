@@ -171,31 +171,6 @@ config = ResilienceConfig(
 agent = ResilientAgent(base_agent, config)
 ```
 
-## Memory Graph
-
-Enable cross-agent learning so agents share findings:
-
-```python
-agent = factory.create_agent(
-    name="bug_hunter",
-    role="debugger",
-    memory_graph_enabled=True,
-    store_findings=True,
-    query_similar=True,
-)
-
-# Agent automatically:
-# 1. Queries past findings before each invocation
-# 2. Stores new findings after each invocation
-```
-
-Check graph statistics:
-
-```python
-stats = agent.get_graph_stats()
-# {"enabled": True, "node_count": 42, "edge_count": 15, ...}
-```
-
 ## Switching Frameworks
 
 Switch at runtime without changing agent code:

@@ -13308,3 +13308,40 @@ files.
   preview. Same class as the worktree-venv-lacks-extras lessons —
   per-worktree dependency isolation applies to node too, and the
   main checkout having node_modules does NOT help a worktree.
+
+- **A PEP 562 pointed-error shim does NOT surface its message on
+  `from`-imports — only on attribute access; dogfood both forms
+  before claiming "users get a helpful error"**: hit 2026-07-05
+  dogfooding the MemoryGraph removal (memorygraph-value-gate). The
+  removal shim raises `AttributeError("'attune.memory.MemoryGraph'
+  was removed in 10.0.0. …successor…")` from the module
+  `__getattr__` — and `attune.memory.MemoryGraph` attribute access
+  shows it. But `from attune.memory import MemoryGraph` (the form
+  users actually write) shows only CPython's generic
+  `ImportError: cannot import name 'MemoryGraph' from
+  'attune.memory'` — the import machinery swallows the
+  AttributeError text entirely (not even chained visibly). The
+  failure is still loud, but the guidance is lost on the most
+  common path. Implications: (1) regression tests for removal
+  shims should assert BOTH forms (pytest.raises(AttributeError)
+  on getattr AND pytest.raises(ImportError) on the from-import);
+  (2) migration notes/changelogs should carry the successor
+  pointer themselves rather than relying on the runtime message;
+  (3) only a live dogfood caught this — the getattr-based unit
+  test passed while the from-import behaved differently.
+
+- **zsh's no-word-split makes a broken pre-commit pre-flight look
+  like a PASS — `pre-commit run --files $VAR` with a multiline var
+  prints "(no files to check) Skipped", not an error**: 2026-07-05
+  variant of the known "zsh does NOT word-split unquoted $VARS"
+  gotcha, dangerous because the failure mode is SILENT. `CHANGED=$(
+  git status ... | awk ...)` then `pre-commit run black --files
+  $CHANGED` passed the whole newline-joined list as ONE filename;
+  pre-commit filtered the nonexistent path and reported every hook
+  "Skipped" — which scans as green in a hurry (a bare `ruff check
+  $CHANGED` at least errors). A Skipped pre-flight is a
+  NOT-RUN pre-flight. Fix: pipe through xargs (`git status --short
+  | grep ... | awk '{print $NF}' | xargs uv run --with pre-commit
+  pre-commit run black --files`) or use a zsh array. Rule: in
+  pre-flight output, treat "(no files to check) Skipped" on files
+  you KNOW you changed as a word-splitting bug, never as a pass.

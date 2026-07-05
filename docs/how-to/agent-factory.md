@@ -12,8 +12,8 @@ state machines, AutoGen conversational agents, Haystack pipelines, or
 Attune's native adapter.
 
 The factory layers Attune-side features — model-tier routing,
-cost-tracking flags, optional Memory Graph integration, optional
-resilience wrapping — on top of the chosen framework.
+cost-tracking flags, optional resilience wrapping — on top of the
+chosen framework.
 
 ## Supported frameworks
 
@@ -112,7 +112,6 @@ Creates an agent through the active adapter. Frequently used arguments:
 | `memory_enabled`   | `bool`                          | `True`               | Conversation memory                                    |
 | `memory_type`      | `str`                           | `"conversation"`     | `"conversation"`, `"summary"`, `"vector"`              |
 | `resilience_enabled` | `bool`                        | `False`              | Wraps result in a `ResilientAgent` (see below)         |
-| `memory_graph_enabled` | `bool`                      | `False`              | Wraps result in a `MemoryAwareAgent` (see below)       |
 
 Returns an object that implements `BaseAgent` — i.e. has
 `async def invoke(input_data, context=None) -> dict` and
@@ -240,29 +239,16 @@ These IDs are fallback constants — the live mapping is whatever
 
 ## Optional wrappers
 
-When you set the right flags on `create_agent`, the returned agent is
-wrapped with one or both of:
-
-### `MemoryAwareAgent` — Memory Graph integration
-
-Enabled by `memory_graph_enabled=True`. Queries similar past findings
-before invocation and stores new findings after. Imported lazily from
-`attune.agent_factory.memory_integration`; if the import fails, the flag
-is logged and ignored (the underlying agent is returned unwrapped).
-
-Tuning args on `create_agent`: `memory_graph_path` (default
-`"patterns/memory_graph.json"`), `store_findings` (default `True`),
-`query_similar` (default `True`).
+When you set the right flag on `create_agent`, the returned agent is
+wrapped with:
 
 ### `ResilientAgent` — Circuit breaker / retry / timeout
 
 Enabled by `resilience_enabled=True`. Imported lazily from
-`attune.agent_factory.resilient`; same fail-soft behavior on import
-error. Tuning args: `circuit_breaker_threshold` (default `3`),
+`attune.agent_factory.resilient`; if the import fails, the flag is
+logged and ignored (the underlying agent is returned unwrapped).
+Tuning args: `circuit_breaker_threshold` (default `3`),
 `retry_max_attempts` (default `2`), `timeout_seconds` (default `30.0`).
-
-When both flags are set, `ResilientAgent` is applied as the *outer*
-wrapper around `MemoryAwareAgent`.
 
 ## Public exports
 
@@ -279,10 +265,9 @@ from attune.agent_factory import (
 )
 ```
 
-That list is the `__all__` of `attune.agent_factory`. `MemoryAwareAgent`,
-`ResilientAgent`, `ResilienceConfig`, and the framework-specific
-adapters are importable from their submodules but not re-exported at the
-top level.
+That list is the `__all__` of `attune.agent_factory`. `ResilientAgent`,
+`ResilienceConfig`, and the framework-specific adapters are importable
+from their submodules but not re-exported at the top level.
 
 ## Example: code review pipeline
 

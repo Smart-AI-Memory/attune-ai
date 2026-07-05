@@ -72,16 +72,12 @@ def create_agent(
     circuit_breaker_threshold: int = 3,
     retry_max_attempts: int = 2,
     timeout_seconds: float = 30.0,
-    memory_graph_enabled: bool = False,
-    memory_graph_path: str = "patterns/memory_graph.json",
-    store_findings: bool = True,
-    query_similar: bool = True,
 ) -> BaseAgent
 ```
 
 Creates an agent using the configured framework. Automatically
-applies `ResilientAgent` and `MemoryAwareAgent` wrappers when
-the corresponding options are enabled.
+applies the `ResilientAgent` wrapper when the corresponding
+option is enabled.
 
 **Returns:** `BaseAgent` implementation (may be wrapped).
 
@@ -332,10 +328,6 @@ Dataclass for agent creation configuration.
 | `circuit_breaker_threshold` | `int` | `3` | Failures before open |
 | `retry_max_attempts` | `int` | `2` | Max retries |
 | `timeout_seconds` | `float` | `30.0` | Invocation timeout |
-| `memory_graph_enabled` | `bool` | `False` | Enable memory graph |
-| `memory_graph_path` | `str` | `"patterns/memory_graph.json"` | Graph file path |
-| `store_findings` | `bool` | `True` | Store findings |
-| `query_similar` | `bool` | `True` | Query similar findings |
 
 ---
 
@@ -485,40 +477,6 @@ ResilientAgent(
 | Method | Description |
 |--------|-------------|
 | `reset_circuit_breaker()` | Manual circuit breaker reset |
-
----
-
-## MemoryAwareAgent
-
-**Module:** `attune.agent_factory.memory_integration`
-
-Wraps any `BaseAgent` with Memory Graph integration for
-cross-agent learning.
-
-### Constructor
-
-```python
-MemoryAwareAgent(
-    agent: BaseAgent,
-    graph_path: str = "patterns/memory_graph.json",
-    store_findings: bool = True,
-    query_similar: bool = True,
-    similarity_threshold: float = 0.4,
-    max_similar_results: int = 5,
-)
-```
-
-### Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `graph` | `MemoryGraph \| None` | Memory graph instance |
-
-### Methods
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `get_graph_stats()` | `dict` | Node/edge counts and path |
 
 ---
 

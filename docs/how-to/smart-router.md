@@ -293,7 +293,6 @@ attune route "Fix performance in the database layer"
 
 ## See Also
 
-- [Memory Graph](memory-graph.md) — Cross-wizard knowledge sharing
 - [Auto-Chaining](auto-chaining.md) — Automatic wizard sequencing
 - [Telemetry and Signals](telemetry-and-signals.md) — Monitor routing
   decisions over time with `attune telemetry routing-stats`

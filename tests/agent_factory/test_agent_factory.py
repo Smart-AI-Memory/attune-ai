@@ -504,40 +504,7 @@ class TestAdapterDispatch:
 
 
 class TestCreateAgentWrapperImportErrors:
-    """Cover lines 252-255 (memory) and 276-279 (resilience) ImportError paths."""
-
-    def test_memory_graph_import_error_logs_warning(self, caplog):
-        """Lines 252-255: MemoryAwareAgent import fails → warning logged."""
-        import logging
-        import sys
-
-        from attune.agent_factory.factory import AgentFactory, Framework
-
-        # Pop the module so import gets attempted; patch finder to raise
-        sys.modules.pop("attune.agent_factory.memory_integration", None)
-
-        f = AgentFactory(framework=Framework.NATIVE, api_key="key")
-
-        import builtins as _b
-
-        real_import = _b.__import__
-
-        def fake_import(name, *args, **kwargs):
-            if "memory_integration" in name:
-                raise ImportError("memory not installed")
-            return real_import(name, *args, **kwargs)
-
-        with caplog.at_level(logging.WARNING):
-            from unittest.mock import patch
-
-            with patch("builtins.__import__", side_effect=fake_import):
-                agent = f.create_agent(
-                    name="a",
-                    memory_graph_enabled=True,
-                )
-        # Warning should mention memory integration
-        assert any("Memory integration not available" in r.message for r in caplog.records)
-        assert agent is not None
+    """Cover the resilience ImportError path."""
 
     def test_resilience_import_error_logs_warning(self, caplog):
         """Lines 276-279: ResilientAgent import fails → warning logged."""

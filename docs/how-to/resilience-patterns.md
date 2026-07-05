@@ -375,4 +375,3 @@ async def health_endpoint():
 
 - [API Reference](../reference/API_REFERENCE.md) - Full API documentation
 - [Smart Router](smart-router.md) - Natural language wizard dispatch
-- [Memory Graph](memory-graph.md) - Cross-wizard knowledge sharing

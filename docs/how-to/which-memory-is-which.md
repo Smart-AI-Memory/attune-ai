@@ -10,7 +10,7 @@ command reaches it.
 | Ring | What it holds | Where it lives | Reach it via |
 |------|---------------|----------------|--------------|
 | Personal memory | Curated topics you capture (decisions, patterns, troubleshooting, reference) | `~/.attune/memory/<topic>/<kind>.md` | `attune memory capture` / `recall`, `personal_memory_*` MCP tools |
-| Memory graph | Structured findings from workflows (patterns, bugs, context nodes + edges) | JSON graph on disk, per project | `memory_store` / `memory_search` MCP tools |
+| Unified memory | Key-value stash plus persisted patterns from workflows | Redis short-term + persistent pattern store (`UnifiedMemory`) | `memory_store` / `memory_search` MCP tools |
 | Session memory (Redis/AMS) | Per-session working keys plus semantic long-term records | Redis Agent Memory Server, `attune` namespace | `redis_memory_*` MCP tools (needs the `[redis]` extra) |
 | Host agent memory | Whatever your host agent (e.g. Claude Code) persists for itself | The host's own files (e.g. `~/.claude/.../memory/`) | The host reads it; attune does not |
 
@@ -26,9 +26,10 @@ command reaches it.
   attune memory recall "why did we pick JWT"
   ```
 
-- **"Store a structured finding a workflow produced"** — the memory
-  graph. Workflows write typed nodes (bug, pattern, context) and link
-  them; search is graph-aware.
+- **"Store a structured finding a workflow produced"** — unified
+  memory. `memory_store` stashes the value and, when a
+  `pattern_type` is given, persists it as a long-term pattern;
+  `memory_search` retrieves stored keys and patterns.
 
 - **"Share state across agents in this session, or search past
   sessions semantically"** — Redis/AMS session memory. Working-memory

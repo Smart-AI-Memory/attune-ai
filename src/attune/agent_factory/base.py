@@ -95,12 +95,6 @@ class AgentConfig:
     retry_max_attempts: int = 2
     timeout_seconds: float = 30.0
 
-    # Memory Graph integration
-    memory_graph_enabled: bool = False
-    memory_graph_path: str = "patterns/memory_graph.json"
-    store_findings: bool = True
-    query_similar: bool = True
-
 
 @dataclass
 class WorkflowConfig:
