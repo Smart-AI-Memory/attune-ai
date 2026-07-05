@@ -212,3 +212,71 @@ during the 2026-07-05 housekeeping run. Triage into .claude/lessons.md
   haven't checked). Extends the editable-MAPPING / worktree-vs-main
   family to the *config-file read* surface (prior instances were
   code-execution and write-side).
+
+## From elegant-pasteur-da6dcb (round 2, added post-#1260)
+
+  CANCELLED noise (separate, low-priority) is quietable with
+  `cancel-in-progress: false` in the scan workflow.
+- **The #910 retry harness emits a `failure` (not `cancelled`) with
+  near-full runtime when it gives up on a hang — don't misread it as
+  a real test/coverage failure.** When the bounded auto-retry wrapper
+  exhausts its attempts it deliberately `exit 1`s with
+  `::error::<lane> pytest hung on every attempt (runner-hang) —
+  failing the job after bounded auto-retry`, so the job conclusion is
+  `failure` (NOT `cancelled` like a raw step-timeout). The ~28-29 min
+  runtime is the hang signature itself (≈2× the 14m step timeout +
+  retries), NOT evidence that real work ran and failed — so "ran the
+  full duration ⇒ real failure" is exactly backwards for this harness.
+  Hit 2026-06-15 triaging PR #912: I first called its `coverage` +
+  `test (ubuntu-3.11)` fails "real" from the long runtime, but the
+  logs had ZERO `FAILED` test lines and ZERO "Required test coverage …
+  not reached" lines — only the `::error:: …runner-hang` marker and a
+  trailing `Terminate orphan process: pid (…) (python)` cleanup tail.
+  Diagnostic before assuming a code fix is needed: `gh run view --job
+  <id> --log | grep -E "FAILED |Required test coverage|hung on every
+  attempt|Terminate orphan"`. Only the runner-hang marker + orphan
+  cleanup (no `FAILED`/coverage-shortfall lines) ⇒ it's the hang;
+  rerun the failed lanes, don't fix code. Contrast: a fast (~2 min)
+  `pre-commit` `failure` on a dependabot PR IS real (lint/lock) — the
+  hang signature is specifically long runtime + orphan-python tail.
+  Two rerun gotchas: (a) `gh run rerun <id> --failed` rejects "cannot
+  be retried" if `<id>` is a SIBLING workflow's run (Auto Approve,
+  Security Scan, Dependabot auto-merge) — resolve the *Tests* run id
+  from the failing check's `link` field, never `gh run list --limit
+  1`; (b) the resolved Tests run reruns cleanly. Extends the existing
+  CI-hang retry-harness lessons with the consumer/reading side.
+
+## From compassionate-matsumoto-c31293 (round 2, added post-#1260; full snapshot also on origin/claude/compassionate-matsumoto-c31293)
+
+  CANCELLED noise (separate, low-priority) is quietable with
+  `cancel-in-progress: false` in the scan workflow.
+  **AUDIT RESULT (2026-06-24, the predicted systemic sweep):** running
+  the "grep the handler's kwargs inside the workflow module" check
+  across ALL 18 `_run_*` handlers found FOUR broken by this class, not
+  two. Hard-broken (every call returns `"path argument is required"`):
+  `_run_doc_gen` (passed `source_code`/`doc_type`/`audience`),
+  `_run_doc_audit` (passed `project_root`; workflow reads only `path`),
+  `_run_research_synthesis` (passed `sources`/`question`; workflow was
+  rewritten to read source docs from a `path` on disk — a SEMANTIC
+  drift, not just a rename, so the fix changed the tool's input schema
+  too), plus `_run_test_generation` (passed `module_path`; fixed under
+  its own task). Silently-DEGRADED (no error, wrong scope):
+  `_run_doc_orchestrator` buried the path in `context={"project_root":
+  …}` while the orchestrator resolves scope from the TOP-LEVEL `path`/
+  `project_root` kwargs → scope fell back to cwd. Working-but-via-
+  DEPRECATED-alias (migrated to canonical `path=` opportunistically):
+  `_run_test_audit` (`src_path=`), `_run_health_check` (`project_root=`).
+  All the plain path-passers (security_audit, bug_predict, code_review,
+  perf_audit, release_prep, refactor_plan, dependency_check,
+  deep_review, simplify_code, secure_release, test_gen_parallel) were
+  already correct. Takeaways that generalize: (a) the degraded case is
+  nastier than the hard-broken one — no error to grep for, you only
+  catch it by checking the workflow READS the kwarg you pass at the
+  level you pass it (top-level vs nested in a dict); (b) when the
+  workflow was rewritten (not just renamed), aligning handler→workflow
+  means changing the `tool_schemas.py` input contract too, and updating
+  every mocked test that PINNED the old kwargs (they're the reason the
+  drift survived); (c) the non-mocked receipt that catches all four:
+  drive the real handler→`execute` with only `claude_agent_sdk.query`
+  (the subprocess) stubbed, and assert `success is True` — a stale
+  kwarg yields `success False` + `"path argument is required"`.
