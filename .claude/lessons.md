@@ -13273,3 +13273,38 @@ files.
   the plan instead of burning a denied call each time. A denied
   PreToolUse classifier block means the command never ran — no
   partial-execution reconciliation needed (unlike user-interrupts).
+
+- **Releasing any attune-* sibling creates latent `website-accuracy`
+  debt — the PyPI version audit fails the NEXT website-touching
+  attune-ai PR, not the release itself; bump `website/lib/features.ts`
+  in the release close-out**: 2026-07-04, attune-author 0.23.0
+  shipped in the morning; hours later an unrelated website-touching
+  PR (#1248) failed `website-accuracy` with `attune-author
+  site=0.22.0 pypi=0.23.0`. The audit compares each `version:` field
+  in features.ts against live PyPI, so the drift is created at
+  RELEASE time but only bites whoever touches the website next — a
+  classic deferred-tax shape that misattributes blame to an innocent
+  PR. Rule: the release-execute close-out for ANY attune-* package
+  should include bumping that package's `version:` in attune-ai's
+  `website/lib/features.ts` (a one-line PR, or ride it into any open
+  website-touching PR as done in #1248). Diagnostic tell: a
+  website-accuracy failure naming a package your PR never touched =
+  inherited drift, fix-forward in your PR rather than treating it as
+  a flake.
+
+- **`npm run dev` in a worktree's `website/` with an empty
+  node_modules silently resolves Next.js from `~/node_modules` (the
+  HOME-dir app) and 500s on missing plugins — `npm ci` in the
+  worktree website/ first (~7s)**: 2026-07-04, preview-verifying a
+  homepage edit. The worktree's `website/node_modules` existed but
+  was empty, so Node's upward resolution walked to
+  `/Users/patrickroebuck/node_modules` (the loose home-directory
+  Next.js app) and dev-served with THAT next install — failing with
+  `Cannot find module '@tailwindcss/postcss'` (a plugin the home app
+  doesn't have). The require-stack tell:
+  `/Users/patrickroebuck/node_modules/next/...` instead of
+  `<worktree>/website/node_modules/next/...`. Fix: `cd website &&
+  npm ci --no-audit --no-fund` (7s with warm cache), restart the
+  preview. Same class as the worktree-venv-lacks-extras lessons —
+  per-worktree dependency isolation applies to node too, and the
+  main checkout having node_modules does NOT help a worktree.
