@@ -70,30 +70,48 @@ developer workflow hub; `attune-gui` is the docs hub.
 
 ---
 
-## New in 9.3.0 — Dynamic forms that improve human/AI communication
+<!-- ROTATING SLOT: this "New in <version>" section is replaced each
+     release with the headline feature; the displaced content moves to
+     a permanent section below (see "Dynamic forms" for the pattern).
+     Don't stack a second "New in" section here. -->
 
-**Attune now improves how you and the AI communicate by dynamically
-using interactive forms.** The form *is* the improvement: instead of a
-fixed wall of prose, Attune renders the right form in response to your
-prompt whenever a structured turn communicates better than text — so a
-multi-part question becomes one form you answer with a click, a
-recommendation arrives as weighable cards, and a disagreement is shown
-side-by-side so you can overrule it in one tap. The exchange gets
-faster, clearer, and less ambiguous. The agent picks the right *form*
-for the moment:
+## New in 9.7.0 — the memory suite, out of the box
 
-- **intake** — gather several independent decisions in one form
-- **decision** — a recommended option with rationale + per-option
-  tradeoffs (`/spec` approval gate)
-- **pushback** — agent dissent shown as "your approach" vs "I'd suggest
-  instead"; overrule or switch in one pick (`/spec` plan review)
-- **progress** — a done / in-progress / blocked board whose blocked
-  items are a fix-next picker (`/spec` execute)
+**Your agent stops starting from zero — and now it works with a plain
+`pip install attune-ai`.** The memory suite matured across the last
+several releases (curated promotion in 9.5, files-canonical
+unification in 9.6); 9.7.0 removes the last install friction by
+shipping the Redis / Agent Memory Server client as a core dependency.
+The loop:
 
-All constructs share one declarative form model and validator, render
-richly on widget-capable surfaces (e.g. claude.ai / Cowork) and degrade
-gracefully to a recommendation-first menu elsewhere. The terse reply
-vocab (`y` / `go` / `1`) answers any of them.
+- **Stash on stop** — a `Stop` hook extracts decisions, bugs, and
+  references from the session (local LLM when available, heuristic
+  fallback) and writes them to the memory store: a local file by
+  default, Redis Agent Memory Server when one is reachable.
+- **Recall at the door** — a `SessionStart` hook surfaces the most
+  recent findings for your project, and warns when the memory
+  backend is unreachable instead of degrading silently.
+- **Promote what endures** — a reviewed stash→curated path: the
+  agent drafts a node per candidate, you verdict each one (the
+  30-day test), and promotion lands a git-tracked `.md` file in
+  the curated corpus. Files are the store; Redis serves them —
+  recall pulls a few hundred exactly-relevant tokens on demand
+  instead of re-reading whole files into context.
+- **Lessons at the trap moment** — a `UserPromptSubmit` hook
+  retrieves your project's engineering lessons (from
+  `.claude/lessons.md` or `CLAUDE.md`) when a prompt hits a known
+  trap; a `PreToolUse` hook surfaces curated rules at the exact
+  tool call they govern.
+- **On demand** — `/recall <topic>` searches both stores with
+  results labeled by source; `/remember` captures and manages
+  facts explicitly; a full MCP tool surface (memory, personal
+  memory, Redis/AMS) gives agents the same access.
+
+Memory is local-first — nothing leaves your machine, and without a
+Redis server everything degrades to the file backend with clear
+guidance. Your memory, your corpus: we dogfood the loop on our own
+380+ engineering lessons, retrieved via attune-rag at **P@3 96%**
+(100% on the high-severity subset) on a frozen trap-moment benchmark.
 
 ---
 
@@ -180,36 +198,37 @@ repeated token costs across calls.
 ### 5. Memory that compounds across sessions
 
 Most AI coding sessions start from zero. Attune ships a
-cross-session memory loop — every session ends by stashing its
-durable findings, and every new session can pull them back:
+cross-session memory loop — stash on stop, recall at the door,
+reviewed promotion into a git-tracked curated corpus, and lessons
+retrieved at the exact trap moment they guard against. Covered in
+depth in the "New in 9.7.0" section at the top of this README; the
+hook-by-hook mechanics and tunables live in the
+"Session continuity & cross-session memory" section below.
 
-- **Stash on stop** — a `Stop` hook extracts decisions, bugs, and
-  references from the session (local LLM when available, heuristic
-  fallback) and writes them to the memory store: a local file by
-  default, Redis Agent Memory Server when one is reachable — the
-  client ships with the standard install.
-- **Recall at the door** — a `SessionStart` hook surfaces the most
-  recent findings for your project, and warns when the memory
-  backend is unreachable instead of degrading silently.
-- **Promote what endures** — a reviewed stash→curated path: the
-  agent drafts a node per candidate, you verdict each one (the
-  30-day test), and promotion lands a git-tracked `.md` file in
-  the curated corpus. Files are the store; Redis serves them —
-  recall pulls a few hundred exactly-relevant tokens on demand
-  instead of re-reading whole files into context.
-- **Lessons at the trap moment** — a `UserPromptSubmit` hook
-  retrieves your project's engineering lessons (from
-  `.claude/lessons.md` or `CLAUDE.md`) when a prompt hits a known
-  trap; a `PreToolUse` hook surfaces curated rules at the exact
-  tool call they govern.
-- **`/recall <topic>`** — on-demand search across both stores,
-  results labeled `[lesson]` vs session finding.
+---
 
-Your memory, your corpus: the loop runs over *your* project's
-sessions and lessons file. We dogfood it on our own — 380+
-engineering lessons retrieved via attune-rag at **P@3 96%**
-(100% on the high-severity subset) on a frozen trap-moment
-benchmark.
+## Dynamic forms — structured human/AI communication
+
+Attune improves how you and the AI communicate by dynamically using
+interactive forms (shipped in 9.3.0). Instead of a fixed wall of
+prose, Attune renders the right form whenever a structured turn
+communicates better than text — a multi-part question becomes one
+form you answer with a click, a recommendation arrives as weighable
+cards, and a disagreement is shown side-by-side so you can overrule
+it in one tap:
+
+- **intake** — gather several independent decisions in one form
+- **decision** — a recommended option with rationale + per-option
+  tradeoffs (`/spec` approval gate)
+- **pushback** — agent dissent shown as "your approach" vs "I'd suggest
+  instead"; overrule or switch in one pick (`/spec` plan review)
+- **progress** — a done / in-progress / blocked board whose blocked
+  items are a fix-next picker (`/spec` execute)
+
+All constructs share one declarative form model and validator, render
+richly on widget-capable surfaces (e.g. claude.ai / Cowork) and degrade
+gracefully to a recommendation-first menu elsewhere. The terse reply
+vocab (`y` / `go` / `1`) answers any of them.
 
 ---
 
