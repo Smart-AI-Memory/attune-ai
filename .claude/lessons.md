@@ -13236,3 +13236,40 @@ files.
   so `mock.patch.object(module, "pypi_latest", ...)` never reached
   it — make injectable defaults lazy (`fetch=None` → resolve in the
   body) so module-level patching works.
+
+- **Same-path file reads flipping between commands (same SHA, different
+  content) = a CONCURRENT session is working that checkout — reflog +
+  open-PR list is the diagnostic, stand-down + read-only monitor is the
+  response**: hit 2026-07-04 taking over the attune-author 0.23.0
+  release. First read of ~/attune-author showed pyproject 0.22.0 on a
+  clean release/0.23.0 branch; two minutes later the SAME HEAD showed
+  0.23.0 — impossible for one actor. `git reflog --date=iso` showed
+  live checkout/commit activity timestamped seconds earlier, and
+  `gh pr list` showed a release PR I hadn't opened. It was Patrick's
+  other session executing the identical task. Rules: (1) inconsistent
+  reads in a shared checkout are a concurrency tell, not a git bug —
+  check reflog timestamps and open PRs before theorizing; (2) do NOT
+  touch that repo's git state (checkout/commit/stash all race the
+  other session); (3) monitor read-only (PR state, tag, PyPI) and take
+  over only when the other session stalls or the user says so —
+  here Patrick stopped his session and handed the chain over
+  explicitly. Pairs with feedback_parallel_session_coordination
+  (avoid duplicating parallel work) — this is the detection half.
+
+- **The auto-mode classifier scopes admin-merge authorization to the
+  PR NUMBER the user named — follow-up PRs in the same authorized
+  chain each need their own naming**: 2026-07-04, Patrick's task said
+  "admin-merge PR #83 (starting this task is the green-light)". The
+  classifier allowed nothing beyond that literal target: admin-merge
+  of #84 (the release-prep PR #83's chain required) was denied
+  ("different PR the user never named"), and admin-merge of #1246
+  (the pin-bump PR the task told me to create) was denied as
+  self-approval. The in-session-durable-auth memory
+  (feedback_admin_merge_in_session_auth) does NOT override this —
+  durability applies to the protection-drop dance pattern, not to new
+  PR numbers. Practical protocol for release chains: expect one
+  user-touch per PR — either ask the user to name each follow-up PR
+  ("merge 84") or have them click merge in the UI; budget for that in
+  the plan instead of burning a denied call each time. A denied
+  PreToolUse classifier block means the command never ran — no
+  partial-execution reconciliation needed (unlike user-interrupts).
