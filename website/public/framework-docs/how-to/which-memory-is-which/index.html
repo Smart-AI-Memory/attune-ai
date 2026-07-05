@@ -1313,34 +1313,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../memory-graph/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Memory Graph
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../lessons-workflow/" class="md-nav__link">
         
   
@@ -4699,9 +4671,9 @@ command reaches it.</p>
 <td><code>attune memory capture</code> / <code>recall</code>, <code>personal_memory_*</code> MCP tools</td>
 </tr>
 <tr>
-<td>Memory graph</td>
-<td>Structured findings from workflows (patterns, bugs, context nodes + edges)</td>
-<td>JSON graph on disk, per project</td>
+<td>Unified memory</td>
+<td>Key-value stash plus persisted patterns from workflows</td>
+<td>Redis short-term + persistent pattern store (<code>UnifiedMemory</code>)</td>
 <td><code>memory_store</code> / <code>memory_search</code> MCP tools</td>
 </tr>
 <tr>
@@ -4730,9 +4702,10 @@ command reaches it.</p>
 </code></pre></div>
 <ul>
 <li>
-<p><strong>"Store a structured finding a workflow produced"</strong> — the memory
-  graph. Workflows write typed nodes (bug, pattern, context) and link
-  them; search is graph-aware.</p>
+<p><strong>"Store a structured finding a workflow produced"</strong> — unified
+  memory. <code>memory_store</code> stashes the value and, when a
+  <code>pattern_type</code> is given, persists it as a long-term pattern;
+  <code>memory_search</code> retrieves stored keys and patterns.</p>
 </li>
 <li>
 <p><strong>"Share state across agents in this session, or search past

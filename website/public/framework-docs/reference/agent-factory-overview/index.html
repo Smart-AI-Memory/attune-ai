@@ -1210,34 +1210,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/memory-graph/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Memory Graph
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../how-to/lessons-workflow/" class="md-nav__link">
         
   
@@ -4566,17 +4538,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#memory-graph-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Memory Graph Integration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#decorators" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4651,15 +4612,9 @@ resilience patterns, and cross-agent learning.</p>
 <a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>└─────────────┘  │  fallback (outer)    │
 <a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>                 └──────────────────────┘
 </code></pre></div>
-<p>When both <code>memory_graph_enabled</code> and <code>resilience_enabled</code> are
-set, the factory applies wrappers in this order:</p>
-<ol>
-<li>Framework adapter creates the base agent</li>
-<li><code>MemoryAwareAgent</code> wraps it (inner)</li>
-<li><code>ResilientAgent</code> wraps the result (outer)</li>
-</ol>
-<p>This means resilience patterns protect both the agent call
-and the memory graph queries.</p>
+<p>When <code>resilience_enabled</code> is set, the framework adapter
+creates the base agent and <code>ResilientAgent</code> wraps it, so
+resilience patterns protect the agent call.</p>
 <hr />
 <h2 id="module-structure">Module Structure<a class="headerlink" href="#module-structure" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>src/attune/agent_factory/
@@ -4669,15 +4624,14 @@ and the memory graph queries.</p>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>├── framework.py             # Framework enum and detection
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>├── decorators.py            # Operation decorators
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>├── resilient.py             # ResilientAgent wrapper
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>├── memory_integration.py    # MemoryAwareAgent wrapper
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>└── adapters/
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    ├── __init__.py          # Lazy-loading adapter registry
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    ├── native.py            # Empathy native adapter
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    ├── langchain_adapter.py # LangChain adapter
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    ├── langgraph_adapter.py # LangGraph adapter
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    ├── autogen_adapter.py   # Microsoft AutoGen adapter
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    ├── haystack_adapter.py  # deepset Haystack adapter
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    └── wizard_adapter.py    # Attune wizard adapter
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>└── adapters/
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    ├── __init__.py          # Lazy-loading adapter registry
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    ├── native.py            # Empathy native adapter
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    ├── langchain_adapter.py # LangChain adapter
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    ├── langgraph_adapter.py # LangGraph adapter
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    ├── autogen_adapter.py   # Microsoft AutoGen adapter
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    ├── haystack_adapter.py  # deepset Haystack adapter
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    └── wizard_adapter.py    # Attune wizard adapter
 </code></pre></div>
 <hr />
 <h2 id="design-patterns">Design Patterns<a class="headerlink" href="#design-patterns" title="Permanent link">&para;</a></h2>
@@ -4702,7 +4656,7 @@ and the memory graph queries.</p>
 </tr>
 <tr>
 <td><strong>Wrapper</strong></td>
-<td><code>ResilientAgent</code>, <code>MemoryAwareAgent</code></td>
+<td><code>ResilientAgent</code></td>
 <td>Add cross-cutting concerns</td>
 </tr>
 <tr>
@@ -4772,8 +4726,6 @@ as a zero-dependency fallback.</p>
   on the provider and task type</li>
 <li><strong>CircuitBreaker</strong> (<code>attune.resilience</code>) — Provides
   circuit breaker state management for <code>ResilientAgent</code></li>
-<li><strong>MemoryGraph</strong> (<code>attune.memory</code>) — Stores and queries
-  cross-agent findings for <code>MemoryAwareAgent</code></li>
 <li><strong>EmpathyLLM</strong> — Powers the native adapter with built-in
   cost tracking and pattern learning</li>
 </ul>
@@ -4802,18 +4754,6 @@ production-ready patterns:</p>
 <li><strong>Fallback</strong> — Optional. Returns a configurable fallback
    response instead of raising.</li>
 </ol>
-<hr />
-<h2 id="memory-graph-integration">Memory Graph Integration<a class="headerlink" href="#memory-graph-integration" title="Permanent link">&para;</a></h2>
-<p>When <code>memory_graph_enabled=True</code>, agents gain cross-agent
-learning:</p>
-<p><strong>Before invocation:</strong> Queries the memory graph for similar
-past findings and injects them into the context dict under
-<code>context["similar_findings"]</code>.</p>
-<p><strong>After invocation:</strong> Scans the agent's output for finding
-patterns (bugs, vulnerabilities, performance issues) and
-stores them in the graph with the agent's name as source.</p>
-<p>This allows a debugger agent to benefit from a security
-agent's past findings, and vice versa.</p>
 <hr />
 <h2 id="decorators">Decorators<a class="headerlink" href="#decorators" title="Permanent link">&para;</a></h2>
 <p>Six reusable decorators for agent operations:</p>

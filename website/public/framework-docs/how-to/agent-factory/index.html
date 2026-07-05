@@ -1222,34 +1222,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../memory-graph/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Memory Graph
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../lessons-workflow/" class="md-nav__link">
         
   
@@ -1612,17 +1584,6 @@
   
     <nav class="md-nav" aria-label="Optional wrappers">
       <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#memoryawareagent-memory-graph-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MemoryAwareAgent — Memory Graph integration
-      
-    </span>
-  </a>
-  
-</li>
         
           <li class="md-nav__item">
   <a href="#resilientagent-circuit-breaker-retry-timeout" class="md-nav__link">
@@ -5051,17 +5012,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#memoryawareagent-memory-graph-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MemoryAwareAgent — Memory Graph integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#resilientagent-circuit-breaker-retry-timeout" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5138,8 +5088,8 @@ calls work whether the underlying agents are LangChain chains, LangGraph
 state machines, AutoGen conversational agents, Haystack pipelines, or
 Attune's native adapter.</p>
 <p>The factory layers Attune-side features — model-tier routing,
-cost-tracking flags, optional Memory Graph integration, optional
-resilience wrapping — on top of the chosen framework.</p>
+cost-tracking flags, optional resilience wrapping — on top of the
+chosen framework.</p>
 <h2 id="supported-frameworks">Supported frameworks<a class="headerlink" href="#supported-frameworks" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -5341,12 +5291,6 @@ on what's installed and the <code>use_case</code> argument, falling back to
 <td><code>False</code></td>
 <td>Wraps result in a <code>ResilientAgent</code> (see below)</td>
 </tr>
-<tr>
-<td><code>memory_graph_enabled</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
-<td>Wraps result in a <code>MemoryAwareAgent</code> (see below)</td>
-</tr>
 </tbody>
 </table>
 <p>Returns an object that implements <code>BaseAgent</code> — i.e. has
@@ -5464,23 +5408,14 @@ importable) maps:</p>
 <p>These IDs are fallback constants — the live mapping is whatever
 <code>ModelRouter</code> resolves at runtime.</p>
 <h2 id="optional-wrappers">Optional wrappers<a class="headerlink" href="#optional-wrappers" title="Permanent link">&para;</a></h2>
-<p>When you set the right flags on <code>create_agent</code>, the returned agent is
-wrapped with one or both of:</p>
-<h3 id="memoryawareagent-memory-graph-integration"><code>MemoryAwareAgent</code> — Memory Graph integration<a class="headerlink" href="#memoryawareagent-memory-graph-integration" title="Permanent link">&para;</a></h3>
-<p>Enabled by <code>memory_graph_enabled=True</code>. Queries similar past findings
-before invocation and stores new findings after. Imported lazily from
-<code>attune.agent_factory.memory_integration</code>; if the import fails, the flag
-is logged and ignored (the underlying agent is returned unwrapped).</p>
-<p>Tuning args on <code>create_agent</code>: <code>memory_graph_path</code> (default
-<code>"patterns/memory_graph.json"</code>), <code>store_findings</code> (default <code>True</code>),
-<code>query_similar</code> (default <code>True</code>).</p>
+<p>When you set the right flag on <code>create_agent</code>, the returned agent is
+wrapped with:</p>
 <h3 id="resilientagent-circuit-breaker-retry-timeout"><code>ResilientAgent</code> — Circuit breaker / retry / timeout<a class="headerlink" href="#resilientagent-circuit-breaker-retry-timeout" title="Permanent link">&para;</a></h3>
 <p>Enabled by <code>resilience_enabled=True</code>. Imported lazily from
-<code>attune.agent_factory.resilient</code>; same fail-soft behavior on import
-error. Tuning args: <code>circuit_breaker_threshold</code> (default <code>3</code>),
+<code>attune.agent_factory.resilient</code>; if the import fails, the flag is
+logged and ignored (the underlying agent is returned unwrapped).
+Tuning args: <code>circuit_breaker_threshold</code> (default <code>3</code>),
 <code>retry_max_attempts</code> (default <code>2</code>), <code>timeout_seconds</code> (default <code>30.0</code>).</p>
-<p>When both flags are set, <code>ResilientAgent</code> is applied as the <em>outer</em>
-wrapper around <code>MemoryAwareAgent</code>.</p>
 <h2 id="public-exports">Public exports<a class="headerlink" href="#public-exports" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agent_factory</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">AgentCapability</span><span class="p">,</span>
@@ -5493,10 +5428,9 @@ wrapper around <code>MemoryAwareAgent</code>.</p>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">WorkflowConfig</span><span class="p">,</span>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="p">)</span>
 </code></pre></div>
-<p>That list is the <code>__all__</code> of <code>attune.agent_factory</code>. <code>MemoryAwareAgent</code>,
-<code>ResilientAgent</code>, <code>ResilienceConfig</code>, and the framework-specific
-adapters are importable from their submodules but not re-exported at the
-top level.</p>
+<p>That list is the <code>__all__</code> of <code>attune.agent_factory</code>. <code>ResilientAgent</code>,
+<code>ResilienceConfig</code>, and the framework-specific adapters are importable
+from their submodules but not re-exported at the top level.</p>
 <h2 id="example-code-review-pipeline">Example: code review pipeline<a class="headerlink" href="#example-code-review-pipeline" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agent_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentFactory</span><span class="p">,</span> <span class="n">AgentRole</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>

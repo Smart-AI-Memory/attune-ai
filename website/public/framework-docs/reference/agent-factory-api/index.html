@@ -1210,34 +1210,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../how-to/memory-graph/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Memory Graph
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../how-to/lessons-workflow/" class="md-nav__link">
         
   
@@ -4967,56 +4939,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#memoryawareagent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MemoryAwareAgent
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="MemoryAwareAgent">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#constructor_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constructor
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#properties_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Properties
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#methods_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Methods
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#decorators" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5145,15 +5067,11 @@ any supported framework.</p>
 <a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>    <span class="n">circuit_breaker_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
 <a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>    <span class="n">retry_max_attempts</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
 <a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>    <span class="n">timeout_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span><span class="p">,</span>
-<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>    <span class="n">memory_graph_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>    <span class="n">memory_graph_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;patterns/memory_graph.json&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>    <span class="n">store_findings</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>    <span class="n">query_similar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseAgent</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseAgent</span>
 </code></pre></div>
 <p>Creates an agent using the configured framework. Automatically
-applies <code>ResilientAgent</code> and <code>MemoryAwareAgent</code> wrappers when
-the corresponding options are enabled.</p>
+applies the <code>ResilientAgent</code> wrapper when the corresponding
+option is enabled.</p>
 <p><strong>Returns:</strong> <code>BaseAgent</code> implementation (may be wrapped).</p>
 <h4 id="create_workflow">create_workflow<a class="headerlink" href="#create_workflow" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">create_workflow</span><span class="p">(</span>
@@ -5487,30 +5405,6 @@ reviewer</code> pipeline.</p>
 <td><code>float</code></td>
 <td><code>30.0</code></td>
 <td>Invocation timeout</td>
-</tr>
-<tr>
-<td><code>memory_graph_enabled</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
-<td>Enable memory graph</td>
-</tr>
-<tr>
-<td><code>memory_graph_path</code></td>
-<td><code>str</code></td>
-<td><code>"patterns/memory_graph.json"</code></td>
-<td>Graph file path</td>
-</tr>
-<tr>
-<td><code>store_findings</code></td>
-<td><code>bool</code></td>
-<td><code>True</code></td>
-<td>Store findings</td>
-</tr>
-<tr>
-<td><code>query_similar</code></td>
-<td><code>bool</code></td>
-<td><code>True</code></td>
-<td>Query similar findings</td>
 </tr>
 </tbody>
 </table>
@@ -5857,55 +5751,6 @@ and fallback patterns.</p>
 </tbody>
 </table>
 <hr />
-<h2 id="memoryawareagent">MemoryAwareAgent<a class="headerlink" href="#memoryawareagent" title="Permanent link">&para;</a></h2>
-<p><strong>Module:</strong> <code>attune.agent_factory.memory_integration</code></p>
-<p>Wraps any <code>BaseAgent</code> with Memory Graph integration for
-cross-agent learning.</p>
-<h3 id="constructor_2">Constructor<a class="headerlink" href="#constructor_2" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">MemoryAwareAgent</span><span class="p">(</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>    <span class="n">agent</span><span class="p">:</span> <span class="n">BaseAgent</span><span class="p">,</span>
-<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    <span class="n">graph_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;patterns/memory_graph.json&quot;</span><span class="p">,</span>
-<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="n">store_findings</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="n">query_similar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>    <span class="n">similarity_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">,</span>
-<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a>    <span class="n">max_similar_results</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
-<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="p">)</span>
-</code></pre></div>
-<h3 id="properties_2">Properties<a class="headerlink" href="#properties_2" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Property</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>graph</code></td>
-<td><code>MemoryGraph \| None</code></td>
-<td>Memory graph instance</td>
-</tr>
-</tbody>
-</table>
-<h3 id="methods_2">Methods<a class="headerlink" href="#methods_2" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>get_graph_stats()</code></td>
-<td><code>dict</code></td>
-<td>Node/edge counts and path</td>
-</tr>
-</tbody>
-</table>
-<hr />
 <h2 id="decorators">Decorators<a class="headerlink" href="#decorators" title="Permanent link">&para;</a></h2>
 <p><strong>Module:</strong> <code>attune.agent_factory.decorators</code></p>
 <table>
@@ -5995,13 +5840,13 @@ lazy-loaded to avoid importing unused dependencies.</p>
 </tbody>
 </table>
 <p>Access adapters via factory functions:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agent_factory.adapters</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>    <span class="n">NativeAdapter</span><span class="p">,</span>
-<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>    <span class="n">get_langchain_adapter</span><span class="p">,</span>
-<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>    <span class="n">get_langgraph_adapter</span><span class="p">,</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">get_autogen_adapter</span><span class="p">,</span>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="n">get_haystack_adapter</span><span class="p">,</span>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agent_factory.adapters</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>    <span class="n">NativeAdapter</span><span class="p">,</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    <span class="n">get_langchain_adapter</span><span class="p">,</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="n">get_langgraph_adapter</span><span class="p">,</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="n">get_autogen_adapter</span><span class="p">,</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>    <span class="n">get_haystack_adapter</span><span class="p">,</span>
+<a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="p">)</span>
 </code></pre></div>
 
 
