@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [9.7.1] — 2026-07-04
+
+Docs/metadata patch — no code changes. Republishes so the PyPI
+project page carries the restructured README: the memory suite in
+the rotating "New in" flagship slot (was a four-minors-stale
+"New in 9.3.0" forms label), dynamic forms as a permanent section,
+and one consolidated memory overview.
+
 ## [9.7.0] — 2026-07-04
 
 Redis memory out of the box: the standard install now carries the
