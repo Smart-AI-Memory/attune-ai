@@ -1,6 +1,8 @@
 # MemoryGraph Value-Gate — Requirements
 
-**Status:** approved (2026-07-05) · **Owner:** Patrick + agent
+**Status:** complete (2026-07-05) — shipped in 10.0.0: removal
+landed via PR #1256 (T1–T6 all checked, receipts inline), released
+in #1257. · **Owner:** Patrick + agent
 **Born:** memory-unification T6 (the deferred value-gate exercise).
 
 ## Problem
