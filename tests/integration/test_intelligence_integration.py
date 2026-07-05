@@ -190,7 +190,7 @@ class TestFullIntegration:
     def test_file_history_informs_routing(self):
         """Test that file-based suggestions influence routing."""
         router = SmartRouter()
-        _decision = router.route_sync("Review db/queries.py for issues")
+        router.route_sync("Review db/queries.py for issues")
 
         # Should suggest security wizard for a db query file
         suggestions = router.suggest_for_file("db/queries.py")
