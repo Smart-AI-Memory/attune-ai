@@ -253,7 +253,7 @@ wheels = [
 
 [[package]]
 name = "attune-ai"
-version = "9.7.1"
+version = "10.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "agent-memory-client" },

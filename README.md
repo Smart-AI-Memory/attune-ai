@@ -75,14 +75,27 @@ developer workflow hub; `attune-gui` is the docs hub.
      a permanent section below (see "Dynamic forms" for the pattern).
      Don't stack a second "New in" section here. -->
 
-## New in 9.7.0 — the memory suite, out of the box
+## New in 10.0.0 — one memory architecture, no legacy layer
 
-**Your agent stops starting from zero — and now it works with a plain
-`pip install attune-ai`.** The memory suite matured across the last
-several releases (curated promotion in 9.5, files-canonical
-unification in 9.6); 9.7.0 removes the last install friction by
-shipping the Redis / Agent Memory Server client as a core dependency.
-The loop:
+Major version, one breaking change: the legacy memory-graph API
+(`attune.memory.MemoryGraph` and its node/edge types) is removed.
+Curated memory has been plain `.md` files served from Redis since
+9.6.0 — the graph was the layer nothing living called, confirmed by
+a usage audit before deletion (receipts in
+`docs/specs/memorygraph-value-gate/`). If you never imported
+`MemoryGraph` — telemetry says that's everyone — nothing changes:
+same install, same memory loop, same measured economics below.
+Accessing a removed name raises an error naming the successor, and
+there is no data migration because the graph store was already
+retired.
+
+## The memory suite — out of the box, measured
+
+**Your agent stops starting from zero — with a plain
+`pip install attune-ai`.** The memory suite matured across recent
+releases (curated promotion in 9.5, files-canonical unification in
+9.6, Redis / Agent Memory Server client as a core dependency in
+9.7). The loop:
 
 - **Stash on stop** — a `Stop` hook extracts decisions, bugs, and
   references from the session (local LLM when available, heuristic
@@ -113,13 +126,13 @@ guidance. Your memory, your corpus: we dogfood the loop on our own
 380+ engineering lessons, retrieved via attune-rag at **P@3 96%**
 (100% on the high-severity subset) on a frozen trap-moment benchmark.
 
-**The economics, measured.** Durable memory here is 302,949 tokens
-across 751 docs; a session recalls only the relevant slice:
+**The economics, measured.** Durable memory here is 303,205 tokens
+across 752 docs; a session recalls only the relevant slice:
 
 | Memory-suite recall | Instead of loading | You load | Win |
 |---|--:|--:|--:|
 | Trap-moment lessons | 202,042 tok (583 lessons) | ≤3,000 tok | **67× fewer tokens** |
-| SessionStart digest | 16 corpus files (4.4 ms) | one Redis call (0.6 ms) | **~7× faster** |
+| SessionStart digest | 16 corpus files (4.6 ms) | one Redis call (0.6 ms) | **~7× faster** |
 
 The lessons injection stays budget-capped no matter how large the
 corpus grows, and recall is a single warm Redis call — so both wins
@@ -214,7 +227,7 @@ Most AI coding sessions start from zero. Attune ships a
 cross-session memory loop — stash on stop, recall at the door,
 reviewed promotion into a git-tracked curated corpus, and lessons
 retrieved at the exact trap moment they guard against. Covered in
-depth in the "New in 9.7.0" section at the top of this README; the
+depth in "The memory suite" section at the top of this README; the
 hook-by-hook mechanics and tunables live in the
 "Session continuity & cross-session memory" section below.
 

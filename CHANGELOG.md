@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.0] — 2026-07-05
+
+Breaking release: the legacy memory-graph API is removed. Curated
+memory has been plain `.md` files with Redis-derived serving since
+9.6.0 (memory-unification); this release deletes the orphaned
+graph layer that nothing living called — the subsystem value-gate
+verdict, receipts in `docs/specs/memorygraph-value-gate/`. No data
+migration: the graph store was already retired. If you imported
+`MemoryGraph` (telemetry says nobody did), the curated-file
+pipeline is the successor.
+
 ### Removed
 
 - **BREAKING — memory:** the graph API is gone —
@@ -21,7 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   graph with zero live consumers — see
   `docs/specs/memorygraph-value-gate/` for the evidence.
   Accessing a removed name raises a pointed error naming the
-  successor. Ships in the next major (10.0.0).
+  successor (note: Python's `from`-import form surfaces a generic
+  `ImportError`; attribute access shows the full guidance).
 
 ## [9.7.1] — 2026-07-04
 
