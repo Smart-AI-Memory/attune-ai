@@ -113,6 +113,19 @@ guidance. Your memory, your corpus: we dogfood the loop on our own
 380+ engineering lessons, retrieved via attune-rag at **P@3 96%**
 (100% on the high-severity subset) on a frozen trap-moment benchmark.
 
+**The economics, measured.** Durable memory here is 302,949 tokens
+across 751 docs; a session recalls only the relevant slice:
+
+| Memory-suite recall | Instead of loading | You load | Win |
+|---|--:|--:|--:|
+| Trap-moment lessons | 202,042 tok (583 lessons) | ≤3,000 tok | **67× fewer tokens** |
+| SessionStart digest | 16 corpus files (4.4 ms) | one Redis call (0.6 ms) | **~7× faster** |
+
+The lessons injection stays budget-capped no matter how large the
+corpus grows, and recall is a single warm Redis call — so both wins
+widen as your memory does. Numbers from `benchmarks/memory_savings.py`
+on our dogfood store (cl100k_base).
+
 ---
 
 ## Ecosystem
