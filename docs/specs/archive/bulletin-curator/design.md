@@ -466,3 +466,14 @@ v1 scope. Concrete v1 choices:
   - "MCP-invoked SDK workflows ALREADY isolate their
     intermediate AssistantMessage stream" — confirms the
     curator's intermediate tokens stay inside the SDK session
+
+---
+
+## Addendum: Patrick's inline review comments (recovered 2026-07-05 from a pre-archive stash)
+
+- System prompt: would we get better performance with an XML-enhanced prompt?
+- Template `curator.html`: "I really like this way of showing what to expect. I also will like the report."
+- Cost + safety: can this be done using my Max subscription?
+- Suppression follow-up spec: "a needed item please prioritize"
+- Scope: "Will I have the ability to have agents from multiple projects report? If not in V1 then in V2"
+- On "curator's intermediate tokens stay inside the SDK session": "a bit confusing. Do I have to use the API for this?"
