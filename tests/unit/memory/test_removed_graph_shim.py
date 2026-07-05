@@ -36,3 +36,11 @@ def test_removed_name_not_in_all(name: str) -> None:
     import attune.memory
 
     assert name not in attune.memory.__all__
+
+
+def test_from_import_fails() -> None:
+    """The from-import form fails too — with CPython's generic
+    ImportError (the import machinery swallows the pointed
+    AttributeError text; see lessons.md 2026-07-05)."""
+    with pytest.raises(ImportError, match="MemoryGraph"):
+        from attune.memory import MemoryGraph  # noqa: F401,PLC0415
