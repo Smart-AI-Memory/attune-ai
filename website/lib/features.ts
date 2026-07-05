@@ -384,7 +384,7 @@ export const PILLARS: Pillar[] = [
       "at the moment a prompt needs it.",
     points: [
       "Local-first by default — no cloud required",
-      "Optional Redis semantic tier (local Ollama embeddings)",
+      "Redis semantic tier, client included (local Ollama embeddings)",
       "Automatic recall, or on demand with /recall",
     ],
     icon: "🧠",

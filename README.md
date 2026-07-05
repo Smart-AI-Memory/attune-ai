@@ -186,8 +186,8 @@ durable findings, and every new session can pull them back:
 - **Stash on stop** — a `Stop` hook extracts decisions, bugs, and
   references from the session (local LLM when available, heuristic
   fallback) and writes them to the memory store: a local file by
-  default, Redis Agent Memory Server with
-  `pip install 'attune-ai[redis]'`.
+  default, Redis Agent Memory Server when one is reachable — the
+  client ships with the standard install.
 - **Recall at the door** — a `SessionStart` hook surfaces the most
   recent findings for your project, and warns when the memory
   backend is unreachable instead of degrading silently.
@@ -397,19 +397,22 @@ from retrieval. Full methodology:
 ## Installation Options
 
 `pip install attune-ai` works out of the box — the CLI, all
-workflows, the MCP server, RAG, and the Agent SDK are core
-dependencies. Add extras only for the surfaces you use:
+workflows, the MCP server, RAG, cross-session memory (the Redis /
+Agent Memory Server client is a core dependency as of 9.7.0), and
+the Agent SDK. Memory features activate when a Redis Stack server
+is reachable and degrade with guidance when not. Add extras only
+for the surfaces you use:
 
 | You want | Install |
 | -------- | ------- |
-| Everything most users need | `pip install attune-ai` |
+| Everything most users need, incl. Redis memory | `pip install attune-ai` |
 | Claude API mode + optional LangChain/LangGraph interop adapters | `pip install 'attune-ai[developer]'` |
 | The ops dashboard (`attune ops`) | `pip install 'attune-ai[ops]'` |
-| Redis / Agent Memory Server memory backend | `pip install 'attune-ai[redis]'` |
 | Help authoring (generate / maintain `.help/` templates) | `pip install 'attune-ai[author]'` |
 
-Extras combine — for example
-`pip install 'attune-ai[developer,ops,redis]'`. Keep the quotes:
+(`[redis]` remains as an empty backward-compat alias.) Extras
+combine — for example
+`pip install 'attune-ai[developer,ops]'`. Keep the quotes:
 zsh and bash treat square brackets as glob characters.
 
 Contributing? Clone and install the dev toolchain instead:

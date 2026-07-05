@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **packaging:** Redis memory client deps (`redis`,
+  `agent-memory-client>=0.14.0,<0.15`) are now **core
+  dependencies** — the standard `pip install attune-ai` supports
+  the cross-session memory features (hydration, recall digest,
+  `redis_memory_*` MCP tools, `AMSMemoryBackend`) whenever a Redis
+  Stack server is reachable. Packaging catch-up with the
+  facade-direction D1 ratification ("Redis stays — align on Redis +
+  Anthropic Claude"); memory unification (9.6.0) made memory the
+  flagship story, so its deps no longer hide behind an extra. The
+  `[redis]` extra remains as an empty backward-compat alias (same
+  pattern as `[memory]`/`[rag]`), and the `[dev]` mirror entries are
+  gone — worktree venvs stop drifting out of redis support. Features
+  degrade with a clean guidance message when no server is reachable.
+
 ## [9.6.0] — 2026-07-04
 
 The memory-unification release: the curated corpus becomes plain

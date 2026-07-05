@@ -323,19 +323,20 @@ export default function Home() {
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
                 <span className="text-xs font-bold text-[var(--secondary)] tracking-[0.2em] uppercase mb-4 block">Semantic memory</span>
-                <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Powered by Redis when you want it</h2>
+                <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Powered by Redis, ready out of the box</h2>
                 <p className="text-[var(--text-secondary)] leading-relaxed mb-6">
                   Memory is local-first by default &mdash; nothing leaves your
-                  machine. Plug in Redis Agent Memory Server for semantic search
-                  over your project memory: local Ollama embeddings, int8 vector
-                  quantization, no cloud required.
+                  machine. The Redis Agent Memory Server client ships with the
+                  standard install: point it at a Redis Stack server for
+                  semantic search over your project memory &mdash; local Ollama
+                  embeddings, int8 vector quantization, no cloud required.
                 </p>
-                <code className="inline-block bg-[var(--surface-container-high)] px-4 py-2 rounded-lg text-sm font-mono">pip install &apos;attune-ai[redis]&apos;</code>
+                <code className="inline-block bg-[var(--surface-container-high)] px-4 py-2 rounded-lg text-sm font-mono">pip install attune-ai</code>
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
                 {[
                   ['Local-first', 'Default backend is on-disk — no service required'],
-                  ['Redis AMS tier', 'Opt in for semantic recall across sessions'],
+                  ['Redis AMS tier', 'Client included — semantic recall across sessions'],
                   ['Ollama embeddings', 'Runs locally — no API key, no cloud'],
                   ['int8 quantization', 'Compact vectors, shipped in attune-ai 7.4'],
                 ].map(([title, desc]) => (

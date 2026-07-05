@@ -36,12 +36,18 @@ These features work without any additional dependencies beyond the base install 
 
 ---
 
-## Optional Features (Require Redis)
+## Optional Features (Require a Redis Server)
 
-These features require Redis server and the `redis` extra:
+The Redis client libraries ship with the standard install (core
+dependencies as of 9.7.0 — the `[redis]` extra remains as an empty
+backward-compat alias). These features activate when a Redis Stack
+server is reachable:
 
 ```bash
-pip install 'attune-ai[redis]'
+# macOS
+brew tap redis-stack/redis-stack && brew install redis-stack-server
+# Linux
+sudo apt install redis-stack-server
 ```
 
 ### Memory - Redis-Enhanced
