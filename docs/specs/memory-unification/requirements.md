@@ -1,9 +1,12 @@
 # Memory Unification — Requirements
 
-**Status:** approved (2026-07-04) — Patrick locked D1 (files +
-Redis, NO graph middle layer), OQ1 (dedicated curated dir —
-RE-LOCKED same day after reversing the first call, see
-decisions.md), OQ2 (retire curated_graph.json). Phase 4 un-gated.
+**Status:** complete (2026-07-04) — shipped in 9.6.0 (PR #1239);
+T1–T5 executed same day, receipts in migration-receipt.md; T6
+(deferred value-gate) executed as the memorygraph-value-gate spec,
+shipped in 10.0.0. Locks: D1 (files + Redis, NO graph middle
+layer), OQ1 (dedicated curated dir — RE-LOCKED same day after
+reversing the first call, see decisions.md), OQ2 (retire
+curated_graph.json).
 **Owner:** patrick + agent
 
 ---
