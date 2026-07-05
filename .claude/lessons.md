@@ -13981,4 +13981,3 @@ def ", start_idx + 1)` for module-
   `ERROR: Coverage failure` line was in the
   iter-3 log too — but the narrative said "OOM" so
   the reader (and I) skimmed past it.
-
