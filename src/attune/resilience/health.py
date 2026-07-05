@@ -13,7 +13,6 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -80,11 +79,6 @@ class HealthCheck:
         async def check_database():
             await db.ping()
             return True
-
-        @health.register("memory_graph")
-        async def check_memory_graph():
-            graph = MemoryGraph()
-            return len(graph.nodes) >= 0
 
         status = await health.run_all()
         print(status.to_dict())
@@ -247,29 +241,6 @@ def register_default_checks(health: HealthCheck) -> None:
                 "healthy": workflow_count > 0,
                 "workflow_count": workflow_count,
                 "message": f"{workflow_count} workflows registered",
-            }
-        except Exception as e:  # noqa: BLE001
-            return {"healthy": False, "message": str(e)}
-
-    @health.register("memory_graph")
-    async def check_memory_graph() -> dict[str, Any]:
-        """Check memory graph is accessible."""
-        try:
-            from attune.memory import MemoryGraph
-
-            graph_path = Path("patterns/memory_graph.json")
-            if graph_path.exists():
-                graph = MemoryGraph(path=graph_path)
-                return {
-                    "healthy": True,
-                    "node_count": len(graph.nodes),
-                    "edge_count": len(graph.edges),
-                }
-            return {
-                "healthy": True,
-                "node_count": 0,
-                "edge_count": 0,
-                "message": "Graph file not yet created",
             }
         except Exception as e:  # noqa: BLE001
             return {"healthy": False, "message": str(e)}

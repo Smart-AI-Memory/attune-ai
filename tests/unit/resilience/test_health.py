@@ -440,7 +440,6 @@ class TestRegisterDefaultChecks:
         h = HealthCheck()
         register_default_checks(h)
         assert "workflow_registry" in h._checks
-        assert "memory_graph" in h._checks
         assert "smart_router" in h._checks
         assert "chain_executor" in h._checks
 
@@ -472,85 +471,6 @@ class TestRegisterDefaultChecks:
         monkeypatch.setitem(sys.modules, "attune.routing", _Broken())
         result2 = await h.run_check("workflow_registry")
         assert result2.status == HealthStatus.UNHEALTHY
-
-    @pytest.mark.asyncio
-    async def test_memory_graph_check_with_existing_file(self, monkeypatch, tmp_path):
-        """Lines 254-272: memory_graph check, file exists."""
-        import sys
-        from types import SimpleNamespace
-        from unittest.mock import MagicMock
-
-        from attune.resilience.health import register_default_checks
-
-        fake_graph = MagicMock()
-        fake_graph.nodes = [1, 2, 3]
-        fake_graph.edges = [(1, 2)]
-        fake_module = SimpleNamespace(MemoryGraph=lambda path: fake_graph)
-        monkeypatch.setitem(sys.modules, "attune.memory", fake_module)
-
-        # patch Path so that exists() returns True
-        from attune.resilience import health as health_mod
-
-        class FakePath:
-            def __init__(self, *a, **kw):
-                pass
-
-            def exists(self):
-                return True
-
-        monkeypatch.setattr(health_mod, "Path", FakePath)
-
-        h = HealthCheck()
-        register_default_checks(h)
-        result = await h.run_check("memory_graph")
-        assert result.status == HealthStatus.HEALTHY
-        assert result.details.get("node_count") == 3
-
-    @pytest.mark.asyncio
-    async def test_memory_graph_check_no_file(self, monkeypatch):
-        """Lines 268-273: memory graph file does not exist."""
-        import sys
-        from types import SimpleNamespace
-        from unittest.mock import MagicMock
-
-        from attune.resilience import health as health_mod
-        from attune.resilience.health import register_default_checks
-
-        fake_module = SimpleNamespace(MemoryGraph=MagicMock())
-        monkeypatch.setitem(sys.modules, "attune.memory", fake_module)
-
-        class FakePath:
-            def __init__(self, *a, **kw):
-                pass
-
-            def exists(self):
-                return False
-
-        monkeypatch.setattr(health_mod, "Path", FakePath)
-
-        h = HealthCheck()
-        register_default_checks(h)
-        result = await h.run_check("memory_graph")
-        assert result.status == HealthStatus.HEALTHY
-        assert result.details.get("node_count") == 0
-
-    @pytest.mark.asyncio
-    async def test_memory_graph_check_exception(self, monkeypatch):
-        """Lines 274-275: memory_graph exception → unhealthy."""
-        import sys
-
-        from attune.resilience.health import register_default_checks
-
-        class _Broken:
-            def __getattr__(self, name):
-                raise RuntimeError("nope")
-
-        monkeypatch.setitem(sys.modules, "attune.memory", _Broken())
-
-        h = HealthCheck()
-        register_default_checks(h)
-        result = await h.run_check("memory_graph")
-        assert result.status == HealthStatus.UNHEALTHY
 
     @pytest.mark.asyncio
     async def test_smart_router_check_happy_path(self, monkeypatch):

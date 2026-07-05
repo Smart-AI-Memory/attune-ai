@@ -79,10 +79,8 @@ if TYPE_CHECKING:
         check_redis_cross_session_support,
         generate_agent_id,
     )
-    from .edges import REVERSE_EDGE_TYPES, WORKFLOW_EDGE_PATTERNS, Edge, EdgeType
     from .features import FeatureInfo, FeatureStatus, MemoryFeatures
     from .file_session import FileSessionConfig, FileSessionMemory, get_file_session_memory
-    from .graph import MemoryGraph
     from .long_term import (
         Classification,
         ClassificationRules,
@@ -94,7 +92,6 @@ if TYPE_CHECKING:
         SecurityError,
     )
     from .memory_tool import AttuneMemoryTool, make_memory_tool
-    from .nodes import BugNode, Node, NodeType, PatternNode, PerformanceNode, VulnerabilityNode
     from .personal import PersonalMemory
     from .redis_bootstrap import (
         RedisStartMethod,
@@ -157,11 +154,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
         "check_redis_cross_session_support",
     ),
     "generate_agent_id": (".cross_session", "generate_agent_id"),
-    # edges
-    "REVERSE_EDGE_TYPES": (".edges", "REVERSE_EDGE_TYPES"),
-    "WORKFLOW_EDGE_PATTERNS": (".edges", "WORKFLOW_EDGE_PATTERNS"),
-    "Edge": (".edges", "Edge"),
-    "EdgeType": (".edges", "EdgeType"),
     # features
     "FeatureInfo": (".features", "FeatureInfo"),
     "FeatureStatus": (".features", "FeatureStatus"),
@@ -170,8 +162,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FileSessionConfig": (".file_session", "FileSessionConfig"),
     "FileSessionMemory": (".file_session", "FileSessionMemory"),
     "get_file_session_memory": (".file_session", "get_file_session_memory"),
-    # graph
-    "MemoryGraph": (".graph", "MemoryGraph"),
     # long_term
     "Classification": (".long_term", "Classification"),
     "ClassificationRules": (".long_term", "ClassificationRules"),
@@ -182,13 +172,6 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "SecurePattern": (".long_term", "SecurePattern"),
     "SecurityError": (".long_term", "SecurityError"),
     "MemoryPermissionError": (".long_term", "PermissionError"),
-    # nodes
-    "BugNode": (".nodes", "BugNode"),
-    "Node": (".nodes", "Node"),
-    "NodeType": (".nodes", "NodeType"),
-    "PatternNode": (".nodes", "PatternNode"),
-    "PerformanceNode": (".nodes", "PerformanceNode"),
-    "VulnerabilityNode": (".nodes", "VulnerabilityNode"),
     # redis_bootstrap
     "RedisStartMethod": (".redis_bootstrap", "RedisStartMethod"),
     "RedisStatus": (".redis_bootstrap", "RedisStatus"),
@@ -238,9 +221,34 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 # Cache for loaded attributes
 _loaded_attrs: dict[str, object] = {}
 
+#: Graph API removed in 10.0.0 (memorygraph-value-gate spec).
+#: Curated memory now lives in plain .md files — see
+#: docs/specs/memory-unification/.
+_REMOVED_10_0_0 = frozenset(
+    {
+        "MemoryGraph",
+        "Node",
+        "NodeType",
+        "BugNode",
+        "PatternNode",
+        "PerformanceNode",
+        "VulnerabilityNode",
+        "Edge",
+        "EdgeType",
+        "REVERSE_EDGE_TYPES",
+        "WORKFLOW_EDGE_PATTERNS",
+    }
+)
+
 
 def __getattr__(name: str) -> object:
     """Lazy import handler - loads memory submodules only when accessed."""
+    if name in _REMOVED_10_0_0:
+        raise AttributeError(
+            f"'attune.memory.{name}' was removed in 10.0.0. Curated memory "
+            "is now stored as plain .md files (~/.attune/memory/curated/) "
+            "with Redis-derived serving — see docs/specs/memory-unification/."
+        )
     if name in _LAZY_IMPORTS:
         module_path, attr_name = _LAZY_IMPORTS[name]
 
@@ -272,8 +280,6 @@ def is_redis_available() -> bool:
 
 
 __all__ = [
-    "REVERSE_EDGE_TYPES",
-    "WORKFLOW_EDGE_PATTERNS",
     "AccessTier",
     "AgentContext",
     "AgentCredentials",
@@ -281,7 +287,6 @@ __all__ = [
     "AuditEvent",
     "AuditLogger",
     "BackgroundService",
-    "BugNode",
     "Classification",
     "ClassificationRules",
     "ClaudeMemoryConfig",
@@ -292,8 +297,6 @@ __all__ = [
     "ControlPanelConfig",
     "ConversationSummaryIndex",
     "CrossSessionCoordinator",
-    "Edge",
-    "EdgeType",
     "EncryptionManager",
     "Environment",
     "FeatureInfo",
@@ -304,19 +307,14 @@ __all__ = [
     "MemoryConfig",
     "MemoryControlPanel",
     "MemoryFeatures",
-    "MemoryGraph",
     "MemoryPermissionError",
     "MemoryStats",
-    "Node",
-    "NodeType",
     "PIIDetection",
     "PIIPattern",
     "PIIScrubber",
     "PaginatedResult",
     "PersonalMemory",
     "PatternMetadata",
-    "PatternNode",
-    "PerformanceNode",
     "RedisConfig",
     "RedisMetrics",
     "RedisShortTermMemory",
@@ -337,7 +335,6 @@ __all__ = [
     "TTLStrategy",
     "TimeWindowQuery",
     "UnifiedMemory",
-    "VulnerabilityNode",
     "check_redis_connection",
     "check_redis_cross_session_support",
     "detect_secrets",

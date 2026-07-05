@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **BREAKING — memory:** the graph API is gone —
+  `attune.memory.MemoryGraph`, the `Node`/`NodeType`/`Edge`/
+  `EdgeType` datatypes (incl. `BugNode`, `PatternNode`,
+  `PerformanceNode`, `VulnerabilityNode`, `REVERSE_EDGE_TYPES`,
+  `WORKFLOW_EDGE_PATTERNS`), the `MemoryAwareAgent` factory
+  wrapper with its never-enabled `memory_graph_*` /
+  `store_findings` / `query_similar` knobs, and the `memory_graph`
+  health check. Curated memory moved to plain `.md` files with
+  Redis-derived serving in 9.6.0 (memory-unification), leaving the
+  graph with zero live consumers — see
+  `docs/specs/memorygraph-value-gate/` for the evidence.
+  Accessing a removed name raises a pointed error naming the
+  successor. Ships in the next major (10.0.0).
+
 ## [9.7.1] — 2026-07-04
 
 Docs/metadata patch — no code changes. Republishes so the PyPI

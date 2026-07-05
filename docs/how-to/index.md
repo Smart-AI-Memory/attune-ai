@@ -17,10 +17,6 @@ framework and need to accomplish something specific.
 
     Configure and use the three-tier memory architecture
 
-- :material-graph: **[Memory Graph](memory-graph.md)**
-
-    Build knowledge graphs from conversation history
-
 </div>
 
 ## AI Agents

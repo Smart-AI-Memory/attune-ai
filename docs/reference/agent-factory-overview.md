@@ -37,15 +37,9 @@ resilience patterns, and cross-agent learning.
                  └──────────────────────┘
 ```
 
-When both `memory_graph_enabled` and `resilience_enabled` are
-set, the factory applies wrappers in this order:
-
-1. Framework adapter creates the base agent
-2. `MemoryAwareAgent` wraps it (inner)
-3. `ResilientAgent` wraps the result (outer)
-
-This means resilience patterns protect both the agent call
-and the memory graph queries.
+When `resilience_enabled` is set, the framework adapter
+creates the base agent and `ResilientAgent` wraps it, so
+resilience patterns protect the agent call.
 
 ---
 
@@ -59,7 +53,6 @@ src/attune/agent_factory/
 ├── framework.py             # Framework enum and detection
 ├── decorators.py            # Operation decorators
 ├── resilient.py             # ResilientAgent wrapper
-├── memory_integration.py    # MemoryAwareAgent wrapper
 └── adapters/
     ├── __init__.py          # Lazy-loading adapter registry
     ├── native.py            # Empathy native adapter
@@ -78,7 +71,7 @@ src/attune/agent_factory/
 |---------|-------|---------|
 | **Factory** | `AgentFactory` | Create agents/workflows via adapters |
 | **Adapter** | `BaseAdapter` + implementations | Framework-specific agent creation |
-| **Wrapper** | `ResilientAgent`, `MemoryAwareAgent` | Add cross-cutting concerns |
+| **Wrapper** | `ResilientAgent` | Add cross-cutting concerns |
 | **Decorator** | `decorators.py` | Reusable operation enhancements |
 | **Lazy Loading** | `adapters/__init__.py` | Optional deps loaded on demand |
 | **Configuration Object** | `AgentConfig`, `WorkflowConfig` | Structured creation params |
@@ -110,8 +103,6 @@ The Agent Factory integrates with these Attune subsystems:
   on the provider and task type
 - **CircuitBreaker** (`attune.resilience`) — Provides
   circuit breaker state management for `ResilientAgent`
-- **MemoryGraph** (`attune.memory`) — Stores and queries
-  cross-agent findings for `MemoryAwareAgent`
 - **EmpathyLLM** — Powers the native adapter with built-in
   cost tracking and pattern learning
 
@@ -148,24 +139,6 @@ production-ready patterns:
    `invoke()` and `stream()`.
 4. **Fallback** — Optional. Returns a configurable fallback
    response instead of raising.
-
----
-
-## Memory Graph Integration
-
-When `memory_graph_enabled=True`, agents gain cross-agent
-learning:
-
-**Before invocation:** Queries the memory graph for similar
-past findings and injects them into the context dict under
-`context["similar_findings"]`.
-
-**After invocation:** Scans the agent's output for finding
-patterns (bugs, vulnerabilities, performance issues) and
-stores them in the graph with the agent's name as source.
-
-This allows a debugger agent to benefit from a security
-agent's past findings, and vice versa.
 
 ---
 
