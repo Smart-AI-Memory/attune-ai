@@ -76,7 +76,7 @@ export const PRODUCTS: Product[] = [
     id: "attune-author",
     name: "Attune Author",
     pypiName: "attune-author",
-    version: "0.22.0",
+    version: "0.23.0",
     tagline: "Author and polish help content with AI",
     installCommand: "pip install 'attune-author[plugin]'",
     marketplaceInstall:
@@ -384,7 +384,7 @@ export const PILLARS: Pillar[] = [
       "at the moment a prompt needs it.",
     points: [
       "Local-first by default — no cloud required",
-      "Optional Redis semantic tier (local Ollama embeddings)",
+      "Redis semantic tier, client included (local Ollama embeddings)",
       "Automatic recall, or on demand with /recall",
     ],
     icon: "🧠",

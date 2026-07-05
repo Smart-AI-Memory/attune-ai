@@ -111,6 +111,31 @@ the highest-integrity leverage move.
 superseded by "relabel-not-remove; leverage path is the work." 9.0.0
 is **not** a facade-removal release.
 
+## D6 — Redis memory deps become CORE dependencies (packaging catch-up with D1). EXECUTED 2026-07-04.
+
+**Decision:** `redis>=5.0.0,<9.0.0` and
+`agent-memory-client>=0.14.0,<0.15` move from the `[redis]` extra
+into core `dependencies`. The `[redis]` extra stays as an empty
+backward-compat alias (the `[memory]`/`[rag]` pattern); the `[dev]`
+mirror entries are removed. Install docs (README, docs/features,
+website homepage) now present memory as part of the standard
+install, activating when a Redis Stack server is reachable.
+
+**Why:** D1 ratified "Redis stays — align on Redis + Anthropic
+Claude," and memory unification (9.6.0) made cross-session memory
+the flagship story — yet the standard install couldn't run it
+(`redis_memory_*` MCP tools failed in every venv that missed the
+extra; the 2026-07-02 worktree-drift class). This REVERSES the
+packaging half of the archived redis-decoupling spec ("vanilla
+attune-ai is Redis-free") — deliberate, Patrick-directed 2026-07-04.
+
+**Conditions shipped with the flip:** (1) tight cap on
+agent-memory-client (`<0.15`) since it now sits on every user's
+resolution path; (2) a no-server degradation gate — the memory
+surface with deps installed but no reachable server must produce a
+clean guidance message, not a traceback (the 9.3.0 "boot-only smoke
+passes broken features" lesson).
+
 ---
 
 ## What this does NOT decide (open for the meeting)

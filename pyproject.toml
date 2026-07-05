@@ -78,10 +78,21 @@ dependencies = [
     "attune-rag>=0.1.5,<0.8",  # RAG grounding for rag-code-gen workflow + rag_knowledge_query MCP tool. Core dep (not optional) — required for acceptable retrieval accuracy. Cap is <0.8: re-validated against attune-rag 0.7.0 (lock bumped 0.6.0->0.7.0; purely additive — subscription-first FaithfulnessJudge auth + new attune_rag.auth module; only removal is the internal Phase-4 freeze CI gate, "no library change"; all 0.6.x public symbols unchanged per its POLICY §2, confirmed by importing every attune-ai-consumed symbol); next minor (0.8.0) still requires explicit re-validation before lifting the cap.
     "attune-verify>=0.1.0,<0.3",  # Generation fact-checker backing the /verify skill (deterministic entity checks: imports/flags/links/counts). Core dep — stdlib-only (zero transitive deps), so promoting to core is cheap and lets /verify work out of the box without an extra. Semantic layer is opt-in (the skill acts as the ambient judge). Cap raised to <0.3 to admit 0.2.0 (full dotted-path import resolution — catches private-submodule hallucinations the 0.1.0 top-level-only checker missed; purely additive, no API break).
     "tomli>=2.0.0; python_version < '3.11'",  # tomllib fallback for Python 3.10. Used by attune.utils.coverage (loaded transitively from release-prep + orchestrated-health-check workflows). Without this, those workflows fail to load on 3.10.
+    # Redis memory runtime — CORE as of the 2026-07-04 packaging
+    # catch-up with the facade-direction D1 ratification ("Redis
+    # stays — align on Redis + Anthropic Claude"): cross-session
+    # memory (hydration, recall digest, redis_memory_* MCP tools,
+    # AMSMemoryBackend) is the flagship story, so the standard
+    # install carries its deps. Features still need a reachable
+    # Redis Stack server and degrade with a clean guidance message
+    # without one (see tests/unit/memory/test_no_server_degradation.py).
+    # agent-memory-client is capped tightly — it moves fast and now
+    # sits on every user's resolution path; raise the cap only after
+    # re-validating. The [redis] extra remains as an empty alias.
+    "agent-memory-client>=0.14.0,<0.15",
+    "redis>=5.0.0,<9.0.0",
     # NOTE: attune-author is a workspace-only dev dep for authoring/
     # refactoring help content — NOT a runtime requirement.
-    # NOTE: redis is opt-in via the [redis] extra (bundled attune_redis
-    # plugin). Vanilla `pip install attune-ai` is Redis-free.
 ]
 # NOTE: CrewAI dependency removed in v3.1.3 (deprecated since v4.4.0)
 # The "Crew" workflows use EmpathyLLMExecutor (Anthropic SDK) directly.
@@ -117,12 +128,10 @@ author = [
 # bundled attune_redis plugin).
 memory = []
 
-# Redis Agent Memory Server runtime deps for the bundled `attune_redis`
-# plugin. Opt-in only — vanilla `pip install attune-ai` is Redis-free.
-redis = [
-    "agent-memory-client>=0.14.0",
-    "redis>=5.0.0,<9.0.0",
-]
+# Redis/AMS deps promoted to CORE 2026-07-04 (see the core
+# dependencies comment). Empty no-op kept for backward compat with
+# `pip install 'attune-ai[redis]'` — same pattern as [memory]/[rag].
+redis = []
 
 # LLM provider (Claude-native architecture)
 anthropic = ["anthropic>=0.40.0"]
@@ -238,15 +247,9 @@ dev = [
     "uvicorn[standard]>=0.27.0,<1.0",
     "jinja2>=3.1.0,<4.0",
     "requests>=2.28.0,<3.0.0",  # For notification tests
-    # Redis/AMS runtime ([redis] extra) — mirrored into [dev] so
-    # worktree/dev syncs carry the deps the plugin MCP server's
-    # redis_memory_* tools and the attune_redis backend need, without
-    # a separate `--extra redis`. Found 2026-07-02: a worktree session
-    # whose SessionStart hook hydrated Redis had MCP tools failing
-    # "Redis support not installed" (curated-memory spec, T6). Keep
-    # pins in lock-step with the [redis] extra above.
-    "agent-memory-client>=0.14.0",
-    "redis>=5.0.0,<9.0.0",
+    # Redis/AMS mirror removed 2026-07-04 — redis + agent-memory-client
+    # are CORE deps now (see the core dependencies comment), so every
+    # sync carries them; the 2026-07-02 worktree drift class is gone.
     # RAG integration test coverage — attune-rag is an
     # optional runtime dep but required for the rag_code_gen
     # and rag_knowledge_query test paths to exercise their
@@ -258,12 +261,11 @@ dev = [
     # unconditionally. Without these, the unit suite fails at
     # collection on a fresh `pip install -e .[dev]`. See
     # docs/specs/ci-debt/ Phase A for the contract:
-    #   - redis: tests/unit/memory/test_pubsub_direct.py
     #   - langchain-anthropic: tests/unit/agent_factory/test_langgraph_adapter.py
     #   - tiktoken: tests/unit/models/test_token_estimator.py
     #     (tiktoken stays optional in production; tests cover
     #      both TIKTOKEN_AVAILABLE paths)
-    "redis>=5.0.0,<9.0.0",
+    # (redis entry removed 2026-07-04 — core dep now)
     "langchain-anthropic>=0.3.0,<2.0.0",
     "tiktoken>=0.7.0,<1.0.0",
 ]

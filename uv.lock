@@ -256,6 +256,7 @@ name = "attune-ai"
 version = "9.6.0"
 source = { editable = "." }
 dependencies = [
+    { name = "agent-memory-client" },
     { name = "anthropic" },
     { name = "attune-rag" },
     { name = "attune-verify" },
@@ -270,6 +271,7 @@ dependencies = [
     { name = "python-frontmatter" },
     { name = "python-multipart" },
     { name = "pyyaml" },
+    { name = "redis" },
     { name = "rich" },
     { name = "structlog" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
@@ -342,7 +344,6 @@ backend = [
     { name = "uvicorn" },
 ]
 dev = [
-    { name = "agent-memory-client" },
     { name = "attune-rag" },
     { name = "bandit" },
     { name = "black" },
@@ -361,7 +362,6 @@ dev = [
     { name = "pytest-testmon" },
     { name = "pytest-timeout" },
     { name = "pytest-xdist" },
-    { name = "redis" },
     { name = "requests" },
     { name = "ruff" },
     { name = "tiktoken" },
@@ -439,18 +439,13 @@ otel = [
     { name = "opentelemetry-exporter-otlp-proto-grpc" },
     { name = "opentelemetry-sdk" },
 ]
-redis = [
-    { name = "agent-memory-client" },
-    { name = "redis" },
-]
 windows = [
     { name = "colorama" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "agent-memory-client", marker = "extra == 'dev'", specifier = ">=0.14.0" },
-    { name = "agent-memory-client", marker = "extra == 'redis'", specifier = ">=0.14.0" },
+    { name = "agent-memory-client", specifier = ">=0.14.0,<0.15" },
     { name = "aiohttp", marker = "extra == 'all'", specifier = ">=3.14.1,<4.0.0" },
     { name = "anthropic", specifier = ">=0.40.0,<1.0.0" },
     { name = "anthropic", marker = "extra == 'all'", specifier = ">=0.40.0" },
@@ -581,8 +576,7 @@ requires-dist = [
     { name = "pyyaml", marker = "extra == 'developer'", specifier = ">=6.0,<7.0" },
     { name = "pyyaml", marker = "extra == 'enterprise'", specifier = ">=6.0,<7.0" },
     { name = "pyyaml", marker = "extra == 'full'", specifier = ">=6.0,<7.0" },
-    { name = "redis", marker = "extra == 'dev'", specifier = ">=5.0.0,<9.0.0" },
-    { name = "redis", marker = "extra == 'redis'", specifier = ">=5.0.0,<9.0.0" },
+    { name = "redis", specifier = ">=5.0.0,<9.0.0" },
     { name = "requests", marker = "extra == 'dev'", specifier = ">=2.28.0,<3.0.0" },
     { name = "rich", specifier = ">=13.0.0,<16.0.0" },
     { name = "ruff", marker = "extra == 'all'", specifier = ">=0.1,<1.0" },
