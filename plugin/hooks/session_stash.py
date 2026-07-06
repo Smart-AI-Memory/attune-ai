@@ -155,11 +155,36 @@ def _read_transcript_tail(transcript_path: str | None, max_chars: int = _TAIL_CH
     except OSError:
         return ""
     joined = "\n".join(chunks)
+    # Collapse runs of marker-only lines (each behind its `role: ` prefix)
+    # left by tool-heavy stretches, so they don't eat the char budget
+    # (R1, stash-extractor-provenance).
+    marker = re.escape(_OMITTED_MARKER)
+    joined = re.sub(
+        rf"(?:^\S*: {marker}\s*$\n?){{2,}}",
+        f"{_OMITTED_MARKER}\n",
+        joined,
+        flags=re.MULTILINE,
+    )
     return joined[-max_chars:]
 
 
+#: Replaces tool_result/tool_use block content in the extractor's tail.
+#: Tool results are user-ROLE messages in the transcript JSONL, so
+#: without this filter every file the assistant read entered the tail as
+#: `user: <file contents>` — mislabeled as user speech, and the source
+#: of the 2026-07-05 garbled-stash incident (#1263). See
+#: docs/specs/stash-extractor-provenance/.
+_OMITTED_MARKER = "[tool output omitted]"
+_AMBIENT_BLOCK_TYPES = {"tool_result", "tool_use"}
+
+
 def _text_of(content: object) -> str:
-    """Collect the string text from a transcript message body (recursive)."""
+    """Collect the ROLE-FAITHFUL string text from a transcript message body.
+
+    Recursive over the block structure; ``tool_result``/``tool_use``
+    blocks contribute only an omission marker (R1) — their content is
+    context the session saw, not something a participant said.
+    """
     if content is None:
         return ""
     if isinstance(content, str):
@@ -167,6 +192,8 @@ def _text_of(content: object) -> str:
     if isinstance(content, list):
         return " ".join(_text_of(p) for p in content).strip()
     if isinstance(content, dict):
+        if content.get("type") in _AMBIENT_BLOCK_TYPES:
+            return _OMITTED_MARKER
         parts: list[str] = []
         t = content.get("text")
         if isinstance(t, str):
@@ -194,7 +221,11 @@ def _extract_via_ollama(text: str) -> list[dict] | None:
         "- At most 5 findings; fewer is better. Skip chit-chat and routine steps.\n"
         "- Each finding is a single reusable insight worth recalling next session.\n"
         "- type is one of: decision, pattern, bug, reference, note.\n"
-        "- content is one concise sentence, <= 280 chars, no secrets/paths-as-secrets.\n\n"
+        "- content is one concise sentence, <= 280 chars, no secrets/paths-as-secrets.\n"
+        "- PROVENANCE: extract only what the ASSISTANT concluded or the USER\n"
+        "  decided IN THIS SESSION. Never restate file contents, docs, or\n"
+        "  tool output the session merely read — reading a claim is not\n"
+        "  finding it. When unsure whether the session asserted it, skip it.\n\n"
         f"TRANSCRIPT TAIL:\n{text}\n"
     )
     payload = json.dumps(
