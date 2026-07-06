@@ -73,7 +73,7 @@ class TestControlPanelConfig:
     def test_control_panel_config_defaults(self):
         """Test default configuration values"""
         config = ControlPanelConfig()
-        assert config.redis_host == "localhost"
+        assert config.redis_host == "127.0.0.1"
         assert config.redis_port == 6379
         assert config.storage_dir == "./memdocs_storage"
         assert config.audit_dir == "./logs"
@@ -101,7 +101,7 @@ class TestMemoryControlPanelInit:
         """Test initialization with default config"""
         panel = MemoryControlPanel()
         assert panel.config is not None
-        assert panel.config.redis_host == "localhost"
+        assert panel.config.redis_host == "127.0.0.1"
         assert panel._redis_status is None
         assert panel._short_term is None
         assert panel._long_term is None

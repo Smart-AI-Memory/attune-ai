@@ -72,7 +72,7 @@ class TestRedisStatus:
             available=False,
             method=RedisStartMethod.MOCK,
         )
-        assert status.host == "localhost"
+        assert status.host == "127.0.0.1"
         assert status.port == 6379
         assert status.message == ""
         assert status.pid is None

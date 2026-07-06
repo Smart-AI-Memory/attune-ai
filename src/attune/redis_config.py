@@ -73,7 +73,10 @@ logger = logging.getLogger(__name__)
 REDIS_MODE_CLOUD = "cloud"
 REDIS_MODE_LOCAL = "local"
 _VALID_REDIS_MODES = {REDIS_MODE_CLOUD, REDIS_MODE_LOCAL}
-_LOCAL_HOSTS = {"127.0.0.1", ""}
+# "localhost" stays here for MODE INFERENCE only — it's a plain string
+# compare, no DNS. Local mode then connects with the literal 127.0.0.1,
+# so REDIS_HOST=localhost never reaches getaddrinfo.
+_LOCAL_HOSTS = {"localhost", "127.0.0.1", ""}
 
 
 def _resolve_redis_mode() -> str:

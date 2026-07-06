@@ -41,7 +41,7 @@ class TestMemoryConfig:
         """Test default configuration values"""
         config = MemoryConfig()
         assert config.environment == Environment.DEVELOPMENT
-        assert config.redis_host == "localhost"
+        assert config.redis_host == "127.0.0.1"
         assert config.redis_port == 6379
         assert config.redis_mock is False
         assert config.redis_auto_start is False  # File-first: Redis is optional
@@ -106,7 +106,7 @@ class TestMemoryConfig:
         """Test from_environment with no env vars set"""
         config = MemoryConfig.from_environment()
         assert config.environment == Environment.DEVELOPMENT
-        assert config.redis_host == "localhost"
+        assert config.redis_host == "127.0.0.1"
         assert config.redis_mock is False
 
 

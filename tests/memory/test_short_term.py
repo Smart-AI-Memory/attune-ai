@@ -90,7 +90,7 @@ class TestRedisConfig:
     def test_default_values(self):
         """Test RedisConfig default values."""
         config = RedisConfig()
-        assert config.host == "localhost"
+        assert config.host == "127.0.0.1"
         assert config.port == 6379
         assert config.db == 0
         assert config.password is None
@@ -122,7 +122,7 @@ class TestRedisConfig:
         """Test to_redis_kwargs returns correct dict."""
         config = RedisConfig()
         kwargs = config.to_redis_kwargs()
-        assert kwargs["host"] == "localhost"
+        assert kwargs["host"] == "127.0.0.1"
         assert kwargs["port"] == 6379
         assert kwargs["db"] == 0
         assert kwargs["decode_responses"] is True
