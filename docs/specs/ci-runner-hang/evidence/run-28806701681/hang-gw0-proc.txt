@@ -1,0 +1,4 @@
+# ci-runner-hang process-state probe (worker=gw0 pid=7588 ppid=4400)
+## ps tree
+ps: unknown option -- w
+Try `ps --help' for more information.
