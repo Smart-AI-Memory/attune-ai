@@ -2,6 +2,18 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/privacy",
+      "destination": "https://smartaimemory.com/privacy",
+      "permanent": false
+    },
+    {
+      "source": "/terms",
+      "destination": "https://smartaimemory.com/terms",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

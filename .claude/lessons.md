@@ -13995,3 +13995,17 @@ def ", start_idx + 1)` for module-
   Also note the update requires a Claude Code restart to apply —
   a same-session `ls` of the cache dir shows the new version dir
   but the running session keeps serving the old one.
+
+- **"Coverage ≥94%" conflates a MEASURED value with an ENFORCED
+  gate — outward-facing quality claims must name which one they
+  are**: the marketplace submission pack (drafted "every claim
+  receipt-backed") said "coverage gate ≥94%"; the codecov badge
+  reads 94% but the enforced gate is `fail_under = 85` /
+  `--cov-fail-under=85` in pyproject. A reviewer checking the
+  repo would find the claim falsifiable even though both numbers
+  are real. The safe shape: "coverage 94% (codecov, live badge;
+  CI gate enforces ≥85%)". Generalization for any external claim
+  (submission forms, READMEs, blog posts): a metric can be true
+  as a measurement and false as a policy — grep the enforcing
+  config (`fail_under`, branch protection, required checks)
+  before writing "gate"/"required"/"enforced" next to a number.
