@@ -74,7 +74,7 @@ class MemoryConfig:
 
     # Short-term memory settings (Redis - optional enhancement)
     redis_url: str | None = None
-    redis_host: str = "localhost"
+    redis_host: str = "127.0.0.1"
     redis_port: int = 6379
     redis_mock: bool = False
     redis_auto_start: bool = False  # File-first: Redis is optional
@@ -130,7 +130,7 @@ class MemoryConfig:
             file_session_dir=get_attune_env("FILE_SESSION_DIR", ".attune") or ".attune",
             # Redis settings (optional)
             redis_url=os.getenv("REDIS_URL"),
-            redis_host=get_attune_env("REDIS_HOST", "localhost") or "localhost",
+            redis_host=get_attune_env("REDIS_HOST", "127.0.0.1") or "127.0.0.1",
             redis_port=int(get_attune_env("REDIS_PORT", "6379") or "6379"),
             redis_mock=(get_attune_env("REDIS_MOCK", "") or "").lower() == "true",
             redis_auto_start=(get_attune_env("REDIS_AUTO_START", "false") or "false").lower()

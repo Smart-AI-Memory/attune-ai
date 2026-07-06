@@ -54,7 +54,7 @@ Usage:
 
     # Or with explicit config
     from attune.memory.short_term import RedisConfig
-    config = RedisConfig(host="localhost", ssl=True)
+    config = RedisConfig(host="127.0.0.1", ssl=True)
     memory = get_redis_memory(config=config)
 
 Copyright 2025 Smart AI Memory, LLC
@@ -73,7 +73,7 @@ logger = logging.getLogger(__name__)
 REDIS_MODE_CLOUD = "cloud"
 REDIS_MODE_LOCAL = "local"
 _VALID_REDIS_MODES = {REDIS_MODE_CLOUD, REDIS_MODE_LOCAL}
-_LOCAL_HOSTS = {"localhost", "127.0.0.1", ""}
+_LOCAL_HOSTS = {"127.0.0.1", ""}
 
 
 def _resolve_redis_mode() -> str:
@@ -130,7 +130,7 @@ def parse_redis_url(url: str) -> dict:
     ssl = parsed.scheme == "rediss"
 
     return {
-        "host": parsed.hostname or "localhost",
+        "host": parsed.hostname or "127.0.0.1",
         "port": parsed.port or 6379,
         "password": parsed.password,
         "db": int(parsed.path.lstrip("/") or 0) if parsed.path else 0,
@@ -203,9 +203,13 @@ def get_redis_config() -> RedisConfig:
     common = _get_common_connection_kwargs()
 
     if mode == REDIS_MODE_LOCAL:
-        # Local mode: localhost, no password, ignore REDIS_PASSWORD
+        # Local mode: loopback, no password, ignore REDIS_PASSWORD.
+        # Literal 127.0.0.1, NOT "localhost": hostname resolution
+        # (getaddrinfo) runs before any socket timeout applies and has
+        # wedged Windows CI workers for 20 minutes
+        # (docs/specs/windows-exit139-segfault/).
         return RedisConfig(
-            host="localhost",
+            host="127.0.0.1",
             port=int(os.getenv("REDIS_PORT", "6379")),
             password=None,
             db=int(os.getenv("REDIS_DB", "0")),
@@ -231,7 +235,7 @@ def get_redis_config() -> RedisConfig:
         )
 
     return RedisConfig(
-        host=host or "localhost",
+        host=host or "127.0.0.1",
         port=int(os.getenv("REDIS_PORT", "6379")),
         password=password,
         db=int(os.getenv("REDIS_DB", "0")),

@@ -45,7 +45,7 @@ def fetch_digest_nodes(count: int = 9, client: Any = None) -> list[dict[str, Any
         count: How many nodes to request (most-recent first).
         client: An optional connected ``redis.Redis`` client. When None,
             one is created from ``REDIS_URL`` (default
-            ``redis://localhost:6379/0``).
+            ``redis://127.0.0.1:6379/0``).
 
     Returns:
         A list of node dicts (``name``, ``type``, ``description``,
@@ -60,7 +60,7 @@ def fetch_digest_nodes(count: int = 9, client: Any = None) -> list[dict[str, Any
     if client is None:
         import redis  # noqa: PLC0415 — optional dependency, import at use
 
-        url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+        url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
         client = redis.Redis.from_url(url, decode_responses=True)
 
     raw = client.fcall(DIGEST_FUNCTION, 0, str(count))

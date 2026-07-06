@@ -58,13 +58,13 @@ class RedisStatus:
 
     available: bool
     method: RedisStartMethod
-    host: str = "localhost"
+    host: str = "127.0.0.1"
     port: int = 6379
     message: str = ""
     pid: int | None = None
 
 
-def _check_redis_running(host: str = "localhost", port: int = 6379) -> bool:
+def _check_redis_running(host: str = "127.0.0.1", port: int = 6379) -> bool:
     """Check if Redis is responding to ping."""
     try:
         import redis
@@ -344,7 +344,7 @@ def _start_via_wsl() -> bool:
 
 
 def ensure_redis(
-    host: str = "localhost",
+    host: str = "127.0.0.1",
     port: int = 6379,
     auto_start: bool = True,
     verbose: bool = True,
@@ -574,7 +574,7 @@ def stop_redis(method: RedisStartMethod) -> bool:
 
 
 # Convenience function for simple usage
-def get_redis_or_mock(host: str = "localhost", port: int = 6379):
+def get_redis_or_mock(host: str = "127.0.0.1", port: int = 6379):
     """Get a Redis connection, starting Redis if needed, or return mock.
 
     Returns:

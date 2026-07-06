@@ -68,7 +68,7 @@ class RedisConfig:
     - Retry with exponential backoff
     """
 
-    host: str = "localhost"
+    host: str = "127.0.0.1"
     port: int = 6379
     db: int = 0
     password: str | None = None

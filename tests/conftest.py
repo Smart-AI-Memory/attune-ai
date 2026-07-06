@@ -29,6 +29,25 @@ import pydantic.root_model  # noqa: F401  (import for side effect: sys.modules w
 import pytest
 
 # =============================================================================
+# Redis host guard — literal loopback, never a resolvable name
+# (windows-exit139-segfault spec)
+# =============================================================================
+# A unit test that builds the real memory stack (e.g. an unmocked
+# ``UnifiedMemory``) ends up in redis-py's ``_connect``, where
+# ``getaddrinfo("localhost")`` runs BEFORE ``socket_connect_timeout``
+# applies and is uninterruptible by ``--timeout-method=thread``. On a
+# Windows runner with a stalled resolver that wedged a worker for 20
+# minutes (run 28806701681 — dump in
+# docs/specs/windows-exit139-segfault/). Source defaults are now the
+# literal ``127.0.0.1``; this guard covers env-driven paths and any
+# future call site that regresses to a hostname. Runs at conftest
+# import time, so it applies in the xdist controller and every worker.
+# Deliberately NOT overriding an explicit non-default REDIS_HOST — an
+# integration lane pointing at a real server stays functional.
+if os.environ.get("REDIS_HOST", "localhost") in ("localhost", ""):
+    os.environ["REDIS_HOST"] = "127.0.0.1"
+
+# =============================================================================
 # CI hang watchdog (ci-runner-hang spec, Phase 1)
 # =============================================================================
 # The Ubuntu coverage/test lanes intermittently wedge *inside* the pytest
