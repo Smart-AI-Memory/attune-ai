@@ -14026,3 +14026,18 @@ def ", start_idx + 1)` for module-
   in `~/.claude/settings.json`), NOT a repo hook — repo PRs can't
   instrument it; only the three `plugin/hooks/` memory hooks
   (session_recall / jit_recall / session_stash) are in-tree.
+
+- **Windows-only test failure class: hardcoded POSIX literals asserted
+  against values that passed through `str(Path(...))`** — PR #1279's
+  only red lane was `assert event["where"] == "/x"` failing as
+  `'\\x' == '/x'` (the helper serializes non-JSON values via
+  `json.dumps(default=str)`, and `str(Path("/x"))` is `\x` on
+  Windows). Fix pattern: compare via the SAME conversion the code
+  under test applies (`== str(Path("/x"))`), never a hardcoded POSIX
+  string. Cost of missing it locally: one full ~20-min windows-latest
+  round trip per iteration. Cheap preflight when a test asserts on
+  anything Path-derived: ask "what does this literal look like under
+  `WindowsPath`?" This was also a confirming instance of the existing
+  "wait for ALL OS lanes on filesystem-touching PRs before merging"
+  lesson — waiting caught the bug pre-merge instead of burying it on
+  main.
