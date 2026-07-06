@@ -18,6 +18,7 @@ import asyncio
 import fnmatch
 import hashlib
 import logging
+import re
 import threading
 from typing import Any
 
@@ -647,6 +648,33 @@ class AMSMemoryBackend:
         except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Graceful degradation for AMS HTTP errors
             logger.error("prune_failed: max_age_days=%s error=%s", age, e)
+            return 0
+
+    def forget(self, ids: list[str]) -> int:
+        """Delete specific long-term memories by record ID.
+
+        The IDs are the ``id`` values returned by :meth:`search` /
+        :meth:`recent`. Complements :meth:`prune` (age-based sweep)
+        with precise removal — the correction path when a stashed
+        finding turns out to be wrong or stale. Best-effort; returns
+        the number of memories deleted (0 on failure or empty input),
+        never raises.
+        """
+        if not ids:
+            return 0
+        try:
+            response = _run_sync(self._client.delete_long_term_memories(ids))
+            # AMS acks with a status string like "ok, deleted 3 memories"
+            # (no numeric field) — parse the count out, falling back to
+            # len(ids) on a bare "ok".
+            status = str(getattr(response, "status", "") or "")
+            match = re.search(r"deleted (\d+)", status)
+            if match:
+                return int(match.group(1))
+            return len(ids) if status.startswith("ok") else 0
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Graceful degradation for AMS HTTP errors
+            logger.error("forget_failed: ids=%d error=%s", len(ids), e)
             return 0
 
     # =========================================================================

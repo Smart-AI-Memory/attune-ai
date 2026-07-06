@@ -276,7 +276,14 @@ class MemoryHandlersMixin:
             }
         except Exception as e:  # noqa: BLE001
             logger.exception("memory_forget failed")
-            return {"success": False, "error": str(e)}
+            return {
+                "success": False,
+                "error": (
+                    f"{e} — memory_forget targets the session/pattern store. "
+                    "For AMS long-term records (IDs from redis_memory_search), "
+                    "use redis_memory_forget."
+                ),
+            }
 
     # ------------------------------------------------------------------
     # Personal cross-session memory

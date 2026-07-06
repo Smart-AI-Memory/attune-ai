@@ -1,11 +1,12 @@
 """Redis MCP tool definitions and handlers.
 
-Provides 5 MCP tools for Redis Agent Memory Server
+Provides 6 MCP tools for Redis Agent Memory Server
 operations:
 
 - ``redis_memory_store`` — store to AMS working memory
 - ``redis_memory_retrieve`` — get from AMS working memory
 - ``redis_memory_search`` — semantic search via long-term
+- ``redis_memory_forget`` — delete long-term records by ID
 - ``redis_memory_promote`` — promote working to long-term
 - ``redis_health_check`` — AMS + Redis health status
 
@@ -87,6 +88,27 @@ TOOL_DEFINITIONS: dict[str, dict[str, Any]] = {
                 },
             },
             "required": ["query"],
+        },
+    },
+    "redis_memory_forget": {
+        "name": "redis_memory_forget",
+        "description": (
+            "Delete specific long-term memories from Redis Agent Memory Server "
+            "by record ID. IDs come from redis_memory_search results — the "
+            "correction path when a stashed finding is wrong or stale."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": (
+                        "Record IDs to delete (the `id` field from redis_memory_search results)"
+                    ),
+                },
+            },
+            "required": ["ids"],
         },
     },
     "redis_memory_promote": {
@@ -275,6 +297,40 @@ async def handle_redis_memory_promote(server: Any, args: dict[str, Any]) -> dict
         return {"success": False, "error": str(e)}
 
 
+async def handle_redis_memory_forget(server: Any, args: dict[str, Any]) -> dict[str, Any]:
+    """Delete long-term AMS memories by record ID.
+
+    Args:
+        server: MCP server instance.
+        args: Tool arguments (ids: list of record IDs).
+
+    Returns:
+        Result dict with deleted count.
+    """
+    try:
+        backend = _get_backend(server)
+        ids = args["ids"]
+        if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
+            return {"success": False, "error": "ids must be a list of record-ID strings"}
+
+        deleted = backend.forget(ids)
+        return {
+            "success": deleted > 0 or not ids,
+            "requested": len(ids),
+            "deleted": deleted,
+            "source": "redis-ams",
+        }
+    except ImportError:
+        return {
+            "success": False,
+            "error": "Redis support not installed. Run: pip install 'attune-ai[redis]'",
+        }
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Graceful degradation for MCP tool errors
+        logger.exception("redis_memory_forget failed")
+        return {"success": False, "error": str(e)}
+
+
 async def handle_redis_health_check(server: Any, args: dict[str, Any]) -> dict[str, Any]:
     """Check AMS health and connection status.
 
@@ -311,6 +367,7 @@ TOOL_HANDLERS: dict[str, Any] = {
     "redis_memory_store": handle_redis_memory_store,
     "redis_memory_retrieve": handle_redis_memory_retrieve,
     "redis_memory_search": handle_redis_memory_search,
+    "redis_memory_forget": handle_redis_memory_forget,
     "redis_memory_promote": handle_redis_memory_promote,
     "redis_health_check": handle_redis_health_check,
 }

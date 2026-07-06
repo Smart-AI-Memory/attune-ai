@@ -23,11 +23,11 @@ from attune_redis.mcp_tools import (
 
 
 class TestToolDefinitions:
-    """Verify all 5 tools have valid JSON schemas."""
+    """Verify all 6 tools have valid JSON schemas."""
 
-    def test_five_tools_defined(self):
-        """Exactly 5 tools must be defined."""
-        assert len(TOOL_DEFINITIONS) == 5
+    def test_six_tools_defined(self):
+        """Exactly 6 tools must be defined."""
+        assert len(TOOL_DEFINITIONS) == 6
 
     @pytest.mark.parametrize(
         "tool_name",
@@ -35,6 +35,7 @@ class TestToolDefinitions:
             "redis_memory_store",
             "redis_memory_retrieve",
             "redis_memory_search",
+            "redis_memory_forget",
             "redis_memory_promote",
             "redis_health_check",
         ],
@@ -53,6 +54,7 @@ class TestToolDefinitions:
             "redis_memory_store",
             "redis_memory_retrieve",
             "redis_memory_search",
+            "redis_memory_forget",
             "redis_memory_promote",
             "redis_health_check",
         ],
@@ -80,13 +82,19 @@ class TestToolDefinitions:
         schema = TOOL_DEFINITIONS["redis_memory_search"]["input_schema"]
         assert "query" in schema["required"]
 
+    def test_forget_requires_ids(self):
+        """redis_memory_forget must require ids (array of strings)."""
+        schema = TOOL_DEFINITIONS["redis_memory_forget"]["input_schema"]
+        assert schema["required"] == ["ids"]
+        assert schema["properties"]["ids"]["type"] == "array"
+
 
 class TestToolHandlers:
     """Verify handler dispatch table matches definitions."""
 
-    def test_five_handlers(self):
-        """Exactly 5 handlers must be registered."""
-        assert len(TOOL_HANDLERS) == 5
+    def test_six_handlers(self):
+        """Exactly 6 handlers must be registered."""
+        assert len(TOOL_HANDLERS) == 6
 
     def test_handlers_match_definitions(self):
         """Every defined tool must have a handler."""
@@ -241,7 +249,7 @@ class TestRegisterTools:
 
         register_tools(server)
 
-        assert len(server.tools) == 5
+        assert len(server.tools) == 6
         assert "redis_memory_store" in server.tools
         assert "redis_health_check" in server.tools
 
@@ -253,7 +261,7 @@ class TestRegisterTools:
 
         register_tools(server)
 
-        assert len(server._plugin_handlers) == 5
+        assert len(server._plugin_handlers) == 6
         assert "redis_memory_store" in server._plugin_handlers
 
     def test_creates_plugin_handlers_if_missing(self):
