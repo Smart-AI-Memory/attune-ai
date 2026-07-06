@@ -511,3 +511,117 @@ def test_recall_main_disabled_via_env(recall_mod, monkeypatch, capsys):
     _stdin(monkeypatch, {"source": "startup"})
     assert recall_mod.main() == 0
     assert capsys.readouterr().out == ""
+
+
+# ==========================================================================
+# Provenance filtering (#1263, docs/specs/stash-extractor-provenance/)
+# ==========================================================================
+
+
+def _jsonl_line(role: str, content) -> str:
+    return json.dumps({"message": {"role": role, "content": content}})
+
+
+@pytest.fixture
+def poisoned_transcript(tmp_path):
+    """The 2026-07-05 failure shape: a Read tool_result carrying
+    memory-file prose (as a user-ROLE message), between genuine turns."""
+    ambient_prose = (
+        "Patrick has self-identified that pushing through exhaustion "
+        "creates downstream debug cost. Lesson learned: compact reply "
+        "vocab should be used consistently."
+    )
+    lines = [
+        _jsonl_line("user", "please run the memory corpus lint"),
+        _jsonl_line(
+            "assistant",
+            [
+                {"type": "text", "text": "Reading the memory files now."},
+                {"type": "tool_use", "id": "t1", "name": "Read", "input": {"file_path": "x.md"}},
+            ],
+        ),
+        _jsonl_line(
+            "user",
+            [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "t1",
+                    "content": [{"type": "text", "text": ambient_prose}],
+                }
+            ],
+        ),
+        _jsonl_line(
+            "assistant",
+            "Root cause found: the bulk regen wrote an empty-string "
+            "source hash — that bug gutted all 36 template files.",
+        ),
+    ]
+    p = tmp_path / "poisoned.jsonl"
+    p.write_text("\n".join(lines), encoding="utf-8")
+    return p
+
+
+def test_tail_excludes_tool_result_content(stash_mod, poisoned_transcript):
+    tail = stash_mod._read_transcript_tail(str(poisoned_transcript))
+    assert "exhaustion" not in tail
+    assert "compact reply vocab" not in tail
+    assert stash_mod._OMITTED_MARKER in tail
+    # Genuine turns survive, correctly attributed.
+    assert "memory corpus lint" in tail
+    assert "empty-string" in tail
+
+
+def test_tail_excludes_tool_use_input(stash_mod, poisoned_transcript):
+    tail = stash_mod._read_transcript_tail(str(poisoned_transcript))
+    assert "x.md" not in tail  # tool_use input is ambient too
+
+
+def test_heuristic_cannot_surface_ambient_prose(stash_mod, poisoned_transcript):
+    """The poisoned line contains a marker word ('Lesson learned') — with
+    the filter it never reaches the heuristic at all."""
+    tail = stash_mod._read_transcript_tail(str(poisoned_transcript))
+    found = stash_mod._extract_heuristic(tail)
+    assert all("compact reply vocab" not in f["content"] for f in found)
+    assert all("exhaustion" not in f["content"] for f in found)
+
+
+def test_consecutive_omission_markers_collapse(stash_mod, tmp_path):
+    result_block = [
+        {
+            "type": "tool_result",
+            "tool_use_id": "t",
+            "content": [{"type": "text", "text": "dump"}],
+        }
+    ]
+    lines = [_jsonl_line("user", result_block) for _ in range(6)]
+    lines.append(_jsonl_line("assistant", "Decision: ship it."))
+    p = tmp_path / "toolheavy.jsonl"
+    p.write_text("\n".join(lines), encoding="utf-8")
+    tail = stash_mod._read_transcript_tail(str(p))
+    assert tail.count(stash_mod._OMITTED_MARKER) < 6
+    assert "Decision: ship it." in tail
+
+
+def test_prompt_carries_provenance_rules(stash_mod, monkeypatch):
+    """The Ollama prompt must instruct assertion-only extraction (R2)."""
+    captured = {}
+
+    class _Resp:
+        def read(self):
+            return json.dumps({"response": json.dumps({"findings": []})}).encode()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def fake_urlopen(req, timeout=0):
+        captured["body"] = json.loads(req.data.decode("utf-8"))
+        return _Resp()
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    stash_mod._extract_via_ollama("assistant: concluded X")
+    prompt = captured["body"]["prompt"]
+    assert "PROVENANCE" in prompt
+    assert "merely read" in prompt
