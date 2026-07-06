@@ -32,6 +32,10 @@ llama3.1:8b can exceed a tighter cap and starve extraction),
 ``ATTUNE_MEMORY_STASH_CONTEXT`` (set ``0`` to suppress the
 ``additionalContext`` emission while still stashing to disk).
 
+Each stash is logged to ``~/.attune/telemetry/memory_events.jsonl``
+(findings/written counts, extractor, injected size; see
+``_memory_telemetry``) so the capture side is measurable too.
+
 Exit 0 always.
 
 Copyright 2026 Smart-AI-Memory
@@ -66,6 +70,14 @@ try:
 except Exception:  # noqa: BLE001 — hook must never crash a session
     _sentinel_dir = None  # type: ignore[assignment]
     estimate_utilization = None  # type: ignore[assignment]
+
+try:
+    from _memory_telemetry import log_memory_event
+except Exception:  # noqa: BLE001 — telemetry is optional, never load-bearing
+
+    def log_memory_event(event: str, session_id: str | None = None, **fields: object) -> None:
+        return
+
 
 _VALID_TYPES = {"decision", "pattern", "bug", "reference", "note"}
 _MAX_FINDINGS = 5
@@ -352,7 +364,7 @@ def _context_enabled() -> bool:
     }
 
 
-def _emit_additional_context(findings: list[dict], written: int) -> None:
+def _emit_additional_context(findings: list[dict], written: int) -> int:
     """Print a compact findings summary as Stop-hook ``additionalContext``.
 
     Emits the Claude Code >= 2.1.163 envelope
@@ -360,9 +372,12 @@ def _emit_additional_context(findings: list[dict], written: int) -> None:
     "additionalContext": "..."}}`` on stdout so the just-stashed insights
     surface into the current session's next turn. No-op when nothing was
     written or the feature is disabled; never raises (best-effort).
+
+    Returns the character count of the injected summary (0 when skipped),
+    so the caller's telemetry can record the context cost.
     """
     if written <= 0 or not findings or not _context_enabled():
-        return
+        return 0
     lines = [
         f"\U0001f9e0 Stashed {written} session finding(s) to attune memory "
         "(recall later with /recall):"
@@ -385,10 +400,11 @@ def _emit_additional_context(findings: list[dict], written: int) -> None:
             )
         )
         sys.stdout.flush()
+        return len(summary)
     except (OSError, ValueError, TypeError):
         # INTENTIONAL: context injection is best-effort; the disk stash
         # already succeeded, so a stdout failure must not change exit status.
-        pass
+        return 0
 
 
 def main() -> int:
@@ -425,10 +441,12 @@ def main() -> int:
 
         raw = _extract_via_ollama(text)
         findings = _normalize(raw) if raw else []
+        extractor = "ollama"
         if not findings:
             # Ollama unavailable, timed out, or yielded nothing usable —
             # fall back to the heuristic rather than stash nothing.
             findings = _normalize(_extract_heuristic(text))
+            extractor = "heuristic"
         if not findings:
             _diag(f"skip session={session_id} extraction yielded no findings")
             return 0
@@ -451,7 +469,15 @@ def main() -> int:
 
         # Surface the stashed findings into the current session's next turn
         # via Stop-hook additionalContext (best-effort; older CC ignores it).
-        _emit_additional_context(findings, written)
+        injected = _emit_additional_context(findings, written)
+        log_memory_event(
+            "session_stash",
+            session_id=session_id,
+            findings=len(findings),
+            written=written,
+            extractor=extractor,
+            injected_chars=injected,
+        )
         return 0
     except Exception:  # noqa: BLE001 — a Stop hook must never crash the session
         traceback.print_exc(file=sys.stderr)

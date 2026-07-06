@@ -14009,3 +14009,35 @@ def ", start_idx + 1)` for module-
   as a measurement and false as a policy — grep the enforcing
   config (`fail_under`, branch protection, required checks)
   before writing "gate"/"required"/"enforced" next to a number.
+
+- **New local-only telemetry files must dodge the `usage*.jsonl` glob —
+  that prefix is the phone-home boundary**: the opt-in usage ping
+  (`usage_ping.py`) syncs every `telemetry_dir.glob("usage*.jsonl")`
+  file (current + rotated), so naming a new local-only event log
+  `usage_<x>.jsonl` would silently enroll it in the consented upload
+  the moment a user opts in. `memory_events.jsonl` (PR #1279) stays
+  local precisely because it misses the glob. Rule when adding any
+  file under `~/.attune/telemetry/`: check what reads the directory
+  (`grep -n 'glob' src/attune/telemetry/*.py`) and pick a name on the
+  right side of the consent boundary — local-only files avoid the
+  `usage` prefix; ping-eligible data goes IN `usage.jsonl` proper, not
+  a sibling. Related scoping fact: the SessionStart Redis hydration
+  step is personal infra (`~/.attune/memory/session_hydrate.py`, wired
+  in `~/.claude/settings.json`), NOT a repo hook — repo PRs can't
+  instrument it; only the three `plugin/hooks/` memory hooks
+  (session_recall / jit_recall / session_stash) are in-tree.
+
+- **Windows-only test failure class: hardcoded POSIX literals asserted
+  against values that passed through `str(Path(...))`** — PR #1279's
+  only red lane was `assert event["where"] == "/x"` failing as
+  `'\\x' == '/x'` (the helper serializes non-JSON values via
+  `json.dumps(default=str)`, and `str(Path("/x"))` is `\x` on
+  Windows). Fix pattern: compare via the SAME conversion the code
+  under test applies (`== str(Path("/x"))`), never a hardcoded POSIX
+  string. Cost of missing it locally: one full ~20-min windows-latest
+  round trip per iteration. Cheap preflight when a test asserts on
+  anything Path-derived: ask "what does this literal look like under
+  `WindowsPath`?" This was also a confirming instance of the existing
+  "wait for ALL OS lanes on filesystem-touching PRs before merging"
+  lesson — waiting caught the bug pre-merge instead of burying it on
+  main.
