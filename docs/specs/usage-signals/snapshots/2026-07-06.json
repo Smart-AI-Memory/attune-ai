@@ -1,0 +1,27 @@
+{
+  "date": "2026-07-06",
+  "github": {},
+  "pypi_recent": {
+    "attune-ai": {
+      "last_day": 394,
+      "last_month": 4408,
+      "last_week": 1739
+    },
+    "attune-author": {
+      "last_day": 22,
+      "last_month": 2465,
+      "last_week": 316
+    },
+    "attune-help": {
+      "last_day": 8,
+      "last_month": 301,
+      "last_week": 69
+    },
+    "attune-rag": {
+      "last_day": 723,
+      "last_month": 30515,
+      "last_week": 4471
+    }
+  },
+  "taken_at": "2026-07-06T05:54:38.238080+00:00"
+}
