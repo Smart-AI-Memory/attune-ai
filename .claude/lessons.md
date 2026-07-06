@@ -14009,3 +14009,20 @@ def ", start_idx + 1)` for module-
   as a measurement and false as a policy — grep the enforcing
   config (`fail_under`, branch protection, required checks)
   before writing "gate"/"required"/"enforced" next to a number.
+
+- **New local-only telemetry files must dodge the `usage*.jsonl` glob —
+  that prefix is the phone-home boundary**: the opt-in usage ping
+  (`usage_ping.py`) syncs every `telemetry_dir.glob("usage*.jsonl")`
+  file (current + rotated), so naming a new local-only event log
+  `usage_<x>.jsonl` would silently enroll it in the consented upload
+  the moment a user opts in. `memory_events.jsonl` (PR #1279) stays
+  local precisely because it misses the glob. Rule when adding any
+  file under `~/.attune/telemetry/`: check what reads the directory
+  (`grep -n 'glob' src/attune/telemetry/*.py`) and pick a name on the
+  right side of the consent boundary — local-only files avoid the
+  `usage` prefix; ping-eligible data goes IN `usage.jsonl` proper, not
+  a sibling. Related scoping fact: the SessionStart Redis hydration
+  step is personal infra (`~/.attune/memory/session_hydrate.py`, wired
+  in `~/.claude/settings.json`), NOT a repo hook — repo PRs can't
+  instrument it; only the three `plugin/hooks/` memory hooks
+  (session_recall / jit_recall / session_stash) are in-tree.
