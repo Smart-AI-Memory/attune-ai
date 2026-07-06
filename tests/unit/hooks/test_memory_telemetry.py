@@ -110,7 +110,8 @@ def test_log_never_raises_on_unwritable_dir(telem_mod, tmp_path, monkeypatch):
 def test_log_serializes_non_json_values_via_default_str(telem_mod, tmp_path, monkeypatch):
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / ".attune"))
     telem_mod.log_memory_event("session_stash", where=Path("/x"))
-    assert _events(tmp_path)[0]["where"] == "/x"
+    # str(Path("/x")) is "\\x" on Windows — compare via the same conversion.
+    assert _events(tmp_path)[0]["where"] == str(Path("/x"))
 
 
 def test_log_truncates_long_session_ids(telem_mod, tmp_path, monkeypatch):
