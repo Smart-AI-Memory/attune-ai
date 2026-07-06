@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/welcome.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/welcome.py",
             "timeout": 3000
           }
         ]
@@ -14,7 +14,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/usage_consent_notice.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/usage_consent_notice.py",
             "timeout": 2000
           }
         ]
@@ -23,7 +23,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/spec_orient.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/spec_orient.py",
             "timeout": 4000
           }
         ]
@@ -32,7 +32,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/session_recall.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/session_recall.py",
             "timeout": 3000
           }
         ]
@@ -43,7 +43,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/compact_warning.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/compact_warning.py",
             "timeout": 4000
           }
         ]
@@ -52,7 +52,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/session_stash.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/session_stash.py",
             "timeout": 15000
           }
         ]
@@ -64,7 +64,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/jit_recall.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/jit_recall.py",
             "timeout": 3000
           }
         ]
@@ -74,7 +74,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/security_guard.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/security_guard.py",
             "timeout": 5000
           }
         ]
@@ -84,7 +84,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/security_guard.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/security_guard.py",
             "timeout": 5000
           }
         ]
@@ -96,7 +96,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/format_on_save.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/format_on_save.py",
             "timeout": 10000
           }
         ]
@@ -106,7 +106,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/help_on_error.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/help_on_error.py",
             "timeout": 3000
           }
         ]
@@ -116,7 +116,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/help_post_commit.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/help_post_commit.py",
             "timeout": 5000
           }
         ]
@@ -127,7 +127,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/lesson_recall.py",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/lesson_recall.py",
             "timeout": 5000
           }
         ]

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.2] — 2026-07-06
+
+Hook-portability patch: plugin hooks now launch with `python3` instead
+of `python`. On stock macOS and many Linux distros no `python` shim
+exists, so every hook (memory stash/recall, jit-recall, security guard)
+silently no-opped for users installing from the marketplace. Surfaced
+by the pre-submission sweep for the plugin-marketplace listing.
+
+### Fixed
+
+- **plugin hooks: `python` → `python3`** in all 13 hook commands in
+  `plugin/hooks/hooks.json`, plus the `/handoff` command's
+  `allowed-tools` and helper invocation — hooks now work on machines
+  without a `python` alias. (`.mcp.json` is unaffected: its `python`
+  resolves inside the uvx-managed environment, not the system PATH.)
+
 ## [10.0.1] — 2026-07-06
 
 Memory-suite quality patch: three defects surfaced by a live dogfood
