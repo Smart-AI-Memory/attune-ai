@@ -160,7 +160,7 @@ class RedisAutoDetector:
         except ImportError:
             return False
 
-    def _check_server_reachable(self, host: str = "localhost", port: int = 6379) -> bool:
+    def _check_server_reachable(self, host: str = "127.0.0.1", port: int = 6379) -> bool:
         """Check if Redis server responds to ping.
 
         Uses a short timeout to avoid slowing down CLI startup.

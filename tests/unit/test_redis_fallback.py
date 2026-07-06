@@ -47,7 +47,7 @@ _PATCH_AUTO_DETECT = patch(
 def _redis_running() -> bool:
     """Check if Redis is actually running on localhost."""
     try:
-        r = redis.Redis(host="localhost", port=6379, socket_connect_timeout=1)
+        r = redis.Redis(host="127.0.0.1", port=6379, socket_connect_timeout=1)
         r.ping()
         return True
     except Exception:
@@ -108,7 +108,7 @@ class TestRedisFallbackBehavior:
 
         # Should raise exception after retries exhausted
         with pytest.raises(redis.ConnectionError):
-            _ = RedisShortTermMemory(host="localhost", port=6379)
+            _ = RedisShortTermMemory(host="127.0.0.1", port=6379)
 
         # Verify it attempted to connect
         assert mock_redis_cls.called
@@ -130,7 +130,7 @@ class TestRedisFallbackBehavior:
 
         # Auth errors are not retried (not ConnectionError/TimeoutError)
         with pytest.raises(redis.AuthenticationError):
-            _ = RedisShortTermMemory(host="localhost", port=6379, password="wrong")
+            _ = RedisShortTermMemory(host="127.0.0.1", port=6379, password="wrong")
 
     @patch("attune.memory.redis_auto_detect.RedisAutoDetector")
     @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=True)
@@ -159,7 +159,7 @@ class TestRedisFallbackBehavior:
         mock_redis_cls.return_value = mock_client
 
         # Should succeed after retries
-        memory = RedisShortTermMemory(host="localhost", port=6379)
+        memory = RedisShortTermMemory(host="127.0.0.1", port=6379)
 
         # Verify it retried 3 times
         assert call_count == 3
@@ -168,7 +168,7 @@ class TestRedisFallbackBehavior:
     @patch("attune.memory.short_term.base.REDIS_AVAILABLE", False)
     def test_uses_mock_when_redis_not_installed(self):
         """Test that mock storage is used when Redis package not available."""
-        memory = RedisShortTermMemory(host="localhost", port=6379)
+        memory = RedisShortTermMemory(host="127.0.0.1", port=6379)
         creds = AgentCredentials("test_agent", AccessTier.CONTRIBUTOR)
 
         # Should use mock
@@ -275,7 +275,7 @@ class TestDataConsistencyDuringFailover:
         mock_client.ping.return_value = True
         mock_redis_cls.return_value = mock_client
 
-        memory = RedisShortTermMemory(host="localhost", port=6379)
+        memory = RedisShortTermMemory(host="127.0.0.1", port=6379)
 
         # Stash should raise exception after retries exhausted
         with pytest.raises(redis.ConnectionError):
@@ -305,7 +305,7 @@ class TestConnectionRecovery:
         mock_redis_cls.return_value = mock_client
 
         # First connection attempt fails, retries succeed
-        memory = RedisShortTermMemory(host="localhost", port=6379)
+        memory = RedisShortTermMemory(host="127.0.0.1", port=6379)
 
         # Should have recovered and ping should work
         assert memory.ping() is True
@@ -349,7 +349,7 @@ class TestErrorHandlingEdgeCases:
         mock_client.setex.side_effect = redis.ResponseError("OOM command not allowed")
         mock_redis_cls.return_value = mock_client
 
-        memory = RedisShortTermMemory(host="localhost", port=6379)
+        memory = RedisShortTermMemory(host="127.0.0.1", port=6379)
 
         # Should raise ResponseError (not fallback - this is a config issue)
         with pytest.raises(redis.ResponseError):
@@ -384,7 +384,7 @@ class TestConfigurationValidation:
     def test_validates_retry_configuration(self):
         """Test that retry configuration is validated."""
         config = RedisConfig(
-            host="localhost",
+            host="127.0.0.1",
             port=6379,
             retry_max_attempts=3,
             retry_base_delay=0.1,
@@ -414,7 +414,7 @@ class TestConfigurationValidation:
     def test_socket_timeout_configuration(self):
         """Test socket timeout configuration."""
         config = RedisConfig(
-            host="localhost",
+            host="127.0.0.1",
             port=6379,
             socket_timeout=10.0,
             socket_connect_timeout=5.0,

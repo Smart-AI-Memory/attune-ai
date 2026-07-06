@@ -479,7 +479,7 @@ class TestControlPanelConfig:
     def test_default_initialization(self):
         """Test ControlPanelConfig with default values."""
         config = ControlPanelConfig()
-        assert config.redis_host == "localhost"
+        assert config.redis_host == "127.0.0.1"
         assert config.redis_port == 6379
         assert config.storage_dir == "./memdocs_storage"
         assert config.audit_dir == "./logs"
@@ -512,7 +512,7 @@ class TestMemoryControlPanelInitialization:
         """Test initialization with default config."""
         panel = MemoryControlPanel()
         assert panel.config is not None
-        assert panel.config.redis_host == "localhost"
+        assert panel.config.redis_host == "127.0.0.1"
         assert panel._redis_status is None
         assert panel._short_term is None
         assert panel._long_term is None
@@ -537,7 +537,7 @@ class TestMemoryControlPanelStatus:
 
         assert "timestamp" in status
         assert status["redis"]["status"] == "running"
-        assert status["redis"]["host"] == "localhost"
+        assert status["redis"]["host"] == "127.0.0.1"
         assert status["redis"]["port"] == 6379
 
     @patch("attune.memory.control_panel._check_redis_running")

@@ -29,7 +29,7 @@ def parse_redis_url(url: str) -> dict:
     parsed = urlparse(url)
 
     return {
-        "host": parsed.hostname or "localhost",
+        "host": parsed.hostname or "127.0.0.1",
         "port": parsed.port or 6379,
         "password": parsed.password,
         "db": int(parsed.path.lstrip("/") or 0) if parsed.path else 0,
@@ -80,7 +80,7 @@ def get_redis_memory(
         memory = get_redis_memory()
 
         # Explicit URL
-        memory = get_redis_memory(url="redis://localhost:6379")
+        memory = get_redis_memory(url="redis://127.0.0.1:6379")
 
         # Force mock mode
         memory = get_redis_memory(use_mock=True)

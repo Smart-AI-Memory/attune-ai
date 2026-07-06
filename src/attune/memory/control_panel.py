@@ -89,7 +89,7 @@ logger = structlog.get_logger(__name__)
 class ControlPanelConfig:
     """Configuration for control panel."""
 
-    redis_host: str = "localhost"
+    redis_host: str = "127.0.0.1"
     redis_port: int = 6379
     storage_dir: str = "./memdocs_storage"
     audit_dir: str = "./logs"

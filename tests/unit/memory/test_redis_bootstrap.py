@@ -45,7 +45,7 @@ class TestRedisStatus:
 
         assert status.available is True
         assert status.method == RedisStartMethod.ALREADY_RUNNING
-        assert status.host == "localhost"
+        assert status.host == "127.0.0.1"
         assert status.port == 6379
         assert status.message == ""
         assert status.pid is None
@@ -525,7 +525,7 @@ class TestGetRedisOrMock:
 
         assert status.available is True
         assert memory is mock_memory
-        mock_memory_cls.assert_called_once_with(host="localhost", port=6379, use_mock=False)
+        mock_memory_cls.assert_called_once_with(host="127.0.0.1", port=6379, use_mock=False)
 
     @patch("attune.memory.redis_bootstrap.ensure_redis")
     def test_returns_mock_status_when_unavailable(self, mock_ensure):

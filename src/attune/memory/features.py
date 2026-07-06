@@ -75,11 +75,14 @@ class MemoryFeatures:
             return False
 
     @staticmethod
-    def is_redis_running(host: str = "localhost", port: int = 6379) -> bool:
+    def is_redis_running(host: str = "127.0.0.1", port: int = 6379) -> bool:
         """Check if Redis server is running and accessible.
 
         Args:
-            host: Redis host (default: localhost)
+            host: Redis host (default: 127.0.0.1 — literal loopback, not
+                "localhost": getaddrinfo runs before socket timeouts
+                apply and has wedged Windows CI workers for 20 minutes;
+                see docs/specs/windows-exit139-segfault/)
             port: Redis port (default: 6379)
 
         Returns:

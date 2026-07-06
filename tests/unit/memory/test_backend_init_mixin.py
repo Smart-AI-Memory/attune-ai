@@ -26,7 +26,7 @@ class FakeConfig:
     redis_url: str | None = None
     redis_auto_start: bool = False
     redis_required: bool = False
-    redis_host: str = "localhost"
+    redis_host: str = "127.0.0.1"
     redis_port: int = 6379
     claude_memory_enabled: bool = False
     load_enterprise_memory: bool = False

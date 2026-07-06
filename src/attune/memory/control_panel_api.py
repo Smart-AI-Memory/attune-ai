@@ -305,7 +305,7 @@ class MemoryAPIHandler(BaseHTTPRequestHandler):
 
 def run_api_server(
     panel: MemoryControlPanel,
-    host: str = "localhost",
+    host: str = "127.0.0.1",
     port: int = 8765,
     api_key: str | None = None,
     enable_rate_limit: bool = True,

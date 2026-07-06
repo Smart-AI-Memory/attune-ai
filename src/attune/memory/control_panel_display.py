@@ -176,7 +176,7 @@ Quick Start:
     )
     parser.add_argument(
         "--host",
-        default="localhost",
+        default="127.0.0.1",
         help="Redis host (or API host for 'api' command)",
     )
     parser.add_argument("--port", type=int, default=6379, help="Redis port")

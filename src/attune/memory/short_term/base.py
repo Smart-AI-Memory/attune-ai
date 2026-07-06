@@ -102,7 +102,7 @@ class BaseOperations:
 
     def __init__(
         self,
-        host: str = "localhost",
+        host: str = "127.0.0.1",
         port: int = 6379,
         db: int = 0,
         password: str | None = None,
@@ -153,7 +153,7 @@ class BaseOperations:
             else:
                 # Check if caller provided non-default args (backward compatibility)
                 caller_overrode = (
-                    host != "localhost" or port != 6379 or db != 0 or password is not None
+                    host != "127.0.0.1" or port != 6379 or db != 0 or password is not None
                 )
                 if caller_overrode:
                     self._config = RedisConfig(

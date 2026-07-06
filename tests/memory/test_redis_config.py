@@ -197,7 +197,7 @@ class TestGetRedisConfig:
 
             try:
                 config = get_redis_config()
-                assert config.host == "localhost"
+                assert config.host == "127.0.0.1"
                 assert config.port == 6379
                 assert config.db == 0
             finally:
@@ -358,7 +358,7 @@ class TestRedisMode:
             assert config.use_mock is False
 
     def test_local_mode_ignores_password(self):
-        """Test local mode uses localhost and ignores REDIS_PASSWORD."""
+        """Test local mode uses literal loopback and ignores REDIS_PASSWORD."""
         env = {
             "REDIS_MODE": "local",
             "REDIS_HOST": "should-be-ignored.com",
@@ -369,7 +369,7 @@ class TestRedisMode:
         }
         with patch.dict(os.environ, env, clear=False):
             config = get_redis_config()
-            assert config.host == "localhost"
+            assert config.host == "127.0.0.1"
             assert config.password is None
             assert config.use_mock is False
 

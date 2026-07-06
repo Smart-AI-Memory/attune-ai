@@ -56,7 +56,7 @@ class TestMemoryConfig:
 
         assert config.environment == Environment.DEVELOPMENT
         assert config.redis_url is None
-        assert config.redis_host == "localhost"
+        assert config.redis_host == "127.0.0.1"
         assert config.redis_port == 6379
         assert config.redis_mock is False
         assert config.redis_auto_start is False  # File-first: Redis is optional
