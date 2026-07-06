@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.0.1] — 2026-07-06
+
+Memory-suite quality patch: three defects surfaced by a live dogfood
+session on release day (2026-07-05), filed with session evidence
+(#1263–#1265) and each fixed with its own receipt.
+
+### Added
+
+- **redis_memory_forget** MCP tool + `AMSMemoryBackend.forget(ids)`:
+  delete specific AMS long-term records by the IDs
+  `redis_memory_search` returns — the correction path when a stashed
+  finding is wrong or stale. ids-only by design (deletion by semantic
+  query is a foot-gun). Redis tool count 5 → 6. (#1264, #1267)
+- **jit-recall command shapes:** recall-map rules accept
+  `match_regex` over the raw tool-input text, closing the
+  trigger-side gap where lessons existed but never fired on traps in
+  *generated* commands. Seeded with four observed slip-points: zsh
+  `[ a \< b ]` string-compare, `=word` PATH expansion, read-only
+  `status=$(...)`, and the formatter-strips-lone-import Edit trap.
+  (#1265, #1268)
+
+### Fixed
+
+- **memory:** the Stop-hook stash extractor no longer promotes
+  content the session merely *read* into findings. Root cause:
+  `tool_result` blocks are user-role transcript messages, so every
+  file the assistant read entered the extractor as user speech —
+  the extractor tail is now role-faithful (`[tool output omitted]`
+  markers), and the extraction prompt carries provenance rules
+  ("reading a claim is not finding it"). Spec + failure replay in
+  `docs/specs/stash-extractor-provenance/`. (#1263, #1269)
+- **memory:** `memory_forget`'s Redis-required error now names the
+  URL it attempted and points AMS-record deletions at
+  `redis_memory_forget` instead of implying all Redis memory is
+  down. (#1264)
+
 ## [10.0.0] — 2026-07-05
 
 Breaking release: the legacy memory-graph API is removed. Curated
