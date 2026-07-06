@@ -161,11 +161,15 @@ class BackendInitMixin:
                 if self.config.redis_required and not (
                     self._redis_status and self._redis_status.available
                 ):
+                    attempted = self.config.redis_url or "default localhost"
                     raise RuntimeError(
-                        "Redis is required but not available. "
+                        "Redis is required but not available "
+                        f"(attempted: {attempted}). "
                         f"Config requires Redis (redis_required=True, environment={self.config.environment.value}). "
                         "Either: (1) Start Redis server, (2) Set REDIS_URL environment variable, "
-                        "or (3) Set redis_required=False in MemoryConfig.",
+                        "or (3) Set redis_required=False in MemoryConfig. "
+                        "Note: this is the unified-memory store, not the AMS server — "
+                        "redis_memory_* tools may still work if AMS is reachable.",
                     )
 
             except RuntimeError:

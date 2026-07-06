@@ -26,7 +26,7 @@ Before refactoring, key discoveries from exploration:
   This is why some handlers use `getattr()`.
 - Tool count assertion in
   `tests/unit/test_mcp_memory_tools.py:32` is `== 33`
-  (28 core + 5 redis). Must update if tools change.
+  (28 core + 6 redis). Must update if tools change.
 
 ---
 
