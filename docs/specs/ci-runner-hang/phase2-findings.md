@@ -478,3 +478,73 @@ unchanged, plus one addition: if a THIRD exit-139 arrives, consider
 splitting "Windows teardown segfault" into its own tracked class —
 two sightings in two days on the same lane suggests it may recur at
 a higher rate than the wedge itself.
+
+---
+
+## Monitoring log — 6th capture: exit-139 №3, and this one has a TEST FRAME (2026-07-06)
+
+PR #1279's `test (windows-latest, 3.12)` lane (run `28806701681`,
+attempt 1) died with **exit 139** after the 20-min watchdog fired.
+Dumps saved under [evidence/run-28806701681/](evidence/run-28806701681/).
+Third exit-139 sighting — the 5th-capture tripwire fires. But unlike
+every prior capture, **this one satisfies the reopen criterion**: the
+worker dump is complete and its main thread is inside a test, not
+end-of-session.
+
+### Timeline (from the job log)
+
+- Other workers progressed to **96%**, everything passing (last
+  `PASSED` 16:47:00Z) while gw0 sat wedged.
+- 16:47:33Z: `558 Segmentation fault   pytest -n auto --timeout=60
+  --timeout-method=thread …` → exit 139 at 16:47:38Z.
+- The `if: always()` upload preserved the dumps (artifact
+  `8115726398`) — controller + gw0 only; gw1–3 watchdogs never fired.
+
+### What the stacks show — the polluter has a name
+
+- **gw0 main thread (complete stack, no truncation):**
+  `tests/unit/meta_workflows/test_session_context.py:252
+  test_record_execution_success` → `UnifiedMemory(user_id="test_user")`
+  → `unified.py:190 __post_init__` → `backend_init_mixin.py:129`
+  → `config.py:110 get_redis_memory` → `short_term/facade.py:161`
+  → `features.py:96 is_redis_running` → `redis …
+  connection.py:1566 _connect` — **blocked in a live Redis connect,
+  inside a unit test, in the `not network` lane, for 20 minutes.**
+- **The 1s connect timeout was set and didn't help.**
+  `features.py:95` passes `socket_connect_timeout=1`, but that bounds
+  the socket phase only — the `getaddrinfo("localhost")` resolution
+  inside `_connect` runs BEFORE any socket timeout applies. A 20-min
+  block with a 1s timeout in force is only explicable in the
+  pre-timeout phase. This **confirms the #1272 getaddrinfo
+  hypothesis** at a production call site: #1272's literal-loopback fix
+  patched one TEST probe (`test_redis_bootstrap.py`); the
+  `host="localhost"` defaults across `src/attune/memory/` (unified.py,
+  features.py, redis_bootstrap.py, short_term/facade.py,
+  redis_auto_detect.py, control_panel*.py, types.py) were untouched.
+- **Controller:** the stable H4 `_thread_receiver` signature, and the
+  main thread again cut off in `re/_parser` — second consecutive
+  capture where the segfault killed the process while faulthandler
+  was writing. The dump machinery's own probe threads
+  (`conftest.py:170 _dump_process_state`, `subprocess._readerthread`)
+  are visible in gw0.
+- **PR #1279 is exonerated:** it touches `plugin/hooks/` only;
+  `test_record_execution_success` and the unmocked `UnifiedMemory`
+  init path are on `main`.
+
+### Classification and disposition
+
+Per decisions.md step 3 this is the **H1/H2 I/O-polluter family** —
+a worker wedged in a C-level socket call — now confirmed with a named
+frame, not inferred. The tar-pit rationale ("no test frame, nothing
+fixable") no longer holds for this class:
+
+- **Tripwire executed:** exit-139 splits into its own tracked class →
+  [../windows-exit139-segfault/](../windows-exit139-segfault/README.md).
+- **This spec stays `monitoring`** for the original end-of-session
+  wedge (captures 1–4, whose shape remains unexplained and
+  unreproducible). The new class carries the fixable hypothesis and
+  the narrow fix per decisions.md step 4.
+
+**Monitoring tally: 6 captures** (3 Linux timeout-kill, 1 Windows
+timeout-kill, 2 Windows exit-139 — both now filed under the split
+class, which also claims the #1272 sighting as its first).

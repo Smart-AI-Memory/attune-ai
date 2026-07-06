@@ -1,0 +1,107 @@
+Timeout (0:20:00)!
+Thread 0x00001924 (most recent call first):
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\subprocess.py", line 1599 in _readerthread
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1012 in run
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1075 in _bootstrap_inner
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1032 in _bootstrap
+
+Thread 0x00000ed8 (most recent call first):
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\subprocess.py", line 1599 in _readerthread
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1012 in run
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1075 in _bootstrap_inner
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1032 in _bootstrap
+
+Thread 0x0000077c (most recent call first):
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 359 in wait
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 655 in wait
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1431 in run
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1075 in _bootstrap_inner
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1032 in _bootstrap
+
+Thread 0x00001610 (most recent call first):
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\asyncio\windows_events.py", line 774 in _poll
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\asyncio\windows_events.py", line 445 in select
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\asyncio\base_events.py", line 1961 in _run_once
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\asyncio\base_events.py", line 645 in run_forever
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\asyncio\windows_events.py", line 322 in run_forever
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1012 in run
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1075 in _bootstrap_inner
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1032 in _bootstrap
+
+Thread 0x00001f9c (most recent call first):
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1169 in _wait_for_tstate_lock
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1153 in join
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\subprocess.py", line 1628 in _communicate
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\subprocess.py", line 1209 in communicate
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\subprocess.py", line 550 in run
+  File "D:\a\attune-ai\attune-ai\tests\conftest.py", line 170 in _dump_process_state
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1433 in run
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1075 in _bootstrap_inner
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 1032 in _bootstrap
+
+Thread 0x000020c8 (most recent call first):
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 359 in wait
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\threading.py", line 655 in wait
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\execnet\gateway_base.py", line 470 in waitall
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\execnet\gateway_base.py", line 1239 in _terminate_execution
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\execnet\gateway_base.py", line 1176 in _thread_receiver
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\execnet\gateway_base.py", line 341 in run
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\execnet\gateway_base.py", line 411 in _perform_spawn
+
+Thread 0x00002274 (most recent call first):
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\redis\connection.py", line 1566 in _connect
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\redis\connection.py", line 1034 in connect_check_health
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\redis\connection.py", line 1008 in <lambda>
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\redis\retry.py", line 120 in call_with_retry
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\redis\connection.py", line 1007 in connect
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\redis\connection.py", line 3163 in get_connection
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\redis\utils.py", line 258 in wrapper
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\redis\client.py", line 804 in _execute_command
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\redis\client.py", line 798 in execute_command
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\redis\commands\core.py", line 2031 in ping
+  File "D:\a\attune-ai\attune-ai\src\attune\memory\features.py", line 96 in is_redis_running
+  File "D:\a\attune-ai\attune-ai\src\attune\memory\features.py", line 147 in get_feature_status
+  File "D:\a\attune-ai\attune-ai\src\attune\memory\features.py", line 183 in check_redis
+  File "D:\a\attune-ai\attune-ai\src\attune\memory\short_term\facade.py", line 161 in __init__
+  File "D:\a\attune-ai\attune-ai\src\attune\memory\config.py", line 110 in get_redis_memory
+  File "D:\a\attune-ai\attune-ai\src\attune\memory\mixins\backend_init_mixin.py", line 129 in _initialize_backends
+  File "D:\a\attune-ai\attune-ai\src\attune\memory\unified.py", line 190 in __post_init__
+  File "<string>", line 7 in __init__
+  File "D:\a\attune-ai\attune-ai\tests\unit\meta_workflows\test_session_context.py", line 252 in test_record_execution_success
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\_pytest\python.py", line 167 in pytest_pyfunc_call
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\_pytest\python.py", line 1707 in runtest
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\_pytest\runner.py", line 184 in pytest_runtest_call
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\_pytest\runner.py", line 250 in <lambda>
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\_pytest\runner.py", line 361 in from_call
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\_pytest\runner.py", line 249 in call_and_report
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\_pytest\runner.py", line 139 in runtestprotocol
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\_pytest\runner.py", line 118 in pytest_runtest_protocol
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\xdist\remote.py", line 227 in run_one_test
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\xdist\remote.py", line 206 in pytest_runtestloop
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\_pytest\main.py", line 384 in _main
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\_pytest\main.py", line 330 in wrap_session
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\_pytest\main.py", line 377 in pytest_cmdline_main
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\xdist\remote.py", line 427 in <module>
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\execnet\gateway_base.py", line 1291 in executetask
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\execnet\gateway_base.py", line 341 in run
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\execnet\gateway_base.py", line 411 in _perform_spawn
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\execnet\gateway_base.py", line 389 in integrate_as_primary_thread
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\execnet\gateway_base.py", line 1273 in serve
+  File "C:\hostedtoolcache\windows\Python\3.12.10\x64\Lib\site-packages\execnet\gateway_base.py", line 1806 in serve
+  File "<string>", line 8 in <module>
+  File "<string>", line 1 in <module>

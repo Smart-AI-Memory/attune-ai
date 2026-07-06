@@ -156,3 +156,24 @@ outcome — Phase 1's diagnostics + fast-fail already retire most of the
 intervention tax. Mark the spec `monitoring` and let the next captured
 stack reopen Phase 2. Tar-pit guard: do not chase an unreproducible
 hang past two investigation attempts.
+
+---
+
+## D-2026-07-06: exit-139 split into its own tracked class
+
+The 5th capture's tripwire (third exit-139 sighting) fired on run
+`28806701681` (PR #1279) — and the capture also met the standing
+reopen criterion (a test frame in a complete worker dump). Decision:
+
+- **Split**, don't reopen: the exit-139 class now lives at
+  `docs/specs/windows-exit139-segfault/` with a confirmed H1/H2
+  mechanism (unit test → unmocked `UnifiedMemory` → live
+  `getaddrinfo("localhost")` in redis-py `_connect`, not bounded by
+  `socket_connect_timeout`) and a narrow fix plan per step 4 above.
+- **This spec stays `monitoring`** for the original end-of-session
+  wedge (captures 1–4): still no test frame, still unreproducible,
+  tar-pit guard still applies.
+- Rationale for the split over a reopen: the two shapes now have
+  different mechanisms, different evidence quality, and different
+  dispositions (fixable vs monitored) — one spec status can't honestly
+  cover both.
