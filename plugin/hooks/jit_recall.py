@@ -22,6 +22,10 @@ Flow (all best-effort, never blocks a tool call):
 Tunables (env): ``ATTUNE_JIT_RECALL`` (set ``0`` to disable),
 ``ATTUNE_AI_SENTINEL_DIR`` (sentinel dir override, for tests).
 
+Each fire is logged to ``~/.attune/telemetry/memory_events.jsonl``
+(tool, rule ids, injected size; see ``_memory_telemetry``) so fire
+rate and context cost are measurable per session.
+
 Exit 0 always — a crash or missing corpus degrades to silent no-op (R4).
 
 Copyright 2026 Smart-AI-Memory
@@ -53,6 +57,14 @@ try:
 except Exception:  # noqa: BLE001 — hook must never crash a tool call
     RECALL_MAP = {}  # type: ignore[assignment]
     _sentinel_dir = None  # type: ignore[assignment]
+
+try:
+    from _memory_telemetry import log_memory_event
+except Exception:  # noqa: BLE001 — telemetry is optional, never load-bearing
+
+    def log_memory_event(event: str, session_id: str | None = None, **fields: object) -> None:
+        return
+
 
 _SENTINEL_PREFIX = ".jit-recalled-"
 _SENTINEL_TTL_SECONDS = 7 * 24 * 3600  # match _state's compact-warned TTL
@@ -174,17 +186,30 @@ def main() -> int:
                 resolved = _resolve_lesson(ref)
                 if resolved:
                     lines.append(f"  Full lesson — {resolved}")
+        context = "\n".join(lines)
         sys.stdout.write(
             json.dumps(
                 {
                     "hookSpecificOutput": {
                         "hookEventName": "PreToolUse",
-                        "additionalContext": "\n".join(lines),
+                        "additionalContext": context,
                     }
                 }
             )
         )
         sys.stdout.flush()
+
+        # Telemetry: which rules surfaced, for which tool, and how much
+        # context they cost — the (tool, rules, ts) triple also lets a
+        # later analysis estimate prevented-failure rate by checking
+        # whether the matching failure still occurred after the fire.
+        log_memory_event(
+            "jit_recall",
+            session_id=session_id,
+            tool=tool_name,
+            rules=[rule["rule_id"] for rule in fresh],
+            injected_chars=len(context),
+        )
 
         # Sentinels AFTER the emit so a mid-work crash retries next fire.
         for rule in fresh:

@@ -14,6 +14,10 @@ opening context. Never raises — a crash must not break the session.
 Tunables (env): ``ATTUNE_MEMORY_RECALL`` (set ``0`` to disable),
 ``ATTUNE_MEMORY_RECALL_TOPK`` (default 5).
 
+Each emission is logged to ``~/.attune/telemetry/memory_events.jsonl``
+(size + entry count; see ``_memory_telemetry``) so the layer's token
+cost is measured, not modeled.
+
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
 """
@@ -29,6 +33,18 @@ from pathlib import Path
 for _stream in (sys.stdout, sys.stderr):
     if _stream.encoding and _stream.encoding.lower() != "utf-8":
         _stream.reconfigure(encoding="utf-8", errors="replace")
+
+_HOOKS_DIR = str(Path(__file__).resolve().parent)
+if _HOOKS_DIR not in sys.path:
+    sys.path.insert(0, _HOOKS_DIR)
+
+try:
+    from _memory_telemetry import log_memory_event
+except Exception:  # noqa: BLE001 — telemetry is optional, never load-bearing
+
+    def log_memory_event(event: str, session_id: str | None = None, **fields: object) -> None:
+        return
+
 
 _DEFAULT_TOPK = 5
 _CONTENT_BUDGET = 1_400  # ~350 tokens of finding text
@@ -121,8 +137,15 @@ def main() -> int:
             return 0
         block = _format(entries)
         # Only print if we actually rendered at least one finding line.
-        if any(line.startswith("- [") for line in block.splitlines()):
+        rendered = sum(1 for line in block.splitlines() if line.startswith("- ["))
+        if rendered:
             print(block)
+            log_memory_event(
+                "session_recall",
+                session_id=payload.get("session_id"),
+                entries=rendered,
+                injected_chars=len(block),
+            )
         if health:
             print(health)
         return 0
