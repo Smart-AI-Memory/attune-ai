@@ -73,6 +73,18 @@ class TestParseResultJson:
         assert not r.ok
         assert r.error == "error_max_turns"
 
+    def test_success_subtype_with_is_error_not_ok(self):
+        # Real shape from an auth failure: subtype=success + is_error=true.
+        env = dict(
+            RESULT_ENVELOPE,
+            is_error=True,
+            api_error_status=401,
+            result="Failed to authenticate. API Error: 401 Invalid authentication credentials",
+        )
+        r = parse_result_json(json.dumps(env), **_kw())
+        assert not r.ok
+        assert "401" in r.error
+
     def test_garbage_is_failure_not_crash(self):
         r = parse_result_json("not json at all", **_kw())
         assert not r.ok
