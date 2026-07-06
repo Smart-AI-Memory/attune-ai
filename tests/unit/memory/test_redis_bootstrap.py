@@ -92,8 +92,12 @@ class TestCheckRedisRunning:
 
     def test_returns_false_when_redis_not_available(self):
         """Test returns False when Redis is not available on default port."""
-        # Test against a port that's almost certainly not running Redis
-        result = _check_redis_running(host="localhost", port=16379)
+        # Literal loopback IP, NOT "localhost": hostname resolution goes
+        # through native getaddrinfo(), which intermittently segfaults
+        # xdist workers on windows-latest (exit 139; hit twice on the
+        # 10.0.1 release SHA). Same remedy as test_uses_custom_host_and_port
+        # below (windows-xdist-flakes inventory).
+        result = _check_redis_running(host="127.0.0.1", port=16379)
         assert result is False
 
     def test_uses_custom_host_and_port(self):
