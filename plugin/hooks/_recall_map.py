@@ -18,6 +18,12 @@ Authoring rules:
   serialized ``tool_input`` contains the substring — REQUIRED for
   broad tools like ``Bash`` so the rule fires only at the actual
   decision point, not on the session's first bash call.
+- Optional ``match_regex`` scopes a rule by ``re.search`` over the
+  RAW string fields of ``tool_input`` (not the JSON dump — so shell
+  backslashes match as written). Use for command SHAPES a substring
+  can't pin down (issue #1265: prompt-keyed recall misses traps in
+  generated commands). Either filter satisfies the broad-tool
+  scoping requirement; a rule may use both (AND).
 - Optional ``lesson_ref`` names a lessons-corpus slug (an
   ``attune.lessons`` entry path like ``tag-mechanics-….md``); the
   hook resolves it through ``LessonsIndex`` at fire time and appends
@@ -102,6 +108,52 @@ RECALL_MAP: dict[str, list[dict[str, str]]] = {
                 "UNSIGNED — re-sign with `git commit --amend -S "
                 "--no-edit` (or re-sign the replayed range) before "
                 "pushing, or the pushed commits lose their GPG signature."
+            ),
+        },
+        # zsh command shapes (#1265, added 2026-07-06): the corpus held
+        # these lessons and prompt-keyed recall still missed both traps
+        # in generated commands during the 2026-07-05 housekeeping run.
+        {
+            "rule_id": "zsh-bracket-string-compare",
+            "match_regex": r"\[[^]\n]*\\<",
+            "text": (
+                "zsh (this Bash tool's shell): `[ a \\< b ]` dies with "
+                '\'condition expected: <\' — use `[[ "$a" < "$b" ]]` '
+                "for string comparison, never escaped `\\<` in `[ ]`."
+            ),
+        },
+        {
+            "rule_id": "zsh-eqword-expansion",
+            "match_regex": r"(?:^|[\s;|&])=[A-Za-z=][A-Za-z0-9=_-]+",
+            "text": (
+                "zsh expands an unquoted word starting with `=` as a "
+                "PATH lookup (`=word` -> 'word not found') — quote it "
+                "('===' separators, `=value` args)."
+            ),
+        },
+        {
+            "rule_id": "zsh-status-readonly",
+            "match_substring": "status=",
+            "text": (
+                "zsh: `status` (also `path`, `pipestatus`, `prompt`) is "
+                "a READ-ONLY special variable — `status=$(...)` kills "
+                "the whole script with 'read-only variable'. Name it "
+                "`st`/`result` instead."
+            ),
+        },
+    ],
+    # Format-on-save strips a just-added import whose usage lands in a
+    # LATER edit (#1265; corpus lesson #864, re-hit 2026-07-05 on
+    # attune_redis/memory.py `import re`).
+    "Edit": [
+        {
+            "rule_id": "formatter-strips-lone-import",
+            "match_substring": "import ",
+            "text": (
+                "Adding an import whose USAGE lands in a separate later "
+                "edit lets the format-on-save hook strip it as unused "
+                "in between — put the import and its first usage in the "
+                "SAME edit, or re-verify imports after the usage edit."
             ),
         },
     ],

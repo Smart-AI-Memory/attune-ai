@@ -84,15 +84,102 @@ def test_map_entries_have_stable_safe_rule_ids(jit_mod):
             assert rule["text"].strip(), f"{tool}: empty rule text"
 
 
-def test_broad_tool_entries_require_match_substring(jit_mod):
-    """A rule keyed on a broad tool MUST scope itself via match_substring,
-    or it fires on the session's first such call (R3: low noise)."""
+def test_broad_tool_entries_require_content_filter(jit_mod):
+    """A rule keyed on a broad tool MUST scope itself via match_substring
+    or match_regex, or it fires on the session's first such call (R3)."""
     for tool in ("Bash", "Edit", "Write", "Read"):
         for rule in jit_mod.RECALL_MAP.get(tool, []):
-            assert rule.get("match_substring"), (
-                f"{tool}/{rule['rule_id']}: broad-tool rule without "
-                "match_substring would fire on every session's first call"
+            assert rule.get("match_substring") or rule.get("match_regex"), (
+                f"{tool}/{rule['rule_id']}: broad-tool rule without a "
+                "content filter would fire on every session's first call"
             )
+
+
+def test_map_regexes_compile(jit_mod):
+    """Every match_regex in the map must be a valid pattern."""
+    import re as _re
+
+    for _tool, rules in jit_mod.RECALL_MAP.items():
+        for rule in rules:
+            pattern = rule.get("match_regex")
+            if pattern:
+                _re.compile(pattern)  # raises on a bad pattern
+
+
+# ==========================================================================
+# Command-shape regex scoping (#1265)
+# ==========================================================================
+
+
+def _bash_payload(command: str, session: str = "sess-rx") -> dict:
+    return {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "session_id": session,
+        "tool_input": {"command": command},
+    }
+
+
+def test_zsh_bracket_compare_fires_on_escaped_lt(jit_mod, monkeypatch, capsys):
+    rc, out = _run(jit_mod, monkeypatch, capsys, _bash_payload('[ "$a" \\< "$b" ] && echo lt'))
+    assert rc == 0
+    assert "zsh-bracket-string-compare" not in out  # rule_id never leaks
+    assert "condition expected" in out
+
+
+def test_zsh_bracket_compare_silent_on_plain_test(jit_mod, monkeypatch, capsys):
+    rc, out = _run(jit_mod, monkeypatch, capsys, _bash_payload('[ "$a" = "$b" ] && echo eq'))
+    assert rc == 0
+    assert "condition expected" not in out
+
+
+def test_zsh_eqword_fires_on_separator(jit_mod, monkeypatch, capsys):
+    rc, out = _run(jit_mod, monkeypatch, capsys, _bash_payload("echo ===LEAD==="))
+    assert rc == 0
+    assert "PATH lookup" in out
+
+
+def test_zsh_eqword_silent_on_flag_assignment(jit_mod, monkeypatch, capsys):
+    # --flag=value and a==b comparisons must NOT trip the =word rule.
+    rc, out = _run(
+        jit_mod, monkeypatch, capsys, _bash_payload('grep --color=auto x; [ "$a" == "$b" ]')
+    )
+    assert rc == 0
+    assert "PATH lookup" not in out
+
+
+def test_zsh_status_readonly_fires_on_assignment(jit_mod, monkeypatch, capsys):
+    rc, out = _run(jit_mod, monkeypatch, capsys, _bash_payload("status=$(gh pr checks 1)"))
+    assert rc == 0
+    assert "READ-ONLY" in out
+
+
+def test_edit_import_rule_fires_once(jit_mod, monkeypatch, capsys):
+    payload = {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Edit",
+        "session_id": "sess-ed",
+        "tool_input": {"file_path": "x.py", "new_string": "import re\n"},
+    }
+    rc, out = _run(jit_mod, monkeypatch, capsys, payload)
+    assert rc == 0
+    assert "SAME edit" in out
+    rc2, out2 = _run(jit_mod, monkeypatch, capsys, payload)
+    assert rc2 == 0
+    assert out2 == ""  # surface-once sentinel
+
+
+def test_bad_regex_never_blocks(jit_mod, monkeypatch, capsys):
+    """A malformed pattern degrades to silent no-op for that rule (R4)."""
+    jit_mod.RECALL_MAP["Bash"].append(
+        {"rule_id": "bad-regex", "match_regex": "([unclosed", "text": "never shown"}
+    )
+    try:
+        rc, out = _run(jit_mod, monkeypatch, capsys, _bash_payload("echo hello"))
+        assert rc == 0
+        assert "never shown" not in out
+    finally:
+        jit_mod.RECALL_MAP["Bash"].pop()
 
 
 # ==========================================================================

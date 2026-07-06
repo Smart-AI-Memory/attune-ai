@@ -139,15 +139,26 @@ def main() -> int:
             return 0
 
         session_id = payload.get("session_id")
-        tool_input_text = json.dumps(payload.get("tool_input") or {})
+        tool_input = payload.get("tool_input") or {}
+        tool_input_text = json.dumps(tool_input)
+        # Raw (un-JSON-escaped) string fields, for regex shapes that
+        # contain backslashes — `\<` becomes `\\<` in the JSON dump.
+        raw_input_text = " ".join(v for v in tool_input.values() if isinstance(v, str))
         fresh = []
         for rule in rules:
-            # Optional content filter (e.g. a Bash rule scoped to one
-            # command shape) — without it a Bash-keyed rule would fire
+            # Optional content filters (e.g. a Bash rule scoped to one
+            # command shape) — without one a Bash-keyed rule would fire
             # on the first bash call of every session (R3: low noise).
             needle = rule.get("match_substring")
             if needle and needle not in tool_input_text:
                 continue
+            pattern = rule.get("match_regex")
+            if pattern:
+                try:
+                    if not re.search(pattern, raw_input_text):
+                        continue
+                except re.error:
+                    continue  # bad pattern never blocks the call (R4)
             sentinel = _sentinel_path(session_id, rule["rule_id"])
             if sentinel is not None and sentinel.exists():
                 continue
