@@ -13981,3 +13981,17 @@ def ", start_idx + 1)` for module-
   `ERROR: Coverage failure` line was in the
   iter-3 log too — but the narrative said "OOM" so
   the reader (and I) skimmed past it.
+
+- **`claude plugin update <name>` fails "Plugin not found" for
+  marketplace-installed plugins — use the marketplace-qualified
+  form `<plugin>@<marketplace>`**: `claude plugin update
+  attune-ai` errored with `Plugin "attune-ai" not found` even
+  though `claude plugin list` showed it installed and enabled at
+  user scope. The list output names it `attune-ai@attune-ai`
+  (plugin@marketplace), and only that qualified form updates it
+  (`claude plugin update attune-ai@attune-ai` → 10.0.0 → 10.0.1).
+  Diagnostic recipe: on "not found", run `claude plugin list` and
+  copy the exact `name@marketplace` string from the header line.
+  Also note the update requires a Claude Code restart to apply —
+  a same-session `ls` of the cache dir shows the new version dir
+  but the running session keeps serving the old one.

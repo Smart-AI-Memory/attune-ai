@@ -415,3 +415,66 @@ Windows-compatible probe (psutil/PowerShell) — that would be chasing
 an unreproducible upstream bug past confirmed evidence. Reopen only
 if a capture arrives with a test frame (not end-of-session) or an
 upstream pytest-xdist/execnet fix becomes adoptable.
+
+---
+
+## Monitoring log — 5th capture: Windows again, segfault mid-dump (2026-07-06)
+
+PR #1274's `test (windows-latest, 3.12)` lane (run `28772959348`)
+wedged and died with **exit 139 (segfault)** after the 20-min
+watchdog fired. Dumps saved under
+[evidence/run-28772959348/](evidence/run-28772959348/). The spec
+stays `monitoring` — this capture is logged as evidence, not a
+reopen; nothing here revives a fixable hypothesis.
+
+### Timeline (from the job log)
+
+- Tests progressed normally to **94%** (last `[gw3] PASSED` at
+  06:56:35Z), then output stopped — the familiar end-of-session
+  freeze.
+- Watchdog dump header `Timeout (0:20:00)!` fired; at 07:03:44Z the
+  step died: `Segmentation fault  pytest -n auto --timeout=60
+  --timeout-method=thread …` → exit 139, then the wrapper exited 1.
+- The `if: always()` upload preserved the dumps (artifact
+  `8101851811`).
+
+### What the stacks show — and what's NEW
+
+- **Controller:** four `_thread_receiver` threads all blocked in
+  `execnet gateway_base.py:534 read` — the stable H4 signature,
+  identical to captures 1–4.
+- **NEW (a): the dump is truncated mid-write.** The controller's
+  main-thread frame cuts off at `re/_parser.py:255 __next` — the
+  segfault killed the process *while faulthandler was writing*. So
+  unlike captures 1–4 the main thread was NOT idle in
+  `dsession queue.get`; it was actively executing (regex parsing,
+  plausibly an import/compile during teardown or plugin work). The
+  frame below `re/_parser` is unrecoverable.
+- **NEW (b): worker dumps are EMPTY** (`hang-gw2.txt`,
+  `hang-gw3.txt`, 0 bytes) — the per-worker watchdogs never fired,
+  i.e. no worker was wedged past threshold. Prior captures showed
+  workers idle in `serve()`; this one can't say either way.
+- **NEW (c): exit 139, not 124.** Prior Windows capture (#4, run
+  `28566485306`) died by timeout kill; this one segfaulted. This is
+  the second sighting of the exit-139/clean-log class first seen on
+  the 10.0.1 release chain (#1272) — and the branch **contained**
+  #1272's literal-loopback fix (`gh api compare` = `ahead`), so
+  that fix does not cover this segfault path. The getaddrinfo
+  hypothesis from #1272 is not confirmed here (no frame names it;
+  the truncation hides the faulting call).
+
+### Why this doesn't reopen the spec
+
+Same tar-pit logic as the 4th-capture close-out: end-of-session
+shape, no test frame, Windows (fork structurally impossible), and
+the one new datum (segfault during faulthandler dump) points at
+interpreter/teardown internals, not at our fixtures. The tax stayed
+bounded: the lane is not in the required set, so PR #1274 merged
+without it; `gh run rerun --failed` was kicked as hygiene.
+
+**Monitoring tally: 5 captures** (3 Linux timeout-kill, 1 Windows
+timeout-kill, 1 Windows segfault-mid-dump). Reopen criteria
+unchanged, plus one addition: if a THIRD exit-139 arrives, consider
+splitting "Windows teardown segfault" into its own tracked class —
+two sightings in two days on the same lane suggests it may recur at
+a higher rate than the wedge itself.
