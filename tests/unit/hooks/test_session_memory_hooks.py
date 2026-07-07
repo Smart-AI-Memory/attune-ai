@@ -625,3 +625,162 @@ def test_prompt_carries_provenance_rules(stash_mod, monkeypatch):
     prompt = captured["body"]["prompt"]
     assert "PROVENANCE" in prompt
     assert "merely read" in prompt
+
+
+# ==========================================================================
+# Task-note reconciliation (stale "PR #N" findings expire at recall time)
+# ==========================================================================
+
+
+def test_pr_refs_extracts_numbers(recall_mod):
+    assert recall_mod._pr_refs("CI re-running on PR #1282 and pr #7") == ["1282", "7"]
+    assert recall_mod._pr_refs("no refs here, not even #123 bare") == []
+    assert recall_mod._pr_refs("") == []
+
+
+def _entries():
+    return [
+        {"id": "stale-1", "text": "CI is re-running on PR #1282", "topics": ["type:reference"]},
+        {"id": "fresh-1", "text": "plain durable insight", "topics": ["type:note"]},
+    ]
+
+
+def test_reconcile_drops_merged_pr_note(recall_mod, monkeypatch):
+    monkeypatch.setattr(recall_mod, "_pr_state", lambda n, cwd: "MERGED")
+    fresh, stale = recall_mod._reconcile(_entries(), "/proj")
+    assert [e["id"] for e in fresh] == ["fresh-1"]
+    assert stale == ["stale-1"]
+
+
+def test_reconcile_keeps_open_pr_note(recall_mod, monkeypatch):
+    monkeypatch.setattr(recall_mod, "_pr_state", lambda n, cwd: "OPEN")
+    fresh, stale = recall_mod._reconcile(_entries(), "/proj")
+    assert len(fresh) == 2 and stale == []
+
+
+def test_reconcile_keeps_note_on_unknown_state(recall_mod, monkeypatch):
+    # gh missing / timeout / cross-repo number -> conservative keep.
+    monkeypatch.setattr(recall_mod, "_pr_state", lambda n, cwd: None)
+    fresh, stale = recall_mod._reconcile(_entries(), "/proj")
+    assert len(fresh) == 2 and stale == []
+
+
+def test_reconcile_mixed_refs_kept_unless_all_resolved(recall_mod, monkeypatch):
+    states = {"1": "MERGED", "2": "OPEN"}
+    monkeypatch.setattr(recall_mod, "_pr_state", lambda n, cwd: states[n])
+    entries = [{"id": "e1", "text": "touches PR #1 and PR #2", "topics": []}]
+    fresh, stale = recall_mod._reconcile(entries, None)
+    assert len(fresh) == 1 and stale == []
+
+
+def test_reconcile_bounds_gh_calls(recall_mod, monkeypatch):
+    calls: list[str] = []
+
+    def _counting_state(n, cwd):
+        calls.append(n)
+        return "MERGED"
+
+    monkeypatch.setattr(recall_mod, "_pr_state", _counting_state)
+    entries = [{"id": f"e{i}", "text": f"note about PR #{100 + i}", "topics": []} for i in range(6)]
+    fresh, stale = recall_mod._reconcile(entries, None)
+    assert len(calls) == recall_mod._MAX_PR_CHECKS
+    # Beyond the check budget, notes are conservatively kept.
+    assert len(stale) == recall_mod._MAX_PR_CHECKS
+    assert len(fresh) == 3
+
+
+def test_reconcile_disabled_via_env(recall_mod, monkeypatch):
+    monkeypatch.setenv("ATTUNE_MEMORY_RECALL_RECONCILE", "0")
+    monkeypatch.setattr(
+        recall_mod, "_pr_state", lambda n, cwd: pytest.fail("must not call gh when disabled")
+    )
+    fresh, stale = recall_mod._reconcile(_entries(), "/proj")
+    assert len(fresh) == 2 and stale == []
+
+
+def test_reconcile_missing_id_drops_render_but_skips_forget(recall_mod, monkeypatch):
+    monkeypatch.setattr(recall_mod, "_pr_state", lambda n, cwd: "MERGED")
+    entries = [{"text": "on PR #9", "topics": []}]  # no id -> nothing to forget
+    fresh, stale = recall_mod._reconcile(entries, None)
+    assert fresh == [] and stale == []
+
+
+def test_recall_main_drops_and_forgets_stale(recall_mod, monkeypatch, capsys):
+    import attune.memory.session_stash as ss
+
+    monkeypatch.setattr(ss, "recent_entries", lambda **k: _entries())
+    monkeypatch.setattr(ss, "backend_status", lambda: dict(_HEALTHY))
+    forgotten: list[list[str]] = []
+    monkeypatch.setattr(ss, "forget_entries", lambda ids: forgotten.append(list(ids)) or 1)
+    monkeypatch.setattr(recall_mod, "_pr_state", lambda n, cwd: "MERGED")
+    _stdin(monkeypatch, {"source": "startup", "cwd": "/proj"})
+    assert recall_mod.main() == 0
+    out = capsys.readouterr().out
+    assert "plain durable insight" in out
+    assert "PR #1282" not in out
+    assert forgotten == [["stale-1"]]
+
+
+def test_recall_main_silent_when_all_entries_stale(recall_mod, monkeypatch, capsys):
+    import attune.memory.session_stash as ss
+
+    monkeypatch.setattr(
+        ss, "recent_entries", lambda **k: [{"id": "s1", "text": "on PR #5", "topics": []}]
+    )
+    monkeypatch.setattr(ss, "backend_status", lambda: dict(_HEALTHY))
+    monkeypatch.setattr(ss, "forget_entries", len)
+    monkeypatch.setattr(recall_mod, "_pr_state", lambda n, cwd: "CLOSED")
+    _stdin(monkeypatch, {"source": "startup", "cwd": "/proj"})
+    assert recall_mod.main() == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_pr_state_parses_gh_json(recall_mod, monkeypatch):
+    class _Proc:
+        returncode = 0
+        stdout = '{"state": "MERGED"}'
+
+    monkeypatch.setattr(recall_mod.subprocess, "run", lambda *a, **k: _Proc())
+    assert recall_mod._pr_state("1282", None) == "MERGED"
+
+
+def test_pr_state_none_on_gh_failure(recall_mod, monkeypatch):
+    def _boom(*a, **k):
+        raise FileNotFoundError("gh not installed")
+
+    monkeypatch.setattr(recall_mod.subprocess, "run", _boom)
+    assert recall_mod._pr_state("1", None) is None
+
+
+# ==========================================================================
+# Stash chip review affordance (short ids + drop/review hint)
+# ==========================================================================
+
+
+def test_stash_findings_attaches_ids(stash_mod, monkeypatch):
+    import attune.memory.session_stash as ss
+
+    monkeypatch.setattr(ss, "stash_entry", lambda e: True)
+    findings = [{"type": "note", "content": "a finding"}]
+    assert stash_mod._stash_findings(findings, session_id="s", cwd="/p") == 1
+    assert len(findings[0].get("id", "")) == 36  # uuid4 attached on write
+
+
+def test_emit_context_shows_short_ids_and_review_hint(stash_mod, capsys):
+    findings = [
+        {"type": "note", "content": "keep me honest", "id": "3f2a9c1b-0000-4000-8000-caf0caf0caf0"}
+    ]
+    injected = stash_mod._emit_additional_context(findings, written=1)
+    assert injected > 0
+    payload = json.loads(capsys.readouterr().out)
+    ctx = payload["hookSpecificOutput"]["additionalContext"]
+    assert "`3f2a9c1b`" in ctx
+    assert "/recall review" in ctx and "/recall drop" in ctx
+
+
+def test_emit_context_without_ids_falls_back(stash_mod, capsys):
+    # Older path: findings without attached ids still render (no id chunk).
+    findings = [{"type": "note", "content": "plain"}]
+    assert stash_mod._emit_additional_context(findings, written=1) > 0
+    ctx = json.loads(capsys.readouterr().out)["hookSpecificOutput"]["additionalContext"]
+    assert "- [note] plain" in ctx

@@ -14041,3 +14041,54 @@ def ", start_idx + 1)` for module-
   "wait for ALL OS lanes on filesystem-touching PRs before merging"
   lesson — waiting caught the bug pre-merge instead of burying it on
   main.
+
+- **zsh csh-style modifiers silently mangle `$var:word` path
+  concatenation — `$REPO:tests/unit` expands to
+  `<basename-of-REPO>ests/unit`, and double quotes do NOT
+  protect**: hit 2026-07-06 in a generated pytest command. zsh
+  parses `$var:X` as a history-style modifier when `X` is a
+  modifier letter: probed empirically, the CONSUMING (dangerous)
+  letters are `a A c e h l P q Q r s t u` (`:t` basename, `:h`
+  dirname, `:l` lowercase — so `$IMG:latest` is a live instance
+  of the same trap; `:s` dies outright with "no previous
+  substitution"), while `g p x` and any non-modifier letter pass
+  through literally. `"$var:t..."` inside double quotes STILL
+  applies the modifier. **Fix: brace the expansion —
+  `${REPO}:tests/unit` is immune** (the expansion ends at `}`).
+  Digits after the colon (`$HOST:8080`) and `:/` (`PATH=$PATH:/usr/bin`)
+  are safe. Promoted to the JIT recall map as
+  `zsh-var-colon-modifier` (4th zsh command-shape rule).
+
+- **zsh does NOT word-split unquoted `$VAR` (SH_WORD_SPLIT off) — a
+  space-separated file list in a variable passes as ONE argument, and
+  the symptom is a deceptive "(no files to check)Skipped" from
+  pre-commit, not an error**: hit 2026-07-06 pre-flighting pinned
+  black/ruff: `FILES=$(git status ... | tr '\n' ' ')` then
+  `pre-commit run black --files $FILES` silently checked nothing —
+  in bash that expands to N args, in zsh (this Bash tool's shell) it
+  stays one arg containing spaces, matching no file. The skip reads
+  as a pass if you don't notice the "no files" tail. Fix: pipe
+  through xargs (`git status --short | awk '{print $2}' | xargs
+  pre-commit run black --files`) or `${(z)FILES}` / arrays. Sibling
+  of the existing zsh command-shape traps (bracket-compare, =word,
+  status, $var:modifier) — same family: commands drafted in
+  bash-idiom run under zsh semantics.
+
+- **Stash-extractor provenance gap #2: content the ASSISTANT QUOTES
+  into its own reply (an article draft, a doc excerpt, pasted
+  deliverable text) is role-faithful assistant speech, so the
+  tool_result provenance filter (#1263) cannot catch it — the
+  extractor promotes the quoted document's claims as session
+  "findings"**: observed 2026-07-06 (dogfood week day 2): the turn
+  that pasted the LinkedIn article into the reply produced a stash
+  chip where 4-5/5 findings restated ARTICLE content (67x, 5%->0%,
+  the article's own closing question garbled into a "note"), not
+  session conclusions. This is the delivery-turn twin of day-1's
+  "all findings duplicated a committed spec doc" — together they
+  make the capture-side filter candidate concrete: skip findings
+  whose content substring-matches a document the session wrote or
+  quoted verbatim (pairs with docs/specs/stash-extractor-provenance
+  and the "already in a committed artifact?" filter idea in the
+  2026-07-06 starter). Until that ships, expect deliverable-heavy
+  turns to produce low-precision chips and prune them via the new
+  `/recall review`.

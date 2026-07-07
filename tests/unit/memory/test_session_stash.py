@@ -14,6 +14,7 @@ from attune.memory.session_stash import (
     DEFAULT_TTL_DAYS,
     MAX_CONTENT_CHARS,
     SessionStashEntry,
+    forget_entries,
     recall_entries,
     recent_entries,
     resolve_backend,
@@ -547,3 +548,122 @@ def test_file_fallback_roundtrip_no_infra(tmp_path, monkeypatch):
     assert hits, "stashed finding must be recallable with zero infra"
     assert any("retry loop" in (h.get("text") or "") for h in hits)
     assert hits[0]["cwd"] == "/proj"
+
+
+# --------------------------------------------------------------------------
+# forget_entries
+# --------------------------------------------------------------------------
+
+
+class _ForgetBackend(_FakeBackend):
+    """Searchable backend that also implements precise forget()."""
+
+    def __init__(self, results=None):
+        super().__init__(results)
+        self.forgotten: list[list[str]] = []
+
+    def forget(self, ids):
+        self.forgotten.append(list(ids))
+        return len(ids)
+
+
+def test_forget_entries_delegates_to_backend():
+    fb = _ForgetBackend()
+    assert forget_entries(["a", "b"], backend=fb) == 2
+    assert fb.forgotten == [["a", "b"]]
+
+
+def test_forget_entries_empty_ids_noop():
+    fb = _ForgetBackend()
+    assert forget_entries([], backend=fb) == 0
+    assert fb.forgotten == []
+
+
+def test_forget_entries_noop_without_backend():
+    assert forget_entries(["a"]) == 0  # ambient resolution isolated -> None
+
+
+def test_forget_entries_backend_without_forget_degrades():
+    assert forget_entries(["a"], backend=_FakeBackend()) == 0
+
+
+def test_forget_entries_swallows_backend_error():
+    class _Boom(_ForgetBackend):
+        def forget(self, ids):
+            raise RuntimeError("ams down")
+
+    assert forget_entries(["a"], backend=_Boom()) == 0
+
+
+# --------------------------------------------------------------------------
+# forget_by_prefix
+# --------------------------------------------------------------------------
+
+
+class _RecentForgetBackend(_ForgetBackend):
+    """Forget-capable backend with a recent() listing to resolve against."""
+
+    def __init__(self, ids):
+        super().__init__()
+        self._ids = list(ids)
+
+    def recent(self, limit=5, **filters):
+        return [{"id": i, "text": "x", "topics": []} for i in self._ids[:limit]]
+
+
+def test_forget_by_prefix_resolves_unique_prefix():
+    from attune.memory.session_stash import forget_by_prefix
+
+    fb = _RecentForgetBackend(["aaaa1111-x", "bbbb2222-y"])
+    assert forget_by_prefix(["aaaa1111"], backend=fb) == 1
+    assert fb.forgotten == [["aaaa1111-x"]]
+
+
+def test_forget_by_prefix_skips_ambiguous_and_unknown():
+    from attune.memory.session_stash import forget_by_prefix
+
+    fb = _RecentForgetBackend(["abc-1", "abc-2", "def-3"])
+    # "abc" matches two records, "zzz" matches none -> both skipped.
+    assert forget_by_prefix(["abc", "zzz", "def"], backend=fb) == 1
+    assert fb.forgotten == [["def-3"]]
+
+
+def test_forget_by_prefix_full_id_works():
+    from attune.memory.session_stash import forget_by_prefix
+
+    fb = _RecentForgetBackend(["abc-1"])
+    assert forget_by_prefix(["abc-1"], backend=fb) == 1
+
+
+def test_forget_by_prefix_empty_or_blank_noop():
+    from attune.memory.session_stash import forget_by_prefix
+
+    fb = _RecentForgetBackend(["abc-1"])
+    assert forget_by_prefix([], backend=fb) == 0
+    assert forget_by_prefix(["  ", ""], backend=fb) == 0
+    assert fb.forgotten == []
+
+
+def test_forget_by_prefix_backend_without_recent_degrades():
+    from attune.memory.session_stash import forget_by_prefix
+
+    assert forget_by_prefix(["abc"], backend=_ForgetBackend()) == 0
+
+
+def test_forget_by_prefix_noop_without_backend():
+    from attune.memory.session_stash import forget_by_prefix
+
+    # Ambient resolution isolated by the autouse fixture -> no backend.
+    assert forget_by_prefix(["abc"]) == 0
+
+
+def test_forget_by_prefix_swallows_recent_error():
+    from attune.memory.session_stash import forget_by_prefix
+
+    class _RecentBoom(_ForgetBackend):
+        def recent(self, limit=5, **filters):
+            raise RuntimeError("listing failed")
+
+    fb = _RecentBoom()
+    assert forget_by_prefix(["abc"], backend=fb) == 0
+    assert fb.forgotten == []

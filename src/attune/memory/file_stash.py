@@ -276,6 +276,41 @@ class FileStashBackend:
             logger.warning("file_stash_prune_failed", error=str(e))
         return dropped
 
+    def forget(self, ids: list[str]) -> int:
+        """Delete specific findings by record ID.
+
+        The IDs are the ``id`` values returned by :meth:`search` /
+        :meth:`recent`. Complements :meth:`prune` (age-based sweep) with
+        precise removal — the correction path when a stashed finding is
+        wrong or stale. Best-effort; returns the number of findings
+        deleted (0 on failure or empty input), never raises. Parity with
+        ``AMSMemoryBackend.forget``.
+        """
+        if not ids or not self._findings.exists():
+            return 0
+        targets = set(ids)
+        kept: list[dict[str, Any]] = []
+        dropped = 0
+        try:
+            for line in self._findings.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(rec, dict) and rec.get("id") in targets:
+                    dropped += 1
+                else:
+                    kept.append(rec)
+            if dropped:
+                self._rewrite(kept)
+        except OSError as e:
+            logger.warning("file_stash_forget_failed", error=str(e))
+            return 0
+        return dropped
+
     # ------------------------------------------------------------------ #
     # MemoryBackend — key/value
     # ------------------------------------------------------------------ #

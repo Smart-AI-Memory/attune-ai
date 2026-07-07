@@ -26,6 +26,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import subprocess
 import sys
 import traceback
 from pathlib import Path
@@ -49,9 +51,100 @@ except Exception:  # noqa: BLE001 — telemetry is optional, never load-bearing
 _DEFAULT_TOPK = 5
 _CONTENT_BUDGET = 1_400  # ~350 tokens of finding text
 
+# --- Task-note reconciliation (stale "PR #N" findings) -------------------
+# A stashed note like "CI is re-running on PR #1282" goes stale the moment
+# the PR merges — often within hours, far inside any TTL. Reconcile at
+# recall time: check each referenced PR's live state (bounded, best-effort)
+# and drop+forget notes whose every referent is MERGED/CLOSED.
+_PR_REF_RE = re.compile(r"\bPR\s*#(\d+)", re.IGNORECASE)
+_MAX_PR_CHECKS = 3  # bound the gh calls per session start
+_GH_TIMEOUT_SECONDS = 4.0
+_RESOLVED_STATES = {"MERGED", "CLOSED"}
+
 
 def _enabled() -> bool:
     return os.environ.get("ATTUNE_MEMORY_RECALL", "1").strip() not in {"0", "false", "no"}
+
+
+def _reconcile_enabled() -> bool:
+    return os.environ.get("ATTUNE_MEMORY_RECALL_RECONCILE", "1").strip() not in {
+        "0",
+        "false",
+        "no",
+    }
+
+
+def _pr_refs(content: str) -> list[str]:
+    """Extract 'PR #N' referents from a finding's text."""
+    return _PR_REF_RE.findall(content or "")
+
+
+def _pr_state(number: str, cwd: str | None) -> str | None:
+    """Live PR state via gh (MERGED/OPEN/CLOSED), or None on any failure."""
+
+    try:
+        proc = subprocess.run(  # noqa: S603, S607 — fixed argv, no shell
+            ["gh", "pr", "view", number, "--json", "state"],
+            capture_output=True,
+            text=True,
+            timeout=_GH_TIMEOUT_SECONDS,
+            cwd=cwd or None,
+        )
+        if proc.returncode != 0:
+            return None
+        state = json.loads(proc.stdout).get("state")
+        return state if isinstance(state, str) else None
+    except Exception:  # noqa: BLE001 — gh missing/slow/offline -> keep the note
+        return None
+
+
+def _reconcile(entries: list[dict], cwd: str | None) -> tuple[list[dict], list[str]]:
+    """Partition entries into (fresh, stale-ids); best-effort, conservative.
+
+    An entry is stale only when it references at least one PR and EVERY
+    referenced PR is definitively MERGED/CLOSED — an unknown state (gh
+    missing, timeout, cross-repo number) keeps the note. Checks are
+    bounded to :data:`_MAX_PR_CHECKS` unique PR numbers per session start.
+    """
+    if not _reconcile_enabled():
+        return entries, []
+    checked: dict[str, str | None] = {}
+    fresh: list[dict] = []
+    stale_ids: list[str] = []
+    for e in entries:
+        if not isinstance(e, dict):
+            continue
+        refs = _pr_refs(str(e.get("text") or e.get("content") or ""))
+        resolved = bool(refs)
+        for n in dict.fromkeys(refs):
+            if n not in checked:
+                if len(checked) >= _MAX_PR_CHECKS:
+                    resolved = False
+                    break
+                checked[n] = _pr_state(n, cwd)
+            if checked[n] not in _RESOLVED_STATES:
+                resolved = False
+                break
+        if resolved:
+            # Stale: drop from render either way; forget only when the
+            # record carries an id to delete by.
+            if e.get("id"):
+                stale_ids.append(str(e["id"]))
+            continue
+        fresh.append(e)
+    return fresh, stale_ids
+
+
+def _forget(ids: list[str]) -> int:
+    """Best-effort backend deletion of reconciled-stale findings."""
+    if not ids:
+        return 0
+    try:
+        from attune.memory.session_stash import forget_entries
+
+        return forget_entries(ids)
+    except Exception:  # noqa: BLE001 — older attune without forget_entries
+        return 0
 
 
 def _type_of(topics: object) -> str:
@@ -131,7 +224,21 @@ def main() -> int:
             pass
 
         entries = recent_entries(top_k=topk, cwd=cwd)
+        # Drop task notes whose PR referents have since merged/closed —
+        # and forget them so they never resurface (task-note expiry).
+        entries, stale_ids = _reconcile(entries, cwd)
+        forgotten = _forget(stale_ids)
         if not entries:
+            if stale_ids:
+                # Everything recalled was stale — still record the reconcile.
+                log_memory_event(
+                    "session_recall",
+                    session_id=payload.get("session_id"),
+                    entries=0,
+                    injected_chars=0,
+                    reconciled_stale=len(stale_ids),
+                    forgotten=forgotten,
+                )
             if health:
                 print(health)
             return 0
@@ -145,6 +252,8 @@ def main() -> int:
                 session_id=payload.get("session_id"),
                 entries=rendered,
                 injected_chars=len(block),
+                reconciled_stale=len(stale_ids),
+                forgotten=forgotten,
             )
         if health:
             print(health)

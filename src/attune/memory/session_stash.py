@@ -327,6 +327,93 @@ def recall_entries(
     return results
 
 
+def forget_entries(
+    ids: list[str],
+    backend: SearchableMemoryBackend | None = None,
+) -> int:
+    """Delete stashed findings by record ID. 0 when unavailable.
+
+    The precise-removal correction path (vs. ``prune``'s age sweep):
+    used by the recall reconciler when a task note's referent (e.g. a
+    PR) has since resolved, and by per-finding review deletion. Returns
+    the number of entries deleted. Never raises — safe to call from a
+    hook. Backends predating ``forget`` degrade to 0.
+
+    Args:
+        ids: Record IDs (the ``id`` values from ``search``/``recent``).
+        backend: Optional injected backend; resolved from the entry
+            point when omitted.
+
+    Returns:
+        Count of deleted entries (best-effort).
+    """
+    if not ids:
+        return 0
+    target = resolve_backend(backend)
+    if target is None:
+        return 0
+    forget = getattr(target, "forget", None)
+    if not callable(forget):
+        return 0
+    try:
+        return int(forget(list(ids)) or 0)
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL: forget is best-effort; never break the host session.
+        logger.warning("session stash forget failed: %s", exc)
+        return 0
+
+
+def forget_by_prefix(
+    prefixes: list[str],
+    limit: int = 100,
+    cwd: str | None = None,
+    backend: SearchableMemoryBackend | None = None,
+) -> int:
+    """Delete stashed findings by short (unique) ID prefix. 0 when none.
+
+    The review-affordance path: the Stop-hook chip shows each finding
+    with a short id prefix; this resolves those prefixes against the
+    most-recent records and deletes exact, UNAMBIGUOUS matches. An
+    ambiguous prefix (two records match) or an unknown one is skipped —
+    deletion must never guess. Never raises.
+
+    Args:
+        prefixes: Short id prefixes (e.g. the first 8 chars shown in
+            the stash chip). Full ids work too.
+        limit: How many recent records to resolve against.
+        cwd: Optional project filter passed to ``recent``.
+        backend: Optional injected backend; resolved from the entry
+            point when omitted.
+
+    Returns:
+        Count of deleted entries (best-effort).
+    """
+    wanted = [p.strip() for p in prefixes if p and p.strip()]
+    if not wanted:
+        return 0
+    target = resolve_backend(backend)
+    if target is None:
+        return 0
+    recent = getattr(target, "recent", None)
+    if not callable(recent):
+        return 0
+    try:
+        records = recent(limit=limit, cwd=cwd) or []
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL: resolution is best-effort; never break the caller.
+        logger.warning("forget_by_prefix recent-listing failed: %s", exc)
+        return 0
+    ids = [str(r.get("id")) for r in records if isinstance(r, dict) and r.get("id")]
+    full_ids: list[str] = []
+    for prefix in wanted:
+        matches = [i for i in ids if i.startswith(prefix)]
+        if len(matches) == 1:
+            full_ids.append(matches[0])
+        else:
+            logger.info("forget_by_prefix: prefix %r skipped (%d matches)", prefix, len(matches))
+    return forget_entries(full_ids, backend=target)
+
+
 def recent_entries(
     top_k: int = 5,
     cwd: str | None = None,

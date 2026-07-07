@@ -154,6 +154,32 @@ def test_zsh_status_readonly_fires_on_assignment(jit_mod, monkeypatch, capsys):
     assert "READ-ONLY" in out
 
 
+def test_zsh_colon_modifier_fires_on_var_path_concat(jit_mod, monkeypatch, capsys):
+    # `$REPO:tests/...` — zsh consumes `:t` as the tail modifier.
+    rc, out = _run(jit_mod, monkeypatch, capsys, _bash_payload("pytest $REPO:tests/unit"))
+    assert rc == 0
+    assert "Brace the expansion" in out
+
+
+def test_zsh_colon_modifier_fires_inside_double_quotes(jit_mod, monkeypatch, capsys):
+    # Double quotes do NOT protect — the modifier still applies.
+    rc, out = _run(jit_mod, monkeypatch, capsys, _bash_payload('ls "$IMG:latest"'))
+    assert rc == 0
+    assert "Brace the expansion" in out
+
+
+def test_zsh_colon_modifier_silent_on_safe_shapes(jit_mod, monkeypatch, capsys):
+    # Braced expansion, digit ports, and PATH-style `:/` never trip it.
+    rc, out = _run(
+        jit_mod,
+        monkeypatch,
+        capsys,
+        _bash_payload("pytest ${REPO}:tests/unit; curl $HOST:8080; PATH=$PATH:/usr/bin"),
+    )
+    assert rc == 0
+    assert "Brace the expansion" not in out
+
+
 def test_edit_import_rule_fires_once(jit_mod, monkeypatch, capsys):
     payload = {
         "hook_event_name": "PreToolUse",
