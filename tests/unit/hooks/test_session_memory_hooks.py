@@ -728,7 +728,7 @@ def test_recall_main_silent_when_all_entries_stale(recall_mod, monkeypatch, caps
         ss, "recent_entries", lambda **k: [{"id": "s1", "text": "on PR #5", "topics": []}]
     )
     monkeypatch.setattr(ss, "backend_status", lambda: dict(_HEALTHY))
-    monkeypatch.setattr(ss, "forget_entries", lambda ids: len(ids))
+    monkeypatch.setattr(ss, "forget_entries", len)
     monkeypatch.setattr(recall_mod, "_pr_state", lambda n, cwd: "CLOSED")
     _stdin(monkeypatch, {"source": "startup", "cwd": "/proj"})
     assert recall_mod.main() == 0

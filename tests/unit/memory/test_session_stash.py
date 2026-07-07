@@ -648,3 +648,22 @@ def test_forget_by_prefix_backend_without_recent_degrades():
     from attune.memory.session_stash import forget_by_prefix
 
     assert forget_by_prefix(["abc"], backend=_ForgetBackend()) == 0
+
+
+def test_forget_by_prefix_noop_without_backend():
+    from attune.memory.session_stash import forget_by_prefix
+
+    # Ambient resolution isolated by the autouse fixture -> no backend.
+    assert forget_by_prefix(["abc"]) == 0
+
+
+def test_forget_by_prefix_swallows_recent_error():
+    from attune.memory.session_stash import forget_by_prefix
+
+    class _RecentBoom(_ForgetBackend):
+        def recent(self, limit=5, **filters):
+            raise RuntimeError("listing failed")
+
+    fb = _RecentBoom()
+    assert forget_by_prefix(["abc"], backend=fb) == 0
+    assert fb.forgotten == []

@@ -410,3 +410,25 @@ def test_forget_is_idempotent(backend):
     backend.remember("once", memory_id="m1")
     assert backend.forget(["m1"]) == 1
     assert backend.forget(["m1"]) == 0
+
+
+def test_forget_skips_blank_and_corrupt_lines(backend):
+    backend.remember("valid one", memory_id="m1")
+    backend.remember("valid two", memory_id="m2")
+    # Inject noise the forget scan must tolerate (mirrors prune's test).
+    with backend._findings.open("a", encoding="utf-8") as fh:
+        fh.write("\n")
+        fh.write("{not json at all\n")
+    assert backend.forget(["m1"]) == 1
+    remaining = [r["id"] for r in backend.recent(limit=10)]
+    assert remaining == ["m2"]
+
+
+def test_forget_swallows_read_error(backend, monkeypatch):
+    backend.remember("unreadable store", memory_id="m1")
+
+    def _boom(*a, **k):
+        raise OSError("disk detached")
+
+    monkeypatch.setattr(type(backend._findings), "read_text", _boom)
+    assert backend.forget(["m1"]) == 0

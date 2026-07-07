@@ -247,7 +247,7 @@ class SearchableMemoryBackend(MemoryBackend, Protocol):
             Count of deleted entries (best-effort).
 
         """
-        ...
+        pass
 
     def recent(self, limit: int = 5, **filters: Any) -> list[dict]:
         """Return the most-recent findings without a query.
