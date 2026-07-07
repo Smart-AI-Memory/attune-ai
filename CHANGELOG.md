@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Task-note expiry (recall-time reconcile + forget)**: the
+  SessionStart recall hook now checks each recalled finding's
+  `PR #N` referents against live GitHub state (bounded, best-effort)
+  and drops + forgets notes whose every referent is merged/closed —
+  a stale "CI is re-running on PR #X" note no longer resurfaces for
+  30 days. Disable with `ATTUNE_MEMORY_RECALL_RECONCILE=0`.
+- **Stash review affordance**: the Stop-hook stash chip shows a
+  short id per finding, and `/recall drop <id>` / `/recall review`
+  (checklist form) delete wrong captures — backed by new
+  `forget_entries` / `forget_by_prefix` in
+  `attune.memory.session_stash` and `FileStashBackend.forget`
+  (parity with the AMS backend).
+- **JIT recall map: zsh `$var:X` modifier trap** — a fourth zsh
+  command-shape rule warns before `$REPO:tests/...`-style expansions
+  silently mangle (`:t` basename, `:l` lowercase; braces are immune).
+
 ## [10.0.2] — 2026-07-06
 
 Hook-portability patch: plugin hooks now launch with `python3` instead

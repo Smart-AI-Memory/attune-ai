@@ -141,6 +141,21 @@ RECALL_MAP: dict[str, list[dict[str, str]]] = {
                 "`st`/`result` instead."
             ),
         },
+        # zsh csh-style modifiers on $var:word (trap #5, added
+        # 2026-07-06): `$REPO:tests/unit` silently expands to
+        # `<basename>ests/unit` (`:t` = tail); double quotes do NOT
+        # protect. Dangerous letters probed empirically — `g p x` and
+        # non-modifier letters pass through and are excluded.
+        {
+            "rule_id": "zsh-var-colon-modifier",
+            "match_regex": r"\$\w+:[aAcehlPqQrstu]",
+            "text": (
+                "zsh parses `$var:X` as a modifier (`$REPO:tests/...` "
+                "-> `<basename-of-REPO>ests/...`; `$IMG:latest` "
+                "lowercases) — even inside double quotes. Brace the "
+                "expansion: `${var}:word` is immune."
+            ),
+        },
     ],
     # Format-on-save strips a just-added import whose usage lands in a
     # LATER edit (#1265; corpus lesson #864, re-hit 2026-07-05 on

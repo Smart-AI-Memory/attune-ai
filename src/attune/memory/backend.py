@@ -229,6 +229,26 @@ class SearchableMemoryBackend(MemoryBackend, Protocol):
         """
         ...
 
+    def forget(self, ids: list[str]) -> int:
+        """Delete specific findings by record ID.
+
+        The IDs are the ``id`` values returned by ``search`` / ``recent``.
+        Complements ``prune`` (age-based sweep) with precise removal — the
+        correction path when a stashed finding is wrong or stale (e.g. a
+        task note whose PR has since merged). Best-effort; returns the
+        number of entries deleted (0 on failure or empty input), never
+        raises. Backends predating this method are handled by callers via
+        ``getattr``.
+
+        Args:
+            ids: Record IDs to delete.
+
+        Returns:
+            Count of deleted entries (best-effort).
+
+        """
+        ...
+
     def recent(self, limit: int = 5, **filters: Any) -> list[dict]:
         """Return the most-recent findings without a query.
 

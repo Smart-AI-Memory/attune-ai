@@ -14041,3 +14041,20 @@ def ", start_idx + 1)` for module-
   "wait for ALL OS lanes on filesystem-touching PRs before merging"
   lesson — waiting caught the bug pre-merge instead of burying it on
   main.
+
+- **zsh csh-style modifiers silently mangle `$var:word` path
+  concatenation — `$REPO:tests/unit` expands to
+  `<basename-of-REPO>ests/unit`, and double quotes do NOT
+  protect**: hit 2026-07-06 in a generated pytest command. zsh
+  parses `$var:X` as a history-style modifier when `X` is a
+  modifier letter: probed empirically, the CONSUMING (dangerous)
+  letters are `a A c e h l P q Q r s t u` (`:t` basename, `:h`
+  dirname, `:l` lowercase — so `$IMG:latest` is a live instance
+  of the same trap; `:s` dies outright with "no previous
+  substitution"), while `g p x` and any non-modifier letter pass
+  through literally. `"$var:t..."` inside double quotes STILL
+  applies the modifier. **Fix: brace the expansion —
+  `${REPO}:tests/unit` is immune** (the expansion ends at `}`).
+  Digits after the colon (`$HOST:8080`) and `:/` (`PATH=$PATH:/usr/bin`)
+  are safe. Promoted to the JIT recall map as
+  `zsh-var-colon-modifier` (4th zsh command-shape rule).

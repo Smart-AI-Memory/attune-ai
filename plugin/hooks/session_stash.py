@@ -343,6 +343,9 @@ def _stash_findings(findings: list[dict], session_id: str, cwd: str) -> int:
             )
             if stash_entry(entry):
                 written += 1
+                # Attach the record id so the chip can offer per-finding
+                # review/deletion (short prefix is enough to forget by).
+                f["id"] = entry.id
         except Exception:  # noqa: BLE001 — one bad finding must not abort the rest
             continue
     if written:
@@ -382,11 +385,17 @@ def _emit_additional_context(findings: list[dict], written: int) -> int:
         f"\U0001f9e0 Stashed {written} session finding(s) to attune memory "
         "(recall later with /recall):"
     ]
-    for f in findings[:written]:
+    stashed = [f for f in findings if f.get("id")] or findings[:written]
+    for f in stashed:
         content = str(f.get("content", "")).strip().replace("\n", " ")
         if len(content) > 160:
             content = content[:157] + "..."
-        lines.append(f"- [{f.get('type', 'note')}] {content}")
+        short_id = str(f.get("id", ""))[:8]
+        id_part = f" `{short_id}`" if short_id else ""
+        lines.append(f"- [{f.get('type', 'note')}]{id_part} {content}")
+    lines.append(
+        "Review: `/recall review` prunes with a checklist; " "`/recall drop <id>` deletes one."
+    )
     summary = "\n".join(lines)
     try:
         sys.stdout.write(

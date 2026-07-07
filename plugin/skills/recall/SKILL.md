@@ -1,7 +1,7 @@
 ---
 name: recall
 description: "Pull relevant findings stashed from past sessions — on demand. Triggers on: recall, remember, what did I learn, prior session, past findings, did I hit this before, what do we know about."
-argument-hint: "<topic to recall | leave empty for recent>"
+argument-hint: "<topic | empty for recent | drop <id> | review>"
 ---
 
 # Recall
@@ -87,6 +87,34 @@ the backend that answered: "no hits" from the file tier while
 `status.unreachable_upgrade` is set means the real store may simply be
 dark, not empty. Suggest the user keep working; the soak fills the
 store over time.
+
+## Review / Drop Findings
+
+The stash chip (`🧠 Stashed N session finding(s)…`) shows each
+finding with a short id like `` `3f2a9c1b` ``. Two correction modes:
+
+**`/recall drop <id> [<id> ...]`** — delete specific findings by
+short id prefix. Run:
+
+```bash
+IDS="3f2a9c1b,77bd0e21" python -c "import os; from attune.memory.session_stash import forget_by_prefix; print(forget_by_prefix(os.environ['IDS'].split(','), cwd=os.getcwd()))"
+```
+
+Report how many were deleted. A prefix matching zero or multiple
+records is skipped (deletion never guesses) — tell the user which
+ids were skipped and show the candidates via the recent-findings
+snippet so they can retry with a longer prefix.
+
+**`/recall review`** — interactive pruning. Fetch the recent
+findings (snippet above), then present ONE multi-select question —
+via the `elicitation_render_form` MCP tool when available (a single
+`multi_select` field; map to `AskUserQuestion` with
+`multiSelect: true`), else directly via `AskUserQuestion` — where
+each option is one finding: label = short id + `[type]`, description
+= the finding text (truncated ~100 chars). Question: "Which findings
+should be deleted?" Then delete the picked ids with the
+`forget_by_prefix` snippet and report the count. If the user picks
+nothing, delete nothing.
 
 ## Promote A Keeper
 
