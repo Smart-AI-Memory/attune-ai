@@ -9830,6 +9830,34 @@ files.
     these entries are local-only and can't/shouldn't be committed —
     they hold machine-specific absolute paths. "Commit the launch
     config" is a no-op; don't force-add past the ignore.
+  - **To run the WORKTREE's code (not main's) in the dashboard, wrap
+    the launch in `env` to inject PYTHONPATH** (2026-07-08). The
+    known-good recipe above uses the main venv + `--project-root
+    /main`, which runs MAIN's editable-mapped code — fine for just
+    viewing, wrong when you're actively editing worktree source. To
+    exercise your edits, set `runtimeExecutable` = `env` and
+    `runtimeArgs` =
+    `["PYTHONPATH=<worktree>/src", "/Users/.../attune-ai/.venv/bin/
+    python", "-m", "attune.ops", "--project-root", "<worktree>",
+    "--port", "8765", "--no-browser"]`. Main venv supplies the
+    `[ops]` extras; the PYTHONPATH override wins over the editable
+    MAPPING so the worktree's modules load. Confirm with `curl -s
+    localhost:8765/api/info` — `project_root` should read the
+    worktree path.
+  - **The dashboard dev server imports route/data `.py` at STARTUP
+    and does NOT hot-reload them — only Jinja templates render fresh
+    from disk per request** (2026-07-08). Editing a template
+    (`templates/*.html`) shows up on the next reload; editing a
+    route (`routes/*.py`) or `ops/data.py` does NOT until you
+    `preview_stop` + `preview_start`. The trap signature: the
+    template change renders, but a NEW context var the route was
+    supposed to pass comes through empty/undefined (Jinja silently
+    renders missing vars as falsy), so a freshly-added section hits
+    its `{% else %}` empty-state despite correct data on disk. Cost
+    a verify cycle this session (empty KPIs → diagnosed as stale
+    module code → restart fixed it). Rule: after editing any Python
+    the dashboard serves, RESTART the preview server before
+    verifying; a template-only edit can skip the restart.
 
 - **Cross-repo work from a worktree-rooted session: `worktree_path_guard`
   blocks Write/Edit into sibling repos, `EnterWorktree` can't cross

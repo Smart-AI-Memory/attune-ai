@@ -58,6 +58,67 @@
 {% endif %}
 
 <section class="panel">
+  <h2>Short-term memory</h2>
+  <p class="page-sub">
+    Context the memory hooks inject each session, from
+    <code>{{ attune_home }}/telemetry/memory_events.jsonl</code>.
+    This is measured <em>cost</em> (tokens added to context) &mdash; not
+    a savings figure.
+  </p>
+  {% if memory_summary and memory_summary.total_events %}
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">Tokens injected (est.)</div>
+        <div class="kpi-value">{{ '{:,}'.format(memory_summary.total_est_tokens) }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Events</div>
+        <div class="kpi-value">{{ '{:,}'.format(memory_summary.total_events) }}</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Avg tokens / session</div>
+        <div class="kpi-value">{{ '{:,.1f}'.format(memory_summary.per_session_avg_tokens) }}</div>
+      </div>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Event</th><th class="num">Fires</th><th class="num">Tokens (est.)</th></tr></thead>
+      <tbody>
+        {% for name, row in memory_summary.by_event.items() %}
+          <tr><td><code>{{ name }}</code></td><td class="num">{{ row.n }}</td><td class="num">{{ '{:,}'.format(row.est_tokens) }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% if memory_signal %}
+      <h3>Estimated intervention signal</h3>
+      <p class="meta">{{ memory_signal.caption }}</p>
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">Rule surfacings (upper bound)</div>
+          <div class="kpi-value">{{ '{:,}'.format(memory_signal.rule_surfacings) }}</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Distinct rules</div>
+          <div class="kpi-value">{{ '{:,}'.format(memory_signal.distinct_rules) }}</div>
+        </div>
+      </div>
+      {% if memory_signal.top_rules %}
+        <table class="data-table">
+          <thead><tr><th>Rule</th><th class="num">Surfaced</th></tr></thead>
+          <tbody>
+            {% for rule, count in memory_signal.top_rules %}
+              <tr><td><code>{{ rule }}</code></td><td class="num">{{ count }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    {% endif %}
+  {% else %}
+    <p class="empty">No memory events yet.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
   <h2>Dashboard interactions (this session)</h2>
   <p class="page-sub">In-memory counters since the dashboard process started. Resets on restart; no PII, no disk write.</p>
   <div class="kpi-grid">
