@@ -14133,3 +14133,20 @@ def ", start_idx + 1)` for module-
   missing keys is the tell. Same family as "registered ≠ working"
   — the fix ships with non-mocked round-trip tests on the real
   route.
+
+- **Starter-file pre-authorization is invisible to the auto-mode
+  classifier — get an explicit in-session green light (one
+  AskUserQuestion) before the first `gh pr merge --admin`**: the
+  morning starter pre-staged the exact admin-merge command for a
+  changelog PR, but the classifier blocked it ("no in-session
+  approval is visible") — it reads the conversation, not
+  `~/.attune/next_session_starter.md`. One AskUserQuestion
+  confirming the merge(s) unblocked it, and per the durable
+  in-session-auth precedent the approval covered subsequent
+  admin-merges that session. Pattern: when a handoff file
+  authorizes classifier-gated actions (admin merges, protection
+  changes), convert that into in-session approval FIRST — one
+  question batching all the gated actions — instead of burning a
+  blocked attempt per action. Extends the "harness safety
+  classifier blocks bundled-destructive scripts" lesson: same
+  classifier, new surface (pre-staged authorization vs bundling).
