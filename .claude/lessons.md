@@ -14150,3 +14150,21 @@ def ", start_idx + 1)` for module-
   blocked attempt per action. Extends the "harness safety
   classifier blocks bundled-destructive scripts" lesson: same
   classifier, new surface (pre-staged authorization vs bundling).
+
+- **Social-content state lives OFF-repo — the drafts folder and
+  memory's published/unpublished ledger don't tell you what's
+  actually posted; confirm the referent before drafting companion
+  content**: (2026-07-08) asked for "a brief post about the
+  article to announce it," I anchored on the next-in-queue draft
+  (the 10.0.0 "deletion release" Article) and drafted an
+  announcement for the WRONG release — the just-shipped version
+  was 10.1.0; the "article" then turned out to be a THIRD piece
+  (`docs/blog/social/linkedin_memory_metrics.md`) that had been
+  published without any memory record. Two rules: (1) a release
+  announcement anchors to the latest SHIPPED version
+  (release_state memory / PyPI), never to the newest draft in
+  `docs/blog/social/`; (2) when the user says "the article/post"
+  and ≥2 drafted-or-published pieces could match, ask which one —
+  posting happens outside the repo, so the memory ledger is
+  best-effort, not authoritative; reconcile it (posted-status,
+  URLs) whenever the user mentions having posted something.
