@@ -190,6 +190,8 @@ async def telemetry_page(request: Request) -> HTMLResponse:
     # Labeled benefit estimate — carries its own honesty caption; the
     # template renders it verbatim so this never reads as measured savings.
     memory_signal = data.estimate_intervention_signal(cfg.memory_events_path)
+    # Noise side — findings surfaced then dropped as noise.
+    memory_feedback = data.estimate_feedback_signal(cfg.memory_events_path)
     return _render(
         request,
         "telemetry.html",
@@ -199,6 +201,7 @@ async def telemetry_page(request: Request) -> HTMLResponse:
         interaction_top=interaction_top,
         memory_summary=memory_summary,
         memory_signal=memory_signal,
+        memory_feedback=memory_feedback,
     )
 
 

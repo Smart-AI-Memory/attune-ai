@@ -113,6 +113,35 @@
         </table>
       {% endif %}
     {% endif %}
+
+    {% if memory_feedback %}
+      <h3>Noise signal</h3>
+      <p class="meta">{{ memory_feedback.caption }}</p>
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">Findings rejected</div>
+          <div class="kpi-value">{{ '{:,}'.format(memory_feedback.rejected) }}</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Findings stashed</div>
+          <div class="kpi-value">{{ '{:,}'.format(memory_feedback.findings_written) }}</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Rejection rate</div>
+          <div class="kpi-value">{{ '{:.1%}'.format(memory_feedback.rejection_rate) }}</div>
+        </div>
+      </div>
+      {% if memory_feedback.by_source %}
+        <table class="data-table">
+          <thead><tr><th>Source</th><th class="num">Rejected</th></tr></thead>
+          <tbody>
+            {% for src, count in memory_feedback.by_source.items() %}
+              <tr><td><code>{{ src }}</code></td><td class="num">{{ count }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    {% endif %}
   {% else %}
     <p class="empty">No memory events yet.</p>
   {% endif %}

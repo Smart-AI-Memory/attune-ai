@@ -591,6 +591,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             # than failing the whole telemetry call.
             try:
                 from attune.ops.data import (
+                    estimate_feedback_signal,
                     estimate_intervention_signal,
                     read_memory_summary,
                 )
@@ -599,6 +600,8 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 # Labeled benefit estimate — see the caption in the payload;
                 # this is an upper bound on interventions, not savings.
                 result["memory_intervention_signal"] = estimate_intervention_signal()
+                # Noise side: findings surfaced then dropped as noise.
+                result["memory_feedback"] = estimate_feedback_signal()
             except Exception:  # noqa: BLE001
                 # INTENTIONAL: memory telemetry is a bonus section; never
                 # let it break the core usage stats.
