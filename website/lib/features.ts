@@ -32,7 +32,7 @@ export const PRODUCTS: Product[] = [
     id: "attune-ai",
     name: "Attune AI",
     pypiName: "attune-ai",
-    version: "10.0.2",
+    version: "10.1.0",
     tagline: "Generate, maintain, and serve help from your code",
     installCommand: "pip install attune-ai",
     marketplaceInstall:
@@ -54,7 +54,7 @@ export const PRODUCTS: Product[] = [
     id: "attune-help",
     name: "Attune Help",
     pypiName: "attune-help",
-    version: "0.11.1",
+    version: "0.12.0",
     tagline: "Lightweight reader for help templates",
     installCommand: "pip install attune-help",
     marketplaceInstall:
@@ -101,7 +101,7 @@ export const PRODUCTS: Product[] = [
     id: "claude-code-plugin",
     name: "Claude Code Plugin",
     pypiName: "attune-ai",
-    version: "10.0.2",
+    version: "10.1.0",
     tagline: "Progressive help right in your terminal",
     installCommand:
       "claude plugin marketplace add Smart-AI-Memory/attune-ai",
