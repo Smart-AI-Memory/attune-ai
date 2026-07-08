@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.2.0] — 2026-07-08
+
+Memory-ledger minor: the short-term memory layer's cost, benefit, and
+noise are now readable on the ops dashboard and the `telemetry_stats`
+MCP tool — measured honestly (cost as fact, benefit as a captioned
+upper-bound estimate, never a savings percentage). Plus three
+guardrail test suites that pin previously prose-only policies.
+
+### Added
+
+- **Short-term memory panel on the ops Telemetry tab** (#1291): what
+  the memory hooks actually inject — total est. tokens, per-event
+  breakdown (session recall / JIT rule recall / stash), per-session
+  average, and an "estimated intervention signal" (JIT rule
+  surfacings as a labeled upper bound — explicitly not a savings
+  figure). Same data via `read_memory_summary()` and a new `memory`
+  section on the `telemetry_stats` MCP tool.
+- **Injection noise signal** (#1292): deleting a stashed finding
+  (`/recall drop`, `/recall review`, the recall reconciler) now
+  records a `memory_feedback` rejection event — every drop is an
+  explicit "this surfaced item was noise" verdict. A "Noise signal"
+  block (rejection rate = rejected / findings stashed) joins the
+  dashboard panel and MCP tool. New src-importable writer
+  `attune.telemetry.memory_events` mirrors the hook's local-only
+  consent gate (`ATTUNE_MEMORY_TELEMETRY`, `DO_NOT_TRACK`).
+- **CI spend guard** (#1293): `secrets.ANTHROPIC_API_KEY` can no
+  longer ride push/PR workflows — keyed workflows require an explicit
+  test-level allowlist, schedule/dispatch-only triggers, and a
+  verified spend control (the 2026-06-10 $1,200 burn, made
+  structural).
+- **Consent-surface guard** (#1294): the privacy promises are now
+  tests — phone-home ping defaults OFF, `DO_NOT_TRACK` beats every
+  opt-in (config and env, in both memory-writer copies), and the
+  ping's record source can never include `memory_events.jsonl`.
+- **Extras-honesty guard** (#1295): install hints in error messages
+  must point at extras that actually install something — undefined
+  extras fail, and empty back-compat aliases (like `[redis]`, core
+  since 10.0) are allowed only via a documented allowlist.
+
 ## [10.1.0] — 2026-07-08
 
 Memory-suite minor: stash lifecycle UX (task-note expiry, review
