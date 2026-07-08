@@ -24,6 +24,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **JIT recall map: zsh `$var:X` modifier trap** — a fourth zsh
   command-shape rule warns before `$REPO:tests/...`-style expansions
   silently mangle (`:t` basename, `:l` lowercase; braces are immune).
+- **Self-measuring memory telemetry**: the recall, JIT-recall, and
+  stash hooks now log their own footprint — one local-only JSON line
+  per fire to `~/.attune/telemetry/memory_events.jsonl` (injected
+  entry/char/token counts, JIT `(tool, rules)` triples, stash
+  extractor + size) — so the memory layer's token/cost impact can be
+  *measured* rather than modeled. Off by default; enable with
+  `ATTUNE_MEMORY_TELEMETRY=1` (honors `DO_NOT_TRACK`). The file is never
+  part of the opt-in usage ping — it stays on your machine.
+
+### Fixed
+
+- **Redis host defaults to `127.0.0.1` (was `localhost`)** across the
+  memory stack and `redis_config`: `getaddrinfo("localhost")` runs
+  before the socket-connect timeout applies and is uninterruptible, so
+  a slow or misbehaving resolver could wedge a connection (it hung
+  Windows CI workers ~20 min). Env-provided hosts are untouched, and
+  `localhost` is still recognized for local-vs-cloud backend inference.
 
 ## [10.0.2] — 2026-07-06
 
