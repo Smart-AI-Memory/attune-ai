@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.1.0] — 2026-07-08
+
+Memory-suite minor: stash lifecycle UX (task-note expiry, review
+affordance, zsh trap coverage), self-measuring memory telemetry, and
+a Windows-CI-hardening fix for Redis host resolution.
+
 ### Added
 
 - **Task-note expiry (recall-time reconcile + forget)**: the
