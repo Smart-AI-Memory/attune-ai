@@ -54,7 +54,7 @@ export const PRODUCTS: Product[] = [
     id: "attune-help",
     name: "Attune Help",
     pypiName: "attune-help",
-    version: "0.11.1",
+    version: "0.12.0",
     tagline: "Lightweight reader for help templates",
     installCommand: "pip install attune-help",
     marketplaceInstall:
