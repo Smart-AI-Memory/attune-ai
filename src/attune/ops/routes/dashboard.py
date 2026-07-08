@@ -183,6 +183,15 @@ async def telemetry_page(request: Request) -> HTMLResponse:
         "rec_card_clicks": counters.top("rec_card_click", limit=10) if counters else [],
         "scope_picker_changes": (counters.top("scope_picker_change", limit=10) if counters else []),
     }
+    # Short-term memory injection cost — read from the memory hooks'
+    # local event log. Reports measured cost (tokens injected), not a
+    # savings estimate; the template captions it accordingly.
+    memory_summary = data.read_memory_summary(cfg.memory_events_path)
+    # Labeled benefit estimate — carries its own honesty caption; the
+    # template renders it verbatim so this never reads as measured savings.
+    memory_signal = data.estimate_intervention_signal(cfg.memory_events_path)
+    # Noise side — findings surfaced then dropped as noise.
+    memory_feedback = data.estimate_feedback_signal(cfg.memory_events_path)
     return _render(
         request,
         "telemetry.html",
@@ -190,6 +199,9 @@ async def telemetry_page(request: Request) -> HTMLResponse:
         telemetry=summary,
         interaction_totals=interaction_totals,
         interaction_top=interaction_top,
+        memory_summary=memory_summary,
+        memory_signal=memory_signal,
+        memory_feedback=memory_feedback,
     )
 
 

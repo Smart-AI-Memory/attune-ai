@@ -42,6 +42,15 @@ class Config:
         return self.attune_home / "telemetry" / "usage.jsonl"
 
     @property
+    def memory_events_path(self) -> Path:
+        """Local event log written by the short-term memory hooks.
+
+        Produced by ``plugin/hooks/_memory_telemetry.py``; one JSON line
+        per hook fire (session_recall / jit_recall / session_stash).
+        """
+        return self.attune_home / "telemetry" / "memory_events.jsonl"
+
+    @property
     def runs_dir(self) -> Path:
         """Disk root for persisted ops runs. May not exist until first write."""
         return self.attune_home / "ops" / "runs"

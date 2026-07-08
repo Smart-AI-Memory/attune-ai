@@ -583,7 +583,31 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
             tracker = UsageTracker()
             stats = tracker.get_stats(days=args.get("days", 30))
-            return {"success": True, **stats}
+            result: dict[str, Any] = {"success": True, **stats}
+
+            # Additive: short-term memory injection cost, read from the
+            # local memory_events.jsonl the memory hooks write. Guarded so
+            # a missing [ops] surface degrades to no memory section rather
+            # than failing the whole telemetry call.
+            try:
+                from attune.ops.data import (
+                    estimate_feedback_signal,
+                    estimate_intervention_signal,
+                    read_memory_summary,
+                )
+
+                result["memory"] = read_memory_summary()
+                # Labeled benefit estimate — see the caption in the payload;
+                # this is an upper bound on interventions, not savings.
+                result["memory_intervention_signal"] = estimate_intervention_signal()
+                # Noise side: findings surfaced then dropped as noise.
+                result["memory_feedback"] = estimate_feedback_signal()
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: memory telemetry is a bonus section; never
+                # let it break the core usage stats.
+                logger.debug("memory summary unavailable", exc_info=True)
+
+            return result
         except ImportError as e:
             logger.warning("Telemetry module not available: %s", e)
             return {"success": False, "error": "Telemetry module not installed"}

@@ -9830,6 +9830,34 @@ files.
     these entries are local-only and can't/shouldn't be committed —
     they hold machine-specific absolute paths. "Commit the launch
     config" is a no-op; don't force-add past the ignore.
+  - **To run the WORKTREE's code (not main's) in the dashboard, wrap
+    the launch in `env` to inject PYTHONPATH** (2026-07-08). The
+    known-good recipe above uses the main venv + `--project-root
+    /main`, which runs MAIN's editable-mapped code — fine for just
+    viewing, wrong when you're actively editing worktree source. To
+    exercise your edits, set `runtimeExecutable` = `env` and
+    `runtimeArgs` =
+    `["PYTHONPATH=<worktree>/src", "/Users/.../attune-ai/.venv/bin/
+    python", "-m", "attune.ops", "--project-root", "<worktree>",
+    "--port", "8765", "--no-browser"]`. Main venv supplies the
+    `[ops]` extras; the PYTHONPATH override wins over the editable
+    MAPPING so the worktree's modules load. Confirm with `curl -s
+    localhost:8765/api/info` — `project_root` should read the
+    worktree path.
+  - **The dashboard dev server imports route/data `.py` at STARTUP
+    and does NOT hot-reload them — only Jinja templates render fresh
+    from disk per request** (2026-07-08). Editing a template
+    (`templates/*.html`) shows up on the next reload; editing a
+    route (`routes/*.py`) or `ops/data.py` does NOT until you
+    `preview_stop` + `preview_start`. The trap signature: the
+    template change renders, but a NEW context var the route was
+    supposed to pass comes through empty/undefined (Jinja silently
+    renders missing vars as falsy), so a freshly-added section hits
+    its `{% else %}` empty-state despite correct data on disk. Cost
+    a verify cycle this session (empty KPIs → diagnosed as stale
+    module code → restart fixed it). Rule: after editing any Python
+    the dashboard serves, RESTART the preview server before
+    verifying; a template-only edit can skip the restart.
 
 - **Cross-repo work from a worktree-rooted session: `worktree_path_guard`
   blocks Write/Edit into sibling repos, `EnterWorktree` can't cross
@@ -14168,6 +14196,28 @@ def ", start_idx + 1)` for module-
   posting happens outside the repo, so the memory ledger is
   best-effort, not authoritative; reconcile it (posted-status,
   URLs) whenever the user mentions having posted something.
+
+- **Authoring guardrail tests has two receipt traps — the guard may
+  already exist, and a "fires" receipt can be fake** (2026-07-08,
+  building the CI-spend #1293 and consent-surface #1294 guards):
+  (1) **Grep `tests/` for an existing enforcer BEFORE proposing a
+  guard from a prose rule.** The website-content-accuracy rule reads
+  as unenforced prose, but `tests/unit/test_website_version_accuracy.
+  py::TestCapabilityCountsSync` already pins every features.ts count
+  to the live registries (required lanes) — I ranked "build this" in
+  a backlog before checking and nearly re-built it. Rules/docs
+  describe policies; only a grep tells you whether a test already
+  enforces one. Same family as "re-validate a spec's premise."
+  (2) **Prove a new guard FIRES by making the exact feared diff, not
+  via wrapper scaffolding.** A lambda-wrapped "does rule 2 fire?"
+  check raised its own placeholder AssertionError and printed FIRES —
+  a fake receipt that read as real. The trustworthy receipt is
+  mutating the guarded thing itself and watching the right test go
+  red: sed-flip the default (`usage_ping = False`→`True`), widen the
+  glob (`usage*.jsonl`→`*.jsonl`), write a synthetic violating
+  workflow file — then `git checkout` the source. If the receipt
+  can fail for a reason other than the guard firing, it proves
+  nothing.
 
 - **A terse "go" answering a multi-item offer doesn't register as
   merge approval with the auto-mode classifier — one

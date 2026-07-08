@@ -18,7 +18,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from attune.ops.config import Config
+from attune.ops.config import Config, attune_home
 
 logger = logging.getLogger(__name__)
 
@@ -939,6 +939,247 @@ def read_telemetry_summary(
         by_day=recent_days_data,
         last_event_at=last_event_at,
     )
+
+
+def read_memory_summary(path: Path | None = None) -> dict[str, Any]:
+    """Aggregate ``memory_events.jsonl`` into a cost summary.
+
+    Reports what the short-term memory hooks (session recall, JIT rule
+    recall, the Stop-hook stash) actually inject — measured cost, not a
+    savings estimate. See ``plugin/hooks/_memory_telemetry.py`` for the
+    producer and event schema.
+
+    Args:
+        path: Override the events-file location (tests pass a fixture).
+            ``None`` resolves to ``<attune_home>/telemetry/
+            memory_events.jsonl``.
+
+    Returns:
+        A JSON-serializable dict. A missing file yields a zeroed summary
+        (never raises), so callers can render an empty state.
+    """
+    if path is None:
+        path = attune_home() / "telemetry" / "memory_events.jsonl"
+
+    zeroed: dict[str, Any] = {
+        "total_events": 0,
+        "total_est_tokens": 0,
+        "distinct_sessions": 0,
+        "by_event": {},
+        "by_day": {},
+        "per_session_avg_tokens": 0.0,
+    }
+    if not path.exists():
+        return zeroed
+
+    total_events = 0
+    total_est_tokens = 0
+    sessions: set[str] = set()
+    by_event_n: dict[str, int] = defaultdict(int)
+    by_event_tokens: dict[str, int] = defaultdict(int)
+    by_day_n: dict[str, int] = defaultdict(int)
+    by_day_tokens: dict[str, int] = defaultdict(int)
+
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    event: dict[str, Any] = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+
+                name = str(event.get("event") or "unknown")
+                tokens = int(event.get("est_tokens", 0) or 0)
+                # Memory events use the ``ts`` key (v1.0 schema in
+                # _memory_telemetry.log_memory_event); ``timestamp`` is a
+                # defensive fallback. Without it every event misses the
+                # by_day bucketing — the same zero-KPI bug the usage
+                # reader documents just above.
+                ts = str(event.get("ts") or event.get("timestamp") or "")
+                sid = event.get("session_id")
+
+                total_events += 1
+                total_est_tokens += tokens
+                by_event_n[name] += 1
+                by_event_tokens[name] += tokens
+                if sid:
+                    sessions.add(str(sid))
+
+                day = _to_day(ts)
+                if day:
+                    by_day_n[day] += 1
+                    by_day_tokens[day] += tokens
+    except OSError:
+        return zeroed
+
+    distinct_sessions = len(sessions)
+    per_session_avg = round(total_est_tokens / distinct_sessions, 1) if distinct_sessions else 0.0
+
+    return {
+        "total_events": total_events,
+        "total_est_tokens": total_est_tokens,
+        "distinct_sessions": distinct_sessions,
+        "by_event": {
+            name: {"n": by_event_n[name], "est_tokens": by_event_tokens[name]}
+            for name in sorted(by_event_n)
+        },
+        "by_day": {
+            day: {"n": by_day_n[day], "est_tokens": by_day_tokens[day]} for day in sorted(by_day_n)
+        },
+        "per_session_avg_tokens": per_session_avg,
+    }
+
+
+#: Honesty caption shipped verbatim with every intervention-signal
+#: readout. The benefit of memory injection cannot be MEASURED from the
+#: event log alone (no failure log to correlate against), so this number
+#: is an upper bound on interventions, not a savings figure. Keeping the
+#: caption a module constant lets a test assert it renders unmodified —
+#: the guard against the discredited "memory saves X%" framing.
+INTERVENTION_SIGNAL_CAPTION = (
+    "Estimate, not measured savings: counts JIT rules surfaced before a "
+    "tool call. Each MAY have prevented a mistake, but the log has no "
+    "failure record to confirm it — treat this as an upper bound on "
+    "helpful interventions, never a cost-savings percentage."
+)
+
+
+def estimate_intervention_signal(path: Path | None = None) -> dict[str, Any]:
+    """Estimate a LABELED benefit signal from ``jit_recall`` surfacings.
+
+    Counts how often the JIT recall hook surfaced a rule right before a
+    tool call. This is deliberately NOT a savings number: the event log
+    records what was injected, not whether a failure was actually
+    avoided, so the honest reading is an upper bound on helpful
+    interventions. Every caller must render :data:`INTERVENTION_SIGNAL_CAPTION`
+    alongside these figures. See ``memory_cost_claim_grounding`` for why a
+    real savings claim needs a separate benchmark.
+
+    Args:
+        path: Override the events-file location (tests pass a fixture).
+            ``None`` resolves to the default ``memory_events.jsonl``.
+
+    Returns:
+        JSON-serializable dict with ``rule_surfacings`` (int),
+        ``distinct_rules`` (int), ``top_rules`` (list of ``[rule, count]``,
+        highest first), and ``caption`` (the verbatim honesty string).
+        A missing file yields zeroed counts, never an exception.
+    """
+    if path is None:
+        path = attune_home() / "telemetry" / "memory_events.jsonl"
+
+    rule_counts: dict[str, int] = defaultdict(int)
+    surfacings = 0
+
+    if path.exists():
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        event: dict[str, Any] = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if event.get("event") != "jit_recall":
+                        continue
+                    rules = event.get("rules") or []
+                    if not isinstance(rules, list):
+                        continue
+                    for rule in rules:
+                        rule_counts[str(rule)] += 1
+                        surfacings += 1
+        except OSError:
+            rule_counts.clear()
+            surfacings = 0
+
+    top_rules = heapq.nlargest(10, rule_counts.items(), key=lambda kv: kv[1])
+    return {
+        "rule_surfacings": surfacings,
+        "distinct_rules": len(rule_counts),
+        "top_rules": [[rule, count] for rule, count in top_rules],
+        "caption": INTERVENTION_SIGNAL_CAPTION,
+    }
+
+
+#: Honesty caption for the feedback (noise) signal. A rejection rate is
+#: the NOISE side of the insurance ledger — how often a surfaced finding
+#: was later dropped as wrong/irrelevant — NOT an inverse-quality score
+#: or a savings figure. Kept a constant so a test can assert it renders.
+FEEDBACK_SIGNAL_CAPTION = (
+    "Noise signal: findings that were surfaced by recall and then "
+    "explicitly dropped as wrong/irrelevant/resolved, as a share of "
+    "findings stashed. Lower is less noise injected — it is not a "
+    "quality score or a savings figure."
+)
+
+
+def estimate_feedback_signal(path: Path | None = None) -> dict[str, Any]:
+    """Aggregate ``memory_feedback`` rejections into a noise rate.
+
+    Reads the explicit "this surfaced finding was noise" verdicts
+    emitted by the deletion seam (``attune.memory.session_stash``) and
+    expresses them as a share of the findings the Stop-hook stashed —
+    the net-of-noise half of the memory analyzer. See
+    ``project_memory_as_insurance``.
+
+    Args:
+        path: Override the events-file location (tests pass a fixture).
+            ``None`` resolves to the default ``memory_events.jsonl``.
+
+    Returns:
+        JSON-serializable dict: ``rejected`` (total rejected findings),
+        ``by_source`` (``{source: count}``), ``findings_written``
+        (denominator, from ``session_stash`` events), ``rejection_rate``
+        (rejected / written, 0.0 when none written), and ``caption``.
+        A missing file yields zeroed counts, never an exception.
+    """
+    if path is None:
+        path = attune_home() / "telemetry" / "memory_events.jsonl"
+
+    rejected = 0
+    by_source: dict[str, int] = defaultdict(int)
+    findings_written = 0
+
+    if path.exists():
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        event: dict[str, Any] = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    name = event.get("event")
+                    if name == "memory_feedback":
+                        count = int(event.get("count", 0) or 0)
+                        rejected += count
+                        by_source[str(event.get("source") or "unknown")] += count
+                    elif name == "session_stash":
+                        findings_written += int(event.get("written", 0) or 0)
+        except OSError:
+            return {
+                "rejected": 0,
+                "by_source": {},
+                "findings_written": 0,
+                "rejection_rate": 0.0,
+                "caption": FEEDBACK_SIGNAL_CAPTION,
+            }
+
+    rate = round(rejected / findings_written, 3) if findings_written else 0.0
+    return {
+        "rejected": rejected,
+        "by_source": {src: by_source[src] for src in sorted(by_source)},
+        "findings_written": findings_written,
+        "rejection_rate": rate,
+        "caption": FEEDBACK_SIGNAL_CAPTION,
+    }
 
 
 # ---------------------------------------------------------------------------

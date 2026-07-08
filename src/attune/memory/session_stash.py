@@ -327,9 +327,36 @@ def recall_entries(
     return results
 
 
+def _record_rejection(count: int, source: str, cwd: str | None) -> None:
+    """Best-effort ``memory_feedback`` event for a deletion (never raises).
+
+    A deletion is an explicit "this surfaced finding was wrong /
+    irrelevant / resolved" verdict — the noise signal the insurance
+    frame needs (see ``project_memory_as_insurance``). Emitted from the
+    single ``forget_entries`` chokepoint so every deletion path
+    (``/recall drop``, review, reconciler) is captured exactly once.
+    """
+    try:
+        from attune.telemetry.memory_events import log_memory_event
+
+        log_memory_event(
+            "memory_feedback",
+            verdict="rejected",
+            source=source,
+            count=count,
+            cwd=cwd,
+        )
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: feedback telemetry must never break a deletion.
+        pass
+
+
 def forget_entries(
     ids: list[str],
     backend: SearchableMemoryBackend | None = None,
+    *,
+    source: str = "forget",
+    cwd: str | None = None,
 ) -> int:
     """Delete stashed findings by record ID. 0 when unavailable.
 
@@ -339,10 +366,19 @@ def forget_entries(
     the number of entries deleted. Never raises — safe to call from a
     hook. Backends predating ``forget`` degrade to 0.
 
+    A successful deletion (count > 0) emits one ``memory_feedback``
+    event tagged with ``source``/``cwd`` — the noise denominator for
+    the memory analyzer. This is the single emit point; delegating
+    callers (``forget_by_prefix``) pass ``source``/``cwd`` through and
+    must NOT emit again.
+
     Args:
         ids: Record IDs (the ``id`` values from ``search``/``recent``).
         backend: Optional injected backend; resolved from the entry
             point when omitted.
+        source: Rejection origin for the feedback event
+            (``recall_drop`` / ``review`` / ``reconciler`` / ``forget``).
+        cwd: Optional project path recorded on the feedback event.
 
     Returns:
         Count of deleted entries (best-effort).
@@ -356,11 +392,14 @@ def forget_entries(
     if not callable(forget):
         return 0
     try:
-        return int(forget(list(ids)) or 0)
+        count = int(forget(list(ids)) or 0)
     except Exception as exc:  # noqa: BLE001
         # INTENTIONAL: forget is best-effort; never break the host session.
         logger.warning("session stash forget failed: %s", exc)
         return 0
+    if count > 0:
+        _record_rejection(count=count, source=source, cwd=cwd)
+    return count
 
 
 def forget_by_prefix(
@@ -368,6 +407,8 @@ def forget_by_prefix(
     limit: int = 100,
     cwd: str | None = None,
     backend: SearchableMemoryBackend | None = None,
+    *,
+    source: str = "recall_drop",
 ) -> int:
     """Delete stashed findings by short (unique) ID prefix. 0 when none.
 
@@ -381,9 +422,12 @@ def forget_by_prefix(
         prefixes: Short id prefixes (e.g. the first 8 chars shown in
             the stash chip). Full ids work too.
         limit: How many recent records to resolve against.
-        cwd: Optional project filter passed to ``recent``.
+        cwd: Optional project filter passed to ``recent``; also
+            recorded on the emitted feedback event.
         backend: Optional injected backend; resolved from the entry
             point when omitted.
+        source: Rejection origin threaded to ``forget_entries`` for the
+            feedback event (defaults to ``recall_drop``).
 
     Returns:
         Count of deleted entries (best-effort).
@@ -411,7 +455,8 @@ def forget_by_prefix(
             full_ids.append(matches[0])
         else:
             logger.info("forget_by_prefix: prefix %r skipped (%d matches)", prefix, len(matches))
-    return forget_entries(full_ids, backend=target)
+    # forget_entries is the single emit point; pass source/cwd through.
+    return forget_entries(full_ids, backend=target, source=source, cwd=cwd)
 
 
 def recent_entries(
