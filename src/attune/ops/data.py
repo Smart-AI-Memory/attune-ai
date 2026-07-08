@@ -1106,6 +1106,82 @@ def estimate_intervention_signal(path: Path | None = None) -> dict[str, Any]:
     }
 
 
+#: Honesty caption for the feedback (noise) signal. A rejection rate is
+#: the NOISE side of the insurance ledger — how often a surfaced finding
+#: was later dropped as wrong/irrelevant — NOT an inverse-quality score
+#: or a savings figure. Kept a constant so a test can assert it renders.
+FEEDBACK_SIGNAL_CAPTION = (
+    "Noise signal: findings that were surfaced by recall and then "
+    "explicitly dropped as wrong/irrelevant/resolved, as a share of "
+    "findings stashed. Lower is less noise injected — it is not a "
+    "quality score or a savings figure."
+)
+
+
+def estimate_feedback_signal(path: Path | None = None) -> dict[str, Any]:
+    """Aggregate ``memory_feedback`` rejections into a noise rate.
+
+    Reads the explicit "this surfaced finding was noise" verdicts
+    emitted by the deletion seam (``attune.memory.session_stash``) and
+    expresses them as a share of the findings the Stop-hook stashed —
+    the net-of-noise half of the memory analyzer. See
+    ``project_memory_as_insurance``.
+
+    Args:
+        path: Override the events-file location (tests pass a fixture).
+            ``None`` resolves to the default ``memory_events.jsonl``.
+
+    Returns:
+        JSON-serializable dict: ``rejected`` (total rejected findings),
+        ``by_source`` (``{source: count}``), ``findings_written``
+        (denominator, from ``session_stash`` events), ``rejection_rate``
+        (rejected / written, 0.0 when none written), and ``caption``.
+        A missing file yields zeroed counts, never an exception.
+    """
+    if path is None:
+        path = attune_home() / "telemetry" / "memory_events.jsonl"
+
+    rejected = 0
+    by_source: dict[str, int] = defaultdict(int)
+    findings_written = 0
+
+    if path.exists():
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        event: dict[str, Any] = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    name = event.get("event")
+                    if name == "memory_feedback":
+                        count = int(event.get("count", 0) or 0)
+                        rejected += count
+                        by_source[str(event.get("source") or "unknown")] += count
+                    elif name == "session_stash":
+                        findings_written += int(event.get("written", 0) or 0)
+        except OSError:
+            return {
+                "rejected": 0,
+                "by_source": {},
+                "findings_written": 0,
+                "rejection_rate": 0.0,
+                "caption": FEEDBACK_SIGNAL_CAPTION,
+            }
+
+    rate = round(rejected / findings_written, 3) if findings_written else 0.0
+    return {
+        "rejected": rejected,
+        "by_source": {src: by_source[src] for src in sorted(by_source)},
+        "findings_written": findings_written,
+        "rejection_rate": rate,
+        "caption": FEEDBACK_SIGNAL_CAPTION,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Spend anomaly alarm — R6 of docs/specs/usage-signals/. Surfaces the
 # "$1,200-night" class of event within a day. See decisions.md D13.
