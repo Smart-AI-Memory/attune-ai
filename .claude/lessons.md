@@ -14196,3 +14196,25 @@ def ", start_idx + 1)` for module-
   posting happens outside the repo, so the memory ledger is
   best-effort, not authoritative; reconcile it (posted-status,
   URLs) whenever the user mentions having posted something.
+
+- **Authoring guardrail tests has two receipt traps — the guard may
+  already exist, and a "fires" receipt can be fake** (2026-07-08,
+  building the CI-spend #1293 and consent-surface #1294 guards):
+  (1) **Grep `tests/` for an existing enforcer BEFORE proposing a
+  guard from a prose rule.** The website-content-accuracy rule reads
+  as unenforced prose, but `tests/unit/test_website_version_accuracy.
+  py::TestCapabilityCountsSync` already pins every features.ts count
+  to the live registries (required lanes) — I ranked "build this" in
+  a backlog before checking and nearly re-built it. Rules/docs
+  describe policies; only a grep tells you whether a test already
+  enforces one. Same family as "re-validate a spec's premise."
+  (2) **Prove a new guard FIRES by making the exact feared diff, not
+  via wrapper scaffolding.** A lambda-wrapped "does rule 2 fire?"
+  check raised its own placeholder AssertionError and printed FIRES —
+  a fake receipt that read as real. The trustworthy receipt is
+  mutating the guarded thing itself and watching the right test go
+  red: sed-flip the default (`usage_ping = False`→`True`), widen the
+  glob (`usage*.jsonl`→`*.jsonl`), write a synthetic violating
+  workflow file — then `git checkout` the source. If the receipt
+  can fail for a reason other than the guard firing, it proves
+  nothing.
