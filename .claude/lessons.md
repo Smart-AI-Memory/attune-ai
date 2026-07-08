@@ -14092,3 +14092,44 @@ def ", start_idx + 1)` for module-
   2026-07-06 starter). Until that ships, expect deliverable-heavy
   turns to produce low-precision chips and prune them via the new
   `/recall review`.
+
+- **A repo whose CI installs fresh (`pip install -e ".[dev]"`, no
+  lockfile) can go red from SIBLING-package drift while your local
+  uv.lock run stays green — reproduce CI's resolution with
+  `uv run --with '<pkg>==<latest>'` before pushing**: hit 2026-07-06
+  on attune-gui PR #82 (a pin bump for attune-author). Local suite
+  was green (uv.lock held attune-help 0.10.2), but CI's fresh pip
+  resolve picked attune-help 0.12.0, whose `manifest` module had
+  been REMOVED (0.11) — 5 tests 500'd on py3.12/3.13. The drift was
+  pre-existing (main's last CI run predated the 0.11 release; any
+  PR would have hit it) — don't assume a red lane on your PR was
+  caused by your diff; check when main last ran the same matrix.
+  Fix pattern: verify green under BOTH the lock's version and the
+  latest in-range version (`uv run --with 'attune-help==0.12.0'
+  pytest`). Follow-on trap: my direct-YAML fix raced a parallel
+  session's fix (#80, delegating to `attune_author.manifest`) that
+  merged first → PR went DIRTY with zero checks on head. Read
+  main's recent commits for a COMPETING fix before resolving;
+  adopt the merged one (per parallel-session coordination), rebuild
+  via `reset --hard origin/main` + cherry-pick of the still-unique
+  commits, and re-run the kept tests against the adopted
+  implementation — they found a real gap (`load_manifest` lets
+  `yaml.YAMLError` escape → 500 where the endpoint documents 400).
+
+- **A dashboard field that is ALWAYS at its empty/zero state
+  ("Features: 0", "no features.yaml found") smells like a
+  producer/consumer contract gap masked by a mocked test — grep the
+  producer for the exact keys the consumer reads before theorizing
+  about lookup paths**: attune-gui's Workspace card read
+  `corpus.get("manifest_path")` / `corpus.get("feature_count")`
+  (home_summary.py), but the `/api/cowork/corpus` endpoint NEVER
+  returned those keys — while `test_home_summary.py` mocked
+  `corpus_health()` WITH them, so the suite proved the consumer
+  logic against a producer that didn't exist. The reported theory
+  ("it looks for features.yaml at the workspace root only") was
+  wrong — it never looked at all. Diagnostic: for any
+  constant-empty UI field, diff the consumer's `.get(...)` keys
+  against the producer's actual return dict; a mock supplying the
+  missing keys is the tell. Same family as "registered ≠ working"
+  — the fix ships with non-mocked round-trip tests on the real
+  route.
