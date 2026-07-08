@@ -4,7 +4,7 @@
 > attune's memory backends. See
 > [`requirements.md`](requirements.md) for scope.
 
-**Status:** partial — Phase 1 shipped (`memory/memory_tool.py`, PR #671); Phase 2 (MCP/CLI surfacing) is forward work — verified 2026-06-08 spec triage
+**Status:** complete — Phase 1 shipped (`memory/memory_tool.py`, PR #671); Phase 2 surfacing shipped as the `attune memory-agent` CLI; Option ③ (SDK-native-workflow surfacing) re-scoped out — see Phase 2 below.
 
 ---
 
