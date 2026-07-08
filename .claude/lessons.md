@@ -14237,3 +14237,21 @@ def ", start_idx + 1)` for module-
   into one AskUserQuestion confirmation up front — cheaper than
   burning a blocked attempt, and the in-session-auth precedent
   then covers the rest of the session.
+
+- **Resolving a lessons.md merge conflict with a script: whole-string
+  marker asserts can NEVER pass — the corpus itself contains literal
+  conflict-marker text inside lesson bodies** (2026-07-08, fixing PR
+  #1290's append-tail collision): lessons documenting merge/stash
+  conflicts legitimately embed `<<<<<<< ` / `>>>>>>> ` as CONTENT, so
+  a resolution script asserting `"<<<<<<< " not in text` fails even
+  after a perfect resolve (two attempts died on their own safety
+  asserts; the second failure also left a marker-laden file STAGED —
+  reconcile with `git status` + `grep -c '^<<<<<<<'` + check HEAD's
+  copy before retrying). Correct checks are LINE-ANCHORED: detect
+  hunks via `line.startswith("<<<<<<< ")` (assert exactly the expected
+  count), and post-resolve assert no LINE starts with a marker —
+  `grep -c "^<<<<<<< "` not substring search. The conflict itself is
+  the standard both-appended-to-tail shape: keep BOTH sides (main's
+  tail first, the PR's after). Applies to any self-referential corpus
+  file (lessons, docs about git) — the content defeats naive marker
+  detection precisely because the file teaches about conflicts.
