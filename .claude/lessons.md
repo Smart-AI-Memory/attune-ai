@@ -14168,3 +14168,22 @@ def ", start_idx + 1)` for module-
   posting happens outside the repo, so the memory ledger is
   best-effort, not authoritative; reconcile it (posted-status,
   URLs) whenever the user mentions having posted something.
+
+- **A terse "go" answering a multi-item offer doesn't register as
+  merge approval with the auto-mode classifier — one
+  AskUserQuestion does**: (2026-07-08) the user replied "go" to an
+  explicit "say `go` and I'll watch checks and merge #1289" offer,
+  yet the classifier denied the subsequent `gh pr merge`
+  ("unrequested by the user"). A single AskUserQuestion ("Merge it
+  now?" → "Yes") unblocked the identical command immediately.
+  Extends the "starter-file pre-authorization is invisible to the
+  classifier" lesson: the classifier weights structured,
+  tool-mediated approvals (an AskUserQuestion answer) far above
+  conversational shorthand — even shorthand given in-session,
+  moments earlier, in direct reply to the offer. Pattern: before
+  the FIRST classifier-gated command of a sequence (merge,
+  protection change), if authorization arrived as terse vocab
+  ("go", "y") or an implicit bundle ("do all three"), convert it
+  into one AskUserQuestion confirmation up front — cheaper than
+  burning a blocked attempt, and the in-session-auth precedent
+  then covers the rest of the session.
