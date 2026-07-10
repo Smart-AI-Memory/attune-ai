@@ -5,7 +5,7 @@
 > `specs/fable-model-tiers/` (attune repo, approved 2026-07-09), whose
 > design this mirrors where the plugin's architecture allows.
 
-**Status**: in-review
+**Status**: approved (2026-07-10 — Patrick, via PR #1303 review)
 
 ## Architecture
 
