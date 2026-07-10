@@ -11,7 +11,7 @@
 
 ## Phase 1: Requirements
 
-**Status**: draft
+**Status**: approved (2026-07-10 — Patrick: Option A for the Batch question)
 
 ### Problem statement
 
@@ -123,10 +123,10 @@ that refuses is simply a lost item unless we handle it. Options:
 | B. Batch uses fable + client-side re-queue: refused items resubmitted in a second batch pinned to opus-4-8 | True fable quality where it succeeds | Doubles worst-case latency; re-queue machinery + state tracking; refusal rate unknown (no telemetry yet) | Phase 2 candidate, after telemetry |
 | C. Batch uses fable, refusals reported as errored items only | Simplest fable-everywhere story | Silently degrades bulk results; violates the workspace spec's "errored, never skipped" principle only barely — items error out with no recovery | ❌ |
 
-**Recommendation:** Option A now (mirrors attune-author's batch
-policy, shipped 2026-07-09), with a follow-up item to collect refusal
-telemetry from interactive premium calls and revisit Option B once a
-real refusal rate is known.
+**DECIDED (Patrick, 2026-07-10): Option A** — batch premium stays
+opus-4-8, mirroring attune-author's shipped `_batch_polish_model()`
+policy. Follow-up: collect refusal telemetry from interactive premium
+calls and revisit Option B once a real refusal rate is known.
 
 ### Edge cases & open questions
 
@@ -146,8 +146,8 @@ real refusal rate is known.
   cannot be costed until it does.
 - `plugin/help/generated/` tier documentation regeneration is assumed
   cheap but unverified.
-- Status is **draft** — needs Patrick's approval on the Batch
-  decision (Option A) before Phase 2.
+- Batch decision approved (Option A, 2026-07-10) — requirements are
+  approved; Phase 2 (design) may begin.
 
 ---
 
