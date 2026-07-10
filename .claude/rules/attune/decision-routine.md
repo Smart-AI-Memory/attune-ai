@@ -140,8 +140,30 @@ Stage 2 review is the worked consumer.
 
 ---
 
+## Acting on a terse "go"
+
+Two gates fire before executing a `go` / `do it` / `y` (full rule in
+the `feedback_go_referent_and_spend_gates` memory):
+
+- **Referent gate (A).** Execute only when exactly one action is the
+  obvious referent from my immediately-prior turn. If that turn listed
+  multiple options or open items, the referent is unresolved — resolve
+  it first (one line or `AskUserQuestion`) before acting. The precision
+  burden is mine, not the user's shorthand.
+- **Spend gate (B).** Before the first billable API call of a task,
+  state what + a rough cost estimate and get an explicit go for the
+  spend — even when a spec pre-authorizes the work. Then it's
+  session-durable. Free/local actions never trip this.
+
+An ambiguous referent that resolves to a paid action trips both →
+hard stop.
+
+---
+
 ## Cross-references
 
+- `feedback_go_referent_and_spend_gates` memory — the two gates above
+  in full, with the origin and how-to-apply
 - `.claude/rules/attune/xml-enhanced-prompts.md` — canonical for
   XML prompt criteria and schema
 - `.claude/CLAUDE.md` — Critical Rules section names when to use
