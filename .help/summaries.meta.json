@@ -1,0 +1,1880 @@
+{
+  "agents/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a",
+    "summary_hash": "16d4ca143badcc74558ff605d0a7b96bdd7e99033296317548686868306698ee"
+  },
+  "agents/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a",
+    "summary_hash": "c4b7f4acbcef00e232ecb02c0c1a22c2819c2461120950f81c584afff3f481e9"
+  },
+  "agents/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a",
+    "summary_hash": "e9cd20459773b74194720d4be1c8731d05b231c5339b6229d8690b524b4b9674"
+  },
+  "agents/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "ecd5c81e8a7f378cb806384780a940c27082ef0d5c0dfad20cc7a101e937e10e",
+    "summary_hash": "d5bcf04477d43b35c4d64e4e95edfd86f9eb0f4838585fbec720141d75719663"
+  },
+  "agents/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a",
+    "summary_hash": "94a875601146916163efbe631a3c843563320c132aa386dde2d26dc2670ed93b"
+  },
+  "agents/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a",
+    "summary_hash": "8ac10f6c2cafbfe34505521fd67e4ff40fc537232780f41bedbec7daf2244ae4"
+  },
+  "agents/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a",
+    "summary_hash": "599af504bf1867389881519e724a0dd9245302d49994e9dc46bc76cbf0e175e4",
+    "truncated": true
+  },
+  "agents/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a",
+    "summary_hash": "fc2dfb8cc7d4504fa1e35cf8d582f5e6abb7fbef1db28fc1881ec3ab5bb11d7f"
+  },
+  "agents/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a",
+    "summary_hash": "ad96a2ecb483cc6a0d6445f12347064ea86c3e97fe335aa284ef0699ccd30048",
+    "truncated": true
+  },
+  "agents/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a",
+    "summary_hash": "3fe926c693fe712e9179fda36fb6f85fa7340b25be9c7f3880c3f26c5ce390b4"
+  },
+  "agents/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a",
+    "summary_hash": "445573fc515173f15069a9345f9d4a132f1c7c71e9d01fbb48f8d43bf4fb2bbb"
+  },
+  "bug-predict/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d",
+    "summary_hash": "a0a2ec60b6ab68270d7a3390d5d55db3626eb7cd64e4608c0c89db294e934af1"
+  },
+  "bug-predict/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d",
+    "summary_hash": "18d0a08b4e4ab668b3228a21854609603b0fa7061900cbfb5ba0a0563f77f9c4",
+    "truncated": true
+  },
+  "bug-predict/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d",
+    "summary_hash": "a3ec92420ee5267e59f79986621ed67b36a736d23127eb21456cf1fe9269d376"
+  },
+  "bug-predict/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "750014addbbc0825c7da37de3ee7d765c2c29f9e0e9db47dbc9d3df3542340a0",
+    "summary_hash": "c305ad21de44ba949a218e7bc406bd8054e033939acf6c9d39a0222e2c344888",
+    "truncated": true
+  },
+  "bug-predict/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d",
+    "summary_hash": "a5a01316ff7c72b9bde10b840539d9a9a92f56d5dc2c03e04c1a3ae0ce3a0c21"
+  },
+  "bug-predict/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d",
+    "summary_hash": "750594e2f242d94057215905925729d87cae3b3d6e432c875542cb1535700f6d"
+  },
+  "bug-predict/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d",
+    "summary_hash": "e621214ae9001e34f221dd2d06300840d6b98abe2e5ae62c94974310fc8a6df7"
+  },
+  "bug-predict/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d",
+    "summary_hash": "bafccd54adafcadfc33cc0774e712b4a548696cbd0b1207059d460bfcc84ecd8"
+  },
+  "bug-predict/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d",
+    "summary_hash": "e6622c61b28dbaf59579fbf3278243c362480a1839aec0fcadab4feb6aa5602f",
+    "truncated": true
+  },
+  "bug-predict/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d",
+    "summary_hash": "bc67159d69c60bb04a712502a2bdb2f469200d92d05900d2f1b1c73c9de1e531"
+  },
+  "bug-predict/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d",
+    "summary_hash": "40e4a4c67623364c515de059f68042d8c16157d6762d24e1b8cd6ea8271ec048"
+  },
+  "cli/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bd2a2253f6a68a6b8671e90b653a8b827a19319e732c7538d504fb7c9e90bdb4",
+    "summary_hash": "2a6bdf829512046d0219b02ba4b210853b593522c9c17a59f53944a99072642b"
+  },
+  "cli/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bd2a2253f6a68a6b8671e90b653a8b827a19319e732c7538d504fb7c9e90bdb4",
+    "summary_hash": "a63a1666593cf67836c75a058fc828d8efec54e531bd798e1051a941ca040e5a"
+  },
+  "cli/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bd2a2253f6a68a6b8671e90b653a8b827a19319e732c7538d504fb7c9e90bdb4",
+    "summary_hash": "c05657aa80f753fd493f0757961422949acb77b7a9d6d0107bc9b3e2e7c4c514"
+  },
+  "cli/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "c5869a44d484eaa1e8ac37a67657b958065c6b870d010d051acf6c86c3532eb2",
+    "summary_hash": "720235f5f610bdb2602b459317b844e2d353280c8d69d8cddb27e24d0d10c8e3"
+  },
+  "cli/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bd2a2253f6a68a6b8671e90b653a8b827a19319e732c7538d504fb7c9e90bdb4",
+    "summary_hash": "e656a16f9ed4b8b3be329fe08e17d532d7b9b7673992024ae5d2c80976af0f08",
+    "truncated": true
+  },
+  "cli/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bd2a2253f6a68a6b8671e90b653a8b827a19319e732c7538d504fb7c9e90bdb4",
+    "summary_hash": "6d93864798509c305e61db7c930cfba22f83912f954b810614f6691042eac192"
+  },
+  "cli/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bd2a2253f6a68a6b8671e90b653a8b827a19319e732c7538d504fb7c9e90bdb4",
+    "summary_hash": "5cfbc733d50c0fc2f4511f7a07b3f1f7fc124610a49a3d5d84ce77b307eb7dde"
+  },
+  "cli/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bd2a2253f6a68a6b8671e90b653a8b827a19319e732c7538d504fb7c9e90bdb4",
+    "summary_hash": "69ada262ac8ac8777c3616210757f3a18529cc800c6b8f98a2f13dbf808e8ab9",
+    "truncated": true
+  },
+  "cli/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bd2a2253f6a68a6b8671e90b653a8b827a19319e732c7538d504fb7c9e90bdb4",
+    "summary_hash": "d554499acfa2071f61dc290c594bd983b483b12a9c8059b91cfbb62fffb93dcd"
+  },
+  "cli/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bd2a2253f6a68a6b8671e90b653a8b827a19319e732c7538d504fb7c9e90bdb4",
+    "summary_hash": "2e2a7a8f16871dbcd90e15dd521bbfc73074675599b19120e7120cf445c7528c"
+  },
+  "cli/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bd2a2253f6a68a6b8671e90b653a8b827a19319e732c7538d504fb7c9e90bdb4",
+    "summary_hash": "1fef7086a886f12aa0d46e0e993cccdc226b1e5784742e4c67ab51bfd3721710"
+  },
+  "code-quality/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472",
+    "summary_hash": "0d78d13b823d8b098155064701df95dc73682fdf20bb55b073a249b4da0ce6f2"
+  },
+  "code-quality/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472",
+    "summary_hash": "0da54568c2aafa9e7692b6970f37736305b437869638eba58a27745436a65fae",
+    "truncated": true
+  },
+  "code-quality/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472",
+    "summary_hash": "6723dc8e0aeefa0276176f4be2a9f3f1370e146cf67ef9eaaeb42c732bab7196"
+  },
+  "code-quality/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "4f0f1e5876a5f83b83316fb690fa9aa652fd8f63b15844a89c384083fbac424f",
+    "summary_hash": "2ea67dda8dcb459b9634c5775a51a534e7c5126c9724cb5e7eedb3e3939f482f"
+  },
+  "code-quality/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472",
+    "summary_hash": "38da1b77c78300786e240faf832305bbbd79d3a8c89eeec14d480d151d3e1870",
+    "truncated": true
+  },
+  "code-quality/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472",
+    "summary_hash": "2d27133817a18e04ade7dd2ddca44db941a693d11768dddaea7066608bb982b4"
+  },
+  "code-quality/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472",
+    "summary_hash": "37fc821d9795005e2a9956c119106fc1a0fd2979b944de56038ddd42de29e90f"
+  },
+  "code-quality/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472",
+    "summary_hash": "dbeedc479123396c600b9fdcd97160dd958eedf0290cbe60719dfc9061f36c58"
+  },
+  "code-quality/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472",
+    "summary_hash": "3347f8eda60266d91a81b96b376075f20a56f269729c879a277723ac8d9dc7af"
+  },
+  "code-quality/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472",
+    "summary_hash": "746ebd8b399011f9357d35fa78aac2c8c9ee6771567c9784555af12e28835bd5"
+  },
+  "code-quality/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472",
+    "summary_hash": "899d78d2588eb38241c17d2680fc01b0c0b51b3f38cd867d8ac4093ea82c7f54",
+    "truncated": true
+  },
+  "configuration/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "7359a1b70578c0d83b0fc6af405ebd38e3949c66a7f64b303c05e961504871c1",
+    "summary_hash": "1632422719e6855f7e24bfb7612935eacb6cb29eeb88fdaeb5cb832c96597e90"
+  },
+  "configuration/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "7359a1b70578c0d83b0fc6af405ebd38e3949c66a7f64b303c05e961504871c1",
+    "summary_hash": "e0b77d7663709287945d8a0b2c3b94e932072880b1ca73a8ba3b046b20f4c86e"
+  },
+  "configuration/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "7359a1b70578c0d83b0fc6af405ebd38e3949c66a7f64b303c05e961504871c1",
+    "summary_hash": "272afc97374f90263f75eeb2de11d49ef8853e00ea3431b13ac95d4691e9a8ff"
+  },
+  "configuration/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "604c2379a87e26f454bda4cbf1107754b03bdab0760a50c31dfa62eb0e948023",
+    "summary_hash": "14a851ebe0c664331cc36a32268bd1c51435096a4c005d74a1112ce0da4a2bf2"
+  },
+  "configuration/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "7359a1b70578c0d83b0fc6af405ebd38e3949c66a7f64b303c05e961504871c1",
+    "summary_hash": "9f21b25733f2828a7082af35073843aef029039debc4629944cb9ea206543f07"
+  },
+  "configuration/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "7359a1b70578c0d83b0fc6af405ebd38e3949c66a7f64b303c05e961504871c1",
+    "summary_hash": "5c4993054e828978ded7bb5360926ac851bca839ab92dfe64ca04df0730ac4b5"
+  },
+  "configuration/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "7359a1b70578c0d83b0fc6af405ebd38e3949c66a7f64b303c05e961504871c1",
+    "summary_hash": "48807e98128ebaadaeefb5349da922fb96e439c6fec5ffe71176e001636b287f"
+  },
+  "configuration/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "7359a1b70578c0d83b0fc6af405ebd38e3949c66a7f64b303c05e961504871c1",
+    "summary_hash": "e843fa6713d96279a25f9152f39a39975ed3af2e7f1152139598910a0dfcd768"
+  },
+  "configuration/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "7359a1b70578c0d83b0fc6af405ebd38e3949c66a7f64b303c05e961504871c1",
+    "summary_hash": "cd3bf6c600a7317b7960d6dd0ffcac03059caaabb92e944a2640faec981cb491",
+    "truncated": true
+  },
+  "configuration/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "7359a1b70578c0d83b0fc6af405ebd38e3949c66a7f64b303c05e961504871c1",
+    "summary_hash": "9853571cd11478cf9bc3892e3dbec887368214edc945787988e9464fd773a9b5"
+  },
+  "configuration/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "7359a1b70578c0d83b0fc6af405ebd38e3949c66a7f64b303c05e961504871c1",
+    "summary_hash": "8ce86ab8fda4f1a90695f2400579368087071a412829366a79491fab2fabc58c"
+  },
+  "deep-review/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083",
+    "summary_hash": "fdcfd0ab9c53dd2f246ee87d6701e950c890df3d6aca9f034ec0132616dac9ab"
+  },
+  "deep-review/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083",
+    "summary_hash": "1e3f2ab7e46d0cfe3431392f003fa70a6f0605399fa52d13642afebf5f6ab38b",
+    "truncated": true
+  },
+  "deep-review/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083",
+    "summary_hash": "4949b0b3e975cad627981f24640a80fb18970dc7d456be432d6755a3c7d29fe6"
+  },
+  "deep-review/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0166eb83fb8436c203cdd073439a7339645f40e53cdfe39db4fbed0559eac81d",
+    "summary_hash": "f480fe0d3454aa6219535ef5a28003bf11a0b863eecc5c59e08ecc717c7f94f7"
+  },
+  "deep-review/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083",
+    "summary_hash": "61217ee0fece7e6d0eaae5341296707375df9116912e44f50999282f8a67166e",
+    "truncated": true
+  },
+  "deep-review/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083",
+    "summary_hash": "a7578e9addf342ea78cc2d6c6127e75688fb9db88dd466412d08305bf8a93912"
+  },
+  "deep-review/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083",
+    "summary_hash": "dee9c669d600d5d11eb0dbde56c591cd97f064ed2c2cfa8d459d83fa6e6c3997",
+    "truncated": true
+  },
+  "deep-review/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083",
+    "summary_hash": "e28b8135efa8f1678864a714dd1bb858040f1b1abb22a79bcc7f86dc656ca7b9",
+    "truncated": true
+  },
+  "deep-review/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083",
+    "summary_hash": "0eb4446e1f29d8ca04df38fcd34bac9fda2b88c638ee84c71fd09bea8476607b",
+    "truncated": true
+  },
+  "deep-review/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083",
+    "summary_hash": "cb513e85293f14f6c1996b54d8b530ef7bdd363df801ec58305ecd7bd9dc40b7"
+  },
+  "deep-review/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083",
+    "summary_hash": "03d15ffdedacb6cfcb58b66564ae38c468e12e312794f3349e762ac2ffdf9086"
+  },
+  "doc-gen/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384",
+    "summary_hash": "0a968d186c639bd9f5fa246799dd5e34c2e525dd944c9090bab62923a6ae7596"
+  },
+  "doc-gen/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384",
+    "summary_hash": "e2412d92d77fb3a4c612c48d0304c76ef929aacc36291fd8fcecece2df037871",
+    "truncated": true
+  },
+  "doc-gen/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384",
+    "summary_hash": "f5fb2b1f720b688b3793ee1f6dea114b3c264dcf392a2fc53cbd5a4884f07165"
+  },
+  "doc-gen/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "e72f8c7df1bc5e57a104c92b8ea7ec8a43b33084d7d1ab2add257441af45c122",
+    "summary_hash": "157582fc02ed60c2a8c3e0aad79a13563f206d02549d06e0c4012a9614190bc5"
+  },
+  "doc-gen/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384",
+    "summary_hash": "d0c74e6fe1f8899d0014dedc2de8f5d49d45d190e4f5c11a8b35aa20e042150f",
+    "truncated": true
+  },
+  "doc-gen/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384",
+    "summary_hash": "c9b0c92d622ff5bd90f6237c73bb50cb8ea3bea9c3719fc7a4b9a6f82fb3b995"
+  },
+  "doc-gen/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384",
+    "summary_hash": "587ab69b868bf5bebf33cea0591021d8486424e63155b45dfd329c5156197772"
+  },
+  "doc-gen/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384",
+    "summary_hash": "972b053794c7d82382aa825335a077ef25839d5b1faf0b0f51e5d9de7dda63bf"
+  },
+  "doc-gen/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384",
+    "summary_hash": "86e3342f9a4065f9f1cdeca2b854703c19e65ddd5c9c6ebfde770ab3250094ee"
+  },
+  "doc-gen/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384",
+    "summary_hash": "c67395b891a38dcdcbc94186e4f3b711bf8b22d44d5afcc77460562d15979ee6"
+  },
+  "doc-gen/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384",
+    "summary_hash": "4aa66c75db0500fdb8cc30ba966c861ebe1102f8e48c806f9a144436e71cc00c"
+  },
+  "elicitation-forms/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "a92a686cbf5ee20f00434eb8333649a9fe60ca3b10acaec689f66904730ce1c4",
+    "summary_hash": "8b195211b684955b095175d9a446cf061c476ec52d4588160f141f18607468f4"
+  },
+  "elicitation-forms/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "a92a686cbf5ee20f00434eb8333649a9fe60ca3b10acaec689f66904730ce1c4",
+    "summary_hash": "232b90a244d44e01e1c191be2cd77de35d9a2143d2cfc61969889c02f40d8939",
+    "truncated": true
+  },
+  "elicitation-forms/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "a92a686cbf5ee20f00434eb8333649a9fe60ca3b10acaec689f66904730ce1c4",
+    "summary_hash": "d823874e2a03395667280e0a31cb9ff0fed4850aed4d399b6d7b874c5532ade9",
+    "truncated": true
+  },
+  "elicitation-forms/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "a92a686cbf5ee20f00434eb8333649a9fe60ca3b10acaec689f66904730ce1c4",
+    "summary_hash": "ea723ca21cae39b0f5e3ca1142f97023fd0323bfd7b9681951ebd5b5177531eb"
+  },
+  "elicitation-forms/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "a92a686cbf5ee20f00434eb8333649a9fe60ca3b10acaec689f66904730ce1c4",
+    "summary_hash": "e2300ccf6ad421d54ceacf97049e278c43b5b649fa148f8eca5c4d82f3c519cd"
+  },
+  "elicitation-forms/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "a92a686cbf5ee20f00434eb8333649a9fe60ca3b10acaec689f66904730ce1c4",
+    "summary_hash": "395c645fb86430cabe58b0e0e9f9a4bfaf7c7ebaa14b27ff507a876dbe6c3a61"
+  },
+  "elicitation-forms/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "a92a686cbf5ee20f00434eb8333649a9fe60ca3b10acaec689f66904730ce1c4",
+    "summary_hash": "0fac2d68b24010b3a053e30a6b0418f7a085cc9ee1e6c8d13f0bc6837094686b"
+  },
+  "elicitation-forms/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "a92a686cbf5ee20f00434eb8333649a9fe60ca3b10acaec689f66904730ce1c4",
+    "summary_hash": "f4fe35983d7aea2c83bc2b91900f43042a99f22a6c5caaf459d73618ab9f2bc0"
+  },
+  "elicitation-forms/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "a92a686cbf5ee20f00434eb8333649a9fe60ca3b10acaec689f66904730ce1c4",
+    "summary_hash": "985583bba2f55029c8d695796f542057ee70a0714e7ff2fe7fbdd97b7c048cf5",
+    "truncated": true
+  },
+  "elicitation-forms/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "a92a686cbf5ee20f00434eb8333649a9fe60ca3b10acaec689f66904730ce1c4",
+    "summary_hash": "2b45abea7bb08700b88e8475e7927f612cca53f459328111b0ddef79d5fa1afb",
+    "truncated": true
+  },
+  "fix-test/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b",
+    "summary_hash": "29d572f979ab8b43473f922dbfa941bd8bfe3953adb1ac4a8cdd74520f777f03",
+    "truncated": true
+  },
+  "fix-test/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b",
+    "summary_hash": "34f52e71774560d26fb509a48c832231f9ca31a65bb7cdd9d0dff3652483c164",
+    "truncated": true
+  },
+  "fix-test/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b",
+    "summary_hash": "c280dde6616ccafac052d7b00cf2ff2e7e8808a58ed1d254d6545cbfb6fd8f01"
+  },
+  "fix-test/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "26d8af3fe4cef200ee3e0528559c0e39b2bd3756956371d1e78427e02cb6385b",
+    "summary_hash": "f377e74132e3833535b8d9d9080d42aee6e782cd3e466d0fad42b39de7668989"
+  },
+  "fix-test/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b",
+    "summary_hash": "d76b028d174fc19c56c38535984448e2d728c9a69adf74e7ab0c4ceac1fe4ff8",
+    "truncated": true
+  },
+  "fix-test/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b",
+    "summary_hash": "4bf118cebfc7b22e98eaf4551f90b80dd0d1a00abb343b6ca4858b4398701e69"
+  },
+  "fix-test/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b",
+    "summary_hash": "162a41f693aff1b9232b3e696be6cfe30a1df4fce662d91dd746e9a4819a367e",
+    "truncated": true
+  },
+  "fix-test/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b",
+    "summary_hash": "87157a7847f77e06626df816a68666e447d2644d166d97e8449c645a5be3f65f",
+    "truncated": true
+  },
+  "fix-test/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b",
+    "summary_hash": "e192fd1869ceb8e888602576411b5cd502b626f0a9ec0621c66eb579ab2f13e5",
+    "truncated": true
+  },
+  "fix-test/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b",
+    "summary_hash": "b6e7be62ddf85254992f1c98e96be71225d652f0a300aa9cbe8990648fe07d92"
+  },
+  "fix-test/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b",
+    "summary_hash": "78ee3ff3d9761f74b7e3635607ce9fea5b9a858c5d490db9774974131d44a404"
+  },
+  "help-system/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "ca01c2128b2f7c655e8b49be4eed5c98e84af405f64d43f1ed48adce237ea1ab",
+    "summary_hash": "7347bbf12322c69ebac6212ae208cd8b425b1e19a12a0375908a810368586665",
+    "truncated": true
+  },
+  "help-system/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "ca01c2128b2f7c655e8b49be4eed5c98e84af405f64d43f1ed48adce237ea1ab",
+    "summary_hash": "f9bba8d098f516c812a9eb2f81e6288fe04a309fa9ea79584894572b4e41315e"
+  },
+  "help-system/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "ca01c2128b2f7c655e8b49be4eed5c98e84af405f64d43f1ed48adce237ea1ab",
+    "summary_hash": "453da53b3d3ccf5bd5c77a98d847f478cc22919a1e398c5574424f7ede5f465f"
+  },
+  "help-system/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "4b3a1bab804233a15abd64921c90aef74285b767a163dd8932e08c8233993bd6",
+    "summary_hash": "840a432ec0ff11c7e9c0faa3e2f05abd4445b4489da301ce228c111419774d59"
+  },
+  "help-system/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "ca01c2128b2f7c655e8b49be4eed5c98e84af405f64d43f1ed48adce237ea1ab",
+    "summary_hash": "0fe2cb12b0be20e36e78c0bb0a2faa218eb30df549da33ec68247d2e46207323",
+    "truncated": true
+  },
+  "help-system/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "ca01c2128b2f7c655e8b49be4eed5c98e84af405f64d43f1ed48adce237ea1ab",
+    "summary_hash": "50eb356e0235f75bbf0de90eeffe867580a3004d561ae6a7662c78deae9aea47"
+  },
+  "help-system/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "ca01c2128b2f7c655e8b49be4eed5c98e84af405f64d43f1ed48adce237ea1ab",
+    "summary_hash": "e3d4e14e5be971bd9a84989436fd6aa8b1e0ffc3173a29f232ac03733e4f3554",
+    "truncated": true
+  },
+  "help-system/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "ca01c2128b2f7c655e8b49be4eed5c98e84af405f64d43f1ed48adce237ea1ab",
+    "summary_hash": "b8d324a125c8386213dce82a3aba295d20440caee7e33d1c6298c066aa968e80",
+    "truncated": true
+  },
+  "help-system/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "ca01c2128b2f7c655e8b49be4eed5c98e84af405f64d43f1ed48adce237ea1ab",
+    "summary_hash": "ddb827912ff138bce30be52d385a1dfba47a71f45e2e8c5fc1eea00efd4c9687"
+  },
+  "help-system/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "ca01c2128b2f7c655e8b49be4eed5c98e84af405f64d43f1ed48adce237ea1ab",
+    "summary_hash": "8e27dd320aa09780554b31934d4c3b25cb98e4e62ed46dbae33300439ed61219"
+  },
+  "help-system/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "ca01c2128b2f7c655e8b49be4eed5c98e84af405f64d43f1ed48adce237ea1ab",
+    "summary_hash": "add9564cb6ae4e3d718f2a4d7dc05e3c6454f831aec8af8597ced316bd744d9f"
+  },
+  "hooks/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7",
+    "summary_hash": "86f84cbd79f94188c88555802da9fa4fe74061f2875d9001ab34ac849a1f3f2c"
+  },
+  "hooks/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7",
+    "summary_hash": "1392b2a467f726850ba8bc806dcd4767310ea228979795b817f3af490f82022e"
+  },
+  "hooks/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7",
+    "summary_hash": "3792c5625ff1f495374575a5cb5037e4649abd7edb0e152c4d3fc87407eb389d"
+  },
+  "hooks/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "7717cbea2ca989c143e66e17573d274cea8edd361774f5c6fe3534a0a2d750aa",
+    "summary_hash": "e25781c82b8ac9a71d4df345cbdc8bb56cc33c3523a89ba6b5074399c987e78a",
+    "truncated": true
+  },
+  "hooks/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7",
+    "summary_hash": "84bcc226927cac5b1c4f67eb8afdec36230f6ecb79edebca13d016d0a72bf3c3",
+    "truncated": true
+  },
+  "hooks/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7",
+    "summary_hash": "fdf0295836bad7e199d44912f39b058a672597e85596adf69ee098075e5ab82a"
+  },
+  "hooks/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7",
+    "summary_hash": "cead29da03f72df7cf5945a5a13505293679bbfb671dbc59db019bf6ba2e0868"
+  },
+  "hooks/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7",
+    "summary_hash": "1f76567dadd4184fb83bbb5e61851ca99eacdd19f3f6b965919617f03027a0f8"
+  },
+  "hooks/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7",
+    "summary_hash": "0d2ade1ba3dcfa2534b1da040b6957fb9dea661ef2941090af01245ea036f738"
+  },
+  "hooks/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7",
+    "summary_hash": "50ce7570d09c39590731c0f727a4cde5b4ec05f6f5fdb73bf85b0d7bbb17c898"
+  },
+  "hooks/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7",
+    "summary_hash": "ff0371ccd19b2159264d9a392e2c9a720eff7abdec7f5530606c823321d8e1bc"
+  },
+  "mcp-server/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f",
+    "summary_hash": "4d77f61dee063b054f995a33483f637774edc2b13aee4b68bf95275828f0074e"
+  },
+  "mcp-server/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f",
+    "summary_hash": "19f91e4d1128740b10db2ec604ed1a9d602a50a21043220dd64e70450f33561a"
+  },
+  "mcp-server/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f",
+    "summary_hash": "4791af43caa29cc08b3bd61709743460cd5500fbd640c76916d50675bb7f32fb"
+  },
+  "mcp-server/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "ad3216c576f7cee8bb9d5055b985fb768c44e145329c91f37235cb70f4a0baa2",
+    "summary_hash": "24865796608eb2dcdb5a428085bbe4e322d2b8490f5d7b2ba0adea4f47c756ca"
+  },
+  "mcp-server/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f",
+    "summary_hash": "dbd78d761fed14ae034deb923effb7067f028c3ab89a996599ea9715ec0d8972"
+  },
+  "mcp-server/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f",
+    "summary_hash": "8d964f887eef303e46e229c1b102fe21d02a11fa75ab2a5a8577628a24feea11"
+  },
+  "mcp-server/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f",
+    "summary_hash": "70dd6bfacec5e4c103f40359864e473ebe17ddc39d7d1cfd4042cafcc45ab10c"
+  },
+  "mcp-server/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f",
+    "summary_hash": "2cd1d55ef75efbfdce4104c1e097433f656aa9591b71e7fc687f2403f7eaf961"
+  },
+  "mcp-server/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f",
+    "summary_hash": "b82c11c0898205f40bd5900a818de7ef8714f5a50195a8642488a21f70767b4c"
+  },
+  "mcp-server/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f",
+    "summary_hash": "e97e2675c22a8d4e1eb19a7f09f7c8cf6594bed9215bc7f366341e354f644a9b"
+  },
+  "mcp-server/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f",
+    "summary_hash": "22f723b78399347956aeb412d41988e38043e1a94a4bd212652975f155e9e0a6"
+  },
+  "memory/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b",
+    "summary_hash": "667d2b71b30235e9fc618d309e33c6a0186c3aea3000449618926264f102fd51",
+    "truncated": true
+  },
+  "memory/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b",
+    "summary_hash": "464e329dd3aa37346f698e8830104221ef630e79e88388712b5705d2bcdcdbf0",
+    "truncated": true
+  },
+  "memory/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b",
+    "summary_hash": "6f11cd172d1a1f18958377286bbb792e9baf701fb100a345bc1e58b0d57b0e12"
+  },
+  "memory/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "64d1999916bfd14577a0b8371b25eaa734000a9b499325ac60587fef4aa2dd48",
+    "summary_hash": "2111e7ce20840f035ea2491567a1e3c00e6aa5bb71f70435150769566a844657",
+    "truncated": true
+  },
+  "memory/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b",
+    "summary_hash": "42abddf37630db0934ffa4589d8ede8d16a6c3f7549fa1002bda3aea9de98cc0",
+    "truncated": true
+  },
+  "memory/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b",
+    "summary_hash": "2730cb22feeb9014d04e52797b4330d03ad468ce5890da13c5227b089b7ada71"
+  },
+  "memory/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b",
+    "summary_hash": "28f1588fa1fa35b14304a2e0949ac2ee7ce7809055f2845092908a30178b2a10",
+    "truncated": true
+  },
+  "memory/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b",
+    "summary_hash": "11394cfc22516a0045b2e22066eb5929d0cec0a424977b01f4fdb15ea3426591",
+    "truncated": true
+  },
+  "memory/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b",
+    "summary_hash": "a15a5989112e3f6e2412d826606c598de39d6c8406a8ac72b102325386721c63",
+    "truncated": true
+  },
+  "memory/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b",
+    "summary_hash": "661db6caff43bdb15b2a07dbe5693c5b3154a88bc5e813177488f6cab3bdaa2d",
+    "truncated": true
+  },
+  "memory/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b",
+    "summary_hash": "3e5ac327c8f5423106057989e699daf7efbe6aadb0699eb86a9f4bfe9459cfe4"
+  },
+  "models/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459",
+    "summary_hash": "5777bef9d374ef7801e9ab626c229c141f5bfc5230aae895f2000775be793313"
+  },
+  "models/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459",
+    "summary_hash": "2441223f04f3d23746cec08d4d1cab09552e4d413f8f89dadeba31f4dfd444d2",
+    "truncated": true
+  },
+  "models/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459",
+    "summary_hash": "cfcdb6078dd6a67a8a8aa6c8766b85e36d98b2ba5091a676f31638abb91829b0"
+  },
+  "models/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254",
+    "summary_hash": "63f91deae32e84ac44538fd913bc3309a51d1190483b378b087801336380b5f1"
+  },
+  "models/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459",
+    "summary_hash": "7e2556a7382a788d9dda422a5a5387d696ca28a3781cde44a20ccbb65f1c00f5"
+  },
+  "models/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459",
+    "summary_hash": "52043a394a2d106d369a3fe4efa7d7a4ed28eacf92553345ce2de06fb399ce63"
+  },
+  "models/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459",
+    "summary_hash": "9c38caedac77dfe6edef7c10722e7c5fef60e1f4fb809bad79fa65a13007d900",
+    "truncated": true
+  },
+  "models/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459",
+    "summary_hash": "5d2608e9439616fa1962d50b40e93fe9ce21a0c9f3b9021625d045cebff05947",
+    "truncated": true
+  },
+  "models/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459",
+    "summary_hash": "d1a1b9422247c17655b3c918d669e8dbf5f78663a60c28ac59b616504e091108"
+  },
+  "models/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459",
+    "summary_hash": "dc006a49441feb80e88ca3f67e5531f4a558d75ada547fe11fd6f99651094f83"
+  },
+  "models/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459",
+    "summary_hash": "77c73093dbaebd486020f99448337d0a5ba9156519f0e93e1b2bf7f05247b2dd"
+  },
+  "ops-dashboard/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "1cad6797952953474159da11cd78e2e6f3b36b4845377e700eb2570427d138e7",
+    "summary_hash": "398b361f600cf1bb6b9d5e31727c3053968e5eec09d5642c2f96009c5bc1298d"
+  },
+  "ops-dashboard/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "1cad6797952953474159da11cd78e2e6f3b36b4845377e700eb2570427d138e7",
+    "summary_hash": "84afbe648a9f56fd5e18a4ab5237bcb672cf771ffb0ca3fb58d85d4950960355"
+  },
+  "ops-dashboard/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "1cad6797952953474159da11cd78e2e6f3b36b4845377e700eb2570427d138e7",
+    "summary_hash": "67d290bd17f8975de29dd627f49e0967f51bacd5a6686c82333e8d1feb2cac85"
+  },
+  "ops-dashboard/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "17d9424b042daad9a4e27867c7bbfc1a8bdc292fc2a0d10bf89d3ec5343b4f35",
+    "summary_hash": "7d0ac7cc3b5b80c595e02f31cd71ba31c6c79fadeb23722b76dfb2538543a27d"
+  },
+  "ops-dashboard/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "1cad6797952953474159da11cd78e2e6f3b36b4845377e700eb2570427d138e7",
+    "summary_hash": "7e128cf08bb307e412e66a953f1b3daf7f79d5e9f58baf15b615746ecfa3bed8"
+  },
+  "ops-dashboard/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "1cad6797952953474159da11cd78e2e6f3b36b4845377e700eb2570427d138e7",
+    "summary_hash": "a514410e5a7889b0243cf922bcf9d40b105ccc7b389678f81752af3741857bd2"
+  },
+  "ops-dashboard/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "1cad6797952953474159da11cd78e2e6f3b36b4845377e700eb2570427d138e7",
+    "summary_hash": "26a0335698e815b67514060291b7798dc20a917fb87344f52fa7b510966c714e"
+  },
+  "ops-dashboard/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "1cad6797952953474159da11cd78e2e6f3b36b4845377e700eb2570427d138e7",
+    "summary_hash": "6cd4c709cf417ab8007e655e55139328f9045e43205d9a4d7048a6b6390d8cdb"
+  },
+  "ops-dashboard/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "1cad6797952953474159da11cd78e2e6f3b36b4845377e700eb2570427d138e7",
+    "summary_hash": "8cd069854c92d8481a77ffa7409baf360023f9217154226e98b6eb11e7fc6920",
+    "truncated": true
+  },
+  "ops-dashboard/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "1cad6797952953474159da11cd78e2e6f3b36b4845377e700eb2570427d138e7",
+    "summary_hash": "c958a2dc5ba448e5911a144c265e63b3769e1ab66e9dc3e9b61c5d63183d902f"
+  },
+  "ops-dashboard/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "1cad6797952953474159da11cd78e2e6f3b36b4845377e700eb2570427d138e7",
+    "summary_hash": "2047d36c0287867aa46cbed3f8ee82dc88e11b4911a40bea2f992ecd60e6e69c"
+  },
+  "orchestration/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567",
+    "summary_hash": "b05c027baffb5484bcf3c20b3154dcd3a9ede4036a1e63feb2a72110a8168251",
+    "truncated": true
+  },
+  "orchestration/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567",
+    "summary_hash": "bbc583bbe84690c10512d29075f40efcf65cc8020662f77783447c18d83dc0f0"
+  },
+  "orchestration/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567",
+    "summary_hash": "0013ba546e865ce87964694164ab8c0bb231bdc4a5690820cda42371eae39ae6"
+  },
+  "orchestration/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "724daad6579e10a087a387da6e0700406bd20754e3b214f46d58e497a8c56a13",
+    "summary_hash": "37c0d2893c83536d3265b8f68ee38bc70978b5131b15061107f7548a7d4d6786"
+  },
+  "orchestration/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567",
+    "summary_hash": "8dbf495db921448ca18c4b8530f3a73a277574e2a16be3b883af40c9305de5f5",
+    "truncated": true
+  },
+  "orchestration/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567",
+    "summary_hash": "56471ef7b782e8669f399c93b0d9649966baa9f77938dae5f83f108827b4a9cb"
+  },
+  "orchestration/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567",
+    "summary_hash": "7e25808e99288f1228147929a0f1c55c3612d63ce131938f57626bcba779c407"
+  },
+  "orchestration/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567",
+    "summary_hash": "4e2712270814ac30af74eefcb6e1765fbda59e8d498826052440a207eaec3c45",
+    "truncated": true
+  },
+  "orchestration/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567",
+    "summary_hash": "baaff58b06b36d020b7b52b646c25928519e3d21f0456f64226ec64db15e324c"
+  },
+  "orchestration/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567",
+    "summary_hash": "a286725c1f55ce310172c90adddb348b313b9b3e5a633c41c72d0581d5f23795"
+  },
+  "orchestration/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3da859c638c01505e80876fc298c0d02f94889242bbb1c93df05af5291945567",
+    "summary_hash": "b70b85d0a2fe8965757321047f573dd85a432a0f429b57802a0444aa259e98b7",
+    "truncated": true
+  },
+  "plugin/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0c448ba69ee8546bc76d88364bffc606531d666c64711912a8285967cb769da2",
+    "summary_hash": "b8c49e59166f724607e6aa8b96b1847733aeac3c9908c57f61eceffeb5e18d2b"
+  },
+  "plugin/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0c448ba69ee8546bc76d88364bffc606531d666c64711912a8285967cb769da2",
+    "summary_hash": "3255bd5ba3c565764a945fa9a9bcab3a50fb23be1d772dcfd1988dde35f8f816",
+    "truncated": true
+  },
+  "plugin/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0c448ba69ee8546bc76d88364bffc606531d666c64711912a8285967cb769da2",
+    "summary_hash": "bf6d044b222d8e656ce4206759b6a9dfd3dba32d46dc0674392c84012b9f86d5"
+  },
+  "plugin/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "746d0ec8c3e9ab34137a8e6cfd610d512115a0e4bc1be92e222a5fbe6bd75c84",
+    "summary_hash": "3ce088f7b5c8cf2876ea484fc2c57e3e3aea3b273f6198315a980d2f6b437169"
+  },
+  "plugin/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0c448ba69ee8546bc76d88364bffc606531d666c64711912a8285967cb769da2",
+    "summary_hash": "d35870bd90180b898cf19cb0137dbee947ac636875bcfb837bf69178a7501602",
+    "truncated": true
+  },
+  "plugin/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0c448ba69ee8546bc76d88364bffc606531d666c64711912a8285967cb769da2",
+    "summary_hash": "e4cd22cfa61b18f2a424ee0c05f5509e2565eb080f8822d20eb91893c1c35941"
+  },
+  "plugin/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0c448ba69ee8546bc76d88364bffc606531d666c64711912a8285967cb769da2",
+    "summary_hash": "577f996684e6c71fdb91d353768f3cb581e44160d98271194b4504f9a944acb8",
+    "truncated": true
+  },
+  "plugin/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0c448ba69ee8546bc76d88364bffc606531d666c64711912a8285967cb769da2",
+    "summary_hash": "2cd45dd37f1ed038bd3e2a7f25b9d3353af8e9d82955cb076066ea08b9fe64b1"
+  },
+  "plugin/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0c448ba69ee8546bc76d88364bffc606531d666c64711912a8285967cb769da2",
+    "summary_hash": "a2a935f500a0534353524f2a6858d75bd2f0bdf9c9acbf7fe94b292f271432bb",
+    "truncated": true
+  },
+  "plugin/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0c448ba69ee8546bc76d88364bffc606531d666c64711912a8285967cb769da2",
+    "summary_hash": "1546045b0e6606d7c99a7d51f6443bcabd581a94ae089c75810d8f30647eec4c"
+  },
+  "plugin/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0c448ba69ee8546bc76d88364bffc606531d666c64711912a8285967cb769da2",
+    "summary_hash": "916dee93d026f040f8d145d24875aef7f87d5bc57951a510b52f11f70ece489f"
+  },
+  "rag-grounding/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4",
+    "summary_hash": "4bfbf5cd0108c9c3395d73364aa7e6e85a8d8b41e50a19c1a17c42636d822a99"
+  },
+  "rag-grounding/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4",
+    "summary_hash": "67888f3eca72066ca03c35a621e4db885aae0fd9ec007e4fb7b2cb4ecdde500c",
+    "truncated": true
+  },
+  "rag-grounding/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4",
+    "summary_hash": "b2044ac0c3bbc4e2a755f94b214914de2a0a1fb53d7e5cc6b130c9f8d66f1847"
+  },
+  "rag-grounding/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "963a89bdf710dc53dace340bfc002da183fd60926788ee058a4c1f1331d1acf9",
+    "summary_hash": "1bf9c7228d030c5c1318924217fd4b8ed24b0ec70731918b3e00316d92f37253"
+  },
+  "rag-grounding/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4",
+    "summary_hash": "4deca2244b548f47e8a25880c67c6a8754b1d8c4e0feaefafa2367fc0dde05c1"
+  },
+  "rag-grounding/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4",
+    "summary_hash": "fa5d1eaa93f850c0c0200a32dad8dd42bec207fd4a65bce920212e181c118703"
+  },
+  "rag-grounding/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4",
+    "summary_hash": "c716075353f2a44c38202fe6f114b8c04100bfb78d328aab45b261f00a1ef8f1"
+  },
+  "rag-grounding/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4",
+    "summary_hash": "e956dbcfcee71344a3a44b0e2dcc40069643e3cacb7de0f8b20c5188617cb7f6",
+    "truncated": true
+  },
+  "rag-grounding/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4",
+    "summary_hash": "f8589cfde9607ca2758721be69db913c94a38a876e731bedd6283d70483aa5a6",
+    "truncated": true
+  },
+  "rag-grounding/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4",
+    "summary_hash": "823a0aa93ec13d8ef663456dbb51f1d0628d96370df986d6c769f0e4f57ff52b"
+  },
+  "rag-grounding/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4",
+    "summary_hash": "a0d76ea76b8105335df48978740d555e1effc0400f9bb67bb1a580676d3bf5bc"
+  },
+  "refactor-plan/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb",
+    "summary_hash": "8da3cf9d9e1e539ed7f75a68de06d7cceb2dbfa6229fc5f23a964c1234cf2b64"
+  },
+  "refactor-plan/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb",
+    "summary_hash": "078d8cfef96907fe3fd15e941401b0f42180c43ece995cf62047212de4271a19",
+    "truncated": true
+  },
+  "refactor-plan/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb",
+    "summary_hash": "2cfca05a2435e707c97892174d75335da8c48f3ed7c89b7f9c19552622c4a31e"
+  },
+  "refactor-plan/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "a8b5dc570639e8d2770577c7a57611f86fbf596d547e3e6299cd6a5dd1281ea0",
+    "summary_hash": "25d29d1c8458eef86bde119708edb045199148f4da1e0b58dd32ce41db7bbc99"
+  },
+  "refactor-plan/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb",
+    "summary_hash": "ed53ec66cd6fc63b5a906568fc89d02b97493a512e46ea0c69bb957482d137da",
+    "truncated": true
+  },
+  "refactor-plan/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb",
+    "summary_hash": "702ca00b5041070c64ebc46a0b3807bf4d74c3c4fa9338431d5a1d79c37ee66d",
+    "truncated": true
+  },
+  "refactor-plan/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb",
+    "summary_hash": "a0bfcb980b2d1378c22766bfbd181fe9119bf82f9d2f8aab8c2f9d263520e251"
+  },
+  "refactor-plan/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb",
+    "summary_hash": "a9ee32fb7378d6e1c7fea2afad9eacfa052cd310497366fbfb34457abf91bb8e"
+  },
+  "refactor-plan/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb",
+    "summary_hash": "b79925eacffc3b53b72172b0283c37116f3c760445fdfb44c24850337ae713ff",
+    "truncated": true
+  },
+  "refactor-plan/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb",
+    "summary_hash": "2a7a90ba01293cd1cff52ef9678df150fa11400505d4f669946d019bc8a67073"
+  },
+  "refactor-plan/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb",
+    "summary_hash": "7df7d3c4a18bf63db9a982d4c82eacb98ec519ae354cf2fd431eb16c6fe04004"
+  },
+  "release-notes/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3bee45ea7e9bedc48f6fdc7744f2c05ff0fd177419dba9606233f53b10818ab6",
+    "summary_hash": "08ea78225e9a32dc3369b5cb8879dd61517bffd916a1ef1bbd7d790806d86f78",
+    "truncated": true
+  },
+  "release-notes/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3bee45ea7e9bedc48f6fdc7744f2c05ff0fd177419dba9606233f53b10818ab6",
+    "summary_hash": "abf067e8573790fe69c244ab46bcfd30b14d1723227a02fde01a224334e55c10",
+    "truncated": true
+  },
+  "release-notes/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3bee45ea7e9bedc48f6fdc7744f2c05ff0fd177419dba9606233f53b10818ab6",
+    "summary_hash": "651607f4d4d9a4accb80806ddfe5ccca056d6e20262c1f593aca8d3307db677e"
+  },
+  "release-notes/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "7da9446d7cacf94eaf0a08e3e56fa68fcda7ff671c1bb6ec775d253ba2882243",
+    "summary_hash": "6a6cfef5cda761857e985c0952bbef9793e99f5aab1094767f8f70e829e29b21"
+  },
+  "release-notes/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3bee45ea7e9bedc48f6fdc7744f2c05ff0fd177419dba9606233f53b10818ab6",
+    "summary_hash": "a2597eb4f04392172dda03c2c5b9c4efff30c79825b83ba9ec36c3142a191c21",
+    "truncated": true
+  },
+  "release-notes/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3bee45ea7e9bedc48f6fdc7744f2c05ff0fd177419dba9606233f53b10818ab6",
+    "summary_hash": "48b82a3fbeacc34289d3ccb1b2235a6e82a36f5e81760c15e5c7ef94e78be654"
+  },
+  "release-notes/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3bee45ea7e9bedc48f6fdc7744f2c05ff0fd177419dba9606233f53b10818ab6",
+    "summary_hash": "4525cc1ded50e627007eb093e27e910256c628aabe11b78c473b76b63bc869e9"
+  },
+  "release-notes/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3bee45ea7e9bedc48f6fdc7744f2c05ff0fd177419dba9606233f53b10818ab6",
+    "summary_hash": "c34a5d7ce83982912b1fd0c7684d77a0cf968e1ee2eb7148297e6855949dec03",
+    "truncated": true
+  },
+  "release-notes/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3bee45ea7e9bedc48f6fdc7744f2c05ff0fd177419dba9606233f53b10818ab6",
+    "summary_hash": "ad9553ba135c158d7f19081ab42fd3b4b984caa08d7fa24f46a4f7a2b2859a73"
+  },
+  "release-notes/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3bee45ea7e9bedc48f6fdc7744f2c05ff0fd177419dba9606233f53b10818ab6",
+    "summary_hash": "c0af81a6609fd763e9f1d2c78dc53a902c03163d0e893c1422f1028de62b4aab",
+    "truncated": true
+  },
+  "release-notes/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "3bee45ea7e9bedc48f6fdc7744f2c05ff0fd177419dba9606233f53b10818ab6",
+    "summary_hash": "c9772353724ed33e72f2f63e4ea9f0bdeb1ac24b93e8ab61d31eff288ddfd70e",
+    "truncated": true
+  },
+  "release-prep/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2",
+    "summary_hash": "bfe3dfa3130ffcf69ba80bda05757440988c1bca8ecb59ca0b80dc4c353e8311"
+  },
+  "release-prep/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2",
+    "summary_hash": "fd6d82f73c39fff9307eaeb4729cca442040bcc1848facae3822387da0d2efd6"
+  },
+  "release-prep/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2",
+    "summary_hash": "a5e628e45265b0fddb928fd8a4fb30a2e9052123bcf037737341dd5a2655092b"
+  },
+  "release-prep/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "08b2f8fa8377393a5e18bf6badc6480f4ed3f2ecb093331e0f268b7300efe50b",
+    "summary_hash": "42f5bf19c54198499865308fc73704b14053bf984c3fc0d722946c740d7a8951",
+    "truncated": true
+  },
+  "release-prep/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2",
+    "summary_hash": "0492cbf371d0f5b3120dafabfb0ebf41613e5b6ca961d8e5f138f123d2050e9c",
+    "truncated": true
+  },
+  "release-prep/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2",
+    "summary_hash": "463c19585c6b7d620e5ef23511f394b12fa856f2a4002619f5565d7f0c186298"
+  },
+  "release-prep/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2",
+    "summary_hash": "b210164fea213b3064acb096cb6a04a5d2e741daabc15ac87ff599b9cb1d681b"
+  },
+  "release-prep/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2",
+    "summary_hash": "7ef117578ff684d80b949432b674db014294b3efb59b03d873ff8c3d30fd5840"
+  },
+  "release-prep/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2",
+    "summary_hash": "dc2f473533f729374e70a8b601da5eab3804374ffa82cc782031d3b97cad7d60",
+    "truncated": true
+  },
+  "release-prep/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2",
+    "summary_hash": "285a64fca35dfa0fc685c7ee34221d870c947da5f9401409257f11e1b117caed"
+  },
+  "release-prep/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2",
+    "summary_hash": "9c3dd69750898024e04d24bf75521fc8fbdc700af00cb7a228a605005db6aba7",
+    "truncated": true
+  },
+  "resilience/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5cb46b75c64a21b6c79cd5a1c06a09a397f1048bd4e927af38e5c62d97a332d6",
+    "summary_hash": "f8cfa561ad8fbd35d71cb44cedca831fb629fb755f45dd9dc419f4b2e0ca8deb"
+  },
+  "resilience/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5cb46b75c64a21b6c79cd5a1c06a09a397f1048bd4e927af38e5c62d97a332d6",
+    "summary_hash": "235f463ad18aebae74102041737577857215e21badafc58846407d73d0146484"
+  },
+  "resilience/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5cb46b75c64a21b6c79cd5a1c06a09a397f1048bd4e927af38e5c62d97a332d6",
+    "summary_hash": "5a77e7fb245be42dde919e48d6798d4f0b067bedf9cb63f9e3ee2ca49990969e"
+  },
+  "resilience/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "83cf1259ff124fcc64f3f4d13907dd395978f3f01281b0513959e7a851715f6a",
+    "summary_hash": "c97ab8bbde6d55a56328812955e91f753607a9c78d98779bd07bc28186022768"
+  },
+  "resilience/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5cb46b75c64a21b6c79cd5a1c06a09a397f1048bd4e927af38e5c62d97a332d6",
+    "summary_hash": "f499f1e3634f87fb6d0cc8cb9d18a140c24ad2992566eda9a4ca53d98a3c377e",
+    "truncated": true
+  },
+  "resilience/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5cb46b75c64a21b6c79cd5a1c06a09a397f1048bd4e927af38e5c62d97a332d6",
+    "summary_hash": "02b358df8dfd197b4b221f51bb6978447a393e2a996815a2c48e4afaf1d9840a"
+  },
+  "resilience/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5cb46b75c64a21b6c79cd5a1c06a09a397f1048bd4e927af38e5c62d97a332d6",
+    "summary_hash": "17499f4854486548e51b3accdd3d2613b1989911ee0da19c1be6acf6b5da17c9",
+    "truncated": true
+  },
+  "resilience/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5cb46b75c64a21b6c79cd5a1c06a09a397f1048bd4e927af38e5c62d97a332d6",
+    "summary_hash": "322e9efb8424c81f8186be8fe69cd6c2aedcbe2c7451f9d75fb1efb749b76c60",
+    "truncated": true
+  },
+  "resilience/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5cb46b75c64a21b6c79cd5a1c06a09a397f1048bd4e927af38e5c62d97a332d6",
+    "summary_hash": "3ef0ff4ce2697a6675f1f3967a5f997d5315a0b1ebecc0cb9c640b819c627b1f",
+    "truncated": true
+  },
+  "resilience/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5cb46b75c64a21b6c79cd5a1c06a09a397f1048bd4e927af38e5c62d97a332d6",
+    "summary_hash": "ed0c7c236d2b4c001eda3bb4a8180b05ae7fe5572c21834498bdede3880f371c"
+  },
+  "resilience/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "5cb46b75c64a21b6c79cd5a1c06a09a397f1048bd4e927af38e5c62d97a332d6",
+    "summary_hash": "83f2110691895fb372b8e879695b1b4d45cf0983c92289ad73c3b095106e857a"
+  },
+  "security-audit/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a",
+    "summary_hash": "3ddf71343dee6c5632640268f50739f2913d8a1d579ddfdd83a5f290ea1876be"
+  },
+  "security-audit/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a",
+    "summary_hash": "c2ce43b88a7ef7e92ef5134406a9d70b3fc179b0485d924fbdb3fb66fe26d376",
+    "truncated": true
+  },
+  "security-audit/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a",
+    "summary_hash": "92a2a776129a85b643bf22b44059794c92f91945455619acf532e70f2c9b376c"
+  },
+  "security-audit/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "eae54371f777d7daaf221262e83161689f726496eaa58090e4ea0460f613d131",
+    "summary_hash": "02df127346cd430c556c6835bd485249412be68fdb5765d52cad0ed83efa4981"
+  },
+  "security-audit/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a",
+    "summary_hash": "550ad367c7e11b38422a195f075d71635c92f52ac0b11b12814a20455125b048",
+    "truncated": true
+  },
+  "security-audit/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a",
+    "summary_hash": "8c5d2bf7240399f3da36deef4026edb17a4ee38cc2988ff5d3cc91527803b7ec"
+  },
+  "security-audit/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a",
+    "summary_hash": "2e308f47e4f7dc04a7ae1544e96465f28686256b6b319986ad63e35cc8f218d0"
+  },
+  "security-audit/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a",
+    "summary_hash": "d8d6f208b8e13633460f617be7c7141bc31e4477a2c7318cd35cedf01482a4d6",
+    "truncated": true
+  },
+  "security-audit/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a",
+    "summary_hash": "6a9f0ef8467133e619bf3d437788bd01798af8bbc318a0a3de64cfbac7233990",
+    "truncated": true
+  },
+  "security-audit/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a",
+    "summary_hash": "db306ba8f9e23b7c880d7ac2b10102977a53977bf7f0d52e65f4bb2b599fbdc5"
+  },
+  "security-audit/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a",
+    "summary_hash": "921043dc154acde875c0b0d5b91416231a52b01d479a188c3f16220cc58e2a99"
+  },
+  "smart-test/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe",
+    "summary_hash": "edd8ce3c21ea081b5527c4141be1b8b5b97dde51af0644bfab3322c6e853b090"
+  },
+  "smart-test/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe",
+    "summary_hash": "95ff12255dd09ec34d4663e687787a059ca1857be10546948b749018b26fac8a",
+    "truncated": true
+  },
+  "smart-test/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe",
+    "summary_hash": "1049773e06445bb9f0aa0fc7af8280d2f38aa7df80dddd4be47a4f5b9e49e2f3"
+  },
+  "smart-test/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "b1325f36412cbd67b36481e0f150de834b91392f8fa17c843f8aecd357d18b07",
+    "summary_hash": "db5dc6d176cb46b4c7f4dc22ebefccb4cea74d22d8f8fff67082c9748a274899"
+  },
+  "smart-test/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe",
+    "summary_hash": "ba0991470de8297db84f4b721ec1ddaaea80359c3e5d41815d0323814a5a7d6c",
+    "truncated": true
+  },
+  "smart-test/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe",
+    "summary_hash": "d2e21737a14773d13f9ef96d65c2b51a0d35e6d9f2a46844828d79b853ced5a1"
+  },
+  "smart-test/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe",
+    "summary_hash": "a5e1e4bc135a119d9cb594aefdcbe6a939e800c426fed11e60f139d1eb4dcdca",
+    "truncated": true
+  },
+  "smart-test/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe",
+    "summary_hash": "e9afae254685aeb22d0ccb9a81c5e48214dd8ff4fba41ed83892ff41feaaeedf",
+    "truncated": true
+  },
+  "smart-test/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe",
+    "summary_hash": "8eb2f8843c0ba47b8c7b3913163def68042ac2ae69b9fa727b005f4b2ab93a80",
+    "truncated": true
+  },
+  "smart-test/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe",
+    "summary_hash": "cd2c2e8b3d46475e155c08165a64fa1f4b8cc0983acfceb37543b4d9d1859b4b",
+    "truncated": true
+  },
+  "smart-test/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe",
+    "summary_hash": "f7eeed165ec931c0843153952589d5c3951a2f7eced6e6a2ab756ee1c5efa872"
+  },
+  "spec-engine/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1",
+    "summary_hash": "4dd0949b6f65590fd50aa1c7e284d081e2a01ad0a2f6e0a0c43247978ec19116",
+    "truncated": true
+  },
+  "spec-engine/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1",
+    "summary_hash": "6ddbfc9f549e0fbef9b5e83ec6d4552ef1ba7467221a30be676d673028c4e66d"
+  },
+  "spec-engine/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1",
+    "summary_hash": "4567c9403a63a60c785769e2b67a468c822ca4b014740630ca96416e35280397"
+  },
+  "spec-engine/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337",
+    "summary_hash": "b3525e629469d6d9ed1e456ed80c8ff26a77139c850b0fd85a7d51c812d49572",
+    "truncated": true
+  },
+  "spec-engine/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1",
+    "summary_hash": "046ea8a7cffff899ec4d6c9de1553bfeb01f697baab5bc5afcd06e00eca62e1a",
+    "truncated": true
+  },
+  "spec-engine/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1",
+    "summary_hash": "bce3c77b4a5b8c65816058d50e9a691076ff8691eb84fe3f1feeaeede2bcdd29"
+  },
+  "spec-engine/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1",
+    "summary_hash": "2dbbb4e879b6079f9bdd159f3fa85a14666f31012172234e37d9a25cef89e04b",
+    "truncated": true
+  },
+  "spec-engine/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1",
+    "summary_hash": "152d5cfc8a5508a412a810023ad3ad960ae320be2708d85b11e0aba79dfa3154"
+  },
+  "spec-engine/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1",
+    "summary_hash": "b4012c9304b471ee00796a481784c682d9c682d1283a5712a2aa6510fa9f7177",
+    "truncated": true
+  },
+  "spec-engine/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1",
+    "summary_hash": "e8cbf2b483101a587239d0dce7549068bf9df0d3522c13e27ec718e805d9bfe8",
+    "truncated": true
+  },
+  "spec-engine/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1",
+    "summary_hash": "a956b5f557743f5cd59dd7c37181b0758dea92c0db9c2750984319dde4537269"
+  },
+  "telemetry/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b",
+    "summary_hash": "33b01a72a0c3bbecec0fcce0c09faf298293f0473b94ab3b2bde99078fe5afda"
+  },
+  "telemetry/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b",
+    "summary_hash": "839757bb8211072abd73e4d862b036d4a5d32599834effaa5b9cf9c03fb0b999",
+    "truncated": true
+  },
+  "telemetry/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b",
+    "summary_hash": "942cf1b1914688cd6ce922810e572440464139bf08a402f508b32d9063c6f5bb"
+  },
+  "telemetry/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "6d538c395b2e48850f597c2bdde5d30893828a1aa0f8462568f6e2ff5add403a",
+    "summary_hash": "886cb3d2d44a431d9f0f55017b509cff4b9a8d6b5e492ffbcd578662b880a446"
+  },
+  "telemetry/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b",
+    "summary_hash": "22fd717eb89ac838143810a2f9f0f29e523fbabe875dd3b213f4cad0ea4b79f0",
+    "truncated": true
+  },
+  "telemetry/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b",
+    "summary_hash": "542796444ef2500709124dc8578e1175bb468bd66e8fa94cd09694bd4da605cf"
+  },
+  "telemetry/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b",
+    "summary_hash": "71e5c049ff6e302af5e7585680e60a917894b1e301c4c4b478e5df0eec48bb0d",
+    "truncated": true
+  },
+  "telemetry/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b",
+    "summary_hash": "95bdad49112987b43cec593f80ca10fc3064bc8ad0b942602389f3f7b66ba35b"
+  },
+  "telemetry/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b",
+    "summary_hash": "312e5d421957f6a84e4c88f4b4f3f26e93972a956acfa24c1cb41d3d902443b0",
+    "truncated": true
+  },
+  "telemetry/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b",
+    "summary_hash": "937815a67eddaa5b0a40924b32dfdeca553f01116d5cfe299dcccf646354b986",
+    "truncated": true
+  },
+  "telemetry/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "70af5f419937014536c9522dee18a1346bb18f723c2ed51057c807380c66ee6b",
+    "summary_hash": "fa2eb6b3e3b66921023fe8b80bdf70aed0d0b045b739c8da2d6034e0173c322f",
+    "truncated": true
+  },
+  "wizards/comparison.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0",
+    "summary_hash": "61a896a6ef349b95b1d1c864c3ebc3f10a634d4439a1dba4cc1240268b80e05e",
+    "truncated": true
+  },
+  "wizards/concept.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0",
+    "summary_hash": "48d1e6af59212c4fdae061d5b3860ec707af2db2880c9e8d89ed1a01ad1f166e",
+    "truncated": true
+  },
+  "wizards/error.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0",
+    "summary_hash": "68167cf26580b19465d5523bc48167d28b2fa8bb168d4944384a7ba3feb8c86e",
+    "truncated": true
+  },
+  "wizards/faq.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "43c40ace49f90f41f4d16f463b01f39c8b0d18d0f3c68eecf0a6613696f16f75",
+    "summary_hash": "f7486b8d656496f7f3eaacd8dde603517b8af7573628e7122485d09540e29518"
+  },
+  "wizards/note.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0",
+    "summary_hash": "97acd0cb9783f7f7fd32eca0b2a9432ad279074a27861c400ace91be8c9fddee"
+  },
+  "wizards/quickstart.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0",
+    "summary_hash": "134f934559b1f414b3d2bd44313422216c28de58eb937c220e2da09145bc4329"
+  },
+  "wizards/reference.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0",
+    "summary_hash": "ca15b69fe08a2cc1d153984873d077ad16507dd2872beb798ec9566941e5b568",
+    "truncated": true
+  },
+  "wizards/task.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0",
+    "summary_hash": "fd217896af261a14b6947d2c1f7d54fddeed500612eeed8163ba43d285bcd95d"
+  },
+  "wizards/tip.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0",
+    "summary_hash": "789ae1a74b95b75bf0d6b4262c86b0b733021390598fc9dfe05d109aabc55ebd",
+    "truncated": true
+  },
+  "wizards/troubleshooting.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0",
+    "summary_hash": "467b89cc97c925c699765f19b36be13f94b9f3222478750e9e8e860bc2827e8b"
+  },
+  "wizards/warning.md": {
+    "model": "claude-sonnet-5",
+    "polished_at": "2026-07-10T05:10:37.855747+00:00",
+    "source_hash": "0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0",
+    "summary_hash": "eef71b1cbe8a11b0dce5725e24325fec557359bdb4b9dc6352d137520d442e10"
+  }
+}
