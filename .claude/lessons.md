@@ -14255,3 +14255,306 @@ def ", start_idx + 1)` for module-
   tail first, the PR's after). Applies to any self-referential corpus
   file (lessons, docs about git) — the content defeats naive marker
   detection precisely because the file teaches about conflicts.
+
+<!-- Harvested lessons — 2026-07-09 stale-branch cleanup. Each block is the
+     verbatim added text of an unmerged lessons commit; source noted per block. -->
+
+<!-- from 041e0587e docs(lessons): attune-gui sibling-env false-stale + dropped pull_request webhook -->
+
+
+- **attune-gui's "all N templates stale" is the attune-author
+  false-stale bug re-surfacing through a SIBLING env — the
+  dashboard computes staleness with whatever attune-author ITS OWN
+  environment resolves, and attune-gui 0.8.0's pyproject caps it at
+  `attune-author[ai]>=0.14.0,<0.15` (pre-0.23.0 fix)**: hit
+  2026-07-06 launching `/attune-gui` against ~/attune-ai — Home
+  showed "FRESH RATIO 0%, 296 stale of 296" plus "no features.yaml
+  found · Features: 0" even though the plugin-side false-stale was
+  RESOLVED 2026-07-04 (attune-author 0.23.0, attune-ai pin bumped
+  PR #1246). The uniform N-of-N tell from the 2026-07-04 lesson
+  applies unchanged; the trap is thinking "we fixed that" — the fix
+  only landed in envs whose PIN allows 0.23.0, and each attune-*
+  consumer (attune-gui, worktree venvs, CI) re-introduces the bug
+  until its own ceiling moves. Two sub-traps hit en route:
+  (1) `uv pip install --python <project-venv> attune-author==0.23`
+  reported success but the NEXT `uv run --directory <project> ...`
+  launch silently re-synced the env to uv.lock and DOWNGRADED it
+  back — `uv run` auto-sync is the same wipe as the known "later
+  uv sync WIPES direct installs" lesson, but it fires on every
+  launch, so a venv-level fix for a uv-run-launched app never
+  sticks. Launch-time fix that DOES stick:
+  `uv run --with 'attune-author[ai]>=0.23,<0.24' attune-gui`
+  (overlay env, survives re-sync); durable fix = bump the consumer's
+  pyproject ceiling + `uv lock` + publish (the `<0.15` cap ships in
+  PyPI metadata, so every fresh install resolves the buggy version
+  until a patch release). (2) Diagnose which env computes a
+  dashboard's numbers from the UI's own provenance line ("Probed
+  under <python>") — after the --with overlay it read the ephemeral
+  `~/.cache/uv/builds-v0/...` path with 0.23.0, confirming the live
+  process, not the project venv, was answering.
+
+- **GitHub can silently DROP `pull_request` synchronize webhooks —
+  zero workflow runs schedule for a pushed SHA while earlier pushes
+  scheduled within seconds; poll the runs API and fall back to
+  `workflow_dispatch`**: hit twice in one hour on attune-gui PR #82
+  (2026-07-07). After `git push` to a PR branch, `gh pr checks`
+  said "no checks reported" for 7+ minutes; `gh api
+  "repos/<o>/<r>/actions/runs?head_sha=<sha>" -q .total_count`
+  returned 0 — the synchronize event never fired workflows (trigger
+  config was fine: `on: pull_request` bare). Detection recipe:
+  poll that runs-by-head_sha count for ~90s; if still 0, the
+  webhook is gone — it does not arrive late. Recovery: `gh workflow
+  run tests.yml --ref <branch>` (+ lint.yml) — dispatch runs
+  execute on the branch HEAD and their check-runs attach to that
+  SHA, so they satisfy PR checks and codecov posts normally. The
+  next push may auto-trigger fine (flaky, not systemic). Corollary
+  for release trains: after ANY push that must gate a merge, verify
+  runs actually SCHEDULED (count > 0), not just that none failed.
+  Same session also confirmed the fixed pin must reach the
+  PUBLISHED artifact to stick: attune-gui 0.9.1 shipped the
+  `attune-author >=0.23,<0.24` pin, and the dashboard launch was
+  repointed from the local checkout to the shipped wheel
+  (`uv tool run attune-gui@0.9.1` in launch.json — bump the pinned
+  version on each release; a `--directory` launch runs whatever the
+  checkout's HEAD happens to be, including detached stale state).
+
+<!-- from caf236e7f docs(lessons): 0%-coverage from missing optional dep is structural deadness -->
+
+
+- **A module at EXACTLY 0% in the QA coverage baseline can be 0%
+  because an OPTIONAL dep gating the WHOLE module isn't installed —
+  not because it's testable-but-untested; `grep <dep> pyproject.toml`
+  before scoping a suite**: 2026-06-14 (Sun-1 auto-run), the
+  `attune.workflows` baseline flagged `progress_server.py` (327 lines,
+  0%) as a top gap. But the module does `try: import websockets …
+  except ImportError: WEBSOCKETS_AVAILABLE = False`, and
+  `ProgressServer.__init__` RAISES `ImportError` when the flag is
+  False. `websockets` is NOT a declared dep (`grep websockets
+  pyproject.toml` → nothing) and isn't in the venv, so the class can't
+  even instantiate in CI either — the 0% is structural deadness, not a
+  missing test. Covering it would need a dep addition (risky /
+  out-of-QA-scope) or module-global mock gymnastics (patch
+  `WEBSOCKETS_AVAILABLE=True` + inject a fake `websockets` exposing
+  `exceptions.ConnectionClosed`/`serve`) that don't reflect real usage
+  — low value. Pick the next clean target instead (here:
+  `test_maintenance_cli.py`, a pure argparse CLI with mockable
+  collaborators — the proven 99% pattern from #876). Refines the
+  QA-baseline "a module here is a HYPOTHESIS" reminder: when a module
+  is at *exactly* 0% (not partial), suspect a whole-module import guard
+  and grep the gating dep BEFORE committing effort.
+
+<!-- from 87ac6f655 docs(lessons): subprocess check=False + parse-stdout masks a crash as "empty/clean" -->
+
+
+- **A `subprocess.run(..., check=False)` consumer that parses stdout
+  turns a SUBPROCESS CRASH into a false "clean/empty" result — verify
+  the exit code (or that the CLI is even importable) before trusting
+  parsed-empty output**: 2026-07-01, absorbing attune-author's staleness
+  machinery, dogfooding the live consumer
+  (`attune.ops.help_data._attune_author_stale_features`) revealed it
+  shells `attune-author status` via `subprocess.run(check=False)` and
+  feeds `result.stdout` to a markdown parser. On this machine the
+  `attune-author` PATH shim points at a Python without `attune_author`
+  installed → the subprocess dies with `ModuleNotFoundError`, exits
+  non-zero, stdout empty. `_parse_status_output("")` returns
+  `frozenset()`, so a **crash reads as "nothing stale"** — and because
+  the function returns an empty set (not `None`), callers never reach
+  their age-based fallback. The graceful-degradation shape
+  (`check=False` + parse-whatever-came-back) silently converts "the tool
+  is broken" into "the tool says everything's fine." Rules: (1) a
+  subprocess whose EMPTY output is a valid answer MUST check
+  `returncode` (or `check=True` + catch) — treat non-zero as *unknown*,
+  not as the empty answer; (2) map *unknown* to the real fallback
+  (here: `None` → age-based), never to the same value as a genuine empty
+  result; (3) when a consumer "returns nothing wrong," confirm the
+  underlying tool actually RAN — `which <tool>` finding a shim is not
+  proof it's importable/runnable. Pairs with "registered ≠ working —
+  dogfood the live loop" (a broken dependency masquerading as success)
+  and the workflow-failure-exit-propagation family (swallowed non-zero
+  exits). Recorded in attune-author-consolidation decisions.md D8.
+
+<!-- from 96a46aaae docs(CLAUDE.md): three session lessons from worktree cleanup -->
+
+
+- **`git stash pop` after fast-forwarding to upstream
+  inverts `--ours` / `--theirs` semantics — and the
+  most common conflict shape is a spec status field
+  that upstream changed since the stash**: classic
+  flow during the "merge + restore wip" dance when
+  the main checkout has uncommitted spec edits.
+  Stash → ff merge → pop → conflicts on any file
+  where both sides edited the same line. During the
+  pop, the merge base is HEAD (the just-merged
+  upstream content), so `--ours` = upstream (HEAD),
+  `--theirs` = the stashed content. This is INVERTED
+  from a regular merge. Concretely, hit on
+  2026-05-12 with spec status field collisions —
+  upstream had moved `coverage-canonical-pattern`
+  to "paused 2026-05-12" while the stash had stale
+  "approved" edits. `git checkout --ours <file>`
+  on each conflicted file took the upstream
+  (correct) version. ALWAYS follow a deliberate-
+  discard resolution with `git stash drop` to clear
+  the stash entry — otherwise it lingers with stale
+  content and is easy to revive later by mistake.
+  The conflict shape (status fields, sometimes
+  status-line + decisions reference) is predictable
+  enough that a one-line resolution checklist works:
+  `git checkout --ours <conflicted files> && git add
+  <files> && git stash drop`.
+
+- **Scheduled-tasks display time uses Claude Code's
+  configured local timezone, NOT the timezone you
+  passed in the ISO offset — verify by reading the
+  display in the user's local time, not by trusting
+  the offset you specified**: passed
+  `fireAt="2026-05-12T19:30:00-07:00"` (intending 7:30
+  PM Pacific). Display showed "5/12/2026, 10:30:00
+  PM" — which is 7:30 PM Pacific rendered in Eastern
+  time (the user's locale). The stored ISO is
+  canonical; the display is just rendered for the
+  user. If user said "7:30 PM" and the display shows
+  a different hour, the schedule is wrong for THEIR
+  intent. Confirm user's timezone separately (their
+  daily-briefing cron `fireAt` minus the cron
+  `cronExpression` time-of-day gives the local
+  offset). Update via
+  `update_scheduled_task(fireAt="<correct-offset>")`.
+
+- **Subagent-vs-Batches questions need a Phase 0
+  measurement before drafting the full spec**: when
+  considering whether to replace a Batches API pipeline
+  with subagent fan-out (e.g., per-kind polish
+  specialization in attune-author), the prior is that
+  Batches already wins on speed/cost — 50% discount
+  plus automatic parallelism. The only axis where
+  subagents can beat Batches is *quality
+  differentiation* (different prompts, models, or
+  strategies per task type). Don't draft a full spec
+  on that prior alone. Phase 0 design: run the same
+  fixed corpus through three arms — (1) status quo
+  Batches with global prompt, (2) subagents with
+  regular API per-kind (no batching — worst case for
+  subagents, exposes the discount loss), (3) subagents
+  that each submit their own Batches call (preserves
+  discount, isolates the per-kind effect). Capture
+  wall-clock, input/output tokens, total $, and 5
+  sampled outputs per arm for quality eyeball.
+  Pre-commit a decision matrix to
+  `docs/specs/<spec>/decisions.md` BEFORE running so
+  the result routes the decision cleanly without
+  goalpost-moving (see the existing "Pre-committed
+  decision matrices survive contact with data"
+  lesson). Same pattern as the Agent Surface
+  Rebalance retirement (2026-05-12): $8.78 of
+  measurement was strictly cheaper than implementing
+  a conversion that would have saved zero bytes. Test
+  budget here is similarly cheap (~$5-15 for a 12-
+  template corpus on Sonnet). Generalize: any "swap
+  Anthropic-native infrastructure for orchestration
+  layer above it" question in this ecosystem needs
+  Phase 0 measurement first.
+
+<!-- from 8fce6bd18 docs(CLAUDE.md): add stale-branch git-status gotcha lesson -->
+
+
+- **`git diff --stat` on an abandoned branch shows
+  working-tree-vs-branch-HEAD, not vs current main —
+  the insert/delete counts mislead when assessing
+  "what's worth salvaging" from a stale branch**: hit
+  during today's worktree audit on
+  `silly-shamir-a723b0` (PR #262 CLOSED, dirty). The
+  `git status` showed `M` on 3 files in
+  `.help/templates/memory/` and the `--stat` reported
+  214 inserts / 264 deletes — a substantial-looking
+  rewrite. But that diff was working-tree-vs-the-
+  branch's-OWN-old-base. The actual diff vs current
+  main was 6 lines per file: just regenerated
+  frontmatter (`generated_at` timestamp +
+  `source_hash`). Body content was identical because
+  the templates auto-regenerate from `src/attune/
+  memory/` source and main had a NEWER regeneration.
+  Pattern: when evaluating whether to "salvage"
+  uncommitted work from an abandoned branch, always
+  `diff <worktree-file> <main-file>` directly, not
+  `git diff --stat` inside the worktree. The latter
+  compares against a base that's typically weeks
+  behind main. Saved a no-op PR today. Pairs with
+  the existing "Audits with 'possibly delete if X'
+  qualifiers require verifying both X and the
+  alternative before acting" lesson — same shape,
+  different mechanism.
+
+<!-- from 263d4f379 docs(lessons): 4 from worktree/staging/stash mechanics -->
+
+
+- **Editable install from a sub-worktree binds to
+  the parent worktree's filesystem for project-
+  relative reads, not just code**: the existing
+  lesson on `uv run attune from a worktree serves
+  the MAIN repo's code, not the worktree's` covers
+  Python imports. The corollary: anything resolving
+  `config.project_root / "docs" / "specs"` (or any
+  other project-relative path) reads the PARENT
+  worktree's disk too — `project_root` is set at
+  server startup from where the binary was
+  launched. Concrete observation: ops dashboard's
+  `/api/specs` returned 18 specs while the
+  sub-worktree had 20 on disk; the 2 missing
+  existed in `origin/main` but the parent's local
+  main was 16 commits behind. The dashboard wasn't
+  filtering or caching — it was scanning a stale
+  filesystem. Generalization: when an
+  editable-install-served service shows stale
+  data, check the PARENT worktree's git state, not
+  the sub-worktree where you made changes.
+
+- **Replicating prepared staged work onto a moved
+  main: use `git apply --3way` of the diff, not
+  content overwrites**: prepared work in a parent
+  worktree's staging area may be against a
+  POINT-IN-TIME version of main that has since
+  evolved. Wholesale-copying the staged content
+  into a fresh branch off current main reverts the
+  upstream evolution. Caught when
+  `test-quality-program/decisions.md` showed a
+  279-line deletion — main had grown a Phase-2
+  decisions section that the staged version
+  predated. Fix template: `git -C <parent> diff
+  --cached -- <paths> > /tmp/x.patch` to extract
+  the prepared diff, then `git apply --3way
+  /tmp/x.patch` on a fresh branch off current
+  main. 3-way picks up the surgical change,
+  preserves the upstream growth, and flags only
+  the actual conflicts.
+
+- **`git merge --ff-only` can fail silently when
+  staged changes conflict with incoming files**:
+  the error ("Your local changes to the following
+  files would be overwritten by merge") prints and
+  exit is non-zero, but a user pasting a
+  multi-command block may not see it scroll past.
+  Always verify post-merge HEAD: `git rev-parse
+  main` and `git rev-parse origin/main` should
+  match. Diagnostic check before merging:
+  `git merge-base --is-ancestor main origin/main`
+  (must be true) AND look for overlap between
+  `git diff --cached --name-only` and `git diff
+  main..origin/main --name-only` — must be empty
+  for ff to succeed with a staged tree. If
+  non-empty, unstage or stash those files before
+  the merge.
+
+- **`git stash pop` after a ff-merge that touched
+  the same files: resolve with `--ours` to keep
+  main, NOT `--theirs`**: counterintuitive flag
+  direction. For `git stash pop`, `--ours` is the
+  WORKING TREE state (main's authoritative content
+  after the ff) and `--theirs` is the STASHED
+  content. Memory hook: stash-pop has `git apply`
+  semantics — what's CURRENTLY in the tree is
+  "ours", what you're applying is "theirs". Same
+  direction as `git merge`, opposite of `git
+  rebase`. When the goal is to keep main's newer
+  content over older stashed prep, `git checkout
+  --ours <file>`.
