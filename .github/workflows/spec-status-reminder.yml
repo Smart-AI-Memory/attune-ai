@@ -1,0 +1,154 @@
+# Spec-status reminder (spec-status-integrity, workspace design §5).
+#
+# Reusable workflow: canonical logic lives here; the umbrella and the
+# four layer repos call it with a 6-line `uses:` caller. On a MERGED PR
+# it scans the PR body, commit messages, and changed paths for spec-dir
+# references (specs/<slug>/, docs/specs/<slug>/); every referenced spec
+# whose status is still in-flight in the merged tree earns ONE reminder
+# comment. Guards:
+#
+# - merged only — closed-unmerged PRs are ignored;
+# - self-reference carve-out (design §5 amendment 2026-07-10): a spec
+#   whose own files the PR modifies is skipped — editing the spec is
+#   proof of awareness, so spec-authoring PRs are never heckled;
+# - marker comment — the reminder is posted at most once per PR.
+#
+# The status parser is intentionally self-contained (a condensed mirror
+# of plugin/hooks/_state.py's leading-token semantics): a reusable
+# workflow runs against the CALLER's checkout, where the vendored hook
+# path differs per repo (or is absent in the umbrella).
+name: spec-status-reminder
+
+on:
+  pull_request:
+    types: [closed]
+  workflow_call: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  remind:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # The merged tree — statuses are judged post-merge, so a PR
+          # that flips its spec's status silences its own reminder.
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Remind about referenced in-flight specs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PYEOF'
+          import json
+          import os
+          import re
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          MARKER = "<!-- spec-status-reminder -->"
+          SPEC_REF = re.compile(r"\b((?:docs/)?specs/[a-z0-9][a-z0-9-]*)\b")
+          STATUS_LINE = re.compile(
+              r"^\s*\**\s*Status\**\s*:\s*\**\s*(.+?)\s*$",
+              re.IGNORECASE | re.MULTILINE,
+          )
+          LEAD_TOKEN = re.compile(r"[a-z][a-z-]*")
+          # Condensed mirror of _state.py's verdict sets: anything whose
+          # leading token is terminal / ongoing / parked is NOT in-flight.
+          SETTLED = {
+              "closed", "complete", "completed", "retired", "superseded",
+              "shipped", "done", "implemented",   # terminal
+              "living", "ongoing",                # ongoing-by-design
+              "parked", "paused", "blocked", "deferred",  # parked family
+          }
+          PHASE_FILES = ("tasks.md", "design.md", "requirements.md")
+
+          def gh_api(path, *extra):
+              proc = subprocess.run(
+                  ["gh", "api", path, "--paginate", *extra],
+                  capture_output=True, text=True, timeout=60,
+              )
+              if proc.returncode != 0:
+                  print(f"gh api {path} failed: {proc.stderr.strip()}", file=sys.stderr)
+                  return None
+              return json.loads(proc.stdout)
+
+          def in_flight(status: str) -> bool:
+              value = status.strip().lstrip("*_`").strip()
+              if value.startswith(("✓", "✅")):  # ✓ / ✅ glyphs
+                  return False
+              match = LEAD_TOKEN.search(value.lower())
+              token = match.group(0) if match else ""
+              return token not in SETTLED
+
+          repo = os.environ["REPO"]
+          pr = os.environ["PR_NUMBER"]
+
+          detail = gh_api(f"repos/{repo}/pulls/{pr}")
+          if not isinstance(detail, dict) or not detail.get("merged"):
+              print("PR not merged — nothing to do.")
+              sys.exit(0)
+
+          commits = gh_api(f"repos/{repo}/pulls/{pr}/commits") or []
+          files = gh_api(f"repos/{repo}/pulls/{pr}/files") or []
+          changed = [f.get("filename") or "" for f in files]
+
+          texts = [detail.get("body") or ""]
+          texts += [c.get("commit", {}).get("message") or "" for c in commits]
+          texts += changed
+          refs = {m.group(1) for text in texts for m in SPEC_REF.finditer(text)}
+
+          # Self-reference carve-out: the PR touched files under the spec.
+          touched = {r for r in refs if any(f.startswith(r + "/") for f in changed)}
+
+          hits = []
+          for ref in sorted(refs - touched):
+              spec_dir = Path(ref)
+              if not spec_dir.is_dir():
+                  continue
+              for fname in PHASE_FILES:
+                  fpath = spec_dir / fname
+                  if not fpath.is_file():
+                      continue
+                  match = STATUS_LINE.search(
+                      fpath.read_text(encoding="utf-8", errors="replace")
+                  )
+                  status = match.group(1).strip() if match else ""
+                  if in_flight(status):
+                      hits.append((ref, status or "no status"))
+                  break  # highest-priority phase file decides
+
+          if not hits:
+              print("No in-flight spec references — nothing to do.")
+              sys.exit(0)
+
+          comments = gh_api(f"repos/{repo}/issues/{pr}/comments") or []
+          if any(MARKER in (c.get("body") or "") for c in comments):
+              print("Reminder already posted — not commenting twice.")
+              sys.exit(0)
+
+          lines = [MARKER]
+          for ref, status in hits:
+              lines.append(
+                  f"This PR references `{ref}` (status: {status}) — "
+                  "flip the status or mark it `parked`."
+              )
+          body = "\n\n".join(lines)
+          proc = subprocess.run(
+              ["gh", "api", f"repos/{repo}/issues/{pr}/comments",
+               "-X", "POST", "-f", f"body={body}"],
+              capture_output=True, text=True, timeout=60,
+          )
+          if proc.returncode != 0:
+              print(f"comment failed: {proc.stderr.strip()}", file=sys.stderr)
+              sys.exit(1)
+          print(f"Reminded about {len(hits)} spec(s).")
+          PYEOF

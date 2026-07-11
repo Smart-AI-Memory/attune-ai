@@ -24,6 +24,7 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import json
+import os
 import sys
 import traceback
 from pathlib import Path
@@ -46,8 +47,20 @@ from _state import (  # noqa: E402 — sys.path bootstrap above
     SpecInfo,
     discover_specs,
     prune_stale_sentinels,
+    read_drift_cache,
     workspace_roots,
 )
+
+
+def _audit_annotations_enabled() -> bool:
+    """Kill switch (spec-status-integrity, design §3).
+
+    ``ATTUNE_SPEC_AUDIT=off`` suppresses both the ``⚠ drifted``
+    drift-cache annotation and the existing suspected-stale hint.
+    Anything else (including unset) leaves them on.
+    """
+    return os.environ.get("ATTUNE_SPEC_AUDIT", "").strip().lower() != "off"
+
 
 # Char budget for the post-compact spec body. Generous so the
 # spec survives compaction with full content; the model sees this
@@ -58,8 +71,12 @@ _POST_COMPACT_CHAR_BUDGET = 8_000
 _ORIENTATION_MAX_SPECS = 3
 
 
-def _format_phase(spec: SpecInfo) -> str:
+def _format_phase(spec: SpecInfo, annotate: bool = True) -> str:
     """Short ``(phase status)`` blurb for the orientation list.
+
+    ``annotate=False`` (the ``ATTUNE_SPEC_AUDIT=off`` kill switch)
+    suppresses the suspected-stale hint; the status_conflict hint is
+    self-truthing, not an audit annotation, and always renders.
 
     Renders the reconciled ``effective_status`` (not the raw header
     ``status``) so a stale "draft" header above a closed checklist
@@ -91,20 +108,40 @@ def _format_phase(spec: SpecInfo) -> str:
         }.get(spec.status_source, spec.status_source)
         raw = spec.status or "no header"
         return f'{base} — {source_label}; header says "{raw}", worth fixing'
-    if spec.staleness == "suspected-stale":
+    if annotate and spec.staleness == "suspected-stale":
         raw = spec.status or "no status"
-        return f'{base} — ⚠ deliverables present, status still "{raw}"; ' "verify before building"
+        return f'{base} — ⚠ deliverables present, status still "{raw}"; verify before building'
     return base
 
 
-def format_orientation(specs: list[SpecInfo]) -> str:
+def _drift_suffix(spec: SpecInfo, drift_cache: dict[str, dict]) -> str:
+    """`` ⚠ drifted: attune-author #95 merged`` when the drift cache
+    marks this spec drifted; empty otherwise (design §3). The cache is
+    read from disk only — the hook makes no network calls."""
+    entry = drift_cache.get(f"{spec.layer}/{spec.slug}")
+    if not isinstance(entry, dict) or entry.get("verdict") != "drifted":
+        return ""
+    prs = [p for p in entry.get("prs") or [] if isinstance(p, str)]
+    detail = f": {', '.join(prs)} merged" if prs else ""
+    return f" ⚠ drifted{detail}"
+
+
+def format_orientation(
+    specs: list[SpecInfo],
+    drift_cache: dict[str, dict] | None = None,
+    annotate: bool = True,
+) -> str:
     """Short markdown list of in-flight specs for non-compact starts."""
     if not specs:
         return ""
+    drift = drift_cache or {}
     lines = ["attune workspace — in-flight specs:"]
     for spec in specs[:_ORIENTATION_MAX_SPECS]:
         layer_prefix = "" if spec.layer == "workspace" else f"{spec.layer}/"
-        lines.append(f"- {layer_prefix}specs/{spec.slug}/  ({_format_phase(spec)})")
+        line = f"- {layer_prefix}specs/{spec.slug}/  ({_format_phase(spec, annotate=annotate)})"
+        if annotate:
+            line += _drift_suffix(spec, drift)
+        lines.append(line)
     leftover = len(specs) - _ORIENTATION_MAX_SPECS
     if leftover > 0:
         lines.append(f"- (+{leftover} more)")
@@ -167,7 +204,11 @@ def main() -> int:
             if body:
                 print(body)
         else:
-            orient = format_orientation(specs)
+            annotate = _audit_annotations_enabled()
+            # Offline by design: the drift signal comes from the cache
+            # spec_audit --pr-links wrote, never from a network call.
+            drift_cache = read_drift_cache(roots) if annotate else {}
+            orient = format_orientation(specs, drift_cache=drift_cache, annotate=annotate)
             if orient:
                 print(orient)
         return 0

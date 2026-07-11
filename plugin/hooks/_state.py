@@ -21,12 +21,56 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
+
+# ── Drift-cache read (spec-status-integrity, design §3) ───────
+#
+# ``spec_audit.py --pr-links`` writes ``.attune/spec-drift.json`` per
+# workspace root; ``spec_orient`` reads it back so the SessionStart
+# annotation stays offline (the hook's no-network invariant). Entries
+# older than one weekly-CI period + slack are ignored.
+_DRIFT_CACHE_MAX_AGE_SECONDS = 8 * 24 * 60 * 60
+
+
+def read_drift_cache(roots: list[Path], now: float | None = None) -> dict[str, dict]:
+    """Merge fresh drift-cache entries across workspace roots.
+
+    Returns ``{"<layer>/<slug>": {verdict, prs, signal}}`` from every
+    root whose ``.attune/spec-drift.json`` is present, well-formed, and
+    fresher than :data:`_DRIFT_CACHE_MAX_AGE_SECONDS`. Anything else —
+    absent file, malformed JSON, wrong shapes, stale ``generated_at`` —
+    contributes nothing and never raises (the cache is advisory; the
+    annotation simply falls back to current behavior).
+    """
+    current = time.time() if now is None else now
+    merged: dict[str, dict] = {}
+    for root in roots:
+        cache_path = Path(root) / ".attune" / "spec-drift.json"
+        try:
+            data = json.loads(cache_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, ValueError, UnicodeDecodeError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        generated = data.get("generated_at")
+        if not isinstance(generated, int | float):
+            continue
+        if current - float(generated) > _DRIFT_CACHE_MAX_AGE_SECONDS:
+            continue
+        specs = data.get("specs")
+        if not isinstance(specs, dict):
+            continue
+        for key, entry in specs.items():
+            if isinstance(key, str) and isinstance(entry, dict):
+                merged.setdefault(key, entry)
+    return merged
+
 
 # Phases checked, highest-priority first. The first phase file
 # present in a spec directory determines the displayed phase
@@ -59,7 +103,7 @@ _STATUS_LINE = re.compile(
 # done (see decisions.md DECIDE-2).
 _TERMINAL_LINE = re.compile(
     r"^\s*\**\s*(?:Spec\s+)?Status\**\s*:\s*\**\s*"
-    r"(closed|complete|completed|retired|superseded|shipped|done)\b",
+    r"(closed|complete|completed|retired|superseded|shipped|done|implemented)\b",
     re.IGNORECASE | re.MULTILINE,
 )
 _CHECKLIST_HEADING = re.compile(
@@ -76,12 +120,30 @@ _DEFERRED_MARKERS = re.compile(
 )
 _NEXT_H2 = re.compile(r"^##\s+", re.MULTILINE)
 _TERMINAL_VERDICTS = frozenset(
-    {"closed", "complete", "completed", "retired", "superseded", "shipped", "done"}
+    {
+        "closed",
+        "complete",
+        "completed",
+        "retired",
+        "superseded",
+        "shipped",
+        "done",
+        # spec-status-integrity additions (design §1): ``implemented``
+        # and the bare check glyphs are terminal — the wild-scan found
+        # both in real headers.
+        "implemented",
+        "✓",
+        "✅",
+    }
 )
 # Ongoing-by-design statuses: a living roadmap / continuous program is not
 # pending work, so it should NOT show as in-flight — but it is also not
 # "done". Excluded from the in-flight list, kept distinct from terminal.
 _ONGOING_VERDICTS = frozenset({"living", "ongoing"})
+# Parked-semantics statuses (spec-status-integrity, design §1): work
+# deliberately on hold. Skipped by drift checks and excluded from the
+# in-flight orientation list; the audit still lists them (as parked).
+_PARKED_VERDICTS = frozenset({"parked", "paused", "blocked", "deferred"})
 
 # Leading alphabetic word of a status value, for first-word tokenization:
 # ``complete (2026-06-09) — shipped #694`` -> ``complete``.
@@ -96,11 +158,162 @@ def _leading_verdict(status: str) -> str:
     not exact-string membership. This is the fix for the class of bug
     where a correctly-marked-``complete`` spec stayed in-flight forever
     because ``"complete (date) — ..."`` is not in ``_TERMINAL_VERDICTS``.
+
+    A bare check glyph (``✓`` / ``✅``) leading the value is returned
+    as-is — the glyphs are members of ``_TERMINAL_VERDICTS``
+    (spec-status-integrity, design §1) but are not alphabetic, so the
+    word regex would otherwise skip past them to whatever word follows.
     """
+    stripped = status.strip().lstrip("*_`").strip()
+    for glyph in ("✅", "✓"):
+        if stripped.startswith(glyph):
+            return glyph
     # search (not match) so a stray leading ``**``/punctuation doesn't
     # swallow the verdict — the first alphabetic run is the word we want.
     m = _LEADING_WORD.search(status)
     return m.group(0).lower() if m else ""
+
+
+# ── Status-vocabulary lint (spec-status-integrity, design §1) ─
+#
+# The canonical vocabulary for NEW specs. Historical aliases
+# (``_TERMINAL_VERDICTS`` / ``_ONGOING_VERDICTS`` members and the
+# in-flight forms below) stay accepted — no mass rewrite of ~127
+# existing status lines — but the lint steers authors to these 8.
+_CANONICAL_STATUS_TOKENS = (
+    "draft",
+    "in-review",
+    "approved",
+    "in-progress",
+    "implemented",
+    "complete",
+    "superseded",
+    "parked",
+)
+# In-flight forms honored by the checker (design §2): the canonical
+# in-flight 4 plus the historical ``not started`` / ``open`` / ``pending``.
+# ``not`` is the leading token of ``not started``.
+_IN_FLIGHT_TOKENS = frozenset(
+    {"draft", "in-review", "approved", "in-progress", "not", "open", "pending"}
+)
+# Lint tokenization keeps hyphens (``in-review``), unlike
+# ``_LEADING_WORD`` which stops at the first non-alpha char.
+_LINT_TOKEN = re.compile(r"[A-Za-z][A-Za-z-]*")
+
+
+def lint_status_token(status: str) -> str | None:
+    """Lint a status value's leading token against the known vocabulary.
+
+    Returns ``None`` when the leading token is recognized — one of the
+    canonical 8, a historical terminal/ongoing alias, a parked-family
+    token, an accepted in-flight form, or a bare check glyph. Otherwise
+    returns a one-line ``unparseable`` message naming the canonical 8;
+    the token is never guessed at.
+    """
+    stripped = status.strip().lstrip("*_`").strip()
+    for glyph in ("✅", "✓"):
+        if stripped.startswith(glyph):
+            return None
+    match = _LINT_TOKEN.search(status)
+    token = match.group(0).lower() if match else ""
+    recognized = (
+        _TERMINAL_VERDICTS | _ONGOING_VERDICTS | _PARKED_VERDICTS | _IN_FLIGHT_TOKENS
+    ) | set(_CANONICAL_STATUS_TOKENS)
+    if token in recognized:
+        return None
+    shown = token or status.strip() or "(empty)"
+    return f'unparseable status "{shown}" — use one of: ' + ", ".join(_CANONICAL_STATUS_TOKENS)
+
+
+# ── PR-reference extraction (spec-status-integrity, design §1) ──
+#
+# ``extract_pr_refs()`` parses the four PR-citation styles found in the
+# wild (workspace spec design.md §1): explicit ``PR #212`` /
+# ``PRs #303, #304`` lists, bare ``#1191`` (ambiguous — may be an
+# issue; resolved at check time via the pulls API, merged-only), and
+# the markdown pull-URL — the required style for cross-repo refs.
+# Code fences and inline code spans are blanked first so quoted
+# examples (`` `#NNN` `` in docs) never count as citations.
+_CODE_FENCE = re.compile(r"```.*?```", re.DOTALL)
+_INLINE_CODE = re.compile(r"`[^`\n]+`")
+_PULL_URL = re.compile(r"https://github\.com/(?P<repo>[\w.-]+/[\w.-]+)/pull/(?P<number>\d+)\b")
+# Whole markdown links are blanked AFTER pull-URLs are extracted, so a
+# link text like ``[#95](…/pull/95)`` doesn't ALSO scan as a bare
+# current-repo ref — and issue-links yield nothing at all.
+_MD_LINK = re.compile(r"\[[^\]\n]*\]\([^)\n]*\)")
+_PR_LIST = re.compile(r"\bPRs?\s*#\d+(?:\s*,\s*#\d+)*", re.IGNORECASE)
+_REF_NUMBER = re.compile(r"#(\d+)")
+# Bare ``#NNN``: not preceded by a word char / ``#`` / ``/`` (rejects
+# ``foo#12``, anchors, URL paths) and not followed by a word char
+# (rejects ``#12abc``).
+_BARE_REF = re.compile(r"(?<![\w#/])#(\d+)(?![\w#])")
+
+
+@dataclass(frozen=True)
+class PrRef:
+    """One PR citation extracted from a spec's text.
+
+    ``repo`` is the explicit ``owner/name`` slug from a pull-URL
+    citation; ``None`` means "current repo". ``explicit`` is True when
+    the citation is unambiguously a PR (``PR #N`` / ``PRs #N, …`` /
+    pull-URL); a bare ``#NNN`` is ``explicit=False`` — it may be an
+    issue, which the checker resolves via the pulls API at check time.
+    """
+
+    number: int
+    repo: str | None = None
+    explicit: bool = False
+
+
+def _blank(match: re.Match[str]) -> str:
+    """Length-preserving mask so match positions stay comparable."""
+    return " " * (match.end() - match.start())
+
+
+def extract_pr_refs(text: str) -> list[PrRef]:
+    """Extract PR citations from spec text — deduped, document order.
+
+    Styles recognized (workspace design §1): ``PR #212``,
+    ``PRs #303, #304``, bare ``#1191``, and
+    ``https://github.com/<owner>/<repo>/pull/<n>`` (markdown-wrapped or
+    bare). Duplicate ``(repo, number)`` pairs collapse to the earliest
+    occurrence, upgraded to ``explicit`` if any occurrence was.
+    """
+    scrubbed = _CODE_FENCE.sub(_blank, text)
+    scrubbed = _INLINE_CODE.sub(_blank, scrubbed)
+
+    hits: list[tuple[int, str | None, int, bool]] = []  # (pos, repo, number, explicit)
+
+    for match in _PULL_URL.finditer(scrubbed):
+        hits.append((match.start(), match.group("repo"), int(match.group("number")), True))
+    # Blank markdown links wholesale (pull-URLs already harvested), then
+    # any bare pull-URLs outside links, before the plain-text scans.
+    scrubbed = _MD_LINK.sub(_blank, scrubbed)
+    scrubbed = _PULL_URL.sub(_blank, scrubbed)
+
+    for match in _PR_LIST.finditer(scrubbed):
+        for num in _REF_NUMBER.finditer(match.group(0)):
+            hits.append((match.start() + num.start(), None, int(num.group(1)), True))
+    scrubbed = _PR_LIST.sub(_blank, scrubbed)
+
+    for match in _BARE_REF.finditer(scrubbed):
+        hits.append((match.start(), None, int(match.group(1)), False))
+
+    # Dedupe on (repo, number): earliest position wins the slot; the
+    # explicit flag is OR-merged across occurrences.
+    best: dict[tuple[str | None, int], tuple[int, bool]] = {}
+    for pos, repo, number, explicit in hits:
+        key = (repo, number)
+        if key in best:
+            prev_pos, prev_explicit = best[key]
+            best[key] = (prev_pos, prev_explicit or explicit)
+        else:
+            best[key] = (pos, explicit)
+    ordered = sorted(best.items(), key=lambda item: item[1][0])
+    return [
+        PrRef(number=number, repo=repo, explicit=explicit)
+        for (repo, number), (_pos, explicit) in ordered
+    ]
 
 
 # ── Deliverables block (spec-status-integrity, DECIDE-3) ──────
@@ -516,7 +729,9 @@ def classify_staleness(spec_text: str, header_status: str, roots: list[Path]) ->
     # done deeper in the file is not falsely flagged.
     effective, _source, _conflict = _reconcile_status(header_status, spec_text)
     lead = _leading_verdict(effective)
-    if lead in _TERMINAL_VERDICTS or lead in _ONGOING_VERDICTS:
+    # Parked-family statuses are deliberately on hold — skipped by drift
+    # checks (design §1), so they classify ``ok`` alongside terminal.
+    if lead in _TERMINAL_VERDICTS or lead in _ONGOING_VERDICTS or lead in _PARKED_VERDICTS:
         return "ok"
     return "suspected-stale"
 
@@ -577,6 +792,9 @@ def _is_in_flight(phase: str, effective_status: str) -> bool:
       phase.
     - First word is ongoing-by-design (living / ongoing) → a continuous
       program / living roadmap is not pending work, exclude.
+    - First word is parked-family (parked / paused / blocked /
+      deferred) → deliberately on hold, not pending work, exclude
+      (spec-status-integrity, design §1).
     - Empty status (malformed) → still in-flight (don't drop a
       working spec because the heading was malformed).
     - Anything else (draft / approved / in-progress / …) → in-flight.
@@ -586,7 +804,7 @@ def _is_in_flight(phase: str, effective_status: str) -> bool:
     (the self-truthing improvement).
     """
     lead = _leading_verdict(effective_status)
-    if lead in _TERMINAL_VERDICTS or lead in _ONGOING_VERDICTS:
+    if lead in _TERMINAL_VERDICTS or lead in _ONGOING_VERDICTS or lead in _PARKED_VERDICTS:
         return False
     return True
 
