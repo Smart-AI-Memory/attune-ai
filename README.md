@@ -500,6 +500,45 @@ every install.
 
 ---
 
+## Platform Support
+
+| Platform | Support |
+| -------- | ------- |
+| macOS | Full |
+| Linux | Full |
+| Windows via WSL2 | Full |
+| Windows native + Git Bash | Supported (Bash tool, POSIX-ish syntax) |
+| Windows native + PowerShell tool | Limited — security validation fails closed |
+
+Notes for native Windows:
+
+- Claude Code supports native Windows (10 1809+). Installing
+  [Git for Windows](https://gitforwindows.org/) enables the Bash
+  tool; without it, the PowerShell tool is used (opt-in via
+  `CLAUDE_CODE_USE_POWERSHELL_TOOL=1`).
+- Under PowerShell, the security-validation hook applies a strict
+  command allowlist and **fails closed**: commands it does not
+  recognize are blocked rather than silently passed. Use Git Bash
+  or WSL2 for the full experience.
+- OS-level sandboxing is available on macOS/Linux/WSL2 only, not
+  native Windows.
+
+### Redis on Windows
+
+Redis has no native Windows build. Docker is the recommended path:
+
+```bash
+docker run -d -p 6379:6379 redis:7-alpine
+```
+
+Without a reachable Redis, cross-session memory degrades gracefully
+to the local file backend —
+`attune.memory.session_stash.backend_status()` reports
+`fallback: true` so the degradation is visible, and no errors are
+spammed to the session.
+
+---
+
 ## API Mode
 
 ```bash
