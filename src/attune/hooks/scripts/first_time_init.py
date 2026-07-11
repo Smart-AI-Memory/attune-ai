@@ -13,7 +13,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from attune.security.path_validation import _validate_file_path
+try:
+    from attune.security.path_validation import _validate_file_path
+except ImportError:  # direct script execution (hook) — bootstrap repo src/
+    from _bootstrap import ensure_repo_src_on_path
+
+    ensure_repo_src_on_path()
+    from attune.security.path_validation import _validate_file_path
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +104,7 @@ def should_skip_init(project_root: Path) -> bool:
 def mark_never_ask(project_root: Path) -> None:
     """Mark project to never ask about init again."""
     marker = _validate_file_path(str(get_never_ask_file(project_root)))
-    marker.write_text(f"Created: {datetime.now().isoformat()}\n")
+    marker.write_text(f"Created: {datetime.now().isoformat()}\n", encoding="utf-8")
 
 
 def initialize_project(project_root: Path) -> dict[str, Any]:
@@ -135,7 +141,7 @@ def initialize_project(project_root: Path) -> dict[str, Any]:
         try:
             config_content = DEFAULT_CONFIG.format(timestamp=datetime.now().isoformat())
             validated_config = _validate_file_path(str(config_path))
-            validated_config.write_text(config_content)
+            validated_config.write_text(config_content, encoding="utf-8")
             result["created_files"].append("attune.config.yaml")
             logger.info("Created config file: attune.config.yaml")
         except OSError as e:
@@ -151,7 +157,7 @@ def initialize_project(project_root: Path) -> dict[str, Any]:
 .attune/learned_skills/
 """
         validated_gitignore = _validate_file_path(str(gitignore_additions))
-        validated_gitignore.write_text(gitignore_content)
+        validated_gitignore.write_text(gitignore_content, encoding="utf-8")
         result["created_files"].append(".attune/.gitignore_additions")
     except OSError:
         pass  # Non-critical
@@ -280,6 +286,9 @@ def main(**context: Any) -> dict[str, Any]:
 
 
 if __name__ == "__main__":
+    from _bootstrap import ensure_utf8_stdio
+
+    ensure_utf8_stdio()
     # Allow running as a script for testing
     import sys
 

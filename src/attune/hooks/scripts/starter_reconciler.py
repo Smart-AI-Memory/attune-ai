@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """SessionStart hook: reconcile next_session_starter.md threads vs reality.
 
 The companion to ``starter_prompt_nudge.py``. That hook *surfaces* the
@@ -147,6 +147,8 @@ def _run(cmd: list[str], cwd: Path | None) -> subprocess.CompletedProcess | None
             cmd,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=SUBPROC_TIMEOUT,
             cwd=str(cwd) if cwd else None,
         )
@@ -363,6 +365,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _bootstrap import ensure_utf8_stdio
+
+    ensure_utf8_stdio()
     from _sdk_gate import exit_if_sdk_subprocess
 
     exit_if_sdk_subprocess()

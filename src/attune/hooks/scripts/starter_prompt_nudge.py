@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """SessionStart hook: surface next_session_starter.md handoffs when present.
 
 Eliminates the cross-session handoff friction documented in the
@@ -127,6 +127,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _bootstrap import ensure_utf8_stdio
+
+    ensure_utf8_stdio()
     from _sdk_gate import exit_if_sdk_subprocess
 
     exit_if_sdk_subprocess()

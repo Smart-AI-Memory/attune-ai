@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """PreToolUse just-in-time recall — surface the governing rule at the
 decision point.
 

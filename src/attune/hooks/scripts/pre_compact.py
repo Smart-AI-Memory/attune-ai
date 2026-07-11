@@ -197,6 +197,9 @@ def generate_compaction_summary(
 
 # Main entry point for hook execution
 if __name__ == "__main__":
+    from _bootstrap import ensure_utf8_stdio
+
+    ensure_utf8_stdio()
     # Example usage for testing
     print("Pre-compact hook script")
     print("This script is called before context compaction")

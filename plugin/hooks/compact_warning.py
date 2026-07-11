@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Stop-hook compact-warning — fires once per session at threshold.
 
 Stop-hook payloads from Claude Code do NOT expose a context-

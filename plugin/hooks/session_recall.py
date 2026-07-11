@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """SessionStart hook — surface recent cross-session findings at startup.
 
 SessionStart has no query, so recall is recency-driven: the newest
@@ -87,6 +87,8 @@ def _pr_state(number: str, cwd: str | None) -> str | None:
             ["gh", "pr", "view", number, "--json", "state"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=_GH_TIMEOUT_SECONDS,
             cwd=cwd or None,
         )

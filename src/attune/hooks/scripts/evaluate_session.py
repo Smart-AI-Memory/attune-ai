@@ -191,6 +191,9 @@ def apply_learned_patterns(context: dict[str, Any]) -> str:
 
 # Entry point for hook execution
 if __name__ == "__main__":
+    from _bootstrap import ensure_utf8_stdio
+
+    ensure_utf8_stdio()
     print("Evaluate Session Hook Script")
     print("This script is called at session end to evaluate learning potential")
     print()

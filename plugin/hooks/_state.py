@@ -919,6 +919,8 @@ def _run_git(cwd: Path, *args: str) -> str:
             cwd=str(cwd),
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=2.0,
             check=False,
         )

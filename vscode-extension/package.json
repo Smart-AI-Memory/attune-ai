@@ -1,0 +1,63 @@
+{
+  "name": "attune-dashboard",
+  "displayName": "Attune AI Dashboard",
+  "description": "Monitor Attune AI telemetry and cross-session memory from VS Code. Cross-platform: macOS, Linux, Windows.",
+  "version": "0.1.0",
+  "publisher": "smart-ai-memory",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "attune.showDashboard",
+        "title": "Attune: Show Dashboard"
+      },
+      {
+        "command": "attune.refreshTelemetry",
+        "title": "Attune: Refresh Telemetry",
+        "icon": "$(refresh)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "attune.showDashboard",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "attuneTelemetry",
+          "name": "Attune Telemetry"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "attune.refreshTelemetry",
+          "when": "view == attuneTelemetry",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.4.0"
+  }
+}
