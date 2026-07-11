@@ -59,7 +59,7 @@ _STATUS_LINE = re.compile(
 # done (see decisions.md DECIDE-2).
 _TERMINAL_LINE = re.compile(
     r"^\s*\**\s*(?:Spec\s+)?Status\**\s*:\s*\**\s*"
-    r"(closed|complete|completed|retired|superseded|shipped|done)\b",
+    r"(closed|complete|completed|retired|superseded|shipped|done|implemented)\b",
     re.IGNORECASE | re.MULTILINE,
 )
 _CHECKLIST_HEADING = re.compile(
@@ -76,12 +76,30 @@ _DEFERRED_MARKERS = re.compile(
 )
 _NEXT_H2 = re.compile(r"^##\s+", re.MULTILINE)
 _TERMINAL_VERDICTS = frozenset(
-    {"closed", "complete", "completed", "retired", "superseded", "shipped", "done"}
+    {
+        "closed",
+        "complete",
+        "completed",
+        "retired",
+        "superseded",
+        "shipped",
+        "done",
+        # spec-status-integrity additions (design §1): ``implemented``
+        # and the bare check glyphs are terminal — the wild-scan found
+        # both in real headers.
+        "implemented",
+        "✓",
+        "✅",
+    }
 )
 # Ongoing-by-design statuses: a living roadmap / continuous program is not
 # pending work, so it should NOT show as in-flight — but it is also not
 # "done". Excluded from the in-flight list, kept distinct from terminal.
 _ONGOING_VERDICTS = frozenset({"living", "ongoing"})
+# Parked-semantics statuses (spec-status-integrity, design §1): work
+# deliberately on hold. Skipped by drift checks and excluded from the
+# in-flight orientation list; the audit still lists them (as parked).
+_PARKED_VERDICTS = frozenset({"parked", "paused", "blocked", "deferred"})
 
 # Leading alphabetic word of a status value, for first-word tokenization:
 # ``complete (2026-06-09) — shipped #694`` -> ``complete``.
@@ -96,11 +114,71 @@ def _leading_verdict(status: str) -> str:
     not exact-string membership. This is the fix for the class of bug
     where a correctly-marked-``complete`` spec stayed in-flight forever
     because ``"complete (date) — ..."`` is not in ``_TERMINAL_VERDICTS``.
+
+    A bare check glyph (``✓`` / ``✅``) leading the value is returned
+    as-is — the glyphs are members of ``_TERMINAL_VERDICTS``
+    (spec-status-integrity, design §1) but are not alphabetic, so the
+    word regex would otherwise skip past them to whatever word follows.
     """
+    stripped = status.strip().lstrip("*_`").strip()
+    for glyph in ("✅", "✓"):
+        if stripped.startswith(glyph):
+            return glyph
     # search (not match) so a stray leading ``**``/punctuation doesn't
     # swallow the verdict — the first alphabetic run is the word we want.
     m = _LEADING_WORD.search(status)
     return m.group(0).lower() if m else ""
+
+
+# ── Status-vocabulary lint (spec-status-integrity, design §1) ─
+#
+# The canonical vocabulary for NEW specs. Historical aliases
+# (``_TERMINAL_VERDICTS`` / ``_ONGOING_VERDICTS`` members and the
+# in-flight forms below) stay accepted — no mass rewrite of ~127
+# existing status lines — but the lint steers authors to these 8.
+_CANONICAL_STATUS_TOKENS = (
+    "draft",
+    "in-review",
+    "approved",
+    "in-progress",
+    "implemented",
+    "complete",
+    "superseded",
+    "parked",
+)
+# In-flight forms honored by the checker (design §2): the canonical
+# in-flight 4 plus the historical ``not started`` / ``open`` / ``pending``.
+# ``not`` is the leading token of ``not started``.
+_IN_FLIGHT_TOKENS = frozenset(
+    {"draft", "in-review", "approved", "in-progress", "not", "open", "pending"}
+)
+# Lint tokenization keeps hyphens (``in-review``), unlike
+# ``_LEADING_WORD`` which stops at the first non-alpha char.
+_LINT_TOKEN = re.compile(r"[A-Za-z][A-Za-z-]*")
+
+
+def lint_status_token(status: str) -> str | None:
+    """Lint a status value's leading token against the known vocabulary.
+
+    Returns ``None`` when the leading token is recognized — one of the
+    canonical 8, a historical terminal/ongoing alias, a parked-family
+    token, an accepted in-flight form, or a bare check glyph. Otherwise
+    returns a one-line ``unparseable`` message naming the canonical 8;
+    the token is never guessed at.
+    """
+    stripped = status.strip().lstrip("*_`").strip()
+    for glyph in ("✅", "✓"):
+        if stripped.startswith(glyph):
+            return None
+    match = _LINT_TOKEN.search(status)
+    token = match.group(0).lower() if match else ""
+    recognized = (
+        _TERMINAL_VERDICTS | _ONGOING_VERDICTS | _PARKED_VERDICTS | _IN_FLIGHT_TOKENS
+    ) | set(_CANONICAL_STATUS_TOKENS)
+    if token in recognized:
+        return None
+    shown = token or status.strip() or "(empty)"
+    return f'unparseable status "{shown}" — use one of: ' + ", ".join(_CANONICAL_STATUS_TOKENS)
 
 
 # ── PR-reference extraction (spec-status-integrity, design §1) ──
@@ -607,7 +685,9 @@ def classify_staleness(spec_text: str, header_status: str, roots: list[Path]) ->
     # done deeper in the file is not falsely flagged.
     effective, _source, _conflict = _reconcile_status(header_status, spec_text)
     lead = _leading_verdict(effective)
-    if lead in _TERMINAL_VERDICTS or lead in _ONGOING_VERDICTS:
+    # Parked-family statuses are deliberately on hold — skipped by drift
+    # checks (design §1), so they classify ``ok`` alongside terminal.
+    if lead in _TERMINAL_VERDICTS or lead in _ONGOING_VERDICTS or lead in _PARKED_VERDICTS:
         return "ok"
     return "suspected-stale"
 
@@ -668,6 +748,9 @@ def _is_in_flight(phase: str, effective_status: str) -> bool:
       phase.
     - First word is ongoing-by-design (living / ongoing) → a continuous
       program / living roadmap is not pending work, exclude.
+    - First word is parked-family (parked / paused / blocked /
+      deferred) → deliberately on hold, not pending work, exclude
+      (spec-status-integrity, design §1).
     - Empty status (malformed) → still in-flight (don't drop a
       working spec because the heading was malformed).
     - Anything else (draft / approved / in-progress / …) → in-flight.
@@ -677,7 +760,7 @@ def _is_in_flight(phase: str, effective_status: str) -> bool:
     (the self-truthing improvement).
     """
     lead = _leading_verdict(effective_status)
-    if lead in _TERMINAL_VERDICTS or lead in _ONGOING_VERDICTS:
+    if lead in _TERMINAL_VERDICTS or lead in _ONGOING_VERDICTS or lead in _PARKED_VERDICTS:
         return False
     return True
 

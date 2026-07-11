@@ -599,3 +599,94 @@ class TestExtractPrRefs:
         )
         refs = state_mod.extract_pr_refs(text)
         assert [r.number for r in refs] == [7, 3, 9]
+
+
+# ── vocabulary lint + parked/glyph semantics (task 3) ─────────
+
+
+class TestLintStatusToken:
+    """Token table per workspace design §1 — recognized forms lint
+    clean; unknown leading tokens are named unparseable, never guessed."""
+
+    @pytest.mark.parametrize(
+        "status",
+        [
+            # canonical 8
+            "draft",
+            "in-review",
+            "approved",
+            "in-progress",
+            "implemented",
+            "complete",
+            "superseded",
+            "parked",
+            # historical terminal/ongoing aliases
+            "closed",
+            "completed",
+            "retired",
+            "shipped",
+            "done",
+            "living",
+            "ongoing",
+            # parked family
+            "paused",
+            "blocked",
+            "deferred",
+            # accepted in-flight forms
+            "not started",
+            "open",
+            "pending",
+            # glyphs
+            "✓",
+            "✅",
+            "✓ (2026-07-10)",
+            # informative decoration around a recognized token
+            "approved (2026-07-10 — Patrick)",
+            "**in-review** (attune #32)",
+            "complete (2026-06-09) — shipped #694",
+        ],
+    )
+    def test_recognized_tokens_lint_clean(self, state_mod, status) -> None:
+        assert state_mod.lint_status_token(status) is None
+
+    @pytest.mark.parametrize("status", ["wibble", "TODO: revisit", "phase-two", ""])
+    def test_unknown_tokens_are_unparseable(self, state_mod, status) -> None:
+        message = state_mod.lint_status_token(status)
+        assert message is not None
+        assert "unparseable" in message
+        # The lint names the canonical 8, never guesses.
+        for token in ("draft", "in-review", "approved", "implemented", "parked"):
+            assert token in message
+
+
+class TestParkedAndGlyphSemantics:
+    def _spec(self, status: str) -> str:
+        return f"# Spec\n\n**Status**: {status}\n\n## Deliverables\n\n- attune-rag/src/attune_rag/foo.py\n"
+
+    @pytest.mark.parametrize("status", ["parked", "paused (til Q3)", "blocked on #12", "deferred"])
+    def test_parked_family_not_in_flight(self, state_mod, status) -> None:
+        assert state_mod._is_in_flight("tasks", status) is False
+
+    @pytest.mark.parametrize("status", ["implemented (2026-07-10)", "✓", "✅ shipped"])
+    def test_new_terminal_forms_not_in_flight(self, state_mod, status) -> None:
+        assert state_mod._is_in_flight("tasks", status) is False
+
+    def test_draft_still_in_flight(self, state_mod) -> None:
+        assert state_mod._is_in_flight("tasks", "draft") is True
+
+    @pytest.mark.parametrize("status", ["parked (2026-07-10)", "implemented", "✓"])
+    def test_all_resolved_but_parked_or_terminal_is_ok(self, state_mod, workspace, status) -> None:
+        # Parked family + new terminal forms are skipped by drift checks.
+        text = self._spec(status)
+        assert state_mod.classify_staleness(text, status, [workspace]) == "ok"
+
+    def test_body_implemented_line_is_terminal_signal(self, state_mod) -> None:
+        verdict, source = state_mod._completion_signal(
+            "# Spec\n\nprose\n\nStatus: implemented in #99\n"
+        )
+        assert verdict == "implemented"
+        assert source == "terminal-line"
+
+    def test_glyph_leading_verdict(self, state_mod) -> None:
+        assert state_mod._leading_verdict("✓ (2026-07-10)") == "✓"
+        assert state_mod._leading_verdict("✅") == "✅"
