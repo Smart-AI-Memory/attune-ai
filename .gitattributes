@@ -1,4 +1,20 @@
 # =============================================================================
+# Line endings (cross-platform)
+# =============================================================================
+# Normalize text files to LF in the repo; source files that must be
+# byte-identical across macOS/Linux/Windows checkouts are pinned to
+# eol=lf so CRLF autocrlf checkouts can't break shebangs, heredocs,
+# or hash-based freshness checks.
+* text=auto
+*.py text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+Dockerfile* text eol=lf
+
+# =============================================================================
 # .gitattributes - Git Archive Export Control
 # =============================================================================
 # Files marked with 'export-ignore' are excluded from:

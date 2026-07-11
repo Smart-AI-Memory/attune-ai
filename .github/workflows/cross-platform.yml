@@ -1,0 +1,95 @@
+name: Cross-platform hooks
+
+# Fast, focused portability gate for the hook layer (Tier 1 of the
+# cross-platform work, 2026-07). The full test matrix lives in
+# tests.yml; this workflow exists so hook-layer portability breaks
+# fail loudly and cheaply on every push/PR that touches them.
+#
+# SPEND GUARD: ANTHROPIC_API_KEY is pinned to the empty string —
+# per-push workflows must never receive the real secret (see the
+# 2026-06-10 CI spend lesson).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/attune/hooks/**"
+      - "plugin/hooks/**"
+      - "tests/unit/hooks/**"
+      - "vscode-extension/**"
+      - ".claude/settings.json"
+      - ".github/workflows/cross-platform.yml"
+  pull_request:
+    paths:
+      - "src/attune/hooks/**"
+      - "plugin/hooks/**"
+      - "tests/unit/hooks/**"
+      - "vscode-extension/**"
+      - ".claude/settings.json"
+      - ".github/workflows/cross-platform.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cross-platform-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ANTHROPIC_API_KEY: ""
+
+jobs:
+  hook-tests:
+    name: hooks (${{ matrix.os }}, ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.11", "3.12"]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install package + test deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install pytest pytest-asyncio
+
+      - name: Run hook test suite
+        run: python -m pytest tests/unit/hooks/ -q
+
+      - name: Hook scripts execute standalone (no PYTHONPATH)
+        run: |
+          echo '{"tool_name":"Bash","tool_input":{"command":"ls"}}' \
+            | python src/attune/hooks/scripts/security_guard.py
+          echo '{"tool_name":"Bash","tool_input":{"command":"eval(x)"}}' \
+            | python src/attune/hooks/scripts/security_guard.py && exit 1 || test $? -eq 2
+
+  extension-compile:
+    name: vscode-extension compile (ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: vscode-extension/package-lock.json
+
+      - name: Compile extension (tsc strict)
+        working-directory: vscode-extension
+        run: |
+          npm ci
+          npm run compile
