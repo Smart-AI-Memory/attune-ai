@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.3.0] — 2026-07-11
+
+Spec-integrity minor: the spec-status-integrity hook suite lands
+(drift between spec files and their PRs is now flagged at session
+start), `.help` retrieval gains path-keyed LLM-polished summaries,
+and the Anthropic provider stops sending sampling params that
+Claude 5 models reject.
+
+### Added
+
+- **spec-status-integrity hooks** (#1305): PR-link drift signal,
+  status-vocabulary lint, drift cache, and a `spec-status-reminder`
+  PR workflow — spec statuses that lag or contradict their merged
+  PRs are surfaced instead of silently rotting
+  (spec: `docs/specs/spec-status-integrity/`).
+- **Path-keyed `.help/summaries.json`** (#1300, #1301): retrieval
+  sidecar seeded for all 296 templates, then LLM-polished with
+  provenance metadata — summary matches get the retriever's 1.5x
+  boost (mirrors the attune-rag path-keyed summary design).
+
+### Fixed
+
+- **Claude 5 family sampling params** (#1310): the Anthropic
+  provider now strips `temperature`/`top_p`/`top_k` and converts
+  `enabled` thinking to `adaptive` for Claude 5 models (sonnet-5,
+  fable-5) as it already did for Opus 4.7+ — these models reject
+  the params with HTTP 400 ("`temperature` is deprecated for this
+  model", seen live in the 2026-07-06 integration-auth run).
+
 ## [10.2.0] — 2026-07-08
 
 Memory-ledger minor: the short-term memory layer's cost, benefit, and
