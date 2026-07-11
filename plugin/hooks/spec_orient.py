@@ -45,9 +45,11 @@ if _HOOKS_DIR not in sys.path:
 
 from _state import (  # noqa: E402 — sys.path bootstrap above
     SpecInfo,
+    WorktreeSpecDrift,
     discover_specs,
     prune_stale_sentinels,
     read_drift_cache,
+    scan_worktree_spec_drift,
     workspace_roots,
 )
 
@@ -148,6 +150,26 @@ def format_orientation(
     return "\n".join(lines)
 
 
+def format_worktree_drift(findings: list[WorktreeSpecDrift]) -> str:
+    """Alarm block for week-old uncommitted spec content in worktrees.
+
+    Task 10 (spec-status-integrity): this hook reads local files, so a
+    spec that lives only in a worktree still renders as "approved" in
+    the orientation above — these lines expose that instead of masking
+    it. Empty string when there is nothing to report.
+    """
+    if not findings:
+        return ""
+    lines = []
+    for f in findings:
+        more = f" (+{f.count - 1} more)" if f.count > 1 else ""
+        lines.append(
+            f"⚠ approved-looking spec content uncommitted in worktree "
+            f"{f.worktree} since {f.since}: {f.sample}{more} — commit or sweep it"
+        )
+    return "\n".join(lines)
+
+
 def render_spec_pin(spec: SpecInfo, char_budget: int = _POST_COMPACT_CHAR_BUDGET) -> str:
     """Render a spec body for post-compact context restoration.
 
@@ -211,6 +233,15 @@ def main() -> int:
             orient = format_orientation(specs, drift_cache=drift_cache, annotate=annotate)
             if orient:
                 print(orient)
+            if annotate:
+                # Task 10 — worktree-drift alarm. Same kill switch as the
+                # other audit annotations; bounded + best-effort inside.
+                try:
+                    alarm = format_worktree_drift(scan_worktree_spec_drift(cwd))
+                except Exception:  # noqa: BLE001 — never break SessionStart
+                    alarm = ""
+                if alarm:
+                    print(alarm)
         return 0
     except Exception:  # noqa: BLE001 — hook must never crash a session
         # Log the full traceback to stderr so plugin authors can

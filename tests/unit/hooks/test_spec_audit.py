@@ -19,6 +19,8 @@ from __future__ import annotations
 import importlib.util
 import io as _io
 import json as _json
+import os as _os
+import subprocess as _subprocess
 import sys
 import time as _time
 import types as _types
@@ -520,13 +522,26 @@ class TestExtractPrRefs:
         refs = state_mod.extract_pr_refs("Shipped via PR #212 yesterday.")
         assert refs == [state_mod.PrRef(number=212, repo=None, explicit=True)]
 
-    def test_bare_hash_is_ambiguous(self, state_mod) -> None:
+    def test_bare_hash_with_shipping_context_is_confident(self, state_mod) -> None:
+        # attune-ai#1314: "landed in #N" reads as a shipping citation —
+        # it must reach the drift signal, unlike ordinal prose below.
         refs = state_mod.extract_pr_refs("landed in attune #1191 last week")
-        assert refs == [state_mod.PrRef(number=1191, repo=None, explicit=False)]
+        assert refs == [state_mod.PrRef(number=1191, repo=None, explicit=True)]
+
+    def test_bare_hash_in_ordinal_prose_stays_ambiguous(self, state_mod) -> None:
+        # The two live false-positive shapes from the first sweep
+        # (attune-ai#1314): ordinal prose must never earn confidence.
+        for text in (
+            "advisory lane blocking the trigger is failure-shape #1",
+            "open item #2, hasn't started yet in earnest",
+        ):
+            refs = state_mod.extract_pr_refs(text)
+            assert len(refs) == 1, text
+            assert refs[0].explicit is False, text
 
     def test_inline_in_status_single(self, state_mod) -> None:
         refs = state_mod.extract_pr_refs("**Status**: complete — shipped in #567")
-        assert refs == [state_mod.PrRef(number=567, repo=None, explicit=False)]
+        assert refs == [state_mod.PrRef(number=567, repo=None, explicit=True)]
 
     def test_inline_in_status_pr_list(self, state_mod) -> None:
         refs = state_mod.extract_pr_refs("**Status**: complete — shipped (PRs #303, #304)")
@@ -1073,3 +1088,202 @@ class TestDriftAnnotation:
         out = capsys.readouterr().out
         assert "drifted" not in out
         assert "specs/foo/" in out
+
+
+# ── attune-ai#1314 precision + resolver honesty ──────────────────────
+
+
+class TestDriftSignalPrecision:
+    """Only confident citations reach gh; degraded runs say so."""
+
+    def test_ordinal_prose_never_queries_gh(self, audit_mod, tmp_path, fake_gh) -> None:
+        _pr_spec(
+            tmp_path / "specs" / "lane-isolation",
+            status="draft (2026-06-15)",
+            body="advisory lane blocking the trigger is failure-shape #1; open item #2 pending.",
+        )
+        resolver = audit_mod._PrResolver()
+        results = audit_mod.audit_specs([tmp_path], pr_links=True, resolver=resolver)
+        (row,) = [r for r in results if r.slug == "lane-isolation"]
+        assert row.drifted is False
+        assert resolver.calls == 0
+        assert fake_gh.calls == []
+
+    def test_shipping_context_bare_ref_still_drifts(self, audit_mod, tmp_path, fake_gh) -> None:
+        _pr_spec(
+            tmp_path / "specs" / "sse-endpoint",
+            status="approved (2026-06-14)",
+            body="SSE endpoint shipped in #67 with 10 tests.",
+        )
+        results = audit_mod.audit_specs([tmp_path], pr_links=True, resolver=audit_mod._PrResolver())
+        (row,) = [r for r in results if r.slug == "sse-endpoint"]
+        assert row.drifted is True
+        assert row.merged_prs == ("#67",)
+
+    def test_transient_failure_counts_and_is_not_cached(self, audit_mod, monkeypatch) -> None:
+        attempts = {"n": 0}
+
+        def flaky_gh(args, cwd=None):
+            attempts["n"] += 1
+            return None  # timeout / OSError shape
+
+        monkeypatch.setattr(audit_mod, "_run_gh", flaky_gh)
+        resolver = audit_mod._PrResolver()
+        ref = audit_mod.PrRef(number=67, repo=None, explicit=True)
+        assert resolver.merged(ref, Path("."), "workspace") is False
+        assert resolver.merged(ref, Path("."), "workspace") is False
+        assert resolver.failures == 2  # retried, not cached as a verdict
+        assert attempts["n"] == 2
+
+    def test_call_budget_cap_sets_capped_flag(self, audit_mod, fake_gh) -> None:
+        resolver = audit_mod._PrResolver(max_calls=1)
+        first = audit_mod.PrRef(number=67, repo=None, explicit=True)
+        second = audit_mod.PrRef(number=51, repo="Smart-AI-Memory/attune-author", explicit=True)
+        assert resolver.merged(first, Path("."), "workspace") is True
+        assert resolver.merged(second, Path("."), "workspace") is False
+        assert resolver.capped is True
+
+    def test_format_json_reports_resolver_state(self, audit_mod) -> None:
+        resolver = audit_mod._PrResolver(max_calls=1)
+        resolver.calls = 1
+        resolver.failures = 2
+        resolver.capped = True
+        payload = _json.loads(audit_mod.format_json([], resolver))
+        assert payload["resolver"] == {"calls": 1, "failures": 2, "capped": True}
+
+    def test_format_json_without_resolver_is_clean(self, audit_mod) -> None:
+        payload = _json.loads(audit_mod.format_json([]))
+        assert payload["resolver"] == {"calls": 0, "failures": 0, "capped": False}
+
+
+# ── task 10 — worktree spec-drift alarm ──────────────────────────────
+
+
+def _git(cwd: Path, *args: str) -> None:
+    _subprocess.run(
+        ["git", "-c", "user.email=t@t", "-c", "user.name=t", *args],
+        cwd=str(cwd),
+        check=True,
+        capture_output=True,
+    )
+
+
+@pytest.fixture
+def repo_with_worktree(tmp_path: Path):
+    """A real repo + one linked worktree, with a committed spec."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q", "-b", "main")
+    spec = repo / "specs" / "seed" / "requirements.md"
+    spec.parent.mkdir(parents=True)
+    spec.write_text("**Status**: draft\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-q", "-m", "seed")
+    worktree = tmp_path / "wt"
+    _git(repo, "worktree", "add", "-q", str(worktree), "-b", "feat/x")
+    return repo, worktree
+
+
+def _age(path: Path, days: float) -> None:
+    old = _time.time() - days * 86400
+    _os.utime(path, (old, old))
+
+
+class TestScanWorktreeSpecDrift:
+    def test_flags_week_old_untracked_spec_content(self, state_mod, repo_with_worktree) -> None:
+        repo, worktree = repo_with_worktree
+        stale = worktree / "specs" / "orphan" / "requirements.md"
+        stale.parent.mkdir(parents=True)
+        stale.write_text("**Status**: approved\n", encoding="utf-8")
+        _age(stale, days=8)
+        findings = state_mod.scan_worktree_spec_drift(repo)
+        assert len(findings) == 1
+        finding = findings[0]
+        assert finding.worktree == "wt"
+        assert "orphan" in finding.sample
+        assert finding.count == 1
+        # since == the stale file's mtime date
+        assert finding.since == _time.strftime("%Y-%m-%d", _time.localtime(stale.stat().st_mtime))
+
+    def test_flags_dirty_tracked_spec_file(self, state_mod, repo_with_worktree) -> None:
+        repo, worktree = repo_with_worktree
+        tracked = worktree / "specs" / "seed" / "requirements.md"
+        tracked.write_text("**Status**: approved — big amendment\n", encoding="utf-8")
+        _age(tracked, days=9)
+        findings = state_mod.scan_worktree_spec_drift(repo)
+        assert [f.worktree for f in findings] == ["wt"]
+
+    def test_fresh_files_do_not_alarm(self, state_mod, repo_with_worktree) -> None:
+        repo, worktree = repo_with_worktree
+        fresh = worktree / "specs" / "new" / "requirements.md"
+        fresh.parent.mkdir(parents=True)
+        fresh.write_text("**Status**: draft\n", encoding="utf-8")
+        assert state_mod.scan_worktree_spec_drift(repo) == []
+
+    def test_old_non_spec_files_do_not_alarm(self, state_mod, repo_with_worktree) -> None:
+        repo, worktree = repo_with_worktree
+        stray = worktree / "notes.md"
+        stray.write_text("scratch\n", encoding="utf-8")
+        _age(stray, days=30)
+        assert state_mod.scan_worktree_spec_drift(repo) == []
+
+    def test_non_repo_dir_yields_nothing(self, state_mod, tmp_path: Path) -> None:
+        assert state_mod.scan_worktree_spec_drift(tmp_path / "nope") == []
+
+    def test_age_gate_is_configurable(self, state_mod, repo_with_worktree) -> None:
+        repo, worktree = repo_with_worktree
+        f = worktree / "specs" / "seed" / "requirements.md"
+        f.write_text("**Status**: approved\n", encoding="utf-8")
+        _age(f, days=2)
+        assert state_mod.scan_worktree_spec_drift(repo) == []
+        assert state_mod.scan_worktree_spec_drift(repo, age_days=1) != []
+
+
+class TestOrientWorktreeAlarm:
+    def test_format_matches_spec_wording(self, state_mod, orient_mod) -> None:
+        findings = [
+            state_mod.WorktreeSpecDrift(
+                worktree="adoring-merkle",
+                since="2026-05-30",
+                sample="specs/heading-based-chunking/requirements.md",
+                count=3,
+            ),
+        ]
+        out = orient_mod.format_worktree_drift(findings)
+        assert (
+            "⚠ approved-looking spec content uncommitted in worktree "
+            "adoring-merkle since 2026-05-30" in out
+        )
+        assert "(+2 more)" in out
+
+    def test_empty_findings_render_nothing(self, orient_mod) -> None:
+        assert orient_mod.format_worktree_drift([]) == ""
+
+    def test_main_surfaces_alarm(
+        self, state_mod, orient_mod, repo_with_worktree, monkeypatch, capsys
+    ) -> None:
+        repo, worktree = repo_with_worktree
+        stale = worktree / "specs" / "orphan" / "requirements.md"
+        stale.parent.mkdir(parents=True)
+        stale.write_text("**Status**: approved\n", encoding="utf-8")
+        _age(stale, days=8)
+        monkeypatch.setenv("ATTUNE_AI_WORKSPACE_ROOTS", str(repo))
+        monkeypatch.delenv("ATTUNE_SPEC_AUDIT", raising=False)
+        monkeypatch.setattr("sys.stdin", _io.StringIO(_json.dumps({"cwd": str(repo)})))
+        assert orient_mod.main() == 0
+        out = capsys.readouterr().out
+        assert "⚠ approved-looking spec content uncommitted in worktree wt" in out
+
+    def test_kill_switch_silences_alarm(
+        self, state_mod, orient_mod, repo_with_worktree, monkeypatch, capsys
+    ) -> None:
+        repo, worktree = repo_with_worktree
+        stale = worktree / "specs" / "orphan" / "requirements.md"
+        stale.parent.mkdir(parents=True)
+        stale.write_text("**Status**: approved\n", encoding="utf-8")
+        _age(stale, days=8)
+        monkeypatch.setenv("ATTUNE_AI_WORKSPACE_ROOTS", str(repo))
+        monkeypatch.setenv("ATTUNE_SPEC_AUDIT", "off")
+        monkeypatch.setattr("sys.stdin", _io.StringIO(_json.dumps({"cwd": str(repo)})))
+        assert orient_mod.main() == 0
+        assert "uncommitted in worktree" not in capsys.readouterr().out
