@@ -46,7 +46,9 @@ def main() -> None:
     """Read PostToolUse payload and suggest help if applicable."""
     try:
         _buf = getattr(sys.stdin, "buffer", None)  # None when tests patch stdin
-        raw = (_buf.read(10_000).decode("utf-8", errors="replace") if _buf else sys.stdin.read(10_000))  # Cap input at 10KB
+        raw = (
+            _buf.read(10_000).decode("utf-8", errors="replace") if _buf else sys.stdin.read(10_000)
+        )  # Cap input at 10KB
         if not raw.strip():
             return
         data = json.loads(raw)

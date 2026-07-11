@@ -44,9 +44,7 @@ def main() -> int:
     """Capture stdin payload and environment markers to a JSONL file."""
     buffer = getattr(sys.stdin, "buffer", None)
     raw = (
-        buffer.read().decode("utf-8", errors="replace")
-        if buffer is not None
-        else sys.stdin.read()
+        buffer.read().decode("utf-8", errors="replace") if buffer is not None else sys.stdin.read()
     )
 
     try:

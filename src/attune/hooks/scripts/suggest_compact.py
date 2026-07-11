@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import tempfile
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -72,7 +73,18 @@ def save_compaction_state(state: dict[str, Any]) -> None:
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(state, f, indent=2)
-        os.replace(tmp_path, state_file)
+        # On Windows, os.replace raises PermissionError while a
+        # concurrent reader holds the destination open (no
+        # FILE_SHARE_DELETE) — those windows are tiny, so retry
+        # briefly before giving up. POSIX succeeds on the first try.
+        for attempt in range(50):
+            try:
+                os.replace(tmp_path, state_file)
+                break
+            except PermissionError:
+                if attempt == 49:
+                    raise
+                time.sleep(0.002)
     except OSError:
         try:
             os.unlink(tmp_path)

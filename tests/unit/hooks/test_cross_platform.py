@@ -74,9 +74,7 @@ class TestPosixFamily:
 
 class TestPowershellFamily:
     def test_blocks_invoke_expression(self) -> None:
-        allowed, reason = validate_shell_command(
-            "Invoke-Expression $payload", family="powershell"
-        )
+        allowed, reason = validate_shell_command("Invoke-Expression $payload", family="powershell")
         assert not allowed
         assert "Invoke-Expression" in reason
 
@@ -101,9 +99,7 @@ class TestPowershellFamily:
         assert "strict mode" in reason
 
     def test_allowlisted_commands_pass(self) -> None:
-        allowed, _ = validate_shell_command(
-            "git status; python -m pytest", family="powershell"
-        )
+        allowed, _ = validate_shell_command("git status; python -m pytest", family="powershell")
         assert allowed
 
     def test_disallowed_segment_behind_allowed_prefix_is_blocked(self) -> None:
@@ -202,14 +198,10 @@ class TestAtomicStateWrites:
     def test_concurrent_saves_never_yield_partial_json(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        suggest_compact = importlib.import_module(
-            "attune.hooks.scripts.suggest_compact"
-        )
+        suggest_compact = importlib.import_module("attune.hooks.scripts.suggest_compact")
 
         state_file = tmp_path / "compaction_state.json"
-        monkeypatch.setattr(
-            suggest_compact, "get_compaction_state_file", lambda: state_file
-        )
+        monkeypatch.setattr(suggest_compact, "get_compaction_state_file", lambda: state_file)
 
         errors: list[Exception] = []
         stop = threading.Event()
@@ -229,6 +221,11 @@ class TestAtomicStateWrites:
                         json.loads(state_file.read_text(encoding="utf-8"))
                     except json.JSONDecodeError as exc:
                         errors.append(exc)
+                    except OSError:
+                        # Windows: transient sharing violation while a
+                        # writer's os.replace is in flight — not a torn
+                        # write; keep observing.
+                        continue
 
         threads = [threading.Thread(target=writer, args=(i,)) for i in range(4)]
         observer = threading.Thread(target=reader)
@@ -247,14 +244,10 @@ class TestAtomicStateWrites:
     def test_no_leftover_tempfiles_on_success(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        suggest_compact = importlib.import_module(
-            "attune.hooks.scripts.suggest_compact"
-        )
+        suggest_compact = importlib.import_module("attune.hooks.scripts.suggest_compact")
 
         state_file = tmp_path / "state.json"
-        monkeypatch.setattr(
-            suggest_compact, "get_compaction_state_file", lambda: state_file
-        )
+        monkeypatch.setattr(suggest_compact, "get_compaction_state_file", lambda: state_file)
         suggest_compact.save_compaction_state({"tool_call_count": 1})
         leftovers = [p for p in tmp_path.iterdir() if p.name != "state.json"]
         assert leftovers == []
@@ -262,14 +255,10 @@ class TestAtomicStateWrites:
     def test_roundtrip_preserves_non_ascii(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        suggest_compact = importlib.import_module(
-            "attune.hooks.scripts.suggest_compact"
-        )
+        suggest_compact = importlib.import_module("attune.hooks.scripts.suggest_compact")
 
         state_file = tmp_path / "state.json"
-        monkeypatch.setattr(
-            suggest_compact, "get_compaction_state_file", lambda: state_file
-        )
+        monkeypatch.setattr(suggest_compact, "get_compaction_state_file", lambda: state_file)
         suggest_compact.save_compaction_state({"note": "naïve — 日本語 🎉"})
         loaded = suggest_compact.load_compaction_state()
         assert loaded["note"] == "naïve — 日本語 🎉"

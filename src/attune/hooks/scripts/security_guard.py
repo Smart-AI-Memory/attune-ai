@@ -341,9 +341,7 @@ def validate_file_path(file_path: str) -> tuple[bool, str]:
             normalized = str(PureWindowsPath(check_path)).lower()
             for win_dir in WINDOWS_SYSTEM_DIRECTORIES:
                 if normalized.startswith(win_dir):
-                    return False, (
-                        f"Blocked: cannot write to system directory {win_dir} (CWE-22)"
-                    )
+                    return False, (f"Blocked: cannot write to system directory {win_dir} (CWE-22)")
 
     return True, ""
 
