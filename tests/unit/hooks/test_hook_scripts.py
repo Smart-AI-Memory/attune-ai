@@ -186,6 +186,8 @@ class TestHasSessionWork:
             ["git", "log", "--oneline", "--since=8 hours ago"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=5,
         )
 

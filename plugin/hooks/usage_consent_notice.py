@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """SessionStart hook — surface the anonymous-usage consent ask once.
 
 The CLI consent prompt (``usage_ping.maybe_prompt_consent``) fires only

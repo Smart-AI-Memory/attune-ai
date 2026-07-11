@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """SessionStart spec-orientation hook.
 
 Fires on every SessionStart event. Branches on the ``source``

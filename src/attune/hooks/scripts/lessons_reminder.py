@@ -42,6 +42,8 @@ def has_session_work() -> bool:
             ["git", "log", "--oneline", "--since=8 hours ago"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=5,
         )
         return bool(result.stdout.strip())
@@ -70,6 +72,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _bootstrap import ensure_utf8_stdio
+
+    ensure_utf8_stdio()
     from _sdk_gate import exit_if_sdk_subprocess
 
     exit_if_sdk_subprocess()

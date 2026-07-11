@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Spec status audit — flag specs whose deliverables shipped but status didn't.
 
 On-demand / CI companion to the always-on ``spec_orient`` SessionStart
@@ -102,6 +102,8 @@ def _run_gh(args: list[str], cwd: Path | None) -> subprocess.CompletedProcess[st
             ["gh", *args],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=_GH_TIMEOUT_SECONDS,
             cwd=str(cwd) if cwd else None,
         )

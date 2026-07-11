@@ -50,7 +50,8 @@ def _read_stdin_context() -> dict[str, Any]:
     if sys.stdin.isatty():
         return {}
     try:
-        raw = sys.stdin.read().strip()
+        _buf = getattr(sys.stdin, "buffer", None)  # None when tests patch stdin
+        raw = (_buf.read().decode("utf-8", errors="replace") if _buf else sys.stdin.read()).strip()
         if raw:
             return json.loads(raw)
     except (json.JSONDecodeError, ValueError) as e:
@@ -59,6 +60,9 @@ def _read_stdin_context() -> dict[str, Any]:
 
 
 if __name__ == "__main__":
+    from _bootstrap import ensure_utf8_stdio
+
+    ensure_utf8_stdio()
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
     ctx = _read_stdin_context()
     record_telemetry(ctx)

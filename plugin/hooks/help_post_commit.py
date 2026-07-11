@@ -29,7 +29,8 @@ for _stream in (sys.stdout, sys.stderr):
 def main() -> None:
     """Check for stale help after git commit."""
     try:
-        raw = sys.stdin.read(10_000)
+        _buf = getattr(sys.stdin, "buffer", None)  # None when tests patch stdin
+        raw = (_buf.read(10_000).decode("utf-8", errors="replace") if _buf else sys.stdin.read(10_000))
         if not raw.strip():
             return
         data = json.loads(raw)

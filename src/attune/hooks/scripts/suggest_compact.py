@@ -10,6 +10,7 @@ Licensed under the Apache License, Version 2.0
 import json
 import logging
 import os
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -38,7 +39,7 @@ def load_compaction_state() -> dict[str, Any]:
 
     if state_file.exists():
         try:
-            with open(state_file) as f:
+            with open(state_file, encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, OSError):
             pass
@@ -61,8 +62,23 @@ def save_compaction_state(state: dict[str, Any]) -> None:
     state_file = get_compaction_state_file()
     state_file.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(state_file, "w") as f:
-        json.dump(state, f, indent=2)
+    # Atomic write: tempfile in the same directory + os.replace, so a
+    # concurrent session never observes a truncated/partial JSON file.
+    fd, tmp_path = tempfile.mkstemp(
+        dir=state_file.parent,
+        prefix=state_file.name,
+        suffix=".tmp",
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=2)
+        os.replace(tmp_path, state_file)
+    except OSError:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
 
 
 def should_suggest_compaction(
@@ -211,6 +227,9 @@ def reset_on_compaction(**context: Any) -> dict[str, Any]:
 
 
 if __name__ == "__main__":
+    from _bootstrap import ensure_utf8_stdio
+
+    ensure_utf8_stdio()
     # Allow running as a script for testing
 
     logging.basicConfig(level=logging.INFO, format="%(message)s")

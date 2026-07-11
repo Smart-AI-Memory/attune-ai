@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """Stop-hook session-stash — capture reusable findings once per session.
 
 The ``Stop`` event fires on every turn, so this hook acts ONCE per

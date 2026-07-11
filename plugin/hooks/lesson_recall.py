@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """UserPromptSubmit lesson recall — surface matching lessons with the
 prompt that needs them.
 

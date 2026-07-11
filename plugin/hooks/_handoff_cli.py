@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """CLI wrapper for the ``/handoff`` slash command.
 
 Generates a resume prompt from the current cwd's git state plus
