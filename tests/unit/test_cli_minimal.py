@@ -16,6 +16,7 @@ import pytest
 
 from attune.cli_minimal import (
     _SUBCOMMAND_DISPATCH,
+    _OneLineLogFormatter,
     create_parser,
     get_version,
     main,
@@ -317,6 +318,61 @@ class TestMainEdgeCases:
         ctx, mock_fn = _mock_subcmd("workflow", "list", return_value=1)
         with ctx:
             assert main(["workflow", "list"]) == 1
+
+
+class TestOneLineLogFormatter:
+    """Tests for _OneLineLogFormatter (setup-friction F1)."""
+
+    def _record(self, exc_info=None) -> logging.LogRecord:
+        return logging.LogRecord(
+            name="attune.test",
+            level=logging.ERROR,
+            pathname=__file__,
+            lineno=1,
+            msg="workflow failed",
+            args=(),
+            exc_info=exc_info,
+        )
+
+    def test_plain_record_formats_one_line(self) -> None:
+        fmt = _OneLineLogFormatter(fmt="%(levelname)s:%(name)s:%(message)s")
+        message = fmt.format(self._record())
+        assert message == "ERROR:attune.test:workflow failed"
+
+    def test_exception_record_suppresses_traceback(self) -> None:
+        try:
+            raise ValueError("boom")
+        except ValueError:
+            import sys
+
+            record = self._record(exc_info=sys.exc_info())
+        fmt = _OneLineLogFormatter(fmt="%(levelname)s:%(name)s:%(message)s")
+        message = fmt.format(record)
+        assert "Traceback" not in message
+        assert "\n" not in message
+        assert message.endswith("(re-run with --verbose for the full traceback)")
+
+    def test_record_exc_info_restored_after_format(self) -> None:
+        # Other handlers on the same record must still see the exception.
+        try:
+            raise ValueError("boom")
+        except ValueError:
+            import sys
+
+            record = self._record(exc_info=sys.exc_info())
+        exc_info = record.exc_info
+        _OneLineLogFormatter(fmt="%(message)s").format(record)
+        assert record.exc_info == exc_info
+
+    def test_main_non_verbose_installs_one_line_formatter(self) -> None:
+        ctx, mock_fn = _mock_simple("version")
+        with ctx, patch("logging.basicConfig") as mock_config:
+            main(["version"])
+        call = next(c for c in mock_config.call_args_list if "handlers" in c.kwargs)
+        assert call.kwargs["level"] == logging.WARNING
+        handlers = call.kwargs["handlers"]
+        assert len(handlers) == 1
+        assert isinstance(handlers[0].formatter, _OneLineLogFormatter)
 
 
 class TestCreateParserAuth:
