@@ -504,3 +504,98 @@ class TestMainExitCodes:
         monkeypatch.setattr(audit_mod, "audit_specs", _boom)
         # Warn-by-default: a thrown audit still exits 0.
         assert audit_mod.main([]) == 0
+
+
+# ── extract_pr_refs (spec-status-integrity-hooks, task 2) ─────
+
+
+class TestExtractPrRefs:
+    """Four citation styles + negatives, per workspace design §1."""
+
+    def test_pr_hash_style(self, state_mod) -> None:
+        refs = state_mod.extract_pr_refs("Shipped via PR #212 yesterday.")
+        assert refs == [state_mod.PrRef(number=212, repo=None, explicit=True)]
+
+    def test_bare_hash_is_ambiguous(self, state_mod) -> None:
+        refs = state_mod.extract_pr_refs("landed in attune #1191 last week")
+        assert refs == [state_mod.PrRef(number=1191, repo=None, explicit=False)]
+
+    def test_inline_in_status_single(self, state_mod) -> None:
+        refs = state_mod.extract_pr_refs("**Status**: complete — shipped in #567")
+        assert refs == [state_mod.PrRef(number=567, repo=None, explicit=False)]
+
+    def test_inline_in_status_pr_list(self, state_mod) -> None:
+        refs = state_mod.extract_pr_refs("**Status**: complete — shipped (PRs #303, #304)")
+        assert refs == [
+            state_mod.PrRef(number=303, repo=None, explicit=True),
+            state_mod.PrRef(number=304, repo=None, explicit=True),
+        ]
+
+    def test_markdown_pull_url_resolves_repo(self, state_mod) -> None:
+        text = "Done in [#95](https://github.com/Smart-AI-Memory/attune-author/pull/95)."
+        refs = state_mod.extract_pr_refs(text)
+        # Exactly one ref: the link text ``#95`` must NOT also produce a
+        # bare current-repo ref.
+        assert refs == [
+            state_mod.PrRef(number=95, repo="Smart-AI-Memory/attune-author", explicit=True)
+        ]
+
+    def test_bare_pull_url(self, state_mod) -> None:
+        text = "See https://github.com/Smart-AI-Memory/attune-rag/pull/188 for details."
+        refs = state_mod.extract_pr_refs(text)
+        assert refs == [
+            state_mod.PrRef(number=188, repo="Smart-AI-Memory/attune-rag", explicit=True)
+        ]
+
+    # ── negatives ────────────────────────────────────────────
+
+    def test_issue_url_yields_nothing(self, state_mod) -> None:
+        text = "Tracked in [#12](https://github.com/Smart-AI-Memory/attune/issues/12)."
+        assert state_mod.extract_pr_refs(text) == []
+
+    def test_non_pull_github_url_yields_nothing(self, state_mod) -> None:
+        text = "[the repo](https://github.com/Smart-AI-Memory/attune-rag/tree/main/src)"
+        assert state_mod.extract_pr_refs(text) == []
+
+    def test_hash_followed_by_word_chars_rejected(self, state_mod) -> None:
+        assert state_mod.extract_pr_refs("commit #12abc is unrelated") == []
+
+    def test_word_char_prefix_rejected(self, state_mod) -> None:
+        assert state_mod.extract_pr_refs("channel foo#42 and anchor ##7") == []
+
+    def test_code_fence_content_ignored(self, state_mod) -> None:
+        text = "before\n```\nPR #999 and #888\n```\nafter"
+        assert state_mod.extract_pr_refs(text) == []
+
+    def test_inline_code_ignored(self, state_mod) -> None:
+        assert state_mod.extract_pr_refs("cite specs as `PR #NNN` or `#123`") == []
+
+    def test_empty_text(self, state_mod) -> None:
+        assert state_mod.extract_pr_refs("") == []
+
+    # ── dedupe + ordering ────────────────────────────────────
+
+    def test_duplicates_dedupe_to_first_occurrence(self, state_mod) -> None:
+        refs = state_mod.extract_pr_refs("PR #212 shipped this; see #212 again")
+        assert refs == [state_mod.PrRef(number=212, repo=None, explicit=True)]
+
+    def test_bare_then_explicit_upgrades_flag(self, state_mod) -> None:
+        refs = state_mod.extract_pr_refs("see #212, later merged as PR #212")
+        assert refs == [state_mod.PrRef(number=212, repo=None, explicit=True)]
+
+    def test_same_number_different_repo_is_distinct(self, state_mod) -> None:
+        text = "local #95 and [#95](https://github.com/Smart-AI-Memory/attune-author/pull/95)"
+        refs = state_mod.extract_pr_refs(text)
+        assert state_mod.PrRef(number=95, repo=None, explicit=False) in refs
+        assert (
+            state_mod.PrRef(number=95, repo="Smart-AI-Memory/attune-author", explicit=True) in refs
+        )
+        assert len(refs) == 2
+
+    def test_document_order_across_styles(self, state_mod) -> None:
+        text = (
+            "First [#7](https://github.com/Smart-AI-Memory/attune-gui/pull/7), "
+            "then PR #3, then bare #9."
+        )
+        refs = state_mod.extract_pr_refs(text)
+        assert [r.number for r in refs] == [7, 3, 9]
