@@ -1,6 +1,6 @@
 # Analysis-Workflow Output Widgets — requirements
 
-**Status:** draft (2026-06-28) · **Owner:** Patrick + agent
+**Status:** approved (2026-06-28) · **Owner:** Patrick + agent
 **Kickoff:** `/spec` widget form, response `resp-20260628-143856`
 (goal = formalize the program; workflows = all 7; shared_renderer = yes;
 "parallel acceptable").
