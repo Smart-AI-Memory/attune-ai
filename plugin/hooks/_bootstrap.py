@@ -70,7 +70,11 @@ def ensure_repo_src_on_path() -> None:
         src = Path(__file__).resolve().parents[3]
     except IndexError:
         return
-    if not (src / "attune").is_dir():  # plugin copy / moved layout — no-op
+    # Require the real package (__init__.py), not just a directory named
+    # "attune" — from the plugin copy, parents[3] lands OUTSIDE the repo,
+    # where an unrelated "attune" dir (e.g. a workspace umbrella checkout)
+    # would otherwise shadow the installed package as a namespace package.
+    if not (src / "attune" / "__init__.py").is_file():  # plugin copy / moved layout — no-op
         return
     src_str = str(src)
     if src_str not in sys.path:

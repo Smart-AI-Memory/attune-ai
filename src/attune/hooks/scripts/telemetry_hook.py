@@ -63,6 +63,9 @@ if __name__ == "__main__":
     from _bootstrap import ensure_utf8_stdio
 
     ensure_utf8_stdio()
+    from _sdk_gate import exit_if_sdk_subprocess
+
+    exit_if_sdk_subprocess()
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
     ctx = _read_stdin_context()
     record_telemetry(ctx)

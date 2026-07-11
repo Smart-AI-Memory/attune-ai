@@ -64,7 +64,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e .
-          python -m pip install pytest pytest-asyncio
+          # pytest-xdist: the repo's pytest addopts inject -n, so a
+          # bare pytest install fails with "unrecognized arguments: -n".
+          python -m pip install pytest pytest-asyncio pytest-xdist
 
       - name: Run hook test suite
         run: python -m pytest tests/unit/hooks/ -q
