@@ -1,9 +1,10 @@
 name: Cross-platform hooks
 
-# Fast, focused portability gate for the hook layer (Tier 1 of the
-# cross-platform work, 2026-07). The full test matrix lives in
-# tests.yml; this workflow exists so hook-layer portability breaks
-# fail loudly and cheaply on every push/PR that touches them.
+# Fast, focused portability gate for the hook layer. Added by the
+# enforcement tier of the 2026-07 cross-platform work to guard the
+# Tier-1 hook fixes. The full test matrix lives in tests.yml; this
+# workflow exists so hook-layer portability breaks fail loudly and
+# cheaply on every push/PR that touches them.
 #
 # SPEND GUARD: ANTHROPIC_API_KEY is pinned to the empty string —
 # per-push workflows must never receive the real secret (see the

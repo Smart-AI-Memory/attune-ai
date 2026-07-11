@@ -14,9 +14,11 @@ name: Windows payload capture (one-shot)
 #   - two tiny prompts total ("run echo hello")
 # Expected cost per dispatch: well under $0.25.
 #
-# Usage:
-#   gh workflow run windows-payload-capture.yml --ref <branch>
-# then read the uploaded `hook-payloads` artifact.
+# Usage (NOTE: GitHub only registers dispatch-only workflows once the
+# file exists on the DEFAULT branch — dispatching against a feature
+# branch 404s until this file has merged to main; verified 2026-07-11):
+#   gh workflow run windows-payload-capture.yml --ref main
+# then read the uploaded `hook-payloads-*` artifacts.
 
 on:
   workflow_dispatch: {}

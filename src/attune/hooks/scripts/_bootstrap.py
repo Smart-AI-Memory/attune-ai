@@ -61,9 +61,10 @@ def read_stdin_utf8(limit: int | None = None) -> str:
 def ensure_repo_src_on_path() -> None:
     """Insert the repo's ``src/`` directory at the front of ``sys.path``.
 
-    Resolved relative to this file (``src/attune/hooks/scripts/`` →
-    three parents up), so it works from any cwd, any worktree, and
-    any platform without env-prefix syntax in the registration.
+    Resolved relative to this file — ``parents[3]`` climbs
+    ``scripts/`` → ``hooks/`` → ``attune/`` → ``src/`` — so it works
+    from any cwd, any worktree, and any platform without env-prefix
+    syntax in the registration.
     """
     try:
         src = Path(__file__).resolve().parents[3]

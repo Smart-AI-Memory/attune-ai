@@ -187,9 +187,10 @@ def detect_shell_family(context: dict[str, Any]) -> str:
 
     Detection order (most to least explicit):
     1. An explicit tool/shell name in the hook payload. NOTE: the
-       exact payload shape on native Windows is unverified — when a
-       Windows machine is available, capture a real payload and
-       tighten this (the shell-family tests document the assumption).
+       exact payload shape on native Windows is unverified — run
+       .github/workflows/windows-payload-capture.yml (from main) to
+       capture real payloads and tighten this; the assumptions are
+       documented in tests/unit/hooks/test_cross_platform.py.
     2. On Windows: CLAUDE_CODE_USE_POWERSHELL_TOOL=1 → powershell;
        a configured Git Bash → posix; otherwise unknown.
     3. Non-Windows → posix.
