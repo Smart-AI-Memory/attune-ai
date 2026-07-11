@@ -14,7 +14,7 @@
   `project_memory_as_insurance.md` — the ratified frame this spec
   serves: cost is fact, benefit is tail-prevention net of noise;
   this spec measures the prevention numerator
-- `benchmarks/session_savings.py` (PR #1276) — the existing A/B
+- `benchmarks/session_savings.py` (`PR #1276`) — the existing A/B
   harness (headless `claude -p`, `ATTUNE_JIT_RECALL` /
   `ATTUNE_LESSON_RECALL` toggles, per-arm medians). It measures
   COST per arm; it has no outcome scoring. This spec adds the
@@ -25,7 +25,7 @@
 - `docs/specs/memory-recall-eval/` — sibling, different axis:
   that spec asks "does retrieval return the right memories";
   this one asks "does a surfaced memory change behavior"
-- `tests/unit/ci/test_ci_spend_guard.py` (#1293) — constraint:
+- `tests/unit/ci/test_ci_spend_guard.py` (`#1293`) — constraint:
   the battery must never become a per-PR keyed CI job
 
 ---
@@ -67,11 +67,11 @@ occur. Δp is entirely unmeasured.** Without it:
 
 - A savings percentage. Output is failure rates and Δp per class,
   never a dollar or token savings claim (insurance frame; caption
-  discipline from #1291).
+  discipline from `#1291`).
 - Retrieval accuracy (that is `memory-recall-eval`).
 - "When not to inject" routing — that falls out of noise data
   soaking, not this spec.
-- Per-PR CI integration — forbidden by the CI spend guard (#1293).
+- Per-PR CI integration — forbidden by the CI spend guard (`#1293`).
   The battery is a scheduled/manual, budget-capped, keyed run.
 
 ## Trap classes — cut 1 (from measured exposure)
@@ -147,7 +147,7 @@ bar):**
 - **Output:** per-cell counts (fired / total), per-class Δp with
   raw counts always shown; pilot-scale numbers are labeled
   pilot — no rate is quoted externally below 20/cell.
-- **Verify-the-trap receipt (per #1293 discipline):** before any
+- **Verify-the-trap receipt (per `#1293` discipline):** before any
   arm comparison is trusted, each trap must be shown to fire on a
   synthetic run known to lack the lesson (the discrimination
   gate).

@@ -36,6 +36,7 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import time
@@ -81,9 +82,20 @@ _HEADERS = ("Spec", "Layer", "Status", "Staleness", "Unresolved")
 
 # ── PR-link resolution (workspace design §2) ──────────────────
 
+
 # Bound gh calls per run — same discipline as session_recall.py's
 # _MAX_PR_CHECKS, sized for an audit sweep rather than a session start.
-_MAX_GH_CALLS = 30
+# The first full-workspace sweep (94 specs) capped out at 30 even after
+# the #1314 precision fix, so the weekly CI raises it via env; local
+# runs keep the conservative default.
+def _max_gh_calls() -> int:
+    try:
+        return int(os.environ.get("ATTUNE_SPEC_AUDIT_MAX_GH_CALLS", "30"))
+    except ValueError:
+        return 30
+
+
+_MAX_GH_CALLS = _max_gh_calls()
 _GH_TIMEOUT_SECONDS = 6.0
 # All three phase files are scanned for citations, not just the
 # highest-priority one — a requirements.md often carries the approval
@@ -126,9 +138,15 @@ class _PrResolver:
       §2 — never blocks).
     """
 
-    def __init__(self, max_calls: int = _MAX_GH_CALLS) -> None:
+    def __init__(self, max_calls: int | None = None) -> None:
         self.calls = 0
+        # Resolved at construction (not def-time) so tests can tune the
+        # module constant; the explicit param was silently ignored
+        # pre-#1314.
+        self.max_calls = _MAX_GH_CALLS if max_calls is None else max_calls
         self.dead = False
+        self.failures = 0  # transient gh errors (timeout / non-zero exit)
+        self.capped = False  # ran out of the per-run call budget
         self._cache: dict[tuple[str, int], bool] = {}
 
     def merged(self, ref: PrRef, spec_dir: Path, layer: str) -> bool:
@@ -136,7 +154,14 @@ class _PrResolver:
         key = (ref.repo or f"local:{layer}", ref.number)
         if key in self._cache:
             return self._cache[key]
-        if self.dead or self.calls >= _MAX_GH_CALLS:
+        if self.dead:
+            return False
+        if self.calls >= self.max_calls:
+            # Surfaced in the JSON payload — a capped run means "some
+            # refs unchecked", which reads very differently from clean
+            # (attune-ai#1314: silent gaps made consecutive runs
+            # disagree).
+            self.capped = True
             return False
         self.calls += 1
         try:
@@ -146,10 +171,15 @@ class _PrResolver:
             # (offline degradation; the deliverable signal still stands).
             self.dead = True
             return False
+        if verdict is None:
+            # Transient failure: report it, and do NOT cache — a retry
+            # in the same run (other phase file) may still succeed.
+            self.failures += 1
+            return False
         self._cache[key] = verdict
         return verdict
 
-    def _check(self, ref: PrRef, spec_dir: Path) -> bool:
+    def _check(self, ref: PrRef, spec_dir: Path) -> bool | None:
         # Explicit cross-repo slug → REST pulls endpoint ("merged" is a
         # single-PR-GET field; an issue number 404s here, which is
         # exactly the merged-only filter the design wants). Local refs
@@ -162,14 +192,19 @@ class _PrResolver:
                 ["pr", "view", str(ref.number), "--json", "state"],
                 cwd=spec_dir,
             )
-        if proc is None or proc.returncode != 0:
-            return False
+        if proc is None:
+            return None  # timeout / OSError — transient, retryable
+        if proc.returncode != 0:
+            # Non-zero is definitive for cross-repo (404 = not a PR) but
+            # can be transient for local gh auth hiccups; treating it as
+            # a failure keeps the run honest either way.
+            return None
         try:
             data = json.loads(proc.stdout)
         except (json.JSONDecodeError, ValueError):
-            return False
+            return None
         if not isinstance(data, dict):
-            return False
+            return None
         if ref.repo:
             return bool(data.get("merged"))
         return data.get("state") == "MERGED"
@@ -274,10 +309,13 @@ def audit_specs(
         checked = pr_links and resolver is not None and in_flight
         if checked:
             try:
+                # Only confident citations drive drift (attune-ai#1314):
+                # explicit PR #N / pull-URLs / shipping-context bare refs.
+                # Ordinal prose ("failure-shape #1") never reaches gh.
                 merged_prs = tuple(
                     _pr_label(ref, spec.layer)
                     for ref in _collect_refs(spec.path)
-                    if resolver.merged(ref, spec.path, spec.layer)
+                    if ref.explicit and resolver.merged(ref, spec.path, spec.layer)
                 )
             except Exception:  # noqa: BLE001 — one bad spec must not abort the audit
                 merged_prs = ()
@@ -337,7 +375,7 @@ def write_drift_cache(results: list[AuditResult], roots: list[Path]) -> list[Pat
     return written
 
 
-def format_json(results: list[AuditResult]) -> str:
+def format_json(results: list[AuditResult], resolver: _PrResolver | None = None) -> str:
     """Machine-readable audit payload for the tracking-issue upsert."""
     drifted = sorted(r.cache_key for r in results if r.drifted)
     payload = {
@@ -346,6 +384,14 @@ def format_json(results: list[AuditResult]) -> str:
             "specs": len(results),
             "drifted": len(drifted),
             "suspected_stale": sum(1 for r in results if r.staleness == "suspected-stale"),
+        },
+        # attune-ai#1314: a capped or failure-ridden run means "refs went
+        # unchecked" — consumers (the weekly issue upsert, humans) must
+        # be able to tell that apart from a genuinely clean sweep.
+        "resolver": {
+            "calls": resolver.calls if resolver else 0,
+            "failures": resolver.failures if resolver else 0,
+            "capped": bool(resolver.capped) if resolver else False,
         },
         "drifted": drifted,
         "specs": {
@@ -454,7 +500,14 @@ def main(argv: list[str] | None = None) -> int:
             # The cache is what lets the offline SessionStart hook
             # annotate drift without network calls (design §3).
             write_drift_cache(results, roots)
-        print(format_json(results) if as_json else format_report(results))
+        print(format_json(results, resolver) if as_json else format_report(results))
+        if resolver and (resolver.failures or resolver.capped):
+            print(
+                f"note: PR resolution degraded — {resolver.failures} lookup "
+                f"failure(s){', call budget hit' if resolver.capped else ''}; "
+                "unchecked refs count as not-drifted this run",
+                file=sys.stderr,
+            )
         if strict and any(r.drifted or r.staleness == "suspected-stale" for r in results):
             return 1
         return 0

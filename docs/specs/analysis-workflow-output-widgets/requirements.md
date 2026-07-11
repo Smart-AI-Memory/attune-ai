@@ -6,7 +6,7 @@
 "parallel acceptable").
 
 Formalize the rich `show_widget` output pattern — already shipped for
-discovery-sweep (#1148, triage board) and security-audit (#1149,
+discovery-sweep (`#1148`, triage board) and security-audit (`#1149`,
 severity dashboard) — into a program that (a) extracts a **shared
 renderer** and (b) extends rich output to the other analysis workflows.
 
@@ -17,8 +17,8 @@ otherwise — their MCP responses split into two shapes:
 
 | Workflow | Handler pick | Output shape | Widget family |
 |---|---|---|---|
-| security-audit | `findings` | structured `Finding` | **A** (done #1149) |
-| discovery-sweep | bespoke buckets | structured `Finding` | **A** (done #1148) |
+| security-audit | `findings` | structured `Finding` | **A** (done `#1149`) |
+| discovery-sweep | bespoke buckets | structured `Finding` | **A** (done `#1148`) |
 | **perf-audit** (`performance_audit`) | `findings` + score | structured `Finding` | **A** |
 | **bug-predict** | `predictions` (findings-like → report findings) | structured *iff* report has a `FindingsSection` | **A?** (confirm) |
 | **code-review** | `feedback` + `quality_score` | `feedback` is NOT findings-like → text | **B** |
@@ -52,8 +52,8 @@ are NOT the structured `severity/file/line/message` shape either.
   the contract.
 - **FR-1 (shared renderer).** Extract `attune.workflows.findings_widget`
   — the severity palette + `esc`/`location` + finding-card primitives —
-  and migrate the discovery-sweep board (#1148) and security-audit
-  dashboard (#1149) onto it. No behaviour change; pure de-dup.
+  and migrate the discovery-sweep board (`#1148`) and security-audit
+  dashboard (`#1149`) onto it. No behaviour change; pure de-dup.
 - **FR-2 (Family A rollout).** Apply the structured dashboard to the
   confirmed Family-A workflows via their existing `findings`/`predictions`
   picks → `dashboard_html`, skill Output wiring, tests.
@@ -64,14 +64,14 @@ are NOT the structured `severity/file/line/message` shape either.
 ## Non-goals
 
 - No new MCP tools (the 47-count guard / README / features.ts). Extend
-  existing responses with `*_html` fields, as #1148/#1149 did.
+  existing responses with `*_html` fields, as `#1148`/#1149 did.
 - No reworking SDK-native workflows to manufacture structured findings
   where the LLM emits prose — Family B renders what's actually there.
 - `slider`/`color` controls stay deferred (elicitation D11).
 
 ## Sequencing & parallelism (user OK'd parallel)
 
-1. **FR-1 shared renderer** — must land FIRST (after #1148+#1149 merge)
+1. **FR-1 shared renderer** — must land FIRST (after `#1148`+`#1149` merge)
    so A-family widgets build on it, not on copies.
 2. **FR-0 confirm** — parallel per-workflow (read-only).
 3. **FR-2 / FR-3** — parallelizable per workflow (one PR each, or grouped
@@ -84,4 +84,4 @@ are NOT the structured `severity/file/line/message` shape either.
 - Each in-scope workflow's response carries the right `*_html`
   (dashboard for A, panel for B); skill prefers it, markdown fallback.
 - Every helper injection-safe + unit-tested; no exact-dict response test
-  broken (pop `*_html`, keep legacy keys exact — see #1149 lesson).
+  broken (pop `*_html`, keep legacy keys exact — see `#1149` lesson).

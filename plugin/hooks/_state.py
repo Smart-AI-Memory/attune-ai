@@ -247,6 +247,23 @@ _REF_NUMBER = re.compile(r"#(\d+)")
 # ``foo#12``, anchors, URL paths) and not followed by a word char
 # (rejects ``#12abc``).
 _BARE_REF = re.compile(r"(?<![\w#/])#(\d+)(?![\w#])")
+# Shipping vocabulary that promotes a bare ref to citation confidence.
+# First live sweep (attune-ai#1314) showed bare ``#N`` matching ordinal
+# prose ("failure-shape #1", "open item #2") and resolving to unrelated
+# ancient PRs; a bare ref only reads as a PR citation when its own line
+# says something shipped through it ("shipped in #67", "landed via #95").
+_SHIPPING_CONTEXT = re.compile(
+    r"\b(ship(?:ped|s|ping)?|merged?|land(?:ed|s)?|implement(?:ed|s|ing|ation)?"
+    r"|deliver(?:ed|s)?|released?|fix(?:ed|es)?|via|clos(?:ed|es))\b",
+    re.IGNORECASE,
+)
+
+
+def _line_around(text: str, pos: int) -> str:
+    """The full line of ``text`` containing offset ``pos``."""
+    start = text.rfind("\n", 0, pos) + 1
+    end = text.find("\n", pos)
+    return text[start : end if end != -1 else len(text)]
 
 
 @dataclass(frozen=True)
@@ -255,9 +272,11 @@ class PrRef:
 
     ``repo`` is the explicit ``owner/name`` slug from a pull-URL
     citation; ``None`` means "current repo". ``explicit`` is True when
-    the citation is unambiguously a PR (``PR #N`` / ``PRs #N, …`` /
-    pull-URL); a bare ``#NNN`` is ``explicit=False`` — it may be an
-    issue, which the checker resolves via the pulls API at check time.
+    the citation reads as a PR with confidence: ``PR #N`` /
+    ``PRs #N, …`` / pull-URL, or a bare ``#NNN`` whose own line carries
+    shipping vocabulary ("shipped in #67"). Other bare refs stay
+    ``explicit=False`` — ordinal prose ("failure-shape #1") must not
+    drive the drift signal (attune-ai#1314).
     """
 
     number: int
@@ -297,7 +316,11 @@ def extract_pr_refs(text: str) -> list[PrRef]:
     scrubbed = _PR_LIST.sub(_blank, scrubbed)
 
     for match in _BARE_REF.finditer(scrubbed):
-        hits.append((match.start(), None, int(match.group(1)), False))
+        # attune-ai#1314: a bare ref earns citation confidence only when
+        # its line carries shipping vocabulary; ordinal prose stays
+        # explicit=False and the drift signal ignores it.
+        confident = bool(_SHIPPING_CONTEXT.search(_line_around(scrubbed, match.start())))
+        hits.append((match.start(), None, int(match.group(1)), confident))
 
     # Dedupe on (repo, number): earliest position wins the slot; the
     # explicit flag is OR-merged across occurrences.
@@ -929,6 +952,110 @@ def _run_git(cwd: Path, *args: str) -> str:
     if result.returncode != 0:
         return ""
     return result.stdout
+
+
+# ── Worktree spec-drift alarm (spec-status-integrity task 10) ──
+#
+# Motivating incident: approved spec content sat uncommitted in a
+# worktree for six weeks while the SessionStart hook read those local
+# files and reported the spec "approved" — masking the drift. CI can
+# never see local worktrees, so this scan must live in the local hook.
+
+_WORKTREE_DRIFT_AGE_DAYS = 7
+_MAX_WORKTREES_SCANNED = 12
+_WORKTREE_SCAN_BUDGET_SECONDS = 2.5
+_SPEC_STATUS_PATHSPECS = ("specs", "docs/specs")
+
+
+@dataclass(frozen=True)
+class WorktreeSpecDrift:
+    """Uncommitted spec content sitting in one worktree past the age gate."""
+
+    worktree: str  # basename of the worktree directory
+    since: str  # YYYY-MM-DD of the oldest stale file's mtime
+    sample: str  # one repo-relative path, for the alarm line
+    count: int  # total stale spec files in this worktree
+
+
+def _stale_spec_files(worktree: Path, cutoff: float) -> list[tuple[float, str]]:
+    """(mtime, relpath) for uncommitted spec files older than ``cutoff``."""
+    porcelain = _run_git(
+        worktree, "status", "--porcelain", "--no-renames", "--", *_SPEC_STATUS_PATHSPECS
+    )
+    stale: list[tuple[float, str]] = []
+    for line in porcelain.splitlines():
+        rel = line[3:].strip().strip('"')
+        if not rel:
+            continue
+        path = worktree / rel
+        candidates = [path]
+        if rel.endswith("/") or path.is_dir():
+            # Untracked directories are reported as one entry; look one
+            # level of rglob deep enough to date the content (bounded).
+            candidates = [f for f in path.rglob("*") if f.is_file()][:50]
+        for f in candidates:
+            try:
+                mtime = f.stat().st_mtime
+            except OSError:
+                continue
+            if mtime <= cutoff:
+                try:
+                    shown = str(f.relative_to(worktree))
+                except ValueError:
+                    shown = rel
+                stale.append((mtime, shown))
+    return stale
+
+
+def scan_worktree_spec_drift(
+    repo_dir: Path,
+    *,
+    age_days: int = _WORKTREE_DRIFT_AGE_DAYS,
+    now: float | None = None,
+) -> list[WorktreeSpecDrift]:
+    """Week-old uncommitted spec content across the repo's worktrees.
+
+    Scans every worktree ``git worktree list`` reports for ``repo_dir``
+    (the main checkout included), looking at dirty/untracked files under
+    ``specs/`` and ``docs/specs/`` whose mtime is older than
+    ``age_days``. Best-effort and bounded: at most
+    ``_MAX_WORKTREES_SCANNED`` worktrees, one 2s-capped git call each,
+    and an overall ``_WORKTREE_SCAN_BUDGET_SECONDS`` wall-clock budget —
+    a slow or broken repo yields fewer findings, never an error.
+    """
+    started = time.monotonic()
+    cutoff = (now if now is not None else time.time()) - age_days * 86400
+    listing = _run_git(repo_dir, "worktree", "list", "--porcelain")
+    if not listing:
+        return []
+    worktrees = [
+        Path(line[len("worktree ") :].strip())
+        for line in listing.splitlines()
+        if line.startswith("worktree ")
+    ]
+    findings: list[WorktreeSpecDrift] = []
+    for worktree in worktrees[:_MAX_WORKTREES_SCANNED]:
+        if time.monotonic() - started > _WORKTREE_SCAN_BUDGET_SECONDS:
+            break
+        if not worktree.is_dir():
+            continue
+        try:
+            stale = _stale_spec_files(worktree, cutoff)
+        except Exception:  # noqa: BLE001 — one bad worktree must not kill the scan
+            continue
+        if not stale:
+            continue
+        stale.sort()
+        oldest_mtime, sample = stale[0]
+        findings.append(
+            WorktreeSpecDrift(
+                worktree=worktree.name,
+                since=time.strftime("%Y-%m-%d", time.localtime(oldest_mtime)),
+                sample=sample,
+                count=len(stale),
+            )
+        )
+    return findings
 
 
 def git_state(cwd: Path) -> GitState:
