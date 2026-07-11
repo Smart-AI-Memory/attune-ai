@@ -1,0 +1,37 @@
+{
+  "date": "2026-07-11",
+  "github": {
+    "clones_14d": 66764,
+    "forks": 0,
+    "stars": 8,
+    "views_14d": 749
+  },
+  "pypi_recent": {
+    "attune-ai": {
+      "last_day": 37,
+      "last_month": 5497,
+      "last_week": 2034
+    },
+    "attune-author": {
+      "last_day": 157,
+      "last_month": 2435,
+      "last_week": 543
+    },
+    "attune-help": {
+      "last_day": 16,
+      "last_month": 546,
+      "last_week": 377
+    },
+    "attune-rag": {
+      "last_day": 249,
+      "last_month": 28838,
+      "last_week": 2895
+    },
+    "attune-verify": {
+      "last_day": 470,
+      "last_month": 42640,
+      "last_week": 6079
+    }
+  },
+  "taken_at": "2026-07-11T15:01:01.413163+00:00"
+}
