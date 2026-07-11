@@ -690,9 +690,7 @@ class TestSamplingParamNormalization:
     @pytest.mark.asyncio
     async def test_generate_omits_temperature_for_sonnet_5(self):
         """End-to-end: a Claude 5 call must not send temperature (would 400)."""
-        mock_anthropic = MagicMock()
         mock_client = MagicMock()
-        mock_anthropic.AsyncAnthropic.return_value = mock_client
         mock_response = MagicMock()
         mock_response.model = "claude-sonnet-5"
         mock_response.stop_reason = "end_turn"
@@ -703,7 +701,7 @@ class TestSamplingParamNormalization:
         mock_response.content = [block]
         mock_client.messages.create = AsyncMock(return_value=mock_response)
 
-        with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
+        with patch("anthropic.AsyncAnthropic", return_value=mock_client):
             provider = AnthropicProvider(api_key="test-key", model="claude-sonnet-5")
             await provider.generate([{"role": "user", "content": "hi"}], temperature=0.3)
 
