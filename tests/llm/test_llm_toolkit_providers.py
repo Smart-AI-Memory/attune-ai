@@ -218,7 +218,9 @@ class TestAnthropicProvider:
         mock_client.messages.create = AsyncMock(return_value=mock_response)
         mock_anthropic_class.return_value = mock_client
 
-        provider = AnthropicProvider(api_key="sk-test", use_thinking=True)
+        provider = AnthropicProvider(
+            api_key="sk-test", use_thinking=True, model="claude-sonnet-4-5"
+        )
 
         result = await provider.generate(
             messages=[{"role": "user", "content": "Complex question"}],
@@ -247,7 +249,7 @@ class TestAnthropicProvider:
         mock_block.type = "text"
         mock_block.text = "ok"
         mock_response.content = [mock_block]
-        mock_response.model = "claude-sonnet-5"
+        mock_response.model = "claude-sonnet-4-5"
         mock_response.usage = MagicMock(input_tokens=10, output_tokens=5)
         mock_response.stop_reason = "end_turn"
 
@@ -255,7 +257,9 @@ class TestAnthropicProvider:
         mock_client.messages.create = AsyncMock(return_value=mock_response)
         mock_anthropic_class.return_value = mock_client
 
-        provider = AnthropicProvider(api_key="sk-test", use_thinking=True)
+        provider = AnthropicProvider(
+            api_key="sk-test", use_thinking=True, model="claude-sonnet-4-5"
+        )
 
         # Default thinking_budget=10000, max_tokens=2048 — the exact shape
         # that 400'd in the nightly integration-auth run.
@@ -279,7 +283,7 @@ class TestAnthropicProvider:
         mock_block.type = "text"
         mock_block.text = "ok"
         mock_response.content = [mock_block]
-        mock_response.model = "claude-sonnet-5"
+        mock_response.model = "claude-sonnet-4-5"
         mock_response.usage = MagicMock(input_tokens=10, output_tokens=5)
         mock_response.stop_reason = "end_turn"
 
@@ -287,7 +291,9 @@ class TestAnthropicProvider:
         mock_client.messages.create = AsyncMock(return_value=mock_response)
         mock_anthropic_class.return_value = mock_client
 
-        provider = AnthropicProvider(api_key="sk-test", use_thinking=True, thinking_budget=2000)
+        provider = AnthropicProvider(
+            api_key="sk-test", use_thinking=True, thinking_budget=2000, model="claude-sonnet-4-5"
+        )
 
         await provider.generate(
             messages=[{"role": "user", "content": "Q"}],
