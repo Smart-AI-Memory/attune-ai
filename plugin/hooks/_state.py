@@ -21,12 +21,56 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
+
+# ── Drift-cache read (spec-status-integrity, design §3) ───────
+#
+# ``spec_audit.py --pr-links`` writes ``.attune/spec-drift.json`` per
+# workspace root; ``spec_orient`` reads it back so the SessionStart
+# annotation stays offline (the hook's no-network invariant). Entries
+# older than one weekly-CI period + slack are ignored.
+_DRIFT_CACHE_MAX_AGE_SECONDS = 8 * 24 * 60 * 60
+
+
+def read_drift_cache(roots: list[Path], now: float | None = None) -> dict[str, dict]:
+    """Merge fresh drift-cache entries across workspace roots.
+
+    Returns ``{"<layer>/<slug>": {verdict, prs, signal}}`` from every
+    root whose ``.attune/spec-drift.json`` is present, well-formed, and
+    fresher than :data:`_DRIFT_CACHE_MAX_AGE_SECONDS`. Anything else —
+    absent file, malformed JSON, wrong shapes, stale ``generated_at`` —
+    contributes nothing and never raises (the cache is advisory; the
+    annotation simply falls back to current behavior).
+    """
+    current = time.time() if now is None else now
+    merged: dict[str, dict] = {}
+    for root in roots:
+        cache_path = Path(root) / ".attune" / "spec-drift.json"
+        try:
+            data = json.loads(cache_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, ValueError, UnicodeDecodeError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        generated = data.get("generated_at")
+        if not isinstance(generated, int | float):
+            continue
+        if current - float(generated) > _DRIFT_CACHE_MAX_AGE_SECONDS:
+            continue
+        specs = data.get("specs")
+        if not isinstance(specs, dict):
+            continue
+        for key, entry in specs.items():
+            if isinstance(key, str) and isinstance(entry, dict):
+                merged.setdefault(key, entry)
+    return merged
+
 
 # Phases checked, highest-priority first. The first phase file
 # present in a spec directory determines the displayed phase

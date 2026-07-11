@@ -17,8 +17,10 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import importlib.util
+import io as _io
 import json as _json
 import sys
+import time as _time
 import types as _types
 from pathlib import Path
 
@@ -926,3 +928,148 @@ class TestPrLinksMain:
             "workspace/rag-gate-accuracy-baseline",
         ]
         assert payload["specs"]["workspace/help-memory-tool"]["drifted"] is False
+
+
+# ── spec_orient drift annotation + kill switch (task 5) ───────
+
+
+def _load_spec_orient_module():
+    """Load spec_orient.py fresh, same convention as the other loaders."""
+    if str(_HOOKS_DIR) not in sys.path:
+        sys.path.insert(0, str(_HOOKS_DIR))
+    spec = importlib.util.spec_from_file_location("spec_orient", _HOOKS_DIR / "spec_orient.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["spec_orient"] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+@pytest.fixture
+def orient_mod():
+    return _load_spec_orient_module()
+
+
+def _orient_spec(state_mod, *, slug: str = "foo", staleness: str = "unknown"):
+    return state_mod.SpecInfo(
+        slug=slug,
+        path=Path("/tmp/x"),
+        layer="workspace",
+        phase="requirements",
+        status="draft",
+        mtime=0.0,
+        effective_status="draft",
+        staleness=staleness,
+    )
+
+
+def _write_drift_cache_file(root: Path, *, generated_at: float, specs: dict) -> None:
+    cache_dir = root / ".attune"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    (cache_dir / "spec-drift.json").write_text(
+        _json.dumps({"generated_at": generated_at, "specs": specs}), encoding="utf-8"
+    )
+
+
+class TestReadDriftCache:
+    _SPECS = {"workspace/foo": {"verdict": "drifted", "prs": ["attune-author #95"]}}
+
+    def test_fresh_cache_is_read(self, state_mod, tmp_path) -> None:
+        _write_drift_cache_file(tmp_path, generated_at=1_000_000.0, specs=self._SPECS)
+        merged = state_mod.read_drift_cache([tmp_path], now=1_000_000.0 + 3600)
+        assert merged["workspace/foo"]["verdict"] == "drifted"
+
+    def test_eight_day_old_cache_ignored(self, state_mod, tmp_path) -> None:
+        _write_drift_cache_file(tmp_path, generated_at=1_000_000.0, specs=self._SPECS)
+        stale_now = 1_000_000.0 + 8 * 24 * 3600 + 60
+        assert state_mod.read_drift_cache([tmp_path], now=stale_now) == {}
+
+    def test_absent_cache_is_empty(self, state_mod, tmp_path) -> None:
+        assert state_mod.read_drift_cache([tmp_path], now=0.0) == {}
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            "{not json",
+            "[]",
+            '{"specs": {}}',
+            '{"generated_at": "yesterday", "specs": {}}',
+            '{"generated_at": 1000000.0, "specs": []}',
+        ],
+    )
+    def test_malformed_cache_never_raises(self, state_mod, tmp_path, payload) -> None:
+        cache_dir = tmp_path / ".attune"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        (cache_dir / "spec-drift.json").write_text(payload, encoding="utf-8")
+        assert state_mod.read_drift_cache([tmp_path], now=1_000_000.0 + 60) == {}
+
+
+class TestDriftAnnotation:
+    def test_drifted_spec_gets_suffix(self, state_mod, orient_mod) -> None:
+        spec = _orient_spec(state_mod)
+        cache = {"workspace/foo": {"verdict": "drifted", "prs": ["attune-author #95"]}}
+        out = orient_mod.format_orientation([spec], drift_cache=cache)
+        assert "specs/foo/" in out
+        assert "⚠ drifted: attune-author #95 merged" in out
+
+    def test_ok_verdict_gets_no_suffix(self, state_mod, orient_mod) -> None:
+        spec = _orient_spec(state_mod)
+        cache = {"workspace/foo": {"verdict": "ok", "prs": []}}
+        assert "drifted" not in orient_mod.format_orientation([spec], drift_cache=cache)
+
+    def test_unmatched_spec_gets_no_suffix(self, state_mod, orient_mod) -> None:
+        spec = _orient_spec(state_mod)
+        cache = {"workspace/other": {"verdict": "drifted", "prs": ["#1"]}}
+        assert "drifted" not in orient_mod.format_orientation([spec], drift_cache=cache)
+
+    def test_no_cache_is_current_behavior(self, state_mod, orient_mod) -> None:
+        spec = _orient_spec(state_mod)
+        out = orient_mod.format_orientation([spec])
+        assert "specs/foo/" in out
+        assert "drifted" not in out
+
+    def test_kill_switch_suppresses_drift_and_stale(self, state_mod, orient_mod) -> None:
+        spec = _orient_spec(state_mod, staleness="suspected-stale")
+        cache = {"workspace/foo": {"verdict": "drifted", "prs": ["#9"]}}
+        out = orient_mod.format_orientation([spec], drift_cache=cache, annotate=False)
+        assert "drifted" not in out
+        assert "deliverables present" not in out
+        # The spec line itself still renders.
+        assert "specs/foo/" in out
+
+    def test_stale_hint_still_renders_when_enabled(self, state_mod, orient_mod) -> None:
+        spec = _orient_spec(state_mod, staleness="suspected-stale")
+        assert "deliverables present" in orient_mod.format_orientation([spec])
+
+    @pytest.mark.parametrize(
+        ("value", "expected"), [("off", False), ("OFF", False), ("", True), ("on", True)]
+    )
+    def test_env_kill_switch(self, orient_mod, monkeypatch, value, expected) -> None:
+        monkeypatch.setenv("ATTUNE_SPEC_AUDIT", value)
+        assert orient_mod._audit_annotations_enabled() is expected
+
+    def _arrange_workspace(self, tmp_path: Path, monkeypatch) -> None:
+        _pr_spec(tmp_path / "specs" / "foo", status="draft", body="work pending")
+        _write_drift_cache_file(
+            tmp_path,
+            generated_at=_time.time(),
+            specs={"workspace/foo": {"verdict": "drifted", "prs": ["#67"]}},
+        )
+        monkeypatch.setenv("ATTUNE_AI_WORKSPACE_ROOTS", str(tmp_path))
+        monkeypatch.setattr("sys.stdin", _io.StringIO(_json.dumps({"cwd": str(tmp_path)})))
+
+    def test_main_end_to_end_annotates_from_cache(
+        self, state_mod, orient_mod, tmp_path, monkeypatch, capsys
+    ) -> None:
+        self._arrange_workspace(tmp_path, monkeypatch)
+        assert orient_mod.main() == 0
+        assert "⚠ drifted: #67 merged" in capsys.readouterr().out
+
+    def test_main_kill_switch_yields_zero_annotations(
+        self, state_mod, orient_mod, tmp_path, monkeypatch, capsys
+    ) -> None:
+        self._arrange_workspace(tmp_path, monkeypatch)
+        monkeypatch.setenv("ATTUNE_SPEC_AUDIT", "off")
+        assert orient_mod.main() == 0
+        out = capsys.readouterr().out
+        assert "drifted" not in out
+        assert "specs/foo/" in out
