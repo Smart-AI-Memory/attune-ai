@@ -25,6 +25,10 @@ def _disable_spend_gate(monkeypatch):
     The gate has dedicated tests in ``test_workflow_spend_gate.py``.
     """
     monkeypatch.setenv("ATTUNE_SPEND_GATE", "off")
+    # Auth-evidence for the pre-gate auth pre-flight (setup-friction
+    # F1/F4): CI runners have no ~/.claude and an empty key, and these
+    # tests target dispatch, not auth.
+    monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "test-evidence")  # pragma: allowlist secret
 
 
 # ---------------------------------------------------------------------------

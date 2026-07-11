@@ -686,13 +686,40 @@ More: attune --help | Docs: https://smartaimemory.com/framework-docs/"""
     return 0
 
 
+class _OneLineLogFormatter(logging.Formatter):
+    """Formatter that suppresses tracebacks on non-verbose CLI runs.
+
+    A full traceback on a user's first failed workflow reads as a crash
+    even when the workflow returns a structured, actionable error right
+    below it (setup-friction F1). Errors stay one line; ``--verbose``
+    restores complete tracebacks via the default formatter.
+    """
+
+    def format(self, record: logging.LogRecord) -> str:
+        exc_info, exc_text = record.exc_info, record.exc_text
+        record.exc_info, record.exc_text = None, None
+        try:
+            message = super().format(record)
+        finally:
+            record.exc_info, record.exc_text = exc_info, exc_text
+        if exc_info:
+            message += " (re-run with --verbose for the full traceback)"
+        return message
+
+
 def main(argv: list[str] | None = None) -> int:
     """Main entry point."""
     parser = create_parser()
     args = parser.parse_args(argv)
 
-    # Configure logging
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING)
+    # Configure logging (one-line records unless --verbose; see
+    # _OneLineLogFormatter).
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        _handler = logging.StreamHandler()
+        _handler.setFormatter(_OneLineLogFormatter(fmt="%(levelname)s:%(name)s:%(message)s"))
+        logging.basicConfig(level=logging.WARNING, handlers=[_handler])
 
     command = args.command
 

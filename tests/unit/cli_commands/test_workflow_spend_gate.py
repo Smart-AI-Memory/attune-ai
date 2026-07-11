@@ -64,6 +64,15 @@ def env_file(tmp_path, monkeypatch):
     return path
 
 
+@pytest.fixture(autouse=True)
+def auth_preflight_passes(monkeypatch):
+    """These tests target the SPEND GATE, which sits behind the auth
+    pre-flight (setup-friction F1/F4). Neutralize the pre-flight so the
+    gate is reachable regardless of the runner's auth evidence (CI has
+    no ``~/.claude`` and an empty ``ANTHROPIC_API_KEY``)."""
+    monkeypatch.setattr(workflow_commands, "_auth_preflight", lambda: None)
+
+
 @pytest.fixture
 def fake_runner(monkeypatch):
     """Patch the workflow runner; capture whether it ran + its on_result."""
