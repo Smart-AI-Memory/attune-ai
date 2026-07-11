@@ -177,11 +177,11 @@ The execution plan is workspace tasks 1–6, one commit each on
 | # | Task (workspace #) | Component | Status | Notes |
 |---|--------------------|-----------|--------|-------|
 | 1 | This companion spec (ws 1) | docs/specs | done | |
-| 2 | `extract_pr_refs()` + `PrRef` (ws 2) | `_state.py` | pending | |
-| 3 | `lint_status_token()` + vocabulary (ws 3) | `_state.py` | pending | |
-| 4 | `--pr-links` + drift cache + `--json` (ws 4) | `spec_audit.py` | pending | |
-| 5 | Drift-cache read + `⚠ drifted` (ws 5) | `spec_orient.py` | pending | |
-| 6 | Reusable reminder workflow (ws 6) | `.github/workflows` | pending | |
+| 2 | `extract_pr_refs()` + `PrRef` (ws 2) | `_state.py` | done | 4 styles + negatives; 17 tests |
+| 3 | `lint_status_token()` + vocabulary (ws 3) | `_state.py` | done | `implemented`/glyphs terminal; parked family |
+| 4 | `--pr-links` + drift cache + `--json` (ws 4) | `spec_audit.py` | done | Golden test mirrors SPEC-AUDIT-2026-06-17 |
+| 5 | Drift-cache read + `⚠ drifted` (ws 5) | `spec_orient.py` | done | 8-day freshness; `ATTUNE_SPEC_AUDIT=off` |
+| 6 | Reusable reminder workflow (ws 6) | `.github/workflows` | done | yaml.safe_load test suite |
 
 Testing strategy, rollback plan, and the full XML execution plan live in
 the workspace `tasks.md` — not duplicated here.
@@ -194,15 +194,18 @@ the workspace `tasks.md` — not duplicated here.
 
 ### Completion checklist
 
-- [ ] All tasks marked done
-- [ ] pytest + ruff green after each task
-- [ ] No live gh calls in the default suite (testing-conventions)
-- [ ] Existing `classify_staleness` / `spec_orient` behavior unchanged
-      for already-recognized tokens (regression check)
+- [x] All tasks marked done
+- [x] pytest + ruff green after each task
+- [x] No live gh calls in the default suite (testing-conventions) —
+      gh is patched at the `_run_gh` subprocess boundary
+- [x] Existing `classify_staleness` / `spec_orient` behavior unchanged
+      for already-recognized tokens (regression check — full hook suite
+      green)
 - [ ] Version bumped for the plugin release (three files:
-      pyproject.toml + plugin.json + uv.lock)
-- [ ] Committed one task per commit, conventional messages
-- [ ] PR opened linking this spec and the workspace spec
+      pyproject.toml + plugin.json + uv.lock) — rides the release-prep
+      PR per the standard flow, not this feature PR
+- [x] Committed one task per commit, conventional messages
+- [x] PR opened linking this spec and the workspace spec
 
 ---
 
