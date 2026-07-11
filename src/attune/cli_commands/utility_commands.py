@@ -207,10 +207,31 @@ def cmd_validate(args: Namespace) -> int:
             keys_found += 1
 
     if keys_found == 0:
-        errors.append(
-            "No API keys found. Set ANTHROPIC_API_KEY\n"
-            "   Run: python -m attune.models.auth_cli setup",
+        # Missing key is only an ERROR when there's no subscription-auth
+        # evidence either — a Claude Code login (`~/.claude` present /
+        # OAuth token set) is a fully working configuration
+        # (setup-friction F2/F3: validate used to hard-fail machines
+        # that subscription-first routing serves fine).
+        import os as _os
+        from pathlib import Path as _Path
+
+        has_subscription_evidence = (
+            bool(_os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "").strip())
+            or (_Path.home() / ".claude").exists()
         )
+        if has_subscription_evidence:
+            print("  ✅ Claude Code (subscription) auth evidence found")
+            warnings.append(
+                "No ANTHROPIC_API_KEY set — workflows will use "
+                "subscription (Claude Code) auth; large-module API "
+                "fallback is unavailable",
+            )
+        else:
+            errors.append(
+                "No auth found. Log in to Claude Code (run `claude` once) "
+                "or set ANTHROPIC_API_KEY\n"
+                "   Run: attune auth setup",
+            )
 
     # Check workflows
     try:

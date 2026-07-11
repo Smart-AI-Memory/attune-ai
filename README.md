@@ -300,7 +300,11 @@ Then say "what can attune do?" in Claude Code.
 
 ```bash
 pip install attune-ai
+attune            # shows your next steps
 ```
+
+Then check your setup with `attune validate` and run your first
+workflow: `attune workflow run code-review --path src/`.
 
 The core install includes the CLI, all workflows, and the MCP
 server. See [Installation Options](#installation-options) for

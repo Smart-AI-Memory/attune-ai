@@ -730,12 +730,56 @@ class SdkSubprocessError(Exception):
         view (persisted by Phase 3).
         """
         if self.kind == "unknown":
+            if _stderr_carries_no_signal(self.stderr):
+                # No stderr was recoverable — the most common real-world
+                # cause on a fresh machine is no working auth (no
+                # ANTHROPIC_API_KEY and a `claude` CLI that isn't logged
+                # in). Say so instead of pointing at stderr that doesn't
+                # exist (setup-friction F1).
+                key_state = (
+                    "ANTHROPIC_API_KEY is not set"
+                    if not os.environ.get("ANTHROPIC_API_KEY", "").strip()
+                    else "ANTHROPIC_API_KEY is set but may be invalid"
+                )
+                return (
+                    "The claude CLI subprocess failed without producing "
+                    "any error output.\n\n"
+                    f"On this machine, {key_state} — the most common "
+                    "cause is missing or logged-out auth.\n"
+                    "Most likely fixes:\n"
+                    "  - Log in to Claude Code: run `claude` once "
+                    "interactively, or\n"
+                    "  - Set an API key: export ANTHROPIC_API_KEY=..., or\n"
+                    "  - Run `attune auth setup` for guided configuration."
+                )
             return (
                 f"{self.message}\n\n"
                 "Underlying error (raw stderr from the claude CLI):\n"
                 f"{self.stderr.strip()}"
             )
         return f"{self.message}\n\nFull stderr is available on /runs/<id>/view."
+
+
+def _stderr_carries_no_signal(stderr: str) -> bool:
+    """True when captured "stderr" has nothing a user could act on.
+
+    ``capture_subprocess_failure()`` returns synthetic single-line
+    parenthetical markers — e.g. ``"(the SDK reported a subprocess
+    failure but exposed no command or stderr to capture)"`` or
+    ``"(claude exited 1 with no stderr/stdout)"`` — when no real
+    output was recoverable. Rendering those under an "Underlying
+    error" heading points the user at evidence that doesn't exist
+    (setup-friction F1). Treat text as no-signal when it is empty or
+    every non-empty line is such a parenthetical marker.
+    """
+    text = stderr.strip()
+    if not text:
+        return True
+    return all(
+        line.startswith("(") and line.endswith(")")
+        for line in (ln.strip() for ln in text.splitlines())
+        if line
+    )
 
 
 # (compiled_re, kind, message) tuples. Ordered most-specific first so

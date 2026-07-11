@@ -456,10 +456,14 @@ class TestCmdValidate:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "attune.config.json").write_text("{}")
 
-        # Remove all API keys
+        # Remove all API keys AND all subscription-auth evidence
+        # (setup-friction F2/F3: keyless is only an error when there's
+        # no Claude Code login evidence either).
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+        monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
         with patch.dict("sys.modules", {"attune.workflows": MagicMock(WORKFLOW_REGISTRY={})}):
             result = cmd_validate(args)
@@ -467,7 +471,33 @@ class TestCmdValidate:
         assert result == 1
         captured = capsys.readouterr()
         assert "Validation failed" in captured.out
-        assert "No API keys found" in captured.out
+        assert "No auth found" in captured.out
+
+    def test_no_api_key_with_subscription_evidence_warns_and_passes(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Keyless + a ~/.claude dir = working subscription config: warn,
+        don't fail (setup-friction F2/F3)."""
+        args = self._make_args()
+
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "attune.config.json").write_text("{}")
+        (tmp_path / ".claude").mkdir()
+
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        with patch.dict("sys.modules", {"attune.workflows": MagicMock(WORKFLOW_REGISTRY={})}):
+            result = cmd_validate(args)
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "subscription" in captured.out.lower()
+        assert "Configuration is valid" in captured.out
 
     def test_no_config_file_shows_warning(
         self,
@@ -648,13 +678,15 @@ class TestCmdValidate:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "")
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
         monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+        monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
         with patch.dict("sys.modules", {"attune.workflows": MagicMock(WORKFLOW_REGISTRY={})}):
             result = cmd_validate(args)
 
         assert result == 1
         captured = capsys.readouterr()
-        assert "No API keys found" in captured.out
+        assert "No auth found" in captured.out
 
 
 # ---------------------------------------------------------------------------
