@@ -17,7 +17,9 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import importlib.util
+import json as _json
 import sys
+import types as _types
 from pathlib import Path
 
 import pytest
@@ -690,3 +692,237 @@ class TestParkedAndGlyphSemantics:
     def test_glyph_leading_verdict(self, state_mod) -> None:
         assert state_mod._leading_verdict("✓ (2026-07-10)") == "✓"
         assert state_mod._leading_verdict("✅") == "✅"
+
+
+# ── --pr-links mode + drift cache + --json (task 4) ───────────
+#
+# Golden fixture: a miniature of the specs/SPEC-AUDIT-2026-06-17
+# findings — in-flight specs whose implementing PRs merged (drifted),
+# one with no PR trail (not drifted), one citing an unmerged PR
+# (merged-only filter), one citing an issue number (404s on the pulls
+# endpoint), and a terminal spec that must never be queried. gh is
+# patched at the subprocess boundary (testing-conventions.md — no live
+# calls in the default suite).
+
+
+def _pr_spec(spec_dir: Path, *, status: str, body: str) -> None:
+    spec_dir.mkdir(parents=True, exist_ok=True)
+    (spec_dir / "tasks.md").write_text(
+        f"# Tasks\n\n**Status**: {status}\n\n{body}\n", encoding="utf-8"
+    )
+
+
+@pytest.fixture
+def golden_tree(tmp_path: Path):
+    specs = tmp_path / "specs"
+    # DONE-in-reality, header still approved → drifted (local merged PR).
+    _pr_spec(
+        specs / "gui-batch-status-sse",
+        status="approved (2026-06-14)",
+        body="SSE endpoint shipped in #67 with 10 tests.",
+    )
+    # DONE via a cross-repo PR → drifted (explicit pull-URL).
+    _pr_spec(
+        specs / "rag-gate-accuracy-baseline",
+        status="approved (2026-06-04)",
+        body="Tasks 1-8 merged via [#51](https://github.com/Smart-AI-Memory/attune-author/pull/51).",
+    )
+    # Genuinely open — no PR citations → not drifted.
+    _pr_spec(
+        specs / "long-cache-ttl-citations",
+        status="approved (2026-06-14)",
+        body="No implementation yet; best no-key build candidate.",
+    )
+    # Cites a PR that is still OPEN → merged-only filter keeps it clean.
+    _pr_spec(
+        specs / "help-memory-tool",
+        status="approved (2026-06-14)",
+        body="Option A landing via #99 (in review).",
+    )
+    # Cites a number that is an ISSUE, not a PR → resolver says no.
+    _pr_spec(
+        specs / "hash-regenerate-button",
+        status="draft",
+        body="Tracked alongside issue #400.",
+    )
+    # Terminal — must never be queried even though it cites a PR.
+    _pr_spec(
+        specs / "template-path-rename",
+        status="complete (2026-06-17)",
+        body="Shipped in PR #212.",
+    )
+    return tmp_path
+
+
+class _FakeGh:
+    """Canned gh responses keyed by PR number; records every call."""
+
+    #: number -> ("merged" | "open" | "issue")
+    STATES = {"67": "merged", "51": "merged", "99": "open", "400": "issue", "212": "merged"}
+
+    def __init__(self) -> None:
+        self.calls: list[list[str]] = []
+        self.cwds: list[object] = []
+
+    def __call__(self, args, cwd=None):
+        self.calls.append(list(args))
+        self.cwds.append(cwd)
+        number = next(
+            (tok.rstrip("/").rsplit("/", 1)[-1] for tok in args if tok[-1:].isdigit()), ""
+        )
+        state = self.STATES.get(number)
+        if state == "issue":
+            return _types.SimpleNamespace(returncode=1, stdout="", stderr="Not Found (404)")
+        if args[0] == "api":
+            payload = {"merged": state == "merged", "number": int(number or 0)}
+        else:
+            payload = {"state": "MERGED" if state == "merged" else "OPEN"}
+        return _types.SimpleNamespace(returncode=0, stdout=_json.dumps(payload), stderr="")
+
+
+@pytest.fixture
+def fake_gh(audit_mod, monkeypatch):
+    fake = _FakeGh()
+    monkeypatch.setattr(audit_mod, "_run_gh", fake)
+    return fake
+
+
+class TestPrLinksGolden:
+    def _audit(self, audit_mod, golden_tree):
+        return audit_mod.audit_specs([golden_tree], pr_links=True, resolver=audit_mod._PrResolver())
+
+    def test_reproduces_2026_06_17_verdicts(self, audit_mod, golden_tree, fake_gh) -> None:
+        by_slug = {r.slug: r for r in self._audit(audit_mod, golden_tree)}
+        assert by_slug["gui-batch-status-sse"].drifted is True
+        assert by_slug["gui-batch-status-sse"].merged_prs == ("#67",)
+        assert by_slug["rag-gate-accuracy-baseline"].drifted is True
+        assert by_slug["rag-gate-accuracy-baseline"].merged_prs == ("attune-author #51",)
+        assert by_slug["long-cache-ttl-citations"].drifted is False
+        assert by_slug["help-memory-tool"].drifted is False  # unmerged PR
+        assert by_slug["hash-regenerate-button"].drifted is False  # issue ref
+        assert by_slug["template-path-rename"].drifted is False  # terminal
+
+    def test_terminal_specs_never_queried(self, audit_mod, golden_tree, fake_gh) -> None:
+        self._audit(audit_mod, golden_tree)
+        assert not any("212" in tok for call in fake_gh.calls for tok in call)
+
+    def test_cross_repo_uses_api_endpoint(self, audit_mod, golden_tree, fake_gh) -> None:
+        self._audit(audit_mod, golden_tree)
+        api_calls = [c for c in fake_gh.calls if c[0] == "api"]
+        assert api_calls == [["api", "repos/Smart-AI-Memory/attune-author/pulls/51"]]
+
+    def test_local_refs_resolve_via_spec_dir_cwd(self, audit_mod, golden_tree, fake_gh) -> None:
+        self._audit(audit_mod, golden_tree)
+        view_cwds = [
+            cwd
+            for call, cwd in zip(fake_gh.calls, fake_gh.cwds, strict=True)
+            if call[0] == "pr" and "67" in call
+        ]
+        assert view_cwds and all("gui-batch-status-sse" in str(c) for c in view_cwds)
+
+
+class TestPrResolverBounds:
+    def test_cache_dedupes_repeat_lookups(self, audit_mod, fake_gh, state_mod, tmp_path) -> None:
+        resolver = audit_mod._PrResolver()
+        ref = state_mod.PrRef(number=67, repo=None, explicit=True)
+        assert resolver.merged(ref, tmp_path, "workspace") is True
+        assert resolver.merged(ref, tmp_path, "workspace") is True
+        assert resolver.calls == 1
+
+    def test_call_cap_bounds_gh_spend(
+        self, audit_mod, fake_gh, state_mod, tmp_path, monkeypatch
+    ) -> None:
+        monkeypatch.setattr(audit_mod, "_MAX_GH_CALLS", 3)
+        resolver = audit_mod._PrResolver()
+        for n in range(1, 10):
+            resolver.merged(state_mod.PrRef(number=n, repo=None, explicit=True), tmp_path, "x")
+        assert resolver.calls == 3
+        assert len(fake_gh.calls) == 3
+
+    def test_missing_gh_goes_dead_not_fatal(
+        self, audit_mod, state_mod, tmp_path, monkeypatch
+    ) -> None:
+        def _absent(args, cwd=None):
+            raise FileNotFoundError("gh")
+
+        monkeypatch.setattr(audit_mod, "_run_gh", _absent)
+        resolver = audit_mod._PrResolver()
+        ref = state_mod.PrRef(number=1, repo=None, explicit=True)
+        assert resolver.merged(ref, tmp_path, "x") is False
+        assert resolver.dead is True
+        # Subsequent lookups short-circuit without touching gh again.
+        assert (
+            resolver.merged(state_mod.PrRef(number=2, repo=None, explicit=True), tmp_path, "x")
+            is False
+        )
+        assert resolver.calls == 1
+
+    def test_malformed_gh_output_is_not_merged(
+        self, audit_mod, state_mod, tmp_path, monkeypatch
+    ) -> None:
+        monkeypatch.setattr(
+            audit_mod,
+            "_run_gh",
+            lambda args, cwd=None: _types.SimpleNamespace(
+                returncode=0, stdout="not json", stderr=""
+            ),
+        )
+        resolver = audit_mod._PrResolver()
+        assert (
+            resolver.merged(state_mod.PrRef(number=5, repo=None, explicit=True), tmp_path, "x")
+            is False
+        )
+
+
+class TestDriftCache:
+    def test_cache_schema_and_content(self, audit_mod, golden_tree, fake_gh) -> None:
+        results = audit_mod.audit_specs(
+            [golden_tree], pr_links=True, resolver=audit_mod._PrResolver()
+        )
+        written = audit_mod.write_drift_cache(results, [golden_tree])
+        assert written == [golden_tree / ".attune" / "spec-drift.json"]
+        data = _json.loads(written[0].read_text(encoding="utf-8"))
+        assert isinstance(data["generated_at"], float)
+        entry = data["specs"]["workspace/gui-batch-status-sse"]
+        assert entry == {"verdict": "drifted", "prs": ["#67"], "signal": "pr-links"}
+        # Clean in-flight specs are recorded too (checked-and-clean).
+        assert data["specs"]["workspace/long-cache-ttl-citations"]["verdict"] == "ok"
+        # Terminal specs carry no drift signal.
+        assert "workspace/template-path-rename" not in data["specs"]
+
+
+class TestPrLinksMain:
+    def test_offline_makes_no_gh_calls(self, audit_mod, golden_tree, monkeypatch, capsys) -> None:
+        def _boom(args, cwd=None):
+            raise AssertionError("gh must not be invoked with --offline")
+
+        monkeypatch.setattr(audit_mod, "_run_gh", _boom)
+        monkeypatch.setenv("ATTUNE_AI_WORKSPACE_ROOTS", str(golden_tree))
+        assert audit_mod.main(["--pr-links", "--offline"]) == 0
+        assert not (golden_tree / ".attune" / "spec-drift.json").exists()
+
+    def test_default_exit_zero_with_drift(
+        self, audit_mod, golden_tree, fake_gh, monkeypatch, capsys
+    ) -> None:
+        monkeypatch.setenv("ATTUNE_AI_WORKSPACE_ROOTS", str(golden_tree))
+        assert audit_mod.main(["--pr-links"]) == 0
+        out = capsys.readouterr().out
+        assert "⚠ drifted" in out
+        assert "flip the status or mark them parked" in out
+        # main --pr-links writes the cache as a side effect.
+        assert (golden_tree / ".attune" / "spec-drift.json").exists()
+
+    def test_strict_exit_one_on_drift(self, audit_mod, golden_tree, fake_gh, monkeypatch) -> None:
+        monkeypatch.setenv("ATTUNE_AI_WORKSPACE_ROOTS", str(golden_tree))
+        assert audit_mod.main(["--pr-links", "--strict"]) == 1
+
+    def test_json_output_parses(self, audit_mod, golden_tree, fake_gh, monkeypatch, capsys) -> None:
+        monkeypatch.setenv("ATTUNE_AI_WORKSPACE_ROOTS", str(golden_tree))
+        assert audit_mod.main(["--pr-links", "--json"]) == 0
+        payload = _json.loads(capsys.readouterr().out)
+        assert payload["counts"]["drifted"] == 2
+        assert sorted(payload["drifted"]) == [
+            "workspace/gui-batch-status-sse",
+            "workspace/rag-gate-accuracy-baseline",
+        ]
+        assert payload["specs"]["workspace/help-memory-tool"]["drifted"] is False
