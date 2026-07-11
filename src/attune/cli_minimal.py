@@ -666,7 +666,8 @@ def _show_welcome() -> int:
     except Exception:  # noqa: BLE001
         # INTENTIONAL: version is non-critical for welcome message
         ver = "?"
-    print(f"""Attune AI v{ver} — AI-powered developer workflows
+    print(
+        f"""Attune AI v{ver} — AI-powered developer workflows
 
 Get started:
   attune workflow list        See all available workflows
@@ -680,7 +681,8 @@ For interactive development in Claude Code:
   /testing      Run tests, coverage, generate tests
   /wizard run   Guided multi-step wizards
 
-More: attune --help | Docs: https://smartaimemory.com/framework-docs/""")
+More: attune --help | Docs: https://smartaimemory.com/framework-docs/"""
+    )
     return 0
 
 
