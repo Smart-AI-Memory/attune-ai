@@ -386,12 +386,21 @@ Phase 2 triages these specific docs.
   retired docs outside of (a) the cleanup spec itself, (b)
   `docs/archive/`.
 
-### Follow-up chip spawned
+### Follow-up chip resolved (2026-07-10)
 
 - **Team coordination on shared Redis memory** — feature spec
   exploration. Recovers (in a new design) the coordination
-  surface that v6.8.0 deleted; separate from doc cleanup. Chip
-  in queue; not in this session's scope.
+  surface that v6.8.0 deleted; separate from doc cleanup.
+  **Resolution:** [attune workspace spec
+  `team-coordination-on-shared-redis`](https://github.com/Smart-AI-Memory/attune/tree/main/specs/team-coordination-on-shared-redis)
+  landed as **decision-not-to-ship** ([PR
+  #42](https://github.com/Smart-AI-Memory/attune/pull/42), merged
+  2026-07-10). Rationale: v6.8.0 audit found zero internal callers,
+  the adjacent multi-session pain is already specced in
+  `multi-actor-bulletin`, and the substrate (`attune_redis`
+  pub/sub + AMS) lives in the plugin — so any future coordination
+  surface belongs there, not in attune-ai core. Three re-open
+  triggers documented in the spec's `non-feature.md` tombstone.
 
 ### Phase 3 status
 
