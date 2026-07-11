@@ -491,7 +491,10 @@ class TestCmdValidate:
         monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
-        with patch.dict("sys.modules", {"attune.workflows": MagicMock(WORKFLOW_REGISTRY={})}):
+        # patch the attr, not sys.modules — the ratchet in
+        # tests/unit/ci/test_no_new_sys_modules_patch.py blocks new
+        # sys.modules-dict patching in this file.
+        with patch("attune.workflows.discover_workflows", return_value={}):
             result = cmd_validate(args)
 
         assert result == 0
