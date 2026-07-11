@@ -13,9 +13,11 @@
 
 ## Phase 1: Requirements
 
-**Status**: approved (2026-07-10 — by reference: workspace spec
-`specs/spec-status-integrity/requirements.md` approved by Patrick
-2026-07-10; this companion restates the plugin-scoped subset)
+**Status**: implemented (2026-07-11) — tasks 1–6 shipped via #1305,
+released in v10.3.0; siblings re-synced (spec-status-integrity task 7).
+Approved 2026-07-10 by reference: workspace spec
+`specs/spec-status-integrity/requirements.md` (Patrick); this companion
+restates the plugin-scoped subset.
 
 ### Problem statement
 
