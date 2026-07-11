@@ -253,7 +253,7 @@ class TestBatchRequestFormatConversion:
 
             old_format = {
                 "custom_id": "test_id",
-                "model": "claude-sonnet-5",
+                "model": "claude-sonnet-4-5",
                 "messages": [{"role": "user", "content": "Test"}],
                 "max_tokens": 1024,
                 "temperature": 0.8,

@@ -608,7 +608,7 @@ class TestAnthropicProviderGenerate:
 
 
 class TestSamplingParamNormalization:
-    """Opus 4.7+ reject temperature/top_p/top_k + enabled-thinking (400)."""
+    """Opus 4.7+ and Claude 5 reject temperature/top_p/top_k + enabled-thinking (400)."""
 
     def test_normalize_strips_sampling_params_for_opus_48(self):
         from attune.llm.providers.anthropic import _normalize_api_kwargs_for_model
@@ -617,10 +617,19 @@ class TestSamplingParamNormalization:
         _normalize_api_kwargs_for_model(kw)
         assert "temperature" not in kw and "top_p" not in kw and "top_k" not in kw
 
-    def test_normalize_keeps_sampling_params_for_sonnet_and_opus_46(self):
+    def test_normalize_strips_sampling_params_for_claude_5_family(self):
+        """Live 400 on claude-sonnet-5 (integration-auth, 2026-07-06)."""
         from attune.llm.providers.anthropic import _normalize_api_kwargs_for_model
 
-        for model in ("claude-sonnet-5", "claude-haiku-4-5", "claude-opus-4-6"):
+        for model in ("claude-sonnet-5", "claude-fable-5", "claude-sonnet-5-20260301"):
+            kw = {"model": model, "temperature": 0.7, "top_p": 0.9}
+            _normalize_api_kwargs_for_model(kw)
+            assert "temperature" not in kw and "top_p" not in kw, model
+
+    def test_normalize_keeps_sampling_params_for_older_models(self):
+        from attune.llm.providers.anthropic import _normalize_api_kwargs_for_model
+
+        for model in ("claude-haiku-4-5", "claude-sonnet-4-5", "claude-opus-4-6"):
             kw = {"model": model, "temperature": 0.7}
             _normalize_api_kwargs_for_model(kw)
             assert kw["temperature"] == 0.7, model
@@ -657,10 +666,31 @@ class TestSamplingParamNormalization:
         assert sent["model"] == "claude-opus-4-8"
 
     @pytest.mark.asyncio
-    async def test_generate_keeps_temperature_for_sonnet(self):
+    async def test_generate_keeps_temperature_for_sonnet_45(self):
         mock_anthropic = MagicMock()
         mock_client = MagicMock()
         mock_anthropic.AsyncAnthropic.return_value = mock_client
+        mock_response = MagicMock()
+        mock_response.model = "claude-sonnet-4-5"
+        mock_response.stop_reason = "end_turn"
+        mock_response.usage = MagicMock(input_tokens=1, output_tokens=1)
+        block = MagicMock()
+        block.type = "text"
+        block.text = "ok"
+        mock_response.content = [block]
+        mock_client.messages.create = AsyncMock(return_value=mock_response)
+
+        with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
+            provider = AnthropicProvider(api_key="test-key", model="claude-sonnet-4-5")
+            await provider.generate([{"role": "user", "content": "hi"}], temperature=0.3)
+
+        sent = mock_client.messages.create.await_args.kwargs
+        assert sent["temperature"] == 0.3
+
+    @pytest.mark.asyncio
+    async def test_generate_omits_temperature_for_sonnet_5(self):
+        """End-to-end: a Claude 5 call must not send temperature (would 400)."""
+        mock_client = MagicMock()
         mock_response = MagicMock()
         mock_response.model = "claude-sonnet-5"
         mock_response.stop_reason = "end_turn"
@@ -671,12 +701,12 @@ class TestSamplingParamNormalization:
         mock_response.content = [block]
         mock_client.messages.create = AsyncMock(return_value=mock_response)
 
-        with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
+        with patch("anthropic.AsyncAnthropic", return_value=mock_client):
             provider = AnthropicProvider(api_key="test-key", model="claude-sonnet-5")
             await provider.generate([{"role": "user", "content": "hi"}], temperature=0.3)
 
         sent = mock_client.messages.create.await_args.kwargs
-        assert sent["temperature"] == 0.3
+        assert "temperature" not in sent
 
 
 if __name__ == "__main__":
