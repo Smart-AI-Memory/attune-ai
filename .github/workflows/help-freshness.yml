@@ -74,6 +74,17 @@ jobs:
             echo "workflow with regen=true."
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: DEC-8 spend gate — block if over the monthly ceiling
+        # Enforcement half of the R6 spend alarm (see
+        # scripts/ci_spend_gate.py). Only runs when we're about to
+        # actually spend (regen=true + stale features exist). Needs
+        # ANTHROPIC_ADMIN_API_KEY to verify spend; without it, fails
+        # open with a loud warning rather than blocking the regen.
+        if: steps.list_stale.outputs.count != '0' && github.event.inputs.regen == 'true'
+        env:
+          ANTHROPIC_ADMIN_API_KEY: ${{ secrets.ANTHROPIC_ADMIN_API_KEY }}
+        run: python scripts/ci_spend_gate.py
+
       - name: Regenerate stale features
         if: steps.list_stale.outputs.count != '0' && github.event.inputs.regen == 'true'
         env:

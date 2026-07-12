@@ -55,6 +55,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .[dev]
 
+      - name: DEC-8 spend gate — block if over the monthly ceiling
+        # Enforcement half of the R6 spend alarm (see
+        # scripts/ci_spend_gate.py). Needs ANTHROPIC_ADMIN_API_KEY to
+        # verify spend; without it, fails open with a loud warning
+        # rather than blocking every keyed run.
+        env:
+          ANTHROPIC_ADMIN_API_KEY: ${{ secrets.ANTHROPIC_ADMIN_API_KEY }}
+        run: python scripts/ci_spend_gate.py
+
       - name: Run auth integration bucket (real API)
         # -m "" / -o addopts="" override the repo defaults
         # (`-m "not integration"` and `-n auto`). Real-API workflow
