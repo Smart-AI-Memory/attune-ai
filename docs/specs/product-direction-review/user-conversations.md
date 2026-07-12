@@ -6,6 +6,14 @@ humans who ran attune-ai on a real repo. Count: **1 of 5.**
 Record each conversation here within a day of having it. Unrecorded
 signal doesn't compound (assessment-2026-07-11, N1).
 
+**Inbound channel (weekend-plan Block 5, live 2026-07-12):**
+[GitHub Discussion #1325](https://github.com/Smart-AI-Memory/attune-ai/discussions/1325),
+"Did setup fight you? Tell me where." Linked from the README
+quickstart, the CLI's bare `attune` welcome screen, and all three
+setup-related error paths (no-auth preflight, `attune validate`,
+the no-signal-stderr SDK failure). Any substantive reply counts
+toward the 5.
+
 ---
 
 ## Conversation 1 — 2026-07-09

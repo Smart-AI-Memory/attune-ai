@@ -230,7 +230,9 @@ def cmd_validate(args: Namespace) -> int:
             errors.append(
                 "No auth found. Log in to Claude Code (run `claude` once) "
                 "or set ANTHROPIC_API_KEY\n"
-                "   Run: attune auth setup",
+                "   Run: attune auth setup\n"
+                "   Setup fight you? https://github.com/Smart-AI-Memory/"
+                "attune-ai/discussions/1325",
             )
 
     # Check workflows

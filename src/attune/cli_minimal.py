@@ -681,7 +681,8 @@ For interactive development in Claude Code:
   /testing      Run tests, coverage, generate tests
   /wizard run   Guided multi-step wizards
 
-More: attune --help | Docs: https://smartaimemory.com/framework-docs/"""
+More: attune --help | Docs: https://smartaimemory.com/framework-docs/
+Setup fight you? https://github.com/Smart-AI-Memory/attune-ai/discussions/1325"""
     )
     return 0
 

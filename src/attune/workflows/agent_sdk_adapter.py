@@ -750,7 +750,9 @@ class SdkSubprocessError(Exception):
                     "  - Log in to Claude Code: run `claude` once "
                     "interactively, or\n"
                     "  - Set an API key: export ANTHROPIC_API_KEY=..., or\n"
-                    "  - Run `attune auth setup` for guided configuration."
+                    "  - Run `attune auth setup` for guided configuration.\n\n"
+                    "Still stuck? https://github.com/Smart-AI-Memory/"
+                    "attune-ai/discussions/1325"
                 )
             return (
                 f"{self.message}\n\n"

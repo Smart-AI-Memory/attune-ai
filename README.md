@@ -306,6 +306,8 @@ attune            # shows your next steps
 Then check your setup with `attune validate` and run your first
 workflow: `attune workflow run code-review --path src/`.
 
+Setup fight you? [Tell me where](https://github.com/Smart-AI-Memory/attune-ai/discussions/1325) — I'm actively fixing this.
+
 The core install includes the CLI, all workflows, and the MCP
 server. See [Installation Options](#installation-options) for
 per-surface extras (API-mode agents, ops dashboard, Redis memory).

@@ -246,7 +246,9 @@ def _auth_preflight() -> str | None:
         "(npm install -g @anthropic-ai/claude-code), run `claude` "
         "once to log in, then re-run this workflow.\n"
         "   - API key: export ANTHROPIC_API_KEY=... and re-run.\n"
-        "   For guided configuration: attune auth setup"
+        "   For guided configuration: attune auth setup\n"
+        "   Setup fight you? https://github.com/Smart-AI-Memory/"
+        "attune-ai/discussions/1325"
     )
 
 
