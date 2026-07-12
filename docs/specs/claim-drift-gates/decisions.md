@@ -76,25 +76,30 @@ every claim surface.
   a CI job, not a checker — and stages advisory→required over two
   weeks per the ci-matrix-right-sizing precedent.
 
-## Open decisions
+## Resolved decisions (continued)
 
-- **D4 — what README claims about workflow count/stages. OPEN —
-  needs Patrick.** The registry has 22 slugs over 20 distinct
-  classes (`release-prep`/`release-gate`,
-  `health-check`/`orchestrated-health-check` are deliberate alias
-  pairs); only ~3 workflows declare multiple `stages`
-  (documentation-orchestrator 4, help-maintenance 5, rag-code-gen 2).
-  Options:
-  (a) claim **"20 workflows"** (distinct classes) and drop the
-      multi-stage claim entirely — cleanest, slightly undersells;
-  (b) claim **"22 workflow commands"** (slugs) — defensible wording,
-      G1 binds to the slug count;
-  (c) keep "multi-stage" but redefine it against internal agent-team
-      steps and expose that number from the registry so G1 can bind
-      it — most work, preserves the marketing point honestly.
-  Recommendation: (a) or (b); (c) only if the multi-stage framing
-  matters for positioning. G1 ships with the claim manifest bound to
-  whichever is ratified.
+- **D4 — what README claims about workflow count/stages. RATIFIED
+  (2026-07-12), option (a).** Claim **"20 workflows"** (distinct
+  classes) and drop the multi-stage claim entirely.
+  `CAPABILITIES.workflows` in `website/lib/features.ts` now derives
+  from `len(set(discover_workflows().values()))` (20), not
+  `list_workflows()` filtered on a truthy `stages` field (19) — that
+  prior derivation counted nearly every workflow, since almost all of
+  them set *some* `stages` value; only 3
+  (`documentation-orchestrator` 4, `rag-code-gen` 2,
+  `release-prep`/`release-gate` 4 as one alias pair) actually declare
+  *multiple* stages, so "multi-stage" overclaimed what the number
+  measured. Surfaced during a marketing-accuracy review
+  (2026-07-12), independent of the four-pass external review that
+  opened this spec. Fixed alongside: README's "22 workflows (19
+  multi-stage)" → "20 workflows"; the two website copy sites
+  (RELIABILITY_LOOP stage 03, the "workflows" PILLARS entry) that
+  repeated "19 multi-stage workflows"; and
+  `test_workflows_count_matches_registry` in
+  `tests/unit/test_website_version_accuracy.py`, which now asserts
+  against the distinct-class count.
+
+## Open decisions
 
 - **D7 — G1/G2/G3 in pre-commit as well as CI? OPEN.** They need an
   importable `attune`, which pre-commit's isolated env doesn't

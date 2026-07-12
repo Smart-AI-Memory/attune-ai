@@ -242,7 +242,7 @@ export default function Home() {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-8 text-center">
               <div>
                 <div className="text-4xl font-extrabold text-[var(--primary)]">{CAPABILITIES.workflows}</div>
-                <div className="text-sm text-[var(--text-muted)] mt-1">multi-stage workflows</div>
+                <div className="text-sm text-[var(--text-muted)] mt-1">workflows</div>
               </div>
               <div>
                 <div className="text-4xl font-extrabold text-[var(--primary)]">{CAPABILITIES.mcpTools}</div>

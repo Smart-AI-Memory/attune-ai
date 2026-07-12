@@ -25,7 +25,7 @@ const PILLAR_COLOR: Record<string, { bg: string; text: string }> = {
 };
 
 const includedItems = [
-  `${CAPABILITIES.workflows} multi-stage AI workflows`,
+  `${CAPABILITIES.workflows} AI workflows`,
   `MCP server with ${CAPABILITIES.mcpTools} registered tools`,
   `${CAPABILITIES.skills} auto-triggering Claude Code skills`,
   'Spec-driven workflow with an approval gate (/spec)',

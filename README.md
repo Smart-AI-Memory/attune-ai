@@ -38,8 +38,8 @@ production codebase. Four definitions, for the systems-minded:
    Protocol server that turns Claude Code into a managed multi-agent
    platform. Instead of one monolithic prompt, it dispatches 2–6
    domain-specific subagents in parallel — code readers, validators,
-   test designers, refactor planners — across 22 workflows
-   (19 multi-stage) and 47 MCP tools, and an orchestrator synthesizes
+   test designers, refactor planners — across 20 workflows
+   and 47 MCP tools, and an orchestrator synthesizes
    their findings into one result.
 3. **A Socratic quality-gate engine.** Multi-stage workflows ask
    before they act: the `/spec` flow brainstorms, plans, then executes
@@ -51,14 +51,15 @@ production codebase. Four definitions, for the systems-minded:
    not a byproduct. Through decoupled modules (`attune-author`,
    `attune-rag`, `attune-help`), a citation-per-claim retrieval
    contract keeps mean per-claim faithfulness CI-gated at ≥ 0.97
-   (0.996 measured on the benchmark set) — grounding that both
-   engineers and agents use to verify implementation dependencies.
+   (0.98 currently measured, N=20 runs on the 40-query golden set) —
+   grounding that both engineers and agents use to verify
+   implementation dependencies.
 
 In short: the infrastructure to move AI from conversational
 autocomplete to a grounded, multi-agent software-engineering utility.
 The same system doubles as an authoring-and-assistance toolkit for
 knowledge bases at scale — and we run our own on it: the docs, help
-templates, and 380+ engineering lessons at
+templates, and 800+ engineering lessons at
 [attune-ai.dev](https://attune-ai.dev) are authored, grounded, and
 maintained entirely by Attune's own stack.
 
@@ -123,11 +124,13 @@ releases (curated promotion in 9.5, files-canonical unification in
 Memory is local-first — nothing leaves your machine, and without a
 Redis server everything degrades to the file backend with clear
 guidance. Your memory, your corpus: we dogfood the loop on our own
-380+ engineering lessons, retrieved via attune-rag at **P@3 96%**
+800+ engineering lessons, retrieved via attune-rag at **P@3 96%**
 (100% on the high-severity subset) on a frozen trap-moment benchmark.
 
-**The economics, measured.** Durable memory here is 303,205 tokens
-across 752 docs; a session recalls only the relevant slice:
+**The economics, measured (2026-07-05 snapshot; corpus has grown
+since — the ratios below only improve as it does).** Durable memory
+was 303,205 tokens across 752 docs at measurement time; a session
+recalls only the relevant slice:
 
 | Memory-suite recall | Instead of loading | You load | Win |
 |---|--:|--:|--:|
@@ -238,15 +241,17 @@ vocab (`y` / `go` / `1`) answers any of them.
 ### 4. RAG-grounded generation
 
 `attune-rag` (core dep) grounds LLM generation in retrieved corpus
-passages and enforces citation-per-claim, delivering **0.996 mean
-per-claim faithfulness on the benchmark set — over 99% of generated
-claims are grounded in their cited passages (under 1% hallucinated
-per claim)**. The conservative per-query bucket rate (a single
-ungrounded claim disqualifies the whole response) is 6.7%, down from
-46.7% without the citation contract. Retrieved passages are wrapped
-in sentinel tags to prevent prompt injection. The Claude provider
-automatically caches the stable RAG context prefix, eliminating
-repeated token costs across calls.
+passages and enforces citation-per-claim, delivering **0.98 mean
+per-claim faithfulness on the current CI-gated benchmark** (40
+queries, N=20 runs, floor ≥0.97) — the large majority of generated
+claims are grounded in their cited passages. The citation-per-claim
+design itself was chosen via an A/B comparison (2026-04-19): the
+conservative per-query bucket rate (a single ungrounded claim
+disqualifies the whole response) dropped from 46.7% without the
+contract to 6.7% with it. Retrieved passages are wrapped in sentinel
+tags to prevent prompt injection. The Claude provider automatically
+caches the stable RAG context prefix, eliminating repeated token
+costs across calls.
 
 ### 5. Memory that compounds across sessions
 
