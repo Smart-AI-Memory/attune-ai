@@ -14575,3 +14575,21 @@ def ", start_idx + 1)` for module-
   the Bash tool rather than a native terminal, and Redis-backed
   features degrade the same as anywhere else — nothing
   Cowork-specific breaks.
+
+- **The auto-mode classifier also blocks push/PR of DOCS content it
+  reads as sensitive — "generate a report" ≠ authorization to
+  publish it**: 2026-07-12, the third product-direction assessment
+  committed fine locally, but `git push` + `gh pr create` in one
+  compound command was denied ("Excess Sensitive Detail /
+  Out-of-Place Publication") because the report body named spend
+  caps, the Anthropic refund dispute, secret names
+  (`ANTHROPIC_ADMIN_API_KEY`), and "only 1 confirmed user" — and
+  the user had asked only to *generate* the report. Precedent
+  (sibling assessments with the same content class already public
+  on main) does NOT pre-authorize the classifier. Extends the
+  "bundled-destructive scripts blocked" lesson to a new surface:
+  publication of internal-strategy prose. Handling: commit locally,
+  present the report + the publish question to the user, retry
+  push/PR only on an explicit go. Don't burn a cycle trying to
+  rephrase the PR body to slip past — the sensitivity is in the
+  committed file, not the body text.
