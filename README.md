@@ -219,19 +219,25 @@ communicates better than text. A multi-part question becomes one form
 you answer with a click; a recommendation arrives as weighable cards; a
 disagreement is shown side-by-side so you can overrule it in one tap.
 This is a deliberate effort to *improve human/AI communication* — making
-the back-and-forth faster, clearer, and less ambiguous. The agent picks
-the right *construct* for the moment:
+the back-and-forth faster, clearer, and less ambiguous. Three of the
+four constructs fire at a **fork** — a point where the conversation
+can't move forward without your choice; the fourth (**progress**) is a
+status report, not a fork. The agent picks the right *construct* for
+the moment:
 
-- **intake** — gathers several independent decisions as a single
-  (multi-select-capable) form, instead of N back-and-forth questions.
-- **decision** — offers a *recommended* option with a rationale and
-  per-option tradeoffs, rendered as cards (consumed by the `/spec`
-  approval gate).
-- **pushback** — when the agent disagrees with your stated approach, it
-  shows "your approach" beside "I'd suggest instead" with a "why", and
-  you overrule or switch with one pick (`/spec` plan review).
-- **progress** — a done / in-progress / blocked status board whose
-  blocked items are a picker for what to fix next (`/spec` execute).
+- **intake** *(fork)* — gathers several independent decisions as a
+  single (multi-select-capable) form, instead of N back-and-forth
+  questions.
+- **decision** *(fork)* — offers a *recommended* option with a
+  rationale and per-option tradeoffs, rendered as cards (consumed by
+  the `/spec` approval gate).
+- **pushback** *(fork)* — when the agent disagrees with your stated
+  approach, it shows "your approach" beside "I'd suggest instead" with
+  a "why", and you overrule or switch with one pick (`/spec` plan
+  review).
+- **progress** *(report)* — a done / in-progress / blocked status
+  board whose blocked items are a picker for what to fix next (`/spec`
+  execute).
 
 All constructs share one declarative form model and validator, render
 richly on widget-capable surfaces (e.g. claude.ai / Cowork) and degrade
@@ -273,15 +279,19 @@ prose, Attune renders the right form whenever a structured turn
 communicates better than text — a multi-part question becomes one
 form you answer with a click, a recommendation arrives as weighable
 cards, and a disagreement is shown side-by-side so you can overrule
-it in one tap:
+it in one tap. Three constructs fire at a **fork** — a point where
+the conversation needs your choice to continue; the fourth
+(**progress**) is a status report, not a fork:
 
-- **intake** — gather several independent decisions in one form
-- **decision** — a recommended option with rationale + per-option
-  tradeoffs (`/spec` approval gate)
-- **pushback** — agent dissent shown as "your approach" vs "I'd suggest
-  instead"; overrule or switch in one pick (`/spec` plan review)
-- **progress** — a done / in-progress / blocked board whose blocked
-  items are a fix-next picker (`/spec` execute)
+- **intake** *(fork)* — gather several independent decisions in one
+  form
+- **decision** *(fork)* — a recommended option with rationale +
+  per-option tradeoffs (`/spec` approval gate)
+- **pushback** *(fork)* — agent dissent shown as "your approach" vs
+  "I'd suggest instead"; overrule or switch in one pick (`/spec` plan
+  review)
+- **progress** *(report)* — a done / in-progress / blocked board
+  whose blocked items are a fix-next picker (`/spec` execute)
 
 All constructs share one declarative form model and validator, render
 richly on widget-capable surfaces (e.g. claude.ai / Cowork) and degrade
