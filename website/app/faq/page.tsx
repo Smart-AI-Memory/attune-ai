@@ -26,15 +26,15 @@ const faqData: FAQCategory[] = [
       },
       {
         question: 'What is the reliability loop?',
-        answer: 'The reliability loop is the arc Attune AI takes a requirement through on its way to shipped software: Specify, Ground, Build, Remember, Verify. You write a spec, ground every change in your real code, build with multi-stage workflows, carry what worked into the next session, and verify the output before it ships.',
+        answer: 'The reliability loop is the arc Attune AI takes a requirement through on its way to shipped software: Specify, Ground, Build, Remember, Verify. You write a spec, ground every change in your real code, build with a team of workflows, carry what worked into the next session, and verify the output before it ships.',
       },
       {
         question: 'What are the four pillars?',
-        answer: 'Attune AI is built on four pillars, each a real, shipped capability: AI workflows (19 multi-stage workflows for review, tests, bug prediction, and refactors), Project memory (cross-session findings and a retrievable lessons corpus), Retrieval grounding (citations back to your source via attune-rag), and Verification (fact-checking generated content before it reaches main).',
+        answer: 'Attune AI is built on four pillars, each a real, shipped capability: AI workflows (20 workflows for review, tests, bug prediction, and refactors), Project memory (cross-session findings and a retrievable lessons corpus), Retrieval grounding (citations back to your source via attune-rag), and Verification (fact-checking generated content before it reaches main).',
       },
       {
         question: 'What can Attune AI do, in numbers?',
-        answer: 'Attune AI ships 22 workflows (19 multi-stage), 47 MCP tools, 24 auto-triggering skills, 5 wizards, and 15 template kinds. The spec engine runs via /spec, progressive help via /coach, and cross-session recall via /recall.',
+        answer: 'Attune AI ships 20 workflows, 47 MCP tools, 24 auto-triggering skills, 5 wizards, and 15 template kinds. The spec engine runs via /spec, progressive help via /coach, and cross-session recall via /recall.',
       },
       {
         question: "What's the difference between attune-ai and attune-gui?",
@@ -132,7 +132,7 @@ const faqData: FAQCategory[] = [
     questions: [
       {
         question: 'What can I build with Attune AI?',
-        answer: 'You take requirements through to reliable software: write a spec with /spec, ground changes in your real code, run multi-stage workflows for code review, security scanning, test generation, bug prediction, and refactor planning, then verify the output before it ships. The lessons corpus and cross-session memory carry what worked into the next session.',
+        answer: 'You take requirements through to reliable software: write a spec with /spec, ground changes in your real code, run workflows for code review, security scanning, test generation, bug prediction, and refactor planning, then verify the output before it ships. The lessons corpus and cross-session memory carry what worked into the next session.',
       },
       {
         question: 'How does the spec engine work?',

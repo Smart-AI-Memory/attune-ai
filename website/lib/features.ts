@@ -248,10 +248,16 @@ export const DIFFERENTIATORS: Differentiator[] = [
 /**
  * Counts that appear in prose and stat callouts across the
  * site. Verified against the live Python code per the
- * website-content-accuracy rule (last verified 2026-06-28,
- * attune-ai 9.2.0):
+ * website-content-accuracy rule (last verified 2026-07-12,
+ * attune-ai 10.4.0):
  *
- *   workflows: attune.workflows.list_workflows() with stages
+ *   workflows: distinct classes in attune.workflows.discover_workflows()
+ *     (D4, claim-drift-gates, 2026-07-12: the prior count used
+ *     list_workflows() filtered on a truthy `stages` field, which is
+ *     set on nearly every workflow — only 3 actually declare more than
+ *     one stage. "Multi-stage workflows" overclaimed what the number
+ *     measured; this is the honest distinct-workflow-class total.
+ *     release-prep/release-gate count once — deliberate alias pair.)
  *   skills: plugin/skills/ directory count (test_skill_count)
  *   mcpTools: attune.mcp.tool_schemas get_*_tools() total
  *   templateKinds: attune_author.generator._ALL_TEMPLATE_NAMES length
@@ -262,7 +268,7 @@ export const DIFFERENTIATORS: Differentiator[] = [
  * and no page consumed them.)
  */
 export const CAPABILITIES = {
-  workflows: 19,
+  workflows: 20,
   skills: 24,
   mcpTools: 47,
   templateKinds: 15,
@@ -305,7 +311,7 @@ export const RELIABILITY_LOOP: LoopStage[] = [
     n: "03",
     name: "Build",
     description:
-      "19 multi-stage workflows: review, tests, bug prediction, refactor.",
+      "20 workflows: review, tests, bug prediction, refactor.",
   },
   {
     n: "04",
@@ -363,7 +369,7 @@ export const PILLARS: Pillar[] = [
     tag: "AI workflows",
     title: "Specialist teams, not one prompt",
     description:
-      "19 multi-stage workflows run teams of 2–6 Claude subagents to " +
+      "20 workflows run teams of 2–6 Claude subagents to " +
       "review code, surface vulnerabilities, generate tests, and plan " +
       "refactors — with cost-tiered model routing.",
     points: [

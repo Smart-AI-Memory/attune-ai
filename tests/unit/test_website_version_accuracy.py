@@ -23,7 +23,11 @@ Three layers:
 3. **Deterministic count sync, network-free** — every field of
    ``features.ts`` ``CAPABILITIES`` MUST equal the live Python registry
    it claims to mirror (skills → ``plugin/skills/`` dirs; workflows →
-   multi-stage ``list_workflows()``; wizards → ``list_wizards()``;
+   distinct classes in ``discover_workflows()`` (D4, claim-drift-gates:
+   the prior "multi-stage" framing counted any workflow with a
+   ``stages`` field set, which is nearly all of them — only 3 actually
+   declare multiple stages, so the count is now the honest distinct-
+   workflow-class total instead); wizards → ``list_wizards()``;
    mcpTools → ``tool_schemas`` ``get_*_tools()`` total; templateKinds →
    ``attune_author.generator._ALL_TEMPLATE_NAMES``). This closes the
    blind spot that let the website advertise 17 skills while the plugin
@@ -203,12 +207,14 @@ class TestCapabilityCountsSync:
         )
 
     def test_workflows_count_matches_registry(self):
-        from attune.workflows import list_workflows
+        from attune.workflows import discover_workflows
 
-        live = sum(1 for w in list_workflows() if w.get("stages"))
+        live = len(set(discover_workflows().values()))
         assert _capabilities()["workflows"] == live, (
-            f"CAPABILITIES.workflows != live multi-stage workflow count ({live}) — "
-            "update website/lib/features.ts"
+            f"CAPABILITIES.workflows != live distinct workflow-class count "
+            f"({live}) — update website/lib/features.ts. (D4, "
+            f"claim-drift-gates: this counts distinct classes, not slugs — "
+            f"release-prep/release-gate are a deliberate alias pair.)"
         )
 
     def test_wizards_count_matches_registry(self):
