@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.4.0] — 2026-07-12
+
+First-run setup no longer traps keyless users in a raw traceback, and
+the hook layer now runs identically on macOS, Linux, and Windows.
+
+### Fixed
+
+- **First-run setup frictions F1–F5** (#1318): a keyless user's first
+  `workflow run` attempt used to end in an unhandled traceback
+  (`Exception: Claude Code returned an error result: success`)
+  followed by a contradictory success banner. Now: auth is checked
+  before the spend gate fires, `auth status` renders zero-config
+  defaults honestly instead of claiming completed setup, `validate`
+  no longer hard-fails a keyless machine with working subscription
+  auth, and non-verbose CLI runs log a one-line error instead of a
+  25-line traceback. README's pip quickstart now says what to type
+  after install.
+- **session_savings benchmark `is_error` counting** (#1319): the
+  benchmark counted a CLI result as a valid zero-token success
+  whenever `subtype == "success"`, without checking `is_error` — a
+  10-session auth-401 run aggregated as all-zero-cost "data,"
+  silently corrupting the cost comparison. Both are now required.
+
+### Changed
+
+- **Cross-platform hook layer** (#1313): every hook script and
+  registration now runs identically on macOS, Linux, and Windows —
+  UTF-8-safe stdin/stdout handling, atomic state writes, a
+  `_bootstrap.py` path resolver replacing `PYTHONPATH` env-prefixing,
+  and shell-family-aware security validation that fails closed for
+  unknown/PowerShell contexts. New README platform-support policy
+  documents the support tiers (macOS/Linux/WSL2 full,
+  Windows+Git Bash supported, Windows+PowerShell limited).
+
+### Added
+
+- **VS Code extension scaffold** (#1313): a minimal cross-platform
+  dashboard extension reading the file-telemetry contract (no direct
+  Redis connection); feature growth goes through
+  `specs/vscode-extension/`.
+
 ## [10.3.0] — 2026-07-11
 
 Spec-integrity minor: the spec-status-integrity hook suite lands
