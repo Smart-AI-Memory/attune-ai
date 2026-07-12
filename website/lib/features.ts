@@ -357,7 +357,7 @@ export const PILLARS: Pillar[] = [
       "a disagreement is shown side-by-side so you overrule it in one " +
       "tap.",
     points: [
-      "Intake, decision, pushback, and progress constructs",
+      "Intake, decision, and pushback fire at a fork; progress reports status",
       "Rich on widget surfaces, graceful menu fallback elsewhere",
       "Answer with one click — or the terse y / go / 1 vocab",
     ],
