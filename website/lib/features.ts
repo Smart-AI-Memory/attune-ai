@@ -344,6 +344,24 @@ export interface Pillar {
 }
 
 export const PILLARS: Pillar[] = [
+  // DEC-3 (product-direction-review): memory is THE pillar — it
+  // stays first; the rest are supporting capabilities.
+  {
+    id: "memory",
+    tag: "Project memory",
+    title: "Your agent stops starting from zero",
+    description:
+      "Findings from each session are stashed and recalled in the next. " +
+      "A retrievable lessons corpus surfaces the right engineering lesson " +
+      "at the moment a prompt needs it.",
+    points: [
+      "Local-first by default — no cloud required",
+      "Redis semantic tier, client included (local Ollama embeddings)",
+      "Automatic recall, or on demand with /recall",
+    ],
+    icon: "🧠",
+    color: "secondary",
+  },
   {
     id: "communication",
     tag: "Dynamic forms",
@@ -379,22 +397,6 @@ export const PILLARS: Pillar[] = [
     ],
     icon: "⚙️",
     color: "primary",
-  },
-  {
-    id: "memory",
-    tag: "Project memory",
-    title: "Your agent stops starting from zero",
-    description:
-      "Findings from each session are stashed and recalled in the next. " +
-      "A retrievable lessons corpus surfaces the right engineering lesson " +
-      "at the moment a prompt needs it.",
-    points: [
-      "Local-first by default — no cloud required",
-      "Redis semantic tier, client included (local Ollama embeddings)",
-      "Automatic recall, or on demand with /recall",
-    ],
-    icon: "🧠",
-    color: "secondary",
   },
   {
     id: "grounding",

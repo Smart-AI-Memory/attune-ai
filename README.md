@@ -23,45 +23,30 @@
 
 ---
 
-**Attune AI** is a spec-driven, multi-agent framework that puts a
-deterministic quality-gate layer between autonomous LLM agents and a
-production codebase. Four definitions, for the systems-minded:
+**Attune AI** gives Claude Code persistent memory. Your agent stops
+starting from zero: a stash → recall → promote loop carries
+decisions, bugs, and hard-won lessons from one session into the
+next, and a retrievable lessons corpus surfaces the right lesson at
+the exact moment a prompt needs it — local-first, working from a
+plain `pip install attune-ai`. The economics are measured, not
+promised: recall loads a few hundred exactly-relevant tokens instead
+of your whole corpus — 67× fewer tokens on our own 800+ lesson
+store, retrieved at P@3 96% on a frozen trap-moment benchmark
+(details in [the memory suite](#the-memory-suite--out-of-the-box-measured)
+below).
 
-1. **A staleness-aware source mirror.** Most AI tools treat code
-   generation as prompt-and-forget, losing context between sessions.
-   Attune binds help templates and `features.yaml` definitions to
-   source via sha256 source hashes, so drift between docs and code is
-   *detected* rather than silently accumulated — and a cross-session
-   memory loop carries decisions, bugs, and references from one
-   session into the next.
-2. **An MCP-native team coordinator.** Attune runs as a Model Context
-   Protocol server that turns Claude Code into a managed multi-agent
-   platform. Instead of one monolithic prompt, it dispatches 2–6
-   domain-specific subagents in parallel — code readers, validators,
-   test designers, refactor planners — across 20 workflows
-   and 47 MCP tools, and an orchestrator synthesizes
-   their findings into one result.
-3. **A Socratic quality-gate engine.** Multi-stage workflows ask
-   before they act: the `/spec` flow brainstorms, plans, then executes
-   behind declarative quality gates that block on real code-review and
-   security-audit scores — not blind agent autonomy. This front-loads
-   constraints and cuts the most expensive failure mode: confidently
-   solving the wrong problem.
-4. **An active knowledge engine.** Documentation is a runtime asset,
-   not a byproduct. Through decoupled modules (`attune-author`,
-   `attune-rag`, `attune-help`), a citation-per-claim retrieval
-   contract keeps mean per-claim faithfulness CI-gated at ≥ 0.97
-   (0.98 currently measured, N=20 runs on the 40-query golden set) —
-   grounding that both engineers and agents use to verify
-   implementation dependencies.
+Around that memory core, the same package also ships a spec-driven,
+multi-agent toolkit: 20 workflows and 47 MCP tools dispatching 2–6
+domain-specific subagents behind Socratic quality gates, RAG
+grounding with a citation-per-claim contract (mean per-claim
+faithfulness CI-gated at ≥ 0.97; 0.98 currently measured, N=20 runs
+on the 40-query golden set), and generation fact-checking — one
+install, one MCP server.
 
-In short: the infrastructure to move AI from conversational
-autocomplete to a grounded, multi-agent software-engineering utility.
-The same system doubles as an authoring-and-assistance toolkit for
-knowledge bases at scale — and we run our own on it: the docs, help
-templates, and 800+ engineering lessons at
-[attune-ai.dev](https://attune-ai.dev) are authored, grounded, and
-maintained entirely by Attune's own stack.
+We run our own knowledge base on it: the docs, help templates, and
+800+ engineering lessons at [attune-ai.dev](https://attune-ai.dev)
+are authored, grounded, and maintained entirely by Attune's own
+stack.
 
 **Managing and creating help-content, docs, or knowledge-bases?**
 That's [`attune-gui`](https://github.com/Smart-AI-Memory/attune-gui)

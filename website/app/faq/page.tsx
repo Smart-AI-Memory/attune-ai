@@ -29,8 +29,8 @@ const faqData: FAQCategory[] = [
         answer: 'The reliability loop is the arc Attune AI takes a requirement through on its way to shipped software: Specify, Ground, Build, Remember, Verify. You write a spec, ground every change in your real code, build with a team of workflows, carry what worked into the next session, and verify the output before it ships.',
       },
       {
-        question: 'What are the four pillars?',
-        answer: 'Attune AI is built on four pillars, each a real, shipped capability: AI workflows (20 workflows for review, tests, bug prediction, and refactors), Project memory (cross-session findings and a retrievable lessons corpus), Retrieval grounding (citations back to your source via attune-rag), and Verification (fact-checking generated content before it reaches main).',
+        question: 'What is Attune AI built on?',
+        answer: 'Memory is the pillar: project memory carries cross-session findings and a retrievable lessons corpus, surfaced at the moment a prompt needs them. Around it ship four supporting capabilities, each real and shipped: dynamic forms (structured human/AI turns), AI workflows (20 workflows for review, tests, bug prediction, and refactors), retrieval grounding (citations back to your source via attune-rag), and verification (fact-checking generated content before it reaches main).',
       },
       {
         question: 'What can Attune AI do, in numbers?',

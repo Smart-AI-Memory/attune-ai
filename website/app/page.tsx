@@ -193,15 +193,16 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Four platform pillars */}
+        {/* Platform pillars — memory leads (DEC-3) */}
         <section className="py-32 px-6 max-w-7xl mx-auto" aria-label="Platform pillars">
           <div className="text-center mb-20">
             <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">The Platform</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold">Four pillars, one outcome</h2>
+            <h2 className="text-4xl md:text-5xl font-extrabold">Memory is the pillar</h2>
             <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
-              Each pillar is a real, shipped capability &mdash; not a
-              roadmap promise. Together they keep your AI agent&apos;s work
-              grounded, remembered, and verified.
+              Attune AI leads with project memory &mdash; the four
+              capabilities around it keep your AI agent&apos;s work
+              grounded, verified, and easy to steer. All real and
+              shipped, none a roadmap promise.
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-6">

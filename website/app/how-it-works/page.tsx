@@ -104,15 +104,15 @@ export default function HowItWorksPage() {
           </div>
         </section>
 
-        {/* Four pillars underneath */}
+        {/* Pillars underneath — memory leads (DEC-3) */}
         <section className="py-20 bg-[var(--surface-container-low)]">
           <div className="container">
             <div className="max-w-5xl mx-auto">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold mb-4">What&apos;s working underneath</h2>
                 <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
-                  Four pillars power every stage of the loop — each a real,
-                  shipped capability.
+                  Memory powers every stage of the loop — with four
+                  supporting capabilities, each real and shipped.
                 </p>
               </div>
 
