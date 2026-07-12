@@ -194,14 +194,25 @@ DEC-2 through DEC-5 from June carry forward unchanged. New:
 
 - **DEC-6 — Answer DEC-1…5 in writing, this week,** even if every
   answer is "no". An explicit "no" is a decision; silence is drift.
-  *(pending)*
+  **Resolved 2026-07-12:** self-fulfilling — answered by recording
+  DEC-1…5 above, in writing, with dates, this week.
 - **DEC-7 — Release freeze, 14 days.** No tags. Observe the download
-  badge. Publishes the F1/N3 experiment at zero cost. *(pending)*
+  badge. Publishes the F1/N3 experiment at zero cost. **Decided
+  2026-07-12:** yes, starting 2026-07-13 after one more release
+  already in flight. No tags through 2026-07-27; watch the download
+  badge over that window.
 - **DEC-8 — Hard-cap CI LLM spend at $100/month.** The alarm exists;
   add enforcement. Redirect the ~$1,100/month delta toward anything
-  user-facing. *(pending)*
+  user-facing. **Decided 2026-07-12 (modified amount):** cap at
+  $350/month — the existing documented ceiling
+  (`user_monthly_spend_budget`) — rather than a new $100 figure.
+  Still a ~70% cut from the $1,200 actual. Enforcement mechanism
+  (provider-side cap vs. CI gate) is a follow-up implementation task,
+  not yet built.
 - **DEC-9 — One root-hygiene pass** (N4), time-boxed to half a day.
-  *(pending)*
+  **Done 2026-07-12:** PR #1322 — merged ACKNOWLEDGEMENTS files,
+  removed six stale root test scripts, cleared MagicMock/ and other
+  local artifacts, pruned ~93MB of stale worktree bloat.
 
 DEC-2 remains the only decision that matters. One of five
 conversations is done (2026-07-09, logged in

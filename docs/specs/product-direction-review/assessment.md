@@ -118,15 +118,29 @@ These are proposals, not adopted. Record the call inline with a date
 when made.
 
 - **DEC-1 — Freeze new product surface for two weeks.** No new specs,
-  workflows, or pillars. *(pending)*
+  workflows, or pillars. **Decided 2026-07-12 (modified):** freeze
+  new spec directories only, for 2 weeks (through 2026-07-26). Bug
+  fixes, small features, and finishing in-flight specs remain
+  allowed — targets exactly what F3 measured (spec-directory growth),
+  not all forward motion.
 - **DEC-2 — Run 5 user conversations.** People who ran attune-ai on a
-  real repo. Owner: Patrick. *(pending)*
+  real repo. Owner: Patrick. **Decided 2026-07-12:** proceed via
+  weekend-plan Block 5's zero-contact inbound channel. Target
+  unchanged — 5 conversations, 1 of 5 done.
 - **DEC-3 — Pick the one pillar** those users actually used; let the
-  others idle. *(pending)*
+  others idle. **Decided 2026-07-12:** Memory. Workflows, RAG
+  grounding, and verification idle until DEC-2 produces evidence
+  otherwise.
 - **DEC-4 — Stop the test/coverage ratchet;** real round-trip tests
-  only. *(pending)*
+  only. **Decided 2026-07-12:** yes. Freeze the coverage-percentage
+  gate where it stands (no further upward ratcheting); redirect
+  test-writing effort to real round-trip coverage, starting with the
+  still-open `claude-agent-sdk-0-2-migration` spec.
 - **DEC-5 — Time-box CI flake-chasing;** mark unresolved hangs
-  known-flaky and move on. *(pending)*
+  known-flaky and move on. **Decided 2026-07-12:** closed as already
+  resolved in practice — F6 (2026-07-11 follow-up) confirms the
+  tar-pit trip-wire worked (~18% → ~4% of commits touching
+  CI/hangs/flakes/runners).
 
 ---
 
