@@ -86,7 +86,7 @@ This project incorporates components from the projects listed below. The origina
 
 The hook system and markdown agent patterns in this framework were **inspired by** the work in [everything-claude-code](https://github.com/affaan-m/everything-claude-code) by **Affaan Mustafa** (MIT License).
 
-See [ACKNOWLEDGMENTS.md](ACKNOWLEDGMENTS.md) for details on conceptual contributions.
+See [ACKNOWLEDGEMENTS.md](ACKNOWLEDGEMENTS.md) for details on conceptual contributions.
 
 ---
 
