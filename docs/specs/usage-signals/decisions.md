@@ -520,6 +520,17 @@ The `ts`-not-`timestamp` field discipline (the #867 bug that made Home
 read zero) is honored in `read_daily_spend()` with a `timestamp` legacy
 fallback. Remaining: Phase 2c Reach dashboard, R5 telemetry watchdog.
 
+**Correction — 2026-07-12 (Patrick):** the "$1,200-night" figure named
+above and in `product-direction-review/assessment-2026-07-11.md`'s N2
+finding understated the actual amount — the real figure was over
+$1,700. Separately, Anthropic has acknowledged Patrick is owed a
+refund related to this spend; the exact mechanism (billing/metering
+error vs. real usage refunded as goodwill) isn't confirmed yet, so
+the root-cause narrative (a mismarked-tests bug causing real API
+calls) should be treated as provisional pending that explanation. The
+R6 alarm and its design rationale in this entry are unaffected by
+either correction.
+
 ## Signal check — 2026-07-11 (agent, Vercel runtime logs)
 
 Three weeks after D8 go-live, first read of what the ingest has

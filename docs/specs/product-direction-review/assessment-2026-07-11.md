@@ -155,16 +155,29 @@ entry, an email, a call — or it will be converted into a spec.
 
 ### N2 — The machine outspends its observable value ~∞
 
-`usage-signals/decisions.md` records a **$1,200/month API burn on
-CI** against a $350/month ceiling (`user_monthly_spend_budget`),
-while local (human) usage ran ~$126/month. The response was
-characteristic: a well-engineered spend *alarm* (18 tests, z-score
-anomaly detection, source-precedence design). The alarm is good
-engineering. But the finding isn't that spend was invisible — it's
-that ~$1,200/month of LLM calls validate a product with zero
-confirmed users. That's ~$14k/year buying green checkmarks. DEC-5's
-logic applies: time-box it, cap CI model spend hard, spend the
-difference on anything that touches a human.
+`usage-signals/decisions.md` records an API burn on CI — over
+$1,700/month by Patrick's own figure (2026-07-12 correction; this
+document previously understated it as $1,200) — against a
+$350/month ceiling (`user_monthly_spend_budget`), while local
+(human) usage ran ~$126/month.
+
+**2026-07-12 update — under dispute:** Anthropic has acknowledged
+Patrick is owed a refund related to this spend. The exact mechanism
+(billing/metering error vs. real usage refunded as goodwill) is not
+yet confirmed, so the causal narrative below (CI misconfiguration
+alone explaining the full amount) should be treated as provisional
+pending that explanation — not rewritten here until the facts are
+in.
+
+The response to the original finding was characteristic: a
+well-engineered spend *alarm* (18 tests, z-score anomaly detection,
+source-precedence design). The alarm is good engineering. But the
+finding isn't that spend was invisible — it's that a large volume of
+LLM calls validate a product with zero confirmed users, at a cost
+that may or may not turn out to be legitimate given the pending
+Anthropic refund. DEC-5's logic applies regardless: time-box it, cap
+CI model spend hard, spend the difference on anything that touches a
+human.
 
 ### N3 — Release cadence is manufacturing its own evidence
 
@@ -202,13 +215,18 @@ DEC-2 through DEC-5 from June carry forward unchanged. New:
   already in flight. No tags through 2026-07-27; watch the download
   badge over that window.
 - **DEC-8 — Hard-cap CI LLM spend at $100/month.** The alarm exists;
-  add enforcement. Redirect the ~$1,100/month delta toward anything
-  user-facing. **Decided 2026-07-12 (modified amount):** cap at
-  $350/month — the existing documented ceiling
-  (`user_monthly_spend_budget`) — rather than a new $100 figure.
-  Still a ~70% cut from the $1,200 actual. Enforcement mechanism
+  add enforcement. Redirect the delta toward anything user-facing.
+  **Decided 2026-07-12 (modified amount):** cap at $350/month — the
+  existing documented ceiling (`user_monthly_spend_budget`) — rather
+  than a new $100 figure. A meaningful cut from the actual spend
+  (over $1,700/month by Patrick's corrected figure — see N2's
+  2026-07-12 update above; a refund from Anthropic is pending and
+  the root cause isn't fully settled yet). Enforcement mechanism
   (provider-side cap vs. CI gate) is a follow-up implementation task,
-  not yet built.
+  not yet built. The cap is worth building regardless of how the
+  refund/root-cause question resolves — spend discipline on a
+  pre-revenue product doesn't depend on whose fault a specific past
+  incident was.
 - **DEC-9 — One root-hygiene pass** (N4), time-boxed to half a day.
   **Done 2026-07-12:** PR #1322 — merged ACKNOWLEDGEMENTS files,
   removed six stale root test scripts, cleared MagicMock/ and other
@@ -240,7 +258,8 @@ next gate spec, would resolve F1 in a week.
 - [assessment.md](assessment.md) — the 2026-06-17 review this
   follows up; DEC-1…5 defined there, all still pending.
 - [usage-signals](../usage-signals/) — snapshots (download surge
-  data), spend-alarm decision record ($1,200 CI burn).
+  data), spend-alarm decision record (CI burn — corrected 2026-07-12
+  to over $1,700; Anthropic refund pending, root cause unsettled).
 - [memorygraph-value-gate](../memorygraph-value-gate/) — receipts for
   the 10.0.0 deletion; the pruning pattern working as designed.
 - [subsystem-value-gate](../subsystem-value-gate/) — the gate
