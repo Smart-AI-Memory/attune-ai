@@ -519,3 +519,27 @@ counted" note so the blind spot is explicit, not silent.
 The `ts`-not-`timestamp` field discipline (the #867 bug that made Home
 read zero) is honored in `read_daily_spend()` with a `timestamp` legacy
 fallback. Remaining: Phase 2c Reach dashboard, R5 telemetry watchdog.
+
+## Signal check — 2026-07-11 (agent, Vercel runtime logs)
+
+Three weeks after D8 go-live, first read of what the ingest has
+actually received. Method: Vercel observability aggregates for the
+`website` project (no DB/secret access needed).
+
+- Last 7 days, all `/api/usage` traffic: **6 × HTTP 405** (GETs —
+  scanners/browser pokes), **zero 2xx ingests**.
+- Last 24h by request path: `/api/usage/` absent from all 260
+  distinct paths.
+- Only known rows in Neon remain the two 2026-06-20 sentinels
+  (D8/D10). Raw log-line retention is shorter than the window, but
+  the 7-day aggregate is fully silent.
+
+Reading: the pipe works; the signal is zero — D9's prediction
+("opt-in default-off transmits ~nothing") confirmed empirically.
+Corollary for the reach question: 2,316 downloads/week alongside
+zero pings is further evidence the download curve is CI shadow, not
+humans at the CLI. This system cannot answer "do users exist" on
+any useful timescale; the product-direction-review instruments
+(user conversations, inbound friction channel) are the working
+ones. No further investment here recommended until a conversation
+or inbound report proves a human population to measure.
