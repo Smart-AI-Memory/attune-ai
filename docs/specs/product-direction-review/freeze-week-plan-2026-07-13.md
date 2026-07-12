@@ -104,8 +104,8 @@ data point instead of a vibe.
 |-------|--------|--------|
 | 0 | 3 secrets/caps live, gate enforcing | |
 | 1 | 0 replies >24h; threads logged | |
-| 2 | N5 paragraph committed | |
-| 3 | Memory visibly pillar #1, sweep clean | |
+| 2 | N5 paragraph committed | **Done 2026-07-12** — usage-signals D11. |
+| 3 | Memory visibly pillar #1, sweep clean | **Done 2026-07-12** — README memory-first intro; PILLARS reordered; home/FAQ/how-it-works/docs/pricing copy reworded (pricing found only by the final broad grep); `next build` green. PyPI copy lags until first post-freeze release, as planned. |
 | 4 | Pilot discrimination results (or dated deferral) | |
 | 5 | fable tasks 3–8 done OR consciously dropped | |
 | 6 | Freeze interpretation written 07-27 | |
