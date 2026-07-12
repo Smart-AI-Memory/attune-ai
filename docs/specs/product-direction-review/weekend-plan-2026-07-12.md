@@ -90,15 +90,18 @@ telling you about it.
 
 ---
 
-## Scorecard (fill in Sunday night)
+## Scorecard (filled 2026-07-12 — done same night, not Sunday)
 
 | Block | Target | Actual |
 |-------|--------|--------|
-| 1 | Friction log + time-to-first-success baseline | |
-| 2+4 | Top-3 frictions fixed, time re-measured | |
-| 3 | 0 "(pending)" decisions | |
-| 5 | Inbound channel live, linked from error paths | |
-| 6 | Root clean, CI spend capped | |
+| 1 | Friction log + time-to-first-success baseline | **Done.** `setup-friction-log.md` — baseline "not reached" (keyless wall), 5 ranked frictions (F1-F5). |
+| 2+4 | Top-3 frictions fixed, time re-measured | **Done, exceeded.** All 5 fixed (not just top-3), PR #1318. Shipped live in v10.4.0 — the real re-measurement is the release itself, not just a worktree re-run. |
+| 3 | 0 "(pending)" decisions | **Done.** All 9 DECs (1-9) recorded with dates, PR #1323. |
+| 5 | Inbound channel live, linked from error paths | **Done.** Discussion #1325, linked from README + CLI welcome screen + all 3 setup-error paths, PR #1326. |
+| 6 | Root clean, CI spend capped | **Partial.** Root hygiene done (PR #1322). CI spend cap *decided* (DEC-8: \$350/mo) but enforcement mechanism not yet built — in progress. |
+
+All 5 required blocks (1-5) done, plus most of Block 6 — full weekend
+scope closed in a single session rather than across Sat/Sun.
 
 Success = Blocks 1–5. Block 6 is the first to drop if time runs
 out.
