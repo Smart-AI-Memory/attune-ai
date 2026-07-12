@@ -241,11 +241,17 @@ build work that is legitimate *during* the freeze.
 8. **fable-premium-tier** (separate checkout `~/attune-ai-fable`,
    tasks 3–9 remaining, task 9 approval-gated). In-flight spec, so
    DEC-1-compatible; but task 9 is a release and the freeze says
-   no tags through 07-27 — sequence accordingly.
+   no tags through 07-27 — sequence accordingly. **Decided
+   2026-07-12:** proceed tasks 3–8 capped at 2 sessions; task 9
+   parked to ≥07-28 — see
+   [freeze-week-plan-2026-07-13.md](freeze-week-plan-2026-07-13.md)
+   Block 5.
 9. **trap-battery** — requirements pending approval since 07-08,
    pilot scale already ratified. A decision (approve/park), not a
    design pass. Parking it until 07-27 is a valid answer; record
-   whichever.
+   whichever. **Decided 2026-07-12: approved** — pilot authorized,
+   builds after freeze-week Block 0; recorded in
+   [trap-battery/decisions.md](../trap-battery/decisions.md).
 
 Explicitly *not* on the ledger: new gates, new specs, coverage
 work, CI tuning, memory-layer audit (backlog note exists; it can

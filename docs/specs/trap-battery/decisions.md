@@ -18,3 +18,18 @@
 - **question-shape flagged weakest scorer** at requirements time;
   pre-approved swap candidate is `zsh-status-readonly` (measured
   exposure; JIT-fired in the originating session itself).
+
+## 2026-07-12 — Phase 1 pilot APPROVED (Patrick)
+
+- Approved via the freeze-week plan (product-direction-review,
+  Block 4) — a decision, not a design pass, per the third
+  assessment's ledger item 9.
+- Scope unchanged from the ratified pilot: 3 classes × 2 arms ×
+  5 repeats, deterministic scoring only, discrimination gate
+  before any scale-up.
+- Sequencing: build/run AFTER freeze-week Block 0 lands
+  (`ANTHROPIC_ADMIN_API_KEY` + Console spend cap), so the
+  ~$30–60 pilot spend runs under live enforcement. The run
+  itself still gets a stated-cost go at execution time per the
+  spend gate.
+- DEC-1 note: existing spec directory — freeze-compatible.

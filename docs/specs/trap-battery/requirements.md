@@ -6,7 +6,7 @@
 > Δp (prevention) term of the memory-as-insurance EV — and, once
 > stable, doubles as the memory system's regression suite.
 
-**Status:** requirements drafted (2026-07-08) — pending approval
+**Status:** approved (2026-07-12) — phase 1 pilot authorized
 **Owner:** Patrick + agent
 **Related:**
 
