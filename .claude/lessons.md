@@ -14558,3 +14558,20 @@ def ", start_idx + 1)` for module-
   rebase`. When the goal is to keep main's newer
   content over older stashed prep, `git checkout
   --ours <file>`.
+
+- **Plugin platform scoping: Cowork RUNS the Claude Code plugin
+  harness — the "scope to Claude Code only" lesson is about
+  Claude.ai WEB, don't over-apply it**: at the 2026-07-06
+  marketplace submission, the form offered Claude Code and
+  Cowork as separate supported platforms, and the corpus lesson
+  "skills/hooks/MCP only work in Claude Code, not Claude.ai
+  (web) — scope to Claude Code only" nearly caused Cowork to be
+  left unchecked. Cowork (the desktop/knowledge-work harness) is
+  NOT Claude.ai web: it loads plugins fully — verified live in
+  the submitting session itself (attune-ai MCP server connected
+  with 53 tools, all 23 skills registered, SessionStart/Stop
+  hooks firing). Correct scoping: Claude Code ✓, Cowork ✓,
+  Claude.ai web ✗. Caveats that held: the `attune` CLI runs via
+  the Bash tool rather than a native terminal, and Redis-backed
+  features degrade the same as anywhere else — nothing
+  Cowork-specific breaks.
