@@ -14743,3 +14743,52 @@ def ", start_idx + 1)` for module-
   fact. Same family as "verify-first release gates" — a green/red
   label from tooling is a claim, not evidence, when the tool's
   default scope may differ from the reference's.
+
+- **A stash-chip `[note]` that reads like a terse instruction may BE
+  a mid-turn user message — check attribution before `/recall
+  drop`**: Claude Code surfaces messages the user sends mid-turn
+  INSIDE the running turn, often only alongside the next tool
+  result — so the FIRST visible trace of a real instruction can be
+  its echo in the Stop-hook stash chip. Hit 2026-07-13: the chip
+  showed `[note] "sounds like we should fix this..."`; I read it as
+  extractor noise and started a `/recall drop` on what was actually
+  Patrick's reply to a finding in my summary (the real message
+  surfaced one tool result later). Rules: (a) an
+  instruction-shaped or reply-shaped stash entry is possible unseen
+  user input — re-read the turn before classifying it as noise;
+  (b) never drop a stashed note you cannot attribute; (c) when a
+  drop is already in flight and new context reframes the entry,
+  abort the drop — deletion never has to win a race.
+
+- **A spec `Status:` line inside a blockquote is PARSER-INVISIBLE —
+  the spec silently reads as "no status" (in-flight) forever**:
+  `_STATUS_LINE` in `plugin/hooks/_state.py` matches
+  `^\s*\**\s*Status...` and a leading `> ` fails the match, so
+  `> **Status: scaffolding — ...**` contributes NOTHING — the audit
+  shows `—` for the spec even though a human sees a status right
+  there. Two attune-rag specs (api-v0.2.0-cut, v1.0.0-release) sat
+  unparseable for ~2 months until the 2026-07-13 truth sweep.
+  Rules: (a) status lines go on a PLAIN line, never quoted; (b)
+  when the audit shows `—` but the file visibly has a status, look
+  for a prefix (blockquote, list marker) swallowing the match; (c)
+  when FIXING such a spec, replace the whole stale blockquote — a
+  new plain line above a contradicting quoted status confuses the
+  next reader.
+- **The "fresh sibling/worktree venv lacks pytest/fastapi" class is
+  CLOSED by the PEP 735 dev dependency-group (#1350) — stop
+  hand-installing the extras list**: root cause was never missing
+  pyproject entries (the `[dev]` extra has been complete for a while
+  — fastapi, uvicorn[standard], jinja2, httpx, all pytest plugins;
+  jinja2/python-multipart are even CORE deps) but the provisioning
+  surface: `uv sync` / `uv run` include PEP 735 dependency GROUPS by
+  default and never extras, so any venv not synced with `--extra dev`
+  started bare (the 2026-07-13 attune-ai-fable checkout lacked even
+  pytest). Post-#1350, a bare `uv sync` provisions the full
+  toolchain; `tests/unit/test_dev_dependency_group_mirror.py` pins
+  group ≡ extra. The older worktree-venv lesson's hand-install list
+  (`uv pip install fastapi 'uvicorn[standard]' jinja2 …`) applies
+  ONLY to pre-#1350 checkouts. Related diagnosis trap (hit while
+  "confirming" the gap): a non-greedy regex across a TOML dep block
+  truncates at the first `]` inside specs like `bandit[toml]` and
+  fabricates "missing" deps — parse line-based, as
+  `test_extras_honesty.py`'s docstring already warns.
