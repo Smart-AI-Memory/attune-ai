@@ -392,6 +392,63 @@ all = [
     "filelock>=3.16.0,<4.0.0",  # CVE fix: GHSA-w853
 ]
 
+
+# PEP 735 dependency group mirroring the [dev] extra (drift-guarded by
+# tests/unit/test_dev_dependency_group_mirror.py). uv includes the `dev`
+# GROUP by default on every `uv sync` / `uv run`, so fresh worktree and
+# sibling-checkout venvs get the full test/tooling set without anyone
+# remembering `--extra dev` — closing the recurring "venv lacks pytest/
+# fastapi" class (2026-07-13). CI/pip keep installing the extra.
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3,<10.0",  # CVE-2025-71176 fix
+    "pytest-asyncio>=0.21,<2.0",  # Updated for pytest-asyncio 1.x
+    "pytest-cov>=4.0,<8.0",  # Updated upper bound
+    "pytest-mock>=3.14.0,<4.0",  # Mock fixtures for testing
+    "pytest-xdist>=3.5.0,<4.0",  # Parallel test execution (4-8x faster)
+    "pytest-timeout>=2.3.0,<3.0",  # Per-test timeout — names hanging tests instead of cascading worker death (CI diagnostic)
+    "pytest-testmon>=2.1.0,<3.0",  # Run only tests affected by changes
+    "pytest-picked>=0.5.0,<1.0",  # Run tests for uncommitted changes
+    "black>=24.3.0,<27.0",  # CVE fix: PYSEC-2024-48
+    "mypy>=1.0,<3.0",
+    "types-PyYAML>=6.0,<7.0",  # Type stubs for PyYAML
+    "ruff>=0.1,<1.0",
+    "coverage>=7.0,<8.0",
+    "bandit>=1.7,<2.0",
+    "pre-commit>=3.0,<5.0",  # Updated for pre-commit 4.x
+    # Test dependencies for API and integration tests
+    "httpx>=0.27.0,<1.0.0",  # For API testing
+    "fastapi>=0.110.0,<1.0.0",  # For wizard API tests + attune.ops dashboard
+    # attune.ops dashboard runtime ([ops] extra) — mirrored into [dev]
+    # so worktree/dev syncs can run and test `python -m attune.ops`
+    # without a separate `--extra ops`. Keep pins in lock-step with the
+    # [ops] extra above.
+    "uvicorn[standard]>=0.27.0,<1.0",
+    "jinja2>=3.1.0,<4.0",
+    "requests>=2.28.0,<3.0.0",  # For notification tests
+    # Redis/AMS mirror removed 2026-07-04 — redis + agent-memory-client
+    # are CORE deps now (see the core dependencies comment), so every
+    # sync carries them; the 2026-07-02 worktree drift class is gone.
+    # RAG integration test coverage — attune-rag is an
+    # optional runtime dep but required for the rag_code_gen
+    # and rag_knowledge_query test paths to exercise their
+    # branches (rag tests use pytest.importorskip). Floor
+    # matches the [rag] extra so dev + runtime deps stay in
+    # lock-step.
+    "attune-rag>=0.1.5,<0.8",
+    # Test deps for paths that import optional runtime libs
+    # unconditionally. Without these, the unit suite fails at
+    # collection on a fresh `pip install -e .[dev]`. See
+    # docs/specs/ci-debt/ Phase A for the contract:
+    #   - langchain-anthropic: tests/unit/agent_factory/test_langgraph_adapter.py
+    #   - tiktoken: tests/unit/models/test_token_estimator.py
+    #     (tiktoken stays optional in production; tests cover
+    #      both TIKTOKEN_AVAILABLE paths)
+    # (redis entry removed 2026-07-04 — core dep now)
+    "langchain-anthropic>=0.3.0,<2.0.0",
+    "tiktoken>=0.7.0,<1.0.0",
+]
+
 [project.scripts]
 # Primary minimal CLI (v4.7.1+) - streamlined for automation/CI
 attune = "attune.cli_minimal:main"
