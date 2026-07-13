@@ -14726,3 +14726,22 @@ def ", start_idx + 1)` for module-
   zero injections with hooks alive means "no decision point hit", not
   "arms broken" (receipt hierarchy: hook lifecycle events = alive,
   banners = injected, telemetry = fire-only log).
+
+- **The "fresh sibling/worktree venv lacks pytest/fastapi" class is
+  CLOSED by the PEP 735 dev dependency-group (#1350) — stop
+  hand-installing the extras list**: root cause was never missing
+  pyproject entries (the `[dev]` extra has been complete for a while
+  — fastapi, uvicorn[standard], jinja2, httpx, all pytest plugins;
+  jinja2/python-multipart are even CORE deps) but the provisioning
+  surface: `uv sync` / `uv run` include PEP 735 dependency GROUPS by
+  default and never extras, so any venv not synced with `--extra dev`
+  started bare (the 2026-07-13 attune-ai-fable checkout lacked even
+  pytest). Post-#1350, a bare `uv sync` provisions the full
+  toolchain; `tests/unit/test_dev_dependency_group_mirror.py` pins
+  group ≡ extra. The older worktree-venv lesson's hand-install list
+  (`uv pip install fastapi 'uvicorn[standard]' jinja2 …`) applies
+  ONLY to pre-#1350 checkouts. Related diagnosis trap (hit while
+  "confirming" the gap): a non-greedy regex across a TOML dep block
+  truncates at the first `]` inside specs like `bandit[toml]` and
+  fabricates "missing" deps — parse line-based, as
+  `test_extras_honesty.py`'s docstring already warns.
