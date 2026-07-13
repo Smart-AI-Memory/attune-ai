@@ -14603,3 +14603,53 @@ def ", start_idx + 1)` for module-
   family: put the detail in the committed files, keep PR bodies /
   commit -m text minimal and neutral. Two-step handling: (1) get
   the explicit user go, (2) publish with minimal inline prose.
+
+- **Memory-injection surfaces have GEOMETRY — PreToolUse JIT recall
+  can only reach failures that happen AT a tool call; a rule about
+  the shape of the FINAL MESSAGE (question-shape style rules) has no
+  tool-call moment, so only UserPromptSubmit recall can carry it**:
+  learned from the trap-battery phase-1 pilot (2026-07-13,
+  `benchmarks/trap_battery_results_2026-07-13.md`). zsh-eqword went
+  OFF 2/5 → ON 0/5 (the JIT hook sees the Bash command draft — the
+  injection lands exactly at the decision point), while
+  question-shape went OFF 5/5 → ON 4/5 (no Bash allowed, so the
+  trap-moment surface never fires; prompt-time retrieval may or may
+  not match). Two rules: (1) when selecting trap/eval classes, match
+  the failure moment to the injection surface that's supposed to
+  prevent it — a style-of-answer rule "failing" under a JIT-recall
+  toggle may be measuring surface coverage, not lesson efficacy;
+  (2) an env-toggle A/B (ATTUNE_JIT_RECALL etc.) needs an IN-BAND
+  receipt that the toggle is honored — hook injections leave literal
+  markers in stream-json transcripts ("Lessons that may apply",
+  "Just-in-time recall"); scan the OFF arm for zero markers before
+  trusting any arm delta ("registered ≠ working" applied to
+  benchmark arms).
+
+- **A plain `.git/hooks/pre-commit` CANNOT reproduce the pre-commit
+  framework's silent-skip trap — a hook that exits 0 lets the commit
+  proceed, so the only mimic available is a VISIBLE exit-1, which
+  tests recovery (which baseline agents already have), not the lived
+  failure**: trap-battery's git-commit-verify-landed fixture went
+  0/5 in BOTH arms for exactly this reason. The lived trap
+  (`git commit -q` exit 0, "Passed" output, commit silently skipped)
+  is a property of the pre-commit framework's stash/restore cycle,
+  not of git hooks. Fixture-design rule: before building an eval
+  fixture for a lived failure, verify the mimic preserves the
+  failure's SIGNATURE (exit code + visibility), not just its
+  narrative; a louder-than-life reproduction measures a different
+  (easier) behavior.
+
+- **Provisioning a cross-repo CI token? Check `gh repo view --json
+  visibility` on every target FIRST — public repos need NO token in
+  `actions/checkout`, and the PAT you're about to mint may be pure
+  liability**: the umbrella spec-audit's `ATTUNE_WORKSPACE_RO_TOKEN`
+  failed 3/3 runs with "Bad credentials" (a 401 = the token STRING is
+  invalid — approval/scope misses give 404, and on PUBLIC repos any
+  valid token passes); the durable fix was deleting the token from
+  the workflow entirely (attune #48) since all five checkout targets
+  were public — which also deleted the yearly-expiry failure mode.
+  Related receipts from the same saga: `gh issue create --label X`
+  exits 1 when the label doesn't exist on the repo (create the label
+  first); and `gh run watch ... --exit-status | tail` launders the
+  exit code through the pipe — read the conclusion from `gh run view
+  --json conclusion`, never the pipeline's exit.
