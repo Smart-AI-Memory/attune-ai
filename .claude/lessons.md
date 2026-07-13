@@ -14891,3 +14891,20 @@ def ", start_idx + 1)` for module-
   three different ppids in one session). Benchmark note: per-run
   `ATTUNE_AI_SENTINEL_DIR` isolation stays right for hygiene (virgin
   gates per run, nothing written to the real ~/.attune).
+
+- **"Hold this PR for review" is not a mechanism — in this repo a
+  docs-only PR IS a merge instruction (the auto-merge-safe lane takes
+  it within minutes); an intended hold must be encoded as a DRAFT
+  PR, not as intent stated in chat/handoff notes**: 2026-07-13, the
+  widgets-v3 design PR (#1346) was opened with "deliberately held
+  for Patrick's adjustment" written in the session summary and the
+  starter file — and the auto-merge-safe workflow merged it anyway,
+  because docs-only diffs auto-merge by design (#881 class). No harm
+  (design docs carry draft status lines internally), but the general
+  rule: any PR you don't want merged yet gets `gh pr create --draft`
+  (or `gh pr ready --undo` immediately after), because every
+  documented hold that lives only in prose is invisible to the
+  automation that acts on PR state. Extends the existing
+  "auto-merge-safe class merges a PR on its CURRENT diff within
+  minutes" lesson from the stranded-commits angle to the
+  intent-to-hold angle.
