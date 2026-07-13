@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Recall/warning sentinels no longer collapse into a shared bucket
+  when a hook payload lacks `session_id`**: jit_recall, lesson_recall,
+  and compact_warning keyed their surface-once sentinels on a literal
+  `unknown` fallback, so any no-id invocation joined one machine-wide
+  bucket — the first fire suppressed that rule/lesson/warning for
+  every such session for the 7-day TTL. Session identity now resolves
+  via `session_id`, then the transcript filename stem (which is the
+  session uuid), and with no identity at all the hooks fail open
+  (surface again, write nothing). Live-probe note: current Claude
+  Code supplies `session_id` in headless payloads, so real `claude
+  -p` sessions dedup correctly; the shared bucket bit synthetic and
+  legacy payloads.
+
 - **SDK-gate no longer silences hooks in headless `claude -p`
   sessions**: Claude Code stamps `CLAUDE_CODE_ENTRYPOINT=sdk-cli`
   into every headless session (verified on 2.1.144), so the

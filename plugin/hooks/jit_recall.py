@@ -53,10 +53,11 @@ if _HOOKS_DIR not in sys.path:
 
 try:
     from _recall_map import RECALL_MAP
-    from _state import _sentinel_dir  # type: ignore[attr-defined]
+    from _state import _sentinel_dir, resolve_session_key  # type: ignore[attr-defined]
 except Exception:  # noqa: BLE001 — hook must never crash a tool call
     RECALL_MAP = {}  # type: ignore[assignment]
     _sentinel_dir = None  # type: ignore[assignment]
+    resolve_session_key = None  # type: ignore[assignment]
 
 try:
     from _memory_telemetry import log_memory_event
@@ -110,10 +111,13 @@ def _safe(fragment: str | None, fallback: str) -> str:
     return re.sub(r"[^A-Za-z0-9_-]", "_", fragment)[:64] or fallback
 
 
-def _sentinel_path(session_id: str | None, rule_id: str) -> Path | None:
-    if _sentinel_dir is None:
+def _sentinel_path(session_key: str | None, rule_id: str) -> Path | None:
+    # No session identity -> no sentinel: fail OPEN (surface again)
+    # rather than share an "unknown" bucket across sessions, where the
+    # first fire suppresses the rule machine-wide for the TTL.
+    if _sentinel_dir is None or not session_key:
         return None
-    name = f"{_SENTINEL_PREFIX}{_safe(session_id, 'unknown')}-{_safe(rule_id, 'rule')}"
+    name = f"{_SENTINEL_PREFIX}{_safe(session_key, 'unknown')}-{_safe(rule_id, 'rule')}"
     return _sentinel_dir() / name
 
 
@@ -150,7 +154,11 @@ def main() -> int:
         if not rules:
             return 0
 
-        session_id = payload.get("session_id")
+        session_key = (
+            resolve_session_key(payload)
+            if resolve_session_key is not None
+            else payload.get("session_id")
+        )
         tool_input = payload.get("tool_input") or {}
         tool_input_text = json.dumps(tool_input)
         # Raw (un-JSON-escaped) string fields, for regex shapes that
@@ -171,7 +179,7 @@ def main() -> int:
                         continue
                 except re.error:
                     continue  # bad pattern never blocks the call (R4)
-            sentinel = _sentinel_path(session_id, rule["rule_id"])
+            sentinel = _sentinel_path(session_key, rule["rule_id"])
             if sentinel is not None and sentinel.exists():
                 continue
             fresh.append(rule)
@@ -205,7 +213,7 @@ def main() -> int:
         # whether the matching failure still occurred after the fire.
         log_memory_event(
             "jit_recall",
-            session_id=session_id,
+            session_id=session_key,
             tool=tool_name,
             rules=[rule["rule_id"] for rule in fresh],
             injected_chars=len(context),
@@ -213,7 +221,7 @@ def main() -> int:
 
         # Sentinels AFTER the emit so a mid-work crash retries next fire.
         for rule in fresh:
-            sentinel = _sentinel_path(session_id, rule["rule_id"])
+            sentinel = _sentinel_path(session_key, rule["rule_id"])
             if sentinel is None:
                 continue
             try:
