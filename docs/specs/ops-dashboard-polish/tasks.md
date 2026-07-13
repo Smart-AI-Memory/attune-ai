@@ -1,6 +1,6 @@
 # Tasks — Ops Dashboard Polish
 
-**Status:** Phase A complete (publish-ready gate met); Phases B/C/D partially shipped, remaining items listed below. Last audit: 2026-05-20 against `main` at v7.0.0.
+**Status:** parked (2026-07-13) — Phases A+B shipped (#361 #365 #367; B2 in #371), C2 Sessions (#377 #387 #390), D5 (#376); remaining: C1 /memory page, C3 memory nav+KPIs, D1 sweep+CI gate, D2-D4, D6.
 **Owner:** Patrick
 
 Cross-references the QA punch list at

@@ -14727,6 +14727,151 @@ def ", start_idx + 1)` for module-
   "arms broken" (receipt hierarchy: hook lifecycle events = alive,
   banners = injected, telemetry = fire-only log).
 
+- **The "fresh sibling/worktree venv lacks pytest/fastapi" class is
+  CLOSED by the PEP 735 dev dependency-group (#1350) — stop
+  hand-installing the extras list**: root cause was never missing
+  pyproject entries (the `[dev]` extra has been complete for a while
+  — fastapi, uvicorn[standard], jinja2, httpx, all pytest plugins;
+  jinja2/python-multipart are even CORE deps) but the provisioning
+  surface: `uv sync` / `uv run` include PEP 735 dependency GROUPS by
+  default and never extras, so any venv not synced with `--extra dev`
+  started bare (the 2026-07-13 attune-ai-fable checkout lacked even
+  pytest). Post-#1350, a bare `uv sync` provisions the full
+  toolchain; `tests/unit/test_dev_dependency_group_mirror.py` pins
+  group ≡ extra. The older worktree-venv lesson's hand-install list
+  (`uv pip install fastapi 'uvicorn[standard]' jinja2 …`) applies
+  ONLY to pre-#1350 checkouts. Related diagnosis trap (hit while
+  "confirming" the gap): a non-greedy regex across a TOML dep block
+  truncates at the first `]` inside specs like `bandit[toml]` and
+  fabricates "missing" deps — parse line-based, as
+  `test_extras_honesty.py`'s docstring already warns.
+- **The starter-reconciler resolves bare `#N` references against the
+  PRIMARY repo — a handoff's cross-repo `owner/repo#N` reference can
+  be misreported (e.g. "CLOSED" for an issue that is OPEN in the repo
+  the handoff actually named)**: hit 2026-07-13 morning brief. The
+  handoff named umbrella issue `Smart-AI-Memory/attune#49`
+  (spec-status drift, OPEN); the reconciler line said "#49 CLOSED"
+  because it resolved #49 against attune-ai, where that number is a
+  long-closed item. Acting on the reconciler verdict would have
+  dropped the shortlist's #1 work item as "already done". Rule: the
+  reconciler's PR/issue verdicts are trustworthy only for
+  primary-repo references; for any handoff reference qualified with
+  another repo (or `attune #N` shorthand), re-verify with an explicit
+  `gh ... --repo <owner>/<repo>` before treating MERGED/CLOSED as
+  fact. Same family as "verify-first release gates" — a green/red
+  label from tooling is a claim, not evidence, when the tool's
+  default scope may differ from the reference's.
+
+- **A stash-chip `[note]` that reads like a terse instruction may BE
+  a mid-turn user message — check attribution before `/recall
+  drop`**: Claude Code surfaces messages the user sends mid-turn
+  INSIDE the running turn, often only alongside the next tool
+  result — so the FIRST visible trace of a real instruction can be
+  its echo in the Stop-hook stash chip. Hit 2026-07-13: the chip
+  showed `[note] "sounds like we should fix this..."`; I read it as
+  extractor noise and started a `/recall drop` on what was actually
+  Patrick's reply to a finding in my summary (the real message
+  surfaced one tool result later). Rules: (a) an
+  instruction-shaped or reply-shaped stash entry is possible unseen
+  user input — re-read the turn before classifying it as noise;
+  (b) never drop a stashed note you cannot attribute; (c) when a
+  drop is already in flight and new context reframes the entry,
+  abort the drop — deletion never has to win a race.
+
+- **A spec `Status:` line inside a blockquote is PARSER-INVISIBLE —
+  the spec silently reads as "no status" (in-flight) forever**:
+  `_STATUS_LINE` in `plugin/hooks/_state.py` matches
+  `^\s*\**\s*Status...` and a leading `> ` fails the match, so
+  `> **Status: scaffolding — ...**` contributes NOTHING — the audit
+  shows `—` for the spec even though a human sees a status right
+  there. Two attune-rag specs (api-v0.2.0-cut, v1.0.0-release) sat
+  unparseable for ~2 months until the 2026-07-13 truth sweep.
+  Rules: (a) status lines go on a PLAIN line, never quoted; (b)
+  when the audit shows `—` but the file visibly has a status, look
+  for a prefix (blockquote, list marker) swallowing the match; (c)
+  when FIXING such a spec, replace the whole stale blockquote — a
+  new plain line above a contradicting quoted status confuses the
+  next reader.
+
+- **Headless `claude -p` stamps `CLAUDE_CODE_ENTRYPOINT=sdk-cli` into
+  EVERY such session — sdk-gated hooks silently no-op, and "hooks
+  alive" lifecycle receipts do NOT prove emission**: verified live
+  2026-07-13 (Claude Code 2.1.144) during the trap-battery phase-2
+  probes. Gated hooks still START and exit 0 with empty output, so
+  hook_started/hook_response counts look healthy while every gated
+  hook is a no-op (this retroactively explains phase-1's residual
+  "hooks alive, zero injections" mysteries; the welcome banner seen
+  in probes came from an UNGATED hook). Diagnostics: (a) a probe
+  session running `env | grep CLAUDE` reveals the stamp ($0.15);
+  (b) direct hook execution WITH `CLAUDE_CODE_ENTRYPOINT=sdk-cli` in
+  env reproduces the empty-output shape for free. Benchmark escape
+  hatch: `ATTUNE_SDK_GATE_OVERRIDE=1` (both `_sdk_gate` twins,
+  #1351) — benchmark-only; the product fix is its own task. Two
+  stacked nested-session traps ride along: children inherit ~14
+  `CLAUDE_*` OAuth vars and 401 (fix: scrubbed env — whitelist +
+  ANTHROPIC_API_KEY from the 0600 key file, never printed), and the
+  key file pattern is `~/.attune/anthropic.env`.
+
+- **zsh: `read -r path` CLOBBERS command lookup — `path` is the
+  array tied to PATH (same special-var family as `status`)**: hit
+  live 2026-07-13 in a `while IFS=: read -r path a b` loop; every
+  subsequent command in the loop printed `command not found` because
+  assigning `$path` rewrote PATH. The JIT rule covers `status=`
+  assignment; the same reserved family (`path`, `pipestatus`,
+  `prompt`, `status`) also breaks via `read` variable NAMES. Name
+  loop variables `relf`/`p`/`f`, never `path`/`status`.
+
+- **A piped git mutation hides its failure — `git revert … 2>&1 |
+  tail -1` exits with TAIL's code, so the chain continues as if the
+  revert landed**: hit 2026-07-13 (the revert had failed on an
+  invalid flag; log still showed the old tip while the `&&` chain
+  marched on and "pushed" a no-op). Pipelines report the LAST
+  command's status: keep git state mutations UN-piped (or use
+  `set -o pipefail` deliberately), and verify effect (`git log
+  --oneline -1`) rather than trusting chain completion — the
+  commit-landed discipline applied to every mutating git verb.
+
+- **Auto-merge on the required-check subset structurally IGNORES
+  non-required lanes — a red Windows matrix can live on main for
+  hours/days with every PR "merging green"**: extends the
+  "admin-merging before Windows lanes complete" lesson with the
+  auto-merge mechanism. `gh pr merge --auto` fires the moment the
+  REQUIRED set passes; attune's required set excludes the 5
+  windows-latest lanes, so #1343's broken-on-Windows test rode in
+  at 07-13 morning and EVERY later run (docs sweeps, #1352) showed
+  5 red Windows lanes that nothing gated on. Rules: (a) after any
+  auto-/admin-merge, read the FULL matrix conclusions (`gh run view
+  <id> --json jobs`), not the PR checks summary; (b) before blaming
+  your PR for a red lane, check main's own run at the pre-PR SHA
+  (`gh run list --workflow=tests.yml --branch=main`) — here main
+  was already failing, so the fix was a hotfix PR (#1353), not a
+  revert; (c) the concrete portable trap: never assert
+  `st_mode & 0o111` in cross-platform tests — Windows has no exec
+  bits (mode 0o666) and git-for-Windows runs hooks via sh without
+  them; assert existence everywhere, mode bits under
+  `sys.platform != "win32"`. Bonus observation: the dynamic
+  setup-matrix shrinks PR matrices for tests-only diffs (hotfix ran
+  ONE Windows lane), so "the lane passed on the PR" ≠ "all lanes
+  ran" — main's post-merge run is the real receipt.
+
+- **`zsh` exists only on the macOS runners — Ubuntu AND Windows
+  CI lanes lack the binary, so shell-specific fixture tests go
+  red on 13 lanes while passing locally (macOS dev box) and on
+  the macOS matrix**: hit 2026-07-13 reviewing #1351 — the
+  trap-battery `TestZshStatusRecovery` tests spawn
+  `subprocess.run(["zsh", ...])` and failed every ubuntu-latest,
+  windows-latest, clock-tz, and coverage lane with
+  `FileNotFoundError`, giving a false "green locally" signal.
+  Rule: any test that spawns a non-POSIX-guaranteed shell or tool
+  (`zsh`, `fish`, `gdate`, …) needs
+  `@pytest.mark.skipif(shutil.which("zsh") is None, ...)` at
+  authoring time — pair it with the existing Windows-path rules
+  (no exec-bit asserts; never `.endswith("a/b.md")` on paths that
+  Windows renders with backslashes — the same PR's
+  `TestSessionEnvIsolation` failed exactly that way). The
+  trap-battery fixtures are zsh-heavy by design, so phase-2+
+  additions will re-hit this unless guarded.
+
 - **"Hold this PR for review" is not a mechanism — in this repo a
   docs-only PR IS a merge instruction (the auto-merge-safe lane takes
   it within minutes); an intended hold must be encoded as a DRAFT

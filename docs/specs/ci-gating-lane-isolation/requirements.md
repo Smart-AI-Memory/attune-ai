@@ -1,6 +1,6 @@
 # Spec: CI gating-lane isolation
 
-**Status:** Layer A shipping (2026-06-15) — see `decisions.md`; B/C deferred
+**Status:** superseded (2026-06-17) — by the ci-runner-hang root-cause fix (#930); Layer A shipped (#910) then was retired (#931, #932) once the hang was gone; Layers B/C never needed
 **Opened:** 2026-06-15
 **Layer:** attune-ai (CI / `.github/workflows/`)
 **Owner:** Patrick + agent

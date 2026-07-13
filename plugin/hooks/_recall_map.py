@@ -171,5 +171,24 @@ RECALL_MAP: dict[str, list[dict[str, str]]] = {
                 "SAME edit, or re-verify imports after the usage edit."
             ),
         },
+        # Recovery-path mirror of the Bash rule (trap-battery phase 2,
+        # 2026-07-13, adversarial-review finding 2): the lived fix for a
+        # broken `status=$( … )` script line is a Read→Edit whose
+        # old_string carries the pattern — Bash-only keying meant the
+        # most likely recovery path fired nothing. Scoped to the
+        # command-substitution shape; a bare "status=" filter would fire
+        # on Python kwargs (R3: low noise). Own rule_id (ids are
+        # globally unique by tested invariant), so the Bash and Edit
+        # surfaces sentinel independently.
+        {
+            "rule_id": "zsh-status-readonly-edit",
+            "match_substring": "status=$(",
+            "text": (
+                "zsh: `status` (also `path`, `pipestatus`, `prompt`) is "
+                "a READ-ONLY special variable — `status=$(...)` kills "
+                "the whole script with 'read-only variable'. Name it "
+                "`st`/`result` instead."
+            ),
+        },
     ],
 }

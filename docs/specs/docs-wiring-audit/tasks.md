@@ -1,6 +1,6 @@
 # Tasks: Documentation Wiring Audit
 
-**Status:** partial (2026-06-09) — v1 shipped (`scripts/audit_docs_wiring.py` + anchor/link checks); remaining findings deferred. Relabelled from "draft" by spec disposition pass.
+**Status:** parked (2026-07-13) — v1 shipped (#518/#523 anchor check via `scripts/audit_docs_wiring.py`; #540 CI job, since promoted to a required check on main); remaining: nav/features.yaml/mkdocstrings checks (Tasks 3, 4, 9) + See-Also advisory (Task 10, deferred).
 **Phase:** 3 — Tasks
 **Predecessor:** [design.md](./design.md) (Phase 2 authored
 2026-05-31)

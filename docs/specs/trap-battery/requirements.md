@@ -6,7 +6,9 @@
 > Δp (prevention) term of the memory-as-insurance EV — and, once
 > stable, doubles as the memory system's regression suite.
 
-**Status:** phase 1 executed (2026-07-13) — pilot complete, verdicts in decisions.md
+**Status:** in-progress (2026-07-13) — phase 1 executed (pilot
+complete, verdicts in decisions.md); phase 2 design APPROVED
+2026-07-13 ([design.md](design.md)) — build gate open
 **Owner:** Patrick + agent
 **Related:**
 

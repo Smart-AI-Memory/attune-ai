@@ -1,6 +1,6 @@
 # Design — Opus 4.8 Platform Fit (Phase 0 harness)
 
-**Status:** draft (2026-06-10) — awaiting Patrick's review
+**Status:** superseded (2026-07-10) — by fable-premium-tier (premium tier opus-4-8 → claude-fable-5, approved 2026-07-10); Phase-0 harness never built or run (#674 was the mechanical prerequisite, not this scope)
 **Phase 1:** [requirements.md](./requirements.md) — approved 2026-06-08 (#679)
 
 Realizes Phase 0 (measure-first). Authoring is decoupled from

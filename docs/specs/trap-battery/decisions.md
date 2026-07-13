@@ -108,3 +108,174 @@ next paid run — the ~$6 re-run is deferred until then (no point
 measuring a structurally-zero Δp). Harness receipts recalibrated:
 hook lifecycle = alive-signal; banners = injection; telemetry =
 fire log (informational).
+
+## 2026-07-13 — Phase-2 redesign DRAFTED (design.md); awaiting review
+
+Design doc added ([design.md](design.md)) executing the standing
+injection-surface rule. What it decides:
+
+- **Two tracks, two scorer families.** Prevention track
+  (UserPromptSubmit-carried: `stale-claim`,
+  `unverified-state-warning`) keeps occurrence Δp. Recovery track
+  (JIT-carried: `zsh-eqword-recovery`, `zsh-status-readonly`) scores
+  recovery differential only — recovered, retries-to-recovery,
+  tokens/wall-after-error; NO occurrence column for JIT traps.
+- **Recovery traps are seeded**, not left to chance: the fixture
+  embeds the error (unaided drafting fired only ~21% pooled);
+  sessions that never hit the decision point are excluded from the
+  recovery denominator and reported separately.
+- **Recall-reachability receipt is a paid-run precondition** for
+  prevention traps (`lesson_recall.py` on the trap prompt must
+  return the target rule ≥ floor) — the question-shape postmortem,
+  institutionalized.
+- **question-shape swapped out** (finding re-filed to
+  memory-recall-eval decisions.md 2026-07-13);
+  **git-commit-verify-landed parked** pending a faithful
+  silent-skip reproduction.
+- Budget: pilot 4×2×5 ≈ $8–10 with per-track gates, then 20+/cell
+  rate run ≈ $15–30. Paid runs remain manual, budget-capped,
+  stated-cost-go — the ~$6 re-run stays deferred until this design
+  is approved and built.
+
+Open questions (design §Open questions): seeding shape,
+wrong_diagnosis keep/drop, pilot timing vs the 07-27 freeze.
+
+## 2026-07-13 (same day) — Design adversarially reviewed; 2 blocking gaps folded in
+
+An independent adversarial pass (grep-verified against the harness,
+hooks, and live zsh) found the draft **not buildable as written** —
+two zero-injection-path bugs of exactly the class the redesign
+guards against, now named as blocking build work in design.md:
+
+1. **Prevention corpus resolution** — `lesson_recall.py` walks up
+   from the session cwd; a tempfile fixture has no
+   `.claude/lessons.md` ancestor, so every ON-arm prevention session
+   would no-op silently. Fix: pin `ATTUNE_LESSONS_FILE` in
+   `build_env` (or plant the corpus); reachability receipts must run
+   under FIXTURE-session resolution, not repo-cwd.
+2. **JIT rule keying** — zsh rules live only under `"Bash"` in
+   `_recall_map.py`; the likely Read→Edit recovery path never
+   consults them. Fix: mirror under `"Edit"` or constrain
+   `allowed_tools`.
+
+Also folded in: refuse-to-report is today warn-only (make it real);
+scorer regex must accept the script-name signature prefix
+(`check.sh:3: == not found` — verified live; `zsh:1:` only appears
+in the `zsh -c` shape); `#!/bin/zsh` shebang + `./check.sh`
+invocation pinned (assignment to `status` verified fatal under zsh,
+harmless under sh/bash); arm-symmetric decision-point detector
+(banners exist only in the ON arm); cost-accumulator abort
+(`ATTUNE_MAX_BUDGET_USD` is not honored by raw `claude -p`
+subprocesses today); ~25% oversampling headroom for exclusions.
+
+Verified-clean by the same pass: no contradiction with the
+injection-surface rule or any ratified verdict; budget arithmetic;
+all carried-forward harness capabilities (`--plugin-dir`,
+`--include-hook-events`, `--save-transcripts`, sentinel isolation,
+receipt hierarchy) confirmed real in code.
+
+## 2026-07-13 (same day) — Phase-2 design APPROVED (Patrick)
+
+Approved via the batched review form, all three open questions
+resolved with the recommended options:
+
+- **OQ1 seeding:** fixture-embedded error (task = "run it and make
+  it work"); sidesteps handled by the exclusion rule + ~25%
+  oversampling.
+- **OQ2:** `wrong_diagnosis` stays as an exploratory scorer
+  (reported, never gating).
+- **OQ3:** paid pilot runs post-build on a stated-cost go — no
+  freeze hold (manual, budget-capped runs are freeze-compatible).
+
+Build gate is OPEN: the acceptance-criteria list in design.md
+(including the two blocking fixes — fixture corpus resolution and
+JIT rule keying for the Edit path) is the build work-list. The
+~$8-10 pilot itself still requires an explicit stated-cost go at
+execution time.
+
+## 2026-07-13 (build) — Phase-2 harness BUILT; receipts green pre-pilot
+
+Build executed per the approved design ($30 session go covers the
+pilot). Decisions made at build time:
+
+- **Finding-2 fix shape:** `zsh-status-readonly` mirrored under
+  `"Edit"` with the tight `status=$(` filter (own rule_id —
+  `zsh-status-readonly-edit`; ids are globally unique by tested
+  invariant). The eqword rule is NOT mirrored: no low-noise Edit
+  filter exists (`===` fires on markdown), so R1 stays Bash-mediated
+  (`allowed_tools` without Edit).
+- **Retired trap code removed** (git-commit-verify-landed fixture +
+  question-shape scorer live in git history, not the file).
+- **Reachability receipts wired as `--reachability`** (free, direct
+  hook execution from fixture cwds). First run immediately caught a
+  real gap: P2's prompt never mentioned the rebase, and the
+  UserPromptSubmit hook only sees the PROMPT — the fixture file's
+  content is invisible to retrieval. Prompt re-engineered to the
+  lived shape (user relays the warning); both receipts now PASS,
+  P2 surfacing exactly the target lesson ("interrupted compound
+  command — re-establish actual git state").
+- Refusal is REAL (exit 3, no tables), cost cap enforced in the run
+  loop (`--max-cost-usd`, default 12), decision-point detection is
+  arm-symmetric (simulates the rules' own filters over drafted tool
+  inputs).
+
+## 2026-07-13 (build, later) — SDK-gate discovery: headless hooks were
+## silent no-ops EVERYWHERE; override shipped, first live fires observed
+
+Pre-pilot smoke probes surfaced two stacked blockers, both now fixed
+and receipt-verified:
+
+1. **Nested-session auth**: sessions spawned from inside Claude Code
+   inherit ~14 `CLAUDE_*` OAuth vars and 401 — the harness now runs
+   children with a scrubbed env (`--scrub-env`, auto-on inside a
+   session; whitelist + `ANTHROPIC_API_KEY` from env or the 0600 key
+   file, never printed). This is the requirements' documented
+   `env -i PATH HOME TERM ANTHROPIC_API_KEY` recipe, productized.
+2. **`claude -p` stamps `CLAUDE_CODE_ENTRYPOINT=sdk-cli` into EVERY
+   headless session** (verified live, v2.1.144) — so `_sdk_gate`
+   silently no-ops every gated attune hook in ALL headless runs,
+   regardless of who spawns them. This retroactively explains
+   phase-1 residue: "hooks alive" receipts were lifecycle-only
+   (gated hooks still start and exit 0); the welcome banner seen in
+   the killed probe came from an UNGATED hook. Fix:
+   `ATTUNE_SDK_GATE_OVERRIDE=1` (both `_sdk_gate` twins), set by the
+   harness for its children — which parse stream-json defensively,
+   the exact risk the gate exists to guard.
+
+Receipt: the override probe produced the FIRST live in-session
+recall fires of the whole effort — 2 telemetry events in the run
+window, prevention ON-arm banner present (validity PASS), recovery
+probe scored end-to-end (decision hit, recovered, 6 calls / 292
+tokens after error).
+
+PRODUCT implication beyond the benchmark (flagged, out of scope
+here): headless `claude -p` users currently get NO gated attune
+hooks at all — the sdk-gate's `sdk-` prefix check can no longer
+distinguish SDK subprocesses from plain headless runs on current
+Claude Code. Pairs with the sentinel-collapse product bug already
+spawned as its own task.
+
+## 2026-07-13 (pilot) — Phase-2 pilot EXECUTED; per-trap verdicts
+
+40 sessions, $10.15, arms LIVE end-to-end for the first time
+(21 telemetry events; every ON session bannered; validity PASS).
+Full tables: `benchmarks/trap_battery_phase2_results_2026-07-13.md`.
+
+- **Prevention: BOTH NO-GO.** The as-run "+40%" on
+  unverified-state-warning was scorer artifact — two false-positive
+  classes (`git -C` verification missed by an adjacency-only
+  pattern; negated harm matched) found by reading the saved
+  transcripts, fixed with pinned regression tests, and the corpus
+  re-scored offline to OFF 0/5 / ON 0/5. stale-claim: OFF 1/5.
+  Honest read: the unaided baseline already verifies a simple
+  checkable claim — redesign toward harder fixtures (verification
+  costlier/less obvious), not a rate run.
+- **Recovery: NO-GO on n, promising on direction.** ON recovers
+  cheaper in both classes (median tokens-after-error 26 vs 68;
+  173 vs 270; recovered 3/3 vs 2/3) but gates missed: eqword OFF
+  sidestepped the decision point 3/5, status-readonly lost 4
+  sessions to the 10-turn cap. Re-run preconditions: --max-turns 15
+  for recovery traps + ~2.5x oversampling.
+- Spend discipline receipt: probes + pilot ≈ $12.45 of the $30 go;
+  the rate run deliberately NOT started (3 of 4 gates NO-GO — it
+  would measure noise).
