@@ -504,3 +504,33 @@ class TestHookEventReceipt:
         }
         t = _transcript(ev, _result("x"))
         assert sum(t.injections().values()) == 0
+
+
+class TestHookSummary:
+    def test_counts_started_by_event_and_failures(self):
+        events = [
+            {"type": "system", "subtype": "hook_started", "hook_event": "SessionStart"},
+            {"type": "system", "subtype": "hook_started", "hook_event": "SessionStart"},
+            {"type": "system", "subtype": "hook_started", "hook_event": "PreToolUse"},
+            {
+                "type": "system",
+                "subtype": "hook_response",
+                "hook_event": "SessionStart",
+                "exit_code": 1,
+            },
+            {
+                "type": "system",
+                "subtype": "hook_response",
+                "hook_event": "SessionStart",
+                "exit_code": 0,
+            },
+        ]
+        t = _transcript(*events, _result("x"))
+        summary = t.hook_summary()
+        assert summary["SessionStart"] == 2
+        assert summary["PreToolUse"] == 1
+        assert summary["failed"] == 1
+
+    def test_no_hook_events_is_all_zero(self):
+        t = _transcript(_result("x"))
+        assert t.hook_summary() == {"failed": 0}

@@ -153,3 +153,36 @@ repo's current hook code). Three receipts stack: hook events
 (per-session), telemetry log (run window), and the OFF-arm marker
 scan. A valid pilot re-run is unblocked; Δp remains unmeasured until
 it happens.
+
+---
+
+## AMENDMENT 2 (2026-07-13) — pilot re-run ALSO refused; receipt hierarchy revised
+
+The re-run (30 sessions, ~$5.80) ran under the fixed harness — and the
+harness correctly **refused to report Δp again** (zero recall
+telemetry, zero banners). Forensics on the surviving probe stream
+revised the picture:
+
+- `--plugin-dir` DOES load the plugin in headless sessions (the
+  plugin's welcome banner appears in a hook_response: "attune-ai
+  loaded — 18 workflows, 31 MCP tools"). The earlier RESOLUTION
+  stands on that point.
+- **But 3 of the plugin's SessionStart hooks exit 1 in fixture
+  sessions**, and no recall telemetry appears — the recall subsystem
+  (hydrate → recall map → injection) is failing OUTSIDE a real repo
+  even though the hook scripts run fine when executed directly with
+  a full interactive env.
+- **Telemetry is fire-only** for jit/lesson recall, so zero events
+  alone cannot distinguish "hooks dead" from "hooks alive, nothing
+  matched". `session_recall` (logs every session start) is the
+  alive-signal: zero session_recall events across 30 sessions is
+  what proves the recall path never initialized.
+
+Receipt hierarchy (implemented): per-run **hook_summary** (lifecycle
+events — hooks alive?) → **injection banners** (did recall inject?)
+→ **telemetry window** (fire log). The harness now persists raw
+streams on request (`--save-transcripts DIR`), so the next diagnosis
+costs one $0.15 session instead of a $6 re-run. Open question for
+phase 2: WHICH plugin SessionStart hooks fail in fixture dirs and
+whether recall needs a repo-shaped cwd (hydrate) — answerable from
+one saved transcript.

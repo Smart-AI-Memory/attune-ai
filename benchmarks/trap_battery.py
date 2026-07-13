@@ -131,6 +131,32 @@ class Transcript:
                     )
         return "\n".join(parts)
 
+    def hook_summary(self) -> dict[str, int]:
+        """Count hook lifecycle events (requires ``--include-hook-events``).
+
+        Keys: one per observed ``hook_event`` (SessionStart,
+        UserPromptSubmit, PreToolUse, ...) counting ``hook_started``
+        events, plus ``"failed"`` counting ``hook_response`` events with
+        a nonzero exit code. All zeros ≈ the flag wasn't passed or no
+        hooks are registered; a healthy plugin-loaded session shows
+        SessionStart ≥ 4 (3 user-level + plugin's). This is the
+        "hooks alive" receipt — telemetry is fire-only and can be
+        legitimately silent (see telemetry_arm_receipt).
+        """
+        counts: dict[str, int] = {"failed": 0}
+        for ev in self.events:
+            if ev.get("type") != "system":
+                continue
+            sub = ev.get("subtype")
+            if sub == "hook_started":
+                key = str(ev.get("hook_event", "unknown"))
+                counts[key] = counts.get(key, 0) + 1
+            elif sub == "hook_response":
+                code = ev.get("exit_code", ev.get("exitCode", 0))
+                if code not in (0, None, "?"):
+                    counts["failed"] += 1
+        return counts
+
     def injections(self) -> dict[str, int]:
         """Count recall-hook injection markers anywhere in the events.
 
@@ -401,6 +427,9 @@ class TrapRunResult:
     #: Injection-marker counts from Transcript.injections (presence
     #: detection per recall surface; empty for errored runs).
     injections: dict[str, int] = field(default_factory=dict)
+    #: Hook lifecycle counts from Transcript.hook_summary (the
+    #: "hooks alive" receipt; empty for errored runs).
+    hooks: dict[str, int] = field(default_factory=dict)
 
 
 #: The repo's own plugin directory — forced into every trap session via
@@ -421,6 +450,7 @@ def run_trap_session(
     timeout_s: int,
     keep_fixture: bool = False,
     plugin_dir: Path | None = None,
+    transcript_dir: Path | None = None,
 ) -> TrapRunResult:
     """Build a fresh fixture, run one headless session in it, score it.
 
@@ -471,6 +501,9 @@ def run_trap_session(
                 error=f"timeout after {timeout_s}s",
             )
         wall = time.monotonic() - start
+        if transcript_dir is not None:
+            transcript_dir.mkdir(parents=True, exist_ok=True)
+            (transcript_dir / f"{trap.id}_{arm}_{repeat}.jsonl").write_text(proc.stdout)
         t = parse_stream_json(proc.stdout, task_id=trap.id, arm=arm, repeat=repeat, wall_s=wall)
         rr = t.result
         assert rr is not None  # parse_stream_json always sets it
@@ -500,6 +533,7 @@ def run_trap_session(
             cost_usd=rr.cost_usd,
             num_turns=rr.num_turns,
             injections=t.injections(),
+            hooks=t.hook_summary(),
         )
     finally:
         if keep_fixture:
@@ -718,6 +752,12 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="plugin dir to force-load per session (default: the repo's plugin/)",
     )
+    parser.add_argument(
+        "--save-transcripts",
+        type=Path,
+        default=None,
+        help="directory to persist each session's raw stream-json (debugging)",
+    )
     args = parser.parse_args(argv)
 
     arms = [a.strip() for a in args.arms.split(",") if a.strip()]
@@ -774,11 +814,16 @@ def main(argv: list[str] | None = None) -> int:
                     timeout_s=args.timeout_s,
                     keep_fixture=args.keep_fixtures,
                     plugin_dir=args.plugin_dir,
+                    transcript_dir=args.save_transcripts,
                 )
                 status = ("FIRED" if r.fired else "clean") if r.ok else f"ERROR ({r.error})"
                 inj = "+".join(f"{k[0]}{v}" for k, v in sorted(r.injections.items()))
+                hk = "+".join(f"{k[:2]}{v}" for k, v in sorted(r.hooks.items()) if k != "failed")
+                failed = r.hooks.get("failed", 0)
                 print(
-                    f"    {status}: {r.wall_s:.1f}s, ${r.cost_usd:.2f}, inj {inj or '-'}",
+                    f"    {status}: {r.wall_s:.1f}s, ${r.cost_usd:.2f}, "
+                    f"inj {inj or '-'}, hooks {hk or 'NONE'}"
+                    + (f" ({failed} failed)" if failed else ""),
                     flush=True,
                 )
                 results.append(r)
