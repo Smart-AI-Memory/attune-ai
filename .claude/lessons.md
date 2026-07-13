@@ -14793,6 +14793,44 @@ def ", start_idx + 1)` for module-
   new plain line above a contradicting quoted status confuses the
   next reader.
 
+- **Headless `claude -p` stamps `CLAUDE_CODE_ENTRYPOINT=sdk-cli` into
+  EVERY such session — sdk-gated hooks silently no-op, and "hooks
+  alive" lifecycle receipts do NOT prove emission**: verified live
+  2026-07-13 (Claude Code 2.1.144) during the trap-battery phase-2
+  probes. Gated hooks still START and exit 0 with empty output, so
+  hook_started/hook_response counts look healthy while every gated
+  hook is a no-op (this retroactively explains phase-1's residual
+  "hooks alive, zero injections" mysteries; the welcome banner seen
+  in probes came from an UNGATED hook). Diagnostics: (a) a probe
+  session running `env | grep CLAUDE` reveals the stamp ($0.15);
+  (b) direct hook execution WITH `CLAUDE_CODE_ENTRYPOINT=sdk-cli` in
+  env reproduces the empty-output shape for free. Benchmark escape
+  hatch: `ATTUNE_SDK_GATE_OVERRIDE=1` (both `_sdk_gate` twins,
+  #1351) — benchmark-only; the product fix is its own task. Two
+  stacked nested-session traps ride along: children inherit ~14
+  `CLAUDE_*` OAuth vars and 401 (fix: scrubbed env — whitelist +
+  ANTHROPIC_API_KEY from the 0600 key file, never printed), and the
+  key file pattern is `~/.attune/anthropic.env`.
+
+- **zsh: `read -r path` CLOBBERS command lookup — `path` is the
+  array tied to PATH (same special-var family as `status`)**: hit
+  live 2026-07-13 in a `while IFS=: read -r path a b` loop; every
+  subsequent command in the loop printed `command not found` because
+  assigning `$path` rewrote PATH. The JIT rule covers `status=`
+  assignment; the same reserved family (`path`, `pipestatus`,
+  `prompt`, `status`) also breaks via `read` variable NAMES. Name
+  loop variables `relf`/`p`/`f`, never `path`/`status`.
+
+- **A piped git mutation hides its failure — `git revert … 2>&1 |
+  tail -1` exits with TAIL's code, so the chain continues as if the
+  revert landed**: hit 2026-07-13 (the revert had failed on an
+  invalid flag; log still showed the old tip while the `&&` chain
+  marched on and "pushed" a no-op). Pipelines report the LAST
+  command's status: keep git state mutations UN-piped (or use
+  `set -o pipefail` deliberately), and verify effect (`git log
+  --oneline -1`) rather than trusting chain completion — the
+  commit-landed discipline applied to every mutating git verb.
+
 - **Auto-merge on the required-check subset structurally IGNORES
   non-required lanes — a red Windows matrix can live on main for
   hours/days with every PR "merging green"**: extends the
@@ -14815,3 +14853,21 @@ def ", start_idx + 1)` for module-
   setup-matrix shrinks PR matrices for tests-only diffs (hotfix ran
   ONE Windows lane), so "the lane passed on the PR" ≠ "all lanes
   ran" — main's post-merge run is the real receipt.
+
+- **`zsh` exists only on the macOS runners — Ubuntu AND Windows
+  CI lanes lack the binary, so shell-specific fixture tests go
+  red on 13 lanes while passing locally (macOS dev box) and on
+  the macOS matrix**: hit 2026-07-13 reviewing #1351 — the
+  trap-battery `TestZshStatusRecovery` tests spawn
+  `subprocess.run(["zsh", ...])` and failed every ubuntu-latest,
+  windows-latest, clock-tz, and coverage lane with
+  `FileNotFoundError`, giving a false "green locally" signal.
+  Rule: any test that spawns a non-POSIX-guaranteed shell or tool
+  (`zsh`, `fish`, `gdate`, …) needs
+  `@pytest.mark.skipif(shutil.which("zsh") is None, ...)` at
+  authoring time — pair it with the existing Windows-path rules
+  (no exec-bit asserts; never `.endswith("a/b.md")` on paths that
+  Windows renders with backslashes — the same PR's
+  `TestSessionEnvIsolation` failed exactly that way). The
+  trap-battery fixtures are zsh-heavy by design, so phase-2+
+  additions will re-hit this unless guarded.

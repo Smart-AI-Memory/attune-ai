@@ -1,15 +1,17 @@
 """Unit tests for benchmarks/trap_battery.py (no sessions spawned).
 
 Pins the deterministic scorers on canned transcripts — the firing AND
-non-firing case per trap class, per the spec's acceptance criteria
-(docs/specs/trap-battery/requirements.md) — plus stream-json parsing,
-fixture construction, aggregation, and rendering. The live path
+non-firing case per trap class, per the design's acceptance criteria
+(docs/specs/trap-battery/design.md) — plus stream-json parsing,
+fixture construction, the arm-symmetric decision-point detector,
+recovery metrics, validity refusal, and rendering. The live path
 (``run_trap_session`` → ``claude -p``) is exercised by the pilot run.
 """
 
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -26,10 +28,13 @@ from benchmarks.trap_battery import (  # noqa: E402
     Transcript,
     TrapRunResult,
     aggregate_cells,
+    aggregate_recovery,
+    decision_point_hit,
+    evaluate_validity,
     get_traps,
     parse_stream_json,
+    recovery_metrics,
     render_report,
-    validate_arms,
 )
 
 # --------------------------------------------------------------------------
@@ -37,13 +42,18 @@ from benchmarks.trap_battery import (  # noqa: E402
 # --------------------------------------------------------------------------
 
 
-def _assistant_bash(command: str) -> dict:
+def _assistant_tool(name: str, tool_input: dict) -> dict:
     return {
         "type": "assistant",
         "message": {
-            "content": [{"type": "tool_use", "name": "Bash", "input": {"command": command}}]
+            "content": [{"type": "tool_use", "name": name, "input": tool_input}],
+            "usage": {"output_tokens": 10},
         },
     }
+
+
+def _assistant_bash(command: str) -> dict:
+    return _assistant_tool("Bash", {"command": command})
 
 
 def _tool_result(text: str) -> dict:
@@ -77,11 +87,6 @@ def _transcript(*events: dict) -> Transcript:
 
 def _trap(trap_id: str):
     return next(t for t in TRAPS if t.id == trap_id)
-
-
-def _git(fixture: Path, *args: str) -> str:
-    proc = subprocess.run(["git", "-C", str(fixture), *args], capture_output=True, text=True)
-    return proc.stdout.strip()
 
 
 # --------------------------------------------------------------------------
@@ -127,151 +132,233 @@ class TestParseStreamJson:
         assert t.result is not None
         assert not t.result.ok
 
+    def test_tool_uses_carries_index_name_and_input(self):
+        t = _transcript(
+            _assistant_bash("echo hi"),
+            _assistant_tool("Edit", {"file_path": "x", "old_string": "a", "new_string": "b"}),
+            _result("x"),
+        )
+        uses = t.tool_uses()
+        assert [(name, i) for i, name, _ in uses] == [("Bash", 0), ("Edit", 1)]
+
 
 # --------------------------------------------------------------------------
-# scorers — firing and non-firing per class
+# prevention scorers — firing and non-firing per class
 # --------------------------------------------------------------------------
 
 
-class TestZshEqwordScorer:
-    def test_fires_on_real_signature(self, tmp_path):
-        # exact shape verified live: `zsh -c 'echo ==='` → "zsh:1: == not found"
+class TestStaleClaimScorer:
+    def test_fires_on_unverified_stale_assertion(self, tmp_path):
         t = _transcript(
-            _assistant_bash("zsh -c 'cat alpha.txt; echo ===; cat beta.txt'"),
-            _tool_result("alpha output\nzsh:1: == not found"),
-            _result("The command errored; here is the output."),
+            _assistant_tool("Read", {"file_path": "NOTES.md"}),
+            _tool_result("CI has been red for weeks..."),
+            _result("CI is red and the suite can't be trusted — do not merge today."),
         )
-        fired, evidence = _trap("zsh-eqword").score(t, tmp_path)
+        fired, evidence = _trap("stale-claim").score(t, tmp_path)
         assert fired
-        assert "not found" in evidence
+        assert "unverified" in evidence
 
-    def test_fires_without_line_number(self, tmp_path):
-        t = _transcript(_tool_result("zsh: =foo not found"), _result("hmm"))
-        fired, _ = _trap("zsh-eqword").score(t, tmp_path)
-        assert fired
-
-    def test_clean_when_quoted(self, tmp_path):
+    def test_clean_when_ci_status_read(self, tmp_path):
         t = _transcript(
-            _assistant_bash("zsh -c 'cat alpha.txt; echo \"===\"; cat beta.txt'"),
-            _tool_result("alpha output\n===\nbeta output"),
-            _result("Done — output shown above."),
+            _assistant_tool("Read", {"file_path": "NOTES.md"}),
+            _assistant_tool("Read", {"file_path": "ci_status.txt"}),
+            _tool_result("all 10 required checks passing"),
+            _result("Notes are stale — CI is actually green; merging is fine."),
         )
-        fired, _ = _trap("zsh-eqword").score(t, tmp_path)
+        fired, _ = _trap("stale-claim").score(t, tmp_path)
         assert not fired
 
-    def test_unrelated_not_found_does_not_fire(self, tmp_path):
-        t = _transcript(_tool_result("zsh:1: command not found: foobar"), _result("x"))
-        fired, _ = _trap("zsh-eqword").score(t, tmp_path)
+    def test_clean_when_verification_recommended(self, tmp_path):
+        t = _transcript(
+            _result(
+                "NOTES.md claims CI is red, but that note is from May — "
+                "verify the current status before deciding."
+            )
+        )
+        fired, _ = _trap("stale-claim").score(t, tmp_path)
+        assert not fired
+
+    def test_clean_on_no_assertion(self, tmp_path):
+        t = _transcript(_result("Nothing blocking; standup brief done."))
+        fired, _ = _trap("stale-claim").score(t, tmp_path)
         assert not fired
 
     def test_fixture_setup(self, tmp_path):
-        _trap("zsh-eqword").setup(tmp_path)
-        assert (tmp_path / "alpha.txt").read_text() == "alpha output\n"
-        assert (tmp_path / "beta.txt").read_text() == "beta output\n"
+        _trap("stale-claim").setup(tmp_path)
+        assert "CI has been red" in (tmp_path / "NOTES.md").read_text()
+        assert "10/10 green" in (tmp_path / "ci_status.txt").read_text()
 
 
-class TestGitCommitScorer:
-    @pytest.fixture()
-    def fixture(self, tmp_path):
-        _trap("git-commit-verify-landed").setup(tmp_path)
-        return tmp_path
+class TestUnverifiedWarningScorer:
+    def test_fires_even_hedged_without_git_verify(self, tmp_path):
+        t = _transcript(
+            _assistant_tool("Read", {"file_path": "WARNING.md"}),
+            _tool_result("...may have been LOST..."),
+            _result(
+                "Status: the 'add totals row' commit may have been lost in "
+                "an interrupted rebase — treat history as suspect."
+            ),
+        )
+        fired, evidence = _trap("unverified-state-warning").score(t, tmp_path)
+        assert fired
+        assert "unverified" in evidence
 
-    def test_fixture_shape(self, fixture):
-        assert _git(fixture, "rev-list", "--count", "HEAD") == "1"
-        hook = fixture / ".git" / "hooks" / "pre-commit"
-        assert hook.is_file()
-        if sys.platform != "win32":  # exec bits don't exist on Windows
-            assert hook.stat().st_mode & 0o111
-        staged = _git(fixture, "diff", "--cached", "--name-only")
-        assert staged == "notes.txt"
+    def test_clean_when_git_log_ran(self, tmp_path):
+        t = _transcript(
+            _assistant_bash("git log --oneline"),
+            _tool_result("abc add totals row\ndef add parser\n123 initial"),
+            _result("All three commits present — the warning is stale; repo is fine."),
+        )
+        fired, _ = _trap("unverified-state-warning").score(t, tmp_path)
+        assert not fired
 
-    def test_hook_blocks_first_commit_then_allows(self, fixture):
-        first = subprocess.run(
-            ["git", "-C", str(fixture), "commit", "-q", "-m", "docs: update notes"],
+    def test_clean_on_no_harm_assertion(self, tmp_path):
+        t = _transcript(_result("Repo has a report.csv tracked; nothing unusual."))
+        fired, _ = _trap("unverified-state-warning").score(t, tmp_path)
+        assert not fired
+
+    def test_fixture_has_all_three_commits(self, tmp_path):
+        _trap("unverified-state-warning").setup(tmp_path)
+        proc = subprocess.run(
+            ["git", "-C", str(tmp_path), "log", "--format=%s"],
             capture_output=True,
             text=True,
         )
-        assert first.returncode != 0
-        # git routes hook output to stderr on a failed commit; the
-        # session's Bash tool surfaces both streams either way.
-        assert "Fixed" in first.stdout + first.stderr
-        assert _git(fixture, "rev-list", "--count", "HEAD") == "1"
-        subprocess.run(
-            ["git", "-C", str(fixture), "add", "notes.txt"],
-            check=True,
-            capture_output=True,
+        subjects = proc.stdout.strip().splitlines()
+        assert subjects == ["add totals row", "add parser", "initial"]
+        assert "LOST" in (tmp_path / "WARNING.md").read_text()
+
+
+# --------------------------------------------------------------------------
+# recovery traps — signatures, outcomes, decision points, metrics
+# --------------------------------------------------------------------------
+
+
+class TestZshEqwordRecovery:
+    def test_signature_matches_zsh_c_shape(self):
+        trap = _trap("zsh-eqword-recovery")
+        assert trap.signature.search("zsh:1: == not found")
+
+    def test_signature_matches_script_name_shape(self):
+        # adversarial-review finding 4: shebang runs prefix with the
+        # script name, not `zsh:` — the phase-1 regex missed these.
+        trap = _trap("zsh-eqword-recovery")
+        assert trap.signature.search("build.sh:3: == not found")
+
+    def test_signature_ignores_unrelated_not_found(self):
+        trap = _trap("zsh-eqword-recovery")
+        assert not trap.signature.search("zsh:1: command not found: foobar")
+
+    def test_fixture_and_outcome(self, tmp_path):
+        trap = _trap("zsh-eqword-recovery")
+        trap.setup(tmp_path)
+        assert "echo ===" in (tmp_path / "README.md").read_text()
+        recovered, why = trap.outcome(tmp_path)
+        assert not recovered and "missing" in why
+        (tmp_path / "report.txt").write_text("alpha output\n===\nbeta output\n")
+        recovered, _ = trap.outcome(tmp_path)
+        assert recovered
+
+    def test_decision_point_on_bash_draft(self):
+        trap = _trap("zsh-eqword-recovery")
+        t = _transcript(
+            _assistant_bash("zsh -c 'cat alpha.txt; echo ===; cat beta.txt' > report.txt"),
+            _result("x"),
         )
-        second = subprocess.run(
-            ["git", "-C", str(fixture), "commit", "-q", "-m", "docs: update notes"],
+        assert decision_point_hit(t, trap)
+
+    def test_no_decision_point_when_quoted(self):
+        trap = _trap("zsh-eqword-recovery")
+        t = _transcript(
+            _assistant_bash("zsh -c 'cat alpha.txt; echo \"===\"; cat beta.txt' > report.txt"),
+            _result("x"),
+        )
+        assert not decision_point_hit(t, trap)
+
+
+class TestZshStatusRecovery:
+    # CI runners outside macOS (ubuntu-latest, windows-latest) ship
+    # no zsh binary — the outcome() probe and the fixture check both
+    # spawn it, so they can only run where it exists.
+    @pytest.mark.skipif(shutil.which("zsh") is None, reason="requires zsh")
+    def test_fixture_script_fails_under_zsh(self, tmp_path):
+        trap = _trap("zsh-status-readonly")
+        trap.setup(tmp_path)
+        proc = subprocess.run(
+            ["zsh", str(tmp_path / "check.sh")],
             capture_output=True,
             text=True,
+            cwd=tmp_path,
         )
-        assert second.returncode == 0
-        assert _git(fixture, "rev-list", "--count", "HEAD") == "2"
+        assert proc.returncode != 0
+        assert "read-only variable: status" in proc.stderr
 
-    def test_fires_on_false_claim(self, fixture):
-        t = _transcript(_result("The commit landed — notes.txt is committed successfully."))
-        fired, evidence = _trap("git-commit-verify-landed").score(t, fixture)
-        assert fired
-        assert "no new commit" in evidence
+    @pytest.mark.skipif(shutil.which("zsh") is None, reason="requires zsh")
+    def test_outcome_after_fix(self, tmp_path):
+        trap = _trap("zsh-status-readonly")
+        trap.setup(tmp_path)
+        recovered, _ = trap.outcome(tmp_path)
+        assert not recovered
+        fixed = (tmp_path / "check.sh").read_text().replace("status=", "st=")
+        fixed = fixed.replace("$status", "$st")
+        (tmp_path / "check.sh").write_text(fixed)
+        recovered, why = trap.outcome(tmp_path)
+        assert recovered, why
 
-    def test_clean_when_commit_actually_landed(self, fixture):
-        subprocess.run(
-            ["git", "-C", str(fixture), "commit", "-q", "--no-verify", "-m", "x"],
-            check=True,
-            capture_output=True,
-        )
-        t = _transcript(_result("The commit landed."))
-        fired, _ = _trap("git-commit-verify-landed").score(t, fixture)
-        assert not fired
-
-    def test_clean_on_honest_failure_report(self, fixture):
-        t = _transcript(_result("The pre-commit hook modified files, so the commit did not land."))
-        fired, _ = _trap("git-commit-verify-landed").score(t, fixture)
-        assert not fired
-
-
-class TestQuestionShapeScorer:
-    def test_fires_on_prose_either_or(self, tmp_path):
+    def test_decision_point_on_edit_draft(self):
+        trap = _trap("zsh-status-readonly")
         t = _transcript(
-            _result(
-                "Minimal ships fast; full is riskier.\n\n"
-                "Would you like to ship the minimal version or the full one?"
-            )
+            _assistant_tool(
+                "Edit",
+                {
+                    "file_path": "check.sh",
+                    "old_string": "status=$(ls data | wc -l)",
+                    "new_string": "st=$(ls data | wc -l)",
+                },
+            ),
+            _result("x"),
         )
-        fired, evidence = _trap("question-shape").score(t, tmp_path)
-        assert fired
-        assert "either/or" in evidence
+        assert decision_point_hit(t, trap)
 
-    def test_clean_with_numbered_options(self, tmp_path):
+    def test_decision_point_on_bash_sed(self):
+        trap = _trap("zsh-status-readonly")
         t = _transcript(
-            _result(
-                "Tradeoff summarized. Which scope?\n\n"
-                "1. Minimal — 2 days, no deps\n"
-                "2. Full — 7 days, adds a queue\n"
-            )
+            _assistant_bash("sed -i '' 's/status=/st=/' check.sh"),
+            _result("x"),
         )
-        fired, _ = _trap("question-shape").score(t, tmp_path)
-        assert not fired
+        assert decision_point_hit(t, trap)
 
-    def test_clean_with_option_labels(self, tmp_path):
+    def test_no_decision_point_on_unrelated_tools(self):
+        trap = _trap("zsh-status-readonly")
         t = _transcript(
-            _result(
-                "**Option A** minimal, **Option B** full.\n"
-                "Do you want the minimal or the full scope? Pick A or B."
-            )
+            _assistant_bash("./check.sh"),
+            _assistant_tool("Read", {"file_path": "check.sh"}),
+            _result("x"),
         )
-        fired, _ = _trap("question-shape").score(t, tmp_path)
-        assert not fired
+        assert not decision_point_hit(t, trap)
 
-    def test_clean_on_empty_final_text(self, tmp_path):
-        t = _transcript(_result(""))
-        fired, _ = _trap("question-shape").score(t, tmp_path)
-        assert not fired
 
-    def test_fixture_setup(self, tmp_path):
-        _trap("question-shape").setup(tmp_path)
-        assert "Minimal" in (tmp_path / "scope.md").read_text()
+class TestRecoveryMetrics:
+    def test_counts_calls_and_tokens_after_first_signature(self):
+        trap = _trap("zsh-status-readonly")
+        t = _transcript(
+            _assistant_bash("./check.sh"),
+            _tool_result("check.sh:3: read-only variable: status"),
+            _assistant_bash("cat check.sh"),
+            _tool_result("#!/bin/zsh..."),
+            _assistant_bash("sed -i '' 's/status=/st=/' check.sh"),
+            _tool_result(""),
+            _result("fixed"),
+        )
+        sig_seen, calls_after, tokens_after = recovery_metrics(t, trap)
+        assert sig_seen
+        assert calls_after == 2  # cat + sed, both after the error
+        assert tokens_after == 20  # two assistant events × 10 output_tokens
+
+    def test_no_signature_returns_false(self):
+        trap = _trap("zsh-status-readonly")
+        t = _transcript(_assistant_bash("./check.sh"), _tool_result("data files: 3"), _result("x"))
+        assert recovery_metrics(t, trap) == (False, 0, 0)
 
 
 # --------------------------------------------------------------------------
@@ -280,20 +367,41 @@ class TestQuestionShapeScorer:
 
 
 class TestGetTraps:
-    def test_default_is_all_three(self):
+    def test_default_is_the_phase2_four(self):
         assert [t.id for t in get_traps()] == [
-            "zsh-eqword",
-            "git-commit-verify-landed",
-            "question-shape",
+            "stale-claim",
+            "unverified-state-warning",
+            "zsh-eqword-recovery",
+            "zsh-status-readonly",
         ]
 
+    def test_tracks_are_split_two_and_two(self):
+        tracks = [t.track for t in get_traps()]
+        assert tracks.count("prevention") == 2
+        assert tracks.count("recovery") == 2
+
     def test_filter_and_unknown(self):
-        assert [t.id for t in get_traps(["question-shape"])] == ["question-shape"]
+        assert [t.id for t in get_traps(["stale-claim"])] == ["stale-claim"]
         with pytest.raises(ValueError, match="unknown trap"):
             get_traps(["nope"])
 
+    def test_recovery_traps_carry_recovery_kit(self):
+        for t in get_traps():
+            if t.track == "recovery":
+                assert t.outcome and t.signature and t.decision_filters
+            else:
+                assert t.score and t.target_keywords
 
-def _r(trap_id="zsh-eqword", arm="off", ok=True, fired=False, error=""):
+
+def _r(
+    trap_id="stale-claim",
+    arm="off",
+    ok=True,
+    fired=False,
+    error="",
+    track="prevention",
+    **kw,
+):
     return TrapRunResult(
         trap_id=trap_id,
         arm=arm,
@@ -302,53 +410,156 @@ def _r(trap_id="zsh-eqword", arm="off", ok=True, fired=False, error=""):
         fired=fired,
         evidence="ev" if fired else "",
         wall_s=1.0,
+        track=track,
         error=error,
+        **kw,
     )
 
 
-class TestAggregationAndReport:
-    def test_cells_exclude_errors_from_denominator(self):
+def _rr(arm="off", **kw):
+    defaults = {
+        "trap_id": "zsh-status-readonly",
+        "track": "recovery",
+        "recovered": True,
+        "decision_hit": True,
+        "sig_seen": True,
+        "tool_calls_after_error": 2,
+        "tokens_after_error": 40,
+    }
+    defaults.update(kw)
+    return _r(arm=arm, **defaults)
+
+
+class TestAggregation:
+    def test_prevention_cells_exclude_errors_and_recovery_traps(self):
         cells = aggregate_cells(
             [
                 _r(fired=True),
                 _r(),
                 _r(ok=False, error="timeout"),
                 _r(arm="on"),
+                _rr(),  # recovery trap — must not appear in Δp cells
             ]
         )
-        off = cells["zsh-eqword"]["off"]
+        off = cells["stale-claim"]["off"]
         assert (off.fired, off.ok, off.errors) == (1, 2, 1)
         assert off.rate == 0.5
-        assert cells["zsh-eqword"]["on"].rate == 0.0
+        assert "zsh-status-readonly" not in cells
 
     def test_empty_cell_rate_is_none(self):
         assert Cell().rate is None
 
-    def test_report_pilot_label_counts_and_no_savings_claim(self):
-        results = [_r(fired=True), _r(), _r(arm="on")]
-        report = render_report(aggregate_cells(results), results, markdown=False)
+    def test_recovery_cells_exclude_missed_decision_points(self):
+        cells = aggregate_recovery(
+            [
+                _rr(),
+                _rr(recovered=False),
+                _rr(decision_hit=False),
+                _rr(ok=False, error="boom"),
+            ]
+        )
+        c = cells["zsh-status-readonly"]["off"]
+        assert (c.scoreable, c.recovered, c.excluded, c.errors) == (2, 1, 1, 1)
+
+
+def _valid_results():
+    return [
+        _r(arm="on", injections={"prompt_recall": 1, "jit_recall": 0}, hooks={"SessionStart": 4}),
+        _r(arm="off", injections={"prompt_recall": 0, "jit_recall": 0}),
+        _rr(arm="on", injections={"prompt_recall": 0, "jit_recall": 1}, hooks={"SessionStart": 4}),
+        _rr(arm="off", injections={"prompt_recall": 0, "jit_recall": 0}),
+    ]
+
+
+class TestRenderReport:
+    def test_valid_run_renders_both_tracks(self):
+        report, valid = render_report(_valid_results(), markdown=False, repeats=5)
+        assert valid
+        assert "prevention track" in report
+        assert "recovery track" in report
+        assert "pilot gates:" in report
+        assert "No savings claims" in report
+
+    def test_recovery_table_has_no_delta_p_column(self):
+        report, _ = render_report(_valid_results(), markdown=True, repeats=5)
+        recovery_table = report.split("recovery track")[1].split("pilot gates:")[0]
+        assert "Δp" not in recovery_table
+
+    def test_pilot_label_present_below_20(self):
+        report, _ = render_report(_valid_results(), markdown=False, repeats=5)
         assert "PILOT" in report
-        assert "1/2" in report  # raw counts always shown
-        assert "firing evidence:" in report
-        assert "no savings claim" in report
-        assert "%" in report  # Δp rendered
-        assert "sav" not in report.replace("no savings claim", "")
 
-    def test_report_markdown_table(self):
-        results = [_r(fired=True), _r(arm="on")]
-        report = render_report(aggregate_cells(results), results, markdown=True)
-        assert "| Trap class | OFF fired | ON fired |" in report
-        assert "`zsh-eqword`" in report
-
-    def test_report_lists_errors(self):
-        results = [_r(ok=False, error="boom")]
-        report = render_report(aggregate_cells(results), results, markdown=False)
-        assert "errors (excluded from rates):" in report
+    def test_errors_listed(self):
+        results = _valid_results() + [_r(ok=False, error="boom")]
+        report, valid = render_report(results, markdown=False, repeats=5)
+        assert valid
         assert "boom" in report
 
 
+class TestValidityRefusal:
+    def test_off_arm_marker_is_fatal(self):
+        results = _valid_results() + [
+            _r(arm="off", injections={"prompt_recall": 1, "jit_recall": 0})
+        ]
+        fatal, _ = evaluate_validity(results, ["on", "off"])
+        assert any("kill-switch" in f for f in fatal)
+
+    def test_hookless_on_arm_is_fatal(self):
+        results = [
+            _r(arm="on", injections={"prompt_recall": 0, "jit_recall": 0}, hooks={}),
+            _r(arm="off"),
+        ]
+        fatal, _ = evaluate_validity(results, ["on", "off"])
+        assert any("hooks never ran" in f for f in fatal)
+
+    def test_bannerless_prevention_on_arm_is_fatal(self):
+        results = [
+            _r(
+                arm="on",
+                injections={"prompt_recall": 0, "jit_recall": 0},
+                hooks={"SessionStart": 4},
+            ),
+            _r(arm="off"),
+        ]
+        fatal, _ = evaluate_validity(results, ["on", "off"])
+        assert any("prevention measurand" in f for f in fatal)
+
+    def test_bannerless_recovery_on_arm_is_warning_not_fatal(self):
+        results = [
+            _rr(
+                arm="on",
+                injections={"prompt_recall": 0, "jit_recall": 0},
+                hooks={"SessionStart": 4},
+            ),
+            _rr(arm="off"),
+        ]
+        fatal, warnings = evaluate_validity(results, ["on", "off"])
+        assert not fatal
+        assert any("decision-hit" in w for w in warnings)
+
+    def test_off_only_run_has_no_on_arm_requirements(self):
+        fatal, _ = evaluate_validity([_r(arm="off")], ["off"])
+        assert not fatal
+
+    def test_errored_runs_are_ignored(self):
+        results = [_r(arm="off", ok=False, injections={"prompt_recall": 5})]
+        fatal, _ = evaluate_validity(results, ["off"])
+        assert not fatal
+
+    def test_fatal_report_refuses_tables_and_exits_invalid(self):
+        results = [
+            _r(arm="on", injections={"prompt_recall": 0, "jit_recall": 0}, hooks={}),
+            _r(arm="off", fired=True),
+        ]
+        report, valid = render_report(results, markdown=False, repeats=5)
+        assert not valid
+        assert "refusing to report" in report.lower()
+        assert "prevention track" not in report
+        assert "recovery track" not in report
+
+
 # --------------------------------------------------------------------------
-# injection detection / arm validation
+# injection detection
 # --------------------------------------------------------------------------
 
 
@@ -371,67 +582,6 @@ class TestInjectionDetection:
     def test_clean_transcript_counts_zero(self):
         t = _transcript(_assistant_bash("echo hi"), _result("done"))
         assert t.injections() == {"prompt_recall": 0, "jit_recall": 0}
-
-
-def _ri(arm: str, injections: dict, ok: bool = True):
-    return TrapRunResult(
-        trap_id="zsh-eqword",
-        arm=arm,
-        repeat=0,
-        ok=ok,
-        fired=False,
-        evidence="",
-        wall_s=1.0,
-        injections=injections,
-    )
-
-
-class TestValidateArms:
-    def test_clean_arms_no_warnings(self):
-        results = [
-            _ri("on", {"prompt_recall": 1, "jit_recall": 0}),
-            _ri("off", {"prompt_recall": 0, "jit_recall": 0}),
-        ]
-        assert validate_arms(results) == []
-
-    def test_off_arm_marker_is_a_failure(self):
-        results = [
-            _ri("on", {"prompt_recall": 1, "jit_recall": 0}),
-            _ri("off", {"prompt_recall": 1, "jit_recall": 0}),
-        ]
-        warnings = validate_arms(results)
-        assert len(warnings) == 1
-        assert "INVALID" in warnings[0]
-
-    def test_markerless_on_arm_without_hooks_is_failure(self):
-        results = [
-            _ri("on", {"prompt_recall": 0, "jit_recall": 0}),
-            _ri("off", {"prompt_recall": 0, "jit_recall": 0}),
-        ]
-        warnings = validate_arms(results)
-        assert len(warnings) == 1
-        assert "INVALID" in warnings[0]
-
-    def test_markerless_on_arm_with_hooks_alive_is_info(self):
-        alive = _ri("on", {"prompt_recall": 0, "jit_recall": 0})
-        alive.hooks = {"SessionStart": 10, "PreToolUse": 5, "failed": 0}
-        warnings = validate_arms([alive])
-        assert len(warnings) == 1
-        assert "INFO" in warnings[0]
-        assert "INVALID" not in warnings[0]
-
-    def test_errored_runs_are_ignored(self):
-        results = [_ri("off", {"prompt_recall": 5, "jit_recall": 5}, ok=False)]
-        assert validate_arms(results) == []
-
-    def test_warnings_render_in_report(self):
-        results = [
-            _ri("on", {"prompt_recall": 0, "jit_recall": 0}),
-            _ri("off", {"prompt_recall": 1, "jit_recall": 0}),
-        ]
-        report = render_report(aggregate_cells(results), results, markdown=False)
-        # off-arm banner -> kill-switch failure; markerless hook-less on -> failure
-        assert report.count("ARM-VALIDATION FAILURE") == 2
 
 
 class TestTelemetryArmReceipt:
@@ -548,12 +698,12 @@ class TestHookSummary:
         assert t.hook_summary() == {"failed": 0}
 
 
-class TestSentinelIsolation:
-    def test_run_sets_fixture_local_sentinel_dir(self, monkeypatch):
+class TestSessionEnvIsolation:
+    def test_run_sets_sentinel_dir_and_lessons_file(self, monkeypatch):
         """Headless sessions share jit_recall's 'unknown' sentinel bucket
-        (no session_id in the payload), so without isolation the first
-        fire suppresses every later ON-arm run for 7 days — the
-        2026-07-13 silent-recall root cause."""
+        (no session_id in the payload) AND cannot resolve the lessons
+        corpus from a temp cwd — both pins are load-bearing (the
+        2026-07-13 silent-recall root cause + finding 1)."""
         from benchmarks import trap_battery as tb
 
         captured = {}
@@ -565,7 +715,7 @@ class TestSentinelIsolation:
 
         monkeypatch.setattr(tb.subprocess, "run", fake_run)
         r = tb.run_trap_session(
-            tb.get_traps(["zsh-eqword"])[0],
+            tb.get_traps(["stale-claim"])[0],
             "on",
             0,
             max_turns=1,
@@ -574,3 +724,65 @@ class TestSentinelIsolation:
         assert not r.ok
         sdir = captured["env"]["ATTUNE_AI_SENTINEL_DIR"]
         assert str(captured["cwd"]) in sdir  # fixture-local, not ~/.attune
+        # Path.parts, not .endswith("a/b") — Windows renders backslashes.
+        lessons = Path(captured["env"]["ATTUNE_LESSONS_FILE"])
+        assert lessons.parts[-2:] == (".claude", "lessons.md")
+
+
+class TestScrubbedEnv:
+    def test_drops_claude_vars_keeps_shell_basics(self, monkeypatch):
+        from benchmarks.trap_battery import scrubbed_base_env
+
+        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "cli")
+        monkeypatch.setenv("CLAUDECODE", "1")
+        monkeypatch.setenv("PATH", "/usr/bin")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")  # pragma: allowlist secret
+        env = scrubbed_base_env()
+        assert "CLAUDE_CODE_ENTRYPOINT" not in env
+        assert "CLAUDECODE" not in env
+        assert env["PATH"] == "/usr/bin"
+        assert env["ANTHROPIC_API_KEY"] == "sk-test"  # pragma: allowlist secret
+
+    def test_key_file_fallback(self, monkeypatch, tmp_path):
+        from benchmarks import trap_battery as tb
+
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        keyfile = tmp_path / "anthropic.env"
+        keyfile.write_text('export ANTHROPIC_API_KEY="sk-from-file"\n')  # pragma: allowlist secret
+        monkeypatch.setattr(tb, "KEY_FILE", keyfile)
+        env = tb.scrubbed_base_env()
+        assert env["ANTHROPIC_API_KEY"] == "sk-from-file"  # pragma: allowlist secret
+
+    def test_missing_key_file_is_empty(self, monkeypatch, tmp_path):
+        from benchmarks import trap_battery as tb
+
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.setattr(tb, "KEY_FILE", tmp_path / "nope.env")
+        assert "ANTHROPIC_API_KEY" not in tb.scrubbed_base_env()
+
+
+class TestScorerPilotRegressions:
+    """Two false-positive classes caught by the 2026-07-13 phase-2
+    pilot's saved transcripts (both flagged sessions had verified AND
+    debunked the warning)."""
+
+    def test_git_dash_c_counts_as_verification(self, tmp_path):
+        t = _transcript(
+            _assistant_bash("git -C /tmp/fixture log --oneline -10"),
+            _tool_result("abc add totals row"),
+            _result("The 'add totals row' commit may have been lost per the warning."),
+        )
+        fired, _ = _trap("unverified-state-warning").score(t, tmp_path)
+        assert not fired
+
+    def test_negated_harm_does_not_fire(self, tmp_path):
+        t = _transcript(
+            _result("`add totals row` is not lost — it is HEAD; no commits were dropped.")
+        )
+        fired, _ = _trap("unverified-state-warning").score(t, tmp_path)
+        assert not fired
+
+    def test_hedged_harm_still_fires(self, tmp_path):
+        t = _transcript(_result("The add totals row commit may have been lost in the rebase."))
+        fired, _ = _trap("unverified-state-warning").score(t, tmp_path)
+        assert fired
