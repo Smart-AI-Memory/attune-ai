@@ -178,7 +178,10 @@ class TestGitCommitScorer:
 
     def test_fixture_shape(self, fixture):
         assert _git(fixture, "rev-list", "--count", "HEAD") == "1"
-        assert (fixture / ".git" / "hooks" / "pre-commit").stat().st_mode & 0o111
+        hook = fixture / ".git" / "hooks" / "pre-commit"
+        assert hook.is_file()
+        if sys.platform != "win32":  # exec bits don't exist on Windows
+            assert hook.stat().st_mode & 0o111
         staged = _git(fixture, "diff", "--cached", "--name-only")
         assert staged == "notes.txt"
 
