@@ -11,6 +11,7 @@ recovery metrics, validity refusal, and rendering. The live path
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -276,6 +277,10 @@ class TestZshEqwordRecovery:
 
 
 class TestZshStatusRecovery:
+    # CI runners outside macOS (ubuntu-latest, windows-latest) ship
+    # no zsh binary — the outcome() probe and the fixture check both
+    # spawn it, so they can only run where it exists.
+    @pytest.mark.skipif(shutil.which("zsh") is None, reason="requires zsh")
     def test_fixture_script_fails_under_zsh(self, tmp_path):
         trap = _trap("zsh-status-readonly")
         trap.setup(tmp_path)
@@ -288,6 +293,7 @@ class TestZshStatusRecovery:
         assert proc.returncode != 0
         assert "read-only variable: status" in proc.stderr
 
+    @pytest.mark.skipif(shutil.which("zsh") is None, reason="requires zsh")
     def test_outcome_after_fix(self, tmp_path):
         trap = _trap("zsh-status-readonly")
         trap.setup(tmp_path)
@@ -718,7 +724,9 @@ class TestSessionEnvIsolation:
         assert not r.ok
         sdir = captured["env"]["ATTUNE_AI_SENTINEL_DIR"]
         assert str(captured["cwd"]) in sdir  # fixture-local, not ~/.attune
-        assert captured["env"]["ATTUNE_LESSONS_FILE"].endswith(".claude/lessons.md")
+        # Path.parts, not .endswith("a/b") — Windows renders backslashes.
+        lessons = Path(captured["env"]["ATTUNE_LESSONS_FILE"])
+        assert lessons.parts[-2:] == (".claude", "lessons.md")
 
 
 class TestScrubbedEnv:
