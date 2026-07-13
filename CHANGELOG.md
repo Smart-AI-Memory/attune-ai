@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **SDK-gate no longer silences hooks in headless `claude -p`
+  sessions**: Claude Code stamps `CLAUDE_CODE_ENTRYPOINT=sdk-cli`
+  into every headless session (verified on 2.1.144), so the
+  SDK-subprocess gate's bare `sdk-` prefix check made every gated
+  attune hook (jit_recall, lesson_recall, session recall/stash, …) a
+  silent no-op for all `claude -p` users. `sdk-cli` is now exempt;
+  true SDK subprocesses (`ATTUNE_SDK_SUBPROCESS=1`, `sdk-py`,
+  `sdk-ts`, unknown `sdk-*`) stay gated. Adds
+  `ATTUNE_SDK_GATE_OVERRIDE=1` as a benchmark-only escape hatch.
+  (sdk-subprocess-isolation D9; discovered by the trap-battery
+  benchmark.)
+
 ## [10.4.1] — 2026-07-13
 
 Docs/metadata patch — no code changes. Ships the memory-first
