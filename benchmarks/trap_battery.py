@@ -463,6 +463,16 @@ def run_trap_session(
     fixture = Path(tempfile.mkdtemp(prefix=f"trap-{trap.id}-"))
     try:
         trap.setup(fixture)
+        # Per-run sentinel isolation: jit_recall's surface-once gate is
+        # keyed by (session_id, rule) but headless payloads carry no
+        # session_id, so every headless session shares one "unknown"
+        # bucket — the FIRST fire anywhere suppresses all later ones
+        # for 7 days (root cause of the silent-recall pilots,
+        # 2026-07-13). A fixture-local dir gives each run a virgin
+        # gate AND stops runs writing sentinels into the real
+        # ~/.attune (the spec's isolation requirement).
+        sentinel_dir = fixture / ".attune-sentinels"
+        sentinel_dir.mkdir()
         cmd = [
             "claude",
             "-p",
@@ -481,10 +491,12 @@ def run_trap_session(
             cmd += ["--plugin-dir", str(effective_plugin)]
         start = time.monotonic()
         try:
+            env = build_env(arm)
+            env["ATTUNE_AI_SENTINEL_DIR"] = str(sentinel_dir)
             proc = subprocess.run(
                 cmd,
                 cwd=fixture,
-                env=build_env(arm),
+                env=env,
                 capture_output=True,
                 text=True,
                 timeout=timeout_s,

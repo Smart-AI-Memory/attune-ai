@@ -534,3 +534,31 @@ class TestHookSummary:
     def test_no_hook_events_is_all_zero(self):
         t = _transcript(_result("x"))
         assert t.hook_summary() == {"failed": 0}
+
+
+class TestSentinelIsolation:
+    def test_run_sets_fixture_local_sentinel_dir(self, monkeypatch):
+        """Headless sessions share jit_recall's 'unknown' sentinel bucket
+        (no session_id in the payload), so without isolation the first
+        fire suppresses every later ON-arm run for 7 days — the
+        2026-07-13 silent-recall root cause."""
+        from benchmarks import trap_battery as tb
+
+        captured = {}
+
+        def fake_run(cmd, **kwargs):
+            captured["env"] = kwargs["env"]
+            captured["cwd"] = kwargs["cwd"]
+            raise subprocess.TimeoutExpired(cmd, 1)
+
+        monkeypatch.setattr(tb.subprocess, "run", fake_run)
+        r = tb.run_trap_session(
+            tb.get_traps(["zsh-eqword"])[0],
+            "on",
+            0,
+            max_turns=1,
+            timeout_s=1,
+        )
+        assert not r.ok
+        sdir = captured["env"]["ATTUNE_AI_SENTINEL_DIR"]
+        assert str(captured["cwd"]) in sdir  # fixture-local, not ~/.attune

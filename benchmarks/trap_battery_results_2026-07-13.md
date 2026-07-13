@@ -186,3 +186,31 @@ costs one $0.15 session instead of a $6 re-run. Open question for
 phase 2: WHICH plugin SessionStart hooks fail in fixture dirs and
 whether recall needs a repo-shaped cwd (hydrate) — answerable from
 one saved transcript.
+
+---
+
+## ROOT CAUSE (2026-07-13, final) — surface-once sentinel collapse
+
+The $0.15 probe with saved transcripts closed the case:
+
+- Hooks run fine in fixture sessions (probe: SessionStart ×10,
+  PreToolUse ×5, all recall-relevant hooks exit 0) — but jit_recall
+  emitted nothing because of its **surface-once sentinel**: headless
+  payloads carry no `session_id`, so every headless session shares
+  the literal `unknown` sentinel bucket in `~/.attune`. The first
+  fire anywhere (here: a direct diagnostic invocation at 03:38Z)
+  suppresses the rule for ALL headless sessions for 7 days.
+- Even unpolluted, a 30-session pilot would have had exactly ONE
+  ON-arm injection total — the A/B was structurally broken from the
+  first design, independent of plugin loading.
+- **Fix (shipped):** per-run `ATTUNE_AI_SENTINEL_DIR` isolation —
+  every session gets a virgin fixture-local sentinel dir, which also
+  stops benchmark runs writing sentinels into the real `~/.attune`
+  (the spec's isolation requirement, previously violated).
+- The underlying PRODUCT bug (headless users get each JIT rule once
+  per 7 days machine-wide) is flagged as its own task, out of this
+  spec's scope.
+
+Verification path: one $0.15 zsh ON probe should now show `inj j1`
+and a fresh telemetry event; then the pilot re-run (~$6) measures a
+real Δp for the first time.
