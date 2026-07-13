@@ -14745,3 +14745,50 @@ def ", start_idx + 1)` for module-
   truncates at the first `]` inside specs like `bandit[toml]` and
   fabricates "missing" deps — parse line-based, as
   `test_extras_honesty.py`'s docstring already warns.
+- **The starter-reconciler resolves bare `#N` references against the
+  PRIMARY repo — a handoff's cross-repo `owner/repo#N` reference can
+  be misreported (e.g. "CLOSED" for an issue that is OPEN in the repo
+  the handoff actually named)**: hit 2026-07-13 morning brief. The
+  handoff named umbrella issue `Smart-AI-Memory/attune#49`
+  (spec-status drift, OPEN); the reconciler line said "#49 CLOSED"
+  because it resolved #49 against attune-ai, where that number is a
+  long-closed item. Acting on the reconciler verdict would have
+  dropped the shortlist's #1 work item as "already done". Rule: the
+  reconciler's PR/issue verdicts are trustworthy only for
+  primary-repo references; for any handoff reference qualified with
+  another repo (or `attune #N` shorthand), re-verify with an explicit
+  `gh ... --repo <owner>/<repo>` before treating MERGED/CLOSED as
+  fact. Same family as "verify-first release gates" — a green/red
+  label from tooling is a claim, not evidence, when the tool's
+  default scope may differ from the reference's.
+
+- **A stash-chip `[note]` that reads like a terse instruction may BE
+  a mid-turn user message — check attribution before `/recall
+  drop`**: Claude Code surfaces messages the user sends mid-turn
+  INSIDE the running turn, often only alongside the next tool
+  result — so the FIRST visible trace of a real instruction can be
+  its echo in the Stop-hook stash chip. Hit 2026-07-13: the chip
+  showed `[note] "sounds like we should fix this..."`; I read it as
+  extractor noise and started a `/recall drop` on what was actually
+  Patrick's reply to a finding in my summary (the real message
+  surfaced one tool result later). Rules: (a) an
+  instruction-shaped or reply-shaped stash entry is possible unseen
+  user input — re-read the turn before classifying it as noise;
+  (b) never drop a stashed note you cannot attribute; (c) when a
+  drop is already in flight and new context reframes the entry,
+  abort the drop — deletion never has to win a race.
+
+- **A spec `Status:` line inside a blockquote is PARSER-INVISIBLE —
+  the spec silently reads as "no status" (in-flight) forever**:
+  `_STATUS_LINE` in `plugin/hooks/_state.py` matches
+  `^\s*\**\s*Status...` and a leading `> ` fails the match, so
+  `> **Status: scaffolding — ...**` contributes NOTHING — the audit
+  shows `—` for the spec even though a human sees a status right
+  there. Two attune-rag specs (api-v0.2.0-cut, v1.0.0-release) sat
+  unparseable for ~2 months until the 2026-07-13 truth sweep.
+  Rules: (a) status lines go on a PLAIN line, never quoted; (b)
+  when the audit shows `—` but the file visibly has a status, look
+  for a prefix (blockquote, list marker) swallowing the match; (c)
+  when FIXING such a spec, replace the whole stale blockquote — a
+  new plain line above a contradicting quoted status confuses the
+  next reader.

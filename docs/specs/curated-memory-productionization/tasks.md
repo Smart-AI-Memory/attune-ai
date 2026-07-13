@@ -1,6 +1,6 @@
 # Tasks: Curated-Memory Productionization
 
-**Status:** drafted 2026-07-02 (from the memory-suite audit session)
+**Status:** complete (2026-07-03) — R1/R3/R4 shipped with live receipts (#1212, #1229; D5/D7/D9/D10); riders T4/T5/T7 done 2026-07-02; T6 drift probe live in `session_hydrate.py` with redis made a core dep 2026-07-04; R2 (on-demand) served by the ratified FT.SEARCH query-first discipline. Substrate later absorbed by memory-unification (#1239), serving/promotion contracts preserved.
 **Requirements:** [requirements.md](requirements.md)
 **Decisions:** [decisions.md](decisions.md) — D8 records the audit
 that produced the rider tasks (T4–T7).

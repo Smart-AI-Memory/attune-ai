@@ -5,7 +5,7 @@
 > Execution plan for Claude Code:
 > [.claude/plans/fable-premium-tier.md](../../../.claude/plans/fable-premium-tier.md).
 
-**Status**: in-review
+**Status:** in-progress (2026-07-13) — approved 2026-07-10 (requirements + design, PR #1303); executing in sibling checkout ~/attune-ai-fable on feat/fable-premium-tier — tasks 1–4 committed, tasks 5–9 pending
 
 ## Implementation order
 

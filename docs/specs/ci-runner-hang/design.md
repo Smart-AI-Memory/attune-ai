@@ -1,6 +1,6 @@
 # Design: CI Runner-Hang Root Cause and Fix
 
-**Status:** draft
+**Status:** closed (2026-07-02) — D3/PR #1213: cause is xdist/execnet-internal, not ours to fix; Phase-1 diagnostics shipped (#874: hang dump + job timeouts); passive monitoring with reopen criteria in decisions.md; exit-139 class split to windows-exit139-segfault (2026-07-06)
 **Created:** 2026-06-14
 **Requirements:** [requirements.md](requirements.md)
 
