@@ -14695,3 +14695,34 @@ def ", start_idx + 1)` for module-
   — mine the artifact before re-spending (here the kill landed after
   session-init, so the hook-lifecycle evidence was complete while the
   paid model turn never ran).
+
+- **Any dedup/suppression gate keyed by a POSSIBLY-ABSENT id collapses
+  into one shared bucket — jit_recall's surface-once sentinel is keyed
+  (session_id, rule) but headless payloads carry NO session_id, so all
+  `claude -p` sessions share the literal "unknown" bucket: the first
+  fire anywhere suppresses that rule machine-wide for the 7-day TTL**:
+  final root cause of the trap-battery silent-recall saga (2026-07-13;
+  two invalidated pilots). Consequences: (a) benchmarks driving
+  headless sessions MUST isolate the gate per run
+  (`ATTUNE_AI_SENTINEL_DIR` to a fixture-local dir — also stops runs
+  writing sentinels into the real `~/.attune`); (b) a DIRECT hook
+  invocation for diagnosis also lands in the shared bucket and
+  poisons later headless runs — clean up diagnostic sentinels;
+  (c) general rule: when a dedup key has a fallback default, ask what
+  population shares that default before trusting per-X semantics.
+  Product-side fix spawned as its own task.
+
+- **Injection surface bounds the measurand: PreToolUse-injected
+  context reaches the model WHILE THE CALL PROCEEDS, so a JIT-carried
+  rule can never prevent the first occurrence of the mistake it
+  guards — it can only improve RECOVERY; first-occurrence prevention
+  is only measurable for UserPromptSubmit-carried rules**: the
+  trap-battery reframe (2026-07-13, results doc FINAL REFRAME).
+  Corollaries: (a) an eval that scores "did the failure signature
+  occur" on a JIT-carried rule measures a structural zero — score
+  retries-to-recovery / wrong-diagnosis / time-after-error instead;
+  (b) a JIT rule whose match filter targets the MISTAKE SHAPE
+  (unquoted =word) correctly stays silent for agents that pre-quote —
+  zero injections with hooks alive means "no decision point hit", not
+  "arms broken" (receipt hierarchy: hook lifecycle events = alive,
+  banners = injected, telemetry = fire-only log).
