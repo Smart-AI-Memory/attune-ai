@@ -57,3 +57,29 @@ Run by Patrick from a plain terminal (30/30 sessions ok, ~$5.65 —
   interpretable.
 - Phase-2 cost projection corrected: ~$0.19/session mean → 2
   classes × 20/cell ≈ 80 sessions ≈ $15.
+
+## 2026-07-13 (later, same night) — CORRECTION: pilot invalid as A/B
+
+The injection diagnostic invalidated the arm comparison: recall
+hooks never ran in the headless temp-dir sessions (zero events in
+`~/.attune/telemetry/memory_events.jsonl` for all 37 sessions; both
+arms effectively OFF). Full chain + retractions in
+`benchmarks/trap_battery_results_2026-07-13.md` (CORRECTION section).
+
+- **zsh-eqword GO → GO, re-based.** Δp +40% retracted (noise on
+  identical arms). What survives: the trap discriminates unaided
+  (3/14 pooled) and its scorer is receipt-proven. It stays the lead
+  phase-2 class — but Δp is still unmeasured.
+- **git-commit-verify-landed NO-GO — unchanged** (0/14 pooled).
+- **question-shape SWAP — unchanged and now structural**: `Read`
+  isn't in the JIT matcher and the prompt scores below the
+  lesson-recall floor; the ON arm had zero injection paths by
+  construction. Finding re-filed to the recall-triggering axis
+  (memory-recall-eval sibling).
+- **Blocking phase-2 precondition:** get recall hooks running in
+  harness sessions and verify via the telemetry-window receipt now
+  built into the harness (ARM-VALIDATION FAILURE on zero events).
+- Meta: the arm-receipt discipline ("registered ≠ working" applied
+  to benchmark arms) caught this the same night it shipped — the
+  detection feature's first real catch was the pilot that motivated
+  it.

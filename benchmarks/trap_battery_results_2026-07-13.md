@@ -77,3 +77,55 @@ arm.
 4. **Cost model correction.** ~$0.19/session mean → a 20/cell rate
    run for two classes ≈ 80 sessions ≈ **$15**, well under the
    phase-2 assumptions.
+
+---
+
+## CORRECTION (2026-07-13, same night) — pilot INVALID as an A/B; Δp retracted
+
+The injection-detection diagnostic (7 further sessions + direct hook
+execution + telemetry audit) established, in order:
+
+1. **stream-json does not echo hook `additionalContext`** — the
+   transcript-marker scan above is structurally blind. Detection was
+   rebuilt on the authoritative channel:
+   `~/.attune/telemetry/memory_events.jsonl` (every recall fire
+   appends a line).
+2. **The recall hooks are plugin-level and DO work from a temp dir**
+   (direct execution of `jit_recall.py` with the zsh trap payload
+   from a scratch dir returned the zsh-eqword rule; with
+   `ATTUNE_JIT_RECALL=0` it returned nothing — the kill-switch
+   receipt is good).
+3. **But the telemetry log shows ZERO recall events from any of the
+   37 headless fixture sessions.** Every event in the window belongs
+   to interactive sessions or the direct hook tests. The plugin's
+   hooks never ran inside `claude -p` sessions in temp dirs — so
+   **both arms were effectively OFF for the entire pilot**, and every
+   Δp above is sampling noise on identical arms.
+
+**Retractions/re-readings:**
+
+- `zsh-eqword` Δp "+40%" → **retracted**. With both arms unaided,
+  the pooled firing rate is 3/14 (~21%); the observed 0/7-vs-3/7
+  split has p≈0.19 under a common rate — consistent with chance.
+- The trap DESIGNS retain their validated properties: zsh-eqword
+  discriminates unaided (~21% firing with no lesson present),
+  git-commit-verify-landed does not fire at all (0/14 pooled),
+  question-shape fires ~100% unaided.
+- `question-shape` gains a STRUCTURAL diagnosis independent of the
+  arms problem: its only allowed tool is `Read`, which the JIT
+  matcher (`AskUserQuestion|Bash|Edit`) does not cover, and direct
+  execution of `lesson_recall.py` on the trap prompt returns nothing
+  (below the 8.0 score floor). Even with hooks running, the ON arm
+  had zero injection paths. SWAP verdict stands, with the finding
+  re-filed to the recall-triggering axis.
+
+**Phase-2 preconditions (blocking):**
+
+1. Make the recall hooks actually run in harness sessions
+   (candidate: run fixtures under a trusted/plugin-enabled path;
+   discriminator test: one headless session cwd'd in the repo, then
+   check the telemetry log for its events).
+2. The harness now reads the telemetry log over the run window and
+   declares ARM-VALIDATION FAILURE on zero events with an ON arm —
+   re-running tonight's pilot under the fixed harness would have
+   refused to report Δp.

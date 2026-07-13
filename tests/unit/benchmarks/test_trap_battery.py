@@ -421,3 +421,50 @@ class TestValidateArms:
         report = render_report(aggregate_cells(results), results, markdown=False)
         assert "ARM-VALIDATION FAILURE" in report
         assert "ARM-VALIDATION WARNING" in report
+
+
+class TestTelemetryArmReceipt:
+    def _log(self, tmp_path, rows):
+        p = tmp_path / "memory_events.jsonl"
+        p.write_text("\n".join(json.dumps(r) for r in rows))
+        return p
+
+    def test_counts_events_in_window(self, tmp_path):
+        from benchmarks.trap_battery import count_memory_events
+
+        log = self._log(
+            tmp_path,
+            [
+                {"ts": "2026-07-13T01:00:00Z", "event": "jit_recall"},
+                {"ts": "2026-07-13T03:00:00Z", "event": "jit_recall"},
+                {"ts": "2026-07-13T04:00:00Z", "event": "session_recall"},
+            ],
+        )
+        assert count_memory_events("2026-07-13T02:00:00", log_path=log) == 2
+
+    def test_unreadable_log_is_minus_one(self, tmp_path):
+        from benchmarks.trap_battery import count_memory_events
+
+        assert count_memory_events("2026-07-13", log_path=tmp_path / "nope.jsonl") == -1
+
+    def test_zero_events_with_on_arm_is_failure(self):
+        from benchmarks.trap_battery import telemetry_arm_receipt
+
+        msg = telemetry_arm_receipt(0, ["on", "off"])
+        assert msg is not None and "INVALID" in msg
+
+    def test_zero_events_off_only_is_fine(self):
+        from benchmarks.trap_battery import telemetry_arm_receipt
+
+        assert telemetry_arm_receipt(0, ["off"]) is None
+
+    def test_positive_count_is_clean(self):
+        from benchmarks.trap_battery import telemetry_arm_receipt
+
+        assert telemetry_arm_receipt(7, ["on", "off"]) is None
+
+    def test_unreadable_is_warning_not_failure(self):
+        from benchmarks.trap_battery import telemetry_arm_receipt
+
+        msg = telemetry_arm_receipt(-1, ["on"])
+        assert msg is not None and "WARNING" in msg and "INVALID" not in msg

@@ -14653,3 +14653,29 @@ def ", start_idx + 1)` for module-
   first); and `gh run watch ... --exit-status | tail` launders the
   exit code through the pipe — read the conclusion from `gh run view
   --json conclusion`, never the pipeline's exit.
+
+- **CORRECTION + extension (2026-07-13, same night) to the
+  "memory-injection surfaces have GEOMETRY" lesson above — the
+  transcript-marker receipt described there DOES NOT WORK, and the
+  pilot's Δp was retracted**: three stacked findings from the
+  diagnostic. (1) stream-json does NOT echo hook `additionalContext`
+  into emitted events — transcript scans for injection banners are
+  structurally blind; the authoritative in-band receipt is the recall
+  hooks' own telemetry log (`~/.attune/telemetry/memory_events.jsonl`,
+  one line per fire with session_id/tool/rules). (2) Plugin recall
+  hooks do not run AT ALL inside headless `claude -p` sessions in
+  temp dirs (zero telemetry events across 37 fixture sessions, while
+  direct execution of the same hook scripts from the same temp dir
+  injects fine) — so an env-toggle A/B ran with BOTH arms effectively
+  OFF and the "+40% Δp" was noise on identical arms. Before ANY
+  hook-dependent A/B: run one probe session, then check the telemetry
+  log for that session's events — behavioral deltas are NOT evidence
+  the toggle worked (0/7 vs 3/7 felt like signal; p≈0.19). (3) The
+  question-shape trap was structurally uninstrumentable: its only
+  allowed tool (`Read`) isn't in the JIT matcher
+  (`AskUserQuestion|Bash|Edit`) and its prompt scores below the
+  lesson-recall floor — check BOTH the matcher list and a direct
+  `lesson_recall.py` dry-run against the prompt when designing
+  recall-dependent evals. Meta: the arm-receipt discipline caught all
+  of this the same night the harness shipped; the correction cost 7
+  sessions (~$1.15) and one telemetry read.

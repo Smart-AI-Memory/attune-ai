@@ -519,6 +519,62 @@ def aggregate_cells(results: list[TrapRunResult]) -> dict[str, dict[str, Cell]]:
     return cells
 
 
+#: The recall hooks' own event log — the authoritative in-band receipt
+#: that injections happened. Discovered 2026-07-13: stream-json does
+#: NOT echo hook additionalContext into events, so transcript markers
+#: are structurally blind; the telemetry log is ground truth (every
+#: jit_recall/lesson_recall fire appends a line — see
+#: plugin/hooks/_memory_telemetry.py).
+MEMORY_EVENTS_LOG = Path.home() / ".attune" / "telemetry" / "memory_events.jsonl"
+
+
+def count_memory_events(since_iso: str, log_path: Path | None = None) -> int:
+    """Count recall-telemetry events at/after ``since_iso`` (UTC ISO).
+
+    Returns -1 when the log is unreadable (treated as "no receipt
+    available", reported but not fatal).
+    """
+    path = log_path or MEMORY_EVENTS_LOG
+    try:
+        lines = path.read_text().splitlines()
+    except OSError:
+        return -1
+    n = 0
+    for line in lines:
+        try:
+            ev = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(ev, dict) and ev.get("ts", "") >= since_iso:
+            n += 1
+    return n
+
+
+def telemetry_arm_receipt(n_events: int, arms: list[str]) -> str | None:
+    """Interpret the run-window telemetry count as an arms receipt.
+
+    The 2026-07-13 pilot lesson: plugin recall hooks may not run AT ALL
+    in headless temp-dir sessions, making both arms identical no matter
+    what the env toggles say. Zero events across a run that included an
+    ON arm means the A/B measured nothing about memory.
+    """
+    if "on" not in arms:
+        return None
+    if n_events < 0:
+        return (
+            "ARM-VALIDATION WARNING — recall telemetry log unreadable "
+            f"({MEMORY_EVENTS_LOG}); no injection receipt is available."
+        )
+    if n_events == 0:
+        return (
+            "ARM-VALIDATION FAILURE — zero recall-telemetry events during "
+            "the run window: the recall hooks never ran in these sessions, "
+            "so BOTH arms were effectively OFF and arm deltas are INVALID "
+            "(2026-07-13 pilot failure mode)."
+        )
+    return None
+
+
 def validate_arms(results: list[TrapRunResult]) -> list[str]:
     """Receipt that the arm toggles are honored ("registered ≠ working").
 
@@ -674,6 +730,7 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
 
+    run_start_iso = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())
     results: list[TrapRunResult] = []
     for repeat in range(args.repeats):
         # Alternate arm order per repeat (cache-warmth symmetry, as in
@@ -699,7 +756,12 @@ def main(argv: list[str] | None = None) -> int:
                 results.append(r)
 
     cells = aggregate_cells(results)
+    n_events = count_memory_events(run_start_iso)
+    receipt = telemetry_arm_receipt(n_events, arms)
     print(render_report(cells, results, markdown=False))
+    print(f"\nrecall-telemetry events in run window: {n_events}")
+    if receipt:
+        print(receipt)
     if args.markdown:
         print()
         print(render_report(cells, results, markdown=True))
