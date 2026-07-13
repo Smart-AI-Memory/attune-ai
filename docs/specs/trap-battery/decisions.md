@@ -192,3 +192,29 @@ Build gate is OPEN: the acceptance-criteria list in design.md
 JIT rule keying for the Edit path) is the build work-list. The
 ~$8-10 pilot itself still requires an explicit stated-cost go at
 execution time.
+
+## 2026-07-13 (build) — Phase-2 harness BUILT; receipts green pre-pilot
+
+Build executed per the approved design ($30 session go covers the
+pilot). Decisions made at build time:
+
+- **Finding-2 fix shape:** `zsh-status-readonly` mirrored under
+  `"Edit"` with the tight `status=$(` filter (own rule_id —
+  `zsh-status-readonly-edit`; ids are globally unique by tested
+  invariant). The eqword rule is NOT mirrored: no low-noise Edit
+  filter exists (`===` fires on markdown), so R1 stays Bash-mediated
+  (`allowed_tools` without Edit).
+- **Retired trap code removed** (git-commit-verify-landed fixture +
+  question-shape scorer live in git history, not the file).
+- **Reachability receipts wired as `--reachability`** (free, direct
+  hook execution from fixture cwds). First run immediately caught a
+  real gap: P2's prompt never mentioned the rebase, and the
+  UserPromptSubmit hook only sees the PROMPT — the fixture file's
+  content is invisible to retrieval. Prompt re-engineered to the
+  lived shape (user relays the warning); both receipts now PASS,
+  P2 surfacing exactly the target lesson ("interrupted compound
+  command — re-establish actual git state").
+- Refusal is REAL (exit 3, no tables), cost cap enforced in the run
+  loop (`--max-cost-usd`, default 12), decision-point detection is
+  arm-symmetric (simulates the rules' own filters over drafted tool
+  inputs).
