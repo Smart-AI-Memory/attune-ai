@@ -10,6 +10,7 @@ import re
 from collections.abc import AsyncGenerator
 from typing import Any
 
+from ..fable_call import acreate_with_fable
 from .base import BaseLLMProvider, LLMResponse
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,11 @@ logger = logging.getLogger(__name__)
 # future opus-4-9 / opus-4-1x. Older models (Opus 4.6-, Sonnet, Haiku)
 # still accept these params, so they're left untouched.
 _OPUS_NO_SAMPLING_RE = re.compile(r"opus-4-(?:[7-9]|\d{2,})")
+
+# Fable models reject explicit sampling params AND any explicit thinking
+# config (adaptive-by-default; even {"type": "disabled"} is a 400).
+# Matches attune.model_tiers.fable_extras' model detection.
+_FABLE_PREFIX = "claude-fable"
 
 
 def _cache_control() -> dict[str, str]:
@@ -47,11 +53,33 @@ def _normalize_api_kwargs_for_model(api_kwargs: dict[str, Any]) -> None:
 
     This provider defaults ``temperature=0.7`` and can set extended
     thinking, both of which Opus 4.7+ reject with a 400 — so without this,
-    any premium-tier (Opus 4.8) call through this path would fail. Strip
-    the sampling params and convert ``enabled`` thinking to ``adaptive``
-    for those models; leave older models that still accept them untouched.
+    any premium-tier call through this path would fail. Strip the sampling
+    params and convert ``enabled`` thinking to ``adaptive`` for those
+    models; leave older models that still accept them untouched.
+
+    Fable models (``claude-fable-*``) go further: they reject ANY explicit
+    ``thinking`` config (adaptive-by-default — even ``{"type": "disabled"}``
+    is a 400), so both the sampling params and the whole thinking key are
+    stripped, each with a logged warning (design §4a: strip + warn, don't
+    raise).
     """
-    if not _OPUS_NO_SAMPLING_RE.search(api_kwargs.get("model", "")):
+    model = api_kwargs.get("model", "")
+    if model.startswith(_FABLE_PREFIX):
+        for param in ("temperature", "top_p", "top_k"):
+            if api_kwargs.pop(param, None) is not None:
+                logger.warning(
+                    "Dropped %s for %s — fable models reject explicit sampling params",
+                    param,
+                    model,
+                )
+        if api_kwargs.pop("thinking", None) is not None:
+            logger.warning(
+                "Dropped explicit thinking config for %s — fable is "
+                "adaptive-by-default and rejects thinking overrides",
+                model,
+            )
+        return
+    if not _OPUS_NO_SAMPLING_RE.search(model):
         return
     for param in ("temperature", "top_p", "top_k"):
         api_kwargs.pop(param, None)
@@ -205,11 +233,16 @@ class AnthropicProvider(BaseLLMProvider):
         # kwargs merge so a caller-supplied temperature is also stripped.
         _normalize_api_kwargs_for_model(api_kwargs)
 
-        # Call Anthropic API (async with AsyncAnthropic) with typed error handling
+        # Call Anthropic API (async with AsyncAnthropic) with typed error
+        # handling. Fable models route through the beta namespace with the
+        # server-side fallback opt-in, surface refusals as
+        # ModelRefusalError, and re-raise a 400 with the retention hint —
+        # all inside acreate_with_fable; non-fable models take the exact
+        # pre-tier code path (plain messages.create, byte-identical).
         try:
             import anthropic
 
-            response = await self.client.messages.create(**api_kwargs)  # type: ignore[call-overload]
+            response = await acreate_with_fable(self.client, **api_kwargs)  # type: ignore[call-overload]
         except anthropic.RateLimitError as e:
             logger.warning(f"Rate limited by Anthropic API: {e}")
             raise
