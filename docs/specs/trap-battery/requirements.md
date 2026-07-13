@@ -7,8 +7,8 @@
 > stable, doubles as the memory system's regression suite.
 
 **Status:** in-progress (2026-07-13) — phase 1 executed (pilot
-complete, verdicts in decisions.md); phase 2 redesign drafted in
-[design.md](design.md), awaiting review
+complete, verdicts in decisions.md); phase 2 design APPROVED
+2026-07-13 ([design.md](design.md)) — build gate open
 **Owner:** Patrick + agent
 **Related:**
 

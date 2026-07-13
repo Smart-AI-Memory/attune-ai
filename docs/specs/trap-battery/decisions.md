@@ -173,3 +173,22 @@ injection-surface rule or any ratified verdict; budget arithmetic;
 all carried-forward harness capabilities (`--plugin-dir`,
 `--include-hook-events`, `--save-transcripts`, sentinel isolation,
 receipt hierarchy) confirmed real in code.
+
+## 2026-07-13 (same day) — Phase-2 design APPROVED (Patrick)
+
+Approved via the batched review form, all three open questions
+resolved with the recommended options:
+
+- **OQ1 seeding:** fixture-embedded error (task = "run it and make
+  it work"); sidesteps handled by the exclusion rule + ~25%
+  oversampling.
+- **OQ2:** `wrong_diagnosis` stays as an exploratory scorer
+  (reported, never gating).
+- **OQ3:** paid pilot runs post-build on a stated-cost go — no
+  freeze hold (manual, budget-capped runs are freeze-compatible).
+
+Build gate is OPEN: the acceptance-criteria list in design.md
+(including the two blocking fixes — fixture corpus resolution and
+JIT rule keying for the Edit path) is the build work-list. The
+~$8-10 pilot itself still requires an explicit stated-cost go at
+execution time.

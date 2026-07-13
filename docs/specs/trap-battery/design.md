@@ -1,7 +1,8 @@
 # Design — Trap Battery Phase 2 (re-derived under the injection-surface rule)
 
-**Status:** draft (2026-07-13) — for Patrick's review; build gated on
-approval
+**Status:** approved (2026-07-13, Patrick — all three open questions
+resolved same day; see §Open questions and decisions.md); build gate
+OPEN, paid pilot still needs a stated-cost go
 **Owner:** Patrick + agent
 **Inputs:** `benchmarks/trap_battery_results_2026-07-13.md` (FINAL
 REFRAME), decisions.md 2026-07-13 entries, requirements.md swap
@@ -201,13 +202,12 @@ still waits for Patrick's explicit go.
 - Cost-accumulator abort honoring the run budget (finding 6).
 - Results doc template separates the two tracks' tables.
 
-## Open questions (for review)
+## Open questions — RESOLVED (Patrick, 2026-07-13)
 
-1. Recovery seeding shape: fixture-embedded error (recommended above)
-   vs "run exactly this command" prompting — the former is more
-   natural but gives the agent room to sidestep the decision point;
-   the exclusion rule handles that, at some n cost.
-2. Keep `wrong_diagnosis` as exploratory, or drop it until a cleaner
-   deterministic definition exists?
-3. Timing of the paid pilot: any time post-approval with a stated-cost
-   go, or hold until after the 07-27 freeze ends?
+1. Recovery seeding shape: **fixture-embedded error** (as
+   recommended). Sidesteps are handled by the exclusion rule plus the
+   ~25% oversampling headroom.
+2. `wrong_diagnosis`: **keep as exploratory** — reported, never
+   gating.
+3. Paid pilot timing: **post-build, on a stated-cost go** — manual
+   budget-capped runs don't violate the 07-27 freeze; no hold.
