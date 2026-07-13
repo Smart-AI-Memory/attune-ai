@@ -108,3 +108,68 @@ next paid run — the ~$6 re-run is deferred until then (no point
 measuring a structurally-zero Δp). Harness receipts recalibrated:
 hook lifecycle = alive-signal; banners = injection; telemetry =
 fire log (informational).
+
+## 2026-07-13 — Phase-2 redesign DRAFTED (design.md); awaiting review
+
+Design doc added ([design.md](design.md)) executing the standing
+injection-surface rule. What it decides:
+
+- **Two tracks, two scorer families.** Prevention track
+  (UserPromptSubmit-carried: `stale-claim`,
+  `unverified-state-warning`) keeps occurrence Δp. Recovery track
+  (JIT-carried: `zsh-eqword-recovery`, `zsh-status-readonly`) scores
+  recovery differential only — recovered, retries-to-recovery,
+  tokens/wall-after-error; NO occurrence column for JIT traps.
+- **Recovery traps are seeded**, not left to chance: the fixture
+  embeds the error (unaided drafting fired only ~21% pooled);
+  sessions that never hit the decision point are excluded from the
+  recovery denominator and reported separately.
+- **Recall-reachability receipt is a paid-run precondition** for
+  prevention traps (`lesson_recall.py` on the trap prompt must
+  return the target rule ≥ floor) — the question-shape postmortem,
+  institutionalized.
+- **question-shape swapped out** (finding re-filed to
+  memory-recall-eval decisions.md 2026-07-13);
+  **git-commit-verify-landed parked** pending a faithful
+  silent-skip reproduction.
+- Budget: pilot 4×2×5 ≈ $8–10 with per-track gates, then 20+/cell
+  rate run ≈ $15–30. Paid runs remain manual, budget-capped,
+  stated-cost-go — the ~$6 re-run stays deferred until this design
+  is approved and built.
+
+Open questions (design §Open questions): seeding shape,
+wrong_diagnosis keep/drop, pilot timing vs the 07-27 freeze.
+
+## 2026-07-13 (same day) — Design adversarially reviewed; 2 blocking gaps folded in
+
+An independent adversarial pass (grep-verified against the harness,
+hooks, and live zsh) found the draft **not buildable as written** —
+two zero-injection-path bugs of exactly the class the redesign
+guards against, now named as blocking build work in design.md:
+
+1. **Prevention corpus resolution** — `lesson_recall.py` walks up
+   from the session cwd; a tempfile fixture has no
+   `.claude/lessons.md` ancestor, so every ON-arm prevention session
+   would no-op silently. Fix: pin `ATTUNE_LESSONS_FILE` in
+   `build_env` (or plant the corpus); reachability receipts must run
+   under FIXTURE-session resolution, not repo-cwd.
+2. **JIT rule keying** — zsh rules live only under `"Bash"` in
+   `_recall_map.py`; the likely Read→Edit recovery path never
+   consults them. Fix: mirror under `"Edit"` or constrain
+   `allowed_tools`.
+
+Also folded in: refuse-to-report is today warn-only (make it real);
+scorer regex must accept the script-name signature prefix
+(`check.sh:3: == not found` — verified live; `zsh:1:` only appears
+in the `zsh -c` shape); `#!/bin/zsh` shebang + `./check.sh`
+invocation pinned (assignment to `status` verified fatal under zsh,
+harmless under sh/bash); arm-symmetric decision-point detector
+(banners exist only in the ON arm); cost-accumulator abort
+(`ATTUNE_MAX_BUDGET_USD` is not honored by raw `claude -p`
+subprocesses today); ~25% oversampling headroom for exclusions.
+
+Verified-clean by the same pass: no contradiction with the
+injection-surface rule or any ratified verdict; budget arithmetic;
+all carried-forward harness capabilities (`--plugin-dir`,
+`--include-hook-events`, `--save-transcripts`, sentinel isolation,
+receipt hierarchy) confirmed real in code.
