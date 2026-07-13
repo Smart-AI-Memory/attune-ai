@@ -14908,3 +14908,34 @@ def ", start_idx + 1)` for module-
   "auto-merge-safe class merges a PR on its CURRENT diff within
   minutes" lesson from the stranded-commits angle to the
   intent-to-hold angle.
+
+- **The lessons.md tail is a serial-conflict magnet on multi-session
+  days — a lessons-appending PR re-conflicts EVERY time any other PR
+  appends first; resolve-union THEN arm auto-merge in the same
+  breath**: hit twice within one hour on #1347 (2026-07-13 evening) —
+  resolved against main after #1351's lessons append, pushed, and
+  before its checks finished #1356 appended again → DIRTY again,
+  second identical resolution. The existing "resolution is
+  mechanical" lesson covers HOW (union: main's tail stays, your
+  lesson moves to the end); the new bit is the RACE: a resolved
+  lessons PR without auto-merge armed loses to the next session's
+  merge and re-dirties indefinitely. Rule: after pushing a lessons
+  conflict resolution, `gh pr merge --auto --squash` immediately —
+  don't wait to eyeball checks; the docs-only lane merges it the
+  moment it's green, closing the window. Same applies to any
+  append-at-tail file shared across parallel sessions.
+
+- **The worktree-path-guard hook blocks cross-tree Edit/Write — the
+  compliant move is to bring the BRANCH to your session's worktree,
+  not to bypass via Bash**: hit 2026-07-13 resolving #1351's
+  conflicts — the branch was checked out in another session's
+  worktree, and mid-merge Edits there were blocked (session worktree
+  ≠ target worktree). Recipe: `git -C <other-wt> merge --abort`
+  (clear its conflicted state), `git -C <other-wt> checkout --detach`
+  (frees the branch; git forbids one branch in two worktrees), then
+  `git checkout <branch>` in YOUR worktree and redo the merge there —
+  Edits now pass the guard and the session's own uncommitted bits
+  (e.g. a pending lessons append) can fold into the same resolution.
+  Don't sed/python the files via Bash to dodge the guard — it exists
+  to catch exactly the wrong-tree writes the worktree lessons above
+  document; route around it by relocating the work, not the write.
