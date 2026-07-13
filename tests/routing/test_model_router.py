@@ -89,7 +89,7 @@ class TestModelRouter:
     def test_route_premium_task(self, router):
         """Test routing premium task to premium model."""
         model = router.route("coordinate")
-        assert model == "claude-opus-4-8"  # Opus 4.5
+        assert model == "claude-fable-5"  # Fable 5 (premium tier)
 
     # test_route_with_openai_provider deleted - OpenAI removed in v5.0.0 (Anthropic-only)
     # test_route_with_ollama_provider deleted - Ollama removed in v5.0.0 (Anthropic-only)
@@ -129,8 +129,8 @@ class TestModelRouter:
         """Test cost estimation for premium tier."""
         cost = router.estimate_cost("coordinate", input_tokens=10000, output_tokens=2000)
 
-        # Opus: $5/M input, $25/M output
-        expected = (10000 / 1000) * 0.005 + (2000 / 1000) * 0.025
+        # Fable 5: $10/M input, $50/M output
+        expected = (10000 / 1000) * 0.010 + (2000 / 1000) * 0.050
         assert cost == pytest.approx(expected, rel=0.01)
 
     def test_compare_costs(self, router):
@@ -152,7 +152,7 @@ class TestModelRouter:
         assert tier == ModelTier.PREMIUM
 
         model = router.route("my_special_task")
-        assert model == "claude-opus-4-8"  # Opus 4.5
+        assert model == "claude-fable-5"  # Fable 5 (premium tier)
 
     def test_add_task_routing(self, router):
         """Test adding custom routing dynamically."""

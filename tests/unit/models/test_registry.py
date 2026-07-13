@@ -222,7 +222,7 @@ class TestModelRegistry:
     def test_anthropic_models(self):
         """Teaching Pattern: Testing specific provider models.
 
-        Anthropic should have Haiku, Sonnet, and Opus.
+        Anthropic should have Haiku, Sonnet, and Fable.
         """
         from attune.models.registry import MODEL_REGISTRY
 
@@ -230,7 +230,7 @@ class TestModelRegistry:
 
         assert "haiku" in anthropic["cheap"].id.lower()
         assert "sonnet" in anthropic["capable"].id.lower()
-        assert "opus" in anthropic["premium"].id.lower()
+        assert "fable" in anthropic["premium"].id.lower()
 
 
 @pytest.mark.unit

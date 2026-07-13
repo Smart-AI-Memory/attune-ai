@@ -436,6 +436,19 @@ class AnthropicProvider(BaseLLMProvider):
     def get_model_info(self) -> dict[str, Any]:
         """Get Claude model information with extended context capabilities."""
         model_info = {
+            "claude-fable-5": {
+                # 1M-token context window; cache write $12.50 / read $1
+                # per MTok fall out of the 1.25x / 0.1x input derivation
+                # in calculate_actual_cost.
+                "max_tokens": 1000000,
+                "cost_per_1m_input": 10.00,
+                "cost_per_1m_output": 50.00,
+                "supports_prompt_caching": True,
+                # Adaptive reasoning — explicit thinking config is
+                # stripped by _normalize_api_kwargs_for_model.
+                "supports_thinking": True,
+                "ideal_for": "Frontier reasoning, premium interactive work",
+            },
             "claude-opus-4-8": {
                 "max_tokens": 200000,
                 "cost_per_1m_input": 5.00,

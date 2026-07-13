@@ -77,7 +77,7 @@ def cmd_sonnet_opus_analysis(args: Any) -> int:
         # Cost Savings Panel
         savings_text = Text()
         savings_text.append(f"Actual Cost: ${stats['actual_cost']:.2f}\n")
-        savings_text.append(f"Always-Opus Cost: ${stats['always_opus_cost']:.2f}\n")
+        savings_text.append(f"Always-Premium Cost: ${stats['always_opus_cost']:.2f}\n")
         savings_text.append(
             f"Savings: ${stats['savings']:.2f} ({stats['savings_percent']:.1f}%)\n",
             style="green bold",
@@ -125,7 +125,7 @@ def cmd_sonnet_opus_analysis(args: Any) -> int:
         print(f"  Fallback Rate: {stats['fallback_rate']:.1f}%")
         print("\nCost Savings:")
         print(f"  Actual Cost: ${stats['actual_cost']:.2f}")
-        print(f"  Always-Opus Cost: ${stats['always_opus_cost']:.2f}")
+        print(f"  Always-Premium Cost: ${stats['always_opus_cost']:.2f}")
         print(f"  Savings: ${stats['savings']:.2f} ({stats['savings_percent']:.1f}%)")
         print(f"  Avg Cost/Call (actual): ${stats['avg_cost_per_call']:.4f}")
         print(f"  Avg Cost/Call (all Opus): ${stats['avg_opus_cost_per_call']:.4f}")

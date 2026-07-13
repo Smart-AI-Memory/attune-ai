@@ -765,7 +765,7 @@ async def test_interact_with_fix_bug_routes_to_capable(mock_provider):
 
 @pytest.mark.asyncio
 async def test_interact_with_coordinate_routes_to_premium(mock_provider):
-    """Test that coordinate task routes to premium tier (Opus)"""
+    """Test that coordinate task routes to premium tier (Fable)"""
     with patch("attune.llm.core.AnthropicProvider", return_value=mock_provider):
         llm = EmpathyLLM(
             provider="anthropic",
@@ -781,7 +781,7 @@ async def test_interact_with_coordinate_routes_to_premium(mock_provider):
         )
 
         assert result["metadata"]["routed_tier"] == "premium"
-        assert "opus" in result["metadata"]["routed_model"].lower()
+        assert "fable" in result["metadata"]["routed_model"].lower()
 
 
 @pytest.mark.asyncio

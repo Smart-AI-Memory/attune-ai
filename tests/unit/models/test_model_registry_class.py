@@ -260,7 +260,7 @@ class TestGetModel:
         assert model is not None
         assert model.provider == "anthropic"
         assert model.tier == "premium"
-        assert "opus" in model.id.lower()
+        assert "fable" in model.id.lower()
 
     def test_get_model_invalid_provider_raises_error(self):
         """Test that invalid provider raises ValueError."""

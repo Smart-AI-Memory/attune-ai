@@ -125,7 +125,9 @@ class ModelInfo:
 MODEL_REGISTRY: dict[str, dict[str, ModelInfo]] = {
     # -------------------------------------------------------------------------
     # Anthropic Claude Models
-    # Intelligent fallback: Sonnet 5 → Opus 4.8 (~1.67x input cost: $3 → $5/M)
+    # Premium tier is Fable 5 (server-side opus-4-8 fallback rides in the
+    # request — see attune.model_tiers / llm.fable_call). Opus 4.8 stays
+    # resolvable by id via ADDITIONAL_MODELS below (batch premium target).
     # -------------------------------------------------------------------------
     "anthropic": {
         "cheap": ModelInfo(
@@ -149,16 +151,40 @@ MODEL_REGISTRY: dict[str, dict[str, ModelInfo]] = {
             supports_tools=True,
         ),
         "premium": ModelInfo(
-            id="claude-opus-4-8",
+            id="claude-fable-5",
             provider="anthropic",
             tier="premium",
-            input_cost_per_million=5.00,
-            output_cost_per_million=25.00,
-            max_tokens=8192,
+            # $10/$50 per MTok (prompt cache: $12.50/MTok write, $1/MTok
+            # read — derived as 1.25x / 0.1x input by cost calculators).
+            # 1M-token context window; 128K max output tokens.
+            input_cost_per_million=10.00,
+            output_cost_per_million=50.00,
+            max_tokens=128000,
             supports_vision=True,
             supports_tools=True,
         ),
     },
+}
+
+
+# Models that are real and priced but NOT tier-routed. Kept out of
+# MODEL_REGISTRY so tier lookups (get_model, get_models_by_tier,
+# DEFAULT_MODELS, ModelRouter.MODELS) see exactly one model per tier,
+# while by-id lookups (get_model_by_id, get_pricing_for_model,
+# cost_tracker.MODEL_PRICING) still resolve them. opus-4-8 remains the
+# batch premium target (anthropic_batch._batch_premium_model) and the
+# pricing anchor for pre-fable telemetry records.
+ADDITIONAL_MODELS: dict[str, ModelInfo] = {
+    "claude-opus-4-8": ModelInfo(
+        id="claude-opus-4-8",
+        provider="anthropic",
+        tier="premium",
+        input_cost_per_million=5.00,
+        output_cost_per_million=25.00,
+        max_tokens=8192,
+        supports_vision=True,
+        supports_tools=True,
+    ),
 }
 
 
@@ -216,8 +242,10 @@ class ModelRegistry:
                 if tier.value in provider_models
             ]
 
-        # Cache for get_model_by_id (model_id -> ModelInfo)
-        self._model_id_cache: dict[str, ModelInfo] = {}
+        # Cache for get_model_by_id (model_id -> ModelInfo).
+        # Seed with ADDITIONAL_MODELS first so tier-routed registry
+        # entries win on any id collision.
+        self._model_id_cache: dict[str, ModelInfo] = dict(ADDITIONAL_MODELS)
         for provider_models in self._registry.values():
             for model_info in provider_models.values():
                 self._model_id_cache[model_info.id] = model_info
@@ -299,7 +327,7 @@ class ModelRegistry:
             >>> premium_models = registry.get_models_by_tier("premium")
             >>> for model in premium_models:
             ...     print(f"{model.provider}: {model.id}")
-            anthropic: claude-opus-4-8
+            anthropic: claude-fable-5
 
         """
         return self._tier_cache.get(tier.lower(), [])
@@ -467,5 +495,5 @@ TIER_PRICING: dict[str, dict[str, float]] = {
         "input": 3.00,
         "output": 15.00,
     },  # Sonnet 5 pricing (std; intro $2/$10 until 2026-08-31)
-    "premium": {"input": 5.00, "output": 25.00},  # Opus 4.8 pricing
+    "premium": {"input": 10.00, "output": 50.00},  # Fable 5 pricing
 }
