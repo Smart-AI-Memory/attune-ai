@@ -175,6 +175,20 @@ def test_sentinel_written_after_emit(hook_mod, monkeypatch, capsys, tmp_path):
     assert all(s.name.startswith(".lesson-recalled-sess-1-") for s in sentinels)
 
 
+def test_no_identity_fails_open_and_writes_no_sentinel(hook_mod, monkeypatch, capsys, tmp_path):
+    """No session_id and no transcript_path: surface every time, write
+    NOTHING — never a shared 'unknown' bucket (the 2026-07-13
+    headless-collapse regression guard)."""
+    payload = _payload(MATCHING_PROMPT)
+    del payload["session_id"]
+    _, out1 = _run(hook_mod, monkeypatch, capsys, payload)
+    _, out2 = _run(hook_mod, monkeypatch, capsys, payload)
+    assert out1 != "" and out2 != ""  # fail-open: fires both times
+    base = tmp_path / "sentinels"
+    leftover = [p.name for p in base.iterdir()] if base.is_dir() else []
+    assert leftover == []
+
+
 def test_child_hit_sentinels_on_parent_lesson(hook_mod, monkeypatch, capsys, tmp_path):
     """A child-doc hit must gate on the PARENT lesson id, so the same
     mega-lesson isn't re-surfaced via a different child."""

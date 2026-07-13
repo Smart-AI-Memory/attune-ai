@@ -503,12 +503,32 @@ class TestSessionSentinelPath:
         assert path.parent == tmp_path
         assert ".." not in path.name
 
-    def test_unknown_session_id(
+    def test_no_session_key_returns_none(
         self, tmp_path: Path, state_mod, monkeypatch: pytest.MonkeyPatch
     ) -> None:
+        """No identity -> None, never a shared 'unknown' bucket (the
+        2026-07-13 headless-collapse regression guard)."""
         monkeypatch.setenv("ATTUNE_AI_SENTINEL_DIR", str(tmp_path))
-        path = state_mod.session_sentinel_path(None)
-        assert path.name == ".compact-warned-unknown"
+        assert state_mod.session_sentinel_path(None) is None
+        assert state_mod.session_sentinel_path("") is None
+
+
+# ── resolve_session_key ──────────────────────────────────────
+
+
+class TestResolveSessionKey:
+    def test_session_id_wins(self, state_mod) -> None:
+        payload = {"session_id": "abc", "transcript_path": "/x/y.jsonl"}
+        assert state_mod.resolve_session_key(payload) == "abc"
+
+    def test_transcript_stem_fallback(self, state_mod) -> None:
+        """The transcript filename stem IS the session uuid."""
+        payload = {"transcript_path": "/p/fdf0adc1-4322.jsonl"}
+        assert state_mod.resolve_session_key(payload) == "fdf0adc1-4322"
+
+    def test_no_identity_is_none(self, state_mod) -> None:
+        assert state_mod.resolve_session_key({}) is None
+        assert state_mod.resolve_session_key({"session_id": "", "transcript_path": ""}) is None
 
 
 # ── prune_stale_sentinels ────────────────────────────────────

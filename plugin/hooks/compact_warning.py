@@ -38,6 +38,7 @@ from _resume_prompt import build_resume_prompt  # noqa: E402
 from _state import (  # noqa: E402
     discover_specs,
     git_state,
+    resolve_session_key,
     session_sentinel_path,
     workspace_roots,
 )
@@ -87,18 +88,21 @@ def main() -> int:
         threshold = _threshold()
         if util < threshold:
             return 0
-        sentinel = session_sentinel_path(payload.get("session_id"))
-        if sentinel.exists():
-            return 0  # already warned this session
-        # Write the sentinel BEFORE the print so a re-fire mid-print
-        # can't double-emit the warning.
-        try:
-            sentinel.parent.mkdir(parents=True, exist_ok=True)
-            sentinel.write_text(f"{util:.4f}\n", encoding="utf-8")
-        except OSError:
-            # If we can't write the sentinel, skip the warning to
-            # avoid spamming on every Stop event.
-            return 0
+        # transcript_path is present here (early-returned above), so
+        # the key always resolves; None-handling is defensive only.
+        sentinel = session_sentinel_path(resolve_session_key(payload))
+        if sentinel is not None:
+            if sentinel.exists():
+                return 0  # already warned this session
+            # Write the sentinel BEFORE the print so a re-fire
+            # mid-print can't double-emit the warning.
+            try:
+                sentinel.parent.mkdir(parents=True, exist_ok=True)
+                sentinel.write_text(f"{util:.4f}\n", encoding="utf-8")
+            except OSError:
+                # If we can't write the sentinel, skip the warning to
+                # avoid spamming on every Stop event.
+                return 0
 
         cwd = Path(payload.get("cwd") or Path.cwd())
         roots = workspace_roots(cwd=cwd)
