@@ -279,3 +279,36 @@ Full tables: `benchmarks/trap_battery_phase2_results_2026-07-13.md`.
 - Spend discipline receipt: probes + pilot ≈ $12.45 of the $30 go;
   the rate run deliberately NOT started (3 of 4 gates NO-GO — it
   would measure noise).
+
+## 2026-07-13 (evening) — Phase-2 pilot EXECUTED: harness GO, all four
+## traps NO-GO; full run correctly blocked
+
+Run on the merged #1351 harness (first full live pass of the
+two-track pipeline), post-#1352 gate fix, post-#1356 sentinel fix in
+flight: 40/40 sessions, **Σ $10.00** (cap $12; $20 grant, Patrick,
+this session). Full tables:
+`benchmarks/trap_battery_results_2026-07-13_phase2.md`.
+
+- **Prevention** (`stale-claim`, `unverified-state-warning`): OFF
+  fired 0/5 on both — the model self-verifies; the traps carry their
+  own verification cue. NO-GO (gate ≥2/5). Redesign: remove the cue,
+  make the wrong claim the path of least resistance.
+- **Recovery** (`zsh-eqword-recovery`, `zsh-status-readonly`):
+  decision-point hits under the ≥4/arm gate (3 `error_max_turns`
+  exclusions, all zsh-status-readonly). Directional-only: ON
+  recovered zsh-status-readonly with median 112 tokens-after vs 297
+  OFF. Not quotable at n≤4.
+- **Claim checked and REJECTED via transcript receipt**: two ON-arm
+  zsh-eqword sessions avoided the error entirely (looked like
+  prevention leaking into the recovery track), but the prompt-time
+  injection in both was an IRRELEVANT lesson (auto-merge-safe class,
+  on a zsh task) — avoidance is path variance, not recall. Recorded
+  because the next reader WILL be tempted by this pattern.
+- **Byproduct finding**: lesson_recall injected irrelevant lessons at
+  trap prompts (precision miss) — measurable injection noise for the
+  memory-as-insurance "when-not-to-inject" thread (#1291); saved
+  transcripts hold the (prompt, injected, relevant?) corpus.
+
+Decision: full $15–30 run stays blocked until ≥1 trap passes its
+pilot gate. Next work is trap redesign (unpaid, design-only) — see
+the results doc's Next section.
