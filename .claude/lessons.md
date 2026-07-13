@@ -14726,3 +14726,20 @@ def ", start_idx + 1)` for module-
   zero injections with hooks alive means "no decision point hit", not
   "arms broken" (receipt hierarchy: hook lifecycle events = alive,
   banners = injected, telemetry = fire-only log).
+
+- **The starter-reconciler resolves bare `#N` references against the
+  PRIMARY repo — a handoff's cross-repo `owner/repo#N` reference can
+  be misreported (e.g. "CLOSED" for an issue that is OPEN in the repo
+  the handoff actually named)**: hit 2026-07-13 morning brief. The
+  handoff named umbrella issue `Smart-AI-Memory/attune#49`
+  (spec-status drift, OPEN); the reconciler line said "#49 CLOSED"
+  because it resolved #49 against attune-ai, where that number is a
+  long-closed item. Acting on the reconciler verdict would have
+  dropped the shortlist's #1 work item as "already done". Rule: the
+  reconciler's PR/issue verdicts are trustworthy only for
+  primary-repo references; for any handoff reference qualified with
+  another repo (or `attune #N` shorthand), re-verify with an explicit
+  `gh ... --repo <owner>/<repo>` before treating MERGED/CLOSED as
+  fact. Same family as "verify-first release gates" — a green/red
+  label from tooling is a claim, not evidence, when the tool's
+  default scope may differ from the reference's.

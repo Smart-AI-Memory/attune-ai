@@ -1,6 +1,6 @@
 # Design: Generic parallel agent teams
 
-**Status:** APPROVED (2026-06-26) — ready to execute (T1)
+**Status:** complete (2026-06-26) — shipped in PR #1098: WorkflowAgent + AgentTeam in src/attune/agents/team.py; ReleasePrepTeam re-seat deliberately skipped per R6 fallback (see decisions.md)
 **Requirements:** [requirements.md](requirements.md) ·
 **Decisions:** [decisions.md](decisions.md)
 

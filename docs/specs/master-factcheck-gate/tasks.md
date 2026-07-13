@@ -1,6 +1,6 @@
 # Master Fact-Check — Tasks
 
-**Status:** draft (2026-06-30) · implements [design.md](design.md).
+**Status:** superseded (2026-06-30) — by attune-author-consolidation (PR #1192, D4): fact-check absorbed into attune.authoring (#1193); resolver fold-in (T1 here = its T2) tracked there. Implements [design.md](design.md).
 
 ## T1 — Extract the authoritative resolver (R1/R2)
 

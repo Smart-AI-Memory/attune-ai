@@ -1,5 +1,7 @@
 # Memory Unification — Tasks
 
+**Status:** complete (2026-07-04) — T1–T5 shipped in 9.6.0 (PR #1239); T6 closed in #1256 (10.0.0)
+
 Gate resolved 2026-07-04 (D1/OQ1/OQ2 locked — see decisions.md).
 Architecture: files + Redis, no graph middle layer.
 **T1–T5 executed same day; receipts inline and in

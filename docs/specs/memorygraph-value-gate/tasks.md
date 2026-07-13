@@ -1,5 +1,7 @@
 # MemoryGraph Value-Gate — Tasks
 
+**Status:** complete (2026-07-05) — shipped in 10.0.0: removal via PR #1256 (T1–T6 checked, receipts inline), released in #1257
+
 Single PR (spec + removal, the memory-unification precedent).
 
 - [x] **T1 — src removal.** Delete

@@ -5,7 +5,7 @@
 > real sessions, then decide whether the taxonomy/field reinterpretation
 > holds up or needs adjustment.
 
-**Status:** requirements drafted
+**Status:** superseded (2026-07-05) — by memory unification: no-graph decision #1239, MemoryGraph/NodeTypes removed #1256; friction-log evidence (2026-07-01→04, frictions A/C fixed #1212) fed that verdict
 **Owner:** Patrick + agent
 **Related:**
 

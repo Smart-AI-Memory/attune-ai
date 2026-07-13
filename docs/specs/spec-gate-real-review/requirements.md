@@ -1,6 +1,6 @@
 # Spec: Real spec quality gates + dead orchestration-engine removal
 
-**Status:** requirements drafted (2026-06-25)
+**Status:** complete (2026-06-26) — gate made real in #1094 (dogfood R1/R2), dead engine removed in #1096 (pre-removal tag); deferred docs handled by orchestration-doc-fiction-cleanup
 **Owner:** Patrick + agent
 **Supersedes scope of:** the Phase B half of
 `interactive-orchestration-access` (Phase A shipped as #1093)

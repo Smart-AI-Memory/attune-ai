@@ -1,6 +1,6 @@
 # Tasks — orchestration-doc-fiction-cleanup
 
-**Status:** executed (2026-06-26) — pending PR
+**Status:** complete (2026-06-26) — shipped in PR #1107 (doc cleanup for the #1096 DynamicTeam/MetaOrchestrator removal); D7 follow-ups tracked separately (#1108, #1111)
 
 Counts (`dyn` = DynamicTeam/SDKAgent refs, `meta` = MetaOrchestrator
 refs, `surv` = surviving-symbol refs) verified against `origin/main`
