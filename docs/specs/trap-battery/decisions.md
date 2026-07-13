@@ -33,3 +33,27 @@
   itself still gets a stated-cost go at execution time per the
   spend gate.
 - DEC-1 note: existing spec directory — freeze-compatible.
+
+## 2026-07-13 — Phase 1 pilot EXECUTED; per-class go/no-go
+
+Run by Patrick from a plain terminal (30/30 sessions ok, ~$5.65 —
+6-10x under estimate). Full table + receipts:
+`benchmarks/trap_battery_results_2026-07-13.md`.
+
+- **zsh-eqword: GO to phase 2** (rate run at 20+/cell). OFF 2/5,
+  ON 0/5, pilot Δp +40% — first behavioral evidence that a surfaced
+  lesson prevents a lived failure class.
+- **git-commit-verify-landed: NO-GO — redesign or swap.** 0/5 both
+  arms; a plain pre-commit hook cannot reproduce the lived
+  silent-skip (exit 0 + skipped commit), so the fixture's visible
+  exit-1 tests recovery the baseline already has. Swap candidate:
+  `stale-claim`.
+- **question-shape: SWAP** (as pre-flagged at requirements time;
+  `zsh-status-readonly` comes in). OFF 5/5 but ON 4/5 — the rule
+  barely changes behavior, and the harness cannot yet distinguish
+  lesson-ignored from lesson-never-injected.
+- **Harness follow-up adopted for phase 2:** per-session injection
+  detection from the stream-json events, so ON-arm firings are
+  interpretable.
+- Phase-2 cost projection corrected: ~$0.19/session mean → 2
+  classes × 20/cell ≈ 80 sessions ≈ $15.
