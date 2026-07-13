@@ -33,3 +33,78 @@
   itself still gets a stated-cost go at execution time per the
   spend gate.
 - DEC-1 note: existing spec directory — freeze-compatible.
+
+## 2026-07-13 — Phase 1 pilot EXECUTED; per-class go/no-go
+
+Run by Patrick from a plain terminal (30/30 sessions ok, ~$5.65 —
+6-10x under estimate). Full table + receipts:
+`benchmarks/trap_battery_results_2026-07-13.md`.
+
+- **zsh-eqword: GO to phase 2** (rate run at 20+/cell). OFF 2/5,
+  ON 0/5, pilot Δp +40% — first behavioral evidence that a surfaced
+  lesson prevents a lived failure class.
+- **git-commit-verify-landed: NO-GO — redesign or swap.** 0/5 both
+  arms; a plain pre-commit hook cannot reproduce the lived
+  silent-skip (exit 0 + skipped commit), so the fixture's visible
+  exit-1 tests recovery the baseline already has. Swap candidate:
+  `stale-claim`.
+- **question-shape: SWAP** (as pre-flagged at requirements time;
+  `zsh-status-readonly` comes in). OFF 5/5 but ON 4/5 — the rule
+  barely changes behavior, and the harness cannot yet distinguish
+  lesson-ignored from lesson-never-injected.
+- **Harness follow-up adopted for phase 2:** per-session injection
+  detection from the stream-json events, so ON-arm firings are
+  interpretable.
+- Phase-2 cost projection corrected: ~$0.19/session mean → 2
+  classes × 20/cell ≈ 80 sessions ≈ $15.
+
+## 2026-07-13 (later, same night) — CORRECTION: pilot invalid as A/B
+
+The injection diagnostic invalidated the arm comparison: recall
+hooks never ran in the headless temp-dir sessions (zero events in
+`~/.attune/telemetry/memory_events.jsonl` for all 37 sessions; both
+arms effectively OFF). Full chain + retractions in
+`benchmarks/trap_battery_results_2026-07-13.md` (CORRECTION section).
+
+- **zsh-eqword GO → GO, re-based.** Δp +40% retracted (noise on
+  identical arms). What survives: the trap discriminates unaided
+  (3/14 pooled) and its scorer is receipt-proven. It stays the lead
+  phase-2 class — but Δp is still unmeasured.
+- **git-commit-verify-landed NO-GO — unchanged** (0/14 pooled).
+- **question-shape SWAP — unchanged and now structural**: `Read`
+  isn't in the JIT matcher and the prompt scores below the
+  lesson-recall floor; the ON arm had zero injection paths by
+  construction. Finding re-filed to the recall-triggering axis
+  (memory-recall-eval sibling).
+- **Blocking phase-2 precondition:** get recall hooks running in
+  harness sessions and verify via the telemetry-window receipt now
+  built into the harness (ARM-VALIDATION FAILURE on zero events).
+- Meta: the arm-receipt discipline ("registered ≠ working" applied
+  to benchmark arms) caught this the same night it shipped — the
+  detection feature's first real catch was the pilot that motivated
+  it.
+
+## 2026-07-13 (final addendum) — phase-2 precondition RESOLVED
+
+`--plugin-dir <repo>/plugin` force-loads plugin hooks in headless
+`-p` sessions (killed-probe receipt: SessionStart ×10 +
+UserPromptSubmit ×2 fired from a temp dir); installed-plugin hooks
+never load headless, which is why the pilot arms were dead.
+`--include-hook-events` surfaces hook outputs (with recall banners)
+as stream events. Harness updated to pass both by default; valid
+pilot re-run is unblocked (~$6, needs a stated-cost go). Runbook
+unchanged: plain terminal, `python -m benchmarks.trap_battery --run`.
+
+## 2026-07-13 (design finding) — injection surface bounds the measurand
+
+Chain of four root causes closed (plugin loading → visibility →
+sentinel collapse → match-scope mechanics); full narrative in the
+results doc. Standing design rule for phase 2: **PreToolUse-carried
+rules can only be measured on recovery differential** (the call
+proceeds; first error unavoidable); **first-occurrence prevention is
+only measurable for UserPromptSubmit-carried rules**. Phase-2 trap
+lineup and scorers must be re-derived under this rule before the
+next paid run — the ~$6 re-run is deferred until then (no point
+measuring a structurally-zero Δp). Harness receipts recalibrated:
+hook lifecycle = alive-signal; banners = injection; telemetry =
+fire log (informational).

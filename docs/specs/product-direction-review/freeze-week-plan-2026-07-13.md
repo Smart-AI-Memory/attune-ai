@@ -106,7 +106,7 @@ data point instead of a vibe.
 | 1 | 0 replies >24h; threads logged | |
 | 2 | N5 paragraph committed | **Done 2026-07-12** — usage-signals D11. |
 | 3 | Memory visibly pillar #1, sweep clean | **Done 2026-07-12** — README memory-first intro; PILLARS reordered; home/FAQ/how-it-works/docs/pricing copy reworded (pricing found only by the final broad grep); `next build` green. PyPI copy lags until first post-freeze release, as planned. |
-| 4 | Pilot discrimination results (or dated deferral) | |
+| 4 | Pilot discrimination results (or dated deferral) | **Run + corrected 2026-07-13.** Harness shipped (PR #1343); 30-session pilot executed (~$5.65); arm receipt then INVALIDATED the A/B (recall hooks dead in headless sessions — both arms OFF; Δp retracted, corrections in place). Fix found same night: `--plugin-dir` + `--include-hook-events`; valid re-run unblocked. Trap verdicts: zsh-eqword GO, git-commit NO-GO, question-shape SWAP (structural). |
 | 5 | fable tasks 3–8 done OR consciously dropped | |
 | 6 | Freeze interpretation written 07-27 | |
 

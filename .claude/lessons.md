@@ -14603,3 +14603,95 @@ def ", start_idx + 1)` for module-
   family: put the detail in the committed files, keep PR bodies /
   commit -m text minimal and neutral. Two-step handling: (1) get
   the explicit user go, (2) publish with minimal inline prose.
+
+- **Memory-injection surfaces have GEOMETRY — PreToolUse JIT recall
+  can only reach failures that happen AT a tool call; a rule about
+  the shape of the FINAL MESSAGE (question-shape style rules) has no
+  tool-call moment, so only UserPromptSubmit recall can carry it**:
+  learned from the trap-battery phase-1 pilot (2026-07-13,
+  `benchmarks/trap_battery_results_2026-07-13.md`). zsh-eqword went
+  OFF 2/5 → ON 0/5 (the JIT hook sees the Bash command draft — the
+  injection lands exactly at the decision point), while
+  question-shape went OFF 5/5 → ON 4/5 (no Bash allowed, so the
+  trap-moment surface never fires; prompt-time retrieval may or may
+  not match). Two rules: (1) when selecting trap/eval classes, match
+  the failure moment to the injection surface that's supposed to
+  prevent it — a style-of-answer rule "failing" under a JIT-recall
+  toggle may be measuring surface coverage, not lesson efficacy;
+  (2) an env-toggle A/B (ATTUNE_JIT_RECALL etc.) needs an IN-BAND
+  receipt that the toggle is honored — hook injections leave literal
+  markers in stream-json transcripts ("Lessons that may apply",
+  "Just-in-time recall"); scan the OFF arm for zero markers before
+  trusting any arm delta ("registered ≠ working" applied to
+  benchmark arms).
+
+- **A plain `.git/hooks/pre-commit` CANNOT reproduce the pre-commit
+  framework's silent-skip trap — a hook that exits 0 lets the commit
+  proceed, so the only mimic available is a VISIBLE exit-1, which
+  tests recovery (which baseline agents already have), not the lived
+  failure**: trap-battery's git-commit-verify-landed fixture went
+  0/5 in BOTH arms for exactly this reason. The lived trap
+  (`git commit -q` exit 0, "Passed" output, commit silently skipped)
+  is a property of the pre-commit framework's stash/restore cycle,
+  not of git hooks. Fixture-design rule: before building an eval
+  fixture for a lived failure, verify the mimic preserves the
+  failure's SIGNATURE (exit code + visibility), not just its
+  narrative; a louder-than-life reproduction measures a different
+  (easier) behavior.
+
+- **Provisioning a cross-repo CI token? Check `gh repo view --json
+  visibility` on every target FIRST — public repos need NO token in
+  `actions/checkout`, and the PAT you're about to mint may be pure
+  liability**: the umbrella spec-audit's `ATTUNE_WORKSPACE_RO_TOKEN`
+  failed 3/3 runs with "Bad credentials" (a 401 = the token STRING is
+  invalid — approval/scope misses give 404, and on PUBLIC repos any
+  valid token passes); the durable fix was deleting the token from
+  the workflow entirely (attune #48) since all five checkout targets
+  were public — which also deleted the yearly-expiry failure mode.
+  Related receipts from the same saga: `gh issue create --label X`
+  exits 1 when the label doesn't exist on the repo (create the label
+  first); and `gh run watch ... --exit-status | tail` launders the
+  exit code through the pipe — read the conclusion from `gh run view
+  --json conclusion`, never the pipeline's exit.
+
+- **CORRECTION + extension (2026-07-13, same night) to the
+  "memory-injection surfaces have GEOMETRY" lesson above — the
+  transcript-marker receipt described there DOES NOT WORK, and the
+  pilot's Δp was retracted**: three stacked findings from the
+  diagnostic. (1) stream-json does NOT echo hook `additionalContext`
+  into emitted events — transcript scans for injection banners are
+  structurally blind; the authoritative in-band receipt is the recall
+  hooks' own telemetry log (`~/.attune/telemetry/memory_events.jsonl`,
+  one line per fire with session_id/tool/rules). (2) Plugin recall
+  hooks do not run AT ALL inside headless `claude -p` sessions in
+  temp dirs (zero telemetry events across 37 fixture sessions, while
+  direct execution of the same hook scripts from the same temp dir
+  injects fine) — so an env-toggle A/B ran with BOTH arms effectively
+  OFF and the "+40% Δp" was noise on identical arms. Before ANY
+  hook-dependent A/B: run one probe session, then check the telemetry
+  log for that session's events — behavioral deltas are NOT evidence
+  the toggle worked (0/7 vs 3/7 felt like signal; p≈0.19). (3) The
+  question-shape trap was structurally uninstrumentable: its only
+  allowed tool (`Read`) isn't in the JIT matcher
+  (`AskUserQuestion|Bash|Edit`) and its prompt scores below the
+  lesson-recall floor — check BOTH the matcher list and a direct
+  `lesson_recall.py` dry-run against the prompt when designing
+  recall-dependent evals. Meta: the arm-receipt discipline caught all
+  of this the same night the harness shipped; the correction cost 7
+  sessions (~$1.15) and one telemetry read.
+
+- **RESOLUTION (2026-07-13, later) of the headless-hooks finding in
+  the correction above: `claude -p` does NOT load INSTALLED plugins'
+  hooks, but `--plugin-dir <repo>/plugin` force-loads them per
+  session, and `--include-hook-events` (stream-json only) emits every
+  hook as `hook_started`/`hook_response` system events WITH output —
+  hook outputs carry the recall banners, so transcript-marker
+  detection works under these two flags**: proven by a killed probe
+  whose stream survived on disk (SessionStart ×10 + UserPromptSubmit
+  ×2 from a temp-dir `-p` session). Benchmark bonus: pinning
+  `--plugin-dir` to the repo's `plugin/` tests the CURRENT hook code,
+  not the installed plugin version. Also a reusable move: a
+  user-rejected long-running command may leave a PARTIAL output file
+  — mine the artifact before re-spending (here the kill landed after
+  session-init, so the hook-lifecycle evidence was complete while the
+  paid model turn never ran).
