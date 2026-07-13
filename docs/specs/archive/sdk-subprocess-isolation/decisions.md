@@ -51,3 +51,53 @@
   still shows for unmigrated workflows on subscription — resolved
   per-workflow by the wrf T8 migrations (rendered reports already
   suppress it).
+
+## D9 — 2026-07-13 amendment: exempt `sdk-cli` from the entrypoint
+## prefix check (headless `claude -p` is not an SDK subprocess)
+
+D3's premise drifted: current Claude Code stamps
+`CLAUDE_CODE_ENTRYPOINT=sdk-cli` into EVERY plain headless
+`claude -p` session (verified live 2026-07-13 on 2.1.144), so the
+bare `sdk-` prefix check silenced every gated attune hook for ALL
+headless users — not just SDK subprocesses. Discovered by the
+trap-battery benchmark (docs/specs/trap-battery/decisions.md,
+"SDK-gate discovery" entry): phase-1 "hooks alive" receipts were
+lifecycle-only; gated hooks started and exited 0 with no output.
+
+**Decision:** keep both D3 signals, exempt the single entrypoint
+value verified to mean "plain headless CLI":
+`ATTUNE_SDK_SUBPROCESS=1` OR (`sdk-` prefix AND != `sdk-cli`).
+
+Alternatives rejected:
+
+- *Drop the prefix check, keep only `ATTUNE_SDK_SUBPROCESS=1`* —
+  regresses D3's third-party coverage: the Agent SDK still stamps
+  `sdk-py` (re-verified 2026-07-13, claude-agent-sdk 0.2.116 via
+  `scripts/probe_sdk_subprocess_env.py`), and those subprocesses
+  never touch attune's adapter.
+- *Allow-list (`sdk-py`, `sdk-ts` only)* — fails open: a future
+  SDK language stamp would un-gate and re-poison the stream-json
+  channel. The deny-list fails closed: unknown `sdk-*` values stay
+  gated (worst case a silent hook, the soft failure).
+- *`CLAUDECODE` nesting depth* — does not discriminate: an SDK
+  script run from a terminal is not nested; a plain headless run
+  inside a Claude Code session is.
+
+Also codified here: `ATTUNE_SDK_GATE_OVERRIDE=1` force-disables the
+gate — benchmark-only escape hatch (shipped for the trap-battery
+harness, whose children parse stream-json defensively). Nothing
+else should set it.
+
+Receipt (same-day A/B, one `zsh-eqword` trap session per arm,
+scrubbed env, worktree plugin force-loaded, per-run sentinel
+isolation): pre-fix ON-arm = hook lifecycle present, ZERO
+injections, trap fired; post-fix ON-arm = recall injection present
+with no override set. Unit contract: sdk-cli → not gated;
+sdk-py/sdk-ts/unknown sdk-* → gated; marker beats the exemption
+(`tests/unit/plugins/test_sdk_subprocess_gate.py`).
+
+Interaction note: un-gating headless hooks makes the jit_recall
+surface-once sentinel collapse (headless payloads carry no
+session_id → shared "unknown" bucket, 7-day machine-wide
+suppression) USER-VISIBLE for headless sessions. That bug has its
+own task; the two fixes compose but this one lands first.
