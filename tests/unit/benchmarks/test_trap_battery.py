@@ -20,6 +20,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 from benchmarks.trap_battery import (  # noqa: E402
+    INJECTION_MARKERS,
     TRAPS,
     Cell,
     Transcript,
@@ -28,6 +29,7 @@ from benchmarks.trap_battery import (  # noqa: E402
     get_traps,
     parse_stream_json,
     render_report,
+    validate_arms,
 )
 
 # --------------------------------------------------------------------------
@@ -340,3 +342,82 @@ class TestAggregationAndReport:
         report = render_report(aggregate_cells(results), results, markdown=False)
         assert "errors (excluded from rates):" in report
         assert "boom" in report
+
+
+# --------------------------------------------------------------------------
+# injection detection / arm validation
+# --------------------------------------------------------------------------
+
+
+def _user_text(text: str) -> dict:
+    return {"type": "user", "message": {"content": [{"type": "text", "text": text}]}}
+
+
+class TestInjectionDetection:
+    def test_markers_cover_both_recall_surfaces(self):
+        assert set(INJECTION_MARKERS) == {"prompt_recall", "jit_recall"}
+
+    def test_counts_prompt_and_jit_markers_anywhere(self):
+        t = _transcript(
+            _user_text("Lessons that may apply to this prompt: - foo"),
+            _tool_result("Just-in-time recall — rule(s) governing Bash: - bar"),
+            _result("done"),
+        )
+        assert t.injections() == {"prompt_recall": 1, "jit_recall": 1}
+
+    def test_clean_transcript_counts_zero(self):
+        t = _transcript(_assistant_bash("echo hi"), _result("done"))
+        assert t.injections() == {"prompt_recall": 0, "jit_recall": 0}
+
+
+def _ri(arm: str, injections: dict, ok: bool = True):
+    return TrapRunResult(
+        trap_id="zsh-eqword",
+        arm=arm,
+        repeat=0,
+        ok=ok,
+        fired=False,
+        evidence="",
+        wall_s=1.0,
+        injections=injections,
+    )
+
+
+class TestValidateArms:
+    def test_clean_arms_no_warnings(self):
+        results = [
+            _ri("on", {"prompt_recall": 1, "jit_recall": 0}),
+            _ri("off", {"prompt_recall": 0, "jit_recall": 0}),
+        ]
+        assert validate_arms(results) == []
+
+    def test_off_arm_marker_is_a_failure(self):
+        results = [
+            _ri("on", {"prompt_recall": 1, "jit_recall": 0}),
+            _ri("off", {"prompt_recall": 1, "jit_recall": 0}),
+        ]
+        warnings = validate_arms(results)
+        assert len(warnings) == 1
+        assert "INVALID" in warnings[0]
+
+    def test_markerless_on_arm_is_a_warning(self):
+        results = [
+            _ri("on", {"prompt_recall": 0, "jit_recall": 0}),
+            _ri("off", {"prompt_recall": 0, "jit_recall": 0}),
+        ]
+        warnings = validate_arms(results)
+        assert len(warnings) == 1
+        assert "unvalidated" in warnings[0]
+
+    def test_errored_runs_are_ignored(self):
+        results = [_ri("off", {"prompt_recall": 5, "jit_recall": 5}, ok=False)]
+        assert validate_arms(results) == []
+
+    def test_warnings_render_in_report(self):
+        results = [
+            _ri("on", {"prompt_recall": 0, "jit_recall": 0}),
+            _ri("off", {"prompt_recall": 1, "jit_recall": 0}),
+        ]
+        report = render_report(aggregate_cells(results), results, markdown=False)
+        assert "ARM-VALIDATION FAILURE" in report
+        assert "ARM-VALIDATION WARNING" in report

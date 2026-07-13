@@ -76,6 +76,14 @@ from benchmarks.session_savings import (  # noqa: E402
 # --------------------------------------------------------------------------
 
 
+#: Literal banner text each recall surface injects into a session
+#: (see Transcript.injections for provenance and caveats).
+INJECTION_MARKERS: dict[str, re.Pattern[str]] = {
+    "prompt_recall": re.compile(r"Lessons that may apply"),
+    "jit_recall": re.compile(r"Just-in-time recall"),
+}
+
+
 @dataclass
 class Transcript:
     """Parsed ``--output-format stream-json`` session output.
@@ -122,6 +130,26 @@ class Transcript:
                         if isinstance(c, dict) and c.get("type") == "text"
                     )
         return "\n".join(parts)
+
+    def injections(self) -> dict[str, int]:
+        """Count recall-hook injection markers anywhere in the events.
+
+        The memory suite's two injection surfaces leave literal banner
+        text in the transcript (observed live 2026-07-13):
+        UserPromptSubmit lesson recall — "Lessons that may apply";
+        PreToolUse JIT recall — "Just-in-time recall". Events are
+        scanned as serialized JSON so the check is robust to WHERE a
+        hook's context lands (message content, system event, tool
+        result). This is presence detection, not attention detection —
+        it resolves injected-vs-never-surfaced, not injected-vs-ignored.
+        """
+        counts = dict.fromkeys(INJECTION_MARKERS, 0)
+        for ev in self.events:
+            blob = json.dumps(ev)
+            for name, pattern in INJECTION_MARKERS.items():
+                if pattern.search(blob):
+                    counts[name] += 1
+        return counts
 
 
 def parse_stream_json(
@@ -370,6 +398,9 @@ class TrapRunResult:
     cost_usd: float = 0.0
     num_turns: int = 0
     error: str = ""
+    #: Injection-marker counts from Transcript.injections (presence
+    #: detection per recall surface; empty for errored runs).
+    injections: dict[str, int] = field(default_factory=dict)
 
 
 def run_trap_session(
@@ -447,6 +478,7 @@ def run_trap_session(
             wall_s=wall,
             cost_usd=rr.cost_usd,
             num_turns=rr.num_turns,
+            injections=t.injections(),
         )
     finally:
         if keep_fixture:
@@ -485,6 +517,39 @@ def aggregate_cells(results: list[TrapRunResult]) -> dict[str, dict[str, Cell]]:
         else:
             cell.errors += 1
     return cells
+
+
+def validate_arms(results: list[TrapRunResult]) -> list[str]:
+    """Receipt that the arm toggles are honored ("registered ≠ working").
+
+    Returns human-readable warnings. Two failure shapes:
+
+      * any OFF-arm run shows injection markers → the kill-switch is
+        not honored and every arm delta is invalid;
+      * no ON-arm run shows any marker → either recall never fired or
+        INJECTION_MARKERS no longer matches the transcript shape —
+        ON-arm results are unvalidated either way.
+    """
+    warnings: list[str] = []
+    off_dirty = [
+        f"{r.trap_id}/off#{r.repeat}: {r.injections}"
+        for r in results
+        if r.ok and r.arm == "off" and sum(r.injections.values())
+    ]
+    if off_dirty:
+        warnings.append(
+            "ARM-VALIDATION FAILURE — OFF arm shows recall markers (the "
+            "kill-switch is not honored; arm deltas are INVALID): " + "; ".join(off_dirty)
+        )
+    on_runs = [r for r in results if r.ok and r.arm == "on"]
+    if on_runs and not any(sum(r.injections.values()) for r in on_runs):
+        warnings.append(
+            "ARM-VALIDATION WARNING — no injection markers detected in any "
+            "ON-arm run: either recall never fired for these prompts or "
+            "INJECTION_MARKERS no longer matches the transcript shape. "
+            "Treat ON-arm results as unvalidated."
+        )
+    return warnings
 
 
 def _fmt_rate(cell: Cell | None) -> str:
@@ -537,6 +602,10 @@ def render_report(
         lines.append("")
         lines.append("firing evidence:")
         lines.extend(f"  {r.trap_id}/{r.arm}#{r.repeat}: {r.evidence}" for r in fired)
+    arm_warnings = validate_arms(results)
+    if arm_warnings:
+        lines.append("")
+        lines.extend(arm_warnings)
     lines.append("")
     lines.append(
         "Output is failure rates and Δp only — no savings claim. "
@@ -622,7 +691,11 @@ def main(argv: list[str] | None = None) -> int:
                     keep_fixture=args.keep_fixtures,
                 )
                 status = ("FIRED" if r.fired else "clean") if r.ok else f"ERROR ({r.error})"
-                print(f"    {status}: {r.wall_s:.1f}s, ${r.cost_usd:.2f}", flush=True)
+                inj = "+".join(f"{k[0]}{v}" for k, v in sorted(r.injections.items()))
+                print(
+                    f"    {status}: {r.wall_s:.1f}s, ${r.cost_usd:.2f}, inj {inj or '-'}",
+                    flush=True,
+                )
                 results.append(r)
 
     cells = aggregate_cells(results)
