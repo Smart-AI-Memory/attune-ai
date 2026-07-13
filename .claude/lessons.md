@@ -14726,3 +14726,20 @@ def ", start_idx + 1)` for module-
   zero injections with hooks alive means "no decision point hit", not
   "arms broken" (receipt hierarchy: hook lifecycle events = alive,
   banners = injected, telemetry = fire-only log).
+
+- **"Hold this PR for review" is not a mechanism — in this repo a
+  docs-only PR IS a merge instruction (the auto-merge-safe lane takes
+  it within minutes); an intended hold must be encoded as a DRAFT
+  PR, not as intent stated in chat/handoff notes**: 2026-07-13, the
+  widgets-v3 design PR (#1346) was opened with "deliberately held
+  for Patrick's adjustment" written in the session summary and the
+  starter file — and the auto-merge-safe workflow merged it anyway,
+  because docs-only diffs auto-merge by design (#881 class). No harm
+  (design docs carry draft status lines internally), but the general
+  rule: any PR you don't want merged yet gets `gh pr create --draft`
+  (or `gh pr ready --undo` immediately after), because every
+  documented hold that lives only in prose is invisible to the
+  automation that acts on PR state. Extends the existing
+  "auto-merge-safe class merges a PR on its CURRENT diff within
+  minutes" lesson from the stranded-commits angle to the
+  intent-to-hold angle.
