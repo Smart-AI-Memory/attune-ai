@@ -254,3 +254,28 @@ hooks at all — the sdk-gate's `sdk-` prefix check can no longer
 distinguish SDK subprocesses from plain headless runs on current
 Claude Code. Pairs with the sentinel-collapse product bug already
 spawned as its own task.
+
+## 2026-07-13 (pilot) — Phase-2 pilot EXECUTED; per-trap verdicts
+
+40 sessions, $10.15, arms LIVE end-to-end for the first time
+(21 telemetry events; every ON session bannered; validity PASS).
+Full tables: `benchmarks/trap_battery_phase2_results_2026-07-13.md`.
+
+- **Prevention: BOTH NO-GO.** The as-run "+40%" on
+  unverified-state-warning was scorer artifact — two false-positive
+  classes (`git -C` verification missed by an adjacency-only
+  pattern; negated harm matched) found by reading the saved
+  transcripts, fixed with pinned regression tests, and the corpus
+  re-scored offline to OFF 0/5 / ON 0/5. stale-claim: OFF 1/5.
+  Honest read: the unaided baseline already verifies a simple
+  checkable claim — redesign toward harder fixtures (verification
+  costlier/less obvious), not a rate run.
+- **Recovery: NO-GO on n, promising on direction.** ON recovers
+  cheaper in both classes (median tokens-after-error 26 vs 68;
+  173 vs 270; recovered 3/3 vs 2/3) but gates missed: eqword OFF
+  sidestepped the decision point 3/5, status-readonly lost 4
+  sessions to the 10-turn cap. Re-run preconditions: --max-turns 15
+  for recovery traps + ~2.5x oversampling.
+- Spend discipline receipt: probes + pilot ≈ $12.45 of the $30 go;
+  the rate run deliberately NOT started (3 of 4 gates NO-GO — it
+  would measure noise).
