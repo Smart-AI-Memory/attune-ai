@@ -83,3 +83,14 @@ arms effectively OFF). Full chain + retractions in
   to benchmark arms) caught this the same night it shipped — the
   detection feature's first real catch was the pilot that motivated
   it.
+
+## 2026-07-13 (final addendum) — phase-2 precondition RESOLVED
+
+`--plugin-dir <repo>/plugin` force-loads plugin hooks in headless
+`-p` sessions (killed-probe receipt: SessionStart ×10 +
+UserPromptSubmit ×2 fired from a temp dir); installed-plugin hooks
+never load headless, which is why the pilot arms were dead.
+`--include-hook-events` surfaces hook outputs (with recall banners)
+as stream events. Harness updated to pass both by default; valid
+pilot re-run is unblocked (~$6, needs a stated-cost go). Runbook
+unchanged: plain terminal, `python -m benchmarks.trap_battery --run`.

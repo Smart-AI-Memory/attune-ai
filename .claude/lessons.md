@@ -14679,3 +14679,19 @@ def ", start_idx + 1)` for module-
   recall-dependent evals. Meta: the arm-receipt discipline caught all
   of this the same night the harness shipped; the correction cost 7
   sessions (~$1.15) and one telemetry read.
+
+- **RESOLUTION (2026-07-13, later) of the headless-hooks finding in
+  the correction above: `claude -p` does NOT load INSTALLED plugins'
+  hooks, but `--plugin-dir <repo>/plugin` force-loads them per
+  session, and `--include-hook-events` (stream-json only) emits every
+  hook as `hook_started`/`hook_response` system events WITH output —
+  hook outputs carry the recall banners, so transcript-marker
+  detection works under these two flags**: proven by a killed probe
+  whose stream survived on disk (SessionStart ×10 + UserPromptSubmit
+  ×2 from a temp-dir `-p` session). Benchmark bonus: pinning
+  `--plugin-dir` to the repo's `plugin/` tests the CURRENT hook code,
+  not the installed plugin version. Also a reusable move: a
+  user-rejected long-running command may leave a PARTIAL output file
+  — mine the artifact before re-spending (here the kill landed after
+  session-init, so the hook-lifecycle evidence was complete while the
+  paid model turn never ran).

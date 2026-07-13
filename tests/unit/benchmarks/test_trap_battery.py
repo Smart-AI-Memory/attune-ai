@@ -468,3 +468,39 @@ class TestTelemetryArmReceipt:
 
         msg = telemetry_arm_receipt(-1, ["on"])
         assert msg is not None and "WARNING" in msg and "INVALID" not in msg
+
+
+class TestHookEventReceipt:
+    """--include-hook-events puts hook outputs into the stream as
+    system events; injections() must count banners found there (the
+    2026-07-13 discovery that made transcript detection work)."""
+
+    def test_hook_response_output_counts_as_injection(self):
+        ev = {
+            "type": "system",
+            "subtype": "hook_response",
+            "hook_event": "UserPromptSubmit",
+            "output": "Lessons that may apply to this prompt:\n- foo",
+        }
+        t = _transcript(ev, _result("x"))
+        assert t.injections()["prompt_recall"] == 1
+
+    def test_jit_hook_response_counts(self):
+        ev = {
+            "type": "system",
+            "subtype": "hook_response",
+            "hook_event": "PreToolUse",
+            "output": '{"hookSpecificOutput": {"additionalContext": '
+            '"Just-in-time recall — rule(s) governing Bash: ..."}}',
+        }
+        t = _transcript(ev, _result("x"))
+        assert t.injections()["jit_recall"] == 1
+
+    def test_hook_started_without_output_does_not_count(self):
+        ev = {
+            "type": "system",
+            "subtype": "hook_started",
+            "hook_event": "UserPromptSubmit",
+        }
+        t = _transcript(ev, _result("x"))
+        assert sum(t.injections().values()) == 0

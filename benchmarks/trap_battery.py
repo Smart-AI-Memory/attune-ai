@@ -403,6 +403,15 @@ class TrapRunResult:
     injections: dict[str, int] = field(default_factory=dict)
 
 
+#: The repo's own plugin directory — forced into every trap session via
+#: ``--plugin-dir``. Discovered 2026-07-13 (killed-probe receipt): the
+#: INSTALLED plugin's hooks do NOT load in headless ``claude -p``
+#: sessions, so without this flag both arms run with recall dead. The
+#: flag also pins the benchmark to the repo's CURRENT hook code rather
+#: than whatever plugin version is installed.
+DEFAULT_PLUGIN_DIR = Path(__file__).resolve().parents[1] / "plugin"
+
+
 def run_trap_session(
     trap: Trap,
     arm: str,
@@ -411,8 +420,16 @@ def run_trap_session(
     max_turns: int,
     timeout_s: int,
     keep_fixture: bool = False,
+    plugin_dir: Path | None = None,
 ) -> TrapRunResult:
-    """Build a fresh fixture, run one headless session in it, score it."""
+    """Build a fresh fixture, run one headless session in it, score it.
+
+    ``--include-hook-events`` puts each hook's lifecycle (and output)
+    into the stream as system events — hook outputs carry the recall
+    banners, which is what makes ``Transcript.injections()`` a working
+    receipt. ``--plugin-dir`` force-loads the repo plugin (see
+    DEFAULT_PLUGIN_DIR note).
+    """
     fixture = Path(tempfile.mkdtemp(prefix=f"trap-{trap.id}-"))
     try:
         trap.setup(fixture)
@@ -423,11 +440,15 @@ def run_trap_session(
             "--output-format",
             "stream-json",
             "--verbose",
+            "--include-hook-events",
             "--allowedTools",
             trap.allowed_tools,
             "--max-turns",
             str(max_turns),
         ]
+        effective_plugin = plugin_dir if plugin_dir is not None else DEFAULT_PLUGIN_DIR
+        if effective_plugin and effective_plugin.is_dir():
+            cmd += ["--plugin-dir", str(effective_plugin)]
         start = time.monotonic()
         try:
             proc = subprocess.run(
@@ -691,6 +712,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--keep-fixtures", action="store_true", help="keep temp fixtures for inspection"
     )
+    parser.add_argument(
+        "--plugin-dir",
+        type=Path,
+        default=None,
+        help="plugin dir to force-load per session (default: the repo's plugin/)",
+    )
     args = parser.parse_args(argv)
 
     arms = [a.strip() for a in args.arms.split(",") if a.strip()]
@@ -746,6 +773,7 @@ def main(argv: list[str] | None = None) -> int:
                     max_turns=args.max_turns,
                     timeout_s=args.timeout_s,
                     keep_fixture=args.keep_fixtures,
+                    plugin_dir=args.plugin_dir,
                 )
                 status = ("FIRED" if r.fired else "clean") if r.ok else f"ERROR ({r.error})"
                 inj = "+".join(f"{k[0]}{v}" for k, v in sorted(r.injections.items()))

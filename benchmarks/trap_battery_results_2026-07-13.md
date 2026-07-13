@@ -129,3 +129,27 @@ execution + telemetry audit) established, in order:
    declares ARM-VALIDATION FAILURE on zero events with an ON arm —
    re-running tonight's pilot under the fixed harness would have
    refused to report Δp.
+
+---
+
+## RESOLUTION (2026-07-13, later) — headless hook mechanism found
+
+A killed probe session (rejected mid-run, but its stream survived on
+disk) settled the phase-2 precondition at near-zero cost:
+
+- `claude -p --plugin-dir <repo>/plugin` **force-loads the plugin in
+  headless mode** — 10 plugin SessionStart hooks and 2
+  UserPromptSubmit hooks demonstrably started/responded from a temp
+  dir. (Patrick's repo-cwd probe confirmed the INSTALLED plugin's
+  hooks do NOT load in `-p` mode — the flag is required.)
+- `--include-hook-events` surfaces every hook as named
+  `hook_started`/`hook_response` system events, with output — and
+  hook outputs carry the recall banners, so transcript-marker
+  detection WORKS under these flags.
+
+The harness now always passes `--include-hook-events` and defaults
+`--plugin-dir` to the repo's `plugin/` (pinning the benchmark to the
+repo's current hook code). Three receipts stack: hook events
+(per-session), telemetry log (run window), and the OFF-arm marker
+scan. A valid pilot re-run is unblocked; Δp remains unmeasured until
+it happens.
