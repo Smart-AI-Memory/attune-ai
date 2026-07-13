@@ -400,14 +400,22 @@ class TestValidateArms:
         assert len(warnings) == 1
         assert "INVALID" in warnings[0]
 
-    def test_markerless_on_arm_is_a_warning(self):
+    def test_markerless_on_arm_without_hooks_is_failure(self):
         results = [
             _ri("on", {"prompt_recall": 0, "jit_recall": 0}),
             _ri("off", {"prompt_recall": 0, "jit_recall": 0}),
         ]
         warnings = validate_arms(results)
         assert len(warnings) == 1
-        assert "unvalidated" in warnings[0]
+        assert "INVALID" in warnings[0]
+
+    def test_markerless_on_arm_with_hooks_alive_is_info(self):
+        alive = _ri("on", {"prompt_recall": 0, "jit_recall": 0})
+        alive.hooks = {"SessionStart": 10, "PreToolUse": 5, "failed": 0}
+        warnings = validate_arms([alive])
+        assert len(warnings) == 1
+        assert "INFO" in warnings[0]
+        assert "INVALID" not in warnings[0]
 
     def test_errored_runs_are_ignored(self):
         results = [_ri("off", {"prompt_recall": 5, "jit_recall": 5}, ok=False)]
@@ -419,8 +427,8 @@ class TestValidateArms:
             _ri("off", {"prompt_recall": 1, "jit_recall": 0}),
         ]
         report = render_report(aggregate_cells(results), results, markdown=False)
-        assert "ARM-VALIDATION FAILURE" in report
-        assert "ARM-VALIDATION WARNING" in report
+        # off-arm banner -> kill-switch failure; markerless hook-less on -> failure
+        assert report.count("ARM-VALIDATION FAILURE") == 2
 
 
 class TestTelemetryArmReceipt:
@@ -447,11 +455,12 @@ class TestTelemetryArmReceipt:
 
         assert count_memory_events("2026-07-13", log_path=tmp_path / "nope.jsonl") == -1
 
-    def test_zero_events_with_on_arm_is_failure(self):
+    def test_zero_events_with_on_arm_is_informational(self):
         from benchmarks.trap_battery import telemetry_arm_receipt
 
         msg = telemetry_arm_receipt(0, ["on", "off"])
-        assert msg is not None and "INVALID" in msg
+        assert msg is not None and "fire-only" in msg
+        assert "INVALID" not in msg
 
     def test_zero_events_off_only_is_fine(self):
         from benchmarks.trap_battery import telemetry_arm_receipt

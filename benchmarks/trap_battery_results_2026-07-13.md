@@ -214,3 +214,35 @@ The $0.15 probe with saved transcripts closed the case:
 Verification path: one $0.15 zsh ON probe should now show `inj j1`
 and a fresh telemetry event; then the pilot re-run (~$6) measures a
 real Δp for the first time.
+
+---
+
+## FINAL REFRAME (2026-07-13) — what a JIT-carried rule can and cannot prevent
+
+The post-fix probe was CLEAN with hooks fully alive (Se10/Pr5, all
+exit 0) and still zero injections — and this time that is the system
+working correctly: the agent's first draft was already quoted
+(`echo "==="`), the rule's match_regex requires an UNQUOTED =-word,
+so there was no decision point to fire at. Two structural findings:
+
+1. **PreToolUse injection cannot prevent the first occurrence.** The
+   hook's own docs: injected context "reaches the model while the
+   call proceeds" (D2, smoke-tested 2026-06-09). A JIT-carried rule
+   fires exactly when the mistaken command is already drafted — the
+   error still executes; the value is in RECOVERY (fewer flails,
+   correct diagnosis, faster retry). As scored (signature occurred),
+   zsh-eqword's Δp is structurally ~0. The original pilot's
+   "ON 0/5 prevention" was noise on dead arms, and could never have
+   been real prevention under these mechanics.
+2. **Injection surface determines what is measurable.**
+   UserPromptSubmit-carried rules (injected before any action) can
+   show first-occurrence prevention; PreToolUse-carried rules can
+   only show recovery differential. Phase-2 scorer design follows:
+   for JIT traps, score retries-to-recovery / wrong-diagnosis /
+   time-after-error between arms, not occurrence.
+
+Receipts recalibrated accordingly: hook lifecycle = alive-signal;
+zero banners with hooks alive = "no decision point hit" (INFO);
+zero telemetry = informational (fire-only). The harness, receipts,
+and isolation are now sound; the remaining phase-2 work is trap and
+scorer design, which is design work, not tonight's build.

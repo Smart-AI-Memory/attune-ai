@@ -94,3 +94,17 @@ never load headless, which is why the pilot arms were dead.
 as stream events. Harness updated to pass both by default; valid
 pilot re-run is unblocked (~$6, needs a stated-cost go). Runbook
 unchanged: plain terminal, `python -m benchmarks.trap_battery --run`.
+
+## 2026-07-13 (design finding) — injection surface bounds the measurand
+
+Chain of four root causes closed (plugin loading → visibility →
+sentinel collapse → match-scope mechanics); full narrative in the
+results doc. Standing design rule for phase 2: **PreToolUse-carried
+rules can only be measured on recovery differential** (the call
+proceeds; first error unavoidable); **first-occurrence prevention is
+only measurable for UserPromptSubmit-carried rules**. Phase-2 trap
+lineup and scorers must be re-derived under this rule before the
+next paid run — the ~$6 re-run is deferred until then (no point
+measuring a structurally-zero Δp). Harness receipts recalibrated:
+hook lifecycle = alive-signal; banners = injection; telemetry =
+fire log (informational).

@@ -634,10 +634,10 @@ def telemetry_arm_receipt(n_events: int, arms: list[str]) -> str | None:
         )
     if n_events == 0:
         return (
-            "ARM-VALIDATION FAILURE — zero recall-telemetry events during "
-            "the run window: the recall hooks never ran in these sessions, "
-            "so BOTH arms were effectively OFF and arm deltas are INVALID "
-            "(2026-07-13 pilot failure mode)."
+            "telemetry note: zero recall fires logged in the run window. "
+            "The log is fire-only, so this alone does not invalidate the "
+            "arms — trust the per-run hooks/inj columns (hook lifecycle is "
+            "the alive-receipt; see validate_arms)."
         )
     return None
 
@@ -666,12 +666,21 @@ def validate_arms(results: list[TrapRunResult]) -> list[str]:
         )
     on_runs = [r for r in results if r.ok and r.arm == "on"]
     if on_runs and not any(sum(r.injections.values()) for r in on_runs):
-        warnings.append(
-            "ARM-VALIDATION WARNING — no injection markers detected in any "
-            "ON-arm run: either recall never fired for these prompts or "
-            "INJECTION_MARKERS no longer matches the transcript shape. "
-            "Treat ON-arm results as unvalidated."
-        )
+        hooks_alive = any(sum(v for k, v in r.hooks.items() if k != "failed") for r in on_runs)
+        if hooks_alive:
+            warnings.append(
+                "ARM-VALIDATION INFO — hooks ran in every ON-arm session but "
+                "no recall injected: no rule matched a decision point in "
+                "these runs (fire-only surfaces are legitimately silent). "
+                "Zero injection opportunities means delta-p is not being "
+                "exercised by this sample, not that the arms are broken."
+            )
+        else:
+            warnings.append(
+                "ARM-VALIDATION FAILURE — no hook lifecycle events and no "
+                "injection markers in any ON-arm run: hooks never ran, both "
+                "arms were effectively OFF, arm deltas are INVALID."
+            )
     return warnings
 
 
