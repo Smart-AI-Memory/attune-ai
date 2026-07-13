@@ -14792,3 +14792,26 @@ def ", start_idx + 1)` for module-
   when FIXING such a spec, replace the whole stale blockquote — a
   new plain line above a contradicting quoted status confuses the
   next reader.
+
+- **Auto-merge on the required-check subset structurally IGNORES
+  non-required lanes — a red Windows matrix can live on main for
+  hours/days with every PR "merging green"**: extends the
+  "admin-merging before Windows lanes complete" lesson with the
+  auto-merge mechanism. `gh pr merge --auto` fires the moment the
+  REQUIRED set passes; attune's required set excludes the 5
+  windows-latest lanes, so #1343's broken-on-Windows test rode in
+  at 07-13 morning and EVERY later run (docs sweeps, #1352) showed
+  5 red Windows lanes that nothing gated on. Rules: (a) after any
+  auto-/admin-merge, read the FULL matrix conclusions (`gh run view
+  <id> --json jobs`), not the PR checks summary; (b) before blaming
+  your PR for a red lane, check main's own run at the pre-PR SHA
+  (`gh run list --workflow=tests.yml --branch=main`) — here main
+  was already failing, so the fix was a hotfix PR (#1353), not a
+  revert; (c) the concrete portable trap: never assert
+  `st_mode & 0o111` in cross-platform tests — Windows has no exec
+  bits (mode 0o666) and git-for-Windows runs hooks via sh without
+  them; assert existence everywhere, mode bits under
+  `sys.platform != "win32"`. Bonus observation: the dynamic
+  setup-matrix shrinks PR matrices for tests-only diffs (hotfix ran
+  ONE Windows lane), so "the lane passed on the PR" ≠ "all lanes
+  ran" — main's post-merge run is the real receipt.
