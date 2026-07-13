@@ -389,7 +389,7 @@ class TestModuleConstants:
         # Prevent regression to deprecated model IDs
         assert MODEL_CONFIG["cheap"] == "claude-haiku-4-5"
         assert MODEL_CONFIG["capable"] == "claude-sonnet-5"
-        assert MODEL_CONFIG["premium"] == "claude-opus-4-8"
+        assert MODEL_CONFIG["premium"] == "claude-fable-5"
 
     def test_default_quality_gates_keys(self):
         """DEFAULT_QUALITY_GATES has expected keys."""

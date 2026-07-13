@@ -15,6 +15,7 @@ Licensed under the Apache License, Version 2.0
 import json
 from dataclasses import asdict, dataclass, field
 
+from attune.model_tiers import resolve_model
 from attune.security.path_validation import _validate_file_path
 
 
@@ -58,7 +59,7 @@ class AdaptiveConfig:
             "simple": "claude-haiku-4-5",
             "moderate": "claude-sonnet-5",
             "complex": "claude-sonnet-5",
-            "very_complex": "claude-opus-4-8",
+            "very_complex": resolve_model("premium"),
         },
     )
     complexity_thresholds: dict[str, int] = field(

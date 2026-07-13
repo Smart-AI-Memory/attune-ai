@@ -27,7 +27,7 @@ model_routing:
   models:
     cheap: "claude-haiku-4-5"
     capable: "claude-sonnet-5"
-    premium: "claude-opus-4-8"
+    premium: "claude-fable-5"
 
 # Claude Code integration
 claude_sync:
@@ -83,7 +83,7 @@ model_routing:
   models:
     cheap: "claude-haiku-4-5"
     capable: "claude-sonnet-5"
-    premium: "claude-opus-4-8"
+    premium: "claude-fable-5"
 
 claude_sync:
   enabled: true

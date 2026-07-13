@@ -21,6 +21,8 @@ from typing import Any
 
 import structlog
 
+from attune.model_tiers import resolve_model
+
 logger = structlog.get_logger(__name__)
 
 # Lazy import to avoid circular dependency
@@ -156,7 +158,7 @@ class AdaptiveModelRouter:
         fallbacks = {
             "cheap": "claude-haiku-4-5",
             "capable": "claude-sonnet-5",
-            "premium": "claude-opus-4-8",
+            "premium": resolve_model("premium"),
         }
         return fallbacks.get(tier_lower, "claude-haiku-4-5")
 

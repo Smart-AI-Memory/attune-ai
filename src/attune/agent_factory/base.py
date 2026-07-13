@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from attune.model_tiers import resolve_model
+
 
 class AgentRole(Enum):
     """Standard agent roles for multi-agent systems."""
@@ -302,7 +304,7 @@ class BaseAdapter(ABC):
                 "anthropic": {
                     "cheap": "claude-haiku-4-5",
                     "capable": "claude-sonnet-5",
-                    "premium": "claude-opus-4-8",
+                    "premium": resolve_model("premium"),
                 },
             }
             return defaults.get(provider, defaults["anthropic"]).get(

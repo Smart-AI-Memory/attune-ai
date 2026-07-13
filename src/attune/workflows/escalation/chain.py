@@ -16,6 +16,7 @@ import logging
 import time
 from typing import Any
 
+from attune.model_tiers import resolve_model
 from attune.workflows.escalation.evaluator import Evaluator
 from attune.workflows.escalation.models import (
     AttemptResult,
@@ -39,7 +40,7 @@ class EscalationChain:
 
     Args:
         models: Ordered list of model IDs to try. Defaults to
-            Haiku → Sonnet → Opus.
+            Haiku → Sonnet → premium tier (via attune.model_tiers).
         validators: Rule-based validators (Layer 1). Run on every attempt
             before the evaluator.
         evaluator: Optional LLM-based semantic evaluator (Layer 2). Runs
@@ -63,12 +64,6 @@ class EscalationChain:
 
     """
 
-    DEFAULT_MODELS: list[str] = [
-        "claude-haiku-4-5",
-        "claude-sonnet-4-5",
-        "claude-opus-4-8",
-    ]
-
     def __init__(
         self,
         models: list[str] | None = None,
@@ -83,7 +78,8 @@ class EscalationChain:
         """Initialize EscalationChain.
 
         Args:
-            models: Ordered model IDs. Defaults to Haiku → Sonnet → Opus.
+            models: Ordered model IDs. Defaults to Haiku → Sonnet →
+                premium tier.
             validators: Rule-based validators applied before the evaluator.
             evaluator: Optional semantic evaluator with gate control.
             retries_per_model: Same-model retries before escalation (0 = none).
@@ -93,7 +89,13 @@ class EscalationChain:
             executor: EmpathyLLMExecutor. Created lazily if omitted.
 
         """
-        self.models = models or self.DEFAULT_MODELS
+        # Built per instance so the premium tier honors env overrides at
+        # call time (a class attribute would freeze the env read at import).
+        self.models = models or [
+            "claude-haiku-4-5",
+            "claude-sonnet-4-5",
+            resolve_model("premium"),
+        ]
         self.validators: list[Validator] = validators or []
         self.evaluator = evaluator
         self.retries_per_model = retries_per_model

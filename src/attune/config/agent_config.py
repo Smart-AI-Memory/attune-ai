@@ -16,6 +16,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from attune.model_tiers import resolve_model
+
 
 class ModelTier(str, Enum):
     """Model tier for cost optimization."""
@@ -150,7 +152,7 @@ class UnifiedAgentConfig(BaseModel):
             Provider.ANTHROPIC: {
                 ModelTier.CHEAP: "claude-haiku-4-5",
                 ModelTier.CAPABLE: "claude-sonnet-5",
-                ModelTier.PREMIUM: "claude-opus-4-8",
+                ModelTier.PREMIUM: resolve_model("premium"),
             },
         }
 

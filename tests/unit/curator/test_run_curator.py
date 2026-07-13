@@ -157,7 +157,7 @@ def test_happy_path_returns_validated_items(isolate):
     result = asyncio.run(core.run_curator(project_root=isolate, client=client))
     assert result.summary.startswith("Two things")
     assert [i.id for i in result.items] == ["i1", "i2"]
-    assert result.model == core._CURATOR_MODEL
+    assert result.model == core._curator_model()
     assert set(result.sources_consulted) == {"bulletin", "specs"}
     assert result.cost_usd > 0
     assert client.messages.calls  # SDK was invoked
@@ -284,7 +284,7 @@ def test_default_client_constructed_when_none(isolate, monkeypatch):
 # Helper units (edge paths)
 # --------------------------------------------------------------------------
 def test_compute_cost_none_usage_is_zero():
-    assert core._compute_cost(core._CURATOR_MODEL, None) == 0.0
+    assert core._compute_cost(core._curator_model(), None) == 0.0
 
 
 def test_compute_cost_unknown_model_no_pricing(monkeypatch):
@@ -298,7 +298,7 @@ def test_compute_cost_swallows_pricing_error():
         def input_tokens(self):
             raise RuntimeError("usage broke")
 
-    assert core._compute_cost(core._CURATOR_MODEL, _Boom()) == 0.0
+    assert core._compute_cost(core._curator_model(), _Boom()) == 0.0
 
 
 def test_extract_payload_text_fallback():

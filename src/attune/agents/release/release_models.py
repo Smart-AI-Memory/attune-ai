@@ -16,6 +16,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
+from attune.model_tiers import resolve_model
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,10 +46,13 @@ except ImportError:
 # Configuration
 # =============================================================================
 
+# NOTE: the premium entry resolves through attune.model_tiers at IMPORT
+# time (this dict is read directly by base_agent/release_prep_team).
+# Set ATTUNE_MODEL_PREMIUM before importing to override it.
 MODEL_CONFIG = {
     "cheap": "claude-haiku-4-5",
     "capable": "claude-sonnet-5",
-    "premium": "claude-opus-4-8",
+    "premium": resolve_model("premium"),
 }
 
 # LLM mode: "real" uses API calls, "simulated" uses rule-based analysis
