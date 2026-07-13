@@ -218,3 +218,39 @@ pilot). Decisions made at build time:
   loop (`--max-cost-usd`, default 12), decision-point detection is
   arm-symmetric (simulates the rules' own filters over drafted tool
   inputs).
+
+## 2026-07-13 (build, later) — SDK-gate discovery: headless hooks were
+## silent no-ops EVERYWHERE; override shipped, first live fires observed
+
+Pre-pilot smoke probes surfaced two stacked blockers, both now fixed
+and receipt-verified:
+
+1. **Nested-session auth**: sessions spawned from inside Claude Code
+   inherit ~14 `CLAUDE_*` OAuth vars and 401 — the harness now runs
+   children with a scrubbed env (`--scrub-env`, auto-on inside a
+   session; whitelist + `ANTHROPIC_API_KEY` from env or the 0600 key
+   file, never printed). This is the requirements' documented
+   `env -i PATH HOME TERM ANTHROPIC_API_KEY` recipe, productized.
+2. **`claude -p` stamps `CLAUDE_CODE_ENTRYPOINT=sdk-cli` into EVERY
+   headless session** (verified live, v2.1.144) — so `_sdk_gate`
+   silently no-ops every gated attune hook in ALL headless runs,
+   regardless of who spawns them. This retroactively explains
+   phase-1 residue: "hooks alive" receipts were lifecycle-only
+   (gated hooks still start and exit 0); the welcome banner seen in
+   the killed probe came from an UNGATED hook. Fix:
+   `ATTUNE_SDK_GATE_OVERRIDE=1` (both `_sdk_gate` twins), set by the
+   harness for its children — which parse stream-json defensively,
+   the exact risk the gate exists to guard.
+
+Receipt: the override probe produced the FIRST live in-session
+recall fires of the whole effort — 2 telemetry events in the run
+window, prevention ON-arm banner present (validity PASS), recovery
+probe scored end-to-end (decision hit, recovered, 6 calls / 292
+tokens after error).
+
+PRODUCT implication beyond the benchmark (flagged, out of scope
+here): headless `claude -p` users currently get NO gated attune
+hooks at all — the sdk-gate's `sdk-` prefix check can no longer
+distinguish SDK subprocesses from plain headless runs on current
+Claude Code. Pairs with the sentinel-collapse product bug already
+spawned as its own task.

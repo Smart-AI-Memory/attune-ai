@@ -30,7 +30,18 @@ import sys
 
 
 def is_sdk_subprocess() -> bool:
-    """True when running inside an SDK-spawned ``claude`` subprocess."""
+    """True when running inside an SDK-spawned ``claude`` subprocess.
+
+    ``ATTUNE_SDK_GATE_OVERRIDE=1`` force-disables the gate: headless
+    ``claude -p`` stamps ``CLAUDE_CODE_ENTRYPOINT=sdk-cli`` into EVERY
+    such session (verified live 2026-07-13 on 2.1.144), so the gate
+    silences all attune hooks in headless mode even for deliberate
+    consumers. The trap-battery benchmark (which parses stream-json
+    defensively and NEEDS the recall hooks live) sets the override for
+    its child sessions; nothing else should.
+    """
+    if os.environ.get("ATTUNE_SDK_GATE_OVERRIDE") == "1":
+        return False
     if os.environ.get("ATTUNE_SDK_SUBPROCESS") == "1":
         return True
     return os.environ.get("CLAUDE_CODE_ENTRYPOINT", "").startswith("sdk-")

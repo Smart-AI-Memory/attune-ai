@@ -607,6 +607,50 @@ class TrapRunResult:
     hooks: dict[str, int] = field(default_factory=dict)
 
 
+#: Nested-session env scrub (requirements §Design: nested ``claude -p``
+#: needs ``env -i PATH HOME TERM ANTHROPIC_API_KEY``). A session
+#: launched from inside Claude Code inherits ~14 ``CLAUDE_*`` vars
+#: including OAuth state, and the child 401s. The scrubbed base keeps
+#: only the shell basics plus the API key (from the environment, else
+#: the 0600 key file — never printed).
+SCRUB_KEEP = (
+    "PATH",
+    "HOME",
+    "TERM",
+    "SHELL",
+    "USER",
+    "LOGNAME",
+    "TMPDIR",
+    "LANG",
+    "LC_ALL",
+    "COLORTERM",
+)
+KEY_FILE = Path.home() / ".attune" / "anthropic.env"
+
+
+def _key_from_file(path: Path | None = None) -> str:
+    try:
+        text = (path or KEY_FILE).read_text()
+    except OSError:
+        return ""
+    for line in text.splitlines():
+        line = line.strip()
+        if line.startswith("export "):
+            line = line[len("export ") :].strip()
+        if line.startswith("ANTHROPIC_API_KEY="):
+            return line.split("=", 1)[1].strip().strip("\"'")
+    return ""
+
+
+def scrubbed_base_env() -> dict[str, str]:
+    """Minimal child env for nested ``claude -p`` sessions."""
+    base = {k: os.environ[k] for k in SCRUB_KEEP if k in os.environ}
+    key = os.environ.get("ANTHROPIC_API_KEY") or _key_from_file()
+    if key:
+        base["ANTHROPIC_API_KEY"] = key
+    return base
+
+
 #: The repo's own plugin directory — forced into every trap session via
 #: ``--plugin-dir``. Discovered 2026-07-13 (killed-probe receipt): the
 #: INSTALLED plugin's hooks do NOT load in headless ``claude -p``
@@ -627,6 +671,7 @@ def run_trap_session(
     plugin_dir: Path | None = None,
     transcript_dir: Path | None = None,
     lessons_file: Path | None = None,
+    scrub_env: bool = False,
 ) -> TrapRunResult:
     """Build a fresh fixture, run one headless session in it, score it.
 
@@ -667,9 +712,15 @@ def run_trap_session(
             cmd += ["--plugin-dir", str(effective_plugin)]
         start = time.monotonic()
         try:
-            env = build_env(arm)
+            env = build_env(arm, base=scrubbed_base_env() if scrub_env else None)
             env["ATTUNE_AI_SENTINEL_DIR"] = str(sentinel_dir)
             env["ATTUNE_LESSONS_FILE"] = str(lessons_file or REPO_LESSONS)
+            # Headless `claude -p` stamps CLAUDE_CODE_ENTRYPOINT=sdk-cli
+            # (verified 2026-07-13, v2.1.144), which makes every
+            # sdk-gated attune hook a silent no-op — the benchmark's
+            # whole point is exercising those hooks, and this harness
+            # parses stream-json defensively (the risk the gate guards).
+            env["ATTUNE_SDK_GATE_OVERRIDE"] = "1"
             proc = subprocess.run(
                 cmd,
                 cwd=fixture,
@@ -1194,6 +1245,15 @@ def main(argv: list[str] | None = None) -> int:
         help="lessons corpus for the ON arm (default: the repo's .claude/lessons.md)",
     )
     parser.add_argument(
+        "--scrub-env",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help=(
+            "run child sessions with a scrubbed env (auto-on inside a "
+            "Claude Code session — inherited OAuth state 401s the child)"
+        ),
+    )
+    parser.add_argument(
         "--save-transcripts",
         type=Path,
         default=None,
@@ -1239,13 +1299,23 @@ def main(argv: list[str] | None = None) -> int:
     if shutil.which("zsh") is None:
         print("FAIL: zsh not on PATH (recovery fixtures need it)", file=sys.stderr)
         return 1
-    if os.environ.get("CLAUDECODE"):
+    scrub = args.scrub_env
+    if scrub is None:
+        scrub = bool(os.environ.get("CLAUDECODE"))
+        if scrub:
+            print(
+                "note: Claude Code session detected — child sessions run "
+                "with a scrubbed env (--no-scrub-env to override).",
+                file=sys.stderr,
+            )
+    if scrub and not (os.environ.get("ANTHROPIC_API_KEY") or _key_from_file()):
         print(
-            "WARN: running inside a Claude Code session — nested sessions "
-            "need a scrubbed env and can skew hook behavior; prefer a plain "
-            "terminal.",
+            "FAIL: scrubbed env needs ANTHROPIC_API_KEY (env or "
+            f"{KEY_FILE}) — nested sessions cannot reuse this session's "
+            "OAuth state.",
             file=sys.stderr,
         )
+        return 1
 
     run_start_iso = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())
     results: list[TrapRunResult] = []
@@ -1281,6 +1351,7 @@ def main(argv: list[str] | None = None) -> int:
                     plugin_dir=args.plugin_dir,
                     transcript_dir=args.save_transcripts,
                     lessons_file=lessons_file,
+                    scrub_env=scrub,
                 )
                 total_cost += r.cost_usd
                 if r.track == "recovery" and r.ok:

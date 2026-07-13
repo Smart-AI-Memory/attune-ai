@@ -235,3 +235,40 @@ class TestRepoGateTwin:
         monkeypatch.delenv("ATTUNE_SDK_SUBPROCESS", raising=False)
         monkeypatch.delenv("CLAUDE_CODE_ENTRYPOINT", raising=False)
         assert _sdk_gate.exit_if_sdk_subprocess() is None
+
+
+class TestSdkGateOverride:
+    """ATTUNE_SDK_GATE_OVERRIDE=1 force-disables the gate — headless
+    `claude -p` stamps CLAUDE_CODE_ENTRYPOINT=sdk-cli into every such
+    session (2026-07-13, v2.1.144), so deliberate headless-hook
+    consumers (trap-battery) need an explicit opt-out."""
+
+    def test_override_beats_sdk_entrypoint(self, monkeypatch):
+        import importlib
+        import sys
+
+        sys.path.insert(0, "plugin/hooks")
+        gate = importlib.import_module("_sdk_gate")
+        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "sdk-cli")
+        monkeypatch.setenv("ATTUNE_SDK_GATE_OVERRIDE", "1")
+        assert not gate.is_sdk_subprocess()
+
+    def test_override_beats_explicit_marker(self, monkeypatch):
+        import importlib
+        import sys
+
+        sys.path.insert(0, "plugin/hooks")
+        gate = importlib.import_module("_sdk_gate")
+        monkeypatch.setenv("ATTUNE_SDK_SUBPROCESS", "1")
+        monkeypatch.setenv("ATTUNE_SDK_GATE_OVERRIDE", "1")
+        assert not gate.is_sdk_subprocess()
+
+    def test_no_override_still_gates(self, monkeypatch):
+        import importlib
+        import sys
+
+        sys.path.insert(0, "plugin/hooks")
+        gate = importlib.import_module("_sdk_gate")
+        monkeypatch.delenv("ATTUNE_SDK_GATE_OVERRIDE", raising=False)
+        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "sdk-cli")
+        assert gate.is_sdk_subprocess()

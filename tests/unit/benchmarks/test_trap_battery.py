@@ -719,3 +719,35 @@ class TestSessionEnvIsolation:
         sdir = captured["env"]["ATTUNE_AI_SENTINEL_DIR"]
         assert str(captured["cwd"]) in sdir  # fixture-local, not ~/.attune
         assert captured["env"]["ATTUNE_LESSONS_FILE"].endswith(".claude/lessons.md")
+
+
+class TestScrubbedEnv:
+    def test_drops_claude_vars_keeps_shell_basics(self, monkeypatch):
+        from benchmarks.trap_battery import scrubbed_base_env
+
+        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "cli")
+        monkeypatch.setenv("CLAUDECODE", "1")
+        monkeypatch.setenv("PATH", "/usr/bin")
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")  # pragma: allowlist secret
+        env = scrubbed_base_env()
+        assert "CLAUDE_CODE_ENTRYPOINT" not in env
+        assert "CLAUDECODE" not in env
+        assert env["PATH"] == "/usr/bin"
+        assert env["ANTHROPIC_API_KEY"] == "sk-test"  # pragma: allowlist secret
+
+    def test_key_file_fallback(self, monkeypatch, tmp_path):
+        from benchmarks import trap_battery as tb
+
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        keyfile = tmp_path / "anthropic.env"
+        keyfile.write_text('export ANTHROPIC_API_KEY="sk-from-file"\n')  # pragma: allowlist secret
+        monkeypatch.setattr(tb, "KEY_FILE", keyfile)
+        env = tb.scrubbed_base_env()
+        assert env["ANTHROPIC_API_KEY"] == "sk-from-file"  # pragma: allowlist secret
+
+    def test_missing_key_file_is_empty(self, monkeypatch, tmp_path):
+        from benchmarks import trap_battery as tb
+
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.setattr(tb, "KEY_FILE", tmp_path / "nope.env")
+        assert "ANTHROPIC_API_KEY" not in tb.scrubbed_base_env()
