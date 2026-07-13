@@ -113,7 +113,7 @@ rag = []
 # to the sibling path for workspace dev; PyPI is the
 # fallback.
 author = [
-    "attune-author>=0.23,<0.24",
+    "attune-author>=0.23,<0.26",
     # attune-author 0.15.0 moved attune-help from its core deps to its
     # dev extra — attune-ai had been receiving it TRANSITIVELY. The
     # rag_knowledge_query MCP tool and help-corpus tests need it, so
