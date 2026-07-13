@@ -1105,17 +1105,42 @@ def _sentinel_dir() -> Path:
     return Path.home() / ".attune"
 
 
-def session_sentinel_path(session_id: str | None) -> Path:
+def resolve_session_key(payload: dict) -> str | None:
+    """Best session identity a hook payload offers, or ``None``.
+
+    ``session_id`` when present; else the transcript filename stem
+    (which IS the session uuid). ``None`` means "no session identity"
+    — sentinel writers must fail OPEN (surface again, write nothing)
+    rather than share an ``unknown`` bucket across sessions, where
+    the first fire anywhere suppresses the item machine-wide for the
+    sentinel TTL (the 2026-07-13 headless-collapse bug).
+    """
+    session_id = payload.get("session_id")
+    if session_id:
+        return str(session_id)
+    transcript = payload.get("transcript_path")
+    if transcript:
+        stem = Path(str(transcript)).stem
+        if stem:
+            return stem
+    return None
+
+
+def session_sentinel_path(session_key: str | None) -> Path | None:
     """Path to the once-per-session compact-warning sentinel.
 
-    Uses a sanitized session id so the path stays inside the
-    sentinel dir even with weird inputs.
+    Uses a sanitized session key so the path stays inside the
+    sentinel dir even with weird inputs. Returns ``None`` when there
+    is no session identity — a shared fallback name would collapse
+    every no-id session into one machine-wide bucket (see
+    :func:`resolve_session_key`); callers fail open instead.
     """
-    base = _sentinel_dir()
-    safe = "unknown"
-    if session_id:
-        safe = re.sub(r"[^A-Za-z0-9_-]", "_", session_id)[:64] or "unknown"
-    return base / f".compact-warned-{safe}"
+    if not session_key:
+        return None
+    safe = re.sub(r"[^A-Za-z0-9_-]", "_", session_key)[:64]
+    if not safe:
+        return None
+    return _sentinel_dir() / f".compact-warned-{safe}"
 
 
 def prune_stale_sentinels(now: float | None = None) -> int:

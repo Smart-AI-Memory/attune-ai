@@ -14872,6 +14872,26 @@ def ", start_idx + 1)` for module-
   trap-battery fixtures are zsh-heavy by design, so phase-2+
   additions will re-hit this unless guarded.
 
+- **RESOLUTION (2026-07-13, evening) of the sentinel-collapse lesson's
+  mechanism claim: live headless payloads on CC 2.1.144 DO carry
+  session_id (and transcript_path) — verified by a real `claude -p`
+  probe with a payload-dumping hook on SessionStart, UserPromptSubmit,
+  and PreToolUse. The "headless payloads carry NO session_id" claim
+  almost certainly came from DIRECT hook invocations with synthetic
+  payloads (the very diagnostic the lesson warns poisons the bucket).**
+  The shared-"unknown"-bucket hazard itself was real and is now fixed
+  fail-open: `_state.resolve_session_key(payload)` (session_id →
+  transcript stem → None) feeds every sentinel writer (jit_recall,
+  lesson_recall, compact_warning), and a None key means NO sentinel —
+  surface again rather than share a machine-wide bucket. Two durable
+  points: (a) hook payload shape claims must be verified with a LIVE
+  session probe (a ~$0.02 `claude -p` with a dump-hook plugin settles
+  it), never with synthetic stdin payloads; (b) ppid is NOT a usable
+  session key — each hook invocation gets a fresh parent (probe showed
+  three different ppids in one session). Benchmark note: per-run
+  `ATTUNE_AI_SENTINEL_DIR` isolation stays right for hygiene (virgin
+  gates per run, nothing written to the real ~/.attune).
+
 - **"Hold this PR for review" is not a mechanism — in this repo a
   docs-only PR IS a merge instruction (the auto-merge-safe lane takes
   it within minutes); an intended hold must be encoded as a DRAFT
