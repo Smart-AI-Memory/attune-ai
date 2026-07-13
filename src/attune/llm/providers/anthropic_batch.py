@@ -9,7 +9,27 @@ import logging
 from datetime import datetime
 from typing import Any
 
+from attune.model_tiers import fable_extras, resolve_model
+
 logger = logging.getLogger(__name__)
+
+# The Batch API rejects the beta ``fallbacks`` param, so fable models
+# never run in batches — premium batch work targets the fallback model
+# directly (design §4b, Option A; mirrors attune-author's
+# _batch_polish_model). Interactive premium stays fable-5.
+_BATCH_PREMIUM_FALLBACK = "claude-opus-4-8"
+
+
+def _batch_premium_model() -> str:
+    """Premium tier for batch work, with fable swapped for its fallback.
+
+    Call sites building premium batch requests use this instead of
+    ``resolve_model("premium")`` so a fable-resolved premium never
+    reaches the Batch API (which rejects ``fallbacks`` — the request
+    would run with no server-side fallback chain).
+    """
+    model = resolve_model("premium")
+    return _BATCH_PREMIUM_FALLBACK if fable_extras(model) else model
 
 
 class AnthropicBatchProvider:
@@ -115,11 +135,25 @@ class AnthropicBatchProvider:
         # Drop params newer models (Opus 4.7+) reject from every request's
         # params — same root cause as the non-batch provider; an Opus 4.8
         # batch request carrying temperature would otherwise 400 per-item.
+        # Fable models are downgraded FIRST (Batch API rejects the beta
+        # ``fallbacks`` param, so fable never runs in batches — design
+        # §4b Option A), then normalized under the downgraded model's
+        # rules.
         from .anthropic import _normalize_api_kwargs_for_model
 
         for formatted in formatted_requests:
             params = formatted.get("params")
             if isinstance(params, dict):
+                model = str(params.get("model", ""))
+                if fable_extras(model):
+                    logger.info(
+                        "Batch request %s: %s downgraded to %s "
+                        "(Batch API has no fallbacks support)",
+                        formatted.get("custom_id", "?"),
+                        model,
+                        _BATCH_PREMIUM_FALLBACK,
+                    )
+                    params["model"] = _BATCH_PREMIUM_FALLBACK
                 _normalize_api_kwargs_for_model(params)
 
         try:

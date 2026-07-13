@@ -18,7 +18,7 @@ All paths are exercised with mocks — no live Anthropic API call.
 
 import logging
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -69,11 +69,11 @@ class TestFableRouting:
     """Fable models take the beta path; everything else is untouched."""
 
     @pytest.mark.asyncio
-    async def test_fable_routes_via_beta_namespace(self):
+    async def test_fable_routes_via_beta_namespace(self, fake_module):
         client = _make_client()
-        with patch.dict("sys.modules", {"anthropic": _make_mock_anthropic(client)}):
-            provider = AnthropicProvider(api_key="test-key", model="claude-fable-5")
-            result = await provider.generate([{"role": "user", "content": "hi"}])
+        fake_module("anthropic", _make_mock_anthropic(client))
+        provider = AnthropicProvider(api_key="test-key", model="claude-fable-5")
+        result = await provider.generate([{"role": "user", "content": "hi"}])
 
         client.beta.messages.create.assert_awaited_once()
         client.messages.create.assert_not_called()
@@ -84,11 +84,11 @@ class TestFableRouting:
         assert result.content == "ok"
 
     @pytest.mark.asyncio
-    async def test_non_fable_path_unchanged(self):
+    async def test_non_fable_path_unchanged(self, fake_module):
         client = _make_client()
-        with patch.dict("sys.modules", {"anthropic": _make_mock_anthropic(client)}):
-            provider = AnthropicProvider(api_key="test-key")  # claude-sonnet-5
-            await provider.generate([{"role": "user", "content": "hi"}])
+        fake_module("anthropic", _make_mock_anthropic(client))
+        provider = AnthropicProvider(api_key="test-key")  # claude-sonnet-5
+        await provider.generate([{"role": "user", "content": "hi"}])
 
         client.messages.create.assert_awaited_once()
         client.beta.messages.create.assert_not_called()
@@ -98,23 +98,23 @@ class TestFableRouting:
         assert "betas" not in kwargs
 
     @pytest.mark.asyncio
-    async def test_fable_refusal_raises_model_refusal_error(self):
+    async def test_fable_refusal_raises_model_refusal_error(self, fake_module):
         client = _make_client(fable_response=_response(stop_reason="refusal"))
-        with patch.dict("sys.modules", {"anthropic": _make_mock_anthropic(client)}):
-            provider = AnthropicProvider(api_key="test-key", model="claude-fable-5")
-            with pytest.raises(ModelRefusalError):
-                await provider.generate([{"role": "user", "content": "hi"}])
+        fake_module("anthropic", _make_mock_anthropic(client))
+        provider = AnthropicProvider(api_key="test-key", model="claude-fable-5")
+        with pytest.raises(ModelRefusalError):
+            await provider.generate([{"role": "user", "content": "hi"}])
 
     @pytest.mark.asyncio
-    async def test_fable_400_carries_retention_hint(self):
+    async def test_fable_400_carries_retention_hint(self, fake_module):
         client = MagicMock()
         client.beta.messages.create = AsyncMock(
             side_effect=_FakeAPIStatusError("bad request", status_code=400)
         )
-        with patch.dict("sys.modules", {"anthropic": _make_mock_anthropic(client)}):
-            provider = AnthropicProvider(api_key="test-key", model="claude-fable-5")
-            with pytest.raises(_FakeAPIStatusError) as excinfo:
-                await provider.generate([{"role": "user", "content": "hi"}])
+        fake_module("anthropic", _make_mock_anthropic(client))
+        provider = AnthropicProvider(api_key="test-key", model="claude-fable-5")
+        with pytest.raises(_FakeAPIStatusError) as excinfo:
+            await provider.generate([{"role": "user", "content": "hi"}])
 
         assert "retention" in str(excinfo.value)
         assert isinstance(excinfo.value.__cause__, _FakeAPIStatusError)
@@ -124,14 +124,12 @@ class TestFableParamStripping:
     """claude-fable* strips sampling AND thinking, each with a warning."""
 
     @pytest.mark.asyncio
-    async def test_fable_strips_sampling_and_thinking(self, caplog):
+    async def test_fable_strips_sampling_and_thinking(self, caplog, fake_module):
         client = _make_client()
-        with patch.dict("sys.modules", {"anthropic": _make_mock_anthropic(client)}):
-            provider = AnthropicProvider(
-                api_key="test-key", model="claude-fable-5", use_thinking=True
-            )
-            with caplog.at_level(logging.WARNING, logger="attune.llm.providers.anthropic"):
-                await provider.generate([{"role": "user", "content": "hi"}], top_p=0.9, top_k=40)
+        fake_module("anthropic", _make_mock_anthropic(client))
+        provider = AnthropicProvider(api_key="test-key", model="claude-fable-5", use_thinking=True)
+        with caplog.at_level(logging.WARNING, logger="attune.llm.providers.anthropic"):
+            await provider.generate([{"role": "user", "content": "hi"}], top_p=0.9, top_k=40)
 
         kwargs = client.beta.messages.create.await_args.kwargs
         for param in ("temperature", "top_p", "top_k", "thinking"):
@@ -142,13 +140,11 @@ class TestFableParamStripping:
         assert "thinking" in stripped
 
     @pytest.mark.asyncio
-    async def test_opus_strip_behavior_unchanged(self):
+    async def test_opus_strip_behavior_unchanged(self, fake_module):
         client = _make_client(plain_response=_response(model="claude-opus-4-8"))
-        with patch.dict("sys.modules", {"anthropic": _make_mock_anthropic(client)}):
-            provider = AnthropicProvider(
-                api_key="test-key", model="claude-opus-4-8", use_thinking=True
-            )
-            await provider.generate([{"role": "user", "content": "hi"}])
+        fake_module("anthropic", _make_mock_anthropic(client))
+        provider = AnthropicProvider(api_key="test-key", model="claude-opus-4-8", use_thinking=True)
+        await provider.generate([{"role": "user", "content": "hi"}])
 
         # Opus is NOT fable: plain namespace, sampling stripped silently,
         # enabled thinking converted to adaptive (not removed).
