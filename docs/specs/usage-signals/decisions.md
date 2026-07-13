@@ -554,3 +554,21 @@ any useful timescale; the product-direction-review instruments
 (user conversations, inbound friction channel) are the working
 ones. No further investment here recommended until a conversation
 or inbound report proves a human population to measure.
+
+## D11 — attune-rag download figure declared uninterpreted noise (2026-07-12)
+
+The 2026-07-12 snapshot shows attune-rag at **27,410
+downloads/month — 5× attune-ai's 5,501** — for a sub-package with
+no announcement, no badge prominence, and no known users. Per the
+third product-direction assessment (N5): this figure is
+**uninterpreted noise pending evidence** and MUST NOT be quoted as
+traction on any surface (README, website, posts, changelogs). The
+D1 finding ("our CI is the biggest user") and the 07-11 signal
+check (zero pings alongside thousands of weekly downloads) both
+predict exactly this artifact — mirror/scanner amplification on a
+freshly-tagged dependency chain. Standing rule extended: no
+download number for ANY attune-* package is quotable until a
+recorded interpretation in this file says otherwise. The DEC-7
+release-freeze window (2026-07-13 → 07-27, no tags) is the live
+experiment; its 07-27 interpretation supersedes this entry's
+"pending evidence" clause either way.

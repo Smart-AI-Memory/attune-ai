@@ -15,7 +15,7 @@ const faqItems = [
   {
     question: 'What is attune-ai?',
     answer:
-      'A spec-driven development platform that turns requirements into reliable software. It combines four pillars — AI workflows, project memory, retrieval grounding, and verification — into one reliability loop: specify with /spec, ground every change in your real code, build with a team of workflows, remember what worked across sessions, and verify the output before it ships.',
+      'A development platform built around project memory that turns requirements into reliable software. Memory leads; AI workflows, retrieval grounding, and verification support it in one reliability loop: specify with /spec, ground every change in your real code, build with a team of workflows, remember what worked across sessions, and verify the output before it ships.',
   },
   {
     question: 'How does it keep generated content from drifting?',
