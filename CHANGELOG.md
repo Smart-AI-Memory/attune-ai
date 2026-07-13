@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.4.1] — 2026-07-13
+
+Docs/metadata patch — no code changes. Ships the memory-first
+repositioning to the PyPI project page (the README is the
+`long_description`), per product-direction DEC-3.
+
+### Documentation
+
+- README reordered: persistent memory is pillar #1; workflows, RAG
+  grounding, and verification demoted to a single "also ships" line
+  (DEC-3, product-direction-review).
+- Trap-battery phase-1 results, forensics narrative, and per-class
+  verdicts (`benchmarks/trap_battery_results_2026-07-13.md`,
+  `docs/specs/trap-battery/decisions.md`) — includes the
+  injection-surface measurement rule.
+- Third product-direction assessment + freeze-week plan; DEC-7
+  amended (this release re-anchors the freeze window at t=0; no
+  tags through 2026-07-27).
+- Lessons corpus: headless hook mechanics (`--plugin-dir`,
+  `--include-hook-events`), sentinel-bucket collapse, injection
+  surfaces.
+
 ## [10.4.0] — 2026-07-12
 
 First-run setup no longer traps keyless users in a raw traceback, and

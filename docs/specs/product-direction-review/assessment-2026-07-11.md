@@ -213,7 +213,14 @@ DEC-2 through DEC-5 from June carry forward unchanged. New:
   badge. Publishes the F1/N3 experiment at zero cost. **Decided
   2026-07-12:** yes, starting 2026-07-13 after one more release
   already in flight. No tags through 2026-07-27; watch the download
-  badge over that window.
+  badge over that window. **Amended 2026-07-13 (Patrick):** one
+  docs-only patch (v10.4.1) tagged 2026-07-13 so the DEC-3
+  memory-first README reaches the PyPI long_description at the
+  window's start instead of two weeks late. The observation window
+  re-anchors to this tag at t=0 (end date unchanged: 2026-07-27) —
+  a sharp reference point for the decay curve. Absolute no-tag hold
+  from here through 2026-07-27; this amendment is the exception
+  being recorded, not a precedent.
 - **DEC-8 — Hard-cap CI LLM spend at $100/month.** The alarm exists;
   add enforcement. Redirect the delta toward anything user-facing.
   **Decided 2026-07-12 (modified amount):** cap at $350/month — the

@@ -12,6 +12,11 @@ capped.
 (channel, download curve), closes a decision in writing, or
 executes an already-made decision. No new specs, no new gates,
 no inventing an item 10.
+**DEC-7 amendment (2026-07-13):** v10.4.1 (docs-only, README →
+PyPI) tagged at the window's start; observation window re-anchored
+to that tag at t=0, end date unchanged (07-27), absolute no-tag
+hold after it. See assessment-2026-07-11.md DEC-7 for the dated
+rationale.
 
 ---
 
