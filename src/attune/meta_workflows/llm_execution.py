@@ -12,12 +12,14 @@ import logging
 import time
 from typing import Any
 
+from attune.llm.fable_call import create_with_fable
 from attune.meta_workflows.models import (
     AgentExecutionResult,
     AgentSpec,
     TierStrategy,
 )
 from attune.meta_workflows.prompt_builder import build_agent_prompt
+from attune.model_tiers import ModelRefusalError
 from attune.routing.model_router import ModelRouter, ModelTier
 from attune.telemetry.usage_tracker import UsageTracker
 
@@ -252,15 +254,24 @@ def execute_llm_call(prompt: str, model_config: Any, tier: ModelTier) -> dict[st
 
         client = Anthropic(api_key=api_key)
 
-        # Execute the LLM call
-        response = client.messages.create(
+        # Execute the LLM call. Premium tiers resolve to fable — the
+        # helper routes fable models via the beta namespace (+ server-
+        # side opus fallback) and raises ModelRefusalError on refusal;
+        # non-fable models take the exact pre-tier path.
+        response = create_with_fable(
+            client,
             model=model_config.model_id,
             max_tokens=2048,
             messages=[{"role": "user", "content": prompt}],
         )
 
-        # Extract response data
-        output_text = response.content[0].text if response.content else ""
+        # Extract response data. First TEXT block, not content[0] —
+        # fable responses can lead with a thinking block that has no
+        # .text (fable_call docstring).
+        output_text = next(
+            (block.text for block in (response.content or []) if hasattr(block, "text")),
+            "",
+        )
         prompt_tokens = response.usage.input_tokens
         completion_tokens = response.usage.output_tokens
 
@@ -288,6 +299,26 @@ def execute_llm_call(prompt: str, model_config: Any, tier: ModelTier) -> dict[st
     except ImportError:
         logger.warning("Anthropic client not available, using simulation")
         return simulate_llm_call(prompt, model_config, tier)
+
+    except ModelRefusalError as e:
+        # The whole fable -> opus fallback chain refused: record the
+        # fable_refusal telemetry event; the item errors — never a
+        # silent skip (docs/specs/fable-premium-tier design §5).
+        from attune.models.telemetry import log_fable_refusal
+
+        log_fable_refusal(e, workflow="meta_workflow", model=model_config.model_id)
+        logger.error(f"LLM call refused: {e}")
+        return {
+            "cost": 0.0,
+            "tokens": {"input": 0, "output": 0, "total": 0},
+            "success": False,
+            "output": {
+                "error": str(e),
+                "model": model_config.model_id,
+                "tier": tier.value,
+                "success": False,
+            },
+        }
 
     except Exception as e:  # noqa: BLE001
         logger.error(f"LLM call failed: {e}")

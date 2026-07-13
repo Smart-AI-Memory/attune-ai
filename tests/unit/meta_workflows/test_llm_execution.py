@@ -486,6 +486,77 @@ class TestExecuteLlmCall:
         assert "cost" in result
 
 
+class TestExecuteLlmCallFable:
+    """Fable premium path: beta routing, first-TEXT-block, refusal event."""
+
+    def _response(self, blocks, stop_reason="end_turn"):
+        resp = MagicMock()
+        resp.content = blocks
+        resp.stop_reason = stop_reason
+        resp.usage.input_tokens = 10
+        resp.usage.output_tokens = 5
+        return resp
+
+    def _client_module(self, response):
+        client = MagicMock()
+        client.beta.messages.create.return_value = response
+        client.messages.create.return_value = response
+        mod = MagicMock()
+        mod.Anthropic.return_value = client
+        return client, mod
+
+    def test_fable_routes_via_beta_and_reads_first_text_block(self, fake_module, monkeypatch):
+        from types import SimpleNamespace
+
+        from attune.meta_workflows.llm_execution import execute_llm_call
+
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        blocks = [
+            SimpleNamespace(type="thinking", thinking="..."),
+            SimpleNamespace(type="text", text="fable says hi"),
+        ]
+        client, mod = self._client_module(self._response(blocks))
+        fake_module("anthropic", mod)
+
+        result = execute_llm_call("p", _make_model_config("claude-fable-5"), ModelTier.PREMIUM)
+
+        client.beta.messages.create.assert_called_once()
+        client.messages.create.assert_not_called()
+        assert result["success"] is True
+        assert result["output"]["message"] == "fable says hi"
+
+    def test_non_fable_keeps_plain_namespace(self, fake_module, monkeypatch):
+        from types import SimpleNamespace
+
+        from attune.meta_workflows.llm_execution import execute_llm_call
+
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        blocks = [SimpleNamespace(type="text", text="haiku says hi")]
+        client, mod = self._client_module(self._response(blocks))
+        fake_module("anthropic", mod)
+
+        result = execute_llm_call("p", _make_model_config("claude-haiku-4-5"), ModelTier.CHEAP)
+
+        client.messages.create.assert_called_once()
+        client.beta.messages.create.assert_not_called()
+        assert result["output"]["message"] == "haiku says hi"
+
+    def test_refusal_returns_failure_and_records_event(self, fake_module, monkeypatch):
+        from attune.meta_workflows.llm_execution import execute_llm_call
+
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+        client, mod = self._client_module(self._response([], stop_reason="refusal"))
+        fake_module("anthropic", mod)
+
+        with patch("attune.models.telemetry.log_fable_refusal") as mock_log:
+            result = execute_llm_call("p", _make_model_config("claude-fable-5"), ModelTier.PREMIUM)
+
+        assert result["success"] is False
+        assert "refused" in result["output"]["error"]
+        mock_log.assert_called_once()
+        assert mock_log.call_args.kwargs["model"] == "claude-fable-5"
+
+
 # ---------------------------------------------------------------------------
 # Coverage for previously-missed branches
 # ---------------------------------------------------------------------------

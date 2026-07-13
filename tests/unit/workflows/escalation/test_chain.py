@@ -189,6 +189,26 @@ class TestEscalationChainSuccess:
 # ---------------------------------------------------------------------------
 
 
+class TestEscalationChainRefusal:
+    """A fable refusal propagates — escalation can't fix a refusal verdict."""
+
+    @pytest.mark.asyncio
+    async def test_model_refusal_error_propagates(self):
+        from attune.model_tiers import ModelRefusalError
+
+        executor = MagicMock()
+        executor.run = AsyncMock(side_effect=ModelRefusalError("refused", category="safety"))
+        chain = EscalationChain(
+            models=["claude-fable-5"],
+            executor=executor,
+            retries_per_model=1,
+        )
+        with pytest.raises(ModelRefusalError):
+            await chain.run("prompt")
+        # No same-model retry after a refusal — it's a verdict, not a flake.
+        executor.run.assert_awaited_once()
+
+
 class TestEscalationChainRetries:
     @pytest.mark.asyncio
     async def test_retries_on_structural_failure_then_succeeds(self):

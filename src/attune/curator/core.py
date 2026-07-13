@@ -23,7 +23,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from attune.model_tiers import resolve_model
+from attune.llm.fable_call import acreate_with_fable
+from attune.model_tiers import ModelRefusalError, resolve_model
 
 from .cache import CuratorCache
 from .prompt import _CURATOR_SYSTEM_PROMPT, build_curator_prompt
@@ -254,7 +255,13 @@ async def _query_opus(
         "tool_choice": {"type": "tool", "name": "emit_curation"},
         "messages": [{"role": "user", "content": prompt}],
     }
-    response = await client.messages.create(**request_kwargs)
+    # Premium default is fable — the helper routes fable models via the
+    # beta namespace (+ server-side opus fallback) and surfaces a
+    # refusal as ModelRefusalError; non-fable models take the exact
+    # pre-tier path. (_extract_curation_payload already walks all
+    # content blocks, so the leading-thinking-block gotcha from the
+    # fable_call docstring doesn't apply here.)
+    response = await acreate_with_fable(client, **request_kwargs)
     payload = _extract_curation_payload(response)
     return CuratorResult(
         summary=str(payload.get("summary") or ""),
@@ -358,6 +365,25 @@ async def run_curator(
 
     try:
         result = await _query_opus(prompt, schema, client=client, model=model)
+    except ModelRefusalError as exc:
+        # The whole fable -> opus fallback chain refused: record the
+        # fable_refusal telemetry event, then degrade gracefully
+        # (run_curator never raises).
+        from attune.models.telemetry import log_fable_refusal
+
+        log_fable_refusal(exc, workflow="curator", model=model)
+        logger.warning("curator: synthesis refused: %s", exc)
+        return CuratorResult(
+            summary=(
+                "The curator briefing was refused by the model "
+                f"(category: {exc.category or 'unspecified'}). "
+                "Recorded as a fable_refusal telemetry event."
+            ),
+            items=[],
+            sources_consulted=sources_consulted,
+            model=model,
+            cached_at=datetime.now(timezone.utc),
+        )
     except Exception as exc:  # noqa: BLE001
         # INTENTIONAL: an LLM outage / missing key / API error degrades
         # to an offline briefing rather than crashing the dashboard.

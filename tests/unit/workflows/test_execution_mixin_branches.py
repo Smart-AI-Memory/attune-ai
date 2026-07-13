@@ -378,6 +378,29 @@ class TestExecuteExceptionBranches:
         assert result.success is False
 
     @pytest.mark.asyncio
+    async def test_model_refusal_branch_records_fable_refusal_event(self):
+        """ModelRefusalError errors the run AND records the telemetry event."""
+        from attune.model_tiers import ModelRefusalError
+
+        obj = _make_full_workflow()
+        obj._execute_standard = AsyncMock(
+            side_effect=ModelRefusalError("refused", category="safety")
+        )
+        obj._finalize_execution = MagicMock(return_value=self._make_result())
+
+        with (
+            patch("attune.models.TaskRoutingRecord", create=True) as MockRR,
+            patch("attune.workflows.execution_mixin._update_routing_record"),
+            patch("attune.models.telemetry.log_fable_refusal") as mock_log,
+        ):
+            MockRR.return_value = MagicMock()
+            result = await obj.execute(task="x")
+
+        assert result.success is False
+        mock_log.assert_called_once()
+        assert mock_log.call_args.kwargs["workflow"] == "test-workflow"
+
+    @pytest.mark.asyncio
     async def test_generic_exception_branch(self):
         obj = _make_full_workflow()
 

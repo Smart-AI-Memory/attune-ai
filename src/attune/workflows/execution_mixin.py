@@ -46,6 +46,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
+from attune.model_tiers import ModelRefusalError
 from attune.resilience.retry import RetryConfig, retry_with_backoff
 
 if TYPE_CHECKING:
@@ -251,6 +252,17 @@ class ExecutionMixin:
                     WorkflowStage,
                 )
 
+        except ModelRefusalError as e:
+            # The whole fable -> opus server-side fallback chain refused:
+            # record the fable_refusal telemetry event and error the run —
+            # never a silent skip (docs/specs/fable-premium-tier design §5).
+            from attune.models.telemetry import log_fable_refusal
+
+            log_fable_refusal(e, workflow=self.name)
+            error = f"Workflow execution error (model refusal): {e}"
+            logger.error(error)
+            if self._progress_tracker:
+                self._progress_tracker.fail_workflow(error)
         except (ValueError, TypeError, KeyError) as e:
             error = f"Workflow execution error (data/config): {e}"
             logger.error(error)

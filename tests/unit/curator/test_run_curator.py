@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from unittest.mock import patch
 
 import pytest
 
@@ -57,9 +58,17 @@ class _FakeMessages:
         return self._response
 
 
+class _FakeBeta:
+    def __init__(self, messages: _FakeMessages) -> None:
+        self.messages = messages
+
+
 class _FakeClient:
     def __init__(self, response=None, exc: Exception | None = None) -> None:
         self.messages = _FakeMessages(response=response, exc=exc)
+        # Fable models route via the beta namespace (fable_call); share
+        # the recorder so ``client.messages.calls`` sees every call.
+        self.beta = _FakeBeta(self.messages)
 
 
 def _tool_response(summary: str, items: list, *, in_tok: int = 1000, out_tok: int = 200):
@@ -256,6 +265,27 @@ def test_offline_rate_limit_message(isolate):
     result = asyncio.run(core.run_curator(project_root=isolate, client=_FakeClient(exc=exc)))
     assert "rate limit" in result.summary.lower()
     assert "429" not in result.summary
+
+
+def test_refusal_records_event_and_degrades(isolate):
+    """A fable refusal degrades to an errored briefing + telemetry event.
+
+    The default curator model is the premium tier (fable), so the call
+    rides the beta path where ``stop_reason == "refusal"`` surfaces as
+    ``ModelRefusalError``; ``run_curator`` records the ``fable_refusal``
+    event and keeps its never-raises contract.
+    """
+    refusal = _Response([], _Usage(10, 1))
+    refusal.stop_reason = "refusal"
+    client = _FakeClient(refusal)
+    with patch("attune.models.telemetry.log_fable_refusal") as mock_log:
+        result = asyncio.run(core.run_curator(project_root=isolate, client=client))
+
+    assert result.items == []
+    assert "refused" in result.summary
+    mock_log.assert_called_once()
+    assert mock_log.call_args.kwargs["workflow"] == "curator"
+    assert mock_log.call_args.kwargs["model"] == core._curator_model()
 
 
 def test_budget_overage_logs_warning(isolate, caplog):
