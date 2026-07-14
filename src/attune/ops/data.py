@@ -822,6 +822,38 @@ def sparkline_points(values: list[float], *, width: int = 240, height: int = 40)
     return " ".join(points)
 
 
+def _parse_usage_event(line: str) -> tuple[float, float, str, str] | None:
+    """Parse one ``usage.jsonl`` line into ``(cost, savings, workflow, ts)``.
+
+    Returns ``None`` for blank or non-JSON lines (silently skipped —
+    they must not count toward totals). Field fallbacks, all pinned by
+    ``test_data_characterization.py``:
+
+    - cost: ``total_cost`` → ``cost`` → 0.0 (an explicit ``null``
+      total_cost does NOT fall through to ``cost`` — dict.get only
+      defaults on a MISSING key).
+    - workflow: ``workflow`` → ``event_type`` → ``"unknown"`` (an
+      empty-string workflow is falsy and falls through).
+    - ts: ``usage.jsonl`` events use the ``ts`` key (v1.0 schema in
+      UsageTracker._format_entry); ``timestamp`` is the legacy
+      fallback for rotated archives that predate the rename. Without
+      it every event silently misses the by_day bucketing and Home's
+      KPI tiles read zero.
+    """
+    line = line.strip()
+    if not line:
+        return None
+    try:
+        event: dict[str, Any] = json.loads(line)
+    except json.JSONDecodeError:
+        return None
+    cost = float(event.get("total_cost", event.get("cost", 0.0)) or 0.0)
+    savings = float(event.get("savings", 0.0) or 0.0)
+    workflow = str(event.get("workflow") or event.get("event_type") or "unknown")
+    ts = str(event.get("ts") or event.get("timestamp") or "")
+    return cost, savings, workflow, ts
+
+
 def read_telemetry_summary(
     config: Config,
     *,
@@ -854,23 +886,10 @@ def read_telemetry_summary(
     try:
         with path.open("r", encoding="utf-8") as f:
             for line in f:
-                line = line.strip()
-                if not line:
+                parsed = _parse_usage_event(line)
+                if parsed is None:
                     continue
-                try:
-                    event: dict[str, Any] = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-
-                cost = float(event.get("total_cost", event.get("cost", 0.0)) or 0.0)
-                savings = float(event.get("savings", 0.0) or 0.0)
-                workflow = str(event.get("workflow") or event.get("event_type") or "unknown")
-                # ``usage.jsonl`` events use the ``ts`` key (v1.0 schema in
-                # UsageTracker._format_entry); ``timestamp`` is kept as a
-                # legacy fallback for any rotated archives that predate the
-                # rename. Without this fallback every event silently misses
-                # the by_day bucketing and Home's KPI tiles read zero.
-                ts = str(event.get("ts") or event.get("timestamp") or "")
+                cost, savings, workflow, ts = parsed
 
                 total_requests += 1
                 total_cost += cost
@@ -1218,6 +1237,55 @@ class SpendAlarm:
     detail: str  # one-line human explanation
 
 
+def _daily_anomaly_check(
+    baseline: list[float],
+    baseline_mean: float,
+    today_cost: float,
+    *,
+    z_threshold: float,
+    flat_multiplier: float,
+) -> tuple[str, float | None, str | None]:
+    """The daily-anomaly trigger: ``(method, z_score, detail)``.
+
+    ``detail`` is non-None exactly when the trigger fires. With
+    variance in the baseline the method is ``"zscore"`` (flag at
+    ``z >= z_threshold``, inclusive); a flat baseline (stdev == 0)
+    falls back to ``"multiplier"`` (flag on STRICTLY exceeding
+    ``baseline_mean * flat_multiplier`` — the spec's explicit rule for
+    the variance-free $1,200-night case). ``baseline_mean`` arrives
+    pre-rounded (4dp) and is used as-is so the z-score matches the
+    reported baseline, while stdev is computed from the raw values —
+    both pinned by ``test_data_characterization.py``.
+
+    Callers gate on ``min_baseline_days`` before calling; the
+    ``len < 2`` guard here only prevents ``statistics.stdev`` from
+    raising when that gate is configured down to 1.
+    """
+    stdev = statistics.stdev(baseline) if len(baseline) >= 2 else 0.0
+    if stdev > 0:
+        z_score = round((today_cost - baseline_mean) / stdev, 2)
+        if z_score >= z_threshold:
+            return (
+                "zscore",
+                z_score,
+                f"today ${today_cost:.2f} is {z_score:.1f}σ above the "
+                f"${baseline_mean:.2f}/day baseline",
+            )
+        return "zscore", z_score, None
+
+    # Flat history: baseline_mean > 0 here (baseline keeps non-zero
+    # days only), so the ratio is finite; the inf arm is pure defense.
+    if today_cost > baseline_mean * flat_multiplier:
+        ratio = today_cost / baseline_mean if baseline_mean else float("inf")
+        return (
+            "multiplier",
+            None,
+            f"today ${today_cost:.2f} is {ratio:.1f}x the flat "
+            f"${baseline_mean:.2f}/day baseline (no variance)",
+        )
+    return "multiplier", None, None
+
+
 def spend_alarm(
     daily: dict[str, float],
     *,
@@ -1302,27 +1370,16 @@ def spend_alarm(
     detail_parts: list[str] = []
 
     if baseline_days >= min_baseline_days:
-        stdev = statistics.stdev(baseline) if baseline_days >= 2 else 0.0
-        if stdev > 0:
-            method = "zscore"
-            z_score = round((today_cost - baseline_mean) / stdev, 2)
-            if z_score >= z_threshold:
-                triggers.append("daily_anomaly")
-                detail_parts.append(
-                    f"today ${today_cost:.2f} is {z_score:.1f}σ above the "
-                    f"${baseline_mean:.2f}/day baseline"
-                )
-        else:
-            # Flat history: no variance -> multiplier fallback (the
-            # explicit spec rule). baseline_mean > 0 here (non-zero days).
-            method = "multiplier"
-            if today_cost > baseline_mean * flat_multiplier:
-                triggers.append("daily_anomaly")
-                ratio = today_cost / baseline_mean if baseline_mean else float("inf")
-                detail_parts.append(
-                    f"today ${today_cost:.2f} is {ratio:.1f}x the flat "
-                    f"${baseline_mean:.2f}/day baseline (no variance)"
-                )
+        method, z_score, anomaly_detail = _daily_anomaly_check(
+            baseline,
+            baseline_mean,
+            today_cost,
+            z_threshold=z_threshold,
+            flat_multiplier=flat_multiplier,
+        )
+        if anomaly_detail is not None:
+            triggers.append("daily_anomaly")
+            detail_parts.append(anomaly_detail)
 
     if ceiling_hit:
         triggers.append("ceiling")
