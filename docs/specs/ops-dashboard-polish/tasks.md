@@ -80,6 +80,27 @@ as a single sweep than as N small PRs.
 
 ---
 
+## Phase E — Library Health snapshot tab (2026-07-14, in progress)
+
+**Goal:** productize `docs/reports/library-health-2026-07-14.md` into
+a standing, deterministic-only dashboard tab. See decisions.md's
+Phase E section for the three ratified decisions this phase
+implements.
+
+| ID | Task | Status | Closes | PR / location |
+|----|------|--------|--------|----|
+| E1 | Docs-only spec amendment recording decisions 1-3 (this commit) | done | — | `docs/specs/ops-dashboard-polish/decisions.md`, `tasks.md` |
+| E2 | `health_snapshot.py` collector: per-signal degradation, atomic versioned JSON write, `python -m attune.ops.health_snapshot` CLI entry | done | — | `src/attune/ops/health_snapshot.py` |
+| E3 | `/health/library` page + `/health/library/refresh` POST + `/api/health/library/status` poll route; staleness-aware auto-refresh on GET | done | — | `src/attune/ops/routes/health_library.py`, `templates/health_library.html` |
+| E4 | Unit + route test coverage (collector per-signal degradation, atomic write, schema shape; route renders latest, stale badge, refresh POST) | done | — | `tests/unit/ops/test_health_snapshot.py`, `tests/unit/ops/test_health_library_route.py` |
+
+**Phase E definition of done:** the tab renders the deterministic
+snapshot with a stale badge and working Refresh button; the collector
+never crashes on a missing network/CLI dependency; 80%+ coverage on
+the new module.
+
+---
+
 ## Parallelism strategy
 
 Phases A and B can pipeline: while A1 is in review, A2 can be in
