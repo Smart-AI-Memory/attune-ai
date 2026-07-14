@@ -16,7 +16,7 @@ This package provides modular organization of execution strategies:
 - base: ExecutionStrategy ABC
 - core_strategies: Sequential, Parallel, Debate, Teaching, Refinement, Adaptive
 - conditional_strategies: Conditional, MultiConditional, Nested, NestedSequential
-- advanced: ToolEnhanced, PromptCached, etc. (TODO)
+- advanced: ToolEnhanced, PromptCached, etc.
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
