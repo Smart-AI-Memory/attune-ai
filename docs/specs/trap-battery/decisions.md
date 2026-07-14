@@ -350,9 +350,10 @@ Patrick: "approve the recovery re-run post-freeze." Recorded scope:
   same caps/receipts; est. ~$10–15. The run-day session still
   states the exact cost before spending (standing spend-gate
   discipline) — this entry settles the authorization and timing.
-- **Left open (deliberately not inferred)**: whether the post-freeze
-  run also includes the PREVENTION traps. The approval was given
-  against the phase-2 pilot report (prevention NO-GO at the time);
-  the same-night v2 re-pilot made prevention 4/4 GO, so folding
-  them into the same run (~$15–30 total, one run instead of two)
-  is now viable — Patrick to confirm or decline.
+- **RESOLVED same evening (Patrick: option 1)**: the prevention
+  traps ARE folded in — the post-freeze run is the FULL v2 battery
+  (all four traps, repeats 15–20, ~$15–30 total, one run). The
+  original approval was given against the phase-2 pilot report
+  (prevention NO-GO at the time); the same-night v2 re-pilot made
+  prevention 4/4 GO, and Patrick extended the approval to the full
+  run on being shown the delta.
