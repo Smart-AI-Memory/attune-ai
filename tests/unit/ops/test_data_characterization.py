@@ -73,7 +73,7 @@ _SPEND_TODAY = date(2026, 6, 20)
 # ===========================================================================
 
 
-def test_read_telemetry_summary_happy_path_full_shape(tmp_path):
+def test_read_telemetry_summary_happy_path_full_shape(tmp_path, monkeypatch):
     """Main happy path: multiple workflows, multiple days, savings — pins
     the exact TelemetrySummary shape (rounding, sort order, last_event_at)."""
     cfg = _config(tmp_path)
@@ -88,34 +88,31 @@ def test_read_telemetry_summary_happy_path_full_shape(tmp_path):
     def _fake_list_workflows() -> list[WorkflowEntry]:
         return canonical
 
-    _data_mod.list_workflows = _fake_list_workflows  # type: ignore[assignment]
-    try:
-        _write_events(
-            cfg.telemetry_path,
-            [
-                {
-                    "workflow": "code-review",
-                    "ts": "2026-05-14T09:00:00+00:00",
-                    "total_cost": 1.5,
-                    "savings": 0.5,
-                },
-                {
-                    "workflow": "code-review",
-                    "ts": "2026-05-14T10:00:00+00:00",
-                    "total_cost": 0.5,
-                },
-                {
-                    "workflow": "security-audit",
-                    "ts": "2026-05-13T08:00:00+00:00",
-                    "total_cost": 3.0,
-                    "savings": 1.0,
-                },
-            ],
-        )
+    monkeypatch.setattr(_data_mod, "list_workflows", _fake_list_workflows)
+    _write_events(
+        cfg.telemetry_path,
+        [
+            {
+                "workflow": "code-review",
+                "ts": "2026-05-14T09:00:00+00:00",
+                "total_cost": 1.5,
+                "savings": 0.5,
+            },
+            {
+                "workflow": "code-review",
+                "ts": "2026-05-14T10:00:00+00:00",
+                "total_cost": 0.5,
+            },
+            {
+                "workflow": "security-audit",
+                "ts": "2026-05-13T08:00:00+00:00",
+                "total_cost": 3.0,
+                "savings": 1.0,
+            },
+        ],
+    )
 
-        summary = data.read_telemetry_summary(cfg, today=_TELEMETRY_TODAY)
-    finally:
-        del _data_mod.list_workflows
+    summary = data.read_telemetry_summary(cfg, today=_TELEMETRY_TODAY)
 
     assert summary == data.TelemetrySummary(
         total_requests=3,
@@ -191,7 +188,7 @@ def test_read_telemetry_summary_cost_field_fallback_chain(tmp_path):
     assert summary.total_cost == pytest.approx(3.0)
 
 
-def test_read_telemetry_summary_workflow_field_fallback_chain(tmp_path):
+def test_read_telemetry_summary_workflow_field_fallback_chain(tmp_path, monkeypatch):
     """``workflow`` wins; falls back to ``event_type``; falls back to
     ``"unknown"``. Quirk: an EMPTY-STRING ``workflow`` is falsy under the
     ``or`` chain, so it also falls through to ``event_type`` rather than
@@ -205,33 +202,30 @@ def test_read_telemetry_summary_workflow_field_fallback_chain(tmp_path):
     def _raise():
         raise RuntimeError("registry unavailable")
 
-    _data_mod.list_workflows = _raise  # type: ignore[assignment]
-    try:
-        _write_events(
-            cfg.telemetry_path,
-            [
-                {
-                    "ts": "2026-05-14T09:00:00+00:00",
-                    "workflow": "code-review",
-                    "total_cost": 1.0,
-                },
-                {
-                    "ts": "2026-05-14T09:01:00+00:00",
-                    "event_type": "audit_run",
-                    "total_cost": 2.0,
-                },
-                {"ts": "2026-05-14T09:02:00+00:00", "total_cost": 3.0},
-                {
-                    "ts": "2026-05-14T09:03:00+00:00",
-                    "workflow": "",
-                    "event_type": "fallback-name",
-                    "total_cost": 4.0,
-                },
-            ],
-        )
-        summary = data.read_telemetry_summary(cfg, today=_TELEMETRY_TODAY)
-    finally:
-        del _data_mod.list_workflows
+    monkeypatch.setattr(_data_mod, "list_workflows", _raise)
+    _write_events(
+        cfg.telemetry_path,
+        [
+            {
+                "ts": "2026-05-14T09:00:00+00:00",
+                "workflow": "code-review",
+                "total_cost": 1.0,
+            },
+            {
+                "ts": "2026-05-14T09:01:00+00:00",
+                "event_type": "audit_run",
+                "total_cost": 2.0,
+            },
+            {"ts": "2026-05-14T09:02:00+00:00", "total_cost": 3.0},
+            {
+                "ts": "2026-05-14T09:03:00+00:00",
+                "workflow": "",
+                "event_type": "fallback-name",
+                "total_cost": 4.0,
+            },
+        ],
+    )
+    summary = data.read_telemetry_summary(cfg, today=_TELEMETRY_TODAY)
 
     by_cost = {row[0]: row[2] for row in summary.by_workflow}
     assert by_cost == {
@@ -303,7 +297,9 @@ def test_read_telemetry_summary_by_day_window_excludes_old_days_but_totals_inclu
     assert summary.by_day == [("2026-05-14", 1, 2.0)]
 
 
-def test_read_telemetry_summary_canonical_filter_excludes_unregistered_workflows(tmp_path):
+def test_read_telemetry_summary_canonical_filter_excludes_unregistered_workflows(
+    tmp_path, monkeypatch
+):
     """When the workflow registry resolves, ``by_workflow`` only surfaces
     canonical (currently-registered) workflow names — a stale test-fixture
     or removed-workflow name is dropped from the rollup, though it still
@@ -315,33 +311,32 @@ def test_read_telemetry_summary_canonical_filter_excludes_unregistered_workflows
     def _fake_list_workflows():
         return [WorkflowEntry(name="code-review", description="", stages=1, tier_map={})]
 
-    _data_mod.list_workflows = _fake_list_workflows  # type: ignore[assignment]
-    try:
-        _write_events(
-            cfg.telemetry_path,
-            [
-                {
-                    "ts": "2026-05-14T09:00:00+00:00",
-                    "workflow": "code-review",
-                    "total_cost": 1.0,
-                },
-                {
-                    "ts": "2026-05-14T09:01:00+00:00",
-                    "workflow": "old-stub",
-                    "total_cost": 2.0,
-                },
-            ],
-        )
-        summary = data.read_telemetry_summary(cfg, today=_TELEMETRY_TODAY)
-    finally:
-        del _data_mod.list_workflows
+    monkeypatch.setattr(_data_mod, "list_workflows", _fake_list_workflows)
+    _write_events(
+        cfg.telemetry_path,
+        [
+            {
+                "ts": "2026-05-14T09:00:00+00:00",
+                "workflow": "code-review",
+                "total_cost": 1.0,
+            },
+            {
+                "ts": "2026-05-14T09:01:00+00:00",
+                "workflow": "old-stub",
+                "total_cost": 2.0,
+            },
+        ],
+    )
+    summary = data.read_telemetry_summary(cfg, today=_TELEMETRY_TODAY)
 
     assert summary.total_requests == 2
     assert summary.total_cost == pytest.approx(3.0)  # unfiltered total
     assert summary.by_workflow == [("code-review", 1, 1.0)]  # old-stub dropped
 
 
-def test_read_telemetry_summary_registry_failure_falls_back_to_show_everything(tmp_path):
+def test_read_telemetry_summary_registry_failure_falls_back_to_show_everything(
+    tmp_path, monkeypatch
+):
     """INTENTIONAL fallback: if introspecting the workflow registry raises,
     the canonical filter is disabled entirely (``canonical_names = None``)
     rather than hiding all data behind a broken registry call."""
@@ -351,26 +346,23 @@ def test_read_telemetry_summary_registry_failure_falls_back_to_show_everything(t
     def _raise():
         raise RuntimeError("registry unavailable")
 
-    _data_mod.list_workflows = _raise  # type: ignore[assignment]
-    try:
-        _write_events(
-            cfg.telemetry_path,
-            [
-                {
-                    "ts": "2026-05-14T09:00:00+00:00",
-                    "workflow": "not-a-real-workflow",
-                    "total_cost": 1.0,
-                }
-            ],
-        )
-        summary = data.read_telemetry_summary(cfg, today=_TELEMETRY_TODAY)
-    finally:
-        del _data_mod.list_workflows
+    monkeypatch.setattr(_data_mod, "list_workflows", _raise)
+    _write_events(
+        cfg.telemetry_path,
+        [
+            {
+                "ts": "2026-05-14T09:00:00+00:00",
+                "workflow": "not-a-real-workflow",
+                "total_cost": 1.0,
+            }
+        ],
+    )
+    summary = data.read_telemetry_summary(cfg, today=_TELEMETRY_TODAY)
 
     assert summary.by_workflow == [("not-a-real-workflow", 1, 1.0)]
 
 
-def test_read_telemetry_summary_by_workflow_caps_at_top_20(tmp_path):
+def test_read_telemetry_summary_by_workflow_caps_at_top_20(tmp_path, monkeypatch):
     """``by_workflow`` is capped at the top 20 by cost (``heapq.nlargest``),
     dropping the lowest spenders when more than 20 distinct workflows have
     events, and returns them sorted descending by cost."""
@@ -380,20 +372,17 @@ def test_read_telemetry_summary_by_workflow_caps_at_top_20(tmp_path):
     def _raise():
         raise RuntimeError("registry unavailable")  # show-everything fallback
 
-    _data_mod.list_workflows = _raise  # type: ignore[assignment]
-    try:
-        events = [
-            {
-                "ts": "2026-05-14T09:00:00+00:00",
-                "workflow": f"w{i:02d}",
-                "total_cost": float(i),
-            }
-            for i in range(1, 23)  # w01..w22, costs 1.0..22.0
-        ]
-        _write_events(cfg.telemetry_path, events)
-        summary = data.read_telemetry_summary(cfg, today=_TELEMETRY_TODAY)
-    finally:
-        del _data_mod.list_workflows
+    monkeypatch.setattr(_data_mod, "list_workflows", _raise)
+    events = [
+        {
+            "ts": "2026-05-14T09:00:00+00:00",
+            "workflow": f"w{i:02d}",
+            "total_cost": float(i),
+        }
+        for i in range(1, 23)  # w01..w22, costs 1.0..22.0
+    ]
+    _write_events(cfg.telemetry_path, events)
+    summary = data.read_telemetry_summary(cfg, today=_TELEMETRY_TODAY)
 
     assert len(summary.by_workflow) == 20
     names = {row[0] for row in summary.by_workflow}
