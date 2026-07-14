@@ -54,8 +54,6 @@ ALLOWLISTED_D_BLOCKS: frozenset[str] = frozenset(
         "project_index/dependency_analysis.py::DependencyAnalysisMixin._build_summary",
         "project_index/index.py::ProjectIndex.refresh_incremental",
         "voice/formatter.py::_extract_from_workflow_result",
-        "workflow_ship.py::ship_workflow",
-        "workflows/bug_predict_report.py::format_bug_predict_report",
         "workflows/discovery_sweep/board.py::sweep_to_board_html",
         "workflows/document_gen/report_formatter.py::format_doc_gen_report",
         "workflows/documentation_orchestrator.py::DocumentationOrchestrator.execute",

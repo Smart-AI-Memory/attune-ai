@@ -45,4 +45,4 @@ re-exported from `attune.workflows`. `WorkflowResult` comes from
 | MCP tool | `bug_predict` — one required `path` argument; runs at standard depth (the handler does not pass `depth`). |
 | Python | `await BugPredictionWorkflow().execute(path=<p>, depth=<d>)`. |
 
-<!-- attune-generated: source_hash=3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d feature=bug-predict kind=reference generated_at=2026-06-23 -->
+<!-- attune-generated: source_hash=6651bf938b845a590d6af44512242264ef0650223553d1e58325a8c0c6b2e208 feature=bug-predict kind=reference generated_at=2026-07-14 -->

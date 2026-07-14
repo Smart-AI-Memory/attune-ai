@@ -1,15 +1,18 @@
 # Licensed under the Apache License, Version 2.0
 # Copyright 2025 Smart AI Memory, LLC
-"""Tests for pattern reporting, report generator, workflow_fixall,
-monitoring validators, and template engine — Batch 14.
+"""Tests for pattern reporting, report generator, monitoring
+validators, and template engine -- Batch 14.
 
 Covers: meta_workflows/pattern_reporting, meta_workflows/report_generator,
-workflow_fixall, monitoring/validators, template_engine.
+monitoring/validators, template_engine.
+
+(Formerly also covered workflow_fixall -- removed with the
+legacy one-command family; see
+docs/reports/d-block-triage-2026-07-14.md.)
 """
 
 from __future__ import annotations
 
-import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -220,85 +223,6 @@ class TestReportGenerator:
         report = generate_report(result, template)
         assert "security_auditor" in report
         assert "haiku" in report
-
-
-# === Module: workflow_fixall.py ===
-
-
-class TestWorkflowFixall:
-    def _make_wc(self):
-        mock_wc = MagicMock()
-        mock_wc._run_command.return_value = (True, "Fixed 2 issues\nFixed 1 issues")
-        mock_wc._load_stats.return_value = {"commands": {}}
-        return mock_wc
-
-    def test_fix_all_workflow_returns_zero(self):
-        from attune.workflow_fixall import fix_all_workflow
-
-        mock_wc = self._make_wc()
-        with patch.dict(sys.modules, {"attune.workflow_commands": mock_wc}):
-            result = fix_all_workflow()
-        assert result == 0
-
-    def test_fix_all_workflow_calls_ruff_fix(self):
-        from attune.workflow_fixall import fix_all_workflow
-
-        mock_wc = self._make_wc()
-        with patch.dict(sys.modules, {"attune.workflow_commands": mock_wc}):
-            fix_all_workflow()
-        calls = [str(c) for c in mock_wc._run_command.call_args_list]
-        assert any("ruff" in c and "check" in c for c in calls)
-
-    def test_fix_all_workflow_calls_ruff_format(self):
-        from attune.workflow_fixall import fix_all_workflow
-
-        mock_wc = self._make_wc()
-        with patch.dict(sys.modules, {"attune.workflow_commands": mock_wc}):
-            fix_all_workflow()
-        calls = [str(c) for c in mock_wc._run_command.call_args_list]
-        assert any("ruff" in c and "format" in c for c in calls)
-
-    def test_fix_all_workflow_dry_run(self, capsys):
-        from attune.workflow_fixall import fix_all_workflow
-
-        mock_wc = self._make_wc()
-        with patch.dict(sys.modules, {"attune.workflow_commands": mock_wc}):
-            fix_all_workflow(dry_run=True)
-        out = capsys.readouterr().out
-        assert "DRY RUN" in out
-
-    def test_fix_all_workflow_updates_stats(self):
-        from attune.workflow_fixall import fix_all_workflow
-
-        mock_wc = self._make_wc()
-        stats = {"commands": {}}
-        mock_wc._load_stats.return_value = stats
-        with patch.dict(sys.modules, {"attune.workflow_commands": mock_wc}):
-            fix_all_workflow()
-        mock_wc._save_stats.assert_called_once()
-        assert stats["commands"].get("fix-all", 0) == 1
-
-    def test_cmd_fix_all_delegates(self):
-        from attune.workflow_fixall import cmd_fix_all
-
-        mock_wc = MagicMock()
-        mock_wc.fix_all_workflow.return_value = 0
-        with patch.dict(sys.modules, {"attune.workflow_commands": mock_wc}):
-            args = MagicMock()
-            args.project_root = "."
-            args.dry_run = False
-            args.verbose = False
-            result = cmd_fix_all(args)
-        assert result == 0
-        mock_wc.fix_all_workflow.assert_called_once()
-
-    def test_wc_late_binding(self):
-        from attune.workflow_fixall import _wc
-
-        mock_wc = MagicMock()
-        with patch.dict(sys.modules, {"attune.workflow_commands": mock_wc}):
-            result = _wc()
-        assert result is mock_wc
 
 
 # === Module: monitoring/validators.py ===

@@ -133,4 +133,4 @@ and `max_turns`. On failure, `success` is `False` and `error` /
   as an internal utility, not a configuration surface for the
   prediction.
 
-<!-- attune-generated: source_hash=3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d feature=bug-predict kind=architecture generated_at=2026-06-23 -->
+<!-- attune-generated: source_hash=6651bf938b845a590d6af44512242264ef0650223553d1e58325a8c0c6b2e208 feature=bug-predict kind=architecture generated_at=2026-07-14 -->

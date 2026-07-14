@@ -1,9 +1,13 @@
 # Licensed under the Apache License, Version 2.0
 # Copyright 2025 Smart AI Memory, LLC
-"""Tests for deprecation utils, workflow helpers, and data model classes — Batch 16.
+"""Tests for deprecation utils and data model classes -- Batch 16.
 
-Covers: _deprecation, _workflow_helpers, workflows/data_classes,
-workflows/step_config, workflows/progress_models.
+Covers: _deprecation, workflows/data_classes, workflows/step_config,
+workflows/progress_models.
+
+(Formerly also covered _workflow_helpers -- removed with the
+legacy one-command family; see
+docs/reports/d-block-triage-2026-07-14.md.)
 """
 
 from __future__ import annotations
@@ -11,7 +15,6 @@ from __future__ import annotations
 import json
 import warnings
 from datetime import datetime
-from unittest.mock import patch
 
 # === Module: _deprecation.py ===
 
@@ -60,142 +63,6 @@ class TestDeprecation:
             _emit_cli_deprecation("mod.a", "cmd a")
             _emit_cli_deprecation("mod.b", "cmd b")
         assert len(caught) == 2
-
-
-# === Module: _workflow_helpers.py ===
-
-
-class TestWorkflowHelpers:
-    def test_load_patterns_empty_dir(self, tmp_path):
-        from attune._workflow_helpers import _load_patterns
-
-        result = _load_patterns(str(tmp_path / "nonexistent"))
-        assert isinstance(result, dict)
-        assert "debugging" in result
-        assert result["debugging"] == []
-
-    def test_load_patterns_loads_json(self, tmp_path):
-        from attune._workflow_helpers import _load_patterns
-
-        patterns_dir = tmp_path / "patterns"
-        patterns_dir.mkdir()
-        (patterns_dir / "debugging.json").write_text(json.dumps({"patterns": [{"id": "bug-1"}]}))
-        result = _load_patterns(str(patterns_dir))
-        assert len(result["debugging"]) == 1
-        assert result["debugging"][0]["id"] == "bug-1"
-
-    def test_load_patterns_handles_corrupt_json(self, tmp_path):
-        from attune._workflow_helpers import _load_patterns
-
-        patterns_dir = tmp_path / "patterns"
-        patterns_dir.mkdir()
-        (patterns_dir / "debugging.json").write_text("not-json")
-        result = _load_patterns(str(patterns_dir))
-        assert result["debugging"] == []
-
-    def test_load_stats_defaults_when_missing(self, tmp_path):
-        from attune._workflow_helpers import _load_stats
-
-        result = _load_stats(str(tmp_path / "nodir"))
-        assert result["commands"] == {}
-        assert result["patterns_learned"] == 0
-
-    def test_load_stats_reads_file(self, tmp_path):
-        from attune._workflow_helpers import _load_stats
-
-        stats_dir = tmp_path / ".attune"
-        stats_dir.mkdir()
-        (stats_dir / "stats.json").write_text(json.dumps({"commands": {"ship": 3}}))
-        result = _load_stats(str(stats_dir))
-        assert result["commands"]["ship"] == 3
-
-    def test_save_stats_creates_file(self, tmp_path):
-        from attune._workflow_helpers import _save_stats
-
-        stats = {"commands": {"learn": 1}, "patterns_learned": 5}
-        _save_stats(stats, str(tmp_path / ".attune"))
-        saved = json.loads((tmp_path / ".attune" / "stats.json").read_text())
-        assert saved["commands"]["learn"] == 1
-
-    def test_run_command_success(self):
-        from attune._workflow_helpers import _run_command
-
-        success, output = _run_command(["echo", "hello"])
-        assert success is True
-        assert "hello" in output
-
-    def test_run_command_failure(self):
-        from attune._workflow_helpers import _run_command
-
-        success, output = _run_command(["false"])
-        assert success is False
-
-    def test_run_command_not_found(self):
-        from attune._workflow_helpers import _run_command
-
-        success, output = _run_command(["definitely_not_a_real_command_xyz123"])
-        assert success is False
-        assert "not found" in output.lower() or "Command not found" in output
-
-    def test_run_command_timeout(self):
-        import subprocess
-
-        from attune._workflow_helpers import _run_command
-
-        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 300)):
-            success, output = _run_command(["sleep", "9999"])
-        assert success is False
-        assert "timed out" in output.lower()
-
-    def test_get_tech_debt_trend_unknown_no_file(self, tmp_path):
-        from attune._workflow_helpers import _get_tech_debt_trend
-
-        result = _get_tech_debt_trend(str(tmp_path / "patterns"))
-        assert result == "unknown"
-
-    def test_get_tech_debt_trend_insufficient(self, tmp_path):
-        from attune._workflow_helpers import _get_tech_debt_trend
-
-        patterns_dir = tmp_path / "patterns"
-        patterns_dir.mkdir()
-        (patterns_dir / "tech_debt.json").write_text(
-            json.dumps({"snapshots": [{"total_items": 5}]})
-        )
-        result = _get_tech_debt_trend(str(patterns_dir))
-        assert result == "insufficient_data"
-
-    def test_get_tech_debt_trend_increasing(self, tmp_path):
-        from attune._workflow_helpers import _get_tech_debt_trend
-
-        patterns_dir = tmp_path / "patterns"
-        patterns_dir.mkdir()
-        (patterns_dir / "tech_debt.json").write_text(
-            json.dumps({"snapshots": [{"total_items": 5}, {"total_items": 8}]})
-        )
-        result = _get_tech_debt_trend(str(patterns_dir))
-        assert result == "increasing"
-
-    def test_get_tech_debt_trend_decreasing(self, tmp_path):
-        from attune._workflow_helpers import _get_tech_debt_trend
-
-        patterns_dir = tmp_path / "patterns"
-        patterns_dir.mkdir()
-        (patterns_dir / "tech_debt.json").write_text(
-            json.dumps({"snapshots": [{"total_items": 10}, {"total_items": 7}]})
-        )
-        result = _get_tech_debt_trend(str(patterns_dir))
-        assert result == "decreasing"
-
-    def test_get_tech_debt_trend_stable(self, tmp_path):
-        from attune._workflow_helpers import _get_tech_debt_trend
-
-        patterns_dir = tmp_path / "patterns"
-        patterns_dir.mkdir()
-        (patterns_dir / "tech_debt.json").write_text(
-            json.dumps({"snapshots": [{"total_items": 5}, {"total_items": 5}]})
-        )
-        result = _get_tech_debt_trend(str(patterns_dir))
-        assert result == "stable"
 
 
 # === Module: workflows/data_classes.py ===

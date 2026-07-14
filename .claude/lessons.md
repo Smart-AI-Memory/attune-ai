@@ -15137,3 +15137,50 @@ def ", start_idx + 1)` for module-
   centrally verifying subagent-written tests, run them WITH the
   downstream suite serially at least once — the subagent's own
   green run can't see what it poisons for others.
+
+- **Orchestrating background agents in isolated worktrees — two
+  mechanical patterns for the supervisor**: (2026-07-14, the
+  sonnet-drafts/fable-gates triple-lane run). (a) PROGRESS without
+  transcript access: a background agent's worktree is ordinary git —
+  `git -C .claude/worktrees/agent-<id> status --short` + `log
+  --oneline -2` shows exactly what it has staged/committed (e.g. all
+  five legacy modules D-staged told us the per-module verification
+  had condemned the whole family, long before the completion
+  notification). Never tail the agent's .output JSONL (context
+  bomb); the worktree IS the progress bar. (b) VERIFYING a finished
+  agent's pushed branch: `git checkout <their-branch>` in your own
+  worktree fails ("already used by worktree at agent-<id>") — the
+  known one-branch-one-worktree rule. Don't fight it: run the
+  verification suite IN their worktree with YOUR venv's python
+  (`cd agent-wt && <your-venv>/bin/python -m pytest ...`), or lift
+  files by path. Their worktree persists after the agent finishes
+  precisely so the supervisor can verify in place.
+
+- **A background agent that "kicks off the final suite in the
+  background" stalls at the finish line — its child processes die
+  when the agent stops; forbid backgrounded final verification in
+  agent prompts**: (2026-07-14, Lane A takeover). The deletion-lane
+  agent finished all code work, reported "serial suite running in
+  the background via a Monitor, will follow up" — then its monitor
+  and pytest process died with the agent turn. Symptom set: no
+  pushed branch, worktree HEAD unmoved, and `ps aux | grep
+  <agent-worktree>` EMPTY despite the "running" claim. The work
+  itself was intact; the supervisor ran the suite, committed, and
+  pushed. Two rules: (1) agent prompts must require the final
+  verification run SYNCHRONOUSLY before the agent yields — an
+  agent's backgrounded process does not outlive it; (2) when a
+  lane goes quiet, check for live processes in its worktree before
+  assuming a long test run — "quiet + no process" is a stall, not
+  patience.
+
+- **Preservation-proof hashing must normalize wall-clock/random
+  fields first — the generated_at rule, re-learned on a different
+  surface**: (2026-07-14, batch-1 cuts gate). A byte-comparison
+  harness hashed `repr(FormResponse)` and flagged main-vs-branch as
+  DIFFERENT — the delta was the microsecond `timestamp` field,
+  different between any two runs by construction. Same class as the
+  projector's `normalize_generated_stamps` (and the diff-filter
+  footer lesson): before hashing/diffing outputs for a
+  behavior-preservation receipt, strip or pin every wall-clock,
+  random, or run-id field; a "difference" in one of those is
+  harness noise that erodes trust in the real signal.

@@ -189,45 +189,47 @@ class TestRefreshWorkflowRegistry:
         assert len(WORKFLOW_REGISTRY) > 0
 
 
-class TestLoadCliCommands:
-    """Tests for _load_cli_commands lazy loading (lines 218-233)."""
+class TestDeprecatedCliCommands:
+    """Tests for the retired one-command family's deprecation stubs.
 
-    def test_load_cli_commands_sets_loaded_flag(self):
-        """_load_cli_commands sets _cli_loaded to True."""
+    ``cmd_morning``/``cmd_ship``/``cmd_fix_all``/``cmd_learn`` had no
+    live caller (no CLI wiring; the "ship" NL intent already routes to
+    release-prep) and their implementation modules were deleted. The
+    names stay accessible via ``__getattr__`` (deprecation path, not a
+    hard ``AttributeError``) but warn on access and raise when called.
+    See docs/reports/d-block-triage-2026-07-14.md.
+    """
 
+    @pytest.mark.parametrize(
+        "name",
+        ["cmd_morning", "cmd_ship", "cmd_fix_all", "cmd_learn"],
+    )
+    def test_getattr_warns_and_returns_stub(self, name):
         import attune.workflows as wf_module
 
-        # Reset state
-        wf_module._cli_loaded = False
+        with pytest.warns(DeprecationWarning, match=name):
+            stub = wf_module.__getattr__(name)
 
-        wf_module._load_cli_commands()
+        assert callable(stub)
 
-        assert wf_module._cli_loaded is True
-
-    def test_load_cli_commands_idempotent(self):
-        """_load_cli_commands does nothing when already loaded."""
+    @pytest.mark.parametrize(
+        "name",
+        ["cmd_morning", "cmd_ship", "cmd_fix_all", "cmd_learn"],
+    )
+    def test_stub_raises_when_called(self, name):
         import attune.workflows as wf_module
 
-        wf_module._cli_loaded = True
-        # Calling again should be a no-op (no error)
-        wf_module._load_cli_commands()
+        with pytest.warns(DeprecationWarning):
+            stub = wf_module.__getattr__(name)
 
-        assert wf_module._cli_loaded is True
+        with pytest.raises(NotImplementedError, match=name):
+            stub()
 
-    def test_getattr_cli_command_triggers_load(self):
-        """Accessing cmd_morning via __getattr__ triggers _load_cli_commands."""
-        from unittest.mock import patch
-
+    def test_cmd_ship_stub_points_at_successor(self):
         import attune.workflows as wf_module
 
-        with patch.object(wf_module, "_load_cli_commands") as mock_load:
-            # Reset so getattr can be triggered
-            wf_module._cli_loaded = False
-            try:
-                _ = wf_module.__getattr__("cmd_morning")
-            except Exception:
-                pass
-            mock_load.assert_called_once()
+        with pytest.warns(DeprecationWarning, match="release-prep"):
+            wf_module.__getattr__("cmd_ship")
 
 
 class TestDiscoverWorkflowsWithConfig:

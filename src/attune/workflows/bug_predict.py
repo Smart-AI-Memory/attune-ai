@@ -46,10 +46,6 @@ from .bug_predict_patterns import (
     _remove_docstrings,  # noqa: F401 — re-exported
     _should_exclude_file,  # noqa: F401 — re-exported
 )
-from .bug_predict_report import (
-    format_bug_predict_report,  # noqa: F401 — re-exported
-    main,  # noqa: F401 — re-exported
-)
 from .data_classes import WorkflowResult
 from .step_config import WorkflowStepConfig
 
@@ -319,7 +315,3 @@ class BugPredictionWorkflow(BaseWorkflow):
                 run_result = sdk_result
         run_result.result_text = build_result_text(assistant_parts, result_parts)
         return run_result
-
-
-if __name__ == "__main__":
-    main()
