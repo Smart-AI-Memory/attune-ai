@@ -315,9 +315,9 @@
 <td>medium</td>
 </tr>
 <tr>
-<td><code>format_bug_predict_report(result, ...)</code> raises / prints nothing useful</td>
-<td>It expects the pre-v4.2.0 dict shape, <strong>not</strong> the <code>WorkflowResult</code> <code>execute</code> returns</td>
-<td>Read <code>result.final_output</code> / <code>result.summary</code> directly</td>
+<td><code>ImportError: cannot import name 'format_bug_predict_report'</code></td>
+<td>The pre-v4.2.0 formatter module was removed (dead code, zero live callers)</td>
+<td>Read <code>result.final_output</code> / <code>result.summary</code> directly, or render via <code>attune.voice.report_renderer.render()</code></td>
 <td>medium</td>
 </tr>
 <tr>

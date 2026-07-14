@@ -388,12 +388,14 @@ is <code>BugPredictionWorkflow</code> (its constructor and async
 leading underscore — the pattern helpers in
 <code>bug_predict_patterns.py</code> and <code>_run_agent_predict</code> — are
 internal and may change.</li>
-<li><strong><code>format_bug_predict_report</code> and <code>main</code> are legacy.</strong>
-<code>format_bug_predict_report(result, input_data)</code> consumes the
-pre-v4.2.0 dict pipeline shape (<code>overall_risk_score</code>,
-<code>patterns_found</code>, …), not the <code>WorkflowResult</code> that <code>execute</code>
-returns; do not feed it <code>execute</code>'s output. Read
-<code>result.final_output</code> and <code>result.summary</code> directly instead.</li>
+<li><strong><code>format_bug_predict_report</code> and <code>main</code> were removed.</strong> They
+consumed the pre-v4.2.0 dict pipeline shape
+(<code>overall_risk_score</code>, <code>patterns_found</code>, …), not the
+<code>WorkflowResult</code> that <code>execute</code> returns, and had no live caller
+once the SDK-native rewrite shipped. Read <code>result.final_output</code>
+(a <code>WorkflowReport</code> when subagent findings parsed as structured
+output, rendered via <code>attune.voice.report_renderer.render()</code>)
+and <code>result.summary</code> directly instead.</li>
 <li><strong>Start shallow, then deepen.</strong> Run <code>quick</code> to triage, and only
 spend a <code>deep</code> budget on the modules that came back hot.</li>
 <li><strong>Use <code>--cheap</code> for routine CLI runs.</strong> It forces unpinned
