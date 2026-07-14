@@ -5,7 +5,7 @@
 > recalls curated memory correctly — before investing further in the
 > subsystem or deciding it needs work.
 
-**Status:** requirements drafted
+**Status:** recommitted (2026-07-14 triage) — requirements drafted; next eval round is real work (memory-as-insurance feedback signal)
 **Owner:** Patrick + agent
 **Related:**
 

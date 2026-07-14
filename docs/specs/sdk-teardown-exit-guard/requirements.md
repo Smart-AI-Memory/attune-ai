@@ -1,6 +1,6 @@
 # Spec: SDK teardown-exit-1 guard
 
-**Status:** DRAFT (2026-06-26) — awaiting approval
+**Status:** DRAFT (2026-06-26) — recommitted at 2026-07-14 triage (failure class still live)
 **Owner:** Patrick + agent
 **Prior art (archived):**
 `docs/specs/archive/sdk-error-message-fidelity/` — flagged this exact

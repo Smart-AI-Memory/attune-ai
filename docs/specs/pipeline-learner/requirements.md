@@ -6,7 +6,7 @@
 > path to pipeline authoring — songs that emerge from what
 > we've actually played.
 
-**Status:** draft
+**Status:** draft — kill proposed at 2026-07-14 triage, SPARED by Patrick; commit-or-kill again next triage
 **Created:** 2026-05-17
 **Owner:** TBD
 **Related:**

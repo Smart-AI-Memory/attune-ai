@@ -1,6 +1,8 @@
 # attune-author Consolidation & Retirement — Requirements
 
 **Status:** draft (2026-06-30) · **Owner:** Patrick + agent
+**Absorbs:** single-source-authoring (merged 2026-07-14 at triage —
+same domain; archived copy retains its draft reqs/design)
 **Born:** the single-source insights discussion. Patrick: "attune-author
 is going to have to be either retired or redesigned." Verification of the
 package's scope (it is beta, no real adopters, retire-able) plus the

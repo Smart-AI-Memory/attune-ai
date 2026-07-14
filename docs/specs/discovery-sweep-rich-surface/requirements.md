@@ -1,6 +1,9 @@
 # Discovery-Sweep Rich Surface — requirements
 
 **Status:** draft (2026-06-28) · **Owner:** Patrick + agent
+**Absorbs:** analysis-workflow-output-widgets (merged 2026-07-14 at
+triage — its D4 re-scope concluded only discovery-sweep has
+structured output; archived copy retains the design-v2 material)
 
 The "double-fit showcase": wire the working `show_widget` rich surface
 (shipped in `elicitation-form-surface` D11) into discovery-sweep on
