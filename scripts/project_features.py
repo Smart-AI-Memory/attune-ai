@@ -102,7 +102,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"{verb} {len(result.outputs)} output(s) for {args.feature!r}:")
     for out in result.outputs:
         rel = out.path.relative_to(repo_root) if out.path.is_relative_to(repo_root) else out.path
-        print(f"  [{out.target}] {out.kind:<16} -> {rel}")
+        note = " (unchanged, skipped)" if out.path in result.unchanged else ""
+        print(f"  [{out.target}] {out.kind:<16} -> {rel}{note}")
 
     if result.skipped:
         print(f"skipped {len(result.skipped)}:")

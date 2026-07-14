@@ -223,4 +223,4 @@ namespaces are `attune auth` (authentication) and `attune provider`
 | `MockLLMExecutor` | A deterministic executor for tests; records calls in `call_history`. |
 | `AdaptiveModelRouter` | Picks a model from historical telemetry. `get_best_model(workflow, stage, ...)` returns a model id; `recommend_tier_upgrade(workflow, stage)` returns `(bool, reason)`. |
 
-<!-- attune-generated: source_hash=234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459 feature=models kind=how-to generated_at=2026-06-21 -->
+<!-- attune-generated: source_hash=52589e077700e250b69e496efaa9634a271c4f91bd520b4c07b4915347a04668 feature=models kind=how-to generated_at=2026-07-14 -->

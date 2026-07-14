@@ -115,4 +115,4 @@ given mode so you can compare before committing.
   `min_success_rate` to `AdaptiveModelRouter.get_best_model`, or read
   `get_routing_stats` to drive your own selection logic.
 
-<!-- attune-generated: source_hash=234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459 feature=models kind=architecture generated_at=2026-06-21 -->
+<!-- attune-generated: source_hash=52589e077700e250b69e496efaa9634a271c4f91bd520b4c07b4915347a04668 feature=models kind=architecture generated_at=2026-07-14 -->

@@ -156,4 +156,4 @@ contrast, drive `CodeReviewWorkflow` directly.
   `_SUBAGENT_NAMES`; a new pass is a new `AgentDefinition` plus a
   synthesis section in the task template in `code_review.py`.
 
-<!-- attune-generated: source_hash=3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472 feature=code-quality kind=architecture generated_at=2026-06-23 -->
+<!-- attune-generated: source_hash=1cda16e2ee597c3fc3187497350da0cf77783f31c42c22e4652888adb60ca679 feature=code-quality kind=architecture generated_at=2026-07-14 -->
