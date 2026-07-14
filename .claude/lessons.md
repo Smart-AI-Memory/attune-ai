@@ -15044,3 +15044,45 @@ def ", start_idx + 1)` for module-
   that it prunes other ad-hoc installs. Durable fix would be
   adding the docs pins to the dev dependency-group like the #1350
   play did for the dev extra.
+
+- **A line-granular diff filter misclassifies multi-field lines —
+  reverting "timestamp-only" churn by dropping diff lines containing
+  `generated_at` silently reverted REAL `source_hash` updates that
+  share the same footer line**: 2026-07-14, FG1 Phase 1 (PR #1370).
+  After a full 27-feature projection run, a cleanup script kept only
+  files whose diff had "content lines" — defined as +/- lines NOT
+  containing `generated_at`. The `.help` frontmatter puts
+  `generated_at:` and `source_hash:` on separate lines (filter
+  correct), but the docs-page footer packs both into ONE line
+  (`<!-- attune-generated: source_hash=X … generated_at=D -->`), so
+  15 docs pages with legitimately-moved source_hash were reverted to
+  stale footers. Caught only because the projection drift gate built
+  the same day fired on the real corpus at birth. Rule: when
+  filtering diffs by "does the line contain field X", first check
+  whether X ever shares a line with load-bearing fields; match the
+  FIELD (regex-replace `generated_at=\S+` then compare), not the
+  line. Companion fix that retires the whole dance: make generators
+  idempotent (skip writes whose only delta is the stamp) so
+  timestamp churn never enters the diff.
+
+- **A freshness exemption is an enforcement HOLE unless something
+  else guards the surface — `status: manual` features were exempt
+  from LLM-staleness by design, so master→projection drift had NO
+  gate and sat invisible for 3 weeks**: #1059 edited the models /
+  spec-engine masters (archive-path fixes) without re-projection;
+  `help_status` showed "0 stale / 27 manual" the whole time because
+  manual features are deliberately outside the staleness check
+  (correct — they must never get LLM regen), and the pre-commit
+  regen hook is check-only. Found by accident when FG1's full
+  projection run touched every feature. Fix shipped: deterministic
+  `check_projection_drift()` as a unit test (dry-run re-render vs
+  committed files, stamps normalized) + tripwire tests proving it
+  fires. Generalization: whenever a surface is EXEMPTED from a
+  freshness/validation mechanism ("manual", "frozen", "skip"),
+  ask what ELSE enforces its invariant — an exemption with no
+  replacement gate is where multi-week silent drift lives. Pairs
+  with the "spec-named work-scope drifts from code reality" lesson
+  (same family: the FG1 starter said "the 3 hand-authored FAQs" but
+  ALL 27 features had frozen faq.md files — glob the actual property
+  before executing; the undercount surfaced a 159-Q/A content
+  decision that needed Patrick's call).
