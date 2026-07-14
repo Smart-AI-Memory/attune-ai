@@ -1,6 +1,6 @@
 # Post-Commit Help Maintenance → Check-Only
 
-**Status:** draft — awaiting review
+**Status:** draft — awaiting review; recommitted at 2026-07-14 triage
 **Owner:** Patrick + agent
 **Created:** 2026-06-22
 

@@ -1,6 +1,6 @@
 # Subsystem Value Gate — Requirements
 
-**Status:** approved (2026-06-11) · **Owner:** Patrick + agent
+**Status:** living (2026-07-14) — reusable subsystem gate procedure, proven twice (socratic #1060, memorygraph #1256); approved 2026-06-11 · **Owner:** Patrick + agent
 **Born:** discipline-review chat, 2026-06-11 (improvement #1 of 6).
 
 ## Problem

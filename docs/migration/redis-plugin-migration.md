@@ -70,7 +70,7 @@ hypothetical follow-up.
 > Redis, **superseded by the newer `attune_redis` integration**; new
 > code should use `attune_redis.AMSMemoryBackend`. `RedisShortTermMemory`
 > still powers live subsystems (e.g. `memory/control_panel`).
-> See [`docs/specs/redis-facade-direction/`](../specs/redis-facade-direction/decisions.md).
+> See [`docs/specs/redis-facade-direction/`](../specs/archive/redis-facade-direction/decisions.md).
 
 ## Install path
 

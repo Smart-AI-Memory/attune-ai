@@ -25,7 +25,7 @@ from attune.lessons import (
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 REAL_LESSONS = REPO_ROOT / ".claude" / "lessons.md"
-FIXTURE = REPO_ROOT / "docs" / "specs" / "lessons-corpus-rag" / "golden_queries.json"
+FIXTURE = REPO_ROOT / "docs" / "specs" / "archive" / "lessons-corpus-rag" / "golden_queries.json"
 
 SAMPLE = """\
 # Header
