@@ -1,8 +1,8 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 1196,
-    "linked_templates": 880,
+    "total_templates": 1197,
+    "linked_templates": 881,
     "total_tags": 113
   },
   "links": {
@@ -1602,6 +1602,9 @@
       ],
       "prevented_by": [
         "tip-elicitation-forms"
+      ],
+      "related_faq": [
+        "faq-elicitation-forms"
       ],
       "tags": [
         "elicitation",
@@ -5164,6 +5167,18 @@
         "testing",
         "security",
         "claude-code"
+      ]
+    },
+    "faq-elicitation-forms": {
+      "related_error": [
+        "err-elicitation-forms"
+      ],
+      "tags": [
+        "elicitation",
+        "forms",
+        "communication",
+        "ux",
+        "widget"
       ]
     },
     "faq-enforce-admins-false-defeats-code-review-scorecard-check": {
@@ -12039,6 +12054,7 @@
       "com-elicitation-forms",
       "con-elicitation-forms",
       "err-elicitation-forms",
+      "faq-elicitation-forms",
       "not-elicitation-forms",
       "qui-elicitation-forms",
       "ref-elicitation-forms",
@@ -12215,6 +12231,7 @@
       "com-elicitation-forms",
       "con-elicitation-forms",
       "err-elicitation-forms",
+      "faq-elicitation-forms",
       "not-elicitation-forms",
       "qui-elicitation-forms",
       "ref-elicitation-forms",
@@ -12283,6 +12300,7 @@
       "com-elicitation-forms",
       "con-elicitation-forms",
       "err-elicitation-forms",
+      "faq-elicitation-forms",
       "not-elicitation-forms",
       "qui-elicitation-forms",
       "ref-elicitation-forms",
@@ -14286,6 +14304,7 @@
       "con-progressive-depth",
       "con-socratic-discovery",
       "err-elicitation-forms",
+      "faq-elicitation-forms",
       "not-elicitation-forms",
       "not-socratic-interaction-rule",
       "qui-elicitation-forms",
@@ -14312,6 +14331,7 @@
       "com-elicitation-forms",
       "con-elicitation-forms",
       "err-elicitation-forms",
+      "faq-elicitation-forms",
       "not-elicitation-forms",
       "qui-elicitation-forms",
       "ref-elicitation-forms",
