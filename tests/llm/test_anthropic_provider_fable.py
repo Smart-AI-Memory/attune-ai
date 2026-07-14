@@ -87,13 +87,15 @@ class TestFableRouting:
     async def test_non_fable_path_unchanged(self, fake_module):
         client = _make_client()
         fake_module("anthropic", _make_mock_anthropic(client))
-        provider = AnthropicProvider(api_key="test-key")  # claude-sonnet-5
+        # sonnet-4-5: pre-Claude-5, outside _NO_SAMPLING_MODELS_RE — the
+        # only family whose sampling params still pass through (sonnet-5
+        # joined the strip list on main, 2026-07-13).
+        provider = AnthropicProvider(api_key="test-key", model="claude-sonnet-4-5")
         await provider.generate([{"role": "user", "content": "hi"}])
 
         client.messages.create.assert_awaited_once()
         client.beta.messages.create.assert_not_called()
         kwargs = client.messages.create.await_args.kwargs
-        # Sonnet still accepts sampling params — the provider default survives.
         assert kwargs["temperature"] == 0.7
         assert "betas" not in kwargs
 

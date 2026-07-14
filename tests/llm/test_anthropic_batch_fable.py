@@ -73,7 +73,8 @@ class TestCreateBatchDowngrade:
                 {
                     "custom_id": "t2",
                     "params": {
-                        "model": "claude-sonnet-5",
+                        # pre-Claude-5: outside the sampling-strip list
+                        "model": "claude-sonnet-4-5",
                         "messages": [{"role": "user", "content": "hi"}],
                         "max_tokens": 64,
                         "temperature": 0.3,
@@ -83,5 +84,5 @@ class TestCreateBatchDowngrade:
         )
         sent = provider.client.messages.batches.create.call_args.kwargs["requests"]
         params = sent[0]["params"]
-        assert params["model"] == "claude-sonnet-5"
+        assert params["model"] == "claude-sonnet-4-5"
         assert params["temperature"] == 0.3
