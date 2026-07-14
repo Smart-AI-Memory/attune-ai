@@ -133,4 +133,4 @@ tiers above.
 - **Manage at runtime:** use `MemoryControlPanel` to browse, export,
   and clear stored memory without code changes.
 
-<!-- attune-generated: source_hash=544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b feature=memory kind=architecture generated_at=2026-06-23 -->
+<!-- attune-generated: source_hash=cba94c001e0b9e2f41279e9caa28b69cdc1ff0b0c62ec76baa038dc0e48cb5b6 feature=memory kind=architecture generated_at=2026-07-14 -->

@@ -169,4 +169,4 @@ re-exported from `attune.workflows`. `WorkflowResult` comes from
 | MCP tool | `code_review` — one required `path` argument; runs at standard depth (the handler does not pass `depth`) and validates the path against the workspace root. |
 | Python | `await CodeReviewWorkflow().execute(path=<p>, depth=<d>)`. |
 
-<!-- attune-generated: source_hash=3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472 feature=code-quality kind=how-to generated_at=2026-06-23 -->
+<!-- attune-generated: source_hash=1cda16e2ee597c3fc3187497350da0cf77783f31c42c22e4652888adb60ca679 feature=code-quality kind=how-to generated_at=2026-07-14 -->

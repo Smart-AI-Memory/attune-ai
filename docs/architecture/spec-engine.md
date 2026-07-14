@@ -128,4 +128,4 @@ a list of interrupted runs you can pick back up.
   incomplete plans, then pass `plan_path` to `execute_with_approval()`
   to resume.
 
-<!-- attune-generated: source_hash=2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1 feature=spec-engine kind=architecture generated_at=2026-06-21 -->
+<!-- attune-generated: source_hash=657458c4d06bb198d067760775b69a5c87288113feaddb9cdaf3df631c188617 feature=spec-engine kind=architecture generated_at=2026-07-14 -->

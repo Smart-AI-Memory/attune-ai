@@ -153,6 +153,10 @@ class ProjectionResult:
     skipped: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     outputs: list[ProjectedOutput] = field(default_factory=list)
+    #: Planned outputs whose on-disk file already matches modulo the
+    #: ``generated_at`` stamp — left untouched so re-projection is
+    #: idempotent (no timestamp churn in diffs).
+    unchanged: list[Path] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -296,10 +300,74 @@ def project_feature(
     if not dry_run:
         for out in result.outputs:
             out.path.parent.mkdir(parents=True, exist_ok=True)
+            if out.path.exists():
+                existing = out.path.read_text(encoding="utf-8")
+                if normalize_generated_stamps(existing) == normalize_generated_stamps(out.content):
+                    result.unchanged.append(out.path)
+                    continue
             out.path.write_text(out.content, encoding="utf-8")
             result.written.append(out.path)
 
     return result
+
+
+#: ``generated_at`` carriers in projected outputs: the ``.help`` YAML
+#: frontmatter line and the docs-page HTML-comment footer field.
+_FRONTMATTER_GENERATED_AT_RE = re.compile(r"^generated_at: .*$", re.M)
+_FOOTER_GENERATED_AT_RE = re.compile(r" generated_at=[^ >]+")
+
+
+def normalize_generated_stamps(text: str) -> str:
+    """Return ``text`` with every ``generated_at`` stamp neutralized.
+
+    Projection output is deterministic except for the render
+    timestamp. Comparing two renders through this normalizer answers
+    "same content?" — used by the idempotent write path (skip
+    rewriting a file whose only difference would be the timestamp)
+    and by the projection drift gate.
+    """
+    text = _FRONTMATTER_GENERATED_AT_RE.sub("generated_at: <stamp>", text)
+    return _FOOTER_GENERATED_AT_RE.sub(" generated_at=<stamp>", text)
+
+
+def check_projection_drift(
+    project_root: str | Path,
+    help_dir: str | Path,
+    masters_dir: str | Path | None = None,
+) -> list[str]:
+    """Compare a dry-run projection of every master against disk.
+
+    The drift gate for single-sourced features: re-renders each
+    ``<masters_dir>/*.md`` master in memory and diffs every planned
+    output against the committed file, ignoring ``generated_at``
+    stamps. Returns one finding per drifted output — empty means the
+    corpus is in lockstep with its masters (the guarantee `status:
+    manual` features otherwise lack, since they are exempt from the
+    LLM-freshness staleness check by design).
+
+    Findings name the master, the output path, and whether the file
+    is missing or differs, so the fix is always the one-liner
+    ``python scripts/project_features.py <feature>``.
+    """
+    project_root = Path(project_root)
+    help_dir = Path(help_dir)
+    masters = Path(masters_dir) if masters_dir else project_root / "content" / "features"
+    findings: list[str] = []
+    for master in sorted(masters.glob("*.md")):
+        result = project_feature(master, project_root, help_dir, dry_run=True)
+        for out in result.outputs:
+            rel = (
+                out.path.relative_to(project_root)
+                if out.path.is_relative_to(project_root)
+                else out.path
+            )
+            if not out.path.exists():
+                findings.append(f"{master.stem}: {rel} missing — re-run projection")
+                continue
+            on_disk = out.path.read_text(encoding="utf-8")
+            if normalize_generated_stamps(on_disk) != normalize_generated_stamps(out.content):
+                findings.append(f"{master.stem}: {rel} differs from its master — re-run projection")
+    return findings
 
 
 #: The two accepted seed-bullet shapes (FG1 Phase 1). Bold-Q is the
