@@ -71,7 +71,8 @@ def _run_formatter(cmd: list[str], path: str) -> None:
 def main() -> None:
     """Read tool result from stdin, format Python files."""
     try:
-        raw = sys.stdin.read()
+        _buf = getattr(sys.stdin, "buffer", None)  # None when tests patch stdin
+        raw = _buf.read().decode("utf-8", errors="replace") if _buf else sys.stdin.read()
         if not raw.strip():
             return
 
@@ -102,6 +103,15 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    try:
+        from _bootstrap import ensure_utf8_stdio
+    except ImportError:
+        # Vendored copies (sibling .claude/hooks/) may not ship
+        # _bootstrap.py — degrade to the pre-bootstrap behavior
+        # rather than crashing the hook.
+        pass
+    else:
+        ensure_utf8_stdio()
     from _sdk_gate import exit_if_sdk_subprocess
 
     exit_if_sdk_subprocess()

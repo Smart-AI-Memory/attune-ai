@@ -1,6 +1,6 @@
 # Tasks — empathy-doc-fiction-cleanup
 
-**Status:** approved (2026-06-26)
+**Status:** complete (2026-06-26) — executed in PR #1109 (5 deletes + 16 repoints, docs-only); D7 EmpathyLLMExecutor correction shipped in PR #1115
 
 Signals verified against `origin/main`: `el` = "Empathy Level" refs,
 `hc` = clinical/healthcare keyword refs, `comp` = live companion symbols

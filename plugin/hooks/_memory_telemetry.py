@@ -111,9 +111,12 @@ def log_memory_event(event: str, session_id: str | None = None, **fields: object
         path = _events_path()
         path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         _rotate_if_huge(path)
+        # Single write() call per record: appends of one buffered line
+        # are effectively atomic on POSIX and Windows, so concurrent
+        # sessions never interleave partial JSONL lines.
+        line = json.dumps(record, separators=(",", ":"), default=str) + "\n"
         with path.open("a", encoding="utf-8") as fh:
-            json.dump(record, fh, separators=(",", ":"), default=str)
-            fh.write("\n")
+            fh.write(line)
     except Exception:  # noqa: BLE001
         # INTENTIONAL: telemetry about best-effort hooks must never
         # break the hook (or the session) it observes.

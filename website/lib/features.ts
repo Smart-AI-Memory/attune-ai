@@ -32,7 +32,7 @@ export const PRODUCTS: Product[] = [
     id: "attune-ai",
     name: "Attune AI",
     pypiName: "attune-ai",
-    version: "10.2.0",
+    version: "10.4.1",
     tagline: "Generate, maintain, and serve help from your code",
     installCommand: "pip install attune-ai",
     marketplaceInstall:
@@ -54,7 +54,7 @@ export const PRODUCTS: Product[] = [
     id: "attune-help",
     name: "Attune Help",
     pypiName: "attune-help",
-    version: "0.12.0",
+    version: "0.13.0",
     tagline: "Lightweight reader for help templates",
     installCommand: "pip install attune-help",
     marketplaceInstall:
@@ -76,7 +76,7 @@ export const PRODUCTS: Product[] = [
     id: "attune-author",
     name: "Attune Author",
     pypiName: "attune-author",
-    version: "0.23.0",
+    version: "0.25.0",
     tagline: "Author and polish help content with AI",
     installCommand: "pip install 'attune-author[plugin]'",
     marketplaceInstall:
@@ -101,7 +101,7 @@ export const PRODUCTS: Product[] = [
     id: "claude-code-plugin",
     name: "Claude Code Plugin",
     pypiName: "attune-ai",
-    version: "10.2.0",
+    version: "10.4.1",
     tagline: "Progressive help right in your terminal",
     installCommand:
       "claude plugin marketplace add Smart-AI-Memory/attune-ai",
@@ -248,10 +248,16 @@ export const DIFFERENTIATORS: Differentiator[] = [
 /**
  * Counts that appear in prose and stat callouts across the
  * site. Verified against the live Python code per the
- * website-content-accuracy rule (last verified 2026-06-28,
- * attune-ai 9.2.0):
+ * website-content-accuracy rule (last verified 2026-07-12,
+ * attune-ai 10.4.0):
  *
- *   workflows: attune.workflows.list_workflows() with stages
+ *   workflows: distinct classes in attune.workflows.discover_workflows()
+ *     (D4, claim-drift-gates, 2026-07-12: the prior count used
+ *     list_workflows() filtered on a truthy `stages` field, which is
+ *     set on nearly every workflow — only 3 actually declare more than
+ *     one stage. "Multi-stage workflows" overclaimed what the number
+ *     measured; this is the honest distinct-workflow-class total.
+ *     release-prep/release-gate count once — deliberate alias pair.)
  *   skills: plugin/skills/ directory count (test_skill_count)
  *   mcpTools: attune.mcp.tool_schemas get_*_tools() total
  *   templateKinds: attune_author.generator._ALL_TEMPLATE_NAMES length
@@ -262,7 +268,7 @@ export const DIFFERENTIATORS: Differentiator[] = [
  * and no page consumed them.)
  */
 export const CAPABILITIES = {
-  workflows: 19,
+  workflows: 20,
   skills: 24,
   mcpTools: 47,
   templateKinds: 15,
@@ -305,7 +311,7 @@ export const RELIABILITY_LOOP: LoopStage[] = [
     n: "03",
     name: "Build",
     description:
-      "19 multi-stage workflows: review, tests, bug prediction, refactor.",
+      "20 workflows: review, tests, bug prediction, refactor.",
   },
   {
     n: "04",
@@ -338,42 +344,8 @@ export interface Pillar {
 }
 
 export const PILLARS: Pillar[] = [
-  {
-    id: "communication",
-    tag: "Dynamic forms",
-    title: "Forms that improve how you and the AI talk",
-    description:
-      "Attune improves human/AI communication by dynamically using " +
-      "interactive forms: instead of a fixed wall of prose, it renders " +
-      "the right form in response to your prompt whenever a structured " +
-      "turn communicates better than text. A multi-part question " +
-      "becomes one click; a recommendation arrives as weighable cards; " +
-      "a disagreement is shown side-by-side so you overrule it in one " +
-      "tap.",
-    points: [
-      "Intake, decision, pushback, and progress constructs",
-      "Rich on widget surfaces, graceful menu fallback elsewhere",
-      "Answer with one click — or the terse y / go / 1 vocab",
-    ],
-    icon: "💬",
-    color: "primary",
-  },
-  {
-    id: "workflows",
-    tag: "AI workflows",
-    title: "Specialist teams, not one prompt",
-    description:
-      "19 multi-stage workflows run teams of 2–6 Claude subagents to " +
-      "review code, surface vulnerabilities, generate tests, and plan " +
-      "refactors — with cost-tiered model routing.",
-    points: [
-      "Security audit, code review, bug prediction, release prep",
-      "Cheap / capable / premium model routing",
-      "Structured, readable reports",
-    ],
-    icon: "⚙️",
-    color: "primary",
-  },
+  // DEC-3 (product-direction-review): memory is THE pillar — it
+  // stays first; the rest are supporting capabilities.
   {
     id: "memory",
     tag: "Project memory",
@@ -389,6 +361,42 @@ export const PILLARS: Pillar[] = [
     ],
     icon: "🧠",
     color: "secondary",
+  },
+  {
+    id: "communication",
+    tag: "Dynamic forms",
+    title: "Forms that improve how you and the AI talk",
+    description:
+      "Attune improves human/AI communication by dynamically using " +
+      "interactive forms: instead of a fixed wall of prose, it renders " +
+      "the right form in response to your prompt whenever a structured " +
+      "turn communicates better than text. A multi-part question " +
+      "becomes one click; a recommendation arrives as weighable cards; " +
+      "a disagreement is shown side-by-side so you overrule it in one " +
+      "tap.",
+    points: [
+      "Intake, decision, and pushback fire at a fork; progress reports status",
+      "Rich on widget surfaces, graceful menu fallback elsewhere",
+      "Answer with one click — or the terse y / go / 1 vocab",
+    ],
+    icon: "💬",
+    color: "primary",
+  },
+  {
+    id: "workflows",
+    tag: "AI workflows",
+    title: "Specialist teams, not one prompt",
+    description:
+      "20 workflows run teams of 2–6 Claude subagents to " +
+      "review code, surface vulnerabilities, generate tests, and plan " +
+      "refactors — with cost-tiered model routing.",
+    points: [
+      "Security audit, code review, bug prediction, release prep",
+      "Cheap / capable / premium model routing",
+      "Structured, readable reports",
+    ],
+    icon: "⚙️",
+    color: "primary",
   },
   {
     id: "grounding",

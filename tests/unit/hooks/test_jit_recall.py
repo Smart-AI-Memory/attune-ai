@@ -448,6 +448,35 @@ def test_sentinel_written_after_emit(jit_mod, monkeypatch, capsys, tmp_path):
     assert sentinels[0].name.startswith(".jit-recalled-sess-1-")
 
 
+def test_missing_session_id_dedups_via_transcript_stem(jit_mod, monkeypatch, capsys, tmp_path):
+    """A payload without session_id but with transcript_path still
+    dedups per session — the transcript stem IS the session uuid."""
+    payload = _payload()
+    del payload["session_id"]
+    payload["transcript_path"] = "/tmp/projects/x/abcd-1234.jsonl"
+    _, out1 = _run(jit_mod, monkeypatch, capsys, payload)
+    _, out2 = _run(jit_mod, monkeypatch, capsys, payload)
+    assert out1 != ""
+    assert out2 == ""  # suppressed within the same (transcript) session
+    names = [p.name for p in (tmp_path / "sentinels").iterdir()]
+    assert names and all("abcd-1234" in n for n in names)
+
+
+def test_no_identity_fails_open_and_writes_no_sentinel(jit_mod, monkeypatch, capsys, tmp_path):
+    """No session_id AND no transcript_path: surface every time, write
+    NOTHING — never a shared 'unknown' bucket where the first fire
+    suppresses the rule machine-wide for the TTL (the 2026-07-13
+    headless-collapse regression guard)."""
+    payload = _payload()
+    del payload["session_id"]
+    _, out1 = _run(jit_mod, monkeypatch, capsys, payload)
+    _, out2 = _run(jit_mod, monkeypatch, capsys, payload)
+    assert out1 != "" and out2 != ""  # fail-open: fires both times
+    base = tmp_path / "sentinels"
+    leftover = [p.name for p in base.iterdir()] if base.is_dir() else []
+    assert leftover == []
+
+
 def test_prune_removes_only_stale_jit_sentinels(jit_mod, tmp_path):
     base = tmp_path / "sentinels"
     base.mkdir(parents=True, exist_ok=True)

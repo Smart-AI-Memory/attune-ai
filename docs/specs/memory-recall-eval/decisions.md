@@ -154,3 +154,36 @@ No full ground-truthed benchmark run for `find_similar` yet — this was
 a spot-check, not Run 4. If curated-graph usage grows (friction-log
 spec), rerun this corpus's methodology against `find_similar` with a
 tuned threshold.
+
+## 2026-07-13 — Re-filed from trap-battery: style rules are structurally unreachable by BOTH recall surfaces
+
+**Finding (from the trap-battery phase-1 forensics — see
+[benchmarks/trap_battery_results_2026-07-13.md](../../../benchmarks/trap_battery_results_2026-07-13.md)
+and `docs/specs/trap-battery/decisions.md`):** the `question-shape`
+trap's ON≈OFF result has a structural cause on the recall-triggering
+axis, independent of the pilot's injection-arms confound:
+
+- **JIT (PreToolUse) path: no matching moment.** The trap's only
+  allowed tool is `Read`, and the JIT matcher covers
+  `AskUserQuestion|Bash|Edit` — a rule about the shape of the FINAL
+  MESSAGE has no tool-call decision point at all, so PreToolUse
+  recall can never carry it.
+- **Prompt-time (UserPromptSubmit) path: below the floor.** Direct
+  execution of `lesson_recall.py` on the trap prompt returns nothing —
+  the lesson scores under the 8.0 relevance floor. Nothing about a
+  "summarize/answer" prompt surface-matches a rule about response
+  formatting.
+
+**Consequence for this spec:** recall evals scoped to content recall
+(hit@k on topical queries) cannot see this failure class. A
+style/format rule is only live if (a) some surface fires at
+message-composition time or (b) the prompt-time scorer can match
+rules by APPLICABILITY (the reply will contain a closing question)
+rather than topical overlap. Neither exists today — style rules are
+dead weight in the corpus until one does.
+
+**Disposition:** recorded here as a known structural gap; the
+trap-battery phase-2 redesign owns the measurement side
+(UserPromptSubmit-carried rules measure prevention; JIT-carried rules
+measure recovery only). No eval re-run scheduled against style rules
+until a carrying surface exists.

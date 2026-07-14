@@ -15,11 +15,13 @@ from .base import BaseLLMProvider, LLMResponse
 
 logger = logging.getLogger(__name__)
 
-# Opus 4.7 and later reject temperature/top_p/top_k and the
-# enabled-thinking shape (HTTP 400). Matches opus-4-7, opus-4-8, and any
-# future opus-4-9 / opus-4-1x. Older models (Opus 4.6-, Sonnet, Haiku)
-# still accept these params, so they're left untouched.
-_OPUS_NO_SAMPLING_RE = re.compile(r"opus-4-(?:[7-9]|\d{2,})")
+# Opus 4.7+ and the entire Claude 5 family (sonnet-5, fable-5, ...) reject
+# temperature/top_p/top_k and the enabled-thinking shape (HTTP 400:
+# "`temperature` is deprecated for this model" — seen live on claude-sonnet-5,
+# integration-auth run 2026-07-06). The second alternative requires a letter
+# run before "-5" so claude-haiku-4-5 / claude-sonnet-4-5 stay untouched.
+# Older models (Opus 4.6-, Sonnet 4.x, Haiku 4.x) still accept these params.
+_NO_SAMPLING_MODELS_RE = re.compile(r"opus-4-(?:[7-9]|\d{2,})|[a-z]+-5(?:[.-]|$)")
 
 # Fable models reject explicit sampling params AND any explicit thinking
 # config (adaptive-by-default; even {"type": "disabled"} is a 400).
@@ -52,10 +54,11 @@ def _normalize_api_kwargs_for_model(api_kwargs: dict[str, Any]) -> None:
     """Drop request params that newer Claude models reject (in place).
 
     This provider defaults ``temperature=0.7`` and can set extended
-    thinking, both of which Opus 4.7+ reject with a 400 — so without this,
-    any premium-tier call through this path would fail. Strip the sampling
-    params and convert ``enabled`` thinking to ``adaptive`` for those
-    models; leave older models that still accept them untouched.
+    thinking, both of which Opus 4.7+ and Claude 5 models reject with a
+    400 — so without this, any premium-tier (Opus 4.8) or Claude 5
+    (sonnet-5, fable-5) call through this path would fail. Strip the
+    sampling params and convert ``enabled`` thinking to ``adaptive``
+    for those models; leave older models that still accept them untouched.
 
     Fable models (``claude-fable-*``) go further: they reject ANY explicit
     ``thinking`` config (adaptive-by-default — even ``{"type": "disabled"}``
@@ -79,7 +82,7 @@ def _normalize_api_kwargs_for_model(api_kwargs: dict[str, Any]) -> None:
                 model,
             )
         return
-    if not _OPUS_NO_SAMPLING_RE.search(model):
+    if not _NO_SAMPLING_MODELS_RE.search(model):
         return
     for param in ("temperature", "top_p", "top_k"):
         api_kwargs.pop(param, None)
@@ -323,8 +326,7 @@ class AnthropicProvider(BaseLLMProvider):
             write_cost_per_token = input_cost_per_token * 1.25
             write_cost = cache_creation * write_cost_per_token
             logger.debug(
-                f"Cache WRITE: {cache_creation:,} tokens written to cache "
-                f"(cost ${write_cost:.4f})",
+                f"Cache WRITE: {cache_creation:,} tokens written to cache (cost ${write_cost:.4f})",
             )
 
     async def analyze_large_codebase(

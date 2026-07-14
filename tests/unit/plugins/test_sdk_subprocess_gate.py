@@ -67,18 +67,48 @@ class TestIsSdkSubprocess:
         monkeypatch.delenv("CLAUDE_CODE_ENTRYPOINT", raising=False)
         assert gate.is_sdk_subprocess() is True
 
-    def test_sdk_entrypoint_detected(self, monkeypatch):
-        """CLAUDE_CODE_ENTRYPOINT=sdk-py covers third-party SDK scripts."""
+    @pytest.mark.parametrize("entrypoint", ["sdk-py", "sdk-ts", "sdk-go"])
+    def test_sdk_entrypoint_detected(self, monkeypatch, entrypoint):
+        """sdk-py/sdk-ts (and unknown future sdk-*) cover third-party
+        SDK scripts — unknown values stay gated (D9 fail-safe)."""
         gate = _load_gate()
         monkeypatch.delenv("ATTUNE_SDK_SUBPROCESS", raising=False)
-        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "sdk-py")
+        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", entrypoint)
         assert gate.is_sdk_subprocess() is True
+
+    def test_headless_cli_entrypoint_not_detected(self, monkeypatch):
+        """D9: sdk-cli marks plain headless ``claude -p`` (stamped into
+        every such session since at least CC 2.1.144) — NOT an SDK
+        subprocess. Gating it silenced all attune hooks headless."""
+        gate = _load_gate()
+        monkeypatch.delenv("ATTUNE_SDK_SUBPROCESS", raising=False)
+        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "sdk-cli")
+        assert gate.is_sdk_subprocess() is False
+
+    def test_marker_still_gates_headless_entrypoint(self, monkeypatch):
+        """The explicit marker wins over the sdk-cli exemption: an
+        attune adapter subprocess is gated whatever the CLI stamps."""
+        gate = _load_gate()
+        monkeypatch.setenv("ATTUNE_SDK_SUBPROCESS", "1")
+        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "sdk-cli")
+        assert gate.is_sdk_subprocess() is True
+
+    def test_override_force_disables_gate(self, monkeypatch):
+        """ATTUNE_SDK_GATE_OVERRIDE=1 (benchmark-only) beats both
+        signals — harnesses that parse stream-json defensively use it
+        to keep hooks live in SDK-driven sessions."""
+        gate = _load_gate()
+        monkeypatch.setenv("ATTUNE_SDK_GATE_OVERRIDE", "1")
+        monkeypatch.setenv("ATTUNE_SDK_SUBPROCESS", "1")
+        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "sdk-py")
+        assert gate.is_sdk_subprocess() is False
 
     @pytest.mark.parametrize("entrypoint", ["claude-desktop", "cli", ""])
     def test_interactive_sessions_not_detected(self, monkeypatch, entrypoint):
         """Interactive entrypoints never match (AC3 precondition)."""
         gate = _load_gate()
         monkeypatch.delenv("ATTUNE_SDK_SUBPROCESS", raising=False)
+        monkeypatch.delenv("ATTUNE_SDK_GATE_OVERRIDE", raising=False)
         if entrypoint:
             monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", entrypoint)
         else:
@@ -134,12 +164,19 @@ class TestGateDriftGuards:
 class TestHooksSilentInSdkSubprocess:
     """AC1/AC2: each registered hook exits 0 with zero output."""
 
+    @staticmethod
+    def _gated_env(**overrides: str) -> dict[str, str]:
+        """os.environ minus the benchmark override, plus the signal."""
+        env = {**os.environ, **overrides}
+        env.pop("ATTUNE_SDK_GATE_OVERRIDE", None)
+        return env
+
     @pytest.mark.parametrize("script", _plugin_hook_scripts(), ids=lambda p: p.name)
     def test_plugin_hook_silent_with_marker(self, script):
         """AC1: the explicit marker silences every plugin hook."""
         result = subprocess.run(  # noqa: S603
             [sys.executable, str(script)],
-            env={**os.environ, "ATTUNE_SDK_SUBPROCESS": "1"},
+            env=self._gated_env(ATTUNE_SDK_SUBPROCESS="1"),
             input="",
             capture_output=True,
             text=True,
@@ -155,7 +192,7 @@ class TestHooksSilentInSdkSubprocess:
 
     def test_plugin_hook_silent_with_sdk_entrypoint(self):
         """AC2: the SDK's own entrypoint stamp silences hooks too."""
-        env = {**os.environ, "CLAUDE_CODE_ENTRYPOINT": "sdk-py"}
+        env = self._gated_env(CLAUDE_CODE_ENTRYPOINT="sdk-py")
         env.pop("ATTUNE_SDK_SUBPROCESS", None)
         result = subprocess.run(  # noqa: S603
             [sys.executable, str(PLUGIN_HOOKS / "welcome.py")],
@@ -175,7 +212,7 @@ class TestHooksSilentInSdkSubprocess:
         script = REPO_ROOT / "src" / "attune" / "hooks" / "scripts" / "lessons_reminder.py"
         result = subprocess.run(  # noqa: S603
             [sys.executable, str(script)],
-            env={**os.environ, "ATTUNE_SDK_SUBPROCESS": "1"},
+            env=self._gated_env(ATTUNE_SDK_SUBPROCESS="1"),
             input="",
             capture_output=True,
             text=True,
@@ -211,6 +248,22 @@ class TestRepoGateTwin:
         monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "sdk-ts")
         assert _sdk_gate.is_sdk_subprocess() is True
 
+    def test_headless_cli_entrypoint_not_detected(self, monkeypatch):
+        """D9 in the repo twin: sdk-cli = plain headless, hooks live."""
+        from attune.hooks.scripts import _sdk_gate
+
+        monkeypatch.delenv("ATTUNE_SDK_SUBPROCESS", raising=False)
+        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "sdk-cli")
+        assert _sdk_gate.is_sdk_subprocess() is False
+
+    def test_override_force_disables_gate(self, monkeypatch):
+        """The benchmark override disarms the repo twin too."""
+        from attune.hooks.scripts import _sdk_gate
+
+        monkeypatch.setenv("ATTUNE_SDK_GATE_OVERRIDE", "1")
+        monkeypatch.setenv("ATTUNE_SDK_SUBPROCESS", "1")
+        assert _sdk_gate.is_sdk_subprocess() is False
+
     def test_interactive_not_detected(self, monkeypatch):
         """No signal → not an SDK subprocess."""
         from attune.hooks.scripts import _sdk_gate
@@ -235,3 +288,43 @@ class TestRepoGateTwin:
         monkeypatch.delenv("ATTUNE_SDK_SUBPROCESS", raising=False)
         monkeypatch.delenv("CLAUDE_CODE_ENTRYPOINT", raising=False)
         assert _sdk_gate.exit_if_sdk_subprocess() is None
+
+
+class TestSdkGateOverride:
+    """ATTUNE_SDK_GATE_OVERRIDE=1 force-disables the gate — headless
+    `claude -p` stamps CLAUDE_CODE_ENTRYPOINT=sdk-cli into every such
+    session (2026-07-13, v2.1.144), so deliberate headless-hook
+    consumers (trap-battery) need an explicit opt-out."""
+
+    def test_override_beats_sdk_entrypoint(self, monkeypatch):
+        import importlib
+        import sys
+
+        sys.path.insert(0, "plugin/hooks")
+        gate = importlib.import_module("_sdk_gate")
+        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "sdk-cli")
+        monkeypatch.setenv("ATTUNE_SDK_GATE_OVERRIDE", "1")
+        assert not gate.is_sdk_subprocess()
+
+    def test_override_beats_explicit_marker(self, monkeypatch):
+        import importlib
+        import sys
+
+        sys.path.insert(0, "plugin/hooks")
+        gate = importlib.import_module("_sdk_gate")
+        monkeypatch.setenv("ATTUNE_SDK_SUBPROCESS", "1")
+        monkeypatch.setenv("ATTUNE_SDK_GATE_OVERRIDE", "1")
+        assert not gate.is_sdk_subprocess()
+
+    def test_no_override_still_gates(self, monkeypatch):
+        """No override → a true SDK entrypoint still gates (sdk-cli
+        itself is exempt per D9 — covered by TestIsSdkSubprocess)."""
+        import importlib
+        import sys
+
+        sys.path.insert(0, "plugin/hooks")
+        gate = importlib.import_module("_sdk_gate")
+        monkeypatch.delenv("ATTUNE_SDK_GATE_OVERRIDE", raising=False)
+        monkeypatch.delenv("ATTUNE_SDK_SUBPROCESS", raising=False)
+        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "sdk-py")
+        assert gate.is_sdk_subprocess()

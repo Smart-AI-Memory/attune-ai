@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """SessionStart hook: surface .help/ freshness and completeness issues.
 
 Runs quickly (<2s) and prints a short summary to stdout when any of:
@@ -123,6 +123,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _bootstrap import ensure_utf8_stdio
+
+    ensure_utf8_stdio()
     from _sdk_gate import exit_if_sdk_subprocess
 
     exit_if_sdk_subprocess()

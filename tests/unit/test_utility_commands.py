@@ -160,15 +160,25 @@ class TestCmdValidate:
         """Create args namespace for validate command."""
         return argparse.Namespace()
 
-    def test_validate_no_api_keys(self, capsys: pytest.CaptureFixture) -> None:
-        """Test validate returns 1 when no API keys are set."""
+    def test_validate_no_api_keys(
+        self,
+        capsys: pytest.CaptureFixture,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test validate returns 1 when no API keys and no subscription auth."""
         args = self._make_args()
 
         env = {
             "ANTHROPIC_API_KEY": "",
             "OPENAI_API_KEY": "",
             "GOOGLE_API_KEY": "",
+            "CLAUDE_CODE_OAUTH_TOKEN": "",
         }
+        # No ~/.claude dir under tmp_path → no subscription-auth evidence
+        # (setup-friction F2/F3: keyless is only an error when there's no
+        # Claude Code login evidence either).
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
         with patch.dict("os.environ", env, clear=False):
             with patch("os.environ.get", side_effect=lambda k, *a: env.get(k, "")):
@@ -181,7 +191,7 @@ class TestCmdValidate:
         assert result == 1
         captured = capsys.readouterr()
         assert "Validation failed" in captured.out
-        assert "No API keys found" in captured.out
+        assert "No auth found" in captured.out
 
     def test_validate_with_anthropic_key(self, capsys: pytest.CaptureFixture) -> None:
         """Test validate succeeds with ANTHROPIC_API_KEY set."""
@@ -207,13 +217,22 @@ class TestCmdValidate:
         assert "Anthropic" in captured.out
         assert "Configuration is valid" in captured.out
 
-    def test_validate_without_any_key(self, capsys: pytest.CaptureFixture) -> None:
-        """Test validate fails when no API key is set."""
+    def test_validate_without_any_key(
+        self,
+        capsys: pytest.CaptureFixture,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test validate fails when no API key and no subscription auth."""
         args = self._make_args()
 
         env_patch = {
             "ANTHROPIC_API_KEY": "",
+            "CLAUDE_CODE_OAUTH_TOKEN": "",
         }
+        # No ~/.claude dir under tmp_path → no subscription-auth evidence,
+        # regardless of the developer machine running the test.
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
 
         with (
             patch.dict("os.environ", env_patch, clear=False),

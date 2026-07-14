@@ -25,7 +25,7 @@ const PILLAR_COLOR: Record<string, { bg: string; text: string }> = {
 };
 
 const includedItems = [
-  `${CAPABILITIES.workflows} multi-stage AI workflows`,
+  `${CAPABILITIES.workflows} AI workflows`,
   `MCP server with ${CAPABILITIES.mcpTools} registered tools`,
   `${CAPABILITIES.skills} auto-triggering Claude Code skills`,
   'Spec-driven workflow with an approval gate (/spec)',
@@ -123,7 +123,7 @@ export default function PricingPage() {
           </div>
         </section>
 
-        {/* Four pillars — all free */}
+        {/* Pillars — memory leads (DEC-3), all free */}
         <section className="py-24 px-6 bg-[var(--surface-container-low)]">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
@@ -131,11 +131,11 @@ export default function PricingPage() {
                 The Platform
               </span>
               <h2 className="text-4xl font-extrabold">
-                Four pillars, zero cost
+                Memory first, zero cost
               </h2>
               <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
-                Each pillar is a real, shipped capability — and every one is
-                included in the free, open source release.
+                Project memory and every capability around it — all real,
+                shipped, and included in the free, open source release.
               </p>
             </div>
 

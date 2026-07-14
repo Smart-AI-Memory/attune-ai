@@ -105,6 +105,8 @@ def _git_toplevel(start: Path) -> Path | None:
             ["git", "-C", str(start), "rev-parse", "--show-toplevel"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=2,
             check=False,
         )
@@ -220,7 +222,8 @@ def main(context: dict[str, Any]) -> int:
 
 def _read_stdin_context() -> dict[str, Any]:
     """Read the Claude Code hook context from stdin."""
-    raw = sys.stdin.read()
+    _buf = getattr(sys.stdin, "buffer", None)  # None when tests patch stdin
+    raw = _buf.read().decode("utf-8", errors="replace") if _buf else sys.stdin.read()
     if not raw:
         return {}
     try:
@@ -230,6 +233,9 @@ def _read_stdin_context() -> dict[str, Any]:
 
 
 if __name__ == "__main__":
+    from _bootstrap import ensure_utf8_stdio
+
+    ensure_utf8_stdio()
     from _sdk_gate import exit_if_sdk_subprocess
 
     exit_if_sdk_subprocess()

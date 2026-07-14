@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """SessionStart welcome message for attune-ai plugin.
 
 Prints a brief orientation message when a Claude Code session

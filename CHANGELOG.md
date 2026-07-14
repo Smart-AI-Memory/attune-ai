@@ -7,6 +7,125 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Recall/warning sentinels no longer collapse into a shared bucket
+  when a hook payload lacks `session_id`**: jit_recall, lesson_recall,
+  and compact_warning keyed their surface-once sentinels on a literal
+  `unknown` fallback, so any no-id invocation joined one machine-wide
+  bucket — the first fire suppressed that rule/lesson/warning for
+  every such session for the 7-day TTL. Session identity now resolves
+  via `session_id`, then the transcript filename stem (which is the
+  session uuid), and with no identity at all the hooks fail open
+  (surface again, write nothing). Live-probe note: current Claude
+  Code supplies `session_id` in headless payloads, so real `claude
+  -p` sessions dedup correctly; the shared bucket bit synthetic and
+  legacy payloads.
+
+- **SDK-gate no longer silences hooks in headless `claude -p`
+  sessions**: Claude Code stamps `CLAUDE_CODE_ENTRYPOINT=sdk-cli`
+  into every headless session (verified on 2.1.144), so the
+  SDK-subprocess gate's bare `sdk-` prefix check made every gated
+  attune hook (jit_recall, lesson_recall, session recall/stash, …) a
+  silent no-op for all `claude -p` users. `sdk-cli` is now exempt;
+  true SDK subprocesses (`ATTUNE_SDK_SUBPROCESS=1`, `sdk-py`,
+  `sdk-ts`, unknown `sdk-*`) stay gated. Adds
+  `ATTUNE_SDK_GATE_OVERRIDE=1` as a benchmark-only escape hatch.
+  (sdk-subprocess-isolation D9; discovered by the trap-battery
+  benchmark.)
+
+## [10.4.1] — 2026-07-13
+
+Docs/metadata patch — no code changes. Ships the memory-first
+repositioning to the PyPI project page (the README is the
+`long_description`), per product-direction DEC-3.
+
+### Documentation
+
+- README reordered: persistent memory is pillar #1; workflows, RAG
+  grounding, and verification demoted to a single "also ships" line
+  (DEC-3, product-direction-review).
+- Trap-battery phase-1 results, forensics narrative, and per-class
+  verdicts (`benchmarks/trap_battery_results_2026-07-13.md`,
+  `docs/specs/trap-battery/decisions.md`) — includes the
+  injection-surface measurement rule.
+- Third product-direction assessment + freeze-week plan; DEC-7
+  amended (this release re-anchors the freeze window at t=0; no
+  tags through 2026-07-27).
+- Lessons corpus: headless hook mechanics (`--plugin-dir`,
+  `--include-hook-events`), sentinel-bucket collapse, injection
+  surfaces.
+
+## [10.4.0] — 2026-07-12
+
+First-run setup no longer traps keyless users in a raw traceback, and
+the hook layer now runs identically on macOS, Linux, and Windows.
+
+### Fixed
+
+- **First-run setup frictions F1–F5** (#1318): a keyless user's first
+  `workflow run` attempt used to end in an unhandled traceback
+  (`Exception: Claude Code returned an error result: success`)
+  followed by a contradictory success banner. Now: auth is checked
+  before the spend gate fires, `auth status` renders zero-config
+  defaults honestly instead of claiming completed setup, `validate`
+  no longer hard-fails a keyless machine with working subscription
+  auth, and non-verbose CLI runs log a one-line error instead of a
+  25-line traceback. README's pip quickstart now says what to type
+  after install.
+- **session_savings benchmark `is_error` counting** (#1319): the
+  benchmark counted a CLI result as a valid zero-token success
+  whenever `subtype == "success"`, without checking `is_error` — a
+  10-session auth-401 run aggregated as all-zero-cost "data,"
+  silently corrupting the cost comparison. Both are now required.
+
+### Changed
+
+- **Cross-platform hook layer** (#1313): every hook script and
+  registration now runs identically on macOS, Linux, and Windows —
+  UTF-8-safe stdin/stdout handling, atomic state writes, a
+  `_bootstrap.py` path resolver replacing `PYTHONPATH` env-prefixing,
+  and shell-family-aware security validation that fails closed for
+  unknown/PowerShell contexts. New README platform-support policy
+  documents the support tiers (macOS/Linux/WSL2 full,
+  Windows+Git Bash supported, Windows+PowerShell limited).
+
+### Added
+
+- **VS Code extension scaffold** (#1313): a minimal cross-platform
+  dashboard extension reading the file-telemetry contract (no direct
+  Redis connection); feature growth goes through
+  `specs/vscode-extension/`.
+
+## [10.3.0] — 2026-07-11
+
+Spec-integrity minor: the spec-status-integrity hook suite lands
+(drift between spec files and their PRs is now flagged at session
+start), `.help` retrieval gains path-keyed LLM-polished summaries,
+and the Anthropic provider stops sending sampling params that
+Claude 5 models reject.
+
+### Added
+
+- **spec-status-integrity hooks** (#1305): PR-link drift signal,
+  status-vocabulary lint, drift cache, and a `spec-status-reminder`
+  PR workflow — spec statuses that lag or contradict their merged
+  PRs are surfaced instead of silently rotting
+  (spec: `docs/specs/spec-status-integrity/`).
+- **Path-keyed `.help/summaries.json`** (#1300, #1301): retrieval
+  sidecar seeded for all 296 templates, then LLM-polished with
+  provenance metadata — summary matches get the retriever's 1.5x
+  boost (mirrors the attune-rag path-keyed summary design).
+
+### Fixed
+
+- **Claude 5 family sampling params** (#1310): the Anthropic
+  provider now strips `temperature`/`top_p`/`top_k` and converts
+  `enabled` thinking to `adaptive` for Claude 5 models (sonnet-5,
+  fable-5) as it already did for Opus 4.7+ — these models reject
+  the params with HTTP 400 ("`temperature` is deprecated for this
+  model", seen live in the 2026-07-06 integration-auth run).
+
 ## [10.2.0] — 2026-07-08
 
 Memory-ledger minor: the short-term memory layer's cost, benefit, and

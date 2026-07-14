@@ -5,19 +5,19 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"$(git rev-parse --show-toplevel)\" && PYTHONPATH=src python src/attune/hooks/scripts/help_freshness_nudge.py",
+            "command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/help_freshness_nudge.py\"",
             "timeout": 5,
             "statusMessage": "Checking .help freshness..."
           },
           {
             "type": "command",
-            "command": "python $(git rev-parse --show-toplevel)/src/attune/hooks/scripts/starter_prompt_nudge.py",
+            "command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/starter_prompt_nudge.py\"",
             "timeout": 3,
             "statusMessage": "Checking for cross-session handoff..."
           },
           {
             "type": "command",
-            "command": "python $(git rev-parse --show-toplevel)/src/attune/hooks/scripts/starter_reconciler.py",
+            "command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/starter_reconciler.py\"",
             "timeout": 12,
             "statusMessage": "Reconciling handoff freshness..."
           }
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"$(git rev-parse --show-toplevel)\" && PYTHONPATH=src python src/attune/hooks/scripts/lessons_reminder.py",
+            "command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/lessons_reminder.py\"",
             "timeout": 5,
             "statusMessage": "Checking for lessons to record..."
           }
@@ -42,7 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"$(git rev-parse --show-toplevel)\" && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
+            "command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/security_guard.py\"",
             "timeout": 5,
             "statusMessage": "Security check..."
           }
@@ -53,13 +53,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"$(git rev-parse --show-toplevel)\" && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
+            "command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/security_guard.py\"",
             "timeout": 5,
             "statusMessage": "Path validation..."
           },
           {
             "type": "command",
-            "command": "PYTHONPATH=src python src/attune/hooks/scripts/worktree_path_guard.py",
+            "command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/worktree_path_guard.py\"",
             "timeout": 5,
             "statusMessage": "Worktree path check..."
           }
@@ -72,7 +72,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"$(git rev-parse --show-toplevel)\" && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
+            "command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/format_on_save.py\"",
             "timeout": 10,
             "statusMessage": "Auto-formatting..."
           }
@@ -83,7 +83,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"$(git rev-parse --show-toplevel)\" && PYTHONPATH=src python src/attune/hooks/scripts/security_guard.py",
+            "command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/telemetry_hook.py\"",
             "timeout": 3,
             "statusMessage": "Recording telemetry..."
           }

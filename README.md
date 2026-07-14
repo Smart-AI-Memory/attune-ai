@@ -23,44 +23,30 @@
 
 ---
 
-**Attune AI** is a spec-driven, multi-agent framework that puts a
-deterministic quality-gate layer between autonomous LLM agents and a
-production codebase. Four definitions, for the systems-minded:
+**Attune AI** gives Claude Code persistent memory. Your agent stops
+starting from zero: a stash → recall → promote loop carries
+decisions, bugs, and hard-won lessons from one session into the
+next, and a retrievable lessons corpus surfaces the right lesson at
+the exact moment a prompt needs it — local-first, working from a
+plain `pip install attune-ai`. The economics are measured, not
+promised: recall loads a few hundred exactly-relevant tokens instead
+of your whole corpus — 67× fewer tokens on our own 800+ lesson
+store, retrieved at P@3 96% on a frozen trap-moment benchmark
+(details in [the memory suite](#the-memory-suite--out-of-the-box-measured)
+below).
 
-1. **A staleness-aware source mirror.** Most AI tools treat code
-   generation as prompt-and-forget, losing context between sessions.
-   Attune binds help templates and `features.yaml` definitions to
-   source via sha256 source hashes, so drift between docs and code is
-   *detected* rather than silently accumulated — and a cross-session
-   memory loop carries decisions, bugs, and references from one
-   session into the next.
-2. **An MCP-native team coordinator.** Attune runs as a Model Context
-   Protocol server that turns Claude Code into a managed multi-agent
-   platform. Instead of one monolithic prompt, it dispatches 2–6
-   domain-specific subagents in parallel — code readers, validators,
-   test designers, refactor planners — across 22 workflows
-   (19 multi-stage) and 47 MCP tools, and an orchestrator synthesizes
-   their findings into one result.
-3. **A Socratic quality-gate engine.** Multi-stage workflows ask
-   before they act: the `/spec` flow brainstorms, plans, then executes
-   behind declarative quality gates that block on real code-review and
-   security-audit scores — not blind agent autonomy. This front-loads
-   constraints and cuts the most expensive failure mode: confidently
-   solving the wrong problem.
-4. **An active knowledge engine.** Documentation is a runtime asset,
-   not a byproduct. Through decoupled modules (`attune-author`,
-   `attune-rag`, `attune-help`), a citation-per-claim retrieval
-   contract keeps mean per-claim faithfulness CI-gated at ≥ 0.97
-   (0.996 measured on the benchmark set) — grounding that both
-   engineers and agents use to verify implementation dependencies.
+Around that memory core, the same package also ships a spec-driven,
+multi-agent toolkit: 20 workflows and 47 MCP tools dispatching 2–6
+domain-specific subagents behind Socratic quality gates, RAG
+grounding with a citation-per-claim contract (mean per-claim
+faithfulness CI-gated at ≥ 0.97; 0.98 currently measured, N=20 runs
+on the 40-query golden set), and generation fact-checking — one
+install, one MCP server.
 
-In short: the infrastructure to move AI from conversational
-autocomplete to a grounded, multi-agent software-engineering utility.
-The same system doubles as an authoring-and-assistance toolkit for
-knowledge bases at scale — and we run our own on it: the docs, help
-templates, and 380+ engineering lessons at
-[attune-ai.dev](https://attune-ai.dev) are authored, grounded, and
-maintained entirely by Attune's own stack.
+We run our own knowledge base on it: the docs, help templates, and
+800+ engineering lessons at [attune-ai.dev](https://attune-ai.dev)
+are authored, grounded, and maintained entirely by Attune's own
+stack.
 
 **Managing and creating help-content, docs, or knowledge-bases?**
 That's [`attune-gui`](https://github.com/Smart-AI-Memory/attune-gui)
@@ -123,11 +109,13 @@ releases (curated promotion in 9.5, files-canonical unification in
 Memory is local-first — nothing leaves your machine, and without a
 Redis server everything degrades to the file backend with clear
 guidance. Your memory, your corpus: we dogfood the loop on our own
-380+ engineering lessons, retrieved via attune-rag at **P@3 96%**
+800+ engineering lessons, retrieved via attune-rag at **P@3 96%**
 (100% on the high-severity subset) on a frozen trap-moment benchmark.
 
-**The economics, measured.** Durable memory here is 303,205 tokens
-across 752 docs; a session recalls only the relevant slice:
+**The economics, measured (2026-07-05 snapshot; corpus has grown
+since — the ratios below only improve as it does).** Durable memory
+was 303,205 tokens across 752 docs at measurement time; a session
+recalls only the relevant slice:
 
 | Memory-suite recall | Instead of loading | You load | Win |
 |---|--:|--:|--:|
@@ -216,19 +204,25 @@ communicates better than text. A multi-part question becomes one form
 you answer with a click; a recommendation arrives as weighable cards; a
 disagreement is shown side-by-side so you can overrule it in one tap.
 This is a deliberate effort to *improve human/AI communication* — making
-the back-and-forth faster, clearer, and less ambiguous. The agent picks
-the right *construct* for the moment:
+the back-and-forth faster, clearer, and less ambiguous. Three of the
+four constructs fire at a **fork** — a point where the conversation
+can't move forward without your choice; the fourth (**progress**) is a
+status report, not a fork. The agent picks the right *construct* for
+the moment:
 
-- **intake** — gathers several independent decisions as a single
-  (multi-select-capable) form, instead of N back-and-forth questions.
-- **decision** — offers a *recommended* option with a rationale and
-  per-option tradeoffs, rendered as cards (consumed by the `/spec`
-  approval gate).
-- **pushback** — when the agent disagrees with your stated approach, it
-  shows "your approach" beside "I'd suggest instead" with a "why", and
-  you overrule or switch with one pick (`/spec` plan review).
-- **progress** — a done / in-progress / blocked status board whose
-  blocked items are a picker for what to fix next (`/spec` execute).
+- **intake** *(fork)* — gathers several independent decisions as a
+  single (multi-select-capable) form, instead of N back-and-forth
+  questions.
+- **decision** *(fork)* — offers a *recommended* option with a
+  rationale and per-option tradeoffs, rendered as cards (consumed by
+  the `/spec` approval gate).
+- **pushback** *(fork)* — when the agent disagrees with your stated
+  approach, it shows "your approach" beside "I'd suggest instead" with
+  a "why", and you overrule or switch with one pick (`/spec` plan
+  review).
+- **progress** *(report)* — a done / in-progress / blocked status
+  board whose blocked items are a picker for what to fix next (`/spec`
+  execute).
 
 All constructs share one declarative form model and validator, render
 richly on widget-capable surfaces (e.g. claude.ai / Cowork) and degrade
@@ -238,15 +232,17 @@ vocab (`y` / `go` / `1`) answers any of them.
 ### 4. RAG-grounded generation
 
 `attune-rag` (core dep) grounds LLM generation in retrieved corpus
-passages and enforces citation-per-claim, delivering **0.996 mean
-per-claim faithfulness on the benchmark set — over 99% of generated
-claims are grounded in their cited passages (under 1% hallucinated
-per claim)**. The conservative per-query bucket rate (a single
-ungrounded claim disqualifies the whole response) is 6.7%, down from
-46.7% without the citation contract. Retrieved passages are wrapped
-in sentinel tags to prevent prompt injection. The Claude provider
-automatically caches the stable RAG context prefix, eliminating
-repeated token costs across calls.
+passages and enforces citation-per-claim, delivering **0.98 mean
+per-claim faithfulness on the current CI-gated benchmark** (40
+queries, N=20 runs, floor ≥0.97) — the large majority of generated
+claims are grounded in their cited passages. The citation-per-claim
+design itself was chosen via an A/B comparison (2026-04-19): the
+conservative per-query bucket rate (a single ungrounded claim
+disqualifies the whole response) dropped from 46.7% without the
+contract to 6.7% with it. Retrieved passages are wrapped in sentinel
+tags to prevent prompt injection. The Claude provider automatically
+caches the stable RAG context prefix, eliminating repeated token
+costs across calls.
 
 ### 5. Memory that compounds across sessions
 
@@ -268,15 +264,19 @@ prose, Attune renders the right form whenever a structured turn
 communicates better than text — a multi-part question becomes one
 form you answer with a click, a recommendation arrives as weighable
 cards, and a disagreement is shown side-by-side so you can overrule
-it in one tap:
+it in one tap. Three constructs fire at a **fork** — a point where
+the conversation needs your choice to continue; the fourth
+(**progress**) is a status report, not a fork:
 
-- **intake** — gather several independent decisions in one form
-- **decision** — a recommended option with rationale + per-option
-  tradeoffs (`/spec` approval gate)
-- **pushback** — agent dissent shown as "your approach" vs "I'd suggest
-  instead"; overrule or switch in one pick (`/spec` plan review)
-- **progress** — a done / in-progress / blocked board whose blocked
-  items are a fix-next picker (`/spec` execute)
+- **intake** *(fork)* — gather several independent decisions in one
+  form
+- **decision** *(fork)* — a recommended option with rationale +
+  per-option tradeoffs (`/spec` approval gate)
+- **pushback** *(fork)* — agent dissent shown as "your approach" vs
+  "I'd suggest instead"; overrule or switch in one pick (`/spec` plan
+  review)
+- **progress** *(report)* — a done / in-progress / blocked board
+  whose blocked items are a fix-next picker (`/spec` execute)
 
 All constructs share one declarative form model and validator, render
 richly on widget-capable surfaces (e.g. claude.ai / Cowork) and degrade
@@ -300,7 +300,13 @@ Then say "what can attune do?" in Claude Code.
 
 ```bash
 pip install attune-ai
+attune            # shows your next steps
 ```
+
+Then check your setup with `attune validate` and run your first
+workflow: `attune workflow run code-review --path src/`.
+
+Setup fight you? [Tell me where](https://github.com/Smart-AI-Memory/attune-ai/discussions/1325) — I'm actively fixing this.
 
 The core install includes the CLI, all workflows, and the MCP
 server. See [Installation Options](#installation-options) for
@@ -500,6 +506,45 @@ every install.
 
 ---
 
+## Platform Support
+
+| Platform | Support |
+| -------- | ------- |
+| macOS | Full |
+| Linux | Full |
+| Windows via WSL2 | Full |
+| Windows native + Git Bash | Supported (Bash tool, POSIX-ish syntax) |
+| Windows native + PowerShell tool | Limited — security validation fails closed |
+
+Notes for native Windows:
+
+- Claude Code supports native Windows (10 1809+). Installing
+  [Git for Windows](https://gitforwindows.org/) enables the Bash
+  tool; without it, the PowerShell tool is used (opt-in via
+  `CLAUDE_CODE_USE_POWERSHELL_TOOL=1`).
+- Under PowerShell, the security-validation hook applies a strict
+  command allowlist and **fails closed**: commands it does not
+  recognize are blocked rather than silently passed. Use Git Bash
+  or WSL2 for the full experience.
+- OS-level sandboxing is available on macOS/Linux/WSL2 only, not
+  native Windows.
+
+### Redis on Windows
+
+Redis has no native Windows build. Docker is the recommended path:
+
+```bash
+docker run -d -p 6379:6379 redis:7-alpine
+```
+
+Without a reachable Redis, cross-session memory degrades gracefully
+to the local file backend —
+`attune.memory.session_stash.backend_status()` reports
+`fallback: true` so the degradation is visible, and no errors are
+spammed to the session.
+
+---
+
 ## API Mode
 
 ```bash
@@ -684,7 +729,7 @@ it helps others discover the project.
   whose workflow posts validated Attune's plan-first, multi-agent approach
 - **[Affaan Mustafa](https://github.com/affaan-m/everything-claude-code)** — For battle-tested Claude Code configurations that inspired the hook system
 
-[View Full Acknowledgements](https://github.com/Smart-AI-Memory/attune-ai/blob/main/ACKNOWLEDGMENTS.md)
+[View Full Acknowledgements](https://github.com/Smart-AI-Memory/attune-ai/blob/main/ACKNOWLEDGEMENTS.md)
 
 ---
 

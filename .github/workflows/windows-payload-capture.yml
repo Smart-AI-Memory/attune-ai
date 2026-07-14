@@ -1,0 +1,105 @@
+name: Windows payload capture (one-shot)
+
+# Diagnostic for the open question from the 2026-07 cross-platform
+# work: what does the Claude Code hook payload ACTUALLY contain on
+# native Windows, under (a) the Bash tool via Git Bash and (b) the
+# opt-in PowerShell tool? The answer feeds
+# security_guard.detect_shell_family().
+#
+# SPEND: this workflow uses the REAL ANTHROPIC_API_KEY (it must run
+# the actual `claude` CLI so Claude Code itself emits the payload).
+# It is manual-dispatch ONLY and budget-capped:
+#   - ATTUNE_MAX_BUDGET_USD caps SDK-side spend
+#   - --max-turns 4 bounds each headless run
+#   - two tiny prompts total ("run echo hello")
+# Expected cost per dispatch: well under $0.25.
+#
+# Usage (NOTE: GitHub only registers dispatch-only workflows once the
+# file exists on the DEFAULT branch — dispatching against a feature
+# branch 404s until this file has merged to main; verified 2026-07-11):
+#   gh workflow run windows-payload-capture.yml --ref main
+# then read the uploaded `hook-payloads-*` artifacts.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-payload-capture
+  cancel-in-progress: true
+
+env:
+  ATTUNE_MAX_BUDGET_USD: "1"
+
+jobs:
+  capture:
+    name: capture (windows, ${{ matrix.shell-family }})
+    runs-on: windows-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shell-family: git-bash
+            use-powershell: "0"
+          - shell-family: powershell
+            use-powershell: "1"
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "20"
+
+      - name: Install Claude Code CLI
+        shell: bash
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Prepare scratch project with capture hook
+        shell: bash
+        run: |
+          mkdir -p scratch/.claude
+          cp scripts/capture_hook_payload.py scratch/
+          cat > scratch/.claude/settings.json <<'JSON'
+          {
+            "hooks": {
+              "PreToolUse": [
+                {
+                  "hooks": [
+                    {
+                      "type": "command",
+                      "command": "python \"$CLAUDE_PROJECT_DIR/capture_hook_payload.py\"",
+                      "timeout": 10
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+          JSON
+
+      - name: Run one headless tool call (payload capture)
+        shell: bash
+        working-directory: scratch
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_USE_POWERSHELL_TOOL: ${{ matrix.use-powershell }}
+          ATTUNE_PAYLOAD_CAPTURE_FILE: ${{ github.workspace }}/hook_payload_capture-${{ matrix.shell-family }}.jsonl
+        run: |
+          claude -p "Run this exact shell command and nothing else: echo hello" \
+            --allowedTools "Bash" --max-turns 4 || true
+
+      - name: Show captured payloads
+        shell: bash
+        run: |
+          echo "=== ${{ matrix.shell-family }} ==="
+          cat "hook_payload_capture-${{ matrix.shell-family }}.jsonl" || echo "NO CAPTURE - hook did not fire"
+
+      - name: Upload capture artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: hook-payloads-${{ matrix.shell-family }}
+          path: hook_payload_capture-*.jsonl
+          if-no-files-found: warn

@@ -144,6 +144,19 @@ def cmd_workflow_run(args: Namespace) -> int:
         # for nested dataclasses).
         input_data["output_format"] = "json"
 
+    # Auth pre-flight (setup-friction F1/F4) — BEFORE the spend gate,
+    # so a machine with no auth path at all gets one clean sentence
+    # instead of (a) a spend warning about dollars it cannot spend,
+    # then (b) an SDK traceback. Only blocks when NEITHER auth path
+    # exists: no ANTHROPIC_API_KEY and no `claude` CLI. A present-but-
+    # unauthenticated CLI can't be verified cheaply, so it proceeds
+    # (that failure is handled by SdkSubprocessError messaging).
+    if not getattr(args, "no_llm", False):
+        preflight_error = _auth_preflight()
+        if preflight_error:
+            print(preflight_error)
+            return EXIT_CLI_ERROR
+
     # Spend gate (collaboration-gates Phase 1) — guard the first
     # billable run of the session. Free/local runs never reach it
     # (R8): a ``--no-llm`` run makes no billable call. The gate's own
@@ -191,6 +204,51 @@ def cmd_workflow_run(args: Namespace) -> int:
             verbose=bool(getattr(args, "verbose", False)),
         ),
         on_result=_record_envelope_cost if record_cost else None,
+    )
+
+
+def _auth_preflight() -> str | None:
+    """Return an actionable error when no LLM auth evidence exists.
+
+    CLI *presence* can't be the test — ``claude-agent-sdk`` ships a
+    bundled ``claude`` binary, so one always exists after
+    ``pip install attune-ai``. What distinguishes a machine that can
+    run workflows from a fresh one is evidence of *credentials*:
+
+    - ``ANTHROPIC_API_KEY`` in the environment, or
+    - ``CLAUDE_CODE_OAUTH_TOKEN`` in the environment, or
+    - a ``~/.claude`` directory — Claude Code has been run (and
+      possibly logged in) on this machine at least once. Existence
+      only; the directory is never read (macOS keeps credentials in
+      the Keychain, so requiring a credentials *file* would
+      false-positive on logged-in Macs).
+
+    Conservative by design: any evidence passes, and a stale/logged-
+    out state still fails later with the SdkSubprocessError guidance.
+    Only the nothing-at-all machine is blocked here, before the spend
+    gate can warn it about dollars it cannot spend (setup-friction
+    F1/F4).
+    """
+    import os
+    from pathlib import Path
+
+    if os.environ.get("ANTHROPIC_API_KEY", "").strip():
+        return None
+    if os.environ.get("CLAUDE_CODE_OAUTH_TOKEN", "").strip():
+        return None
+    if (Path.home() / ".claude").exists():
+        return None
+
+    return (
+        "\n🔑 No auth found — workflows make LLM calls and need one "
+        "of these:\n"
+        "   - Claude Code (subscription): install it "
+        "(npm install -g @anthropic-ai/claude-code), run `claude` "
+        "once to log in, then re-run this workflow.\n"
+        "   - API key: export ANTHROPIC_API_KEY=... and re-run.\n"
+        "   For guided configuration: attune auth setup\n"
+        "   Setup fight you? https://github.com/Smart-AI-Memory/"
+        "attune-ai/discussions/1325"
     )
 
 

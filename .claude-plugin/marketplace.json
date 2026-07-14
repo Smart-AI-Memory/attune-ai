@@ -7,14 +7,14 @@
   },
   "metadata": {
     "description": "Spec-driven development for Claude Code — take an idea through requirements, design, tasks, and gated execution with an approval loop. Plus 23 auto-triggering skills: security audits, code review, test generation, release prep.",
-    "version": "10.2.0"
+    "version": "10.4.1"
   },
   "plugins": [
     {
       "name": "attune-ai",
       "description": "Spec-driven development is the core workflow: /spec carries an idea through brainstorm, requirements, design, and task execution with quality gates and your approval at each stage. Backed by 23 auto-triggering skills — security audits, code reviews, test generation, bug prediction, and release preparation. For help content tools, also install attune-help and attune-author from this marketplace.",
       "source": "./plugin",
-      "version": "10.2.0",
+      "version": "10.4.1",
       "author": {
         "name": "Smart AI Memory",
         "email": "patrick.roebuck@smartaimemory.com"

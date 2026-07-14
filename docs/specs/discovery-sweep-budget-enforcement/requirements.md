@@ -1,6 +1,6 @@
 # Discovery-Sweep Budget Enforcement — requirements
 
-**Status:** approved (2026-06-28) · **Owner:** Patrick + agent
+**Status:** complete (2026-06-28) — shipped in PR #1159 (per-source cap plumbed to SDK `max_budget_usd`; prerequisite cost fix #1156); D5 dogfood acceptance PASSED (decisions.md D8) · **Owner:** Patrick + agent
 
 Make `discovery-sweep`'s `budget_usd` an actual spend cap. Today it is
 decorative: the engine splits `budget_usd` across sources by

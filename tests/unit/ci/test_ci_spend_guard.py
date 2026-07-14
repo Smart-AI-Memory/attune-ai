@@ -49,6 +49,10 @@ WORKFLOWS_DIR = Path(__file__).resolve().parents[3] / ".github" / "workflows"
 KEYED_ALLOWLIST: dict[str, str] = {
     "integration-auth.yml": "weekly live-key canary, ATTUNE_MAX_BUDGET_USD-capped",
     "help-freshness.yml": "keyed regen only on manual regen=true dispatch",
+    "windows-payload-capture.yml": (
+        "one-shot Windows hook-payload diagnostic, dispatch-only, "
+        "ATTUNE_MAX_BUDGET_USD-capped + --max-turns bounded"
+    ),
 }
 
 #: Triggers that fire automatically at code-event scale. A live key on
@@ -194,4 +198,33 @@ def test_help_freshness_key_gated_on_manual_regen():
         f"`if: ... regen == 'true'` gate — the manual-dispatch gate is "
         f"this workflow's spend control (attune-author does not honor "
         f"ATTUNE_MAX_BUDGET_USD)."
+    )
+
+
+def test_windows_payload_capture_caps_spend():
+    """The Windows payload diagnostic keeps both of its spend bounds.
+
+    Its allowlist conditions: ATTUNE_MAX_BUDGET_USD caps SDK-side
+    spend, and every headless `claude -p` invocation is bounded by
+    --max-turns so a runaway agentic loop can't accumulate cost.
+    """
+    path = WORKFLOWS_DIR / "windows-payload-capture.yml"
+    if not path.exists():
+        pytest.skip("windows-payload-capture.yml absent")
+    text = path.read_text(encoding="utf-8")
+    assert "ATTUNE_MAX_BUDGET_USD" in text, (
+        "windows-payload-capture.yml uses the real ANTHROPIC_API_KEY "
+        "but no longer sets ATTUNE_MAX_BUDGET_USD — restore the cap or "
+        "de-key the workflow."
+    )
+    claude_invocations = re.findall(r"claude -p(?:[^\n]*\\\n)*[^\n]*", text)
+    assert claude_invocations, (
+        "windows-payload-capture.yml no longer invokes `claude -p` — "
+        "re-point this test at wherever the keyed invocation moved."
+    )
+    unbounded = [inv for inv in claude_invocations if "--max-turns" not in inv]
+    assert not unbounded, (
+        f"windows-payload-capture.yml has `claude -p` invocation(s) "
+        f"without --max-turns: {unbounded} — the turn bound is part of "
+        f"this workflow's spend control."
     )

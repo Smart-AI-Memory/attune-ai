@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """UserPromptSubmit lesson recall — surface matching lessons with the
 prompt that needs them.
 
@@ -46,9 +46,10 @@ if _HOOKS_DIR not in sys.path:
     sys.path.insert(0, _HOOKS_DIR)
 
 try:
-    from _state import _sentinel_dir  # type: ignore[attr-defined]
+    from _state import _sentinel_dir, resolve_session_key  # type: ignore[attr-defined]
 except Exception:  # noqa: BLE001 — hook must never crash a prompt
     _sentinel_dir = None  # type: ignore[assignment]
+    resolve_session_key = None  # type: ignore[assignment]
 
 _SENTINEL_PREFIX = ".lesson-recalled-"
 _SENTINEL_TTL_SECONDS = 7 * 24 * 3600  # match the jit-recall TTL
@@ -79,10 +80,13 @@ def _safe(fragment: str | None, fallback: str) -> str:
     return re.sub(r"[^A-Za-z0-9_-]", "_", fragment)[:64] or fallback
 
 
-def _sentinel_path(session_id: str | None, lesson_id: str) -> Path | None:
-    if _sentinel_dir is None:
+def _sentinel_path(session_key: str | None, lesson_id: str) -> Path | None:
+    # No session identity -> no sentinel: fail OPEN (surface again)
+    # rather than share an "unknown" bucket across sessions, where the
+    # first fire suppresses the lesson machine-wide for the TTL.
+    if _sentinel_dir is None or not session_key:
         return None
-    name = f"{_SENTINEL_PREFIX}{_safe(session_id, 'unknown')}-{_safe(lesson_id, 'lesson')}"
+    name = f"{_SENTINEL_PREFIX}{_safe(session_key, 'unknown')}-{_safe(lesson_id, 'lesson')}"
     return _sentinel_dir() / name
 
 
@@ -135,11 +139,15 @@ def main() -> int:
         if not hits:
             return 0
 
-        session_id = payload.get("session_id")
+        session_key = (
+            resolve_session_key(payload)
+            if resolve_session_key is not None
+            else payload.get("session_id")
+        )
         fresh = []
         for hit in hits:
             lesson_id = Path(hit.entry.metadata.get("parent_path", hit.entry.path)).stem
-            sentinel = _sentinel_path(session_id, lesson_id)
+            sentinel = _sentinel_path(session_key, lesson_id)
             if sentinel is not None and sentinel.exists():
                 continue
             fresh.append((hit, lesson_id))
@@ -169,7 +177,7 @@ def main() -> int:
 
         # Sentinels AFTER the emit so a mid-work crash retries next fire.
         for _hit, lesson_id in fresh:
-            sentinel = _sentinel_path(session_id, lesson_id)
+            sentinel = _sentinel_path(session_key, lesson_id)
             if sentinel is None:
                 continue
             try:

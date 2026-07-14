@@ -205,11 +205,20 @@ def parse_result_json(raw: str, *, task_id: str, arm: str, repeat: int, wall_s: 
             error=f"unparseable output: {raw[:200]!r}",
         )
     usage = obj.get("usage") or {}
+    # The CLI can report subtype "success" WITH is_error=true (e.g. an
+    # auth 401) — a run only counts when both agree it worked.
+    ok = obj.get("subtype") == "success" and not obj.get("is_error")
+    if ok:
+        error = ""
+    elif obj.get("is_error"):
+        error = str(obj.get("result", ""))[:200] or f"is_error (subtype={obj.get('subtype')})"
+    else:
+        error = str(obj.get("subtype"))
     return RunResult(
         task_id=task_id,
         arm=arm,
         repeat=repeat,
-        ok=obj.get("subtype") == "success",
+        ok=ok,
         wall_s=wall_s,
         api_s=float(obj.get("duration_api_ms", 0)) / 1000.0,
         num_turns=int(obj.get("num_turns", 0)),
@@ -218,7 +227,7 @@ def parse_result_json(raw: str, *, task_id: str, arm: str, repeat: int, wall_s: 
         cache_read_tokens=int(usage.get("cache_read_input_tokens", 0)),
         output_tokens=int(usage.get("output_tokens", 0)),
         cost_usd=float(obj.get("total_cost_usd", 0.0)),
-        error="" if obj.get("subtype") == "success" else str(obj.get("subtype")),
+        error=error,
     )
 
 

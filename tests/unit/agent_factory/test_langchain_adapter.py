@@ -39,11 +39,18 @@ class TestLangChainAdapterGetLLMNormalization:
         assert "top_k" not in kwargs
         assert kwargs["model"] == "claude-opus-4-8"
 
-    def test_anthropic_keeps_temperature_for_sonnet(self):
-        """Sonnet still accepts temperature → passed through."""
+    def test_anthropic_strips_temperature_for_sonnet_5(self):
+        """Claude 5 family rejects temperature → stripped."""
         with patch("langchain_anthropic.ChatAnthropic") as mock_chat:
             adapter = LangChainAdapter(provider="anthropic", api_key="sk-test")
             adapter._get_llm(_config("claude-sonnet-5"))
+        assert "temperature" not in mock_chat.call_args.kwargs
+
+    def test_anthropic_keeps_temperature_for_sonnet_4_5(self):
+        """Sonnet 4.5 still accepts temperature → passed through."""
+        with patch("langchain_anthropic.ChatAnthropic") as mock_chat:
+            adapter = LangChainAdapter(provider="anthropic", api_key="sk-test")
+            adapter._get_llm(_config("claude-sonnet-4-5"))
         assert "temperature" in mock_chat.call_args.kwargs
 
     def test_anthropic_keeps_temperature_for_opus_4_6(self):

@@ -58,7 +58,7 @@ export default function Home() {
             <div className="grid lg:grid-cols-2 gap-16 items-center">
               <div className="z-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--surface-container-high)] text-[var(--primary)] text-xs font-bold tracking-widest mb-6 uppercase">
-                  <span>v10.2.0</span>
+                  <span>v10.4.1</span>
                   <span className="w-1 h-1 rounded-full bg-[var(--primary)]"></span>
                   <span className="opacity-80">Spec-driven development platform</span>
                 </div>
@@ -193,15 +193,16 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Four platform pillars */}
+        {/* Platform pillars — memory leads (DEC-3) */}
         <section className="py-32 px-6 max-w-7xl mx-auto" aria-label="Platform pillars">
           <div className="text-center mb-20">
             <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">The Platform</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold">Four pillars, one outcome</h2>
+            <h2 className="text-4xl md:text-5xl font-extrabold">Memory is the pillar</h2>
             <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
-              Each pillar is a real, shipped capability &mdash; not a
-              roadmap promise. Together they keep your AI agent&apos;s work
-              grounded, remembered, and verified.
+              Attune AI leads with project memory &mdash; the four
+              capabilities around it keep your AI agent&apos;s work
+              grounded, verified, and easy to steer. All real and
+              shipped, none a roadmap promise.
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
@@ -242,7 +243,7 @@ export default function Home() {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-8 text-center">
               <div>
                 <div className="text-4xl font-extrabold text-[var(--primary)]">{CAPABILITIES.workflows}</div>
-                <div className="text-sm text-[var(--text-muted)] mt-1">multi-stage workflows</div>
+                <div className="text-sm text-[var(--text-muted)] mt-1">workflows</div>
               </div>
               <div>
                 <div className="text-4xl font-extrabold text-[var(--primary)]">{CAPABILITIES.mcpTools}</div>

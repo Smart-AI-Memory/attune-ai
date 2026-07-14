@@ -90,8 +90,13 @@ def cmd_auth_status(args: Any) -> int:
 
     """
     try:
-        # Load strategy
+        # Load strategy. Track whether it came from a real config file:
+        # a fresh install runs on zero-config defaults, and rendering
+        # those as "Setup Completed: Yes / Tier: PRO" reads as state the
+        # user never created (setup-friction F3). Same values, honest
+        # labels.
         strategy = AuthStrategy.load()
+        configured = AUTH_STRATEGY_FILE.exists()
         output_json = getattr(args, "json", False)
 
         if output_json:
@@ -105,6 +110,7 @@ def cmd_auth_status(args: Any) -> int:
                 "prefer_subscription": strategy.prefer_subscription,
                 "cost_optimization": strategy.cost_optimization,
                 "setup_completed": strategy.setup_completed,
+                "configured": configured,
                 "config_file": str(AUTH_STRATEGY_FILE),
             }
             print(json.dumps(config, indent=2))
@@ -115,15 +121,30 @@ def cmd_auth_status(args: Any) -> int:
             console = Console()
 
             # Configuration panel
+            default_note = "" if configured else " (default)"
             config_text = Text()
             config_text.append("Subscription Tier: ", style="cyan")
-            config_text.append(f"{strategy.subscription_tier.value.upper()}\n", style="bold")
-            config_text.append("Default Mode: ", style="cyan")
-            config_text.append(f"{strategy.default_mode.value.upper()}\n", style="bold")
-            config_text.append("Setup Completed: ", style="cyan")
             config_text.append(
-                "✅ Yes\n" if strategy.setup_completed else "❌ No (run 'attune auth setup')\n",
+                f"{strategy.subscription_tier.value.upper()}{default_note}\n", style="bold"
             )
+            config_text.append("Default Mode: ", style="cyan")
+            config_text.append(
+                f"{strategy.default_mode.value.upper()}{default_note}\n", style="bold"
+            )
+            config_text.append("Setup: ", style="cyan")
+            if configured:
+                config_text.append(
+                    (
+                        "✅ Configured\n"
+                        if strategy.setup_completed
+                        else "❌ Incomplete (run 'attune auth setup')\n"
+                    ),
+                )
+            else:
+                config_text.append(
+                    "Not configured — using zero-config defaults "
+                    "(run 'attune auth setup' to customize)\n",
+                )
 
             console.print(Panel(config_text, title="Authentication Strategy", border_style="blue"))
 
@@ -161,16 +182,24 @@ def cmd_auth_status(args: Any) -> int:
             console.print(threshold_table)
 
             # File location
-            console.print(f"\n[dim]Configuration file: {AUTH_STRATEGY_FILE}[/dim]")
+            file_note = "" if configured else " (not created yet)"
+            console.print(f"\n[dim]Configuration file: {AUTH_STRATEGY_FILE}{file_note}[/dim]")
 
         else:
             # Plain text fallback
             print("\n" + "=" * 60)
             print("AUTHENTICATION STRATEGY")
             print("=" * 60)
-            print(f"\nSubscription Tier: {strategy.subscription_tier.value.upper()}")
-            print(f"Default Mode: {strategy.default_mode.value.upper()}")
-            print(f"Setup Completed: {'Yes' if strategy.setup_completed else 'No'}")
+            plain_note = "" if configured else " (default)"
+            print(f"\nSubscription Tier: {strategy.subscription_tier.value.upper()}{plain_note}")
+            print(f"Default Mode: {strategy.default_mode.value.upper()}{plain_note}")
+            if configured:
+                print(f"Setup Completed: {'Yes' if strategy.setup_completed else 'No'}")
+            else:
+                print(
+                    "Setup: not configured — using zero-config defaults "
+                    "(run 'attune auth setup' to customize)"
+                )
 
             print("\nModule Size Thresholds:")
             print(f"  Small: < {strategy.small_module_threshold} LOC")
@@ -186,7 +215,9 @@ def cmd_auth_status(args: Any) -> int:
                 print("  Small/Medium → Subscription")
                 print("  Large → API (1M context window)")
 
-            print(f"\nConfiguration file: {AUTH_STRATEGY_FILE}")
+            print(
+                f"\nConfiguration file: {AUTH_STRATEGY_FILE}{'' if configured else ' (not created yet)'}"
+            )
             print("=" * 60)
 
         return 0
