@@ -4483,10 +4483,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-1-import-the-two-building-blocks" class="md-nav__link">
+  <a href="#step-1-import-the-workflow-and-the-renderer" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 1 — Import the two building blocks
+        Step 1 — Import the workflow and the renderer
       
     </span>
   </a>
@@ -4516,10 +4516,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-4-format-the-results-into-a-human-readable-report" class="md-nav__link">
+  <a href="#step-4-render-the-result-into-a-human-readable-report" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 4 — Format the results into a human-readable report
+        Step 4 — Render the result into a human-readable report
       
     </span>
   </a>
@@ -4599,21 +4599,28 @@
 <li>A directory of Python source files to scan (the tutorial uses <code>src/</code> as the target)</li>
 </ul>
 <h2 id="what-you-will-build">What you will build<a class="headerlink" href="#what-you-will-build" title="Permanent link">&para;</a></h2>
-<p>A short script that wires together <code>BugPredictionWorkflow</code> and <code>format_bug_predict_report</code> to produce output like this:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Bug Prediction Report
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Risk Score: 73/100 | Files: 34 | Findings: 8
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>HIGH (2 findings)
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>  src/hooks/executor.py:89   dangerous_eval  eval() on user input
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  src/plugins/loader.py:142  dangerous_eval  exec() in plugin loader
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>...
+<p>A short async script that runs <code>BugPredictionWorkflow</code> and renders its
+<code>WorkflowResult</code> into a readable report using the shared
+<code>attune.voice.report_renderer</code>, producing output like this:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a># Bug Prediction
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Risk: 2 high-severity findings, moderate overall risk.
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>**Score:** 55/100
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>## Pattern Scanner
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>- 🔴 src/hooks/executor.py:89 — eval() on user input
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>- 🔴 src/plugins/loader.py:142 — exec() in plugin loader
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>...
 </code></pre></div>
 <p>By the time the script runs successfully, you'll understand how the orchestrator coordinates its three subagents and how raw results become a readable report.</p>
 <hr />
-<h2 id="step-1-import-the-two-building-blocks">Step 1 — Import the two building blocks<a class="headerlink" href="#step-1-import-the-two-building-blocks" title="Permanent link">&para;</a></h2>
-<p>The workflow and the formatter live in separate modules. Import both so you can see the boundary between "running the analysis" and "presenting the results".</p>
+<h2 id="step-1-import-the-workflow-and-the-renderer">Step 1 — Import the workflow and the renderer<a class="headerlink" href="#step-1-import-the-workflow-and-the-renderer" title="Permanent link">&para;</a></h2>
+<p>The workflow and the report renderer live in separate modules — analysis
+and presentation are intentionally decoupled. Import both so you can see
+the boundary.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.bug_predict</span><span class="w"> </span><span class="kn">import</span> <span class="n">BugPredictionWorkflow</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.bug_predict_report</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_bug_predict_report</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.voice.report_renderer</span><span class="w"> </span><span class="kn">import</span> <span class="n">render</span>
 </code></pre></div>
 <p>Run this as a standalone script. If neither import raises an <code>ImportError</code>, your installation is complete.</p>
 <p><strong>You should see:</strong> no output and no errors.</p>
@@ -4626,22 +4633,29 @@
 <p><strong>You should see:</strong> the object created without exceptions. Print <code>workflow</code> to confirm it exists.</p>
 <hr />
 <h2 id="step-3-run-the-scan-against-a-target-path">Step 3 — Run the scan against a target path<a class="headerlink" href="#step-3-run-the-scan-against-a-target-path" title="Permanent link">&para;</a></h2>
-<p>Call <code>execute()</code> with the path you want to analyze. The orchestrator sends each subagent a task derived from <code>_TASK_PROMPT_TEMPLATE</code>, substituting your path for <code>{path}</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">raw_result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/&quot;</span><span class="p">)</span>
+<p><code>execute()</code> is a coroutine — <code>await</code> it (or drive the script with
+<code>asyncio.run</code>). The orchestrator sends each subagent a task derived from
+<code>_TASK_PROMPT_TEMPLATE</code>, substituting your path for <code>{path}</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/&quot;</span><span class="p">)</span>
 </code></pre></div>
 <p>This is the step where the real work happens: <code>pattern-scanner</code> flags dangerous patterns (<code>eval()</code>, bare <code>except:</code>, TODO markers), <code>risk-correlator</code> weighs complexity and change frequency, and <code>prevention-advisor</code> ranks remediation strategies. The returned <code>WorkflowResult</code> bundles all three subagents' findings.</p>
-<p><strong>You should see:</strong> <code>execute()</code> return without raising. You can print <code>raw_result</code> to inspect the raw synthesis before formatting.</p>
+<p><strong>You should see:</strong> <code>execute()</code> return without raising. Check <code>result.success</code> before formatting — a <code>False</code> value means <code>result.error</code> explains what went wrong instead of a report.</p>
 <hr />
-<h2 id="step-4-format-the-results-into-a-human-readable-report">Step 4 — Format the results into a human-readable report<a class="headerlink" href="#step-4-format-the-results-into-a-human-readable-report" title="Permanent link">&para;</a></h2>
-<p><code>format_bug_predict_report</code> takes the raw result dict and the original input data and produces the structured markdown report. Keeping formatting separate from analysis means you can reuse the workflow output in other contexts (a CI comment, a dashboard) without re-running the scan.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">report</span> <span class="o">=</span> <span class="n">format_bug_predict_report</span><span class="p">(</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">result</span><span class="o">=</span><span class="n">raw_result</span><span class="p">,</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">input_data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;src/&quot;</span><span class="p">},</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="p">)</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+<h2 id="step-4-render-the-result-into-a-human-readable-report">Step 4 — Render the result into a human-readable report<a class="headerlink" href="#step-4-render-the-result-into-a-human-readable-report" title="Permanent link">&para;</a></h2>
+<p>Keeping formatting separate from analysis means you can reuse the workflow
+output in other contexts (a CI comment, a dashboard) without re-running
+the scan. <code>result.final_output</code> carries a <code>WorkflowReport</code> when the
+subagents' findings parsed as structured output; <code>render()</code> turns that
+into markdown. Fall back to <code>result.summary</code> (always a plain string) when
+you just need the one-line takeaway.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.output</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkflowReport</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">,</span> <span class="n">WorkflowReport</span><span class="p">):</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">render</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">))</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summary</span> <span class="ow">or</span> <span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">)</span>
 </code></pre></div>
-<p><strong>You should see:</strong> a report with a <code>## Summary</code> section showing an overall risk score (0–100), a <code>## Bugs</code> section organized by severity (HIGH / MEDIUM / LOW), and a <code>## Suggestions</code> section with prioritized remediation advice.</p>
+<p><strong>You should see:</strong> a report with a title, an overall <code>**Score:** N/100</code> line, and one section per subagent (pattern scanner findings, risk correlations, prevention advice).</p>
 <hr />
 <h2 id="step-5-read-a-finding-and-understand-what-it-means">Step 5 — Read a finding and understand what it means<a class="headerlink" href="#step-5-read-a-finding-and-understand-what-it-means" title="Permanent link">&para;</a></h2>
 <p>Find a HIGH-severity line in your output, for example:</p>
@@ -4674,28 +4688,37 @@
 <p><strong>You should see:</strong> at least one finding per severity tier if your codebase contains any TODO/FIXME comments or broad <code>except</code> blocks.</p>
 <hr />
 <h2 id="complete-script">Complete script<a class="headerlink" href="#complete-script" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.bug_predict</span><span class="w"> </span><span class="kn">import</span> <span class="n">BugPredictionWorkflow</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.bug_predict_report</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_bug_predict_report</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">workflow</span> <span class="o">=</span> <span class="n">BugPredictionWorkflow</span><span class="p">()</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">raw_result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.bug_predict</span><span class="w"> </span><span class="kn">import</span> <span class="n">BugPredictionWorkflow</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.output</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkflowReport</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.voice.report_renderer</span><span class="w"> </span><span class="kn">import</span> <span class="n">render</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
 <a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">report</span> <span class="o">=</span> <span class="n">format_bug_predict_report</span><span class="p">(</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">result</span><span class="o">=</span><span class="n">raw_result</span><span class="p">,</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="n">input_data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;src/&quot;</span><span class="p">},</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="p">)</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">workflow</span> <span class="o">=</span> <span class="n">BugPredictionWorkflow</span><span class="p">()</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Scan failed: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>        <span class="k">return</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">,</span> <span class="n">WorkflowReport</span><span class="p">):</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>        <span class="nb">print</span><span class="p">(</span><span class="n">render</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">))</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>    <span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>        <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summary</span> <span class="ow">or</span> <span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">)</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
 </code></pre></div>
 <p>Save this as <code>run_bug_predict.py</code> and run it with <code>python run_bug_predict.py</code>.</p>
 <hr />
 <h2 id="what-you-learned">What you learned<a class="headerlink" href="#what-you-learned" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Step 1</strong> — The workflow and the formatter are separate imports because analysis and presentation are intentionally decoupled.</li>
+<li><strong>Step 1</strong> — The workflow and the renderer are separate imports because analysis and presentation are intentionally decoupled.</li>
 <li><strong>Step 2</strong> — <code>BugPredictionWorkflow()</code> sets up three subagents (<code>pattern-scanner</code>, <code>risk-correlator</code>, <code>prevention-advisor</code>) under a single orchestrator without any required configuration.</li>
-<li><strong>Step 3</strong> — <code>execute(path=...)</code> drives all three subagents and returns a unified <code>WorkflowResult</code>; you don't call each subagent yourself.</li>
-<li><strong>Step 4</strong> — <code>format_bug_predict_report</code> converts that result into the tiered severity report (HIGH / MEDIUM / LOW) with file links and risk scores.</li>
+<li><strong>Step 3</strong> — <code>execute(path=...)</code> is a coroutine that drives all three subagents and returns a unified <code>WorkflowResult</code>; you don't call each subagent yourself.</li>
+<li><strong>Step 4</strong> — <code>attune.voice.report_renderer.render()</code> converts a structured <code>WorkflowReport</code> into markdown; <code>result.summary</code> is always available as a plain-string fallback.</li>
 <li><strong>Step 5</strong> — Each finding maps a pattern category to a concrete location, and the scanner's false-positive filtering means you can trust HIGH findings to reflect real risk.</li>
 </ul>
 <h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>

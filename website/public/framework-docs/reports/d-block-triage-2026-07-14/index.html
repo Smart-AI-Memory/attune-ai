@@ -4493,6 +4493,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#paydown-plan-of-record-patrick-approved-2026-07-14-evening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Paydown plan of record (Patrick-approved 2026-07-14 evening)
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4640,6 +4651,53 @@ these aren't changing.</p>
    for a should-this-exist decision when project_index is next
    touched.</li>
 </ol>
+<h2 id="paydown-plan-of-record-patrick-approved-2026-07-14-evening">Paydown plan of record (Patrick-approved 2026-07-14 evening)<a class="headerlink" href="#paydown-plan-of-record-patrick-approved-2026-07-14-evening" title="Permanent link">&para;</a></h2>
+<p>Definition of done: the ratchet ledger contains ONLY deliberate
+ACCEPT entries, each justified above — not zero. Expected floor
+after the in-flight work (batch-1 cuts −3, deletions −2): 22, of
+which 9 are the remaining REFACTOR blocks.</p>
+<p>Method per batch: pin-then-cut (pins PR merges before cuts PR),
+serial-suite verification at the orchestrator's gate, ratchet
+entries deleted in each cut PR. One batch per session; freeze-
+compatible.</p>
+<ul>
+<li><strong>Batch 2 — churn-hot infra</strong> (1 session, 3 PRs; amended
+  2026-07-14): FIRST a standalone small PR fixing the known
+  <code>cmd_workflow_run</code> exit-0-on-failure bug (own regression test —
+  a deliberate behavior change must not ride inside a
+  pins-prove-preservation cut; and the bug is live today, so it
+  ships sooner decoupled). THEN pins + cuts as usual for
+  <code>_workflow_response</code> D26 (pin the MCP response shapes — the
+  exact-dict-equality trap lives here),
+  <code>RunnerService._validate_recommendation</code> D24 (stdout-loop
+  states), and <code>cmd_workflow_run</code> D21 — now purely
+  behavior-preserving like every other cut.</li>
+<li><strong>Batch 3 — formatters + the last F</strong> (1 session, 2 PRs):
+  <code>format_doc_gen_report</code> D29, <code>_extract_from_workflow_result</code>
+  D23, <code>_section_html</code> D22, <code>_build_summary</code> F48 (highest care).
+  Parallel pin agents (similar section-builder shapes), one cut
+  pass. Natural moment for the held <code>refresh_incremental</code>
+  should-this-exist decision (sibling file).</li>
+<li><strong>Batch 4 — workflow executes</strong> (1 session, 3 small PRs):
+  <code>RagCodeGenWorkflow.execute</code> D24,
+  <code>DocumentationOrchestrator.execute</code> D22,
+  <code>EmpathyLLMExecutor.run</code> D22. Stage-extraction, mock-based
+  pins, plus one dogfood-run receipt per cut (registered ≠
+  working — these wrap LLM/SDK calls). OPENING STEP (amended
+  2026-07-14): a 15-minute subsystem-value-gate check on
+  <code>EmpathyLLMExecutor</code>'s callers (<code>escalation/chain</code>,
+  <code>escalation/evaluator</code>, <code>executor_mixin</code>) BEFORE any pin work —
+  it is the live executor of a framework whose core was deleted
+  in 9.0.0; if its callers are themselves retirement candidates,
+  the right move is deletion-with-deprecation (ledger −1 free),
+  not a careful refactor of dead-subsystem plumbing. Proceed with
+  the refactor only if the check says the callers stay.</li>
+</ul>
+<p>Post-freeze checkpoint: re-check the 12 ACCEPT rationales against
+fresh churn data once — an ACCEPT that starts churning is promoted
+to REFACTOR.</p>
+<p>Trajectory: 27 → 22 (in flight) → ~13 (batches 2+3) → 12
+all-ACCEPT (batch 4).</p>
 
 
 
