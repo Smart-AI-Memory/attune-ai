@@ -37,11 +37,13 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 import time
 import traceback
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Force utf-8 on stdout/stderr — the table uses ⚠ and an em-dash rule
@@ -56,8 +58,10 @@ if _HOOKS_DIR not in sys.path:
     sys.path.insert(0, _HOOKS_DIR)
 
 from _state import (  # noqa: E402 — sys.path bootstrap above
+    _TERMINAL_VERDICTS,
     PrRef,
     _is_in_flight,
+    _leading_verdict,
     _resolve_entry,
     discover_specs,
     extract_pr_refs,
@@ -97,6 +101,43 @@ def _max_gh_calls() -> int:
 
 _MAX_GH_CALLS = _max_gh_calls()
 _GH_TIMEOUT_SECONDS = 6.0
+
+# ── archive-ready detection (2026-07-14 triage R1) ────────────
+#
+# Three manual backlog triages in 25 days (48→27, 33→23, 56→22) showed
+# terminal specs accumulate top-level at ~1/day and only move when a
+# human schedules an excavation. A terminal-status spec that is still
+# top-level (the audit never sees archive/ — discover_specs walks one
+# level and archive dirs carry no phase files) past a grace window is
+# flagged "archive-ready". Warn-only: never affects --strict.
+_STATUS_DATE = re.compile(r"\((\d{4}-\d{2}-\d{2})")
+
+
+def _archive_grace_days() -> float:
+    try:
+        return float(os.environ.get("ATTUNE_SPEC_ARCHIVE_GRACE_DAYS", "7"))
+    except ValueError:
+        return 7.0
+
+
+def _terminal_since(status: str, mtime: float) -> float:
+    """Epoch seconds a spec has been terminal since.
+
+    Prefers the ISO date conventionally written right after the verdict
+    (``complete (2026-07-03) — …``); falls back to the spec's most
+    recent file mtime, so an undated terminal spec still ages out of
+    the grace window once it stops being touched.
+    """
+    match = _STATUS_DATE.search(status)
+    if match:
+        try:
+            parsed = datetime.strptime(match.group(1), "%Y-%m-%d")
+            return parsed.replace(tzinfo=timezone.utc).timestamp()
+        except ValueError:
+            pass
+    return mtime
+
+
 # All three phase files are scanned for citations, not just the
 # highest-priority one — a requirements.md often carries the approval
 # trail ("shipped in #N") even when tasks.md exists.
@@ -258,6 +299,9 @@ class AuditResult:
     signal: str = "deliverables"
     cache_key: str = ""  # "<layer>/<slug>" — the drift-cache key
     root: str = ""  # workspace root the spec lives under
+    # archive-ready (triage R1) — terminal status but still top-level
+    # past the grace window. Warn-only; never feeds --strict.
+    archive_ready: bool = False
 
 
 def _root_for(spec_path: Path, roots: list[Path]) -> str:
@@ -277,6 +321,7 @@ def audit_specs(
     *,
     pr_links: bool = False,
     resolver: _PrResolver | None = None,
+    now: float | None = None,
 ) -> list[AuditResult]:
     """Classify every discovered spec (terminal included) into a row.
 
@@ -292,6 +337,9 @@ def audit_specs(
     """
     if roots is None:
         roots = workspace_roots()
+    if now is None:
+        now = time.time()
+    grace_seconds = _archive_grace_days() * 86400.0
     results: list[AuditResult] = []
     for spec in discover_specs(roots, include_terminal=True):
         total = len(spec.deliverables)
@@ -320,6 +368,14 @@ def audit_specs(
             except Exception:  # noqa: BLE001 — one bad spec must not abort the audit
                 merged_prs = ()
             drifted = bool(merged_prs)
+        # archive-ready (triage R1): terminal verdict + still top-level
+        # (archive/ is invisible to discover_specs) past the grace window.
+        terminal = (
+            _leading_verdict(spec.effective_status or spec.status or "") in _TERMINAL_VERDICTS
+        )
+        archive_ready = (
+            terminal and (now - _terminal_since(spec.status or "", spec.mtime)) >= grace_seconds
+        )
         results.append(
             AuditResult(
                 slug=spec.slug,
@@ -334,6 +390,7 @@ def audit_specs(
                 signal="pr-links" if checked else "deliverables",
                 cache_key=f"{spec.layer}/{spec.slug}",
                 root=_root_for(spec.path, roots),
+                archive_ready=archive_ready,
             )
         )
     return results
@@ -378,12 +435,14 @@ def write_drift_cache(results: list[AuditResult], roots: list[Path]) -> list[Pat
 def format_json(results: list[AuditResult], resolver: _PrResolver | None = None) -> str:
     """Machine-readable audit payload for the tracking-issue upsert."""
     drifted = sorted(r.cache_key for r in results if r.drifted)
+    archive_ready = sorted(r.cache_key for r in results if r.archive_ready)
     payload = {
         "generated_at": time.time(),
         "counts": {
             "specs": len(results),
             "drifted": len(drifted),
             "suspected_stale": sum(1 for r in results if r.staleness == "suspected-stale"),
+            "archive_ready": len(archive_ready),
         },
         # attune-ai#1314: a capped or failure-ridden run means "refs went
         # unchecked" — consumers (the weekly issue upsert, humans) must
@@ -394,6 +453,7 @@ def format_json(results: list[AuditResult], resolver: _PrResolver | None = None)
             "capped": bool(resolver.capped) if resolver else False,
         },
         "drifted": drifted,
+        "archive_ready": archive_ready,
         "specs": {
             r.cache_key: {
                 "layer": r.layer,
@@ -404,6 +464,7 @@ def format_json(results: list[AuditResult], resolver: _PrResolver | None = None)
                 "drifted": r.drifted,
                 "prs": list(r.merged_prs),
                 "signal": r.signal,
+                "archive_ready": r.archive_ready,
             }
             for r in results
         },
@@ -479,6 +540,12 @@ def format_report(results: list[AuditResult]) -> str:
         out.append(
             f"⚠ {len(stale)} spec(s) have shipped deliverables but a "
             "non-terminal status — verify & update."
+        )
+    ready = sorted(r.slug for r in results if r.archive_ready)
+    if ready:
+        out.append(
+            f"⚠ {len(ready)} terminal spec(s) past the archive grace "
+            "window but still top-level — archive-ready: " + ", ".join(ready)
         )
     if not drifted and not stale:
         out.append("✓ No drifted or suspected-stale specs.")
