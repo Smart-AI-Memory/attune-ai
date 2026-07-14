@@ -6,4 +6,4 @@
 # Copyright 2025 Smart AI Memory, LLC
 # Licensed under Fair Source 0.9
 
-streamlit>=1.58.0,<2.0.0
+streamlit>=1.59.1,<2.0.0
