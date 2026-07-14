@@ -15086,3 +15086,54 @@ def ", start_idx + 1)` for module-
   ALL 27 features had frozen faq.md files — glob the actual property
   before executing; the undercount surfaced a 159-Q/A content
   decision that needed Patrick's call).
+
+- **Re-signing a rebased RANGE non-interactively, and `%G?` = `E`
+  does NOT mean unsigned**: after `git rebase --onto origin/main
+  <old-base> <branch>` replays commits unsigned (known lesson), the
+  range recipe is `git rebase origin/main --force-rebase --exec
+  "git commit --amend -S --no-edit"` — signs every replayed commit
+  without interactive mode. Verification gotcha: `git log
+  --format='%G?'` can print `E` (signature cannot be CHECKED — e.g.
+  the public key isn't in the local keyring) both before AND after
+  signing, so it can't distinguish signed-but-unverifiable from
+  unsigned. The definitive check is `git cat-file commit HEAD |
+  grep -c gpgsig` — a `gpgsig` header present means signed. Saves a
+  pointless second re-sign loop.
+
+- **Counting a population through `| tail -N` / `| head -N` silently
+  truncates it — the health report shipped "3 D-grade blocks" when
+  the true count was 30 (incl. 3 F-grade)**: 2026-07-14, the first
+  scoreboard read `radon cc -s -n D --total-average | tail -8` and
+  eyeballed the visible rows as the whole population; the refresh
+  pass counted with `grep -cE " - [DEF] \("` and got 30 — the
+  truncation ate 27 rows including the repo's only F-grades
+  (elicitation's form_from_dict F87 / _control_html F84), which are
+  worse than anything the report DID list. Rule: a pipe through
+  tail/head is a VIEW, never a MEASUREMENT — derive any count/claim
+  from `grep -c` / `wc -l` over the full stream, and when a listing
+  feeds a "top N worst" table, sort the FULL set first. Same family
+  as "verify counts against live registries" (website-content-
+  accuracy) — this is the shell-pipeline surface of that rule.
+
+- **`del module.attr` as patch-cleanup DELETES the module's own
+  function when the attr was defined there — and xdist masks the
+  resulting cross-test pollution as shifting "flakes"; a serial run
+  is the detector**: 2026-07-14, subagent-written characterization
+  tests patched `attune.ops.data.list_workflows` by assignment and
+  "cleaned up" with `try/finally: del _data_mod.list_workflows`.
+  `list_workflows` is DEFINED in data.py, so the del erased the real
+  function; every later test calling it in the same process hit
+  NameError/AttributeError. Under `-n auto` only tests sharing the
+  poisoned worker failed — a DIFFERENT small subset each run (9,
+  then 7, then 2), indistinguishable from the known xdist flake
+  class, and I initially misattributed it exactly there. A serial
+  full-suite run (`pytest -o addopts=""`) exposed the truth: 40
+  failures, all downstream of one file. Three rules: (1) patch with
+  pytest's `monkeypatch.setattr` (auto-restores), never
+  assignment+del — del only restores when the attr was a SHADOW,
+  not the definition; (2) "different failing subset each xdist run"
+  is the signature of cross-test pollution or ordering, not of the
+  tests themselves — serialize before blaming flakes; (3) when
+  centrally verifying subagent-written tests, run them WITH the
+  downstream suite serially at least once — the subagent's own
+  green run can't see what it poisons for others.
