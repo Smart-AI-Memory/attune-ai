@@ -14990,3 +14990,22 @@ def ", start_idx + 1)` for module-
   '(Recommended)' suffix) which applies per-question inside the
   batch, and with `feedback_surface_forks_as_forms` (Patrick wants
   forks AS forms, not prose).
+
+- **Reviewing a PR whose bulk is `plugin/help/generated/` manifest
+  churn — decompose the hash changes before judging the diff size**:
+  hit 2026-07-14 reviewing PR #1367 ("add one 82-line manual FAQ",
+  but +2165/−1972 across 4 files). The regen rewrites EVERY
+  `source_manifest.json` entry's `generated_at` (one timestamp for
+  the whole run), so raw diff size says nothing. The 2-command
+  triage that settles benign-vs-repolish: (1) count DISTINCT new
+  hashes — `grep -E '^\+.*"hash"' | sort -u | wc -l` on the diff
+  (7 distinct = metadata-only; hundreds = content regen); (2) group
+  changed lines by their `"source"` path — a single non-feature
+  source (e.g. `.claude/CLAUDE.md`) repeating across ~738 entries
+  is one upstream file's hash bump fanned out, NOT 738 content
+  changes. Also check which generated CONTENT files changed:
+  benign regen touches only `cross_links.json` + the new feature's
+  file; a re-polish shows other features' generated .md files in
+  the diff. Review-side complement to the commit-side "`.help`
+  regen re-polishes the whole feature corpus — discard from focused
+  PRs" lesson.
