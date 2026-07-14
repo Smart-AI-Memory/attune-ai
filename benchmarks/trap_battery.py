@@ -946,7 +946,10 @@ def aggregate_recovery(results: list[TrapRunResult]) -> dict[str, dict[str, Reco
 #: NOT echo hook additionalContext into events, so transcript markers
 #: are structurally blind; the telemetry log is ground truth (every
 #: jit_recall/lesson_recall fire appends a line — see
-#: plugin/hooks/_memory_telemetry.py).
+#: plugin/hooks/_memory_telemetry.py). CAVEAT: lesson_recall only
+#: gained telemetry 2026-07-14 (memory-recall-eval) — in the phase-2
+#: runs (2026-07-13/14) prompt-time fires appended NOTHING, so those
+#: runs' event counts undercount lesson_recall injections.
 MEMORY_EVENTS_LOG = Path.home() / ".attune" / "telemetry" / "memory_events.jsonl"
 
 

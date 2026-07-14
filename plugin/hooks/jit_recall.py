@@ -23,8 +23,10 @@ Tunables (env): ``ATTUNE_JIT_RECALL`` (set ``0`` to disable),
 ``ATTUNE_AI_SENTINEL_DIR`` (sentinel dir override, for tests).
 
 Each fire is logged to ``~/.attune/telemetry/memory_events.jsonl``
-(tool, rule ids, injected size; see ``_memory_telemetry``) so fire
-rate and context cost are measurable per session.
+(tool, rule ids, matched triggers, injected size, a ``surfacing_id``
+join key; see ``_memory_telemetry``) so fire rate and context cost are
+measurable per session and a later verdict pass can label each
+surfacing acted-on / ignored / wrong (memory-recall-eval spec).
 
 Exit 0 always — a crash or missing corpus degrades to silent no-op (R4).
 
@@ -39,6 +41,7 @@ import os
 import re
 import sys
 import time
+import uuid
 from pathlib import Path
 
 # Force utf-8 on stdout/stderr (Windows cp1252 would crash on em-dash,
@@ -165,6 +168,7 @@ def main() -> int:
         # contain backslashes — `\<` becomes `\\<` in the JSON dump.
         raw_input_text = " ".join(v for v in tool_input.values() if isinstance(v, str))
         fresh = []
+        triggers = []  # parallel to fresh: which gate matched, for telemetry
         for rule in rules:
             # Optional content filters (e.g. a Bash rule scoped to one
             # command shape) — without one a Bash-keyed rule would fire
@@ -183,6 +187,12 @@ def main() -> int:
             if sentinel is not None and sentinel.exists():
                 continue
             fresh.append(rule)
+            triggers.append(
+                "+".join(
+                    part for part, active in (("substring", needle), ("regex", pattern)) if active
+                )
+                or "tool"
+            )
         if not fresh:
             return 0
 
@@ -207,15 +217,18 @@ def main() -> int:
         )
         sys.stdout.flush()
 
-        # Telemetry: which rules surfaced, for which tool, and how much
-        # context they cost — the (tool, rules, ts) triple also lets a
-        # later analysis estimate prevented-failure rate by checking
-        # whether the matching failure still occurred after the fire.
+        # Telemetry: which rules surfaced, for which tool, via which
+        # trigger, and how much context they cost. The surfacing_id is
+        # the join key a later verdict pass (acted-on / ignored / wrong)
+        # references; triggers[i] says which gate fired rules[i]
+        # (memory-recall-eval spec, 2026-07-14).
         log_memory_event(
             "jit_recall",
             session_id=session_key,
+            surfacing_id=uuid.uuid4().hex[:12],
             tool=tool_name,
             rules=[rule["rule_id"] for rule in fresh],
+            triggers=triggers,
             injected_chars=len(context),
         )
 

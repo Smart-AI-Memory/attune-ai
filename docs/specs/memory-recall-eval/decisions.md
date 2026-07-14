@@ -187,3 +187,63 @@ trap-battery phase-2 redesign owns the measurement side
 (UserPromptSubmit-carried rules measure prevention; JIT-carried rules
 measure recovery only). No eval re-run scheduled against style rules
 until a carrying surface exists.
+
+## 2026-07-14 — Injection feedback signal, step 1: complete per-surfacing capture records
+
+**Context:** the recommit (2026-07-14 triage) points this spec at the
+memory-as-insurance feedback signal — label each injection acted-on /
+ignored / wrong so the noise denominator builds itself
+(`project_memory_as_insurance`). Prerequisite audit found the capture
+side incomplete; this entry records the design shipped to close it.
+
+**What the audit found (pre-change state):**
+
+- `plugin/hooks/lesson_recall.py` (prompt-time recall) emitted **no
+  telemetry at all** — it computed `lesson_id` + score per hit, then
+  discarded them. The largest hole: prompt-time surfacings were
+  invisible to any later analysis. Corollary:
+  `benchmarks/trap_battery.py`'s comment claiming "every
+  jit_recall/lesson_recall fire appends a line" was false — the
+  phase-2 runs (2026-07-13/14) undercounted prompt-time injections in
+  their telemetry receipts (caveat now recorded at the
+  `MEMORY_EVENTS_LOG` definition).
+- `jit_recall` logged `tool` + `rules` + size but no join key and no
+  record of WHICH gate (substring/regex/tool-keyed) fired each rule.
+- `session_recall` logged only an aggregate entry count — not which
+  findings were surfaced.
+- No event anywhere carries an `acted_on`/`ignored`/`wrong` verdict;
+  the only outcome signal is `memory_feedback` (stash deletion), which
+  covers stashed findings, not surfaced rules/lessons.
+
+**Design shipped (capture side):** every injection surface now writes
+a complete, joinable surfacing record to
+`~/.attune/telemetry/memory_events.jsonl`:
+
+- **`lesson_recall` (new event):** `lessons` (parallel `scores`),
+  `surfacing_id`, `injected_chars`/`est_tokens`.
+- **`jit_recall` (enriched):** adds `surfacing_id` and `triggers`
+  (parallel to `rules`; values `tool` | `substring` | `regex` |
+  `substring+regex`).
+- **`session_recall` (enriched):** adds `surfacing_id` and
+  `finding_ids` (ids of the findings actually rendered; id-less
+  records still count in `entries`).
+- **`surfacing_id`** (12-hex uuid per event) is the join key a later
+  verdict event references; per-item verdicts key on
+  `(surfacing_id, lesson_id|rule_id|finding_id)`.
+
+Receipts: unit suites green (125 tests across the four hook suites;
+the one failure is the pre-existing real-Ollama environmental flake,
+confirmed failing on the untouched baseline) + live subprocess
+round-trips of both hooks with an isolated `ATTUNE_HOME` showing the
+new records on disk.
+
+**Step 2 (scoped, not built — the verdict scorer):** the Stop hook
+(`plugin/hooks/session_stash.py`) already parses the transcript tail
+at end-of-session; it is the natural place to correlate the session's
+surfacing records against the transcript and emit a `memory_signal`
+verdict per surfacing (`acted_on` / `ignored` / `wrong`), reusing its
+Ollama-with-fallback pattern — with `unscored` (not a guessed
+heuristic label) when Ollama is unavailable, because a garbage label
+is worse than none. Plus an `ops/data.py` reader that turns verdicts
+into the noise denominator `estimate_intervention_signal`'s caption
+says is missing. Design pass owed before build.

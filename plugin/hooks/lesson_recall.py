@@ -19,6 +19,11 @@ Noise controls (all from the design):
 Test/ops knob: ``ATTUNE_LESSONS_FILE`` pins the corpus file (default:
 walk up from the payload cwd via ``attune.lessons.find_lessons_file``).
 
+Each fire is logged to ``~/.attune/telemetry/memory_events.jsonl``
+(lesson ids, scores, injected size, a ``surfacing_id`` join key; see
+``_memory_telemetry``) so a later verdict pass can label each
+surfacing acted-on / ignored / wrong (memory-recall-eval spec).
+
 Exit 0 always — a crash, missing attune install, or missing corpus
 degrades to silent no-op.
 
@@ -33,6 +38,7 @@ import os
 import re
 import sys
 import time
+import uuid
 from pathlib import Path
 
 # Force utf-8 on stdout/stderr (Windows cp1252 would crash on em-dash,
@@ -50,6 +56,14 @@ try:
 except Exception:  # noqa: BLE001 — hook must never crash a prompt
     _sentinel_dir = None  # type: ignore[assignment]
     resolve_session_key = None  # type: ignore[assignment]
+
+try:
+    from _memory_telemetry import log_memory_event
+except Exception:  # noqa: BLE001 — telemetry is optional, never load-bearing
+
+    def log_memory_event(event: str, session_id: str | None = None, **fields: object) -> None:
+        return
+
 
 _SENTINEL_PREFIX = ".lesson-recalled-"
 _SENTINEL_TTL_SECONDS = 7 * 24 * 3600  # match the jit-recall TTL
@@ -163,17 +177,32 @@ def main() -> int:
             if len(body) > _BODY_EXCERPT_CHARS:
                 body = body[:_BODY_EXCERPT_CHARS] + "…"
             lines.append(f"- **{hit.entry.summary}**: {body}")
+        context = "\n".join(lines)
         sys.stdout.write(
             json.dumps(
                 {
                     "hookSpecificOutput": {
                         "hookEventName": "UserPromptSubmit",
-                        "additionalContext": "\n".join(lines),
+                        "additionalContext": context,
                     }
                 }
             )
         )
         sys.stdout.flush()
+
+        # Telemetry: which lessons surfaced, at what score, and how much
+        # context they cost. The surfacing_id is the join key a later
+        # verdict pass (acted-on / ignored / wrong) references — without
+        # this record, prompt-time recall is invisible to the noise
+        # denominator (memory-recall-eval spec, 2026-07-14).
+        log_memory_event(
+            "lesson_recall",
+            session_id=session_key,
+            surfacing_id=uuid.uuid4().hex[:12],
+            lessons=[lesson_id for _hit, lesson_id in fresh],
+            scores=[round(hit.score, 1) for hit, _lesson_id in fresh],
+            injected_chars=len(context),
+        )
 
         # Sentinels AFTER the emit so a mid-work crash retries next fire.
         for _hit, lesson_id in fresh:

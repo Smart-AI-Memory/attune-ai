@@ -10,7 +10,8 @@ same local-only JSONL style as ``usage.jsonl``.
 One event = one JSON line:
 
 - ``v`` / ``ts`` — schema version, UTC ISO-8601 timestamp.
-- ``event`` — ``session_recall`` | ``jit_recall`` | ``session_stash``.
+- ``event`` — ``session_recall`` | ``jit_recall`` | ``lesson_recall``
+  | ``session_stash``.
 - ``session_id`` — Claude Code session id (local file only; the
   opt-in usage ping reads ``usage*.jsonl`` and never this file).
 - ``injected_chars`` / ``est_tokens`` — size of the context the hook
@@ -88,7 +89,7 @@ def log_memory_event(event: str, session_id: str | None = None, **fields: object
 
     Args:
         event: Event name (``session_recall`` / ``jit_recall`` /
-            ``session_stash``).
+            ``lesson_recall`` / ``session_stash``).
         session_id: Claude Code session id, when the payload carried one.
         **fields: Event-specific data. An int ``injected_chars`` field
             gains a derived ``est_tokens`` sibling automatically.
