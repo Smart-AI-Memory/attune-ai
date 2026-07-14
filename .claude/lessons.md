@@ -15009,3 +15009,38 @@ def ", start_idx + 1)` for module-
   the diff. Review-side complement to the commit-side "`.help`
   regen re-polishes the whole feature corpus — discard from focused
   PRs" lesson.
+
+- **Ollama "tags answers" ≠ "generation works" — a wedged daemon
+  lists models on `/api/tags` while `/api/ps` is empty and every
+  `/api/generate` (even a trivial "Say hi") hangs past 300s**: hit
+  2026-07-14 in the wiring check when
+  `test_extract_via_ollama_real_round_trip` failed reproducibly.
+  The test's skipif gate probes `/api/tags` for the model name, so
+  the test RUNS (gate passes) yet the real generate call blows the
+  40s stash timeout → `_extract_via_ollama` returns None → the
+  assertion fails looking like a code bug. Triage recipe before
+  blaming the code: (a) `curl /api/tags` — answers, model listed;
+  (b) `curl /api/ps` — empty means nothing loaded; (c) time a
+  trivial `/api/generate` with a generous `--max-time` — if that
+  hangs too, model loading is wedged daemon-side (seen on Ollama
+  0.13.5) and the fix is an Ollama restart, not a repo change.
+  Bonus receipt: the same session's Stop hook still stashed
+  findings — `session_stash`'s heuristic fallback (None →
+  heuristic) carried the live loop, confirming the degraded path
+  works in production. Pairs with "registered ≠ working": the tags
+  probe is a liveness check, not a capability check.
+
+- **Bare `uv sync` does NOT provision mkdocs — the docs toolchain
+  lives in the `docs`/`all` extras, not in
+  `[dependency-groups] dev`**: the #1350 "bare uv sync provisions
+  everything" fix mirrored the *dev extra* only; mkdocs,
+  mkdocs-material, mkdocstrings, mkdocs-with-pdf, and
+  pymdown-extensions sit in the `docs` and `all` extras and stay
+  absent after a sync (symptom: `python -m mkdocs` →
+  `No module named mkdocs` right after a clean `uv sync`). For a
+  local `mkdocs build --strict`, `uv pip install` the five pinned
+  packages directly (no sync semantics) — knowing a later
+  `uv sync` wipes them — or sync with `--extra docs` accepting
+  that it prunes other ad-hoc installs. Durable fix would be
+  adding the docs pins to the dev dependency-group like the #1350
+  play did for the dev extra.
