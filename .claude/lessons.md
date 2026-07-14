@@ -14939,3 +14939,34 @@ def ", start_idx + 1)` for module-
   Don't sed/python the files via Bash to dodge the guard — it exists
   to catch exactly the wrong-tree writes the worktree lessons above
   document; route around it by relocating the work, not the write.
+
+- **`git checkout -b X origin/main || (git fetch && …)` silently bases
+  the branch on a STALE origin/main — fetch FIRST, unconditionally,
+  in any session where PRs are auto-merging in parallel**: the first
+  checkout succeeds against the last-fetched ref, so the fetch
+  fallback never runs; hit 2026-07-13 evening when
+  `bench/trap-redesign-v2` came out based BEFORE #1358's squash
+  (missing the very results doc the branch needed to amend) and
+  needed an immediate rebase. In a repo where auto-merge lands PRs
+  every few minutes (three sessions merging concurrently that day),
+  the local `origin/main` ref is stale within minutes of any fetch.
+  Rule: `git fetch origin main -q && git checkout -b X origin/main`
+  — fetch as a mandatory first step, never inside a fallback arm.
+
+- **A `;`-joined git sequence runs its destructive tail even when the
+  setup steps failed — an unconditioned `git rebase` after two failed
+  checkouts rebased the CURRENT branch**: hit 2026-07-13 evening
+  preparing #1351's rebase: the remote branch had been deleted
+  (externally merged minutes earlier), the local checkout failed too
+  ("branch already exists"), and the trailing `git rebase
+  origin/main` then ran against the still-checked-out sentinel-fix
+  branch, dropping it mid-conflict. Recovery: `git rebase --abort`,
+  then reconcile (`gh pr view` showed the PR MERGED — the whole
+  rebase premise was stale). Rules: (a) join a destructive git step
+  to its setup with `&&`, never `;` — or issue it as its own command
+  after `git branch --show-current` confirms the target; (b) before
+  rebasing/continuing work on another session's PR branch, re-check
+  the PR state first — in a multi-session repo it may have merged
+  while you were editing. Extends the "interrupted compound Bash
+  command may have partially executed" family with the
+  unconditioned-tail variant.

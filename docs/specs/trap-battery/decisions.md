@@ -308,7 +308,33 @@ this session). Full tables:
   trap prompts (precision miss) — measurable injection noise for the
   memory-as-insurance "when-not-to-inject" thread (#1291); saved
   transcripts hold the (prompt, injected, relevant?) corpus.
+  *CORRECTED (2026-07-13, later): overbroad — the full transcript
+  sweep shows the PREVENTION traps received RELEVANT lessons
+  (verify-first; interrupted-command/reconcile), so their arms
+  delivered the treatment and the traps were simply too weak; only
+  the RECOVERY-trap prompts drew irrelevant lessons. The noise
+  finding is scoped to recovery-shaped prompts.*
 
 Decision: full $15–30 run stays blocked until ≥1 trap passes its
 pilot gate. Next work is trap redesign (unpaid, design-only) — see
 the results doc's Next section.
+
+## 2026-07-13 (night) — v2 trap redesign RE-PILOTED: 4/4 GO; full run
+## unblocked pending a stated-cost go
+
+Same-day redesign per the dud discipline, re-piloted at identical
+scale (40/40 sessions, Σ $10.99, zero errored sessions). All four
+traps pass their gates: prevention OFF fired 3/5 and 2/5 (v1: 0/5,
+0/5 — the cue-removal worked); recovery decision-point hits 5/5 in
+all four cells (v1: 3-4; verbatim-follow prompt + per-trap
+max_turns=14). Directional signals at n=5, not quotable:
+prevention Δp +20% / +40% (unverified-state-warning ON asserted the
+harm ZERO times); eqword recovery cheaper ON (25 vs 40 median
+tokens-after); status-readonly REVERSED (350 vs 247 — watch at full
+n). Prevention prompts were retrieval-pre-flighted offline
+(relevant lessons at 18.5–23.5, floor 8), closing the silent-arm
+hole. Full tables: results doc, "Re-pilot after v2" section.
+
+**Decision: the $15–30 full run is UNBLOCKED. It does not start
+without its own stated-cost go (spend gate).** Recommended shape:
+same 4 traps, repeats 15–20, same caps and receipts.
