@@ -68,7 +68,7 @@ Major version, one breaking change: the legacy memory-graph API
 Curated memory has been plain `.md` files served from Redis since
 9.6.0 — the graph was the layer nothing living called, confirmed by
 a usage audit before deletion (receipts in
-`docs/specs/memorygraph-value-gate/`). If you never imported
+`docs/specs/archive/memorygraph-value-gate/`). If you never imported
 `MemoryGraph` — telemetry says that's everyone — nothing changes:
 same install, same memory loop, same measured economics below.
 Accessing a removed name raises an error naming the successor, and

@@ -81,7 +81,7 @@ that store behind Anthropic's Memory tool interface turns an
 *analogous* claim ("we do memory the way Anthropic suggests") into
 a *demonstrable* one ("our memory layer is a drop-in backend for
 Anthropic's Memory tool, persisted on Redis's Agent Memory
-Server"). Spec: [`anthropic-memory-tool-backend`](../specs/anthropic-memory-tool-backend/requirements.md).
+Server"). Spec: [`anthropic-memory-tool-backend`](../specs/archive/anthropic-memory-tool-backend/requirements.md).
 
 ---
 
@@ -103,7 +103,7 @@ Redis coordination mixins better than "user demand" did:
 - **AMS/Redis memory path** → **invest.** Strongest alignment, most
   claimable; add the Memory-tool bridge.
 
-See [`redis-facade-direction/decisions.md`](../specs/redis-facade-direction/decisions.md)
+See [`redis-facade-direction/decisions.md`](../specs/archive/redis-facade-direction/decisions.md)
 for the proposed direction (relabel-not-remove; retire mixins;
 keep PatternStaging) — a proposal to ratify, not yet executed.
 
