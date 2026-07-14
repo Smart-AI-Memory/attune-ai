@@ -21,6 +21,7 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from html import escape
 
 from attune.meta_workflows.models import FormQuestion, FormSchema, QuestionType
@@ -72,6 +73,248 @@ def _list_html(q: FormQuestion, *, multi: bool) -> str:
     return f'<{tag} class="ae-list"{role}>{items}</{tag}>'
 
 
+def _ordered_options_recommended_first(q: FormQuestion) -> list[str]:
+    """Return ``q.options`` with ``q.recommended`` moved to the front,
+    when it names one of them. Shared by the three card-based renders
+    (DECISION, PUSHBACK, PROGRESS report style).
+    """
+    ordered = list(q.options)
+    if q.recommended and q.recommended in ordered:
+        ordered = [q.recommended] + [o for o in ordered if o != q.recommended]
+    return ordered
+
+
+def _control_decision_html(q: FormQuestion) -> str:
+    """Render a DECISION control: recommended-first cards with notes."""
+    notes = q.option_notes or {}
+    cards = ""
+    for opt in _ordered_options_recommended_first(q):
+        is_rec = opt == q.recommended
+        badge = '<span class="ae-rec-badge">Recommended</span>' if is_rec else ""
+        note = f'<span class="ae-card-note">{_esc(notes[opt])}</span>' if opt in notes else ""
+        checked = " checked" if q.default == opt else ""
+        cls = "ae-card ae-card-rec" if is_rec else "ae-card"
+        cards += (
+            f'<label class="{cls}">'
+            f'<input type="radio" name="{_esc(q.id)}" data-control '
+            f'value="{_esc(opt)}"{checked}>'
+            f'{badge}<span class="ae-card-title">{_esc(opt)}</span>{note}</label>'
+        )
+    return f'<div class="ae-cards" role="radiogroup">{cards}</div>'
+
+
+def _control_pushback_html(q: FormQuestion) -> str:
+    """Render a PUSHBACK control.
+
+    Dissent framing: the agent's alternative (``recommended``) is badged
+    "I'd suggest instead" and ordered first; the user's stated approach
+    (``user_position``) carries a muted "your approach" tag. Same radio
+    answer path as DECISION.
+    """
+    notes = q.option_notes or {}
+    cards = ""
+    for opt in _ordered_options_recommended_first(q):
+        is_rec = opt == q.recommended
+        is_user = opt == q.user_position
+        badge = '<span class="ae-rec-badge">I&#x27;d suggest instead</span>' if is_rec else ""
+        tag = '<span class="ae-yours-tag">your approach</span>' if is_user else ""
+        note = f'<span class="ae-card-note">{_esc(notes[opt])}</span>' if opt in notes else ""
+        checked = " checked" if q.default == opt else ""
+        cls = "ae-card ae-card-rec" if is_rec else "ae-card"
+        cards += (
+            f'<label class="{cls}">'
+            f'<input type="radio" name="{_esc(q.id)}" data-control '
+            f'value="{_esc(opt)}"{checked}>'
+            f'{badge}{tag}<span class="ae-card-title">{_esc(opt)}</span>{note}</label>'
+        )
+    return f'<div class="ae-cards" role="radiogroup">{cards}</div>'
+
+
+def _control_progress_report_html(q: FormQuestion) -> str:
+    """Render PROGRESS in v5.1 "report" style: a neutral digest.
+
+    Item status is a free-form category tag (no task semantics, no
+    strikethrough); items named in options render as pickable "go
+    deeper" cards, the rest as static tagged rows. Same radio answer
+    path as the default style.
+    """
+    items = q.progress_items or []
+    notes = q.option_notes or {}
+    by_label = {it.get("label"): it for it in items}
+    rows = ""
+    for it in items:
+        if it.get("label") in q.options:
+            continue
+        tag = f'<span class="ae-prog-tag">{_esc(it.get("status", ""))}</span>'
+        detail = (
+            f'<span class="ae-prog-detail">{_esc(it["detail"])}</span>' if it.get("detail") else ""
+        )
+        rows += (
+            f'<div class="ae-prog-row ae-prog-report">'
+            f'{tag}<span class="ae-prog-label">{_esc(it.get("label", ""))}</span>'
+            f"{detail}</div>"
+        )
+    cards = ""
+    for opt in _ordered_options_recommended_first(q):
+        it = by_label.get(opt, {})
+        is_rec = opt == q.recommended
+        badge = '<span class="ae-rec-badge">suggested next</span>' if is_rec else ""
+        tag = f'<span class="ae-prog-tag">{_esc(it.get("status", ""))}</span>'
+        note_text = notes.get(opt) or it.get("detail")
+        note = f'<span class="ae-card-note">{_esc(note_text)}</span>' if note_text else ""
+        checked = " checked" if q.default == opt else ""
+        cls = "ae-card ae-card-rec" if is_rec else "ae-card"
+        cards += (
+            f'<label class="{cls}">'
+            f'<input type="radio" name="{_esc(q.id)}" data-control '
+            f'value="{_esc(opt)}"{checked}>'
+            f'{badge}{tag}<span class="ae-card-title">{_esc(opt)}</span>{note}</label>'
+        )
+    picker = (
+        '<div class="ae-prog-blocked-h">Pick one to go deeper:</div>'
+        f'<div class="ae-cards" role="radiogroup">{cards}</div>'
+        if cards
+        else ""
+    )
+    rows_html = f'<div class="ae-prog-rows">{rows}</div>' if rows else ""
+    return f'<div class="ae-progress">{rows_html}{picker}</div>'
+
+
+def _control_progress_html(q: FormQuestion) -> str:
+    """Render PROGRESS in the default task style.
+
+    Done/in_flight items render as static rows; the blocked items
+    become the radiogroup picker (recommended first, "suggested next"
+    badge). With no blocked items the picker is omitted and the
+    control is a pure status display.
+    """
+    items = q.progress_items or []
+    notes = q.option_notes or {}
+    by_status: dict[str, list[dict[str, str]]] = {"done": [], "in_flight": [], "blocked": []}
+    for it in items:
+        st = it.get("status", "")
+        if st in by_status:
+            by_status[st].append(it)
+    rows = ""
+    for status_key, icon, sr in (("done", "✓", "done"), ("in_flight", "◐", "in progress")):
+        for it in by_status[status_key]:
+            detail = (
+                f'<span class="ae-prog-detail">{_esc(it["detail"])}</span>'
+                if it.get("detail")
+                else ""
+            )
+            rows += (
+                f'<div class="ae-prog-row ae-prog-{status_key}">'
+                f'<span class="ae-prog-icon" aria-hidden="true">{icon}</span>'
+                f'<span class="ae-prog-label">{_esc(it.get("label", ""))}</span>{detail}'
+                f'<span class="sr-only"> ({sr})</span></div>'
+            )
+    detail_by_label = {it.get("label"): it.get("detail") for it in by_status["blocked"]}
+    cards = ""
+    for opt in _ordered_options_recommended_first(q):
+        is_rec = opt == q.recommended
+        badge = '<span class="ae-rec-badge">suggested next</span>' if is_rec else ""
+        note_text = notes.get(opt) or detail_by_label.get(opt)
+        note = f'<span class="ae-card-note">{_esc(note_text)}</span>' if note_text else ""
+        checked = " checked" if q.default == opt else ""
+        cls = "ae-card ae-card-rec" if is_rec else "ae-card"
+        cards += (
+            f'<label class="{cls}">'
+            f'<input type="radio" name="{_esc(q.id)}" data-control '
+            f'value="{_esc(opt)}"{checked}>'
+            f'<span class="ae-prog-icon ae-prog-blocked" aria-hidden="true">✕</span>'
+            f'{badge}<span class="ae-card-title">{_esc(opt)}</span>{note}</label>'
+        )
+    picker = (
+        '<div class="ae-prog-blocked-h">Blocked — pick one to tackle:</div>'
+        f'<div class="ae-cards" role="radiogroup">{cards}</div>'
+        if cards
+        else ""
+    )
+    rows_html = f'<div class="ae-prog-rows">{rows}</div>' if rows else ""
+    return f'<div class="ae-progress">{rows_html}{picker}</div>'
+
+
+def _control_multi_select_html(q: FormQuestion) -> str:
+    """Render MULTI_SELECT: a list_style list, or plain checkboxes."""
+    if q.list_style:
+        return _list_html(q, multi=True)
+    boxes = "".join(
+        f'<label class="ae-check"><input type="checkbox" data-control '
+        f'value="{_esc(opt)}"{_checked(q, opt)}> {_esc(opt)}</label>'
+        for opt in q.options
+    )
+    return f'<div class="ae-checks">{boxes}</div>'
+
+
+def _control_single_select_html(q: FormQuestion) -> str:
+    """Render SINGLE_SELECT: a list_style list, or a native <select>."""
+    if q.list_style:
+        return _list_html(q, multi=False)
+    opts = '<option value="">— choose —</option>' + "".join(
+        f'<option value="{_esc(opt)}"{_selected(q, opt)}>{_esc(opt)}</option>' for opt in q.options
+    )
+    return f'<select data-control class="ae-input">{opts}</select>'
+
+
+def _control_boolean_html(q: FormQuestion) -> str:
+    """Render BOOLEAN as a Yes/No <select>."""
+    opts = '<option value="">—</option>' + "".join(
+        f'<option value="{_esc(o)}"{_selected(q, o)}>{_esc(o)}</option>' for o in _BOOLEAN_OPTIONS
+    )
+    return f'<select data-control class="ae-input">{opts}</select>'
+
+
+def _control_number_html(q: FormQuestion) -> str:
+    """Render NUMBER with min/max bounds mirrored onto native attrs."""
+    bounds = ""
+    if q.minimum is not None:
+        bounds += f' min="{_esc(q.minimum)}"'
+    if q.maximum is not None:
+        bounds += f' max="{_esc(q.maximum)}"'
+    default = f' value="{_esc(q.default)}"' if q.default is not None else ""
+    return f'<input type="number" step="any" data-control class="ae-input"' f"{bounds}{default}>"
+
+
+def _control_date_html(q: FormQuestion) -> str:
+    """Render DATE as a native date input."""
+    default = f' value="{_esc(q.default)}"' if q.default is not None else ""
+    return f'<input type="date" data-control class="ae-input"{default}>'
+
+
+def _control_textarea_html(q: FormQuestion) -> str:
+    """Render TEXTAREA with max_length mirrored onto native attrs."""
+    maxlen = f' maxlength="{_esc(q.max_length)}"' if q.max_length else ""
+    default = _esc(q.default) if q.default is not None else ""
+    return (
+        f'<textarea data-control class="ae-input ae-textarea" rows="3"'
+        f"{maxlen}>{default}</textarea>"
+    )
+
+
+def _control_text_input_html(q: FormQuestion) -> str:
+    """Render TEXT_INPUT — also the fallback for any other type."""
+    maxlen = f' maxlength="{_esc(q.max_length)}"' if q.max_length else ""
+    default = f' value="{_esc(q.default)}"' if q.default is not None else ""
+    return f'<input type="text" data-control class="ae-input"{maxlen}{default}>'
+
+
+#: Per-type control renderers. PROGRESS is special-cased in
+#: ``_control_html`` (it branches further on ``progress_style``); any
+#: type not present here falls back to ``_control_text_input_html``,
+#: matching the original's unconditional TEXT_INPUT tail.
+_CONTROL_RENDERERS: dict[QuestionType, Callable[[FormQuestion], str]] = {
+    QuestionType.DECISION: _control_decision_html,
+    QuestionType.PUSHBACK: _control_pushback_html,
+    QuestionType.MULTI_SELECT: _control_multi_select_html,
+    QuestionType.SINGLE_SELECT: _control_single_select_html,
+    QuestionType.BOOLEAN: _control_boolean_html,
+    QuestionType.NUMBER: _control_number_html,
+    QuestionType.DATE: _control_date_html,
+    QuestionType.TEXTAREA: _control_textarea_html,
+}
+
+
 def _control_html(q: FormQuestion) -> str:
     """Render the input control for one question (no label/wrapper).
 
@@ -86,210 +329,13 @@ def _control_html(q: FormQuestion) -> str:
     Returns:
         An HTML fragment for the control.
     """
-    if q.type == QuestionType.DECISION:
-        notes = q.option_notes or {}
-        ordered = list(q.options)
-        if q.recommended and q.recommended in ordered:
-            ordered = [q.recommended] + [o for o in ordered if o != q.recommended]
-        cards = ""
-        for opt in ordered:
-            is_rec = opt == q.recommended
-            badge = '<span class="ae-rec-badge">Recommended</span>' if is_rec else ""
-            note = f'<span class="ae-card-note">{_esc(notes[opt])}</span>' if opt in notes else ""
-            checked = " checked" if q.default == opt else ""
-            cls = "ae-card ae-card-rec" if is_rec else "ae-card"
-            cards += (
-                f'<label class="{cls}">'
-                f'<input type="radio" name="{_esc(q.id)}" data-control '
-                f'value="{_esc(opt)}"{checked}>'
-                f'{badge}<span class="ae-card-title">{_esc(opt)}</span>{note}</label>'
-            )
-        return f'<div class="ae-cards" role="radiogroup">{cards}</div>'
-
-    if q.type == QuestionType.PUSHBACK:
-        # Dissent framing: the agent's alternative (``recommended``) is badged
-        # "I'd suggest instead" and ordered first; the user's stated approach
-        # (``user_position``) carries a muted "your approach" tag. Same radio
-        # answer path as DECISION.
-        notes = q.option_notes or {}
-        ordered = list(q.options)
-        if q.recommended and q.recommended in ordered:
-            ordered = [q.recommended] + [o for o in ordered if o != q.recommended]
-        cards = ""
-        for opt in ordered:
-            is_rec = opt == q.recommended
-            is_user = opt == q.user_position
-            badge = '<span class="ae-rec-badge">I&#x27;d suggest instead</span>' if is_rec else ""
-            tag = '<span class="ae-yours-tag">your approach</span>' if is_user else ""
-            note = f'<span class="ae-card-note">{_esc(notes[opt])}</span>' if opt in notes else ""
-            checked = " checked" if q.default == opt else ""
-            cls = "ae-card ae-card-rec" if is_rec else "ae-card"
-            cards += (
-                f'<label class="{cls}">'
-                f'<input type="radio" name="{_esc(q.id)}" data-control '
-                f'value="{_esc(opt)}"{checked}>'
-                f'{badge}{tag}<span class="ae-card-title">{_esc(opt)}</span>{note}</label>'
-            )
-        return f'<div class="ae-cards" role="radiogroup">{cards}</div>'
-
-    if q.type == QuestionType.PROGRESS and q.progress_style == "report":
-        # v5.1 "report" style: a neutral digest. Item status is a free-form
-        # category tag (no task semantics, no strikethrough); items named in
-        # options render as pickable "go deeper" cards, the rest as static
-        # tagged rows. Same radio answer path as the default style.
-        items = q.progress_items or []
-        notes = q.option_notes or {}
-        by_label = {it.get("label"): it for it in items}
-        rows = ""
-        for it in items:
-            if it.get("label") in q.options:
-                continue
-            tag = f'<span class="ae-prog-tag">{_esc(it.get("status", ""))}</span>'
-            detail = (
-                f'<span class="ae-prog-detail">{_esc(it["detail"])}</span>'
-                if it.get("detail")
-                else ""
-            )
-            rows += (
-                f'<div class="ae-prog-row ae-prog-report">'
-                f'{tag}<span class="ae-prog-label">{_esc(it.get("label", ""))}</span>'
-                f"{detail}</div>"
-            )
-        ordered = list(q.options)
-        if q.recommended and q.recommended in ordered:
-            ordered = [q.recommended] + [o for o in ordered if o != q.recommended]
-        cards = ""
-        for opt in ordered:
-            it = by_label.get(opt, {})
-            is_rec = opt == q.recommended
-            badge = '<span class="ae-rec-badge">suggested next</span>' if is_rec else ""
-            tag = f'<span class="ae-prog-tag">{_esc(it.get("status", ""))}</span>'
-            note_text = notes.get(opt) or it.get("detail")
-            note = f'<span class="ae-card-note">{_esc(note_text)}</span>' if note_text else ""
-            checked = " checked" if q.default == opt else ""
-            cls = "ae-card ae-card-rec" if is_rec else "ae-card"
-            cards += (
-                f'<label class="{cls}">'
-                f'<input type="radio" name="{_esc(q.id)}" data-control '
-                f'value="{_esc(opt)}"{checked}>'
-                f'{badge}{tag}<span class="ae-card-title">{_esc(opt)}</span>{note}</label>'
-            )
-        picker = (
-            '<div class="ae-prog-blocked-h">Pick one to go deeper:</div>'
-            f'<div class="ae-cards" role="radiogroup">{cards}</div>'
-            if cards
-            else ""
-        )
-        rows_html = f'<div class="ae-prog-rows">{rows}</div>' if rows else ""
-        return f'<div class="ae-progress">{rows_html}{picker}</div>'
-
     if q.type == QuestionType.PROGRESS:
-        # A status report: done/in_flight items render as static rows; the
-        # blocked items become the radiogroup picker (recommended first,
-        # "suggested next" badge). With no blocked items the picker is
-        # omitted and the control is a pure status display.
-        items = q.progress_items or []
-        notes = q.option_notes or {}
-        by_status: dict[str, list[dict[str, str]]] = {"done": [], "in_flight": [], "blocked": []}
-        for it in items:
-            st = it.get("status", "")
-            if st in by_status:
-                by_status[st].append(it)
-        rows = ""
-        for status_key, icon, sr in (("done", "✓", "done"), ("in_flight", "◐", "in progress")):
-            for it in by_status[status_key]:
-                detail = (
-                    f'<span class="ae-prog-detail">{_esc(it["detail"])}</span>'
-                    if it.get("detail")
-                    else ""
-                )
-                rows += (
-                    f'<div class="ae-prog-row ae-prog-{status_key}">'
-                    f'<span class="ae-prog-icon" aria-hidden="true">{icon}</span>'
-                    f'<span class="ae-prog-label">{_esc(it.get("label", ""))}</span>{detail}'
-                    f'<span class="sr-only"> ({sr})</span></div>'
-                )
-        ordered = list(q.options)
-        if q.recommended and q.recommended in ordered:
-            ordered = [q.recommended] + [o for o in ordered if o != q.recommended]
-        detail_by_label = {it.get("label"): it.get("detail") for it in by_status["blocked"]}
-        cards = ""
-        for opt in ordered:
-            is_rec = opt == q.recommended
-            badge = '<span class="ae-rec-badge">suggested next</span>' if is_rec else ""
-            note_text = notes.get(opt) or detail_by_label.get(opt)
-            note = f'<span class="ae-card-note">{_esc(note_text)}</span>' if note_text else ""
-            checked = " checked" if q.default == opt else ""
-            cls = "ae-card ae-card-rec" if is_rec else "ae-card"
-            cards += (
-                f'<label class="{cls}">'
-                f'<input type="radio" name="{_esc(q.id)}" data-control '
-                f'value="{_esc(opt)}"{checked}>'
-                f'<span class="ae-prog-icon ae-prog-blocked" aria-hidden="true">✕</span>'
-                f'{badge}<span class="ae-card-title">{_esc(opt)}</span>{note}</label>'
-            )
-        picker = (
-            '<div class="ae-prog-blocked-h">Blocked — pick one to tackle:</div>'
-            f'<div class="ae-cards" role="radiogroup">{cards}</div>'
-            if cards
-            else ""
-        )
-        rows_html = f'<div class="ae-prog-rows">{rows}</div>' if rows else ""
-        return f'<div class="ae-progress">{rows_html}{picker}</div>'
-
-    if q.type == QuestionType.MULTI_SELECT:
-        if q.list_style:
-            return _list_html(q, multi=True)
-        boxes = "".join(
-            f'<label class="ae-check"><input type="checkbox" data-control '
-            f'value="{_esc(opt)}"{_checked(q, opt)}> {_esc(opt)}</label>'
-            for opt in q.options
-        )
-        return f'<div class="ae-checks">{boxes}</div>'
-
-    if q.type == QuestionType.SINGLE_SELECT:
-        if q.list_style:
-            return _list_html(q, multi=False)
-        opts = '<option value="">— choose —</option>' + "".join(
-            f'<option value="{_esc(opt)}"{_selected(q, opt)}>{_esc(opt)}</option>'
-            for opt in q.options
-        )
-        return f'<select data-control class="ae-input">{opts}</select>'
-
-    if q.type == QuestionType.BOOLEAN:
-        opts = '<option value="">—</option>' + "".join(
-            f'<option value="{_esc(o)}"{_selected(q, o)}>{_esc(o)}</option>'
-            for o in _BOOLEAN_OPTIONS
-        )
-        return f'<select data-control class="ae-input">{opts}</select>'
-
-    if q.type == QuestionType.NUMBER:
-        bounds = ""
-        if q.minimum is not None:
-            bounds += f' min="{_esc(q.minimum)}"'
-        if q.maximum is not None:
-            bounds += f' max="{_esc(q.maximum)}"'
-        default = f' value="{_esc(q.default)}"' if q.default is not None else ""
         return (
-            f'<input type="number" step="any" data-control class="ae-input"' f"{bounds}{default}>"
+            _control_progress_report_html(q)
+            if q.progress_style == "report"
+            else _control_progress_html(q)
         )
-
-    if q.type == QuestionType.DATE:
-        default = f' value="{_esc(q.default)}"' if q.default is not None else ""
-        return f'<input type="date" data-control class="ae-input"{default}>'
-
-    if q.type == QuestionType.TEXTAREA:
-        maxlen = f' maxlength="{_esc(q.max_length)}"' if q.max_length else ""
-        default = _esc(q.default) if q.default is not None else ""
-        return (
-            f'<textarea data-control class="ae-input ae-textarea" rows="3"'
-            f"{maxlen}>{default}</textarea>"
-        )
-
-    # TEXT_INPUT (default).
-    maxlen = f' maxlength="{_esc(q.max_length)}"' if q.max_length else ""
-    default = f' value="{_esc(q.default)}"' if q.default is not None else ""
-    return f'<input type="text" data-control class="ae-input"{maxlen}{default}>'
+    return _CONTROL_RENDERERS.get(q.type, _control_text_input_html)(q)
 
 
 def _checked(q: FormQuestion, opt: str) -> str:

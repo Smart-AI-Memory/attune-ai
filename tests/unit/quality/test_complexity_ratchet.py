@@ -42,9 +42,6 @@ ALLOWLISTED_D_BLOCKS: frozenset[str] = frozenset(
     {
         "authoring/fact_check/python_refs.py::check",
         "cli_commands/workflow_commands.py::cmd_workflow_run",
-        "elicitation/bridge.py::_validate_answer",
-        "elicitation/bridge.py::form_from_dict",
-        "elicitation/widget.py::_control_html",
         "mcp/workflow_handlers.py::_workflow_response",
         "memory/mixins/backend_init_mixin.py::BackendInitMixin._initialize_backends",
         "memory/security/query.py::AuditQueryMixin",
