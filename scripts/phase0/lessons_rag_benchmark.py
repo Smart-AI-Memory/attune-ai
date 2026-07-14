@@ -1,7 +1,7 @@
 """Golden-query benchmark for the lessons-corpus-rag spec.
 
 Scores the trap-moment queries in
-``docs/specs/lessons-corpus-rag/golden_queries.json`` against the
+``docs/specs/archive/lessons-corpus-rag/golden_queries.json`` against the
 REAL ``attune.lessons.LessonsIndex`` (D6: the benchmark exercises the
 shipped module — splitter, atomic child docs, parent-deduped
 retrieval — not a harness-private corpus build).
@@ -28,7 +28,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 LESSONS_FILE = REPO_ROOT / ".claude" / "lessons.md"
-FIXTURE = REPO_ROOT / "docs" / "specs" / "lessons-corpus-rag" / "golden_queries.json"
+FIXTURE = REPO_ROOT / "docs" / "specs" / "archive" / "lessons-corpus-rag" / "golden_queries.json"
 
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
