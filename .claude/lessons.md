@@ -15086,3 +15086,16 @@ def ", start_idx + 1)` for module-
   ALL 27 features had frozen faq.md files — glob the actual property
   before executing; the undercount surfaced a 159-Q/A content
   decision that needed Patrick's call).
+
+- **Re-signing a rebased RANGE non-interactively, and `%G?` = `E`
+  does NOT mean unsigned**: after `git rebase --onto origin/main
+  <old-base> <branch>` replays commits unsigned (known lesson), the
+  range recipe is `git rebase origin/main --force-rebase --exec
+  "git commit --amend -S --no-edit"` — signs every replayed commit
+  without interactive mode. Verification gotcha: `git log
+  --format='%G?'` can print `E` (signature cannot be CHECKED — e.g.
+  the public key isn't in the local keyring) both before AND after
+  signing, so it can't distinguish signed-but-unverifiable from
+  unsigned. The definitive check is `git cat-file commit HEAD |
+  grep -c gpgsig` — a `gpgsig` header present means signed. Saves a
+  pointless second re-sign loop.
