@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block title %}Library Health{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Library Health</h1>
+  <p class="page-sub">
+    Deterministic metrics snapshot — coverage, complexity, churn, docs
+    gates, and hygiene counts. No LLM judgment layer here; see the
+    latest narrative report below.
+  </p>
+</section>
+
+{% if not snapshot %}
+  <section class="curator-empty">
+    <p>No snapshot collected yet.</p>
+    <p class="page-sub">
+      Run <code>python -m attune.ops.health_snapshot</code>, or click
+      Refresh below — a background collection just started.
+    </p>
+    <button id="health-refresh-btn" class="btn btn-primary" type="button">Refresh</button>
+  </section>
+{% else %}
+  {% set signals = snapshot.signals %}
+  <section class="page-head" style="margin-top: 0;">
+    <p>
+      Collected
+      <code id="health-collected-at">{{ snapshot.collected_at }}</code>
+      {% if stale %}
+        <span class="chip chip-warn" id="health-stale-badge"
+              data-tooltip="Older than {{ stale_after_hours }}h — a background refresh has started"
+              data-tooltip-position="bottom">stale</span>
+      {% else %}
+        <span class="chip chip-ok">fresh</span>
+      {% endif %}
+      {% if refreshing %}
+        <span class="chip chip-muted" id="health-refreshing-badge">refreshing&hellip;</span>
+      {% endif %}
+      <button id="health-refresh-btn" class="btn btn-primary" type="button" {% if refreshing %}disabled{% endif %}>Refresh</button>
+    </p>
+  </section>
+
+  <section class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Coverage</div>
+      {% if signals.coverage.status == "ok" %}
+        <div class="kpi-value">{{ signals.coverage.value.coverage_percent }}%</div>
+        <div class="kpi-foot">Codecov, main</div>
+      {% else %}
+        <div class="kpi-value">&mdash;</div>
+        <div class="kpi-foot">unavailable</div>
+      {% endif %}
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Avg complexity</div>
+      {% if signals.complexity.status == "ok" %}
+        <div class="kpi-value">{{ signals.complexity.value.avg_rank }} ({{ signals.complexity.value.avg_complexity }})</div>
+        <div class="kpi-foot">{{ '{:,}'.format(signals.complexity.value.blocks) }} blocks</div>
+      {% else %}
+        <div class="kpi-value">&mdash;</div>
+        <div class="kpi-foot">unavailable</div>
+      {% endif %}
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">D-or-worse blocks</div>
+      {% if signals.complexity.status == "ok" %}
+        <div class="kpi-value">{{ signals.complexity.value.d_or_worse_count }}</div>
+        <div class="kpi-foot">radon complexity ratchet</div>
+      {% else %}
+        <div class="kpi-value">&mdash;</div>
+        <div class="kpi-foot">unavailable</div>
+      {% endif %}
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Churn (90d)</div>
+      {% if signals.churn.status == "ok" %}
+        <div class="kpi-value">{{ '{:,}'.format(signals.churn.value.total_changes) }}</div>
+        <div class="kpi-foot">file-changes under src/</div>
+      {% else %}
+        <div class="kpi-value">&mdash;</div>
+        <div class="kpi-foot">unavailable</div>
+      {% endif %}
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">TODO markers</div>
+      {% if signals.todos.status == "ok" %}
+        <div class="kpi-value">{{ signals.todos.value.count }}</div>
+        <div class="kpi-foot">raw grep count, src/</div>
+      {% else %}
+        <div class="kpi-value">&mdash;</div>
+        <div class="kpi-foot">unavailable</div>
+      {% endif %}
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Open PRs / issues</div>
+      {% if signals.open_prs_issues.status == "ok" %}
+        <div class="kpi-value">{{ signals.open_prs_issues.value.open_prs }} / {{ signals.open_prs_issues.value.open_issues }}</div>
+        <div class="kpi-foot">via gh CLI</div>
+      {% else %}
+        <div class="kpi-value">&mdash;</div>
+        <div class="kpi-foot">unavailable</div>
+      {% endif %}
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">SLOC</div>
+      {% if signals.sloc.status == "ok" %}
+        <div class="kpi-value">{{ '{:,}'.format(signals.sloc.value.src_lines) }}</div>
+        <div class="kpi-foot">{{ '{:,}'.format(signals.sloc.value.src_files) }} files</div>
+      {% else %}
+        <div class="kpi-value">&mdash;</div>
+        <div class="kpi-foot">unavailable</div>
+      {% endif %}
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Tests</div>
+      {% if signals.sloc.status == "ok" %}
+        <div class="kpi-value">{{ '{:,}'.format(signals.sloc.value.test_files) }}</div>
+        <div class="kpi-foot">
+          {% if signals.sloc.value.test_to_src_ratio %}{{ signals.sloc.value.test_to_src_ratio }}:1 LOC ratio{% else %}files{% endif %}
+        </div>
+      {% else %}
+        <div class="kpi-value">&mdash;</div>
+        <div class="kpi-foot">unavailable</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section>
+    <h2>Docs & single-source gates</h2>
+    <table class="data-table">
+      <thead><tr><th>Gate</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr>
+          <th>doc-import audit</th>
+          <td>
+            {% if signals.doc_import_audit.status == "ok" %}
+              {% if signals.doc_import_audit.value.clean %}<span class="chip chip-ok">clean</span>
+              {% else %}<span class="chip chip-warn">findings (exit {{ signals.doc_import_audit.value.exit_code }})</span>{% endif %}
+            {% else %}<span class="chip chip-muted">unavailable</span>{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>docs wiring audit</th>
+          <td>
+            {% if signals.docs_wiring_audit.status == "ok" %}
+              {% if signals.docs_wiring_audit.value.clean %}<span class="chip chip-ok">clean</span>
+              {% else %}<span class="chip chip-warn">findings (exit {{ signals.docs_wiring_audit.value.exit_code }})</span>{% endif %}
+            {% else %}<span class="chip chip-muted">unavailable</span>{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>help completeness</th>
+          <td>
+            {% if signals.help_completeness.status == "ok" %}
+              {% if signals.help_completeness.value.clean %}<span class="chip chip-ok">clean</span>
+              {% else %}<span class="chip chip-warn">findings (exit {{ signals.help_completeness.value.exit_code }})</span>{% endif %}
+            {% else %}<span class="chip chip-muted">unavailable</span>{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>projection drift</th>
+          <td>
+            {% if signals.projection_drift.status == "ok" %}
+              {% if signals.projection_drift.value.findings_count == 0 %}<span class="chip chip-ok">clean</span>
+              {% else %}<span class="chip chip-warn">{{ signals.projection_drift.value.findings_count }} finding(s)</span>{% endif %}
+            {% else %}<span class="chip chip-muted">unavailable</span>{% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  {% if signals.churn.status == "ok" and signals.churn.value.top_files %}
+    <section>
+      <h2>Hotspots (churn, 90d)</h2>
+      <table class="data-table">
+        <thead><tr><th>File</th><th class="num">Changes</th></tr></thead>
+        <tbody>
+          {% for f in signals.churn.value.top_files %}
+            <tr><td><code>{{ f.path }}</code></td><td class="num">{{ f.changes }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endif %}
+
+  <section class="page-head">
+    <p class="page-sub">
+      {% if latest_report %}
+        Narrative findings + ranked improvement plan (LLM-generated, not
+        regenerated by this page):
+        <a href="/{{ latest_report }}">{{ latest_report }}</a>
+      {% else %}
+        No LLM narrative report found under <code>docs/reports/</code>.
+      {% endif %}
+    </p>
+  </section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  var btn = document.getElementById("health-refresh-btn");
+  if (!btn) return;
+  var pollTimer = null;
+
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  function pollOnce() {
+    fetch("/api/health/library/status", { headers: { Accept: "application/json" } })
+      .then(function (r) { return r.json(); })
+      .then(function (status) {
+        if (!status.running) {
+          stopPolling();
+          window.location.reload();
+        }
+      })
+      .catch(function (err) {
+        if (window.console) console.warn("health refresh poll:", err);
+      });
+  }
+
+  btn.addEventListener("click", function () {
+    btn.disabled = true;
+    fetch("/health/library/refresh", {
+      method: "POST",
+      headers: attuneClientHeaders({ Accept: "application/json" }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function () {
+        pollTimer = setInterval(pollOnce, 3000);
+      })
+      .catch(function (err) {
+        btn.disabled = false;
+        if (window.console) console.warn("health refresh start:", err);
+      });
+  });
+
+  {% if refreshing %}
+    pollTimer = setInterval(pollOnce, 3000);
+  {% endif %}
+})();
+</script>
+{% endblock %}

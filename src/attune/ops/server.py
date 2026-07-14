@@ -18,6 +18,7 @@ from attune.ops.interaction_counters import InteractionCounters
 from attune.ops.routes import bulletin as bulletin_routes
 from attune.ops.routes import curator as curator_routes
 from attune.ops.routes import dashboard
+from attune.ops.routes import health_library as health_library_routes
 from attune.ops.routes import help as help_routes
 from attune.ops.routes import interaction_counters as interaction_counters_routes
 from attune.ops.routes import patterns as patterns_routes
@@ -109,6 +110,7 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
         ("/sessions", "Sessions"),
         ("/telemetry", "Telemetry"),
         ("/health", "Health"),
+        ("/health/library", "Library Health"),
         ("/help", "Help"),
     ]
 
@@ -127,9 +129,17 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     from attune.ops.help_regen import HelpRegenRunner
 
     app.state.help_regen = HelpRegenRunner()
+    # Library-health snapshot background refresh — single in-flight
+    # job, mirrors help_regen's shape but runs in a plain thread
+    # (the collector is blocking-subprocess/HTTP, not asyncio-native).
+    # See docs/specs/ops-dashboard-polish/decisions.md Phase E.
+    from attune.ops.health_snapshot import HealthRefreshRunner
+
+    app.state.health_refresh = HealthRefreshRunner()
 
     app.include_router(session_routes.router)
     app.include_router(dashboard.router)
+    app.include_router(health_library_routes.router)
     app.include_router(runner_routes.router)
     app.include_router(runs_history_routes.router)
     app.include_router(sessions_routes.router)
