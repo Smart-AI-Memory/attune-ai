@@ -62,6 +62,17 @@ That is measurable noise-with-cost and belongs to the
 frame, #1291): the harness now gives a concrete corpus of
 (prompt, injected, relevant?) triples in the saved transcripts.
 
+**CORRECTION (2026-07-13, later — full transcript sweep):** the
+claim above is overbroad. Per-trap: the two PREVENTION traps
+received RELEVANT lessons (stale-claim → the verify-first lesson;
+unverified-state-warning → the interrupted-command/reconcile
+lesson), so their ON arms did deliver the treatment — the traps
+themselves were too weak. Only the two RECOVERY traps received
+irrelevant prompt-time lessons (auto-merge-safe class on a zsh
+build task; dependabot freshness on a zsh script fix). The noise
+finding stands for recovery-shaped prompts; it does not indict
+prevention-arm validity.
+
 ## Gates summary
 
 | Trap | Gate | Verdict |
@@ -84,3 +95,56 @@ least one trap passes its pilot gate.
    `--max-turns` for `zsh-status-readonly` (3 max-turns exclusions).
 3. Lesson-recall precision: score the saved (prompt, injection)
    pairs; consider a relevance floor bump for trap-shaped prompts.
+
+---
+
+# Re-pilot after v2 trap redesign (2026-07-13, night)
+
+One-line verdict: **4/4 traps GO — the phase-2 full run is unblocked
+(pending a stated-cost go).** 40/40 sessions, **Σ $10.99**, zero
+errored sessions (the per-trap `max_turns=14` eliminated all three
+`error_max_turns` exclusions).
+
+What changed (commit `feat(bench): trap-battery v2 traps`): stale
+claims became INPUT to summarization tasks instead of the question
+(counter-evidence buried in a filler tree); zsh-eqword instructs
+verbatim execution of the documented command; zsh-status-readonly
+got the higher turn cap. Both prevention prompts were pre-flighted
+offline for treatment relevance (18.5–23.5 vs floor 8) so a weak
+trap could no longer hide behind a silent arm.
+
+## Prevention track
+
+| Trap class | OFF fired | ON fired | Δp (off − on) |
+|---|--:|--:|--:|
+| `stale-claim` | 3/5 (60%) | 2/5 (40%) | +20% |
+| `unverified-state-warning` | 2/5 (40%) | 0/5 (0%) | +40% |
+
+Both GO (gate: OFF ≥2/5). Directional-only at n=5, but the shape is
+what the design predicted: memory-OFF sessions repeat the stale
+claim / warned harm unverified; memory-ON sessions do so less
+(`unverified-state-warning` ON: zero assertions in 5/5).
+
+## Recovery track
+
+| Trap class | arm | recovered | med calls-after | med tokens-after | excluded |
+|---|---|--:|--:|--:|--:|
+| `zsh-eqword-recovery` | off | 4/5 | 1 | 40 | 0 |
+| `zsh-eqword-recovery` | on | 4/5 | 1 | 25 | 0 |
+| `zsh-status-readonly` | off | 5/5 | 4 | 247 | 0 |
+| `zsh-status-readonly` | on | 5/5 | 8 | 350 | 0 |
+
+Both GO (gate: ≥4 decision-point hits per arm — hit 5/5 in all four
+cells; the verbatim-follow prompt fixed the v1 path variance).
+Directional-only: eqword recovers cheaper with memory ON (25 vs 40
+median tokens-after); status-readonly shows the REVERSE (350 vs 247,
+8 vs 4 calls) — worth watching at full-run n before any narrative.
+
+## Where this leaves phase 2
+
+Every trap passed its discrimination gate, arms validated live in
+both directions, and the harness held its cost cap. The $15–30 full
+run (higher repeats for quotable numbers) is now unblocked — it
+needs its own stated-cost go per the spend gate. Day's benchmark
+spend: $10.00 (pilot) + $10.99 (re-pilot) ≈ $21 against the $20
+grant plus reaffirmed authorization.
