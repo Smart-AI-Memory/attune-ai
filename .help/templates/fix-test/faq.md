@@ -1,56 +1,41 @@
 ---
 type: faq
+name: fix-test-faq
 feature: fix-test
 depth: faq
-generated_at: 2026-06-22T10:21:37.523920+00:00
-source_hash: 26d8af3fe4cef200ee3e0528559c0e39b2bd3756956371d1e78427e02cb6385b
+generated_at: 2026-07-14T15:58:52.133407+00:00
+source_hash: 2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b
 status: generated
 ---
 
 # Fix Test FAQ
 
-## What is the fix-test feature?
+## Does fix-test write tests for me?
 
-The fix-test feature provides automated test lifecycle management for your project. It tracks test execution, monitors coverage, and creates maintenance plans to keep your tests healthy and up-to-date with your code changes.
+No. It decides *what* test work a change implies and *whether*
+it is safe to run automatically. Generating test code is the
+smart-test feature's job.
 
-## When should I use fix-test?
+## Is there an `attune fix-test` command?
 
-Use fix-test when you need to:
-- Automatically track which files need tests
-- Monitor test coverage and execution
-- Get maintenance plans for stale or missing tests
-- Respond to file changes with appropriate test actions
-- Get a quick test-health summary for your project
+No dedicated CLI subcommand — fix-test is reached as the
+`/fix-test` skill, and the planning/measurement logic is the Python
+API on this page (`TestMaintenanceWorkflow` and the `test_runner`
+functions).
 
-## What are the main functions I should know about?
+## What's the entry point?
 
-Start with these functions based on what you want to do:
+`await TestMaintenanceWorkflow(project_root).run({"mode":
+"analyze"})` for a whole-project plan, or the `on_file_*` handlers
+for a single file event.
 
-- `run_tests_with_tracking()` — Run your test suite while tracking execution for Tier 1 monitoring
-- `track_coverage()` — Import coverage data from a coverage.xml file
-- `track_file_tests()` — Track test status for a specific source file
-- `get_files_needing_tests()` — Find files that need new tests or have stale tests
+## Which calls are async?
 
-## How do I create a test maintenance plan?
+`run` and the three `on_file_*` handlers. The summary methods
+and all `test_runner` functions are synchronous.
 
-Use the `TestMaintenanceWorkflow` class. It analyzes your project and generates a `TestMaintenancePlan` with specific actions, priorities, and effort estimates for each file that needs attention.
+## How do I run only the safe items?
 
-## How do I respond to file changes automatically?
-
-`TestMaintenanceWorkflow` handles file events for you. Its `on_file_created()`, `on_file_modified()`, and `on_file_deleted()` handlers each return a `TestPlanItem` describing the test action that change implies, with an assigned `TestAction` and `TestPriority`.
-
-## What happens when I run `track_coverage()`?
-
-The function reads your coverage.xml file and creates a `CoverageRecord`. If the file doesn't exist, you'll get a `FileNotFoundError`. If the XML format is invalid, you'll get a `ValueError` with details about what went wrong.
-
-## How do I debug test tracking issues?
-
-First, run `pytest -k "fix-test" -v` to check if the feature's own tests pass. If they do but you're still having problems, add debug logging at the point where things go wrong and re-run with logging enabled.
-
-## Where are the source files?
-
-The fix-test feature spans two files:
-- `src/attune/workflows/test_runner.py` — Test execution and coverage tracking
-- `src/attune/workflows/test_maintenance.py` — Maintenance workflow, planning, and source-file event handlers
-
-**Tags:** `tests`, `debugging`, `fixes`
+`await workflow.run({"mode": "auto"})` — it executes the
+`auto_executable` subset and leaves `REVIEW` / `MANUAL` items for a
+human. Add `"dry_run": True` to preview the count first.

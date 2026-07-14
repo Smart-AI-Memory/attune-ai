@@ -375,6 +375,51 @@ skill's "deep" option runs deep-review for exactly this reason.
 > **not** projected verbatim as the FAQ; it contributes the
 > feature's author-curated seed questions.
 
+- **Q:** What is code quality review?
+  **A:** A one-call code review: the `CodeReviewWorkflow` delegates
+  to four specialized SDK subagents — security, quality, performance,
+  architecture — and synthesizes their findings into a single report
+  with an overall 0–100 health score, per-domain findings, and a
+  prioritized list of next steps.
+- **Q:** When should I run a code quality review?
+  **A:** Before opening pull requests, after large refactors, when
+  inheriting unfamiliar code, or any time you want a health read on a
+  codebase. It is the everyday breadth review.
+- **Q:** How do I start a review?
+  **A:** Four ways: the `/code-quality` skill in a Claude Code
+  conversation, the CLI (`attune workflow run code-review --path
+  src/` — note the slug), the `code_review` MCP tool, or the Python
+  API (`await CodeReviewWorkflow().execute(path="src/")`).
+- **Q:** What's the difference between quick, standard, and deep
+  reviews?
+  **A:** `depth` sets the agent-turn budget — `quick` 10, `standard`
+  20 (the default), `deep` 40. All four passes run at every depth;
+  a bigger budget means more thorough passes, not different ones.
+  (One nuance: the `/code-quality` *skill* routes a "deep" request
+  to the separate deep-review workflow.)
+- **Q:** What do the health scores mean?
+  **A:** The Summary section opens with an overall 0–100 health
+  score synthesized from the four passes — higher is healthier. It
+  is an LLM judgment, not a measurement: treat it as a trend signal
+  and read the per-domain findings for the substance.
+- **Q:** Can I fix issues automatically?
+  **A:** The workflow reports; it never modifies files. In a Claude
+  Code session, ask the agent to apply specific fixes from the
+  report — mechanical ones (unused imports, style) are quick wins;
+  structural findings need manual judgment.
+- **Q:** How do I focus on specific types of issues?
+  **A:** There's no `focus` parameter — all four passes always run.
+  Narrow the `path`, use deep-review (which has `focus`), or drill
+  into the returned report conversationally ("just show me the
+  security findings").
+- **Q:** What if I want to compare different parts of my code?
+  **A:** Run the workflow once per path (e.g. `src/auth/` then
+  `src/api/`) and compare the health scores and finding counts —
+  the report is per-run, one path at a time.
+- **Q:** Where can I learn more?
+  **A:** Say "tell me more" (the coach skill goes progressively
+  deeper: concept → procedural → reference), or open this feature's
+  quickstart and task guides.
 - **Q:** Why does `attune workflow run code-quality` say "unknown
   workflow"?
   **A:** The registered slug is `code-review`. The `code-quality`

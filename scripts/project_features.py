@@ -2,8 +2,8 @@
 """Project a feature's master file to .help kinds + docs pages.
 
 Deterministic projection driver for the help-docs-single-source pilot
-(T2). Reads ``content/features/<feature>.md`` and renders the 10
-non-faq ``.help`` kinds + 4 ``docs/`` pages via
+(T2). Reads ``content/features/<feature>.md`` and renders the 11
+``.help`` kinds + 4 ``docs/`` pages via
 ``attune_author.projector`` — no LLM, no AST, no meta-templates.
 
 Usage::
@@ -83,17 +83,18 @@ def main(argv: list[str] | None = None) -> int:
         example_problems = []
         print(f"warning: example check skipped: {exc}", file=sys.stderr)
 
-    # ``faq`` is skipped per D7 (FAQ Generator unbuilt). ``tutorial`` no
-    # longer needs an explicit skip: attune-author >=0.20.0 drops it from
-    # DOCS_PAGE_SECTIONS by default (a guided tutorial resists pure
-    # section projection — the projected version is just the Tasks list
-    # verbatim, duplicating the how-to; tutorials stay hand-authored per
-    # decision D10).
+    # ``faq`` projects from the master's "## FAQ seeds" section (FG1
+    # Phase 1 — seeds-only; the dynamic channels stay deferred, see
+    # docs/specs/archive/help-docs-single-source/follow-ups.md).
+    # ``tutorial`` needs no explicit skip: attune-author >=0.20.0 drops
+    # it from DOCS_PAGE_SECTIONS by default (a guided tutorial resists
+    # pure section projection — the projected version is just the Tasks
+    # list verbatim, duplicating the how-to; tutorials stay
+    # hand-authored per decision D10).
     result = project_feature(
         master_path,
         repo_root,
         help_dir,
-        skip_kinds=("faq",),
         dry_run=args.dry_run,
     )
 

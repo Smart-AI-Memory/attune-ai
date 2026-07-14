@@ -3,8 +3,8 @@ type: error
 name: models-error
 feature: models
 depth: error
-generated_at: 2026-06-21T18:43:46.304112+00:00
-source_hash: 234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459
+generated_at: 2026-07-14T15:58:54.871943+00:00
+source_hash: 52589e077700e250b69e496efaa9634a271c4f91bd520b4c07b4915347a04668
 status: generated
 ---
 

@@ -10,34 +10,30 @@ type: faq
 
 # Doc Gen FAQ
 
-## What is doc gen?
+## Does doc-gen write documentation files for me?
 
-Doc gen automatically generates documentation from your source code, including API references, README sections, and other developer documentation.
+No. Its subagents are read-only; the generated
+documentation comes back in `final_output` for you to review and
+place.
 
-## When should I use it?
+## What's the difference between doc-gen, doc-audit, and doc-orchestrator?
 
-Use doc gen when you need to create or update documentation for a codebase. It's particularly useful for generating API documentation from docstrings, creating structured README content, and maintaining up-to-date reference materials as your code evolves.
+Doc-gen creates new docs; doc-audit finds stale or missing
+docs; doc-orchestrator runs the full maintenance pipeline. The
+`/doc-gen` skill routes among them.
 
-## What's the main entry point?
+## How do I run doc-gen reliably from code?
 
-Start with the `DocumentGenerationWorkflow` class, which orchestrates the entire documentation generation process. You can also use `format_doc_gen_report()` to format the generated output into a human-readable report.
+Use the CLI (`attune workflow run doc-gen --path <p>`) or
+Python (`DocumentGenerationWorkflow().execute(path=<p>)`) — both
+pass the `path` the workflow expects.
 
-The workflow operates in three stages: outline planning, content writing, and final polish review.
+## Which calls are async?
 
-## How do I control costs?
+`execute` is a coroutine — `await` it or use
+`asyncio.run`.
 
-Doc gen includes built-in cost management through the `DocGenCostMixin`. The workflow tracks token usage across all generation stages and provides cost estimates before processing large codebases.
+## How do I keep a run cheap?
 
-## Can I generate documentation in chunks?
-
-Yes, use the `ChunkedGenerationMixin` to process large codebases in smaller pieces. This prevents memory issues and allows you to generate documentation incrementally.
-
-## How do I debug it?
-
-Run `pytest -k "doc-gen" -v` first to check if the basic functionality works. If tests pass but your code fails, add debug logging at the failure point and check the workflow stages (outline, write, polish) individually.
-
-## Where are the source files?
-
-- `src/attune/workflows/document_gen/**`
-
-**Tags:** `docs`, `documentation`, `generation`
+Narrow the `path` and use a shallower `depth` (`quick`
+uses the smallest agent-turn budget).

@@ -7,22 +7,35 @@ work with enough context to act on cold.
 
 ## FG1 — Build the FAQ Generator (post-pilot)
 
-**Status:** open · **Raised:** 2026-06-21 (D6/D7) · **Blocks:** FAQ
-single-sourcing (not the pilot)
+**Status:** Phase 1 SHIPPED 2026-07-14 (channel-4 seeds projection);
+remainder re-scoped to the dynamic channels + global FAQ page ·
+**Raised:** 2026-06-21 (D6/D7) · **Blocks:** FAQ single-sourcing
+(not the pilot)
 
-Build the four-channel **FAQ Generator** that decisions.md D6
-describes and D7 defers past the pilot. It consumes each feature's
-`## FAQ seeds` (author-curated, channel 4) and merges them with the
-three dynamic channels — unmatched user queries, telemetry
-error-frequency, GitHub issues — then deduplicates and ranks by
-frequency to produce both the in-tool `.help/<feature>/faq.md` and
-the global mkdocs FAQ page.
+**Phase 1 (shipped 2026-07-14):** the deterministic projector now
+renders the `faq` kind from each master's `## FAQ seeds` section
+(channel 4 only, no LLM) — `_render_faq` in
+`src/attune/authoring/projector.py` parses both seed bullet shapes,
+drops the disclaimer blockquote, and emits an H2-per-question page
+with the standard 7-key generated frontmatter, ending the
+frozen-file drift for all 27 FAQs. The 3 curated FAQs (memory,
+code-quality, elicitation-forms) were folded into their masters'
+seeds first (no Q lost; code-quality's drifted answers corrected
+against the master); the other 24 features' stale LLM-generated
+FAQs were replaced by their seeds projections (Patrick-approved —
+old Q/As remain in git history; the dynamic channels resurface
+genuinely-asked questions when signal exists).
 
-**Why deferred:** verified 2026-06-21 the Generator does not exist in
-either repo; `.help/faq.md` is LLM-generated today. The pilot proves
-the projection chain for the other 10 kinds; the Generator is a
-distinct subsystem (telemetry ingestion, dedup, ranking) that would
-balloon pilot scope.
+**Remaining scope:** the dynamic channels — unmatched user queries
+(Phase 2: log unmatched `help_lookup` queries locally, cheap, do
+soon), telemetry error-frequency, GitHub issues — merged,
+deduplicated, and frequency-ranked into the seeds-projected FAQ,
+plus the global mkdocs FAQ page. Deferred until real user signal
+exists (telemetry ~0 as of 2026-07-14).
+
+**Why the remainder is deferred:** the ranker/merger is a distinct
+subsystem (telemetry ingestion, dedup, ranking) with no input data
+today.
 
 **Where to look:** doc-stack spec
 (`.claude/plans/documentation-stack-spec.md`) D3 (~line 659), the

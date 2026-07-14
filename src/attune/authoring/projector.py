@@ -3,23 +3,27 @@
 Part of the help-docs-single-source pilot (T2). Reads one
 hand-authored "master file" per feature
 (``content/features/<feature>.md`` in the consumer repo) and renders
-it to the 10 non-faq ``.help`` kinds plus the 3 ``docs/`` feature
-pages. No LLM, no AST render, no meta-templates: the master file's
-named H2 sections are sliced and concatenated per a fixed projection
-map, then wrapped with the same frontmatter/footer the generator
-writes so attune-help's HelpEngine and the staleness machinery read
-them unchanged (DD2/R4).
+it to the 11 ``.help`` kinds plus the 3 ``docs/`` feature pages. No
+LLM, no AST render, no meta-templates: the master file's named H2
+sections are sliced and concatenated per a fixed projection map, then
+wrapped with the same frontmatter/footer the generator writes so
+attune-help's HelpEngine and the staleness machinery read them
+unchanged (DD2/R4).
 
-``faq`` is intentionally excluded (D7): the FAQ is a sourced
-source-of-truth produced by the (still unbuilt) FAQ Generator from
-four channels, not projected verbatim from the master file (D6).
+``faq`` is the one transform (FG1 Phase 1, channel 4 only): the
+``## FAQ seeds`` section's Q/A bullets are parsed and re-rendered as
+an H2-per-question FAQ page rather than copied verbatim. The dynamic
+channels (unmatched queries, telemetry, GitHub issues — D6) stay
+deferred until real user signal exists.
 
-See ``docs/specs/help-docs-single-source/`` in attune-ai
-(design.md, decisions.md D6/D7/D8, t2-projector-build.md).
+See ``docs/specs/archive/help-docs-single-source/`` in attune-ai
+(design.md, decisions.md D6/D7/D8, follow-ups.md FG1,
+t2-projector-build.md).
 """
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,12 +34,14 @@ from attune.authoring.fact_check import Finding, check_polished_file
 from attune.authoring.source_introspection import compute_scaffold_hash
 
 # ---------------------------------------------------------------------------
-# Projection map — the contract (design.md), faq excluded per D7
+# Projection map — the contract (design.md)
 # ---------------------------------------------------------------------------
 
 #: ``.help`` kind -> source H2 sections, in render order. A kind is
 #: rendered only when *all* of its sections are present in the master
-#: file; a missing section skips the kinds that depend on it.
+#: file; a missing section skips the kinds that depend on it. Every
+#: kind is a verbatim section copy except ``faq``, which transforms
+#: its seeds section (see ``_render_faq``, FG1 Phase 1).
 HELP_KIND_SECTIONS: dict[str, list[str]] = {
     "concept": ["Overview", "Concepts"],
     "reference": ["Reference"],
@@ -47,7 +53,7 @@ HELP_KIND_SECTIONS: dict[str, list[str]] = {
     "warning": ["Failure modes"],
     "note": ["Overview", "Concepts", "Notes & tips"],
     "tip": ["Notes & tips"],
-    # "faq" intentionally excluded — D7 (FAQ Generator unbuilt)
+    "faq": ["FAQ seeds"],
 }
 
 #: ``docs/`` page (project-doc kind) -> source H2 sections.
@@ -208,12 +214,12 @@ def project_feature(
     project_root: str | Path,
     help_dir: str | Path,
     *,
-    skip_kinds: tuple[str, ...] = ("faq",),
+    skip_kinds: tuple[str, ...] = (),
     dry_run: bool = False,
 ) -> ProjectionResult:
     """Project a feature's master file to ``.help`` kinds + docs pages.
 
-    Renders the 10 non-faq ``.help`` kinds to
+    Renders the 11 ``.help`` kinds to
     ``<help_dir>/templates/<feature>/<kind>.md`` (YAML frontmatter)
     and the 3 ``docs/`` pages to their ``nav.mkdocs`` paths under
     ``<project_root>/docs/`` (HTML-comment footer). ``source_hash`` is
@@ -251,8 +257,19 @@ def project_feature(
         if missing:
             result.skipped.append(f"{kind} (missing: {', '.join(missing)})")
             continue
-        body = _join_sections(master, titles)
-        content = _wrap_help(master.feature, kind, source_hash, generated_help, body, title=title)
+        if kind == "faq":
+            body = _render_faq(master.sections["FAQ seeds"], result.warnings)
+            if not body:
+                result.skipped.append("faq (no parseable Q/A seeds)")
+                continue
+            slug_title = master.feature.replace("-", " ").replace("_", " ").title()
+            kind_title = f"{slug_title} FAQ"
+        else:
+            body = _join_sections(master, titles)
+            kind_title = title
+        content = _wrap_help(
+            master.feature, kind, source_hash, generated_help, body, title=kind_title
+        )
         out_path = help_dir / "templates" / master.feature / f"{kind}.md"
         result.outputs.append(ProjectedOutput(kind, "help", out_path, content))
 
@@ -283,6 +300,55 @@ def project_feature(
             result.written.append(out.path)
 
     return result
+
+
+#: The two accepted seed-bullet shapes (FG1 Phase 1). Bold-Q is the
+#: dominant corpus shape; italic-question is the known variant
+#: (elicitation-forms.md). Checked in this order — the bold pattern
+#: must win so ``**Q:**`` is never read as an italic span.
+_SEED_BOLD_RE = re.compile(r"\*\*Q:?\*\*\s*(.+?)\s*\*\*A:?\*\*\s*(.+)", re.S)
+_SEED_ITALIC_RE = re.compile(r"\*([^*].*?)\*\s*(.+)", re.S)
+
+
+def _render_faq(seeds_body: str, warnings: list[str]) -> str:
+    """Transform a ``## FAQ seeds`` section into an FAQ body.
+
+    The one non-verbatim projection (FG1 Phase 1, channel 4 only):
+    drops the section's leading blockquote disclaimer (channel-4
+    framing for authors, not user-facing FAQ content), parses each
+    ``- `` bullet as a Q/A seed in either accepted shape::
+
+        - **Q:** question **A:** answer
+        - *question* answer
+
+    and renders one ``## question`` heading + answer paragraph per
+    seed. A bullet matching neither shape records a projection
+    warning and is skipped — never an error. Returns ``""`` when no
+    seed parses (the caller records a skip).
+    """
+    bullets: list[str] = []
+    for line in seeds_body.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith(">"):
+            continue
+        if line.startswith("- "):
+            bullets.append(line[2:].strip())
+        elif line[:1].isspace() and bullets:
+            bullets[-1] += "\n" + stripped
+        else:
+            warnings.append(f"faq: unrecognized FAQ seeds line skipped: {stripped[:60]!r}")
+
+    parts: list[str] = []
+    for bullet in bullets:
+        match = _SEED_BOLD_RE.match(bullet) or _SEED_ITALIC_RE.match(bullet)
+        if match is None:
+            first_line = bullet.splitlines()[0]
+            warnings.append(f"faq: unparseable Q/A seed skipped: {first_line[:60]!r}")
+            continue
+        question = " ".join(match.group(1).split())
+        answer = match.group(2).strip()
+        parts.append(f"## {question}\n\n{answer}")
+    return "\n\n".join(parts)
 
 
 def _join_sections(master: MasterFile, titles: list[str]) -> str:
