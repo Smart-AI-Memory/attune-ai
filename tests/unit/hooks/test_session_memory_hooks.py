@@ -420,23 +420,29 @@ def test_type_of(recall_mod):
 
 
 def test_format_renders_typed_lines(recall_mod):
-    block = recall_mod._format(
+    block, rendered_ids = recall_mod._format(
         [
-            {"text": "dropped reviews to 0", "topics": ["type:decision"]},
+            {"id": "abc123", "text": "dropped reviews to 0", "topics": ["type:decision"]},
             {"text": "race in the runner", "topics": ["type:bug"]},
         ]
     )
     assert "## Recalled memories" in block
     assert "- [decision] dropped reviews to 0" in block
     assert "- [bug] race in the runner" in block
+    # One slot per rendered line; id-less records render as "".
+    assert rendered_ids == ["abc123", ""]
 
 
 def test_format_respects_budget(recall_mod, monkeypatch):
-    monkeypatch.setattr(recall_mod, "_CONTENT_BUDGET", 10)
-    block = recall_mod._format(
-        [{"text": "x" * 50, "topics": []}, {"text": "should not appear", "topics": []}]
+    monkeypatch.setattr(recall_mod, "_CONTENT_BUDGET", 60)
+    block, rendered_ids = recall_mod._format(
+        [
+            {"id": "kept", "text": "x" * 50, "topics": []},
+            {"id": "cut", "text": "should not appear", "topics": []},
+        ]
     )
     assert "should not appear" not in block
+    assert rendered_ids == ["kept"]  # over-budget entries yield no id either
 
 
 _HEALTHY = {"backend": "FileStashBackend", "fallback": True, "unreachable_upgrade": None}

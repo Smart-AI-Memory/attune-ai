@@ -15,8 +15,10 @@ Tunables (env): ``ATTUNE_MEMORY_RECALL`` (set ``0`` to disable),
 ``ATTUNE_MEMORY_RECALL_TOPK`` (default 5).
 
 Each emission is logged to ``~/.attune/telemetry/memory_events.jsonl``
-(size + entry count; see ``_memory_telemetry``) so the layer's token
-cost is measured, not modeled.
+(size, entry count, surfaced finding ids, a ``surfacing_id`` join key;
+see ``_memory_telemetry``) so the layer's token cost is measured, not
+modeled, and a later verdict pass can label each surfacing acted-on /
+ignored / wrong (memory-recall-eval spec).
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -30,6 +32,7 @@ import re
 import subprocess
 import sys
 import traceback
+import uuid
 from pathlib import Path
 
 for _stream in (sys.stdout, sys.stderr):
@@ -158,14 +161,20 @@ def _type_of(topics: object) -> str:
     return "note"
 
 
-def _format(entries: list[dict]) -> str:
-    """Render the recalled findings as a compact markdown block."""
+def _format(entries: list[dict]) -> tuple[str, list[str]]:
+    """Render the recalled findings as a compact markdown block.
+
+    Returns the block plus one id per rendered finding ("" when the
+    record carries none), so the telemetry event can say WHICH findings
+    were surfaced, not just how many.
+    """
     lines = [
         "## Recalled memories",
         "",
         "Recent findings from this project (most recent first):",
         "",
     ]
+    rendered_ids: list[str] = []
     used = 0
     for e in entries:
         if not isinstance(e, dict):
@@ -178,9 +187,10 @@ def _format(entries: list[dict]) -> str:
         if used > _CONTENT_BUDGET:
             break
         lines.append(f"- [{_type_of(e.get('topics'))}] {content}")
+        rendered_ids.append(str(e.get("id") or ""))
     lines.append("")
     lines.append("_Pull more with `/recall <topic>`._")
-    return "\n".join(lines)
+    return "\n".join(lines), rendered_ids
 
 
 def main() -> int:
@@ -244,15 +254,21 @@ def main() -> int:
             if health:
                 print(health)
             return 0
-        block = _format(entries)
+        block, rendered_ids = _format(entries)
         # Only print if we actually rendered at least one finding line.
-        rendered = sum(1 for line in block.splitlines() if line.startswith("- ["))
-        if rendered:
+        if rendered_ids:
             print(block)
+            # finding_ids says WHICH findings were surfaced (id-less
+            # records are counted in `entries` but not listed); the
+            # surfacing_id is the join key a later verdict pass
+            # (acted-on / ignored / wrong) references
+            # (memory-recall-eval spec, 2026-07-14).
             log_memory_event(
                 "session_recall",
                 session_id=payload.get("session_id"),
-                entries=rendered,
+                surfacing_id=uuid.uuid4().hex[:12],
+                entries=len(rendered_ids),
+                finding_ids=[i for i in rendered_ids if i],
                 injected_chars=len(block),
                 reconciled_stale=len(stale_ids),
                 forgotten=forgotten,

@@ -2,8 +2,8 @@
 
 Covers the helper's contract (JSONL shape, env gates, never-raises)
 and the integration points: a session_recall emission, a jit_recall
-fire, and a session_stash run each append one measurable event to
-``<ATTUNE_HOME>/telemetry/memory_events.jsonl``.
+fire, a lesson_recall fire, and a session_stash run each append one
+measurable event to ``<ATTUNE_HOME>/telemetry/memory_events.jsonl``.
 
 The hooks are standalone scripts; they're loaded via importlib (the
 ``test_session_memory_hooks.py`` pattern).
@@ -145,7 +145,7 @@ def _run(mod, monkeypatch, payload: dict) -> int:
 def test_session_recall_emission_logs_event(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / ".attune"))
     mod = _load_module("session_recall")
-    entries = [{"text": "decided the widget uses tables", "topics": ["type:decision"]}]
+    entries = [{"id": "f-1", "text": "decided the widget uses tables", "topics": ["type:decision"]}]
 
     import attune.memory.session_stash as stash_pkg
 
@@ -162,6 +162,8 @@ def test_session_recall_emission_logs_event(tmp_path, monkeypatch, capsys):
     assert e["event"] == "session_recall"
     assert e["session_id"] == "sess-r"
     assert e["entries"] == 1
+    assert e["finding_ids"] == ["f-1"]
+    assert isinstance(e["surfacing_id"], str) and len(e["surfacing_id"]) == 12
     assert e["injected_chars"] > 0 and e["est_tokens"] > 0
 
 
@@ -187,6 +189,10 @@ def test_jit_recall_fire_logs_tool_and_rules(tmp_path, monkeypatch, capsys):
     assert e["session_id"] == "sess-j"
     assert e["tool"] == "AskUserQuestion"
     assert e["rules"] and all(isinstance(r, str) for r in e["rules"])
+    # triggers is parallel to rules: which gate fired each rule.
+    assert len(e["triggers"]) == len(e["rules"])
+    assert all(t in {"tool", "substring", "regex", "substring+regex"} for t in e["triggers"])
+    assert isinstance(e["surfacing_id"], str) and len(e["surfacing_id"]) == 12
     assert e["injected_chars"] > 0
 
 
@@ -202,6 +208,68 @@ def test_jit_recall_no_match_logs_nothing(tmp_path, monkeypatch):
         "tool_input": {},
     }
     assert _run(mod, monkeypatch, payload) == 0
+    assert _events(tmp_path) == []
+
+
+def test_lesson_recall_fire_logs_lessons_and_scores(tmp_path, monkeypatch, capsys):
+    """Prompt-time recall must leave a surfacing record — before
+    2026-07-14 it logged NOTHING (the memory-recall-eval gap: no
+    record, no noise denominator)."""
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / ".attune"))
+    monkeypatch.setenv("ATTUNE_AI_SENTINEL_DIR", str(tmp_path / "sentinels"))
+    lessons = tmp_path / "lessons.md"
+    lessons.write_text(
+        "## Lessons Learned\n\n"
+        "- **Squash merge tagging requires the merge SHA**: after a\n"
+        "  squash merge always tag the squash merge commit SHA, never\n"
+        "  the feature branch tip.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("ATTUNE_LESSONS_FILE", str(lessons))
+    _load_module("_state")
+    mod = _load_module("lesson_recall")
+    payload = {
+        "hook_event_name": "UserPromptSubmit",
+        "prompt": "how do I tag the release after the squash merge lands",
+        "session_id": "sess-l",
+        "cwd": str(tmp_path),
+    }
+    rc = _run(mod, monkeypatch, payload)
+    assert rc == 0
+    assert "additionalContext" in capsys.readouterr().out
+
+    events = _events(tmp_path)
+    assert len(events) == 1
+    e = events[0]
+    assert e["event"] == "lesson_recall"
+    assert e["session_id"] == "sess-l"
+    assert e["lessons"] and all(isinstance(x, str) for x in e["lessons"])
+    # scores is parallel to lessons, every score at/above the floor.
+    assert len(e["scores"]) == len(e["lessons"])
+    assert all(s >= 8.0 for s in e["scores"])
+    assert isinstance(e["surfacing_id"], str) and len(e["surfacing_id"]) == 12
+    assert e["injected_chars"] > 0 and e["est_tokens"] > 0
+
+
+def test_lesson_recall_no_match_logs_nothing(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / ".attune"))
+    monkeypatch.setenv("ATTUNE_AI_SENTINEL_DIR", str(tmp_path / "sentinels"))
+    lessons = tmp_path / "lessons.md"
+    lessons.write_text(
+        "## Lessons Learned\n\n- **Squash merge tagging**: tag the merge SHA.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("ATTUNE_LESSONS_FILE", str(lessons))
+    _load_module("_state")
+    mod = _load_module("lesson_recall")
+    payload = {
+        "hook_event_name": "UserPromptSubmit",
+        "prompt": "please recolor the dashboard purple with sparkles",
+        "session_id": "sess-l2",
+        "cwd": str(tmp_path),
+    }
+    assert _run(mod, monkeypatch, payload) == 0
+    assert capsys.readouterr().out == ""
     assert _events(tmp_path) == []
 
 
