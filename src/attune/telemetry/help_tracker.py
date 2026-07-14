@@ -20,6 +20,20 @@ Event shape (JSONL, one event per line)::
         "duration_ms": 12.4
     }
 
+Unmatched queries — lookups that completed but resolved no help
+topic — are additionally appended to
+``~/.attune/telemetry/help_unmatched.jsonl``. This is channel 1 of
+the FAQ Generator (real user questions with no matching topic; see
+docs/specs/archive/help-docs-single-source/follow-ups.md FG1)::
+
+    {
+        "v": "1.0",
+        "ts": "2026-04-19T18:30:00.123456+00:00",
+        "source": "help_lookup",
+        "mode": "progressive",
+        "query": "how do I rotate api keys"
+    }
+
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
@@ -39,6 +53,7 @@ logger = logging.getLogger(__name__)
 _LOG_VERSION = "1.0"
 _DEFAULT_DIR = Path.home() / ".attune" / "telemetry"
 _DEFAULT_FILE = "help_queries.jsonl"
+_UNMATCHED_FILE = "help_unmatched.jsonl"
 
 
 def _enabled() -> bool:
@@ -57,6 +72,7 @@ class HelpTracker:
         self,
         log_dir: Path | None = None,
         filename: str = _DEFAULT_FILE,
+        unmatched_filename: str = _UNMATCHED_FILE,
     ):
         """Construct a tracker.
 
@@ -64,15 +80,23 @@ class HelpTracker:
             log_dir: Directory for telemetry files. Defaults to
                 ``~/.attune/telemetry/``.
             filename: JSONL filename within ``log_dir``.
+            unmatched_filename: JSONL filename for the unmatched-query
+                (FAQ channel-1) log within ``log_dir``.
         """
         self._dir = log_dir or _DEFAULT_DIR
         self._path = self._dir / filename
+        self._unmatched_path = self._dir / unmatched_filename
         self._lock = threading.Lock()
 
     @property
     def path(self) -> Path:
         """Path to the JSONL log file."""
         return self._path
+
+    @property
+    def unmatched_path(self) -> Path:
+        """Path to the unmatched-query JSONL log file."""
+        return self._unmatched_path
 
     def log(
         self,
@@ -114,10 +138,44 @@ class HelpTracker:
             event["duration_ms"] = round(duration_ms, 2)
         if metadata:
             event["metadata"] = metadata
+        self._append(self._path, event)
+
+    def log_unmatched(
+        self,
+        *,
+        query: str,
+        mode: str,
+        source: str = "help_lookup",
+    ) -> None:
+        """Append an unmatched query to the FAQ channel-1 log.
+
+        Called when a help lookup completed but resolved no topic —
+        the raw query is what the future FAQ Generator ranks by
+        frequency. No-ops silently if ``ATTUNE_HELP_TELEMETRY=0`` or
+        if the write fails.
+
+        Args:
+            query: The topic/query string that found no help topic.
+            mode: Lookup sub-mode (e.g., ``"progressive"``).
+            source: Call site, e.g., ``"help_lookup"``.
+        """
+        if not _enabled():
+            return
+        event = {
+            "v": _LOG_VERSION,
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "source": source,
+            "mode": mode,
+            "query": query,
+        }
+        self._append(self._unmatched_path, event)
+
+    def _append(self, path: Path, event: dict[str, Any]) -> None:
+        """Append one event to a JSONL file; never raises."""
         try:
             with self._lock:
                 self._dir.mkdir(parents=True, exist_ok=True)
-                with self._path.open("a", encoding="utf-8") as fh:
+                with path.open("a", encoding="utf-8") as fh:
                     fh.write(json.dumps(event, ensure_ascii=False) + "\n")
         except OSError as err:
             logger.debug("help telemetry write failed: %s", err)

@@ -117,3 +117,63 @@ def test_unicode_topics_round_trip(tmp_path, topic):
     )
 
     assert _read_events(tracker.path)[0]["topic"] == topic
+
+
+# ------------------------------------------------------------------
+# log_unmatched — FAQ-Generator channel 1
+# ------------------------------------------------------------------
+
+
+def test_log_unmatched_writes_channel1_event(tmp_path):
+    tracker = HelpTracker(log_dir=tmp_path)
+    tracker.log_unmatched(query="how do I rotate api keys", mode="progressive")
+
+    events = _read_events(tracker.unmatched_path)
+    assert len(events) == 1
+    assert events[0]["query"] == "how do I rotate api keys"
+    assert events[0]["mode"] == "progressive"
+    assert events[0]["source"] == "help_lookup"
+    assert events[0]["v"] == "1.0"
+    assert "ts" in events[0]
+
+
+def test_log_unmatched_goes_to_separate_file(tmp_path):
+    tracker = HelpTracker(log_dir=tmp_path)
+    tracker.log_unmatched(query="x", mode="progressive")
+
+    assert tracker.unmatched_path.name == "help_unmatched.jsonl"
+    assert not tracker.path.exists()
+
+
+def test_log_unmatched_appends(tmp_path):
+    tracker = HelpTracker(log_dir=tmp_path)
+    for query in ["a", "b", "c"]:
+        tracker.log_unmatched(query=query, mode="progressive")
+
+    events = _read_events(tracker.unmatched_path)
+    assert [e["query"] for e in events] == ["a", "b", "c"]
+
+
+def test_log_unmatched_honors_opt_out(tmp_path, monkeypatch):
+    monkeypatch.setenv("ATTUNE_HELP_TELEMETRY", "0")
+    tracker = HelpTracker(log_dir=tmp_path)
+    tracker.log_unmatched(query="x", mode="progressive")
+
+    assert not tracker.unmatched_path.exists()
+
+
+def test_log_unmatched_never_raises_on_write_error(tmp_path):
+    tracker = HelpTracker(log_dir=tmp_path / "nested")
+    # Replace the dir with a file so mkdir would fail
+    (tmp_path / "nested").write_text("block")
+
+    # Should not raise
+    tracker.log_unmatched(query="x", mode="progressive")
+
+
+@pytest.mark.parametrize("query", ["ñoño", "日本語", "🎉"])
+def test_log_unmatched_unicode_round_trips(tmp_path, query):
+    tracker = HelpTracker(log_dir=tmp_path)
+    tracker.log_unmatched(query=query, mode="progressive")
+
+    assert _read_events(tracker.unmatched_path)[0]["query"] == query

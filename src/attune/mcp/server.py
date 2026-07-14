@@ -924,7 +924,10 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         Emits a help-query telemetry event to
         ``~/.attune/telemetry/help_queries.jsonl`` on every call so
         usage of the help system can be measured against drift
-        maintenance cost. Disable with ``ATTUNE_HELP_TELEMETRY=0``.
+        maintenance cost. Queries that resolve no topic are also
+        appended to ``~/.attune/telemetry/help_unmatched.jsonl``
+        (FAQ-Generator channel 1). Disable both with
+        ``ATTUNE_HELP_TELEMETRY=0``.
 
         Supports four modes:
         - progressive: escalates across template types
@@ -954,7 +957,8 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             return result
         finally:
             duration_ms = (time.perf_counter() - started) * 1000
-            get_tracker().log(
+            tracker = get_tracker()
+            tracker.log(
                 source="help_lookup",
                 mode=mode,
                 topic=topic,
@@ -962,6 +966,25 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
                 found=bool(result.get("success")) and "error" not in result,
                 duration_ms=duration_ms,
             )
+            if self._help_lookup_unmatched(mode, result):
+                tracker.log_unmatched(query=topic, mode=mode)
+
+    @staticmethod
+    def _help_lookup_unmatched(mode: str, result: dict[str, Any]) -> bool:
+        """True when a lookup completed but resolved no help topic.
+
+        This is FAQ-Generator channel 1 (real user questions with no
+        matching topic — see help-docs-single-source follow-ups FG1).
+        Exceptions (empty result) and unknown modes don't count. The
+        error prefixes are the not-found returns produced by
+        ``_handle_help_lookup_impl`` below.
+        """
+        if not result:
+            return False
+        if result.get("success"):
+            return mode == "search_tag" and result.get("count") == 0
+        error = str(result.get("error", ""))
+        return error.startswith(("Template not found", "No preamble for"))
 
     async def _handle_help_lookup_impl(
         self, args: dict[str, Any], topic: str, mode: str
