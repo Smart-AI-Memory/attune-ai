@@ -14,7 +14,7 @@ Repo state: v10.4.1, main at the FG1 Phase 1 merge (#1370).
 | Main CI (today's runs) | all green | good |
 | Known dependency vulns (pip-audit) | 0 | good |
 | Avg cyclomatic complexity (radon, 5,155 blocks) | A (4.00) | good |
-| D-grade blocks | 3 | watch |
+| D-or-worse blocks | 30 (incl. 3 F-grade) — CORRECTED at refresh; the first measurement was a truncated listing | watch |
 | Open issues / open PRs | 0 / 2 | good |
 | Source | 170k LOC · 654 files | — |
 | Tests | 330k LOC · 993 files · 2,061 test fns | 1.94:1 ratio |
@@ -41,6 +41,8 @@ Repo state: v10.4.1, main at the FG1 Phase 1 merge (#1370).
 | `ops/routes/dashboard.py` | — | 34 | highest-churn Python file |
 | `mcp/server.py` | 1,446 | 23 | size + churn |
 | `telemetry/feedback_loop.py` | — | — | `recommend_tier` D23 |
+| `elicitation/bridge.py` / `widget.py` | — | — | `form_from_dict` F87, `_control_html` F84 — the true worst blocks, surfaced at refresh |
+| `project_index/dependency_analysis.py` | — | — | `_build_summary` F48 |
 
 The `ops/` subsystem is the concentration: top churn, top size, and
 two of the three worst-complexity blocks.
@@ -61,7 +63,8 @@ two of the three worst-complexity blocks.
 ## Improvement plan (ranked)
 
 Execution status (2026-07-14, same day): items 1+3 shipped in
-PR #1374; items 6+7 shipped in PR #1375 (which also lands the
+PR #1374 (merged); items 6+7 shipped in PR #1375 (merged); items
+2+5 refactors in PR #1376 (D23/D23/D22 → C13/C19/C15) (which also lands the
 characterization pins for items 2 and 5); item 4's seam map is at
 [agent-sdk-adapter-seam-map-2026-07-14.md](agent-sdk-adapter-seam-map-2026-07-14.md).
 
@@ -91,6 +94,16 @@ characterization pins for items 2 and 5); item 4's seam map is at
    "(unknown)" orientation noise is `spec_audit.py`'s *staleness*
    column — no spec declares `## Deliverables`, so the drift
    classifier is toothless repo-wide. Follow-up candidate.
+
+## Corrections (refresh, 2026-07-14 evening)
+
+- **D-count was wrong in the first pass**: "3 D-grade blocks" came
+  from reading a radon listing through `| tail -8` — the truncation
+  ate 27 rows. True count on main: 30 blocks at D or worse,
+  including 3 F-grade (`form_from_dict` F87, `_control_html` F84,
+  `_build_summary` F48). Average complexity A is unaffected
+  (30/5,155 = 0.6%). Count with `grep -c`, never a truncated view.
+- TODO metric settled at 0 real markers after #1375's deletion.
 
 ## Method notes
 

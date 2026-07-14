@@ -15099,3 +15099,18 @@ def ", start_idx + 1)` for module-
   unsigned. The definitive check is `git cat-file commit HEAD |
   grep -c gpgsig` — a `gpgsig` header present means signed. Saves a
   pointless second re-sign loop.
+
+- **Counting a population through `| tail -N` / `| head -N` silently
+  truncates it — the health report shipped "3 D-grade blocks" when
+  the true count was 30 (incl. 3 F-grade)**: 2026-07-14, the first
+  scoreboard read `radon cc -s -n D --total-average | tail -8` and
+  eyeballed the visible rows as the whole population; the refresh
+  pass counted with `grep -cE " - [DEF] \("` and got 30 — the
+  truncation ate 27 rows including the repo's only F-grades
+  (elicitation's form_from_dict F87 / _control_html F84), which are
+  worse than anything the report DID list. Rule: a pipe through
+  tail/head is a VIEW, never a MEASUREMENT — derive any count/claim
+  from `grep -c` / `wc -l` over the full stream, and when a listing
+  feeds a "top N worst" table, sort the FULL set first. Same family
+  as "verify counts against live registries" (website-content-
+  accuracy) — this is the shell-pipeline surface of that rule.
