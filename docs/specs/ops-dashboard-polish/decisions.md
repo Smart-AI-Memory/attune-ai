@@ -117,3 +117,91 @@ The spec is complete when:
 
 The spec retires when Phase D's PRs merge. Lessons accumulated
 during execution roll up into CLAUDE.md per the project convention.
+
+---
+
+## Phase E — Library Health snapshot tab (2026-07-14)
+
+**Predecessor:** [docs/reports/library-health-2026-07-14.md](../../reports/library-health-2026-07-14.md)
+— the ad-hoc report this phase productizes into a standing dashboard
+surface.
+
+### Problem
+
+The library-health report was a manually-run, one-off sweep
+(coverage, complexity, churn, docs gates, hygiene counts). Re-running
+it requires a session and LLM judgment every time, even though most
+of its signal is deterministic and cheap to recompute. Patrick wants
+a standing dashboard tab that shows the deterministic half live,
+without spending LLM credits on every page load.
+
+### Decision
+
+Three ratified decisions (2026-07-14), implemented verbatim in
+`feat/ops-health-tab`:
+
+1. **Deterministic-only snapshot.** The new tab renders a metrics
+   snapshot computed from local/cheap sources only: coverage (Codecov
+   API), radon complexity summary (avg + D-or-worse count), git-log
+   churn, the four docs gates (`scripts/audit_doc_imports.py`,
+   `scripts/audit_docs_wiring.py`, `scripts/check_help_completeness.py`,
+   `attune.authoring.projector.check_projection_drift`), SLOC/file/
+   test counts, TODO-marker count, and open PRs/issues via the `gh`
+   CLI. The LLM judgment layer (the narrative findings + ranked
+   improvement plan a human session produces) is **never regenerated**
+   by this tab — it stays a link to the latest
+   `docs/reports/library-health-*.md`.
+2. **Staleness-aware refresh, no scheduler.** On tab load, if the
+   latest persisted snapshot is older than 12h, the page kicks a
+   background-thread refresh and renders the *previous* snapshot
+   immediately (with its `collected_at` timestamp and a stale badge)
+   rather than blocking the request on live collection. An explicit
+   Refresh button triggers the same collector on demand. No cron, no
+   scheduler process — refresh only happens on page load or user
+   action.
+3. **Docs-first sequencing.** Because the spec-freeze forbids new
+   spec directories, this work amends the existing
+   `ops-dashboard-polish` spec (this section) rather than opening a
+   new one, and the first commit on the branch is this documentation
+   change — code follows in a second commit.
+
+### Naming note (deviation, not a ratified decision)
+
+The existing `/health` route (`src/attune/ops/routes/dashboard.py`,
+`templates/health.html`) is **Environment Health** — Python version,
+platform, `~/.attune` state-file presence. It predates this phase and
+is unrelated to the library-health metrics snapshot. To avoid
+colliding two different concepts under one URL/nav label, this phase
+ships the new surface at **`/health/library`** with its own nav entry
+("Library Health") rather than overloading `/health`. The existing
+Environment Health page is untouched. If Patrick later wants the two
+merged or the existing page renamed, that's a follow-up — out of
+scope here per the "one PR per item" discipline rule.
+
+### Implementation
+
+- `src/attune/ops/health_snapshot.py` — the collector. Each signal
+  (coverage, complexity, churn, four docs gates, SLOC, TODOs, open
+  PRs/issues) degrades independently to
+  `{"status": "unavailable", "reason": ...}` on failure; the snapshot
+  itself never raises. Versioned JSON (`schema_version: 1`) written
+  atomically to `<attune_home>/ops/health/<timestamp>.json` +
+  `latest.json`, mirroring `sweep_results.py`'s tempfile+`os.replace`
+  pattern.
+- `python -m attune.ops.health_snapshot` — standalone CLI entry for
+  cron-free manual/CI collection.
+- `src/attune/ops/routes/health_library.py` — `GET /health/library`
+  (renders `latest.json`, kicks a background refresh if stale),
+  `POST /health/library/refresh` (explicit manual trigger,
+  client-token gated), `GET /api/health/library/status` (JS poll
+  target for the in-flight refresh).
+- `src/attune/ops/templates/health_library.html` — scoreboard tiles,
+  gates table, hotspots table, stale badge, link to the latest LLM
+  report.
+
+### Out of scope (this phase)
+
+- Regenerating or summarizing the LLM report — link only.
+- A scheduler/cron for background collection — decision 2 is
+  explicit: page-load and Refresh-button triggers only.
+- Renaming/merging the existing `/health` Environment Health page.
