@@ -338,3 +338,21 @@ hole. Full tables: results doc, "Re-pilot after v2" section.
 **Decision: the $15–30 full run is UNBLOCKED. It does not start
 without its own stated-cost go (spend gate).** Recommended shape:
 same 4 traps, repeats 15–20, same caps and receipts.
+
+## 2026-07-13 (evening) — Recovery re-run APPROVED, timed post-freeze
+
+Patrick: "approve the recovery re-run post-freeze." Recorded scope:
+
+- **Approved**: the RECOVERY-track paid re-run, to execute
+  **2026-07-28 or later** (after the freeze ends). Shape per the
+  unblocked full-run recommendation: v2 recovery traps
+  (`zsh-eqword-recovery`, `zsh-status-readonly`), repeats 15–20,
+  same caps/receipts; est. ~$10–15. The run-day session still
+  states the exact cost before spending (standing spend-gate
+  discipline) — this entry settles the authorization and timing.
+- **Left open (deliberately not inferred)**: whether the post-freeze
+  run also includes the PREVENTION traps. The approval was given
+  against the phase-2 pilot report (prevention NO-GO at the time);
+  the same-night v2 re-pilot made prevention 4/4 GO, so folding
+  them into the same run (~$15–30 total, one run instead of two)
+  is now viable — Patrick to confirm or decline.
