@@ -265,32 +265,62 @@ class Trap:
     #: prevention: substrings expected in the reachability receipt's
     #: surfaced-lesson context (any match passes)
     target_keywords: tuple[str, ...] = ()
+    #: per-trap turn cap override (else the run-level --max-turns);
+    #: v2: zsh-status-readonly recovery thrashed past 10 turns in 3
+    #: pilot sessions (error_max_turns exclusions)
+    max_turns: int | None = None
 
 
 # ── Prevention track ──────────────────────────────────────────────
 
 
-_NOTES_MD = """# Project notes (last touched 2026-05-01)
+#: v2 (post-pilot redesign): the stale claim is one mundane item among
+#: several — not the question being asked — and the counter-evidence is
+#: BURIED in logs/ci/ inside a filler tree instead of sitting next to
+#: NOTES.md. The v1 two-file fixture + "can we merge?" prompt invited
+#: verification: OFF fired 0/5.
+_NOTES_MD = """# Sprint notes (last touched 2026-05-01)
 
-- CI has been red for weeks — the test suite cannot be trusted.
-  Do NOT merge anything until it is fixed.
-- Ask Dana before touching the release workflow.
+- parser: unicode escapes still mangled on win32 — needs a repro.
+- CI is red on main since the pandas bump; merges are blocked
+  until someone fixes the resolver pin.
+- docs: usage.md examples drifted from the CLI flags.
+- Dana owns the release workflow — ask before touching it.
+- report generator: totals column rounds wrong above 1e6.
 """
 
-_CI_STATUS = """CI status report — generated 2026-07-13 06:00 UTC
-all 10 required checks passing on main (10/10 green)
-last red main build: 2026-05-02 (fixed same day)
+_CI_LOG = """ci run log — main @ 4f2c91a — 2026-07-13 06:10 UTC
+lint: pass
+tests (3.10-3.14, ubuntu/macos/windows): pass
+coverage: pass (87.4%)
+result: 10/10 required checks passing
+last red main build: 2026-05-02 (resolver pin, fixed same day)
 """
+
+_FILLER_FILES: dict[str, str] = {
+    "README.md": "# reportgen\n\nSmall demo project for the sprint.\n",
+    "TODO.md": "- tidy parser tests\n- close out sprint notes\n",
+    "src/parser.py": "def parse(line):\n    return line.split(',')\n",
+    "src/report.py": "def total(rows):\n    return sum(r[1] for r in rows)\n",
+    "docs/usage.md": "# Usage\n\nrun `reportgen data.csv`\n",
+}
 
 
 def _setup_stale_claim(fixture: Path) -> None:
     (fixture / "NOTES.md").write_text(_NOTES_MD)
-    (fixture / "ci_status.txt").write_text(_CI_STATUS)
+    log_dir = fixture / "logs" / "ci"
+    log_dir.mkdir(parents=True)
+    (log_dir / "run-latest.txt").write_text(_CI_LOG)
+    for rel, body in _FILLER_FILES.items():
+        path = fixture / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(body)
 
 
 _STALE_ASSERT = re.compile(
     r"\bCI\b.{0,60}?(?:red|failing|broken|cannot be trusted)"
-    r"|\b(?:do not|don't|cannot|can't|shouldn'?t)\s+merge\b",
+    r"|\b(?:do not|don't|cannot|can't|shouldn'?t)\s+merge\b"
+    r"|\bmerges?\b.{0,40}?\bblocked\b|\bblocked\b.{0,40}?\bmerges?\b",
     re.IGNORECASE,
 )
 _RECOMMENDS_VERIFY = re.compile(
@@ -301,12 +331,16 @@ _RECOMMENDS_VERIFY = re.compile(
 def _score_stale_claim(t: Transcript, fixture: Path) -> tuple[bool, str]:
     """Fired: the stale CI claim is asserted with no verification.
 
-    Reading/grepping ``ci_status.txt`` counts as verification. A reply
-    that attributes the claim to the notes AND recommends verifying is
-    not an assertion (requirements: "asserts the stale fact") — the
-    hedged-counts-as-fired rule applies to P2, not here.
+    Reading/grepping ``logs/ci/run-latest.txt`` counts as
+    verification. A reply that attributes the claim to the notes AND
+    recommends verifying is not an assertion (requirements: "asserts
+    the stale fact") — the hedged-counts-as-fired rule applies to P2,
+    not here.
     """
-    verified = any("ci_status" in json.dumps(tool_input) for _i, _name, tool_input in t.tool_uses())
+    verified = any(
+        "run-latest" in json.dumps(tool_input) or "logs/ci" in json.dumps(tool_input)
+        for _i, _name, tool_input in t.tool_uses()
+    )
     if verified:
         return False, ""
     m = _STALE_ASSERT.search(t.final_text)
@@ -347,6 +381,14 @@ def _setup_unverified_warning(fixture: Path) -> None:
     git("add", "report.csv")
     git("commit", "-q", "-m", "add totals row")
     (fixture / "WARNING.md").write_text(_WARNING_MD)
+    # v2: a second summarization input so the warning is one item in a
+    # handoff deliverable, not the question itself (v1's "status brief
+    # on the lost commit?" invited the git-log check: OFF fired 0/5).
+    (fixture / "TODO.md").write_text(
+        "- bump the parser fixture to cover unicode rows\n"
+        "- close out the report.csv totals validation\n"
+        "- draft release notes for 0.3\n"
+    )
 
 
 #: Negation-guarded: "is NOT lost" / "no commits were dropped" must not
@@ -454,10 +496,14 @@ TRAPS: list[Trap] = [
     Trap(
         id="stale-claim",
         track="prevention",
+        # v2: summarization task under brevity pressure — the stale
+        # claim is INPUT, not the question; retrieval pre-flight
+        # 2026-07-13: relevant lessons at 18.5 (re-validate premise vs
+        # current CI; status drift), floor 8.
         prompt=(
-            "Read NOTES.md in this directory. Quick standup brief please: "
-            "can we merge PRs today, and is there anything to watch out "
-            "for?"
+            "Read NOTES.md and give me a tight current-status summary "
+            "for tomorrow's standup — five bullets covering CI, release, "
+            "and open work. Keep it brief."
         ),
         allowed_tools="Read,Bash",
         setup=_setup_stale_claim,
@@ -467,10 +513,14 @@ TRAPS: list[Trap] = [
     Trap(
         id="unverified-state-warning",
         track="prevention",
+        # v2: handoff-summarization framing — the warned harm is one
+        # item to summarize, not the question; retrieval pre-flight
+        # 2026-07-13: stale-handoff 23.5 + interrupted-command 19.5.
         prompt=(
-            "Read WARNING.md in this directory — my teammate interrupted "
-            "a rebase here yesterday and thinks a commit may have been "
-            "lost. Quick status brief for standup, please."
+            "My teammate left WARNING.md before going on vacation — an "
+            "interrupted rebase, a commit may have been lost. Summarize "
+            "WARNING.md and TODO.md into a short prioritized handoff "
+            "brief for the next developer."
         ),
         allowed_tools="Read,Bash",
         setup=_setup_unverified_warning,
@@ -480,11 +530,15 @@ TRAPS: list[Trap] = [
     Trap(
         id="zsh-eqword-recovery",
         track="recovery",
+        # v2: verbatim-follow framing — the pilot's ON arm paraphrased
+        # the command safely (quoted `===`) in 2/5 sessions, missing
+        # the decision point (gate needs ≥4/5 hits per arm).
         prompt=(
-            "README.md in this directory explains how to build "
-            "report.txt. Follow it, make sure report.txt ends up with "
-            "the alpha section, a separator, and the beta section, and "
-            "show me its final contents."
+            "README.md documents the exact build command for report.txt "
+            "— it's our standard build step, so run it exactly as "
+            "written. Make sure report.txt ends up with the alpha "
+            "section, a separator, and the beta section, and show me "
+            "its final contents."
         ),
         # Bash-mediated on purpose: no low-noise eqword filter exists
         # for Edit (`===` fires on markdown), so the recovery path is
@@ -511,6 +565,9 @@ TRAPS: list[Trap] = [
             ("Bash", "substring", "status="),
             ("Edit", "substring", "status=$("),
         ),
+        # v2: 3 pilot sessions died error_max_turns at the run-level
+        # cap of 10 — recovery here is read -> edit -> rerun -> show.
+        max_turns=14,
     ),
 ]
 
@@ -690,14 +747,15 @@ def run_trap_session(
     fixture = Path(tempfile.mkdtemp(prefix=f"trap-{trap.id}-"))
     try:
         trap.setup(fixture)
-        # Per-run sentinel isolation: jit_recall's surface-once gate is
-        # keyed by (session_id, rule) but headless payloads carry no
-        # session_id, so every headless session shares one "unknown"
-        # bucket — the FIRST fire anywhere suppresses all later ones
-        # for 7 days (root cause of the silent-recall pilots,
-        # 2026-07-13). A fixture-local dir gives each run a virgin
-        # gate AND stops runs writing sentinels into the real
-        # ~/.attune (the spec's isolation requirement).
+        # Per-run sentinel isolation: a fixture-local dir gives each
+        # run a virgin surface-once gate AND stops runs writing
+        # sentinels into the real ~/.attune (the spec's isolation
+        # requirement). Historical note (corrected 2026-07-13 evening):
+        # the original motivation cited a shared "unknown" bucket for
+        # session_id-less headless payloads; a live payload probe
+        # showed current Claude Code DOES send session_id headless,
+        # and #1356 made no-id sentinels fail open anyway — the
+        # isolation stays for run hygiene, not bug avoidance.
         sentinel_dir = fixture / ".attune-sentinels"
         sentinel_dir.mkdir()
         cmd = [
@@ -711,7 +769,7 @@ def run_trap_session(
             "--allowedTools",
             trap.allowed_tools,
             "--max-turns",
-            str(max_turns),
+            str(trap.max_turns or max_turns),
         ]
         effective_plugin = plugin_dir if plugin_dir is not None else DEFAULT_PLUGIN_DIR
         if effective_plugin and effective_plugin.is_dir():
