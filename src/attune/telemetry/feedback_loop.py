@@ -140,6 +140,15 @@ class FeedbackLoop:
     FEEDBACK_TTL = 604800  # 7 days
     MIN_SAMPLES = 10
     QUALITY_THRESHOLD = 0.7
+    #: Above this, a non-cheap tier is a downgrade candidate.
+    EXCELLENT_QUALITY = 0.9
+    #: A downgrade only fires when the target tier's own history
+    #: proves it holds quality above this bar.
+    DOWNGRADE_TARGET_QUALITY = 0.85
+
+    #: The tier ladder is linear, so each verdict direction is one map.
+    _UPGRADE_PATH = {"cheap": "capable", "capable": "premium"}
+    _DOWNGRADE_PATH = {"premium": "capable", "capable": "cheap"}
 
     def __init__(self, memory=None) -> None:
         """Initialise the feedback loop.
@@ -392,43 +401,14 @@ class FeedbackLoop:
                 stats=stats_by_tier,
             )
 
-        avg_quality = current_stats.avg_quality
-        confidence = min(current_stats.sample_count / (self.MIN_SAMPLES * 2), 1.0)
-
-        if avg_quality < self.QUALITY_THRESHOLD:
-            if current_tier == "cheap":
-                recommended = "capable"
-                reason = f"Low quality ({avg_quality:.2f}) - upgrade for better results"
-            elif current_tier == "capable":
-                recommended = "premium"
-                reason = f"Low quality ({avg_quality:.2f}) - upgrade to premium tier"
-            else:
-                recommended = "premium"
-                reason = f"Already using premium tier (quality: {avg_quality:.2f})"
-                confidence = 1.0
-        elif avg_quality > 0.9 and current_tier != "cheap":
-            if current_tier == "premium":
-                capable_stats = stats_by_tier.get("capable")
-                if capable_stats and capable_stats.avg_quality > 0.85:
-                    recommended = "capable"
-                    reason = f"Excellent quality ({avg_quality:.2f}) - downgrade to save cost"
-                else:
-                    recommended = "premium"
-                    reason = f"Excellent quality ({avg_quality:.2f}) - keep premium for consistency"
-            elif current_tier == "capable":
-                cheap_stats = stats_by_tier.get("cheap")
-                if cheap_stats and cheap_stats.avg_quality > 0.85:
-                    recommended = "cheap"
-                    reason = f"Excellent quality ({avg_quality:.2f}) - downgrade to save cost"
-                else:
-                    recommended = "capable"
-                    reason = f"Excellent quality ({avg_quality:.2f}) - keep capable tier"
-            else:
-                recommended = current_tier
-                reason = f"Excellent quality ({avg_quality:.2f}) - maintain current tier"
-        else:
-            recommended = current_tier
-            reason = f"Acceptable quality ({avg_quality:.2f}) - maintain current tier"
+        recommended, reason, confidence_override = self._tier_verdict(
+            current_tier, current_stats.avg_quality, stats_by_tier
+        )
+        confidence = (
+            confidence_override
+            if confidence_override is not None
+            else min(current_stats.sample_count / (self.MIN_SAMPLES * 2), 1.0)
+        )
 
         return TierRecommendation(
             current_tier=current_tier,
@@ -437,6 +417,51 @@ class FeedbackLoop:
             reason=reason,
             stats=stats_by_tier,
         )
+
+    def _tier_verdict(
+        self,
+        current_tier: str,
+        avg_quality: float,
+        stats_by_tier: dict,
+    ) -> tuple[str, str, float | None]:
+        """Resolve (recommended_tier, reason, confidence_override).
+
+        The verdict for a tier with sufficient samples, in three
+        quality bands:
+
+        - below ``QUALITY_THRESHOLD``: climb ``_UPGRADE_PATH`` one
+          rung; at the top (premium) stay put with confidence forced
+          to 1.0 — there is nothing to upgrade to.
+        - above ``EXCELLENT_QUALITY`` on a downgradable tier: step
+          down ``_DOWNGRADE_PATH`` one rung only when the target
+          tier's own history proves it holds quality above
+          ``DOWNGRADE_TARGET_QUALITY``; otherwise keep the tier.
+        - otherwise: acceptable — keep the current tier.
+
+        A ``None`` confidence override means the caller applies the
+        standard sample-count formula.
+        """
+        if avg_quality < self.QUALITY_THRESHOLD:
+            upgraded = self._UPGRADE_PATH.get(current_tier)
+            if upgraded is None:
+                reason = f"Already using premium tier (quality: {avg_quality:.2f})"
+                return "premium", reason, 1.0
+            direction = "for better results" if current_tier == "cheap" else "to premium tier"
+            return upgraded, f"Low quality ({avg_quality:.2f}) - upgrade {direction}", None
+
+        if avg_quality > self.EXCELLENT_QUALITY and current_tier in self._DOWNGRADE_PATH:
+            target = self._DOWNGRADE_PATH[current_tier]
+            target_stats = stats_by_tier.get(target)
+            if target_stats and target_stats.avg_quality > self.DOWNGRADE_TARGET_QUALITY:
+                reason = f"Excellent quality ({avg_quality:.2f}) - downgrade to save cost"
+                return target, reason, None
+            keep = (
+                "keep premium for consistency" if current_tier == "premium" else "keep capable tier"
+            )
+            return current_tier, f"Excellent quality ({avg_quality:.2f}) - {keep}", None
+
+        reason = f"Acceptable quality ({avg_quality:.2f}) - maintain current tier"
+        return current_tier, reason, None
 
     def get_underperforming_stages(
         self,
