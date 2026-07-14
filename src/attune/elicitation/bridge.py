@@ -12,6 +12,7 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
 from typing import Any
 
@@ -45,6 +46,321 @@ class FormValidationError(ValueError):
     def __init__(self, problems: list[str]) -> None:
         self.problems = problems
         super().__init__("; ".join(problems))
+
+
+def _parse_field_identity(
+    where: str, raw: dict[str, Any], seen_ids: set[str]
+) -> tuple[Any, Any, list[str]]:
+    """Parse and validate a field's ``id`` and ``text``/``label``.
+
+    Adds ``fid`` to ``seen_ids`` in place when it is a new, valid id.
+    Returns the raw (possibly invalid) ``fid``/``text`` values alongside
+    any problems — the caller only builds a :class:`FormQuestion` when
+    both turn out to be non-empty strings, mirroring the original
+    inline check at the end of the field loop.
+    """
+    problems: list[str] = []
+
+    fid = raw.get("id")
+    if not fid or not isinstance(fid, str):
+        problems.append(f"{where} 'id' is required and must be a string")
+    elif fid in seen_ids:
+        problems.append(f"{where} duplicate id {fid!r}")
+    else:
+        seen_ids.add(fid)
+
+    text = raw.get("text", raw.get("label"))
+    if not text or not isinstance(text, str):
+        problems.append(f"{where} 'text' (or 'label') is required")
+
+    return fid, text, problems
+
+
+def _resolve_question_type(where: str, type_str: Any) -> tuple[QuestionType | None, list[str]]:
+    """Resolve a field's ``type`` string to a :class:`QuestionType`.
+
+    Returns ``(None, [problem])`` on an unrecognised value. The caller
+    must skip the rest of that field's parsing in that case — no
+    options/bounds/extras are checked for a field whose type didn't
+    resolve, matching the original's ``continue``.
+    """
+    try:
+        return QuestionType(type_str), []
+    except ValueError:
+        valid = ", ".join(t.value for t in QuestionType)
+        return None, [f"{where} invalid type {type_str!r} (use one of: {valid})"]
+
+
+#: Question types whose control needs at least one option.
+_OPTIONS_REQUIRED_TYPES = (
+    QuestionType.SINGLE_SELECT,
+    QuestionType.MULTI_SELECT,
+    QuestionType.DECISION,
+    QuestionType.PUSHBACK,
+)
+
+
+def _parse_options(
+    where: str, raw: dict[str, Any], qtype: QuestionType
+) -> tuple[list[str], list[str]]:
+    """Parse ``options`` and enforce non-empty for select-like types."""
+    problems: list[str] = []
+    options = raw.get("options", [])
+    if not isinstance(options, list) or not all(isinstance(o, str) for o in options):
+        problems.append(f"{where} 'options' must be a list of strings")
+        options = []
+    if qtype in _OPTIONS_REQUIRED_TYPES and not options:
+        problems.append(f"{where} type {qtype.value} requires non-empty 'options'")
+    return options, problems
+
+
+def _parse_rich_control_constraints(
+    where: str, raw: dict[str, Any]
+) -> tuple[Any, Any, int | None, list[str]]:
+    """Parse the v2.1 rich-control constraints: NUMBER range
+    (``minimum``/``maximum``) and TEXT/TEXTAREA length (``max_length``).
+    """
+    problems: list[str] = []
+
+    minimum = raw.get("minimum")
+    if minimum is not None and not _is_number(minimum):
+        problems.append(f"{where} 'minimum' must be a number")
+        minimum = None
+    maximum = raw.get("maximum")
+    if maximum is not None and not _is_number(maximum):
+        problems.append(f"{where} 'maximum' must be a number")
+        maximum = None
+    if _is_number(minimum) and _is_number(maximum) and minimum > maximum:
+        problems.append(f"{where} 'minimum' {minimum} exceeds 'maximum' {maximum}")
+
+    max_length = raw.get("max_length")
+    if max_length is not None and (
+        not isinstance(max_length, int) or isinstance(max_length, bool) or max_length <= 0
+    ):
+        problems.append(f"{where} 'max_length' must be a positive integer")
+        max_length = None
+
+    return minimum, maximum, max_length, problems
+
+
+def _parse_decision_extras(
+    where: str, raw: dict[str, Any], options: list[str]
+) -> tuple[str | None, str | None, dict[str, str] | None, list[str]]:
+    """Parse the v3 DECISION extras: rationale callout + recommended
+    option + per-option tradeoffs. Parsed generically; only DECISION
+    renders them. ``recommended`` must be an option; ``option_notes``
+    keys too.
+    """
+    problems: list[str] = []
+
+    rationale = raw.get("rationale")
+    if rationale is not None and not isinstance(rationale, str):
+        problems.append(f"{where} 'rationale' must be a string")
+        rationale = None
+
+    recommended = raw.get("recommended")
+    if recommended is not None and not isinstance(recommended, str):
+        problems.append(f"{where} 'recommended' must be a string")
+        recommended = None
+    elif recommended is not None and options and recommended not in options:
+        problems.append(f"{where} 'recommended' {recommended!r} not in options")
+
+    option_notes = raw.get("option_notes")
+    if option_notes is not None and (
+        not isinstance(option_notes, dict)
+        or not all(isinstance(k, str) and isinstance(v, str) for k, v in option_notes.items())
+    ):
+        problems.append(f"{where} 'option_notes' must be a map of strings")
+        option_notes = None
+    elif isinstance(option_notes, dict) and options:
+        stray = [k for k in option_notes if k not in options]
+        if stray:
+            problems.append(f"{where} 'option_notes' keys not in options: {stray}")
+
+    return rationale, recommended, option_notes, problems
+
+
+def _parse_user_position(
+    where: str, raw: dict[str, Any], options: list[str]
+) -> tuple[str | None, list[str]]:
+    """Parse the v4 PUSHBACK extra: ``user_position`` — the option that
+    is the user's stated approach (tagged "your approach"). Parsed
+    generically; only PUSHBACK renders it. Must be one of options when
+    set.
+    """
+    user_position = raw.get("user_position")
+    if user_position is not None and not isinstance(user_position, str):
+        return None, [f"{where} 'user_position' must be a string"]
+    if user_position is not None and options and user_position not in options:
+        return user_position, [f"{where} 'user_position' {user_position!r} not in options"]
+    return user_position, []
+
+
+def _parse_progress_style(
+    where: str, raw: dict[str, Any], qtype: QuestionType
+) -> tuple[str | None, list[str]]:
+    """Parse the v5.1 render variant ``progress_style``.
+
+    "report" renders a neutral digest (status = free-form category tag,
+    options = any subset of item labels offered as a "go deeper"
+    picker). Pure presentation; the answer path is unchanged.
+    """
+    progress_style = raw.get("progress_style")
+    if progress_style is None:
+        return None, []
+    if progress_style != "report":
+        return None, [f"{where} 'progress_style' must be 'report'"]
+    if qtype is not QuestionType.PROGRESS:
+        return None, [f"{where} 'progress_style' is only valid on progress (got {qtype.value})"]
+    return progress_style, []
+
+
+def _validate_progress_item(
+    where: str, idx: int, item: dict[str, Any], progress_style: str | None
+) -> tuple[str | None, str | None, list[str]]:
+    """Validate one ``progress_items`` entry.
+
+    Returns ``(label_for_all_labels, label_for_blocked_labels,
+    problems)``. The two label slots use different validity rules (the
+    original's independent conditions, preserved exactly): the first
+    requires a non-empty string label; the second only requires
+    ``status == "blocked"`` and ``isinstance(label, str)`` — an empty
+    string label on a blocked item still counts as blocked.
+    """
+    problems: list[str] = []
+    valid_status = {"done", "in_flight", "blocked"}
+
+    label = item.get("label")
+    status = item.get("status")
+    valid_label = label if isinstance(label, str) and label else None
+    if valid_label is None:
+        problems.append(f"{where} progress_items[{idx}] needs a 'label' string")
+
+    if progress_style == "report":
+        if not isinstance(status, str) or not status:
+            problems.append(
+                f"{where} progress_items[{idx}] 'status' must be "
+                f"a non-empty tag string in report style"
+            )
+    elif status not in valid_status:
+        problems.append(f"{where} progress_items[{idx}] 'status' must be one of {valid_status}")
+
+    if "detail" in item and not isinstance(item["detail"], str):
+        problems.append(f"{where} progress_items[{idx}] 'detail' must be a string")
+
+    blocked_label = label if status == "blocked" and isinstance(label, str) else None
+    return valid_label, blocked_label, problems
+
+
+def _check_progress_item_consistency(
+    where: str,
+    qtype: QuestionType,
+    progress_style: str | None,
+    options: list[str],
+    all_labels: list[str],
+    blocked_labels: list[str],
+) -> list[str]:
+    """PROGRESS-only cross-check between ``options`` and the parsed
+    items: "report" style options must name existing item labels;
+    default style options must equal exactly the blocked-item labels.
+    """
+    if qtype is not QuestionType.PROGRESS:
+        return []
+    if progress_style == "report":
+        stray = [o for o in options if o not in all_labels]
+        if stray:
+            return [f"{where} PROGRESS report options must be item labels; not items: {stray}"]
+        return []
+    if set(blocked_labels) != set(options):
+        return [
+            f"{where} PROGRESS blocked items {sorted(set(blocked_labels))} "
+            f"must equal options {sorted(set(options))}"
+        ]
+    return []
+
+
+def _parse_progress_items(
+    where: str,
+    raw: dict[str, Any],
+    qtype: QuestionType,
+    progress_style: str | None,
+    options: list[str],
+) -> tuple[list[dict[str, Any]] | None, list[str]]:
+    """Parse the v5 PROGRESS extra ``progress_items``: the reported
+    items keyed by status. Parsed generically; only PROGRESS renders
+    them. Each item is {label, status, detail?}. Default (task) style:
+    status in {done, in_flight, blocked}; the blocked subset's labels
+    must equal options (the picker offers exactly the actionable
+    items). "report" style: status is any non-empty category tag;
+    options may be any subset of item labels. Both allow empty options
+    (a pure status display).
+    """
+    progress_items = raw.get("progress_items")
+    if progress_items is None:
+        if qtype is QuestionType.PROGRESS:
+            return None, [f"{where} type progress requires 'progress_items'"]
+        return None, []
+
+    if not isinstance(progress_items, list) or not all(
+        isinstance(it, dict) for it in progress_items
+    ):
+        return None, [f"{where} 'progress_items' must be a list of dicts"]
+
+    problems: list[str] = []
+    all_labels: list[str] = []
+    blocked_labels: list[str] = []
+    for idx, item in enumerate(progress_items):
+        valid_label, blocked_label, item_problems = _validate_progress_item(
+            where, idx, item, progress_style
+        )
+        problems.extend(item_problems)
+        if valid_label is not None:
+            all_labels.append(valid_label)
+        if blocked_label is not None:
+            blocked_labels.append(blocked_label)
+
+    problems.extend(
+        _check_progress_item_consistency(
+            where, qtype, progress_style, options, all_labels, blocked_labels
+        )
+    )
+    return progress_items, problems
+
+
+def _parse_progress_extras(
+    where: str, raw: dict[str, Any], qtype: QuestionType, options: list[str]
+) -> tuple[str | None, list[dict[str, Any]] | None, list[str]]:
+    """Parse the v5.1 ``progress_style`` render variant and the v5
+    PROGRESS ``progress_items`` payload. ``progress_style`` is resolved
+    first so the item validation can branch on it, matching the
+    original single-pass order.
+    """
+    progress_style, style_problems = _parse_progress_style(where, raw, qtype)
+    progress_items, item_problems = _parse_progress_items(
+        where, raw, qtype, progress_style, options
+    )
+    return progress_style, progress_items, [*style_problems, *item_problems]
+
+
+def _parse_list_style(
+    where: str, raw: dict[str, Any], qtype: QuestionType
+) -> tuple[str | None, list[str]]:
+    """Parse the render variant ``list_style``: render select options as
+    an ordered/unordered selectable list. Only valid on the select
+    types; pure presentation, the answer and its validation are
+    unchanged.
+    """
+    list_style = raw.get("list_style")
+    if list_style is None:
+        return None, []
+    if list_style not in ("ordered", "unordered"):
+        return None, [f"{where} 'list_style' must be 'ordered' or 'unordered'"]
+    if qtype not in (QuestionType.SINGLE_SELECT, QuestionType.MULTI_SELECT):
+        return None, [
+            f"{where} 'list_style' is only valid on single_select / "
+            f"multi_select (got {qtype.value})"
+        ]
+    return list_style, []
 
 
 def form_from_dict(data: dict[str, Any]) -> FormSchema:
@@ -89,184 +405,37 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
             problems.append(f"{where} must be a mapping")
             continue
 
-        fid = raw.get("id")
-        if not fid or not isinstance(fid, str):
-            problems.append(f"{where} 'id' is required and must be a string")
-        elif fid in seen_ids:
-            problems.append(f"{where} duplicate id {fid!r}")
-        else:
-            seen_ids.add(fid)
+        fid, text, id_problems = _parse_field_identity(where, raw, seen_ids)
+        problems.extend(id_problems)
 
-        text = raw.get("text", raw.get("label"))
-        if not text or not isinstance(text, str):
-            problems.append(f"{where} 'text' (or 'label') is required")
-
-        type_str = raw.get("type")
-        try:
-            qtype = QuestionType(type_str)
-        except ValueError:
-            valid = ", ".join(t.value for t in QuestionType)
-            problems.append(f"{where} invalid type {type_str!r} (use one of: {valid})")
+        qtype, type_problems = _resolve_question_type(where, raw.get("type"))
+        problems.extend(type_problems)
+        if qtype is None:
             continue
 
-        options = raw.get("options", [])
-        if not isinstance(options, list) or not all(isinstance(o, str) for o in options):
-            problems.append(f"{where} 'options' must be a list of strings")
-            options = []
-        if (
-            qtype
-            in (
-                QuestionType.SINGLE_SELECT,
-                QuestionType.MULTI_SELECT,
-                QuestionType.DECISION,
-                QuestionType.PUSHBACK,
-            )
-            and not options
-        ):
-            problems.append(f"{where} type {qtype.value} requires non-empty 'options'")
+        options, options_problems = _parse_options(where, raw, qtype)
+        problems.extend(options_problems)
 
-        # v2.1 rich-control constraints (number range, text length).
-        minimum = raw.get("minimum")
-        if minimum is not None and not _is_number(minimum):
-            problems.append(f"{where} 'minimum' must be a number")
-            minimum = None
-        maximum = raw.get("maximum")
-        if maximum is not None and not _is_number(maximum):
-            problems.append(f"{where} 'maximum' must be a number")
-            maximum = None
-        if _is_number(minimum) and _is_number(maximum) and minimum > maximum:
-            problems.append(f"{where} 'minimum' {minimum} exceeds 'maximum' {maximum}")
-        max_length = raw.get("max_length")
-        if max_length is not None and (
-            not isinstance(max_length, int) or isinstance(max_length, bool) or max_length <= 0
-        ):
-            problems.append(f"{where} 'max_length' must be a positive integer")
-            max_length = None
+        minimum, maximum, max_length, constraint_problems = _parse_rich_control_constraints(
+            where, raw
+        )
+        problems.extend(constraint_problems)
 
-        # v3 DECISION extras: rationale callout + recommended option +
-        # per-option tradeoffs. Parsed generically; only DECISION renders
-        # them. recommended must be an option; option_notes keys too.
-        rationale = raw.get("rationale")
-        if rationale is not None and not isinstance(rationale, str):
-            problems.append(f"{where} 'rationale' must be a string")
-            rationale = None
-        recommended = raw.get("recommended")
-        if recommended is not None and not isinstance(recommended, str):
-            problems.append(f"{where} 'recommended' must be a string")
-            recommended = None
-        elif recommended is not None and options and recommended not in options:
-            problems.append(f"{where} 'recommended' {recommended!r} not in options")
-        option_notes = raw.get("option_notes")
-        if option_notes is not None and (
-            not isinstance(option_notes, dict)
-            or not all(isinstance(k, str) and isinstance(v, str) for k, v in option_notes.items())
-        ):
-            problems.append(f"{where} 'option_notes' must be a map of strings")
-            option_notes = None
-        elif isinstance(option_notes, dict) and options:
-            stray = [k for k in option_notes if k not in options]
-            if stray:
-                problems.append(f"{where} 'option_notes' keys not in options: {stray}")
+        rationale, recommended, option_notes, decision_problems = _parse_decision_extras(
+            where, raw, options
+        )
+        problems.extend(decision_problems)
 
-        # v4 PUSHBACK extra: user_position — the option that is the user's
-        # stated approach (tagged "your approach"). Parsed generically; only
-        # PUSHBACK renders it. Must be one of options when set.
-        user_position = raw.get("user_position")
-        if user_position is not None and not isinstance(user_position, str):
-            problems.append(f"{where} 'user_position' must be a string")
-            user_position = None
-        elif user_position is not None and options and user_position not in options:
-            problems.append(f"{where} 'user_position' {user_position!r} not in options")
+        user_position, position_problems = _parse_user_position(where, raw, options)
+        problems.extend(position_problems)
 
-        # v5.1 render variant: progress_style — "report" renders a neutral
-        # digest (status = free-form category tag, options = any subset of
-        # item labels offered as a "go deeper" picker). Pure presentation;
-        # the answer path is unchanged. Parsed before progress_items so the
-        # item validation below can branch on it.
-        progress_style = raw.get("progress_style")
-        if progress_style is not None:
-            if progress_style != "report":
-                problems.append(f"{where} 'progress_style' must be 'report'")
-                progress_style = None
-            elif qtype is not QuestionType.PROGRESS:
-                problems.append(
-                    f"{where} 'progress_style' is only valid on progress (got {qtype.value})"
-                )
-                progress_style = None
+        progress_style, progress_items, progress_problems = _parse_progress_extras(
+            where, raw, qtype, options
+        )
+        problems.extend(progress_problems)
 
-        # v5 PROGRESS extra: progress_items — the reported items keyed by
-        # status. Parsed generically; only PROGRESS renders them. Each item
-        # is {label, status, detail?}. Default (task) style: status ∈ {done,
-        # in_flight, blocked}; the blocked subset's labels must equal options
-        # (the picker offers exactly the actionable items). "report" style:
-        # status is any non-empty category tag; options may be any subset of
-        # item labels. Both allow empty options (a pure status display).
-        progress_items = raw.get("progress_items")
-        if progress_items is not None:
-            if not isinstance(progress_items, list) or not all(
-                isinstance(it, dict) for it in progress_items
-            ):
-                problems.append(f"{where} 'progress_items' must be a list of dicts")
-                progress_items = None
-            else:
-                valid_status = {"done", "in_flight", "blocked"}
-                blocked_labels = []
-                all_labels = []
-                for progress_idx, item in enumerate(progress_items):
-                    label = item.get("label")
-                    status = item.get("status")
-                    if not isinstance(label, str) or not label:
-                        problems.append(
-                            f"{where} progress_items[{progress_idx}] needs a 'label' string"
-                        )
-                    else:
-                        all_labels.append(label)
-                    if progress_style == "report":
-                        if not isinstance(status, str) or not status:
-                            problems.append(
-                                f"{where} progress_items[{progress_idx}] 'status' must be "
-                                f"a non-empty tag string in report style"
-                            )
-                    elif status not in valid_status:
-                        problems.append(
-                            f"{where} progress_items[{progress_idx}] 'status' must be one of {valid_status}"
-                        )
-                    if "detail" in item and not isinstance(item["detail"], str):
-                        problems.append(
-                            f"{where} progress_items[{progress_idx}] 'detail' must be a string"
-                        )
-                    if status == "blocked" and isinstance(label, str):
-                        blocked_labels.append(label)
-                if qtype is QuestionType.PROGRESS:
-                    if progress_style == "report":
-                        stray = [o for o in options if o not in all_labels]
-                        if stray:
-                            problems.append(
-                                f"{where} PROGRESS report options must be item labels; "
-                                f"not items: {stray}"
-                            )
-                    elif set(blocked_labels) != set(options):
-                        problems.append(
-                            f"{where} PROGRESS blocked items {sorted(set(blocked_labels))} "
-                            f"must equal options {sorted(set(options))}"
-                        )
-        elif qtype is QuestionType.PROGRESS:
-            problems.append(f"{where} type progress requires 'progress_items'")
-
-        # Render variant: list_style — render select options as an
-        # ordered/unordered selectable list. Only valid on the select types;
-        # pure presentation, the answer and its validation are unchanged.
-        list_style = raw.get("list_style")
-        if list_style is not None:
-            if list_style not in ("ordered", "unordered"):
-                problems.append(f"{where} 'list_style' must be 'ordered' or 'unordered'")
-                list_style = None
-            elif qtype not in (QuestionType.SINGLE_SELECT, QuestionType.MULTI_SELECT):
-                problems.append(
-                    f"{where} 'list_style' is only valid on single_select / "
-                    f"multi_select (got {qtype.value})"
-                )
-                list_style = None
+        list_style, list_style_problems = _parse_list_style(where, raw, qtype)
+        problems.extend(list_style_problems)
 
         if fid and text and isinstance(fid, str) and isinstance(text, str):
             questions.append(
@@ -321,58 +490,87 @@ def form_to_askuserquestion(form: FormSchema, batch_size: int = 4) -> list[list[
     ]
 
 
-def _validate_answer(question: FormQuestion, value: Any) -> str | None:
-    """Return a problem string for one answer, or None if it is valid."""
-    if question.type == QuestionType.MULTI_SELECT:
-        if not isinstance(value, list):
-            return f"{question.id!r} expects a list (multi-select)"
-        bad = [v for v in value if v not in question.options]
-        if bad:
-            return f"{question.id!r} has out-of-option value(s): {bad}"
-        return None
+def _validate_multi_select(question: FormQuestion, value: Any) -> str | None:
+    """MULTI_SELECT: value must be a list whose entries are all options."""
+    if not isinstance(value, list):
+        return f"{question.id!r} expects a list (multi-select)"
+    bad = [v for v in value if v not in question.options]
+    if bad:
+        return f"{question.id!r} has out-of-option value(s): {bad}"
+    return None
 
-    if question.type in (
-        QuestionType.SINGLE_SELECT,
-        QuestionType.DECISION,
-        QuestionType.PUSHBACK,
-        # PROGRESS: a provided answer is one selected blocked item, validated
-        # by membership. When nothing is blocked the form is built display-
-        # only (required=False, empty options) and no answer is collected.
-        QuestionType.PROGRESS,
-    ):
-        if value not in question.options:
-            return f"{question.id!r} value {value!r} not in options"
-        return None
 
-    if question.type == QuestionType.BOOLEAN:
-        if value not in _BOOLEAN_OPTIONS:
-            return f"{question.id!r} boolean value {value!r} must be 'Yes' or 'No'"
-        return None
+def _validate_membership(question: FormQuestion, value: Any) -> str | None:
+    """SINGLE_SELECT / DECISION / PUSHBACK / PROGRESS: value in options.
 
-    if question.type == QuestionType.NUMBER:
-        if not _is_number(value):
-            return f"{question.id!r} expects a number"
-        if question.minimum is not None and value < question.minimum:
-            return f"{question.id!r} {value} is below minimum {question.minimum}"
-        if question.maximum is not None and value > question.maximum:
-            return f"{question.id!r} {value} is above maximum {question.maximum}"
-        return None
+    PROGRESS: a provided answer is one selected blocked item, validated
+    by membership. When nothing is blocked the form is built display-
+    only (required=False, empty options) and no answer is collected.
+    """
+    if value not in question.options:
+        return f"{question.id!r} value {value!r} not in options"
+    return None
 
-    if question.type == QuestionType.DATE:
-        if not isinstance(value, str):
-            return f"{question.id!r} expects an ISO date string (YYYY-MM-DD)"
-        try:
-            datetime.strptime(value, _DATE_FORMAT)
-        except ValueError:
-            return f"{question.id!r} {value!r} is not a valid YYYY-MM-DD date"
-        return None
 
-    # TEXT_INPUT / TEXTAREA — a string, optionally length-bounded.
+def _validate_boolean(question: FormQuestion, value: Any) -> str | None:
+    """BOOLEAN: value must be exactly one of ``_BOOLEAN_OPTIONS``."""
+    if value not in _BOOLEAN_OPTIONS:
+        return f"{question.id!r} boolean value {value!r} must be 'Yes' or 'No'"
+    return None
+
+
+def _validate_number(question: FormQuestion, value: Any) -> str | None:
+    """NUMBER: value must be numeric and within [minimum, maximum]."""
+    if not _is_number(value):
+        return f"{question.id!r} expects a number"
+    if question.minimum is not None and value < question.minimum:
+        return f"{question.id!r} {value} is below minimum {question.minimum}"
+    if question.maximum is not None and value > question.maximum:
+        return f"{question.id!r} {value} is above maximum {question.maximum}"
+    return None
+
+
+def _validate_date(question: FormQuestion, value: Any) -> str | None:
+    """DATE: value must parse as ``_DATE_FORMAT`` (YYYY-MM-DD)."""
+    if not isinstance(value, str):
+        return f"{question.id!r} expects an ISO date string (YYYY-MM-DD)"
+    try:
+        datetime.strptime(value, _DATE_FORMAT)
+    except ValueError:
+        return f"{question.id!r} {value!r} is not a valid YYYY-MM-DD date"
+    return None
+
+
+def _validate_text(question: FormQuestion, value: Any) -> str | None:
+    """TEXT_INPUT / TEXTAREA (and the fallback for any other type): a
+    string, optionally bounded by ``max_length``.
+    """
     if not isinstance(value, str):
         return f"{question.id!r} expects a string"
     if question.max_length is not None and len(value) > question.max_length:
         return f"{question.id!r} exceeds max_length {question.max_length}"
     return None
+
+
+#: Per-type answer validators; a type not present here (TEXT_INPUT,
+#: TEXTAREA) falls back to ``_validate_text``, matching the original's
+#: unconditional string-check tail.
+_ANSWER_VALIDATORS: dict[QuestionType, Callable[[FormQuestion, Any], str | None]] = {
+    QuestionType.MULTI_SELECT: _validate_multi_select,
+    QuestionType.SINGLE_SELECT: _validate_membership,
+    QuestionType.DECISION: _validate_membership,
+    QuestionType.PUSHBACK: _validate_membership,
+    QuestionType.PROGRESS: _validate_membership,
+    QuestionType.BOOLEAN: _validate_boolean,
+    QuestionType.NUMBER: _validate_number,
+    QuestionType.DATE: _validate_date,
+}
+
+
+def _validate_answer(question: FormQuestion, value: Any) -> str | None:
+    """Return a problem string for one answer, or None if it is valid."""
+    handler = _ANSWER_VALIDATORS.get(question.type, _validate_text)
+    return handler(question, value)
 
 
 def collect_form_response(
