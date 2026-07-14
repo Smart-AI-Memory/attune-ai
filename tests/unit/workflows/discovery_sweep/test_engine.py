@@ -108,6 +108,99 @@ class TestExecuteHappyPath:
         assert "## Rejected" in res.final_output
 
 
+def _failure_marker(source: str) -> Finding:
+    """The shape every LLM source emits when its wrapped workflow
+    reports success=False (see llm_source_base.workflow_unsuccessful_
+    finding) — info severity, file set, tagged source-failure."""
+    return _finding(
+        source=source,
+        severity="info",
+        title=f"{source} returned an unsuccessful result for src/",
+        file="src/",
+        line=None,
+        confidence=1.0,
+        tags=("source-failure",),
+    )
+
+
+class TestSourceFailureSurfacing:
+    """Regression suite for the 2026-07-14 silent-failure class: six of
+    seven sources returned only success=False markers, which routing
+    buried in ``rejected`` while the sweep rendered success=True with
+    no failures named (docs/reports/library-health-2026-07-14.md,
+    finding 1)."""
+
+    def test_majority_dead_sources_fail_the_sweep(self) -> None:
+        # The live 6-of-7 scenario: one healthy pattern source, six
+        # sources that produced nothing but failure markers.
+        healthy = FakeSource(name="pattern-scan", is_llm=False, findings=[_finding()])
+        dead = [
+            FakeSource(name=n, findings=[_failure_marker(n)])
+            for n in (
+                "bug-predict",
+                "security-audit",
+                "dependency-check",
+                "perf-audit",
+                "doc-audit",
+                "test-audit",
+            )
+        ]
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[healthy, *dead]))
+        sweep: SweepResult = res.metadata["sweep"]
+
+        # The sweep is FAILED, and says why.
+        assert res.success is False
+        assert res.error is not None
+        assert "6 of 7 sources failed" in res.error
+        # Every dead source is named in metadata.failures.
+        assert len(sweep.metadata.failures) == 6
+        assert all("returned only failure markers" in f for f in sweep.metadata.failures)
+        # Failure markers surface as questions — never buried in rejected.
+        assert sum(q.reason == "SOURCE_FAILED" for q in sweep.questions) == 6
+        assert not any(
+            "source-failure" in r.finding.tags for r in sweep.rejected
+        ), "failure markers must never land in the rejected bucket"
+        # The healthy source's finding still flows to the queue.
+        assert len(sweep.queue) == 1
+
+    def test_minority_failures_keep_success_but_are_named(self) -> None:
+        healthy = [FakeSource(name=f"ok-{i}", findings=[_finding()]) for i in range(3)]
+        dead = FakeSource(name="doc-audit", findings=[_failure_marker("doc-audit")])
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[*healthy, dead]))
+        sweep: SweepResult = res.metadata["sweep"]
+
+        assert res.success is True
+        assert sweep.metadata.failures == ["doc-audit: returned only failure markers"]
+
+    def test_markdown_banner_names_partial_sweep(self) -> None:
+        healthy = [FakeSource(name=f"ok-{i}", findings=[_finding()]) for i in range(3)]
+        dead = FakeSource(name="doc-audit", findings=[_failure_marker("doc-audit")])
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[*healthy, dead]))
+
+        assert "PARTIAL SWEEP: 1 of 4 source(s) failed" in res.final_output
+        assert "doc-audit" in res.final_output
+
+    def test_healthy_source_with_incidental_failure_marker_not_counted(self) -> None:
+        # A source that produced real findings PLUS one failure marker
+        # (e.g. one path of several failed) is degraded, not dead — it
+        # must not count toward the failure majority.
+        mixed = FakeSource(
+            name="doc-audit",
+            findings=[_finding(source="doc-audit"), _failure_marker("doc-audit")],
+        )
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[mixed]))
+        sweep: SweepResult = res.metadata["sweep"]
+
+        assert res.success is True
+        assert sweep.metadata.failures == []
+        # The marker itself still surfaces as a question.
+        assert any(q.reason == "SOURCE_FAILED" for q in sweep.questions)
+
+
 class TestBudgetAllocation:
     def test_per_source_budget_splits_across_llm_only(self) -> None:
         # Two LLM sources with default multiplier=1.0; one non-LLM

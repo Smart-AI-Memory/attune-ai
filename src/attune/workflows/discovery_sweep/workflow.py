@@ -277,6 +277,14 @@ def _render_markdown(result: SweepResult, *, verbose: bool = False) -> str:
     """
     colored = _should_color()
     out: list[str] = []
+    if result.metadata.failures:
+        n_failed = len(result.metadata.failures)
+        n_sources = len(result.metadata.sources)
+        out.append(
+            f"⚠ PARTIAL SWEEP: {n_failed} of {n_sources} source(s) failed "
+            f"({', '.join(result.metadata.failures)}) — findings below "
+            f"may be incomplete.\n"
+        )
     out.append(f"## Queue ({len(result.queue)} findings)\n")
     if result.queue:
         for f in result.queue:
@@ -608,8 +616,25 @@ class DiscoverySweepWorkflow(BaseWorkflow):
         if ds_stdout.is_emission_enabled():
             ds_stdout.emit_final_line(_render_json(sweep))
 
+        # A sweep where source failures are a strict majority is a
+        # failed sweep, not a clean one with quiet footnotes (NFR-1
+        # says failures must not ABORT the sweep — it never promised
+        # they render as success). At half or fewer failed, success
+        # stays True with the failures named in metadata + the
+        # markdown banner.
+        n_failed = len(sweep.metadata.failures)
+        sweep_ok = n_failed * 2 <= len(sources)
+
         return WorkflowResult(
-            success=True,
+            success=sweep_ok,
+            error=(
+                None
+                if sweep_ok
+                else (
+                    f"{n_failed} of {len(sources)} sources failed: "
+                    f"{', '.join(sweep.metadata.failures)}"
+                )
+            ),
             stages=[
                 WorkflowStage(
                     name="sweep",
@@ -682,6 +707,13 @@ class DiscoverySweepWorkflow(BaseWorkflow):
                 questions.append(_failure_to_question(source_name, payload))
                 continue
             all_findings.extend(payload)
+            # A source whose EVERY finding is a failure marker produced
+            # nothing usable — count it as failed alongside crashed
+            # sources so metadata.failures (and the caller's success
+            # flag) reflect reality. Before this, six dead LLM sources
+            # rendered as a clean sweep (2026-07-14 health report).
+            if payload and all("source-failure" in f.tags for f in payload):
+                failures.append(f"{source_name}: returned only failure markers")
 
         queue: list[Finding] = []
         rejected: list[RejectedFinding] = []
