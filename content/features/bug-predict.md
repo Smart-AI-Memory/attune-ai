@@ -5,7 +5,6 @@ tags: [bugs, quality, analysis]
 source_globs:
   - src/attune/workflows/bug_predict.py
   - src/attune/workflows/bug_predict_patterns.py
-  - src/attune/workflows/bug_predict_report.py
 nav:
   help: bug-predict
   mkdocs:
@@ -306,7 +305,7 @@ pre-release sweep.
 | `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
 | `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry; `transient` is set when a retry is reasonable | medium |
 | Scan stops early / partial report | The depth's agent-turn or `max_budget_usd` budget was reached | Use a shallower path or raise depth deliberately (cost rises) | medium |
-| `format_bug_predict_report(result, ...)` raises / prints nothing useful | It expects the pre-v4.2.0 dict shape, **not** the `WorkflowResult` `execute` returns | Read `result.final_output` / `result.summary` directly | medium |
+| `ImportError: cannot import name 'format_bug_predict_report'` | The pre-v4.2.0 formatter module was removed (dead code, zero live callers) | Read `result.final_output` / `result.summary` directly, or render via `attune.voice.report_renderer.render()` | medium |
 | Editing `./attune.config.yml`'s `bug_predict` block changes nothing | That block configures the internal static pattern helpers, which the live SDK workflow does not run | Steer the scan with `system_prompt_suffix` (or a deeper `depth`) instead | medium |
 
 ### Risk areas
@@ -374,12 +373,14 @@ pre-release sweep.
   leading underscore — the pattern helpers in
   `bug_predict_patterns.py` and `_run_agent_predict` — are
   internal and may change.
-- **`format_bug_predict_report` and `main` are legacy.**
-  `format_bug_predict_report(result, input_data)` consumes the
-  pre-v4.2.0 dict pipeline shape (`overall_risk_score`,
-  `patterns_found`, …), not the `WorkflowResult` that `execute`
-  returns; do not feed it `execute`'s output. Read
-  `result.final_output` and `result.summary` directly instead.
+- **`format_bug_predict_report` and `main` were removed.** They
+  consumed the pre-v4.2.0 dict pipeline shape
+  (`overall_risk_score`, `patterns_found`, …), not the
+  `WorkflowResult` that `execute` returns, and had no live caller
+  once the SDK-native rewrite shipped. Read `result.final_output`
+  (a `WorkflowReport` when subagent findings parsed as structured
+  output, rendered via `attune.voice.report_renderer.render()`)
+  and `result.summary` directly instead.
 - **Start shallow, then deepen.** Run `quick` to triage, and only
   spend a `deep` budget on the modules that came back hot.
 - **Use `--cheap` for routine CLI runs.** It forces unpinned

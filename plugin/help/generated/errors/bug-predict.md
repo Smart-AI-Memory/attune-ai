@@ -20,7 +20,7 @@ type: error
 | `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
 | `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry; `transient` is set when a retry is reasonable | medium |
 | Scan stops early / partial report | The depth's agent-turn or `max_budget_usd` budget was reached | Use a shallower path or raise depth deliberately (cost rises) | medium |
-| `format_bug_predict_report(result, ...)` raises / prints nothing useful | It expects the pre-v4.2.0 dict shape, **not** the `WorkflowResult` `execute` returns | Read `result.final_output` / `result.summary` directly | medium |
+| `ImportError: cannot import name 'format_bug_predict_report'` | The pre-v4.2.0 formatter module was removed (dead code, zero live callers) | Read `result.final_output` / `result.summary` directly, or render via `attune.voice.report_renderer.render()` | medium |
 | Editing `./attune.config.yml`'s `bug_predict` block changes nothing | That block configures the internal static pattern helpers, which the live SDK workflow does not run | Steer the scan with `system_prompt_suffix` (or a deeper `depth`) instead | medium |
 
 ### Risk areas

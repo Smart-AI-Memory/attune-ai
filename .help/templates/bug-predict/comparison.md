@@ -3,8 +3,8 @@ type: comparison
 name: bug-predict-comparison
 feature: bug-predict
 depth: comparison
-generated_at: 2026-06-23T12:37:44.972124+00:00
-source_hash: 3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d
+generated_at: 2026-07-14T22:05:25.786099+00:00
+source_hash: 6651bf938b845a590d6af44512242264ef0650223553d1e58325a8c0c6b2e208
 status: generated
 ---
 

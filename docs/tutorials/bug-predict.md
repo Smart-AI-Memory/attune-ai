@@ -10,15 +10,20 @@ You'll finish this tutorial with a working Python script that scans a directory,
 
 ## What you will build
 
-A short script that wires together `BugPredictionWorkflow` and `format_bug_predict_report` to produce output like this:
+A short async script that runs `BugPredictionWorkflow` and renders its
+`WorkflowResult` into a readable report using the shared
+`attune.voice.report_renderer`, producing output like this:
 
 ```
-Bug Prediction Report
-Risk Score: 73/100 | Files: 34 | Findings: 8
+# Bug Prediction
 
-HIGH (2 findings)
-  src/hooks/executor.py:89   dangerous_eval  eval() on user input
-  src/plugins/loader.py:142  dangerous_eval  exec() in plugin loader
+Risk: 2 high-severity findings, moderate overall risk.
+
+**Score:** 55/100
+
+## Pattern Scanner
+- 🔴 src/hooks/executor.py:89 — eval() on user input
+- 🔴 src/plugins/loader.py:142 — exec() in plugin loader
 ...
 ```
 
@@ -26,13 +31,15 @@ By the time the script runs successfully, you'll understand how the orchestrator
 
 ---
 
-## Step 1 — Import the two building blocks
+## Step 1 — Import the workflow and the renderer
 
-The workflow and the formatter live in separate modules. Import both so you can see the boundary between "running the analysis" and "presenting the results".
+The workflow and the report renderer live in separate modules — analysis
+and presentation are intentionally decoupled. Import both so you can see
+the boundary.
 
 ```python
 from attune.workflows.bug_predict import BugPredictionWorkflow
-from attune.workflows.bug_predict_report import format_bug_predict_report
+from attune.voice.report_renderer import render
 ```
 
 Run this as a standalone script. If neither import raises an `ImportError`, your installation is complete.
@@ -57,32 +64,39 @@ You don't need to pass any arguments for a first run; the defaults use the built
 
 ## Step 3 — Run the scan against a target path
 
-Call `execute()` with the path you want to analyze. The orchestrator sends each subagent a task derived from `_TASK_PROMPT_TEMPLATE`, substituting your path for `{path}`.
+`execute()` is a coroutine — `await` it (or drive the script with
+`asyncio.run`). The orchestrator sends each subagent a task derived from
+`_TASK_PROMPT_TEMPLATE`, substituting your path for `{path}`.
 
 ```python
-raw_result = workflow.execute(path="src/")
+result = await workflow.execute(path="src/")
 ```
 
 This is the step where the real work happens: `pattern-scanner` flags dangerous patterns (`eval()`, bare `except:`, TODO markers), `risk-correlator` weighs complexity and change frequency, and `prevention-advisor` ranks remediation strategies. The returned `WorkflowResult` bundles all three subagents' findings.
 
-**You should see:** `execute()` return without raising. You can print `raw_result` to inspect the raw synthesis before formatting.
+**You should see:** `execute()` return without raising. Check `result.success` before formatting — a `False` value means `result.error` explains what went wrong instead of a report.
 
 ---
 
-## Step 4 — Format the results into a human-readable report
+## Step 4 — Render the result into a human-readable report
 
-`format_bug_predict_report` takes the raw result dict and the original input data and produces the structured markdown report. Keeping formatting separate from analysis means you can reuse the workflow output in other contexts (a CI comment, a dashboard) without re-running the scan.
+Keeping formatting separate from analysis means you can reuse the workflow
+output in other contexts (a CI comment, a dashboard) without re-running
+the scan. `result.final_output` carries a `WorkflowReport` when the
+subagents' findings parsed as structured output; `render()` turns that
+into markdown. Fall back to `result.summary` (always a plain string) when
+you just need the one-line takeaway.
 
 ```python
-report = format_bug_predict_report(
-    result=raw_result,
-    input_data={"path": "src/"},
-)
+from attune.workflows.output import WorkflowReport
 
-print(report)
+if isinstance(result.final_output, WorkflowReport):
+    print(render(result.final_output))
+else:
+    print(result.summary or result.final_output)
 ```
 
-**You should see:** a report with a `## Summary` section showing an overall risk score (0–100), a `## Bugs` section organized by severity (HIGH / MEDIUM / LOW), and a `## Suggestions` section with prioritized remediation advice.
+**You should see:** a report with a title, an overall `**Score:** N/100` line, and one section per subagent (pattern scanner findings, risk correlations, prevention advice).
 
 ---
 
@@ -111,19 +125,28 @@ The scanner applies false-positive filtering automatically: `eval()` inside test
 ## Complete script
 
 ```python
+import asyncio
+
 from attune.workflows.bug_predict import BugPredictionWorkflow
-from attune.workflows.bug_predict_report import format_bug_predict_report
+from attune.workflows.output import WorkflowReport
+from attune.voice.report_renderer import render
 
-workflow = BugPredictionWorkflow()
 
-raw_result = workflow.execute(path="src/")
+async def main() -> None:
+    workflow = BugPredictionWorkflow()
+    result = await workflow.execute(path="src/")
 
-report = format_bug_predict_report(
-    result=raw_result,
-    input_data={"path": "src/"},
-)
+    if not result.success:
+        print(f"Scan failed: {result.error}")
+        return
 
-print(report)
+    if isinstance(result.final_output, WorkflowReport):
+        print(render(result.final_output))
+    else:
+        print(result.summary or result.final_output)
+
+
+asyncio.run(main())
 ```
 
 Save this as `run_bug_predict.py` and run it with `python run_bug_predict.py`.
@@ -132,10 +155,10 @@ Save this as `run_bug_predict.py` and run it with `python run_bug_predict.py`.
 
 ## What you learned
 
-- **Step 1** — The workflow and the formatter are separate imports because analysis and presentation are intentionally decoupled.
+- **Step 1** — The workflow and the renderer are separate imports because analysis and presentation are intentionally decoupled.
 - **Step 2** — `BugPredictionWorkflow()` sets up three subagents (`pattern-scanner`, `risk-correlator`, `prevention-advisor`) under a single orchestrator without any required configuration.
-- **Step 3** — `execute(path=...)` drives all three subagents and returns a unified `WorkflowResult`; you don't call each subagent yourself.
-- **Step 4** — `format_bug_predict_report` converts that result into the tiered severity report (HIGH / MEDIUM / LOW) with file links and risk scores.
+- **Step 3** — `execute(path=...)` is a coroutine that drives all three subagents and returns a unified `WorkflowResult`; you don't call each subagent yourself.
+- **Step 4** — `attune.voice.report_renderer.render()` converts a structured `WorkflowReport` into markdown; `result.summary` is always available as a plain-string fallback.
 - **Step 5** — Each finding maps a pattern category to a concrete location, and the scanner's false-positive filtering means you can trust HIGH findings to reflect real risk.
 
 ## Next steps

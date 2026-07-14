@@ -30,9 +30,8 @@ Licensed under the Apache License, Version 2.0
 """
 
 import importlib.metadata
-import importlib.util
 import logging
-import os
+import warnings
 from typing import TYPE_CHECKING
 
 # =============================================================================
@@ -240,37 +239,56 @@ def _lazy_import_workflow(name: str) -> object:
     return attr
 
 
-# Re-export CLI commands from workflow_commands.py (lazy loaded)
-_parent_dir = os.path.dirname(os.path.dirname(__file__))
-_workflows_module_path = os.path.join(_parent_dir, "workflow_commands.py")
+# Legacy one-command family (morning/ship/fix-all/learn) — REMOVED.
+# The implementation modules (workflow_ship.py, workflow_morning.py,
+# workflow_fixall.py, workflow_learn.py, the workflow_commands.py facade,
+# _workflow_helpers.py) had zero live callers: no argparse subcommand
+# wired them, and the "ship" NL intent routes to release-prep instead
+# (cli_router.py maps "ship" -> ("release", "prep")). Accessing these
+# names still works (deprecation path, not a hard AttributeError) but
+# raises with a pointer to the successor. See
+# docs/reports/d-block-triage-2026-07-14.md and CHANGELOG.md.
+#
+# Deliberately NOT bound at module level (no ``cmd_ship = None`` etc.):
+# a bound module global shadows ``__getattr__`` for ordinary attribute
+# access (``attune.workflows.cmd_ship``, ``from attune.workflows import
+# cmd_ship``), which is exactly how the prior "loaded lazily via
+# __getattr__" placeholders silently returned ``None`` instead of ever
+# lazy-loading -- confirmed nothing in ``src/`` outside this module
+# triggered the load any other way. Leaving the names unbound routes
+# every access path through ``__getattr__`` so the deprecation warning
+# is actually observable.
+_DEPRECATED_CLI_COMMAND_SUCCESSORS: dict[str, str | None] = {
+    "cmd_ship": "attune workflow run release-prep",
+    "cmd_morning": None,
+    "cmd_fix_all": None,
+    "cmd_learn": None,
+}
 
-# Initialize to None for type checking - loaded lazily via __getattr__
-cmd_morning = None
-cmd_ship = None
-cmd_fix_all = None
-cmd_learn = None
-_cli_loaded = False
 
+def _deprecated_cli_command_stub(name: str) -> object:
+    """Build a stub for a removed one-command workflow CLI handler.
 
-def _load_cli_commands() -> None:
-    """Load CLI commands lazily."""
-    global cmd_morning, cmd_ship, cmd_fix_all, cmd_learn, _cli_loaded
-    if _cli_loaded:
-        return
+    Emits a DeprecationWarning on access (matching the
+    ``attune.StateManager``-style deprecation pattern) and raises
+    ``NotImplementedError`` when called, since the implementation has
+    been deleted -- there is nothing left to run.
+    """
+    successor = _DEPRECATED_CLI_COMMAND_SUCCESSORS.get(name)
+    message = (
+        f"attune.workflows.{name} belonged to the retired legacy "
+        "one-command workflow family (morning/ship/fix-all/learn) and "
+        "has been removed -- it had no live caller (no CLI wiring; the "
+        "'ship' NL intent already routes to release-prep)."
+    )
+    if successor:
+        message += f" Use '{successor}' instead."
+    warnings.warn(message, DeprecationWarning, stacklevel=3)
 
-    if os.path.exists(_workflows_module_path):
-        _spec = importlib.util.spec_from_file_location("_workflows_cli", _workflows_module_path)
-        if _spec is not None and _spec.loader is not None:
-            _workflows_cli = importlib.util.module_from_spec(_spec)
-            _spec.loader.exec_module(_workflows_cli)
+    def _stub(*_args: object, **_kwargs: object) -> int:
+        raise NotImplementedError(message)
 
-            # Re-export CLI commands
-            cmd_morning = _workflows_cli.cmd_morning
-            cmd_ship = _workflows_cli.cmd_ship
-            cmd_fix_all = _workflows_cli.cmd_fix_all
-            cmd_learn = _workflows_cli.cmd_learn
-
-    _cli_loaded = True
+    return _stub
 
 
 # Default workflow registry - uses CLASS NAMES (strings) for lazy loading
@@ -567,10 +585,9 @@ def __getattr__(name: str) -> object:
     if name in _LAZY_WORKFLOW_IMPORTS:
         return _lazy_import_workflow(name)
 
-    # Handle CLI commands
-    if name in ("cmd_morning", "cmd_ship", "cmd_fix_all", "cmd_learn"):
-        _load_cli_commands()
-        return globals().get(name)
+    # Handle deprecated CLI commands (legacy one-command family, removed)
+    if name in _DEPRECATED_CLI_COMMAND_SUCCESSORS:
+        return _deprecated_cli_command_stub(name)
 
     # Handle migration module exports
     _MIGRATION_EXPORTS = {

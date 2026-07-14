@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **Legacy one-command workflow family (`morning`/`ship`/`fix-all`/
+  `learn`).** `workflow_ship.py`, `workflow_morning.py`,
+  `workflow_fixall.py`, `workflow_learn.py`, the `workflow_commands.py`
+  facade, and `_workflow_helpers.py` are deleted (~640 LOC). Verified
+  zero live callers: no argparse subcommand wired them, and the "ship"
+  NL intent already routes to `release-prep` (`cli_router.py`).
+  `attune.workflows.cmd_morning` / `cmd_ship` / `cmd_fix_all` /
+  `cmd_learn` remain importable (deprecation path — matches the
+  `StateManager` precedent) but now emit a `DeprecationWarning` and
+  raise `NotImplementedError` on call, pointing `cmd_ship` at
+  `attune workflow run release-prep` (no successor for the other
+  three). See `docs/reports/d-block-triage-2026-07-14.md`.
+- **`workflows/bug_predict_report.py::format_bug_predict_report` and
+  `main`.** Consumed the pre-v4.2.0 dict pipeline shape, not the
+  `WorkflowResult` the SDK-native `BugPredictionWorkflow.execute`
+  returns; the only reference was a lint-suppressed re-export in
+  `bug_predict.py`, never called by the registered workflow. Hard
+  deleted (never part of a public `__all__`). Read
+  `result.final_output` / `result.summary` directly, or render a
+  structured `WorkflowReport` via
+  `attune.voice.report_renderer.render()`.
+
 ### Fixed
 
 - **Recall/warning sentinels no longer collapse into a shared bucket

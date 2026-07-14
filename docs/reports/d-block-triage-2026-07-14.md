@@ -60,3 +60,54 @@ these aren't changing.
    (possibly forward-looking watch-mode API). NOT approved — hold
    for a should-this-exist decision when project_index is next
    touched.
+
+## Paydown plan of record (Patrick-approved 2026-07-14 evening)
+
+Definition of done: the ratchet ledger contains ONLY deliberate
+ACCEPT entries, each justified above — not zero. Expected floor
+after the in-flight work (batch-1 cuts −3, deletions −2): 22, of
+which 9 are the remaining REFACTOR blocks.
+
+Method per batch: pin-then-cut (pins PR merges before cuts PR),
+serial-suite verification at the orchestrator's gate, ratchet
+entries deleted in each cut PR. One batch per session; freeze-
+compatible.
+
+- **Batch 2 — churn-hot infra** (1 session, 3 PRs; amended
+  2026-07-14): FIRST a standalone small PR fixing the known
+  `cmd_workflow_run` exit-0-on-failure bug (own regression test —
+  a deliberate behavior change must not ride inside a
+  pins-prove-preservation cut; and the bug is live today, so it
+  ships sooner decoupled). THEN pins + cuts as usual for
+  `_workflow_response` D26 (pin the MCP response shapes — the
+  exact-dict-equality trap lives here),
+  `RunnerService._validate_recommendation` D24 (stdout-loop
+  states), and `cmd_workflow_run` D21 — now purely
+  behavior-preserving like every other cut.
+- **Batch 3 — formatters + the last F** (1 session, 2 PRs):
+  `format_doc_gen_report` D29, `_extract_from_workflow_result`
+  D23, `_section_html` D22, `_build_summary` F48 (highest care).
+  Parallel pin agents (similar section-builder shapes), one cut
+  pass. Natural moment for the held `refresh_incremental`
+  should-this-exist decision (sibling file).
+- **Batch 4 — workflow executes** (1 session, 3 small PRs):
+  `RagCodeGenWorkflow.execute` D24,
+  `DocumentationOrchestrator.execute` D22,
+  `EmpathyLLMExecutor.run` D22. Stage-extraction, mock-based
+  pins, plus one dogfood-run receipt per cut (registered ≠
+  working — these wrap LLM/SDK calls). OPENING STEP (amended
+  2026-07-14): a 15-minute subsystem-value-gate check on
+  `EmpathyLLMExecutor`'s callers (`escalation/chain`,
+  `escalation/evaluator`, `executor_mixin`) BEFORE any pin work —
+  it is the live executor of a framework whose core was deleted
+  in 9.0.0; if its callers are themselves retirement candidates,
+  the right move is deletion-with-deprecation (ledger −1 free),
+  not a careful refactor of dead-subsystem plumbing. Proceed with
+  the refactor only if the check says the callers stay.
+
+Post-freeze checkpoint: re-check the 12 ACCEPT rationales against
+fresh churn data once — an ACCEPT that starts churning is promoted
+to REFACTOR.
+
+Trajectory: 27 → 22 (in flight) → ~13 (batches 2+3) → 12
+all-ACCEPT (batch 4).
