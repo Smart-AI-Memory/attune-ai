@@ -1287,3 +1287,89 @@ class TestOrientWorktreeAlarm:
         monkeypatch.setattr("sys.stdin", _io.StringIO(_json.dumps({"cwd": str(repo)})))
         assert orient_mod.main() == 0
         assert "uncommitted in worktree" not in capsys.readouterr().out
+
+
+# ── archive-ready detection (triage R1, 2026-07-14) ──────────
+
+
+def _epoch(day: str) -> float:
+    """UTC midnight of ``YYYY-MM-DD`` as epoch seconds."""
+    from datetime import datetime, timezone
+
+    return datetime.strptime(day, "%Y-%m-%d").replace(tzinfo=timezone.utc).timestamp()
+
+
+class TestArchiveReady:
+    def test_dated_terminal_past_grace_flags(self, audit_mod, audit_tree) -> None:
+        # done-spec is "complete (2026-06-17)" — 14 days before ``now``.
+        rows = {r.slug: r for r in audit_mod.audit_specs([audit_tree], now=_epoch("2026-07-01"))}
+        assert rows["done-spec"].archive_ready is True
+
+    def test_dated_terminal_within_grace_not_flagged(self, audit_mod, audit_tree) -> None:
+        rows = {r.slug: r for r in audit_mod.audit_specs([audit_tree], now=_epoch("2026-06-20"))}
+        assert rows["done-spec"].archive_ready is False
+
+    def test_non_terminal_never_flags(self, audit_mod, audit_tree) -> None:
+        # approved specs, however old, are not archive candidates.
+        rows = {r.slug: r for r in audit_mod.audit_specs([audit_tree], now=_epoch("2027-01-01"))}
+        assert rows["shipped-spec"].archive_ready is False
+        assert rows["pending-spec"].archive_ready is False
+
+    def test_parked_and_living_never_flag(self, audit_mod, tmp_path) -> None:
+        _audit_spec_file(
+            tmp_path / "specs" / "parked-spec",
+            status="parked (2026-01-01)",
+            deliverables=[],
+        )
+        _audit_spec_file(
+            tmp_path / "specs" / "living-spec",
+            status="living (2026-01-01)",
+            deliverables=[],
+        )
+        rows = {r.slug: r for r in audit_mod.audit_specs([tmp_path], now=_epoch("2027-01-01"))}
+        assert rows["parked-spec"].archive_ready is False
+        assert rows["living-spec"].archive_ready is False
+
+    def test_undated_terminal_falls_back_to_mtime(self, audit_mod, tmp_path) -> None:
+        _audit_spec_file(tmp_path / "specs" / "undated", status="complete", deliverables=[])
+        # Fresh mtime + now ≈ mtime → inside the grace window.
+        fresh = {r.slug: r for r in audit_mod.audit_specs([tmp_path])}
+        assert fresh["undated"].archive_ready is False
+        # Same tree judged 8 days after the file was written → flagged.
+        later = _time.time() + 8 * 86400
+        aged = {r.slug: r for r in audit_mod.audit_specs([tmp_path], now=later)}
+        assert aged["undated"].archive_ready is True
+
+    def test_grace_env_override(self, audit_mod, audit_tree, monkeypatch) -> None:
+        # A 60-day grace swallows the 14-day-old completion date.
+        monkeypatch.setenv("ATTUNE_SPEC_ARCHIVE_GRACE_DAYS", "60")
+        rows = {r.slug: r for r in audit_mod.audit_specs([audit_tree], now=_epoch("2026-07-01"))}
+        assert rows["done-spec"].archive_ready is False
+
+    def test_terminal_since_prefers_status_date(self, audit_mod) -> None:
+        since = audit_mod._terminal_since("complete (2026-06-17) — shipped #1", 12345.0)
+        assert since == _epoch("2026-06-17")
+        assert audit_mod._terminal_since("complete — no date", 12345.0) == 12345.0
+
+    def test_json_payload_carries_archive_ready(self, audit_mod, audit_tree) -> None:
+        results = audit_mod.audit_specs([audit_tree], now=_epoch("2026-07-01"))
+        payload = _json.loads(audit_mod.format_json(results))
+        assert payload["counts"]["archive_ready"] == 1
+        assert payload["archive_ready"] == ["workspace/done-spec"]
+        assert payload["specs"]["workspace/done-spec"]["archive_ready"] is True
+
+    def test_report_footer_lists_ready_slugs(self, audit_mod, audit_tree) -> None:
+        report = audit_mod.format_report(
+            audit_mod.audit_specs([audit_tree], now=_epoch("2026-07-01"))
+        )
+        assert "archive-ready: done-spec" in report
+
+    def test_strict_ignores_archive_ready(self, audit_mod, tmp_path, monkeypatch) -> None:
+        # Only an old terminal spec — archive-ready but nothing stale/drifted.
+        _audit_spec_file(
+            tmp_path / "specs" / "old-done",
+            status="complete (2020-01-01)",
+            deliverables=[],
+        )
+        monkeypatch.setenv("ATTUNE_AI_WORKSPACE_ROOTS", str(tmp_path))
+        assert audit_mod.main(["--strict", "--offline"]) == 0
