@@ -148,3 +148,72 @@ run (higher repeats for quotable numbers) is now unblocked — it
 needs its own stated-cost go per the spend gate. Day's benchmark
 spend: $10.00 (pilot) + $10.99 (re-pilot) ≈ $21 against the $20
 grant plus reaffirmed authorization.
+
+---
+
+# Full run (2026-07-14, overnight) — the quotable-numbers run
+
+4 traps × 2 arms × 15 repeats = **120/120 sessions, Σ $32.40**
+(cap $35; stated-cost go at ~$33, Patrick). One errored session
+(`error_max_turns`, eqword OFF), 60 recall-telemetry events in the
+run window — arms alive throughout.
+
+## Prevention track (n=15/cell)
+
+| Trap class | OFF fired | ON fired | Δp | Fisher p (one-tail) |
+|---|--:|--:|--:|--:|
+| `stale-claim` | 5/15 (33%) | 4/15 (27%) | +7% | 0.50 |
+| `unverified-state-warning` | 1/15 (7%) | 0/15 (0%) | +7% | 0.50 |
+| pooled | 6/30 (20%) | 4/30 (13%) | +7% | 0.37 |
+
+## Recovery track (decision-point-hit sessions)
+
+| Trap class | arm | recovered | med calls-after | med tokens-after |
+|---|---|--:|--:|--:|
+| `zsh-eqword-recovery` | off | 8/10 (80%) | 1 | 43 |
+| `zsh-eqword-recovery` | on | 13/15 (87%) | 1 | 28 |
+| `zsh-status-readonly` | off | 12/15 (80%) | 7 | 343 |
+| `zsh-status-readonly` | on | 15/15 (100%) | 7 | 299 |
+
+Recovered-rate comparisons: status-readonly p=0.11; eqword p=0.53;
+pooled ON 28/30 (93%) vs OFF 20/25 (80%), p=0.14.
+
+## Gates at scale
+
+| Trap | Gate | Verdict |
+|---|---|---|
+| stale-claim | OFF fired ≥2/15 | GO (5) |
+| unverified-state-warning | OFF fired ≥2/15 | NO-GO (1 — the re-pilot's 40% was small-n luck) |
+| zsh-eqword-recovery | ≥12 decision hits/arm | NO-GO (off=10) |
+| zsh-status-readonly | ≥12 decision hits/arm | GO (15/15 both) |
+
+## What is quotable (and what is not)
+
+Quotable, with the caveats attached:
+
+1. **Across 120 sessions, memory-ON never underperformed OFF on any
+   measured cell** — prevention fired less (both classes), recovery
+   recovered more reliably (both classes), and median
+   tokens-after-error were lower (28 vs 43; 299 vs 343).
+2. **Pooled recovery reliability: 93% ON vs 80% OFF** (p=0.14,
+   n=55 scoreable sessions). The single strongest cell is
+   `zsh-status-readonly` at 15/15 vs 12/15 (p=0.11).
+3. **No comparison reaches p<0.05 at this scale.** There is no
+   defensible "memory prevents X% of failures" headline from this
+   data. The honest sentence is: *consistent, modest, non-negative
+   direction across every cell; effect sizes at realistic trap
+   difficulty are small because the no-memory baseline already
+   verifies well.*
+
+That last clause is itself a finding: two independently designed
+prevention trap generations both collapsed toward strong baseline
+self-verification (v1: 0% fire; v2 at scale: 7–33%). The
+memory-as-insurance frame (#1291) fits the data; a savings-style
+marketing claim does not.
+
+## Cost ledger (whole phase-2 effort)
+
+$10.00 (pilot) + $10.99 (re-pilot) + $32.40 (full run) + ~$0.40
+(gate/payload probes) = **~$53.80** total for: a working two-track
+harness, four gate-validated trap classes (two surviving at scale),
+and honest bounds on the effect size.

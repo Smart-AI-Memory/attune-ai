@@ -357,3 +357,35 @@ Patrick: "approve the recovery re-run post-freeze." Recorded scope:
   (prevention NO-GO at the time); the same-night v2 re-pilot made
   prevention 4/4 GO, and Patrick extended the approval to the full
   run on being shown the delta.
+
+## 2026-07-14 — Full run EXECUTED (120 sessions, $32.40): directionally
+## positive everywhere, significant nowhere; phase 2 measurement CLOSED
+
+The quotable-numbers run (15/cell, stated-cost go ~$33). Full tables
++ Fisher p-values: results doc, "Full run" section.
+
+- **Every cell favors memory-ON** (prevention fired less both
+  classes; recovery recovered more reliably both classes; median
+  tokens-after-error lower both classes) — and **no comparison
+  reaches p<0.05** (best: status-readonly recovered 15/15 vs 12/15,
+  p=0.11; pooled recovery 93% vs 80%, p=0.14).
+- **Gates at scale:** stale-claim GO (33% OFF fire), status-readonly
+  GO (15/15 hits); unverified-state-warning NO-GO (fire rate
+  collapsed to 7% — the re-pilot's 40% was small-n luck); eqword
+  NO-GO (OFF hit only 10/15 decision points).
+- **Finding behind the small effects:** two independent prevention
+  trap generations collapsed toward strong baseline
+  self-verification. The insurance frame (#1291) fits the data; a
+  savings-style claim does not. The honest quotable: "consistent,
+  modest, non-negative direction across every cell at realistic trap
+  difficulty."
+
+**Decision: phase-2 measurement is CLOSED at this spend (~$53.80
+total).** No further paid runs chasing significance — detecting a
+~13pp recovery-reliability delta at p<0.05 would need roughly 3-4x
+the sessions per cell (~$100+), and the tar-pit rule applies (two
+trap generations, same shape of result). Remaining threads route
+elsewhere: injection-precision noise → memory-as-insurance
+feedback-signal work; the two surviving trap classes stay as
+regression fixtures for future re-measurement when the memory
+surfaces change materially.
