@@ -274,46 +274,50 @@
   <article class="markdown-body">
 <h1>Memory FAQ</h1>
 <h2>What does the memory subsystem do?</h2>
-<p>It gives agents two tiers of storage behind one API: short-term
-working memory (TTL-expiring, optionally Redis-backed) and long-term
-pattern memory (durable, searchable, classified). Security —
-auto-classification, PII scrubbing, secrets detection, and at-rest
-encryption for sensitive patterns — runs before anything durable is
-written. The recommended entry point is <code>UnifiedMemory</code>.</p>
+<p>It gives agents two tiers of storage behind one API:
+short-term working memory (TTL-expiring, optionally Redis-backed)
+and long-term pattern memory (durable, searchable, classified).
+Security — auto-classification, PII scrubbing, secrets detection,
+and at-rest encryption for sensitive patterns — runs before
+anything durable is written. The recommended entry point is
+<code>UnifiedMemory</code>.</p>
 <h2>What's the difference between short-term and long-term memory?</h2>
-<p>Short-term (<code>stash</code> / <code>retrieve</code>) is TTL-expiring working storage.
-Long-term (<code>persist_pattern</code> / <code>recall_pattern</code> / <code>search_patterns</code>)
-is durable, searchable, classified pattern storage. Patterns can be
-staged first (<code>stage_pattern</code>) and promoted later (<code>promote_pattern</code>).</p>
+<p>Short-term (<code>stash</code> / <code>retrieve</code>) is TTL-expiring working
+storage. Long-term (<code>persist_pattern</code> / <code>recall_pattern</code> /
+<code>search_patterns</code>) is durable, searchable, classified pattern
+storage. Patterns can be staged first (<code>stage_pattern</code>) and
+promoted later (<code>promote_pattern</code>).</p>
 <h2>How do I construct a UnifiedMemory?</h2>
-<p><code>UnifiedMemory(user_id=&quot;...&quot;)</code>. <code>user_id</code> is required; <code>config</code>
-(a <code>MemoryConfig</code>, default auto-detected from the environment) and
-<code>access_tier</code> (default <code>AccessTier.CONTRIBUTOR</code>) are optional. Import
-it with <code>from attune.memory import UnifiedMemory</code>.</p>
+<p><code>UnifiedMemory(user_id=&quot;...&quot;)</code>. <code>user_id</code> is required;
+<code>config</code> (a <code>MemoryConfig</code>, default auto-detected from the
+environment) and <code>access_tier</code> (default <code>AccessTier.CONTRIBUTOR</code>)
+are optional. Import it with
+<code>from attune.memory import UnifiedMemory</code>.</p>
 <h2>Do I need Redis?</h2>
 <p>No. <code>UnifiedMemory</code> auto-detects the environment and uses an
-in-process store when Redis isn't available; Redis adds real-time and
-cross-process support. Check <code>supports_distributed()</code> /
+in-process store when Redis isn't available; Redis adds real-time
+and cross-process support. Check <code>supports_distributed()</code> /
 <code>get_capabilities()</code> to see what the active backend supports.</p>
 <h2>Are the calls async?</h2>
-<p>No — <code>UnifiedMemory</code>'s public methods are synchronous. Call them
-directly, no <code>await</code>.</p>
+<p>No — <code>UnifiedMemory</code>'s public methods are synchronous. Call
+them directly, no <code>await</code>.</p>
 <h2>How is sensitive data protected?</h2>
 <p>On <code>persist_pattern</code>, content is auto-classified (<code>PUBLIC</code> /
-<code>INTERNAL</code> / <code>SENSITIVE</code>), PII is scrubbed, secrets are flagged, and
-<code>SENSITIVE</code> patterns are encrypted at rest when encryption is enabled.
-Keep <code>auto_classify=True</code> unless you set the level yourself.</p>
+<code>INTERNAL</code> / <code>SENSITIVE</code>), PII is scrubbed, secrets are flagged,
+and <code>SENSITIVE</code> patterns are encrypted at rest when encryption is
+enabled. Keep <code>auto_classify=True</code> unless you set the level
+yourself.</p>
 <h2>What is staging for?</h2>
-<p><code>stage_pattern</code> holds a candidate pattern so you can review it
-(<code>get_staged_patterns()</code>) before <code>promote_pattern</code> commits it to
+<p><code>stage_pattern</code> holds a candidate pattern so you can review
+it (<code>get_staged_patterns()</code>) before <code>promote_pattern</code> commits it to
 durable storage (running classification and scrubbing on the way).</p>
 <h2>How do I write a custom backend?</h2>
-<p>Implement the <code>MemoryBackend</code> protocol (or <code>SearchableMemoryBackend</code>
-for search) from <code>attune.memory.backend</code> — both are
-<code>@runtime_checkable</code>, so any class implementing the methods satisfies
-them. Note the protocol's <code>stash(key, value, ttl, agent_id)</code> differs
-from <code>UnifiedMemory</code>'s own <code>stash(key, value, ttl_seconds)</code>.</p>
-<p><strong>Tags:</strong> <code>memory</code>, <code>storage</code></p>
+<p>Implement the <code>MemoryBackend</code> protocol (or
+<code>SearchableMemoryBackend</code> for search) from <code>attune.memory.backend</code>
+— both are <code>@runtime_checkable</code>, so any class implementing the
+methods satisfies them. Note the protocol's
+<code>stash(key, value, ttl, agent_id)</code> differs from <code>UnifiedMemory</code>'s
+own <code>stash(key, value, ttl_seconds)</code>.</p>
 
   </article>
   <footer>

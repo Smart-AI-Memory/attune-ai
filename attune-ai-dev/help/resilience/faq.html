@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Resilience FAQ — faq</title>
-  <meta name="description" content="`retry` for transient failures that usually succeed on a re-try; `circuit_breaker` when a dependency is down and retrying just piles on; `timeout` for calls that may hang; `fallback` when an alternate" />
+  <meta name="description" content="retry for transient blips, circuit breaker when a dependency is down, timeout for hangs, fallback for an acceptable alternate, health checks to report status." />
   <meta property="og:title" content="Resilience FAQ — faq" />
-  <meta property="og:description" content="`retry` for transient failures that usually succeed on a re-try; `circuit_breaker` when a dependency is down and retrying just piles on; `timeout` for calls that may hang; `fallback` when an alternate" />
+  <meta property="og:description" content="retry for transient blips, circuit breaker when a dependency is down, timeout for hangs, fallback for an acceptable alternate, health checks to report status." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/resilience/faq" />
   <style>
@@ -274,38 +274,18 @@
   <article class="markdown-body">
 <h1>Resilience FAQ</h1>
 <h2>Which resilience pattern should I use?</h2>
-<p><code>retry</code> for transient failures that usually succeed on a re-try;
-<code>circuit_breaker</code> when a dependency is down and retrying just piles on;
-<code>timeout</code> for calls that may hang; <code>fallback</code> when an alternate result
-is acceptable; <code>HealthCheck</code> to aggregate component status. All are
-imported from <code>attune.resilience</code>.</p>
-<h2>Is the fallback API synchronous or asynchronous?</h2>
-<p>The <code>@fallback</code> decorator runs synchronously on a sync function.
-<code>with_fallback(primary, fallbacks)</code> returns an <strong>async</strong> wrapper you must
-await (e.g. <code>asyncio.run(...)</code>). <code>with_timeout(coro, seconds)</code> is also
-async. The <code>@retry</code>, <code>@circuit_breaker</code>, and <code>@timeout</code> decorators work
-on plain sync functions.</p>
+<p>retry for transient blips, circuit breaker when a dependency is
+down, timeout for hangs, fallback for an acceptable alternate, health
+checks to report status.</p>
+<h2>Is the fallback API sync or async?</h2>
+<p>The <code>@fallback</code> decorator is synchronous; <code>with_fallback(...)</code>
+returns an async wrapper you must await. <code>with_timeout</code> is also async.</p>
 <h2>How do I reset a tripped circuit breaker?</h2>
-<p><code>get_circuit_breaker(name).reset()</code>, or wait <code>reset_timeout</code> for it to
-probe in <code>HALF_OPEN</code>. A breaker trips <code>OPEN</code> after <code>failure_threshold</code>
-consecutive failures and raises <code>CircuitOpenError</code> while open. Inspect
-it with <code>get_circuit_breaker(name).get_stats()</code> (keys: <code>name</code>, <code>state</code>,
-<code>failure_count</code>, <code>success_count</code>, <code>time_until_reset</code>).</p>
+<p><code>get_circuit_breaker(name).reset()</code>, or wait <code>reset_timeout</code>
+for it to probe in HALF_OPEN.</p>
 <h2>How do I stop retrying on non-transient errors?</h2>
-<p>Pass <code>retryable_exceptions=(SomeError, ...)</code> to <code>@retry</code> so only those
-exceptions retry. Left at the default (<code>None</code>), retry treats all
-exceptions as retryable — including programming errors.</p>
-<h2>How do I register a health check?</h2>
-<p><code>register</code> is a <strong>decorator</strong>: apply <code>@hc.register(&quot;name&quot;)</code> over a check
-function that returns a bool/dict, then call <code>run_all_sync()</code> (or the
-async <code>run_all()</code>) to get a <code>SystemHealth</code>. It is not a
-<code>register(name, fn)</code> two-argument call.</p>
-<h2>Where is the source?</h2>
-<p>All resilience source lives under <code>src/attune/resilience/</code> — one module
-per pattern (<code>retry</code>, <code>circuit_breaker</code>, <code>timeout</code>, <code>fallback</code>,
-<code>health</code>).</p>
-<p><strong>Tags:</strong> <code>resilience</code>, <code>fault-tolerance</code>, <code>retry</code>, <code>circuit-breaker</code>,
-<code>reliability</code></p>
+<p>Pass <code>retryable_exceptions=(SomeError, ...)</code> to <code>@retry</code> so only
+those retry.</p>
 
   </article>
   <footer>

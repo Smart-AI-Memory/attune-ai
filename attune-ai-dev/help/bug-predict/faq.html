@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Bug Predict FAQ — faq</title>
-  <meta name="description" content="It scans your codebase for code patterns and complexity signals that historically cause production incidents, then returns a risk report grouped by severity with file paths and line numbers." />
+  <meta name="description" content="No. It predicts and prioritizes likely-bug hotspots and suggests prevention strategies; applying fixes is a separate step you (or a refactor workflow) take." />
   <meta property="og:title" content="Bug Predict FAQ — faq" />
-  <meta property="og:description" content="It scans your codebase for code patterns and complexity signals that historically cause production incidents, then returns a risk report grouped by severity with file paths and line numbers." />
+  <meta property="og:description" content="No. It predicts and prioritizes likely-bug hotspots and suggests prevention strategies; applying fixes is a separate step you (or a refactor workflow) take." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/bug-predict/faq" />
   <style>
@@ -273,88 +273,25 @@
   </nav>
   <article class="markdown-body">
 <h1>Bug Predict FAQ</h1>
-<h2>What does bug predict do?</h2>
-<p>It scans your codebase for code patterns and complexity signals that historically cause production incidents, then returns a risk report grouped by severity with file paths and line numbers.</p>
-<h2>When should I use it?</h2>
-<p>Use bug predict before merging a large PR, during code review to focus attention on real risks, or as a periodic health check on high-churn modules. If you need broader vulnerability scanning rather than pattern-based prediction, consider a security audit instead.</p>
-<h2>How do I run it?</h2>
-<p>The fastest way is to point it at a path:</p>
-<pre><code>/bug-predict src/
-</code></pre>
-<p>You can also use natural language — for example, &quot;predict bugs in src/&quot; or &quot;find risky code in the auth package&quot;. If you don't specify a path, the skill walks you through scoping before it runs. See the <a>task guide</a> for the full walkthrough.</p>
-<h2>What patterns does it detect?</h2>
-<p>It detects three pattern types:</p>
-<table>
-<thead>
-<tr>
-<th>Pattern</th>
-<th>Severity</th>
-<th>Example</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>dangerous_eval</code></td>
-<td>HIGH</td>
-<td><code>eval()</code> or <code>exec()</code> on user input</td>
-</tr>
-<tr>
-<td><code>broad_exception</code></td>
-<td>MEDIUM</td>
-<td>Bare <code>except:</code> or unlogged <code>except Exception:</code></td>
-</tr>
-<tr>
-<td><code>incomplete_code</code></td>
-<td>LOW</td>
-<td>TODO, FIXME, HACK, or XXX comments</td>
-</tr>
-</tbody>
-</table>
-<p>It also weighs cyclomatic complexity, change frequency, and code smells when calculating the overall risk score.</p>
-<h2>Does it flag false positives?</h2>
-<p>It automatically suppresses known-safe patterns — for example, <code>eval()</code> inside test fixture strings, JavaScript <code>regex.exec()</code> calls, and broad exceptions marked with <code># INTENTIONAL:</code> or <code># noqa: BLE001</code>. Keywords like <code>fallback</code>, <code>graceful</code>, and <code>intentional</code> in surrounding comments are also treated as intentional and filtered out.</p>
-<h2>How is the risk score calculated?</h2>
-<p>The score runs from 0 to 100 and reflects a combination of pattern matches, their severity, and contextual signals like file complexity and change frequency. A score is shown at the top of every report alongside the total file and finding counts.</p>
-<h2>What are the three subagents doing under the hood?</h2>
-<p><code>BugPredictionWorkflow</code> coordinates three specialized subagents — <code>pattern-scanner</code>, <code>risk-correlator</code>, and <code>prevention-advisor</code> — and synthesizes their findings into a single report with a summary, a bugs section, and prioritized prevention suggestions.</p>
-<h2>How do I generate a report programmatically?</h2>
-<p>Call <code>format_bug_predict_report(result, input_data)</code> from <code>workflows.bug_predict_report</code>. It takes the raw result dict and the original input data, and returns a formatted string you can print or write to a file. For a standalone CLI run, call <code>main()</code> from the same module.</p>
-<h2>Can I customize the workflow's system prompt?</h2>
-<p>Yes. Pass a <code>system_prompt_suffix</code> string when constructing <code>BugPredictionWorkflow</code>:</p>
-<pre><code class="language-python">from workflows.bug_predict import BugPredictionWorkflow
-
-workflow = BugPredictionWorkflow(system_prompt_suffix=&quot;Focus only on authentication code.&quot;)
-result = workflow.execute(path=&quot;src/auth/&quot;)
-</code></pre>
-<h2>How do I debug a failed scan?</h2>
-<p>Run the related tests first with <code>pytest -k &quot;bug-predict&quot; -v</code>. If the tests pass but your scan still fails, add a <code>logger.debug</code> statement at the suspected failure point and re-run with logging enabled. The source files to inspect are <code>src/attune/workflows/bug_predict.py</code> and the <code>bug_predict_report</code> module in the same directory.</p>
-<p><strong>Tags:</strong> <code>bugs</code>, <code>prediction</code>, <code>scanning</code>, <code>race-condition</code></p>
-<h2>Unresolved references</h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Line 63 (code fence)</td>
-<td>error</td>
-<td><code>from workflows.bug_predict import …</code> — module not importable</td>
-</tr>
-<tr>
-<td>Line 29</td>
-<td>error</td>
-<td><code>[task guide](tasks/use-bug-predict.md)</code> — target does not exist</td>
-</tr>
-</tbody>
-</table>
+<h2>Does bug-predict fix the bugs it finds?</h2>
+<p>No. It predicts and prioritizes likely-bug hotspots and
+suggests prevention strategies; applying fixes is a separate
+step you (or a refactor workflow) take.</p>
+<h2>Is there an <code>attune bug-predict</code> command?</h2>
+<p>No dedicated subcommand — run it as
+<code>attune workflow run bug-predict</code>, or use the <code>/bug-predict</code>
+skill or the <code>bug_predict</code> MCP tool.</p>
+<h2>Which calls are async?</h2>
+<p><code>execute</code> is the only public method and it is a
+coroutine — <code>await</code> it or use <code>asyncio.run</code>.</p>
+<h2>What does <code>depth</code> change?</h2>
+<p>The agent-turn budget (quick 10, standard 20, deep 40)
+and the per-run cost cap — deeper scans read more and cost
+more.</p>
+<h2>Why didn't my <code>./attune.config.yml</code> <code>bug_predict</code> settings change the results?</h2>
+<p>Those settings configure the internal static pattern
+helpers, not the live SDK subagents. Steer the scan with
+<code>system_prompt_suffix</code> or a deeper <code>depth</code> instead.</p>
 
   </article>
   <footer>

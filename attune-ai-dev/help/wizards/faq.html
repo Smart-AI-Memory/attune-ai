@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Wizards FAQ — faq</title>
-  <meta name="description" content="Interactive, multi-step workflows that guide you through complex tasks — collecting input via `question` steps, running LLM calls, decomposing tasks, and gating on review/confirm — and return a `Wizar" />
+  <meta name="description" content="`get_wizard(id)` returns the class; instantiate it and `await run()`. Or use the `/wizard` skill in a conversation. There&#x27;s no `attune wizard` CLI command." />
   <meta property="og:title" content="Wizards FAQ — faq" />
-  <meta property="og:description" content="Interactive, multi-step workflows that guide you through complex tasks — collecting input via `question` steps, running LLM calls, decomposing tasks, and gating on review/confirm — and return a `Wizar" />
+  <meta property="og:description" content="`get_wizard(id)` returns the class; instantiate it and `await run()`. Or use the `/wizard` skill in a conversation. There&#x27;s no `attune wizard` CLI command." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/wizards/faq" />
   <style>
@@ -273,59 +273,23 @@
   </nav>
   <article class="markdown-body">
 <h1>Wizards FAQ</h1>
-<h2>What are wizards?</h2>
-<p>Interactive, multi-step workflows that guide you through complex tasks
-— collecting input via <code>question</code> steps, running LLM calls, decomposing
-tasks, and gating on review/confirm — and return a <code>WizardResult</code> with
-the collected data, generated output, and cost/duration.</p>
-<h2>Which wizards are available?</h2>
-<p>Five ship built in (run <code>list_wizards()</code> to confirm):</p>
-<ul>
-<li><code>debug</code> (<code>DebugWizard</code>) — systematic debugging</li>
-<li><code>refactor</code> (<code>RefactorWizard</code>) — code restructuring with safety checks</li>
-<li><code>release-prep</code> (<code>ReleasePrepWizard</code>) — release preparation</li>
-<li><code>security</code> (<code>SecurityWizard</code>) — guided security audit</li>
-<li><code>test-gen</code> (<code>TestGenWizard</code>) — interactive test generation</li>
-</ul>
 <h2>How do I run a wizard?</h2>
-<p><code>get_wizard(id)</code> returns the wizard class; instantiate it and <code>await</code>
-its <code>run()</code> — <code>run()</code> is a coroutine:</p>
-<pre><code class="language-python">import asyncio
-
-from attune.wizards import get_wizard
-
-
-async def main() -&gt; None:
-    wizard_cls = get_wizard(&quot;debug&quot;)
-    if wizard_cls is not None:
-        result = await wizard_cls().run(initial_context={&quot;file&quot;: &quot;my_script.py&quot;})
-        print(result.success)
-
-
-asyncio.run(main())
-</code></pre>
-<p>There is no <code>attune wizard</code> CLI command and no MCP tool — run wizards
-through the Python API or the <code>/wizard</code> skill.</p>
+<p><code>get_wizard(id)</code> returns the class; instantiate it and
+<code>await run()</code>. Or use the <code>/wizard</code> skill in a conversation. There's
+no <code>attune wizard</code> CLI command.</p>
+<h2>Which wizards ship built in?</h2>
+<p>Five — <code>debug</code>, <code>refactor</code>, <code>release-prep</code>, <code>security</code>,
+<code>test-gen</code> (<code>list_wizards()</code> to confirm).</p>
 <h2>Are the calls async?</h2>
-<p><code>run()</code> is a coroutine — <code>await</code> it or use <code>asyncio.run</code>. The registry
-functions (<code>list_wizards</code>, <code>get_wizard</code>) are synchronous.</p>
+<p><code>run()</code> is a coroutine — <code>await</code> it. The registry functions
+(<code>list_wizards</code>, <code>get_wizard</code>) are synchronous.</p>
 <h2>Is there a <code>WizardRegistry</code> class?</h2>
-<p>No. The registry is module-level functions in <code>attune.wizards</code>:
-<code>list_wizards</code>, <code>get_wizard</code>, <code>register_wizard</code>, <code>save_custom_wizard</code>,
-<code>delete_custom_wizard</code>.</p>
-<h2>How do I see all available wizards?</h2>
-<p>Call <code>list_wizards()</code> — it returns a <code>WizardConfig</code> per registered
-wizard, with id, name, domain, and estimated cost/duration.</p>
-<h2>Can I create custom wizards?</h2>
-<p>Yes — subclass <code>BaseWizard</code> (implement <code>build_prompt_context</code> and
-<code>process_step_result</code>) and <code>register_wizard(id, cls)</code>, or build a
-<code>ConfigDrivenWizard(config, steps)</code> / persist one with
-<code>save_custom_wizard(data)</code>.</p>
-<h2>How do I debug a wizard failure?</h2>
-<p>Check <code>WizardResult.error</code> and <code>WizardResult.steps_completed</code> to see
-where it stopped. If a <code>question</code> step stalls outside the <code>/wizard</code>
-skill, wire an <code>ask_user_callback</code> into the wizard.</p>
-<p><strong>Tags:</strong> <code>wizards</code>, <code>interactive</code></p>
+<p>No. The registry is module-level functions in
+<code>attune.wizards</code> (<code>list_wizards</code>, <code>get_wizard</code>, <code>register_wizard</code>,
+<code>save_custom_wizard</code>, <code>delete_custom_wizard</code>).</p>
+<h2>How do I add my own wizard?</h2>
+<p>Subclass <code>BaseWizard</code> and <code>register_wizard(id, cls)</code>, or build
+a <code>ConfigDrivenWizard</code> / <code>save_custom_wizard(data)</code>.</p>
 
   </article>
   <footer>

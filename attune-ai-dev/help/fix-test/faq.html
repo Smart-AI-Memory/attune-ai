@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Fix Test FAQ — faq</title>
-  <meta name="description" content="The fix-test feature provides automated test lifecycle management for your project. It tracks test execution, monitors coverage, and creates maintenance plans to keep your tests healthy and up-to-date" />
+  <meta name="description" content="No. It decides *what* test work a change implies and *whether* it is safe to run automatically. Generating test code is the smart-test feature&#x27;s job." />
   <meta property="og:title" content="Fix Test FAQ — faq" />
-  <meta property="og:description" content="The fix-test feature provides automated test lifecycle management for your project. It tracks test execution, monitors coverage, and creates maintenance plans to keep your tests healthy and up-to-date" />
+  <meta property="og:description" content="No. It decides *what* test work a change implies and *whether* it is safe to run automatically. Generating test code is the smart-test feature&#x27;s job." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/faq" />
   <style>
@@ -273,40 +273,25 @@
   </nav>
   <article class="markdown-body">
 <h1>Fix Test FAQ</h1>
-<h2>What is the fix-test feature?</h2>
-<p>The fix-test feature provides automated test lifecycle management for your project. It tracks test execution, monitors coverage, and creates maintenance plans to keep your tests healthy and up-to-date with your code changes.</p>
-<h2>When should I use fix-test?</h2>
-<p>Use fix-test when you need to:</p>
-<ul>
-<li>Automatically track which files need tests</li>
-<li>Monitor test coverage and execution</li>
-<li>Get maintenance plans for stale or missing tests</li>
-<li>Respond to file changes with appropriate test actions</li>
-<li>Get a quick test-health summary for your project</li>
-</ul>
-<h2>What are the main functions I should know about?</h2>
-<p>Start with these functions based on what you want to do:</p>
-<ul>
-<li><code>run_tests_with_tracking()</code> — Run your test suite while tracking execution for Tier 1 monitoring</li>
-<li><code>track_coverage()</code> — Import coverage data from a coverage.xml file</li>
-<li><code>track_file_tests()</code> — Track test status for a specific source file</li>
-<li><code>get_files_needing_tests()</code> — Find files that need new tests or have stale tests</li>
-</ul>
-<h2>How do I create a test maintenance plan?</h2>
-<p>Use the <code>TestMaintenanceWorkflow</code> class. It analyzes your project and generates a <code>TestMaintenancePlan</code> with specific actions, priorities, and effort estimates for each file that needs attention.</p>
-<h2>How do I respond to file changes automatically?</h2>
-<p><code>TestMaintenanceWorkflow</code> handles file events for you. Its <code>on_file_created()</code>, <code>on_file_modified()</code>, and <code>on_file_deleted()</code> handlers each return a <code>TestPlanItem</code> describing the test action that change implies, with an assigned <code>TestAction</code> and <code>TestPriority</code>.</p>
-<h2>What happens when I run <code>track_coverage()</code>?</h2>
-<p>The function reads your coverage.xml file and creates a <code>CoverageRecord</code>. If the file doesn't exist, you'll get a <code>FileNotFoundError</code>. If the XML format is invalid, you'll get a <code>ValueError</code> with details about what went wrong.</p>
-<h2>How do I debug test tracking issues?</h2>
-<p>First, run <code>pytest -k &quot;fix-test&quot; -v</code> to check if the feature's own tests pass. If they do but you're still having problems, add debug logging at the point where things go wrong and re-run with logging enabled.</p>
-<h2>Where are the source files?</h2>
-<p>The fix-test feature spans two files:</p>
-<ul>
-<li><code>src/attune/workflows/test_runner.py</code> — Test execution and coverage tracking</li>
-<li><code>src/attune/workflows/test_maintenance.py</code> — Maintenance workflow, planning, and source-file event handlers</li>
-</ul>
-<p><strong>Tags:</strong> <code>tests</code>, <code>debugging</code>, <code>fixes</code></p>
+<h2>Does fix-test write tests for me?</h2>
+<p>No. It decides <em>what</em> test work a change implies and <em>whether</em>
+it is safe to run automatically. Generating test code is the
+smart-test feature's job.</p>
+<h2>Is there an <code>attune fix-test</code> command?</h2>
+<p>No dedicated CLI subcommand — fix-test is reached as the
+<code>/fix-test</code> skill, and the planning/measurement logic is the Python
+API on this page (<code>TestMaintenanceWorkflow</code> and the <code>test_runner</code>
+functions).</p>
+<h2>What's the entry point?</h2>
+<p><code>await TestMaintenanceWorkflow(project_root).run({&quot;mode&quot;: &quot;analyze&quot;})</code> for a whole-project plan, or the <code>on_file_*</code> handlers
+for a single file event.</p>
+<h2>Which calls are async?</h2>
+<p><code>run</code> and the three <code>on_file_*</code> handlers. The summary methods
+and all <code>test_runner</code> functions are synchronous.</p>
+<h2>How do I run only the safe items?</h2>
+<p><code>await workflow.run({&quot;mode&quot;: &quot;auto&quot;})</code> — it executes the
+<code>auto_executable</code> subset and leaves <code>REVIEW</code> / <code>MANUAL</code> items for a
+human. Add <code>&quot;dry_run&quot;: True</code> to preview the count first.</p>
 
   </article>
   <footer>

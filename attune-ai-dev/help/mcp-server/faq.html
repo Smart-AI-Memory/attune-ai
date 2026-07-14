@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MCP Server FAQ — faq</title>
-  <meta name="description" content="`EmpathyMCPServer` — attune&#x27;s Model Context Protocol server. It exposes attune&#x27;s workflows, help, and memory as MCP **tools**, **resources**, and **prompts** to a client like Claude Code, speaking MCP" />
-  <meta property="og:title" content="MCP Server FAQ — faq" />
-  <meta property="og:description" content="`EmpathyMCPServer` — attune&#x27;s Model Context Protocol server. It exposes attune&#x27;s workflows, help, and memory as MCP **tools**, **resources**, and **prompts** to a client like Claude Code, speaking MCP" />
+  <title>Mcp Server FAQ — faq</title>
+  <meta name="description" content="`EmpathyMCPServer` — attune&#x27;s Model Context Protocol server. It exposes attune&#x27;s workflows, help, and memory as MCP tools/resources/ prompts to a client like Claude Code, over stdio." />
+  <meta property="og:title" content="Mcp Server FAQ — faq" />
+  <meta property="og:description" content="`EmpathyMCPServer` — attune&#x27;s Model Context Protocol server. It exposes attune&#x27;s workflows, help, and memory as MCP tools/resources/ prompts to a client like Claude Code, over stdio." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/mcp-server/faq" />
   <style>
@@ -272,44 +272,25 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>MCP Server FAQ</h1>
+<h1>Mcp Server FAQ</h1>
 <h2>What is the MCP server?</h2>
-<p><code>EmpathyMCPServer</code> — attune's Model Context Protocol server. It exposes
-attune's workflows, help, and memory as MCP <strong>tools</strong>, <strong>resources</strong>,
-and <strong>prompts</strong> to a client like Claude Code, speaking MCP over stdio.
-It's how the conversational surface reaches every attune feature.</p>
+<p><code>EmpathyMCPServer</code> — attune's Model Context Protocol server. It
+exposes attune's workflows, help, and memory as MCP tools/resources/
+prompts to a client like Claude Code, over stdio.</p>
 <h2>How do I run it / make the tools show up?</h2>
-<p>Register <code>python -m attune.mcp.server</code> in <code>.mcp.json</code> (the plugin ships
-one). The plugin entry uses <code>uvx --from attune-ai python -m attune.mcp.server</code>; a local checkout uses <code>uv run python -m attune.mcp.server</code>. Run the same command directly to test the server.</p>
+<p>Register <code>python -m attune.mcp.server</code> in <code>.mcp.json</code> (the
+plugin ships one). Run it directly with the same command for testing.</p>
 <h2>How many tools does it expose?</h2>
-<p>41 built-in tools, across five categories — workflow (21), utility (7),
-help (5), memory (4), and personal-memory (4) — plus 3 resources
-(<code>attune://workflows</code>, <code>attune://auth/config</code>, <code>attune://telemetry</code>)
-and 3 prompts (<code>security-scan</code>, <code>test-gen</code>, <code>cost-report</code>). Installed
-plugins can register more (e.g. attune-redis adds five <code>redis_*</code>
-tools), so <code>server.tools</code> may hold more than 41.</p>
+<p>41 built-in — across workflow (21), utility (7), help (5),
+memory (4), and personal-memory (4) categories — plus any registered
+by installed plugins (e.g. attune-redis's five <code>redis_*</code> tools), and
+3 resources and 3 prompts.</p>
 <h2>Is <code>call_tool</code> async?</h2>
-<p>Yes — <code>await EmpathyMCPServer.call_tool(name, arguments)</code>. The
-inspection helpers <code>create_server()</code>, <code>get_resource_list()</code>, and
-<code>get_prompt_list()</code> are synchronous.</p>
-<h2>How do I inspect the server from Python?</h2>
-<pre><code class="language-python">from attune.mcp import create_server
-
-server = create_server()
-print(len(server.tools), &quot;tools&quot;)
-print([r[&quot;uri&quot;] for r in server.get_resource_list()])
-print([p[&quot;name&quot;] for p in server.get_prompt_list()])
-</code></pre>
-<h2>What if the server isn't responding?</h2>
-<p>Confirm <code>.mcp.json</code> exists and its command launches (<code>python -m attune.mcp.server</code>). stdout is the MCP protocol channel, so logs go to
-<code>&lt;tmp&gt;/attune/attune-mcp.log</code> — read that to debug a connection.</p>
-<h2>Where is the server code?</h2>
-<p><code>src/attune/mcp/server.py</code> (the <code>EmpathyMCPServer</code> class). Tool
-<em>schemas</em> live in <code>src/attune/mcp/tool_schemas.py</code> (the five
-<code>get_*_tools</code> groups + <code>get_resources</code> + <code>get_prompts</code>); <em>handlers</em>
-live in <code>memory_handlers.py</code> / <code>workflow_handlers.py</code>; rate limiting is
-in <code>rate_limiter.py</code>.</p>
-<p><strong>Tags:</strong> <code>mcp</code>, <code>tools</code>, <code>server</code></p>
+<p>Yes — <code>await</code> it. <code>create_server()</code>, <code>get_resource_list()</code>,
+and <code>get_prompt_list()</code> are synchronous.</p>
+<h2>Why don't I see server output in my terminal?</h2>
+<p>stdio is the MCP protocol channel; logs go to
+<code>&lt;tmp&gt;/attune/attune-mcp.log</code>.</p>
 
   </article>
   <footer>

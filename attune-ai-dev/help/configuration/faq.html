@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Configuration FAQ — faq</title>
-  <meta name="description" content="It loads, validates, and manages all Attune AI settings — agent behavior, workflows, persistence, routing, telemetry, auth, and more — from config files, environment variables, or both." />
+  <meta name="description" content="The unified tree — `load_unified_config()` → `UnifiedConfig` with typed sections. `AttuneConfig`/`load_config()` is the legacy dataclass; `EmpathyXMLConfig` (`get_config()`) is the empathy subsystem&#x27;s" />
   <meta property="og:title" content="Configuration FAQ — faq" />
-  <meta property="og:description" content="It loads, validates, and manages all Attune AI settings — agent behavior, workflows, persistence, routing, telemetry, auth, and more — from config files, environment variables, or both." />
+  <meta property="og:description" content="The unified tree — `load_unified_config()` → `UnifiedConfig` with typed sections. `AttuneConfig`/`load_config()` is the legacy dataclass; `EmpathyXMLConfig` (`get_config()`) is the empathy subsystem&#x27;s" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/configuration/faq" />
   <style>
@@ -273,105 +273,20 @@
   </nav>
   <article class="markdown-body">
 <h1>Configuration FAQ</h1>
-<h2>What does the configuration module do?</h2>
-<p>It loads, validates, and manages all Attune AI settings — agent behavior, workflows, persistence, routing, telemetry, auth, and more — from config files, environment variables, or both.</p>
-<h2>How do I load configuration?</h2>
-<p>Call <code>load_unified_config()</code> for a one-liner, or instantiate <code>ConfigLoader</code> directly if you need more control (for example, to pass a specific path or call <code>apply_env_overrides()</code> separately).</p>
-<pre><code class="language-python">from attune.config.loader import load_unified_config
-
-config = load_unified_config()          # auto-discovers config file
-config = load_unified_config(&quot;my/path/attune.config.json&quot;)  # explicit path
-</code></pre>
-<h2>Where does the loader look for config files?</h2>
-<p><code>ConfigLoader.discover_config_path()</code> searches these paths in order:</p>
-<ul>
-<li><code>./attune.config.json</code></li>
-<li><code>~/.attune/config.json</code></li>
-<li><code>~/.config/attune/config.json</code></li>
-</ul>
-<p>The first file found wins. If none exist, <code>get_default_config_path()</code> returns the default location to write a new one.</p>
-<h2>How do environment variables override config file values?</h2>
-<p>Call <code>ConfigLoader.apply_env_overrides(config)</code> after loading. Environment variables use the prefix <code>ATTUNE_</code>. If an <code>ATTUNE_</code>-prefixed variable is not set, the module falls back to the equivalent <code>EMPATHY_</code>-prefixed variable via <code>get_attune_env()</code>.</p>
-<h2>How do I read a single environment variable?</h2>
-<p>Use <code>get_attune_env(name, default)</code>. It checks <code>ATTUNE_{name}</code> first, then <code>EMPATHY_{name}</code>, and returns <code>default</code> if neither is set.</p>
-<pre><code class="language-python">from attune.config.env_compat import get_attune_env
-
-api_key = get_attune_env(&quot;API_KEY&quot;, default=None)
-</code></pre>
-<h2>How do I iterate over a group of related environment variables?</h2>
-<p>Use <code>iter_attune_env_prefix(prefix, suffix)</code>. It yields <code>(middle_part, value)</code> for every env var matching <code>ATTUNE_{prefix}*{suffix}</code>.</p>
-<pre><code class="language-python">from attune.config.env_compat import iter_attune_env_prefix
-
-for name, value in iter_attune_env_prefix(&quot;MODEL_&quot;):
-    print(name, value)
-</code></pre>
-<h2>How do I save configuration back to disk?</h2>
-<p>Use <code>save_unified_config(config, path)</code> or <code>ConfigLoader.save(config, path)</code>. Both return the <code>Path</code> where the file was written.</p>
-<h2>How do I validate a config object?</h2>
-<p>Pass a <code>UnifiedConfig</code> instance to <code>validate_config()</code>. It returns a list of <code>ValidationError</code> objects — an empty list means the config is valid.</p>
-<pre><code class="language-python">from attune.config.validation import validate_config
-
-errors = validate_config(config)
-if errors:
-    for e in errors:
-        print(e)
-</code></pre>
-<h2>What sections does <code>UnifiedConfig</code> contain?</h2>
-<p><code>UnifiedConfig</code> composes these section classes, all importable from <code>attune.config.sections</code>:</p>
-<table>
-<thead>
-<tr>
-<th>Section</th>
-<th>Class</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Analysis</td>
-<td><code>AnalysisConfig</code></td>
-</tr>
-<tr>
-<td>Auth</td>
-<td><code>AuthConfig</code></td>
-</tr>
-<tr>
-<td>Environment</td>
-<td><code>EnvironmentConfig</code></td>
-</tr>
-<tr>
-<td>Persistence</td>
-<td><code>PersistenceConfig</code></td>
-</tr>
-<tr>
-<td>Routing</td>
-<td><code>RoutingConfig</code></td>
-</tr>
-<tr>
-<td>Telemetry</td>
-<td><code>TelemetryConfig</code></td>
-</tr>
-<tr>
-<td>Workflows</td>
-<td><code>WorkflowConfig</code></td>
-</tr>
-</tbody>
-</table>
-<p>Each section has <code>to_dict()</code> and <code>from_dict()</code> methods for serialization.</p>
-<h2>How do I read or write individual values on a <code>UnifiedConfig</code>?</h2>
-<p>Use <code>get_value(key)</code>, <code>set_value(key, value)</code>, and <code>get_all_keys()</code> to work with config values without accessing section attributes directly.</p>
-<h2>What is <code>EmpathyXMLConfig</code> and when do I use it?</h2>
-<p><code>EmpathyXMLConfig</code> is a separate config object for the Empathy subsystem. Load it with <code>EmpathyXMLConfig.load_from_file()</code> or build it from environment variables with <code>EmpathyXMLConfig.from_env()</code>. Use <code>get_config()</code> and <code>set_config()</code> to access or replace the global instance.</p>
-<h2>How do I configure agent behavior?</h2>
-<p>Use <code>UnifiedAgentConfig</code>. Call <code>get_model_id()</code> to resolve the active model, and <code>for_book_production()</code> to get a <code>BookProductionConfig</code> scoped to book-production agents. <code>BookProductionConfig</code> exposes <code>model</code>, <code>max_tokens</code>, <code>temperature</code>, <code>timeout</code>, <code>retry_attempts</code>, and <code>retry_delay</code> as properties.</p>
-<h2>How do I debug a configuration problem?</h2>
-<ol>
-<li>Run <code>pytest -k &quot;configuration&quot; -v</code> to check whether the issue is in your code or the library.</li>
-<li>Call <code>validate_config(config)</code> and inspect any returned <code>ValidationError</code> objects.</li>
-<li>Print <code>config.get_all_keys()</code> to confirm which keys are present.</li>
-<li>Check that your environment variables carry the <code>ATTUNE_</code> prefix and use <code>get_attune_env()</code> to verify they resolve correctly.</li>
-</ol>
-<h2>Where is the source code?</h2>
-<p>All configuration source files live under <code>src/attune/config/</code>.</p>
+<h2>Which config should I use?</h2>
+<p>The unified tree — <code>load_unified_config()</code> → <code>UnifiedConfig</code>
+with typed sections. <code>AttuneConfig</code>/<code>load_config()</code> is the legacy
+dataclass; <code>EmpathyXMLConfig</code> (<code>get_config()</code>) is the empathy
+subsystem's config.</p>
+<h2>Why are there <code>AttuneConfig</code> and <code>EmpathyConfig</code>?</h2>
+<p>They are the <strong>same class</strong> — <code>EmpathyConfig</code> is an alias of
+<code>AttuneConfig</code> (the legacy dataclass).</p>
+<h2>How do environment overrides work?</h2>
+<p><code>ATTUNE_</code>-prefixed variables override file values; the legacy
+<code>EMPATHY_</code> prefix is honored as a fallback (<code>get_attune_env</code>).</p>
+<h2>Where does config load from?</h2>
+<p><code>CONFIG_SEARCH_PATHS</code> — <code>./attune.config.json</code>,
+<code>~/.attune/config.json</code>, <code>~/.config/attune/config.json</code>.</p>
 
   </article>
   <footer>

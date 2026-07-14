@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Code Quality FAQ — faq</title>
-  <meta name="description" content="A unified analysis that checks your code for style violations, correctness issues, likely bugs, and structural problems in a single pass with a scored report." />
+  <meta name="description" content="A one-call code review: the `CodeReviewWorkflow` delegates to four specialized SDK subagents — security, quality, performance, architecture — and synthesizes their findings into a single report with a" />
   <meta property="og:title" content="Code Quality FAQ — faq" />
-  <meta property="og:description" content="A unified analysis that checks your code for style violations, correctness issues, likely bugs, and structural problems in a single pass with a scored report." />
+  <meta property="og:description" content="A one-call code review: the `CodeReviewWorkflow` delegates to four specialized SDK subagents — security, quality, performance, architecture — and synthesizes their findings into a single report with a" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/code-quality/faq" />
   <style>
@@ -274,24 +274,68 @@
   <article class="markdown-body">
 <h1>Code Quality FAQ</h1>
 <h2>What is code quality review?</h2>
-<p>A unified analysis that checks your code for style violations, correctness issues, likely bugs, and structural problems in a single pass with a scored report.</p>
+<p>A one-call code review: the <code>CodeReviewWorkflow</code> delegates
+to four specialized SDK subagents — security, quality, performance,
+architecture — and synthesizes their findings into a single report
+with an overall 0–100 health score, per-domain findings, and a
+prioritized list of next steps.</p>
 <h2>When should I run a code quality review?</h2>
-<p>Before opening pull requests, after large refactors, when inheriting unfamiliar code, or any time you want a health score for your codebase.</p>
+<p>Before opening pull requests, after large refactors, when
+inheriting unfamiliar code, or any time you want a health read on a
+codebase. It is the everyday breadth review.</p>
 <h2>How do I start a review?</h2>
-<p>Use <code>/code-quality &lt;path&gt;</code> to review specific files or directories, or just say &quot;review src/&quot; in natural language. You'll get guided through scope and depth questions if needed.</p>
+<p>Four ways: the <code>/code-quality</code> skill in a Claude Code
+conversation, the CLI (<code>attune workflow run code-review --path src/</code> — note the slug), the <code>code_review</code> MCP tool, or the Python
+API (<code>await CodeReviewWorkflow().execute(path=&quot;src/&quot;)</code>).</p>
 <h2>What's the difference between quick, standard, and deep reviews?</h2>
-<p>Quick scans only style and formatting (seconds), standard adds logic errors and likely bugs (~1 minute), and deep includes security and architecture analysis (~3 minutes). Standard is the default.</p>
+<p><code>depth</code> sets the agent-turn budget — <code>quick</code> 10, <code>standard</code>
+20 (the default), <code>deep</code> 40. All four passes run at every depth;
+a bigger budget means more thorough passes, not different ones.
+(One nuance: the <code>/code-quality</code> <em>skill</em> routes a &quot;deep&quot; request
+to the separate deep-review workflow.)</p>
 <h2>What do the health scores mean?</h2>
-<p>90-100 is excellent (ship it), 75-89 is good (fix before merge), 50-74 needs work (prioritize fixes), and 0-49 is poor (stop and address major problems).</p>
+<p>The Summary section opens with an overall 0–100 health
+score synthesized from the four passes — higher is healthier. It
+is an LLM judgment, not a measurement: treat it as a trend signal
+and read the per-domain findings for the substance.</p>
 <h2>Can I fix issues automatically?</h2>
-<p>Some style issues like unused imports can be auto-fixed by saying &quot;fix the quality issues&quot; after getting results. Structural and logic problems require manual attention.</p>
+<p>The workflow reports; it never modifies files. In a Claude
+Code session, ask the agent to apply specific fixes from the
+report — mechanical ones (unused imports, style) are quick wins;
+structural findings need manual judgment.</p>
 <h2>How do I focus on specific types of issues?</h2>
-<p>After getting results, say &quot;just show me the likely bugs&quot; or &quot;focus on security issues&quot; to drill down into specific categories.</p>
+<p>There's no <code>focus</code> parameter — all four passes always run.
+Narrow the <code>path</code>, use deep-review (which has <code>focus</code>), or drill
+into the returned report conversationally (&quot;just show me the
+security findings&quot;).</p>
 <h2>What if I want to compare different parts of my code?</h2>
-<p>Ask &quot;compare quality of src/auth/ vs src/api/&quot; to get a side-by-side analysis showing which area needs more attention.</p>
+<p>Run the workflow once per path (e.g. <code>src/auth/</code> then
+<code>src/api/</code>) and compare the health scores and finding counts —
+the report is per-run, one path at a time.</p>
 <h2>Where can I learn more?</h2>
-<p>Say &quot;tell me more&quot; for complete step-by-step instructions, or check the related quickstart and task guides for this feature.</p>
-<p><strong>Tags:</strong> <code>review</code>, <code>quality</code>, <code>bugs</code></p>
+<p>Say &quot;tell me more&quot; (the coach skill goes progressively
+deeper: concept → procedural → reference), or open this feature's
+quickstart and task guides.</p>
+<h2>Why does <code>attune workflow run code-quality</code> say &quot;unknown workflow&quot;?</h2>
+<p>The registered slug is <code>code-review</code>. The <code>code-quality</code>
+name is the skill / help topic; run the workflow as
+<code>attune workflow run code-review</code>.</p>
+<h2>What's the difference between code-quality and deep-review?</h2>
+<p>Code-quality runs four passes — security, quality,
+performance, architecture — and has no narrowing knob.
+Deep-review swaps performance and architecture for a test-gap
+pass and lets you narrow with <code>focus</code>. Use code-quality for the
+everyday maintainability read, deep-review when test coverage is
+the concern.</p>
+<h2>How do I run only the security pass?</h2>
+<p>You can't — code-quality has no <code>focus</code>. Either narrow the
+<code>path</code>, or use deep-review with <code>focus=[&quot;security&quot;]</code>.</p>
+<h2>Which calls are async?</h2>
+<p><code>execute</code> is the only public method and it is a coroutine
+— <code>await</code> it or use <code>asyncio.run</code>.</p>
+<h2>Does a clean review mean the code is good?</h2>
+<p>No. Findings are LLM predictions, not proofs, and a clean
+pass is not a guarantee — treat the review as one input.</p>
 
   </article>
   <footer>

@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Doc Gen FAQ — faq</title>
-  <meta name="description" content="Doc gen automatically generates documentation from your source code, including API references, README sections, and other developer documentation." />
+  <meta name="description" content="No. Its subagents are read-only; the generated documentation comes back in `final_output` for you to review and place." />
   <meta property="og:title" content="Doc Gen FAQ — faq" />
-  <meta property="og:description" content="Doc gen automatically generates documentation from your source code, including API references, README sections, and other developer documentation." />
+  <meta property="og:description" content="No. Its subagents are read-only; the generated documentation comes back in `final_output` for you to review and place." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/doc-gen/faq" />
   <style>
@@ -273,24 +273,24 @@
   </nav>
   <article class="markdown-body">
 <h1>Doc Gen FAQ</h1>
-<h2>What is doc gen?</h2>
-<p>Doc gen automatically generates documentation from your source code, including API references, README sections, and other developer documentation.</p>
-<h2>When should I use it?</h2>
-<p>Use doc gen when you need to create or update documentation for a codebase. It's particularly useful for generating API documentation from docstrings, creating structured README content, and maintaining up-to-date reference materials as your code evolves.</p>
-<h2>What's the main entry point?</h2>
-<p>Start with the <code>DocumentGenerationWorkflow</code> class, which orchestrates the entire documentation generation process. You can also use <code>format_doc_gen_report()</code> to format the generated output into a human-readable report.</p>
-<p>The workflow operates in three stages: outline planning, content writing, and final polish review.</p>
-<h2>How do I control costs?</h2>
-<p>Doc gen includes built-in cost management through the <code>DocGenCostMixin</code>. The workflow tracks token usage across all generation stages and provides cost estimates before processing large codebases.</p>
-<h2>Can I generate documentation in chunks?</h2>
-<p>Yes, use the <code>ChunkedGenerationMixin</code> to process large codebases in smaller pieces. This prevents memory issues and allows you to generate documentation incrementally.</p>
-<h2>How do I debug it?</h2>
-<p>Run <code>pytest -k &quot;doc-gen&quot; -v</code> first to check if the basic functionality works. If tests pass but your code fails, add debug logging at the failure point and check the workflow stages (outline, write, polish) individually.</p>
-<h2>Where are the source files?</h2>
-<ul>
-<li><code>src/attune/workflows/document_gen/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>docs</code>, <code>documentation</code>, <code>generation</code></p>
+<h2>Does doc-gen write documentation files for me?</h2>
+<p>No. Its subagents are read-only; the generated
+documentation comes back in <code>final_output</code> for you to review and
+place.</p>
+<h2>What's the difference between doc-gen, doc-audit, and doc-orchestrator?</h2>
+<p>Doc-gen creates new docs; doc-audit finds stale or missing
+docs; doc-orchestrator runs the full maintenance pipeline. The
+<code>/doc-gen</code> skill routes among them.</p>
+<h2>How do I run doc-gen reliably from code?</h2>
+<p>Use the CLI (<code>attune workflow run doc-gen --path &lt;p&gt;</code>) or
+Python (<code>DocumentGenerationWorkflow().execute(path=&lt;p&gt;)</code>) — both
+pass the <code>path</code> the workflow expects.</p>
+<h2>Which calls are async?</h2>
+<p><code>execute</code> is a coroutine — <code>await</code> it or use
+<code>asyncio.run</code>.</p>
+<h2>How do I keep a run cheap?</h2>
+<p>Narrow the <code>path</code> and use a shallower <code>depth</code> (<code>quick</code>
+uses the smallest agent-turn budget).</p>
 
   </article>
   <footer>

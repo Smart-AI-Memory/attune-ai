@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Orchestration FAQ — faq</title>
-  <meta name="description" content="A workflow is one analysis. `attune.orchestration` supplies the composable parts — reusable `AgentTemplate`s and a library of `ExecutionStrategy` classes — and `attune.agents.team.AgentTeam` fans seve" />
+  <meta name="description" content="The composable parts — reusable agent templates and a library of execution strategies — plus `AgentTeam` to fan several workflow-backed agents out in parallel behind quality gates." />
   <meta property="og:title" content="Orchestration FAQ — faq" />
-  <meta property="og:description" content="A workflow is one analysis. `attune.orchestration` supplies the composable parts — reusable `AgentTemplate`s and a library of `ExecutionStrategy` classes — and `attune.agents.team.AgentTeam` fans seve" />
+  <meta property="og:description" content="The composable parts — reusable agent templates and a library of execution strategies — plus `AgentTeam` to fan several workflow-backed agents out in parallel behind quality gates." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/orchestration/faq" />
   <style>
@@ -274,39 +274,18 @@
   <article class="markdown-body">
 <h1>Orchestration FAQ</h1>
 <h2>What does orchestration give me beyond a single workflow?</h2>
-<p>A workflow is one analysis. <code>attune.orchestration</code> supplies the
-composable parts — reusable <code>AgentTemplate</code>s and a library of
-<code>ExecutionStrategy</code> classes — and <code>attune.agents.team.AgentTeam</code> fans
-several workflow-backed agents out in parallel behind quality gates.</p>
+<p>The composable parts — reusable agent templates and a library
+of execution strategies — plus <code>AgentTeam</code> to fan several
+workflow-backed agents out in parallel behind quality gates.</p>
 <h2>How do I run a team of agents?</h2>
-<p>Build an <code>AgentTeam(agents, gates)</code> from <code>WorkflowAgent</code>s and
-<code>GateSpec</code>s, then <code>await team.run(target)</code>. Each <code>WorkflowAgent</code> wraps a
-registered workflow and reports a real 0-100 score; each <code>GateSpec</code>
-thresholds one agent's score. The run returns a <code>TeamReport</code> with
-<code>passed</code>, <code>blockers</code>, <code>warnings</code>, <code>results</code>, and <code>cost</code>. It is fan-out +
-gate only — there is no task-analysis planner picking agents for you.</p>
+<p><code>attune.agents.team.AgentTeam(agents, gates)</code> with
+<code>WorkflowAgent</code>s and <code>GateSpec</code>s, then <code>await team.run(target)</code>.</p>
 <h2>How do I see the available agent templates?</h2>
-<p><code>get_all_templates()</code> returns the registry's <code>AgentTemplate</code>s (each has
-an <code>id</code>, <code>role</code>, <code>capabilities</code>, <code>tools</code>, <code>tier_preference</code>); fetch one
-with <code>get_template(template_id)</code>. Filter with
-<code>get_templates_by_capability(...)</code> or <code>get_templates_by_tier(...)</code>, and
-add your own with <code>register_custom_template(...)</code>.</p>
-<h2>Which execution strategies can <code>get_strategy</code> return?</h2>
-<p>Nine names construct with no arguments: <code>sequential</code>, <code>parallel</code>,
-<code>debate</code>, <code>teaching</code>, <code>refinement</code>, <code>adaptive</code>, <code>tool_enhanced</code>,
-<code>prompt_cached_sequential</code>, <code>delegation_chain</code>. The registry also holds
-<code>conditional</code>, <code>multi_conditional</code>, <code>nested</code>, and <code>nested_sequential</code>,
-but those require constructor arguments — fetching them bare via
-<code>get_strategy</code> raises <code>TypeError</code>, so construct them directly. An
-unknown name raises <code>ValueError</code>.</p>
-<h2>Is orchestration synchronous or asynchronous?</h2>
-<p>Building a team and listing templates are synchronous. The runs —
-<code>AgentTeam.run(target)</code> and <code>ExecutionStrategy.execute(agents, context)</code> — are <strong>async</strong> and must be awaited.</p>
-<h2>Where is the source?</h2>
-<p>The templates and strategies live under <code>src/attune/orchestration/</code>; the
-team runner is <code>attune.agents.team.AgentTeam</code>
-(<code>src/attune/agents/team.py</code>).</p>
-<p><strong>Tags:</strong> <code>orchestration</code>, <code>teams</code></p>
+<p><code>get_all_templates()</code> (and <code>get_template(id)</code> for one); filter
+with <code>get_templates_by_capability</code> / <code>get_templates_by_tier</code>.</p>
+<h2>Is orchestration sync or async?</h2>
+<p>Building a team and listing templates are synchronous;
+<code>AgentTeam.run</code> and <code>ExecutionStrategy.execute</code> are async.</p>
 
   </article>
   <footer>

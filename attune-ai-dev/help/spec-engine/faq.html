@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Spec Engine FAQ — faq</title>
-  <meta name="description" content="The spec engine executes a structured, spec-driven development workflow — decomposing a plan into tasks, running each task through quality gates, and tracking progress with per-task approval loops." />
+  <meta name="description" content="The runtime layer that reads a decomposed plan file, executes each task in order, runs quality gates after each, and tracks progress so a run can be paused and resumed." />
   <meta property="og:title" content="Spec Engine FAQ — faq" />
-  <meta property="og:description" content="The spec engine executes a structured, spec-driven development workflow — decomposing a plan into tasks, running each task through quality gates, and tracking progress with per-task approval loops." />
+  <meta property="og:description" content="The runtime layer that reads a decomposed plan file, executes each task in order, runs quality gates after each, and tracks progress so a run can be paused and resumed." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/spec-engine/faq" />
   <style>
@@ -274,38 +274,35 @@
   <article class="markdown-body">
 <h1>Spec Engine FAQ</h1>
 <h2>What is the spec engine?</h2>
-<p>The spec engine executes a structured, spec-driven development workflow — decomposing a plan into tasks, running each task through quality gates, and tracking progress with per-task approval loops.</p>
+<p>The runtime layer that reads a decomposed plan file, executes
+each task in order, runs quality gates after each, and tracks
+progress so a run can be paused and resumed.</p>
 <h2>When should I use it?</h2>
-<p>Use the spec engine when you have a plan file with XML task blocks (saved under <code>.claude/plans/</code>) and want to execute those tasks with quality gates and approval checkpoints. If you're still in the brainstorming or decomposition phase, you don't need the spec engine yet.</p>
+<p>When you have a plan file with XML task blocks under
+<code>.claude/plans/</code> and want to execute those tasks with quality gates
+and approval checkpoints. If you're still brainstorming or
+decomposing, you don't need the engine yet.</p>
 <h2>What's the main entry point?</h2>
-<p>It depends on what you want to do:</p>
-<ul>
-<li><strong>Load and parse a plan file</strong> — call <code>read_spec(plan_path)</code> to extract a list of <code>DecomposedTask</code> objects from the XML blocks in your plan.</li>
-<li><strong>Run the full pipeline programmatically</strong> — instantiate <code>PipelineOrchestrator(spec_path)</code> and call <code>run_all()</code>. Use <code>skip_gates</code>, <code>skip_tests</code>, or <code>skip_simplify</code> to control which checks run.</li>
-<li><strong>Run with per-task approval</strong> — call <code>execute_with_approval(spec_path, on_task_complete)</code>, which prompts for approval after each task instead of running automatically.</li>
-</ul>
+<p>Load and parse a plan — <code>read_spec(plan_path)</code>. Run the full
+pipeline programmatically — <code>await PipelineOrchestrator(spec_path).run_all()</code>.
+Run with per-task approval — <code>await execute_with_approval(spec_path, on_task_complete)</code>.</p>
 <h2>How do quality gates work?</h2>
-<p>After each task executes, <code>run_gates_for_task()</code> evaluates the result and returns a <code>TaskResult</code>. The <code>TaskResult.quality_gate_passed</code> field tells you whether the task met its acceptance criteria; <code>TaskResult.gate_score</code> gives a numeric score; and <code>TaskResult.severity</code> classifies the outcome. If <code>quality_gate_passed</code> is <code>False</code>, the pipeline stops unless you're running in auto-run mode (<code>SpecState.auto_run = True</code>).</p>
-<h2>How does the engine track progress?</h2>
-<p>Progress is stored in a <code>SpecState</code> object, which records the <code>plan_path</code>, a list of <code>completed</code> task IDs, and the <code>current</code> task ID. Call <code>load_state(plan_path)</code> to read existing state from the plan file, <code>save_state(state)</code> to persist it, and <code>clear_state(plan_path)</code> to reset. To find all plans that have unfinished work, call <code>find_resumable_plans()</code>, which defaults to searching <code>.claude/plans/</code>.</p>
+<p>After each task, <code>run_gates_for_task</code> evaluates the result and
+returns a <code>TaskResult</code>. <code>quality_gate_passed</code> says whether the task
+met its acceptance criteria; <code>gate_score</code> gives a numeric score;
+<code>severity</code> classifies the outcome. If <code>quality_gate_passed</code> is
+<code>False</code>, the pipeline stops unless auto-run is active
+(<code>SpecState.auto_run = True</code>).</p>
 <h2>Can I skip tasks or resume a partial run?</h2>
-<p>Yes. Pass a set of task IDs to <code>run_all(skip_task_ids=...)</code> to exclude specific tasks. To resume from where you left off, call <code>get_pending_tasks(tasks, state)</code> — it filters out any task IDs already in <code>SpecState.completed</code> — then pass those remaining tasks to your orchestration logic.</p>
-<h2>How do I display task status to a user?</h2>
-<p>Use the presenter functions:</p>
-<ul>
-<li><code>present_tasks(tasks, state)</code> — renders a markdown table of all tasks, annotated with completion status if you pass a <code>SpecState</code>.</li>
-<li><code>present_task_detail(task)</code> — renders full details for a single task.</li>
-<li><code>present_task_result(task, gate_result)</code> — renders the outcome of a task alongside its quality gate status.</li>
-<li><code>format_progress_bar(completed, total)</code> — returns a visual progress indicator.</li>
-</ul>
+<p>Yes. Pass a set of task IDs to <code>run_all(skip_task_ids=...)</code> to
+exclude them. To resume, call <code>get_pending_tasks(tasks, state)</code> — it
+filters out IDs already in <code>SpecState.completed</code> — then orchestrate
+the remaining tasks.</p>
 <h2>How do I check whether the whole pipeline succeeded?</h2>
-<p>Inspect the <code>PipelineResult</code> returned by <code>run_all()</code> or <code>execute_with_approval()</code>. <code>PipelineResult.success</code> is <code>True</code> only when all tasks executed and passed their gates. <code>PipelineResult.summary</code> gives a human-readable summary. <code>PipelineResult.total_cost</code> and <code>PipelineResult.duration_ms</code> are available for observability.</p>
-<h2>Where are the source files?</h2>
-<ul>
-<li><code>src/attune/pipeline/**</code> — orchestration, result models, and spec reader</li>
-<li><code>src/attune/spec/**</code> — state management, presenter utilities, and approval runner</li>
-</ul>
-<p><strong>Tags:</strong> <code>spec</code>, <code>planning</code></p>
+<p>Inspect the <code>PipelineResult</code>. <code>success</code> is <code>True</code> only when
+all tasks executed and passed their gates; <code>summary</code> is the
+human-readable summary; <code>total_cost</code> and <code>duration_ms</code> are available
+for observability.</p>
 
   </article>
   <footer>

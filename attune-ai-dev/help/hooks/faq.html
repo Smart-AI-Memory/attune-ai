@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Hooks FAQ — faq</title>
-  <meta name="description" content="Hooks let you run custom logic at specific points in the Claude Code lifecycle. You define a `HookDefinition`, attach it to a `HookEvent` via a `HookRegistry` or `HookConfig`, and the system calls it " />
+  <meta name="description" content="The `HookEvent` enum — `PRE_TOOL_USE`, `POST_TOOL_USE`, `SESSION_START`/`SESSION_END`, `PRE_COMPACT`/`POST_COMPACT`, `PRE_COMMAND`/`POST_COMMAND`, `STOP`. Their values are the Claude Code event names." />
   <meta property="og:title" content="Hooks FAQ — faq" />
-  <meta property="og:description" content="Hooks let you run custom logic at specific points in the Claude Code lifecycle. You define a `HookDefinition`, attach it to a `HookEvent` via a `HookRegistry` or `HookConfig`, and the system calls it " />
+  <meta property="og:description" content="The `HookEvent` enum — `PRE_TOOL_USE`, `POST_TOOL_USE`, `SESSION_START`/`SESSION_END`, `PRE_COMPACT`/`POST_COMPACT`, `PRE_COMMAND`/`POST_COMMAND`, `STOP`. Their values are the Claude Code event names." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/faq" />
   <style>
@@ -273,31 +273,20 @@
   </nav>
   <article class="markdown-body">
 <h1>Hooks FAQ</h1>
-<h2>What are hooks?</h2>
-<p>Hooks let you run custom logic at specific points in the Claude Code lifecycle. You define a <code>HookDefinition</code>, attach it to a <code>HookEvent</code> via a <code>HookRegistry</code> or <code>HookConfig</code>, and the system calls it whenever that event fires.</p>
-<h2>When would I use hooks instead of calling my code directly?</h2>
-<p>Use hooks when you need your code to run automatically in response to lifecycle events — for example, recording telemetry after a tool runs, enforcing security rules before a bash command executes, or triggering a compaction summary before context is cleared. If you just need to call a function at a known point in your own code, hooks add unnecessary indirection.</p>
-<h2>What's the difference between <code>HookExecutor</code> and <code>HookExecutorSync</code>?</h2>
-<p><code>HookExecutor</code> runs hook actions and returns results asynchronously. <code>HookExecutorSync</code> is a synchronous wrapper around the same logic — use it when you're calling from a context that can't await, such as a CLI entry point or a synchronous event loop. Both accept a <code>python_handlers</code> dict that maps handler names to callables.</p>
-<h2>How do I register a hook at runtime?</h2>
-<p>Call <code>HookRegistry.register(event, handler, ...)</code>. It returns a <code>handler_id</code> string you can pass to <code>HookRegistry.unregister(handler_id)</code> later if you need to remove it.</p>
-<h2>How should a Python handler be written?</h2>
-<p>The registry calls handlers with the fired context <strong>unpacked as keyword arguments</strong> — write <code>def handler(**context): ...</code>, not <code>def handler(context): ...</code>. A positional <code>context</code> parameter raises <code>TypeError: got an unexpected keyword argument</code>. Read individual values inside with <code>context.get(&quot;tool_name&quot;)</code>, etc.</p>
-<h2>How do I load hooks from a config file?</h2>
-<p>Use <code>HookConfig.from_yaml(yaml_path)</code> to load a config, then pass it to <code>HookRegistry.load_config(config)</code>. To save the current config back to disk, call <code>HookConfig.to_yaml(yaml_path)</code>.</p>
-<h2>How do I fire a hook?</h2>
-<p>Call <code>HookRegistry.fire(event, context)</code> for async dispatch or <code>HookRegistry.fire_sync(event, context)</code> for synchronous dispatch. Both return a list of result dicts, one per executed hook.</p>
-<h2>How do I check which hooks will run for a given event?</h2>
-<p>Call <code>HookRegistry.get_matching_hooks(event, context)</code>. It returns a list of <code>(HookRule, HookDefinition)</code> tuples — the same set the registry would execute if you called <code>fire</code>.</p>
-<h2>What controls whether a hook fires for a particular context?</h2>
-<p>A <code>HookMatcher</code>. When you register a hook, you can supply a <code>HookMatcher</code> whose <code>matches(context)</code> method returns <code>True</code> or <code>False</code>. Hooks without a matcher fire on every matching event. Priority (an integer you set on <code>add_hook</code> or <code>register</code>) controls the order when multiple hooks match.</p>
-<h2>How do I see what has already run?</h2>
-<p>Call <code>HookRegistry.get_execution_log(limit, event_filter)</code> to retrieve recent execution records. Use <code>HookRegistry.get_stats()</code> for aggregate counts, and <code>HookRegistry.clear_execution_log()</code> to reset the log.</p>
-<h2>Where are the source files?</h2>
-<ul>
-<li><code>src/attune/hooks/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>hooks</code>, <code>webhooks</code>, <code>events</code>, <code>automation</code></p>
+<h2>What events can I hook?</h2>
+<p>The <code>HookEvent</code> enum — <code>PRE_TOOL_USE</code>, <code>POST_TOOL_USE</code>,
+<code>SESSION_START</code>/<code>SESSION_END</code>, <code>PRE_COMPACT</code>/<code>POST_COMPACT</code>,
+<code>PRE_COMMAND</code>/<code>POST_COMMAND</code>, <code>STOP</code>. Their values are the Claude Code
+event names.</p>
+<h2>How should a handler be written?</h2>
+<p>It receives the context unpacked as kwargs — <code>def handler(**context): ...</code>. Register it with
+<code>HookRegistry.register(event, handler)</code>.</p>
+<h2>Sync or async?</h2>
+<p><code>fire_sync</code> is synchronous; <code>fire</code> and <code>HookExecutor.execute</code>
+are async.</p>
+<h2>Where are the hooks the plugin actually runs?</h2>
+<p>Under <code>attune/hooks/scripts/</code> (e.g. <code>security_guard</code>,
+<code>worktree_path_guard</code>, <code>lessons_reminder</code>).</p>
 
   </article>
   <footer>

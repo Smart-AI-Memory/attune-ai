@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CLI FAQ — faq</title>
-  <meta name="description" content="It covers two things: the command-line interface (all `attune` subcommands) and the routing layer that maps user input to the right skill or workflow." />
-  <meta property="og:title" content="CLI FAQ — faq" />
-  <meta property="og:description" content="It covers two things: the command-line interface (all `attune` subcommands) and the routing layer that maps user input to the right skill or workflow." />
+  <title>Cli FAQ — faq</title>
+  <meta name="description" content="`attune &lt;command&gt;` (the installed console script) or `python -m attune.cli_minimal`. Start with `attune --help` / `attune doctor`." />
+  <meta property="og:title" content="Cli FAQ — faq" />
+  <meta property="og:description" content="`attune &lt;command&gt;` (the installed console script) or `python -m attune.cli_minimal`. Start with `attune --help` / `attune doctor`." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/faq" />
   <style>
@@ -272,68 +272,19 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>CLI FAQ</h1>
-<h2>What does the CLI feature cover?</h2>
-<p>It covers two things: the command-line interface (all <code>attune</code> subcommands) and the routing layer that maps user input to the right skill or workflow.</p>
+<h1>Cli FAQ</h1>
 <h2>How do I run the CLI?</h2>
-<p>Call <code>main()</code> from <code>attune.cli_minimal</code>. It accepts an optional <code>argv</code> list; when omitted it reads from <code>sys.argv</code>. Every command returns an integer exit code.</p>
-<h2>How does routing work?</h2>
-<p><code>route_user_input()</code> in <code>attune.cli_router</code> takes a string of user input and an optional context dict, then returns a routing decision as a dict. <strong>It is async</strong> — <code>await</code> it (e.g. <code>asyncio.run(route_user_input(text))</code>). <code>is_slash_command</code> and <code>SmartRouter.list_workflows</code> are synchronous; <code>SmartRouter.route_sync</code> is the synchronous routing call. For more control, instantiate <code>HybridRouter</code> directly — it lets you call <code>route()</code>, teach it new preferences with <code>learn_preference()</code>, and get tab-completion candidates with <code>get_suggestions()</code>.</p>
-<h2>What is a <code>RoutingPreference</code>?</h2>
-<p>A <code>RoutingPreference</code> is a dataclass that records one learned routing rule. Its fields are <code>keyword</code>, <code>skill</code>, <code>args</code> (default <code>''</code>), <code>usage_count</code> (default <code>0</code>), and <code>confidence</code> (default <code>1.0</code>). The router accumulates these over time to improve its suggestions.</p>
-<h2>How do I tell whether a string is a slash command?</h2>
-<p>Call <code>is_slash_command(text)</code> from <code>attune.cli_router</code>. It returns a boolean.</p>
-<h2>Which subcommands are available?</h2>
-<p>The CLI is organized into groups:</p>
-<table>
-<thead>
-<tr>
-<th>Group</th>
-<th>Subcommands</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Costs</strong></td>
-<td><code>cmd_costs</code>, <code>cmd_costs_today</code>, <code>cmd_costs_export</code>, <code>cmd_costs_reset</code></td>
-</tr>
-<tr>
-<td><strong>Memory</strong></td>
-<td><code>cmd_remember</code>, <code>cmd_forget</code>, <code>cmd_lessons</code>, <code>cmd_memory_capture</code>, <code>cmd_memory_recall</code>, <code>cmd_memory_topics</code>, <code>cmd_memory_forget_topic</code></td>
-</tr>
-<tr>
-<td><strong>Telemetry</strong></td>
-<td><code>cmd_telemetry_show</code>, <code>cmd_telemetry_savings</code>, <code>cmd_telemetry_export</code>, <code>cmd_telemetry_routing_stats</code>, <code>cmd_telemetry_routing_check</code>, <code>cmd_telemetry_models</code>, <code>cmd_telemetry_agents</code>, <code>cmd_telemetry_signals</code></td>
-</tr>
-<tr>
-<td><strong>Workflows</strong></td>
-<td><code>cmd_workflow_list</code>, <code>cmd_workflow_info</code>, <code>cmd_workflow_run</code></td>
-</tr>
-<tr>
-<td><strong>Patterns</strong></td>
-<td><code>cmd_patterns_review</code>, <code>cmd_patterns_promote</code>, <code>cmd_patterns_reject</code></td>
-</tr>
-<tr>
-<td><strong>Providers</strong></td>
-<td><code>cmd_provider_show</code>, <code>cmd_provider_set</code></td>
-</tr>
-<tr>
-<td><strong>Utility</strong></td>
-<td><code>cmd_setup</code>, <code>cmd_validate</code>, <code>cmd_version</code>, <code>cmd_features</code>, <code>cmd_doctor</code></td>
-</tr>
-</tbody>
-</table>
-<h2>What exit codes does <code>attune workflow run</code> return?</h2>
-<p><code>run_workflow_with_exit_code()</code> in <code>cli_commands._exit_codes</code> instantiates and executes a workflow, then returns the contract exit code as an integer. The specific values depend on the workflow result; check <code>cli_commands._exit_codes</code> for the full contract.</p>
-<h2>How do I debug a failing command?</h2>
-<p>Run the related tests first with <code>pytest -k &quot;cli&quot; -v</code>. If the tests pass but your code still fails, add a <code>logger.debug</code> statement at the suspected failure point and re-run with logging enabled. For symptom-based issues, see the troubleshooting page for this feature.</p>
-<h2>Where are the source files?</h2>
-<ul>
-<li><code>src/attune/cli_minimal.py</code></li>
-<li><code>src/attune/cli_router.py</code></li>
-<li><code>src/attune/cli_commands/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>cli</code>, <code>commands</code></p>
+<p><code>attune &lt;command&gt;</code> (the installed console script) or <code>python -m attune.cli_minimal</code>. Start with <code>attune --help</code> / <code>attune doctor</code>.</p>
+<h2>How do I run a workflow from the terminal?</h2>
+<p><code>attune workflow run &lt;slug&gt;</code> (e.g. <code>attune workflow run code-review</code>); <code>attune workflow list</code> shows the options.</p>
+<h2>Is the router synchronous?</h2>
+<p><code>is_slash_command</code> and <code>SmartRouter.list_workflows</code> are sync;
+<code>route_user_input</code> and <code>SmartRouter.route</code> are async (use <code>route_sync</code>
+for a sync call).</p>
+<h2>What's the difference between the CLI and the MCP server?</h2>
+<p>Same capabilities, different surface — the CLI is for the
+terminal/scripting; the MCP server exposes them as tools inside Claude
+Code.</p>
 
   </article>
   <footer>

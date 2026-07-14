@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Telemetry FAQ — faq</title>
-  <meta name="description" content="Three things, all exported from `attune.telemetry`: every LLM call&#x27;s cost, tokens, cache hits, and duration (`UsageTracker`); a quality score per workflow stage and tier (`FeedbackLoop`); and agent-co" />
+  <meta name="description" content="Every LLM call&#x27;s cost/tokens/cache/duration (`UsageTracker`), a quality score per workflow stage and tier (`FeedbackLoop`), and agent coordination signals (`EventStreamer`, `HeartbeatCoordinator`)." />
   <meta property="og:title" content="Telemetry FAQ — faq" />
-  <meta property="og:description" content="Three things, all exported from `attune.telemetry`: every LLM call&#x27;s cost, tokens, cache hits, and duration (`UsageTracker`); a quality score per workflow stage and tier (`FeedbackLoop`); and agent-co" />
+  <meta property="og:description" content="Every LLM call&#x27;s cost/tokens/cache/duration (`UsageTracker`), a quality score per workflow stage and tier (`FeedbackLoop`), and agent coordination signals (`EventStreamer`, `HeartbeatCoordinator`)." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/telemetry/faq" />
   <style>
@@ -274,42 +274,19 @@
   <article class="markdown-body">
 <h1>Telemetry FAQ</h1>
 <h2>What does attune telemetry record?</h2>
-<p>Three things, all exported from <code>attune.telemetry</code>: every LLM call's
-cost, tokens, cache hits, and duration (<code>UsageTracker</code>); a quality score
-per workflow stage and tier (<code>FeedbackLoop</code>); and agent-coordination
-signals — heartbeats, event streams, and approval requests
-(<code>HeartbeatCoordinator</code>, <code>EventStreamer</code>, <code>ApprovalGate</code>).</p>
-<h2>Where is telemetry data stored by default?</h2>
-<p>Locally, under <code>~/.attune/telemetry</code> (the usage ledger is
-<code>usage.jsonl</code>); the directory is overridable via <code>ATTUNE_HOME</code>. Nothing
-leaves your machine unless you explicitly enable an opt-in phone-home.
-The Redis-backed coordination signals use Redis keys/streams instead of
-the local file.</p>
-<h2>How do I see my usage and cost metrics?</h2>
-<p>From Python, <code>UsageTracker.get_instance().get_stats(days=30)</code> (and
-<code>calculate_savings(days=30)</code>); from a conversation, the
-<code>telemetry_stats</code> MCP tool; or the ops dashboard — all read the same
-on-disk store.</p>
-<h2>Why won't the feedback loop change my recommended tier?</h2>
-<p><code>recommend_tier</code> needs at least <code>MIN_SAMPLES</code> (10) feedback samples for
-the stage's tier before it moves; below that it keeps the current tier
-with reason &quot;Insufficient data&quot;. Tier strings are lowercase
-(<code>cheap</code>/<code>capable</code>/<code>premium</code>) — feedback recorded under another casing
-is invisible to <code>recommend_tier</code>.</p>
-<h2>Does <code>get_quality_stats</code> need 10 samples too?</h2>
-<p>No. <code>get_quality_stats</code> returns <code>None</code> only when there is no feedback
-for the stage at all; with any samples it returns a <code>QualityStats</code>
-(its <code>sample_count</code> tells you how many). The <code>MIN_SAMPLES</code> gate lives in
-<code>recommend_tier</code>, not here.</p>
-<h2>How do I check whether an agent is still running?</h2>
-<p>With the coordination classes (Redis-backed):
-<code>HeartbeatCoordinator.is_agent_alive(...)</code>, <code>get_active_agents()</code>, and
-<code>get_stale_agents()</code>; <code>EventStreamer.consume_events()</code> /
-<code>get_recent_events()</code> read the event stream. Guard their use behind
-<code>TelemetryFeatures.is_redis_available()</code>.</p>
-<h2>Where are the source files?</h2>
-<p>All telemetry source lives under <code>src/attune/telemetry/</code>.</p>
-<p><strong>Tags:</strong> <code>telemetry</code>, <code>metrics</code></p>
+<p>Every LLM call's cost/tokens/cache/duration (<code>UsageTracker</code>),
+a quality score per workflow stage and tier (<code>FeedbackLoop</code>), and
+agent coordination signals (<code>EventStreamer</code>, <code>HeartbeatCoordinator</code>).</p>
+<h2>Where is the data stored?</h2>
+<p>Locally under <code>~/.attune/telemetry</code>. Nothing leaves your
+machine unless you enable an opt-in phone-home.</p>
+<h2>How do I see my usage/metrics?</h2>
+<p><code>UsageTracker.get_instance().get_stats(days=30)</code> from Python,
+the <code>telemetry_stats</code> MCP tool from a conversation, or the ops
+dashboard.</p>
+<h2>Why won't the feedback loop change my tier?</h2>
+<p>It needs at least <code>MIN_SAMPLES</code> (10) feedback rows for a stage
+before <code>recommend_tier</code> will move off the current tier.</p>
 
   </article>
   <footer>

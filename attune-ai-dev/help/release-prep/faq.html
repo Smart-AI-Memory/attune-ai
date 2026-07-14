@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Release Prep FAQ — faq</title>
-  <meta name="description" content="Release-prep is the **deterministic gate** for shipping. Four agents run real tools — `bandit`, `ruff`, `pytest --cov`, and a docstring / README / CHANGELOG check — in parallel, measure the results ag" />
+  <meta name="description" content="Release-prep is the deterministic gate — it runs real bandit/ruff/pytest against hard thresholds and returns APPROVED or BLOCKED. Release-notes is advisory — it drafts a changelog and an LLM go/no-go " />
   <meta property="og:title" content="Release Prep FAQ — faq" />
-  <meta property="og:description" content="Release-prep is the **deterministic gate** for shipping. Four agents run real tools — `bandit`, `ruff`, `pytest --cov`, and a docstring / README / CHANGELOG check — in parallel, measure the results ag" />
+  <meta property="og:description" content="Release-prep is the deterministic gate — it runs real bandit/ruff/pytest against hard thresholds and returns APPROVED or BLOCKED. Release-notes is advisory — it drafts a changelog and an LLM go/no-go " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/release-prep/faq" />
   <style>
@@ -273,69 +273,27 @@
   </nav>
   <article class="markdown-body">
 <h1>Release Prep FAQ</h1>
-<h2>What is release-prep?</h2>
-<p>Release-prep is the <strong>deterministic gate</strong> for shipping. Four agents
-run real tools — <code>bandit</code>, <code>ruff</code>, <code>pytest --cov</code>, and a docstring /
-README / CHANGELOG check — in parallel, measure the results against
-hard quality-gate thresholds, and return an APPROVED or BLOCKED
-verdict. It is the enforcement half of the release pair.</p>
 <h2>What's the difference between release-prep and release-notes?</h2>
-<p>Release-prep is the deterministic gate — real bandit/ruff/pytest
-against hard thresholds, returning APPROVED or BLOCKED. Release-notes
-is advisory — it drafts a changelog and an LLM go/no-go and never
-blocks. Run the gate with <code>attune workflow run release-gate</code>.</p>
+<p>Release-prep is the deterministic gate — it runs real
+bandit/ruff/pytest against hard thresholds and returns APPROVED or
+BLOCKED. Release-notes is advisory — it drafts a changelog and an LLM
+go/no-go and never blocks.</p>
 <h2>How much does the gate cost?</h2>
-<p>$0 by default. <code>RELEASE_LLM_MODE</code> defaults to <code>&quot;simulated&quot;</code>, so the
-agents score real tool output with rule-based logic and make no API
-calls. Set <code>RELEASE_LLM_MODE=real</code> plus an <code>ANTHROPIC_API_KEY</code> to let
-the security and quality agents classify their output with an LLM.</p>
-<h2>What checks does it run?</h2>
-<p>Four agents run in parallel:</p>
-<ul>
-<li><strong><code>SecurityAuditorAgent</code></strong> — <code>uv run bandit -r src/ -f json --severity-level medium</code>; <code>critical_issues</code> = CRITICAL + HIGH.</li>
-<li><strong><code>TestCoverageAgent</code></strong> — <code>uv run pytest --cov=&lt;target&gt;</code>; parses the
-TOTAL coverage percentage.</li>
-<li><strong><code>CodeQualityAgent</code></strong> — <code>uv run ruff check src/ --statistics</code>;
-maps violations to a 0–10 quality score.</li>
-<li><strong><code>DocumentationAgent</code></strong> — AST walk of <code>src/**/*.py</code> for docstring
-coverage, plus README/CHANGELOG presence.</li>
-</ul>
+<p>$0 by default. The agents are rule-based
+(<code>RELEASE_LLM_MODE=simulated</code>) and make no API calls. LLM enhancement
+is opt-in with <code>RELEASE_LLM_MODE=real</code> plus a key.</p>
 <h2>Why did a BLOCKED run still exit 0?</h2>
-<p><code>WorkflowResult.success</code> means the assessment <strong>ran</strong>, not that the
-release was approved. The verdict is in <code>metadata[&quot;approved&quot;]</code> (and
-<code>metadata[&quot;confidence&quot;]</code>), and the full report is in <code>final_output</code>.
-Branch on the verdict, not the exit code.</p>
-<h2>How do I run it?</h2>
-<ul>
-<li><strong>CLI:</strong> <code>attune workflow run release-gate</code> (canonical slug
-<code>release-prep</code>).</li>
-<li><strong>Python:</strong> <code>await ReleasePrepTeamWorkflow().execute(path=&quot;.&quot;)</code>
-(importable from <code>attune.agents.release</code>).</li>
-</ul>
-<p>There is no MCP tool for the gate — it is CLI / Python only.</p>
-<h2>How do I customize the thresholds?</h2>
-<p>Pass a <code>quality_gates</code> dict to <code>ReleasePrepTeam</code> or
+<p><code>success</code> means the assessment ran; the verdict is in
+<code>metadata[&quot;approved&quot;]</code>. Branch on that, not the exit code.</p>
+<h2>How do I change the thresholds?</h2>
+<p>Pass <code>quality_gates={...}</code> to <code>ReleasePrepTeam</code> /
 <code>ReleasePrepTeamWorkflow</code> using the keys <code>max_critical_issues</code>,
-<code>min_coverage</code>, <code>min_quality_score</code>, and <code>min_doc_coverage</code>. Coverage
-and doc-coverage are percentages (e.g. <code>90.0</code>), not fractions:</p>
-<pre><code class="language-python">import asyncio
-
-from attune.agents.release import ReleasePrepTeam
-
-
-async def main() -&gt; None:
-    team = ReleasePrepTeam(quality_gates={&quot;min_coverage&quot;: 90.0})
-    report = await team.assess_readiness(codebase_path=&quot;.&quot;)
-    print(report.format_console_output())
-
-
-asyncio.run(main())
-</code></pre>
+<code>min_coverage</code>, <code>min_quality_score</code>, <code>min_doc_coverage</code>.</p>
+<h2>Is there an MCP tool for the gate?</h2>
+<p>No. The gate is CLI / Python only — run <code>attune workflow run release-gate</code>. The advisory (<code>release_notes</code>) is the MCP surface.</p>
 <h2>Which calls are async?</h2>
 <p>Both <code>ReleasePrepTeamWorkflow.execute</code> and
-<code>ReleasePrepTeam.assess_readiness</code> are coroutines — <code>await</code> them or
-drive them with <code>asyncio.run</code>.</p>
-<p><strong>Tags:</strong> <code>release</code>, <code>publishing</code>, <code>quality</code></p>
+<code>ReleasePrepTeam.assess_readiness</code> are coroutines — <code>await</code> them.</p>
 
   </article>
   <footer>

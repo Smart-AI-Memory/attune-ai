@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Release Notes FAQ — faq</title>
-  <meta name="description" content="Release-notes is the **advisory** half of the release pair. It drafts a changelog and an overall go/no-go readiness recommendation for a codebase about to ship, using four Claude Agent SDK subagents —" />
+  <meta name="description" content="Release-notes is advisory — it drafts a changelog and an LLM go/no-go, and never blocks. Release-prep is the deterministic gate: it runs real bandit/ruff/pytest against hard thresholds and returns APP" />
   <meta property="og:title" content="Release Notes FAQ — faq" />
-  <meta property="og:description" content="Release-notes is the **advisory** half of the release pair. It drafts a changelog and an overall go/no-go readiness recommendation for a codebase about to ship, using four Claude Agent SDK subagents —" />
+  <meta property="og:description" content="Release-notes is advisory — it drafts a changelog and an LLM go/no-go, and never blocks. Release-prep is the deterministic gate: it runs real bandit/ruff/pytest against hard thresholds and returns APP" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/release-notes/faq" />
   <style>
@@ -273,46 +273,23 @@
   </nav>
   <article class="markdown-body">
 <h1>Release Notes FAQ</h1>
-<h2>What is release-notes?</h2>
-<p>Release-notes is the <strong>advisory</strong> half of the release pair. It drafts
-a changelog and an overall go/no-go readiness recommendation for a
-codebase about to ship, using four Claude Agent SDK subagents — a
-health checker, a security scanner, a changelog generator, and a
-release assessor. It predicts and drafts; it does not block.</p>
 <h2>What's the difference between release-notes and release-prep?</h2>
-<p>Release-notes is advisory — it drafts a changelog and an LLM go/no-go,
-and never blocks. Release-prep is the deterministic gate: it runs real
-<code>bandit</code> / <code>ruff</code> / <code>pytest</code> and a docstring check against hard
-thresholds and returns an APPROVED or BLOCKED verdict. Run the gate
-with <code>attune workflow run release-gate</code>.</p>
+<p>Release-notes is advisory — it drafts a changelog and an LLM
+go/no-go, and never blocks. Release-prep is the deterministic gate:
+it runs real bandit/ruff/pytest against hard thresholds and returns
+APPROVED or BLOCKED. Run the gate with <code>attune workflow run release-gate</code>.</p>
 <h2>Does release-notes block my release if the score is low?</h2>
-<p>No. It only recommends. The readiness score and go/no-go come from an
-LLM assessor reading the codebase, not from measured thresholds. For
-an enforced gate, use release-prep.</p>
+<p>No. It only recommends. For an enforced gate, use
+release-prep.</p>
 <h2>How much does a run cost?</h2>
-<p>It is subscription-billed with a per-depth budget cap — $2 / $10 / $25
-for <code>quick</code> / <code>standard</code> / <code>deep</code>. Subscription users pay no
-per-request cost. Set <code>ATTUNE_MAX_BUDGET_USD=0</code> to lift the cap for a
-pre-release run that needs to finish.</p>
+<p>It's subscription-billed with a per-depth budget cap ($2 /
+$10 / $25 for quick / standard / deep). Subscription users pay no
+per-request cost; set <code>ATTUNE_MAX_BUDGET_USD=0</code> to lift the cap.</p>
 <h2>Which calls are async?</h2>
-<p><code>ReleasePreparationWorkflow.execute</code> is a coroutine — <code>await</code> it or
-drive it with <code>asyncio.run</code>. Calling it without awaiting is the most
-common mistake.</p>
+<p><code>execute</code> is a coroutine — <code>await</code> it or use <code>asyncio.run</code>.</p>
 <h2>Where does the changelog come from?</h2>
-<p>The <code>changelog-generator</code> subagent reads <code>git log</code> since the last
-release tag and drafts a CHANGELOG section in Keep a Changelog format.</p>
-<h2>How do I run it?</h2>
-<ul>
-<li><strong>CLI:</strong> <code>attune workflow run release-notes --path .</code></li>
-<li><strong>Python:</strong> <code>await ReleasePreparationWorkflow().execute(path=&quot;.&quot;)</code>
-(importable from <code>attune.workflows</code>)</li>
-<li><strong>Conversation:</strong> the <code>release_notes</code> MCP tool, via the <code>/release</code>
-skill.</li>
-</ul>
-<h2>How do I keep a run cheap?</h2>
-<p>Use a shallower <code>depth</code> — <code>quick</code> uses the smallest agent-turn budget
-(10 turns) and the lowest cap ($2).</p>
-<p><strong>Tags:</strong> <code>release</code>, <code>changelog</code>, <code>advisory</code></p>
+<p>The <code>changelog-generator</code> subagent reads <code>git log</code> since the
+last release tag and drafts a Keep a Changelog section.</p>
 
   </article>
   <footer>

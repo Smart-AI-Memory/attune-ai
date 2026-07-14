@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>RAG Grounding FAQ — faq</title>
-  <meta name="description" content="It retrieves attune documentation and generates an answer that cites real APIs, workflow names, and CLI commands — never invented ones — ending with a markdown `## Sources` block. The class is `RagCod" />
-  <meta property="og:title" content="RAG Grounding FAQ — faq" />
-  <meta property="og:description" content="It retrieves attune documentation and generates an answer that cites real APIs, workflow names, and CLI commands — never invented ones — ending with a markdown `## Sources` block. The class is `RagCod" />
+  <title>Rag Grounding FAQ — faq</title>
+  <meta name="description" content="It retrieves attune documentation and generates an answer that cites real APIs/workflows/CLI commands — never invented ones — ending with a `## Sources` block." />
+  <meta property="og:title" content="Rag Grounding FAQ — faq" />
+  <meta property="og:description" content="It retrieves attune documentation and generates an answer that cites real APIs/workflows/CLI commands — never invented ones — ending with a `## Sources` block." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/rag-grounding/faq" />
   <style>
@@ -272,61 +272,23 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>RAG Grounding FAQ</h1>
-<h2>What is RAG grounding?</h2>
-<p>It retrieves attune documentation and generates an answer that cites
-real APIs, workflow names, and CLI commands — never invented ones —
-ending with a markdown <code>## Sources</code> block. The class is
-<code>RagCodeGenWorkflow</code>: it retrieves grounding passages first (via
-<code>attune_rag.RagPipeline</code>), then a single Claude Agent SDK call
-generates against them.</p>
-<h2>When should I use it?</h2>
-<p>Use it when generated code must stay faithful to the attune ecosystem
-— when a hallucinated API name or invented workflow reference would be
-a problem. For general-purpose generation with no attune grounding, it
-adds overhead you may not need.</p>
+<h1>Rag Grounding FAQ</h1>
+<h2>What does rag-grounding do?</h2>
+<p>It retrieves attune documentation and generates an answer that
+cites real APIs/workflows/CLI commands — never invented ones —
+ending with a <code>## Sources</code> block.</p>
 <h2>Why is the CLI slug <code>rag-code-gen</code> but the feature <code>rag-grounding</code>?</h2>
 <p>Both name the same <code>RagCodeGenWorkflow</code>. <code>rag-code-gen</code> is the
-registered workflow slug (used by the CLI and the <code>/rag-code-gen</code>
-skill); <code>rag-grounding</code> is the feature / help topic.</p>
-<h2>How do I run it?</h2>
-<ul>
-<li><strong>Python:</strong> <code>await RagCodeGenWorkflow().execute(query=&quot;...&quot;)</code>
-(import from <code>attune.workflows</code>).</li>
-<li><strong>CLI:</strong> <code>attune workflow run rag-code-gen --input '{&quot;query&quot;: &quot;...&quot;}'</code>.</li>
-<li><strong>Conversation:</strong> the <code>/rag-code-gen</code> skill.</li>
-</ul>
-<p>There is no dedicated MCP tool for this workflow.</p>
-<pre><code class="language-python">import asyncio
-
-from attune.workflows import RagCodeGenWorkflow
-
-
-async def main() -&gt; None:
-    workflow = RagCodeGenWorkflow()
-    result = await workflow.execute(query=&quot;how do I run a security audit?&quot;)
-    print(result.final_output)   # answer + a ## Sources block
-
-
-asyncio.run(main())
-</code></pre>
+registered workflow slug; <code>rag-grounding</code> is the feature/help topic.</p>
 <h2>Are the calls async?</h2>
-<p>Yes — <code>execute</code> is a coroutine. <code>await</code> it or drive it with
-<code>asyncio.run</code>. Calling it without awaiting is the most common mistake.</p>
+<p>Yes — <code>execute</code> is a coroutine. <code>await</code> it or use
+<code>asyncio.run</code>.</p>
 <h2>Do I need attune-rag installed?</h2>
-<p>Yes — <code>attune-rag</code> is a core dependency (the legacy <code>[rag]</code> extra is an
-empty placeholder). Without it the first <code>execute</code> raises a
+<p>Yes — it's a core dependency. Without it the workflow raises a
 <code>RuntimeError</code> pointing at <code>pip install attune-rag</code>.</p>
-<h2>How does citation enforcement work?</h2>
-<p>The system prompt instructs the model to cite only what the retrieved
-context attests and never to invent attune features. Retrieved content
-arrives inside <code>&lt;passage&gt;...&lt;/passage&gt;</code> tags and is treated strictly as
-documentation — even a literal <code>&lt;/passage&gt;</code> escape is read as content,
-not a command.</p>
 <h2>How do I control how much context is retrieved?</h2>
-<p>Set <code>k</code> (number of passages, default 3) and <code>depth</code>
-(<code>quick</code> / <code>standard</code> / <code>deep</code> — sets the turn budget and cost cap).</p>
-<p><strong>Tags:</strong> <code>rag</code>, <code>retrieval</code>, <code>grounding</code>, <code>faithfulness</code>, <code>citation</code></p>
+<p>Set <code>k</code> (number of passages, default 3) and <code>depth</code> (turn /
+budget tier).</p>
 
   </article>
   <footer>

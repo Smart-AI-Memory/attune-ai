@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ops Dashboard FAQ — faq</title>
-  <meta name="description" content="A local FastAPI web app that lets you run attune workflows against a specific feature scope, browse persisted run history, chain workflows with a single click, and stream live logs over SSE. Start it " />
+  <meta name="description" content="A local FastAPI web app for running attune workflows against a feature scope, with persisted run history, workflow chaining, and live SSE log streaming. Start it with `attune ops` (default `127.0.0.1:" />
   <meta property="og:title" content="Ops Dashboard FAQ — faq" />
-  <meta property="og:description" content="A local FastAPI web app that lets you run attune workflows against a specific feature scope, browse persisted run history, chain workflows with a single click, and stream live logs over SSE. Start it " />
+  <meta property="og:description" content="A local FastAPI web app for running attune workflows against a feature scope, with persisted run history, workflow chaining, and live SSE log streaming. Start it with `attune ops` (default `127.0.0.1:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/faq" />
   <style>
@@ -274,59 +274,29 @@
   <article class="markdown-body">
 <h1>Ops Dashboard FAQ</h1>
 <h2>What is the ops dashboard?</h2>
-<p>A local FastAPI web app that lets you run attune workflows against a
-specific feature scope, browse persisted run history, chain workflows
-with a single click, and stream live logs over SSE. Start it with
-<code>attune ops</code> or <code>python -m attune.ops</code> (default <code>127.0.0.1:8765</code>).</p>
+<p>A local FastAPI web app for running attune workflows against a
+feature scope, with persisted run history, workflow chaining, and live
+SSE log streaming. Start it with <code>attune ops</code> (default
+<code>127.0.0.1:8765</code>).</p>
 <h2>How do I start it?</h2>
-<p>Run <code>attune ops</code> (the CLI subcommand registered by <code>add_subparser()</code>) or
-<code>python -m attune.ops</code> (calls <code>main()</code>). Both block until you stop the
-server. Workflow execution is <strong>enabled by default</strong>; pass <code>--read-only</code>
-for a look-but-don't-run dashboard.</p>
+<p><code>attune ops</code> or <code>python -m attune.ops</code>. Runs are enabled by
+default; pass <code>--read-only</code> for a look-but-don't-run dashboard.</p>
 <h2>What's the public API?</h2>
-<p>Exactly three names — <code>attune.ops.__all__</code> is <code>create_app</code>,
-<code>build_config</code>, and <code>Config</code>. Build a config with <code>build_config(...)</code>
-(don't instantiate <code>Config</code> directly), then <code>create_app(config)</code> returns
-the <code>FastAPI</code> app. Both are synchronous. The runner lives in
-<code>attune.ops.runner</code>.</p>
-<h2>What does <code>Config</code> control?</h2>
-<p><code>Config</code> anchors every path the dashboard reads or writes. Key fields:
-<code>host</code>/<code>port</code> (default <code>127.0.0.1:8765</code>), <code>allow_run</code> (default <code>False</code>),
-<code>specs_roots</code>, <code>runs_retention_days</code> (default 30), and
-<code>specs_candidates_enabled</code>. Derived <strong>properties</strong> (no parentheses)
-include <code>runs_dir</code>, <code>sessions_dir</code>, <code>bulletin_dir</code>, <code>memory_dir</code>, and
-<code>telemetry_path</code>.</p>
+<p>Exactly <code>create_app</code>, <code>build_config</code>, and <code>Config</code>
+(<code>attune.ops.__all__</code>). The runner is <code>attune.ops.runner</code>.</p>
 <h2>Why won't my workflow run?</h2>
-<p><code>Config.allow_run</code> must be <code>True</code>. It defaults to <code>False</code>; the CLI
-enables it (<code>allow_run = not --read-only</code>), so <code>attune ops</code> can run
-workflows out of the box while <code>attune ops --read-only</code> cannot.</p>
-<h2>How do I run a workflow from Python?</h2>
-<p>Use <code>RunnerService</code>. Its <code>start(workflow, *, path=None)</code> method is a
-<strong>coroutine</strong> — <code>await</code> it; it returns a <code>Run</code>. Only one run is active
-at a time, so a concurrent <code>start()</code> raises <code>RunnerBusyError</code> (which
-carries <code>current_run_id</code>).</p>
-<h2>How does the live log stream work?</h2>
-<p><code>Run.subscribe()</code> is an <strong>async iterator</strong> of events — the SSE feed the
-browser consumes. Iterate it with <code>async for</code>; <code>Run.is_terminal</code> (a
-property) flips true when the run finishes.</p>
-<h2>Does the dashboard own the cost / telemetry / help data it shows?</h2>
-<p>No. Those are <strong>adjacent</strong> read-only surfaces it renders:
-<code>ops.anthropic_cost.fetch_summary()</code> (account cost), <code>ops.data</code> (reads
-the telemetry store), and <code>ops.help_data</code> (the help tab). Each is owned
-by its own feature (telemetry, help-system); the dashboard only displays
-them.</p>
-<h2>How do I label a spec's lifecycle?</h2>
-<p><code>ops.spec_lifecycle.derive_lifecycle(spec, *, now=None)</code> returns a status
-string from the spec's phases and last-modified time. That is the only
-public function in the module — there is no candidate-detection API.</p>
-<h2>How long is run history kept?</h2>
-<p><code>runs_retention_days</code> (default 30). History is persisted to
-<code>Config.runs_dir</code> and survives restarts (<code>get_or_load</code> rehydrates a past
-run); <code>prune_old_runs</code> trims older entries.</p>
-<h2>Where are the source files?</h2>
-<ul>
-<li><code>src/attune/ops/**</code></li>
-</ul>
+<p><code>Config.allow_run</code> must be <code>True</code>. It defaults to <code>False</code>; the
+CLI enables it unless you pass <code>--read-only</code>.</p>
+<h2>What's async on the runner?</h2>
+<p><code>RunnerService.start()</code> and <code>Run.subscribe()</code>. The history and
+lookup helpers (<code>recent</code>, <code>get</code>, <code>get_or_load</code>) are synchronous.</p>
+<h2>Can I run two workflows at once?</h2>
+<p>No — one at a time. A concurrent <code>start()</code> raises
+<code>RunnerBusyError</code>.</p>
+<h2>Does it own the cost/telemetry/help data it shows?</h2>
+<p>No. Those are adjacent surfaces — <code>ops.data</code>/
+<code>ops.anthropic_cost</code>/<code>ops.help_data</code> only read data owned by the
+telemetry and help-system features.</p>
 
   </article>
   <footer>

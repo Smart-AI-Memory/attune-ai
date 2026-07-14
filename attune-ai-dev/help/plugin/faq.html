@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Plugin FAQ — faq</title>
-  <meta name="description" content="Two commands:" />
+  <meta name="description" content="`claude plugin marketplace add Smart-AI-Memory/attune-ai`, then `claude plugin install attune-ai@attune-ai`. The first adds the marketplace; the second installs the plugin." />
   <meta property="og:title" content="Plugin FAQ — faq" />
-  <meta property="og:description" content="Two commands:" />
+  <meta property="og:description" content="`claude plugin marketplace add Smart-AI-Memory/attune-ai`, then `claude plugin install attune-ai@attune-ai`. The first adds the marketplace; the second installs the plugin." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/plugin/faq" />
   <style>
@@ -274,74 +274,25 @@
   <article class="markdown-body">
 <h1>Plugin FAQ</h1>
 <h2>How do I install the attune plugin?</h2>
-<p>Two commands:</p>
-<pre><code class="language-bash">claude plugin marketplace add Smart-AI-Memory/attune-ai
-claude plugin install attune-ai@attune-ai
-</code></pre>
-<p>The first registers this repo as a Claude Code marketplace; the second
-installs the <code>attune-ai</code> plugin from it. After install, Claude Code
-auto-discovers the bundle's components and they become available in your
-session.</p>
+<p><code>claude plugin marketplace add Smart-AI-Memory/attune-ai</code>,
+then <code>claude plugin install attune-ai@attune-ai</code>. The first adds the
+marketplace; the second installs the plugin.</p>
 <h2>Why is the install string <code>attune-ai@attune-ai</code>?</h2>
-<p>It reads as <code>plugin-name@marketplace-plugin</code>. This repo is a
-single-plugin marketplace named <code>attune-ai-plugin</code> that offers one
-plugin, also named <code>attune-ai</code> — so the plugin name appears on both
-sides of the <code>@</code>. The marketplace name (<code>attune-ai-plugin</code>) and the
-plugin name (<code>attune-ai</code>) are deliberately different.</p>
+<p>It's <code>plugin-name@marketplace-plugin</code>. This repo is a
+single-plugin marketplace named <code>attune-ai-plugin</code>, offering the
+<code>attune-ai</code> plugin — so the plugin name appears on both sides.</p>
 <h2>What does the plugin actually contain?</h2>
-<p>A manifest plus auto-discovered component folders:</p>
-<table>
-<thead>
-<tr>
-<th>Component</th>
-<th>What's there</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>commands/</code></td>
-<td>1 slash command — <code>/handoff</code></td>
-</tr>
-<tr>
-<td><code>skills/</code></td>
-<td>17 skills (<code>/spec</code>, <code>/security-audit</code>, …)</td>
-</tr>
-<tr>
-<td><code>agents/</code></td>
-<td>6 subagents</td>
-</tr>
-<tr>
-<td><code>hooks/</code></td>
-<td><code>hooks.json</code> + the hook scripts</td>
-</tr>
-<tr>
-<td><code>help/</code></td>
-<td>the help bundle (<code>generated/</code>, <code>templates/</code>, <code>schemas/</code>)</td>
-</tr>
-<tr>
-<td><code>.mcp.json</code></td>
-<td>the MCP server registration</td>
-</tr>
-</tbody>
-</table>
-<p>The two manifests live in <code>plugin/.claude-plugin/</code> — <code>plugin.json</code>
-(plugin identity) and <code>marketplace.json</code> (the marketplace listing).</p>
+<p>A manifest plus auto-discovered components: 1 slash command
+(<code>/handoff</code>), 17 skills, 6 agents, the hook scripts, the help bundle,
+and an <code>.mcp.json</code> that registers the MCP server.</p>
 <h2>Is the plugin the same as the MCP server?</h2>
-<p>No. The plugin is the <strong>bundle</strong>; the MCP server is one component it
-ships (registered in <code>.mcp.json</code>). The server itself — its tools,
-transport, and rate limiting — is documented by the <strong>mcp-server</strong>
-feature, not here.</p>
+<p>No. The plugin is the bundle; the MCP server is one component
+it ships (<code>.mcp.json</code>). The server is documented by the mcp-server
+feature.</p>
 <h2>Does the plugin contain the runtime code?</h2>
-<p>No. <code>plugin/core/__init__.py</code> is just a <code>__version__</code>. The real runtime
-is the pip-installed <code>attune-ai</code> package, which <code>.mcp.json</code> pulls at
-launch with <code>uvx --from attune-ai python -m attune.mcp.server</code>.</p>
-<h2>Why aren't the hooks documented here?</h2>
-<p>The plugin <strong>ships</strong> the hooks (<code>hooks/hooks.json</code> wires them to the
-<code>SessionStart</code>, <code>Stop</code>, <code>PreToolUse</code>, <code>PostToolUse</code>, and
-<code>UserPromptSubmit</code> events), but what each hook <em>does</em> is the <strong>hooks</strong>
-feature's page. This page is about the bundle — manifest, install, and
-the component layout Claude Code discovers.</p>
-<p><strong>Tags:</strong> <code>plugin</code>, <code>claude-code</code></p>
+<p>No — <code>plugin/core</code> is just a <code>__version__</code>. The runtime is the
+pip-installed <code>attune-ai</code> package, which <code>.mcp.json</code> pulls with
+<code>uvx --from attune-ai</code>.</p>
 
   </article>
   <footer>

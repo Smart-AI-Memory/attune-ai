@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Agents FAQ — faq</title>
-  <meta name="description" content="`AgentFactory` is one interface to create, run, and orchestrate AI agents across frameworks — native (the default), LangChain, LangGraph, AutoGen, and Haystack — without rewriting code when you switch" />
+  <meta name="description" content="`AgentFactory` is one interface to create, run, and orchestrate AI agents across frameworks (native, LangChain, LangGraph, AutoGen, Haystack) without rewriting code when you switch." />
   <meta property="og:title" content="Agents FAQ — faq" />
-  <meta property="og:description" content="`AgentFactory` is one interface to create, run, and orchestrate AI agents across frameworks — native (the default), LangChain, LangGraph, AutoGen, and Haystack — without rewriting code when you switch" />
+  <meta property="og:description" content="`AgentFactory` is one interface to create, run, and orchestrate AI agents across frameworks (native, LangChain, LangGraph, AutoGen, Haystack) without rewriting code when you switch." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/faq" />
   <style>
@@ -274,57 +274,23 @@
   <article class="markdown-body">
 <h1>Agents FAQ</h1>
 <h2>What is the Agent Factory?</h2>
-<p><code>AgentFactory</code> is one interface to create, run, and orchestrate AI
-agents across frameworks — native (the default), LangChain, LangGraph,
-AutoGen, and Haystack — without rewriting code when you switch. Its
-<code>create_agent</code> / <code>create_workflow</code> methods return <code>BaseAgent</code> /
-<code>BaseWorkflow</code> objects with a uniform interface.</p>
-<h2>How do I create and run an agent?</h2>
-<p>Build it with the factory, then <code>await</code> its async <code>invoke</code>:</p>
-<pre><code class="language-python">import asyncio
-
-from attune.agent_factory import AgentFactory
-
-
-async def main() -&gt; None:
-    factory = AgentFactory()                  # native framework
-    agent = factory.create_agent(name=&quot;helper&quot;)
-    print(await agent.invoke(&quot;Hello&quot;))
-
-
-asyncio.run(main())
-</code></pre>
-<p>There is no <code>attune agent</code> CLI command and no MCP tool — use the
-Python API or the <code>/agent</code> skill.</p>
+<p><code>AgentFactory</code> is one interface to create, run, and
+orchestrate AI agents across frameworks (native, LangChain,
+LangGraph, AutoGen, Haystack) without rewriting code when you switch.</p>
+<h2>Which framework runs by default?</h2>
+<p><code>native</code>. Pass <code>AgentFactory(framework=&quot;langgraph&quot;)</code> (or a
+<code>Framework</code> value) for another; check availability with
+<code>list_frameworks(installed_only=True)</code>.</p>
 <h2>Are the calls async?</h2>
-<p>Yes — <code>BaseAgent.invoke</code> / <code>stream</code> and <code>BaseWorkflow.run</code> / <code>stream</code>
-are coroutines (<code>await</code> them). The factory's <code>create_*</code> builders are
-synchronous.</p>
-<h2>Which frameworks are supported?</h2>
-<p><code>native</code> (default, no extra deps), <code>langchain</code>, <code>langgraph</code>, <code>autogen</code>,
-<code>haystack</code>. The non-native ones are optional dependencies loaded
-lazily — <code>AgentFactory.list_frameworks(installed_only=True)</code> shows
-what's installed, and <code>recommend_framework(use_case)</code> suggests one.
-Switch with <code>switch_framework(...)</code>.</p>
+<p>Yes — <code>BaseAgent.invoke</code> / <code>stream</code> and <code>BaseWorkflow.run</code> /
+<code>stream</code> are coroutines. The factory's <code>create_*</code> methods are sync.</p>
 <h2>How do I coordinate multiple agents?</h2>
-<p>Create the agents, then <code>create_workflow(name, agents, mode=...)</code> and
-<code>await workflow.run(...)</code>. For ready-made teams use
-<code>create_code_review_pipeline()</code> or
-<code>create_research_pipeline(topic)</code>. Role-preset shortcuts
-(<code>create_researcher</code>, <code>create_writer</code>, <code>create_reviewer</code>,
-<code>create_coordinator</code>, <code>create_debugger</code>) return <code>BaseAgent</code>s.</p>
+<p>Build them, then <code>create_workflow(name, agents, mode=...)</code> and
+<code>await workflow.run(...)</code> — or use a ready-made pipeline like
+<code>create_research_pipeline(topic)</code>.</p>
 <h2>Is this the same as the release-prep agents?</h2>
-<p>No. This feature is the framework-agnostic <strong>Agent Factory</strong>
-(<code>src/attune/agent_factory/</code>). The release-readiness agent team
-(<code>src/attune/agents/release/</code>) is documented under <strong>release-prep</strong>,
-and its state/recovery store (<code>src/attune/agents/state/</code>) is that
-team's persistence layer.</p>
-<h2>What's the public API surface?</h2>
-<p><code>AgentFactory</code>, <code>Framework</code>, <code>BaseAdapter</code>, <code>BaseAgent</code>, <code>AgentConfig</code>,
-<code>WorkflowConfig</code>, <code>AgentRole</code>, and <code>AgentCapability</code> — all from
-<code>attune.agent_factory</code>. Framework-specific adapter/agent classes are
-internal.</p>
-<p><strong>Tags:</strong> <code>agents</code>, <code>ai</code></p>
+<p>No. This is the framework-agnostic Factory. The
+release-readiness agent team is documented under release-prep.</p>
 
   </article>
   <footer>

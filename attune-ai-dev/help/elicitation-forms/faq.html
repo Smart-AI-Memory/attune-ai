@@ -274,37 +274,38 @@
   <article class="markdown-body">
 <h1>Elicitation Forms FAQ</h1>
 <h2>What are elicitation forms?</h2>
-<p>Structured, interactive turns the agent uses instead of freeform
-prose: a multi-part question becomes one clickable form, a
+<p>Structured, interactive turns the agent uses instead of
+freeform prose: a multi-part question becomes one clickable form, a
 recommendation arrives as weighable cards, a disagreement renders
-side-by-side. Every form is one declarative artifact — a <code>FormSchema</code>
-of <code>FormQuestion</code>s built from plain data via
+side-by-side. Every form is one declarative artifact — a
+<code>FormSchema</code> of <code>FormQuestion</code>s built from plain data via
 <code>attune.elicitation.form_from_dict</code> — rendered per surface and
 validated the same way everywhere.</p>
 <h2>What constructs does the communication grammar have?</h2>
 <p>Four, all members of the one form model: <strong>intake</strong> (several
-independent decisions as one multi-select-capable form), <strong>decision</strong>
-(a recommended option with rationale and per-option tradeoffs),
-<strong>pushback</strong> (the agent disagrees and offers a concrete alternative),
-and <strong>progress</strong> (a done/in_flight/blocked report whose blocked items
-are a picker). <code>decision</code>, <code>pushback</code>, and <code>progress</code> are
-presentation-enriched single-selects — the answer is always one
-option, validated by membership like any <code>single_select</code>.</p>
+independent decisions as one multi-select-capable form),
+<strong>decision</strong> (a recommended option with rationale and per-option
+tradeoffs), <strong>pushback</strong> (the agent disagrees and offers a concrete
+alternative), and <strong>progress</strong> (a done/in_flight/blocked report
+whose blocked items are a picker). <code>decision</code>, <code>pushback</code>, and
+<code>progress</code> are presentation-enriched single-selects — the answer is
+always one option, validated by membership like any
+<code>single_select</code>.</p>
 <h2>Which MCP tools expose this?</h2>
-<p>Four: <code>elicitation_render_form</code> (validate a form, return batched
-AskUserQuestion payloads), <code>elicitation_collect_response</code> (validate
-answers into <code>{field_id: value}</code>), <code>elicitation_ask</code> (native MCP
-elicitation dialog, one call in-and-out), and
+<p>Four: <code>elicitation_render_form</code> (validate a form, return
+batched AskUserQuestion payloads), <code>elicitation_collect_response</code>
+(validate answers into <code>{field_id: value}</code>), <code>elicitation_ask</code>
+(native MCP elicitation dialog, one call in-and-out), and
 <code>elicitation_render_widget</code> (inline HTML for <code>show_widget</code>).</p>
 <h2>Which tool should I use on which surface?</h2>
-<p>Widget-capable clients (Cowork / claude.ai): <code>elicitation_render_widget</code>
-— it renders all controls richly and is the surface where the
-<code>decision</code> / <code>pushback</code> / <code>progress</code> framing shows. Clients with
-native MCP elicitation: <code>elicitation_ask</code> (returns
-<code>{success: false, action: &quot;unsupported&quot;}</code> if the client can't elicit
-— it does not render on Claude Code today). Everywhere else:
-<code>elicitation_render_form</code> + the real <code>AskUserQuestion</code> tool, where
-constructs collapse to a recommendation-first single-select.</p>
+<p>Widget-capable clients (Cowork / claude.ai):
+<code>elicitation_render_widget</code> — it renders all controls richly and is
+the surface where the <code>decision</code> / <code>pushback</code> / <code>progress</code> framing
+shows. Clients with native MCP elicitation: <code>elicitation_ask</code>
+(returns <code>{success: false, action: &quot;unsupported&quot;}</code> if the client
+can't elicit — it does not render on Claude Code today). Everywhere
+else: <code>elicitation_render_form</code> + the real <code>AskUserQuestion</code> tool,
+where constructs collapse to a recommendation-first single-select.</p>
 <h2>What field types are supported?</h2>
 <p>The v1 AskUserQuestion path takes four: <code>text_input</code>,
 <code>single_select</code>, <code>multi_select</code>, <code>boolean</code>. The rich surfaces
@@ -312,23 +313,31 @@ constructs collapse to a recommendation-first single-select.</p>
 <code>number</code> (with <code>minimum</code>/<code>maximum</code>), <code>date</code> (YYYY-MM-DD), and the
 construct types <code>decision</code>, <code>pushback</code>, <code>progress</code>.</p>
 <h2>What happens when the user's answers are malformed?</h2>
-<p>Validation is never skipped (R4). <code>elicitation_collect_response</code>
-enforces required fields and option membership; on failure it
-returns <code>{success: false, problems}</code> naming exactly the offending
-fields, so you re-ask only those — malformed input is never
-silently accepted.</p>
+<p>Validation is never skipped (R4).
+<code>elicitation_collect_response</code> enforces required fields and option
+membership; on failure it returns <code>{success: false, problems}</code>
+naming exactly the offending fields, so you re-ask only those —
+malformed input is never silently accepted.</p>
 <h2>How do widget answers get back to the agent?</h2>
 <p>The rendered form posts answers via <code>sendPrompt</code> as a
 sentinel-marked JSON block (<code>__elicitation_response__</code>). Parse that
 block and validate it with <code>elicitation_collect_response</code>. The
 widget round-trip makes no Anthropic API call.</p>
 <h2>When should a construct fire?</h2>
-<p>That is a judgment call governed by the agent's decision routine
-(<code>.claude/rules/attune/decision-routine.md</code>), not by this
+<p>That is a judgment call governed by the agent's decision
+routine (<code>.claude/rules/attune/decision-routine.md</code>), not by this
 subsystem — the grammar defines the <em>shape</em>, not the <em>when</em>. And a
 form never blocks a keyboard-only user: the terse reply vocabulary
 (<code>y</code> / <code>go</code> / <code>1</code>) answers any construct on any surface.</p>
-<p><strong>Tags:</strong> <code>elicitation</code>, <code>forms</code>, <code>communication</code>, <code>ux</code>, <code>widget</code></p>
+<h2>Do forms cost API credits?</h2>
+<p>No. Rendering and validation are pure local transforms — no
+model call on any surface.</p>
+<h2>Why didn't my rich form render?</h2>
+<p>The client isn't widget-capable; it fell back to the
+<code>AskUserQuestion</code> menu. That's expected.</p>
+<h2>Is <code>progress</code> / <code>decision</code> / <code>pushback</code> a different answer shape?</h2>
+<p>No — each answer is one selected option, validated like a
+single-select.</p>
 
   </article>
   <footer>

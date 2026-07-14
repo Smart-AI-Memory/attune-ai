@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Help System FAQ — faq</title>
-  <meta name="description" content="It scans your project to discover features, generates depth-layered help templates for each one, and serves those templates at runtime — adapting content to the audience channel and tracking session s" />
+  <meta name="description" content="It discovers a project&#x27;s features, generates depth-layered help templates for each, and serves them at runtime — adapting to the audience channel and advancing depth as a user asks again." />
   <meta property="og:title" content="Help System FAQ — faq" />
-  <meta property="og:description" content="It scans your project to discover features, generates depth-layered help templates for each one, and serves those templates at runtime — adapting content to the audience channel and tracking session s" />
+  <meta property="og:description" content="It discovers a project&#x27;s features, generates depth-layered help templates for each, and serves them at runtime — adapting to the audience channel and advancing depth as a user asks again." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/help-system/faq" />
   <style>
@@ -274,119 +274,25 @@
   <article class="markdown-body">
 <h1>Help System FAQ</h1>
 <h2>What does the help system do?</h2>
-<p>It scans your project to discover features, generates depth-layered help
-templates for each one, and serves those templates at runtime — adapting
-content to the audience channel and tracking session state so users
-automatically receive more detail each time they ask the same question.</p>
-<h2>When should I use it?</h2>
-<p>Use the help system when you need to generate, maintain, or serve
-contextual help templates for project features. If you only need to look
-up a single template by ID, start with <code>populate()</code> in <code>help.templates</code>.
-If you need to keep templates in sync as source files change, start with
-<code>run_maintenance()</code> in <code>help.maintenance</code>.</p>
+<p>It discovers a project's features, generates depth-layered help
+templates for each, and serves them at runtime — adapting to the
+audience channel and advancing depth as a user asks again.</p>
 <h2>What are the key entry points?</h2>
-<p>The right starting point depends on what you want to do:</p>
-<table>
-<thead>
-<tr>
-<th>Goal</th>
-<th>Function</th>
-<th>Module</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Discover features in a project</td>
-<td><code>scan_project()</code></td>
-<td><code>help.bootstrap</code></td>
-</tr>
-<tr>
-<td>Turn discovered features into a manifest</td>
-<td><code>proposals_to_manifest()</code></td>
-<td><code>help.bootstrap</code></td>
-</tr>
-<tr>
-<td>Serve a template to a user</td>
-<td><code>populate()</code></td>
-<td><code>help.templates</code></td>
-</tr>
-<tr>
-<td>Serve with progressive depth</td>
-<td><code>populate_progressive()</code></td>
-<td><code>help.progression</code></td>
-</tr>
-<tr>
-<td>Re-generate stale templates</td>
-<td><code>run_maintenance()</code></td>
-<td><code>help.maintenance</code></td>
-</tr>
-<tr>
-<td>Find templates relevant to a file</td>
-<td><code>get_precursor_warnings()</code></td>
-<td><code>help.feedback</code></td>
-</tr>
-<tr>
-<td>Find templates relevant to a workflow</td>
-<td><code>get_workflow_help()</code></td>
-<td><code>help.feedback</code></td>
-</tr>
-</tbody>
-</table>
-<p>The <code>attune.help.engine</code> facade re-exports all of these in one place, so
-<code>from attune.help.engine import populate, run_maintenance, …</code> also works.</p>
-<h2>How are template IDs formed?</h2>
-<p>A template ID is <code>&lt;type-prefix&gt;-&lt;name&gt;</code> — for example
-<code>con-progressive-depth</code> addresses the <em>concept</em> named
-<code>progressive-depth</code>. The prefixes are <code>con</code> (concept), <code>tas</code> (task),
-<code>ref</code> (reference), <code>qui</code> (quickstart), <code>err</code> (error), <code>war</code> (warning),
-<code>tip</code>, <code>not</code> (note), <code>faq</code>, <code>tro</code> (troubleshooting), <code>com</code> (comparison).
-<code>populate()</code> returns <code>None</code> if the ID resolves to no file.</p>
-<h2>How does progressive depth work?</h2>
-<p>Each time a user asks about the same topic, <code>populate_progressive()</code>
-advances the depth level — from concept to task to reference — so they
-get more detail without being overwhelmed on the first request. The
-session state is stored per topic and resets when the topic changes.
-Call <code>reset_session()</code> from <code>help.session</code> to clear state manually.</p>
+<p><code>scan_project()</code> (discover), <code>generate_feature_templates()</code>
+(generate), <code>populate()</code> (serve), <code>run_maintenance()</code> (keep in sync),
+and <code>get_precursor_warnings()</code> / <code>get_workflow_help()</code> (contextual).</p>
 <h2>How do I know if my templates are out of date?</h2>
-<p>Call <code>check_staleness()</code> from <code>help.staleness</code>, passing your manifest
-and project root. It returns a <code>StalenessReport</code> whose <code>stale_features</code>
-<strong>property</strong> (no parentheses) lists every feature whose source hash no
-longer matches the stored hash. Then call <code>run_maintenance()</code> to
-regenerate only the stale ones. Features marked <code>status: manual</code> in the
-manifest are skipped.</p>
-<h2>Is generating templates from the engine the right path?</h2>
-<p>No — <code>generate_feature_templates()</code> in <code>help.generator</code> is <strong>deprecated</strong>
-(it writes only three depths and emits a <code>DeprecationWarning</code>); it
-survives as an internal escape hatch for the MCP <code>help_update</code> tool. The
-current generation path is the single-source authoring pipeline
-(<code>attune-author generate &lt;feature&gt; --all-kinds</code>, then the projector).</p>
-<h2>How do I record feedback on a template?</h2>
-<p>Call <code>record_template_feedback(template_id, rating)</code> from
-<code>help.feedback</code>. It returns the updated confidence score as a float. You
-can retrieve the current score at any time with
-<code>get_template_confidence(template_id)</code>.</p>
-<h2>How do I find templates by tag?</h2>
-<p>Use <code>search_by_tag(tag)</code> to get a list of template IDs for a given tag,
-or <code>list_tags()</code> to see every tag and how many templates it covers. Both
-functions accept <code>sort_by_usage=True</code> to rank results by recent usage.</p>
-<h2>How do I debug a failing template?</h2>
-<ol>
-<li>Confirm the manifest loads: <code>load_manifest(&quot;.help&quot;)</code>.</li>
-<li>Confirm the ID resolves: <code>populate(&quot;&lt;id&gt;&quot;)</code> is not <code>None</code>.</li>
-<li>Call <code>check_staleness()</code> to rule out stale source hashes.</li>
-<li>If cross-links are involved, call <code>invalidate_cross_links_cache()</code>
-from <code>help.templates</code> and retry — a stale cache is a common source of
-resolution failures.</li>
-</ol>
-<p>For renderer-specific failures, pass the <code>PopulatedTemplate</code> to
-<code>render_cli()</code>, <code>render_claude_code()</code>, or <code>render_marketplace()</code>
-individually to isolate which renderer is at fault.</p>
-<h2>Is any of the help engine async?</h2>
+<p>Call <code>check_staleness()</code> from <code>help.staleness</code>; its
+<code>StalenessReport.stale_features</code> <strong>property</strong> lists every feature whose
+source hash no longer matches. Then <code>run_maintenance()</code> to regenerate.</p>
+<h2>Is anything async?</h2>
 <p>No — every help engine entry point is synchronous.</p>
+<h2>How do I find templates by tag?</h2>
+<p><code>search_by_tag(tag)</code> returns template IDs; <code>list_tags()</code>
+returns tag → count. Both take <code>sort_by_usage=True</code> to rank by recent
+usage.</p>
 <h2>Where are the source files?</h2>
-<ul>
-<li><code>src/attune/help/**</code></li>
-</ul>
+<p><code>src/attune/help/**</code>.</p>
 
   </article>
   <footer>

@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Smart Test FAQ — faq</title>
-  <meta name="description" content="It finds untested code in your Python project and generates pytest tests to cover it — including edge cases, error paths, and boundary values." />
+  <meta name="description" content="Both — `test-audit` finds and ranks coverage gaps; `test-gen` writes pytest tests to close them. The `/smart-test` skill can do either or both in sequence." />
   <meta property="og:title" content="Smart Test FAQ — faq" />
-  <meta property="og:description" content="It finds untested code in your Python project and generates pytest tests to cover it — including edge cases, error paths, and boundary values." />
+  <meta property="og:description" content="Both — `test-audit` finds and ranks coverage gaps; `test-gen` writes pytest tests to close them. The `/smart-test` skill can do either or both in sequence." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/smart-test/faq" />
   <style>
@@ -273,32 +273,24 @@
   </nav>
   <article class="markdown-body">
 <h1>Smart Test FAQ</h1>
-<h2>What does smart-test do?</h2>
-<p>It finds untested code in your Python project and generates pytest tests to cover it — including edge cases, error paths, and boundary values.</p>
-<h2>When should I use it?</h2>
-<p>Use smart-test when you want to catch coverage gaps before they become tech debt: after writing new modules, when coverage drops below your threshold, before a release, or to bootstrap tests for legacy code that has none.</p>
-<p>If you need to fix tests that are already written but failing, use fix-test instead.</p>
-<h2>What kinds of gaps does it find?</h2>
-<p>Smart-test identifies untested public functions, uncovered branches (<code>if</code>/<code>else</code> paths), exception handlers that are never triggered, boundary values (empty inputs, <code>None</code>, zero, max-length), and input combinations that would need <code>@pytest.mark.parametrize</code> coverage.</p>
-<h2>What does it generate?</h2>
-<p>It produces a coverage gap report ranked by risk, working pytest functions with assertions, boundary and <code>None</code>-handling tests, exception tests, and parametrized test cases for input combinations.</p>
-<h2>Do I need an API key or extra budget?</h2>
-<p>No. Smart-test runs on your existing Claude subscription.</p>
-<h2>Will it generate tests for my entire codebase at once?</h2>
-<p>Not by default. If you don't specify a target, it asks which module to focus on and whether you want gap analysis, test generation, or both. If you include the path upfront — for example, <code>/smart-test src/auth/</code> — it skips the questions and runs immediately.</p>
-<h2>How does it decide which modules to prioritize?</h2>
-<p>It parses your <code>coverage.json</code> output (produced by pytest-cov), scores each module by coverage percentage and statement count, and filters out modules above a minimum threshold (default 50%). Modules are then grouped by subsystem for batch processing.</p>
-<h2>What gets skipped automatically?</h2>
-<p>Directories like <code>.git</code>, <code>__pycache__</code>, <code>venv</code>, <code>migrations</code>, <code>build</code>, <code>dist</code>, and similar non-source paths are excluded by default. You don't need to configure this.</p>
-<h2>Where is the source code for this feature?</h2>
-<ul>
-<li><code>src/attune/workflows/test_audit/</code> — coverage parsing, prioritization, and audit workflow</li>
-<li><code>src/attune/workflows/test_gen/</code> — test generation workflow and AST analysis</li>
-<li><code>src/attune/workflows/test_gen_parallel.py</code> — parallel generation across multiple modules</li>
-</ul>
-<h2>How do I debug smart-test if something goes wrong?</h2>
-<p>Run <code>pytest -k &quot;smart-test&quot; -v</code> first to check whether the underlying tests pass. If they do but your output looks wrong, verify that your <code>coverage.json</code> file exists and contains a top-level <code>files</code> key — <code>parse_coverage_json()</code> raises a <code>ValueError</code> if that key is missing or malformed.</p>
-<p><strong>Tags:</strong> <code>testing</code>, <code>coverage</code>, <code>generation</code></p>
+<h2>Does smart-test find gaps or write tests?</h2>
+<p>Both — <code>test-audit</code> finds and ranks coverage gaps;
+<code>test-gen</code> writes pytest tests to close them. The <code>/smart-test</code>
+skill can do either or both in sequence.</p>
+<h2>Why does <code>attune workflow run smart-test</code> fail?</h2>
+<p><code>smart-test</code> is the skill / topic name, not a workflow
+slug. Run <code>attune workflow run test-audit</code> or
+<code>attune workflow run test-gen</code>.</p>
+<h2>How do I generate tests for many modules at once?</h2>
+<p>Use <code>ParallelTestGenerationWorkflow().execute(top=N, batch_size=M)</code> (the <code>test_gen_parallel</code> MCP tool), which writes
+to <code>tests/behavioral/generated</code> by default.</p>
+<h2>Which calls are async?</h2>
+<p>Every smart-test workflow's <code>execute</code> is a coroutine —
+<code>await</code> it or use <code>asyncio.run</code>.</p>
+<h2>Can I trust the generated tests?</h2>
+<p>Treat them as a reviewed starting point. Generation is
+predictive — run the tests and check the assertions before
+committing.</p>
 
   </article>
   <footer>
