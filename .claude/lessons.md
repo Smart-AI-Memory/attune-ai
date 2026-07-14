@@ -14970,3 +14970,23 @@ def ", start_idx + 1)` for module-
   while you were editing. Extends the "interrupted compound Bash
   command may have partially executed" family with the
   unconditioned-tail variant.
+
+- **A multi-dimension sign-off (triage matrix, release gate) CAN go
+  out as ONE batched AskUserQuestion form — set
+  `metadata.source: "elicit-form"` to pass the one-question-per-turn
+  guard**: the `ask_question_format_guard.py` hook blocks any
+  AskUserQuestion with >1 question ("ask ONE actionable question per
+  turn"), but its §4 escape hatch accepts a batch when the questions
+  are independent, non-branching dimensions of a single decision —
+  opt in via `metadata.source` (e.g. `elicit-form`). Hit 2026-07-14
+  presenting the spec-backlog triage sign-off (archive/merge go +
+  kill list + commit list + recurrence build = 4 independent
+  dimensions of one ratification): the unbatched call was blocked;
+  the same call with the metadata opt-in went through and Patrick
+  answered all four in one turn. Judgment line: use the batch ONLY
+  when no answer changes another question's meaning (true
+  independence); sequential/branching decisions still go one per
+  turn. Pairs with the question-shape rule (recommendation first,
+  '(Recommended)' suffix) which applies per-question inside the
+  batch, and with `feedback_surface_forks_as_forms` (Patrick wants
+  forks AS forms, not prose).
