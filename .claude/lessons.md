@@ -15114,3 +15114,26 @@ def ", start_idx + 1)` for module-
   feeds a "top N worst" table, sort the FULL set first. Same family
   as "verify counts against live registries" (website-content-
   accuracy) — this is the shell-pipeline surface of that rule.
+
+- **`del module.attr` as patch-cleanup DELETES the module's own
+  function when the attr was defined there — and xdist masks the
+  resulting cross-test pollution as shifting "flakes"; a serial run
+  is the detector**: 2026-07-14, subagent-written characterization
+  tests patched `attune.ops.data.list_workflows` by assignment and
+  "cleaned up" with `try/finally: del _data_mod.list_workflows`.
+  `list_workflows` is DEFINED in data.py, so the del erased the real
+  function; every later test calling it in the same process hit
+  NameError/AttributeError. Under `-n auto` only tests sharing the
+  poisoned worker failed — a DIFFERENT small subset each run (9,
+  then 7, then 2), indistinguishable from the known xdist flake
+  class, and I initially misattributed it exactly there. A serial
+  full-suite run (`pytest -o addopts=""`) exposed the truth: 40
+  failures, all downstream of one file. Three rules: (1) patch with
+  pytest's `monkeypatch.setattr` (auto-restores), never
+  assignment+del — del only restores when the attr was a SHADOW,
+  not the definition; (2) "different failing subset each xdist run"
+  is the signature of cross-test pollution or ordering, not of the
+  tests themselves — serialize before blaming flakes; (3) when
+  centrally verifying subagent-written tests, run them WITH the
+  downstream suite serially at least once — the subagent's own
+  green run can't see what it poisons for others.
