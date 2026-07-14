@@ -28,6 +28,7 @@ from ..llm_source_base import (
     budget_too_small_finding,
     cap_hit_finding_if_bound,
     findings_from_workflow_result,
+    workflow_unsuccessful_finding,
 )
 from ..workflow import Finding
 
@@ -98,7 +99,7 @@ class BugPredictSource(LLMSource):
             self._record_cost(result)
 
             if not getattr(result, "success", False):
-                findings.append(_workflow_unsuccessful_finding(self.name, path, result))
+                findings.append(workflow_unsuccessful_finding(self.name, path, result))
                 continue
 
             findings.extend(findings_from_workflow_result(result, self.name))
@@ -138,29 +139,6 @@ def _path_failed_finding(source_name: str, path: str, exc: BaseException) -> Fin
         description=(
             f"Wrapped workflow raised {type(exc).__name__}: {exc}. "
             f"Other paths (if any) were still attempted."
-        ),
-        file=path,
-        line=None,
-        evidence=None,
-        confidence=1.0,
-        tags=("source-failure",),
-    )
-
-
-def _workflow_unsuccessful_finding(
-    source_name: str,
-    path: str,
-    result: object,
-) -> Finding:
-    """Marker for a clean WorkflowResult whose ``success`` came back False."""
-    detail = getattr(result, "final_output", "") or "(no detail returned)"
-    return Finding(
-        source=source_name,
-        severity="info",
-        title=f"{source_name} returned an unsuccessful result for {path}",
-        description=(
-            "Wrapped workflow completed without raising but reported "
-            f"success=False. Detail: {detail[:200]}"
         ),
         file=path,
         line=None,

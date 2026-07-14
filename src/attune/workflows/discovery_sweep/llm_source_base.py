@@ -358,6 +358,45 @@ def cap_hit_finding_if_bound(
     )
 
 
+def workflow_unsuccessful_finding(
+    source_name: str,
+    path: str,
+    result: object,
+) -> Finding:
+    """Marker for a clean WorkflowResult whose ``success`` came back False.
+
+    Shared by every LLM source adapter (previously mirrored per-file
+    with a detail line that only read ``final_output`` — empty on most
+    failures, rendering the useless "(no detail returned)"). Prefers
+    the structured ``error`` / ``error_type`` fields so the question
+    entry names the actual failure.
+
+    Tagged ``source-failure`` so verification rule 0 routes it to the
+    ``questions`` bucket and the engine counts the source as failed
+    when it produced nothing else.
+    """
+    error = getattr(result, "error", None)
+    error_type = getattr(result, "error_type", None)
+    final_output = getattr(result, "final_output", "") or ""
+    detail = str(error or final_output or "(no detail returned)")
+    if error_type:
+        detail = f"[{error_type}] {detail}"
+    return Finding(
+        source=source_name,
+        severity="info",
+        title=f"{source_name} returned an unsuccessful result for {path}",
+        description=(
+            "Wrapped workflow completed without raising but reported "
+            f"success=False. Detail: {detail[:300]}"
+        ),
+        file=path,
+        line=None,
+        evidence=None,
+        confidence=1.0,
+        tags=("source-failure",),
+    )
+
+
 class LLMSource:
     """Optional marker base for LLM-backed FindingSource adapters.
 

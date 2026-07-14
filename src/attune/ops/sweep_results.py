@@ -184,8 +184,10 @@ def persist_result(scope_path: str, sweep_result: dict[str, Any], config: Config
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(sweep_result, f, indent=2)
         os.replace(tmp_name, target)
-    except Exception:
-        # Best-effort cleanup if the rename never happened.
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: cleanup-and-reraise, not a mask — the broad
+        # catch exists only so the temp file never leaks, and the
+        # bare `raise` preserves the original exception unchanged.
         try:
             os.unlink(tmp_name)
         except OSError:

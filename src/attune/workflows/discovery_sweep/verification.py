@@ -147,6 +147,13 @@ def route(finding: Finding, all_findings: list[Finding]) -> Decision:
 
     Rule order (first non-None wins):
 
+    0. **Source failure marker.** Tagged ``source-failure`` →
+       ``Questions(SOURCE_FAILED)``. These are health signals about
+       the sweep itself, not code findings — they must stay visible
+       regardless of severity or file. Without this rule an ``info``
+       marker WITH a file fell through to rule 2 and was silently
+       buried in ``rejected`` (the 2026-07-14 6-of-7-dead-sources
+       sweep that still rendered as clean).
     1. **Location required.** No ``file`` and not tagged
        ``file-level`` → ``Questions(LOCATION_MISSING)``.
     2. **Severity threshold.** Below ``medium`` →
@@ -160,6 +167,16 @@ def route(finding: Finding, all_findings: list[Finding]) -> Decision:
 
     A finding that survives all five lands in ``Queue``.
     """
+    # 0. source failure markers surface as questions, never rejected
+    if "source-failure" in finding.tags:
+        return Questions(
+            reason=REASON_SOURCE_FAILED,
+            next_step=(
+                f"Run `attune workflow run discovery-sweep --path X "
+                f"--source {finding.source}` to reproduce."
+            ),
+        )
+
     # 1. location required
     if finding.file is None and "file-level" not in finding.tags:
         return Questions(
