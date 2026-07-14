@@ -261,10 +261,10 @@ class TestModelRegistry:
         model = MODEL_REGISTRY["anthropic"]["capable"]
         assert "sonnet" in model.id.lower() or model.tier == "capable"
 
-    def test_anthropic_opus_is_premium(self):
-        """Test Anthropic premium tier is Opus."""
+    def test_anthropic_fable_is_premium(self):
+        """Test Anthropic premium tier is Fable."""
         model = MODEL_REGISTRY["anthropic"]["premium"]
-        assert "opus" in model.id.lower()
+        assert "fable" in model.id.lower()
         assert model.tier == "premium"
 
 

@@ -181,11 +181,15 @@ class TelemetryAnalytics:
         self,
         since: datetime | None = None,
     ) -> dict[str, Any]:
-        """Analyze Sonnet 4.5 → Opus 4.5 fallback performance and cost savings.
+        """Analyze Sonnet → premium fallback performance and cost savings.
 
         Tracks:
-        - How often Sonnet 4.5 succeeds vs needs Opus fallback
-        - Cost savings from using Sonnet instead of always using Opus
+        - How often Sonnet succeeds vs needs a premium fallback
+        - Cost savings vs always using the premium model (the baseline
+          is priced from the registry premium entry — fable-5 — so this
+          site cannot drift from the canonical pricing)
+        - Return keys keep the legacy ``opus`` naming — they are a
+          stable API consumed by the telemetry CLI and dashboards
         - Success rates by model
 
         Args:
@@ -202,7 +206,8 @@ class TelemetryAnalytics:
             c
             for c in calls
             if c.provider == "anthropic"
-            and c.model_id in ["claude-sonnet-5", "claude-opus-4-6", "claude-opus-4-8"]
+            and c.model_id
+            in ["claude-sonnet-5", "claude-opus-4-6", "claude-opus-4-8", "claude-fable-5"]
         ]
 
         if not anthropic_calls:
@@ -225,19 +230,25 @@ class TelemetryAnalytics:
         sonnet_calls = [c for c in anthropic_calls if c.model_id == "claude-sonnet-5"]
         sonnet_successes = sum(1 for c in sonnet_calls if c.success)
 
-        # Count Opus fallbacks (calls with fallback_used and ended up on Opus)
+        # Count premium fallbacks (fallback_used and ended on a premium model)
         opus_fallbacks = sum(
             1
             for c in anthropic_calls
-            if c.model_id in ("claude-opus-4-6", "claude-opus-4-8") and c.fallback_used
+            if c.model_id in ("claude-opus-4-6", "claude-opus-4-8", "claude-fable-5")
+            and c.fallback_used
         )
 
         # Calculate costs
         actual_cost = sum(c.estimated_cost for c in anthropic_calls)
 
-        # Calculate what it would cost if everything used Opus
-        opus_input_cost = 5.00 / 1_000_000  # per token
-        opus_output_cost = 25.00 / 1_000_000  # per token
+        # Baseline: what it would cost if everything used the premium
+        # model. Priced from the registry premium entry (fable-5) so the
+        # baseline can't drift from the canonical pricing sites.
+        from ..registry import MODEL_REGISTRY
+
+        premium_info = MODEL_REGISTRY["anthropic"]["premium"]
+        opus_input_cost = premium_info.input_cost_per_million / 1_000_000  # per token
+        opus_output_cost = premium_info.output_cost_per_million / 1_000_000  # per token
         always_opus_cost = sum(
             (c.input_tokens * opus_input_cost) + (c.output_tokens * opus_output_cost)
             for c in anthropic_calls

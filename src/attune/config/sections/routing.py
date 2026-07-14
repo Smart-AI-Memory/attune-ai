@@ -4,8 +4,10 @@ Copyright 2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
+
+from attune.model_tiers import resolve_model
 
 
 @dataclass
@@ -19,7 +21,8 @@ class RoutingConfig:
         default_tier: Default model tier for requests.
         cheap_model: Model ID for cheap/fast tier (Haiku).
         capable_model: Model ID for capable/balanced tier (Sonnet).
-        premium_model: Model ID for premium/powerful tier (Opus).
+        premium_model: Model ID for premium/powerful tier (default
+            resolved via attune.model_tiers; env override wins).
         auto_tier_selection: Automatically select tier based on task complexity.
         cost_optimization: Enable cost-saving optimizations.
         max_tokens_cheap: Max output tokens for cheap tier.
@@ -34,7 +37,7 @@ class RoutingConfig:
     default_tier: Literal["cheap", "capable", "premium"] = "capable"
     cheap_model: str = "claude-haiku-4-5"
     capable_model: str = "claude-sonnet-5"
-    premium_model: str = "claude-opus-4-8"
+    premium_model: str = field(default_factory=lambda: resolve_model("premium"))
     auto_tier_selection: bool = True
     cost_optimization: bool = True
     max_tokens_cheap: int = 4096
@@ -68,7 +71,7 @@ class RoutingConfig:
             default_tier=data.get("default_tier", "capable"),
             cheap_model=data.get("cheap_model", "claude-haiku-4-5"),
             capable_model=data.get("capable_model", "claude-sonnet-5"),
-            premium_model=data.get("premium_model", "claude-opus-4-8"),
+            premium_model=data.get("premium_model", resolve_model("premium")),
             auto_tier_selection=data.get("auto_tier_selection", True),
             cost_optimization=data.get("cost_optimization", True),
             max_tokens_cheap=data.get("max_tokens_cheap", 4096),

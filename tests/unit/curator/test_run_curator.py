@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from unittest.mock import patch
 
 import pytest
 
@@ -57,9 +58,17 @@ class _FakeMessages:
         return self._response
 
 
+class _FakeBeta:
+    def __init__(self, messages: _FakeMessages) -> None:
+        self.messages = messages
+
+
 class _FakeClient:
     def __init__(self, response=None, exc: Exception | None = None) -> None:
         self.messages = _FakeMessages(response=response, exc=exc)
+        # Fable models route via the beta namespace (fable_call); share
+        # the recorder so ``client.messages.calls`` sees every call.
+        self.beta = _FakeBeta(self.messages)
 
 
 def _tool_response(summary: str, items: list, *, in_tok: int = 1000, out_tok: int = 200):
@@ -157,7 +166,7 @@ def test_happy_path_returns_validated_items(isolate):
     result = asyncio.run(core.run_curator(project_root=isolate, client=client))
     assert result.summary.startswith("Two things")
     assert [i.id for i in result.items] == ["i1", "i2"]
-    assert result.model == core._CURATOR_MODEL
+    assert result.model == core._curator_model()
     assert set(result.sources_consulted) == {"bulletin", "specs"}
     assert result.cost_usd > 0
     assert client.messages.calls  # SDK was invoked
@@ -258,6 +267,27 @@ def test_offline_rate_limit_message(isolate):
     assert "429" not in result.summary
 
 
+def test_refusal_records_event_and_degrades(isolate):
+    """A fable refusal degrades to an errored briefing + telemetry event.
+
+    The default curator model is the premium tier (fable), so the call
+    rides the beta path where ``stop_reason == "refusal"`` surfaces as
+    ``ModelRefusalError``; ``run_curator`` records the ``fable_refusal``
+    event and keeps its never-raises contract.
+    """
+    refusal = _Response([], _Usage(10, 1))
+    refusal.stop_reason = "refusal"
+    client = _FakeClient(refusal)
+    with patch("attune.models.telemetry.log_fable_refusal") as mock_log:
+        result = asyncio.run(core.run_curator(project_root=isolate, client=client))
+
+    assert result.items == []
+    assert "refused" in result.summary
+    mock_log.assert_called_once()
+    assert mock_log.call_args.kwargs["workflow"] == "curator"
+    assert mock_log.call_args.kwargs["model"] == core._curator_model()
+
+
 def test_budget_overage_logs_warning(isolate, caplog):
     # Huge output tokens drive cost above the advisory cap.
     client = _FakeClient(_tool_response("spendy", [_item("i1", ["bulletin:r1"])], out_tok=100_000))
@@ -284,7 +314,7 @@ def test_default_client_constructed_when_none(isolate, monkeypatch):
 # Helper units (edge paths)
 # --------------------------------------------------------------------------
 def test_compute_cost_none_usage_is_zero():
-    assert core._compute_cost(core._CURATOR_MODEL, None) == 0.0
+    assert core._compute_cost(core._curator_model(), None) == 0.0
 
 
 def test_compute_cost_unknown_model_no_pricing(monkeypatch):
@@ -298,7 +328,7 @@ def test_compute_cost_swallows_pricing_error():
         def input_tokens(self):
             raise RuntimeError("usage broke")
 
-    assert core._compute_cost(core._CURATOR_MODEL, _Boom()) == 0.0
+    assert core._compute_cost(core._curator_model(), _Boom()) == 0.0
 
 
 def test_extract_payload_text_fallback():

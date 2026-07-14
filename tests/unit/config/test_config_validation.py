@@ -280,14 +280,14 @@ class TestRoutingValidation:
         routing = RoutingConfig()
         assert routing.cheap_model == "claude-haiku-4-5"
         assert routing.capable_model == "claude-sonnet-5"
-        assert routing.premium_model == "claude-opus-4-8"
+        assert routing.premium_model == "claude-fable-5"
 
     def test_routing_config_from_empty_dict(self):
         """Test that from_dict with empty dict uses current defaults."""
         routing = RoutingConfig.from_dict({})
         assert routing.cheap_model == "claude-haiku-4-5"
         assert routing.capable_model == "claude-sonnet-5"
-        assert routing.premium_model == "claude-opus-4-8"
+        assert routing.premium_model == "claude-fable-5"
 
 
 class TestWorkflowsValidation:

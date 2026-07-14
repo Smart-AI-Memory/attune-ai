@@ -390,7 +390,7 @@ class TestModelPricing:
     def test_baseline_model_defined(self):
         """Test that BASELINE_MODEL is defined and valid."""
         assert BASELINE_MODEL is not None
-        assert "opus" in BASELINE_MODEL.lower()
+        assert "fable" in BASELINE_MODEL.lower()
 
     def test_build_model_pricing_returns_dict(self):
         """Test _build_model_pricing returns valid dict."""

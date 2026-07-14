@@ -78,7 +78,7 @@ class TestModelRegistry:
     def test_get_model_anthropic_premium(self):
         model = self.registry.get_model("anthropic", "premium")
         assert model is not None
-        assert "opus" in model.id.lower()
+        assert "fable" in model.id.lower()
 
     def test_get_model_invalid_provider_raises(self):
         with pytest.raises(ValueError, match="not supported"):

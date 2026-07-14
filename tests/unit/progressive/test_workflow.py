@@ -63,7 +63,7 @@ class TestLoadModelConfig:
 
         assert config["cheap"] == "gpt-4o-mini"
         assert config["capable"] == "claude-sonnet-5"
-        assert config["premium"] == "claude-opus-4-8"
+        assert config["premium"] == "claude-fable-5"
 
     def test_load_model_config_env_override(self, monkeypatch):
         """Test environment variable overrides."""
@@ -315,7 +315,7 @@ class TestProgressiveWorkflow:
 
         assert workflow._get_model_for_tier(Tier.CHEAP) == "gpt-4o-mini"
         assert workflow._get_model_for_tier(Tier.CAPABLE) == "claude-sonnet-5"
-        assert workflow._get_model_for_tier(Tier.PREMIUM) == "claude-opus-4-8"
+        assert workflow._get_model_for_tier(Tier.PREMIUM) == "claude-fable-5"
 
     def test_analyze_tier_result_empty(self):
         """Test analyzing empty tier result."""

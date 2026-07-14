@@ -44,6 +44,10 @@ analyze_batch(requests=[
 - `task_id` and `task_type` and `input_data` are required per
   request; `model_tier` is optional (`cheap` / `capable` /
   `premium`, default `capable`).
+- **Premium tier policy:** interactive premium = `claude-fable-5`
+  (with server-side opus fallback); **batch premium =
+  `claude-opus-4-8`** — the Batch API rejects the `fallbacks`
+  param, so fable models are downgraded at request-build time.
 - The call returns a batch id and submits asynchronously — it
   does not block for results.
 

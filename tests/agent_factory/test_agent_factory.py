@@ -390,7 +390,7 @@ class TestModelTierRouting:
         assert "sonnet" in capable.lower()
 
         premium = adapter.get_model_for_tier("premium", "anthropic")
-        assert "opus" in premium.lower()
+        assert "fable" in premium.lower()
 
 
 class TestAgentRoles:

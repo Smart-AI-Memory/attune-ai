@@ -138,10 +138,14 @@ class TestCallLlmWithClient:
 
         agent = _rule_based_agent()
         client = MagicMock()
+        # Fable (premium) calls route via client.beta.messages.create
+        # (create_with_fable); wire both namespaces to the same behavior.
         if raises is not None:
             client.messages.create.side_effect = raises
+            client.beta.messages.create.side_effect = raises
         else:
             client.messages.create.return_value = response
+            client.beta.messages.create.return_value = response
         agent.llm_client = client
         return agent, client
 
@@ -190,6 +194,52 @@ class TestCallLlmWithClient:
 
         assert text == ""
         assert meta["model"] != "fallback"
+
+    def test_premium_routes_via_beta_namespace(self):
+        """Premium tier resolves to fable -> create_with_fable beta path."""
+        from attune.agents.release.release_models import MODEL_CONFIG, Tier
+
+        assert "fable" in MODEL_CONFIG["premium"]  # task 6 wiring
+        resp = self._response("premium answer")
+        resp.stop_reason = "end_turn"
+        agent, client = self._agent_with_client(response=resp)
+        text, meta = agent._call_llm("p", "s", Tier.PREMIUM)
+
+        assert text == "premium answer"
+        assert meta["model"] == MODEL_CONFIG["premium"]
+        client.beta.messages.create.assert_called_once()
+        client.messages.create.assert_not_called()
+
+    def test_premium_refusal_returns_fallback_and_records_event(self):
+        """A refusal keeps the graceful fallback AND records telemetry."""
+        from unittest.mock import patch
+
+        from attune.agents.release.release_models import Tier
+
+        resp = self._response("never surfaced")
+        resp.stop_reason = "refusal"
+        agent, _ = self._agent_with_client(response=resp)
+        with patch("attune.models.telemetry.log_fable_refusal") as mock_log:
+            text, meta = agent._call_llm("p", "s", Tier.PREMIUM)
+
+        assert text == ""
+        assert meta["model"] == "fallback"
+        assert "error" in meta
+        mock_log.assert_called_once()
+
+    def test_leading_thinking_block_skipped_for_first_text(self):
+        """First TEXT block wins, not content[0] (fable_call gotcha)."""
+        from types import SimpleNamespace
+
+        from attune.agents.release.release_models import Tier
+
+        thinking = SimpleNamespace(type="thinking", thinking="...")
+        text_block = SimpleNamespace(type="text", text="real answer")
+        resp = self._response(content_blocks=[thinking, text_block])
+        agent, _ = self._agent_with_client(response=resp)
+        text, _meta = agent._call_llm("p", "s", Tier.CHEAP)
+
+        assert text == "real answer"
 
     def test_exception_returns_fallback_metadata(self):
         from attune.agents.release.release_models import Tier

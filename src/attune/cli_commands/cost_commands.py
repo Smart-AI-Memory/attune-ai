@@ -114,7 +114,9 @@ def _costs_by_workflow(
         print("-" * 40)
         print(f"  Requests:        {len(filtered):,}")
         print(f"  Actual cost:     ${total_actual:.4f}")
-        print(f"  Baseline (Opus): ${total_baseline:.4f}")
+        from attune.cost_tracker import _baseline_label
+
+        print(f"  {_baseline_label():<16} ${total_baseline:.4f}")
         print(f"  Saved:           ${total_savings:.4f} ({savings_pct}%)")
         print()
 

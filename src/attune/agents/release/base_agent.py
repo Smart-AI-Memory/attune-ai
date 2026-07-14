@@ -17,6 +17,8 @@ import time
 from typing import Any
 
 from attune.agents.state.store import AgentStateStore
+from attune.llm.fable_call import create_with_fable
+from attune.model_tiers import ModelRefusalError
 from attune.models.registry import TIER_PRICING
 
 from .release_models import (
@@ -178,7 +180,12 @@ class ReleaseAgent:
         model = MODEL_CONFIG[tier.value]
 
         try:
-            response = self.llm_client.messages.create(
+            # Premium tier resolves to fable — the helper routes fable
+            # models via the beta namespace (+ server-side opus fallback)
+            # and raises ModelRefusalError on refusal; non-fable models
+            # take the exact pre-tier path.
+            response = create_with_fable(
+                self.llm_client,
                 model=model,
                 max_tokens=1024,
                 system=system,
@@ -197,11 +204,13 @@ class ReleaseAgent:
             self.total_cost += cost
             self.total_tokens += input_tokens + output_tokens
 
+            # First TEXT block, not content[0] — fable responses can lead
+            # with a thinking block that has no .text (fable_call docstring).
             response_text = ""
-            if response.content:
-                first_block = response.content[0]
-                if hasattr(first_block, "text"):
-                    response_text = first_block.text  # type: ignore[union-attr]
+            for block in response.content or []:
+                if hasattr(block, "text"):
+                    response_text = block.text
+                    break
 
             return response_text, {
                 "model": model,
@@ -210,6 +219,15 @@ class ReleaseAgent:
                 "cost": cost,
             }
 
+        except ModelRefusalError as e:
+            # The whole fable -> opus fallback chain refused — record the
+            # fable_refusal telemetry event, then keep the graceful
+            # rule-based fallback contract.
+            from attune.models.telemetry import log_fable_refusal
+
+            log_fable_refusal(e, workflow=self.role, model=model)
+            logger.error(f"LLM refusal for {self.role}: {e}")
+            return "", {"model": "fallback", "cost": 0.0, "error": str(e)}
         except Exception as e:  # noqa: BLE001
             # INTENTIONAL: LLM calls may fail for many reasons; graceful fallback
             logger.error(f"LLM call failed for {self.role}: {e}")

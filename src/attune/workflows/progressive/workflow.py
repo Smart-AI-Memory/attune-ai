@@ -11,6 +11,7 @@ import sys
 from datetime import datetime
 from typing import Any
 
+from attune.model_tiers import resolve_model
 from attune.workflows.progressive.core import (
     EscalationConfig,
     FailureAnalysis,
@@ -51,7 +52,7 @@ def _load_model_config() -> dict[str, str]:
     defaults = {
         "cheap": "gpt-4o-mini",
         "capable": "claude-sonnet-5",
-        "premium": "claude-opus-4-8",
+        "premium": resolve_model("premium"),
     }
 
     # Try to load from unified config

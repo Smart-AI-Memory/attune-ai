@@ -23,6 +23,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from attune.llm.fable_call import acreate_with_fable
+from attune.model_tiers import ModelRefusalError, resolve_model
+
 from .cache import CuratorCache
 from .prompt import _CURATOR_SYSTEM_PROMPT, build_curator_prompt
 from .result import (
@@ -40,10 +43,16 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Canonical Opus model for this codebase (matches cost_tracker.BASELINE
-# and is priced in the registry). The spec drafted "claude-opus-4-7",
-# which never existed here — see decisions.md.
-_CURATOR_MODEL = "claude-opus-4-8"
+
+def _curator_model() -> str:
+    """Premium-tier synthesis model, resolved per call.
+
+    Routed through :mod:`attune.model_tiers` so ``ATTUNE_MODEL_PREMIUM``
+    is honored at call time. (The spec drafted "claude-opus-4-7", which
+    never existed here — see decisions.md.)
+    """
+    return resolve_model("premium")
+
 
 # Output token budget for the briefing reply. Input is bounded by the
 # source readers (≤50 rows × ≤500 chars each); this caps the reply.
@@ -246,7 +255,13 @@ async def _query_opus(
         "tool_choice": {"type": "tool", "name": "emit_curation"},
         "messages": [{"role": "user", "content": prompt}],
     }
-    response = await client.messages.create(**request_kwargs)
+    # Premium default is fable — the helper routes fable models via the
+    # beta namespace (+ server-side opus fallback) and surfaces a
+    # refusal as ModelRefusalError; non-fable models take the exact
+    # pre-tier path. (_extract_curation_payload already walks all
+    # content blocks, so the leading-thinking-block gotcha from the
+    # fable_call docstring doesn't apply here.)
+    response = await acreate_with_fable(client, **request_kwargs)
     payload = _extract_curation_payload(response)
     return CuratorResult(
         summary=str(payload.get("summary") or ""),
@@ -301,7 +316,7 @@ async def run_curator(
     max_budget_usd: float = 0.50,
     force_refresh: bool = False,
     client: AsyncAnthropic | None = None,
-    model: str = _CURATOR_MODEL,
+    model: str | None = None,
 ) -> CuratorResult:
     """Synthesize an executive briefing across all project sources.
 
@@ -321,11 +336,15 @@ async def run_curator(
         force_refresh: Bypass both cache read and write.
         client: Injected ``AsyncAnthropic`` (tests pass a fake). When
             None, a default client is constructed lazily.
-        model: Override the synthesis model.
+        model: Override the synthesis model (default: the premium
+            tier via attune.model_tiers).
 
     Returns:
         The synthesized :class:`CuratorResult`. Never raises.
     """
+    if model is None:
+        model = _curator_model()
+
     summaries = await _read_all_sources(project_root)
     sources_consulted = [s.source_id for s in summaries]
 
@@ -346,6 +365,25 @@ async def run_curator(
 
     try:
         result = await _query_opus(prompt, schema, client=client, model=model)
+    except ModelRefusalError as exc:
+        # The whole fable -> opus fallback chain refused: record the
+        # fable_refusal telemetry event, then degrade gracefully
+        # (run_curator never raises).
+        from attune.models.telemetry import log_fable_refusal
+
+        log_fable_refusal(exc, workflow="curator", model=model)
+        logger.warning("curator: synthesis refused: %s", exc)
+        return CuratorResult(
+            summary=(
+                "The curator briefing was refused by the model "
+                f"(category: {exc.category or 'unspecified'}). "
+                "Recorded as a fable_refusal telemetry event."
+            ),
+            items=[],
+            sources_consulted=sources_consulted,
+            model=model,
+            cached_at=datetime.now(timezone.utc),
+        )
     except Exception as exc:  # noqa: BLE001
         # INTENTIONAL: an LLM outage / missing key / API error degrades
         # to an offline briefing rather than crashing the dashboard.

@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any
 
 from attune.models import MODEL_REGISTRY
-from attune.models.registry import TIER_PRICING
+from attune.models.registry import ADDITIONAL_MODELS, TIER_PRICING
 
 # Import pricing from unified registry
 from attune.security.path_validation import _validate_file_path
@@ -41,6 +41,11 @@ def _build_model_pricing() -> dict[str, dict[str, float]]:
                 "input": model_info.input_cost_per_million,
                 "output": model_info.output_cost_per_million,
             }
+
+    # Non-tier-routed models (by-id pricing: the batch premium path
+    # downgrades fable -> opus-4-8, and pre-fable records reference it)
+    for model_info in ADDITIONAL_MODELS.values():
+        pricing.setdefault(model_info.id, model_info.to_cost_tracker_pricing())
 
     # Add tier aliases from registry
     pricing.update(TIER_PRICING)
@@ -64,8 +69,19 @@ def _build_model_pricing() -> dict[str, dict[str, float]]:
 # Pricing per million tokens - sourced from unified registry
 MODEL_PRICING = _build_model_pricing()
 
-# Default premium model for baseline comparison
-BASELINE_MODEL = "claude-opus-4-8"
+# Default premium model for baseline comparison.
+# Moved opus-4-8 -> fable-5 (2026-07-10 amendment, docs/specs/
+# fable-premium-tier design §3): with fable premium at 2x opus pricing,
+# an opus baseline reports negative savings on every deliberate premium
+# call. Safe for history: baseline_cost is computed at log time and
+# stored per record (see log_request), so old records keep opus math.
+BASELINE_MODEL = "claude-fable-5"
+
+
+def _baseline_label() -> str:
+    """Report label for the baseline row, derived from BASELINE_MODEL."""
+    short = BASELINE_MODEL.removeprefix("claude-").split("-")[0].capitalize()
+    return f"Baseline ({short}):"
 
 
 class CostTracker:
@@ -408,7 +424,7 @@ class CostTracker:
         """Determine tier from model name."""
         if "haiku" in model.lower():
             return "cheap"
-        if "opus" in model.lower():
+        if "opus" in model.lower() or "fable" in model.lower():
             return "premium"
         return "capable"
 
@@ -518,7 +534,7 @@ class CostTracker:
             "COSTS",
             "-" * 40,
             f"  Actual cost:         ${summary['actual_cost']:.4f}",
-            f"  Baseline (Opus):     ${summary['baseline_cost']:.4f}",
+            f"  {_baseline_label():<21}${summary['baseline_cost']:.4f}",
             f"  You saved:           ${summary['savings']:.4f} ({summary['savings_percent']}%)",
             "",
         ]

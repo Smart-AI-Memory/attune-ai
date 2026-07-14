@@ -94,10 +94,20 @@ tier module, so the *next* model change is a one-line diff:
 **Not changed** (data/telemetry, opus remains real and priced):
 `models/registry.py` keeps its opus-4-8 entry and **gains** a
 `claude-fable-5` entry ($10/$50 per MTok, 1M context, 128K output);
-`cost_tracker.py` keeps `BASELINE_MODEL = "claude-opus-4-8"` (baseline
-comparisons stay meaningful) and gains fable pricing;
 `llm/providers/anthropic.py:406` pricing table gains a fable row;
 telemetry filters unchanged.
+
+> **Amendment (2026-07-10, Patrick, during execution):** the original
+> design kept `BASELINE_MODEL = "claude-opus-4-8"`. Amended:
+> `BASELINE_MODEL` moves to `claude-fable-5`. With fable premium at 2×
+> opus pricing, an opus baseline makes every premium call report
+> *negative* savings — "routing lost money" when the user deliberately
+> upgraded. The historical-continuity concern that motivated the
+> original choice was verified moot: `baseline_cost` is computed at
+> log time and stored per record (`cost_tracker.py:383-394`), so old
+> records keep opus math and only post-switch records use fable. The
+> hardcoded report label `"Baseline (Opus)"` (`cost_tracker.py:521`)
+> becomes dynamic in the same change (task 7).
 
 ### 4. Fable request handling — providers + one helper
 
@@ -207,10 +217,12 @@ None. Operational notes:
 - **Tokenizer**: fable-5 uses the Opus 4.8 tokenizer — counts roughly
   unchanged vs opus-4-8, so no `max_tokens` audit needed for the
   premium switch itself.
-- **Pricing**: premium moves $5/$25 → $10/$50 per MTok. Cost-tracker
-  gains the fable row; `BASELINE_MODEL` stays opus-4-8 so historical
-  baseline comparisons remain valid. Release notes call out the
-  premium price change prominently.
+- **Pricing**: premium moves $5/$25 → $10/$50 per MTok (prompt cache:
+  $12.50/MTok write, $1/MTok read — confirmed against the live pricing
+  page 2026-07-10). Cost-tracker gains the fable row;
+  `BASELINE_MODEL` moves to `claude-fable-5` per the §3 amendment
+  (log-time storage keeps historical records priced at opus math).
+  Release notes call out the premium price change prominently.
 
 ## UI/UX
 
