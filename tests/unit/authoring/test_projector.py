@@ -77,20 +77,20 @@ def test_parse_ignores_h2_inside_code_fences():
 # --- project_feature: planning ---------------------------------------------
 
 
-def test_dry_run_plans_ten_help_kinds_and_three_docs(tmp_path):
+def test_dry_run_plans_eleven_help_kinds_and_three_docs(tmp_path):
     result = project_feature(FIXTURE, tmp_path, tmp_path / ".help", dry_run=True)
     help_outputs = [o for o in result.outputs if o.target == "help"]
     docs_outputs = [o for o in result.outputs if o.target == "docs" and o.kind != "hub"]
     hub_outputs = [o for o in result.outputs if o.kind == "hub"]
 
-    assert len(help_outputs) == 10
+    assert len(help_outputs) == 11
     assert len(docs_outputs) == 3
     # The hub is additive — exactly one per feature with docs pages.
     assert len(hub_outputs) == 1
     assert {o.kind for o in help_outputs} == set(HELP_KIND_SECTIONS)
     assert {o.kind for o in docs_outputs} == set(DOCS_PAGE_SECTIONS)
-    # faq is never planned (D7).
-    assert "faq" not in {o.kind for o in help_outputs}
+    # faq IS planned when "## FAQ seeds" is present (FG1 Phase 1).
+    assert "faq" in {o.kind for o in help_outputs}
     # tutorial is never projected (D10) — hand-authored.
     assert "tutorial" not in {o.kind for o in docs_outputs}
     # dry-run writes nothing.
@@ -125,8 +125,13 @@ def test_help_body_opens_with_h1_title(tmp_path):
         first_line = body.splitlines()[0]
         assert first_line.startswith("# ")
         assert not first_line.startswith("## ")
-        # The H1 is the feature summary (frontmatter), not the slug.
-        assert first_line == "# Spec-driven development with approval loops"
+        if out.kind == "faq":
+            # The faq H1 is "<Feature> FAQ", matching the hand-authored
+            # FAQ pages it replaces (FG1 Phase 1).
+            assert first_line == "# Spec Engine FAQ"
+        else:
+            # The H1 is the feature summary (frontmatter), not the slug.
+            assert first_line == "# Spec-driven development with approval loops"
 
 
 def test_docs_pages_carry_footer(tmp_path):
@@ -150,7 +155,7 @@ def test_project_feature_writes_to_disk(tmp_path):
     help_dir = tmp_path / ".help"
     result = project_feature(FIXTURE, tmp_path, help_dir, dry_run=False)
 
-    assert len(result.written) == 14
+    assert len(result.written) == 15
     assert (help_dir / "templates" / "spec-engine" / "concept.md").exists()
     assert (help_dir / "templates" / "spec-engine" / "reference.md").exists()
     # docs land at their nav.mkdocs paths.
@@ -159,9 +164,86 @@ def test_project_feature_writes_to_disk(tmp_path):
     assert (tmp_path / "docs" / "reference" / "spec-engine.md").exists()
     # the additive Variant-1 hub page (D11).
     assert (tmp_path / "docs" / "features" / "spec-engine.md").exists()
-    # faq is never written (D7 / DD5); tutorial is hand-authored (D10).
-    assert not (help_dir / "templates" / "spec-engine" / "faq.md").exists()
+    # faq IS written from the FAQ seeds section (FG1 Phase 1).
+    assert (help_dir / "templates" / "spec-engine" / "faq.md").exists()
+    # tutorial is hand-authored (D10).
     assert not (tmp_path / "docs" / "tutorials" / "spec-engine.md").exists()
+
+
+# --- project_feature: faq transform (FG1 Phase 1) ---------------------------
+
+
+def _faq_output(result):
+    faqs = [o for o in result.outputs if o.kind == "faq"]
+    assert len(faqs) == 1
+    return faqs[0]
+
+
+def test_faq_renders_h2_per_question_and_drops_disclaimer(tmp_path):
+    # The fixture's FAQ seeds section: a blockquote disclaimer + six
+    # bold-Q bullets. The projected faq has one H2 per question and no
+    # trace of the channel-4 disclaimer.
+    result = project_feature(FIXTURE, tmp_path, tmp_path / ".help", dry_run=True)
+    body = _help_body(_faq_output(result).content)
+
+    assert body.splitlines()[0] == "# Spec Engine FAQ"
+    assert "## What is the spec engine?" in body
+    assert "## How do quality gates work?" in body
+    assert body.count("\n## ") == 6
+    # Disclaimer and bullet scaffolding are gone.
+    assert "Channel-4 input" not in body
+    assert "**Q:**" not in body
+    assert "**A:**" not in body
+    assert ">" not in body.split("\n## ")[0]
+    # Answers survive with their content intact.
+    assert "read_spec(plan_path)" in body
+
+
+def test_faq_parses_both_bullet_shapes(tmp_path):
+    # Bold-Q (the corpus-dominant shape) and italic-question (the
+    # elicitation-forms variant) both parse; a malformed bullet is
+    # skipped with a warning, never an error.
+    master = tmp_path / "shapes.md"
+    master.write_text(
+        "---\n"
+        "feature: shapes\n"
+        "summary: x\n"
+        "---\n\n"
+        "## FAQ seeds\n\n"
+        "> disclaimer to drop\n\n"
+        "- **Q:** Bold question?\n"
+        "  **A:** Bold answer\n"
+        "  spanning two lines.\n"
+        "- *Italic question?* Italic answer.\n"
+        "- malformed seed with no shape\n",
+        encoding="utf-8",
+    )
+
+    result = project_feature(master, tmp_path, tmp_path / ".help", dry_run=True)
+    body = _help_body(_faq_output(result).content)
+
+    assert "## Bold question?" in body
+    assert "Bold answer\nspanning two lines." in body
+    assert "## Italic question?" in body
+    assert "Italic answer." in body
+    assert "malformed" not in body
+    assert any("unparseable" in w for w in result.warnings)
+
+
+def test_faq_skipped_when_no_seed_parses(tmp_path):
+    # A seeds section with no parseable Q/A records a skip (with
+    # warnings for the bad bullets) rather than writing an empty faq.
+    master = tmp_path / "empty.md"
+    master.write_text(
+        "---\nfeature: empty\nsummary: x\n---\n\n"
+        "## FAQ seeds\n\n> only a disclaimer\n\n- not a q/a bullet\n",
+        encoding="utf-8",
+    )
+
+    result = project_feature(master, tmp_path, tmp_path / ".help", dry_run=False)
+
+    assert "faq (no parseable Q/A seeds)" in result.skipped
+    assert not any(o.kind == "faq" for o in result.outputs)
 
 
 # --- tolerate missing sections ---------------------------------------------
@@ -188,7 +270,8 @@ def test_missing_section_skips_only_dependent_outputs(tmp_path):
 
     assert rendered == {"concept", "note", "tip"}
     # Dependent outputs are recorded as skipped, with the missing
-    # section named.
+    # section named — including faq (no "## FAQ seeds" section).
+    assert any(s.startswith("faq") for s in result.skipped)
     assert any(s.startswith("reference") for s in result.skipped)
     assert any(s.startswith("comparison") for s in result.skipped)
     assert any(s.startswith("error") for s in result.skipped)

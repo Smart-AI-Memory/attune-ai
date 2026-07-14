@@ -3,8 +3,8 @@ type: quickstart
 name: code-quality-quickstart
 feature: code-quality
 depth: quickstart
-generated_at: 2026-06-23T15:45:20.604236+00:00
-source_hash: 3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472
+generated_at: 2026-07-14T15:58:49.270997+00:00
+source_hash: 1cda16e2ee597c3fc3187497350da0cf77783f31c42c22e4652888adb60ca679
 status: generated
 ---
 

@@ -3,79 +3,36 @@ type: faq
 name: wizards-faq
 feature: wizards
 depth: faq
-status: manual
+generated_at: 2026-07-14T15:59:03.515215+00:00
+source_hash: 0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0
+status: generated
 ---
 
 # Wizards FAQ
 
-## What are wizards?
-
-Interactive, multi-step workflows that guide you through complex tasks
-— collecting input via `question` steps, running LLM calls, decomposing
-tasks, and gating on review/confirm — and return a `WizardResult` with
-the collected data, generated output, and cost/duration.
-
-## Which wizards are available?
-
-Five ship built in (run `list_wizards()` to confirm):
-
-- `debug` (`DebugWizard`) — systematic debugging
-- `refactor` (`RefactorWizard`) — code restructuring with safety checks
-- `release-prep` (`ReleasePrepWizard`) — release preparation
-- `security` (`SecurityWizard`) — guided security audit
-- `test-gen` (`TestGenWizard`) — interactive test generation
-
 ## How do I run a wizard?
 
-`get_wizard(id)` returns the wizard class; instantiate it and `await`
-its `run()` — `run()` is a coroutine:
+`get_wizard(id)` returns the class; instantiate it and
+`await run()`. Or use the `/wizard` skill in a conversation. There's
+no `attune wizard` CLI command.
 
-```python
-import asyncio
+## Which wizards ship built in?
 
-from attune.wizards import get_wizard
-
-
-async def main() -> None:
-    wizard_cls = get_wizard("debug")
-    if wizard_cls is not None:
-        result = await wizard_cls().run(initial_context={"file": "my_script.py"})
-        print(result.success)
-
-
-asyncio.run(main())
-```
-
-There is no `attune wizard` CLI command and no MCP tool — run wizards
-through the Python API or the `/wizard` skill.
+Five — `debug`, `refactor`, `release-prep`, `security`,
+`test-gen` (`list_wizards()` to confirm).
 
 ## Are the calls async?
 
-`run()` is a coroutine — `await` it or use `asyncio.run`. The registry
-functions (`list_wizards`, `get_wizard`) are synchronous.
+`run()` is a coroutine — `await` it. The registry functions
+(`list_wizards`, `get_wizard`) are synchronous.
 
 ## Is there a `WizardRegistry` class?
 
-No. The registry is module-level functions in `attune.wizards`:
-`list_wizards`, `get_wizard`, `register_wizard`, `save_custom_wizard`,
-`delete_custom_wizard`.
+No. The registry is module-level functions in
+`attune.wizards` (`list_wizards`, `get_wizard`, `register_wizard`,
+`save_custom_wizard`, `delete_custom_wizard`).
 
-## How do I see all available wizards?
+## How do I add my own wizard?
 
-Call `list_wizards()` — it returns a `WizardConfig` per registered
-wizard, with id, name, domain, and estimated cost/duration.
-
-## Can I create custom wizards?
-
-Yes — subclass `BaseWizard` (implement `build_prompt_context` and
-`process_step_result`) and `register_wizard(id, cls)`, or build a
-`ConfigDrivenWizard(config, steps)` / persist one with
-`save_custom_wizard(data)`.
-
-## How do I debug a wizard failure?
-
-Check `WizardResult.error` and `WizardResult.steps_completed` to see
-where it stopped. If a `question` step stalls outside the `/wizard`
-skill, wire an `ask_user_callback` into the wizard.
-
-**Tags:** `wizards`, `interactive`
+Subclass `BaseWizard` and `register_wizard(id, cls)`, or build
+a `ConfigDrivenWizard` / `save_custom_wizard(data)`.
