@@ -18,7 +18,7 @@ Repo state: v10.4.1, main at the FG1 Phase 1 merge (#1370).
 | Open issues / open PRs | 0 / 2 | good |
 | Source | 170k LOC · 654 files | — |
 | Tests | 330k LOC · 993 files · 2,061 test fns | 1.94:1 ratio |
-| TODO/FIXME/XXX in src | 28 | watch |
+| TODO/FIXME/XXX in src | 1 real (27 grep hits are scanner-regex/prompt-text/scaffold data — triaged in #1375) | good |
 | Bare `except:` in src | 0 | good |
 | Real dynamic-code (eval/exec) uses | 0 (16 string-literal prompt examples) | good |
 
@@ -60,6 +60,11 @@ two of the three worst-complexity blocks.
 
 ## Improvement plan (ranked)
 
+Execution status (2026-07-14, same day): items 1+3 shipped in
+PR #1374; items 6+7 shipped in PR #1375 (which also lands the
+characterization pins for items 2 and 5); item 4's seam map is at
+[agent-sdk-adapter-seam-map-2026-07-14.md](agent-sdk-adapter-seam-map-2026-07-14.md).
+
 1. **Surface discovery-sweep source failures** — act now. When N of
    7 sources fail, the result must say so, not "Here's what I
    found." Extend the #1152 pattern to the sweep envelope (failed
@@ -79,8 +84,13 @@ two of the three worst-complexity blocks.
 6. **Triage the 28 TODOs** — hygiene. Delete, do inline, or promote
    to an issue/chip; a TODO that survives triage gets an owner.
 7. **Spec-status headers for the 22 active specs** — hygiene.
-   Session orientation shows most as "(unknown)"; normalize status
-   lines so the starter and audits read real state.
+   CORRECTED at execution (#1375): 20/22 already had correct status
+   lines (the 07-13/14 truth-sweep PRs); the two gaps
+   (elicitation-form-surface design.md, windows-exit139-segfault
+   README-only dir) are fixed. The real remaining gap: the
+   "(unknown)" orientation noise is `spec_audit.py`'s *staleness*
+   column — no spec declares `## Deliverables`, so the drift
+   classifier is toothless repo-wide. Follow-up candidate.
 
 ## Method notes
 
