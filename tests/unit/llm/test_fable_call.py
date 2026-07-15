@@ -13,7 +13,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from attune.llm.fable_call import _RETENTION_HINT, acreate_with_fable, create_with_fable
+from attune.llm.fable_call import (
+    _ADAPTIVE_THINKING_HEADROOM,
+    _RETENTION_HINT,
+    acreate_with_fable,
+    create_with_fable,
+)
 from attune.model_tiers import ModelRefusalError
 
 FABLE = "claude-fable-5"
@@ -81,11 +86,15 @@ class TestSync:
             create_with_fable(client, model=FABLE, max_tokens=64)
         assert excinfo.value.category == "c"
 
-    def test_non_fable_refusal_stop_reason_not_checked(self):
+    def test_non_fable_refusal_also_raises(self):
         client = MagicMock()
-        client.messages.create.return_value = _response("t", stop_reason="refusal")
-        resp = create_with_fable(client, model=OPUS, max_tokens=64)
-        assert resp.content[0].text == "t"
+        refusal = _response("t", stop_reason="refusal")
+        refusal.stop_details = SimpleNamespace(category="harmful", explanation="no")
+        client.messages.create.return_value = refusal
+        with pytest.raises(ModelRefusalError) as excinfo:
+            create_with_fable(client, model=OPUS, max_tokens=64)
+        assert excinfo.value.category == "harmful"
+        client.beta.messages.create.assert_not_called()
 
     def test_fable_400_carries_retention_hint_same_type(self):
         client = MagicMock()
@@ -117,6 +126,26 @@ class TestSync:
             create_with_fable(client, model=OPUS, max_tokens=64)
         assert _RETENTION_HINT not in str(excinfo.value)
 
+    def test_fable_low_max_tokens_grows_for_adaptive_thinking(self):
+        client = MagicMock()
+        client.beta.messages.create.return_value = _response()
+        create_with_fable(client, model=FABLE, max_tokens=1024)
+        sent = client.beta.messages.create.call_args.kwargs["max_tokens"]
+        assert sent == _ADAPTIVE_THINKING_HEADROOM + 1024
+
+    def test_fable_large_max_tokens_untouched(self):
+        client = MagicMock()
+        client.beta.messages.create.return_value = _response()
+        create_with_fable(client, model=FABLE, max_tokens=_ADAPTIVE_THINKING_HEADROOM + 1)
+        sent = client.beta.messages.create.call_args.kwargs["max_tokens"]
+        assert sent == _ADAPTIVE_THINKING_HEADROOM + 1
+
+    def test_non_fable_max_tokens_never_grows(self):
+        client = MagicMock()
+        client.messages.create.return_value = _response()
+        create_with_fable(client, model=OPUS, max_tokens=64)
+        assert client.messages.create.call_args.kwargs["max_tokens"] == 64
+
 
 class TestAsync:
     @pytest.mark.asyncio
@@ -146,6 +175,16 @@ class TestAsync:
         with pytest.raises(ModelRefusalError) as excinfo:
             await acreate_with_fable(client, model=FABLE, max_tokens=64)
         assert excinfo.value.category is None
+
+    @pytest.mark.asyncio
+    async def test_non_fable_refusal_also_raises(self):
+        client = MagicMock()
+        refusal = _response("t", stop_reason="refusal")
+        refusal.stop_details = None
+        client.messages.create = AsyncMock(return_value=refusal)
+        with pytest.raises(ModelRefusalError):
+            await acreate_with_fable(client, model=OPUS, max_tokens=64)
+        client.beta.messages.create.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_fable_400_carries_retention_hint(self):
