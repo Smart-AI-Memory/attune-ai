@@ -532,6 +532,46 @@ class TestCmdWorkflowRunTarget:
         assert "target" not in call_kwargs
 
 
+class TestCmdWorkflowRunDiscoveryFlags:
+    """Characterization pins (D-block batch 2): the discovery-sweep
+    flags map into input_data exactly as today — set only when truthy,
+    absent otherwise."""
+
+    @staticmethod
+    def _run_tracking(args_kwargs: dict) -> dict:
+        call_kwargs: dict = {}
+
+        class TrackingWorkflow:
+            """Tracking."""
+
+            def execute(self, **kwargs):
+                call_kwargs.update(kwargs)
+                return {"status": "ok"}
+
+        with patch("attune.workflows.get_workflow", return_value=TrackingWorkflow):
+            from attune.cli_commands.workflow_commands import cmd_workflow_run
+
+            assert cmd_workflow_run(_make_args(**args_kwargs)) == 0
+        return call_kwargs
+
+    def test_verbose_flag_sets_input_key(self, capsys):
+        call_kwargs = self._run_tracking({"verbose": True})
+        assert call_kwargs["verbose"] is True
+
+    def test_source_flag_sets_input_key(self, capsys):
+        call_kwargs = self._run_tracking({"source": "git"})
+        assert call_kwargs["source"] == "git"
+
+    def test_depth_flag_sets_input_key(self, capsys):
+        call_kwargs = self._run_tracking({"depth": "quick"})
+        assert call_kwargs["depth"] == "quick"
+
+    def test_absent_flags_omit_keys(self, capsys):
+        call_kwargs = self._run_tracking({})
+        for key in ("verbose", "no_llm", "source", "depth", "output_format"):
+            assert key not in call_kwargs
+
+
 class TestCmdWorkflowRunSyncExecution:
     """Tests for synchronous workflow execution."""
 

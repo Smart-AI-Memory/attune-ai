@@ -164,6 +164,122 @@ def test_validate_rejects_open_url_file_scheme(svc: RunnerService) -> None:
 
 
 # ----------------------------------------------------------------------
+# _validate_recommendation — characterization pins (D-block batch 2).
+# Exact-shape assertions: the refactor cut must not add, drop, or
+# rename response keys, and every coercion below must survive verbatim.
+# ----------------------------------------------------------------------
+
+
+def test_validate_exact_shape_minimal_next_workflow(svc: RunnerService) -> None:
+    out = svc._validate_recommendation({"kind": "next-workflow", "name": "code-review"})
+    assert out == {"kind": "next-workflow", "name": "code-review"}
+
+
+def test_validate_exact_shape_open_url_with_label_and_severity(svc: RunnerService) -> None:
+    out = svc._validate_recommendation(
+        {
+            "kind": "open-url",
+            "url": "https://example.com",
+            "label": "Docs",
+            "severity": "High",
+            "extra": "dropped",
+        }
+    )
+    assert out == {
+        "kind": "open-url",
+        "label": "Docs",
+        "severity": "high",
+        "url": "https://example.com",
+    }
+
+
+def test_validate_label_truncated_to_200(svc: RunnerService) -> None:
+    out = svc._validate_recommendation(
+        {"kind": "next-workflow", "name": "code-review", "label": "x" * 300}
+    )
+    assert out is not None
+    assert out["label"] == "x" * 200
+
+
+def test_validate_non_str_label_dropped(svc: RunnerService) -> None:
+    out = svc._validate_recommendation(
+        {"kind": "next-workflow", "name": "code-review", "label": 42}
+    )
+    assert out == {"kind": "next-workflow", "name": "code-review"}
+
+
+def test_validate_severity_lowercased_and_truncated(svc: RunnerService) -> None:
+    out = svc._validate_recommendation(
+        {"kind": "next-workflow", "name": "code-review", "severity": "URGENT" * 10}
+    )
+    assert out is not None
+    assert out["severity"] == ("urgent" * 10)[:20]
+
+
+def test_validate_non_str_severity_dropped(svc: RunnerService) -> None:
+    out = svc._validate_recommendation(
+        {"kind": "next-workflow", "name": "code-review", "severity": 3}
+    )
+    assert out == {"kind": "next-workflow", "name": "code-review"}
+
+
+@pytest.mark.parametrize("name", [None, "", 42], ids=["missing", "empty", "non-str"])
+def test_validate_rejects_bad_next_workflow_name(svc: RunnerService, name: object) -> None:
+    payload: dict[str, object] = {"kind": "next-workflow"}
+    if name is not None:
+        payload["name"] = name
+    assert svc._validate_recommendation(payload) is None
+
+
+def test_validate_rejects_args_not_an_object(svc: RunnerService) -> None:
+    out = svc._validate_recommendation(
+        {"kind": "next-workflow", "name": "code-review", "args": "src/"}
+    )
+    assert out is None
+
+
+def test_validate_args_without_path_omits_args_key(svc: RunnerService) -> None:
+    # Unknown args keys are dropped; an args dict that sanitizes to
+    # empty produces NO "args" key at all (not an empty dict).
+    out = svc._validate_recommendation(
+        {"kind": "next-workflow", "name": "code-review", "args": {"depth": "quick"}}
+    )
+    assert out == {"kind": "next-workflow", "name": "code-review"}
+
+
+@pytest.mark.parametrize("bad_path", ["", 42], ids=["empty", "non-str"])
+def test_validate_rejects_bad_args_path(svc: RunnerService, bad_path: object) -> None:
+    out = svc._validate_recommendation(
+        {"kind": "next-workflow", "name": "code-review", "args": {"path": bad_path}}
+    )
+    assert out is None
+
+
+def test_validate_path_passes_through_without_project_root() -> None:
+    # project_root=None disables path validation (test-fixture wiring);
+    # the raw string passes through unvalidated and unresolved.
+    svc = RunnerService(project_root=None)
+    out = svc._validate_recommendation(
+        {"kind": "next-workflow", "name": "code-review", "args": {"path": "src/anything"}}
+    )
+    assert out == {
+        "kind": "next-workflow",
+        "name": "code-review",
+        "args": {"path": "src/anything"},
+    }
+
+
+def test_validate_accepts_open_url_plain_http(svc: RunnerService) -> None:
+    out = svc._validate_recommendation({"kind": "open-url", "url": "http://localhost:8765/x"})
+    assert out == {"kind": "open-url", "url": "http://localhost:8765/x"}
+
+
+def test_validate_rejects_non_str_url(svc: RunnerService) -> None:
+    assert svc._validate_recommendation({"kind": "open-url", "url": 7}) is None
+    assert svc._validate_recommendation({"kind": "open-url"}) is None
+
+
+# ----------------------------------------------------------------------
 # RunnerService.handle_stdout_line — marker parsing
 # ----------------------------------------------------------------------
 

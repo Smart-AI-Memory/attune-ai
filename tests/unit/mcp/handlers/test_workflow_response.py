@@ -222,6 +222,67 @@ class TestWorkflowResponseReport:
 
         assert sorted(out["findings"]) == ["a.md outdated", "b.md 404"]
 
+    def test_report_response_exact_key_set(self):
+        """Characterization pin (D-block batch 2): the report-path
+        response carries exactly these keys — the refactor cut must
+        not add, drop, or rename any."""
+        result = _make_result(final_output=_make_report().to_dict())
+        out = _workflow_response(result, score="health_score")
+
+        assert set(out.keys()) == {
+            "success",
+            "summary_markdown",
+            "report",
+            "score",
+            "findings",
+            "panel_html",
+            "cost",
+        }
+
+    def test_cost_zero_when_cost_report_absent(self):
+        result = _make_result(final_output={"x": 1})
+        result.cost_report = None
+        out = _workflow_response(result)
+
+        assert out["cost"] == 0.0
+
+
+class TestMetadataFindingsEdges:
+    """Characterization pins (D-block batch 2) for the metadata-findings
+    fallback: each input shape must keep its exact current handling."""
+
+    @staticmethod
+    def _empty_report_result(metadata):
+        report = WorkflowReport(title="Doc audit", summary="ok", score=90)
+        return _make_result(final_output=report.to_dict(), metadata=metadata)
+
+    def test_none_metadata_yields_empty_findings(self):
+        result = self._empty_report_result(metadata={})
+        result.metadata = None
+        out = _workflow_response(result)
+
+        assert out["findings"] == []
+
+    def test_list_metadata_findings_used_verbatim(self):
+        result = self._empty_report_result(metadata={"findings": ["a", "b"]})
+        out = _workflow_response(result)
+
+        assert out["findings"] == ["a", "b"]
+
+    def test_non_list_values_in_findings_dict_skipped(self):
+        result = self._empty_report_result(
+            metadata={"findings": {"good": ["kept"], "bad": "skipped-not-a-list"}}
+        )
+        out = _workflow_response(result)
+
+        assert out["findings"] == ["kept"]
+
+    def test_non_dict_non_list_findings_value_yields_empty(self):
+        result = self._empty_report_result(metadata={"findings": "prose"})
+        out = _workflow_response(result)
+
+        assert out["findings"] == []
+
 
 # ==================================================================
 # _workflow_response — errored runs surface the real reason
