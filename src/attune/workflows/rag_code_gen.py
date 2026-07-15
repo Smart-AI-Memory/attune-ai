@@ -156,7 +156,16 @@ class RagCodeGenWorkflow(BaseWorkflow):
             self._pipeline = RagPipeline()
         return self._pipeline
 
-    async def execute(self, **kwargs: Any) -> WorkflowResult:
+    def _parse_execute_kwargs(
+        self, kwargs: dict[str, Any]
+    ) -> tuple[dict[str, Any], None] | tuple[None, WorkflowResult]:
+        """Parse and validate execute() kwargs.
+
+        Returns ``(params, None)`` on success or ``(None, error_result)``
+        if any kwarg fails validation. Kept as one method (rather than
+        one helper per kwarg) because the deprecation-warning logic for
+        `cwd`/`path` needs both raw values in scope together.
+        """
         # Function-scoped imports per CLAUDE.md: keeps the F401
         # autofixer from stripping them mid-edit, and these names
         # are only ever used inside this method anyway.
@@ -175,7 +184,7 @@ class RagCodeGenWorkflow(BaseWorkflow):
         try:
             k: int = int(kwargs.get("k", 3))
         except (TypeError, ValueError) as exc:
-            return self._error_result(
+            return None, self._error_result(
                 f"k argument must be an integer (got {kwargs.get('k')!r}): {exc}"
             )
 
@@ -193,7 +202,7 @@ class RagCodeGenWorkflow(BaseWorkflow):
                 info.id for provider in MODEL_REGISTRY.values() for info in provider.values()
             }
             if model not in valid_model_ids:
-                return self._error_result(
+                return None, self._error_result(
                     f"unknown model {model!r}; "
                     "see attune.models.registry.MODEL_REGISTRY for valid IDs"
                 )
@@ -213,7 +222,7 @@ class RagCodeGenWorkflow(BaseWorkflow):
                 "use execute(path=...) instead. The legacy kwarg "
                 "will be removed in v7.0.",
                 DeprecationWarning,
-                stacklevel=2,
+                stacklevel=3,
             )
         elif legacy_cwd and new_path:
             _warnings.warn(
@@ -221,7 +230,7 @@ class RagCodeGenWorkflow(BaseWorkflow):
                 "`cwd=` supplied; `path=` takes precedence and "
                 "`cwd=` is deprecated.",
                 DeprecationWarning,
-                stacklevel=2,
+                stacklevel=3,
             )
         cwd: str = new_path or legacy_cwd or os.getcwd()
 
@@ -239,21 +248,30 @@ class RagCodeGenWorkflow(BaseWorkflow):
         try:
             _validate_file_path(cwd)
         except ValueError as exc:
-            return self._error_result(f"invalid path/cwd: {exc}")
+            return None, self._error_result(f"invalid path/cwd: {exc}")
 
         if not query or not query.strip():
-            return self._error_result("query argument is required")
+            return None, self._error_result("query argument is required")
 
-        max_turns = _DEPTH_MAX_TURNS.get(depth, 12)
-        started_at = datetime.now()
+        return {
+            "query": query,
+            "k": k,
+            "depth": depth,
+            "feedback": feedback,
+            "model": model,
+            "cwd": cwd,
+            "max_turns": _DEPTH_MAX_TURNS.get(depth, 12),
+        }, None
 
+    async def _retrieve(self, query: str, k: int) -> tuple[Any, None] | tuple[None, WorkflowResult]:
+        """Run RAG retrieval; returns ``(rag_result, None)`` or ``(None, error)``."""
         try:
             pipeline = self._get_pipeline()
             # Pin prompt_variant explicitly to insulate this workflow
             # from future default-variant changes in attune-rag.
             # citation = per-passage sentinel wrapping + forced
             # cite-per-claim, selected by the 2026-04-19 A/B sweep.
-            rag_result = pipeline.run(query, k=k, prompt_variant="citation")
+            return pipeline.run(query, k=k, prompt_variant="citation"), None
         except (RuntimeError, ConnectionError, TimeoutError, ValueError) as exc:
             # Broadened from RuntimeError-only: pipeline.run() can
             # also raise ConnectionError / TimeoutError from corpus
@@ -261,23 +279,28 @@ class RagCodeGenWorkflow(BaseWorkflow):
             # three previously surfaced as misleading "Agent SDK
             # returned an error" messages downstream.
             logger.error("RAG pipeline failed (%s): %s", type(exc).__name__, exc)
-            return self._error_result(f"RAG retrieval failed: {exc}")
+            return None, self._error_result(f"RAG retrieval failed: {exc}")
 
+    async def _generate(
+        self, augmented_prompt: str, params: dict[str, Any]
+    ) -> tuple[AgentRunResult, None] | tuple[None, WorkflowResult]:
+        """Run Agent SDK generation; returns ``(run_result, None)`` or ``(None, error)``."""
         try:
             run_result = await self._run_agent_generate(
-                augmented_prompt=rag_result.augmented_prompt,
-                max_turns=max_turns,
-                depth=depth,
-                model=model,
-                cwd=cwd,
+                augmented_prompt=augmented_prompt,
+                max_turns=params["max_turns"],
+                depth=params["depth"],
+                model=params["model"],
+                cwd=params["cwd"],
             )
             self._track_sdk_run_telemetry(stage="agent", agent_run_result=run_result)
+            return run_result, None
         except ImportError as exc:
             logger.error("Agent SDK import failed: %s", exc)
-            return self._error_result(f"Agent SDK unavailable: {exc}")
+            return None, self._error_result(f"Agent SDK unavailable: {exc}")
         except (ConnectionError, TimeoutError) as exc:
             logger.error("Agent SDK network error: %s", exc)
-            return self._error_result(f"Agent SDK connection failed: {exc}")
+            return None, self._error_result(f"Agent SDK connection failed: {exc}")
         except Exception as exc:  # noqa: BLE001
             # INTENTIONAL: Catch-all for unknown SDK errors so we
             # return a structured WorkflowResult rather than
@@ -292,14 +315,21 @@ class RagCodeGenWorkflow(BaseWorkflow):
             sdk_err = SdkSubprocessError(
                 message=summary, stderr=stderr, kind=kind, original_exc=exc
             )
-            return self._error_result(
+            return None, self._error_result(
                 sdk_err.format_user_message(),
                 sdk_stderr=stderr,
                 sdk_error_kind=kind,
             )
 
-        completed_at = datetime.now()
-
+    def _assemble_result(
+        self,
+        rag_result: Any,
+        run_result: AgentRunResult,
+        params: dict[str, Any],
+        started_at: datetime,
+        completed_at: datetime,
+    ) -> WorkflowResult:
+        """Append citations, record feedback, and build the final WorkflowResult."""
         # Append markdown citations to the generated output so the
         # user sees provenance in the same blob as the code. The
         # module-scope import (top of file) guarantees this name is
@@ -315,6 +345,7 @@ class RagCodeGenWorkflow(BaseWorkflow):
         # Optional feedback integration (Phase 4.1 hook). Uses the
         # existing help/feedback.py machinery to record the user's
         # verdict against each cited template.
+        feedback = params["feedback"]
         if feedback in ("good", "bad"):
             self._record_feedback(rag_result, feedback)
 
@@ -333,16 +364,16 @@ class RagCodeGenWorkflow(BaseWorkflow):
             ],
         }
 
-        wf_result = AgentSDKResultAdapter.from_agent_output(
+        return AgentSDKResultAdapter.from_agent_output(
             report_title="RAG code generation",
             result_text=combined_text,
             subagent_names=["rag-generator"],
             started_at=started_at,
             completed_at=completed_at,
             metadata={
-                "query": query,
-                "depth": depth,
-                "max_turns": max_turns,
+                "query": params["query"],
+                "depth": params["depth"],
+                "max_turns": params["max_turns"],
                 "citation": citation_dict,
                 "fallback_used": rag_result.fallback_used,
                 "confidence": rag_result.confidence,
@@ -351,7 +382,24 @@ class RagCodeGenWorkflow(BaseWorkflow):
             },
             agent_run_result=run_result,
         )
-        return wf_result
+
+    async def execute(self, **kwargs: Any) -> WorkflowResult:
+        params, err = self._parse_execute_kwargs(kwargs)
+        if err is not None:
+            return err
+
+        started_at = datetime.now()
+
+        rag_result, err = await self._retrieve(params["query"], params["k"])
+        if err is not None:
+            return err
+
+        run_result, err = await self._generate(rag_result.augmented_prompt, params)
+        if err is not None:
+            return err
+
+        completed_at = datetime.now()
+        return self._assemble_result(rag_result, run_result, params, started_at, completed_at)
 
     async def _run_agent_generate(
         self,

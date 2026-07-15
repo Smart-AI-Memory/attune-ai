@@ -174,6 +174,73 @@ class EmpathyLLMExecutor:
                 ) from e
         return self._llm
 
+    @staticmethod
+    def _build_full_context(
+        system: str | None, context: ExecutionContext | None, existing_context: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Merge system prompt, context fields, and metadata into one dict."""
+        full_context: dict[str, Any] = existing_context
+        if system:
+            full_context["system_prompt"] = system
+        if context:
+            if context.workflow_name:
+                full_context["workflow_name"] = context.workflow_name
+            if context.step_name:
+                full_context["step_name"] = context.step_name
+            if context.session_id:
+                full_context["session_id"] = context.session_id
+            if context.metadata:
+                full_context.update(context.metadata)
+        return full_context
+
+    @staticmethod
+    def _compute_cost(model_info: Any, tokens_input: int, tokens_output: int) -> float:
+        """Estimate USD cost from token counts; 0.0 when model_info is unknown."""
+        if not model_info:
+            return 0.0
+        return (tokens_input / 1_000_000) * model_info.input_cost_per_million + (
+            tokens_output / 1_000_000
+        ) * model_info.output_cost_per_million
+
+    def _record_call_telemetry(
+        self,
+        call_id: str,
+        context: ExecutionContext | None,
+        user_id: str,
+        effective_task_type: str,
+        provider: str,
+        tier_str: str,
+        model_id: str,
+        tokens_input: int,
+        tokens_output: int,
+        cost_estimate: float,
+        latency_ms: int,
+    ) -> None:
+        """Record telemetry for a completed call; failures are silent."""
+        if not self._telemetry:
+            return
+        try:
+            record = LLMCallRecord(
+                call_id=call_id,
+                timestamp=datetime.now().isoformat(),
+                workflow_name=context.workflow_name if context else None,
+                step_name=context.step_name if context else None,
+                user_id=user_id,
+                session_id=context.session_id if context else None,
+                task_type=effective_task_type,
+                provider=provider,
+                tier=tier_str,
+                model_id=model_id,
+                input_tokens=tokens_input,
+                output_tokens=tokens_output,
+                estimated_cost=cost_estimate,
+                latency_ms=latency_ms,
+                success=True,
+            )
+            self._telemetry.log_call(record)
+        except Exception as e:  # noqa: BLE001
+            logger.warning("Failed to record telemetry: %s", e)
+
     async def run(
         self,
         task_type: str,
@@ -210,24 +277,10 @@ class EmpathyLLMExecutor:
         # Get appropriate LLM (supports hybrid mode)
         llm, actual_provider, hybrid_model_id = self._get_llm_for_tier(tier_str)
 
-        # Build context dict
-        full_context: dict[str, Any] = kwargs.pop("existing_context", {})
-        if system:
-            full_context["system_prompt"] = system
-        if context:
-            if context.workflow_name:
-                full_context["workflow_name"] = context.workflow_name
-            if context.step_name:
-                full_context["step_name"] = context.step_name
-            if context.session_id:
-                full_context["session_id"] = context.session_id
-            if context.metadata:
-                full_context.update(context.metadata)
+        full_context = self._build_full_context(system, context, kwargs.pop("existing_context", {}))
 
         # Determine user_id
-        user_id = "workflow"
-        if context and context.user_id:
-            user_id = context.user_id
+        user_id = context.user_id if context and context.user_id else "workflow"
 
         # Use actual provider (resolved for hybrid mode)
         provider = actual_provider
@@ -257,12 +310,7 @@ class EmpathyLLMExecutor:
         if not model_id and model_info:
             model_id = model_info.id
 
-        # Calculate cost
-        cost_estimate = 0.0
-        if model_info:
-            cost_estimate = (tokens_input / 1_000_000) * model_info.input_cost_per_million + (
-                tokens_output / 1_000_000
-            ) * model_info.output_cost_per_million
+        cost_estimate = self._compute_cost(model_info, tokens_input, tokens_output)
 
         # Build response
         response = LLMResponse(
@@ -286,29 +334,19 @@ class EmpathyLLMExecutor:
             },
         )
 
-        # Record telemetry (silent failure)
-        if self._telemetry:
-            try:
-                record = LLMCallRecord(
-                    call_id=call_id,
-                    timestamp=datetime.now().isoformat(),
-                    workflow_name=context.workflow_name if context else None,
-                    step_name=context.step_name if context else None,
-                    user_id=user_id,
-                    session_id=context.session_id if context else None,
-                    task_type=effective_task_type,
-                    provider=provider,
-                    tier=tier_str,
-                    model_id=model_id,
-                    input_tokens=tokens_input,
-                    output_tokens=tokens_output,
-                    estimated_cost=cost_estimate,
-                    latency_ms=latency_ms,
-                    success=True,
-                )
-                self._telemetry.log_call(record)
-            except Exception as e:  # noqa: BLE001
-                logger.warning("Failed to record telemetry: %s", e)
+        self._record_call_telemetry(
+            call_id=call_id,
+            context=context,
+            user_id=user_id,
+            effective_task_type=effective_task_type,
+            provider=provider,
+            tier_str=tier_str,
+            model_id=model_id,
+            tokens_input=tokens_input,
+            tokens_output=tokens_output,
+            cost_estimate=cost_estimate,
+            latency_ms=latency_ms,
+        )
 
         return response
 

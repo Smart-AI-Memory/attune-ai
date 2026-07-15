@@ -345,6 +345,69 @@ class DocumentationOrchestrator(
         ]
         return "\n".join(lines)
 
+    def _apply_scope_kwarg(self, kwargs: dict[str, Any]) -> None:
+        """Resolve the `path=`/`project_root=` scope kwargs onto self.
+
+        `path=` is the canonical kwarg (PATH_ARG_REGISTRY unification);
+        `project_root=` is a deprecated alias, honored so the ops
+        scope-picker can still re-scope a run.
+        """
+        scope = kwargs.get("path") or kwargs.get("project_root")
+        if kwargs.get("project_root") and kwargs.get("path"):
+            warnings.warn(
+                "DocumentationOrchestrator.execute(): both `path=` and "
+                "`project_root=` supplied; `path=` takes precedence and "
+                "`project_root=` is deprecated.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+        elif kwargs.get("project_root"):
+            warnings.warn(
+                "DocumentationOrchestrator.execute(project_root=...) is "
+                "deprecated; use execute(path=...) instead.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+        if scope:
+            self.project_root = Path(scope).resolve()
+            if not self._export_path_explicit:
+                self.export_path = self.project_root / "docs" / "generated"
+
+    def _check_dependencies(self, warning_msgs: list[str], errors: list[str]) -> bool:
+        """Populate warning/error lists; return True if execution must abort."""
+        if not HAS_SCOUT:
+            warning_msgs.append(
+                "ManageDocumentationCrew not available - using ProjectIndex fallback"
+            )
+        if not HAS_WRITER:
+            errors.append("DocumentGenerationWorkflow not available - cannot generate docs")
+            if not self.dry_run:
+                return True
+        if not HAS_PROJECT_INDEX:
+            warning_msgs.append("ProjectIndex not available - limited file tracking")
+        return False
+
+    def _finalize_result(
+        self,
+        result: OrchestratorResult,
+        started_at: datetime,
+        phase: str,
+        summary_items: list[DocumentationItem],
+        docs_skipped: list[str] | None = None,
+        warning_msgs: list[str] | None = None,
+    ) -> OrchestratorResult:
+        """Stamp the shared success/duration/cost/summary fields and return."""
+        result.success = True
+        result.phase = phase
+        if docs_skipped is not None:
+            result.docs_skipped = docs_skipped
+        if warning_msgs is not None:
+            result.warnings = warning_msgs
+        result.duration_ms = int((datetime.now() - started_at).total_seconds() * 1000)
+        result.total_cost = self._total_cost
+        result.summary = self._generate_summary(result, summary_items)
+        return result
+
     async def execute(
         self,
         context: dict | None = None,
@@ -369,43 +432,12 @@ class DocumentationOrchestrator(
         errors: list[str] = []
         warning_msgs: list[str] = []
 
-        # Scope resolution (PATH_ARG_REGISTRY unification): `path=` is the
-        # canonical kwarg; `project_root=` is a deprecated alias. Honoring it
-        # here lets the ops scope-picker actually re-scope the run.
-        scope = kwargs.get("path") or kwargs.get("project_root")
-        if kwargs.get("project_root") and kwargs.get("path"):
-            warnings.warn(
-                "DocumentationOrchestrator.execute(): both `path=` and "
-                "`project_root=` supplied; `path=` takes precedence and "
-                "`project_root=` is deprecated.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-        elif kwargs.get("project_root"):
-            warnings.warn(
-                "DocumentationOrchestrator.execute(project_root=...) is "
-                "deprecated; use execute(path=...) instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-        if scope:
-            self.project_root = Path(scope).resolve()
-            if not self._export_path_explicit:
-                self.export_path = self.project_root / "docs" / "generated"
+        self._apply_scope_kwarg(kwargs)
 
-        # Validate dependencies
-        if not HAS_SCOUT:
-            warning_msgs.append(
-                "ManageDocumentationCrew not available - using ProjectIndex fallback"
-            )
-        if not HAS_WRITER:
-            errors.append("DocumentGenerationWorkflow not available - cannot generate docs")
-            if not self.dry_run:
-                result.errors = errors
-                result.warnings = warning_msgs
-                return result
-        if not HAS_PROJECT_INDEX:
-            warning_msgs.append("ProjectIndex not available - limited file tracking")
+        if self._check_dependencies(warning_msgs, errors):
+            result.errors = errors
+            result.warnings = warning_msgs
+            return result
 
         # Phase 1: Scout
         print("\n" + "=" * 60)
@@ -423,12 +455,7 @@ class DocumentationOrchestrator(
 
         if not items:
             print("\n[✓] No documentation gaps found!")
-            result.success = True
-            result.phase = "complete"
-            result.duration_ms = int((datetime.now() - started_at).total_seconds() * 1000)
-            result.total_cost = self._total_cost
-            result.summary = self._generate_summary(result, items)
-            return result
+            return self._finalize_result(result, started_at, "complete", items)
 
         # Phase 2: Prioritize
         print(f"\n[PRIORITIZE] Found {len(items)} items, selecting top {self.max_items}...")
@@ -443,27 +470,27 @@ class DocumentationOrchestrator(
         # Check for dry run
         if self.dry_run:
             print("\n[DRY RUN] Skipping generation phase")
-            result.success = True
-            result.phase = "complete"
-            result.docs_skipped = [i.file_path for i in priority_items]
-            result.duration_ms = int((datetime.now() - started_at).total_seconds() * 1000)
-            result.total_cost = self._total_cost
-            result.summary = self._generate_summary(result, priority_items)
-            return result
+            return self._finalize_result(
+                result,
+                started_at,
+                "complete",
+                priority_items,
+                docs_skipped=[i.file_path for i in priority_items],
+            )
 
         # Check for approval if not auto_approve
         if not self.auto_approve:
             print(f"\n[!] Ready to generate documentation for {len(priority_items)} items")
             print(f"    Estimated max cost: ${self.max_cost:.2f}")
             print("\n    Set auto_approve=True to proceed automatically")
-            result.success = True
-            result.phase = "awaiting_approval"
-            result.docs_skipped = [i.file_path for i in priority_items]
-            result.warnings = warning_msgs
-            result.duration_ms = int((datetime.now() - started_at).total_seconds() * 1000)
-            result.total_cost = self._total_cost
-            result.summary = self._generate_summary(result, priority_items)
-            return result
+            return self._finalize_result(
+                result,
+                started_at,
+                "awaiting_approval",
+                priority_items,
+                docs_skipped=[i.file_path for i in priority_items],
+                warning_msgs=warning_msgs,
+            )
 
         # Phase 3: Generate
         result.phase = "generate"
@@ -481,13 +508,10 @@ class DocumentationOrchestrator(
         self._update_project_index(generated, updated)
 
         # Finalize
-        result.success = True
-        result.phase = "complete"
-        result.total_cost = self._total_cost
         result.errors = errors
-        result.warnings = warning_msgs
-        result.duration_ms = int((datetime.now() - started_at).total_seconds() * 1000)
-        result.summary = self._generate_summary(result, priority_items)
+        self._finalize_result(
+            result, started_at, "complete", priority_items, warning_msgs=warning_msgs
+        )
 
         print(result.summary)
 
