@@ -4461,10 +4461,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#refactor-12-live-and-churning-or-high-blast-radius" class="md-nav__link">
+  <a href="#refactor-12-all-cut" class="md-nav__link">
     <span class="md-ellipsis">
       
-        REFACTOR (12) — live and churning, or high blast radius
+        REFACTOR (12) — ALL CUT ✅
       
     </span>
   </a>
@@ -4525,6 +4525,11 @@
 
 
 <h1 id="d-or-worse-block-triage-2026-07-14">D-or-worse block triage — 2026-07-14<a class="headerlink" href="#d-or-worse-block-triage-2026-07-14" title="Permanent link">&para;</a></h1>
+<p><strong>Status: COMPLETE (2026-07-15).</strong> All 12 REFACTOR blocks are cut
+and merged; both verified deletions landed. The ratchet ledger on
+<code>origin/main</code> holds exactly the 13 deliberate ACCEPT entries below —
+the paydown plan's own definition of done. See "Paydown plan of
+record" for the closing PR list.</p>
 <p>Phase 0.5 of the paydown plan in
 <a href="../library-health-2026-07-14/">library-health-2026-07-14.md</a>.
 Subagent inventory (fan-in / 120-day churn / tests per block) with
@@ -4532,91 +4537,94 @@ the three DELETE chains re-verified centrally. The ratchet
 (#1377) freezes this set; entries leave the allowlist as batches
 land. Patrick approved Batch 1 + the two verified deletions
 (2026-07-14).</p>
-<h2 id="refactor-12-live-and-churning-or-high-blast-radius">REFACTOR (12) — live and churning, or high blast radius<a class="headerlink" href="#refactor-12-live-and-churning-or-high-blast-radius" title="Permanent link">&para;</a></h2>
+<h2 id="refactor-12-all-cut">REFACTOR (12) — ALL CUT ✅<a class="headerlink" href="#refactor-12-all-cut" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th>Batch</th>
 <th>Block</th>
-<th>Grade</th>
-<th>Driver</th>
+<th>Grade →</th>
+<th>PR</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>1</td>
 <td><code>elicitation/bridge.py::form_from_dict</code></td>
-<td>F87</td>
-<td>4 MCP call sites + recall_digest; hot file</td>
+<td>F87→C15</td>
+<td>#1380</td>
 </tr>
 <tr>
 <td>1</td>
 <td><code>elicitation/widget.py::_control_html</code></td>
-<td>F84</td>
-<td>live render path, churning</td>
+<td>F84→A3</td>
+<td>#1380</td>
 </tr>
 <tr>
 <td>1</td>
 <td><code>elicitation/bridge.py::_validate_answer</code></td>
-<td>D22</td>
-<td>every form response flows through it</td>
+<td>D22→A1</td>
+<td>#1380</td>
 </tr>
 <tr>
 <td>2</td>
 <td><code>mcp/workflow_handlers.py::_workflow_response</code></td>
-<td>D26</td>
-<td>6 call sites, 11 changes/120d, prior swallowed-error bug (#1173)</td>
+<td>D26→A4</td>
+<td>#1386</td>
 </tr>
 <tr>
 <td>2</td>
 <td><code>ops/runner.py::RunnerService._validate_recommendation</code></td>
-<td>D24</td>
-<td>hottest file in set (15 changes/120d), stdout loop</td>
+<td>D24→B9</td>
+<td>#1386</td>
 </tr>
 <tr>
 <td>2</td>
 <td><code>cli_commands/workflow_commands.py::cmd_workflow_run</code></td>
-<td>D21</td>
-<td><code>attune workflow run</code> entry, 12 changes/120d; fold the exit-0-on-failure fix in</td>
+<td>D21→B8</td>
+<td>#1386</td>
 </tr>
 <tr>
 <td>3</td>
 <td><code>project_index/dependency_analysis.py::_build_summary</code></td>
-<td>F48</td>
-<td>3 independent production entry points</td>
+<td>F48→A1</td>
+<td>#1389</td>
 </tr>
 <tr>
 <td>3</td>
 <td><code>workflows/document_gen/report_formatter.py::format_doc_gen_report</code></td>
-<td>D29</td>
-<td>3 call sites depend on exact output shape</td>
+<td>D29→A3</td>
+<td>#1389</td>
 </tr>
 <tr>
 <td>3</td>
 <td><code>voice/formatter.py::_extract_from_workflow_result</code></td>
-<td>D23</td>
-<td>self-declared primary output API</td>
+<td>D23→C13</td>
+<td>#1389</td>
 </tr>
 <tr>
 <td>4</td>
 <td><code>workflows/rag_code_gen.py::RagCodeGenWorkflow.execute</code></td>
-<td>D24</td>
-<td>registered workflow, 13 changes/120d</td>
+<td>D24→below D</td>
+<td>#1391</td>
 </tr>
 <tr>
 <td>4</td>
 <td><code>workflows/documentation_orchestrator.py::DocumentationOrchestrator.execute</code></td>
-<td>D22</td>
-<td>2 live integration points, prior #685 bug</td>
+<td>D22→below D</td>
+<td>#1391</td>
 </tr>
 <tr>
 <td>4</td>
 <td><code>models/empathy_executor.py::EmpathyLLMExecutor.run</code></td>
-<td>D22</td>
-<td>ALIVE (3 subsystems) — doc-fiction lesson confirmed again</td>
+<td>D22→below D</td>
+<td>#1391</td>
 </tr>
 </tbody>
 </table>
+<p>(Batch 3 was completed twice in parallel by two independent
+sessions — #1389 merged first; the duplicate, #1388, was closed as
+superseded, same targets and grades.)</p>
 <h2 id="accept-13-live-stable-tested-refactoring-is-gold-plating">ACCEPT (13) — live, stable, tested; refactoring is gold-plating<a class="headerlink" href="#accept-13-live-stable-tested-refactoring-is-gold-plating" title="Permanent link">&para;</a></h2>
 <p>(+1 on 2026-07-15: <code>refresh_incremental</code> promoted from DELETE-hold —
 see item 3 below.)</p>
@@ -4662,56 +4670,49 @@ these aren't changing.</p>
 </ol>
 <h2 id="paydown-plan-of-record-patrick-approved-2026-07-14-evening">Paydown plan of record (Patrick-approved 2026-07-14 evening)<a class="headerlink" href="#paydown-plan-of-record-patrick-approved-2026-07-14-evening" title="Permanent link">&para;</a></h2>
 <p>Definition of done: the ratchet ledger contains ONLY deliberate
-ACCEPT entries, each justified above — not zero. Expected floor
-after the in-flight work (batch-1 cuts −3, deletions −2): 22, of
-which 9 are the remaining REFACTOR blocks.</p>
+ACCEPT entries, each justified above — not zero. <strong>Met 2026-07-15:</strong>
+the ledger holds exactly the 13 ACCEPT entries above, zero REFACTOR
+blocks remaining.</p>
 <p>Method per batch: pin-then-cut (pins PR merges before cuts PR),
 serial-suite verification at the orchestrator's gate, ratchet
 entries deleted in each cut PR. One batch per session; freeze-
 compatible.</p>
 <ul>
-<li><strong>Batch 2 — churn-hot infra</strong> (1 session, 3 PRs; amended
-  2026-07-14): FIRST a standalone small PR fixing the known
-  <code>cmd_workflow_run</code> exit-0-on-failure bug (own regression test —
-  a deliberate behavior change must not ride inside a
-  pins-prove-preservation cut; and the bug is live today, so it
-  ships sooner decoupled). THEN pins + cuts as usual for
-  <code>_workflow_response</code> D26 (pin the MCP response shapes — the
-  exact-dict-equality trap lives here),
-  <code>RunnerService._validate_recommendation</code> D24 (stdout-loop
-  states), and <code>cmd_workflow_run</code> D21 — now purely
-  behavior-preserving like every other cut.</li>
-<li><strong>Batch 3 — formatters + the last F</strong> (1 session, 2 PRs):
-  <code>format_doc_gen_report</code> D29, <code>_extract_from_workflow_result</code>
-  D23, <code>_section_html</code> D22, <code>_build_summary</code> F48 (highest care).
-  Parallel pin agents (similar section-builder shapes), one cut
-  pass. Natural moment for the held <code>refresh_incremental</code>
-  should-this-exist decision (sibling file).
-  <em>(Scope correction 2026-07-15: <code>_section_html</code> is an ACCEPT-table
-  entry — its mention here contradicted the triage table, which is
-  the authority. Batch 3 executes the three REFACTOR-table blocks
-  only.)</em></li>
-<li><strong>Batch 4 — workflow executes</strong> (1 session, 3 small PRs):
-  <code>RagCodeGenWorkflow.execute</code> D24,
-  <code>DocumentationOrchestrator.execute</code> D22,
-  <code>EmpathyLLMExecutor.run</code> D22. Stage-extraction, mock-based
-  pins, plus one dogfood-run receipt per cut (registered ≠
-  working — these wrap LLM/SDK calls). OPENING STEP (amended
-  2026-07-14): a 15-minute subsystem-value-gate check on
-  <code>EmpathyLLMExecutor</code>'s callers (<code>escalation/chain</code>,
-  <code>escalation/evaluator</code>, <code>executor_mixin</code>) BEFORE any pin work —
-  it is the live executor of a framework whose core was deleted
-  in 9.0.0; if its callers are themselves retirement candidates,
-  the right move is deletion-with-deprecation (ledger −1 free),
-  not a careful refactor of dead-subsystem plumbing. Proceed with
-  the refactor only if the check says the callers stay.</li>
+<li><strong>Batch 1 — elicitation</strong> (2026-07-14, 2 PRs): pins #1378, cuts
+  #1380. <code>form_from_dict</code> F87→C15, <code>_control_html</code> F84→A3,
+  <code>_validate_answer</code> D22→A1.</li>
+<li><strong>Deletions</strong> (2026-07-14/15, 1 PR): #1381 removed the legacy
+  one-command family (<code>ship_workflow</code> D27 + facade) and the
+  orphaned <code>format_bug_predict_report</code> D23, both deprecation-first.</li>
+<li><strong>Batch 2 — churn-hot infra</strong> (2026-07-15, 3 PRs): #1383 (the
+  standalone <code>cmd_workflow_run</code> exit-0-on-failure fix, shipped
+  decoupled from the behavior-preserving cut), pins #1384, cuts
+  #1386. <code>_workflow_response</code> D26→A4,
+  <code>RunnerService._validate_recommendation</code> D24→B9,
+  <code>cmd_workflow_run</code> D21→B8.</li>
+<li><strong>Batch 3 — formatters + the last F</strong> (2026-07-15, 2 PRs): pins
+  #1387, cuts #1389 (completed independently in parallel by two
+  sessions — see the REFACTOR table note above).
+  <code>format_doc_gen_report</code> D29→A3, <code>_build_summary</code> F48→A1,
+  <code>_extract_from_workflow_result</code> D23→C13. Also closed the held
+  <code>refresh_incremental</code> should-this-exist decision: reclassified
+  ACCEPT (zero production callers, but tested/documented/stable —
+  see DELETE-CANDIDATE item 3).</li>
+<li><strong>Batch 4 — workflow executes</strong> (2026-07-15, 1 PR): #1391
+  (pins + cuts combined). Opening subsystem-value-gate check
+  confirmed <code>EmpathyLLMExecutor</code> is alive and central
+  (<code>ExecutorMixin</code> is mixed into every LLM-backed workflow via
+  <code>BaseWorkflow</code>) — refactored, not deleted. <code>RagCodeGenWorkflow.
+  execute</code> D24, <code>DocumentationOrchestrator.execute</code> D22,
+  <code>EmpathyLLMExecutor.run</code> D22 — all cut below D.</li>
 </ul>
-<p>Post-freeze checkpoint: re-check the 12 ACCEPT rationales against
-fresh churn data once — an ACCEPT that starts churning is promoted
-to REFACTOR.</p>
-<p>Trajectory: 27 → 22 (in flight) → ~13 (batches 2+3) → 13
-all-ACCEPT (batch 4; 13 not 12 after the refresh_incremental
-ACCEPT, 2026-07-15).</p>
+<p>Post-freeze checkpoint (still open): re-check the 13 ACCEPT
+rationales against fresh churn data once — an ACCEPT that starts
+churning is promoted to REFACTOR.</p>
+<p>Trajectory (actual): 27 D-or-worse blocks at ratchet ship (2026-07-14)
+→ 13 ACCEPT-only entries on <code>origin/main</code> (2026-07-15, verified
+against the live ratchet allowlist), across batches 1-4 plus the
+two deletions above. Done.</p>
 
 
 
