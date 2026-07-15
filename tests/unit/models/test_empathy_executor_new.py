@@ -777,6 +777,50 @@ class TestEmpathyLLMExecutorRunContextPaths:
         call_kwargs = mock_executor._llm.interact.call_args[1]
         assert call_kwargs["context"]["prior_key"] == "prior_value"
 
+    @pytest.mark.asyncio
+    async def test_run_with_context_missing_workflow_and_step_name(self, mock_executor):
+        """A context object with no workflow_name/step_name skips both.
+
+        Characterization pin (batch-4 D-block cut): every other context
+        test sets both fields truthy, leaving the ``if
+        context.workflow_name:`` / ``if context.step_name:`` false
+        branches unpinned. Behavior: neither key is added to the
+        context dict sent to ``llm.interact``.
+        """
+        context = ExecutionContext(session_id="session-only")
+
+        with patch.object(mock_executor, "_get_llm", return_value=mock_executor._llm):
+            await mock_executor.run(
+                task_type="summarize",
+                prompt="Test",
+                context=context,
+            )
+
+        call_kwargs = mock_executor._llm.interact.call_args[1]
+        sent_context = call_kwargs["context"] or {}
+        assert "workflow_name" not in sent_context
+        assert "step_name" not in sent_context
+        assert sent_context.get("session_id") == "session-only"
+
+    @pytest.mark.asyncio
+    async def test_run_cost_estimate_zero_when_model_info_unavailable(self, mock_executor):
+        """cost_estimate stays 0.0 when the registry has no model_info.
+
+        Characterization pin: ``if model_info:`` false branch — the
+        cost-calculation block must not run when ``get_model`` returns
+        ``None`` (e.g. an unrecognized provider/tier combination).
+        """
+        with (
+            patch.object(mock_executor, "_get_llm", return_value=mock_executor._llm),
+            patch("attune.models.empathy_executor.get_model", return_value=None),
+        ):
+            response = await mock_executor.run(
+                task_type="summarize",
+                prompt="Test",
+            )
+
+        assert response.cost_estimate == 0.0
+
 
 class TestEmpathyLLMExecutorGetModelForTask:
     """Tests for get_model_for_task method."""

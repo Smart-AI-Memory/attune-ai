@@ -1081,6 +1081,50 @@ class TestExecuteWorkflow:
         assert result.success is False
         assert len(result.errors) > 0
 
+    async def test_execute_missing_writer_dry_run_continues(self, tmp_path):
+        """dry_run=True skips the writer-missing early return.
+
+        Characterization pin (batch-4 D-block cut): the ``if not
+        HAS_WRITER: ... if not self.dry_run: return`` guard has a
+        ``dry_run=True`` branch that continues into the scout phase
+        instead of early-returning. Not previously pinned.
+        """
+        orchestrator = DocumentationOrchestrator(
+            project_root=str(tmp_path),
+            dry_run=True,
+        )
+        orchestrator._writer = None
+
+        with patch("attune.workflows.documentation_orchestrator.HAS_WRITER", False):
+            result = await orchestrator.execute()
+
+        # Continued past the guard: reached "no items" completion,
+        # not the writer-missing failure.
+        assert result.phase == "complete"
+        assert "DocumentGenerationWorkflow not available" not in result.errors
+
+    async def test_execute_dry_run_with_items_skips_generation(self, orchestrator):
+        """dry_run=True with items found stops before generation.
+
+        Characterization pin: the ``if items:`` branch reaching the
+        dry-run short-circuit (as opposed to the earlier "no items"
+        short-circuit) was unpinned — every existing dry-run test used
+        an empty findings list.
+        """
+        item = DocumentationItem(
+            file_path="src/attune/foo.py",
+            issue_type="missing_docstring",
+            severity="high",
+            priority=1,
+        )
+        with patch.object(orchestrator, "_run_scout_phase", AsyncMock(return_value=([item], 0.25))):
+            result = await orchestrator.execute()
+
+        assert result.success is True
+        assert result.phase == "complete"
+        assert result.docs_skipped == ["src/attune/foo.py"]
+        assert result.docs_generated == []
+
 
 @pytest.mark.asyncio
 class TestScoutOnlyMethod:
