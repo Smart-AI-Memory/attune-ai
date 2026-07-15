@@ -6917,6 +6917,7 @@ the workflow is marked as failed with <code>error_type: "verification"</code>.</
 </table>
 <hr />
 <h2 id="exit-codes">Exit Codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
+<p><code>attune workflow run</code> follows a four-code contract:</p>
 <table>
 <thead>
 <tr>
@@ -6927,14 +6928,23 @@ the workflow is marked as failed with <code>error_type: "verification"</code>.</
 <tbody>
 <tr>
 <td>0</td>
-<td>Success</td>
+<td>Workflow ran and succeeded (also: interactive spend prompt declined)</td>
 </tr>
 <tr>
 <td>1</td>
-<td>Error (invalid input, workflow failed, etc.)</td>
+<td>Workflow ran and reported failure (<code>WorkflowResult.success</code> false)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Workflow raised an uncaught exception (traceback on stderr)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>CLI-level stop — workflow not found, bad input JSON, bad path, no auth, or spend-gate block (the workflow never executed)</td>
 </tr>
 </tbody>
 </table>
+<p>Other subcommands use <code>0</code> for success and <code>1</code> for error.</p>
 <hr />
 <h2 id="related-tools">Related Tools<a class="headerlink" href="#related-tools" title="Permanent link">&para;</a></h2>
 <p>The framework includes additional CLI tools:</p>
