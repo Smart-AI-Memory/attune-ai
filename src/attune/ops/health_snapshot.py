@@ -34,6 +34,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import logging
 import os
@@ -42,6 +43,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import tokenize
 from collections import Counter
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
@@ -60,6 +62,7 @@ DEFAULT_STALE_AFTER_HOURS = 12
 RESULTS_SUBDIR = ("ops", "health")
 
 _TODO_RE = re.compile(r"\b(?:TODO|FIXME|XXX)\b")
+_TEST_FUNC_RE = re.compile(r"^\s*(?:async\s+)?def\s+test_\w+", re.MULTILINE)
 
 # name -> (script filename, extra argv). Each is invoked as
 # ``python <script> --format json`` and must exit 0 (clean) or
@@ -272,9 +275,27 @@ def _count_py_loc(root: Path) -> tuple[int, int]:
     return files_count, lines_count
 
 
+def _count_test_functions(tests_root: Path) -> int:
+    """Count ``def test_*`` definitions under ``tests_root``.
+
+    A regex sweep (no imports, no pytest collection) — approximates
+    the number of individual tests. Parametrize expansion means
+    pytest's actual collected-item count runs somewhat higher.
+    """
+    count = 0
+    for path in tests_root.rglob("*.py"):
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        count += len(_TEST_FUNC_RE.findall(text))
+    return count
+
+
 def _signal_sloc(project_root: Path) -> dict[str, Any]:
     src_files, src_lines = _count_py_loc(project_root / "src")
-    test_files, test_lines = _count_py_loc(project_root / "tests")
+    tests_dir = project_root / "tests"
+    test_files, test_lines = _count_py_loc(tests_dir)
     if src_files == 0:
         raise RuntimeError(f"no source files found under {project_root / 'src'}")
     ratio = round(test_lines / src_lines, 2) if src_lines else None
@@ -284,12 +305,32 @@ def _signal_sloc(project_root: Path) -> dict[str, Any]:
         "test_files": test_files,
         "test_lines": test_lines,
         "test_to_src_ratio": ratio,
+        "test_function_count": _count_test_functions(tests_dir) if tests_dir.is_dir() else 0,
     }
 
 
 # ---------------------------------------------------------------------------
 # Signal: TODO markers
 # ---------------------------------------------------------------------------
+
+
+def _count_todo_comments(text: str) -> int:
+    """Count TODO/FIXME/XXX markers in real comments only.
+
+    Scans COMMENT tokens (via ``tokenize``), not raw text — a marker
+    word inside a string literal, docstring, or dict key (e.g. a
+    severity-taxonomy definition, or a generated-code template) is
+    not a pending-work comment and must not inflate the count.
+    """
+    try:
+        tokens = tokenize.generate_tokens(io.StringIO(text).readline)
+        return sum(
+            1
+            for tok in tokens
+            if tok.type == tokenize.COMMENT and _TODO_RE.match(tok.string.lstrip("#").strip())
+        )
+    except (tokenize.TokenError, SyntaxError):
+        return 0
 
 
 def _signal_todos(project_root: Path) -> dict[str, Any]:
@@ -300,7 +341,7 @@ def _signal_todos(project_root: Path) -> dict[str, Any]:
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
-        count += len(_TODO_RE.findall(text))
+        count += _count_todo_comments(text)
     return {"count": count}
 
 

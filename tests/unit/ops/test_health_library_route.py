@@ -82,6 +82,7 @@ def _fresh_snapshot(**signal_overrides: dict[str, Any]) -> dict[str, Any]:
                 "test_files": 993,
                 "test_lines": 330000,
                 "test_to_src_ratio": 1.94,
+                "test_function_count": 20500,
             },
         },
         "todos": {"status": "ok", "value": {"count": 1}},
@@ -141,6 +142,17 @@ class TestPopulatedSnapshot:
         body = resp.text
         assert "94.1%" in body
         assert "clean" in body
+
+    def test_pre_upgrade_snapshot_missing_test_function_count_renders_zero(
+        self, client: TestClient, cfg: Config
+    ) -> None:
+        """A snapshot persisted before this field existed must not 500."""
+        snapshot = _fresh_snapshot()
+        del snapshot["signals"]["sloc"]["value"]["test_function_count"]
+        hs.persist_snapshot(snapshot, cfg.attune_home)
+        resp = client.get("/health/library")
+        assert resp.status_code == 200
+        assert "993 files" in resp.text
 
     def test_fresh_snapshot_shows_fresh_badge_not_stale(
         self, client: TestClient, cfg: Config

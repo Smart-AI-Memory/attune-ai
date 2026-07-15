@@ -1,5 +1,11 @@
 # D-or-worse block triage — 2026-07-14
 
+**Status: COMPLETE (2026-07-15).** All 12 REFACTOR blocks are cut
+and merged; both verified deletions landed. The ratchet ledger on
+`origin/main` holds exactly the 13 deliberate ACCEPT entries below —
+the paydown plan's own definition of done. See "Paydown plan of
+record" for the closing PR list.
+
 Phase 0.5 of the paydown plan in
 [library-health-2026-07-14.md](library-health-2026-07-14.md).
 Subagent inventory (fan-in / 120-day churn / tests per block) with
@@ -8,22 +14,26 @@ the three DELETE chains re-verified centrally. The ratchet
 land. Patrick approved Batch 1 + the two verified deletions
 (2026-07-14).
 
-## REFACTOR (12) — live and churning, or high blast radius
+## REFACTOR (12) — ALL CUT ✅
 
-| Batch | Block | Grade | Driver |
-|-------|-------|-------|--------|
-| 1 | `elicitation/bridge.py::form_from_dict` | F87 | 4 MCP call sites + recall_digest; hot file |
-| 1 | `elicitation/widget.py::_control_html` | F84 | live render path, churning |
-| 1 | `elicitation/bridge.py::_validate_answer` | D22 | every form response flows through it |
-| 2 | `mcp/workflow_handlers.py::_workflow_response` | D26 | 6 call sites, 11 changes/120d, prior swallowed-error bug (#1173) |
-| 2 | `ops/runner.py::RunnerService._validate_recommendation` | D24 | hottest file in set (15 changes/120d), stdout loop |
-| 2 | `cli_commands/workflow_commands.py::cmd_workflow_run` | D21 | `attune workflow run` entry, 12 changes/120d; fold the exit-0-on-failure fix in |
-| 3 | `project_index/dependency_analysis.py::_build_summary` | F48 | 3 independent production entry points |
-| 3 | `workflows/document_gen/report_formatter.py::format_doc_gen_report` | D29 | 3 call sites depend on exact output shape |
-| 3 | `voice/formatter.py::_extract_from_workflow_result` | D23 | self-declared primary output API |
-| 4 | `workflows/rag_code_gen.py::RagCodeGenWorkflow.execute` | D24 | registered workflow, 13 changes/120d |
-| 4 | `workflows/documentation_orchestrator.py::DocumentationOrchestrator.execute` | D22 | 2 live integration points, prior #685 bug |
-| 4 | `models/empathy_executor.py::EmpathyLLMExecutor.run` | D22 | ALIVE (3 subsystems) — doc-fiction lesson confirmed again |
+| Batch | Block | Grade → | PR |
+|-------|-------|---------|----|
+| 1 | `elicitation/bridge.py::form_from_dict` | F87→C15 | #1380 |
+| 1 | `elicitation/widget.py::_control_html` | F84→A3 | #1380 |
+| 1 | `elicitation/bridge.py::_validate_answer` | D22→A1 | #1380 |
+| 2 | `mcp/workflow_handlers.py::_workflow_response` | D26→A4 | #1386 |
+| 2 | `ops/runner.py::RunnerService._validate_recommendation` | D24→B9 | #1386 |
+| 2 | `cli_commands/workflow_commands.py::cmd_workflow_run` | D21→B8 | #1386 |
+| 3 | `project_index/dependency_analysis.py::_build_summary` | F48→A1 | #1389 |
+| 3 | `workflows/document_gen/report_formatter.py::format_doc_gen_report` | D29→A3 | #1389 |
+| 3 | `voice/formatter.py::_extract_from_workflow_result` | D23→C13 | #1389 |
+| 4 | `workflows/rag_code_gen.py::RagCodeGenWorkflow.execute` | D24→below D | #1391 |
+| 4 | `workflows/documentation_orchestrator.py::DocumentationOrchestrator.execute` | D22→below D | #1391 |
+| 4 | `models/empathy_executor.py::EmpathyLLMExecutor.run` | D22→below D | #1391 |
+
+(Batch 3 was completed twice in parallel by two independent
+sessions — #1389 merged first; the duplicate, #1388, was closed as
+superseded, same targets and grades.)
 
 ## ACCEPT (13) — live, stable, tested; refactoring is gold-plating
 
@@ -74,55 +84,48 @@ these aren't changing.
 ## Paydown plan of record (Patrick-approved 2026-07-14 evening)
 
 Definition of done: the ratchet ledger contains ONLY deliberate
-ACCEPT entries, each justified above — not zero. Expected floor
-after the in-flight work (batch-1 cuts −3, deletions −2): 22, of
-which 9 are the remaining REFACTOR blocks.
+ACCEPT entries, each justified above — not zero. **Met 2026-07-15:**
+the ledger holds exactly the 13 ACCEPT entries above, zero REFACTOR
+blocks remaining.
 
 Method per batch: pin-then-cut (pins PR merges before cuts PR),
 serial-suite verification at the orchestrator's gate, ratchet
 entries deleted in each cut PR. One batch per session; freeze-
 compatible.
 
-- **Batch 2 — churn-hot infra** (1 session, 3 PRs; amended
-  2026-07-14): FIRST a standalone small PR fixing the known
-  `cmd_workflow_run` exit-0-on-failure bug (own regression test —
-  a deliberate behavior change must not ride inside a
-  pins-prove-preservation cut; and the bug is live today, so it
-  ships sooner decoupled). THEN pins + cuts as usual for
-  `_workflow_response` D26 (pin the MCP response shapes — the
-  exact-dict-equality trap lives here),
-  `RunnerService._validate_recommendation` D24 (stdout-loop
-  states), and `cmd_workflow_run` D21 — now purely
-  behavior-preserving like every other cut.
-- **Batch 3 — formatters + the last F** (1 session, 2 PRs):
-  `format_doc_gen_report` D29, `_extract_from_workflow_result`
-  D23, `_section_html` D22, `_build_summary` F48 (highest care).
-  Parallel pin agents (similar section-builder shapes), one cut
-  pass. Natural moment for the held `refresh_incremental`
-  should-this-exist decision (sibling file).
-  *(Scope correction 2026-07-15: `_section_html` is an ACCEPT-table
-  entry — its mention here contradicted the triage table, which is
-  the authority. Batch 3 executes the three REFACTOR-table blocks
-  only.)*
-- **Batch 4 — workflow executes** (1 session, 3 small PRs):
-  `RagCodeGenWorkflow.execute` D24,
-  `DocumentationOrchestrator.execute` D22,
-  `EmpathyLLMExecutor.run` D22. Stage-extraction, mock-based
-  pins, plus one dogfood-run receipt per cut (registered ≠
-  working — these wrap LLM/SDK calls). OPENING STEP (amended
-  2026-07-14): a 15-minute subsystem-value-gate check on
-  `EmpathyLLMExecutor`'s callers (`escalation/chain`,
-  `escalation/evaluator`, `executor_mixin`) BEFORE any pin work —
-  it is the live executor of a framework whose core was deleted
-  in 9.0.0; if its callers are themselves retirement candidates,
-  the right move is deletion-with-deprecation (ledger −1 free),
-  not a careful refactor of dead-subsystem plumbing. Proceed with
-  the refactor only if the check says the callers stay.
+- **Batch 1 — elicitation** (2026-07-14, 2 PRs): pins #1378, cuts
+  #1380. `form_from_dict` F87→C15, `_control_html` F84→A3,
+  `_validate_answer` D22→A1.
+- **Deletions** (2026-07-14/15, 1 PR): #1381 removed the legacy
+  one-command family (`ship_workflow` D27 + facade) and the
+  orphaned `format_bug_predict_report` D23, both deprecation-first.
+- **Batch 2 — churn-hot infra** (2026-07-15, 3 PRs): #1383 (the
+  standalone `cmd_workflow_run` exit-0-on-failure fix, shipped
+  decoupled from the behavior-preserving cut), pins #1384, cuts
+  #1386. `_workflow_response` D26→A4,
+  `RunnerService._validate_recommendation` D24→B9,
+  `cmd_workflow_run` D21→B8.
+- **Batch 3 — formatters + the last F** (2026-07-15, 2 PRs): pins
+  #1387, cuts #1389 (completed independently in parallel by two
+  sessions — see the REFACTOR table note above).
+  `format_doc_gen_report` D29→A3, `_build_summary` F48→A1,
+  `_extract_from_workflow_result` D23→C13. Also closed the held
+  `refresh_incremental` should-this-exist decision: reclassified
+  ACCEPT (zero production callers, but tested/documented/stable —
+  see DELETE-CANDIDATE item 3).
+- **Batch 4 — workflow executes** (2026-07-15, 1 PR): #1391
+  (pins + cuts combined). Opening subsystem-value-gate check
+  confirmed `EmpathyLLMExecutor` is alive and central
+  (`ExecutorMixin` is mixed into every LLM-backed workflow via
+  `BaseWorkflow`) — refactored, not deleted. `RagCodeGenWorkflow.
+  execute` D24, `DocumentationOrchestrator.execute` D22,
+  `EmpathyLLMExecutor.run` D22 — all cut below D.
 
-Post-freeze checkpoint: re-check the 12 ACCEPT rationales against
-fresh churn data once — an ACCEPT that starts churning is promoted
-to REFACTOR.
+Post-freeze checkpoint (still open): re-check the 13 ACCEPT
+rationales against fresh churn data once — an ACCEPT that starts
+churning is promoted to REFACTOR.
 
-Trajectory: 27 → 22 (in flight) → ~13 (batches 2+3) → 13
-all-ACCEPT (batch 4; 13 not 12 after the refresh_incremental
-ACCEPT, 2026-07-15).
+Trajectory (actual): 27 D-or-worse blocks at ratchet ship (2026-07-14)
+→ 13 ACCEPT-only entries on `origin/main` (2026-07-15, verified
+against the live ratchet allowlist), across batches 1-4 plus the
+two deletions above. Done.

@@ -84,7 +84,7 @@
       <div class="kpi-label">TODO markers</div>
       {% if signals.todos.status == "ok" %}
         <div class="kpi-value">{{ signals.todos.value.count }}</div>
-        <div class="kpi-foot">raw grep count, src/</div>
+        <div class="kpi-foot">real comments only, src/</div>
       {% else %}
         <div class="kpi-value">&mdash;</div>
         <div class="kpi-foot">unavailable</div>
@@ -113,9 +113,10 @@
     <div class="kpi">
       <div class="kpi-label">Tests</div>
       {% if signals.sloc.status == "ok" %}
-        <div class="kpi-value">{{ '{:,}'.format(signals.sloc.value.test_files) }}</div>
+        <div class="kpi-value">{{ '{:,}'.format(signals.sloc.value.test_function_count | default(0)) }}</div>
         <div class="kpi-foot">
-          {% if signals.sloc.value.test_to_src_ratio %}{{ signals.sloc.value.test_to_src_ratio }}:1 LOC ratio{% else %}files{% endif %}
+          {{ '{:,}'.format(signals.sloc.value.test_files) }} files
+          {%- if signals.sloc.value.test_to_src_ratio %} &middot; {{ signals.sloc.value.test_to_src_ratio }}:1 LOC ratio{% endif %}
         </div>
       {% else %}
         <div class="kpi-value">&mdash;</div>

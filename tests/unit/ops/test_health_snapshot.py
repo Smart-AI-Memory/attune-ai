@@ -295,14 +295,18 @@ class TestSignalSloc:
         (src / "a.py").write_text("line1\nline2\nline3\n", encoding="utf-8")
         tests_dir = tmp_path / "tests"
         tests_dir.mkdir()
-        (tests_dir / "test_a.py").write_text("line1\nline2\n", encoding="utf-8")
+        (tests_dir / "test_a.py").write_text(
+            "def test_one():\n    pass\n\n\nasync def test_two():\n    pass\n",
+            encoding="utf-8",
+        )
 
         result = hs._signal_sloc(tmp_path)
         assert result["src_files"] == 1
         assert result["src_lines"] == 3
         assert result["test_files"] == 1
-        assert result["test_lines"] == 2
-        assert result["test_to_src_ratio"] == round(2 / 3, 2)
+        assert result["test_lines"] == 6
+        assert result["test_to_src_ratio"] == round(6 / 3, 2)
+        assert result["test_function_count"] == 2
 
     def test_no_src_files_raises(self, tmp_path: Path) -> None:
         (tmp_path / "src").mkdir()
@@ -317,11 +321,68 @@ class TestSignalSloc:
         assert result["test_files"] == 0
         assert result["test_lines"] == 0
         assert result["test_to_src_ratio"] == 0.0
+        assert result["test_function_count"] == 0
+
+
+class TestCountTestFunctions:
+    def test_counts_sync_and_async_defs(self, tmp_path: Path) -> None:
+        (tmp_path / "test_a.py").write_text(
+            "def test_one():\n    pass\n\n\nasync def test_two():\n    pass\n",
+            encoding="utf-8",
+        )
+        (tmp_path / "test_b.py").write_text(
+            "class TestThing:\n    def test_three(self):\n        pass\n",
+            encoding="utf-8",
+        )
+
+        assert hs._count_test_functions(tmp_path) == 3
+
+    def test_ignores_non_test_defs(self, tmp_path: Path) -> None:
+        (tmp_path / "test_a.py").write_text(
+            "def helper():\n    pass\n\n\ndef test_real():\n    pass\n",
+            encoding="utf-8",
+        )
+
+        assert hs._count_test_functions(tmp_path) == 1
+
+    def test_skips_unreadable_path(self, tmp_path: Path) -> None:
+        # A directory named "*.py" matches rglob but raises OSError
+        # (IsADirectoryError) on read_text() -- must be skipped, not raise.
+        (tmp_path / "weird.py").mkdir()
+        (tmp_path / "test_real.py").write_text("def test_ok():\n    pass\n", encoding="utf-8")
+
+        assert hs._count_test_functions(tmp_path) == 1
+
+    def test_empty_dir_is_zero(self, tmp_path: Path) -> None:
+        assert hs._count_test_functions(tmp_path) == 0
 
 
 # ---------------------------------------------------------------------------
 # _signal_todos
 # ---------------------------------------------------------------------------
+
+
+class TestCountTodoComments:
+    def test_counts_only_real_comments(self) -> None:
+        text = (
+            'x = {"TODO": 1}\n' "# TODO: real comment\n" "def f():\n" "    pass  # FIXME trailing\n"
+        )
+        assert hs._count_todo_comments(text) == 2
+
+    def test_requires_marker_as_first_word(self) -> None:
+        # "TODO" appears in the comment but isn't the marker itself --
+        # a section-header/descriptive comment, not pending work.
+        assert hs._count_todo_comments("# Signal: TODO markers\n") == 0
+
+    def test_string_literal_occurrences_excluded(self) -> None:
+        # Generated-code scaffolding: the "# TODO:" text is part of a
+        # string literal (a template emitted to users), not a real
+        # comment token in this file.
+        text = '"""\n# TODO: inside a docstring, not a comment token\n"""\n'
+        assert hs._count_todo_comments(text) == 0
+
+    def test_unparseable_source_returns_zero(self) -> None:
+        assert hs._count_todo_comments("def (::\n") == 0
 
 
 class TestSignalTodos:
@@ -343,6 +404,36 @@ class TestSignalTodos:
         assert result["count"] == 0
 
     def test_missing_src_dir_returns_zero(self, tmp_path: Path) -> None:
+        result = hs._signal_todos(tmp_path)
+        assert result["count"] == 0
+
+    def test_ignores_string_literal_and_dict_key_occurrences(self, tmp_path: Path) -> None:
+        src = tmp_path / "src"
+        src.mkdir()
+        (src / "a.py").write_text(
+            'SEVERITY = {"TODO": 1, "FIXME": 2}\n'
+            'TEMPLATE = """\n'
+            "# TODO: generated-code scaffolding, not a real marker\n"
+            '"""\n',
+            encoding="utf-8",
+        )
+        result = hs._signal_todos(tmp_path)
+        assert result["count"] == 0
+
+    def test_ignores_comment_that_merely_mentions_the_word(self, tmp_path: Path) -> None:
+        src = tmp_path / "src"
+        src.mkdir()
+        (src / "a.py").write_text(
+            "# Signal: TODO markers\ndef f():\n    pass\n",
+            encoding="utf-8",
+        )
+        result = hs._signal_todos(tmp_path)
+        assert result["count"] == 0
+
+    def test_syntax_error_file_degrades_to_zero_not_fatal(self, tmp_path: Path) -> None:
+        src = tmp_path / "src"
+        src.mkdir()
+        (src / "a.py").write_text("def (::\n", encoding="utf-8")
         result = hs._signal_todos(tmp_path)
         assert result["count"] == 0
 
