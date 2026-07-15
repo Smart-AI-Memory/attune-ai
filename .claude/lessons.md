@@ -15236,3 +15236,31 @@ def ", start_idx + 1)` for module-
   the shell env — deselect it for local full-suite runs (CI is
   keyless and skips it); it failed "credit balance too low" and was
   the session's tell that the API account was out of credits.
+
+- **Worktree→branch assignments DRIFT across parallel sessions —
+  re-verify the branch at a path immediately before `git worktree
+  remove`, never trust an earlier snapshot**: (2026-07-15, late-night
+  cleanup run). Early in the session `git worktree list` showed
+  `focused-kowalevski-c54a99` on `hotfix/health-report-path-windows`
+  (PR #1385's branch — flagged "keep"). ~30 min later, after #1385
+  merged, a pre-composed cleanup command removed that worktree BY PATH
+  to clear the now-merged hotfix — but a parallel session had
+  repurposed the SAME path to `refactor/batch2-cuts-land` (open PR
+  #1386) in the interim. The removal keyed on the path from the stale
+  snapshot, not the branch currently checked out there. No data loss
+  here ONLY because the branch was clean + fully pushed (`git status
+  --short` empty, `git ls-remote` in sync), so just the worktree dir
+  went — the parallel session would need to re-add it. Rules: (1)
+  immediately before `worktree remove <path>`, re-run `git worktree
+  list` and confirm the branch AT THAT PATH is still the one you meant
+  to retire — path identity is not branch identity across time; (2)
+  `git status --short` clean is necessary but not sufficient — a clean
+  worktree can still be an ACTIVE parallel session's checkout;
+  cross-check `gh pr list --head <branch>` for an open PR before
+  removing; (3) don't pre-compose a destructive worktree command from
+  an early-session snapshot and fire it late — re-derive the target at
+  execution time. Same family as the `prune_worktree_self_deletion_
+  hazard` memory (exclude the current worktree + open-PR branches) and
+  the "interrupted compound Bash command may have partially executed"
+  lesson (re-establish actual state before acting) — this is the
+  parallel-session-drift surface of both.
