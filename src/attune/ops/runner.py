@@ -430,51 +430,67 @@ class RunnerService:
             sanitized["severity"] = payload["severity"].lower()[:20]
 
         if kind == "next-workflow":
-            name = payload.get("name")
-            if not isinstance(name, str) or not name:
-                logger.warning("recommendation rejected: next-workflow name missing")
+            return self._validate_next_workflow_rec(payload, sanitized)
+        return self._validate_open_url_rec(payload, sanitized)
+
+    def _validate_next_workflow_rec(
+        self, payload: dict[str, object], sanitized: dict[str, object]
+    ) -> dict[str, object] | None:
+        """Finish validating a ``next-workflow`` recommendation."""
+        name = payload.get("name")
+        if not isinstance(name, str) or not name:
+            logger.warning("recommendation rejected: next-workflow name missing")
+            return None
+        # Verify against the live registry. Cheap: ~25 entries, no I/O.
+        from attune.ops import data as _data
+
+        valid_names = {w.name for w in _data.list_workflows()}
+        if name not in valid_names:
+            logger.warning("recommendation rejected: unknown workflow %r", name)
+            return None
+        sanitized["name"] = name
+
+        args = payload.get("args")
+        if args is not None and not isinstance(args, dict):
+            logger.warning("recommendation rejected: args not an object")
+            return None
+        if isinstance(args, dict) and "path" in args:
+            validated_path = self._validate_rec_path(args["path"])
+            if validated_path is None:
                 return None
-            # Verify against the live registry. Cheap: ~25 entries, no I/O.
-            from attune.ops import data as _data
+            sanitized["args"] = {"path": validated_path}
+        return sanitized
 
-            valid_names = {w.name for w in _data.list_workflows()}
-            if name not in valid_names:
-                logger.warning("recommendation rejected: unknown workflow %r", name)
-                return None
-            sanitized["name"] = name
+    def _validate_rec_path(self, raw_path: object) -> str | None:
+        """Validate a recommendation ``args.path`` value.
 
-            args = payload.get("args")
-            if args is not None and not isinstance(args, dict):
-                logger.warning("recommendation rejected: args not an object")
-                return None
-            if isinstance(args, dict):
-                sanitized_args: dict[str, object] = {}
-                if "path" in args:
-                    raw_path = args["path"]
-                    if not isinstance(raw_path, str) or not raw_path:
-                        logger.warning("recommendation rejected: bad args.path")
-                        return None
-                    if self._project_root is not None:
-                        from attune.security.path_validation import _validate_file_path
+        Returns the validated path string, or ``None`` (after a warning
+        log) when it is rejected. ``project_root=None`` disables
+        validation — the raw string passes through (test-fixture
+        wiring; production server.py always supplies a root).
+        """
+        if not isinstance(raw_path, str) or not raw_path:
+            logger.warning("recommendation rejected: bad args.path")
+            return None
+        if self._project_root is None:
+            return raw_path
+        from attune.security.path_validation import _validate_file_path
 
-                        try:
-                            validated = _validate_file_path(
-                                raw_path, allowed_dir=str(self._project_root)
-                            )
-                        except ValueError as exc:
-                            logger.warning(
-                                "recommendation rejected: args.path failed validation (%s)",
-                                exc,
-                            )
-                            return None
-                        sanitized_args["path"] = str(validated)
-                    else:
-                        sanitized_args["path"] = raw_path
-                if sanitized_args:
-                    sanitized["args"] = sanitized_args
-            return sanitized
+        try:
+            validated = _validate_file_path(raw_path, allowed_dir=str(self._project_root))
+        except ValueError as exc:
+            logger.warning(
+                "recommendation rejected: args.path failed validation (%s)",
+                exc,
+            )
+            return None
+        return str(validated)
 
-        # kind == "open-url"
+    @staticmethod
+    def _validate_open_url_rec(
+        payload: dict[str, object], sanitized: dict[str, object]
+    ) -> dict[str, object] | None:
+        """Finish validating an ``open-url`` recommendation."""
         url = payload.get("url")
         if not isinstance(url, str) or not url.startswith(_VALID_URL_SCHEMES):
             logger.warning("recommendation rejected: bad open-url url %r", url)

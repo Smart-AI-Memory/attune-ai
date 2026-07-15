@@ -78,14 +78,11 @@ def cmd_workflow_info(args: Namespace) -> int:
 def cmd_workflow_run(args: Namespace) -> int:
     """Execute a workflow."""
     import os
-    import sys
 
     from attune.cli_commands._exit_codes import (
         EXIT_CLI_ERROR,
-        EXIT_SUCCESS,
         run_workflow_with_exit_code,
     )
-    from attune.security.path_validation import _validate_file_path
     from attune.workflows import get_workflow
 
     name = args.name
@@ -106,93 +103,24 @@ def cmd_workflow_run(args: Namespace) -> int:
         print(f"❌ Workflow not found: {name}")
         return EXIT_CLI_ERROR
 
-    # Parse input if provided
-    input_data = {}
-    if args.input:
-        try:
-            input_data = json.loads(args.input)
-        except json.JSONDecodeError as e:
-            print(f"❌ Invalid JSON input: {e}")
-            return EXIT_CLI_ERROR
+    input_data, input_error = _build_input_data(args)
+    if input_error is not None:
+        return input_error
 
-    # Add common options with validation
-    if args.path:
-        try:
-            # Validate path to prevent path traversal attacks
-            validated_path = _validate_file_path(args.path)
-            input_data["path"] = str(validated_path)
-        except ValueError as e:
-            print(f"❌ Invalid path: {e}")
-            return EXIT_CLI_ERROR
-    if args.target:
-        input_data["target"] = args.target
-
-    # Discovery-sweep flags (no-op for workflows that don't accept them
-    # since execute() takes **kwargs — extra keys are dropped silently).
-    if getattr(args, "verbose", False):
-        input_data["verbose"] = True
-    if getattr(args, "no_llm", False):
-        input_data["no_llm"] = True
-    if getattr(args, "source", None):
-        input_data["source"] = args.source
-    if getattr(args, "depth", None):
-        input_data["depth"] = args.depth
-    if getattr(args, "json", False):
-        # Let workflows that honor it render their own JSON via
-        # ``final_output`` rather than the generic ``json.dumps(result)``
-        # at the bottom of this function (which produces awkward output
-        # for nested dataclasses).
-        input_data["output_format"] = "json"
-
-    # Auth pre-flight (setup-friction F1/F4) — BEFORE the spend gate,
-    # so a machine with no auth path at all gets one clean sentence
-    # instead of (a) a spend warning about dollars it cannot spend,
-    # then (b) an SDK traceback. Only blocks when NEITHER auth path
-    # exists: no ANTHROPIC_API_KEY and no `claude` CLI. A present-but-
-    # unauthenticated CLI can't be verified cheaply, so it proceeds
-    # (that failure is handled by SdkSubprocessError messaging).
+    record_cost = False
     if not getattr(args, "no_llm", False):
+        # Auth pre-flight (setup-friction F1/F4) — BEFORE the spend
+        # gate, so a machine with no auth path at all gets one clean
+        # sentence instead of (a) a spend warning about dollars it
+        # cannot spend, then (b) an SDK traceback.
         preflight_error = _auth_preflight()
         if preflight_error:
             print(preflight_error)
             return EXIT_CLI_ERROR
 
-    # Spend gate (collaboration-gates Phase 1) — guard the first
-    # billable run of the session. Free/local runs never reach it
-    # (R8): a ``--no-llm`` run makes no billable call. The gate's own
-    # off switch (``ATTUNE_SPEND_GATE=off`` / ``ATTUNE_MAX_BUDGET_USD=0``)
-    # short-circuits to proceed. ``record_cost`` stays False unless an
-    # enforced (non-disabled) envelope is in play, so the off path and
-    # ``--no-llm`` never touch the envelope store.
-    record_cost = False
-    if not getattr(args, "no_llm", False):
-        from attune.gates.spend_gate import (
-            ACTION_BLOCK,
-            ACTION_CONFIRM,
-            evaluate_spend_gate,
-        )
-
-        depth = input_data.get("depth", "standard")
-        interactive = sys.stdin.isatty() and sys.stdout.isatty()
-        decision = evaluate_spend_gate(name, depth, interactive=interactive)
-
-        if decision.action == ACTION_BLOCK:
-            # A blocked run is a refusal, not a success: the workflow
-            # never executed, so exiting 0 would render it green on
-            # every exit-code consumer (ops dashboard chips, CI steps,
-            # shell scripts). Same class as the auth pre-flight above —
-            # a CLI-level stop before execute() — so it shares
-            # EXIT_CLI_ERROR (3).
-            _print_spend_block(decision)
-            return EXIT_CLI_ERROR
-        if decision.action == ACTION_CONFIRM:
-            if not _confirm_spend(decision):
-                print("Skipped — no workflow run, no charge.")
-                return EXIT_SUCCESS
-            _authorize_envelope(decision)
-        # Record actual cost into the envelope only when the gate is
-        # enforced (a real dollar-capped window), never on the off path.
-        record_cost = not decision.envelope.disabled
+        gate_exit, record_cost = _spend_gate_check(name, input_data.get("depth", "standard"))
+        if gate_exit is not None:
+            return gate_exit
 
     print(f"\n🚀 Running workflow: {name}\n")
 
@@ -211,6 +139,96 @@ def cmd_workflow_run(args: Namespace) -> int:
         ),
         on_result=_record_envelope_cost if record_cost else None,
     )
+
+
+def _build_input_data(args: Namespace) -> tuple[dict, int | None]:
+    """Assemble the ``execute()`` kwargs from the CLI arguments.
+
+    Returns ``(input_data, None)`` on success, or ``(input_data,
+    exit_code)`` when a CLI-level input error (bad JSON, bad path) was
+    already printed and the caller should return that code.
+    """
+    from attune.cli_commands._exit_codes import EXIT_CLI_ERROR
+    from attune.security.path_validation import _validate_file_path
+
+    input_data: dict = {}
+    if args.input:
+        try:
+            input_data = json.loads(args.input)
+        except json.JSONDecodeError as e:
+            print(f"❌ Invalid JSON input: {e}")
+            return input_data, EXIT_CLI_ERROR
+
+    # Add common options with validation
+    if args.path:
+        try:
+            # Validate path to prevent path traversal attacks
+            validated_path = _validate_file_path(args.path)
+            input_data["path"] = str(validated_path)
+        except ValueError as e:
+            print(f"❌ Invalid path: {e}")
+            return input_data, EXIT_CLI_ERROR
+    if args.target:
+        input_data["target"] = args.target
+
+    # Discovery-sweep flags (no-op for workflows that don't accept them
+    # since execute() takes **kwargs — extra keys are dropped silently).
+    if getattr(args, "verbose", False):
+        input_data["verbose"] = True
+    if getattr(args, "no_llm", False):
+        input_data["no_llm"] = True
+    if getattr(args, "source", None):
+        input_data["source"] = args.source
+    if getattr(args, "depth", None):
+        input_data["depth"] = args.depth
+    if getattr(args, "json", False):
+        # Let workflows that honor it render their own JSON via
+        # ``final_output`` rather than the generic ``json.dumps(result)``
+        # printed by the exit-code layer (which produces awkward output
+        # for nested dataclasses).
+        input_data["output_format"] = "json"
+    return input_data, None
+
+
+def _spend_gate_check(name: str, depth: str) -> tuple[int | None, bool]:
+    """Run the spend gate (collaboration-gates Phase 1) for one run.
+
+    Guards the first billable run of the session. Free/local runs never
+    reach it (R8): a ``--no-llm`` run makes no billable call. The
+    gate's own off switch (``ATTUNE_SPEND_GATE=off`` /
+    ``ATTUNE_MAX_BUDGET_USD=0``) short-circuits to proceed.
+
+    Returns ``(exit_code, record_cost)``: a non-``None`` exit code means
+    the caller returns it without running the workflow (block → 3 so a
+    refused run is never green on exit-code consumers like the ops
+    dashboard chips; interactive decline → 0, an explicit user choice).
+    ``record_cost`` is True only when an enforced (non-disabled)
+    envelope is in play, so the off path never touches the envelope
+    store.
+    """
+    import sys
+
+    from attune.cli_commands._exit_codes import EXIT_CLI_ERROR, EXIT_SUCCESS
+    from attune.gates.spend_gate import (
+        ACTION_BLOCK,
+        ACTION_CONFIRM,
+        evaluate_spend_gate,
+    )
+
+    interactive = sys.stdin.isatty() and sys.stdout.isatty()
+    decision = evaluate_spend_gate(name, depth, interactive=interactive)
+
+    if decision.action == ACTION_BLOCK:
+        _print_spend_block(decision)
+        return EXIT_CLI_ERROR, False
+    if decision.action == ACTION_CONFIRM:
+        if not _confirm_spend(decision):
+            print("Skipped — no workflow run, no charge.")
+            return EXIT_SUCCESS, False
+        _authorize_envelope(decision)
+    # Record actual cost into the envelope only when the gate is
+    # enforced (a real dollar-capped window), never on the off path.
+    return None, not decision.envelope.disabled
 
 
 def _auth_preflight() -> str | None:
