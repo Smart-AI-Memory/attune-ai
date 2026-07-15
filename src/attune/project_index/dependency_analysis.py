@@ -120,14 +120,28 @@ class DependencyAnalysisMixin:
     def _build_summary(self, records: list[FileRecord]) -> ProjectSummary:
         """Build project summary from records."""
         summary = ProjectSummary()
+        self._summarize_categories(summary, records)
+        self._summarize_testing_health(summary, records)
+        self._summarize_staleness(summary, records)
+        source_records = self._summarize_code_metrics(summary, records)
+        self._summarize_quality(summary, records, source_records)
+        self._summarize_impact(summary, records)
+        return summary
 
+    def _summarize_categories(self, summary: ProjectSummary, records: list[FileRecord]) -> None:
+        """Populate per-category file counts."""
         summary.total_files = len(records)
         summary.source_files = sum(1 for r in records if r.category == FileCategory.SOURCE)
         summary.test_files = sum(1 for r in records if r.category == FileCategory.TEST)
         summary.config_files = sum(1 for r in records if r.category == FileCategory.CONFIG)
         summary.doc_files = sum(1 for r in records if r.category == FileCategory.DOCS)
 
-        # Testing health
+    def _summarize_testing_health(
+        self,
+        summary: ProjectSummary,
+        records: list[FileRecord],
+    ) -> None:
+        """Populate test-coverage counts and the coverage-percent average."""
         requiring_tests = [r for r in records if r.test_requirement == TestRequirement.REQUIRED]
         summary.files_requiring_tests = len(requiring_tests)
         summary.files_with_tests = sum(1 for r in requiring_tests if r.tests_exist)
@@ -136,12 +150,12 @@ class DependencyAnalysisMixin:
             r.test_count for r in records if r.category == FileCategory.TEST
         )
 
-        # Coverage average
         covered = [r for r in records if r.coverage_percent > 0]
         if covered:
             summary.test_coverage_avg = sum(r.coverage_percent for r in covered) / len(covered)
 
-        # Staleness
+    def _summarize_staleness(self, summary: ProjectSummary, records: list[FileRecord]) -> None:
+        """Populate stale-file counts and the top-5 most-stale list."""
         stale = [r for r in records if r.is_stale]
         summary.stale_file_count = len(stale)
         if stale:
@@ -149,7 +163,12 @@ class DependencyAnalysisMixin:
             top_stale = heapq.nlargest(5, stale, key=lambda r: r.staleness_days)
             summary.most_stale_files = [r.path for r in top_stale]
 
-        # Code metrics
+    def _summarize_code_metrics(
+        self,
+        summary: ProjectSummary,
+        records: list[FileRecord],
+    ) -> list[FileRecord]:
+        """Populate LOC/ratio/complexity metrics; return the source-only records."""
         source_records = [r for r in records if r.category == FileCategory.SOURCE]
         summary.total_lines_of_code = sum(r.lines_of_code for r in source_records)
         summary.total_lines_of_test = sum(
@@ -161,8 +180,15 @@ class DependencyAnalysisMixin:
             summary.avg_complexity = sum(r.complexity_score for r in source_records) / len(
                 source_records,
             )
+        return source_records
 
-        # Quality
+    def _summarize_quality(
+        self,
+        summary: ProjectSummary,
+        records: list[FileRecord],
+        source_records: list[FileRecord],
+    ) -> None:
+        """Populate docstring/type-hint percentages and the lint-issue total."""
         if source_records:
             summary.files_with_docstrings_pct = (
                 sum(1 for r in source_records if r.has_docstrings) / len(source_records) * 100
@@ -172,13 +198,13 @@ class DependencyAnalysisMixin:
             )
         summary.total_lint_issues = sum(r.lint_issues for r in records)
 
-        # High impact files
+    def _summarize_impact(self, summary: ProjectSummary, records: list[FileRecord]) -> None:
+        """Populate high-impact, critical-untested, and needs-attention lists."""
         high_impact = heapq.nlargest(10, records, key=lambda r: r.impact_score)
         summary.high_impact_files = [
             r.path for r in high_impact if r.impact_score >= self.config.high_impact_threshold
         ]
 
-        # Critical untested files (high impact + no tests)
         critical = [
             r
             for r in records
@@ -190,11 +216,8 @@ class DependencyAnalysisMixin:
             r.path for r in heapq.nlargest(10, critical, key=lambda r: r.impact_score)
         ]
 
-        # Attention needed
         needing_attention = [r for r in records if r.needs_attention]
         summary.files_needing_attention = len(needing_attention)
         summary.top_attention_files = [
             r.path for r in heapq.nlargest(10, needing_attention, key=lambda r: r.impact_score)
         ]
-
-        return summary
