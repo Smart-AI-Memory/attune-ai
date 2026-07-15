@@ -345,6 +345,14 @@ class TestCountTestFunctions:
 
         assert hs._count_test_functions(tmp_path) == 1
 
+    def test_skips_unreadable_path(self, tmp_path: Path) -> None:
+        # A directory named "*.py" matches rglob but raises OSError
+        # (IsADirectoryError) on read_text() -- must be skipped, not raise.
+        (tmp_path / "weird.py").mkdir()
+        (tmp_path / "test_real.py").write_text("def test_ok():\n    pass\n", encoding="utf-8")
+
+        assert hs._count_test_functions(tmp_path) == 1
+
     def test_empty_dir_is_zero(self, tmp_path: Path) -> None:
         assert hs._count_test_functions(tmp_path) == 0
 
