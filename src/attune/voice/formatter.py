@@ -260,18 +260,38 @@ def _extract_from_workflow_result(
         Tuple of (success, score, report_text, cost_line, error_msg).
 
     """
+    report_text, score, rendered, report_rendered = _resolve_report_text(
+        result.final_output,
+        disclosure=disclosure,
+    )
+    report_text = _apply_sparse_fallback(result, report_text, rendered=rendered)
+    cost_line = _build_cost_line(result, report_rendered=report_rendered)
+    error_msg = result.error if not result.success else None
+
+    return (result.success, score, report_text, cost_line, error_msg)
+
+
+def _resolve_report_text(
+    fo: Any,
+    *,
+    disclosure: str,
+) -> tuple[str | None, int | None, bool, bool]:
+    """Resolve report text + score from a WorkflowResult's ``final_output``.
+
+    Returns:
+        Tuple of (report_text, score, rendered, report_rendered). ``rendered``
+        is True when report_text is designed output (rendered WorkflowReport
+        or the safety-net pretty-print) — exempt from the sparse fallback.
+        ``report_rendered`` is True only when a WorkflowReport actually
+        rendered — the renderer then owns the cost display (show_cost gate),
+        not the voice wrapper.
+
+    """
     report_text = None
     score = None
-    # True when report_text is designed output (rendered WorkflowReport or
-    # the safety-net pretty-print) — exempt from the sparse fallback below.
     rendered = False
-
-    # True only when a WorkflowReport actually rendered — the renderer
-    # then owns the cost display (show_cost gate), not the voice wrapper.
     report_rendered = False
 
-    # Extract formatted report from final_output
-    fo = result.final_output
     if isinstance(fo, dict):
         from attune.workflows.output import WorkflowReport
 
@@ -307,39 +327,52 @@ def _extract_from_workflow_result(
         report_text = _format_unmigrated(fo)
         rendered = True
 
-    # Fallback: use summary + metadata findings if report_text is sparse
-    if not rendered and (not report_text or len(report_text.strip()) < 50):
-        fallback_parts: list[str] = []
-        summary = getattr(result, "summary", None)
-        if summary:
-            fallback_parts.append(summary)
-        metadata = getattr(result, "metadata", None) or {}
-        findings = metadata.get("findings")
-        if isinstance(findings, dict) and findings:
-            for cat, items in findings.items():
-                heading = cat.replace("_", " ").title()
-                fallback_parts.append(f"\n## {heading}")
-                if isinstance(items, list):
-                    for item in items:
-                        fallback_parts.append(f"- {item}")
-        if fallback_parts:
-            report_text = "\n".join(fallback_parts)
+    return report_text, score, rendered, report_rendered
 
-    # Build cost line (guard against None cost_report). A rendered
-    # report's show_cost gate owns cost display — no wrapper duplicate,
-    # and no inapplicable cost line for subscription users (design D3).
-    cost_line = None
+
+def _apply_sparse_fallback(
+    result: Any,
+    report_text: str | None,
+    *,
+    rendered: bool,
+) -> str | None:
+    """Replace a sparse report_text with summary + metadata findings."""
+    if rendered or (report_text and len(report_text.strip()) >= 50):
+        return report_text
+
+    fallback_parts: list[str] = []
+    summary = getattr(result, "summary", None)
+    if summary:
+        fallback_parts.append(summary)
+    metadata = getattr(result, "metadata", None) or {}
+    findings = metadata.get("findings")
+    if isinstance(findings, dict) and findings:
+        for cat, items in findings.items():
+            heading = cat.replace("_", " ").title()
+            fallback_parts.append(f"\n## {heading}")
+            if isinstance(items, list):
+                for item in items:
+                    fallback_parts.append(f"- {item}")
+    if fallback_parts:
+        return "\n".join(fallback_parts)
+    return report_text
+
+
+def _build_cost_line(result: Any, *, report_rendered: bool) -> str | None:
+    """Build the cost/duration line (guard against None cost_report).
+
+    A rendered report's show_cost gate owns cost display — no wrapper
+    duplicate, and no inapplicable cost line for subscription users
+    (design D3).
+    """
     cr = result.cost_report
-    if cr is not None and not report_rendered:
-        cost_parts = [f"${cr.total_cost:.4f}"]
-        if cr.savings_percent > 0:
-            cost_parts.append(f"(saved {cr.savings_percent:.0f}% vs premium)")
-        cost_parts.append(f"| {result.total_duration_ms / 1000:.1f}s")
-        cost_line = " ".join(cost_parts)
-
-    error_msg = result.error if not result.success else None
-
-    return (result.success, score, report_text, cost_line, error_msg)
+    if cr is None or report_rendered:
+        return None
+    cost_parts = [f"${cr.total_cost:.4f}"]
+    if cr.savings_percent > 0:
+        cost_parts.append(f"(saved {cr.savings_percent:.0f}% vs premium)")
+    cost_parts.append(f"| {result.total_duration_ms / 1000:.1f}s")
+    return " ".join(cost_parts)
 
 
 def _format_unmigrated(value: Any) -> str:
