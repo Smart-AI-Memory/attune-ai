@@ -657,3 +657,130 @@ class TestHandleHelpUpdate:
             result = await server._handle_help_update({})
         assert result["success"] is False
         assert "help_init" in result["error"]
+
+
+# ------------------------------------------------------------------
+# Unmatched-query logging (FAQ-Generator channel 1)
+# ------------------------------------------------------------------
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+class TestHelpLookupUnmatchedLogging:
+    """_handle_help_lookup appends unmatched queries to the channel-1 log."""
+
+    @pytest.fixture(autouse=True)
+    def _telemetry_on(self, monkeypatch: Any) -> None:
+        """Re-enable help telemetry — the global conftest disables it."""
+        monkeypatch.delenv("ATTUNE_HELP_TELEMETRY", raising=False)
+
+    def _tracker(self, tmp_path: Any) -> Any:
+        from attune.telemetry.help_tracker import HelpTracker
+
+        return HelpTracker(log_dir=tmp_path / "telemetry")
+
+    @staticmethod
+    def _events(tracker: Any) -> list[dict[str, Any]]:
+        import json
+
+        if not tracker.unmatched_path.exists():
+            return []
+        return [
+            json.loads(line)
+            for line in tracker.unmatched_path.read_text(encoding="utf-8").splitlines()
+            if line
+        ]
+
+    async def test_progressive_not_found_logs_unmatched(self, tmp_path: Any) -> None:
+        """A template miss appends the raw query to the unmatched log."""
+        server = _make_server(tmp_path)
+        tracker = self._tracker(tmp_path)
+        with (
+            patch(f"{_HELP_IMPORTS}.populate_progressive", return_value=None),
+            patch("attune.telemetry.help_tracker.get_tracker", return_value=tracker),
+        ):
+            await server._handle_help_lookup({"topic": "how do I frobnicate"})
+
+        events = self._events(tracker)
+        assert len(events) == 1
+        assert events[0]["query"] == "how do I frobnicate"
+        assert events[0]["mode"] == "progressive"
+        assert events[0]["source"] == "help_lookup"
+
+    async def test_preamble_not_found_logs_unmatched(self, tmp_path: Any) -> None:
+        """A preamble miss appends the raw query to the unmatched log."""
+        server = _make_server(tmp_path)
+        tracker = self._tracker(tmp_path)
+        with (
+            patch(f"{_HELP_IMPORTS}.get_preamble", return_value=None),
+            patch("attune.telemetry.help_tracker.get_tracker", return_value=tracker),
+        ):
+            await server._handle_help_lookup({"topic": "mystery", "mode": "preamble"})
+
+        events = self._events(tracker)
+        assert len(events) == 1
+        assert events[0]["query"] == "mystery"
+        assert events[0]["mode"] == "preamble"
+
+    async def test_search_tag_zero_hits_logs_unmatched(self, tmp_path: Any) -> None:
+        """A tag search with zero hits counts as unmatched."""
+        server = _make_server(tmp_path)
+        tracker = self._tracker(tmp_path)
+        with (
+            patch(f"{_HELP_IMPORTS}.search_by_tag", return_value=[]),
+            patch("attune.telemetry.help_tracker.get_tracker", return_value=tracker),
+        ):
+            await server._handle_help_lookup({"topic": "no-such-tag", "mode": "search_tag"})
+
+        events = self._events(tracker)
+        assert len(events) == 1
+        assert events[0]["query"] == "no-such-tag"
+
+    async def test_search_tag_with_hits_not_logged(self, tmp_path: Any) -> None:
+        """A tag search with hits is NOT unmatched."""
+        server = _make_server(tmp_path)
+        tracker = self._tracker(tmp_path)
+        with (
+            patch(f"{_HELP_IMPORTS}.search_by_tag", return_value=["tpl-1"]),
+            patch("attune.telemetry.help_tracker.get_tracker", return_value=tracker),
+        ):
+            await server._handle_help_lookup({"topic": "security", "mode": "search_tag"})
+
+        assert self._events(tracker) == []
+
+    async def test_found_progressive_not_logged(self, tmp_path: Any) -> None:
+        """A successful lookup is NOT unmatched."""
+        server = _make_server(tmp_path)
+        tracker = self._tracker(tmp_path)
+        with (
+            patch(f"{_HELP_IMPORTS}.populate_progressive", return_value=_FakePopulated()),
+            patch("attune.telemetry.help_tracker.get_tracker", return_value=tracker),
+        ):
+            await server._handle_help_lookup({"topic": "security"})
+
+        assert self._events(tracker) == []
+
+    async def test_unknown_mode_not_logged(self, tmp_path: Any) -> None:
+        """A caller bug (unknown mode) is NOT a channel-1 signal."""
+        server = _make_server(tmp_path)
+        tracker = self._tracker(tmp_path)
+        with patch("attune.telemetry.help_tracker.get_tracker", return_value=tracker):
+            await server._handle_help_lookup({"topic": "x", "mode": "bogus"})
+
+        assert self._events(tracker) == []
+
+    async def test_impl_exception_not_logged(self, tmp_path: Any) -> None:
+        """An error during lookup is NOT unmatched — only resolved misses."""
+        server = _make_server(tmp_path)
+        tracker = self._tracker(tmp_path)
+        with (
+            patch(
+                f"{_HELP_IMPORTS}.populate_progressive",
+                side_effect=RuntimeError("boom"),
+            ),
+            patch("attune.telemetry.help_tracker.get_tracker", return_value=tracker),
+            pytest.raises(RuntimeError),
+        ):
+            await server._handle_help_lookup({"topic": "x"})
+
+        assert self._events(tracker) == []
