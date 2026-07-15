@@ -99,10 +99,21 @@ def _patch_decision(monkeypatch, decision):
 # --- block ---------------------------------------------------------------
 
 
-def test_block_does_not_run_and_exits_clean(monkeypatch, fake_runner, capsys):
+def test_block_does_not_run_and_exits_cli_error(monkeypatch, fake_runner, capsys):
+    """Regression guard: a spend-gate block must exit 3, never 0.
+
+    The blocked run never executed, so exit 0 rendered it green on
+    every exit-code consumer — the ops dashboard chip classifier
+    (status=completed + exit_code=0) showed "completed" for runs the
+    exhausted-envelope gate had refused, and CI steps carried on as if
+    the workflow had run. Blocked = CLI-level stop before execute(),
+    same as the auth pre-flight → EXIT_CLI_ERROR.
+    """
+    from attune.cli_commands._exit_codes import EXIT_CLI_ERROR
+
     _patch_decision(monkeypatch, _decision(ACTION_BLOCK))
     rc = workflow_commands.cmd_workflow_run(_make_args())
-    assert rc == 0
+    assert rc == EXIT_CLI_ERROR
     assert fake_runner["called"] is False
     out = capsys.readouterr().out
     assert "ATTUNE_SPEND_GATE_AUTHORIZED" in out
