@@ -25,7 +25,10 @@ land. Patrick approved Batch 1 + the two verified deletions
 | 4 | `workflows/documentation_orchestrator.py::DocumentationOrchestrator.execute` | D22 | 2 live integration points, prior #685 bug |
 | 4 | `models/empathy_executor.py::EmpathyLLMExecutor.run` | D22 | ALIVE (3 subsystems) — doc-fiction lesson confirmed again |
 
-## ACCEPT (12) — live, stable, tested; refactoring is gold-plating
+## ACCEPT (13) — live, stable, tested; refactoring is gold-plating
+
+(+1 on 2026-07-15: `refresh_incremental` promoted from DELETE-hold —
+see item 3 below.)
 
 `format_secure_release_report` D28 (1 contained caller, 0 churn),
 `HelpMaintenanceWorkflow.execute` D25, `TestMaintenanceWorkflow.
@@ -60,6 +63,13 @@ these aren't changing.
    (possibly forward-looking watch-mode API). NOT approved — hold
    for a should-this-exist decision when project_index is next
    touched.
+   **DECIDED 2026-07-15 (batch 3, Patrick): reclassified as ACCEPT.**
+   Re-verified: zero production callers (both ProjectIndex consumers
+   use full `refresh()`), but it is a tested, documented public
+   method on a published package with ~zero churn since v4.8.0 and
+   no watch-mode subsystem yet. Fits the ACCEPT rationale (complexity
+   is a tax on change; it isn't changing). Allowlist entry stays,
+   ACCEPT count 12 → 13.
 
 ## Paydown plan of record (Patrick-approved 2026-07-14 evening)
 
@@ -90,6 +100,10 @@ compatible.
   Parallel pin agents (similar section-builder shapes), one cut
   pass. Natural moment for the held `refresh_incremental`
   should-this-exist decision (sibling file).
+  *(Scope correction 2026-07-15: `_section_html` is an ACCEPT-table
+  entry — its mention here contradicted the triage table, which is
+  the authority. Batch 3 executes the three REFACTOR-table blocks
+  only.)*
 - **Batch 4 — workflow executes** (1 session, 3 small PRs):
   `RagCodeGenWorkflow.execute` D24,
   `DocumentationOrchestrator.execute` D22,
@@ -109,5 +123,6 @@ Post-freeze checkpoint: re-check the 12 ACCEPT rationales against
 fresh churn data once — an ACCEPT that starts churning is promoted
 to REFACTOR.
 
-Trajectory: 27 → 22 (in flight) → ~13 (batches 2+3) → 12
-all-ACCEPT (batch 4).
+Trajectory: 27 → 22 (in flight) → ~13 (batches 2+3) → 13
+all-ACCEPT (batch 4; 13 not 12 after the refresh_incremental
+ACCEPT, 2026-07-15).

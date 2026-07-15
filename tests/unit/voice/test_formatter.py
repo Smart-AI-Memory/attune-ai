@@ -9,6 +9,7 @@ from unittest.mock import patch
 from attune.voice import personality
 from attune.voice.formatter import (
     _extract_from_dict,
+    _extract_from_workflow_result,
     _extract_result_data,
     format_error,
     format_mcp_response,
@@ -652,3 +653,234 @@ class TestReportDisclosureAndDedup:
         output = format_output("release-prep", result)
         assert personality.HEADER_COST in output
         assert "$0.0042" in output
+
+
+# ---------------------------------------------------------------------------
+# CHARACTERIZATION PINS — _extract_from_workflow_result (radon D23)
+#
+# These tests pin the CURRENT behavior of the function exactly, tuple by
+# tuple, so a follow-up complexity-reduction refactor can be proven
+# behavior-preserving. Do not "fix" surprising behavior here (e.g. the
+# heading-without-items fallback output) — update a pin only alongside an
+# intentional, reviewed behavior change.
+# ---------------------------------------------------------------------------
+
+
+class TestExtractFromWorkflowResultCharacterization:
+    """Exact-tuple behavior pins for _extract_from_workflow_result."""
+
+    # Default _make_result cost_report: $0.0042 / 58% savings / 1500ms.
+    DEFAULT_COST_LINE = "$0.0042 (saved 58% vs premium) | 1.5s"
+
+    def _report_dict(self):
+        """Minimal serialized WorkflowReport, as final_output carries it."""
+        from attune.workflows.output import ProseSection, WorkflowReport
+
+        return WorkflowReport(
+            title="Code review",
+            summary="3 issues found.",
+            score=88,
+            sections=[
+                ProseSection(title="Overview", tier="essential", text="Solid."),
+            ],
+        ).to_dict()
+
+    def _bare_result(
+        self,
+        *,
+        final_output=None,
+        summary=None,
+        metadata=None,
+        success=True,
+        error=None,
+        cost_report=None,
+    ) -> WorkflowResult:
+        """WorkflowResult with NO default cost_report/final_output filling."""
+        now = datetime.now(timezone.utc)
+        return WorkflowResult(
+            success=success,
+            stages=[],
+            final_output=final_output,
+            cost_report=cost_report,
+            started_at=now,
+            completed_at=now,
+            total_duration_ms=1500,
+            error=error,
+            metadata=metadata or {},
+            summary=summary,
+        )
+
+    # -- report-dict final_output (rendered path) ------------------------
+
+    def test_pin_report_dict_renders_score_and_suppresses_cost_line(self):
+        """Rendered report: score from report, cost_line None despite cost_report."""
+        result = _make_result(final_output=self._report_dict())
+        with patch("attune.config.resolve_show_cost", return_value=False):
+            success, score, text, cost_line, error = _extract_from_workflow_result(result)
+        assert (success, score, cost_line, error) == (True, 88, None, None)
+        assert "# Code review" in text
+
+    def test_pin_render_failure_degrades_to_legacy_dict_fields(self):
+        """render_safe raising falls back to formatted_report/score from the dict."""
+        fo = self._report_dict()
+        fo["formatted_report"] = "legacy fallback text long enough to dodge the sparse fallback"
+        result = _make_result(final_output=fo)
+        with (
+            patch("attune.config.resolve_show_cost", return_value=False),
+            patch(
+                "attune.voice.report_renderer.render_safe",
+                side_effect=RuntimeError("boom"),
+            ),
+        ):
+            out = _extract_from_workflow_result(result)
+        assert out == (
+            True,
+            88,
+            "legacy fallback text long enough to dodge the sparse fallback",
+            self.DEFAULT_COST_LINE,
+            None,
+        )
+
+    # -- legacy dict / str / bespoke object paths ------------------------
+
+    def test_pin_legacy_dict_without_report(self):
+        """Plain dict final_output: formatted_report/score picked, cost line built."""
+        result = _make_result(final_output={"formatted_report": "x" * 60, "score": 70})
+        out = _extract_from_workflow_result(result)
+        assert out == (True, 70, "x" * 60, self.DEFAULT_COST_LINE, None)
+
+    def test_pin_str_final_output_passthrough(self):
+        """String final_output passes through untouched, score stays None."""
+        text = "## Findings\n\n- one\n- two\n- three, padding to clear fifty chars"
+        result = _make_result(final_output=text)
+        out = _extract_from_workflow_result(result)
+        assert out == (True, None, text, self.DEFAULT_COST_LINE, None)
+
+    def test_pin_unmigrated_object_banner_skips_sparse_fallback(self):
+        """Bespoke object: banner text is authoritative (rendered=True)."""
+
+        @dataclass
+        class FakeThing:
+            approved: bool = True
+
+        result = _make_result(final_output=FakeThing())
+        result.summary = "should not appear"
+        result.metadata = {"findings": {"security_issues": ["nope"]}}
+        success, score, text, cost_line, error = _extract_from_workflow_result(result)
+        assert text == (
+            "⚠ Renderer not yet migrated for FakeThing. Raw fields:\n\n  approved: True"
+        )
+        assert "## Security Issues" not in text
+        assert (success, score, cost_line, error) == (
+            True,
+            None,
+            self.DEFAULT_COST_LINE,
+            None,
+        )
+
+    # -- sparse fallback: summary + metadata findings --------------------
+
+    def test_pin_sparse_fallback_summary_only(self):
+        """No final_output: report_text becomes the bare summary."""
+        result = self._bare_result(summary="Run finished.")
+        out = _extract_from_workflow_result(result)
+        assert out == (True, None, "Run finished.", None, None)
+
+    def test_pin_sparse_fallback_summary_plus_findings_lists(self):
+        """Findings dict: '## Title Cased' headings + '- item' lines, exact join."""
+        result = self._bare_result(
+            summary="Scan done.",
+            metadata={
+                "findings": {
+                    "security_issues": ["issue a", "issue b"],
+                    "code_smells": ["smell c"],
+                },
+            },
+        )
+        out = _extract_from_workflow_result(result)
+        expected_text = (
+            "Scan done.\n"
+            "\n## Security Issues\n"
+            "- issue a\n"
+            "- issue b\n"
+            "\n## Code Smells\n"
+            "- smell c"
+        )
+        assert out == (True, None, expected_text, None, None)
+
+    def test_pin_sparse_fallback_non_list_findings_value_emits_heading_only(self):
+        """Non-list category value: heading still emitted, items silently skipped."""
+        result = self._bare_result(metadata={"findings": {"raw_stats": {"n": 3}}})
+        out = _extract_from_workflow_result(result)
+        assert out == (True, None, "\n## Raw Stats", None, None)
+
+    def test_pin_sparse_fallback_non_dict_findings_ignored(self):
+        """findings that is not a dict contributes nothing — report_text stays None."""
+        result = self._bare_result(metadata={"findings": ["not", "a", "dict"]})
+        out = _extract_from_workflow_result(result)
+        assert out == (True, None, None, None, None)
+
+    def test_pin_empty_fallback_parts_leave_short_report_text_unchanged(self):
+        """No summary/findings: a short report_text survives untouched."""
+        result = self._bare_result(final_output={"formatted_report": "tiny"})
+        out = _extract_from_workflow_result(result)
+        assert out == (True, None, "tiny", None, None)
+
+    def test_pin_sparse_fallback_replaces_short_report_text(self):
+        """Fallback REPLACES (not appends to) a sub-50-char report_text."""
+        result = self._bare_result(
+            final_output={"formatted_report": "short"},
+            summary="The summary wins.",
+        )
+        out = _extract_from_workflow_result(result)
+        assert out == (True, None, "The summary wins.", None, None)
+
+    # -- cost line variants ----------------------------------------------
+
+    def test_pin_cost_line_with_savings(self):
+        """savings_percent > 0: two-part cost line plus duration."""
+        result = _make_result(final_output={"formatted_report": "x" * 60})
+        _, _, _, cost_line, _ = _extract_from_workflow_result(result)
+        assert cost_line == "$0.0042 (saved 58% vs premium) | 1.5s"
+
+    def test_pin_cost_line_without_savings_segment(self):
+        """savings_percent == 0: no '(saved ...)' segment, just cost | duration."""
+        result = _make_result(
+            final_output={"formatted_report": "x" * 60},
+            cost_report=CostReport(
+                total_cost=0.01,
+                baseline_cost=0.01,
+                savings=0.0,
+                savings_percent=0.0,
+            ),
+        )
+        out = _extract_from_workflow_result(result)
+        assert out == (True, None, "x" * 60, "$0.0100 | 1.5s", None)
+
+    def test_pin_none_cost_report_yields_none_cost_line(self):
+        """cost_report None: cost_line is None, everything else unaffected."""
+        result = self._bare_result(final_output={"formatted_report": "x" * 60})
+        out = _extract_from_workflow_result(result)
+        assert out == (True, None, "x" * 60, None, None)
+
+    # -- error_msg gating --------------------------------------------------
+
+    def test_pin_error_surfaces_only_on_failure(self):
+        """result.error becomes error_msg only when success is False."""
+        result = self._bare_result(
+            success=False,
+            error="boom",
+            final_output={"formatted_report": "x" * 60},
+        )
+        out = _extract_from_workflow_result(result)
+        assert out == (False, None, "x" * 60, None, "boom")
+
+    def test_pin_error_masked_on_success(self):
+        """A populated result.error is dropped when success is True."""
+        result = self._bare_result(
+            success=True,
+            error="ignored",
+            final_output={"formatted_report": "x" * 60},
+        )
+        out = _extract_from_workflow_result(result)
+        assert out == (True, None, "x" * 60, None, None)
