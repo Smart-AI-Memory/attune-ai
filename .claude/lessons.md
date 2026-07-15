@@ -15184,3 +15184,55 @@ def ", start_idx + 1)` for module-
   behavior-preservation receipt, strip or pin every wall-clock,
   random, or run-id field; a "difference" in one of those is
   harness noise that erodes trust in the real signal.
+
+- **A handoff that names a "known bug" without its MECHANISM is a
+  broken pointer once the session that knew it is deleted — starters
+  must carry the repro one-liner, not just the label**: 2026-07-14
+  evening, `next_session_starter.md` said "fix the known
+  `cmd_workflow_run` exit-0-on-failure bug"; Patrick had deleted the
+  prior session as cleanup, and NO surviving artifact (triage doc,
+  lessons, reports) recorded what the bug actually was — transcript
+  searches came up empty and the mechanism had to be re-derived from
+  scratch (~30 min: it was the spend-gate `ACTION_BLOCK` branch
+  returning `EXIT_SUCCESS`; the ops daemon pre-authorizes but still
+  BLOCKS on an exhausted envelope, so refused runs rendered green).
+  Deleting old sessions is fine — that's what handoffs are for — but
+  the contract is on the WRITER: any "known bug / known issue" line
+  in a starter or plan doc must include the one-line mechanism and,
+  ideally, the repro command. Rule of thumb: write the starter as if
+  every transcript will be gone by morning.
+
+- **ALL Windows lanes failing on your PR while ubuntu/macos are green
+  → check MAIN's latest tests.yml run BEFORE diagnosing your diff**:
+  2026-07-14, PR #1383 (exit-code fix, platform-neutral) showed 5/5
+  windows-latest failures; `gh run list --workflow=tests.yml
+  --branch=main --limit 3` showed main itself red on the same lanes
+  since #1379 merged the day before (the "admin-merge before Windows
+  lanes finish" lesson recurring — #1379's own matrix never went
+  green on Windows). The 30-second main-branch check redirected the
+  whole diagnosis from "what did my diff break" to a one-line
+  pre-existing hotfix (#1385). The bug class itself:
+  `str(Path.relative_to(root))` yields BACKSLASHES on Windows — any
+  repo-relative path destined for a URL/link/doc must use
+  `.as_posix()` (health tab's `latest_llm_report`). Recovery order
+  when main is the culprit: hotfix PR first, then
+  `gh pr update-branch` the blocked PRs so their matrices rerun green
+  — don't merge them over the inherited red even though Windows lanes
+  aren't required checks.
+
+- **The /tmp coverage recipe is for MEASURING one module's coverage,
+  not for verifying suites — cwd-dependent tests fail en masse from
+  /tmp and the failures are pure artifact**: 2026-07-14, running four
+  suites together under `cd /tmp && coverage run … -m pytest <abs
+  paths>` produced 102 failures (e.g. `test_specs_routes`,
+  spec/report readers that resolve `docs/…` relative to cwd); the
+  identical serial run from the worktree: 1919 passed, 1 unrelated
+  live-network failure. The recipe (from the worktree-coverage
+  lesson) stays correct for its purpose — targeted `--source=<mod>`
+  measurement where the module's own tests don't read cwd — but the
+  VERIFICATION run that gates a push must execute from the repo root.
+  Corollary: a live-network test (`test_analyze_png_returns_analysis`)
+  runs and spends real API money whenever `ANTHROPIC_API_KEY` is in
+  the shell env — deselect it for local full-suite runs (CI is
+  keyless and skips it); it failed "credit balance too low" and was
+  the session's tell that the API account was out of credits.

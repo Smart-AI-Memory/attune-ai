@@ -41,15 +41,12 @@ D_THRESHOLD = 21
 ALLOWLISTED_D_BLOCKS: frozenset[str] = frozenset(
     {
         "authoring/fact_check/python_refs.py::check",
-        "cli_commands/workflow_commands.py::cmd_workflow_run",
-        "mcp/workflow_handlers.py::_workflow_response",
         "memory/mixins/backend_init_mixin.py::BackendInitMixin._initialize_backends",
         "memory/security/query.py::AuditQueryMixin",
         "memory/security/query.py::AuditQueryMixin.query",
         "memory/security/query.py::_apply_custom_filters",
         "meta_workflows/cli_commands/workflow_commands.py::run_workflow",
         "models/empathy_executor.py::EmpathyLLMExecutor.run",
-        "ops/runner.py::RunnerService._validate_recommendation",
         "ops/spec_lifecycle.py::derive_lifecycle",
         "project_index/dependency_analysis.py::DependencyAnalysisMixin._build_summary",
         "project_index/index.py::ProjectIndex.refresh_incremental",

@@ -42,6 +42,102 @@ def _metadata_findings(result: Any) -> list[Any]:
     return []
 
 
+def _pick_source(source: Any) -> tuple[Any, Any]:
+    """Unpack a field-pick ``source`` into ``(src_key, default)``."""
+    return source if isinstance(source, tuple) else (source, None)
+
+
+def _report_fields(result: Any, fo: Any, raw_output: bool, field_picks: dict) -> dict[str, Any]:
+    """Response fields for a serialized-WorkflowReport final_output.
+
+    Carries the rendered summary markdown verbatim (``summary_markdown``),
+    the report JSON (``report``), and the back-compat ``score`` /
+    ``findings`` fields restored from the report (metadata findings as
+    fallback). Findings-like picks (``findings``/``predictions``/
+    ``checks``) resolve to the report findings; score-like picks
+    (``score``, ``*_score`` — either side of the mapping) to the report
+    score; everything else to its default.
+    """
+    from attune.config import resolve_show_cost
+    from attune.voice.report_renderer import render_safe
+    from attune.workflows.output import WorkflowReport
+
+    # Universal rich panel for mcp__visualize__show_widget — renders
+    # the report's sections (findings / category-bullets / next-steps)
+    # for EVERY SDK-native workflow at once (spec
+    # analysis-workflow-output-widgets D4). Display-only, injection-safe.
+    from attune.workflows.report_panel import report_to_panel_html
+
+    report = WorkflowReport.from_dict(fo)
+    findings = [f.to_dict() for f in report.findings] or _metadata_findings(result)
+    fields: dict[str, Any] = {
+        "summary_markdown": render_safe(
+            report,
+            disclosure="summary",
+            show_cost=resolve_show_cost(),
+        ),
+        "report": fo,
+        "score": report.score,
+        "findings": findings,
+        "panel_html": report_to_panel_html(fo, succeeded=bool(getattr(result, "success", True))),
+    }
+    if raw_output:
+        fields["output"] = fields["summary_markdown"]
+    for key, source in field_picks.items():
+        src_key, default = _pick_source(source)
+        if key in _FINDINGS_KEYS or src_key in _FINDINGS_KEYS:
+            fields[key] = findings
+        elif _is_score_key(key) or _is_score_key(src_key):
+            fields[key] = report.score
+        else:
+            fields[key] = default
+    return fields
+
+
+def _legacy_fields(fo: Any, raw_output: bool, field_picks: dict) -> dict[str, Any]:
+    """Response fields for a legacy flat-dict final_output — each pick
+    is ``final_output.get(source)``, exactly the field-picking the
+    handlers did before the report path existed."""
+    fo_dict = fo if isinstance(fo, dict) else {}
+    fields: dict[str, Any] = {}
+    for key, source in field_picks.items():
+        src_key, default = _pick_source(source)
+        fields[key] = fo_dict.get(src_key, default)
+    if raw_output:
+        fields["output"] = fo
+    return fields
+
+
+def _error_fields(result: Any) -> dict[str, Any]:
+    """Surface the real failure reason of an errored run.
+
+    Without this, an errored run is indistinguishable from a clean
+    empty result (success=false, findings=[], cost=0) — the
+    swallowed-error trap (see removing-dead-code.md "fake-success
+    signature"). The canonical signal is result.error; SDK-native runs
+    leave that None and carry the message in metadata instead
+    (is_error + raw_result_text), e.g. an auth failure surfacing as
+    "Invalid API key". Only str messages are accepted so a mocked
+    result never injects a spurious key.
+    """
+    meta = getattr(result, "metadata", None) or {}
+    if not (result.success is False or meta.get("is_error")):
+        return {}
+    candidates = (
+        getattr(result, "error", None),
+        meta.get("raw_result_text") if meta.get("is_error") else None,
+        meta.get("errors"),
+    )
+    error_msg = next((c for c in candidates if isinstance(c, str) and c.strip()), None)
+    if error_msg is None:
+        return {}
+    fields: dict[str, Any] = {"error": error_msg}
+    error_type = getattr(result, "error_type", None)
+    if isinstance(error_type, str):
+        fields["error_type"] = error_type
+    return fields
+
+
 def _workflow_response(
     result: Any,
     *,
@@ -52,18 +148,10 @@ def _workflow_response(
     """Build an MCP response dict from a WorkflowResult.
 
     Two shapes, decided by what ``result.final_output`` carries
-    (workflow-result-formatting spec, T5):
-
-    - **Serialized WorkflowReport**: the response carries the rendered
-      summary markdown verbatim (``summary_markdown``), the report JSON
-      (``report``), and the back-compat ``score`` / ``findings`` fields
-      restored from the report (metadata findings as fallback).
-      Findings-like picks (``findings``/``predictions``/``checks``)
-      resolve to the report findings; score-like picks (``score``,
-      ``*_score`` — either side of the mapping) to the report score;
-      everything else to its default.
-    - **Legacy flat dict**: each pick is ``final_output.get(source)``,
-      exactly the field-picking the handlers did before.
+    (workflow-result-formatting spec, T5): a serialized WorkflowReport
+    (:func:`_report_fields`) or a legacy flat dict
+    (:func:`_legacy_fields`). Errored runs additionally carry the real
+    failure reason (:func:`_error_fields`).
 
     Args:
         result: WorkflowResult returned by a workflow ``execute()``.
@@ -83,73 +171,16 @@ def _workflow_response(
     fo = result.final_output
 
     if WorkflowReport.is_report_dict(fo):
-        from attune.config import resolve_show_cost
-        from attune.voice.report_renderer import render_safe
-
-        report = WorkflowReport.from_dict(fo)
-        findings = [f.to_dict() for f in report.findings] or _metadata_findings(result)
-        response["summary_markdown"] = render_safe(
-            report,
-            disclosure="summary",
-            show_cost=resolve_show_cost(),
-        )
-        response["report"] = fo
-        response["score"] = report.score
-        response["findings"] = findings
-        # Universal rich panel for mcp__visualize__show_widget — renders
-        # the report's sections (findings / category-bullets / next-steps)
-        # for EVERY SDK-native workflow at once (spec
-        # analysis-workflow-output-widgets D4). Display-only, injection-safe.
-        from attune.workflows.report_panel import report_to_panel_html
-
-        response["panel_html"] = report_to_panel_html(
-            fo, succeeded=bool(getattr(result, "success", True))
-        )
-        if raw_output:
-            response["output"] = response["summary_markdown"]
-        for key, source in field_picks.items():
-            src_key, default = source if isinstance(source, tuple) else (source, None)
-            if key in _FINDINGS_KEYS or src_key in _FINDINGS_KEYS:
-                response[key] = findings
-            elif _is_score_key(key) or _is_score_key(src_key):
-                response[key] = report.score
-            else:
-                response[key] = default
+        response.update(_report_fields(result, fo, raw_output, field_picks))
     else:
-        fo_dict = fo if isinstance(fo, dict) else {}
-        for key, source in field_picks.items():
-            src_key, default = source if isinstance(source, tuple) else (source, None)
-            response[key] = fo_dict.get(src_key, default)
-        if raw_output:
-            response["output"] = fo
+        response.update(_legacy_fields(fo, raw_output, field_picks))
 
     cost_report = getattr(result, "cost_report", None)
     response["cost"] = cost_report.total_cost if cost_report is not None else 0.0
     if include_provider:
         response["provider"] = result.provider
 
-    # Surface the real failure reason. Without this, an errored run is
-    # indistinguishable from a clean empty result (success=false,
-    # findings=[], cost=0) — the swallowed-error trap (see
-    # removing-dead-code.md "fake-success signature"). The canonical
-    # signal is result.error; SDK-native runs leave that None and carry
-    # the message in metadata instead (is_error + raw_result_text), e.g.
-    # an auth failure surfacing as "Invalid API key". Only str messages
-    # are accepted so a mocked result never injects a spurious key.
-    meta = getattr(result, "metadata", None) or {}
-    if result.success is False or meta.get("is_error"):
-        candidates = (
-            getattr(result, "error", None),
-            meta.get("raw_result_text") if meta.get("is_error") else None,
-            meta.get("errors"),
-        )
-        error_msg = next((c for c in candidates if isinstance(c, str) and c.strip()), None)
-        if error_msg is not None:
-            response["error"] = error_msg
-            error_type = getattr(result, "error_type", None)
-            if isinstance(error_type, str):
-                response["error_type"] = error_type
-
+    response.update(_error_fields(result))
     return response
 
 
