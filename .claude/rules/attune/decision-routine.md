@@ -140,6 +140,25 @@ Stage 2 review is the worked consumer.
 
 ---
 
+## Delegation receipts (ratified 2026-07-14)
+
+No subagent lane launches without its **receipt type declared in
+the launch prompt**, and the orchestrator **re-runs the receipts
+centrally** before shipping — a lane's self-report is never the
+receipt. Types (name one or more per lane): **suite** (named tests
+run SERIALLY, exact tail returned — xdist masks pollution),
+**behavioral** (byte-compare/golden output, wall-clock fields
+normalized), **live-fire** (the artifact demonstrably runs),
+**metric** (the motivating number re-measured from the FULL
+stream, never a truncated listing), **evidence-chain** (per-claim
+verification for deletions). A lane that stalls gets its mechanics
+taken over, not re-trusted. Origin + full taxonomy: the
+`feedback_receipt_declared_delegation` global memory; born from the
+2026-07-14 health-loop day, where both failures were claims
+standing in for receipts and both bug-catches were receipts.
+
+---
+
 ## Acting on a terse "go"
 
 Two gates fire before executing a `go` / `do it` / `y` (full rule in
