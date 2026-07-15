@@ -534,3 +534,172 @@ class TestCLI:
                 ]
             )
         assert code == 2
+
+
+# ---------------------------------------------------------------------
+# Nav ↔ filesystem check (Task 3)
+# ---------------------------------------------------------------------
+
+
+@pytest.fixture()
+def repo_tree(tmp_path):
+    """Repo-shaped fixture: docs/ + mkdocs.yml at the parent level."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "index.md").write_text("# Home\n", encoding="utf-8")
+    (tmp_path / "mkdocs.yml").write_text(
+        "site_name: t\nnav:\n  - Home: index.md\n", encoding="utf-8"
+    )
+    return docs
+
+
+class TestCheckNav:
+    def _write_mkdocs(self, docs, nav_yaml="nav:\n  - Home: index.md\n", extra=""):
+        (docs.parent / "mkdocs.yml").write_text(
+            f"site_name: t\n{nav_yaml}{extra}", encoding="utf-8"
+        )
+
+    def test_well_formed_nav_no_findings(self, audit_module, repo_tree):
+        assert audit_module.check_nav(repo_tree) == []
+
+    def test_dangling_nav_entry_is_error(self, audit_module, repo_tree):
+        self._write_mkdocs(repo_tree, "nav:\n  - Home: index.md\n  - Gone: missing.md\n")
+        findings = audit_module.check_nav(repo_tree)
+        assert [f.severity for f in findings] == ["error"]
+        assert "missing.md" in findings[0].message
+
+    def test_orphan_doc_not_allowlisted_is_error(self, audit_module, repo_tree):
+        (repo_tree / "stray.md").write_text("# Stray\n", encoding="utf-8")
+        findings = audit_module.check_nav(repo_tree)
+        assert len(findings) == 1
+        assert findings[0].severity == "error"
+        assert "orphan" in findings[0].message
+
+    def test_orphan_doc_allowlisted_is_exempt(self, audit_module, repo_tree):
+        (repo_tree / "stray.md").write_text("# Stray\n", encoding="utf-8")
+        allow = audit_module.Allowlist(orphan_subtrees=("docs/stray.md",))
+        assert audit_module.check_nav(repo_tree, allow) == []
+
+    def test_nested_nav_structure(self, audit_module, repo_tree):
+        (repo_tree / "guide").mkdir()
+        (repo_tree / "guide" / "a.md").write_text("# A\n", encoding="utf-8")
+        self._write_mkdocs(
+            repo_tree,
+            "nav:\n  - Home: index.md\n  - Guide:\n      - Part A:\n          - guide/a.md\n",
+        )
+        assert audit_module.check_nav(repo_tree) == []
+
+    def test_excluded_doc_is_not_orphan(self, audit_module, repo_tree):
+        (repo_tree / "internal").mkdir()
+        (repo_tree / "internal" / "x.md").write_text("# X\n", encoding="utf-8")
+        self._write_mkdocs(
+            repo_tree,
+            "nav:\n  - Home: index.md\n",
+            "exclude_docs: |\n  internal/\n",
+        )
+        assert audit_module.check_nav(repo_tree) == []
+
+    def test_hook_injected_features_root_is_exempt(self, audit_module, repo_tree):
+        (repo_tree / "features").mkdir()
+        (repo_tree / "features" / "hub.md").write_text("# Hub\n", encoding="utf-8")
+        assert audit_module.check_nav(repo_tree) == []
+
+    def test_projector_feature_page_is_exempt(self, audit_module, repo_tree):
+        help_dir = repo_tree.parent / ".help"
+        help_dir.mkdir()
+        (help_dir / "features.yaml").write_text(
+            "features:\n  spec-engine:\n    description: d\n", encoding="utf-8"
+        )
+        (repo_tree / "reference").mkdir()
+        (repo_tree / "reference" / "spec-engine.md").write_text("# S\n", encoding="utf-8")
+        (repo_tree / "reference" / "not-a-feature.md").write_text("# N\n", encoding="utf-8")
+        findings = audit_module.check_nav(repo_tree)
+        flagged = {f.file for f in findings}
+        assert "docs/reference/not-a-feature.md" in flagged
+        assert "docs/reference/spec-engine.md" not in flagged
+
+    def test_missing_mkdocs_yml_is_warning_not_error(self, audit_module, tmp_path):
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        findings = audit_module.check_nav(docs)
+        assert [f.severity for f in findings] == ["warning"]
+
+
+# ---------------------------------------------------------------------
+# features.yaml check (Task 4, adapted)
+# ---------------------------------------------------------------------
+
+
+class TestCheckFeaturesYaml:
+    def _write_features(self, docs, body):
+        help_dir = docs.parent / ".help"
+        help_dir.mkdir(exist_ok=True)
+        (help_dir / "features.yaml").write_text(body, encoding="utf-8")
+
+    def test_valid_docs_entries_no_findings(self, audit_module, repo_tree):
+        self._write_features(repo_tree, "_docs:\n  - docs/index.md\n")
+        assert audit_module.check_features_yaml(repo_tree) == []
+
+    def test_dangling_docs_entry_is_error(self, audit_module, repo_tree):
+        self._write_features(repo_tree, "_docs:\n  - docs/index.md\n  - docs/gone.md\n")
+        findings = audit_module.check_features_yaml(repo_tree)
+        assert [f.severity for f in findings] == ["error"]
+        assert "docs/gone.md" in findings[0].message
+
+    def test_missing_features_yaml_no_findings(self, audit_module, repo_tree):
+        assert audit_module.check_features_yaml(repo_tree) == []
+
+    def test_unparseable_features_yaml_is_warning(self, audit_module, repo_tree):
+        self._write_features(repo_tree, "_docs: [unclosed\n")
+        findings = audit_module.check_features_yaml(repo_tree)
+        assert [f.severity for f in findings] == ["warning"]
+
+
+# ---------------------------------------------------------------------
+# mkdocstrings symbol resolution (Task 9)
+# ---------------------------------------------------------------------
+
+
+class TestCheckMkdocstrings:
+    def test_valid_stdlib_symbol_resolves(self, audit_module, repo_tree):
+        (repo_tree / "api.md").write_text("# API\n\n::: json.dumps\n", encoding="utf-8")
+        assert audit_module.check_mkdocstrings(repo_tree) == []
+
+    def test_missing_module_is_error(self, audit_module, repo_tree):
+        (repo_tree / "api.md").write_text("::: no_such_module_xyz.Thing\n", encoding="utf-8")
+        findings = audit_module.check_mkdocstrings(repo_tree)
+        assert [f.severity for f in findings] == ["error"]
+        assert "no_such_module_xyz.Thing" in findings[0].message
+
+    def test_missing_attribute_is_error(self, audit_module, repo_tree):
+        (repo_tree / "api.md").write_text("::: json.no_such_attr\n", encoding="utf-8")
+        findings = audit_module.check_mkdocstrings(repo_tree)
+        assert [f.severity for f in findings] == ["error"]
+
+    def test_malformed_directive_not_matched(self, audit_module, repo_tree):
+        (repo_tree / "api.md").write_text("::: not a dotted path!\n:::\n", encoding="utf-8")
+        assert audit_module.check_mkdocstrings(repo_tree) == []
+
+    def test_reports_file_and_line(self, audit_module, repo_tree):
+        (repo_tree / "api.md").write_text("# API\n\n::: no_such_module_xyz\n", encoding="utf-8")
+        findings = audit_module.check_mkdocstrings(repo_tree)
+        assert findings[0].file == "docs/api.md"
+        assert findings[0].line == 3
+
+
+# ---------------------------------------------------------------------
+# Exit-code severity gating (v1.1)
+# ---------------------------------------------------------------------
+
+
+class TestWarningsAreAdvisory:
+    def test_warning_only_findings_exit_zero(self, audit_module, tmp_path):
+        """A repo with no mkdocs.yml yields a nav warning — exit stays 0."""
+        docs = tmp_path / "docs"
+        docs.mkdir()
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = audit_module.run(
+                ["--check", "nav", "--docs-root", str(docs), "--allowlist", str(tmp_path / "n.yml")]
+            )
+        assert code == 0

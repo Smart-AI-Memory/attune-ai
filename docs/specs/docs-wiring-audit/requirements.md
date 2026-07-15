@@ -8,8 +8,7 @@
 >
 > **Orthogonal to content correctness.** This spec does not touch what
 > docs *say* — only how they connect.
-
-**Status:** partial — v1 shipped (scripts/audit_docs_wiring.py + anchor check, #518/#523); later Phase 4 tasks (nav/features.yaml sync, orphans.yml) remaining
+**Status:** approved — v1 shipped (scripts/audit_docs_wiring.py + anchor check, #518/#523); v1.1 shipped 2026-07-15 (nav + features + mkdocstrings checks, .audit/orphans.yml — see decisions.md Phase 4 entry); Task 10 (See-Also) deferred
 **Created:** 2026-05-30
 **Owner:** TBD
 **Related:**
