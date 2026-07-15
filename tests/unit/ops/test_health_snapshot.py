@@ -295,14 +295,18 @@ class TestSignalSloc:
         (src / "a.py").write_text("line1\nline2\nline3\n", encoding="utf-8")
         tests_dir = tmp_path / "tests"
         tests_dir.mkdir()
-        (tests_dir / "test_a.py").write_text("line1\nline2\n", encoding="utf-8")
+        (tests_dir / "test_a.py").write_text(
+            "def test_one():\n    pass\n\n\nasync def test_two():\n    pass\n",
+            encoding="utf-8",
+        )
 
         result = hs._signal_sloc(tmp_path)
         assert result["src_files"] == 1
         assert result["src_lines"] == 3
         assert result["test_files"] == 1
-        assert result["test_lines"] == 2
-        assert result["test_to_src_ratio"] == round(2 / 3, 2)
+        assert result["test_lines"] == 6
+        assert result["test_to_src_ratio"] == round(6 / 3, 2)
+        assert result["test_function_count"] == 2
 
     def test_no_src_files_raises(self, tmp_path: Path) -> None:
         (tmp_path / "src").mkdir()
@@ -317,6 +321,32 @@ class TestSignalSloc:
         assert result["test_files"] == 0
         assert result["test_lines"] == 0
         assert result["test_to_src_ratio"] == 0.0
+        assert result["test_function_count"] == 0
+
+
+class TestCountTestFunctions:
+    def test_counts_sync_and_async_defs(self, tmp_path: Path) -> None:
+        (tmp_path / "test_a.py").write_text(
+            "def test_one():\n    pass\n\n\nasync def test_two():\n    pass\n",
+            encoding="utf-8",
+        )
+        (tmp_path / "test_b.py").write_text(
+            "class TestThing:\n    def test_three(self):\n        pass\n",
+            encoding="utf-8",
+        )
+
+        assert hs._count_test_functions(tmp_path) == 3
+
+    def test_ignores_non_test_defs(self, tmp_path: Path) -> None:
+        (tmp_path / "test_a.py").write_text(
+            "def helper():\n    pass\n\n\ndef test_real():\n    pass\n",
+            encoding="utf-8",
+        )
+
+        assert hs._count_test_functions(tmp_path) == 1
+
+    def test_empty_dir_is_zero(self, tmp_path: Path) -> None:
+        assert hs._count_test_functions(tmp_path) == 0
 
 
 # ---------------------------------------------------------------------------

@@ -82,6 +82,7 @@ def _fresh_snapshot(**signal_overrides: dict[str, Any]) -> dict[str, Any]:
                 "test_files": 993,
                 "test_lines": 330000,
                 "test_to_src_ratio": 1.94,
+                "test_function_count": 20500,
             },
         },
         "todos": {"status": "ok", "value": {"count": 1}},

@@ -60,6 +60,7 @@ DEFAULT_STALE_AFTER_HOURS = 12
 RESULTS_SUBDIR = ("ops", "health")
 
 _TODO_RE = re.compile(r"\b(?:TODO|FIXME|XXX)\b")
+_TEST_FUNC_RE = re.compile(r"^\s*(?:async\s+)?def\s+test_\w+", re.MULTILINE)
 
 # name -> (script filename, extra argv). Each is invoked as
 # ``python <script> --format json`` and must exit 0 (clean) or
@@ -272,9 +273,27 @@ def _count_py_loc(root: Path) -> tuple[int, int]:
     return files_count, lines_count
 
 
+def _count_test_functions(tests_root: Path) -> int:
+    """Count ``def test_*`` definitions under ``tests_root``.
+
+    A regex sweep (no imports, no pytest collection) — approximates
+    the number of individual tests. Parametrize expansion means
+    pytest's actual collected-item count runs somewhat higher.
+    """
+    count = 0
+    for path in tests_root.rglob("*.py"):
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        count += len(_TEST_FUNC_RE.findall(text))
+    return count
+
+
 def _signal_sloc(project_root: Path) -> dict[str, Any]:
     src_files, src_lines = _count_py_loc(project_root / "src")
-    test_files, test_lines = _count_py_loc(project_root / "tests")
+    tests_dir = project_root / "tests"
+    test_files, test_lines = _count_py_loc(tests_dir)
     if src_files == 0:
         raise RuntimeError(f"no source files found under {project_root / 'src'}")
     ratio = round(test_lines / src_lines, 2) if src_lines else None
@@ -284,6 +303,7 @@ def _signal_sloc(project_root: Path) -> dict[str, Any]:
         "test_files": test_files,
         "test_lines": test_lines,
         "test_to_src_ratio": ratio,
+        "test_function_count": _count_test_functions(tests_dir) if tests_dir.is_dir() else 0,
     }
 
 
