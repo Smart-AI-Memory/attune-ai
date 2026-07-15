@@ -466,6 +466,22 @@ class TestLatestLlmReport:
     def test_no_reports_dir_returns_none(self, tmp_path: Path) -> None:
         assert hs.latest_llm_report(tmp_path) is None
 
+    def test_not_relative_falls_back_to_absolute_posix(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The defensive ValueError fallback still yields forward slashes."""
+        reports = tmp_path / "docs" / "reports"
+        reports.mkdir(parents=True)
+        (reports / "library-health-2026-07-14.md").write_text("x", encoding="utf-8")
+
+        def _boom(self: Path, *args: object, **kwargs: object) -> Path:
+            raise ValueError("not in the subpath")
+
+        monkeypatch.setattr(Path, "relative_to", _boom)
+        result = hs.latest_llm_report(tmp_path)
+        assert result == (reports / "library-health-2026-07-14.md").as_posix()
+        assert "\\" not in result
+
     def test_empty_reports_dir_returns_none(self, tmp_path: Path) -> None:
         (tmp_path / "docs" / "reports").mkdir(parents=True)
         assert hs.latest_llm_report(tmp_path) is None

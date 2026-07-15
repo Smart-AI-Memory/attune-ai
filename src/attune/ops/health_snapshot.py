@@ -384,10 +384,13 @@ def latest_llm_report(project_root: Path) -> str | None:
     if not candidates:
         return None
     latest = candidates[-1]
+    # as_posix(): the value is rendered as a repo-relative link/URL, so
+    # it must use forward slashes on every platform (Windows str() gives
+    # backslashes — broke all 5 windows CI lanes on 2026-07-14).
     try:
-        return str(latest.relative_to(project_root))
+        return latest.relative_to(project_root).as_posix()
     except ValueError:
-        return str(latest)
+        return latest.as_posix()
 
 
 # ---------------------------------------------------------------------------
