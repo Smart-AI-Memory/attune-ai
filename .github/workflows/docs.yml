@@ -87,7 +87,7 @@ jobs:
   wiring-audit:
     needs: changes
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         if: needs.changes.outputs.docs == 'true'
@@ -97,11 +97,15 @@ jobs:
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.11'
-          # No actual install needed (script is stdlib-only) but the
-          # `cache: pip` field is required by the repo-wide CI guard
-          # in tests/unit/ci/test_workflow_yaml.py::TestPipCaching.
-          # Cache is a no-op here — there's nothing to cache.
           cache: 'pip'
+
+      # v1 was stdlib-only; v1.1's mkdocstrings check resolves live
+      # symbols against the package, and the nav/features checks read
+      # YAML — mirror doc-import-audit's install so the audit sees the
+      # same import graph mkdocs build sees.
+      - name: Install package (mkdocstrings symbols must resolve)
+        if: needs.changes.outputs.docs == 'true'
+        run: pip install -e ".[dev,developer]" pathspec pyyaml
 
       - name: Run wiring audit
         if: needs.changes.outputs.docs == 'true'

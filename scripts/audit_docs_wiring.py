@@ -754,7 +754,7 @@ def check_mkdocstrings(docs_root: Path, allowlist: Allowlist | None = None) -> l
             Finding(
                 check="mkdocstrings",
                 severity="error",
-                file=str(md.relative_to(docs_root.parent)),
+                file=md.relative_to(docs_root.parent).as_posix(),
                 line=line,
                 message=f"mkdocstrings directive '::: {dotted}' does not resolve ({why})",
                 fix=(
