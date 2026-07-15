@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`attune workflow run` no longer exits 0 when the spend gate blocks
+  the run.** A blocked run (non-interactive without
+  `ATTUNE_SPEND_GATE_AUTHORIZED=1`, or an exhausted session spend
+  window) never executes the workflow, yet exited 0 — so the ops
+  dashboard chip classifier rendered it green "completed" and CI steps
+  carried on as if it had run. Blocked runs now exit 3
+  (`EXIT_CLI_ERROR`), the same CLI-level-stop code as the auth
+  pre-flight. An interactive "no" at the spend prompt still exits 0
+  (explicit user choice, not a failure). Exit-code consumers that
+  relied on blocked-run exit 0 should check for code 3.
+
 ### Removed
 
 - **Legacy one-command workflow family (`morning`/`ship`/`fix-all`/

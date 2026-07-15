@@ -97,9 +97,9 @@ def cmd_workflow_run(args: Namespace) -> int:
             "(opus/sonnet-pinned subagents unaffected)"
         )
 
-    # CLI-level errors (workflow not found, bad JSON, bad path) exit 3 —
-    # distinct from workflow-execution outcomes (0/1/2). See the
-    # workflow-failure-exit-propagation spec.
+    # CLI-level errors (workflow not found, bad JSON, bad path, no auth,
+    # spend-gate block) exit 3 — distinct from workflow-execution
+    # outcomes (0/1/2). See the workflow-failure-exit-propagation spec.
     try:
         workflow_cls = get_workflow(name)
     except KeyError:
@@ -177,8 +177,14 @@ def cmd_workflow_run(args: Namespace) -> int:
         decision = evaluate_spend_gate(name, depth, interactive=interactive)
 
         if decision.action == ACTION_BLOCK:
+            # A blocked run is a refusal, not a success: the workflow
+            # never executed, so exiting 0 would render it green on
+            # every exit-code consumer (ops dashboard chips, CI steps,
+            # shell scripts). Same class as the auth pre-flight above —
+            # a CLI-level stop before execute() — so it shares
+            # EXIT_CLI_ERROR (3).
             _print_spend_block(decision)
-            return EXIT_SUCCESS
+            return EXIT_CLI_ERROR
         if decision.action == ACTION_CONFIRM:
             if not _confirm_spend(decision):
                 print("Skipped — no workflow run, no charge.")

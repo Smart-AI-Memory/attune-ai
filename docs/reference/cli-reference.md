@@ -851,10 +851,16 @@ the workflow is marked as failed with `error_type: "verification"`.
 
 ## Exit Codes
 
+`attune workflow run` follows a four-code contract:
+
 | Code | Meaning |
 |------|---------|
-| 0 | Success |
-| 1 | Error (invalid input, workflow failed, etc.) |
+| 0 | Workflow ran and succeeded (also: interactive spend prompt declined) |
+| 1 | Workflow ran and reported failure (`WorkflowResult.success` false) |
+| 2 | Workflow raised an uncaught exception (traceback on stderr) |
+| 3 | CLI-level stop — workflow not found, bad input JSON, bad path, no auth, or spend-gate block (the workflow never executed) |
+
+Other subcommands use `0` for success and `1` for error.
 
 ---
 
