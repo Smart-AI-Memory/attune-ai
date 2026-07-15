@@ -113,7 +113,7 @@
     <div class="kpi">
       <div class="kpi-label">Tests</div>
       {% if signals.sloc.status == "ok" %}
-        <div class="kpi-value">{{ '{:,}'.format(signals.sloc.value.test_function_count) }}</div>
+        <div class="kpi-value">{{ '{:,}'.format(signals.sloc.value.test_function_count | default(0)) }}</div>
         <div class="kpi-foot">
           {{ '{:,}'.format(signals.sloc.value.test_files) }} files
           {%- if signals.sloc.value.test_to_src_ratio %} &middot; {{ signals.sloc.value.test_to_src_ratio }}:1 LOC ratio{% endif %}

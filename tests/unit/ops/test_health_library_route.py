@@ -143,6 +143,17 @@ class TestPopulatedSnapshot:
         assert "94.1%" in body
         assert "clean" in body
 
+    def test_pre_upgrade_snapshot_missing_test_function_count_renders_zero(
+        self, client: TestClient, cfg: Config
+    ) -> None:
+        """A snapshot persisted before this field existed must not 500."""
+        snapshot = _fresh_snapshot()
+        del snapshot["signals"]["sloc"]["value"]["test_function_count"]
+        hs.persist_snapshot(snapshot, cfg.attune_home)
+        resp = client.get("/health/library")
+        assert resp.status_code == 200
+        assert "993 files" in resp.text
+
     def test_fresh_snapshot_shows_fresh_badge_not_stale(
         self, client: TestClient, cfg: Config
     ) -> None:
