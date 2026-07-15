@@ -15328,3 +15328,26 @@ def ", start_idx + 1)` for module-
   that comes up empty, verify what the value actually measures
   against what its label promises before assuming a fix is needed at
   all.
+
+- **Verifying a squash-merged branch is safe to delete:
+  `git merge-base --is-ancestor` reports NOT-merged by design
+  (squash gets a new SHA) — use content-diff, and discount the
+  post-merge framework-docs bot rebuild**: 2026-07-15, PR #1395
+  squash-merged but its local branch was still checked out in the
+  worktree, so `--delete-branch` failed on the git side and Patrick
+  asked what exactly I was proposing to delete. `git merge-base
+  --is-ancestor <branch> origin/main` said "not an ancestor" —
+  expected for any squash merge (pairs with the existing "orphaned
+  commit after squash-merge" lesson), not evidence anything was
+  lost. The reliable check is `git diff origin/main..<branch>
+  --stat`: it showed a small 2-file residual (generated
+  `docs/reports/.../index.html` + `search_index.json`) that looked
+  like dropped content until `git log --grep=framework-docs
+  origin/main -1` showed an automated `chore(framework-docs):
+  rebuild from docs/ [skip ci]` commit landed immediately AFTER the
+  merge and regenerated those exact site artifacts — the same
+  post-merge bot pattern as the "tag the merge SHA, never main HEAD"
+  release lesson, not data loss. Rule: after a squash-merge, verify
+  delete-safety via content-diff (not is-ancestor), and before
+  treating any residual diff as lost work, check whether it's just
+  the framework-docs bot's regen racing ahead of your branch tip.
