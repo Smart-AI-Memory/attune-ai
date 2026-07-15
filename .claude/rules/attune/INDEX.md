@@ -42,6 +42,9 @@ They do NOT fire when only WRITING a new file — pull manually then:
 - **Elicitation constructs (decision/pushback/progress forms)** →
   `communication-grammar.md` — the construct family + how to add
   the next member.
+- **Writing/editing any `.md` file** → `markdown-formatting.md` —
+  heading/list/table formatting rules; migrated 2026-07-15 from
+  the always-loaded CLAUDE.md.
 
 Resident (full bodies load every session): `decision-routine.md`,
 `xml-enhanced-prompts.md`, `output-formatting.md`. Budget enforced
