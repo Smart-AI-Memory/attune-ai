@@ -1,6 +1,5 @@
 # Design: Documentation Wiring Audit
-
-**Status:** draft (2026-05-31)
+**Status:** approved (2026-05-31)
 **Phase:** 2 — Design
 **Predecessor:** [requirements.md](./requirements.md) (Phase 1
 approved 2026-05-31, see [decisions.md](./decisions.md))

@@ -8,8 +8,6 @@ _docs:
   - docs/reference/TROUBLESHOOTING.md
   - docs/reference/API_REFERENCE.md
   - docs/reference/glossary.md
-  - docs/reference/empathy-os.md
-  - docs/reference/core.md
   - docs/reference/config.md
   - docs/reference/index.md
   # Cross-cutting how-to narratives
@@ -20,9 +18,7 @@ _docs:
   - docs/tutorials/installation.md
   - docs/tutorials/build-a-workflow.md
   - docs/tutorials/index.md
-  - docs/tutorials/examples/adaptive-learning-system.md
   - docs/tutorials/examples/multi-agent-team-coordination.md
-  - docs/tutorials/examples/sbar-clinical-handoff.md
   - docs/tutorials/examples/simple-chatbot.md
   # Architecture without clear feature owner
   - docs/architecture/extending-composition-patterns.md

@@ -1,6 +1,5 @@
 # Tasks: Documentation Wiring Audit
-
-**Status:** parked (2026-07-13) — v1 shipped (#518/#523 anchor check via `scripts/audit_docs_wiring.py`; #540 CI job, since promoted to a required check on main); remaining: nav/features.yaml/mkdocstrings checks (Tasks 3, 4, 9) + See-Also advisory (Task 10, deferred).
+**Status:** approved (2026-07-13) — v1 shipped (#518/#523 anchor check via `scripts/audit_docs_wiring.py`; #540 CI job, since promoted to a required check on main); v1.1 shipped 2026-07-15 (Tasks 3, 4 adapted, 9 — see decisions.md Phase 4 entry); remaining: See-Also advisory (Task 10, deferred).
 **Phase:** 3 — Tasks
 **Predecessor:** [design.md](./design.md) (Phase 2 authored
 2026-05-31)
@@ -351,7 +350,7 @@ in session 2 (2-3 hr); Tasks 6-7 in session 3 (2-4 hr).
 
 ## Phase 4: Implementation
 
-**Status:** not started
+**Status:** v1.1 shipped 2026-07-15 (Tasks 3, 4 adapted, 9); Task 10 deferred
 
 _To be executed after Phase 3 approval. Tasks above are the
 playbook; each task corresponds to a PR or a single commit

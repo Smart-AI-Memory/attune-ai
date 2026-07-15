@@ -1,5 +1,8 @@
 # Per-decision log — Docs wiring audit
 
+**Status:** approved
+
+
 Append-only log. Resolutions for the open questions enumerated in
 [requirements.md](./requirements.md#open-questions). Each decision
 moves the spec one step closer to Phase 1 execution.
@@ -124,3 +127,43 @@ establish a strong pattern from day one.
 - This subsumes both `mkdocs build --strict` (which would
   surface the same failures at build time) and adds the
   precondition check at lint/CI time.
+
+## Phase 4 approval + v1.1 execution (2026-07-15)
+
+**Decision:** Patrick approved Phase 4 ("docs-wiring-audit approve",
+2026-07-15). Tasks 3, 4, 9 shipped the same session in
+`scripts/audit_docs_wiring.py` (single-file layout — the deviation
+from design.md's package proposal is documented in the script
+docstring and stands).
+
+**Scope corrections found at execution** (the spec-drift grep, per
+the spec-named-work-scope lesson):
+
+- **Task 4 premise was stale.** features.yaml no longer carries
+  per-feature `doc_paths`; features are `status: manual` and the
+  feature↔doc consistency the task wanted is owned by the
+  projection-drift gate (#1372,
+  `tests/unit/authoring/test_projection_drift.py`). The check ships
+  adapted: `_docs` entries must exist on disk (error). The unlinked
+  reference/how-to advisory half was dropped — projector pages make
+  it meaningless.
+- **Nav check needed two structural exemptions** the task didn't
+  anticipate: (a) `features/` is nav-injected at build time by
+  `docs/hooks/feature_nav.py`; (b) projector-emitted
+  `<kind>/<feature>.md` pages (reference/how-to/architecture/
+  tutorials × features.yaml names) are hub-linked by design
+  (mkdocs.yml D12 note). Both exempt in `check_nav`.
+- **Warnings are advisory.** Exit code gates on error-severity
+  findings only, so adding checks can't instantly break the
+  required CI job with advisory noise.
+
+**Findings fixed in the same PR:** 4 dangling `_docs` entries in
+`.help/features.yaml` (empathy-os.md, core.md,
+adaptive-learning-system.md, sbar-clinical-handoff.md — all deleted
+in #1073/#1109, entries never cleaned). `.audit/orphans.yml` seeded
+with 11 reasoned entries covering the genuine repo-only orphans
+(blog drafts, reports, process notes, one-offs); 67 projector pages
+needed no allowlisting thanks to the structural exemption.
+
+**Remaining:** Task 10 (See-Also advisory) stays deferred per the
+tasks doc.

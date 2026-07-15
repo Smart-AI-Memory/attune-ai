@@ -1,0 +1,31 @@
+# Orphan allowlist for scripts/audit_docs_wiring.py (nav check).
+#
+# Every entry needs a "# reason:" comment on the preceding line —
+# the loader enforces it. Entries are docs-relative subtree prefixes
+# (trailing slash), globs, or exact paths. An entry here means "this
+# builds but is deliberately not nav-reachable"; prefer exclude_docs
+# in mkdocs.yml when the page shouldn't build at all.
+
+orphan_subtrees:
+  # reason: blog drafts/social copies — the website reads content/blog, not docs/blog; repo-only working copies
+  - docs/blog/
+  # reason: session/health reports — repo-only records, linked from specs and PRs, not site nav
+  - docs/reports/
+  # reason: process drafts and proposals — repo-only working documents
+  - docs/process/
+  # reason: repo-only technical notes (redis alignment, migration, security fix log)
+  - docs/redis/
+  # reason: repo-only technical notes (plugin migration guide)
+  - docs/migration/
+  # reason: repo-only security fix log
+  - docs/security/
+  # reason: repo-only release-engineering notes
+  - docs/MULTI_PACKAGE_RELEASE_PATTERNS.md
+  # reason: repo-only contributor orientation doc
+  - docs/PROJECT_OVERVIEW.md
+  # reason: point-in-time audit record, repo-only
+  - docs/testing-audit-2026-04-23.md
+  # reason: agent-factory docs pending nav placement or consolidation (pre-date the projector)
+  - docs/reference/agent-factory-*.md
+  # reason: dashboard how-to reached from the ops dashboard Help, not site nav
+  - docs/how-to/discovery-sweep-on-the-dashboard.md
