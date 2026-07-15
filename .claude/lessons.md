@@ -15264,3 +15264,46 @@ def ", start_idx + 1)` for module-
   the "interrupted compound Bash command may have partially executed"
   lesson (re-establish actual state before acting) — this is the
   parallel-session-drift surface of both.
+
+- **A next-session-starter task queued as "resume this batch" can be
+  picked up by a PARALLEL session at the same time — `git rebase`
+  dropping a commit as "already upstream" is the tell**: 2026-07-15,
+  this session's starter file said "resume Batch 3 cuts" from a
+  shared worktree (`batch3-pins`), and a DIFFERENT session was given
+  the identical continuation. Both cut `_build_summary` and
+  `_extract_from_workflow_result` independently; the other session's
+  PR (#1389) merged first. Rebasing this session's branch onto the
+  new `origin/main` silently DROPPED its cut-1 commit with "patch
+  contents already upstream" (git's patch-id matched the other
+  session's equivalent diff) — that message is the fast, reliable
+  signal that a parallel session already shipped the same change;
+  don't investigate further, just diff the branch against the new
+  merge commit to confirm equivalence, then close the PR (per
+  `feedback_parallel_session_coordination` memory) rather than
+  fighting the conflict. General rule: a starter/handoff file that
+  names a specific in-progress task (not yet PR'd) is a race
+  condition when more than one session reads it — check `gh pr list`
+  / `git log origin/main -- <touched files>` for a just-merged
+  equivalent BEFORE pushing a PR for that exact task.
+
+- **A dashboard metric that LOOKS like a suspicious sentinel (e.g.
+  exactly "999") can be a genuinely correct count that's simply
+  MISLABELED — verify the computation before assuming a bug**:
+  2026-07-15, Patrick flagged the ops Health page's "Tests" KPI
+  showing "999" as "isn't right." The number was NOT a hardcoded
+  placeholder — `_signal_sloc()` in
+  `src/attune/ops/health_snapshot.py` correctly counts 999 `.py`
+  files under `tests/` for that worktree. The actual defect was the
+  LABEL: "Tests: 999" reads as "999 tests exist," but the real
+  test-function count (verified via `pytest --collect-only`) was
+  ~21,700 — a ~20x mismatch between what the card measures (files)
+  and what it's labeled as (tests). Fix was a fast regex counter
+  (`def test_*`, same style as the file's existing TODO counter — no
+  pytest import/collection cost) surfaced as the headline, with file
+  count demoted to the footer. Pattern: when a user calls a number
+  "wrong," first check whether the COMPUTATION is wrong (a bug) or
+  the LABEL/METRIC CHOICE is wrong (a design mismatch) — grep for the
+  literal value as a hardcoded constant first (fast, cheap), and if
+  that comes up empty, verify what the value actually measures
+  against what its label promises before assuming a fix is needed at
+  all.
