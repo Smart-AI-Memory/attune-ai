@@ -245,6 +245,68 @@ def _extract_result_data(
     return (True, None, str(result) if result else None, None, None)
 
 
+def _render_report_dict(fo: dict, disclosure: str) -> tuple[str | None, int | None]:
+    """Render a serialized WorkflowReport dict (design D2).
+
+    Returns ``(report_text, score)``, or ``(None, None)`` when
+    reconstruction fails — the caller degrades to the legacy dict
+    handling; never a crash, never a repr leak of the WorkflowResult.
+    """
+    try:
+        from attune.config import resolve_show_cost
+        from attune.voice import report_renderer
+        from attune.workflows.output import WorkflowReport
+
+        report = WorkflowReport.from_dict(fo)
+        report_text = report_renderer.render_safe(
+            report,
+            disclosure="full" if disclosure == "full" else "summary",
+            show_cost=resolve_show_cost(),
+        )
+        return report_text, report.score
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: a malformed report payload degrades to the
+        # legacy dict handling in the caller.
+        logger.exception("WorkflowReport reconstruction failed")
+        return None, None
+
+
+def _sparse_fallback_text(result: Any) -> str | None:
+    """Summary + metadata-findings fallback for sparse report text.
+
+    Returns the joined fallback string, or ``None`` when there is
+    nothing to fall back to (caller keeps the original report_text).
+    """
+    fallback_parts: list[str] = []
+    summary = getattr(result, "summary", None)
+    if summary:
+        fallback_parts.append(summary)
+    metadata = getattr(result, "metadata", None) or {}
+    findings = metadata.get("findings")
+    if isinstance(findings, dict) and findings:
+        for cat, items in findings.items():
+            heading = cat.replace("_", " ").title()
+            fallback_parts.append(f"\n## {heading}")
+            if isinstance(items, list):
+                for item in items:
+                    fallback_parts.append(f"- {item}")
+    if fallback_parts:
+        return "\n".join(fallback_parts)
+    return None
+
+
+def _build_cost_line(result: Any) -> str | None:
+    """Cost/duration line for unrendered results (None cost_report → None)."""
+    cr = result.cost_report
+    if cr is None:
+        return None
+    cost_parts = [f"${cr.total_cost:.4f}"]
+    if cr.savings_percent > 0:
+        cost_parts.append(f"(saved {cr.savings_percent:.0f}% vs premium)")
+    cost_parts.append(f"| {result.total_duration_ms / 1000:.1f}s")
+    return " ".join(cost_parts)
+
+
 def _extract_from_workflow_result(
     result: Any,
     *,
@@ -277,24 +339,10 @@ def _extract_from_workflow_result(
 
         if WorkflowReport.is_report_dict(fo):
             # Migrated workflow: reconstruct + render (design D2).
-            try:
-                from attune.config import resolve_show_cost
-                from attune.voice import report_renderer
-
-                report = WorkflowReport.from_dict(fo)
-                report_text = report_renderer.render_safe(
-                    report,
-                    disclosure="full" if disclosure == "full" else "summary",
-                    show_cost=resolve_show_cost(),
-                )
-                score = report.score
+            report_text, score = _render_report_dict(fo, disclosure)
+            if report_text is not None:
                 rendered = True
                 report_rendered = True
-            except Exception:  # noqa: BLE001
-                # INTENTIONAL: a malformed report payload degrades to the
-                # legacy dict handling below — never a crash, never a
-                # repr leak of the whole WorkflowResult.
-                logger.exception("WorkflowReport reconstruction failed")
         if not report_rendered:
             report_text = fo.get("formatted_report")
             score = fo.get("score")
@@ -309,33 +357,12 @@ def _extract_from_workflow_result(
 
     # Fallback: use summary + metadata findings if report_text is sparse
     if not rendered and (not report_text or len(report_text.strip()) < 50):
-        fallback_parts: list[str] = []
-        summary = getattr(result, "summary", None)
-        if summary:
-            fallback_parts.append(summary)
-        metadata = getattr(result, "metadata", None) or {}
-        findings = metadata.get("findings")
-        if isinstance(findings, dict) and findings:
-            for cat, items in findings.items():
-                heading = cat.replace("_", " ").title()
-                fallback_parts.append(f"\n## {heading}")
-                if isinstance(items, list):
-                    for item in items:
-                        fallback_parts.append(f"- {item}")
-        if fallback_parts:
-            report_text = "\n".join(fallback_parts)
+        report_text = _sparse_fallback_text(result) or report_text
 
-    # Build cost line (guard against None cost_report). A rendered
-    # report's show_cost gate owns cost display — no wrapper duplicate,
-    # and no inapplicable cost line for subscription users (design D3).
-    cost_line = None
-    cr = result.cost_report
-    if cr is not None and not report_rendered:
-        cost_parts = [f"${cr.total_cost:.4f}"]
-        if cr.savings_percent > 0:
-            cost_parts.append(f"(saved {cr.savings_percent:.0f}% vs premium)")
-        cost_parts.append(f"| {result.total_duration_ms / 1000:.1f}s")
-        cost_line = " ".join(cost_parts)
+    # A rendered report's show_cost gate owns cost display — no wrapper
+    # duplicate, and no inapplicable cost line for subscription users
+    # (design D3).
+    cost_line = None if report_rendered else _build_cost_line(result)
 
     error_msg = result.error if not result.success else None
 

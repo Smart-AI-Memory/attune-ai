@@ -120,81 +120,92 @@ class DependencyAnalysisMixin:
     def _build_summary(self, records: list[FileRecord]) -> ProjectSummary:
         """Build project summary from records."""
         summary = ProjectSummary()
-
-        summary.total_files = len(records)
-        summary.source_files = sum(1 for r in records if r.category == FileCategory.SOURCE)
-        summary.test_files = sum(1 for r in records if r.category == FileCategory.TEST)
-        summary.config_files = sum(1 for r in records if r.category == FileCategory.CONFIG)
-        summary.doc_files = sum(1 for r in records if r.category == FileCategory.DOCS)
-
-        # Testing health
-        requiring_tests = [r for r in records if r.test_requirement == TestRequirement.REQUIRED]
-        summary.files_requiring_tests = len(requiring_tests)
-        summary.files_with_tests = sum(1 for r in requiring_tests if r.tests_exist)
-        summary.files_without_tests = summary.files_requiring_tests - summary.files_with_tests
-        summary.total_test_count = sum(
-            r.test_count for r in records if r.category == FileCategory.TEST
-        )
-
-        # Coverage average
-        covered = [r for r in records if r.coverage_percent > 0]
-        if covered:
-            summary.test_coverage_avg = sum(r.coverage_percent for r in covered) / len(covered)
-
-        # Staleness
-        stale = [r for r in records if r.is_stale]
-        summary.stale_file_count = len(stale)
-        if stale:
-            summary.avg_staleness_days = sum(r.staleness_days for r in stale) / len(stale)
-            top_stale = heapq.nlargest(5, stale, key=lambda r: r.staleness_days)
-            summary.most_stale_files = [r.path for r in top_stale]
-
-        # Code metrics
-        source_records = [r for r in records if r.category == FileCategory.SOURCE]
-        summary.total_lines_of_code = sum(r.lines_of_code for r in source_records)
-        summary.total_lines_of_test = sum(
-            r.lines_of_code for r in records if r.category == FileCategory.TEST
-        )
-        if summary.total_lines_of_code > 0:
-            summary.test_to_code_ratio = summary.total_lines_of_test / summary.total_lines_of_code
-        if source_records:
-            summary.avg_complexity = sum(r.complexity_score for r in source_records) / len(
-                source_records,
-            )
-
-        # Quality
-        if source_records:
-            summary.files_with_docstrings_pct = (
-                sum(1 for r in source_records if r.has_docstrings) / len(source_records) * 100
-            )
-            summary.files_with_type_hints_pct = (
-                sum(1 for r in source_records if r.has_type_hints) / len(source_records) * 100
-            )
-        summary.total_lint_issues = sum(r.lint_issues for r in records)
-
-        # High impact files
-        high_impact = heapq.nlargest(10, records, key=lambda r: r.impact_score)
-        summary.high_impact_files = [
-            r.path for r in high_impact if r.impact_score >= self.config.high_impact_threshold
-        ]
-
-        # Critical untested files (high impact + no tests)
-        critical = [
-            r
-            for r in records
-            if r.impact_score >= self.config.high_impact_threshold
-            and not r.tests_exist
-            and r.test_requirement == TestRequirement.REQUIRED
-        ]
-        summary.critical_untested_files = [
-            r.path for r in heapq.nlargest(10, critical, key=lambda r: r.impact_score)
-        ]
-
-        # Attention needed
-        needing_attention = [r for r in records if r.needs_attention]
-        summary.files_needing_attention = len(needing_attention)
-        summary.top_attention_files = [
-            r.path for r in heapq.nlargest(10, needing_attention, key=lambda r: r.impact_score)
-        ]
-
+        _summarize_categories(summary, records)
+        _summarize_testing(summary, records)
+        _summarize_staleness(summary, records)
+        _summarize_code_metrics(summary, records)
+        _summarize_impact(summary, records, self.config.high_impact_threshold)
         return summary
+
+
+def _summarize_categories(summary: ProjectSummary, records: list[FileRecord]) -> None:
+    """File counts per category."""
+    summary.total_files = len(records)
+    summary.source_files = sum(1 for r in records if r.category == FileCategory.SOURCE)
+    summary.test_files = sum(1 for r in records if r.category == FileCategory.TEST)
+    summary.config_files = sum(1 for r in records if r.category == FileCategory.CONFIG)
+    summary.doc_files = sum(1 for r in records if r.category == FileCategory.DOCS)
+
+
+def _summarize_testing(summary: ProjectSummary, records: list[FileRecord]) -> None:
+    """Testing health: requirement counts, test totals, coverage average."""
+    requiring_tests = [r for r in records if r.test_requirement == TestRequirement.REQUIRED]
+    summary.files_requiring_tests = len(requiring_tests)
+    summary.files_with_tests = sum(1 for r in requiring_tests if r.tests_exist)
+    summary.files_without_tests = summary.files_requiring_tests - summary.files_with_tests
+    summary.total_test_count = sum(r.test_count for r in records if r.category == FileCategory.TEST)
+
+    # Coverage average — only over records that carry coverage data.
+    covered = [r for r in records if r.coverage_percent > 0]
+    if covered:
+        summary.test_coverage_avg = sum(r.coverage_percent for r in covered) / len(covered)
+
+
+def _summarize_staleness(summary: ProjectSummary, records: list[FileRecord]) -> None:
+    """Stale-test counts, average staleness, top-5 most stale."""
+    stale = [r for r in records if r.is_stale]
+    summary.stale_file_count = len(stale)
+    if stale:
+        summary.avg_staleness_days = sum(r.staleness_days for r in stale) / len(stale)
+        top_stale = heapq.nlargest(5, stale, key=lambda r: r.staleness_days)
+        summary.most_stale_files = [r.path for r in top_stale]
+
+
+def _summarize_code_metrics(summary: ProjectSummary, records: list[FileRecord]) -> None:
+    """LOC totals, test-to-code ratio, complexity, quality percentages."""
+    source_records = [r for r in records if r.category == FileCategory.SOURCE]
+    summary.total_lines_of_code = sum(r.lines_of_code for r in source_records)
+    summary.total_lines_of_test = sum(
+        r.lines_of_code for r in records if r.category == FileCategory.TEST
+    )
+    if summary.total_lines_of_code > 0:
+        summary.test_to_code_ratio = summary.total_lines_of_test / summary.total_lines_of_code
+    if source_records:
+        summary.avg_complexity = sum(r.complexity_score for r in source_records) / len(
+            source_records,
+        )
+        summary.files_with_docstrings_pct = (
+            sum(1 for r in source_records if r.has_docstrings) / len(source_records) * 100
+        )
+        summary.files_with_type_hints_pct = (
+            sum(1 for r in source_records if r.has_type_hints) / len(source_records) * 100
+        )
+    summary.total_lint_issues = sum(r.lint_issues for r in records)
+
+
+def _summarize_impact(
+    summary: ProjectSummary, records: list[FileRecord], high_impact_threshold: float
+) -> None:
+    """High-impact, critical-untested, and needs-attention rankings."""
+    high_impact = heapq.nlargest(10, records, key=lambda r: r.impact_score)
+    summary.high_impact_files = [
+        r.path for r in high_impact if r.impact_score >= high_impact_threshold
+    ]
+
+    # Critical untested files (high impact + no tests)
+    critical = [
+        r
+        for r in records
+        if r.impact_score >= high_impact_threshold
+        and not r.tests_exist
+        and r.test_requirement == TestRequirement.REQUIRED
+    ]
+    summary.critical_untested_files = [
+        r.path for r in heapq.nlargest(10, critical, key=lambda r: r.impact_score)
+    ]
+
+    needing_attention = [r for r in records if r.needs_attention]
+    summary.files_needing_attention = len(needing_attention)
+    summary.top_attention_files = [
+        r.path for r in heapq.nlargest(10, needing_attention, key=lambda r: r.impact_score)
+    ]
