@@ -4472,10 +4472,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#accept-12-live-stable-tested-refactoring-is-gold-plating" class="md-nav__link">
+  <a href="#accept-13-live-stable-tested-refactoring-is-gold-plating" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ACCEPT (12) — live, stable, tested; refactoring is gold-plating
+        ACCEPT (13) — live, stable, tested; refactoring is gold-plating
       
     </span>
   </a>
@@ -4617,7 +4617,9 @@ land. Patrick approved Batch 1 + the two verified deletions
 </tr>
 </tbody>
 </table>
-<h2 id="accept-12-live-stable-tested-refactoring-is-gold-plating">ACCEPT (12) — live, stable, tested; refactoring is gold-plating<a class="headerlink" href="#accept-12-live-stable-tested-refactoring-is-gold-plating" title="Permanent link">&para;</a></h2>
+<h2 id="accept-13-live-stable-tested-refactoring-is-gold-plating">ACCEPT (13) — live, stable, tested; refactoring is gold-plating<a class="headerlink" href="#accept-13-live-stable-tested-refactoring-is-gold-plating" title="Permanent link">&para;</a></h2>
+<p>(+1 on 2026-07-15: <code>refresh_incremental</code> promoted from DELETE-hold —
+see item 3 below.)</p>
 <p><code>format_secure_release_report</code> D28 (1 contained caller, 0 churn),
 <code>HelpMaintenanceWorkflow.execute</code> D25, <code>TestMaintenanceWorkflow.
 _generate_plan</code> D24 (registry-dispatched, tested),
@@ -4649,7 +4651,14 @@ these aren't changing.</p>
    (D21) — WEAKEST: test-only usage, but a documented public method
    (possibly forward-looking watch-mode API). NOT approved — hold
    for a should-this-exist decision when project_index is next
-   touched.</li>
+   touched.
+   <strong>DECIDED 2026-07-15 (batch 3, Patrick): reclassified as ACCEPT.</strong>
+   Re-verified: zero production callers (both ProjectIndex consumers
+   use full <code>refresh()</code>), but it is a tested, documented public
+   method on a published package with ~zero churn since v4.8.0 and
+   no watch-mode subsystem yet. Fits the ACCEPT rationale (complexity
+   is a tax on change; it isn't changing). Allowlist entry stays,
+   ACCEPT count 12 → 13.</li>
 </ol>
 <h2 id="paydown-plan-of-record-patrick-approved-2026-07-14-evening">Paydown plan of record (Patrick-approved 2026-07-14 evening)<a class="headerlink" href="#paydown-plan-of-record-patrick-approved-2026-07-14-evening" title="Permanent link">&para;</a></h2>
 <p>Definition of done: the ratchet ledger contains ONLY deliberate
@@ -4677,7 +4686,11 @@ compatible.</p>
   D23, <code>_section_html</code> D22, <code>_build_summary</code> F48 (highest care).
   Parallel pin agents (similar section-builder shapes), one cut
   pass. Natural moment for the held <code>refresh_incremental</code>
-  should-this-exist decision (sibling file).</li>
+  should-this-exist decision (sibling file).
+  <em>(Scope correction 2026-07-15: <code>_section_html</code> is an ACCEPT-table
+  entry — its mention here contradicted the triage table, which is
+  the authority. Batch 3 executes the three REFACTOR-table blocks
+  only.)</em></li>
 <li><strong>Batch 4 — workflow executes</strong> (1 session, 3 small PRs):
   <code>RagCodeGenWorkflow.execute</code> D24,
   <code>DocumentationOrchestrator.execute</code> D22,
@@ -4696,8 +4709,9 @@ compatible.</p>
 <p>Post-freeze checkpoint: re-check the 12 ACCEPT rationales against
 fresh churn data once — an ACCEPT that starts churning is promoted
 to REFACTOR.</p>
-<p>Trajectory: 27 → 22 (in flight) → ~13 (batches 2+3) → 12
-all-ACCEPT (batch 4).</p>
+<p>Trajectory: 27 → 22 (in flight) → ~13 (batches 2+3) → 13
+all-ACCEPT (batch 4; 13 not 12 after the refresh_incremental
+ACCEPT, 2026-07-15).</p>
 
 
 
