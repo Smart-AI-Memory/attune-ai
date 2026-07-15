@@ -2540,6 +2540,27 @@ files.
   content of a docstring / prompt / example
   output?), not by counting matches. Only code-
   path TODOs are real debt.
+  **Durable fix, 2026-07-15:** the ops Health
+  dashboard's own "TODO markers" KPI hit this
+  exact class — 32 counted, all 32 false positives
+  (the regex's own definition, severity-taxonomy
+  dict keys, generated-code string templates, and
+  descriptive comments that merely mention the
+  word). Rather than re-classify by hand every
+  time the dashboard is read, fixed the COUNTER:
+  `tokenize.generate_tokens` + filter to
+  `tok.type == COMMENT` (excludes anything inside a
+  string/docstring by construction) AND require the
+  marker to be the first word of the comment
+  (excludes descriptive comments like "# Signal:
+  TODO markers"). Verified 32 → 0 against the live
+  repo — matched the manual per-site classification
+  exactly. `src/attune/ops/health_snapshot.py::
+  _count_todo_comments`. Same family as this
+  file's dashboard "999 sentinel-look-alike"
+  lesson (2026-07-15, same session) — both are
+  automated metrics that needed the MEASUREMENT
+  fixed, not the "problem" they (mis)reported.
 
 - **Past-due deprecations are deletion targets, not
   implementation targets — read the DeprecationWarning
