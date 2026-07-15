@@ -642,40 +642,90 @@ def check_features_yaml(docs_root: Path, allowlist: Allowlist | None = None) -> 
 
 _MKDOCSTRINGS_RE = re.compile(r"^:::\s+([A-Za-z_][\w.]*)\s*$", re.MULTILINE)
 
+#: Batch resolver: reads one dotted path per stdin line, prints one
+#: result line per input — ``ok\t<dotted>`` or ``fail\t<dotted>\t<why>``.
+#: One subprocess resolves every directive so the interpreter + package
+#: import cost is paid once, and a crash mid-batch is recovered by
+#: falling back to per-directive resolution for the remainder.
 _RESOLVER_SNIPPET = """
 import importlib, sys
-dotted = sys.argv[1]
-parts = dotted.split(".")
-mod = None
-for i in range(len(parts), 0, -1):
-    try:
-        mod = importlib.import_module(".".join(parts[:i]))
-    except ImportError:
+for raw in sys.stdin:
+    dotted = raw.strip()
+    if not dotted:
         continue
-    obj = mod
-    try:
-        for attr in parts[i:]:
-            obj = getattr(obj, attr)
-    except AttributeError as exc:
-        print(f"unresolved attribute: {exc}", file=sys.stderr)
-        sys.exit(1)
-    sys.exit(0)
-print(f"no importable module prefix in {dotted!r}", file=sys.stderr)
-sys.exit(1)
+    parts = dotted.split(".")
+    resolved = False
+    why = f"no importable module prefix in {dotted!r}"
+    for i in range(len(parts), 0, -1):
+        try:
+            obj = importlib.import_module(".".join(parts[:i]))
+        except ImportError:
+            continue
+        try:
+            for attr in parts[i:]:
+                obj = getattr(obj, attr)
+        except AttributeError as exc:
+            why = f"unresolved attribute: {exc}"
+            break
+        resolved = True
+        break
+    print(("ok\\t" + dotted) if resolved else ("fail\\t" + dotted + "\\t" + why), flush=True)
 """
+
+
+def _resolve_directives(dotted_paths: list[str], env: dict[str, str]) -> dict[str, str | None]:
+    """Resolve dotted paths in one subprocess; ``None`` = resolved.
+
+    A timeout or crash mid-batch marks every unanswered path as failed
+    with the batch error — a hanging import surfaces as findings, never
+    as an audit crash.
+    """
+    import subprocess
+
+    results: dict[str, str | None] = {}
+    unique = list(dict.fromkeys(dotted_paths))
+    if not unique:
+        return results
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-c", _RESOLVER_SNIPPET],
+            input="\n".join(unique) + "\n",
+            capture_output=True,
+            text=True,
+            timeout=120,
+            env=env,
+            check=False,
+        )
+        batch_error = None
+        out = proc.stdout
+    except subprocess.TimeoutExpired as exc:
+        batch_error = "resolver subprocess timed out (hanging import?)"
+        out = exc.stdout or ""
+        if isinstance(out, bytes):
+            out = out.decode(errors="replace")
+
+    for line in out.splitlines():
+        parts = line.split("\t", 2)
+        if len(parts) >= 2 and parts[0] in ("ok", "fail"):
+            results[parts[1]] = (
+                None if parts[0] == "ok" else (parts[2] if len(parts) == 3 else "unresolved")
+            )
+    for dotted in unique:
+        if dotted not in results:
+            results[dotted] = batch_error or "resolver subprocess died before answering"
+    return results
 
 
 def check_mkdocstrings(docs_root: Path, allowlist: Allowlist | None = None) -> list[Finding]:
     """Verify every ``::: dotted.path`` directive resolves in src/.
 
-    Implements Task 9 (design.md §4). Each directive is resolved in a
-    subprocess (``python -c "import X; getattr(...)"`` shape) so a
-    directive whose import segfaults or exits can't take the audit
-    process down. ``src/`` is prepended to PYTHONPATH so the in-repo
-    package is what resolves, matching audit_doc_imports.py.
+    Implements Task 9 (design.md §4). Directives are resolved in a
+    single batched subprocess (interpreter + imports paid once) so a
+    directive whose import segfaults, exits, or hangs can't take the
+    audit process down. ``src/`` is prepended to PYTHONPATH so the
+    in-repo package is what resolves, matching audit_doc_imports.py.
     """
     import os
-    import subprocess
 
     findings: list[Finding] = []
     if not docs_root.is_dir():
@@ -695,33 +745,24 @@ def check_mkdocstrings(docs_root: Path, allowlist: Allowlist | None = None) -> l
     src = str((docs_root.parent / "src").resolve())
     env["PYTHONPATH"] = src + os.pathsep + env.get("PYTHONPATH", "")
 
+    resolution = _resolve_directives([dotted for _, _, dotted in directives], env)
     for md, line, dotted in directives:
-        result = subprocess.run(
-            [sys.executable, "-c", _RESOLVER_SNIPPET, dotted],
-            capture_output=True,
-            text=True,
-            timeout=60,
-            env=env,
-            check=False,
-        )
-        if result.returncode != 0:
-            detail = (result.stderr or result.stdout).strip().splitlines()
-            findings.append(
-                Finding(
-                    check="mkdocstrings",
-                    severity="error",
-                    file=str(md.relative_to(docs_root.parent)),
-                    line=line,
-                    message=(
-                        f"mkdocstrings directive '::: {dotted}' does not resolve"
-                        + (f" ({detail[-1]})" if detail else "")
-                    ),
-                    fix=(
-                        "Fix the dotted path, or delete the directive if the "
-                        "symbol was removed (mkdocs build would fail the same way)."
-                    ),
-                )
+        why = resolution.get(dotted)
+        if why is None:
+            continue
+        findings.append(
+            Finding(
+                check="mkdocstrings",
+                severity="error",
+                file=str(md.relative_to(docs_root.parent)),
+                line=line,
+                message=f"mkdocstrings directive '::: {dotted}' does not resolve ({why})",
+                fix=(
+                    "Fix the dotted path, or delete the directive if the "
+                    "symbol was removed (mkdocs build would fail the same way)."
+                ),
             )
+        )
     return findings
 
 

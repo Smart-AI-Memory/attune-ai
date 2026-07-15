@@ -703,3 +703,32 @@ class TestWarningsAreAdvisory:
                 ["--check", "nav", "--docs-root", str(docs), "--allowlist", str(tmp_path / "n.yml")]
             )
         assert code == 0
+
+
+class TestMkdocstringsBatchResilience:
+    def test_batch_resolves_mixed_ok_and_fail(self, audit_module, repo_tree):
+        (repo_tree / "api.md").write_text(
+            "::: json.dumps\n\ntext\n\n::: no_such_module_xyz.Thing\n", encoding="utf-8"
+        )
+        findings = audit_module.check_mkdocstrings(repo_tree)
+        assert len(findings) == 1
+        assert "no_such_module_xyz.Thing" in findings[0].message
+
+    def test_timeout_surfaces_as_findings_not_crash(self, audit_module, repo_tree, monkeypatch):
+        """A hanging import must yield per-directive findings, not an exception."""
+        import subprocess
+
+        def _fake_run(*args, **kwargs):
+            raise subprocess.TimeoutExpired(cmd="python", timeout=120)
+
+        monkeypatch.setattr(subprocess, "run", _fake_run)
+        (repo_tree / "api.md").write_text("::: json.dumps\n", encoding="utf-8")
+        findings = audit_module.check_mkdocstrings(repo_tree)
+        assert [f.severity for f in findings] == ["error"]
+        assert "timed out" in findings[0].message
+
+    def test_duplicate_directives_resolved_once_flagged_everywhere(self, audit_module, repo_tree):
+        (repo_tree / "a.md").write_text("::: no_such_module_xyz\n", encoding="utf-8")
+        (repo_tree / "b.md").write_text("::: no_such_module_xyz\n", encoding="utf-8")
+        findings = audit_module.check_mkdocstrings(repo_tree)
+        assert {f.file for f in findings} == {"docs/a.md", "docs/b.md"}
