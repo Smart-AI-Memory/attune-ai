@@ -34,6 +34,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import logging
 import os
@@ -42,6 +43,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import tokenize
 from collections import Counter
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
@@ -312,6 +314,25 @@ def _signal_sloc(project_root: Path) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+def _count_todo_comments(text: str) -> int:
+    """Count TODO/FIXME/XXX markers in real comments only.
+
+    Scans COMMENT tokens (via ``tokenize``), not raw text — a marker
+    word inside a string literal, docstring, or dict key (e.g. a
+    severity-taxonomy definition, or a generated-code template) is
+    not a pending-work comment and must not inflate the count.
+    """
+    try:
+        tokens = tokenize.generate_tokens(io.StringIO(text).readline)
+        return sum(
+            1
+            for tok in tokens
+            if tok.type == tokenize.COMMENT and _TODO_RE.match(tok.string.lstrip("#").strip())
+        )
+    except (tokenize.TokenError, SyntaxError):
+        return 0
+
+
 def _signal_todos(project_root: Path) -> dict[str, Any]:
     src_dir = project_root / "src"
     count = 0
@@ -320,7 +341,7 @@ def _signal_todos(project_root: Path) -> dict[str, Any]:
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
-        count += len(_TODO_RE.findall(text))
+        count += _count_todo_comments(text)
     return {"count": count}
 
 

@@ -362,6 +362,29 @@ class TestCountTestFunctions:
 # ---------------------------------------------------------------------------
 
 
+class TestCountTodoComments:
+    def test_counts_only_real_comments(self) -> None:
+        text = (
+            'x = {"TODO": 1}\n' "# TODO: real comment\n" "def f():\n" "    pass  # FIXME trailing\n"
+        )
+        assert hs._count_todo_comments(text) == 2
+
+    def test_requires_marker_as_first_word(self) -> None:
+        # "TODO" appears in the comment but isn't the marker itself --
+        # a section-header/descriptive comment, not pending work.
+        assert hs._count_todo_comments("# Signal: TODO markers\n") == 0
+
+    def test_string_literal_occurrences_excluded(self) -> None:
+        # Generated-code scaffolding: the "# TODO:" text is part of a
+        # string literal (a template emitted to users), not a real
+        # comment token in this file.
+        text = '"""\n# TODO: inside a docstring, not a comment token\n"""\n'
+        assert hs._count_todo_comments(text) == 0
+
+    def test_unparseable_source_returns_zero(self) -> None:
+        assert hs._count_todo_comments("def (::\n") == 0
+
+
 class TestSignalTodos:
     def test_counts_todo_fixme_xxx(self, tmp_path: Path) -> None:
         src = tmp_path / "src"
@@ -381,6 +404,36 @@ class TestSignalTodos:
         assert result["count"] == 0
 
     def test_missing_src_dir_returns_zero(self, tmp_path: Path) -> None:
+        result = hs._signal_todos(tmp_path)
+        assert result["count"] == 0
+
+    def test_ignores_string_literal_and_dict_key_occurrences(self, tmp_path: Path) -> None:
+        src = tmp_path / "src"
+        src.mkdir()
+        (src / "a.py").write_text(
+            'SEVERITY = {"TODO": 1, "FIXME": 2}\n'
+            'TEMPLATE = """\n'
+            "# TODO: generated-code scaffolding, not a real marker\n"
+            '"""\n',
+            encoding="utf-8",
+        )
+        result = hs._signal_todos(tmp_path)
+        assert result["count"] == 0
+
+    def test_ignores_comment_that_merely_mentions_the_word(self, tmp_path: Path) -> None:
+        src = tmp_path / "src"
+        src.mkdir()
+        (src / "a.py").write_text(
+            "# Signal: TODO markers\ndef f():\n    pass\n",
+            encoding="utf-8",
+        )
+        result = hs._signal_todos(tmp_path)
+        assert result["count"] == 0
+
+    def test_syntax_error_file_degrades_to_zero_not_fatal(self, tmp_path: Path) -> None:
+        src = tmp_path / "src"
+        src.mkdir()
+        (src / "a.py").write_text("def (::\n", encoding="utf-8")
         result = hs._signal_todos(tmp_path)
         assert result["count"] == 0
 

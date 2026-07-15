@@ -84,7 +84,7 @@
       <div class="kpi-label">TODO markers</div>
       {% if signals.todos.status == "ok" %}
         <div class="kpi-value">{{ signals.todos.value.count }}</div>
-        <div class="kpi-foot">raw grep count, src/</div>
+        <div class="kpi-foot">real comments only, src/</div>
       {% else %}
         <div class="kpi-value">&mdash;</div>
         <div class="kpi-foot">unavailable</div>
