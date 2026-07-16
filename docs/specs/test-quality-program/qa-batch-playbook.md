@@ -99,16 +99,49 @@ Re-verify if anything looks off:
 - **Worktree coverage reports 0% by default.** The rcfile
   `source` filter can't map the worktree path to the package via
   the main-pointing editable MAPPING. Measure with the MAIN
-  venv's python + an absolute `PYTHONPATH` + `--cov-config=/dev/null`:
+  venv's python + an absolute `PYTHONPATH` + `--cov-config=/dev/null`
+  + a **path**, not a dotted module name, for `--cov` (see the next
+  gotcha for why):
 
   ```bash
   ANTHROPIC_API_KEY="" PYTHONPATH="<wt>/src" <main-venv>/bin/python \
     -m pytest <wt>/tests/path/to/test_<mod>.py \
-    --cov=attune.<mod> --cov-config=/dev/null \
+    --cov="<wt>/src/attune/<mod-path>" --cov-config=/dev/null \
     --cov-report=term-missing -o addopts= -p no:xdist
   ```
 
   (The baseline script already does this for the whole-suite run.)
+
+- **A module loaded via `spec_from_file_location` under a synthetic
+  name is invisible to `--cov=<dotted.module>`, even when
+  thoroughly tested.** `config.py` (legacy-compat re-export) and
+  every `hooks/scripts/*.py` test load their target this way, so
+  `--cov=attune.config` / `--cov=attune.hooks.scripts.X` reports 0%
+  regardless of real coverage — `pytest-cov` needs that exact
+  dotted name imported to find what to report. A **directory**
+  path (`--cov=<wt>/src/attune/hooks/scripts`) tracks by executed
+  file location instead and gives the real number — verified
+  identical to the dotted form for normally-imported modules, so
+  it's a strict superset, not a tradeoff. Real numbers once fixed:
+  `config.py` 98%, `worktree_path_guard.py` 93%,
+  `starter_reconciler.py` 95%. `scripts/qa_coverage_baseline.sh`
+  now does this automatically (converts the dotted `$PACKAGE` arg
+  to a path before invoking `--cov`).
+
+- **A whole-repo baseline can resurrect a module that's
+  DELIBERATELY in `pyproject.toml`'s coverage `omit` list.** The
+  baseline's `--cov-config=/dev/null` (needed for the worktree-path
+  gotcha above) also discards the `omit` entries, so genuinely
+  excluded dead-or-untestable code reappears as a fake "gap." Hit
+  with `workflows/progress_server.py` (142 missed, 0%) — already
+  flagged not-a-real-gap in this doc's Tier 4 and in `decisions.md`
+  (2026-06-14); confirming it's also genuinely dead code (no
+  `websockets` dependency declared, so it can never actually import
+  the live path — always raises at construction) took a few
+  minutes that a first glance at Tier 4 above would have saved.
+  Before treating a baseline "0%" as new work, check whether it's
+  already in the `omit` list (`grep <file> pyproject.toml`) and
+  whether this doc's Tier 4 already settled it.
 
 - **Keyless ALWAYS: `ANTHROPIC_API_KEY=""` (empty, not unset).**
   An UNSET key lets `load_dotenv` inject the real one and the run

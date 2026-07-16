@@ -14363,6 +14363,15 @@ def ", start_idx + 1)` for module-
   QA-baseline "a module here is a HYPOTHESIS" reminder: when a module
   is at *exactly* 0% (not partial), suspect a whole-module import guard
   and grep the gating dep BEFORE committing effort.
+  **Addendum 2026-07-16:** the mechanism for WHY it even reappears —
+  `progress_server.py` is ALSO deliberately in `pyproject.toml`'s
+  coverage `omit` list, but `scripts/qa_coverage_baseline.sh`'s
+  `--cov-config=/dev/null` (needed to work around the worktree-path
+  MAPPING bug) discards the whole rcfile, omit entries included, so
+  genuinely-excluded modules resurrect as fake "gaps" in ANY baseline
+  run. Being on the `omit` list is not protection from this specific
+  script; `grep <file> pyproject.toml` before trusting a baseline
+  "0%" as new work, independent of the optional-dep check above.
 
 <!-- from 87ac6f655 docs(lessons): subprocess check=False + parse-stdout masks a crash as "empty/clean" -->
 
@@ -15351,3 +15360,40 @@ def ", start_idx + 1)` for module-
   delete-safety via content-diff (not is-ancestor), and before
   treating any residual diff as lost work, check whether it's just
   the framework-docs bot's regen racing ahead of your branch tip.
+
+- **A module loaded via `importlib.util.spec_from_file_location`
+  under a synthetic module name is INVISIBLE to
+  `--cov=<dotted.module>` — it shows 0% even when thoroughly
+  tested; use a path-based `--cov=<dir>` to see the real number**:
+  2026-07-15, the `scripts/qa_coverage_baseline.sh` whole-repo run
+  (Tier-2 backlog vetting) ranked `config.py` (180 missed) and
+  several `hooks/scripts/*.py` files (`worktree_path_guard.py` 101
+  missed, `starter_reconciler.py` 183 missed) at 0% — both are
+  deliberately loaded outside the normal package import graph
+  (`attune/config/__init__.py` loads the sibling `config.py` file
+  via `spec_from_file_location("attune_config_legacy", ...)` for
+  backward-compat re-export; hook-script tests load their target
+  the same way under names like `"_worktree_path_guard"`, so the
+  script can run standalone without pulling in the full `attune`
+  package). `pytest-cov`'s `--cov=<dotted.module>` internally does
+  `importlib.import_module(pkg)` to resolve what to instrument/
+  report — since that import never happens under the expected
+  name, it warns "Module X was never imported" and reports 0%,
+  even though 22+ real behavioral tests exist and pass. Re-running
+  with a **path-based** `--cov=src/attune/hooks/scripts` (a
+  directory, not a dotted name) correctly attributed coverage:
+  `worktree_path_guard.py` 93%, `starter_reconciler.py` 95%,
+  `config.py` 98% (via `--cov=src/attune`, its parent dir). This
+  full-suite path-scoped rerun also surfaced the ONE genuine gap
+  hiding in the noise: `hooks/scripts/_bootstrap.py` (24 lines,
+  truly 0%, confirmed under both measurement methods). Rule: before
+  writing tests for a QA-baseline "0%" module that already has a
+  test file (per the playbook's own step 2), check whether it's
+  loaded via `spec_from_file_location`/`runpy` under a synthetic
+  name — if so, re-measure with `--cov=<containing-dir>` before
+  trusting the number. Same family as the existing "worktree
+  coverage reports 0%" gotcha in the QA playbook, but a DIFFERENT
+  root cause (import-graph bypass, not the worktree-vs-main
+  editable-MAPPING mismatch) — both produce the same misleading
+  symptom, so diagnose which one you're looking at before assuming
+  either fix applies.
