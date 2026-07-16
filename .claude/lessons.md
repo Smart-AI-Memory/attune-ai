@@ -15397,3 +15397,36 @@ def ", start_idx + 1)` for module-
   editable-MAPPING mismatch) — both produce the same misleading
   symptom, so diagnose which one you're looking at before assuming
   either fix applies.
+
+- **`autoPort: true` for the attune-ops preview is a NO-OP until the
+  PORT-reading code is in the MAIN checkout (merged AND fast-forwarded)
+  — because the editable-install MAPPING serves main's `src`, not the
+  worktree's**: 2026-07-16, wiring the Cowork preview manager's
+  `autoPort` mode for `attune-ops`. Three facts compose:
+  (1) `attune ops --port` historically defaulted to a HARDCODED `8765`
+  and never read the `PORT` env var the preview manager exports — so
+  when 8765 was occupied (a stale `attune.ops` from another worktree),
+  `autoPort` could not place the server (it re-bound 8765 and
+  collided). Fixed in **PR #1405** (10.4.x): `default=int(
+  os.environ.get("PORT") or 8765)`. (2) A `PORT`-env fix made only in
+  the WORKTREE is invisible to `uv run python -m attune.ops`, because
+  the editable MAPPING (`__editable__…_finder.py`) points `attune` at
+  the MAIN checkout's `src` — the running process ignores worktree
+  edits (the standing editable-MAPPING lesson). (3) THEREFORE flipping
+  `.claude/launch.json` to `autoPort: true` + dropping `--port` does
+  nothing until the fix is BOTH merged to `origin/main` AND the local
+  main checkout is `git merge --ff-only origin/main`'d to pull it — the
+  installed code must actually contain the `PORT`-reading default.
+  Sequence that works: land the CLI fix on main → fast-forward the main
+  checkout → verify `grep 'os.environ.get("PORT")'
+  ~/attune-ai/src/attune/ops/cli.py` → then `autoPort` places the
+  server on a free port. Diagnostic when autoPort still collides on
+  8765 after the launch.json flip: the main checkout is behind
+  origin/main (`git -C ~/attune-ai log --oneline -1` shows a pre-fix
+  SHA). Also: `.claude/launch.json` is git-IGNORED — a local `--port
+  8010` workaround to dodge the occupied 8765 never lands in a PR and
+  needs no cleanup. Pairs with the "editable install's MAPPING points
+  attune at the MAIN checkout" lesson (this is its preview-manager /
+  autoPort surface) and the "static-preview helper must read
+  os.environ['PORT']" lesson (same PORT-env discipline, applied to the
+  real `attune.ops` CLI rather than a static helper).
