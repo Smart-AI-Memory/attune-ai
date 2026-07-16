@@ -160,7 +160,10 @@ class TestSearchMemory:
             result = runner.invoke(meta_workflow_app, ["search-memory", "q"])
 
         assert result.exit_code == 0
-        assert "N/A" in result.output
+        # Three fields (id/type/classification) each fall back to 'N/A'; a bare
+        # "N/A" in output would be satisfied by a single default, so require all
+        # three to prove each field independently fell back.
+        assert result.output.count("N/A") >= 3
 
     def test_import_error_exits_1(self, runner):
         """ImportError while acquiring UnifiedMemory -> exit 1, specific message."""
