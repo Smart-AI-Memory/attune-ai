@@ -39,8 +39,11 @@ metaphor/chapter conversations land somewhere.
   artifact altitude in depth; the communication grammar as a
   worked example of shaping the medium itself.
 - **Part III — Legible systems.** "Too Graceful" (legible
-  failure); the four verification modes + the generation
-  fact-checker (§7 split); receipts as formulas (the gates).
+  failure); **"Legible Failure II: People"** (ratified 2026-07-16
+  — the human mapping: hero/stoic/workaround, grievance-procedure
+  origin, legibility-vs-surveillance boundary); the four
+  verification modes + the generation fact-checker (§7 split);
+  receipts as formulas (the gates).
 - **Frame (not a section):** the discipline is GENERATIVE — each
   precisely-named friction produces its solution; "synergies tied
   to the discipline" is the payoff line (Refinement 2).
@@ -55,6 +58,7 @@ metaphor/chapter conversations land somewhere.
 | "Too Graceful" draft | `docs/process/LEGIBLE_FAILURE_draft_v1.md` | Gate MET 2026-07-16; freshness-passed; publication prep pending |
 | "Too Graceful" outline | `docs/process/LEGIBLE_FAILURE_outline.md` | Decisions record (audience/venue/AI-angle) |
 | Sculptor chapter seed | `docs/process/SCULPTOR_CHAPTER_SEED.md` | Reader-facing v1 (2026-07-16) — one image + D19 receipt |
+| "Legible Failure II: People" seed | `docs/process/LEGIBLE_FAILURE_2_PEOPLE_seed.md` | Chapter RATIFIED 2026-07-16; seed v1 (human mapping + surveillance boundary) |
 | Sculptor deployment guide | `docs/process/SCULPTOR_METAPHOR_treatment.md` | INTERNAL — full clause set; clauses become chapter prose |
 | Dual-audience + book ruling | memory `project_discipline_article_revisions` | Ratified 2026-07-02 |
 | Sculptor metaphor state | memory `project_sculptor_metaphor` | Ratifications through 2026-07-16 |
