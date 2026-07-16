@@ -27,13 +27,20 @@ metaphor/chapter conversations land somewhere.
   quantitative only as demonstrated results, never promised
   multipliers.
 
-## Proposed structure (UNRATIFIED — redline me)
+## Structure (RATIFIED 2026-07-16)
+
+Ratified as proposed by Patrick 2026-07-16 (decision form,
+11:55 session). Ordering within parts stays open.
 
 - **Part I — The discipline.** Grown from the article's real
   spine (§1 premise/vibe-coding counter-thesis · §2 mutual
   contract incl. autonomous mode · §3 pacing · §4 artifact
   discipline · §5 memory discipline · §6 multi-agent coordination
   · §7 verification · §8 24-hour case study).
+  **Part-I mode (RATIFIED 2026-07-16):** book chapters CITE the
+  live article as canon — no absorbed second master; the
+  published, pipeline-guarded article stays the single source
+  until a publisher requires embedded text.
 - **Part II — The craft.** The sculptor chapter (marble = data,
   the chisel never chooses the statue, sculpt-once-cast-many);
   artifact altitude in depth; the communication grammar as a
@@ -79,9 +86,12 @@ metaphor/chapter conversations land somewhere.
 - Chapter ratification, title, and ordering are Patrick's
   decisions — record them here with dates when made.
 
-## Open decisions (Patrick)
+## Decisions record (Patrick)
 
-1. Working title.
-2. Ratify/redline the three-part structure.
-3. Whether Part I reuses the article's sections directly (expand
-   in place) or the book chapters cite the article as canon.
+1. **Working title — DEFERRED (2026-07-16).** Internal handle
+   stays "the dev-with-AI book"; revisit once Part II/III prose
+   exists. No downstream dependency.
+2. **Three-part structure — RATIFIED as proposed (2026-07-16).**
+   See the Structure section above.
+3. **Part-I mode — cite the article as canon (2026-07-16).**
+   Recorded inline in the Structure section.
