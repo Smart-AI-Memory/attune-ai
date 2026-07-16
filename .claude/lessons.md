@@ -14363,6 +14363,15 @@ def ", start_idx + 1)` for module-
   QA-baseline "a module here is a HYPOTHESIS" reminder: when a module
   is at *exactly* 0% (not partial), suspect a whole-module import guard
   and grep the gating dep BEFORE committing effort.
+  **Addendum 2026-07-16:** the mechanism for WHY it even reappears —
+  `progress_server.py` is ALSO deliberately in `pyproject.toml`'s
+  coverage `omit` list, but `scripts/qa_coverage_baseline.sh`'s
+  `--cov-config=/dev/null` (needed to work around the worktree-path
+  MAPPING bug) discards the whole rcfile, omit entries included, so
+  genuinely-excluded modules resurrect as fake "gaps" in ANY baseline
+  run. Being on the `omit` list is not protection from this specific
+  script; `grep <file> pyproject.toml` before trusting a baseline
+  "0%" as new work, independent of the optional-dep check above.
 
 <!-- from 87ac6f655 docs(lessons): subprocess check=False + parse-stdout masks a crash as "empty/clean" -->
 
