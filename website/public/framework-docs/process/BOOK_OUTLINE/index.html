@@ -12,7 +12,7 @@
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/process/LEGIBLE_FAILURE_draft_v1/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/process/BOOK_OUTLINE/">
       
       
       
@@ -25,7 +25,7 @@
     
     
       
-        <title>Too Graceful: When Your Fallbacks Lie to You - Attune AI</title>
+        <title>The dev-with-AI book — container: outline + seed index - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#too-graceful-when-your-fallbacks-lie-to-you" class="md-skip">
+        <a href="#the-dev-with-ai-book-container-outline-seed-index" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Too Graceful: When Your Fallbacks Lie to You
+              The dev-with-AI book — container: outline + seed index
             
           </span>
         </div>
@@ -4461,10 +4461,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#a-simple-question" class="md-nav__link">
+  <a href="#ratified-premises-with-provenance" class="md-nav__link">
     <span class="md-ellipsis">
       
-        A simple question
+        Ratified premises (with provenance)
       
     </span>
   </a>
@@ -4472,10 +4472,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#peeling-the-layers" class="md-nav__link">
+  <a href="#proposed-structure-unratified-redline-me" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Peeling the layers
+        Proposed structure (UNRATIFIED — redline me)
       
     </span>
   </a>
@@ -4483,10 +4483,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#one-shape-three-disguises" class="md-nav__link">
+  <a href="#seed-index" class="md-nav__link">
     <span class="md-ellipsis">
       
-        One shape, three disguises
+        Seed index
       
     </span>
   </a>
@@ -4494,10 +4494,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#legible-not-loud" class="md-nav__link">
+  <a href="#container-rules" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Legible, not loud
+        Container rules
       
     </span>
   </a>
@@ -4505,10 +4505,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-part-where-i-tell-you-the-trick" class="md-nav__link">
+  <a href="#open-decisions-patrick" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The part where I tell you the trick
+        Open decisions (Patrick)
       
     </span>
   </a>
@@ -4535,190 +4535,162 @@
   
 
 
-<h1 id="too-graceful-when-your-fallbacks-lie-to-you">Too Graceful: When Your Fallbacks Lie to You<a class="headerlink" href="#too-graceful-when-your-fallbacks-lie-to-you" title="Permanent link">&para;</a></h1>
-<!-- STATUS: draft v1, Patrick-reviewed 2026-06-11. Publication
-gate ("Redis/recall memory features working reliably") ruled MET
-by Patrick 2026-07-16: memory unification shipped (#1239,
-2026-07-04), guardrail suites landed (#1293–#1295), hydration
-green since. Freshness pass 2026-07-16 — all three mechanisms
-re-verified against live code: backend_status()
-(src/attune/memory/session_stash.py:181), zero-results health
-line (plugin/hooks/session_recall.py:231), stash.log forensic
-trail (plugin/hooks/session_stash.py:99). CLEARED for
-publication prep: attune-ai-dev page + Discipline-article
-cross-links (both ways) + LinkedIn cut (~600–800 words, ASCII
-markers only). Outline + decisions: LEGIBLE_FAILURE_outline.md.
--->
-
-<p><em>Every fallback borrows observability from your future self.</em></p>
-<p>You were taught that graceful degradation is an unalloyed good.
-Primary unavailable? Fall back. Service down? Degrade. Never let a
-missing dependency break the user's flow. It's in every resilience
-talk you've sat through, every system-design interview, every code
-review checklist.</p>
-<p>Here's what the checklist doesn't say: a fallback so smooth that
-nobody notices the primary is dead is not resilience. It's a
-failure mode wearing a feature's clothes — one that's all too easy
-to ship, and that earns the label "AI slop" when it finally
-surfaces.</p>
-<p>I know because I shipped one, and it lied to me from the day it
-shipped.</p>
-<h2 id="a-simple-question">A simple question<a class="headerlink" href="#a-simple-question" title="Permanent link">&para;</a></h2>
-<p>Recently I asked my AI agent a simple question about attune-ai,
-the developer-workflow product I build: "Are the memory
-enhancements helping yet with cross-session recall? Are we on the
-right track?"</p>
-<p>The feature gives the agent persistent memory across
-work sessions. At the end of each session, a hook extracts the
-useful findings — bugs found, decisions made, patterns worth
-keeping — and stashes them in a semantic store backed by Redis. At
-the start of the next session, relevant findings come back. I'd
-invested real engineering in it: embedding pipelines, deduplication
-semantics, a connectivity-gated backend resolver with a clean file
-fallback. The test suite was green. The status, by every visible
-signal, was "working."</p>
-<p>Instead of answering from impressions, the agent did the right
-thing: it ran the feature, live, and demanded a receipt at every
-step.</p>
-<p>The recall query — on a topic with weeks of relevant history —
-returned an empty list.</p>
-<h2 id="peeling-the-layers">Peeling the layers<a class="headerlink" href="#peeling-the-layers" title="Permanent link">&para;</a></h2>
-<p>What followed was a detective story in three layers, each one
-hidden by the layer above it being <em>too polite to mention anything
-was wrong</em>.</p>
-<p><strong>Layer one: the server had been dead for a week.</strong> The semantic
-memory service had died in a reboot days earlier — it had been
-launched with <code>nohup</code>, which doesn't survive restarts. Nothing
-surfaced this. The backend resolver's connectivity gate did
-exactly what it was designed to do: it noticed the primary was
-unreachable and quietly degraded to the local file tier. No error,
-no warning, no log line anyone would see. Graceful.</p>
-<p><strong>Layer two: the fallback tier was empty too.</strong> The file store
-held exactly two entries — both test fixtures from a development
-probe. Which forced the real question: forget this week. Had the
-system <em>ever</em> stored a real finding?</p>
-<p><strong>Layer three: no. It never had.</strong> The Redis store held 51
-records, and every single one was residue from integration tests
-and probes. Meanwhile, nineteen "done" markers showed the capture
-hook had run, session after session, reporting success. Three
-silent mechanisms had compounded:</p>
+<h1 id="the-dev-with-ai-book-container-outline-seed-index">The dev-with-AI book — container: outline + seed index<a class="headerlink" href="#the-dev-with-ai-book-container-outline-seed-index" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> container v1 (2026-07-16). The <strong>seed index is the
+load-bearing part</strong> — every book-related artifact gets a pointer
+here, added atomically when the seed lands (same rule as
+MEMORY.md). The chapter structure below is a PROPOSED hypothesis
+for Patrick to redline, not ratified.</p>
+<p><strong>Why this exists:</strong> book seeds were accreting with no container —
+the exact satellite-scatter pattern that caused the 2026-07-16
+foundational-docs staleness doubt. This file is the fix: future
+metaphor/chapter conversations land somewhere.</p>
+<h2 id="ratified-premises-with-provenance">Ratified premises (with provenance)<a class="headerlink" href="#ratified-premises-with-provenance" title="Permanent link">&para;</a></h2>
 <ul>
-<li>A threshold gate meant to skip trivial sessions was
-  miscalibrated — its estimator counted only conversation text and
-  ignored tool output, so real working sessions measured 0.18
-  against a 0.30 gate and never captured anything. Forever.</li>
-<li>The hook ran in a different Python environment than the
-  application — one missing an optional client library. So on the
-  rare occasions a session did cross the gate, the write silently
-  fell back to the wrong storage tier.</li>
-<li>And when a write failed outright, the code returned zero,
-  swallowed the failure, and wrote the "done" marker anyway.</li>
+<li><strong>Dual-audience design</strong> — portions read by a developer AND
+  their AI, together or separately (Patrick ruling 2026-07-02;
+  <code>project_discipline_article_revisions</code> memory). Weigh every
+  line: does it teach the human, the agent, or both?</li>
+<li><strong>Voice: first-person singular "I"</strong> — thought-leader stature,
+  not company voice (<code>user_authorial_voice_first_person</code> memory).</li>
+<li><strong>Core teaching artifact</strong> — the discipline article; the book
+  builds on it, portions designed for it (same 2026-07-02 ruling).</li>
+<li><strong>Techniques taught tool-agnostic</strong> — pattern + why + one
+  example; attune-ai is the receipt, not the gate (Refinement 3).</li>
+<li><strong>Payoff claims stay §7-honest</strong> — qualitative is universal;
+  quantitative only as demonstrated results, never promised
+  multipliers.</li>
 </ul>
-<p>Here is the part that should bother you: <strong>every individual
-component worked.</strong> The extraction model, tested live, pulled
-useful findings from a real session transcript in
-fourteen seconds. The storage layer round-tripped perfectly once
-the server was up. Every unit test was green, because each test
-verified its component against a mock of its neighbors — and the
-mocks encoded what I believed about the neighbors, not what was
-true. The system had been performing the motions of memory,
-flawlessly, without remembering a single thing.</p>
-<h2 id="one-shape-three-disguises">One shape, three disguises<a class="headerlink" href="#one-shape-three-disguises" title="Permanent link">&para;</a></h2>
-<p>Once you see it, you find it everywhere. Over months of build
-logs, I had named this failure three different ways before
-realizing it was one pattern:</p>
+<h2 id="proposed-structure-unratified-redline-me">Proposed structure (UNRATIFIED — redline me)<a class="headerlink" href="#proposed-structure-unratified-redline-me" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Registered isn't working.</strong> A hook, plugin, or integration
-  that's wired up and exits cleanly is not evidence that it does
-  anything. I had hooks that "ran successfully" for weeks while
-  accomplishing nothing.</li>
-<li><strong>Mocked-green, live-broken.</strong> A hundred passing tests where
-  the mocks faithfully implement your assumptions — and the real
-  dependency behaves differently in four separate ways, every one
-  invisible until first live contact.</li>
-<li><strong>Degraded silently.</strong> This article's headline case: the
-  fallback works so well it conceals the outage.</li>
+<li><strong>Part I — The discipline.</strong> Grown from the article's real
+  spine (§1 premise/vibe-coding counter-thesis · §2 mutual
+  contract incl. autonomous mode · §3 pacing · §4 artifact
+  discipline · §5 memory discipline · §6 multi-agent coordination
+  · §7 verification · §8 24-hour case study).</li>
+<li><strong>Part II — The craft.</strong> The sculptor chapter (marble = data,
+  the chisel never chooses the statue, sculpt-once-cast-many);
+  artifact altitude in depth; the communication grammar as a
+  worked example of shaping the medium itself.</li>
+<li><strong>Part III — Legible systems.</strong> "Too Graceful" (legible
+  failure); <strong>"Legible Failure II: People"</strong> (ratified 2026-07-16
+  — the human mapping: hero/stoic/workaround, grievance-procedure
+  origin, legibility-vs-surveillance boundary); the four
+  verification modes + the generation fact-checker (§7 split);
+  receipts as formulas (the gates).</li>
+<li><strong>Frame (not a section):</strong> the discipline is GENERATIVE — each
+  precisely-named friction produces its solution; "synergies tied
+  to the discipline" is the payoff line (Refinement 2).</li>
 </ul>
-<p>Three names, one shape: <strong>the system being polite about failure —
-and the politeness is what makes the failure expensive.</strong> Every
-<code>except: return fallback</code> you write is a small loan against your
-future self's ability to know what's true. The interest compounds
-in the dark.</p>
-<h2 id="legible-not-loud">Legible, not loud<a class="headerlink" href="#legible-not-loud" title="Permanent link">&para;</a></h2>
-<p>The obvious counterargument: fine, then crash. Alert on
-everything. Fail fast.</p>
-<p>No. The degraded mode is valuable — the file tier kept
-the feature alive; a session must not break because a sidecar
-service is down. Loudness taxes the user on every failure, which
-is precisely why developers route around it with silent fallbacks
-in the first place.</p>
-<p>The fix isn't to make failure loud. It's to make failure
-<strong>legible</strong>: the system stays graceful, and the human stays
-informed. Three mechanisms, each cheap, each shipped the same day
-as the diagnosis:</p>
-<p><strong>1. A status function.</strong> Not a boolean health check — a function
-that <em>names</em> the degradation: which backend answered, whether it's
-the fallback, and which upgrade tier is unreachable. The interface
-that reports state must be as queryable as the interface that
-serves requests.</p>
-<p><strong>2. A health line at a natural attention point — that prints
-even when there are zero results.</strong> attune-ai's session-start
-recall now
-says, in one line, "recall degraded: semantic backend unreachable
-— findings stored there are dark until it's restarted." The
-crucial design choice is printing it <em>especially</em> when there is
-nothing else to show. "No results" and "no results, because the
-real store is unreachable" are different facts, and silence is
-exactly what hid the outage for a week.</p>
-<p><strong>3. A forensic trail where stdout can't go.</strong> Background hooks,
-daemons, and cron jobs often have structurally invisible output —
-ours discards it by design on success. So the hook now appends one
-line per run to a log beside its state files: gate result,
-findings extracted, findings written, and a loud flag when those
-last two numbers don't match. The next investigation of "why is
-the store empty" will take thirty seconds of grep instead of an
-hour of archaeology.</p>
-<p>One rule captures all three, and it's the rule I'd put in any
-team's review checklist:</p>
-<blockquote>
-<p><strong>Any change that adds a fallback path ships its "you are
-degraded" signal in the same change.</strong> And in design review,
-ask: <em>when this falls back, who knows, and how fast?</em></p>
-</blockquote>
-<h2 id="the-part-where-i-tell-you-the-trick">The part where I tell you the trick<a class="headerlink" href="#the-part-where-i-tell-you-the-trick" title="Permanent link">&para;</a></h2>
-<p>I should be honest about how this got caught, because it's the
-actual point.</p>
-<p>It wasn't a monitoring dashboard. It wasn't a clever test. It was
-an AI agent, asked an open question, that responded by dogfooding
-the live system and refusing to report anything it couldn't show a
-receipt for. Empty result — receipt. Dead server — receipt.
-Fixture-only store — receipt. The diagnosis, the fixes, the tests,
-and this article's raw material came out of one working session.</p>
-<p>The failure mode that gets dismissed as "AI slop" wasn't caught by
-a human reviewer or a test suite. It was caught by the AI —
-managed with discipline.</p>
-<p>There's a lot of writing right now that treats working with AI
-agents as an exotic new discipline requiring exotic new instincts.
-My experience is the opposite. I learned the practices that made
-this work decades ago, leading teams building enterprise web
-solutions: specs before execution, receipts over promises, clean
-handoffs, and trusting a teammate to walk the live loop and report
-what's there — including the bad news. I don't treat my
-agent in some unique way invented for AI. I treat it the way solid
-companies treat colleagues. That management practice predates the
-technology by half a century, and it turns out to be exactly what
-the technology needed. It worked on enterprise teams; it works on
-a team of one human and one agent; it works at any size in
-between.</p>
-<p>Which closes the loop, because the two ideas are the same idea.
-Receipts make a teammate's claims legible to you. Status
-functions, health lines, and forensic trails make a <em>system's</em>
-state legible to everyone. Trust — in a colleague, in an agent, in
-a fallback path — isn't built by things never failing. It's built
-by making it cheap to verify and impossible to be silently wrong.</p>
-<p>My system's failures became legible the same week my
-collaboration did. That's not a coincidence. It's the same
-discipline, pointed in both directions.</p>
+<h2 id="seed-index">Seed index<a class="headerlink" href="#seed-index" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Seed</th>
+<th>Where</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Discipline article (canonical)</td>
+<td><code>attune-ai-dev/discipline/COLLABORATION_DISCIPLINE.md</code> → live at attune-ai.dev/discipline</td>
+<td>Published 2026-07-02, Draft v5, 10,798 words; pipeline-guarded</td>
+</tr>
+<tr>
+<td>Article revision proposal</td>
+<td><code>docs/process/COLLABORATION_DISCIPLINE_revision_2026-07-02_proposal.md</code></td>
+<td>APPLIED — historical record</td>
+</tr>
+<tr>
+<td>Article outline</td>
+<td><code>docs/process/COLLABORATION_DISCIPLINE_outline.md</code></td>
+<td>SUPERSEDED by the published article — historical</td>
+</tr>
+<tr>
+<td>"Too Graceful" draft</td>
+<td><code>docs/process/LEGIBLE_FAILURE_draft_v1.md</code></td>
+<td>Gate MET 2026-07-16; freshness-passed; publication prep pending</td>
+</tr>
+<tr>
+<td>"Too Graceful" outline</td>
+<td><code>docs/process/LEGIBLE_FAILURE_outline.md</code></td>
+<td>Decisions record (audience/venue/AI-angle)</td>
+</tr>
+<tr>
+<td>Sculptor chapter seed</td>
+<td><code>docs/process/SCULPTOR_CHAPTER_SEED.md</code></td>
+<td>Reader-facing v1 (2026-07-16) — one image + D19 receipt</td>
+</tr>
+<tr>
+<td>"Legible Failure II: People" seed</td>
+<td><code>docs/process/LEGIBLE_FAILURE_2_PEOPLE_seed.md</code></td>
+<td>Chapter RATIFIED 2026-07-16; seed v1 (human mapping + surveillance boundary)</td>
+</tr>
+<tr>
+<td>Sculptor deployment guide</td>
+<td><code>docs/process/SCULPTOR_METAPHOR_treatment.md</code></td>
+<td>INTERNAL — full clause set; clauses become chapter prose</td>
+</tr>
+<tr>
+<td>Dual-audience + book ruling</td>
+<td>memory <code>project_discipline_article_revisions</code></td>
+<td>Ratified 2026-07-02</td>
+</tr>
+<tr>
+<td>Sculptor metaphor state</td>
+<td>memory <code>project_sculptor_metaphor</code></td>
+<td>Ratifications through 2026-07-16</td>
+</tr>
+<tr>
+<td>§7 verification split</td>
+<td>memory <code>project_section7_verification_split</code></td>
+<td>4 modes + 5th product (generation fact-checker)</td>
+</tr>
+<tr>
+<td>Legible-failure principle</td>
+<td>global memory <code>feedback_legible_failure_principle</code></td>
+<td>Ratified one-liner</td>
+</tr>
+<tr>
+<td>Authorial voice</td>
+<td>global memory <code>user_authorial_voice_first_person</code></td>
+<td>First-person "I"</td>
+</tr>
+<tr>
+<td>LinkedIn derivative #1</td>
+<td>Published 2026-07-03 (§8 "277/14" post; URL not captured)</td>
+<td>Live</td>
+</tr>
+<tr>
+<td>LinkedIn derivative #2</td>
+<td>Queued — §1 vibe-coding counter-thesis</td>
+<td>Not drafted</td>
+</tr>
+<tr>
+<td>Candidate material</td>
+<td><code>docs/BLOG_COVERAGE_AS_BUG_FINDER.md</code>, <code>docs/BLOG_CLAUDE_OPTIMIZATION.md</code></td>
+<td>Unvetted — triage before claiming as chapters</td>
+</tr>
+</tbody>
+</table>
+<h2 id="container-rules">Container rules<a class="headerlink" href="#container-rules" title="Permanent link">&para;</a></h2>
+<ul>
+<li>A new seed lands WITH its index row (atomic) — a seed without a
+  pointer here is the bug this file exists to prevent.</li>
+<li>Status cells must be CHECKABLE (dated, or naming the gate) —
+  prose gates rot silently; see the "gated document goes silently
+  unblocked" lesson (2026-07-16).</li>
+<li>Chapter ratification, title, and ordering are Patrick's
+  decisions — record them here with dates when made.</li>
+</ul>
+<h2 id="open-decisions-patrick">Open decisions (Patrick)<a class="headerlink" href="#open-decisions-patrick" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Working title.</li>
+<li>Ratify/redline the three-part structure.</li>
+<li>Whether Part I reuses the article's sections directly (expand
+   in place) or the book chapters cite the article as canon.</li>
+</ol>
 
 
 
