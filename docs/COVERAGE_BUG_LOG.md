@@ -1,3 +1,42 @@
+## 2026-07-16 — meta_workflows/cli_commands/agent_commands.py (QA, Opus 4.8)
+
+`meta_workflows/cli_commands/agent_commands.py` (`create_agent`,
+`create_team`), **~11% → 99%** (net-new
+`tests/unit/meta_workflows/test_agent_commands.py`, 18 tests). No prior
+test file anywhere imported this module.
+
+- **Bug (crash), class 1 — `create-agent` crashes on EVERY successful
+  invocation, both interactive and quick mode.** The command's final two
+  lines split a Rich markup `[dim]...[/dim]` span across two separate
+  `console.print()` calls:
+
+  ```python
+  console.print(f"\n[dim]Agent tier '{tier}' will cost approximately:")
+  console.print(f"   {costs.get(tier, costs['capable'])} per execution[/dim]\n")
+  ```
+
+  Rich parses markup independently per `console.print()` call — there is
+  no cross-call tag state — so the second call's lone `[/dim]` has no
+  matching open tag and raises `rich.errors.MarkupError: closing tag
+  '[/dim]' at position N doesn't match any open tag`. Typer's `CliRunner`
+  (and a real terminal) surfaces this as exit code 1 with an unhandled
+  exception, AFTER the JSON spec panel and any `--output` file save have
+  already completed — so the command's core work (spec construction,
+  file save) succeeds, but the process always exits non-zero and never
+  prints its final cost-estimate line. `create-team`'s analogous final
+  line (`console.print(f"...{...}[/dim]\n")`) is a single call and does
+  **not** share this bug — confirmed via manual and automated testing
+  that `create-team` exits 0 cleanly. This means every `attune-ai` user
+  who has ever run `create-agent` (interactive or quick mode, any tier)
+  has hit this crash — there is no successful invocation path. Likely
+  fix: merge the two `console.print()` calls into one, or move the
+  closing `[/dim]` onto the first call. **Not fixed here** — kept this
+  PR test-only per the qa-batch-playbook cadence; tests assert the
+  crash's exact `MarkupError` and message as the current real behavior.
+  Filed as a follow-up for a dedicated one-line hotfix PR.
+
+---
+
 ## 2026-06-13 — test isolation: worktree_path_guard `_sdk_gate` import (Opus 4.8)
 
 `tests/unit/hooks/test_worktree_path_guard.py`, **test-infra / isolation
