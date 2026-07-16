@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 import webbrowser
 from pathlib import Path
@@ -22,8 +23,8 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
     parser.add_argument(
         "--port",
         type=int,
-        default=8765,
-        help="Port (default: 8765)",
+        default=int(os.environ.get("PORT") or 8765),
+        help="Port (default: $PORT env var if set, else 8765)",
     )
     parser.add_argument(
         "--project-root",

@@ -54,7 +54,11 @@ def _make_parser() -> argparse.ArgumentParser:
 
 
 class TestAddSubparser:
-    def test_defaults(self) -> None:
+    def test_defaults(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # Port default reads $PORT; delenv so 8765 is deterministic
+        # regardless of the caller's environment (e.g. a Cowork
+        # preview manager that exports PORT).
+        monkeypatch.delenv("PORT", raising=False)
         parser = _make_parser()
         args = parser.parse_args(["ops"])
         assert args.host == "127.0.0.1"
@@ -71,6 +75,21 @@ class TestAddSubparser:
         args = parser.parse_args(["ops", "--port", "9000"])
         assert args.port == 9000
         assert isinstance(args.port, int)
+
+    def test_port_defaults_to_env_var_when_set(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # A process manager (Cowork preview, container) that exports
+        # PORT gets honored without passing --port explicitly.
+        monkeypatch.setenv("PORT", "8010")
+        parser = _make_parser()
+        args = parser.parse_args(["ops"])
+        assert args.port == 8010
+        assert isinstance(args.port, int)
+
+    def test_explicit_port_flag_overrides_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("PORT", "8010")
+        parser = _make_parser()
+        args = parser.parse_args(["ops", "--port", "9000"])
+        assert args.port == 9000
 
     def test_project_root_coerced_to_path(self, tmp_path: Path) -> None:
         parser = _make_parser()
