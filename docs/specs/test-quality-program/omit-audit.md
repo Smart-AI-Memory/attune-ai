@@ -72,10 +72,22 @@ import or a call-time dependency, not an import barrier.
 servers), `project_index/scanner_parallel.py` (multiprocessing),
 `project_index/index.py` (integration-tested), all `__init__.py` /
 `__main__.py` package/entry stubs, `*_example.py`, deprecated
-`agent_factory/*` adapters, and `config.py` (import-shadowed). Hook
-scripts (`hooks/scripts/*.py`) are tagged "standalone / not importable
-via pytest" — **needs a second pass** to confirm (some may import and
-be partially coverable).
+`agent_factory/*` adapters, and `config.py` (import-shadowed).
+
+**Second pass done (2026-07-16):** hook scripts and `config.py` ARE
+well-covered — the reason they read 0% in whole-repo baselines is a
+measurement artifact, not an absence of tests. Both are loaded via
+`importlib.util.spec_from_file_location` under a synthetic module
+name (bypassing normal package import, by design — `config.py` for
+legacy re-export, hook scripts so they run standalone without the
+full `attune` package). `--cov=<dotted.module>` requires that exact
+import to happen and never sees them; a path-scoped `--cov=<dir>`
+does. Real numbers: `config.py` 98%, `worktree_path_guard.py` 93%,
+`starter_reconciler.py` 95%. The one genuine gap in this class:
+`hooks/scripts/_bootstrap.py` (24 lines, confirmed 0% under both
+measurement methods). See `.claude/lessons.md` "coverage baseline
+misreports spec_from_file_location-loaded modules" and the fix in
+`scripts/qa_coverage_baseline.sh`.
 
 ---
 

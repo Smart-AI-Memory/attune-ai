@@ -13,6 +13,20 @@
 # code is measured, and --cov-config=/dev/null to bypass the rcfile
 # source-mapping that otherwise reports 0% from a worktree.
 #
+# --cov is given a DIRECTORY PATH, not the dotted package name. A dotted
+# `--cov=attune.foo` requires coverage to `importlib.import_module` that
+# exact name to find what to instrument/report -- any module loaded via
+# `importlib.util.spec_from_file_location` under a different name (e.g.
+# config.py's legacy-compat loader, or a hooks/scripts/*.py test loading
+# its target standalone) is invisible to it and silently reports 0% even
+# when thoroughly tested (verified 2026-07-15: config.py showed 0%/98%,
+# worktree_path_guard.py 0%/93%, starter_reconciler.py 0%/95% dotted vs
+# path-scoped). Path-based --cov tracks by executed file location, not
+# import name, and gives IDENTICAL numbers to the dotted form for
+# normally-imported modules -- it is a strict superset fix, not a
+# tradeoff. See .claude/lessons.md "coverage baseline misreports
+# spec_from_file_location-loaded modules".
+#
 # Usage:
 #   bash scripts/qa_coverage_baseline.sh [package] [threshold] [out_file]
 #
@@ -30,6 +44,7 @@ PACKAGE="${1:-attune.memory}"
 THRESHOLD="${2:-80}"
 
 WT_ROOT="$(git rev-parse --show-toplevel)"
+PACKAGE_PATH="$WT_ROOT/src/$(echo "$PACKAGE" | tr '.' '/')"
 
 # Locate a python with all extras: prefer the MAIN checkout's venv (a
 # worktree venv is usually synced with only dev/developer extras).
@@ -58,7 +73,7 @@ set +e
 ANTHROPIC_API_KEY="" PYTHONPATH="$WT_ROOT/src" "$PY" -m pytest "$WT_ROOT/tests" \
   --ignore="$WT_ROOT/tests/integration" \
   -o addopts="" \
-  --cov="$PACKAGE" --cov-config=/dev/null \
+  --cov="$PACKAGE_PATH" --cov-config=/dev/null \
   --cov-report=term-missing \
   -n auto -q -p no:cacheprovider >"$OUT_FILE" 2>&1
 RC=$?
