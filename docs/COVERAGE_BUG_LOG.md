@@ -34,6 +34,9 @@ test file anywhere imported this module.
   PR test-only per the qa-batch-playbook cadence; tests assert the
   crash's exact `MarkupError` and message as the current real behavior.
   Filed as a follow-up for a dedicated one-line hotfix PR.
+  **RESOLVED 2026-07-16** — merged the two `console.print()` calls into
+  one; `test_agent_commands.py`'s success-path tests now assert
+  exit_code 0 and the full (previously-unreachable) cost-estimate line.
 
 ---
 

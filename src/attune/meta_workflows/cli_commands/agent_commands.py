@@ -146,9 +146,11 @@ def create_agent(
         "  1. Use this agent in a custom team: [cyan]empathy meta-workflow create-team[/cyan]",
     )
     console.print("  2. Or add to an existing template manually")
-    console.print(f"\n[dim]Agent tier '{tier}' will cost approximately:")
     costs = {"cheap": "$0.001-0.01", "capable": "$0.01-0.05", "premium": "$0.05-0.20"}
-    console.print(f"   {costs.get(tier, costs['capable'])} per execution[/dim]\n")
+    console.print(
+        f"\n[dim]Agent tier '{tier}' will cost approximately:\n"
+        f"   {costs.get(tier, costs['capable'])} per execution[/dim]\n"
+    )
 
 
 @meta_workflow_app.command("create-team")
