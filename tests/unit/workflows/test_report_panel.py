@@ -43,6 +43,15 @@ class TestCategoryBullets:
         assert "bare except" in html
         assert "<ul" in html
 
+    def test_list_bullets_render_inline_bold_and_code(self):
+        # text-tier bullets often carry markdown; render it, don't leave
+        # literal **asterisks** / `backticks` (the Family-B follow-up)
+        d = _report({"security": ["Use **parameterized** queries, never `eval`"]})
+        html = report_to_panel_html(d)
+        assert "<strong>parameterized</strong>" in html
+        assert '<code class="rp-cmd">eval</code>' in html
+        assert "**parameterized**" not in html
+
     def test_score_and_summary_in_header(self):
         html = report_to_panel_html(_report({"security": ["x"]}, summary="2 issues found."))
         assert "score 72/100" in html

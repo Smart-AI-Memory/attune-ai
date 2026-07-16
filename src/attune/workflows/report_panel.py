@@ -100,7 +100,7 @@ def _section_html(section: dict[str, Any]) -> str:
     if kind == "list":
         items = section.get("items") or []
         lis = (
-            "".join(f"<li>{_highlight(i)}</li>" for i in items) or '<li class="rp-empty">none</li>'
+            "".join(f"<li>{_md_inline(i)}</li>" for i in items) or '<li class="rp-empty">none</li>'
         )
         return _wrap(len(items), f'<ul class="rp-list">{lis}</ul>')
 
@@ -111,7 +111,7 @@ def _section_html(section: dict[str, Any]) -> str:
             text = a.get("text") if isinstance(a, dict) else str(a)
             cmd = a.get("command") if isinstance(a, dict) else None
             cmd_html = f' <code class="rp-cmd">{esc(cmd)}</code>' if cmd else ""
-            lis += f"<li>{_highlight(text)}{cmd_html}</li>"
+            lis += f"<li>{_md_inline(text)}{cmd_html}</li>"
         lis = lis or '<li class="rp-empty">none</li>'
         return _wrap(len(items), f'<ul class="rp-list">{lis}</ul>')
 
@@ -120,7 +120,7 @@ def _section_html(section: dict[str, Any]) -> str:
     # the analysis-workflow path today, but keeps the panel robust.
     items = section.get("items") or []
     if items:
-        lis = "".join(f"<li>{_highlight(i)}</li>" for i in items)
+        lis = "".join(f"<li>{_md_inline(i)}</li>" for i in items)
         return _wrap(len(items), f'<ul class="rp-list">{lis}</ul>')
     text = section.get("text") or section.get("body") or ""
     return _wrap(0, f'<div class="rp-prose">{esc(text)}</div>')
