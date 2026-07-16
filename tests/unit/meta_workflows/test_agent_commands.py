@@ -4,22 +4,14 @@ Covers create_agent and create_team CLI commands.
 Uses Typer's CliRunner with the app declared in cli_commands/__init__.py,
 mirroring the pattern in test_workflow_commands.py.
 
-KNOWN PRODUCTION BUG (documented, not fixed, by design -- see
-docs/COVERAGE_BUG_LOG.md): `create_agent`'s final two lines split a Rich
-markup `[dim]...[/dim]` span across two separate `console.print()` calls:
-
-    console.print(f"\\n[dim]Agent tier '{tier}' will cost approximately:")
-    console.print(f"   {costs.get(tier, costs['capable'])} per execution[/dim]\\n")
-
-Rich parses markup independently per `console.print()` call, so the second
-call's lone `[/dim]` has no matching open tag and raises
-`rich.errors.MarkupError`. This means `create-agent` crashes on EVERY
-successful invocation (both interactive and quick mode) -- it has never
-completed cleanly. `create-team`'s analogous final line is a single
-`console.print()` call and does not share this bug. Tests below assert
-the command's REAL (buggy) behavior: exit_code == 1 with a MarkupError,
-after all prior output (including the JSON spec and any file save) has
-already been emitted.
+`create_agent`'s final cost-display line used to be split across two
+separate `console.print()` calls with a Rich `[dim]...[/dim]` span
+straddling them, which crashed with `rich.errors.MarkupError` on every
+successful invocation (Rich parses markup independently per call, so
+the second call's lone `[/dim]` had no matching open tag). Fixed by
+merging into one `console.print()` call -- see the historical entry in
+`docs/COVERAGE_BUG_LOG.md` for the discovery. Tests below assert the
+now-correct behavior: exit_code == 0, full cost line printed.
 """
 
 from __future__ import annotations
@@ -27,7 +19,6 @@ from __future__ import annotations
 import json
 
 import pytest
-from rich.errors import MarkupError
 from typer.testing import CliRunner
 
 from attune.meta_workflows.cli_commands import meta_workflow_app
@@ -42,12 +33,10 @@ def _run(runner, args, input_text=None):
     return runner.invoke(meta_workflow_app, args, input=input_text)
 
 
-def _assert_crashes_on_cost_display(result):
-    """Shared assertion for the known create-agent MarkupError crash."""
-    assert result.exit_code == 1
-    assert isinstance(result.exception, MarkupError)
-    assert "closing tag" in str(result.exception)
-    assert "[/dim]" in str(result.exception)
+def _assert_success(result):
+    """Shared assertion: the command completed without raising."""
+    assert result.exit_code == 0
+    assert result.exception is None
 
 
 # ---------------------------------------------------------------------------
@@ -76,16 +65,14 @@ class TestCreateAgentQuickModeValidation:
 
 
 # ---------------------------------------------------------------------------
-# create_agent -- quick mode success (crashes on cost display -- see module
-# docstring). Coverage of the tier/cost dict branches is still exercised:
-# the f-string evaluates costs.get(...) before console.print() raises.
+# create_agent -- quick mode success
 # ---------------------------------------------------------------------------
 
 
 class TestCreateAgentQuickModeSuccess:
     def test_default_tier_builds_expected_spec(self, runner):
         result = _run(runner, ["create-agent", "-q", "-n", "Foo", "-r", "Do the thing"])
-        _assert_crashes_on_cost_display(result)
+        _assert_success(result)
         assert "Agent Specification Created" in result.output
         assert '"name": "Foo"' in result.output
         assert '"role": "Do the thing"' in result.output
@@ -95,31 +82,35 @@ class TestCreateAgentQuickModeSuccess:
         assert '"base_template": "generic"' in result.output
         assert "Next Steps:" in result.output
         assert "Agent tier 'capable' will cost approximately:" in result.output
+        assert "$0.01-0.05 per execution" in result.output
 
     def test_cheap_tier(self, runner):
         result = _run(runner, ["create-agent", "-q", "-n", "CheapBot", "-r", "role", "-t", "cheap"])
-        _assert_crashes_on_cost_display(result)
+        _assert_success(result)
         assert '"tier": "cheap"' in result.output
         assert "Agent tier 'cheap' will cost approximately:" in result.output
+        assert "$0.001-0.01 per execution" in result.output
 
     def test_premium_tier(self, runner):
         result = _run(
             runner, ["create-agent", "-q", "-n", "PremBot", "-r", "role", "-t", "premium"]
         )
-        _assert_crashes_on_cost_display(result)
+        _assert_success(result)
         assert '"tier": "premium"' in result.output
         assert "Agent tier 'premium' will cost approximately:" in result.output
+        assert "$0.05-0.20 per execution" in result.output
 
     def test_unknown_tier_falls_back_to_capable_cost_lookup(self, runner):
         """costs.get(tier, costs['capable']) fallback branch for an
         unrecognized tier string -- the tier itself is stored as-is
         (unvalidated), only the cost lookup falls back."""
         result = _run(runner, ["create-agent", "-q", "-n", "UnkBot", "-r", "role", "-t", "turbo"])
-        _assert_crashes_on_cost_display(result)
+        _assert_success(result)
         assert '"tier": "turbo"' in result.output
         assert "Agent tier 'turbo' will cost approximately:" in result.output
+        assert "$0.01-0.05 per execution" in result.output
 
-    def test_output_file_is_saved_despite_downstream_crash(self, runner, tmp_path):
+    def test_output_file_is_saved(self, runner, tmp_path):
         out_path = tmp_path / "spec.json"
         result = _run(
             runner,
@@ -134,7 +125,7 @@ class TestCreateAgentQuickModeSuccess:
                 str(out_path),
             ],
         )
-        _assert_crashes_on_cost_display(result)
+        _assert_success(result)
         assert out_path.exists()
         saved = json.loads(out_path.read_text())
         assert saved == {
@@ -173,7 +164,7 @@ class TestCreateAgentInteractive:
             + "\n"
         )
         result = _run(runner, ["create-agent"], answers)
-        _assert_crashes_on_cost_display(result)
+        _assert_success(result)
         assert '"name": "FixAgent"' in result.output
         assert '"role": "fix bugs fast"' in result.output
         assert '"tasks": [' in result.output
@@ -209,7 +200,7 @@ class TestCreateAgentInteractive:
             ["create-agent", "--name", "CustomBot", "--tier", "premium"],
             answers,
         )
-        _assert_crashes_on_cost_display(result)
+        _assert_success(result)
         assert '"name": "CustomBot"' in result.output
         assert '"tier": "capable"' in result.output
         assert '"premium"' not in result.output
