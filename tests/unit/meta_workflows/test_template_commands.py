@@ -193,6 +193,8 @@ class TestListTemplates:
         # Header count reflects list_templates(), even though "ghost" never renders.
         assert "Available Templates (2 total)" in result.output
         assert "Real Template" in result.output
+        # The unloadable template must be skipped, not rendered as a ghost panel.
+        assert "ghost" not in result.output
 
     def test_registry_error_exits_1(self, runner):
         with patch(REGISTRY, side_effect=RuntimeError("storage unavailable")):

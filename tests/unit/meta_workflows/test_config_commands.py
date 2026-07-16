@@ -95,6 +95,9 @@ class TestSuggestDefaultsCmd:
             result = runner.invoke(meta_workflow_app, ["suggest-defaults", template.template_id])
         assert result.exit_code == 0
         assert "mystery_q" in result.output
+        # The suggested value must still render alongside the raw-id fallback,
+        # else a regression dropping the value column would go unnoticed.
+        assert "value_x" in result.output
 
     def test_suggestion_list_value_joined_with_commas(self, runner):
         """Lines 91-93: list value -> joined with ', '."""
@@ -244,4 +247,8 @@ class TestShowMigrationGuide:
         result = runner.invoke(meta_workflow_app, ["migrate", crew_name])
         assert result.exit_code == 0
         assert f"Migrating: {crew_name}" in result.output
-        assert f"attune workflow run {template_id}" in result.output
+        # Pin the template_id field specifically: it is rendered ONLY by the
+        # "Try it now:" line. The bare "attune workflow run {id}" form also
+        # comes from info['new_usage'], so asserting that would pass even if
+        # template_id were corrupted while new_usage stayed correct.
+        assert f"Try it now: attune workflow run {template_id}" in result.output
