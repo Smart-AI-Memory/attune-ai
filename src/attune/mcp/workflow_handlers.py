@@ -174,6 +174,14 @@ def _workflow_response(
         response.update(_report_fields(result, fo, raw_output, field_picks))
     else:
         response.update(_legacy_fields(fo, raw_output, field_picks))
+        # Family-B: a prose-only run (no parseable findings) leaves
+        # final_output as the raw markdown string. Give it a styled panel
+        # too, so prose workflows (deep-review, test-audit, refactor-plan,
+        # dependency-check, code-review) aren't stuck with raw markdown.
+        if isinstance(fo, str) and fo.strip():
+            from attune.workflows.report_panel import markdown_to_panel_html
+
+            response["panel_html"] = markdown_to_panel_html(fo, succeeded=result.success)
 
     cost_report = getattr(result, "cost_report", None)
     response["cost"] = cost_report.total_cost if cost_report is not None else 0.0

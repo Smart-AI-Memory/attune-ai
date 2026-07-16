@@ -177,6 +177,109 @@ def report_to_panel_html(report: dict[str, Any], succeeded: bool = True, message
     )
 
 
+# ------------------------------------------------------------------
+# Family-B: prose-only workflows (deep-review, test-audit,
+# refactor-plan, dependency-check, code-review) yield no parseable
+# findings, so their final_output stays raw markdown text rather than
+# a WorkflowReport. Render that prose as a panel too — same chrome and
+# injection-safety contract — instead of dumping raw markdown.
+# ------------------------------------------------------------------
+
+_MD_H_RE = re.compile(r"^(#{1,6})\s+(.*)$")
+_MD_BULLET_RE = re.compile(r"^\s*[-*+]\s+(.*)$")
+_MD_NUM_RE = re.compile(r"^\s*\d+[.)]\s+(.*)$")
+_MD_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
+_MD_CODE_RE = re.compile(r"`([^`]+)`")
+
+
+def _md_inline(text: Any) -> str:
+    """Escape a line, then apply safe inline markdown plus shared accents.
+
+    Runs ``_highlight`` first (``esc`` + CWE / ``file:line`` accents), so the
+    bold/code regexes only ever wrap already-escaped text — a raw ``<script>``
+    in the source can never survive as markup. Injection-safe by construction.
+    """
+    t = _highlight(text)
+    t = _MD_BOLD_RE.sub(r"<strong>\1</strong>", t)
+    t = _MD_CODE_RE.sub(r'<code class="rp-cmd">\1</code>', t)
+    return t
+
+
+def markdown_to_panel_html(
+    markdown: str, title: str = "", succeeded: bool = True, message: str = ""
+) -> str:
+    """Render a prose markdown string as a panel for ``show_widget``.
+
+    Supports a lightweight subset — ATX headings (``#``..``######``),
+    bullet / numbered lists, paragraphs, inline ``**bold**`` and
+    ``` `code` ```. Unknown syntax degrades to escaped text, never raw HTML.
+
+    Args:
+        markdown: The raw agent markdown (an analysis workflow's
+            ``final_output`` when no findings parsed).
+        title: Optional panel heading.
+        succeeded: ``False`` renders an explicit "did not complete" state —
+            never a false all-clear (the security-dashboard lesson, #1152).
+        message: Optional caption above the panel.
+
+    Returns:
+        Self-contained HTML for ``mcp__visualize__show_widget``.
+    """
+    caption = f'<p class="rp-msg">{esc(message)}</p>' if message else ""
+
+    if not succeeded:
+        return (
+            '<div id="rp-panel">'
+            + _STYLE
+            + caption
+            + '<div class="rp-fail">⚠ Workflow did not complete — no results '
+            + "to show. This is NOT a clean result; check the run/auth "
+            + "status and re-run.</div></div>"
+        )
+
+    head = f'<div class="rp-head"><span class="rp-title">{esc(title)}</span></div>' if title else ""
+
+    blocks: list[str] = []
+    para: list[str] = []
+    items: list[str] = []
+
+    def flush_para() -> None:
+        if para:
+            blocks.append(f'<p class="rp-md-p">{"<br>".join(_md_inline(x) for x in para)}</p>')
+            para.clear()
+
+    def flush_list() -> None:
+        if items:
+            lis = "".join(f"<li>{i}</li>" for i in items)
+            blocks.append(f'<ul class="rp-list">{lis}</ul>')
+            items.clear()
+
+    for line in (markdown or "").splitlines():
+        h = _MD_H_RE.match(line)
+        b = _MD_BULLET_RE.match(line) or _MD_NUM_RE.match(line)
+        if h:
+            flush_para()
+            flush_list()
+            level = min(len(h.group(1)), 6)
+            blocks.append(f'<div class="rp-md-h rp-md-h{level}">{_md_inline(h.group(2))}</div>')
+        elif b:
+            flush_para()
+            items.append(_md_inline(b.group(1)))
+        elif not line.strip():
+            flush_para()
+            flush_list()
+        else:
+            flush_list()
+            para.append(line)
+    flush_para()
+    flush_list()
+
+    body = "".join(blocks) or '<div class="rp-empty">no content</div>'
+    return (
+        '<div id="rp-panel">' + _STYLE + caption + head + f'<div class="rp-md">{body}</div></div>'
+    )
+
+
 _STYLE = """<style>
 #rp-panel { display:block; width:100%; padding:1rem 0;
   color:var(--text-primary); line-height:1.45; font-size:14px; }
@@ -219,4 +322,11 @@ _STYLE = """<style>
 #rp-panel .rp-prose { white-space:pre-wrap; color:var(--text-secondary); }
 #rp-panel .rp-empty { font-size:13px; color:var(--text-muted); font-style:italic; }
 #rp-panel .rp-fail { font-size:13.5px; font-weight:500; color:#e5484d; }
+#rp-panel .rp-md { color:var(--text-secondary); }
+#rp-panel .rp-md-p { margin:.5rem 0; }
+#rp-panel .rp-md-h { font-weight:600; color:var(--text-primary); margin:.9rem 0 .35rem; }
+#rp-panel .rp-md-h1, #rp-panel .rp-md-h2 { font-size:15px; }
+#rp-panel .rp-md-h3, #rp-panel .rp-md-h4,
+#rp-panel .rp-md-h5, #rp-panel .rp-md-h6 { font-size:13.5px; }
+#rp-panel .rp-md strong { color:var(--text-primary); }
 </style>"""

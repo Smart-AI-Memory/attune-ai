@@ -1,6 +1,16 @@
 # Analysis-Workflow Output Widgets — requirements
 
-**Status:** merged (2026-07-14) — into discovery-sweep-rich-surface (D4 re-scope: only discovery-sweep is structured)
+**Status:** merged (2026-07-14) — into discovery-sweep-rich-surface.
+**Superseded note (2026-07-16):** the D4 "only discovery-sweep is
+structured" framing is stale. A UNIVERSAL `report_to_panel_html`
+(`workflows/report_panel.py`) now attaches `panel_html` to EVERY
+analysis workflow whose run yields parseable findings (security-audit,
+perf-audit, bug-predict, code-review, doc-gen, refactor-plan,
+smart-test, code-quality, dependency-check, test-audit, deep-review);
+discovery-sweep keeps its dedicated board. The remaining "Family-B"
+gap — prose-only runs (no parseable findings) — was closed by
+`markdown_to_panel_html`, so those now render a styled panel too rather
+than raw markdown.
 **Kickoff:** `/spec` widget form, response `resp-20260628-143856`
 (goal = formalize the program; workflows = all 7; shared_renderer = yes;
 "parallel acceptable").

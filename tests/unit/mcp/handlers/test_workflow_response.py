@@ -143,6 +143,36 @@ class TestWorkflowResponseLegacy:
         assert out["approved"] is None
         assert out["recommendation"] is None
 
+    def test_prose_string_final_output_gets_panel(self):
+        # Family-B: a prose-only run (no parseable findings) leaves
+        # final_output a raw markdown string — it should still get a panel.
+        result = _make_result(final_output="# Review\n\nAll **good**.", total_cost=0.0)
+        out = _workflow_response(result, raw_output=True)
+
+        assert isinstance(out.get("panel_html"), str)
+        assert 'id="rp-panel"' in out["panel_html"]
+        assert "<strong>good</strong>" in out["panel_html"]
+        # raw markdown still passes through unchanged for back-compat
+        assert out["output"] == "# Review\n\nAll **good**."
+
+    def test_prose_panel_failed_run_not_a_false_all_clear(self):
+        result = _make_result(success=False, final_output="partial output", total_cost=0.0)
+        out = _workflow_response(result, raw_output=True)
+
+        assert "did not complete" in out["panel_html"]
+
+    def test_dict_final_output_gets_no_prose_panel(self):
+        result = _make_result(final_output={"coverage": 85})
+        out = _workflow_response(result, raw_output=True)
+
+        assert "panel_html" not in out
+
+    def test_empty_string_final_output_gets_no_panel(self):
+        result = _make_result(final_output="   ", total_cost=0.0)
+        out = _workflow_response(result, raw_output=True)
+
+        assert "panel_html" not in out
+
 
 # ==================================================================
 # _workflow_response — serialized WorkflowReport path
