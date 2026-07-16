@@ -130,6 +130,73 @@ class TestNextSteps:
         assert "Rotate the leaked key" in html
 
 
+class TestNextStepActions:
+    """A next-step with a command renders a clickable button that posts the
+    command back via sendPrompt — closing the workflow -> report loop."""
+
+    def _with_suggestions(self, suggestions):
+        from attune.workflows.data_classes import NextAction
+
+        return _report(
+            {"security": ["x"]},
+            suggestions=[NextAction(**s) for s in suggestions],
+        )
+
+    def test_command_renders_clickable_button(self):
+        d = self._with_suggestions(
+            [
+                {
+                    "workflow_name": "security-audit",
+                    "description": "Re-run the audit",
+                    "reasoning": "r",
+                }
+            ]
+        )
+        html = report_to_panel_html(d)
+        assert 'class="rp-step"' in html
+        assert 'data-rp-command="/workflows run security-audit"' in html
+        assert "Re-run the audit" in html
+
+    def test_command_maps_via_router(self):
+        # code-review maps to /dev review, not the generic /workflows run
+        d = self._with_suggestions(
+            [{"workflow_name": "code-review", "description": "Review it", "reasoning": "r"}]
+        )
+        assert 'data-rp-command="/dev review"' in report_to_panel_html(d)
+
+    def test_generic_followup_has_no_button(self):
+        # agent-followup names no concrete workflow -> static text, no button
+        d = self._with_suggestions(
+            [{"workflow_name": "agent-followup", "description": "Look into it", "reasoning": "r"}]
+        )
+        html = report_to_panel_html(d)
+        assert "Look into it" in html
+        assert "rp-step-static" in html
+        assert 'class="rp-step"' not in html
+
+    def test_actionable_report_emits_one_sendprompt_script(self):
+        d = self._with_suggestions(
+            [{"workflow_name": "security-audit", "description": "Re-run", "reasoning": "r"}]
+        )
+        html = report_to_panel_html(d)
+        assert html.count("<script>") == 1
+        assert "sendPrompt" in html
+
+    def test_report_without_actions_stays_script_free(self):
+        # findings but no suggestions -> pure display, no script
+        html = report_to_panel_html(_report({"security": ["x"]}))
+        assert "<script" not in html.lower()
+
+    def test_malicious_workflow_name_escaped_in_attribute(self):
+        d = self._with_suggestions(
+            [{"workflow_name": 'evil" onclick="alert(1)', "description": "x", "reasoning": "r"}]
+        )
+        html = report_to_panel_html(d)
+        # the injected quote/handler must be entity-escaped, never live markup
+        assert 'onclick="alert(1)"' not in html
+        assert "&quot;" in html
+
+
 class TestFailureState:
     def test_failed_run_not_clean(self):
         d = _report({"security": ["x"]})

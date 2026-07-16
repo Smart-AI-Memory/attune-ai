@@ -18,9 +18,21 @@ So ONE panel renders any of them — no per-finding-shape assumptions
 ``_workflow_response`` report path, it lights up every report workflow at
 once.
 
-Same injection-safety contract as the other widgets: display-only (no
-``<script>``), every report-derived string ``html.escape``d, CDS tokens,
-transparent background, no ``position: fixed``.
+``next-steps`` actions that carry a ``command`` render as **clickable**
+buttons: on click the widget posts the command back through the global
+``sendPrompt`` so it becomes the next prompt — closing the loop
+``workflow → report panel → pick a next step → next workflow``. This
+reuses the exact return-path pattern the elicitation widget proved
+(``attune.elicitation.widget``): the command lives in a ``data-``
+attribute and is read generically from the DOM — never interpolated into
+the script — so a malicious command string cannot inject markup or code.
+
+Same injection-safety contract as the other widgets: every
+report-derived string ``html.escape``d, CDS tokens, transparent
+background, no ``position: fixed``, and no report data in executable
+script. A single ``<script>`` is emitted ONLY when the report has at
+least one actionable next-step command; a report with no actions stays
+pure display, script-free.
 """
 
 from __future__ import annotations
@@ -110,10 +122,23 @@ def _section_html(section: dict[str, Any]) -> str:
         for a in items:
             text = a.get("text") if isinstance(a, dict) else str(a)
             cmd = a.get("command") if isinstance(a, dict) else None
-            cmd_html = f' <code class="rp-cmd">{esc(cmd)}</code>' if cmd else ""
-            lis += f"<li>{_md_inline(text)}{cmd_html}</li>"
+            if cmd:
+                # Clickable action — closes the loop. The command sits in
+                # ``data-rp-command`` (escaped for the attribute; read back
+                # verbatim via getAttribute) and is posted by _ACTION_SCRIPT
+                # through ``sendPrompt``. It degrades to readable text (the
+                # ``<code>``) when the surface has no ``sendPrompt``.
+                lis += (
+                    '<li><button type="button" class="rp-step" '
+                    f'data-rp-command="{esc(cmd)}">'
+                    '<span class="rp-step-run">run</span> '
+                    f'<span class="rp-step-text">{_md_inline(text)}</span> '
+                    f'<code class="rp-cmd">{esc(cmd)}</code></button></li>'
+                )
+            else:
+                lis += f'<li><span class="rp-step-static">{_md_inline(text)}</span></li>'
         lis = lis or '<li class="rp-empty">none</li>'
-        return _wrap(len(items), f'<ul class="rp-list">{lis}</ul>')
+        return _wrap(len(items), f'<ul class="rp-list rp-steps">{lis}</ul>')
 
     # Generic fallback for any other section kind (callout/prose/table):
     # render the title plus any string items, escaped. Never produced by
@@ -166,6 +191,14 @@ def report_to_panel_html(report: dict[str, Any], succeeded: bool = True, message
     if not sections_html:
         sections_html = '<div class="rp-empty">no findings reported</div>'
 
+    # The script is emitted ONLY when a next-step actually carries a
+    # command — a report with no actions stays pure display, script-free.
+    has_actions = any(
+        s.get("kind") == "next-steps"
+        and any(isinstance(a, dict) and a.get("command") for a in (s.get("items") or []))
+        for s in sections
+    )
+
     return (
         '<div id="rp-panel">'
         + _STYLE
@@ -173,6 +206,7 @@ def report_to_panel_html(report: dict[str, Any], succeeded: bool = True, message
         + f'<div class="rp-head"><span class="rp-title">{title}</span>{score_html}</div>'
         + summary_html
         + sections_html
+        + (_ACTION_SCRIPT if has_actions else "")
         + "</div>"
     )
 
@@ -329,4 +363,49 @@ _STYLE = """<style>
 #rp-panel .rp-md-h3, #rp-panel .rp-md-h4,
 #rp-panel .rp-md-h5, #rp-panel .rp-md-h6 { font-size:13.5px; }
 #rp-panel .rp-md strong { color:var(--text-primary); }
+#rp-panel .rp-steps { list-style:none; padding-left:0; }
+#rp-panel .rp-steps li { margin:.2rem 0; }
+#rp-panel .rp-step { display:flex; align-items:baseline; gap:.45rem; width:100%;
+  text-align:left; padding:.45rem .6rem; font-size:14px; color:var(--text-primary);
+  background:var(--surface-1); border:1px solid var(--border);
+  border-radius:var(--radius); cursor:pointer; font-family:inherit; }
+#rp-panel .rp-step:hover { border-color:var(--border-accent); }
+#rp-panel .rp-step-run { flex:0 0 auto; font-size:10.5px; font-weight:700;
+  text-transform:uppercase; letter-spacing:.04em; color:var(--text-accent);
+  border:1px solid var(--border-accent); border-radius:3px; padding:0 .35em; }
+#rp-panel .rp-step-text { flex:1 1 auto; }
+#rp-panel .rp-step .rp-cmd { flex:0 0 auto; }
+#rp-panel .rp-step-sent { opacity:.55; cursor:default; }
+#rp-panel .rp-step-sent .rp-step-run::after { content:" \\2713"; }
+#rp-panel .rp-step[data-rp-nopost] .rp-step-run { color:var(--text-muted);
+  border-color:var(--border); }
+#rp-panel .rp-step-static { color:var(--text-secondary); }
 </style>"""
+
+
+#: Injection-safe click handler. Reads each action's command from its
+#: ``data-rp-command`` attribute (never from interpolated report data) and
+#: posts it verbatim through the widget's global ``sendPrompt`` — the same
+#: return path the elicitation widget uses. Emitted by
+#: :func:`report_to_panel_html` only when the report has an actionable
+#: next-step. Degrades gracefully: with no ``sendPrompt`` the button tags
+#: itself ``data-rp-nopost`` and the command stays readable as text.
+_ACTION_SCRIPT = """<script>
+(function() {
+  var panel = document.getElementById('rp-panel');
+  if (!panel) return;
+  panel.querySelectorAll('button.rp-step[data-rp-command]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var cmd = btn.getAttribute('data-rp-command');
+      if (!cmd) return;
+      if (typeof sendPrompt === 'function') {
+        sendPrompt(cmd);
+        btn.classList.add('rp-step-sent');
+        btn.disabled = true;
+      } else {
+        btn.setAttribute('data-rp-nopost', '1');
+      }
+    });
+  });
+})();
+</script>"""

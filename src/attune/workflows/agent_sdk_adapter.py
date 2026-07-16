@@ -32,11 +32,10 @@ from .output import (
     Finding,
     FindingsSection,
     ListSection,
-    NextStepsSection,
     Section,
     WorkflowReport,
+    next_steps_section_from_suggestions,
 )
-from .output import NextAction as ReportNextAction
 
 logger = logging.getLogger(__name__)
 
@@ -1675,14 +1674,15 @@ class AgentSDKResultAdapter:
                 ]
                 sections.append(ListSection(title=heading, tier="essential", items=str_items))
 
-        if suggestions:
-            sections.append(
-                NextStepsSection(
-                    title="Next steps",
-                    tier="essential",
-                    items=[ReportNextAction(text=s.description) for s in suggestions],
-                )
-            )
+        # Attach a re-runnable slash command to each suggestion so the report
+        # panel can render one-click next-step buttons (closes the
+        # workflow -> report -> next-step loop). The adapter's text-extracted
+        # suggestions flatten to the non-runnable ``agent-followup``, so these
+        # render as static text until the richer ``generate_suggestions``
+        # pipeline refreshes them post-execution (see execution_mixin).
+        next_steps = next_steps_section_from_suggestions(suggestions)
+        if next_steps is not None:
+            sections.append(next_steps)
 
         report_metadata: dict[str, object] = {"duration_s": duration_ms / 1000}
         if total_cost is not None:

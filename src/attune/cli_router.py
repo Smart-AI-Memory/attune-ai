@@ -18,6 +18,50 @@ import yaml
 from attune.routing import SmartRouter
 from attune.security.path_validation import _validate_file_path
 
+#: Canonical ``workflow_name -> (skill, args)`` map. The single source of
+#: truth for translating a workflow name into a Claude Code skill
+#: invocation — used both by :meth:`HybridRouter._workflow_to_skill` and by
+#: :func:`workflow_to_slash_command` (the next-step button's re-run command).
+_WORKFLOW_SKILL_MAP: dict[str, tuple[str, str]] = {
+    "security-audit": ("workflows", "run security-audit"),
+    "bug-predict": ("workflows", "run bug-predict"),
+    "code-review": ("dev", "review"),
+    "test-gen": ("testing", "gen"),
+    "perf-audit": ("workflows", "run perf-audit"),
+    "commit": ("dev", "commit"),
+    "refactor": ("dev", "refactor"),
+    "simplify": ("workflows", "run simplify-code"),
+    "simplify-code": ("workflows", "run simplify-code"),
+    "debug": ("dev", "debug"),
+    "explain": ("docs", "explain"),
+    "plan": ("plan", ""),
+}
+
+#: Generic placeholder workflow names that have no concrete re-runnable
+#: command (a suggestion the engine could not tie to a real workflow).
+_NON_RUNNABLE_WORKFLOWS = frozenset({"agent-followup", ""})
+
+
+def workflow_to_slash_command(workflow: str) -> str | None:
+    """Translate a workflow name into a re-runnable Claude Code slash command.
+
+    Used by the report panel's next-step buttons: clicking one posts this
+    string through the widget's ``sendPrompt`` so it becomes the next
+    prompt, closing the workflow -> report -> next-step loop.
+
+    Args:
+        workflow: Workflow name from a suggestion (e.g. ``"security-audit"``).
+
+    Returns:
+        A slash command like ``"/workflows run security-audit"`` or
+        ``"/dev review"``, or ``None`` for a generic placeholder
+        (``"agent-followup"``) that names no concrete workflow.
+    """
+    if workflow in _NON_RUNNABLE_WORKFLOWS:
+        return None
+    skill, args = _WORKFLOW_SKILL_MAP.get(workflow, ("workflows", f"run {workflow}"))
+    return f"/{skill} {args}".rstrip() if args else f"/{skill}"
+
 
 @dataclass
 class RoutingPreference:
@@ -394,23 +438,7 @@ class HybridRouter:
             Tuple of (skill_name, args)
 
         """
-        # Workflow to skill mapping
-        workflow_map = {
-            "security-audit": ("workflows", "run security-audit"),
-            "bug-predict": ("workflows", "run bug-predict"),
-            "code-review": ("dev", "review"),
-            "test-gen": ("testing", "gen"),
-            "perf-audit": ("workflows", "run perf-audit"),
-            "commit": ("dev", "commit"),
-            "refactor": ("dev", "refactor"),
-            "simplify": ("workflows", "run simplify-code"),
-            "simplify-code": ("workflows", "run simplify-code"),
-            "debug": ("dev", "debug"),
-            "explain": ("docs", "explain"),
-            "plan": ("plan", ""),
-        }
-
-        return workflow_map.get(workflow, ("workflows", f"run {workflow}"))
+        return _WORKFLOW_SKILL_MAP.get(workflow, ("workflows", f"run {workflow}"))
 
     def learn_preference(self, keyword: str, skill: str, args: str = "") -> None:
         """Learn user's routing preference.
