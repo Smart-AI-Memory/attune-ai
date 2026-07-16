@@ -1,10 +1,18 @@
 # Too Graceful: When Your Fallbacks Lie to You
 
-<!-- STATUS: draft v1, Patrick-reviewed 2026-06-11. DO NOT publish
-to attune-ai-dev yet — publication is gated on the Redis/recall
-memory features working reliably (Patrick's call, 2026-06-11): the
-article ships once its own subject is proven fixed. Outline +
-decisions: LEGIBLE_FAILURE_outline.md. -->
+<!-- STATUS: draft v1, Patrick-reviewed 2026-06-11. Publication
+gate ("Redis/recall memory features working reliably") ruled MET
+by Patrick 2026-07-16: memory unification shipped (#1239,
+2026-07-04), guardrail suites landed (#1293–#1295), hydration
+green since. Freshness pass 2026-07-16 — all three mechanisms
+re-verified against live code: backend_status()
+(src/attune/memory/session_stash.py:181), zero-results health
+line (plugin/hooks/session_recall.py:231), stash.log forensic
+trail (plugin/hooks/session_stash.py:99). CLEARED for
+publication prep: attune-ai-dev page + Discipline-article
+cross-links (both ways) + LinkedIn cut (~600–800 words, ASCII
+markers only). Outline + decisions: LEGIBLE_FAILURE_outline.md.
+-->
 
 *Every fallback borrows observability from your future self.*
 

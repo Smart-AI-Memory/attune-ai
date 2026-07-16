@@ -1,7 +1,11 @@
 # The Discipline of Agent Collaboration — Outline
 
-**Status:** outline APPROVED 2026-05-25 · ready for Phase 3b
-section drafting
+**Status:** SUPERSEDED — the article this outlined shipped and is
+live at attune-ai.dev/discipline (Draft v5, published 2026-07-02,
+revision history in
+`COLLABORATION_DISCIPLINE_revision_2026-07-02_proposal.md`). Kept
+as the historical outline record. (Was: outline APPROVED
+2026-05-25 · ready for Phase 3b section drafting.)
 
 **Working title (locked 2026-05-25):**
 

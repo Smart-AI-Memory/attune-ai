@@ -1,10 +1,11 @@
 # Article outline — "Too Graceful: When Your Fallbacks Lie to You"
 
 **Status:** draft v1 written + Patrick-reviewed same day
-(LEGIBLE_FAILURE_draft_v1.md, ~1,490 words). **Publication gated**
-on the Redis/recall memory features working reliably (Patrick,
-2026-06-11) — the article ships once its own subject is proven
-fixed; the recall-loop soak (#769) is the readiness signal. Then:
+(LEGIBLE_FAILURE_draft_v1.md, ~1,490 words). **Gate MET
+2026-07-16** (Patrick): memory unification (#1239) + guardrail
+suites (#1293–#1295) shipped, hydration green since 2026-07-04 —
+the article's subject is proven fixed. Freshness pass 2026-07-16
+re-verified all three mechanisms against live code. Next:
 attune-ai-dev page + LinkedIn cut (~600–800 words).
 **Relationship to the Discipline article:** standalone companion
 piece, per the "article is generative — synergies tied to the
@@ -28,7 +29,7 @@ fast?"*
 ## The spine: one true story (2026-06-11 recall-loop triage)
 
 Narrative arc, all receipts real
-(docs/specs/just-in-time-recall/recall-loop-triage-2026-06-11.md):
+(docs/specs/archive/just-in-time-recall/recall-loop-triage-2026-06-11.md):
 
 1. The innocent question: "are the memory enhancements helping yet?"
 2. The dogfood: `/recall` on a topic with rich history → `[]`.

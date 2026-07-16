@@ -15430,3 +15430,30 @@ def ", start_idx + 1)` for module-
   autoPort surface) and the "static-preview helper must read
   os.environ['PORT']" lesson (same PORT-env discipline, applied to the
   real `attune.ops` CLI rather than a static helper).
+
+- **A gated document goes silently UNBLOCKED, not stale — staleness
+  audits of docs with prose publication gates must include an
+  "is-the-gate-now-met?" check**: 2026-07-16, auditing Patrick's
+  "foundational documents" staleness doubt. The canonical philosophy
+  artifact (discipline article) was fine — single-sourced, pipeline-
+  guarded, redeploys on merge. The doubt was actually coming from
+  SATELLITE artifacts: a superseded outline still claiming "ready
+  for Phase 3b drafting," a misnamed `docs/philosophy/` dir holding
+  zero philosophy, and the key find —
+  `docs/process/LEGIBLE_FAILURE_draft_v1.md` gated (2026-06-11) on
+  "publish once Redis/recall memory features are proven fixed." That
+  condition was arguably MET by #1239 memory unification
+  (2026-07-04) + guardrail suites, yet the article sat behind an
+  open door for ~10 days because a prose gate in an HTML comment has
+  nothing re-checking it. Three-part pattern: (1) when a user doubts
+  "foundational doc" freshness, audit tiers separately — the
+  canonical artifact (usually pipeline-guarded, fine) vs the
+  satellites (outlines/proposals/exports with manual Status lines,
+  where the rot lives); (2) for every doc whose status line contains
+  a GATE ("ships when X"), evaluate whether X has since shipped —
+  gates open silently, and an unblocked deliverable is a better find
+  than a stale one; (3) when a gate stays closed, rewrite its
+  condition to be CHECKABLE (name the specific missing thing) so the
+  next audit is a lookup, not a judgment call. Extends the "freshness
+  exemption is an enforcement HOLE unless something guards the
+  surface" lesson from projection-drift to publication gates.
