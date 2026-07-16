@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 
 from attune.workflows.agent_sdk_adapter import AgentSDKResultAdapter as A
-from attune.workflows.report_panel import report_to_panel_html
+from attune.workflows.report_panel import markdown_to_panel_html, report_to_panel_html
 
 pytestmark = pytest.mark.unit
 
@@ -42,6 +42,15 @@ class TestCategoryBullets:
         assert 'class="rp-ref">config.py:88' in html
         assert "bare except" in html
         assert "<ul" in html
+
+    def test_list_bullets_render_inline_bold_and_code(self):
+        # text-tier bullets often carry markdown; render it, don't leave
+        # literal **asterisks** / `backticks` (the Family-B follow-up)
+        d = _report({"security": ["Use **parameterized** queries, never `eval`"]})
+        html = report_to_panel_html(d)
+        assert "<strong>parameterized</strong>" in html
+        assert '<code class="rp-cmd">eval</code>' in html
+        assert "**parameterized**" not in html
 
     def test_score_and_summary_in_header(self):
         html = report_to_panel_html(_report({"security": ["x"]}, summary="2 issues found."))
@@ -146,3 +155,52 @@ class TestInjectionSafety:
     def test_no_script_tag(self):
         html = report_to_panel_html(_report({"security": ["x"]}))
         assert "<script" not in html.lower()
+
+
+class TestMarkdownPanel:
+    """Family-B: prose-only workflows render markdown through a panel."""
+
+    def test_headings_lists_and_paragraphs_render(self):
+        md = "# Deep Review\n\nCode is fine.\n\n- item one\n- item two\n\n## Next\n1. do a thing"
+        html = markdown_to_panel_html(md, title="Deep Review")
+        assert 'id="rp-panel"' in html
+        # title head + both ATX headings become rp-md-h blocks
+        assert html.count("rp-md-h") >= 2
+        assert "Deep Review" in html and "Next" in html
+        # bullets AND the numbered item both become <li>
+        assert html.count("<li>") == 3
+        assert "item one" in html and "do a thing" in html
+        # a plain line becomes a paragraph
+        assert 'class="rp-md-p"' in html and "Code is fine." in html
+
+    def test_inline_bold_and_code(self):
+        html = markdown_to_panel_html("Overall **solid** work in `config.py`")
+        assert "<strong>solid</strong>" in html
+        assert '<code class="rp-cmd">config.py</code>' in html
+
+    def test_cwe_and_file_ref_accents_reused(self):
+        html = markdown_to_panel_html("- Hardcoded key in config.py:88 (CWE-798)")
+        assert 'class="rp-ref"' in html  # file:line accent
+        assert 'class="rp-cwe"' in html  # CWE accent
+
+    def test_escapes_html_never_emits_raw_markup(self):
+        html = markdown_to_panel_html("A `<script>alert(1)</script>` snippet")
+        assert "<script>" not in html
+        assert "&lt;script&gt;" in html
+
+    def test_no_script_tag(self):
+        assert "<script" not in markdown_to_panel_html("# H\n\ntext").lower()
+
+    def test_failure_state_never_a_false_all_clear(self):
+        html = markdown_to_panel_html("looks fine", succeeded=False)
+        assert "did not complete" in html
+        assert "NOT a clean result" in html
+
+    def test_empty_input_renders_placeholder_not_crash(self):
+        html = markdown_to_panel_html("")
+        assert 'id="rp-panel"' in html
+        assert "no content" in html
+
+    def test_message_caption_rendered(self):
+        html = markdown_to_panel_html("body", message="deep-review of src/")
+        assert "deep-review of src/" in html
