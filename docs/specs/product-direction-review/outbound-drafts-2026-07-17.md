@@ -14,7 +14,16 @@ attune-ai on a real repo**. Async text threads count
 
 ---
 
-## Draft 1 — Conversation 1 re-ask (highest yield, send first)
+## Draft 1 — Conversation 1 re-ask — DEAD (2026-07-17)
+
+**Do not send.** Conversation 1 was downgraded: likely the Jacob
+apprenticeship call (phone; he likely never ran attune-ai; mutual
+decision not to work together). There is no async thread, no confirmed
+user, and no four-question interview to conduct. A graceful two-line
+text to Jacob was drafted in-session if ever wanted; the interview
+questions transfer to whichever REAL conversation comes next.
+
+### Original draft (kept for the question checklist)
 
 **Why first:** the log's "Not captured (ask next time)" already lists
 four questions, and one of them — *how the conversation was sourced* —
@@ -72,12 +81,12 @@ posture and probably earns more trust than it costs — but it is a
 public, durable statement, and that is your call, not mine.
 
 > I've been building attune-ai in the open for months. Here's a number
-> I haven't posted: I have had exactly **one** real conversation with
-> someone who ran it on their own repo.
+> I haven't posted: the number of confirmed conversations I've had with
+> someone who ran it on their own repo is **zero**.
 >
-> One. And it was the most useful hour of the project — they told me
-> setup fought them, which reframed what I thought the product's
-> problem was.
+> Zero. The closest I got was a conversation that reframed what I
+> thought the product's problem was — and even that one, I can't
+> honestly claim the person ever ran it.
 >
 > So I'm asking directly instead of waiting: **if you've ever pip
 > installed attune-ai and actually pointed it at a real repository, I
