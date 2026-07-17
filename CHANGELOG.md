@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.5.0] — 2026-07-17
+
+Feature release: the analysis-workflow widget surface is now complete
+(every workflow renders a rich panel, with clickable next steps), the
+elicitation form surface gained its canonical reference form and
+cheaper rendering paths, and the packaging surface was made honest —
+empty placeholder extras deleted and every install remediation now
+names a command that can actually fix the stated problem.
+
+### Added
+
+- **Every analysis workflow now renders a rich report panel** (#1409).
+  Prose-only runs (deep-review, test-audit, refactor-plan,
+  dependency-check, code-review without findings) previously fell back
+  to raw markdown with no widget; `markdown_to_panel_html` closes the
+  Family-B gap.
+- **Report panels render next-step actions as clickable RUN buttons**
+  (#1411). Clicking posts the command back as the next prompt, closing
+  the workflow → report → next-workflow loop.
+- **`attune.elicitation.reference_form`** (#1412) — the canonical,
+  code-verified example form: one field per QuestionType across all
+  ten controls, paired with valid `EXAMPLE_ANSWERS`; doubles as the
+  living spec for form authors.
+- **`needs_widget(form)`** (#1413) — deterministic routing predicate:
+  forms expressible with native controls skip the widget round-trip
+  entirely and go straight to the cheaper surface.
+
+### Changed
+
+- **Widget forms ship only the CSS their controls use** (#1414). The
+  style block is split into per-control families; typical forms emit
+  46–70% less CSS than the previous fixed 4.7 KB block.
+
+### Fixed (also in this release)
+
+- **`create-agent` no longer crashes rendering its cost-estimate
+  line** (#1403) — a Rich markup span split across two prints raised
+  `MarkupError` at the end of every successful create.
+- **`attune ops --port` honors the `PORT` env var** (#1405) — the
+  hardcoded 8765 default collided with occupied ports under process
+  managers using auto-port placement.
+- **Coverage baseline no longer misreports modules loaded via
+  `spec_from_file_location`** (#1397).
+
 ### Removed
 
 - **The six empty placeholder extras (`[rag]`, `[memory]`, `[redis]`,
