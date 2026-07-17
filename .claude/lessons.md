@@ -15506,3 +15506,55 @@ def ", start_idx + 1)` for module-
   uncommitted working-tree edit for local dev is fine; a WIP BRANCH is
   what's blocked). Pairs with the existing worktree-path / editable-
   MAPPING lessons — same family, this is the cross-SIBLING-repo surface.
+
+- **A green `starter_reconciler` report is NOT "the starter is
+  accurate" — it proves PR/PyPI STATE, and says nothing about the
+  DECISION CONTENT the starter narrates; reconcile a "decision open"
+  thread against the decision's own record file**: 2026-07-17,
+  picking up `~/.attune/next_session_starter.md`. The
+  `starter_reconciler.py` SessionStart hook ran and reported clean
+  (`#1412 MERGED · #1413 MERGED · #1414 MERGED · #1415 MERGED · #1407
+  MERGED`, `PyPI attune-ai latest=10.4.1`) — every PR the starter
+  named was correctly resolved, and the starter's own "Pre-flight"
+  section confirmed them. That green is exactly what made the lead
+  thread dangerous: it read as blanket verification. But the starter's
+  §(1) said "Three decisions open (Patrick dismissed the first
+  form-pass — re-present, possibly one at a time)" for the book
+  outline, while `docs/process/BOOK_OUTLINE.md`'s "Decisions record"
+  showed **all three already decided** — working title DEFERRED,
+  3-part structure RATIFIED, Part-I mode CITE-the-article — recorded
+  in #1408 at **12:27 the same day**, ~11h before the starter was
+  written at 23:20. The 22:48 latency session had copied the older
+  9:32-session thread text forward verbatim without re-reading the
+  file it pointed at. Executing as written would have re-presented a
+  form Patrick had already answered — the precise "dismissed the first
+  form-pass" annoyance the starter was warning about, inflicted a
+  second time. **Why no probe caught it:** the reconciler's checks are
+  `gh pr view --json state` and a PyPI version read — both are
+  SHIPPING-state probes. The staleness lived in *document content
+  inside an already-merged file*, so #1408 being MERGED was
+  simultaneously true and the reason the thread was dead. There is no
+  PR-state query whose answer is "the decision this thread describes
+  was made." **Durable rules:** (1) a thread framed as "decision open
+  / awaiting approval / needs ratify" reconciles against **the
+  artifact that would record the decision** (`decisions.md`, a spec
+  `Status:` line, a "Decisions record" section) — one Read, not a `gh`
+  call; (2) `git log --format='%h %ad' --date=...` the starter's named
+  files and compare against the starter's own mtime (`stat -f '%Sm'`)
+  — a commit touching the thread's file AFTER the text was drafted but
+  BEFORE the starter was written is the tell that a copy-forward
+  skipped a reconcile; (3) treat automated reconciliation as covering
+  its stated surface ONLY, and say which surface — "PRs verified" ≠
+  "threads verified"; (4) when a stale thread is found, fix the
+  starter file itself in the same session (rewrite the section to
+  CLOSED with the date + recording commit), or the next session
+  inherits the same phantom. Extends "A next-session starter / TODO
+  handoff can be STALE ON ARRIVAL" (same family, second+ recurrence)
+  with the nuance that lesson's remedy misses: it says reconcile
+  against `git/gh/PyPI`, which is necessary but insufficient — a
+  decision-shaped thread needs a content Read, and the automation
+  built to enforce the original lesson can supply false confidence
+  precisely because it passes. Pairs with "Spec-named work-scope
+  drifts from code reality — grep the actual instances" (the code is
+  the contract) and "gated document goes silently unblocked" — all
+  three are prose-about-state rotting while the state moves.

@@ -3,6 +3,10 @@
 **Status:** draft (2026-07-16) — awaiting Patrick approval.
 **Freeze:** design-only until 2026-07-28 (ratified with the
 standards-landscape sequence); no code before the freeze lifts.
+**Sequencing:** V7 (`v7-requirements.md`) was ratified 2026-07-17 and
+sequences BEFORE this doc in the same post-freeze window (D20 in
+[decisions.md](decisions.md)) — V7's templates supply this adapter's
+round-trip payloads. This doc's own approval remains open.
 **Source:** [v3-standards-landscape.md](v3-standards-landscape.md)
 (2026-07-13, 26-agent verified) — this doc is its "Recommended
 sequence" step 2 (+ step 1 as FR-4), phased as V6.
