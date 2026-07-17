@@ -50,8 +50,9 @@ arrive and read the silence as the answer to F1.
 
 ## Outbound — 2026-07-17: LinkedIn ask POSTED (the DEC-2 decision, executed)
 
-Patrick posted the direct ask to LinkedIn on 2026-07-17 (URL pending
-capture — the recurring gap; capture it). Final angle was Patrick's
+Patrick posted the direct ask to LinkedIn on 2026-07-17.
+**URL (captured same day — gap not repeated this time):**
+https://www.linkedin.com/posts/patrick-roebuck-attune-ai_ive-been-building-attune-ai-in-the-open-share-7483920107094810624-FuCy/ Final angle was Patrick's
 own: setup-has-been-a-challenge / "if pip installing attune-ai gave
 you trouble, I'd appreciate your help" — grounded in the verified
 F1–F5 frictions and pointing the same direction as Discussion #1325.
