@@ -25,9 +25,15 @@ depend on the outbound decision.
 **Tone note:** they gave you setup criticism and it was right. Leading
 with what you did about it earns the follow-up questions.
 
-> Hey — following up on our conversation a couple weeks back, mostly
-> because you were right about the setup problem and I've been chewing
-> on it since.
+**Timeframe check (corrected 2026-07-17):** conversation 1 was
+**2026-07-09** — 8 days ago. "Last week," not "a couple weeks back."
+Re-check this line if the message sits unsent for more than a few days.
+
+**APPROVED by Patrick 2026-07-17** — this is the send-ready text.
+
+> Hey — following up on our conversation last week, mostly because you
+> were right about the setup problem and I've been chewing on it
+> since.
 >
 > I'm trying to be disciplined about not guessing what's wrong with
 > this thing, so four questions if you have five minutes:
@@ -85,12 +91,15 @@ public, durable statement, and that is your call, not mine.
 
 ---
 
-## Draft 3 — Stargazer reach-out (9 people, individual)
+## Draft 3 — Stargazer reach-out (8 people, individual)
 
-**Why:** it is the only other real list. Nine people is small enough
-to message individually, which will outperform a broadcast. A star is
-weak evidence they ran it — expect most to say "I bookmarked it" and
-count that honestly as a non-conversation.
+**Correction (2026-07-17):** the pond is **8, not 9**. Of the 9
+stargazers, one is `silversurfer562` — Patrick's own account. The
+real external list is: `darphiz`, `michelkro`, `oldschoola`,
+`hegc-co`, `swstegall`, `shapefuture`, `bilal-zencloud`, `madhanio`.
+Small enough to message individually, which will outperform a
+broadcast. A star is weak evidence they ran it — expect most to say
+"I bookmarked it" and count that honestly as a non-conversation.
 
 **Do not** mass-DM identical text; GitHub reads that as spam and it
 would earn a reputation hit worth more than the data.
