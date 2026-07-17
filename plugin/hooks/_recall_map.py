@@ -190,5 +190,32 @@ RECALL_MAP: dict[str, list[dict[str, str]]] = {
                 "`st`/`result` instead."
             ),
         },
+        # Migrated off harness path-scope (2026-07-16): these two doc rules
+        # used to auto-load their full ~1.3k-token bodies on any docs/content
+        # edit — and doubled in a dogfooding session (plugin installed in its
+        # own repo). Served here as deduped one-liners with a pointer; the
+        # full bodies live behind the INDEX in .claude/rules-tail/attune/.
+        {
+            "rule_id": "doc-fiction-triage",
+            "match_regex": r"(docs|content)/",
+            "text": (
+                "Doc-cleanup pre-flight: before deleting/rewriting docs that "
+                "name a 'removed' symbol, VERIFY it is actually gone from "
+                "src/ (a live symbol at a new path is not fiction), inventory "
+                "the FULL dead-symbol set, and scope to PUBLISHED surfaces. "
+                "Full checklist: .claude/rules-tail/attune/doc-fiction-triage.md"
+            ),
+        },
+        {
+            "rule_id": "doc-import-gate",
+            "match_regex": r"(docs|content)/",
+            "text": (
+                "Doc-import gate: a doc code-fence importing a REMOVED attune "
+                "symbol fails the doc-import-audit (served surfaces only). If "
+                "a fence shows old API on purpose, mark it "
+                "'<!-- doc-import-skip: reason -->'. Full body: "
+                ".claude/rules-tail/attune/doc-import-gate.md"
+            ),
+        },
     ],
 }
