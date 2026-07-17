@@ -15654,3 +15654,96 @@ def ", start_idx + 1)` for module-
   "'Registered ≠ working' — dogfood the live loop" (static clean ≠
   works) and the N1 "unrecorded signal doesn't compound" rule, which
   this extends: half-recorded signal doesn't compound either.
+
+- **A guard's own ALLOWLIST is a re-introduction vector for the exact
+  bug the guard exists to prevent — and a guard scoped to "referenced"
+  is blind to the unreferenced population**: 2026-07-17, PR #1418.
+  `tests/unit/test_extras_honesty.py` was built (post-#758) to stop one
+  specific trap: an error message saying `pip install 'attune-ai[rag]'`
+  while `rag = []` was an empty no-op alias — the command succeeded,
+  installed nothing, and the error persisted, an unfixable loop. The
+  guard's docstring narrates that history. **Then `redis` was added to
+  its `EMPTY_ALIAS_ALLOWLIST` and the identical bug shipped anyway, for
+  ~3 months.** The allowlist entry was individually defensible ("redis
+  client promoted to core 2026-07-04; alias kept for back-compat") —
+  the flaw was that it conflated two uses the guard cannot distinguish:
+  - an empty alias as an **INSTALL TARGET** ("want redis? core delivers
+    it") — fine, the user gets what they asked for via base deps;
+  - an empty alias as a **REMEDIATION** ("redis missing? run this") —
+    never fine: a no-op cannot fix the stated problem. That IS the trap.
+  All 9 live hints were remediations. **Second, structural hole:** the
+  guard only checked empty extras that a `src/` message REFERENCED. So
+  `rag`, `memory`, `cache`, `agent-sdk`, `software` — empty AND
+  unreferenced — were invisible to every test in the file and sat in
+  the menu indefinitely (22 extras, 6 fake). A guard's predicate
+  silently defines its blind spot: "referenced AND empty" leaves
+  "empty" unpoliced. Fix shipped: allowlist emptied, the
+  install-target-vs-remediation line written into the docstring, and a
+  new `test_no_undocumented_empty_extras` that catches empty extras
+  whether or not anything names them. **Durable rules:** (1) when
+  adding an entry to a guard's escape hatch, ask "does this entry
+  re-admit the case the guard was built for?" — an allowlist is a
+  standing exception, and the guard cannot re-derive the reasoning
+  later; (2) write the *distinction* the exception depends on INTO the
+  guard, not just the exception; (3) read a guard's predicate as a
+  claim about coverage — whatever it ANDs together is what it does not
+  police alone. Pairs with the "grep for an existing enforcer" lesson
+  (that one is about not rebuilding a guard; this is about the guard
+  you already have lying to you).
+
+- **`subprocess.check_call` exiting 0 is not proof the thing installed
+  — verify the POSTCONDITION, or a no-op reports "✓ installed" and
+  sends the user to debug the wrong subsystem**: the concrete bug under
+  the guard hole above (`redis_auto_detect.py`, fixed #1418). Flow: a
+  user whose `import redis` fails is told "Redis Python Package
+  Required" → answers Yes → the installer runs `pip install --quiet
+  attune-ai[redis]` → **an empty alias, so pip exits 0 having installed
+  nothing** → prints **`✓ redis package installed`** → then checks the
+  Redis SERVER, fails, and prompts for a server install. The user is
+  now debugging a server when their package is still broken, having
+  been told the fix succeeded. Same family as "'Registered ≠ working' —
+  dogfood the live loop" and the `StubAgent` fake-success, on the
+  install/subprocess surface: **the command's exit code is evidence
+  about the command, never about the goal.** Fix pattern used: target
+  the real package (`pip install --force-reinstall redis`), then
+  `importlib.invalidate_caches()` + re-run the actual import check
+  before printing success; on "pip succeeded but still not importable",
+  say exactly that rather than claiming a win. Note the cache
+  invalidation is load-bearing — the import finder caches directory
+  listings, so a just-installed package can still look missing and
+  produce a false negative. **Rule:** any "install/repair X" flow must
+  end by re-testing the predicate that triggered it (`can I import it
+  now?`), not by trusting the tool it shelled out to.
+
+- **Never truncate a blast-radius sweep, and encode the invariant as
+  code — the sweep you eyeball is the sweep you get wrong (three
+  near-misses in one change)**: 2026-07-17, #1418, deleting 6 pyproject
+  extras. Three separate ways the sweep almost shipped half-done:
+  (1) **`head -8` on the affected-files grep** hid a SECOND
+  `test_utility_commands.py` (under `tests/unit/cli_commands/`) — a
+  real breakage that only surfaced because a later untruncated run
+  listed 31 files. Truncating a blast-radius search is not a display
+  choice; it is a correctness choice.
+  (2) **A single-extra regex** (`attune-ai\[(rag|memory|...)\]`) missed
+  the COMPOUND form `attune-ai[ops,redis]` — caught only by a
+  programmatic invariant ("every extra named in live docs exists in
+  pyproject") that parsed and split on `,`, not by any grep.
+  (3) **The invariant checker itself had a bug**: `.split()` on
+  whitespace shredded the required-context `test (ubuntu-latest, 3.12)`
+  into three fake contexts and reported "REQUIRED ALL GREEN: False" —
+  nearly a wrong "don't merge" call. `gh` context names contain spaces;
+  split on NEWLINES.
+  Related, same change: a mechanical `sed` across 12 doc files produced
+  grammatical nonsense ("install the extra: `pip install attune-ai`";
+  "## Graceful behavior when the extra isn't installed / Without `pip
+  install attune-ai`") because **a doc reference is a claim, not a
+  string** — each of the 6 extras needed different replacement truth
+  (rag→core since v3.x, cache→prompt caching is automatic,
+  redis→core client + server still needed). Sed first if you like, then
+  READ every hunk in context. **Rules:** (a) blast-radius greps get no
+  `head`; (b) express the post-condition as a script that re-derives it
+  from source-of-truth and prints PASS/FAIL, so the check is repeatable
+  and reviewable — it is the only thing that caught (2); (c) treat your
+  own checker as under test — a checker that can only print PASS is
+  worthless, so make it fail once on purpose (here: injecting
+  `bogus = []` proved the new guard test fired before it was trusted).
