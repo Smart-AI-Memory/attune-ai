@@ -98,10 +98,6 @@ dependencies = [
 # The "Crew" workflows use EmpathyLLMExecutor (Anthropic SDK) directly.
 
 [project.optional-dependencies]
-# attune-rag promoted to core dep in v3.x (required for acceptable accuracy).
-# The [rag] extra is kept as a no-op alias for backward compat with any
-# install scripts that used `pip install attune-ai[rag]`.
-rag = []
 
 # Help authoring (generate / regenerate / polish the
 # project's own `.help/` templates). Optional because
@@ -121,17 +117,7 @@ author = [
     "attune-help>=0.10.0",
 ]
 
-# `[memory]` extra removed in v6.8.0 (P2 of redis-decoupling spec).
-# It was redundant with `[redis]` — both pulled `redis-py`. Empty no-op
-# kept for backward compat with `pip install 'attune-ai[memory]'`; users
-# who actually want Redis should use `[redis]` (canonical opt-in for the
-# bundled attune_redis plugin).
-memory = []
 
-# Redis/AMS deps promoted to CORE 2026-07-04 (see the core
-# dependencies comment). Empty no-op kept for backward compat with
-# `pip install 'attune-ai[redis]'` — same pattern as [memory]/[rag].
-redis = []
 
 # LLM provider (Claude-native architecture)
 anthropic = ["anthropic>=0.40.0"]
@@ -159,18 +145,8 @@ agents = [
 # See docs/CREWAI_MIGRATION.md for migration guide.
 # crewai_adapter.py kept for backward compatibility (lazy-loaded, no core dep)
 
-# Cache extra removed — Anthropic's built-in prompt caching (90% discount)
-# is automatic via the Claude Agent SDK. Kept as empty extra for backward
-# compatibility with pip install 'attune-ai[cache]'.
-cache = []
 
-# Anthropic Agent SDK — now a core dependency (moved to [project.dependencies])
-# Kept as empty extra for backward compatibility with pip install 'attune-ai[agent-sdk]'
-agent-sdk = []
 
-# Software development plugin (code review, bug prediction, etc.)
-# NOTE: attune-software is bundled in this repo at attune_software/
-software = []
 
 # Backend API server (optional) - authentication
 backend = [

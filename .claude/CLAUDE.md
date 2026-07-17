@@ -121,7 +121,10 @@ src/attune/
 ├── telemetry/         # FeedbackLoop, UsageTracker (MemoryBackend protocol)
 └── cli_router.py      # Natural language command routing
 
-attune_redis/          # attune-redis plugin (pip install attune-redis)
+attune_redis/          # Redis plugin — BUNDLED, ships in the attune-ai
+                       # wheel (packages.find scans '.'); redis +
+                       # agent-memory-client are core deps. There is no
+                       # `pip install attune-redis` — that name 404s.
 ```
 
 ---

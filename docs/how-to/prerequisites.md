@@ -124,7 +124,7 @@ Get your key: [console.anthropic.com](https://console.anthropic.com/)
 pip install attune-ai
 
 # With Redis support
-pip install 'attune-ai[redis]'
+pip install attune-ai
 
 # With the ops dashboard
 pip install 'attune-ai[ops]'

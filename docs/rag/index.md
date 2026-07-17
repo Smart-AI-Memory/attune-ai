@@ -8,7 +8,7 @@ package.
 ## Install
 
 ```bash
-pip install 'attune-ai[rag]'
+pip install attune-ai
 ```
 
 This pulls in `attune-rag` and its bundled
@@ -89,14 +89,17 @@ Returns:
 }
 ```
 
-## Graceful behavior when the extra isn't installed
+## Graceful behavior when `attune-rag` is missing
 
-Without `pip install 'attune-ai[rag]'`:
+`attune-rag` is a **core dependency** — `pip install attune-ai` always
+brings it. (A legacy `[rag]` extra existed as an empty back-compat
+alias and was deleted 2026-07-17.) So this path only fires on a broken
+or partial install, and the remediation names the real package:
 
 - The `rag-code-gen` workflow still loads but
   `execute()` returns a `WorkflowResult` with
-  `success=False` and a clear "install
-  attune-ai\[rag\]" hint
+  `success=False` and a hint to reinstall with
+  `pip install attune-rag`
 - The `rag_knowledge_query` MCP tool remains registered in
   the schema; the handler returns a structured
   `{success: false, error, cause}` dict pointing at the

@@ -673,7 +673,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'dev'", specifier = ">=0.27.0,<1.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'ops'", specifier = ">=0.27.0,<1.0" },
 ]
-provides-extras = ["rag", "author", "memory", "redis", "anthropic", "llm", "memdocs", "agents", "cache", "agent-sdk", "software", "backend", "lsp", "windows", "ops", "otel", "docs", "dev", "developer", "enterprise", "full", "all"]
+provides-extras = ["author", "anthropic", "llm", "memdocs", "agents", "backend", "lsp", "windows", "ops", "otel", "docs", "dev", "developer", "enterprise", "full", "all"]
 
 [package.metadata.requires-dev]
 dev = [

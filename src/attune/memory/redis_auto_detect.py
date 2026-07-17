@@ -234,7 +234,7 @@ class RedisAutoDetector:
         print("  persistent session memory in Attune AI.")
         print()
         print("  Install now?")
-        print("    pip install 'attune-ai[redis]'")
+        print("    pip install --force-reinstall redis")
         print()
 
         try:
@@ -246,7 +246,7 @@ class RedisAutoDetector:
         if response in ("d", "dont", "don't"):
             self._save_preference("install_declined", True)
             print("  Won't ask again. Enable later with:")
-            print("    pip install 'attune-ai[redis]'")
+            print("    pip install --force-reinstall redis")
             print("=" * 60)
             print()
             return False
@@ -257,7 +257,10 @@ class RedisAutoDetector:
             print()
             return False
 
-        # Install the package
+        # Install the package. Target `redis` directly, NOT
+        # `attune-ai[redis]` — that extra is an empty back-compat alias
+        # (redis ships as a core dep), so installing it is a no-op that
+        # exits 0 and would make the success message below a lie.
         print()
         print("  Installing redis package...")
         try:
@@ -268,27 +271,46 @@ class RedisAutoDetector:
                     "pip",
                     "install",
                     "--quiet",
-                    "attune-ai[redis]",
+                    "--force-reinstall",
+                    "redis",
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            print("  ✓ redis package installed")
-            print("=" * 60)
-            print()
-            # Now check if server is also available
-            if self._check_server_reachable():
-                self._invalidate_cache()
-                return True
-            # Package installed but server not running — prompt for server
-            return self._prompt_server_install()
         except subprocess.CalledProcessError as e:
             print(f"  ✗ Installation failed: {e}")
-            print("  Install manually: pip install 'attune-ai[redis]'")
+            print("  Install manually: pip install --force-reinstall redis")
             print("=" * 60)
             print()
             logger.error(f"Failed to install redis package: {e}")
             return False
+
+        # pip exiting 0 is not proof the import works — verify before
+        # claiming success, or a no-op install reports "✓ installed"
+        # and sends the user off to debug their server instead.
+        import importlib
+
+        # The import finder caches directory listings; without this a
+        # just-installed package can still look missing.
+        importlib.invalidate_caches()
+        self._invalidate_cache()
+        if not self._check_python_package():
+            print("  ✗ pip reported success but redis is still not importable.")
+            print("    This usually means a broken environment rather than a")
+            print("    missing package. Try: pip install --force-reinstall redis")
+            print("=" * 60)
+            print()
+            logger.error("redis still not importable after a successful pip install")
+            return False
+
+        print("  ✓ redis package installed")
+        print("=" * 60)
+        print()
+        # Now check if server is also available
+        if self._check_server_reachable():
+            return True
+        # Package installed but server not running — prompt for server
+        return self._prompt_server_install()
 
     def _prompt_server_install(self) -> bool:
         """Prompt to install and start the Redis server.

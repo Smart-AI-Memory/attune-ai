@@ -175,7 +175,7 @@ Claude: [Invokes analyze_image with image_path="screenshots/bug.png"]
 
 ### Redis Plugin Tools (attune-redis)
 
-Installed with `pip install 'attune-ai[redis]'`. Adds 5 additional tools:
+Installed with `pip install attune-ai`. Adds 5 additional tools:
 `redis_memory_store`, `redis_memory_retrieve`, `redis_memory_search`,
 `redis_memory_promote`, `redis_health_check`.
 

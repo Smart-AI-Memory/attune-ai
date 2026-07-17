@@ -102,7 +102,7 @@ orchestration, and a unified memory system.
 ```bash
 pip install attune-ai                # Core
 pip install 'attune-ai[developer]'   # Developer extras
-pip install 'attune-ai[redis]'       # Redis-backed memory + AMS plugin
+pip install attune-ai       # Redis-backed memory + AMS plugin
 ```
 
 ---
@@ -298,7 +298,7 @@ class MemoryBackend(Protocol):
 
 Redis-backed short-term memory with TTL expiration.
 
-Requires: `pip install 'attune-ai[redis]'`
+Requires: `pip install attune-ai`
 
 ---
 
@@ -885,7 +885,7 @@ gate.respond_to_request(
 
 Real-time event streaming via Redis Streams.
 
-Requires: `pip install 'attune-ai[redis]'`
+Requires: `pip install attune-ai`
 
 ---
 

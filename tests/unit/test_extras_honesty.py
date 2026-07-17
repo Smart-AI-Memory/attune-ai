@@ -36,13 +36,25 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 SRC_ROOT = REPO_ROOT / "src" / "attune"
 
-#: Empty extras that install hints may still reference — each is a
-#: deliberate back-compat alias whose deps were promoted to core.
-#: Adding an entry is a packaging decision: the pyproject comment for
-#: the extra must document the promotion, as [redis]'s does.
-EMPTY_ALIAS_ALLOWLIST: dict[str, str] = {
-    "redis": "redis client promoted to core deps 2026-07-04 (#1248); alias kept for back-compat",
-}
+#: Empty extras that are allowed to exist — each must be a deliberate
+#: back-compat alias whose deps were promoted to core, documented by the
+#: pyproject comment on the extra itself.
+#:
+#: Deliberately EMPTY since 2026-07-17: the six empty aliases (rag,
+#: memory, redis, cache, agent-sdk, software) were deleted. They were
+#: compat shims for install scripts that, at 8 external stargazers, no
+#: user has — and they inflated the extras menu by 37% (22 -> 16).
+#: Deleting them is safe precisely BECAUSE their deps are core: pip
+#: warns on the unknown extra and still installs everything the user
+#: wanted.
+#:
+#: Before adding an entry back, note what the [redis] entry got wrong:
+#: an alias is defensible as an INSTALL target ("want redis? core
+#: delivers it") but never as a REMEDIATION ("redis missing? run this")
+#: — the second is a no-op that cannot fix the stated problem, which is
+#: the #758 trap this guard exists to prevent. It shipped anyway,
+#: allowlisted, for three months.
+EMPTY_ALIAS_ALLOWLIST: dict[str, str] = {}
 
 
 def _extras_with_dep_counts() -> dict[str, int]:
@@ -109,12 +121,38 @@ def _referenced_extras() -> dict[str, list[str]]:
 
 
 def test_extras_parser_sees_known_ground_truth():
-    """Self-check: the parser must agree with known pyproject facts,
-    so the guard's own parsing can't silently rot (developer is
-    populated; redis is a defined empty alias)."""
+    """Self-check: the parser must agree with known pyproject facts, so
+    the guard's own parsing can't silently rot (`developer` and `all`
+    are populated; the deleted `redis` alias is gone)."""
     extras = _extras_with_dep_counts()
     assert extras.get("developer", 0) > 0
-    assert "redis" in extras and extras["redis"] == 0
+    assert extras.get("all", 0) > 0
+    assert "redis" not in extras, (
+        "the [redis] empty alias was deleted 2026-07-17 — if it is back, "
+        "it needs an EMPTY_ALIAS_ALLOWLIST entry and a pyproject comment"
+    )
+
+
+def test_no_undocumented_empty_extras():
+    """No extra may be empty unless it is an allowlisted back-compat alias.
+
+    The pre-existing guard only caught empty extras that a src/ message
+    REFERENCED. That left a blind spot: `rag`, `memory`, `cache`,
+    `agent-sdk` and `software` were all empty AND unreferenced, so they
+    sat in the menu as items that install nothing and nothing pointed
+    at — invisible to every test here. This closes that: an empty extra
+    is a fake menu item whether or not a message names it.
+    """
+    extras = _extras_with_dep_counts()
+    empty = sorted(name for name, count in extras.items() if count == 0)
+    undocumented = [name for name in empty if name not in EMPTY_ALIAS_ALLOWLIST]
+    assert not undocumented, (
+        f"extras defined with zero deps and no allowlist entry: "
+        f"{undocumented}. `pip install 'attune-ai[X]'` would succeed and "
+        f"install nothing. Either give the extra real deps, delete it, or "
+        f"— only if its deps genuinely moved to core — add an "
+        f"EMPTY_ALIAS_ALLOWLIST entry naming the promoting PR."
+    )
 
 
 def test_referenced_extras_are_defined():
