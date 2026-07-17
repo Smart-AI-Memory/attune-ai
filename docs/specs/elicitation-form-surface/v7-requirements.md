@@ -1,9 +1,11 @@
 # Elicitation Form Surface — V7 Requirements: form-template library
 
-**Status:** draft (2026-07-16) — awaiting Patrick approval.
+**Status:** RATIFIED as proposed (2026-07-17, Patrick — D20 in
+[decisions.md](decisions.md)); requirements below are unchanged from
+the approved draft.
 **Freeze:** design-only until 2026-07-28; no code before the freeze
 lifts. V6 (MCP Apps adapter, `v6-requirements.md`) is queued for the
-same window — see Sequencing below.
+same window and sequences AFTER V7 (ratified — see Sequencing below).
 **Source:** Patrick's idea, discussed 2026-07-16 ("sculpt a form
 once, cast per fork") — the sculptor clause applied to the grammar's
 own artifacts.
@@ -89,10 +91,10 @@ store, no loader, no catalog.
 
 ## Sequencing vs V6 (same post-freeze window)
 
-Recommend **V7 before V6**: V7 is pure-local plumbing (no API, no
-host dependency, dogfoodable same-day) and its templates give V6's
-MCP Apps round-trip receipts (AC-1/AC-2 there) realistic payloads to
-render. V6's ChatGPT-host receipt has external dependencies (host
+**RATIFIED 2026-07-17: V7 before V6.** V7 is pure-local plumbing (no
+API, no host dependency, dogfoodable same-day) and its templates give
+V6's MCP Apps round-trip receipts (AC-1/AC-2 there) realistic payloads
+to render. V6's ChatGPT-host receipt has external dependencies (host
 support, dev-mode access) that can slip without blocking V7 value.
 
 ## Tasks (for review)

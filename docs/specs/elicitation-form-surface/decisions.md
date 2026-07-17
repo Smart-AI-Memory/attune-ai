@@ -695,6 +695,44 @@ skill documents it; `tests/unit/elicitation/test_list_style.py` covers
 render + round-trip + definition validation (11 tests). Zero new
 `QuestionType`, zero answer-path change.
 
+## D20 — V7 form-template library RATIFIED as proposed; V7 sequences before V6
+
+**Date:** 2026-07-17 · **Status:** decided
+
+Patrick ratified [v7-requirements.md](v7-requirements.md) as drafted —
+R1–R5 and AC-1/AC-3 unchanged — including its recommended sequencing:
+**V7 before V6** in the post-freeze window. The 2026-07-28 design-only
+freeze is untouched by this ratification; no code lands before it lifts.
+
+**Why V7 leads:** V7 is pure-local plumbing (no API, no host
+dependency, dogfoodable same-day), and its templates hand V6's MCP Apps
+round-trip its realistic payloads. V6's ChatGPT-host receipt depends on
+external host support and dev-mode access that can slip — sequencing it
+second keeps that slip off V7's value.
+
+**What the ratified shape commits to:** a template store of plain JSON
+files in the dict shape `form_from_dict` already accepts (R1); a ~10-line
+`form_from_template(name, slots)` loader delegating to that one
+validation seam (R2) — so malformed templates fail through the existing
+`FormValidationError` path rather than a parallel one; slot substitution
+in string fields only (R3); an `elicit` catalog section (R4); and
+promote-on-repeat — a form earns templatehood on its SECOND recurrence,
+same rule as lessons (R5). Zero new `QuestionType`, zero validator or
+render change, consistent with the D19 finding that the grammar earns
+its keep by shrinking work rather than adding members.
+
+**Receipts, not registration:** AC-2 is the load-bearing one — the same
+template asked in two distinct sessions, the two `FormResponse` records
+joinable on `template_id`. That demonstrates the comparability claim
+instead of asserting it. `FormResponse` already carries `template_id`,
+so the join key exists before the feature does.
+
+**Worked examples available:** the 2026-07-16 latency session rendered
+two design-only template sketches — `session-contract` (all-scalar) and
+`triage-matrix` (list-valued slots plus a `for_each` expansion that
+needs `_substitute` to handle sole-value list slots). They bracket the
+difficulty range and belong in `design.md` when V7 designs.
+
 ## Open
 
 - **Confirm CC elicitation support** — low priority (elicitation is
