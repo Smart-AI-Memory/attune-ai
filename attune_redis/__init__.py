@@ -5,7 +5,8 @@ Attune AI framework. Implements the MemoryBackend protocol
 via AMS working memory and adds semantic search via AMS
 long-term memory.
 
-Install: ``pip install attune-ai[redis]``
+Bundled with attune-ai — ``pip install attune-ai`` includes this plugin
+and its dependencies (redis, agent-memory-client are core deps).
 
 Copyright 2025-2026 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0

@@ -572,3 +572,16 @@ recorded interpretation in this file says otherwise. The DEC-7
 release-freeze window (2026-07-13 → 07-27, no tags) is the live
 experiment; its 07-27 interpretation supersedes this entry's
 "pending evidence" clause either way.
+
+## DEC-7 amendment — 2026-07-17: mid-window tag, reframed as the experiment's sharpest probe
+
+**Decided by Patrick 2026-07-17** (form pick: "Release now, AS the
+experiment"). The no-tags window (07-13 → 07-27) is amended: v10.5.0
+tags on 2026-07-17, deliberately, four days into the window — same day
+as the LinkedIn direct ask (URL in `product-direction-review/
+user-conversations.md`). Rationale: a tag whose download spike arrives
+with zero human responses alongside it is the cleanest CI-shadow
+evidence the experiment can produce — sharper than an undisturbed
+quiet window. The 07-27 interpretation must therefore read THREE
+series together: the download curve, the tag date, and the
+LinkedIn-response count. Not a violation; an instrumented probe.

@@ -26,7 +26,7 @@ src/attune/
 ├── telemetry/         # FeedbackLoop, UsageTracker (MemoryBackend protocol)
 └── cli_router.py      # Natural language command routing
 
-attune_redis/          # attune-redis plugin (pip install 'attune-ai[redis]')
+attune_redis/          # Redis plugin (bundled — ships with attune-ai)
 ```
 
 ## Related Topics

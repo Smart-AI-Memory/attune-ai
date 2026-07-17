@@ -298,6 +298,57 @@ class TestRedisAutoDetector:
             result = detector._prompt_server_install()
         assert result is False
 
+    # ---- Package-install verification (#1418 fake-success regression) ----
+
+    def test_package_install_pip_success_but_import_fails(self, detector, capsys):
+        """pip exiting 0 must NOT produce a success claim when the import
+        still fails — the #1418 fake-success bug (a no-op install printed
+        '✓ redis package installed' and sent the user to debug the server)."""
+        with (
+            patch("builtins.input", return_value="y"),
+            patch("attune.memory.redis_auto_detect.subprocess.check_call", return_value=0),
+            patch.object(detector, "_check_python_package", return_value=False),
+        ):
+            result = detector._prompt_python_package()
+
+        out = capsys.readouterr().out
+        assert result is False
+        assert "✓ redis package installed" not in out
+        assert "still not importable" in out
+        # The remediation must not be the command that just ran (circular).
+        assert "pip check" in out or "attune-ai" in out
+
+    def test_package_install_success_verified_by_import(self, detector, capsys):
+        """The success claim appears only after the import re-check passes,
+        and the server flow continues."""
+        with (
+            patch("builtins.input", return_value="y"),
+            patch("attune.memory.redis_auto_detect.subprocess.check_call", return_value=0),
+            patch.object(detector, "_check_python_package", return_value=True),
+            patch.object(detector, "_check_server_reachable", return_value=True),
+        ):
+            result = detector._prompt_python_package()
+
+        assert result is True
+        assert "✓ redis package installed" in capsys.readouterr().out
+
+    def test_package_install_subprocess_targets_pinned_redis(self, detector):
+        """The pip invocation must target the real `redis` package with
+        pyproject's version pin — never the deleted [redis] extra (whose
+        no-op success created the fake-success bug), and never unpinned
+        (which could pull a major that violates the core constraint)."""
+        with (
+            patch("builtins.input", return_value="y"),
+            patch("attune.memory.redis_auto_detect.subprocess.check_call", return_value=0) as cc,
+            patch.object(detector, "_check_python_package", return_value=True),
+            patch.object(detector, "_check_server_reachable", return_value=True),
+        ):
+            detector._prompt_python_package()
+
+        args = cc.call_args[0][0]
+        assert "redis>=5.0.0,<9.0.0" in args
+        assert not any("attune-ai[" in a for a in args)
+
     # ---- Cache invalidation ----
 
     def test_invalidate_cache(self, detector):

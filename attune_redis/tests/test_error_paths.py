@@ -214,7 +214,10 @@ class TestMCPHandlerImportErrorPaths:
         ):
             result = await handle_redis_memory_retrieve(import_error_server, {"key": "k"})
         assert result["success"] is False
-        assert "not installed" in result["error"]
+        # New contract (#1420): the deps are core, so the error names a
+        # broken install and a remediation that can actually work.
+        assert "not importable" in result["error"]
+        assert "attune-ai[" not in result["error"]
 
     @pytest.mark.asyncio()
     async def test_search_import_error(self, import_error_server):
@@ -225,7 +228,10 @@ class TestMCPHandlerImportErrorPaths:
         ):
             result = await handle_redis_memory_search(import_error_server, {"query": "test"})
         assert result["success"] is False
-        assert "not installed" in result["error"]
+        # New contract (#1420): the deps are core, so the error names a
+        # broken install and a remediation that can actually work.
+        assert "not importable" in result["error"]
+        assert "attune-ai[" not in result["error"]
 
     @pytest.mark.asyncio()
     async def test_promote_import_error(self, import_error_server):
@@ -236,7 +242,10 @@ class TestMCPHandlerImportErrorPaths:
         ):
             result = await handle_redis_memory_promote(import_error_server, {})
         assert result["success"] is False
-        assert "not installed" in result["error"]
+        # New contract (#1420): the deps are core, so the error names a
+        # broken install and a remediation that can actually work.
+        assert "not importable" in result["error"]
+        assert "attune-ai[" not in result["error"]
 
     @pytest.mark.asyncio()
     async def test_health_check_import_error(self, import_error_server):
@@ -247,7 +256,10 @@ class TestMCPHandlerImportErrorPaths:
         ):
             result = await handle_redis_health_check(import_error_server, {})
         assert result["success"] is False
-        assert "not installed" in result["error"]
+        # New contract (#1420): the deps are core, so the error names a
+        # broken install and a remediation that can actually work.
+        assert "not importable" in result["error"]
+        assert "attune-ai[" not in result["error"]
 
 
 # =================================================================

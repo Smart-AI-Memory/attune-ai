@@ -15748,6 +15748,67 @@ def ", start_idx + 1)` for module-
   worthless, so make it fail once on purpose (here: injecting
   `bogus = []` proved the new guard test fired before it was trusted).
 
+- **This repo has MULTIPLE test roots with their own CI workflows —
+  `attune_redis/tests/` lives OUTSIDE `tests/` and is run by the
+  dedicated "Test attune-redis plugin" workflow (`test (3.11)` etc.),
+  so a "run all affected suites" receipt scoped to `tests/` proves
+  nothing about it**: 2026-07-17, #1420. Changing the shared error
+  strings in `attune_redis/mcp_tools.py` broke 5 assertions in
+  `attune_redis/tests/` that pinned the old wording; the local receipt
+  ("all affected suites, serial") was green because every path in it
+  began with `tests/`. Rule (extends "never truncate a blast-radius
+  sweep"): the affected-test set is derived by GREPPING FOR CONSUMERS
+  of the changed surface across the WHOLE repo (`grep -rl <old-string>
+  .` — then run every test file that hits), never by enumerating
+  directories you believe contain the tests. Directory conventions are
+  a hypothesis; the grep is the contract. Same failure shape as the
+  same-day `tests/unit/cli_commands/` head-truncation miss — three
+  boundary misses in one day, all "blast radius defined by convention."
+
+- **Receipts must POSTDATE the final edit — a green check run before
+  your last change is a stale receipt, and the gap ships**: 2026-07-17,
+  #1420 round 3. Sequence: ran the extras guard (green) → THEN added
+  new test assertions containing the literal `attune-ai[` → ran only
+  the plugin tree (green) → pushed. CI failed on the guard, which now
+  matched the new assertions. Each receipt was honest when taken;
+  the FINAL state was never tested as a whole. Rule: after the last
+  edit of a change, re-run the full receipt set — anything executed
+  before that edit is evidence about a tree that no longer exists.
+  Cheap implementation: make the receipt block the LAST thing before
+  `git add`, and if any edit happens after it, run it again.
+
+- **A source-scanner/guard widened to new roots will eventually scan
+  the tests that enforce its own contract — and their NEGATIVE
+  examples (`assert "attune-ai[" not in ...`) read as violations;
+  exclude test dirs from shipped-code scanners ON CONTRACT grounds**:
+  2026-07-17, #1420. The extras-honesty guard, widened from
+  `src/attune` to all in-wheel packages, matched its own enforcement
+  test's assertion literal in `attune_redis/tests/` and reported a
+  garbage extra name. The fix is principled, not a dodge: the guard's
+  contract is user-facing install hints in SHIPPED code, and test
+  dirs are (a) excluded from the wheel (`packages.find` excludes
+  `tests*`) and (b) the one place negative examples legitimately
+  live. When excluding, RE-PROVE the detection receipt afterwards
+  (restore the old bad file → guard must still fail) so the exclusion
+  demonstrably didn't blind the guard to shipped code. General class:
+  any repo-scanning guard + tests-that-assert-about-the-guard =
+  ouroboros risk; decide the scan boundary by the guard's CONTRACT,
+  not by what happens to pass.
+
+- **`plugin/skills/*/SKILL.md` is a SOURCE — `scripts/
+  sync_agents_skills.py` projects it to `.agents/skills/<name>/
+  SKILL.md`, and `tests/unit/plugins/test_sync_agents_skills.py` is
+  the drift guard that reds EVERY ubuntu/macos lane if you hand-edit
+  a skill without regenerating**: 2026-07-17, #1420 round 2. Edited
+  two SKILL.md files (correct side — they ARE the source), never ran
+  the projector, every main-suite lane went red on the two sync
+  tests. Fix: `python scripts/sync_agents_skills.py` (regenerates all
+  24), commit BOTH sides. The failure message names the exact
+  command. Same single-source pattern as the help-docs projector and
+  the `.help` regen hook — before editing anything under `plugin/`,
+  check whether it is a projection (grep `scripts/` + tests for a
+  sync/drift guard naming the path); the answer decides which side
+  you edit and whether a regen step follows.
 - **A carried "revoke/delete/clean up X" task can be a PHANTOM — X may
   never have been created; verify the artifact EXISTS before carrying
   (or executing) any undo-shaped instruction**: 2026-07-17. The starter

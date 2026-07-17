@@ -918,7 +918,7 @@ class TestCmdFeatures:
         # Must name the `redis` package, not `attune-ai[redis]`: redis is a
         # core dep, so that extra was an empty alias and the suggestion was
         # a no-op that could not fix a missing import (the #758 trap).
-        assert "--force-reinstall redis" in captured.out
+        assert "--force-reinstall 'redis>=5.0.0,<9.0.0'" in captured.out
         assert "attune-ai[" not in captured.out
 
     def test_redis_available_and_running(
@@ -974,7 +974,7 @@ class TestCmdFeatures:
             name="Redis Memory",
             status="not_installed",
             message="Not available",
-            install_command="pip install --force-reinstall redis",
+            install_command="pip install --force-reinstall 'redis>=5.0.0,<9.0.0'",
         )
 
         mock_mem = MagicMock()
@@ -989,7 +989,7 @@ class TestCmdFeatures:
 
         captured = capsys.readouterr()
         assert "Install:" in captured.out
-        assert "--force-reinstall redis" in captured.out
+        assert "--force-reinstall 'redis>=5.0.0,<9.0.0'" in captured.out
 
 
 # ---------------------------------------------------------------------------

@@ -95,7 +95,7 @@ class TelemetryFeatures:
                     message="Redis package not importable (it ships as a "
                     "core dependency, so this usually means a broken or "
                     "partial install)",
-                    install_command="pip install --force-reinstall redis",
+                    install_command="pip install --force-reinstall 'redis>=5.0.0,<9.0.0'",
                 )
 
             return FeatureInfo(
@@ -139,7 +139,7 @@ class TelemetryFeatures:
                 f"{feature_name} requires the redis package, which ships "
                 f"as a core attune-ai dependency — a failure here usually "
                 f"means a broken or partial install.\n"
-                f"Fix: pip install --force-reinstall redis\n"
+                f"Fix: pip install --force-reinstall 'redis>=5.0.0,<9.0.0'\n"
                 f"Redis server setup: https://redis.io/docs/install/",
             )
 

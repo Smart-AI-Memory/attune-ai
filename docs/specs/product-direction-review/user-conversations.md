@@ -1,7 +1,9 @@
 # User Conversations — DEC-2 Evidence Log
 
 **Bar (from [assessment.md](assessment.md)):** 5 conversations with
-humans who ran attune-ai on a real repo. Count: **1 of 5.**
+humans who ran attune-ai on a real repo. Count: **0 of 5 VERIFIED**
+(downgraded 2026-07-17 — conversation 1 likely did not meet the bar;
+see its entry).
 
 Record each conversation here within a day of having it. Unrecorded
 signal doesn't compound (assessment-2026-07-11, N1).
@@ -27,7 +29,7 @@ now, 10 days before the verdict, not only on 07-27.
 | Discussion #1325 upvotes | 1 | 2026-07-17 |
 | Days live | 5 (since 07-12) | 2026-07-17 |
 | Repo stars / forks / watchers | **9 / 0 / 1** | 2026-07-17 |
-| Conversations logged | **1 of 5** | 2026-07-17 |
+| Conversations logged | **0 of 5 verified** (1 recorded, downgraded) | 2026-07-17 |
 
 **Interpretation (agent, kept separate from the data):** the channel
 is not underperforming — it is fishing a pond of ~9, most of whom
@@ -46,9 +48,50 @@ arrive and read the silence as the answer to F1.
 
 ---
 
-## Conversation 1 — 2026-07-09
+## Outbound — 2026-07-17: LinkedIn ask POSTED (the DEC-2 decision, executed)
+
+Patrick posted the direct ask to LinkedIn on 2026-07-17.
+**URL (captured same day — gap not repeated this time):**
+https://www.linkedin.com/posts/patrick-roebuck-attune-ai_ive-been-building-attune-ai-in-the-open-share-7483920107094810624-FuCy/ Final angle was Patrick's
+own: setup-has-been-a-challenge / "if pip installing attune-ai gave
+you trouble, I'd appreciate your help" — grounded in the verified
+F1–F5 frictions and pointing the same direction as Discussion #1325.
+The interview bar stays in the post's body: pip installed it AND
+pointed it at a real repository; bounce stories explicitly invited.
+
+This closes the "outbound vs read-the-silence" fork: **outbound,
+chosen and executed.** From here, the 07-27 verdict reads the
+RESPONSE to a direct ask, which means something — unlike silence from
+a channel nobody was standing in.
+
+**New population datum (Patrick, 2026-07-17, recorded same day):**
+he has talked to **3 people** about attune-ai over the project's
+life; **none ever got back to him** about running it. Whether Jacob
+is among the 3 is unresolved (asked; pending). So the funnel to
+date: 3 personal-network conversations -> 0 follow-throughs; product
+channels -> 0 contacts; confirmed run-reports -> 0. The ask is now
+public; replies get logged here within a day (N1), against the
+four-question checklist kept under draft 1.
+
+---
+
+## Conversation 1 — 2026-07-08/09 — DOWNGRADED 2026-07-17: likely below the bar
 
 **Recorded:** 2026-07-11 (verbal report from Patrick; two-day lag).
+**Downgrade (2026-07-17, Patrick's recall):** the conversation was
+almost certainly the **2026-07-08 phone call with Jacob** (calendar:
+"jacob about apprentice", 1:00–2:00 PM) — an apprenticeship discussion
+that ended with a mutual decision not to work together. Patrick: "I
+don't think he ran it," and there was no other early-July candidate.
+The bar requires a human who RAN attune-ai on a real repo, so this
+conversation **does not count toward the 5**. The "setup issues"
+signal below was therefore talk ABOUT the product, not a report from
+running it — softer than this log originally implied. (The 07-11
+fresh-machine reproduction stands on its own receipts: F1–F5 were
+real, independently verified frictions regardless of this downgrade.)
+**Sourcing datum that survives:** the one near-miss came through
+Patrick's personal network by phone; the product channels (README,
+CLI error paths, #1325) have produced zero. That is where 2–5 live.
 
 ### What the user said
 
