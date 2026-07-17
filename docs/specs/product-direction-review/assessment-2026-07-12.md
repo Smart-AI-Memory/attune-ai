@@ -1,6 +1,9 @@
 # Product Direction Review — Third Assessment
 
-**Status:** assessment (2026-07-12) — outstanding-work ledger current
+**Status:** assessment (2026-07-12) — analysis is a dated snapshot;
+**ledger RECONCILED 2026-07-17**, see the banner in the ledger section
+(4 of 9 items moved; item text left as written — do not act from an
+item without reading the banner first)
 **Owner:** Patrick (+ agent)
 **Type:** strategic assessment / decision record (not a build spec)
 **Trigger:** Patrick asked for an updated version of the report,
@@ -202,6 +205,39 @@ between assessments.
 ---
 
 ## Outstanding-work ledger (the point of this report)
+
+> **RECONCILIATION BANNER — verified 2026-07-17.** This ledger is a
+> 07-12 snapshot and 4 of its 9 items have moved. The item text below
+> is left AS WRITTEN (it is a dated record); this banner is the
+> current truth. **Read it before acting on any item.**
+>
+> - **#2 `ANTHROPIC_ADMIN_API_KEY` — DONE.** The repo secret exists
+>   (`updated_at=2026-07-13T02:24:02Z`, the day after this snapshot
+>   said "verified still unset"). Caveat: secret-exists ≠
+>   DEC-8-enforcement-verified — nobody has confirmed the gate
+>   actually fires. That check is the remaining work, not the setting.
+> - **#3 `ATTUNE_WORKSPACE_RO_TOKEN` — REVERSED. Do NOT create it.**
+>   The umbrella spec-audit CI shipped as
+>   `.github/workflows/spec-status-reminder.yml` using the built-in
+>   `github.token`, so the PAT was orphaned on arrival: zero workflow
+>   references, and no such secret in repo or org. The live action is
+>   to **REVOKE** `attune-workspace-ro` at github.com/settings/tokens
+>   (~3 min, zero blast radius). The Console spend limit half of this
+>   item is unchanged and still open.
+> - **#9 trap-battery — DONE, and measurement CLOSED.** Not "pending
+>   approval": the full v2 battery executed 2026-07-14 (120 sessions,
+>   $32.40). Every cell favored memory-ON, nothing reached p<0.05
+>   (best p=0.11). Phase-2 measurement is CLOSED at ~$53.80 total by
+>   ratified decision — **no further paid runs chasing significance**
+>   (detecting the ~13pp delta would need ~3-4x sessions/cell, ~$100+).
+> - **#1 DEC-2 — still open, now with hard data.** Discussion #1325
+>   has **0 comments / 1 upvote** in 5 days; the repo has **9 stars /
+>   0 forks / 1 watcher**. The passive channel cannot produce 4 more
+>   conversations by 07-27 — there is no population to harvest. See
+>   [user-conversations.md](user-conversations.md).
+>
+> Unchanged and still accurate: #4–#7, and #8 (fable task 9 parked
+> ≥07-28).
 
 Ranked. Items 1–3 are Patrick-only actions; nothing in the repo
 advances them. Items 4–5 are observation windows. Items 6–9 are

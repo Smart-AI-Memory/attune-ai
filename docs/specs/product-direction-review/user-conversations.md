@@ -16,6 +16,36 @@ toward the 5.
 
 ---
 
+## Channel measurement — 2026-07-17 (interim, not the 07-27 verdict)
+
+Recorded per N1 (unrecorded signal doesn't compound) — this is data
+now, 10 days before the verdict, not only on 07-27.
+
+| Measure | Value | As of |
+|---|---|---|
+| Discussion #1325 comments | **0** | 2026-07-17 |
+| Discussion #1325 upvotes | 1 | 2026-07-17 |
+| Days live | 5 (since 07-12) | 2026-07-17 |
+| Repo stars / forks / watchers | **9 / 0 / 1** | 2026-07-17 |
+| Conversations logged | **1 of 5** | 2026-07-17 |
+
+**Interpretation (agent, kept separate from the data):** the channel
+is not underperforming — it is fishing a pond of ~9, most of whom
+likely never ran attune-ai on a real repo. Zero-contact inbound was a
+sound bet given the cost (near-zero), but it cannot arithmetically
+produce 4 more conversations by 07-27. Waiting is not a plan that
+reaches the bar; it is a plan that reaches the verdict.
+
+This is not yet the F1 answer. Silence from a channel nobody has been
+pointed to is weaker evidence than silence after a direct ask —
+outbound first would make the 07-27 silence *mean* something.
+
+**Open decision (Patrick):** outbound (LinkedIn — the only audience
+with demonstrated engagement — plus the 9 stargazers), or let 07-27
+arrive and read the silence as the answer to F1.
+
+---
+
 ## Conversation 1 — 2026-07-09
 
 **Recorded:** 2026-07-11 (verbal report from Patrick; two-day lag).
