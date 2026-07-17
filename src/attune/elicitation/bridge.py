@@ -470,6 +470,50 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
     )
 
 
+#: Question types with no portable ``AskUserQuestion`` control. A form
+#: using any of these must render on the widget or native-elicitation
+#: surface; a form using only the remaining types (single/multi-select,
+#: boolean, short text) renders natively on ``AskUserQuestion`` — one
+#: call, no HTML round-trip. See :func:`needs_widget`.
+_WIDGET_ONLY_TYPES = frozenset(
+    {
+        QuestionType.NUMBER,
+        QuestionType.DATE,
+        QuestionType.TEXTAREA,
+        QuestionType.DECISION,
+        QuestionType.PUSHBACK,
+        QuestionType.PROGRESS,
+    }
+)
+
+
+def needs_widget(form: FormSchema) -> bool:
+    """Return True iff ``form`` needs the widget / native-elicitation surface.
+
+    Routing predicate for surface selection. A form renders natively on
+    ``AskUserQuestion`` — a single call with no HTML round-trip — when
+    every field is a control that surface can express (single/multi-
+    select, boolean, short text). The moment any field is a rich control
+    (``number`` / ``date`` / ``textarea``) or a v3–v5 construct
+    (``decision`` / ``pushback`` / ``progress``), the form must use the
+    widget (``elicitation_render_widget`` → ``show_widget``) or native
+    elicitation instead, because those controls have no portable
+    ``AskUserQuestion`` equivalent.
+
+    Sending an ``AskUserQuestion``-eligible form to the widget costs a
+    second tool call plus a multi-kB HTML round-trip through the model
+    for no gain; this predicate is the cheap check that avoids it.
+
+    Args:
+        form: The form to route.
+
+    Returns:
+        True if a widget / native-elicitation surface is required; False
+        if the form can render on ``AskUserQuestion``.
+    """
+    return any(question.type in _WIDGET_ONLY_TYPES for question in form.questions)
+
+
 def form_to_askuserquestion(form: FormSchema, batch_size: int = 4) -> list[list[dict[str, Any]]]:
     """Render a form to batched ``AskUserQuestion`` payloads.
 

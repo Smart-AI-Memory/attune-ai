@@ -13,6 +13,9 @@ Public surface:
   plain serializable data.
 - :func:`form_to_askuserquestion` — batched ``AskUserQuestion`` payloads
   (≤4 questions per call).
+- :func:`needs_widget` — routing predicate: True iff a form needs the
+  widget / native-elicitation surface (else it renders on
+  ``AskUserQuestion`` — one call, no HTML round-trip).
 - :func:`collect_form_response` — validate raw answers (required +
   option membership) and map them into a ``FormResponse`` (R4 — never
   silently accept malformed input).
@@ -28,6 +31,7 @@ from attune.elicitation.bridge import (
     collect_form_response,
     form_from_dict,
     form_to_askuserquestion,
+    needs_widget,
 )
 from attune.elicitation.elicitation_schema import form_to_elicitation_schema
 from attune.elicitation.reference_form import EXAMPLE_ANSWERS, REFERENCE_FORM
@@ -43,4 +47,5 @@ __all__ = [
     "form_to_askuserquestion",
     "form_to_elicitation_schema",
     "form_to_widget_html",
+    "needs_widget",
 ]

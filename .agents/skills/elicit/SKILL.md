@@ -235,6 +235,17 @@ no blocked items there is nothing to ask — just narrate the report.
 
 ## Choosing a surface
 
+**Route by the form's controls first.** If **every** field is a
+select, boolean, or short text, the form renders natively on
+`AskUserQuestion` — one call, no HTML round-trip — so use that; don't
+reach for the widget. Use a rich surface (native elicitation / widget)
+**only** when at least one field is a `number`, `date`, `textarea`, or a
+`decision` / `pushback` / `progress` construct — those have no portable
+`AskUserQuestion` control. (The `needs_widget` predicate in
+`attune.elicitation` is this same check in code.) Sending an
+AskUserQuestion-eligible form to the widget costs a second tool call and
+a multi-kB HTML round-trip for no gain.
+
 - **Rich / native — one call:** `elicitation_ask` renders the form as a
   native MCP elicitation dialog (supports number/date/textarea +
   multi-select with a structured return) and returns the validated
