@@ -94,13 +94,13 @@ Feature                        Status          Details
 ✅ Long-term memory (file-based) Available       Core feature (always available)
 ✅ File session storage         Available       Core feature (always available)
 ⚠️ Short-term memory (Redis-based) Missing Dependency Redis package not importable
-                                Install: pip install --force-reinstall redis
+                                Install: pip install --force-reinstall 'redis>=5.0.0,<9.0.0'
 ...
 
 💡 To enable Redis-enhanced features:
    1. Repair the redis package (it ships as a core
       dependency, so this means a broken install):
-      pip install --force-reinstall redis
+      pip install --force-reinstall 'redis>=5.0.0,<9.0.0'
 
    2. Install and start Redis server:
       • macOS: brew install redis && brew services start redis
@@ -362,7 +362,7 @@ missing extra.
 **Solution:**
 
 ```bash
-pip install --force-reinstall redis
+pip install --force-reinstall 'redis>=5.0.0,<9.0.0'
 ```
 
 ### "Redis server not running"
@@ -397,7 +397,7 @@ docker start attune-redis
 pip list | grep redis
 
 # If not installed, reinstall
-pip install --force-reinstall redis
+pip install --force-reinstall 'redis>=5.0.0,<9.0.0'
 ```
 
 ### Connection errors
@@ -511,7 +511,7 @@ try:
 except ImportError as e:
     print(e)  # "Short-term memory requires Redis.\n
               #  Status: Redis package not importable\n
-              #  Install: pip install --force-reinstall redis"
+              #  Install: pip install --force-reinstall 'redis>=5.0.0,<9.0.0'"
 ```
 
 **Recommended pattern:**

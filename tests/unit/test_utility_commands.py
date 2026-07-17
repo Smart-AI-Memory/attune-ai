@@ -596,7 +596,7 @@ class TestCmdFeatures:
 
         captured = capsys.readouterr()
         assert "pip install" in captured.out
-        assert "--force-reinstall redis" in captured.out
+        assert "--force-reinstall 'redis>=5.0.0,<9.0.0'" in captured.out
 
     def test_features_redis_available_and_running(self, capsys: pytest.CaptureFixture) -> None:
         """Test cmd_features shows all-good when Redis is available and running."""
@@ -674,7 +674,7 @@ class TestCmdFeatures:
                 name="Short-term memory",
                 status=MemFeatureStatus.MISSING_DEPENDENCY,
                 message="Redis package not importable",
-                install_command="pip install --force-reinstall redis",
+                install_command="pip install --force-reinstall 'redis>=5.0.0,<9.0.0'",
             ),
         }
 
@@ -707,7 +707,7 @@ class TestCmdFeatures:
 
         captured = capsys.readouterr()
         assert "Install:" in captured.out
-        assert "--force-reinstall redis" in captured.out
+        assert "--force-reinstall 'redis>=5.0.0,<9.0.0'" in captured.out
 
     def test_features_shows_header(self, capsys: pytest.CaptureFixture) -> None:
         """Test cmd_features shows the FEATURE AVAILABILITY header."""
@@ -775,7 +775,7 @@ class TestCmdFeatures:
         else:
             short_term_status = MemFeatureStatus.MISSING_DEPENDENCY
             short_term_msg = "Redis package not importable"
-            short_term_install = "pip install --force-reinstall redis"
+            short_term_install = "pip install --force-reinstall 'redis>=5.0.0,<9.0.0'"
 
         return {
             "short_term": FeatureInfo(
@@ -815,6 +815,10 @@ class TestCmdFeatures:
                     if redis_available
                     else "Redis package not importable"
                 ),
-                install_command=None if redis_available else "pip install --force-reinstall redis",
+                install_command=(
+                    None
+                    if redis_available
+                    else "pip install --force-reinstall 'redis>=5.0.0,<9.0.0'"
+                ),
             ),
         }

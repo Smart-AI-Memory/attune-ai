@@ -75,7 +75,8 @@ another model.
 ## If the extra isn't installed
 
 The workflow returns a structured error pointing at
-`pip install 'attune-ai[rag]'`. No exception propagates.
+`pip install attune-rag` (a core dep — missing means a broken
+install). No exception propagates.
 
 ## See also
 

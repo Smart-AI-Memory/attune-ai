@@ -42,10 +42,11 @@ Detect-and-adapt agent that checks for attune-ai prerequisites and guides setup.
      - Sub-millisecond lookups for shared state
      - Shared state persistence across sessions
 
-   - Offer the install command:
+   - The Python client libraries ship with attune-ai core — if they
+     are missing, the install is broken; offer the repair command:
 
      ```bash
-     pip install attune-ai[memory]
+     pip install --force-reinstall attune-ai
      ```
 
    - NEVER block on this step. Always allow the user to proceed without Redis.
@@ -88,7 +89,7 @@ After all detection steps complete, output a summary table showing the state of 
 | Component | Status | Action |
 | --------- | ------ | ------ |
 | attune-ai | vX.Y.Z installed | None needed |
-| Redis | Not detected | Optional -- run `pip install attune-ai[memory]` for multi-agent support |
+| Redis | Not detected | Optional -- client libraries ship with attune-ai; start a Redis server for multi-agent support |
 | MCP Server | Healthy (18 tools) | None needed |
 | Updates | Up to date | None needed |
 

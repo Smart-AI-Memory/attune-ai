@@ -289,7 +289,9 @@ features described in this skill work without Redis.
 **Upgrade:**
 
 ```bash
-pip install attune-ai[memory]
+# Redis client libraries ship with attune-ai core — nothing extra to
+# install; you only need a running Redis / Agent Memory Server.
+pip install attune-ai
 ```
 
 Zero configuration needed -- connects to

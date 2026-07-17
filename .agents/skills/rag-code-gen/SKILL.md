@@ -4,7 +4,7 @@ description: "RAG-grounded code generation with source citations. Triggers on: g
 ---
 # RAG-grounded code generation
 
-Requires the `[rag]` extra (`pip install 'attune-ai[rag]'`).
+attune-rag ships with attune-ai core (`pip install attune-ai`).
 Grounds code generation in the attune-help template corpus
 so outputs cite real APIs, workflow names, and patterns
 instead of hallucinating them. Every output ends with a
@@ -72,7 +72,8 @@ another model.
 ## If the extra isn't installed
 
 The workflow returns a structured error pointing at
-`pip install 'attune-ai[rag]'`. No exception propagates.
+`pip install attune-rag` (a core dep — missing means a broken
+install). No exception propagates.
 
 ## See also
 

@@ -88,8 +88,9 @@ class RedisPlugin(BasePlugin):
             logger.info("attune-redis: agent-memory-client available")
         except ImportError:
             logger.warning(
-                "attune-redis: agent-memory-client not installed. "
-                "Install with: pip install attune-ai[redis]"
+                "attune-redis: agent-memory-client not importable — it is a "
+                "core attune-ai dependency, so this means a broken or "
+                "partial install. Fix: pip install --force-reinstall attune-ai"
             )
 
 
