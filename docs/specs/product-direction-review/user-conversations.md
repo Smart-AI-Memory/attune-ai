@@ -67,6 +67,36 @@ arrive and read the silence as the answer to F1.
 - How the conversation was sourced (the repeatable part for
   conversations 2–5).
 
+### Clarification — 2026-07-17 (Patrick, from memory)
+
+Asked to discriminate, Patrick's recollection: the user's complaint was
+that **workflows were broken**, and **"the problem with the workflows
+stemmed from a setup problem."**
+
+This closes the attribution question. One event, three vocabularies:
+the user experienced *"your workflows are broken"*; the relay compressed
+it to *"setup issues"* (as logged above); the friction log inferred
+*"almost certainly F1."* All three are the same thing — a keyless
+`attune workflow run` returning a 25-line traceback reading
+`Exception: Claude Code returned an error result: success`.
+
+**So F1's fix addresses this user's actual complaint**, and it is
+shipped + verified (post-fix table, [setup-friction-log.md](setup-friction-log.md),
+`fix/setup-friction` 6a628f2). Conversation 1's product finding is
+CLOSED — not "probably F1", confirmed F1-class by the relayer.
+
+**What this rules out:** the complaint was NOT dependency width, the
+extras menu, or install weight. The log's own timeline records the
+install as clean and fast (72 packages, ~40 s, no build errors). Any
+packaging change (e.g. collapsing 22 extras to `attune-ai` +
+`attune-ai[all]`) must be justified on its own merits — conversation 1
+does not support it.
+
+**Still unasked (needs the user, not the relayer):** whether they'd run
+it again unprompted, and **how they found it** — the sole lead on where
+conversations 2–5 come from. Both are blocked: no name, handle, or
+channel was ever recorded.
+
 ### Interpretation (agent, kept separate from the data)
 
 - One datum, but it lands squarely on the width critique (F4/June
