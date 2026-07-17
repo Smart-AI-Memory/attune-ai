@@ -88,7 +88,7 @@ attribute access.
 ### With Redis support
 
 ```bash
-pip install 'attune-ai[redis]'
+pip install attune-ai
 ```
 
 Pulls `redis>=5.0.0,<9.0.0` and `agent-memory-client>=0.14.0`.
@@ -99,7 +99,7 @@ above.
 ### Backward compatibility
 
 ```bash
-pip install 'attune-ai[memory]'  # still works — empty no-op alias
+pip install attune-ai  # still works — empty no-op alias
 ```
 
 ## Legacy `attune.redis_*` modules

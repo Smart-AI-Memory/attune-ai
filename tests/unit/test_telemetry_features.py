@@ -49,9 +49,13 @@ class TestTelemetryFeatures:
 
                 assert isinstance(info, FeatureInfo)
                 assert info.status == FeatureStatus.MISSING_DEPENDENCY
-                assert "Redis package not installed" in info.message
+                assert "not importable" in info.message
                 assert info.install_command is not None
-                assert "attune-ai[redis]" in info.install_command
+                # See test_memory_features for why this must not point at
+                # `attune-ai[redis]`: that extra was an empty alias, so the
+                # remediation was a no-op (the #758 trap).
+                assert "redis" in info.install_command
+                assert "attune-ai[" not in info.install_command
 
     def test_get_feature_status_redis_features_available(self):
         """Test Redis-dependent features when Redis is available."""
@@ -92,9 +96,13 @@ class TestTelemetryFeatures:
 
             error_message = str(exc_info.value)
             assert "Event streaming" in error_message
-            assert "requires Redis" in error_message
+            assert "requires the redis package" in error_message
             assert "pip install" in error_message
             assert "redis.io" in error_message.lower()
+            # The fix offered must be able to work: `attune-ai[redis]` was
+            # an empty alias, so suggesting it could never resolve a
+            # missing import (the #758 trap).
+            assert "attune-ai[" not in error_message
 
     def test_list_all_features_returns_dict(self):
         """Test listing all telemetry features returns dict."""

@@ -143,8 +143,10 @@ class MemoryFeatures:
                 return FeatureInfo(
                     name=redis_features[feature],
                     status=FeatureStatus.MISSING_DEPENDENCY,
-                    message="Redis package not installed",
-                    install_command="pip install 'attune-ai[redis]'",
+                    message="Redis package not importable (it ships as a "
+                    "core dependency, so this usually means a broken or "
+                    "partial install)",
+                    install_command="pip install --force-reinstall redis",
                 )
 
             if not MemoryFeatures.is_redis_running():
@@ -252,8 +254,10 @@ class MemoryFeatures:
                 return FeatureInfo(
                     name=display,
                     status=FeatureStatus.MISSING_DEPENDENCY,
-                    message="Redis package not installed",
-                    install_command="pip install 'attune-ai[redis]'",
+                    message="Redis package not importable (it ships as a "
+                    "core dependency, so this usually means a broken or "
+                    "partial install)",
+                    install_command="pip install --force-reinstall redis",
                 )
             if not redis_server_running:
                 return FeatureInfo(

@@ -661,7 +661,7 @@ attune doctor
   ✅ ANTHROPIC_API_KEY set
   ✅ attune-ai 6.3.0 installed
   ✅ Redis reachable (localhost:6379)
-  ⚠️  attune-rag not installed (pip install attune-ai[rag])
+  ⚠️  attune-rag not installed (pip install attune-ai)
   ✅ MCP server importable
 
 2 warnings. Run `attune features` to see optional extras.
@@ -683,12 +683,12 @@ attune features
 📦 Attune AI Features
 
   ✅ core          Always available
-  ✅ redis         attune-ai[redis] — Redis short-term memory
+  ✅ redis         Core — redis + agent-memory-client ship with attune-ai
+  ✅ rag           Core — attune-rag ships with attune-ai
   ✅ developer     attune-ai[developer] — Development tools
-  ❌ rag           attune-ai[rag] — RAG grounding (attune-rag)
   ❌ author        attune-ai[author] — Template authoring (attune-author)
 
-Install missing extras: pip install attune-ai[rag]
+Install missing extras: pip install 'attune-ai[<name>]'
 ```
 
 ---

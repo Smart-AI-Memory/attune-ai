@@ -25,7 +25,7 @@ square brackets as glob characters):
 | -------- | ------- |
 | Claude API mode + LangChain/LangGraph agent teams | `pip install 'attune-ai[developer]'` |
 | The ops dashboard (`attune ops`) | `pip install 'attune-ai[ops]'` |
-| Redis / Agent Memory Server memory backend | `pip install 'attune-ai[redis]'` |
+| Redis / Agent Memory Server memory backend | Already included — the `redis` client is a core dependency. You only need a running Redis **server**. |
 | Help authoring (`.help/` templates) | `pip install 'attune-ai[author]'` |
 
 ### Verify Installation

@@ -34,8 +34,8 @@ command reaches it.
 - **"Share state across agents in this session, or search past
   sessions semantically"** — Redis/AMS session memory. Working-memory
   keys are session-scoped; long-term records are vector-searchable
-  across sessions. Requires Redis and
-  `pip install 'attune-ai[redis]'`.
+  across sessions. Requires a running Redis server (the `redis` client
+  itself ships with `attune-ai`).
 
 - **"Why does my host agent already know X?"** — that is the host's
   own memory, not attune's. The two do not share storage. If a fact
@@ -67,9 +67,10 @@ would contain ("redis connection timeout"), not vague references
 attune memory topics        # personal memory reachable + populated?
 ```
 
-Use the `redis_health_check` MCP tool for the Redis/AMS ring. If it
-reports Redis support missing, install the extra:
-`pip install 'attune-ai[redis]'`.
+Use the `redis_health_check` MCP tool for the Redis/AMS ring. The
+`redis` client ships as a core dependency, so "support missing" almost
+always means the Redis **server** is unreachable rather than anything
+uninstalled — check the server first.
 
 Every release is gated by `scripts/release_recall_gate.py`, which
 installs the built wheel into a clean environment and proves the

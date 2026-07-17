@@ -93,13 +93,14 @@ Feature                        Status          Details
 ----------------------------------------------------------------------
 ✅ Long-term memory (file-based) Available       Core feature (always available)
 ✅ File session storage         Available       Core feature (always available)
-⚠️ Short-term memory (Redis-based) Missing Dependency Redis package not installed
-                                Install: pip install 'attune-ai[redis]'
+⚠️ Short-term memory (Redis-based) Missing Dependency Redis package not importable
+                                Install: pip install --force-reinstall redis
 ...
 
 💡 To enable Redis-enhanced features:
-   1. Install Redis package:
-      pip install 'attune-ai[redis]'
+   1. Repair the redis package (it ships as a core
+      dependency, so this means a broken install):
+      pip install --force-reinstall redis
 
    2. Install and start Redis server:
       • macOS: brew install redis && brew services start redis
@@ -214,13 +215,16 @@ pip install attune-ai
 - CI/CD pipelines
 - Simple automation scripts
 
-### Redis Install (Multi-Session Coordination)
+### Redis (Multi-Session Coordination)
+
+The `redis` client ships as a **core dependency** — there is nothing
+extra to pip install. You only need a running Redis **server**:
 
 ```bash
-pip install 'attune-ai[redis]'
+brew install redis && brew services start redis   # macOS
 ```
 
-**Additional features:**
+**Features this unlocks:**
 - Redis-based short-term memory
 - Real-time event streaming
 - Cross-session agent coordination
@@ -236,14 +240,13 @@ pip install 'attune-ai[redis]'
 
 ## Installation Extras
 
-Extras combine (e.g. `'attune-ai[developer,ops,redis]'`). Keep the
+Extras combine (e.g. `'attune-ai[developer,ops]'`). Keep the
 quotes — zsh and bash treat square brackets as glob characters.
 
 | Extra | Features | Install Command |
 |-------|----------|-----------------|
 | `developer` | Claude API provider, LangChain/LangGraph agent teams, MemDocs | `pip install 'attune-ai[developer]'` |
 | `ops` | Web ops dashboard (`attune ops`) | `pip install 'attune-ai[ops]'` |
-| `redis` | Redis-based short-term memory, event streaming | `pip install 'attune-ai[redis]'` |
 | `author` | Help authoring (`.help/` template generation) | `pip install 'attune-ai[author]'` |
 | `llm` | Anthropic LLM provider only | `pip install 'attune-ai[llm]'` |
 
@@ -350,14 +353,16 @@ docker run -d --name attune-redis -p 6379:6379 redis:alpine
 
 ## Troubleshooting
 
-### "Redis package not installed"
+### "Redis package not importable"
 
-**Problem:** Feature shows "Missing Dependency"
+**Problem:** Feature shows "Missing Dependency". Because `redis` is a
+core dependency, this means a broken or partial install rather than a
+missing extra.
 
 **Solution:**
 
 ```bash
-pip install 'attune-ai[redis]'
+pip install --force-reinstall redis
 ```
 
 ### "Redis server not running"
@@ -392,7 +397,7 @@ docker start attune-redis
 pip list | grep redis
 
 # If not installed, reinstall
-pip install --force-reinstall 'attune-ai[redis]'
+pip install --force-reinstall redis
 ```
 
 ### Connection errors
@@ -505,8 +510,8 @@ try:
     memory = RedisShortTermMemory()
 except ImportError as e:
     print(e)  # "Short-term memory requires Redis.\n
-              #  Status: Redis package not installed\n
-              #  Install: pip install 'attune-ai[redis]'"
+              #  Status: Redis package not importable\n
+              #  Install: pip install --force-reinstall redis"
 ```
 
 **Recommended pattern:**

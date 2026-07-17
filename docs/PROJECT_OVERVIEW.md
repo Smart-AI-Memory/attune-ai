@@ -27,8 +27,9 @@ pip install attune-ai
 # Claude API mode + LangChain/LangGraph agent teams
 pip install 'attune-ai[developer]'
 
-# Ops dashboard / Redis memory (extras combine)
-pip install 'attune-ai[ops,redis]'
+# Ops dashboard (extras combine, e.g. 'attune-ai[developer,ops]')
+# Redis memory needs no extra — the client ships as a core dependency.
+pip install 'attune-ai[ops]'
 
 # Development
 git clone https://github.com/Smart-AI-Memory/attune-ai.git
@@ -75,7 +76,7 @@ plugin/                # Claude Code plugin
 ├── skills/            # Skill groups (MCP-exposed tasks)
 └── agents/            # Agent definitions
 
-attune_redis/          # Redis plugin (pip install 'attune-ai[redis]')
+attune_redis/          # Redis plugin (bundled — ships with attune-ai)
 attune_software/       # Software plugin (bundled)
 ```
 

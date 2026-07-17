@@ -231,7 +231,7 @@ class RedisPlugin(BasePlugin):
         except ImportError:
             logger.warning(
                 "attune-redis: agent-memory-client not installed. "
-                "Install with: pip install attune-ai[redis]"
+                "Install with: pip install attune-ai
             )
 ```
 
