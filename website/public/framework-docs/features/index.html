@@ -5601,13 +5601,13 @@ server is reachable:</p>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>✅ Long-term memory (file-based) Available       Core feature (always available)
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>✅ File session storage         Available       Core feature (always available)
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>⚠️ Short-term memory (Redis-based) Missing Dependency Redis package not importable
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>                                Install: pip install --force-reinstall redis
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>                                Install: pip install --force-reinstall &#39;redis&gt;=5.0.0,&lt;9.0.0&#39;
 <a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>...
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>💡 To enable Redis-enhanced features:
 <a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>   1. Repair the redis package (it ships as a core
 <a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>      dependency, so this means a broken install):
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>      pip install --force-reinstall redis
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>      pip install --force-reinstall &#39;redis&gt;=5.0.0,&lt;9.0.0&#39;
 <a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>
 <a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>   2. Install and start Redis server:
 <a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>      • macOS: brew install redis &amp;&amp; brew services start redis
@@ -5851,7 +5851,7 @@ quotes — zsh and bash treat square brackets as glob characters.</p>
 core dependency, this means a broken or partial install rather than a
 missing extra.</p>
 <p><strong>Solution:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>pip<span class="w"> </span>install<span class="w"> </span>--force-reinstall<span class="w"> </span>redis
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>pip<span class="w"> </span>install<span class="w"> </span>--force-reinstall<span class="w"> </span><span class="s1">&#39;redis&gt;=5.0.0,&lt;9.0.0&#39;</span>
 </code></pre></div>
 <h3 id="redis-server-not-running">"Redis server not running"<a class="headerlink" href="#redis-server-not-running" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Feature shows "Not Configured"</p>
@@ -5876,7 +5876,7 @@ missing extra.</p>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>pip<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>redis
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># If not installed, reinstall</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>pip<span class="w"> </span>install<span class="w"> </span>--force-reinstall<span class="w"> </span>redis
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>pip<span class="w"> </span>install<span class="w"> </span>--force-reinstall<span class="w"> </span><span class="s1">&#39;redis&gt;=5.0.0,&lt;9.0.0&#39;</span>
 </code></pre></div>
 <h3 id="connection-errors">Connection errors<a class="headerlink" href="#connection-errors" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> <code>redis.exceptions.ConnectionError: Error connecting to localhost:6379</code></p>
@@ -6017,7 +6017,7 @@ missing extra.</p>
 <a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
 <a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>  <span class="c1"># &quot;Short-term memory requires Redis.\n</span>
 <a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>              <span class="c1">#  Status: Redis package not importable\n</span>
-<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>              <span class="c1">#  Install: pip install --force-reinstall redis&quot;</span>
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>              <span class="c1">#  Install: pip install --force-reinstall &#39;redis&gt;=5.0.0,&lt;9.0.0&#39;&quot;</span>
 </code></pre></div>
 <p><strong>Recommended pattern:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.memory.features</span><span class="w"> </span><span class="kn">import</span> <span class="n">MemoryFeatures</span>
