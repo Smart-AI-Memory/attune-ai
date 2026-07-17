@@ -377,6 +377,133 @@ def _field_html(q: FormQuestion) -> str:
     )
 
 
+#: The form CSS, split by control family. Every form emits ``_CSS_BASE``;
+#: each field pulls in only the family its control renders with, so a form
+#: never ships styles for controls it lacks (a number+date form omits the
+#: cards/progress rules — ~60% of the block). See :func:`_needed_css`.
+_CSS_BASE = """#attune-elicit-form { display:block; width:100%; padding:1rem 0;
+  color:var(--text-primary); line-height:1.5; }
+#attune-elicit-form .sr-only { position:absolute; width:1px; height:1px;
+  overflow:hidden; clip:rect(0 0 0 0); }
+#attune-elicit-form h3 { font-size:18px; font-weight:500; margin:0 0 .25rem; }
+#attune-elicit-form .ae-msg { margin:0 0 .5rem; color:var(--text-secondary); }
+#attune-elicit-form .ae-desc { margin:0 0 1rem; color:var(--text-muted);
+  font-size:15px; }
+#attune-elicit-form .ae-field { margin:0 0 1rem; }
+#attune-elicit-form .ae-label { display:block; font-weight:500;
+  margin:0 0 .35rem; }
+#attune-elicit-form .ae-req { color:var(--text-accent); margin-left:2px; }
+#attune-elicit-form .ae-help { font-size:13px; color:var(--text-muted);
+  margin:0 0 .35rem; }
+#attune-elicit-form .ae-submit { margin-top:.5rem; padding:.55rem 1.1rem;
+  font-size:15px; font-weight:500; cursor:pointer; color:var(--text-primary);
+  background:var(--bg-accent); border:1px solid var(--border-accent);
+  border-radius:var(--radius); }
+#attune-elicit-form .ae-submit:disabled { opacity:.6; cursor:default; }
+#attune-elicit-form .ae-error { margin-top:.5rem; font-size:14px;
+  color:var(--text-accent); }
+"""
+
+#: INPUT — text_input, textarea, number, date, boolean, non-list single_select.
+_CSS_INPUT = """#attune-elicit-form .ae-input { width:100%; box-sizing:border-box;
+  padding:.5rem .6rem; font-size:15px; color:var(--text-primary);
+  background:var(--surface-1); border:1px solid var(--border);
+  border-radius:var(--radius); }
+#attune-elicit-form .ae-textarea { resize:vertical; min-height:3.5rem; }
+"""
+
+#: CHECKS — non-list multi_select (checkbox rows).
+_CSS_CHECKS = """#attune-elicit-form .ae-checks { display:flex; flex-direction:column;
+  gap:.35rem; }
+#attune-elicit-form .ae-check { display:flex; align-items:center; gap:.5rem;
+  font-weight:400; }
+"""
+
+#: LIST — any select rendered with ``list_style``.
+_CSS_LIST = """#attune-elicit-form .ae-list { margin:0; padding-left:1.6rem;
+  display:flex; flex-direction:column; gap:.3rem; }
+#attune-elicit-form .ae-list-item label { display:inline-flex;
+  align-items:baseline; gap:.45rem; cursor:pointer; font-weight:400; }
+"""
+
+#: CARDS — decision / pushback option cards + the rationale callout (also
+#: reused by the progress blocked-picker).
+_CSS_CARDS = """#attune-elicit-form .ae-cards { display:flex; flex-direction:column; gap:.5rem; }
+#attune-elicit-form .ae-card { position:relative; display:flex;
+  flex-direction:column; gap:.15rem; padding:.6rem 1.9rem .6rem .75rem;
+  border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; }
+#attune-elicit-form .ae-card:hover { border-color:var(--text-muted); }
+#attune-elicit-form .ae-card-rec { border-color:var(--border-accent); }
+#attune-elicit-form .ae-card input { position:absolute; top:.7rem; right:.6rem; }
+#attune-elicit-form .ae-card-title { font-weight:500; }
+#attune-elicit-form .ae-card-note { font-size:13px; color:var(--text-muted); }
+#attune-elicit-form .ae-rec-badge { font-size:11px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.03em; color:var(--text-accent); }
+#attune-elicit-form .ae-yours-tag { font-size:11px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.03em; color:var(--text-muted); }
+#attune-elicit-form .ae-rationale { margin:.6rem 0 0; padding:.4rem 0 .4rem .75rem;
+  font-size:13px; color:var(--text-secondary);
+  border-left:2px solid var(--border-accent); }
+#attune-elicit-form .ae-rationale-h { display:block; font-weight:600;
+  font-size:11px; text-transform:uppercase; letter-spacing:.03em;
+  color:var(--text-accent); margin-bottom:.15rem; }
+"""
+
+#: PROGRESS — the done/in_flight/blocked status rows (pulls CARDS too).
+_CSS_PROGRESS = """#attune-elicit-form .ae-progress { display:flex; flex-direction:column; gap:.5rem; }
+#attune-elicit-form .ae-prog-rows { display:flex; flex-direction:column; gap:.25rem; }
+#attune-elicit-form .ae-prog-row { display:flex; align-items:baseline; gap:.5rem;
+  font-size:14px; color:var(--text-secondary); }
+#attune-elicit-form .ae-prog-icon { flex:none; font-weight:700; width:1.1em;
+  text-align:center; }
+#attune-elicit-form .ae-prog-done .ae-prog-icon { color:var(--text-success,#3fb950); }
+#attune-elicit-form .ae-prog-in_flight .ae-prog-icon { color:var(--text-accent); }
+#attune-elicit-form .ae-prog-blocked { color:var(--text-accent); }
+#attune-elicit-form .ae-prog-detail { font-size:13px; color:var(--text-muted); }
+#attune-elicit-form .ae-prog-label { color:var(--text-primary); }
+#attune-elicit-form .ae-prog-done .ae-prog-label { text-decoration:line-through;
+  color:var(--text-muted); }
+#attune-elicit-form .ae-prog-blocked-h { font-size:11px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.03em; color:var(--text-accent); }
+#attune-elicit-form .ae-prog-tag { flex:none; font-size:10px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted);
+  border:1px solid var(--border); border-radius:3px; padding:0 .3em; }
+#attune-elicit-form .ae-card .ae-prog-tag { align-self:flex-start; }
+#attune-elicit-form .ae-card .ae-prog-icon { margin-right:.15rem; }
+"""
+
+#: Named family blocks in cascade-emission order (BASE is always first).
+_CSS_FAMILIES: list[tuple[str, str]] = [
+    ("INPUT", _CSS_INPUT),
+    ("CHECKS", _CSS_CHECKS),
+    ("LIST", _CSS_LIST),
+    ("CARDS", _CSS_CARDS),
+    ("PROGRESS", _CSS_PROGRESS),
+]
+
+
+def _families_for(question: FormQuestion) -> set[str]:
+    """Return the CSS families one question's control renders with."""
+    qtype = question.type
+    if qtype == QuestionType.PROGRESS:
+        return {"CARDS", "PROGRESS"}  # blocked picker reuses the cards
+    if qtype in (QuestionType.DECISION, QuestionType.PUSHBACK):
+        return {"CARDS"}
+    if qtype == QuestionType.MULTI_SELECT:
+        return {"LIST"} if question.list_style else {"CHECKS"}
+    if qtype == QuestionType.SINGLE_SELECT:
+        return {"LIST"} if question.list_style else {"INPUT"}
+    return {"INPUT"}  # boolean, number, date, textarea, text_input, fallback
+
+
+def _needed_css(form: FormSchema) -> str:
+    """Return BASE plus only the family CSS the form's controls use."""
+    used: set[str] = set()
+    for question in form.questions:
+        used |= _families_for(question)
+    return _CSS_BASE + "".join(css for name, css in _CSS_FAMILIES if name in used)
+
+
 def form_to_widget_html(form: FormSchema, message: str = "") -> str:
     """Render a declarative form as an inline ``show_widget`` HTML form.
 
@@ -408,80 +535,7 @@ def form_to_widget_html(form: FormSchema, message: str = "") -> str:
     return f"""<h2 class="sr-only">{_esc(form.title)} — interactive form</h2>
 <form id="attune-elicit-form" data-form-title="{_esc(form.title)}">
 <style>
-#attune-elicit-form {{ display:block; width:100%; padding:1rem 0;
-  color:var(--text-primary); line-height:1.5; }}
-#attune-elicit-form .sr-only {{ position:absolute; width:1px; height:1px;
-  overflow:hidden; clip:rect(0 0 0 0); }}
-#attune-elicit-form h3 {{ font-size:18px; font-weight:500; margin:0 0 .25rem; }}
-#attune-elicit-form .ae-msg {{ margin:0 0 .5rem; color:var(--text-secondary); }}
-#attune-elicit-form .ae-desc {{ margin:0 0 1rem; color:var(--text-muted);
-  font-size:15px; }}
-#attune-elicit-form .ae-field {{ margin:0 0 1rem; }}
-#attune-elicit-form .ae-label {{ display:block; font-weight:500;
-  margin:0 0 .35rem; }}
-#attune-elicit-form .ae-req {{ color:var(--text-accent); margin-left:2px; }}
-#attune-elicit-form .ae-help {{ font-size:13px; color:var(--text-muted);
-  margin:0 0 .35rem; }}
-#attune-elicit-form .ae-input {{ width:100%; box-sizing:border-box;
-  padding:.5rem .6rem; font-size:15px; color:var(--text-primary);
-  background:var(--surface-1); border:1px solid var(--border);
-  border-radius:var(--radius); }}
-#attune-elicit-form .ae-textarea {{ resize:vertical; min-height:3.5rem; }}
-#attune-elicit-form .ae-checks {{ display:flex; flex-direction:column;
-  gap:.35rem; }}
-#attune-elicit-form .ae-check {{ display:flex; align-items:center; gap:.5rem;
-  font-weight:400; }}
-#attune-elicit-form .ae-list {{ margin:0; padding-left:1.6rem;
-  display:flex; flex-direction:column; gap:.3rem; }}
-#attune-elicit-form .ae-list-item label {{ display:inline-flex;
-  align-items:baseline; gap:.45rem; cursor:pointer; font-weight:400; }}
-#attune-elicit-form .ae-cards {{ display:flex; flex-direction:column; gap:.5rem; }}
-#attune-elicit-form .ae-card {{ position:relative; display:flex;
-  flex-direction:column; gap:.15rem; padding:.6rem 1.9rem .6rem .75rem;
-  border:1px solid var(--border); border-radius:var(--radius); cursor:pointer; }}
-#attune-elicit-form .ae-card:hover {{ border-color:var(--text-muted); }}
-#attune-elicit-form .ae-card-rec {{ border-color:var(--border-accent); }}
-#attune-elicit-form .ae-card input {{ position:absolute; top:.7rem; right:.6rem; }}
-#attune-elicit-form .ae-card-title {{ font-weight:500; }}
-#attune-elicit-form .ae-card-note {{ font-size:13px; color:var(--text-muted); }}
-#attune-elicit-form .ae-rec-badge {{ font-size:11px; font-weight:600;
-  text-transform:uppercase; letter-spacing:.03em; color:var(--text-accent); }}
-#attune-elicit-form .ae-yours-tag {{ font-size:11px; font-weight:600;
-  text-transform:uppercase; letter-spacing:.03em; color:var(--text-muted); }}
-#attune-elicit-form .ae-rationale {{ margin:.6rem 0 0; padding:.4rem 0 .4rem .75rem;
-  font-size:13px; color:var(--text-secondary);
-  border-left:2px solid var(--border-accent); }}
-#attune-elicit-form .ae-rationale-h {{ display:block; font-weight:600;
-  font-size:11px; text-transform:uppercase; letter-spacing:.03em;
-  color:var(--text-accent); margin-bottom:.15rem; }}
-#attune-elicit-form .ae-progress {{ display:flex; flex-direction:column; gap:.5rem; }}
-#attune-elicit-form .ae-prog-rows {{ display:flex; flex-direction:column; gap:.25rem; }}
-#attune-elicit-form .ae-prog-row {{ display:flex; align-items:baseline; gap:.5rem;
-  font-size:14px; color:var(--text-secondary); }}
-#attune-elicit-form .ae-prog-icon {{ flex:none; font-weight:700; width:1.1em;
-  text-align:center; }}
-#attune-elicit-form .ae-prog-done .ae-prog-icon {{ color:var(--text-success,#3fb950); }}
-#attune-elicit-form .ae-prog-in_flight .ae-prog-icon {{ color:var(--text-accent); }}
-#attune-elicit-form .ae-prog-blocked {{ color:var(--text-accent); }}
-#attune-elicit-form .ae-prog-detail {{ font-size:13px; color:var(--text-muted); }}
-#attune-elicit-form .ae-prog-label {{ color:var(--text-primary); }}
-#attune-elicit-form .ae-prog-done .ae-prog-label {{ text-decoration:line-through;
-  color:var(--text-muted); }}
-#attune-elicit-form .ae-prog-blocked-h {{ font-size:11px; font-weight:600;
-  text-transform:uppercase; letter-spacing:.03em; color:var(--text-accent); }}
-#attune-elicit-form .ae-prog-tag {{ flex:none; font-size:10px; font-weight:600;
-  text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted);
-  border:1px solid var(--border); border-radius:3px; padding:0 .3em; }}
-#attune-elicit-form .ae-card .ae-prog-tag {{ align-self:flex-start; }}
-#attune-elicit-form .ae-card .ae-prog-icon {{ margin-right:.15rem; }}
-#attune-elicit-form .ae-submit {{ margin-top:.5rem; padding:.55rem 1.1rem;
-  font-size:15px; font-weight:500; cursor:pointer; color:var(--text-primary);
-  background:var(--bg-accent); border:1px solid var(--border-accent);
-  border-radius:var(--radius); }}
-#attune-elicit-form .ae-submit:disabled {{ opacity:.6; cursor:default; }}
-#attune-elicit-form .ae-error {{ margin-top:.5rem; font-size:14px;
-  color:var(--text-accent); }}
-</style>
+{_needed_css(form)}</style>
 <h3>{_esc(form.title)}</h3>
 {intro}{desc}
 {fields}
