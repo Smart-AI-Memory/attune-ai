@@ -34,7 +34,16 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PYPROJECT = REPO_ROOT / "pyproject.toml"
-SRC_ROOT = REPO_ROOT / "src" / "attune"
+#: Every Python package that SHIPS IN THE WHEEL (packages.find scans
+#: both `src` and `.`). Scanning only src/attune left attune_redis's
+#: 6 MCP error hints invisible — the #758 trap survived #1418 there
+#: precisely because this list used to be one root. If a new bundled
+#: package is added, add it here.
+SCAN_ROOTS = [
+    REPO_ROOT / "src" / "attune",
+    REPO_ROOT / "attune_redis",
+    REPO_ROOT / "attune_software",
+]
 
 #: Empty extras that are allowed to exist — each must be a deliberate
 #: back-compat alias whose deps were promoted to core, documented by the
@@ -100,14 +109,16 @@ def _extras_with_dep_counts() -> dict[str, int]:
 
 
 def _referenced_extras() -> dict[str, list[str]]:
-    """{extra: [file:line, ...]} for every attune-ai[...] hint in src/.
+    """{extra: [file:line, ...]} for every attune-ai[...] hint in the
+    wheel's Python packages (see SCAN_ROOTS).
 
     Comment-only lines are skipped — a comment describing the pattern
     (doc_audit/checks.py does this) is not a user-facing install hint.
     Comma combos like [memory,redis] expand to individual extras.
     """
     refs: dict[str, list[str]] = {}
-    for py in sorted(SRC_ROOT.rglob("*.py")):
+    files = (py for root in SCAN_ROOTS if root.is_dir() for py in sorted(root.rglob("*.py")))
+    for py in files:
         for lineno, line in enumerate(py.read_text(encoding="utf-8").splitlines(), start=1):
             if line.strip().startswith("#"):
                 continue

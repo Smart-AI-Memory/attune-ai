@@ -7,7 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **The six empty placeholder extras (`[rag]`, `[memory]`, `[redis]`,
+  `[cache]`, `[agent-sdk]`, `[software]`) are deleted** (#1418; extras
+  menu 22 → 16). Each was a back-compat alias whose dependencies had
+  been promoted to core, so `pip install 'attune-ai[redis]'` etc. now
+  emits a pip "unknown extra" warning but still installs everything —
+  the deps ship with the base package. Update install scripts to plain
+  `pip install attune-ai` (or a real extra such as `[developer]`,
+  `[ops]`).
+
 ### Fixed
+
+- **Error messages no longer point at empty-alias extras as
+  remediations, and the interactive Redis installer no longer reports
+  fake success** (#1418 + follow-up). Previously, a broken `redis`
+  import prompted "Install now?" → ran `pip install attune-ai[redis]`
+  (a no-op that exits 0) → printed "✓ redis package installed" with
+  nothing installed. The installer now targets the real, version-pinned
+  package (`redis>=5.0.0,<9.0.0`) and verifies the import before
+  claiming success. All install hints across `attune` and the bundled
+  `attune_redis` plugin (MCP tool errors included) now name real
+  packages, and the extras-honesty guard scans every package that ships
+  in the wheel — not just `src/attune`.
 
 - **`attune workflow run` no longer exits 0 when the spend gate blocks
   the run.** A blocked run (non-interactive without

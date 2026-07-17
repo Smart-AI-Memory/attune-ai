@@ -320,7 +320,7 @@ def cmd_features(args: Namespace) -> int:
         print("\n💡 To enable Redis-enhanced features:")
         print("   1. Repair the redis package (it ships as a core")
         print("      dependency, so this means a broken install):")
-        print("      pip install --force-reinstall redis")
+        print("      pip install --force-reinstall 'redis>=5.0.0,<9.0.0'")
         print("\n   2. Install and start Redis server:")
         print("      • macOS: brew install redis && brew services start redis")
         print("      • Linux: sudo apt install redis-server")

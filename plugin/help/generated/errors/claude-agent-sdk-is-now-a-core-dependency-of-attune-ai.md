@@ -14,7 +14,7 @@ source: .claude/CLAUDE.md
 
 ## Root Cause
 
-As of v4.2.0, the Agent SDK is included in core dependencies. No need for `pip install 'attune-ai[agent-sdk]'` — a plain `pip install attune-ai` includes it. The `[agent-sdk]` extra is kept as an empty placeholder for backward compatibility.
+As of v4.2.0, the Agent SDK is included in core dependencies. No need for `pip install 'attune-ai[agent-sdk]'` — a plain `pip install attune-ai` includes it. (The former `[agent-sdk]` empty placeholder extra was removed 2026-07-17.)
 
 ## Resolution
 

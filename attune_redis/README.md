@@ -11,15 +11,17 @@ search over long-term memory, and pub/sub coordination.
 
 ## Installation
 
-```bash
-pip install 'attune-ai[redis]'
-```
-
-Or as an extra of the core framework:
+Nothing extra to install — this plugin is **bundled in the attune-ai
+wheel**, and its dependencies (`redis`, `agent-memory-client`) are core
+attune-ai dependencies:
 
 ```bash
-pip install attune-ai[redis]
+pip install attune-ai
 ```
+
+(There is no standalone `attune-redis` package on PyPI, and the former
+`[redis]` extra was an empty alias, removed 2026-07-17. You only need a
+running Redis / Agent Memory Server to connect to.)
 
 ## Quick start
 

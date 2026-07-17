@@ -146,7 +146,7 @@ class MemoryFeatures:
                     message="Redis package not importable (it ships as a "
                     "core dependency, so this usually means a broken or "
                     "partial install)",
-                    install_command="pip install --force-reinstall redis",
+                    install_command="pip install --force-reinstall 'redis>=5.0.0,<9.0.0'",
                 )
 
             if not MemoryFeatures.is_redis_running():
@@ -257,7 +257,7 @@ class MemoryFeatures:
                     message="Redis package not importable (it ships as a "
                     "core dependency, so this usually means a broken or "
                     "partial install)",
-                    install_command="pip install --force-reinstall redis",
+                    install_command="pip install --force-reinstall 'redis>=5.0.0,<9.0.0'",
                 )
             if not redis_server_running:
                 return FeatureInfo(

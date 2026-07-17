@@ -234,7 +234,7 @@ class RedisAutoDetector:
         print("  persistent session memory in Attune AI.")
         print()
         print("  Install now?")
-        print("    pip install --force-reinstall redis")
+        print("    pip install --force-reinstall 'redis>=5.0.0,<9.0.0'")
         print()
 
         try:
@@ -246,7 +246,7 @@ class RedisAutoDetector:
         if response in ("d", "dont", "don't"):
             self._save_preference("install_declined", True)
             print("  Won't ask again. Enable later with:")
-            print("    pip install --force-reinstall redis")
+            print("    pip install --force-reinstall 'redis>=5.0.0,<9.0.0'")
             print("=" * 60)
             print()
             return False
@@ -272,14 +272,16 @@ class RedisAutoDetector:
                     "install",
                     "--quiet",
                     "--force-reinstall",
-                    "redis",
+                    # Same spec as pyproject's core dep — an unpinned
+                    # install could pull a redis major that violates it.
+                    "redis>=5.0.0,<9.0.0",
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
         except subprocess.CalledProcessError as e:
             print(f"  ✗ Installation failed: {e}")
-            print("  Install manually: pip install --force-reinstall redis")
+            print("  Install manually: pip install --force-reinstall 'redis>=5.0.0,<9.0.0'")
             print("=" * 60)
             print()
             logger.error(f"Failed to install redis package: {e}")
@@ -296,8 +298,11 @@ class RedisAutoDetector:
         self._invalidate_cache()
         if not self._check_python_package():
             print("  ✗ pip reported success but redis is still not importable.")
-            print("    This usually means a broken environment rather than a")
-            print("    missing package. Try: pip install --force-reinstall redis")
+            print("    The install command was already retried, so don't re-run it —")
+            print("    this points at the environment itself. Diagnose with:")
+            print("      python -m pip check")
+            print("      python -c 'import redis'   (read the actual ImportError)")
+            print("    or rebuild the env: pip install --force-reinstall attune-ai")
             print("=" * 60)
             print()
             logger.error("redis still not importable after a successful pip install")

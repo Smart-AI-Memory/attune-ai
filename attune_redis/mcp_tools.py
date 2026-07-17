@@ -21,6 +21,18 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+# redis + agent-memory-client are CORE attune-ai dependencies, so an
+# ImportError here means a broken or partial environment — never a
+# missing extra. Do NOT point users at an extras install: the [redis]
+# extra was an empty alias (deleted 2026-07-17, #1418) and suggesting
+# it was the #758 no-op-remediation trap.
+_REDIS_MISSING_ERROR = (
+    "Redis client libraries are not importable. They ship with attune-ai "
+    "core, so this indicates a broken or partial install. "
+    "Fix: pip install --force-reinstall attune-ai  "
+    "(in a uv-managed dev checkout: uv sync)"
+)
+
 # =========================================================================
 # Tool definitions (JSON Schema)
 # =========================================================================
@@ -191,7 +203,7 @@ async def handle_redis_memory_store(server: Any, args: dict[str, Any]) -> dict[s
     except ImportError:
         return {
             "success": False,
-            "error": "Redis support not installed. Run: pip install 'attune-ai[redis]'",
+            "error": _REDIS_MISSING_ERROR,
         }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
@@ -225,7 +237,7 @@ async def handle_redis_memory_retrieve(server: Any, args: dict[str, Any]) -> dic
     except ImportError:
         return {
             "success": False,
-            "error": "Redis support not installed. Run: pip install 'attune-ai[redis]'",
+            "error": _REDIS_MISSING_ERROR,
         }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
@@ -259,7 +271,7 @@ async def handle_redis_memory_search(server: Any, args: dict[str, Any]) -> dict[
     except ImportError:
         return {
             "success": False,
-            "error": "Redis support not installed. Run: pip install 'attune-ai[redis]'",
+            "error": _REDIS_MISSING_ERROR,
         }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
@@ -289,7 +301,7 @@ async def handle_redis_memory_promote(server: Any, args: dict[str, Any]) -> dict
     except ImportError:
         return {
             "success": False,
-            "error": "Redis support not installed. Run: pip install 'attune-ai[redis]'",
+            "error": _REDIS_MISSING_ERROR,
         }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
@@ -323,7 +335,7 @@ async def handle_redis_memory_forget(server: Any, args: dict[str, Any]) -> dict[
     except ImportError:
         return {
             "success": False,
-            "error": "Redis support not installed. Run: pip install 'attune-ai[redis]'",
+            "error": _REDIS_MISSING_ERROR,
         }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
@@ -354,7 +366,7 @@ async def handle_redis_health_check(server: Any, args: dict[str, Any]) -> dict[s
     except ImportError:
         return {
             "success": False,
-            "error": "Redis support not installed. Run: pip install 'attune-ai[redis]'",
+            "error": _REDIS_MISSING_ERROR,
         }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
