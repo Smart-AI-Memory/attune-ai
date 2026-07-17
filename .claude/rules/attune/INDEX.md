@@ -23,14 +23,18 @@ the one-liner here is the trip-wire, not the rule.
 - **Touching `os.walk` traversal code, or a scanner flags
   `dirs[:]`** → `os-walk-dirs-pattern.md` — `dirs[:] = [...]` is
   required in-place filtering, NOT a copy to "fix".
+- **Cleaning up docs that name a "removed" symbol** →
+  `doc-fiction-triage.md` (+ `doc-import-gate.md`, the CI gate,
+  and its `doc-import-skip` escape hatch) — a `jit_recall`
+  one-liner fires on Edit/Write touching `docs/` or `content/`;
+  Read the full body before acting (migrated off harness
+  path-scope 2026-07-16 — one body, deduped, not a doubled
+  full-body auto-load).
 
 ## Path-scoped rules (auto-load on READS of matching files only)
 
 They do NOT fire when only WRITING a new file — pull manually then:
 
-- **docs/content cleanup naming a "removed" symbol** →
-  `doc-fiction-triage.md` (+ `doc-import-gate.md` for the CI gate
-  and its `doc-import-skip` escape hatch).
 - **Authoring/reorganizing docs** → `documentation-patterns.md` —
   consolidate over scatter, delete + redirect, ~150-line guideline.
 - **Editing plugin commands/skills/hooks or MCP tools** →

@@ -1,9 +1,3 @@
----
-paths:
-  - "docs/**"
-  - "content/**"
----
-
 # Doc-Fiction Triage — pre-flight checklist before a doc cleanup
 
 **Created:** 2026-06-26
@@ -16,7 +10,7 @@ the checklist that prevents them.
 Run this BEFORE deleting/rewriting any doc that references a "removed"
 symbol. It is the human/agent counterpart to the CI
 [doc-import-gate](./doc-import-gate.md) and pairs with
-[removing-dead-code](../../rules-tail/attune/removing-dead-code.md) (the delete-vs-rewrite
+[removing-dead-code](./removing-dead-code.md) (the delete-vs-rewrite
 decision once a symbol is confirmed dead).
 
 ---
@@ -118,8 +112,8 @@ a prior decision is found wrong, CORRECT it in place with a dated note
 
 ## Cross-references
 
-- [removing-dead-code.md](../../rules-tail/attune/removing-dead-code.md) — the
+- [removing-dead-code.md](./removing-dead-code.md) — the
   delete-vs-rewrite / should-it-exist gate (after §2 confirms dead).
 - [doc-import-gate.md](./doc-import-gate.md) — the CI enforcement of §3.
-- [website-content-accuracy.md](./website-content-accuracy.md) — verify
+- [website-content-accuracy.md](../../rules/attune/website-content-accuracy.md) — verify
   counts/claims against live code (the website counterpart).
