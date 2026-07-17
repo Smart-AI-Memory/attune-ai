@@ -109,3 +109,36 @@ a real round-trip, not a mock.
   or redirect (wizard step / `/spec` intake are alternatives).
 - **Rule-relaxation criteria** (§4) — the behavioral change; needs
   explicit OK, since it edits attune's Socratic question-shape habit.
+
+## 7. Reference form — every control type (freeze-safe V7 precursor)
+
+`attune.elicitation.reference_form` is the single code-verified example
+of a *complete* declarative form: exactly one field per `QuestionType`
+member (all ten — the four v1 controls, the three v2.1 rich controls,
+and the v3–v5 constructs), each with realistic values, paired with
+valid `EXAMPLE_ANSWERS`.
+
+```python
+from attune.elicitation import (
+    REFERENCE_FORM,
+    EXAMPLE_ANSWERS,
+    form_from_dict,
+    collect_form_response,
+)
+
+form = form_from_dict(REFERENCE_FORM)
+response = collect_form_response(form, EXAMPLE_ANSWERS)
+```
+
+It is a plain data constant — **not** a template-store entry or a
+`form_from_template` call. That mechanism is the V7 template library,
+design-frozen until 2026-07-28; this reference is the freeze-safe
+precursor that becomes V7's first stored template verbatim when the
+freeze lifts.
+
+`tests/unit/elicitation/test_reference_form.py` guards it: a
+completeness test fails CI if a new `QuestionType` is added without a
+field here, so the reference cannot silently fall behind the grammar.
+The same test proves the definition validates, the answers round-trip,
+a missing required answer is rejected (R4), and the form casts to all
+three surfaces (`widget` / `AskUserQuestion` / native elicitation).

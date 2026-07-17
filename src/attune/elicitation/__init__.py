@@ -30,9 +30,12 @@ from attune.elicitation.bridge import (
     form_to_askuserquestion,
 )
 from attune.elicitation.elicitation_schema import form_to_elicitation_schema
+from attune.elicitation.reference_form import EXAMPLE_ANSWERS, REFERENCE_FORM
 from attune.elicitation.widget import WIDGET_RESPONSE_MARKER, form_to_widget_html
 
 __all__ = [
+    "EXAMPLE_ANSWERS",
+    "REFERENCE_FORM",
     "WIDGET_RESPONSE_MARKER",
     "FormValidationError",
     "collect_form_response",
