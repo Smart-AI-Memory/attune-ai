@@ -15831,3 +15831,26 @@ def ", start_idx + 1)` for module-
   explicitly. Extends the stale-on-arrival / reconcile-the-record
   family: those catch DONE-but-carried-as-open; this is the inverse,
   NEVER-STARTED-but-carried-as-undoable.
+
+- **`reach_snapshot.py` EXITS 0 on rate-limit — a background task
+  reporting "completed (exit 0)" proved nothing; and the pypistats 429
+  penalty can outlast 50+ minutes, so post-release retries are a
+  tar-pit with a free exit**: 2026-07-17, v10.5.0 close-out. Three
+  snapshot attempts across ~90 min (tag-time, +16 min, +50 min with
+  `--spacing 60`) all captured 0/5 — each background task notified
+  "completed, exit code 0" and only READING the output file revealed
+  the `error: pypistats rate-limited` line. Two halves: (1) the
+  script's soft-fail exit 0 defeats every caller that judges by exit
+  code (monitors, CI steps, `&&` chains) — same family as the same-day
+  "exit 0 is evidence about the command, never the goal" lesson, now
+  on the automation surface: for any script you background, know
+  whether it hard-fails, and read the OUTPUT before reporting its
+  outcome. (2) When retry N≥3 fails identically, verify the mechanism
+  at the SOURCE (`curl -s -w '%{http_code}' https://pypistats.org/api/
+  packages/<pkg>/recent` → bare 429 = IP-penalty, nothing local) and
+  then check whether waiting is even a cost: pypistats aggregates
+  DAILY and lags ~a day, so a next-morning capture is a BETTER
+  after-pair than a same-evening one — deferral was free the whole
+  time. History: rate-limiting also hit the 10.0.x and 10.2.0
+  releases (release_state memory); it is the norm at tag time, not
+  weather. Defer by default; don't burn the evening.
