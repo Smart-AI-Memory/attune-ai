@@ -117,7 +117,19 @@ def _referenced_extras() -> dict[str, list[str]]:
     Comma combos like [memory,redis] expand to individual extras.
     """
     refs: dict[str, list[str]] = {}
-    files = (py for root in SCAN_ROOTS if root.is_dir() for py in sorted(root.rglob("*.py")))
+    # Skip test directories: they are excluded from the wheel
+    # (packages.find excludes tests*), and test code legitimately
+    # contains NEGATIVE examples — e.g. an assertion that an error
+    # message does NOT offer "attune-ai[" — which the hint regex would
+    # otherwise match as a garbage extra name. (That exact ouroboros
+    # broke CI when this guard first scanned attune_redis/tests.)
+    files = (
+        py
+        for root in SCAN_ROOTS
+        if root.is_dir()
+        for py in sorted(root.rglob("*.py"))
+        if "tests" not in py.relative_to(root).parts
+    )
     for py in files:
         for lineno, line in enumerate(py.read_text(encoding="utf-8").splitlines(), start=1):
             if line.strip().startswith("#"):
