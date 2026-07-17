@@ -216,13 +216,17 @@ between assessments.
 >   said "verified still unset"). Caveat: secret-exists ≠
 >   DEC-8-enforcement-verified — nobody has confirmed the gate
 >   actually fires. That check is the remaining work, not the setting.
-> - **#3 `ATTUNE_WORKSPACE_RO_TOKEN` — REVERSED. Do NOT create it.**
->   The umbrella spec-audit CI shipped as
+> - **#3 `ATTUNE_WORKSPACE_RO_TOKEN` — CLOSED. Do NOT create it; there
+>   is also nothing to revoke.** The umbrella spec-audit CI shipped as
 >   `.github/workflows/spec-status-reminder.yml` using the built-in
->   `github.token`, so the PAT was orphaned on arrival: zero workflow
->   references, and no such secret in repo or org. The live action is
->   to **REVOKE** `attune-workspace-ro` at github.com/settings/tokens
->   (~3 min, zero blast radius). The Console spend limit half of this
+>   `github.token`, so the token was never needed — and (corrected
+>   2026-07-17, PM) **it was never created**: Patrick checked both
+>   GitHub token lists (empty), no local trace exists, and this item's
+>   own "carried for 2+ days" status meant not-done. An earlier version
+>   of this banner said "the live action is to REVOKE it" — that was a
+>   phantom carry (an instruction to undo an action never taken),
+>   asserted without checking the artifact existed, and it cost a
+>   fruitless token-list hunt. The Console spend limit half of this
 >   item is unchanged and still open.
 > - **#9 trap-battery — DONE, and measurement CLOSED.** Not "pending
 >   approval": the full v2 battery executed 2026-07-14 (120 sessions,
