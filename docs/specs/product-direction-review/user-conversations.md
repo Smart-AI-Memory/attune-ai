@@ -48,6 +48,32 @@ arrive and read the silence as the answer to F1.
 
 ---
 
+## Outbound — 2026-07-17: LinkedIn ask POSTED (the DEC-2 decision, executed)
+
+Patrick posted the direct ask to LinkedIn on 2026-07-17 (URL pending
+capture — the recurring gap; capture it). Final angle was Patrick's
+own: setup-has-been-a-challenge / "if pip installing attune-ai gave
+you trouble, I'd appreciate your help" — grounded in the verified
+F1–F5 frictions and pointing the same direction as Discussion #1325.
+The interview bar stays in the post's body: pip installed it AND
+pointed it at a real repository; bounce stories explicitly invited.
+
+This closes the "outbound vs read-the-silence" fork: **outbound,
+chosen and executed.** From here, the 07-27 verdict reads the
+RESPONSE to a direct ask, which means something — unlike silence from
+a channel nobody was standing in.
+
+**New population datum (Patrick, 2026-07-17, recorded same day):**
+he has talked to **3 people** about attune-ai over the project's
+life; **none ever got back to him** about running it. Whether Jacob
+is among the 3 is unresolved (asked; pending). So the funnel to
+date: 3 personal-network conversations -> 0 follow-throughs; product
+channels -> 0 contacts; confirmed run-reports -> 0. The ask is now
+public; replies get logged here within a day (N1), against the
+four-question checklist kept under draft 1.
+
+---
+
 ## Conversation 1 — 2026-07-08/09 — DOWNGRADED 2026-07-17: likely below the bar
 
 **Recorded:** 2026-07-11 (verbal report from Patrick; two-day lag).
