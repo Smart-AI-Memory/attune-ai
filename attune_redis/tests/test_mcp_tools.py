@@ -154,7 +154,7 @@ class TestHandleStore:
 
     @pytest.mark.asyncio()
     async def test_store_import_error(self):
-        """Store returns error when plugin not installed."""
+        """Store returns error when redis libs are not importable."""
         server = MagicMock(spec=[])
         del server._redis_backend
         with patch(
@@ -163,7 +163,10 @@ class TestHandleStore:
         ):
             result = await handle_redis_memory_store(server, {"key": "k", "value": "v"})
         assert result["success"] is False
-        assert "not installed" in result["error"]
+        # New contract (#1420): the deps are core, so the error names a
+        # broken install and a remediation that can actually work.
+        assert "not importable" in result["error"]
+        assert "attune-ai[" not in result["error"]
 
 
 class TestHandleRetrieve:
