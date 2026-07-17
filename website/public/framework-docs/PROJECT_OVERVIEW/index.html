@@ -4892,12 +4892,13 @@ beat one clever abstraction."</p>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Claude API mode + LangChain/LangGraph agent teams</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[developer]&#39;</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Ops dashboard / Redis memory (extras combine)</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[ops,redis]&#39;</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Development</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Smart-AI-Memory/attune-ai.git
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="nb">cd</span><span class="w"> </span>attune-ai<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;.[dev]&#39;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Ops dashboard (extras combine, e.g. &#39;attune-ai[developer,ops]&#39;)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Redis memory needs no extra — the client ships as a core dependency.</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[ops]&#39;</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Development</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Smart-AI-Memory/attune-ai.git
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="nb">cd</span><span class="w"> </span>attune-ai<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;.[dev]&#39;</span>
 </code></pre></div>
 <p>Zero-config, ready to use. Subscription-first routing with
 automatic API fallback when <code>ANTHROPIC_API_KEY</code> is set. Run
@@ -4934,7 +4935,7 @@ automatic API fallback when <code>ANTHROPIC_API_KEY</code> is set. Run
 <a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>├── skills/            # Skill groups (MCP-exposed tasks)
 <a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>└── agents/            # Agent definitions
 <a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>attune_redis/          # Redis plugin (pip install &#39;attune-ai[redis]&#39;)
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>attune_redis/          # Redis plugin (bundled — ships with attune-ai)
 <a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>attune_software/       # Software plugin (bundled)
 </code></pre></div>
 <h3 id="key-classes">Key Classes<a class="headerlink" href="#key-classes" title="Permanent link">&para;</a></h3>

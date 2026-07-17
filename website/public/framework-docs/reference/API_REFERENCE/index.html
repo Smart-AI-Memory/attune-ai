@@ -6770,7 +6770,7 @@ orchestration, and a unified memory system.</p>
 <h3 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai<span class="w">                </span><span class="c1"># Core</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[developer]&#39;</span><span class="w">   </span><span class="c1"># Developer extras</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[redis]&#39;</span><span class="w">       </span><span class="c1"># Redis-backed memory + AMS plugin</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai<span class="w">       </span><span class="c1"># Redis-backed memory + AMS plugin</span>
 </code></pre></div>
 <hr />
 <h2 id="core-framework">Core Framework<a class="headerlink" href="#core-framework" title="Permanent link">&para;</a></h2>
@@ -7057,7 +7057,7 @@ persistent long-term).</p>
 <h3 id="redisshorttermmemory">RedisShortTermMemory<a class="headerlink" href="#redisshorttermmemory" title="Permanent link">&para;</a></h3>
 <p><code>attune.memory.RedisShortTermMemory</code></p>
 <p>Redis-backed short-term memory with TTL expiration.</p>
-<p>Requires: <code>pip install 'attune-ai[redis]'</code></p>
+<p>Requires: <code>pip install attune-ai</code></p>
 <hr />
 <h3 id="longtermmemory">LongTermMemory<a class="headerlink" href="#longtermmemory" title="Permanent link">&para;</a></h3>
 <p><code>attune.memory.LongTermMemory</code></p>
@@ -7833,7 +7833,7 @@ class method.</p>
 <h3 id="eventstreamer">EventStreamer<a class="headerlink" href="#eventstreamer" title="Permanent link">&para;</a></h3>
 <p><code>attune.telemetry.EventStreamer</code></p>
 <p>Real-time event streaming via Redis Streams.</p>
-<p>Requires: <code>pip install 'attune-ai[redis]'</code></p>
+<p>Requires: <code>pip install attune-ai</code></p>
 <hr />
 <h2 id="monitoring">Monitoring<a class="headerlink" href="#monitoring" title="Permanent link">&para;</a></h2>
 <h3 id="alertconfig">AlertConfig<a class="headerlink" href="#alertconfig" title="Permanent link">&para;</a></h3>

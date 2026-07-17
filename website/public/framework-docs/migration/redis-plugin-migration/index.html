@@ -4679,14 +4679,14 @@ facade falls back to a mock backend; file-based memory works
 natively. <code>attune.coordination</code> raises <code>ImportError</code> on any
 attribute access.</p>
 <h3 id="with-redis-support">With Redis support<a class="headerlink" href="#with-redis-support" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[redis]&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai
 </code></pre></div>
 <p>Pulls <code>redis&gt;=5.0.0,&lt;9.0.0</code> and <code>agent-memory-client&gt;=0.14.0</code>.
 Enables the bundled <code>attune_redis/</code> plugin (Redis Agent Memory
 Server integration) and all Redis-coupled subsystems listed
 above.</p>
 <h3 id="backward-compatibility">Backward compatibility<a class="headerlink" href="#backward-compatibility" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[memory]&#39;</span><span class="w">  </span><span class="c1"># still works — empty no-op alias</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai<span class="w">  </span><span class="c1"># still works — empty no-op alias</span>
 </code></pre></div>
 <h2 id="legacy-attuneredis_-modules">Legacy <code>attune.redis_*</code> modules<a class="headerlink" href="#legacy-attuneredis_-modules" title="Permanent link">&para;</a></h2>
 <p>The top-level <code>attune.redis_*</code> modules (<code>attune.redis_memory</code>,

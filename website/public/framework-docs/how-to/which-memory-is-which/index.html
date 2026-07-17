@@ -4711,8 +4711,8 @@ command reaches it.</p>
 <p><strong>"Share state across agents in this session, or search past
   sessions semantically"</strong> — Redis/AMS session memory. Working-memory
   keys are session-scoped; long-term records are vector-searchable
-  across sessions. Requires Redis and
-  <code>pip install 'attune-ai[redis]'</code>.</p>
+  across sessions. Requires a running Redis server (the <code>redis</code> client
+  itself ships with <code>attune-ai</code>).</p>
 </li>
 <li>
 <p><strong>"Why does my host agent already know X?"</strong> — that is the host's
@@ -4739,9 +4739,10 @@ would contain ("redis connection timeout"), not vague references
 <h2 id="health-checks">Health checks<a class="headerlink" href="#health-checks" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>attune<span class="w"> </span>memory<span class="w"> </span>topics<span class="w">        </span><span class="c1"># personal memory reachable + populated?</span>
 </code></pre></div>
-<p>Use the <code>redis_health_check</code> MCP tool for the Redis/AMS ring. If it
-reports Redis support missing, install the extra:
-<code>pip install 'attune-ai[redis]'</code>.</p>
+<p>Use the <code>redis_health_check</code> MCP tool for the Redis/AMS ring. The
+<code>redis</code> client ships as a core dependency, so "support missing" almost
+always means the Redis <strong>server</strong> is unreachable rather than anything
+uninstalled — check the server first.</p>
 <p>Every release is gated by <code>scripts/release_recall_gate.py</code>, which
 installs the built wheel into a clean environment and proves the
 capture-to-recall round-trip before publishing.</p>

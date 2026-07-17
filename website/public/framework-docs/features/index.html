@@ -3909,10 +3909,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#redis-install-multi-session-coordination" class="md-nav__link">
+  <a href="#redis-multi-session-coordination" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Redis Install (Multi-Session Coordination)
+        Redis (Multi-Session Coordination)
       
     </span>
   </a>
@@ -4020,10 +4020,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#redis-package-not-installed" class="md-nav__link">
+  <a href="#redis-package-not-importable" class="md-nav__link">
     <span class="md-ellipsis">
       
-        "Redis package not installed"
+        "Redis package not importable"
       
     </span>
   </a>
@@ -5157,10 +5157,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#redis-install-multi-session-coordination" class="md-nav__link">
+  <a href="#redis-multi-session-coordination" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Redis Install (Multi-Session Coordination)
+        Redis (Multi-Session Coordination)
       
     </span>
   </a>
@@ -5268,10 +5268,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#redis-package-not-installed" class="md-nav__link">
+  <a href="#redis-package-not-importable" class="md-nav__link">
     <span class="md-ellipsis">
       
-        "Redis package not installed"
+        "Redis package not importable"
       
     </span>
   </a>
@@ -5600,18 +5600,19 @@ server is reachable:</p>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>----------------------------------------------------------------------
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>✅ Long-term memory (file-based) Available       Core feature (always available)
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>✅ File session storage         Available       Core feature (always available)
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>⚠️ Short-term memory (Redis-based) Missing Dependency Redis package not installed
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>                                Install: pip install &#39;attune-ai[redis]&#39;
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>⚠️ Short-term memory (Redis-based) Missing Dependency Redis package not importable
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>                                Install: pip install --force-reinstall redis
 <a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>...
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>💡 To enable Redis-enhanced features:
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>   1. Install Redis package:
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>      pip install &#39;attune-ai[redis]&#39;
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>   2. Install and start Redis server:
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>      • macOS: brew install redis &amp;&amp; brew services start redis
-<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>      • Linux: sudo apt install redis-server
-<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>      • Docker: docker run -d -p 6379:6379 redis:alpine
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>   1. Repair the redis package (it ships as a core
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>      dependency, so this means a broken install):
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>      pip install --force-reinstall redis
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>   2. Install and start Redis server:
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>      • macOS: brew install redis &amp;&amp; brew services start redis
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>      • Linux: sudo apt install redis-server
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>      • Docker: docker run -d -p 6379:6379 redis:alpine
 </code></pre></div>
 <h3 id="python-api">Python API<a class="headerlink" href="#python-api" title="Permanent link">&para;</a></h3>
 <p>Check feature availability programmatically:</p>
@@ -5718,10 +5719,12 @@ server is reachable:</p>
 - Single-session usage
 - CI/CD pipelines
 - Simple automation scripts</p>
-<h3 id="redis-install-multi-session-coordination">Redis Install (Multi-Session Coordination)<a class="headerlink" href="#redis-install-multi-session-coordination" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[redis]&#39;</span>
+<h3 id="redis-multi-session-coordination">Redis (Multi-Session Coordination)<a class="headerlink" href="#redis-multi-session-coordination" title="Permanent link">&para;</a></h3>
+<p>The <code>redis</code> client ships as a <strong>core dependency</strong> — there is nothing
+extra to pip install. You only need a running Redis <strong>server</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>brew<span class="w"> </span>install<span class="w"> </span>redis<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>brew<span class="w"> </span>services<span class="w"> </span>start<span class="w"> </span>redis<span class="w">   </span><span class="c1"># macOS</span>
 </code></pre></div>
-<p><strong>Additional features:</strong>
+<p><strong>Features this unlocks:</strong>
 - Redis-based short-term memory
 - Real-time event streaming
 - Cross-session agent coordination
@@ -5733,7 +5736,7 @@ server is reachable:</p>
 - Team collaboration</p>
 <hr />
 <h2 id="installation-extras">Installation Extras<a class="headerlink" href="#installation-extras" title="Permanent link">&para;</a></h2>
-<p>Extras combine (e.g. <code>'attune-ai[developer,ops,redis]'</code>). Keep the
+<p>Extras combine (e.g. <code>'attune-ai[developer,ops]'</code>). Keep the
 quotes — zsh and bash treat square brackets as glob characters.</p>
 <table>
 <thead>
@@ -5753,11 +5756,6 @@ quotes — zsh and bash treat square brackets as glob characters.</p>
 <td><code>ops</code></td>
 <td>Web ops dashboard (<code>attune ops</code>)</td>
 <td><code>pip install 'attune-ai[ops]'</code></td>
-</tr>
-<tr>
-<td><code>redis</code></td>
-<td>Redis-based short-term memory, event streaming</td>
-<td><code>pip install 'attune-ai[redis]'</code></td>
 </tr>
 <tr>
 <td><code>author</code></td>
@@ -5848,10 +5846,12 @@ quotes — zsh and bash treat square brackets as glob characters.</p>
 </code></pre></div>
 <hr />
 <h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<h3 id="redis-package-not-installed">"Redis package not installed"<a class="headerlink" href="#redis-package-not-installed" title="Permanent link">&para;</a></h3>
-<p><strong>Problem:</strong> Feature shows "Missing Dependency"</p>
+<h3 id="redis-package-not-importable">"Redis package not importable"<a class="headerlink" href="#redis-package-not-importable" title="Permanent link">&para;</a></h3>
+<p><strong>Problem:</strong> Feature shows "Missing Dependency". Because <code>redis</code> is a
+core dependency, this means a broken or partial install rather than a
+missing extra.</p>
 <p><strong>Solution:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[redis]&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>pip<span class="w"> </span>install<span class="w"> </span>--force-reinstall<span class="w"> </span>redis
 </code></pre></div>
 <h3 id="redis-server-not-running">"Redis server not running"<a class="headerlink" href="#redis-server-not-running" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Feature shows "Not Configured"</p>
@@ -5876,7 +5876,7 @@ quotes — zsh and bash treat square brackets as glob characters.</p>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>pip<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>redis
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># If not installed, reinstall</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>pip<span class="w"> </span>install<span class="w"> </span>--force-reinstall<span class="w"> </span><span class="s1">&#39;attune-ai[redis]&#39;</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>pip<span class="w"> </span>install<span class="w"> </span>--force-reinstall<span class="w"> </span>redis
 </code></pre></div>
 <h3 id="connection-errors">Connection errors<a class="headerlink" href="#connection-errors" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> <code>redis.exceptions.ConnectionError: Error connecting to localhost:6379</code></p>
@@ -6016,8 +6016,8 @@ quotes — zsh and bash treat square brackets as glob characters.</p>
 <a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>    <span class="n">memory</span> <span class="o">=</span> <span class="n">RedisShortTermMemory</span><span class="p">()</span>
 <a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
 <a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>  <span class="c1"># &quot;Short-term memory requires Redis.\n</span>
-<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>              <span class="c1">#  Status: Redis package not installed\n</span>
-<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>              <span class="c1">#  Install: pip install &#39;attune-ai[redis]&#39;&quot;</span>
+<a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>              <span class="c1">#  Status: Redis package not importable\n</span>
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>              <span class="c1">#  Install: pip install --force-reinstall redis&quot;</span>
 </code></pre></div>
 <p><strong>Recommended pattern:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.memory.features</span><span class="w"> </span><span class="kn">import</span> <span class="n">MemoryFeatures</span>

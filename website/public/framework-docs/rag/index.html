@@ -2291,10 +2291,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#graceful-behavior-when-the-extra-isnt-installed" class="md-nav__link">
+  <a href="#graceful-behavior-when-attune-rag-is-missing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Graceful behavior when the extra isn't installed
+        Graceful behavior when attune-rag is missing
       
     </span>
   </a>
@@ -4694,10 +4694,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#graceful-behavior-when-the-extra-isnt-installed" class="md-nav__link">
+  <a href="#graceful-behavior-when-attune-rag-is-missing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Graceful behavior when the extra isn't installed
+        Graceful behavior when attune-rag is missing
       
     </span>
   </a>
@@ -4774,7 +4774,7 @@ extra. Backed by the standalone
 <a href="https://github.com/Smart-AI-Memory/attune-rag">attune-rag</a>
 package.</p>
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[rag]&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai
 </code></pre></div>
 <p>This pulls in <code>attune-rag</code> and its bundled
 <code>[attune-help]</code> corpus (633 templates across concepts,
@@ -4873,13 +4873,16 @@ call an LLM</strong> — you or your agent do that separately.</p>
 <a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">  </span><span class="p">]</span>
 <a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="p">}</span>
 </code></pre></div>
-<h2 id="graceful-behavior-when-the-extra-isnt-installed">Graceful behavior when the extra isn't installed<a class="headerlink" href="#graceful-behavior-when-the-extra-isnt-installed" title="Permanent link">&para;</a></h2>
-<p>Without <code>pip install 'attune-ai[rag]'</code>:</p>
+<h2 id="graceful-behavior-when-attune-rag-is-missing">Graceful behavior when <code>attune-rag</code> is missing<a class="headerlink" href="#graceful-behavior-when-attune-rag-is-missing" title="Permanent link">&para;</a></h2>
+<p><code>attune-rag</code> is a <strong>core dependency</strong> — <code>pip install attune-ai</code> always
+brings it. (A legacy <code>[rag]</code> extra existed as an empty back-compat
+alias and was deleted 2026-07-17.) So this path only fires on a broken
+or partial install, and the remediation names the real package:</p>
 <ul>
 <li>The <code>rag-code-gen</code> workflow still loads but
   <code>execute()</code> returns a <code>WorkflowResult</code> with
-  <code>success=False</code> and a clear "install
-  attune-ai[rag]" hint</li>
+  <code>success=False</code> and a hint to reinstall with
+  <code>pip install attune-rag</code></li>
 <li>The <code>rag_knowledge_query</code> MCP tool remains registered in
   the schema; the handler returns a structured
   <code>{success: false, error, cause}</code> dict pointing at the
