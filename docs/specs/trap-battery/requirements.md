@@ -6,9 +6,19 @@
 > Δp (prevention) term of the memory-as-insurance EV — and, once
 > stable, doubles as the memory system's regression suite.
 
-**Status:** in-progress (2026-07-13) — phase 1 executed (pilot
-complete, verdicts in decisions.md); phase 2 design APPROVED
-2026-07-13 ([design.md](design.md)) — build gate open
+**Status:** MEASUREMENT CLOSED (2026-07-14) — phase 1 executed (pilot,
+verdicts in decisions.md); phase 2 designed, APPROVED, and **EXECUTED**
+as the full v2 battery (120 sessions, $32.40, 2026-07-14). Every cell
+favored memory-ON; nothing reached p<0.05 (best p=0.11). **No further
+paid runs chasing significance** — detecting the ~13pp delta needs
+~3-4x sessions/cell (~$100+) and the tar-pit rule applies. Total spend
+~$53.80. See the 2026-07-14 closure entry in
+[decisions.md](decisions.md).
+**Live remainder (trigger-gated, not scheduled):** the two surviving
+trap classes (stale-claim, status-readonly) stay as regression
+fixtures, to be re-measured only **when the memory surfaces change
+materially**. "trap-battery v2" is DONE — if a carry-forward list
+names it as pending post-freeze work, that list is stale.
 **Owner:** Patrick + agent
 **Related:**
 

@@ -15558,3 +15558,99 @@ def ", start_idx + 1)` for module-
   drifts from code reality — grep the actual instances" (the code is
   the contract) and "gated document goes silently unblocked" — all
   three are prose-about-state rotting while the state moves.
+
+- **I wrote the "reconcile against the record" lesson at 07:00 and
+  violated it at 12:00 the same session — the trigger was too narrow,
+  and the miss was a LINKED artifact in the very file I was editing**:
+  2026-07-17. The morning lesson said: a thread framed as
+  *decision-open* reconciles against the artifact that would RECORD the
+  decision. Hours later, asked whether to collapse the 22 pyproject
+  extras to `attune-ai` + `attune-ai[all]`, I asserted **"we don't know
+  what 'setup fought me' meant"** and advised holding the redesign until
+  a user answered. False. `docs/specs/product-direction-review/
+  setup-friction-log.md` held a full fresh-machine reproduction (07-11,
+  clean Ubuntu sandbox, attune-ai 10.3.0 from PyPI): five RANKED
+  frictions (F1 traceback wall · F2 three competing `setup` surfaces ·
+  F3 fresh install misreporting its own state · F4 spend-gate ordering ·
+  F5 no first command in README), plus a post-fix verification table
+  showing all of them fixed on `fix/setup-friction` (6a628f2). It also
+  killed the premise of my advice: *"Install itself is clean and fast;
+  no compile/dependency errors"* — 72 packages, ~40s. Extras/dependency
+  width were never the friction, so the `[all]` collapse would not have
+  helped the one user we have. **The mechanism of the miss:** I read the
+  assessment's HEADER and LEDGER (editing both) and never read its
+  "Related" link list, where `setup-friction-log.md` sat at line 323. I
+  was inside the file that pointed at the answer. **Durable rules:**
+  (1) the morning rule generalizes — it is NOT just decision-shaped
+  threads; ANY claim of the form "we don't know X" / "nobody has
+  measured X" / "that's unverified" is a RECORD claim and needs a grep
+  before it's spoken, because in a repo this documented the default
+  prior is that someone already measured it; (2) when you edit or
+  reconcile a document, READ ITS LINK LIST FIRST — a doc's "Related"
+  section is a pre-built index of the artifacts that falsify your
+  assumptions about it; (3) the tell that you're about to do this: you
+  are advising a redesign whose justification is an absence of
+  evidence. Absence-of-evidence claims are the cheapest to check and the
+  most expensive to get wrong — they authorize guessing.
+  **Scale finding from the same pass:** the `assessment-2026-07-12`
+  outstanding-work ledger — written expressly "so they stop hiding
+  between assessments" — had **4 of its 9 items stale in 5 days**
+  (#2 secret set the next day; #3 REVERSED from create-the-PAT to
+  revoke-it; #9 trap-battery done not pending; #1 DEC-2 newly falsified
+  by channel data). A ledger built to prevent drift drifted. Fix shape
+  used: a dated RECONCILIATION BANNER at the top of the ledger, item
+  text left AS WRITTEN — the doc is a dated snapshot and a decision
+  record, so rewriting items would destroy history; the banner carries
+  current truth instead. Pairs with "A green `starter_reconciler` proves
+  PR state, not decision content" (same day, same family — this is its
+  generalization).
+
+- **A second-hand user report gets RE-VOCABULARIZED by the relayer, and
+  the log's inference then hardens into an attributed fact — keep the
+  user's words separate from the relayer's summary and the analyst's
+  guess**: 2026-07-17. The DEC-2 log recorded conversation 1's finding
+  as **"setup issues were the primary concern"** (Patrick's verbal
+  relay, logged 2 days later). The setup-friction log then inferred
+  F1 "is almost certainly what conversation 1's user hit." Both plausible
+  — but when asked directly, Patrick's recollection was **"workflows
+  were broken."** Same event, three vocabularies: the user experienced
+  *"your workflows are broken"*; the relayer compressed it to *"setup
+  issues"*; the analyst hardened it to *"F1, almost certainly."* Reading
+  the log's own timeline reconciles them — `attune workflow run
+  code-review` keyless returned a 25-line traceback saying
+  `Exception: Claude Code returned an error result: success`, a 🚀
+  banner AFTER the error, then "This one didn't go as planned." From the
+  user's chair that IS a broken workflow, not a setup problem.
+  **RESOLVED same session:** asked the discriminating question, Patrick's
+  recollection was "the problem with the workflows stemmed from a setup
+  problem" — i.e. keyless, so F1 explains it completely and the fix is
+  already shipped and verified. The analyst's "almost certainly" landed
+  CORRECTLY. Note what that does and does not license: the inference was
+  right, but it was still an inference stated as near-fact, and the only
+  reason it's now known-right is that someone asked. A right guess and a
+  verified claim are different objects even when they agree — the log
+  should now record the confirmation, not keep the hedge.
+  **Durable rules:** (1) in a user-evidence
+  log, record the user's OWN WORDS verbatim in a quoted block, and put
+  the relayer's summary and the analyst's inference in separately
+  labelled sections — the existing "Interpretation (agent, kept separate
+  from the data)" convention is right but only covers the analyst layer;
+  the RELAYER layer is unmarked and is where the vocabulary shift
+  happens; (2) an inference phrased "almost certainly what X hit" must
+  name what would falsify it — here, a single question ("did you have
+  auth configured?") discriminates completely: keyless → F1 explains it
+  and it's fixed; authed → an unfixed defect that static analysis cannot
+  see (22/22 workflows resolve clean with live entrypoints, so there is
+  no registry defect to find); (3) ask the RELAYER before declaring a
+  second-hand datum unresolvable — here the discriminating question was
+  answerable by Patrick from memory in one line, closing the thread
+  without ever reaching the user. The relayer is a cheap, forgotten
+  source. But the limit is real: questions only the USER can answer
+  ("would you run it again?", "how did you find us?" — the sourcing
+  question that is the sole lead on conversations 2–5) stay unaskable,
+  because conversation 1 has no name, handle, or channel recorded
+  anywhere. Capture identity + channel at record time, or the follow-up
+  you will inevitably need is impossible. Pairs with
+  "'Registered ≠ working' — dogfood the live loop" (static clean ≠
+  works) and the N1 "unrecorded signal doesn't compound" rule, which
+  this extends: half-recorded signal doesn't compound either.
