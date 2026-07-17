@@ -54,9 +54,45 @@ without the audits multi-select the remaining open fields don't justify
 a form over the existing AskUserQuestion scoping — so the whole input
 surface waits for FR-3 rather than shipping a thin form now.
 
+## D4 — report-panel next-steps close the loop via `sendPrompt`; rich source, not the adapter's flat one
+
+**Date:** 2026-07-16 · **Status:** decided
+
+The report panel's `next-steps` actions became **clickable**: a next-step
+carrying a `command` renders a "run" button that posts the command back
+through the widget's global `sendPrompt`, so it becomes the user's next
+prompt — closing `workflow → report panel → pick a next step → next
+workflow`. Reuses the elicitation widget's return-path pattern (D8/S1
+there): the command lives in a `data-rp-command` attribute, read
+generically from the DOM, never interpolated into script. The single
+`<script>` is emitted **only** when the report has an actionable command;
+a report with no actions stays pure display, script-free.
+
+**Where the command comes from — the non-obvious half.** The
+`command` field existed on `output.NextAction` but no producer set it,
+and the adapter's text/structured extraction flattens every suggestion's
+`workflow_name` to the non-runnable `agent-followup`. The rich,
+project-aware names (`security-audit`, `test-gen`, …) come from
+`generate_suggestions()`, which runs in `execution_mixin` **after** the
+adapter already serialized the report — so the buttons were inert on the
+real path (the "registered ≠ working / dogfood the real path" trap;
+caught only by running the real producer, not the unit path). Fix: after
+`result.suggestions = generate_suggestions(...)`, refresh the report's
+next-steps section from those rich suggestions
+(`output.report_dict_with_next_steps`). Translation
+`workflow_name → slash command` reuses `cli_router`'s canonical map via
+the new `workflow_to_slash_command()` (no duplicate mapping).
+
+Same injection-safety contract as D2's board and D11's form. `agent-followup`
+resolves to `None` → renders as static text, not a button.
+
 ## Open
 
 - Phase 2: should `sources` filter live on the engine (`run`) as a
   plural `source_names`, or be resolved to an adapter list at the tool
   layer (engine unchanged)? Lean tool-layer (smaller engine surface;
   the engine already accepts an explicit `sources` adapter list).
+- Next-step buttons: cap/dedupe the rendered actions (`generate_suggestions`
+  can return several), and revisit the slash-command format for workflows
+  whose `_WORKFLOW_SKILL_MAP` entry is the generic `/workflows run <name>`
+  fallback — confirm each resolves to a real skill invocation.

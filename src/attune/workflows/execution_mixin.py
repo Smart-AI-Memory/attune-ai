@@ -308,6 +308,17 @@ class ExecutionMixin:
             from .suggestions import generate_suggestions
 
             result.suggestions = generate_suggestions(self.name, result)
+            # Re-source the report panel's next-step buttons from these richer
+            # suggestions. The report in final_output was serialized earlier
+            # from the adapter's text-extracted suggestions (flattened to the
+            # non-runnable ``agent-followup``); this swaps in the real workflow
+            # commands so the next-step buttons become clickable and close the
+            # workflow -> report -> next-step loop.
+            from .output import report_dict_with_next_steps
+
+            result.final_output = report_dict_with_next_steps(
+                result.final_output, result.suggestions
+            )
         except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Suggestions are optional -- never crash workflow
             logger.debug("Suggestion generation skipped: %s", e)

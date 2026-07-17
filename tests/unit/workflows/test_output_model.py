@@ -20,7 +20,76 @@ from attune.workflows.output import (
     Section,
     TableSection,
     WorkflowReport,
+    next_steps_section_from_suggestions,
+    report_dict_with_next_steps,
 )
+
+
+class _Suggestion:
+    """Minimal stand-in for data_classes.NextAction (description + name)."""
+
+    def __init__(self, workflow_name: str, description: str) -> None:
+        self.workflow_name = workflow_name
+        self.description = description
+
+
+class TestNextStepsSectionFromSuggestions:
+    def test_real_workflow_gets_runnable_command(self) -> None:
+        section = next_steps_section_from_suggestions(
+            [_Suggestion("security-audit", "Re-run the audit")]
+        )
+        assert section is not None
+        assert section.items[0].command == "/workflows run security-audit"
+        assert section.items[0].text == "Re-run the audit"
+
+    def test_generic_followup_has_no_command(self) -> None:
+        section = next_steps_section_from_suggestions(
+            [_Suggestion("agent-followup", "Look into it")]
+        )
+        assert section is not None
+        assert section.items[0].command is None
+
+    def test_empty_returns_none(self) -> None:
+        assert next_steps_section_from_suggestions([]) is None
+
+
+class TestReportDictWithNextSteps:
+    def _report_with_flat_steps(self) -> dict:
+        rep = WorkflowReport(
+            title="X",
+            summary="s",
+            score=1,
+            metadata={},
+            sections=[
+                ListSection(title="security", tier="essential", items=["finding"]),
+                NextStepsSection(
+                    title="Next steps",
+                    tier="essential",
+                    items=[NextAction(text="stale flat step", command=None)],
+                ),
+            ],
+        )
+        return rep.to_dict()
+
+    def test_swaps_in_rich_commands_and_replaces_old_section(self) -> None:
+        out = report_dict_with_next_steps(
+            self._report_with_flat_steps(),
+            [_Suggestion("code-review", "Review the diff")],
+        )
+        steps = [s for s in out["sections"] if s["kind"] == "next-steps"]
+        assert len(steps) == 1  # replaced, not duplicated
+        assert steps[0]["items"][0]["command"] == "/dev review"
+        # the non-next-steps section is preserved
+        assert any(s["kind"] == "list" for s in out["sections"])
+
+    def test_non_report_passes_through(self) -> None:
+        assert (
+            report_dict_with_next_steps("raw markdown", [_Suggestion("x", "y")]) == "raw markdown"
+        )
+
+    def test_empty_suggestions_preserves_report_unchanged(self) -> None:
+        rep = self._report_with_flat_steps()
+        assert report_dict_with_next_steps(rep, []) is rep
 
 
 def _full_report() -> WorkflowReport:

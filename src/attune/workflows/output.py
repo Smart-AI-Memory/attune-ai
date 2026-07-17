@@ -324,3 +324,78 @@ class WorkflowReport:
     def is_report_dict(value: object) -> bool:
         """True if ``value`` is a serialized WorkflowReport (voice detection)."""
         return isinstance(value, dict) and value.get("_type") == "WorkflowReport"
+
+
+def next_steps_section_from_suggestions(
+    suggestions: list[object],
+) -> NextStepsSection | None:
+    """Build a ``NextStepsSection`` from suggestion objects, attaching a
+    re-runnable slash command to each.
+
+    The command turns the panel's next-step into a one-click "run" button that
+    posts the command back through ``sendPrompt`` — closing the
+    ``workflow -> report -> next-step -> next workflow`` loop. Each suggestion
+    is anything exposing ``description`` and ``workflow_name`` (a
+    ``attune.workflows.data_classes.NextAction``). The command is resolved via
+    :func:`attune.cli_router.workflow_to_slash_command`; a suggestion whose
+    ``workflow_name`` names no concrete workflow (``agent-followup``) gets a
+    ``None`` command and renders as static text, not a button.
+
+    Args:
+        suggestions: Suggestion objects to render as forward actions.
+
+    Returns:
+        A populated ``NextStepsSection``, or ``None`` when there are no
+        suggestions (the caller appends nothing).
+    """
+    if not suggestions:
+        return None
+    from attune.cli_router import workflow_to_slash_command
+
+    return NextStepsSection(
+        title="Next steps",
+        tier="essential",
+        items=[
+            NextAction(
+                text=str(getattr(s, "description", "") or ""),
+                command=workflow_to_slash_command(str(getattr(s, "workflow_name", "") or "")),
+            )
+            for s in suggestions
+        ],
+    )
+
+
+def report_dict_with_next_steps(report: object, suggestions: list[object]) -> object:
+    """Return ``report`` with its next-steps section rebuilt from ``suggestions``.
+
+    Applied after the richer, project-aware suggestion pipeline
+    (``generate_suggestions``) runs post-execution: the report inside
+    ``WorkflowResult.final_output`` was serialized earlier from the adapter's
+    text-extracted suggestions (which flatten to the non-runnable
+    ``agent-followup``), so its next-step buttons would be inert. This swaps in
+    the rich suggestions' real workflow commands.
+
+    Non-report values (raw markdown, prose) pass through untouched, as does a
+    report when ``suggestions`` is empty (its existing section is preserved).
+
+    Args:
+        report: ``WorkflowResult.final_output`` — a serialized report dict or
+            raw markdown.
+        suggestions: The rich suggestions to source next-step commands from.
+
+    Returns:
+        The report dict with its next-steps section replaced, or ``report``
+        unchanged when it is not a report dict or there is nothing to add.
+    """
+    if not suggestions or not WorkflowReport.is_report_dict(report):
+        return report
+    assert isinstance(report, dict)
+    section = next_steps_section_from_suggestions(suggestions)
+    if section is None:
+        return report
+    kept = [
+        s
+        for s in (report.get("sections") or [])
+        if not (isinstance(s, dict) and s.get("kind") == NextStepsSection.kind)
+    ]
+    return {**report, "sections": [*kept, section.to_dict()]}
