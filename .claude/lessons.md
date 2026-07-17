@@ -15809,3 +15809,25 @@ def ", start_idx + 1)` for module-
   check whether it is a projection (grep `scripts/` + tests for a
   sync/drift guard naming the path); the answer decides which side
   you edit and whether a regen step follows.
+- **A carried "revoke/delete/clean up X" task can be a PHANTOM — X may
+  never have been created; verify the artifact EXISTS before carrying
+  (or executing) any undo-shaped instruction**: 2026-07-17. The starter
+  carried "Revoke unused `attune-workspace-ro` PAT (+ its secret)" for
+  days. Reality: the 07-12 assessment's item was CREATE it, explicitly
+  "carried for 2+ days" (= never done); an intermediate session saw the
+  CI shipping with the built-in `github.token`, concluded the PAT was
+  unused, and wrote "revoke it" — assuming creation had happened. The
+  morning reconcile pass then verified everything AROUND the token (no
+  workflow refs, no repo/org secret — all true) but never the token's
+  own existence, and "upgraded" the carry with a confident "~3 min,
+  zero blast radius" walkthrough. Patrick burned the 3 min hunting both
+  GitHub token lists for a token that never existed. Two rules: (1)
+  undo-shaped tasks (revoke, delete, rotate, disable, clean up) carry
+  an implicit existence claim — check THE OBJECT first (`gh api`, the
+  actual settings list, a filename), not just its references;
+  absence-of-references proves unused, not existent. (2) When
+  reconciling a carry, the checks that FEEL like verification can all
+  be about the object's surroundings — name the existence check
+  explicitly. Extends the stale-on-arrival / reconcile-the-record
+  family: those catch DONE-but-carried-as-open; this is the inverse,
+  NEVER-STARTED-but-carried-as-undoable.
