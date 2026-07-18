@@ -7,23 +7,19 @@ compatibility layer.
 
 from __future__ import annotations
 
-import sys
 import textwrap
 from pathlib import Path
 
 import pytest
 
-# Add scripts/ to path so we can import the sync module.
-_scripts_dir = Path(__file__).parents[3] / "scripts"
-sys.path.insert(0, str(_scripts_dir))
-
 _sync_module = pytest.importorskip(
-    "sync_agents_skills",
+    "scripts.sync_agents_skills",
     reason="scripts/sync_agents_skills.py not found",
 )
 CLAUDE_CODE_FIELDS = _sync_module.CLAUDE_CODE_FIELDS
 build_output = _sync_module.build_output
 discover_skills = _sync_module.discover_skills
+main = _sync_module.main
 parse_frontmatter = _sync_module.parse_frontmatter
 sync_one = _sync_module.sync_one
 validate_name = _sync_module.validate_name
@@ -346,6 +342,80 @@ class TestDiscoverSkills:
 
 
 # -----------------------------------------------------------
+# CLI safety
+# -----------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestCliSafety:
+    """Test that mirror writes require explicit authorization."""
+
+    @staticmethod
+    def _stub_sync(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> list[bool]:
+        calls: list[bool] = []
+        source = Path("/source/example/SKILL.md")
+        monkeypatch.setattr(_sync_module, "discover_skills", lambda root: [source])
+
+        def fake_sync(
+            skill_path: Path,
+            output_root: Path,
+            *,
+            check: bool = False,
+        ) -> tuple[bool, str]:
+            calls.append(check)
+            return True, "example: in sync" if check else "example: generated"
+
+        monkeypatch.setattr(_sync_module, "sync_one", fake_sync)
+        return calls
+
+    def test_bare_invocation_is_read_only(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test the default mode checks instead of writing."""
+        calls = self._stub_sync(monkeypatch)
+
+        assert main([]) == 0
+
+        assert calls and all(calls)
+
+    def test_explicit_check_is_read_only(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test --check remains a compatible read-only spelling."""
+        calls = self._stub_sync(monkeypatch)
+
+        assert main(["--check"]) == 0
+
+        assert calls and all(calls)
+
+    def test_write_flag_authorizes_generation(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test --write is the only generation mode."""
+        calls = self._stub_sync(monkeypatch)
+
+        assert main(["--write"]) == 0
+
+        assert calls and not any(calls)
+
+    def test_help_exits_before_sync(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test --help cannot reach the write path."""
+        calls = self._stub_sync(monkeypatch)
+
+        with pytest.raises(SystemExit) as error:
+            main(["--help"])
+
+        assert error.value.code == 0
+        assert calls == []
+
+    def test_unknown_argument_exits_before_sync(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Test unknown arguments are rejected before any write."""
+        calls = self._stub_sync(monkeypatch)
+
+        with pytest.raises(SystemExit) as error:
+            main(["--typo"])
+
+        assert error.value.code == 2
+        assert calls == []
+
+
+# -----------------------------------------------------------
 # Integration: real plugin skills
 # -----------------------------------------------------------
 
@@ -381,7 +451,7 @@ class TestAgentSkillsIntegration:
     def test_agents_skills_directory_exists(self) -> None:
         """Test that .agents/skills/ directory exists."""
         assert AGENTS_SKILLS.is_dir(), (
-            ".agents/skills/ not found. Run: " "python scripts/sync_agents_skills.py"
+            ".agents/skills/ not found. Run: " "python scripts/sync_agents_skills.py --write"
         )
 
     def test_all_plugin_skills_synced(self) -> None:
@@ -411,7 +481,7 @@ class TestAgentSkillsIntegration:
             agents_body = _body(agents_file)
             assert source_body == agents_body, (
                 f"{name}/SKILL.md body differs from {source_file}. "
-                f"Run: python scripts/sync_agents_skills.py"
+                f"Run: python scripts/sync_agents_skills.py --write"
             )
 
     def test_frontmatter_in_sync(self) -> None:
@@ -425,7 +495,7 @@ class TestAgentSkillsIntegration:
         """
         for _name, source_file in _expected_sources().items():
             ok, msg = sync_one(source_file, AGENTS_SKILLS, check=True)
-            assert ok, f"{msg}. Run: python scripts/sync_agents_skills.py"
+            assert ok, f"{msg}. Run: python scripts/sync_agents_skills.py --write"
 
     def test_no_claude_code_fields_in_agents(self) -> None:
         """Test .agents/ skills have no Claude Code fields."""

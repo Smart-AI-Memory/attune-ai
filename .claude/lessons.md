@@ -400,7 +400,7 @@ files.
     (2) add a row to the "Skills Reference" table in
     `plugin/skills/attune-hub/SKILL.md`
     (`test_all_skill_dirs_referenced_by_attune_hub`); (3) run
-    `python scripts/sync_agents_skills.py` to regenerate the
+    `python scripts/sync_agents_skills.py --write` to regenerate the
     `.agents/skills/` mirror (`test_skill_body_content_matches`).
   - **Only true `BaseWorkflow` subclasses belong in
     `_DEFAULT_WORKFLOW_NAMES`** — a registered class missing
@@ -1201,7 +1201,7 @@ files.
   a new skill directory under `plugin/skills/` without also creating
   a matching `.agents/skills/<name>/SKILL.md` fails the
   `test_all_plugin_skills_synced` test. Run
-  `python scripts/sync_agents_skills.py` after adding or modifying
+  `python scripts/sync_agents_skills.py --write` after adding or modifying
   skills, or the `test_skill_body_content_matches` test will also
   fail.
 
@@ -11885,7 +11885,7 @@ files.
   EXACT skill count (22→23). Durable rules: (1) when adding/renaming a
   plugin skill, ALWAYS run `tests/unit/plugins/
   test_plugin_config_validation.py` AND `test_sync_agents_skills.py`
-  (regenerate `.agents/` via `python scripts/sync_agents_skills.py`)
+  (regenerate `.agents/` via `python scripts/sync_agents_skills.py --write`)
   locally before pushing, and keep skill `description` ≤250 chars; the
   count test and description-length test are the two adding-a-skill
   gotchas. (2) A UNIFORM red matrix — every OS×Python lane failing fast
@@ -12065,13 +12065,14 @@ files.
   `test_plugin_reference_validation` / `test_plugin_config_validation`
   locally, but CI failed `coverage` + `test (ubuntu-latest, 3.12)` +
   both `clock-tz` lanes with `AssertionError: spec: out of sync. Run:
-  python scripts/sync_agents_skills.py` (and `spec/SKILL.md body
+  python scripts/sync_agents_skills.py --write` (and `spec/SKILL.md body
   differs`). The `.agents/skills/` copies are GENERATED mirrors of
   `plugin/skills/`, guarded by `test_sync_agents_skills.py`
   (`test_frontmatter_in_sync` + `test_skill_body_content_matches`), and
   the sync is enforced only at test time — not at pre-commit (unlike the
   `.help` regen hook). **Rule:** after editing any `plugin/skills`
-  SKILL.md, run `PYTHONPATH=src python scripts/sync_agents_skills.py` and
+  SKILL.md, run
+  `PYTHONPATH=src python scripts/sync_agents_skills.py --write` and
   stage the regenerated `.agents/skills/` files in the SAME commit.
   **Diagnostic tells:** (1) a markdown-only PR failing `coverage` +
   `test` + `clock-tz` *together* is a real shared test failure, not a
@@ -15802,7 +15803,7 @@ def ", start_idx + 1)` for module-
   a skill without regenerating**: 2026-07-17, #1420 round 2. Edited
   two SKILL.md files (correct side — they ARE the source), never ran
   the projector, every main-suite lane went red on the two sync
-  tests. Fix: `python scripts/sync_agents_skills.py` (regenerates all
+  tests. Fix: `python scripts/sync_agents_skills.py --write` (regenerates all
   24), commit BOTH sides. The failure message names the exact
   command. Same single-source pattern as the help-docs projector and
   the `.help` regen hook — before editing anything under `plugin/`,
