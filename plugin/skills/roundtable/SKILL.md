@@ -189,6 +189,25 @@ Deliberation is TTL'd; only promoted content is durable. If the
 chair wants a raw thread kept past 7 days, promotion to a report is
 the mechanism — say so rather than extending TTLs ad hoc.
 
+## Routines (P3 — headless table runs)
+
+A routine convenes the table on a recurring question with the same
+gates (R5 cap, R6 absent seats) and one extra: **a routine NEVER
+promotes (R8)** — its digest thread waits on the board for the
+chair. Manual-first is ratified: run it by hand, arm a schedule
+only after the chair reviews a proven run.
+
+```bash
+python -m attune.roundtable.routine clean-run            # real run
+python -m attune.roundtable.routine clean-run --dry-run  # checks + brief only, no board/LLM
+```
+
+Routine #1 is `clean-run` (the weekly health check): keyless check
+battery (collaboration preflight + unit suite) → seats deliberate
+the results → one synthesis pass → digest thread
+`routine-clean-run-<date>`. Review it with
+`/roundtable read <thread>`; promote per-item via Step 6.
+
 ## Arguments
 
 - `/roundtable <question>` — full deliberation (Steps 0–6).
@@ -196,3 +215,5 @@ the mechanism — say so rather than extending TTLs ad hoc.
   (Step 5's read snippet); no member invocations.
 - `/roundtable promote <thread>` — jump to Step 6 for a thread that
   already deliberated.
+- `/roundtable routine <name>` — run a registered routine (above)
+  and present its digest to the chair.

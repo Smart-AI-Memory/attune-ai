@@ -218,3 +218,42 @@ render refusal). AC-3 approve-half exercised live on
 `status=promoted`); decline-half is procedural (skill: declined
 items get no writes) and enforced at the board by the
 unknown-id no-meta-change receipt.
+
+## P3 forks ruled (2026-07-18, Patrick, batched form)
+
+The requirements' "§12 Clean-Run-Check" pointed at nothing — the
+live discipline article has §1–§8 only and no tracked doc defines
+the term (phantom-referent lesson applied: verified before
+building). The chair ruled all three P3 forks, taking each
+recommendation:
+
+1. **Routine #1 = clean-run health check**: keyless check battery
+   (collaboration preflight + unit suite) → seats deliberate the
+   results → digest thread for the chair. Requirements P3 text
+   updated to the ratified definition.
+2. **Manual-first scheduling**: `python -m
+   attune.roundtable.routine <name>` proves the loop by hand;
+   a weekly schedule is armed only after the chair reviews a
+   proven run. (D1's prove-before-automate precedent.)
+3. **Synthesis in unattended runs = one bounded `claude -p`
+   moderator pass**, inside the R5 cap (4 invocations/run:
+   3 seats + 1 synthesis).
+
+## P3 routines — SHIPPED (2026-07-18)
+
+`src/attune/roundtable/routine.py`: `RoutineSpec` (checks,
+question, `max_invocations`), the registered `clean-run` routine,
+seat recipes matching the verified roster invocations, keyless
+check runner (`ANTHROPIC_API_KEY=""` — empty, never unset), and
+`run_routine()` enforcing R5 (halt posted at the cap, single-halt
+semantics), R6 (absent seat → `absent=True` position, run
+completes), R8 (thread left unpromoted, always). `--dry-run` runs
+checks and prints the brief with zero board writes and zero LLM
+invocations.
+
+Receipts: 10 routine tests (real-Redis thread shape; fake seats)
+— full-run message shape, R8 unpromoted meta, check evidence in
+the question body, R6 absent-seat completion, AC-5 cap halt
+(seat N+1 not invoked, one halt message), dry-run
+touches-nothing, keyless env, brief substitution both recipe
+forms. 41 roundtable tests total.
