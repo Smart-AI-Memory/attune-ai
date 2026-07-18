@@ -262,3 +262,6 @@ MagicMock/
 
 # ci-runner-hang watchdog: per-worker faulthandler dumps (CI artifact only)
 hang-dumps/
+
+# Codex local config (per-dev-machine; AGENTS.md is the tracked surface)
+.codex/
