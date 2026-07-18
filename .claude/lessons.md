@@ -15931,3 +15931,30 @@ def ", start_idx + 1)` for module-
   unseen; (4) one branch per agent, ideally one worktree per agent —
   two agents committing on one branch is the multi-agent version of
   the branch-vs-worktree commit tangle.
+
+- **Codex hooks do NOT fire under `codex exec` (CLI/ephemeral mode) —
+  they're app-server features (desktop/VS Code sessions); verify hook
+  wiring with a canary in a desktop session, never with exec**:
+  2026-07-18, wiring the attune memory loop (session_recall /
+  session_stash / jit_recall / lesson_recall) into Codex. An exec run
+  with echo-canaries at BOTH hook levels (`~/.codex/hooks.json` and
+  repo `.codex/hooks.json`) completed fine with ZERO canary lines —
+  hooks are dispatched by the app-server layer, which bare
+  `codex exec` doesn't run (Patrick's real usage is vscode=23/exec=2
+  per `codex doctor` rollout sources). Companion toolkit, all free
+  of model spend: (a) `codex debug prompt-input` dumps the
+  model-visible prompt — grep it to verify skill pickup (skill roots
+  appear as `rN = <dir>`; the repo's tracked `.agents/skills` showed
+  as r15 with all 41 mirrors) and to find mangled imports; (b)
+  `codex mcp list` shows MCP servers with env and enablement;
+  (c) `codex doctor` validates config/auth/DB health. Wiring
+  pattern: reference plugin-cache hook scripts via a dynamic root —
+  `ROOT=$(ls -td "$HOME"/.codex/plugins/cache/attune-ai/attune-ai/*/
+  | head -1)` — so version bumps don't stale the path. Also: Codex's
+  cowork-importer mangles `.claude`→`.Codex` in PROSE too (turned
+  "workflow OS for Claude Code" into "for Codex" in
+  `~/.codex/AGENTS.md`) — after any re-import, grep that file for
+  `.Codex` and re-run the sed fix. Cross-tree config edits from a
+  worktree session (e.g. main checkout's `.codex/hooks.json`) are
+  blocked by worktree_path_guard on Edit/Write — do intentional
+  external-tree JSON edits via a python script in Bash.
