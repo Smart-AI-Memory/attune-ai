@@ -120,3 +120,66 @@ def test_rejects_target_without_exactly_one_marker_pair(tmp_path: Path) -> None:
 
     with pytest.raises(projector.ProjectionError, match="marker pair"):
         projector.project(tmp_path)
+
+
+def test_invalid_claude_target_does_not_partially_update_agents(tmp_path: Path) -> None:
+    _seed_repo(tmp_path)
+    agents = tmp_path / "AGENTS.md"
+    original_agents = agents.read_bytes()
+    (tmp_path / ".claude" / "CLAUDE.md").write_text("# Missing markers\n", encoding="utf-8")
+
+    with pytest.raises(projector.ProjectionError, match="marker pair"):
+        projector.project(tmp_path)
+
+    assert agents.read_bytes() == original_agents
+
+
+def test_rejects_symlinked_target_outside_repository(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    root.mkdir()
+    _seed_repo(root)
+    external = tmp_path / "outside.md"
+    external.write_text("outside\n", encoding="utf-8")
+    handoff = root / projector.HANDOFF_TARGET
+    handoff.parent.mkdir(parents=True)
+    try:
+        handoff.symlink_to(external)
+    except OSError as error:
+        pytest.skip(f"symlinks unavailable: {error}")
+
+    with pytest.raises(projector.ProjectionError, match="escapes repository"):
+        projector.project(root)
+
+    assert external.read_text(encoding="utf-8") == "outside\n"
+
+
+def test_main_reports_unchanged_targets(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+) -> None:
+    result = projector.ProjectionResult(unchanged=[Path("AGENTS.md")])
+    monkeypatch.setattr(projector, "project", lambda root, check: result)
+
+    assert projector.main(["--check"]) == 0
+    assert capsys.readouterr().out == "unchanged AGENTS.md\n"
+
+
+def test_main_reports_projection_drift(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+) -> None:
+    result = projector.ProjectionResult(stale=[Path(".claude/CLAUDE.md")])
+    monkeypatch.setattr(projector, "project", lambda root, check: result)
+
+    assert projector.main(["--check"]) == 1
+    assert capsys.readouterr().out == ("collaboration projection drift:\n  .claude/CLAUDE.md\n")
+
+
+def test_main_reports_projection_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+) -> None:
+    def fail_projection(root: Path, *, check: bool) -> None:
+        raise projector.ProjectionError("bad target")
+
+    monkeypatch.setattr(projector, "project", fail_projection)
+
+    assert projector.main([]) == 1
+    assert capsys.readouterr().out == "error: bad target\n"

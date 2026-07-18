@@ -36,6 +36,17 @@ class ProjectionResult:
     stale: list[Path] = field(default_factory=list)
 
 
+def _validate_file_path(root: Path, relative_path: Path) -> Path:
+    """Return a repository-contained path, resolving symlinks."""
+    resolved_root = root.resolve()
+    resolved_path = (resolved_root / relative_path).resolve()
+    try:
+        resolved_path.relative_to(resolved_root)
+    except ValueError:
+        raise ProjectionError(f"path escapes repository: {relative_path}") from None
+    return resolved_path
+
+
 def _parse_sections(text: str) -> dict[str, str]:
     """Return the two contract-level section bodies from a Markdown master.
 
@@ -60,7 +71,7 @@ def _parse_sections(text: str) -> dict[str, str]:
 
 def _master_sections(root: Path) -> dict[str, str]:
     """Read and validate the collaboration master under ``root``."""
-    path = root / MASTER_PATH
+    path = _validate_file_path(root, MASTER_PATH)
     if not path.is_file():
         raise ProjectionError(f"master missing: {MASTER_PATH}")
     sections = _parse_sections(path.read_text(encoding="utf-8"))
@@ -95,32 +106,30 @@ def project(root: Path, *, check: bool = False) -> ProjectionResult:
     sections = _master_sections(root)
     result = ProjectionResult()
     rendered_contract = _render_marked_block(sections[CONTRACT_HEADING])
+    projections: list[tuple[Path, Path, str | None, str]] = []
 
     for relative_path in CONTRACT_TARGETS:
-        path = root / relative_path
+        path = _validate_file_path(root, relative_path)
         if not path.is_file():
             raise ProjectionError(f"target missing: {relative_path}")
         current = path.read_text(encoding="utf-8")
         expected = _replace_marked_block(current, rendered_contract, relative_path)
+        projections.append((relative_path, path, current, expected))
+
+    handoff_path = _validate_file_path(root, HANDOFF_TARGET)
+    expected_handoff = sections[HANDOFF_HEADING].strip() + "\n"
+    current_handoff = handoff_path.read_text(encoding="utf-8") if handoff_path.is_file() else None
+    projections.append((HANDOFF_TARGET, handoff_path, current_handoff, expected_handoff))
+
+    for relative_path, path, current, expected in projections:
         if current == expected:
             result.unchanged.append(relative_path)
         elif check:
             result.stale.append(relative_path)
         else:
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(expected, encoding="utf-8")
             result.written.append(relative_path)
-
-    handoff_path = root / HANDOFF_TARGET
-    expected_handoff = sections[HANDOFF_HEADING].strip() + "\n"
-    current_handoff = handoff_path.read_text(encoding="utf-8") if handoff_path.is_file() else None
-    if current_handoff == expected_handoff:
-        result.unchanged.append(HANDOFF_TARGET)
-    elif check:
-        result.stale.append(HANDOFF_TARGET)
-    else:
-        handoff_path.parent.mkdir(parents=True, exist_ok=True)
-        handoff_path.write_text(expected_handoff, encoding="utf-8")
-        result.written.append(HANDOFF_TARGET)
 
     return result
 
