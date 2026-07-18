@@ -82,11 +82,14 @@ to make convening it cheap, monitored, and recorded.
   report.** Promoted items land in the owning spec's
   `decisions.md` when a spec exists (probe-001 set the
   precedent); otherwise `docs/reports/roundtable/<thread-slug>.md`.
-- **D3 — budget default: PROVISIONAL (a)** — 1 round (one call
-  per seated member) default, chair may extend to a hard max of
-  3 rounds. Marked provisional: Patrick's D3 answer ratified
-  scope (bidirectional posting + tier-routed outputs, now R9/R10)
-  rather than picking a cap; confirm or adjust at review.
+- **D3 — budget: RESOLVED — up to 3 rounds per question**
+  (Patrick, 2026-07-18: "You and the other llm's/agents can use
+  up to three rounds of questions/suggestions"). The moderator
+  and members may use rounds as the deliberation needs them —
+  including member-originated follow-up questions (R9) — and the
+  moderator halts early when positions have converged or new
+  rounds stop adding information. Three rounds is a hard
+  ceiling: invocation past it requires the chair.
 
 ## Ratified scope additions (Patrick, D3 answer 2026-07-18)
 

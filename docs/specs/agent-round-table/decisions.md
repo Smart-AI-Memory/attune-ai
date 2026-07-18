@@ -100,13 +100,15 @@ exactly the human-in-the-loop shape the table is designed around.
 - **D2: spec if one owns it, else report** —
   `docs/reports/roundtable/<thread-slug>.md` as the fallback
   destination.
-- **D3: PROVISIONAL 1 round default / max 3** — Patrick's D3
-  answer ratified scope instead of picking a cap. His words:
-  members "receive OR post questions including code,
+- **D3: RESOLVED — up to 3 rounds per question** (Patrick,
+  follow-up 2026-07-18: "You and the other llm's/agents can use
+  up to three rounds of questions/suggestions"). Rounds are
+  available to members too (follow-up questions/suggestions per
+  R9), moderator halts early on convergence, three is a hard
+  ceiling without the chair. His earlier D3-slot answer ratified
+  scope: members "receive OR post questions including code,
   feedback/suggestions from the other agents/llm's", and the
   moderator then creates "a spec, pr or one shot based on the
-  complexity using our table with 4 types of responses" — i.e.
+  complexity using our table with 4 types of responses" —
   bidirectional origination (R9) + promotion routed through the
-  contract's four artifact tiers (R10). Budget default stands at
-  the moderator's recommendation until Patrick confirms or
-  adjusts at requirements review.
+  contract's four artifact tiers (R10).
