@@ -1,0 +1,89 @@
+name: Reach Snapshot
+
+# usage-signals R4: capture the pypistats + GitHub reach snapshot
+# from a runner instead of a home IP. pypistats 429-penalizes at
+# IP scope and the penalty is DAY-scale (observed 11+ hours on
+# 2026-07-17); it has hit tag-time captures on 10.0.x, 10.2.0, and
+# 10.5.0. Runners get a fresh egress IP per run, which sidesteps
+# the penalty entirely. Manual dispatch only — run at tag time and
+# for observation-window captures (DEC-7).
+#
+# The snapshot PR is created with ADMIN_MERGE_TOKEN (the repo
+# owner's fine-grained PAT, already used by auto-merge-safe.yml)
+# rather than GITHUB_TOKEN, for two reasons: GITHUB_TOKEN-created
+# PRs never trigger CI (anti-recursion), and the auto-merge-safe
+# lane requires the owner as PR author. A docs-only snapshot PR
+# authored this way rides that lane to merge with zero handling.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Capture snapshot (spaced requests, aborts on 429)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 scripts/reach_snapshot.py --spacing 60 \
+            --out docs/specs/usage-signals/snapshots
+
+      - name: Commit and open PR (rides the auto-merge-safe lane)
+        env:
+          GH_TOKEN_RAW: ${{ secrets.ADMIN_MERGE_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -e
+          if [ -z "$GH_TOKEN_RAW" ]; then
+            echo "::error::ADMIN_MERGE_TOKEN is not set - cannot open a" \
+              "PR that triggers CI. Snapshot was captured but not shipped."
+            exit 1
+          fi
+          # Secrets pasted with a trailing newline break gh auth (see
+          # auto-merge-safe.yml) - strip all whitespace.
+          GH_TOKEN="$(printf '%s' "$GH_TOKEN_RAW" | tr -d '[:space:]')"
+          export GH_TOKEN
+          if [ -z "$(git status --porcelain docs/specs/usage-signals/snapshots/)" ]; then
+            echo "No snapshot changes to commit (already captured today?)."
+            exit 0
+          fi
+          day="$(date -u +%Y-%m-%d)"
+          branch="auto/reach-snapshot-$day"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin \
+            "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git"
+          git checkout -b "$branch"
+          git add docs/specs/usage-signals/snapshots/
+          {
+            echo "docs(usage-signals): reach snapshot $day"
+            echo
+            echo "Captured by the reach-snapshot workflow (runner IP,"
+            echo "immune to the home-IP pypistats penalty)."
+          } > /tmp/commit_msg.txt
+          git commit -F /tmp/commit_msg.txt
+          git push origin "$branch"
+          if gh pr list --head "$branch" --json number --jq 'length' | grep -q '^0$'; then
+            {
+              echo "Automated reach snapshot capture (usage-signals R4)."
+              echo
+              echo "- Workflow: .github/workflows/reach-snapshot.yml"
+              echo "- Script: scripts/reach_snapshot.py --spacing 60"
+              echo
+              echo "Docs-only; expected to merge via the auto-merge-safe lane."
+            } > /tmp/pr_body.txt
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "docs(usage-signals): reach snapshot $day" \
+              --body-file /tmp/pr_body.txt
+          else
+            echo "PR already open for $branch - skipping create."
+          fi
