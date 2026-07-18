@@ -81,6 +81,67 @@ See `docs/reference/cli-reference.md`.
 - Record only concrete evidence: commands actually run, their results,
   changed files, unresolved risks, and the next action.
 
+### Critical code rules
+
+- NEVER use `eval()` or `exec()`.
+- ALWAYS validate file paths in file operations; security tests are
+  required for file-op code.
+- NEVER use bare `except:` — catch specific exceptions and log them
+  before handling.
+- Type hints and docstrings on all public APIs; minimum 80% test
+  coverage on changed code.
+- Simpler is better: flatten nested conditionals, inline one-use
+  helpers, prefer stdlib over custom abstractions.
+
+### Git and pre-commit
+
+- Commits are GPG-signed; `git pull` rebases.
+- Pre-commit auto-fix hooks modify staged files mid-commit.
+  Pre-flight the PINNED tools on your files BEFORE `git add`
+  (`uv run --with pre-commit pre-commit run black --files <f>`).
+- After every commit, verify it landed (`git log --oneline -1` +
+  `git status --short`) — hooks can skip a commit with exit 0.
+- If a hook reformats staged files, the fixes land unstaged —
+  `git add` again and retry.
+- A guard blocks commit messages containing literal `eval(` /
+  `exec(` — write the message to a file and `git commit -F <file>`.
+- `--no-verify` is forbidden. To skip ONE misbehaving hook:
+  `SKIP=<hook-id> git commit …`.
+- detect-secrets flags placeholder-looking strings; annotate false
+  positives with `# pragma: allowlist secret`.
+
+### Branch and worktree discipline
+
+- One branch per agent per task. Never commit to a branch another
+  agent has in flight.
+- One PR per feature surface: before opening a PR, check for an
+  existing or parallel PR touching the same files
+  (`gh pr list`, `git log origin/main -- <files>`).
+- Before every commit: `git branch --show-current` — confirm the
+  checkout you edited is on the branch you mean to ship.
+- Don't touch other agents' worktrees under `.claude/worktrees/`.
+
+### Single-source projections
+
+- `plugin/skills/*/SKILL.md` and `.claude/skills/*/SKILL.md` are
+  SOURCES for the tracked `.agents/skills/` mirror — after editing
+  a skill, run `python scripts/sync_agents_skills.py` and commit
+  both sides (a drift-guard test fails CI otherwise).
+- This contract's own projected blocks and
+  `templates/agent-handoff.md` are owned by
+  `scripts/project_collaboration_contract.py` — edit the master,
+  re-run the projector.
+- `.help/` and docs feature pages are projector-owned; edit the
+  source and re-project, never the generated output.
+
+### CI notes
+
+- Per-push/PR workflows run with `ANTHROPIC_API_KEY: ""` (empty,
+  keyless) by design — never wire the real secret into them. To
+  reproduce keyless CI locally use the empty string, not unset.
+- Windows matrix lanes are slow (~13 min) but real — path,
+  subprocess, and encoding changes must wait for them.
+
 <!-- attune:collaboration:end -->
 
 ---
