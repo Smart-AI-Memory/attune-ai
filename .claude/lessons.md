@@ -15869,3 +15869,41 @@ def ", start_idx + 1)` for module-
   request of the evening 429'd) — the #1425 lesson's "defer, don't
   retry" horizon is hours, not the 15 minutes the error message
   suggests; plan snapshot retries a day apart, not within a session.
+
+- **`actions/checkout`'s persisted GITHUB_TOKEN extraheader silently
+  OVERRIDES a PAT embedded in the remote URL — the push runs as
+  github-actions[bot] and 403s under `contents: read`**: 2026-07-18,
+  reach-snapshot run 29636107041. The capture step succeeded but the
+  ship step's `git remote set-url origin https://x-access-token:
+  ${PAT}@github.com/...` push failed `Permission ... denied to
+  github-actions[bot]` — checkout had persisted the workflow's
+  GITHUB_TOKEN as an `http.<url>.extraheader` auth header, which
+  git prefers over URL-embedded credentials. With the workflow's
+  token at `contents: read`, the push 403s no matter what PAT is in
+  the URL. Fix (PR #1428): `persist-credentials: false` on the
+  checkout step for any workflow that pushes with its own PAT.
+  Diagnostic tell: the 403 names `github-actions[bot]` when you
+  expected the PAT's owner — that identity mismatch IS the
+  extraheader override.
+
+- **pypistats IP-scope diagnoses don't survive contact — both the
+  "home-IP day-scale penalty" and "runner ranges blocked" theories
+  were falsified within one morning; the durable defense is the
+  resumable per-package ratchet, not IP archaeology**: 2026-07-18
+  morning, closing the v10.5.0 after-pair capture. Timeline: runner
+  run A captured 5/5 (07:39 UTC, falsifying the previous night's
+  "runner IPs blocked" conclusion from its instant 429); home IP
+  captured 3/5 then 429'd mid-run at 60s spacing (07:38–07:42,
+  falsifying "home penalty is day-scale" — but also showing spacing
+  doesn't buy immunity); runner runs B and C both 429'd mid-capture
+  (07:50, 08:10); two home resumes ratcheted 4/5 (08:07) then 5/5
+  (08:16). Conclusions: (1) pypistats throttling is erratic and
+  server-side — single-run evidence about IP scope is worthless,
+  don't write IP lessons from n=1; (2) the script's per-package
+  persist-as-you-go resume (reach-snapshot-resilience) is what
+  actually shipped the snapshot — three short attempts each landing
+  1–2 more packages beat every all-or-nothing runner capture, which
+  DISCARDS partial progress when the run dies; (3) when a capture
+  path is all-or-nothing on a flaky upstream, prefer the resumable
+  local path and treat the workflow as opportunistic (it only wins
+  when a single run completes the whole set).
