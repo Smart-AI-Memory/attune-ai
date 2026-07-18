@@ -131,3 +131,29 @@ boundary-double tests (no Redis required).
   complexity using our table with 4 types of responses" —
   bidirectional origination (R9) + promotion routed through the
   contract's four artifact tiers (R10).
+
+## P1 moderated round-trip — SHIPPED (2026-07-18)
+
+The `/roundtable` skill (`plugin/skills/roundtable/SKILL.md`,
+mirrored to `.agents/skills/` by the sync projector): intake +
+spend gate, thread open, member briefs via the verified headless
+recipes, positions posted with R7 receipts, R6 absent-seat
+degradation, R9 origination as `question`/`suggestion` messages,
+bounded rounds with early-halt (D3), synthesis, and chair-gated
+promotion with R10 tier recommendation and D2 destination routing.
+
+**AC-2 receipt — live dogfood, thread `lessons-flow-001`** (board
+`attune:roundtable:thread:lessons-flow-001`, TTL 7d from
+2026-07-18): question ("how do deliberations flow into the shared
+learning corpus?") → all 3 seats answered (claude 17s via
+subagent; antigravity 5s via `agy --mode plan`; codex 10s via
+`codex exec -`) → 3 `position` + 3 member-originated `question`
+messages + 1 `synthesis`, all server-side schema-validated, thread
+read back via `rt_read_thread`. Moderator halted after round 1 of
+3 on unanimous convergence: all seats picked (b) — a distinct
+lesson-promotion lane — and all three independently named
+review-fatigue/dilution as the risk. Open items triaged to the
+chair (unruled as of this writing): the evidence bar for lesson
+candidates (codex + claude convergent follow-up) and a pre-chair
+lint guardrail (antigravity). Promotion of the thread itself:
+chair's call, pending (R4).

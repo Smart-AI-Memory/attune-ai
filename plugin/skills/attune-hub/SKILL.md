@@ -116,6 +116,7 @@ rule (a single turn can't bundle multiple ambiguous decisions). See
 | image-analysis | analyze this image, look at this screenshot, what's in this diagram, read this mockup |
 | elicit | scope this, discovery form, ask me everything at once, multi-select question |
 | author-feature | author a feature page, single-source doc, new feature master, draft docs without an api |
+| roundtable | roundtable, convene the table, ask the table, what do the other models think |
 
 ## MCP Server Not Running
 
