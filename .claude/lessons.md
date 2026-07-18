@@ -16131,3 +16131,32 @@ def ", start_idx + 1)` for module-
   Diagnostic order for "is app X installed": lsregister dump
   FIRST when the cheap checks disagree with the user — the user
   is usually right about their own machine.
+
+- **Antigravity IDE vs CLI diverge on rules mechanics — the IDE
+  does NOT expand @-references, and AGENTS.md loads natively ONLY
+  from the workspace customization root `.agents/`**: 2026-07-18,
+  D3 parity check (app 2.3.1 vs agy CLI 1.1.4; receipts in
+  docs/specs/antigravity-adapter/decisions.md). The ratified
+  adapter (rule file inlining `@../../AGENTS.md`) passed all CLI
+  receipts but the IDE returned NOT IN CONTEXT for the contract.
+  The three-part discriminating probe (rule-body sentinel /
+  literal @-text / referenced-content item) localized it in one
+  round: sentinel present, `@../../AGENTS.md` quoted back as
+  LITERAL text, content absent — rule discovery+activation are
+  shared between surfaces, @-expansion is CLI-only. Asking the
+  IDE to enumerate its "customization roots" (its own system text
+  mentions them) yielded the fix: global `~/.gemini/config`,
+  workspace `.agents/` — so repo-root AGENTS.md is invisible to
+  the IDE but `.agents/AGENTS.md` loads natively. Fix shipped
+  (#1445): the contract projector emits `.agents/AGENTS.md` as a
+  byte-copy fourth target (created-if-missing, `--check`
+  drift-guarded; NOT a symlink — Windows checkouts + the
+  projector rejects symlinked targets). Durable rules: (1) never
+  extrapolate a receipt across provider surfaces that "presumably
+  share the engine" — agy and the IDE shipped different @-support
+  in the same product family; (2) when a context probe fails,
+  ladder it: body-sentinel → literal-reference-text →
+  referenced-content — one probe splits loads-at-all from
+  inlines-references; (3) an agent's own system text often names
+  its config surface (here "customization roots") — asking the
+  tool to enumerate them beats guessing paths from docs.
