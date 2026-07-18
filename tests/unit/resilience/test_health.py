@@ -215,7 +215,9 @@ class TestHealthCheckClass:
 
         result = await health.run_check("latency_check")
 
-        assert result.latency_ms >= 50
+        # Windows event-loop timers are coarse (~15.6ms), so a 50ms sleep
+        # can measure as low as ~35ms — use a platform-tolerant lower bound.
+        assert result.latency_ms >= 30
 
     @pytest.mark.asyncio
     async def test_run_all_checks(self, health):
