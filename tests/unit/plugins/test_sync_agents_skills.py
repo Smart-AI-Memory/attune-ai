@@ -352,12 +352,31 @@ class TestDiscoverSkills:
 
 REPO_ROOT = Path(__file__).parents[3]
 PLUGIN_SKILLS = REPO_ROOT / "plugin" / "skills"
+CLAUDE_SKILLS = REPO_ROOT / ".claude" / "skills"
 AGENTS_SKILLS = REPO_ROOT / ".agents" / "skills"
+
+
+def _expected_sources() -> dict[str, Path]:
+    """Map mirror name -> source SKILL.md, applying shadowing.
+
+    plugin/skills/ wins a name collision; non-shadowed
+    .claude/skills/ entries fill in the rest. Mirrors the sync
+    script's source resolution.
+    """
+    sources: dict[str, Path] = {}
+    for root in (PLUGIN_SKILLS, CLAUDE_SKILLS):
+        for skill_dir in sorted(root.iterdir()):
+            skill_file = skill_dir / "SKILL.md"
+            if not skill_dir.is_dir() or not skill_file.exists():
+                continue
+            if skill_dir.name not in sources:
+                sources[skill_dir.name] = skill_file
+    return sources
 
 
 @pytest.mark.unit
 class TestAgentSkillsIntegration:
-    """Validate .agents/skills/ matches plugin/skills/."""
+    """Validate .agents/skills/ matches its two source roots."""
 
     def test_agents_skills_directory_exists(self) -> None:
         """Test that .agents/skills/ directory exists."""
@@ -366,37 +385,32 @@ class TestAgentSkillsIntegration:
         )
 
     def test_all_plugin_skills_synced(self) -> None:
-        """Test all plugin skills have .agents/ copies."""
-        plugin = {
-            d.name for d in PLUGIN_SKILLS.iterdir() if d.is_dir() and (d / "SKILL.md").exists()
-        }
+        """Test the mirror set equals plugin ∪ non-shadowed .claude."""
+        expected = set(_expected_sources())
         agents = {
             d.name for d in AGENTS_SKILLS.iterdir() if d.is_dir() and (d / "SKILL.md").exists()
         }
-        assert plugin == agents, f"Missing: {plugin - agents}. " f"Extra: {agents - plugin}"
+        assert expected == agents, f"Missing: {expected - agents}. " f"Extra: {agents - expected}"
 
     def test_skill_body_content_matches(self) -> None:
-        """Test .agents/ SKILL.md body matches plugin/ copies.
+        """Test .agents/ SKILL.md body matches its source copy.
 
         Frontmatter differs (Claude Code fields stripped), but
         the body content after the closing --- should match.
         """
-        for skill_dir in PLUGIN_SKILLS.iterdir():
-            if not skill_dir.is_dir():
-                continue
-            plugin_file = skill_dir / "SKILL.md"
-            agents_file = AGENTS_SKILLS / skill_dir.name / "SKILL.md"
-            if not plugin_file.exists() or not agents_file.exists():
+        for name, source_file in _expected_sources().items():
+            agents_file = AGENTS_SKILLS / name / "SKILL.md"
+            if not agents_file.exists():
                 continue
 
             def _body(path: Path) -> str:
                 parts = path.read_text(encoding="utf-8").split("---", 2)
                 return parts[2].strip() if len(parts) >= 3 else ""
 
-            plugin_body = _body(plugin_file)
+            source_body = _body(source_file)
             agents_body = _body(agents_file)
-            assert plugin_body == agents_body, (
-                f"{skill_dir.name}/SKILL.md body differs. "
+            assert source_body == agents_body, (
+                f"{name}/SKILL.md body differs from {source_file}. "
                 f"Run: python scripts/sync_agents_skills.py"
             )
 
@@ -406,16 +420,11 @@ class TestAgentSkillsIntegration:
         ``sync_one`` in check mode compares the full generated
         file (frontmatter *and* body) byte-for-byte. This guards
         against frontmatter drift -- e.g. a ``description`` edited
-        in plugin/skills/ but never re-synced -- which the
+        in a source SKILL.md but never re-synced -- which the
         body-only and dir-set checks above do not catch.
         """
-        for skill_dir in PLUGIN_SKILLS.iterdir():
-            if not skill_dir.is_dir():
-                continue
-            plugin_file = skill_dir / "SKILL.md"
-            if not plugin_file.exists():
-                continue
-            ok, msg = sync_one(plugin_file, AGENTS_SKILLS, check=True)
+        for _name, source_file in _expected_sources().items():
+            ok, msg = sync_one(source_file, AGENTS_SKILLS, check=True)
             assert ok, f"{msg}. Run: python scripts/sync_agents_skills.py"
 
     def test_no_claude_code_fields_in_agents(self) -> None:

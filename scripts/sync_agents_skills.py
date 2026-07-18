@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
-"""Sync Claude Code plugin skills to agentskills.io-compliant format.
+"""Sync Claude Code skills to agentskills.io-compliant format.
 
-Reads SKILL.md files from plugin/skills/*/SKILL.md, strips Claude
-Code-specific frontmatter fields, validates naming rules, and writes
-to .agents/skills/<name>/SKILL.md.
+Reads SKILL.md files from plugin/skills/*/SKILL.md AND
+.claude/skills/*/SKILL.md, strips Claude Code-specific frontmatter
+fields, validates naming rules, and writes to
+.agents/skills/<name>/SKILL.md. On a name collision between the two
+sources, plugin/skills/ wins and the .claude/skills/ copy is skipped
+(reported as [SKIP]).
+
+The tracked .agents/skills/ tree is the one skill mirror other
+agents (e.g. Codex) read — keeping it complete stops Codex's init
+from regenerating its own mangled untracked copies of
+.claude/skills/ (see the 2026-07-18 lesson).
 
 Usage:
     python scripts/sync_agents_skills.py          # Generate files
@@ -257,18 +265,38 @@ def main(argv: list[str] | None = None) -> int:
     plugin_dir = repo_root / "plugin"
     output_root = repo_root / ".agents" / "skills"
 
-    skill_paths = discover_skills(plugin_dir)
-    if not skill_paths:
+    plugin_paths = discover_skills(plugin_dir)
+    if not plugin_paths:
         print("No SKILL.md files found in plugin/skills/")
         return 1
 
+    # Second source: repo-level user skills. Plugin skills shadow
+    # same-named .claude skills (the plugin copy is the product
+    # surface; the .claude copy is the repo-local variant).
+    claude_paths = discover_skills(repo_root / ".claude")
+    plugin_names = {p.parent.name for p in plugin_paths}
+
     mode = "Checking" if check else "Generating"
-    print(f"{mode} agentskills.io skills from {len(skill_paths)} sources\n")
+    total = len(plugin_paths) + len(claude_paths)
+    print(f"{mode} agentskills.io skills from {total} sources\n")
 
     successes = 0
     failures = 0
 
-    for skill_path in skill_paths:
+    for skill_path in plugin_paths:
+        ok, msg = sync_one(skill_path, output_root, check=check)
+        status = "  OK" if ok else "FAIL"
+        print(f"  [{status}] {msg}")
+        if ok:
+            successes += 1
+        else:
+            failures += 1
+
+    for skill_path in claude_paths:
+        name = skill_path.parent.name
+        if name in plugin_names:
+            print(f"  [SKIP] {name}: shadowed by plugin/skills/")
+            continue
         ok, msg = sync_one(skill_path, output_root, check=check)
         status = "  OK" if ok else "FAIL"
         print(f"  [{status}] {msg}")
