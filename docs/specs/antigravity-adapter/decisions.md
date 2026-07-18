@@ -98,7 +98,15 @@ hand-owned (like `.gemini/settings.json` in the sibling spec). No
 `.gitignore` change needed for Antigravity itself; decide separately
 if local Antigravity state dirs appear.
 
-## D3 — surface parity: FAIL — IDE loads the rule but does NOT inline @-references
+## D3 — surface parity: CLOSED (2026-07-18) — restored via `.agents/AGENTS.md` mirror (#1445)
+
+Final state: both surfaces verified loading the contract. CLI via
+the rule file's @-reference (D1 receipts); IDE via the projected
+`.agents/AGENTS.md` mirror in its workspace customization root.
+The probe ladder below is the receipt trail for how the initial
+FAIL was localized and fixed.
+
+### Initial receipt: FAIL — IDE loads the rule but does NOT inline @-references
 
 Live receipt, 2026-07-18, Antigravity IDE (app 2.3.1), workspace
 `~/attune-ai` on `main` at `1e1889b59` (clean tree, adapter and
@@ -156,3 +164,25 @@ projector target (byte-copy of root `AGENTS.md`), so the IDE
 loads the contract natively from its customization root. Not a
 symlink — Windows checkouts. Rule file stays for the CLI.
 Re-probe in the IDE after landing to close D3.
+
+### Closing receipt: IDE contract probe PASS (2026-07-18, post-#1445)
+
+Shipped in #1445 (squash `cc2e7d1a2`): projector emits
+`.agents/AGENTS.md` as a fourth target (byte-copy of root
+`AGENTS.md`, created-if-missing, `--check` drift-guarded; two new
+projector tests). All 10 required CI contexts green including the
+Windows lane.
+
+Patrick re-ran the original contract probe in the IDE (workspace
+`~/attune-ai` on the merge commit), no-tools fence. The IDE
+answered BOTH halves verbatim from loaded context: the preflight
+script with its full constraint list ("read-only, uses cached Git
+refs, and does not fetch, pull, switch branches, invoke `uv`, or
+create an environment") and all four artifact tiers with their
+one-line definitions. Same content the CLI receipts quoted —
+surface parity holds. D3 CLOSED.
+
+Carried risk (unchanged from D1): the IDE-native
+`.agents/AGENTS.md` load path and the CLI's `trigger:` frontmatter
++ relative @-expansion are verified behaviors on app 2.3.1 /
+agy 1.1.4 — re-verify after self-updates.
