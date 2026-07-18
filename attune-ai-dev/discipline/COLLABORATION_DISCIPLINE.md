@@ -1269,11 +1269,13 @@ cases, and high-overhead rewrites.
 
 The discipline of context budgeting has two components:
 
-- **The 300-Line Threshold**: Treat 300 lines of code as a soft ceiling
-  for any single file. If a file grows past this, the agent's first
-  recommendation should not be "let's add a new function," but rather a
-  concrete decomposition plan to split the file into smaller, single-
-  responsibility modules.
+- **The Line Budget**: Treat a few hundred lines as a soft ceiling for
+  any single file — 300 is a sensible greenfield default, and an
+  established repo calibrates its own number and applies it to new
+  growth rather than indicting every legacy module at once. If a file
+  grows past the budget, the agent's first recommendation should not be
+  "let's add a new function," but rather a concrete decomposition plan
+  to split the file into smaller, single-responsibility modules.
 - **Proactive Complexity Flags**: When asked to edit a file that exceeds
   the budget, the agent must flag the risk before proposing code
   changes: *"This file is 450 lines; we should extract the parser class
@@ -1349,12 +1351,14 @@ Setup hygiene requires a routine check:
 
 - **The Three-Minute Rule**: A fresh checkout of the repository in an
   isolated sandbox must be able to install dependencies from the
-  lockfile, configure its environment, and run the entire test suite to
-  green in under three minutes.
+  lockfile, configure its environment, and run the test suite to green
+  inside a fixed, published budget — three minutes is right for a young
+  repo; a mature suite earns a larger number, but the budget is a
+  commitment the repo keeps, not a wish.
 - **The Clean Run Check**: Once a week, or at the start of a major
   release cycle, the agent is tasked to run a clean checkout test. It
-  clones the repo into a clean temp directory, runs `install.sh` or the
-  lockfile install, and runs the tests. Any failure is treated as a
+  clones the repo into a clean temp directory, runs the lockfile
+  install, and runs the tests. Any failure is treated as a
   blocker and must be resolved before other features are written.
 
 Hygiene ensures that the environment is deterministic, enabling
