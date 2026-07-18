@@ -12,7 +12,7 @@ source: .claude/CLAUDE.md
 Adding a new skill directory under `plugin/skills/` without also creating a matching `.agents/skills/<name>/SKILL.md` fails the `test_all_plugin_skills_synced` test.
 
 **How to fix:**
-- Run `python scripts/sync_agents_skills.py` after adding or modifying skills, or the `test_skill_body_content_matches` test will also fail
+- Run `python scripts/sync_agents_skills.py --write` after adding or modifying skills, or the `test_skill_body_content_matches` test will also fail
 
 ```
 plugin/skills/

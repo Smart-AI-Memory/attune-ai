@@ -14,14 +14,15 @@ from regenerating its own mangled untracked copies of
 .claude/skills/ (see the 2026-07-18 lesson).
 
 Usage:
-    python scripts/sync_agents_skills.py          # Generate files
-    python scripts/sync_agents_skills.py --check   # Verify in sync
+    python scripts/sync_agents_skills.py          # Verify in sync
+    python scripts/sync_agents_skills.py --check  # Verify in sync
+    python scripts/sync_agents_skills.py --write  # Generate files
 """
 
 from __future__ import annotations
 
+import argparse
 import re
-import sys
 from pathlib import Path
 
 # Fields allowed in agentskills.io skill frontmatter.
@@ -255,10 +256,20 @@ def main(argv: list[str] | None = None) -> int:
     Returns:
         Exit code: 0 on success, 1 on failure.
     """
-    if argv is None:
-        argv = sys.argv[1:]
-
-    check = "--check" in argv
+    parser = argparse.ArgumentParser(description=__doc__)
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--check",
+        action="store_true",
+        help="verify mirrors without writing (default)",
+    )
+    mode.add_argument(
+        "--write",
+        action="store_true",
+        help="regenerate tracked mirrors",
+    )
+    args = parser.parse_args(argv)
+    check = not args.write
 
     # Determine repo root (script lives in scripts/)
     repo_root = Path(__file__).resolve().parent.parent
@@ -308,7 +319,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\n{'Checked' if check else 'Generated'}: " f"{successes} ok, {failures} failed")
 
     if check and failures > 0:
-        print("\nRun 'python scripts/sync_agents_skills.py' to regenerate.")
+        print("\nRun 'python scripts/sync_agents_skills.py --write' to regenerate.")
 
     return 1 if failures > 0 else 0
 

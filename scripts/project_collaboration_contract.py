@@ -170,12 +170,12 @@ def main(argv: list[str] | None = None) -> int:
     if result.stale:
         print("collaboration projection drift:")
         for path in result.stale:
-            print(f"  {path}")
+            print(f"  {path.as_posix()}")
         return 1
     for path in result.written:
-        print(f"wrote {path}")
+        print(f"wrote {path.as_posix()}")
     for path in result.unchanged:
-        print(f"unchanged {path}")
+        print(f"unchanged {path.as_posix()}")
     return 0
 
 

@@ -46,6 +46,10 @@ attune_redis/          # Redis plugin — bundled in the attune-ai wheel
 
 ### Session protocol
 
+- Before non-trivial work, run
+  `python scripts/collaboration_preflight.py`. It is read-only, uses
+  cached Git refs, and does not fetch, pull, switch branches, invoke
+  `uv`, or create an environment.
 - State the goal, acceptance criteria, assumptions, and intended
   verification before non-trivial implementation.
 - Prefer existing repository conventions and public interfaces before
@@ -121,6 +125,9 @@ attune_redis/          # Redis plugin — bundled in the attune-ai wheel
 
 - One branch per agent per task. Never commit to a branch another
   agent has in flight.
+- Before updating `main`, inspect its existing checkout. Pull only when
+  that checkout is on `main` and clean; otherwise fetch `origin/main`
+  separately and leave the current task worktree untouched.
 - One PR per feature surface: before opening a PR, check for an
   existing or parallel PR touching the same files
   (`gh pr list`, `git log origin/main -- <files>`).
@@ -132,7 +139,7 @@ attune_redis/          # Redis plugin — bundled in the attune-ai wheel
 
 - `plugin/skills/*/SKILL.md` and `.claude/skills/*/SKILL.md` are
   SOURCES for the tracked `.agents/skills/` mirror — after editing
-  a skill, run `python scripts/sync_agents_skills.py` and commit
+  a skill, run `python scripts/sync_agents_skills.py --write` and commit
   both sides (a drift-guard test fails CI otherwise).
 - This contract's own projected blocks and
   `templates/agent-handoff.md` are owned by
