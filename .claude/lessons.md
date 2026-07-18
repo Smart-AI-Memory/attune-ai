@@ -15970,3 +15970,34 @@ def ", start_idx + 1)` for module-
   worktree session (e.g. main checkout's `.codex/hooks.json`) are
   blocked by worktree_path_guard on Edit/Write — do intentional
   external-tree JSON edits via a python script in Bash.
+
+- **Working a Codex-created branch in the primary checkout — the
+  operational kit (override, ruff auto-fix trap, parallel-PR check,
+  CODEOWNERS login)**: 2026-07-18, shipping the collaboration
+  projector (#1436) on Codex's `codex/using-projectors` branch.
+  Four gotchas, all repeatable: (1) `checkout_wip_guard` blocks
+  commits in the primary checkout on a non-main branch;
+  `ATTUNE_ALLOW_CHECKOUT_WIP=1 git commit …` is the sanctioned
+  per-command override when the branch legitimately lives there
+  (Codex doesn't use worktrees). (2) Repo ruff config has
+  `fix = true` (pyproject.toml:539) — a bare `ruff check
+  scripts/` WRITES fixes into 22 unrelated files ("N hidden fixes"
+  in the output is the tell that fixes were applied); scope ruff
+  to the files you touched, and `git checkout -- <dir>` the
+  drive-by fixes out of a focused PR. (3) Before merging an
+  agent-handoff branch, check for a PARALLEL PR of the same
+  feature: Codex had opened AND merged its own unhardened variant
+  (#1434) mid-flight, turning the handoff branch DIRTY with
+  add/add conflicts on every feature file — resolution was
+  mechanical (superseding-branch-side + re-run the projector +
+  focused tests) once diagnosed, but the diagnosis starts with
+  `git log origin/main -- <feature files>` to find who else
+  landed them. Also: the handoff's "already pushed" claim was
+  false (push created the remote branch) — reconcile handoff
+  claims against `git ls-remote` first. (4) CODEOWNERS entries
+  named `@patrickroebuck` — NOT the owner's real login
+  (`silversurfer562`, confirm `gh api user --jq .login`) — so
+  every entry was a silent no-op since the file was written; same
+  wrong-login class as the June auto-approve-owner bug, now on
+  the CODEOWNERS surface. CODEOWNERS is advisory while
+  `required_approving_review_count` is 0.
