@@ -113,6 +113,23 @@ local function promote(keys, args)
   if type(destination) ~= 'string' or #destination == 0 then
     return redis.error_reply('rt_promote: destination is required')
   end
+  local ids_json = args[2]
+  if ids_json ~= nil and #ids_json > 0 then
+    local ok, ids = pcall(cjson.decode, ids_json)
+    if not ok or type(ids) ~= 'table' or #ids == 0 then
+      return redis.error_reply(
+        'rt_promote: item ids must be a non-empty JSON array')
+    end
+    local seq = tonumber(redis.call('HGET', meta_key, 'seq')) or 0
+    for _, id in ipairs(ids) do
+      if type(id) ~= 'number' or id < 1 or id ~= math.floor(id)
+          or id > seq then
+        return redis.error_reply(
+          'rt_promote: unknown item id ' .. tostring(id))
+      end
+    end
+    redis.call('HSET', meta_key, 'promoted_ids', cjson.encode(ids))
+  end
   local t = redis.call('TIME')
   redis.call('HSET', meta_key, 'status', 'promoted',
     'destination', destination, 'promoted_at', t[1])
@@ -223,12 +240,30 @@ class Board:
         raw = self.client.fcall("rt_read_thread", 1, self.thread_key(thread))
         return [BoardMessage.from_json(entry) for entry in raw or []]
 
-    def promote(self, thread: str, destination: str) -> list[BoardMessage]:
+    def promote(
+        self,
+        thread: str,
+        destination: str,
+        item_ids: list[int] | None = None,
+    ) -> list[BoardMessage]:
         """Mark a thread promoted and return its messages for writing out.
 
         The artifact write itself is the moderator's job (D2 routing;
         chair approval per R4 happens before this is called). The
         board only records that promotion happened and where.
+
+        Args:
+            thread: Thread id.
+            destination: Tracked artifact path the content goes to.
+            item_ids: Chair-approved message ids (P2 per-item gates).
+                When given, they are validated server-side against the
+                thread's sequence and recorded in the thread meta as
+                ``promoted_ids``; an unknown id rejects the whole call
+                with no meta change. When omitted, the whole thread is
+                promoted (the P1 behavior).
         """
-        raw = self.client.fcall("rt_promote", 1, self.thread_key(thread), destination)
+        args: list[str] = [destination]
+        if item_ids:
+            args.append(json.dumps(sorted(set(item_ids))))
+        raw = self.client.fcall("rt_promote", 1, self.thread_key(thread), *args)
         return [BoardMessage.from_json(entry) for entry in raw or []]

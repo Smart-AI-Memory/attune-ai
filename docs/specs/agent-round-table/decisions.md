@@ -187,3 +187,34 @@ moderator-pushback amendment accepted:
    before they reach the chair (antigravity's R9 origination,
    promoted). Mechanical rule the tag enables: no receipt AND no
    waiver tag → the candidate is blocked before presentation.
+
+## P2 promotion gates — SHIPPED (2026-07-18)
+
+- **Per-item promotion**: `rt_promote` accepts an optional JSON
+  array of chair-approved message ids, validated server-side
+  against the thread sequence — an unknown id rejects the whole
+  call with zero meta change; approved ids are recorded in meta as
+  `promoted_ids` (deduped, sorted). Omitting ids keeps the P1
+  whole-thread behavior. `Board.promote(thread, destination,
+  item_ids=...)`.
+- **Lesson lane** (`src/attune/roundtable/lessons.py`):
+  `LessonCandidate` (title/body/evidence/waived/thread) with the
+  ruled lint — no receipt AND no waiver → BLOCKED; evidence+waiver
+  flagged as contradictory; title/body curation bounds; origin
+  thread required (R10). `render()` refuses non-lint-clean drafts
+  and stamps waived entries with the visible
+  `unverified — design rationale (chair-waived)` tag.
+- **Skill Step 6** rewritten: per-item chair review
+  (multi-select), promoted ids passed to the board, lesson-lane
+  procedure with the lint gate run before any candidate reaches
+  the chair.
+
+Receipts: 31 roundtable tests green — per-item ids recorded /
+unknown-id atomic rejection / malformed-payload rejection /
+P1-behavior preserved, all against REAL Redis; 14 lint/render
+tests (blocking rule, waiver substitution, contradiction flag,
+render refusal). AC-3 approve-half exercised live on
+`lessons-flow-001` (this file is the destination; thread meta
+`status=promoted`); decline-half is procedural (skill: declined
+items get no writes) and enforced at the board by the
+unknown-id no-meta-change receipt.

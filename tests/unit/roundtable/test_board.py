@@ -194,3 +194,41 @@ class TestAgainstRealRedis:
         board.post_message(thread, author="a@s", kind="suggestion", body="x")
         with pytest.raises(redis.ResponseError, match="destination"):
             board.client.fcall("rt_promote", 1, Board.thread_key(thread), "")
+
+    def test_promote_records_chair_approved_item_ids(self) -> None:
+        """P2 per-item gates: approved ids land in meta, deduped and sorted."""
+        board = _real_board_or_skip()
+        thread = _fresh_thread()
+        for body in ("q", "pos-a", "pos-b"):
+            board.post_message(thread, author="a@s", kind="suggestion", body=body)
+        board.promote(thread, "docs/reports/roundtable/test.md", item_ids=[3, 1, 3])
+        meta = board.client.hgetall(Board.thread_key(thread) + ":meta")
+        assert meta["status"] == "promoted"
+        assert json.loads(meta["promoted_ids"]) == [1, 3]
+
+    def test_promote_unknown_item_id_rejected_with_no_meta_change(self) -> None:
+        """An out-of-range id rejects the whole call atomically (AC-3 spirit)."""
+        redis = pytest.importorskip("redis")
+        board = _real_board_or_skip()
+        thread = _fresh_thread()
+        board.post_message(thread, author="a@s", kind="suggestion", body="only one")
+        with pytest.raises(redis.ResponseError, match="unknown item id 2"):
+            board.promote(thread, "docs/reports/roundtable/test.md", item_ids=[2])
+        meta = board.client.hgetall(Board.thread_key(thread) + ":meta")
+        assert "status" not in meta and "promoted_ids" not in meta
+
+    def test_promote_malformed_ids_payload_rejected(self) -> None:
+        redis = pytest.importorskip("redis")
+        board = _real_board_or_skip()
+        thread = _fresh_thread()
+        board.post_message(thread, author="a@s", kind="suggestion", body="x")
+        with pytest.raises(redis.ResponseError, match="JSON array"):
+            board.client.fcall("rt_promote", 1, Board.thread_key(thread), "dest.md", "not-json")
+
+    def test_promote_without_ids_keeps_p1_whole_thread_behavior(self) -> None:
+        board = _real_board_or_skip()
+        thread = _fresh_thread()
+        board.post_message(thread, author="a@s", kind="suggestion", body="x")
+        board.promote(thread, "dest.md")
+        meta = board.client.hgetall(Board.thread_key(thread) + ":meta")
+        assert meta["status"] == "promoted" and "promoted_ids" not in meta

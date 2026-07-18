@@ -135,11 +135,12 @@ candidates. Read the thread back any time with:
 T="<slug>" python -c "import os, json; from attune.roundtable import Board; print(json.dumps([vars(m) for m in Board().read_thread(os.environ['T'])], ensure_ascii=False, default=str))"
 ```
 
-## Step 6 — Chair rules; promote (R4, R10, D2)
+## Step 6 — Chair rules; promote per item (R4, R10, D2)
 
-Ask the chair per item: promote, decline, or another round. Use
-`AskUserQuestion` (or an elicitation form) — never assume. On
-promotion:
+Present the promotion candidates as discrete items — each with its
+board message id — and ask the chair per item: promote, decline, or
+another round. Use `AskUserQuestion` with `multiSelect` (or an
+elicitation form) — never assume. On promotion:
 
 1. Recommend an artifact tier per the contract's artifact-selection
    table — inline edit / structured one-shot / XML task / spec —
@@ -147,14 +148,40 @@ promotion:
 2. Destination (D2): the owning spec's `decisions.md` when a spec
    exists; else `docs/reports/roundtable/<slug>.md`. The artifact
    records the thread id it came from.
-3. Write the artifact, then mark the thread:
+3. Write the artifact, then mark the thread, passing the
+   chair-approved message ids so the board records exactly what was
+   promoted (an unknown id rejects the whole call, no meta change):
 
 ```bash
-T="<slug>" D="docs/reports/roundtable/<slug>.md" python -c "import os; from attune.roundtable import Board; Board().promote(os.environ['T'], os.environ['D'])"
+T="<slug>" D="docs/reports/roundtable/<slug>.md" IDS="2,4" python -c "import os; from attune.roundtable import Board; Board().promote(os.environ['T'], os.environ['D'], item_ids=[int(i) for i in os.environ['IDS'].split(',')])"
 ```
 
 Post the chair's decision as a `ruling` message (author `chair`).
 Declined items get no file writes — `git status` stays clean.
+
+### The lesson lane (chair rulings, thread lessons-flow-001)
+
+When — and only when — a deliberation yields reusable cross-session
+knowledge (a verified gotcha, a rationale that will be asked again),
+draft a lesson candidate. Default is NO candidate; most threads
+produce none. Before presenting it to the chair, lint it — the gate
+is mechanical: no receipt AND no chair waiver → blocked:
+
+```bash
+TI="<title>" B="<body>" E="<evidence or empty>" T="<slug>" python -c "import os; from attune.roundtable import LessonCandidate; c=LessonCandidate(title=os.environ['TI'], body=os.environ['B'], evidence=os.environ['E'], thread=os.environ['T']); print(c.lint() or c.render())"
+```
+
+- `evidence` is a receipt from the real system (command run,
+  failure observed, fixing diff) — transcript consensus never
+  qualifies.
+- The chair may waive the receipt for a strong design rationale
+  (`waived=True`): the rendered entry then carries the visible
+  `unverified — design rationale (chair-waived)` tag and upgrades
+  to a normal entry when evidence lands. The waiver is the chair's,
+  per item — never self-granted.
+- Approved entries append to `.claude/lessons.md` (or the owning
+  spec's `decisions.md`); Redis re-derives at next hydration. The
+  table never touches the lessons corpus directly.
 
 Deliberation is TTL'd; only promoted content is durable. If the
 chair wants a raw thread kept past 7 days, promotion to a report is
