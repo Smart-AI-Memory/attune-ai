@@ -34,6 +34,17 @@ rationale.
 **Done when:** `ci_spend_gate.py` runs enforcing (not fail-open)
 on its next scheduled run; umbrella spec-audit CI green.
 
+**CLOSED 2026-07-17 — verified with the CI-run receipt.** The
+secret landed 2026-07-13 02:24 UTC; the next scheduled
+`integration-auth` run (29243098370, 2026-07-13 10:33 UTC) took
+the ENFORCING path — its gate step logged
+`ci_spend_gate: month-to-date spend $26.53 is under the $350.00
+ceiling — proceeding.` (not the fail-open warning). Secret-set ≠
+gate-working was the open doubt; the step log is the receipt.
+Note the third bullet (`ATTUNE_WORKSPACE_RO_TOKEN`) was closed
+separately as a phantom carry — never created, never needed
+(spec-audit CI uses the built-in `github.token`; see #1422).
+
 ## Block 1 — Watch the door (10 min/day, every day)
 
 - Check Discussion #1325; reply same-day to anything substantive.

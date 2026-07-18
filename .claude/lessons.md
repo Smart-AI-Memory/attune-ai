@@ -15854,3 +15854,18 @@ def ", start_idx + 1)` for module-
   time. History: rate-limiting also hit the 10.0.x and 10.2.0
   releases (release_state memory); it is the norm at tag time, not
   weather. Defer by default; don't burn the evening.
+
+- **"Auto-merge lane should take it" is a claim about an ARM state —
+  reconcile with `autoMergeRequest`, not the checks**: 2026-07-17
+  evening run. The starter said #1425 (docs-only, all green) would be
+  taken by the auto-merge lane; it sat OPEN for hours at
+  `mergeStateStatus: CLEAN` because `autoMergeRequest` was null —
+  auto-merge was never armed. Green checks + CLEAN prove MERGEABLE,
+  not MERGING. When a handoff says a PR will self-merge, the one-call
+  reconcile is `gh pr view <n> --json mergeStateStatus,autoMergeRequest`
+  — null autoMergeRequest on a CLEAN PR means arm it or merge it now.
+  Companion datum, same run: the pypistats IP-wide 429 penalty was
+  STILL active ~7+ hours after the morning's three attempts (first
+  request of the evening 429'd) — the #1425 lesson's "defer, don't
+  retry" horizon is hours, not the 15 minutes the error message
+  suggests; plan snapshot retries a day apart, not within a session.
