@@ -171,10 +171,29 @@ def test_rejects_symlinked_target_outside_repository(tmp_path: Path) -> None:
     except OSError as error:
         pytest.skip(f"symlinks unavailable: {error}")
 
-    with pytest.raises(projector.ProjectionError, match="escapes repository"):
+    with pytest.raises(projector.ProjectionError, match="must not be a symlink"):
         projector.project(root)
 
     assert external.read_text(encoding="utf-8") == "outside\n"
+
+
+def test_rejects_symlinked_contract_target_inside_repository(tmp_path: Path) -> None:
+    _seed_repo(tmp_path)
+    decoy = tmp_path / "docs" / "decoy.md"
+    decoy.parent.mkdir(parents=True, exist_ok=True)
+    agents = tmp_path / "AGENTS.md"
+    decoy.write_text(agents.read_text(encoding="utf-8"), encoding="utf-8")
+    original_decoy = decoy.read_text(encoding="utf-8")
+    agents.unlink()
+    try:
+        agents.symlink_to(decoy)
+    except OSError as error:
+        pytest.skip(f"symlinks unavailable: {error}")
+
+    with pytest.raises(projector.ProjectionError, match="must not be a symlink"):
+        projector.project(tmp_path)
+
+    assert decoy.read_text(encoding="utf-8") == original_decoy
 
 
 def test_main_reports_unchanged_targets(

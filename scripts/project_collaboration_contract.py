@@ -37,9 +37,19 @@ class ProjectionResult:
 
 
 def _validate_file_path(root: Path, relative_path: Path) -> Path:
-    """Return a repository-contained path, resolving symlinks."""
+    """Return a repository-contained path, resolving symlinks.
+
+    The fixed projection targets must not themselves be symlinks —
+    even one pointing at another in-repo file would silently
+    redirect the write away from the canonical path (a repo-write
+    is required to plant one, but the projector runs automatically
+    from pre-commit, so reject loudly instead).
+    """
     resolved_root = root.resolve()
-    resolved_path = (resolved_root / relative_path).resolve()
+    unresolved = resolved_root / relative_path
+    if unresolved.is_symlink():
+        raise ProjectionError(f"target must not be a symlink: {relative_path}")
+    resolved_path = unresolved.resolve()
     try:
         resolved_path.relative_to(resolved_root)
     except ValueError:
