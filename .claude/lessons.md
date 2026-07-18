@@ -15907,3 +15907,27 @@ def ", start_idx + 1)` for module-
   path is all-or-nothing on a flaky upstream, prefer the resumable
   local path and treat the workflow as opportunistic (it only wins
   when a single run completes the whole set).
+
+- **Codex-init scaffolding: it mirrors `.claude/skills/` into
+  `.agents/skills/` with a naive `.claude`→`.Codex` string replace —
+  treat the strays as regenerable noise; the coexistence layout is
+  AGENTS.md (tracked) + `.codex/` (ignored)**: 2026-07-18, after
+  Patrick started running Codex alongside Claude Code. Codex's init
+  had copied all 17 `.claude/skills/<n>/SKILL.md` into
+  `.agents/skills/<n>/` (untracked, colliding with the namespace of
+  the 24 TRACKED sync_agents_skills.py projections) and string-
+  replaced `.claude`→`.Codex` in the bodies, producing fictional
+  paths (`.Codex/plans/`, `.Codex-plugin/marketplace.json`). 13 were
+  byte-identical to their sources; the 4 "differing" ones differed
+  ONLY by the mangled substitution — no human edits, safe to delete.
+  Rules: (1) if the strays reappear, delete or repoint Codex's
+  mirror — NEVER gitignore `.agents/` wholesale (the drift-guard
+  test needs the tracked 24); (2) the shared-rules bridge for
+  non-Claude agents is the tracked root `AGENTS.md` (#1429) — Codex
+  does not read `.claude/`; keep rule changes in sync between the
+  two when they're agent-agnostic; (3) an UNTRACKED `AGENTS.md`
+  stub blocks `git pull` the moment a tracked version merges — move
+  it aside (`~/.attune/scratch/`) before the pull, don't delete
+  unseen; (4) one branch per agent, ideally one worktree per agent —
+  two agents committing on one branch is the multi-agent version of
+  the branch-vs-worktree commit tangle.
