@@ -27,6 +27,11 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # checkout's persisted GITHUB_TOKEN extraheader OVERRIDES the
+          # PAT embedded in the remote URL below — with contents: read
+          # the push then 403s as github-actions[bot] (run 29636107041).
+          persist-credentials: false
 
       - name: Capture snapshot (spaced requests, aborts on 429)
         env:
