@@ -46,6 +46,26 @@ def test_repo_projection_is_in_sync() -> None:
     assert result.stale == []
 
 
+def test_repo_projection_carries_artifact_tiers_and_verification_receipts() -> None:
+    contract = (REPO_ROOT / projector.MASTER_PATH).read_text(encoding="utf-8")
+    handoff = (REPO_ROOT / projector.HANDOFF_TARGET).read_text(encoding="utf-8")
+
+    for target in projector.CONTRACT_TARGETS:
+        projected = (REPO_ROOT / target).read_text(encoding="utf-8")
+        assert "### Artifact selection" in projected
+        assert "**Inline edit**" in projected
+        assert "**Structured one-shot**" in projected
+        assert "**XML task**" in projected
+        assert "**Spec**" in projected
+        assert "### Verification receipts" in projected
+        assert "require a non-mocked round trip" in projected
+        assert "working receipts" in projected
+
+    assert "### Artifact selection" in contract
+    assert "### Verification receipts" in contract
+    assert "| Claim | Failure-sensitive probe | Result |" in handoff
+
+
 def test_projects_contract_and_handoff_without_clobbering_provider_tail(tmp_path: Path) -> None:
     _seed_repo(tmp_path)
 

@@ -48,6 +48,30 @@ attune_redis/          # Redis plugin — bundled in the attune-ai wheel
 - Keep provider-specific setup in adapters. The shared contract must
   still work when only one provider is available.
 
+### Artifact selection
+
+- Match the artifact to the work before non-trivial implementation and
+  name the selected tier in the session contract:
+  - **Inline edit** — trivial, one file, no ambiguity.
+  - **Structured one-shot** — single-session work framed by a goal,
+    constraints, and acceptance criteria.
+  - **XML task** — dependent work across three or more files, or work
+    that must be executable as a cold handoff.
+  - **Spec** — multi-session or multi-PR work, design ambiguity, or an
+    irreversible choice.
+- Escalate the artifact tier when ambiguity or dependencies grow; do
+  not add ceremony to work that still fits a smaller tier.
+
+### Verification receipts
+
+- Before implementation, name the claim and a probe that would fail if
+  the claim were false. Report the probe actually run and its result.
+- Treat unit tests as evidence only inside their tested boundaries.
+  Hooks, persistence, networking, packaging, and other external seams
+  require a non-mocked round trip through the real boundary.
+- “Configured,” “registered,” and “exited successfully” are not
+  working receipts. Prefer evidence of the user-visible behavior.
+
 ### Handoffs
 
 - For multi-step work, create or update a portable handoff from

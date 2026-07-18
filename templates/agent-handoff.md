@@ -23,9 +23,9 @@
 
 ## Verification
 
-| Command | Result |
-| --- | --- |
-| <!-- command actually run --> | <!-- pass / fail / not run --> |
+| Claim | Failure-sensitive probe | Result |
+| --- | --- | --- |
+| <!-- behavior claimed --> | <!-- command or live check actually run --> | <!-- pass / fail / not run --> |
 
 ## Next action
 
