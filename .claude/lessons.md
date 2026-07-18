@@ -16077,3 +16077,57 @@ def ", start_idx + 1)` for module-
   assertion rather than merging over it forever. Diagnostic rule:
   a second Windows failure after a targeted fix is NOT evidence
   the fix failed — diff the failing TEST NAMES between runs first.
+
+- **Context-loading receipts for third-party agent tools:
+  enumeration answers are LOSSY, and a probe must be scored
+  against the file revision actually in that workspace**:
+  2026-07-18, Antigravity adapter receipts (full transcripts in
+  docs/specs/antigravity-adapter/decisions.md). Three receipt-
+  design rules that generalize: (1) the agent's skill enumeration
+  listed 40/41 mirrors and the "missing" one (`verify`) turned
+  out fine on a direct name-probe — LLM listings drop items;
+  when a count matters, probe specific names, never trust one
+  enumeration. (2) A contract probe returned NOT IN CONTEXT and
+  looked like adapter failure — but the workspace was a worktree
+  on pre-#1439 base whose AGENTS.md genuinely lacked the probed
+  bullet; the "failure" actually PROVED live-file fidelity.
+  Before scoring a context probe pass/fail, read the probed
+  content from THAT checkout's revision, not from main. (3) The
+  sound probe shape is "without using any tools (no file reads,
+  no commands) — if not in your loaded context reply exactly:
+  NOT IN CONTEXT"; without the no-tools fence, an agentic CLI
+  can satisfy the probe by reading the file and the receipt
+  proves nothing about context loading.
+
+- **Antigravity integration (agy CLI 1.1.4 / app 2.3.1) — the
+  live behaviors, several UNDOCUMENTED, that make or break the
+  adapter**: (1) bare `agy -p` binds NO workspace ("no active
+  workspace set") and sees only the ~10 built-in skills —
+  `--add-dir <root>` is required before workspace skills or
+  rules exist. (2) A rule file in `.agents/rules/` does NOT load
+  as plain markdown — it needs `trigger: always_on` YAML
+  frontmatter, which the docs' Rules page never mentions.
+  (3) The docs' `@/AGENTS.md` (absolute-then-workspace) @-form
+  did NOT inline; the RULES-FILE-RELATIVE form
+  `@../../AGENTS.md` inlines the full referenced file into
+  context. (4) `.agents/skills/` is consumed natively (41/41
+  mirrors listed by name) — the repo's agentskills.io mirror has
+  a second consumer beyond the drift tests; skill edits now
+  affect Antigravity sessions too. (5) `agy` authenticates
+  silently (no browser) via the OS keyring when the desktop app
+  has a session. The binary SELF-UPDATES in the background —
+  re-verify behaviors (2) and (3) after version changes before
+  trusting the adapter.
+
+- **User says "it's installed," but ls/find/mdfind on
+  /Applications all say no → dump Launch Services before
+  contradicting them**: 2026-07-18, Antigravity.app had existed
+  since Jul 15 yet `ls /Applications | grep -i`, `find
+  /Applications -iname`, AND `mdfind` all returned nothing; the
+  authoritative read was `lsregister -dump | grep -io
+  "path:.*<name>"` (/System/.../LaunchServices.framework/
+  Support/lsregister), which found the bundle instantly (cause
+  of the ls blindness unresolved — likely sandbox visibility).
+  Diagnostic order for "is app X installed": lsregister dump
+  FIRST when the cheap checks disagree with the user — the user
+  is usually right about their own machine.
