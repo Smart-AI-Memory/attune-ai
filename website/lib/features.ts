@@ -46,7 +46,7 @@ export const PRODUCTS: Product[] = [
       "Generate concept, task, and reference templates",
       "Staleness detection via source hashing",
       "Auto-regeneration of stale templates",
-      "24 Claude Code skills included",
+      "25 Claude Code skills included",
       "MCP server with 47 registered tools",
     ],
   },
@@ -117,7 +117,7 @@ export const PRODUCTS: Product[] = [
       "/coach status — check template freshness",
       "/coach maintain — regenerate stale templates",
       "Auto-triggers on natural language (help, explain, learn)",
-      "24 auto-triggering skills (security, testing, review, etc.)",
+      "25 auto-triggering skills (security, testing, review, etc.)",
     ],
   },
 ];
@@ -269,7 +269,7 @@ export const DIFFERENTIATORS: Differentiator[] = [
  */
 export const CAPABILITIES = {
   workflows: 20,
-  skills: 24,
+  skills: 25,
   mcpTools: 47,
   templateKinds: 15,
   wizards: 5,

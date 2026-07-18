@@ -103,14 +103,26 @@ BRIEF_PREAMBLE = (
 
 
 def run_command(
-    argv: Sequence[str], stdin_text: str | None = None, timeout: int = SEAT_TIMEOUT
+    argv: Sequence[str],
+    stdin_text: str | None = None,
+    timeout: int = SEAT_TIMEOUT,
+    strip_api_key: bool = False,
 ) -> tuple[int, str]:
     """Run one fixed-argv command keyless; return (exit code, output tail).
 
-    ``ANTHROPIC_API_KEY`` is set to the EMPTY string (CI-faithful
-    keyless: unset would let dotenv re-inject a real key downstream).
+    Two keyless modes, both deliberate:
+
+    - Checks (default): ``ANTHROPIC_API_KEY`` set to the EMPTY string
+      — CI-faithful (unset would let dotenv re-inject a real key
+      downstream).
+    - Seats (``strip_api_key=True``): the variable REMOVED — the
+      ``claude`` CLI 401s on an empty key instead of falling back to
+      subscription auth (live-run receipt, 2026-07-18), and members
+      should never inherit a real API key anyway (R1 hygiene).
     """
     env = {**os.environ, "ANTHROPIC_API_KEY": ""}
+    if strip_api_key:
+        env.pop("ANTHROPIC_API_KEY")
     try:
         proc = subprocess.run(  # nosec B603 — fixed argv, shell=False
             list(argv),
@@ -131,9 +143,9 @@ def run_command(
 def default_invoke_seat(recipe: Sequence[str], brief: str) -> tuple[int, str]:
     """Invoke one seat CLI with the brief substituted per its recipe."""
     if recipe[-1] == "-":
-        return run_command(recipe, stdin_text=brief)
+        return run_command(recipe, stdin_text=brief, strip_api_key=True)
     argv = [brief if part == "{brief}" else part for part in recipe]
-    return run_command(argv)
+    return run_command(argv, strip_api_key=True)
 
 
 def run_routine(
@@ -157,8 +169,10 @@ def run_routine(
         dry_run: Run checks and print the brief; skip the board and
             every LLM invocation.
     """
-    date = datetime.date.today().isoformat()
-    thread = f"routine-{spec.name}-{date}"
+    # Minute-resolution stamp: same-day reruns (fix-and-rerun is the
+    # normal proving loop) must not append into one shared thread.
+    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
+    thread = f"routine-{spec.name}-{stamp}"
 
     evidence: list[str] = []
     for label, argv in spec.checks:
@@ -218,6 +232,16 @@ def run_routine(
         code, digest = invoke_seat(("claude", "-p", "{brief}"), synthesis_brief)
         if code == 0 and digest.strip():
             board.post_message(thread, "moderator", "synthesis", digest, round=1)
+        else:
+            # Silence here would read as success — name the failure on
+            # the thread so the chair sees a digest-less run for what
+            # it is.
+            board.post_message(
+                thread,
+                "moderator",
+                "halt",
+                f"synthesis invocation failed (exit {code}): {digest[:200]}",
+            )
     elif positions and not halted:
         board.post_message(
             thread,

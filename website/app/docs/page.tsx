@@ -45,7 +45,7 @@ const faqItems = [
   {
     question: 'What Claude Code skills are included?',
     answer:
-      '24 auto-invoking skills: security audit, smart test, code quality, bug prediction, doc generation, refactor planning, release prep, planning, spec-driven development, fix-test, workflow orchestration, RAG-grounded code generation, content verification, cross-session recall, memory and context, personal memory, image analysis, batch processing, capability catalog, discovery sweep, form-driven elicitation, the coach help system, the attune hub router, and single-source feature-page authoring.',
+      '25 auto-invoking skills: security audit, smart test, code quality, bug prediction, doc generation, refactor planning, release prep, planning, spec-driven development, fix-test, workflow orchestration, RAG-grounded code generation, content verification, cross-session recall, memory and context, personal memory, image analysis, batch processing, capability catalog, discovery sweep, form-driven elicitation, the coach help system, the attune hub router, single-source feature-page authoring, and the multi-LLM round table.',
   },
   {
     question: 'Where do I install attune-help and attune-author from?',
@@ -66,7 +66,7 @@ const workflows = [
   { name: 'Release Prep', description: 'Changelog, version bump, health checks' },
 ];
 
-// The 24 plugin skills — keep in sync with plugin/skills/
+// The 25 plugin skills — keep in sync with plugin/skills/
 // (test_skill_count asserts the directory count).
 const skills = [
   'security-audit', 'smart-test', 'code-quality', 'bug-predict',
@@ -75,6 +75,7 @@ const skills = [
   'verify', 'recall', 'memory-and-context', 'personal-memory',
   'image-analysis', 'bulk', 'catalog', 'discovery-sweep',
   'elicit', 'coach', 'attune-hub', 'author-feature',
+  'roundtable',
 ];
 
 export default function DocsPage() {
@@ -177,7 +178,7 @@ export default function DocsPage() {
                   <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
                     The whole platform: spec engine, AI workflows, project
                     memory, retrieval grounding, and verification.
-                    20 workflows, 24 skills, 47 MCP tools.
+                    20 workflows, 25 skills, 47 MCP tools.
                   </p>
                   <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
                     <span className="text-white/50">$ </span>pip install attune-ai
@@ -506,7 +507,7 @@ export default function DocsPage() {
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
                 Install from the marketplace. Progressive help, project
-                bootstrapping, and 24 skills right in your terminal.
+                bootstrapping, and 25 skills right in your terminal.
               </p>
 
               <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-8 mb-8">
@@ -573,7 +574,7 @@ export default function DocsPage() {
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
                 The build half of the loop: 20 workflows,
-                24 auto-triggering Claude Code skills,
+                25 auto-triggering Claude Code skills,
                 and an MCP server with 47 registered tools — review, tests,
                 bug prediction, refactor, and release prep.
               </p>
@@ -600,7 +601,7 @@ export default function DocsPage() {
 
                 <div>
                   <h3 className="font-bold text-lg mb-4">
-                    24 Claude Code Skills
+                    25 Claude Code Skills
                   </h3>
                   <p className="text-sm text-[var(--text-secondary)] mb-4">
                     Skills auto-invoke from natural language. Type the topic

@@ -34,7 +34,7 @@ const faqData: FAQCategory[] = [
       },
       {
         question: 'What can Attune AI do, in numbers?',
-        answer: 'Attune AI ships 20 workflows, 47 MCP tools, 24 auto-triggering skills, 5 wizards, and 15 template kinds. The spec engine runs via /spec, progressive help via /coach, and cross-session recall via /recall.',
+        answer: 'Attune AI ships 20 workflows, 47 MCP tools, 25 auto-triggering skills, 5 wizards, and 15 template kinds. The spec engine runs via /spec, progressive help via /coach, and cross-session recall via /recall.',
       },
       {
         question: "What's the difference between attune-ai and attune-gui?",

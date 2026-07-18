@@ -154,3 +154,28 @@ class TestPlumbing:
         assert code == 0 and out == "hello table"
         code, out = default_invoke_seat(("cat", "-"), "stdin brief")
         assert code == 0 and out == "stdin brief"
+
+    def test_seats_get_api_key_stripped_not_emptied(self, monkeypatch) -> None:
+        """Live-run regression: an EMPTY key 401s the claude CLI; seats
+        need the variable absent so subscription auth kicks in."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-real")  # pragma: allowlist secret
+        code, out = default_invoke_seat(
+            ("sh", "-c", 'echo "set=${ANTHROPIC_API_KEY+yes}"'), "unused"
+        )
+        assert code == 0 and "set=" in out and "set=yes" not in out
+
+    def test_synthesis_failure_is_visible_on_the_thread(self) -> None:
+        """Live-run regression: a failed synthesis must not read as a
+        successful digest-less run."""
+        board = _real_board_or_skip()
+
+        def invoke(recipe, brief):
+            if "moderator of a round-table routine" in brief:
+                return 1, "Failed to authenticate"
+            return 0, f"position from {recipe[0]}"
+
+        thread = run_routine(_spec(), board=board, invoke_seat=invoke, run_check=_ok_check)
+        msgs = board.read_thread(thread)
+        assert not any(m.kind == "synthesis" for m in msgs)
+        halts = [m for m in msgs if m.kind == "halt"]
+        assert len(halts) == 1 and "synthesis invocation failed (exit 1)" in halts[0].body
