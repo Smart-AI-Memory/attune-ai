@@ -7,16 +7,24 @@
 # Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
 # Default — Patrick owns everything
-* @patrickroebuck
+* @silversurfer562
 
 # Core framework
-src/attune/ @patrickroebuck
+src/attune/ @silversurfer562
 
 # Security-sensitive paths — always require review
-src/attune/security/ @patrickroebuck
-.github/workflows/ @patrickroebuck
-.pre-commit-config.yaml @patrickroebuck
-pyproject.toml @patrickroebuck
+src/attune/security/ @silversurfer562
+.github/workflows/ @silversurfer562
+.pre-commit-config.yaml @silversurfer562
+pyproject.toml @silversurfer562
 
 # Release artifacts
-CHANGELOG.md @patrickroebuck
+CHANGELOG.md @silversurfer562
+# Cross-provider collaboration contract: the master controls the
+# content projected into AGENTS.md and .claude/CLAUDE.md — the
+# always-loaded agent instruction files. A PR touching any of these
+# has instruction-poisoning blast radius; owner reviews them.
+/content/collaboration/contract.md @silversurfer562
+/templates/agent-handoff.md @silversurfer562
+/AGENTS.md @silversurfer562
+/.claude/CLAUDE.md @silversurfer562
