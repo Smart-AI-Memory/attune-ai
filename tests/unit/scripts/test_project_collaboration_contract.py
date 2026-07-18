@@ -71,7 +71,10 @@ def test_projects_contract_and_handoff_without_clobbering_provider_tail(tmp_path
 
     result = projector.project(tmp_path)
 
-    assert set(result.written) == set(projector.CONTRACT_TARGETS) | {projector.HANDOFF_TARGET}
+    assert set(result.written) == set(projector.CONTRACT_TARGETS) | {
+        projector.HANDOFF_TARGET,
+        projector.IDE_MIRROR_TARGET,
+    }
     agents = (tmp_path / "AGENTS.md").read_text(encoding="utf-8")
     assert "Shared rule." in agents
     assert "Provider-specific tail." in agents
@@ -91,7 +94,7 @@ def test_check_fires_when_master_changes_after_projection(tmp_path: Path) -> Non
 
     result = projector.project(tmp_path, check=True)
 
-    assert set(result.stale) == set(projector.CONTRACT_TARGETS)
+    assert set(result.stale) == set(projector.CONTRACT_TARGETS) | {projector.IDE_MIRROR_TARGET}
     assert projector.HANDOFF_TARGET not in result.stale
 
 
@@ -102,7 +105,36 @@ def test_second_projection_is_idempotent(tmp_path: Path) -> None:
     result = projector.project(tmp_path)
 
     assert result.written == []
-    assert set(result.unchanged) == set(projector.CONTRACT_TARGETS) | {projector.HANDOFF_TARGET}
+    assert set(result.unchanged) == set(projector.CONTRACT_TARGETS) | {
+        projector.HANDOFF_TARGET,
+        projector.IDE_MIRROR_TARGET,
+    }
+
+
+def test_ide_mirror_is_byte_copy_of_root_agents(tmp_path: Path) -> None:
+    _seed_repo(tmp_path)
+
+    projector.project(tmp_path)
+
+    root_agents = (tmp_path / "AGENTS.md").read_bytes()
+    mirror = (tmp_path / projector.IDE_MIRROR_TARGET).read_bytes()
+    assert mirror == root_agents
+
+
+def test_check_fires_when_root_agents_hand_content_changes(tmp_path: Path) -> None:
+    _seed_repo(tmp_path)
+    projector.project(tmp_path)
+    agents = tmp_path / "AGENTS.md"
+    agents.write_text(
+        agents.read_text(encoding="utf-8").replace(
+            "Provider-specific tail.", "Edited provider tail."
+        ),
+        encoding="utf-8",
+    )
+
+    result = projector.project(tmp_path, check=True)
+
+    assert projector.IDE_MIRROR_TARGET in result.stale
 
 
 def test_handoff_projection_preserves_nested_h2_sections(tmp_path: Path) -> None:
