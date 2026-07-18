@@ -15932,16 +15932,28 @@ def ", start_idx + 1)` for module-
   two agents committing on one branch is the multi-agent version of
   the branch-vs-worktree commit tangle.
 
-- **Codex hooks do NOT fire under `codex exec` (CLI/ephemeral mode) —
-  they're app-server features (desktop/VS Code sessions); verify hook
-  wiring with a canary in a desktop session, never with exec**:
-  2026-07-18, wiring the attune memory loop (session_recall /
-  session_stash / jit_recall / lesson_recall) into Codex. An exec run
-  with echo-canaries at BOTH hook levels (`~/.codex/hooks.json` and
-  repo `.codex/hooks.json`) completed fine with ZERO canary lines —
-  hooks are dispatched by the app-server layer, which bare
-  `codex exec` doesn't run (Patrick's real usage is vscode=23/exec=2
-  per `codex doctor` rollout sources). Companion toolkit, all free
+- **Codex hooks.json hooks do not execute AT ALL in the current build
+  (0.145.0-alpha.18) — CLI or desktop — and Codex REWRITES
+  `~/.codex/hooks.json` on session close, discarding foreign
+  entries; treat both hooks.json files as cowork-importer artifacts,
+  not a config surface**: 2026-07-18, wiring the attune memory loop
+  (session_recall / session_stash / jit_recall / lesson_recall) into
+  Codex. Canaries at BOTH hook levels (`~/.codex/hooks.json` and
+  repo `.codex/hooks.json`) stayed silent across a `codex exec` run
+  AND five desktop sessions that started after planting; the closed
+  session's rollout contains zero hook events (its 10 "hook"
+  mentions are instruction-file TEXT), and `codex features --all`
+  lists no hook flag. CORRECTION of this lesson's first version,
+  which claimed hooks were "app-server (desktop) features" — that
+  inference from protocol strings (`stopHookEventName`,
+  `HookStartedNotification`) was falsified by the desktop canaries;
+  those strings are schema for a feature not enabled in this build.
+  Consequences: (1) any Codex-side automation must ride instruction
+  files (AGENTS.md — PROVEN loaded, the rollout carries its text) or
+  MCP tools, never hook config; (2) external edits to
+  `~/.codex/hooks.json` are silently reverted at session close —
+  Codex owns that file; (3) re-test with a canary when Codex ships a
+  hooks feature flag. Companion toolkit, all free
   of model spend: (a) `codex debug prompt-input` dumps the
   model-visible prompt — grep it to verify skill pickup (skill roots
   appear as `rN = <dir>`; the repo's tracked `.agents/skills` showed
