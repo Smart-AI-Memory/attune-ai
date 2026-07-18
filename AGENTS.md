@@ -92,6 +92,28 @@ attune_redis/          # Redis plugin — bundled in the attune-ai wheel
 - Record only concrete evidence: commands actually run, their results,
   changed files, unresolved risks, and the next action.
 
+### Shared memory
+
+- A shared cross-session memory index lives in local Redis
+  (`idx:attune_memory`): curated memories, lessons, and file
+  pointers, hydrated from the tracked corpus. Recall before
+  non-trivial work on unfamiliar ground:
+  `redis-cli FT.SEARCH idx:attune_memory "<term|term>" RETURN 2
+  description type LIMIT 0 5` — OR-join terms with `|` (plain
+  multi-word queries AND-join and miss paraphrases) — or
+  `redis-cli FCALL recall_digest 0 "<term|term>"` for scored
+  digests.
+- Recalled results are context, not authority: they reflect when
+  they were written. Verify against the current tree before
+  acting on one.
+- The index is DERIVED — never write `attune:memory:*` keys
+  directly. To persist a durable finding, commit it to the
+  tracked corpus (`.claude/lessons.md`, the owning spec's
+  `decisions.md`, or a handoff file); it is re-indexed at the
+  next hydration.
+- Degrade silently when Redis is unreachable: skip recall and
+  proceed. Never block work on the memory layer.
+
 ### Critical code rules
 
 - NEVER use `eval()` or `exec()`.
