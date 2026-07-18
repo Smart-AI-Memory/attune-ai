@@ -16039,3 +16039,41 @@ def ", start_idx + 1)` for module-
   The older per-file `spec_from_file_location` pattern
   (`test_project_collaboration_contract.py`) is the
   mechanism-independent alternative.
+
+- **`gh pr checks` can read ALL-GREEN while the head SHA's Tests run
+  is still `pending` with ZERO jobs — watch the RUN, not the PR
+  rollup; and the concurrency race also parks runs the OTHER way**:
+  2026-07-18, #1439 final SHA. Two coupled traps: (1) a
+  rollup-keyed watcher (`exit when no pending checks`) fired
+  spuriously because the tests.yml run on the new SHA hadn't
+  attached its check-runs yet — rollup showed 16 pass / 0 pending
+  while `gh run list` showed the Tests run `pending` with
+  `jobs: []`. The tell: mergeStateStatus=BLOCKED despite a green
+  rollup = REQUIRED checks are missing-not-passed; always
+  cross-check `gh run list --branch <b>` before believing rollup
+  green. (2) Inverse of the known cancel-in-progress race: the
+  SUPERSEDED run stayed `in_progress` (its cancellation never
+  fired) and the new SHA's run parked `pending`/zero-jobs behind
+  the concurrency group; `gh run cancel <old-run-id>` released the
+  slot immediately. Durable recipe: after any push, key the wait on
+  the specific run id (`gh run view <id> --json status` until
+  `completed`), never on `gh pr checks` pending-counts.
+
+- **Successive single-test Windows-lane failures on the SAME branch
+  can be DIFFERENT tests — read each failure by name before
+  assuming "my fix didn't work"; `gh run rerun <id> --failed`
+  reruns just the failed job for flake disposal**: 2026-07-18,
+  #1439. Run 1 failed `test_main_reports_projection_drift`
+  (pre-existing main bug: projector printed WindowsPath
+  backslashes; fixed with `as_posix()` at every print site —
+  main's own tests.yml on the PR's base SHA was red with the same
+  failure, the #1436/#1438 admin-merges having outrun their
+  Windows lanes). Run 2 — WITH the fix — failed a completely
+  unrelated test: `test_run_check_tracks_latency` asserts
+  `latency_ms >= 50` after `asyncio.sleep(0.05)`, and Windows's
+  ~15.6ms-granularity timer measured 37ms. Disposal: `gh run
+  rerun <run-id> --failed` (reruns ONLY the failed job, ~15 min
+  saved) + spawn a separate task to fix the flaky boundary
+  assertion rather than merging over it forever. Diagnostic rule:
+  a second Windows failure after a targeted fix is NOT evidence
+  the fix failed — diff the failing TEST NAMES between runs first.
