@@ -98,8 +98,61 @@ hand-owned (like `.gemini/settings.json` in the sibling spec). No
 `.gitignore` change needed for Antigravity itself; decide separately
 if local Antigravity state dirs appear.
 
-## D3 — surface parity: CLI verified; IDE pending
+## D3 — surface parity: FAIL — IDE loads the rule but does NOT inline @-references
 
-All receipts above are CLI (`agy` 1.1.4). The IDE (app 2.3.1)
-presumably shares the rules engine; verify once in the IDE before
-closing D3 (open the workspace, ask the same two questions).
+Live receipt, 2026-07-18, Antigravity IDE (app 2.3.1), workspace
+`~/attune-ai` on `main` at `1e1889b59` (clean tree, adapter and
+contract verified present before the probe). Patrick ran the
+probes in the IDE agent panel; scored against that revision.
+
+1. **Contract probe (same as CLI AC-2): NOT IN CONTEXT.** The
+   preflight script and artifact tiers — verbatim-quotable in the
+   CLI receipts — did not load.
+2. **Discriminating three-part probe localized the break:**
+   - Rule BODY loads: the sentinel phrase "cross-provider
+     collaboration contract for this repository" was quoted back.
+     (So file discovery + activation work in the IDE too.)
+   - The `@../../AGENTS.md` reference was quoted back as LITERAL
+     TEXT — the IDE serves it un-expanded.
+   - `collaboration_preflight.py` (content that exists only in the
+     referenced AGENTS.md): NOT IN CONTEXT.
+
+Diagnosis: the CLI (`agy` 1.1.4) expands rules-file-relative
+@-references; the IDE (app 2.3.1) does not expand @-references at
+all. The adapter's zero-drift trick is CLI-only. Same family as
+the CLI's own `@/AGENTS.md` silent no-op (AC-2 item 3): @-form
+support is fragile and surface-specific across this product.
+
+Lead for the fix: the IDE's own loaded instructions contain
+"Append rules to the `AGENTS.md` file in one of the customization
+roots, depending on scope" — the IDE may support AGENTS.md
+NATIVELY from specific roots (workspace root evidently not among
+them, or not auto-loaded, since item 3 failed). Next probe: ask
+the IDE to enumerate its customization roots.
+
+Fix options:
+
+- (a) Probe the customization roots; if one is repo-reachable and
+  tracked, AGENTS.md lands there natively and the rule file stays
+  as-is for the CLI.
+- (b) Make the projector write the full contract block INTO
+  `.agents/rules/collaboration-contract.md` (new projection
+  target). Guaranteed on both surfaces; costs the by-construction
+  drift-freedom, regains it via the projector's `--check` gate.
+  Keep the @-reference line too — harmless where unsupported.
+
+### Customization-roots receipt → fix (a) selected (2026-07-18)
+
+IDE enumeration probe (quoting its loaded context): global root
+`/Users/patrickroebuck/.gemini/config`; workspace root `.agents`
+(relative to the workspace root). So `.agents/` IS the workspace
+customization root — which retro-explains the whole D3 result:
+the rule file loaded because it lives under `.agents/`, and
+repo-root `AGENTS.md` never loaded because it sits OUTSIDE the
+root and the @-bridge doesn't expand in the IDE.
+
+Fix (a): project `.agents/AGENTS.md` as a new fully-generated
+projector target (byte-copy of root `AGENTS.md`), so the IDE
+loads the contract natively from its customization root. Not a
+symlink — Windows checkouts. Rule file stays for the CLI.
+Re-probe in the IDE after landing to close D3.

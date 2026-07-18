@@ -21,6 +21,12 @@ CONTRACT_HEADING = "Shared contract"
 HANDOFF_HEADING = "Portable handoff template"
 CONTRACT_TARGETS = (Path("AGENTS.md"), Path(".claude/CLAUDE.md"))
 HANDOFF_TARGET = Path("templates/agent-handoff.md")
+# The Antigravity IDE loads AGENTS.md only from its workspace
+# customization root (.agents/) and does not expand the rule file's
+# @-reference, so the root file is mirrored there byte-for-byte
+# (docs/specs/antigravity-adapter, D3). Not a symlink: Windows
+# checkouts, and the projector rejects symlinked targets.
+IDE_MIRROR_TARGET = Path(".agents/AGENTS.md")
 
 
 class ProjectionError(ValueError):
@@ -136,6 +142,15 @@ def project(root: Path, *, check: bool = False) -> ProjectionResult:
         current = path.read_text(encoding="utf-8")
         expected = _replace_marked_block(current, rendered_contract, relative_path)
         projections.append((relative_path, path, current, expected))
+
+    agents_expected = next(
+        expected
+        for relative_path, _, _, expected in projections
+        if relative_path == CONTRACT_TARGETS[0]
+    )
+    mirror_path = _validate_file_path(root, IDE_MIRROR_TARGET)
+    current_mirror = mirror_path.read_text(encoding="utf-8") if mirror_path.is_file() else None
+    projections.append((IDE_MIRROR_TARGET, mirror_path, current_mirror, agents_expected))
 
     handoff_path = _validate_file_path(root, HANDOFF_TARGET)
     expected_handoff = sections[HANDOFF_HEADING].strip() + "\n"
