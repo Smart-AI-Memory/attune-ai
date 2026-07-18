@@ -17,11 +17,17 @@ from attune.roundtable.board import (
     Board,
     BoardMessage,
 )
+from attune.roundtable.lessons import (
+    WAIVER_TAG,
+    LessonCandidate,
+)
 
 __all__ = [
     "KINDS",
     "THREAD_KEY_PREFIX",
     "THREAD_TTL_SECONDS",
+    "WAIVER_TAG",
     "Board",
     "BoardMessage",
+    "LessonCandidate",
 ]

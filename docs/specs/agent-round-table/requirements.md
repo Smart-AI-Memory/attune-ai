@@ -56,11 +56,17 @@ to make convening it cheap, monitored, and recorded.
   Bounded rounds.
 - **P2 — promotion gates.** Chair reviews thread; per-item
   approve/decline; approved items written to the destination
-  (D2) and the thread marked promoted.
-- **P3 — routines.** Scheduled table runs (weekly §12
-  Clean-Run-Check is the first candidate), budget-capped,
-  results posted as a board digest; bridge to pipeline-learner
-  (routines are canonicalized sequences).
+  (D2) and the thread marked promoted. Includes the
+  lesson-candidate lint (chair ruling, lessons-flow-001): drafted
+  lesson candidates are checked for format + curation bar before
+  presentation; no receipt AND no chair-waiver tag → blocked.
+- **P3 — routines.** Scheduled table runs, budget-capped, results
+  posted as a board digest; bridge to pipeline-learner (routines
+  are canonicalized sequences). First routine: the weekly
+  **clean-run health check** (chair-defined 2026-07-18 — the
+  originating chat's "§12 Clean-Run-Check" shorthand resolved to
+  no tracked doc, so the chair defined it: keyless check battery →
+  seats deliberate the results → digest thread for the chair).
 
 ## Roster invocation recipes (verified live 2026-07-18)
 
