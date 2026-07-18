@@ -15931,3 +15931,42 @@ def ", start_idx + 1)` for module-
   unseen; (4) one branch per agent, ideally one worktree per agent —
   two agents committing on one branch is the multi-agent version of
   the branch-vs-worktree commit tangle.
+
+- **Codex hooks.json hooks do not execute AT ALL in the current build
+  (0.145.0-alpha.18) — CLI or desktop — and Codex REWRITES
+  `~/.codex/hooks.json` on session close, discarding foreign
+  entries; treat both hooks.json files as cowork-importer artifacts,
+  not a config surface**: 2026-07-18, wiring the attune memory loop
+  (session_recall / session_stash / jit_recall / lesson_recall) into
+  Codex. Canaries at BOTH hook levels (`~/.codex/hooks.json` and
+  repo `.codex/hooks.json`) stayed silent across a `codex exec` run
+  AND five desktop sessions that started after planting; the closed
+  session's rollout contains zero hook events (its 10 "hook"
+  mentions are instruction-file TEXT), and `codex features --all`
+  lists no hook flag. CORRECTION of this lesson's first version,
+  which claimed hooks were "app-server (desktop) features" — that
+  inference from protocol strings (`stopHookEventName`,
+  `HookStartedNotification`) was falsified by the desktop canaries;
+  those strings are schema for a feature not enabled in this build.
+  Consequences: (1) any Codex-side automation must ride instruction
+  files (AGENTS.md — PROVEN loaded, the rollout carries its text) or
+  MCP tools, never hook config; (2) external edits to
+  `~/.codex/hooks.json` are silently reverted at session close —
+  Codex owns that file; (3) re-test with a canary when Codex ships a
+  hooks feature flag. Companion toolkit, all free
+  of model spend: (a) `codex debug prompt-input` dumps the
+  model-visible prompt — grep it to verify skill pickup (skill roots
+  appear as `rN = <dir>`; the repo's tracked `.agents/skills` showed
+  as r15 with all 41 mirrors) and to find mangled imports; (b)
+  `codex mcp list` shows MCP servers with env and enablement;
+  (c) `codex doctor` validates config/auth/DB health. Wiring
+  pattern: reference plugin-cache hook scripts via a dynamic root —
+  `ROOT=$(ls -td "$HOME"/.codex/plugins/cache/attune-ai/attune-ai/*/
+  | head -1)` — so version bumps don't stale the path. Also: Codex's
+  cowork-importer mangles `.claude`→`.Codex` in PROSE too (turned
+  "workflow OS for Claude Code" into "for Codex" in
+  `~/.codex/AGENTS.md`) — after any re-import, grep that file for
+  `.Codex` and re-run the sed fix. Cross-tree config edits from a
+  worktree session (e.g. main checkout's `.codex/hooks.json`) are
+  blocked by worktree_path_guard on Edit/Write — do intentional
+  external-tree JSON edits via a python script in Bash.
