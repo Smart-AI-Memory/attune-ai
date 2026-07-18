@@ -114,6 +114,30 @@ def test_handoff_projection_preserves_nested_h2_sections(tmp_path: Path) -> None
     assert "## Goal" in handoff
 
 
+def test_projected_block_carries_generated_notice(tmp_path: Path) -> None:
+    _seed_repo(tmp_path)
+
+    projector.project(tmp_path)
+
+    for target in projector.CONTRACT_TARGETS:
+        content = (tmp_path / target).read_text(encoding="utf-8")
+        start = content.index(projector.START_MARKER)
+        end = content.index(projector.END_MARKER)
+        assert projector.GENERATED_NOTICE in content[start:end]
+
+
+def test_rejects_duplicate_required_heading(tmp_path: Path) -> None:
+    _seed_repo(tmp_path)
+    master = tmp_path / projector.MASTER_PATH
+    master.write_text(
+        master.read_text(encoding="utf-8") + "\n## Shared contract\n\nSecond copy.\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(projector.ProjectionError, match="repeats required heading"):
+        projector.project(tmp_path)
+
+
 def test_rejects_target_without_exactly_one_marker_pair(tmp_path: Path) -> None:
     _seed_repo(tmp_path)
     (tmp_path / "AGENTS.md").write_text("# Missing markers\n", encoding="utf-8")

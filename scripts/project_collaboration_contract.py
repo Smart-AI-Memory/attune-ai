@@ -51,13 +51,18 @@ def _parse_sections(text: str) -> dict[str, str]:
     """Return the two contract-level section bodies from a Markdown master.
 
     The handoff template intentionally has its own H2 headings, so only
-    the two declared master headings delimit sections here.
+    the two declared master headings delimit sections here. A repeated
+    required heading raises: silent last-wins could project half an
+    edit (spec D4).
     """
     sections: dict[str, str] = {}
     current: str | None = None
     lines: list[str] = []
     for line in text.splitlines():
         if line.startswith("## ") and line[3:].strip() in {CONTRACT_HEADING, HANDOFF_HEADING}:
+            heading = line[3:].strip()
+            if heading in sections or heading == current:
+                raise ProjectionError(f"master repeats required heading: {heading}")
             if current is not None:
                 sections[current] = "\n".join(lines).strip()
             current = line[3:].strip()
@@ -83,9 +88,15 @@ def _master_sections(root: Path) -> dict[str, str]:
     return sections
 
 
+GENERATED_NOTICE = (
+    "<!-- generated from content/collaboration/contract.md - edit the "
+    "master, then run scripts/project_collaboration_contract.py -->"
+)
+
+
 def _render_marked_block(contract: str) -> str:
     """Return the provider-neutral contract inserted in instruction files."""
-    return "## Cross-provider collaboration\n\n" + contract.strip() + "\n"
+    return GENERATED_NOTICE + "\n\n## Cross-provider collaboration\n\n" + contract.strip() + "\n"
 
 
 def _replace_marked_block(content: str, rendered: str, path: Path) -> str:

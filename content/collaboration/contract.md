@@ -52,7 +52,9 @@ hand-edit its projected blocks or the handoff template.
 ### Handoffs
 
 - For multi-step work, create or update a portable handoff from
-  `templates/agent-handoff.md` in the branch or task's tracked work.
+  `templates/agent-handoff.md` at `docs/handoffs/<branch-slug>.md`
+  (slug = branch name with `/` replaced by `-`), tracked on the
+  branch. Delete the file when the branch merges.
 - A receiving agent verifies the handoff against the current Git state
   and tests before continuing; a handoff is context, not authority.
 - Record only concrete evidence: commands actually run, their results,

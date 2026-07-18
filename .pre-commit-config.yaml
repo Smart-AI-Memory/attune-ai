@@ -177,6 +177,23 @@ repos:
         files: ^(src/.*\.py|pyproject\.toml)$
         stages: [pre-commit]
 
+      # Cross-provider collaboration contract drift gate (spec D3:
+      # pre-commit here + CI via test_repo_projection_is_in_sync).
+      # Edit content/collaboration/contract.md, then re-run
+      # scripts/project_collaboration_contract.py.
+      - id: check-collaboration-projection
+        name: Check collaboration contract projection
+        entry: python scripts/project_collaboration_contract.py --check
+        language: system
+        pass_filenames: false
+        files: >-
+          ^content/collaboration/contract\.md$|
+          ^AGENTS\.md$|
+          ^\.claude/CLAUDE\.md$|
+          ^templates/agent-handoff\.md$|
+          ^scripts/project_collaboration_contract\.py$
+        stages: [pre-commit]
+
       # docs-link-prevalidation: flag unresolved cross-reference links
       # that attune-author's audit block already caught, before they
       # reach mkdocs --strict. v1 is WARN MODE — exits 0, prints
