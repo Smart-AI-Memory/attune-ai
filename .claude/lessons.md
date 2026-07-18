@@ -16160,3 +16160,27 @@ def ", start_idx + 1)` for module-
   inlines-references; (3) an agent's own system text often names
   its config surface (here "customization roots") — asking the
   tool to enumerate them beats guessing paths from docs.
+
+- **`codex exec` blocks FOREVER on non-TTY stdin — close stdin
+  (`</dev/null`) for arg-prompts, or pass the brief via stdin with
+  `codex exec -`**: 2026-07-18, seating Codex at the agent round
+  table. `codex exec "<prompt>"` launched from a tool/script (stdin
+  a pipe, not a TTY) printed `Reading additional input from
+  stdin...` to its output file and parked at ~0 CPU indefinitely —
+  the arg prompt does NOT stop it from also draining stdin. The
+  stall looks like model thinking; the tell is near-zero CPU time
+  after minutes (`ps -o time`). Working recipes (codex-cli 0.144.6,
+  installed `npm install -g @openai/codex`, shares `~/.codex/` auth
+  with the desktop app — `codex login status` → "Logged in using
+  ChatGPT" with no browser flow): (a) prompt as arg + `</dev/null`;
+  (b) brief as a file on stdin: `codex exec --skip-git-repo-check -
+  < brief.txt` (the `-` reads the prompt FROM stdin, so the pipe is
+  consumed deliberately). Related seating facts: headless runs
+  surface a vercel-MCP auth error (noise, non-fatal) and a skills
+  context-budget warning (Codex consumes the attune-ai marketplace
+  registered in `~/.codex/config.toml`). Sibling recipe for
+  Antigravity: `agy --add-dir <ws> -p <brief> --mode plan` works
+  headlessly for pure-reasoning briefs but auto-denies shell
+  commands (permission model has no headless prompt) — members of
+  an orchestrated multi-LLM exchange must be text-in/text-out with
+  the orchestrator doing all I/O.
