@@ -108,7 +108,7 @@ confidence. §7 gives this its own section because it is the
 discipline the others lean on. None of these is clever in
 isolation. The compounding is the discipline.
 
-The rest of this piece names the six disciplines that produce
+The rest of this piece names the ten disciplines that produce
 mornings like that — each its own section, each adoptable
 incrementally, on its own or together:
 
@@ -131,9 +131,12 @@ incrementally, on its own or together:
 - **§7 — Verification.** Quality is not optional: tests catch zero
   hallucinations, dogfooding works at the meaning layer where they
   live, and the receipt beats the promise.
+- **§8 — Case study.** What this looks like when it goes right: a twenty-four-hour arc.
+- **§9 — Context budgeting.** Managing the reasoning window by keeping files small and single-purpose to avoid context dilution.
+- **§10 — Draft-first review.** Separating high-level architectural design from syntax and integration before modifying source files.
+- **§11 — Diagnostic instrumentation.** Embedding structured logging, error handling, and testable telemetry alongside features.
+- **§12 — Sandbox hygiene.** Enforcing clean builds and test runs in isolated work environments to avoid local environment drift.
 
-§8 closes with a longer case study expanding the morning above into
-a full twenty-four-hour arc.
 
 ---
 
@@ -1246,14 +1249,65 @@ recorded as a durable memory node, governed by the rule it states.
 The form that renders the agent's disagreement was used to fix the
 infrastructure that loads the memory the forms render from.
 Drafting an earlier revision of this piece surfaced a friction
-none of the six disciplines quite covered; naming it produced a
+none of the ten disciplines quite covered; naming it produced a
 new spec by the end of that session. The discipline doesn't only
 describe the work. It constrains and improves its own
 construction. That is the compounding — tied to the discipline
 itself, not to any one tool.
 
-That is the discipline of agent collaboration. We are still
-learning it. We hope this is useful.
+---
+
+## §9 — Context Budgeting: Keeping Files Agent-Sized
+
+An agent’s working memory is defined by its context window, but its reasoning capacity is constrained by *context noise*. When a single source file grows to contain multiple unrelated helper functions, class definitions, or utility routines, it becomes a liability. The agent must read the entire file to edit a small part of it, which wastes tokens and dilutes the model's focus. Large files lead to vague edits, missed edge cases, and high-overhead rewrites.
+
+The discipline of context budgeting has two components:
+
+*   **The 300-Line Threshold**: Treat 300 lines of code as a soft ceiling for any single file. If a file grows past this, the agent’s first recommendation should not be "let's add a new function," but rather a concrete decomposition plan to split the file into smaller, single-responsibility modules.
+*   **Proactive Complexity Flags**: When asked to edit a file that exceeds the budget, the agent must flag the risk before proposing code changes: *"This file is 450 lines; we should extract the parser class before implementing this feature to prevent context dilution."*
+
+The benefit is mechanical. By keeping files small and highly cohesive, you ensure that every file read by the agent is 100% relevant to the task, minimizing the cost and error rate of edits.
+
+---
+
+## §10 — The "Draft-First" Code Review
+
+Writing code directly into the active source tree mixes two distinct concerns: architectural design (what we are building) and syntax execution (how we format, import, and hook it up). When these are combined, the human is forced to review a massive multi-file diff where architectural flaws are easily obscured by lines of formatting and import statements.
+
+The draft-first discipline enforces a two-pass implementation:
+
+*   **Pass 1: The Draft**: For any Tier 3 or Tier 4 task, the agent first writes the core logic, algorithm, or data structures in a separate scratchpad, markdown file, or inline block. The draft excludes packaging, imports, and scaffolding. The developer reviews and approves the logic in this isolated state.
+*   **Pass 2: The Inline**: Once the draft logic is approved, the agent executes the actual file edits, wire-ins, and import updates in the codebase.
+
+This approach treats code changes exactly like design specs. Unwinding a bad architectural decision in a markdown draft costs nothing; unwinding it from a five-file diff after it has been wired into the build system is painful and error-prone.
+
+---
+
+## §11 — Diagnostic Instrumentation First
+
+An agent debugging a system is entirely dependent on what it can observe. Unlike a human, it cannot easily attach a debugger, step through execution manually, or rely on visual cues. If a system fails silently or outputs vague errors, the agent is blind and will resort to speculative guesses.
+
+Diagnostic instrumentation must be written first:
+
+*   **The Telemetry Minimum**: No feature is complete without structured log points at key state transitions, error boundaries with context-rich catches, and debug hooks that dump state when requested.
+*   **Testable Telemetry**: Write unit tests that assert logs are generated under error conditions, verifying that the diagnostic path actually fires.
+
+By instrumenting the codebase as you build, you ensure that when the system fails—whether in local CI or production—the agent can diagnose the root cause in a single turn by reading the log file, rather than running multiple speculative trial-and-error cycles.
+
+---
+
+## §12 — Sandbox & Setup Hygiene
+
+A codebase accumulates silent environmental debt. Global python packages, local configuration files, and cached state make the project run locally for the human, while the same project fails to build or test on a clean machine. For agent collaboration, this is fatal; if an agent cannot spin up a clean worktree or run a subagent in a sandbox without encountering environment rot, productivity stops.
+
+Setup hygiene requires a routine check:
+
+*   **The Three-Minute Rule**: A fresh checkout of the repository in an isolated sandbox must be able to install dependencies from the lockfile, configure its environment, and run the entire test suite to green in under three minutes.
+*   **The Clean Run Check**: Once a week, or at the start of a major release cycle, the agent is tasked to run a clean checkout test. It clones the repo into a clean temp directory, runs `install.sh` or the lockfile install, and runs the tests. Any failure is treated as a blocker and must be resolved before other features are written.
+
+Hygiene ensures that the environment is deterministic, enabling subagents to spawn reliably and work in parallel without getting bogged down by configuration drift.
+
+That is the discipline of agent collaboration. We are still learning it. We hope this is useful.
 
 ---
 
