@@ -79,6 +79,25 @@ overruling a unanimous member recommendation — with rationale the
 members lacked (the plugin-manifest consent mechanism) — is
 exactly the human-in-the-loop shape the table is designed around.
 
+## P0 substrate — SHIPPED (2026-07-18)
+
+`src/attune/roundtable/` (`board.py`): message schema
+(`BoardMessage`, `KINDS`), the `attune_roundtable` Redis Function
+library (`rt_post_message` / `rt_read_thread` / `rt_promote` —
+distinct library name from the hydration hook's `attune_memory`,
+so `FUNCTION LOAD REPLACE` never clobbers it), and the
+moderator-side `Board` client. Validation lives SERVER-SIDE in
+Lua per R2/AC-1.
+
+Receipts: 16 tests, run parallel AND serial against a REAL local
+Redis with the library loaded by the suite itself — AC-1 (five
+malformed shapes each rejected with `rt_post_message:` errors and
+ZERO partial writes: thread + meta keys both absent after), AC-6
+(TTL set on post), full post→read→promote round trip, promote
+marks meta + returns messages, missing-thread and
+missing-destination rejections. Keyless-CI lane covered by
+boundary-double tests (no Redis required).
+
 ## Seating receipts (2026-07-18)
 
 - Antigravity: contract probe answered verbatim from loaded
