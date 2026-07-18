@@ -106,23 +106,28 @@ def run_command(
     argv: Sequence[str],
     stdin_text: str | None = None,
     timeout: int = SEAT_TIMEOUT,
-    strip_api_key: bool = False,
+    provider_clean: bool = False,
 ) -> tuple[int, str]:
     """Run one fixed-argv command keyless; return (exit code, output tail).
 
-    Two keyless modes, both deliberate:
+    Two env modes, both deliberate (live-run receipts, 2026-07-18):
 
     - Checks (default): ``ANTHROPIC_API_KEY`` set to the EMPTY string
       — CI-faithful (unset would let dotenv re-inject a real key
       downstream).
-    - Seats (``strip_api_key=True``): the variable REMOVED — the
-      ``claude`` CLI 401s on an empty key instead of falling back to
-      subscription auth (live-run receipt, 2026-07-18), and members
-      should never inherit a real API key anyway (R1 hygiene).
+    - Seats (``provider_clean=True``): every ``ANTHROPIC_*`` and
+      ``CLAUDE*`` variable REMOVED. When the runner itself executes
+      inside a Claude Code session, the child inherits
+      ``ANTHROPIC_BASE_URL`` + ``CLAUDE_CODE_*`` and 401s against the
+      parent session's proxy; an EMPTY ``ANTHROPIC_API_KEY`` likewise
+      401s the ``claude`` CLI instead of letting its own stored auth
+      kick in. Scrubbing the whole provider surface fixes both and
+      keeps harness identifiers out of member processes (R1 hygiene).
     """
-    env = {**os.environ, "ANTHROPIC_API_KEY": ""}
-    if strip_api_key:
-        env.pop("ANTHROPIC_API_KEY")
+    if provider_clean:
+        env = {k: v for k, v in os.environ.items() if not k.startswith(("ANTHROPIC_", "CLAUDE"))}
+    else:
+        env = {**os.environ, "ANTHROPIC_API_KEY": ""}
     try:
         proc = subprocess.run(  # nosec B603 — fixed argv, shell=False
             list(argv),
@@ -143,9 +148,9 @@ def run_command(
 def default_invoke_seat(recipe: Sequence[str], brief: str) -> tuple[int, str]:
     """Invoke one seat CLI with the brief substituted per its recipe."""
     if recipe[-1] == "-":
-        return run_command(recipe, stdin_text=brief, strip_api_key=True)
+        return run_command(recipe, stdin_text=brief, provider_clean=True)
     argv = [brief if part == "{brief}" else part for part in recipe]
-    return run_command(argv, strip_api_key=True)
+    return run_command(argv, provider_clean=True)
 
 
 def run_routine(

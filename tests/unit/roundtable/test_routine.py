@@ -155,14 +155,24 @@ class TestPlumbing:
         code, out = default_invoke_seat(("cat", "-"), "stdin brief")
         assert code == 0 and out == "stdin brief"
 
-    def test_seats_get_api_key_stripped_not_emptied(self, monkeypatch) -> None:
-        """Live-run regression: an EMPTY key 401s the claude CLI; seats
-        need the variable absent so subscription auth kicks in."""
+    def test_seats_run_provider_clean(self, monkeypatch) -> None:
+        """Live-run regression: seats must not inherit ANTHROPIC_*/
+        CLAUDE* vars — an empty key or the parent session's BASE_URL
+        401s the claude CLI instead of its own stored auth."""
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-real")  # pragma: allowlist secret
+        monkeypatch.setenv("ANTHROPIC_BASE_URL", "http://parent-proxy")
+        monkeypatch.setenv("CLAUDECODE", "1")
+        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "cli")
         code, out = default_invoke_seat(
-            ("sh", "-c", 'echo "set=${ANTHROPIC_API_KEY+yes}"'), "unused"
+            (
+                "sh",
+                "-c",
+                'echo "leaked=${ANTHROPIC_API_KEY+k}${ANTHROPIC_BASE_URL+u}'
+                '${CLAUDECODE+c}${CLAUDE_CODE_ENTRYPOINT+e}."',
+            ),
+            "unused",
         )
-        assert code == 0 and "set=" in out and "set=yes" not in out
+        assert code == 0 and "leaked=." in out
 
     def test_synthesis_failure_is_visible_on_the_thread(self) -> None:
         """Live-run regression: a failed synthesis must not read as a

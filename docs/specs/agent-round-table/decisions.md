@@ -251,9 +251,38 @@ completes), R8 (thread left unpromoted, always). `--dry-run` runs
 checks and prints the brief with zero board writes and zero LLM
 invocations.
 
-Receipts: 10 routine tests (real-Redis thread shape; fake seats)
+Receipts: 12 routine tests (real-Redis thread shape; fake seats)
 — full-run message shape, R8 unpromoted meta, check evidence in
 the question body, R6 absent-seat completion, AC-5 cap halt
 (seat N+1 not invoked, one halt message), dry-run
-touches-nothing, keyless env, brief substitution both recipe
-forms. 41 roundtable tests total.
+touches-nothing, keyless check env, provider-clean seat env,
+synthesis-failure visibility, brief substitution both recipe
+forms. 43 roundtable tests total.
+
+## P3 manual proof runs — receipts (2026-07-18)
+
+Two live runs of `clean-run`, verified by READING the board
+threads (exit 0 proved nothing both times):
+
+- **Run 1** (`routine-clean-run-2026-07-18`): caught three real
+  defects. (a) Seats inherited `ANTHROPIC_API_KEY=""` → claude
+  CLI 401 (checks-correct env was seat-wrong); (b) a failed
+  synthesis was SILENT — digest-less run read as success; (c) the
+  keyless suite check caught genuine drift: the 25th skill broke
+  the website capability counts (features.ts + 3 pages, fixed
+  24→25 + roundtable added to the docs skill list). The routine
+  paid for itself on its first run.
+- **Run 2** (`routine-clean-run-20260718-1737`), after fixes:
+  both checks PASS (count fix verified end-to-end), antigravity
+  6s + codex 12s positions posted, synthesis failure now VISIBLE
+  as a halt naming the exit — and the claude seat still ABSENT:
+  the CLI's own stored OAuth token is REVOKED on this machine
+  (verified with a provider-clean env probe — not an env-
+  inheritance issue). R6 degradation worked exactly as specified
+  (AC-4, exercised live, unplanned).
+
+**Blocked on the chair:** full-roster proof + arming the weekly
+schedule wait on an interactive `claude login` re-auth (agent
+must not perform credential flows), then one rerun of
+`python -m attune.roundtable.routine clean-run`. Until then the
+routine runs as a two-seat table with a visible synthesis halt.
