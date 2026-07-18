@@ -16002,3 +16002,40 @@ def ", start_idx + 1)` for module-
   wrong-login class as the June auto-approve-owner bug, now on
   the CODEOWNERS surface. CODEOWNERS is advisory while
   `required_approving_review_count` is 0.
+
+- **Codex desktop DOES create worktrees now — at
+  `~/.codex/worktrees/<hash>/<repo>` — correcting the #1436-era
+  "Codex doesn't use worktrees" note; locate a handed-off branch
+  via `git worktree list` before assuming the primary checkout**:
+  2026-07-18, receiving the `codex/sync-main-and-review-changes`
+  handoff (#1439). The uncommitted work lived in a linked worktree
+  at `~/.codex/worktrees/2ef4/attune-ai`, so committing there
+  needed no `ATTUNE_ALLOW_CHECKOUT_WIP` override (that guard fires
+  on the PRIMARY checkout only). Receiving-agent recipe that
+  worked end-to-end: (1) `git worktree list` to find the branch's
+  actual home; (2) reconcile the handoff's file list against
+  `git status --short` there; (3) re-run every receipt yourself
+  (this handoff's claims all verified true — contrast the #1436
+  handoff whose "already pushed" claim was false); (4) commit IN
+  that worktree, push, PR. The handoff file's job is context, not
+  authority — the receipts re-ran in ~3 min and caught nothing,
+  which is the cheap-confirmation happy path, not wasted work.
+
+- **`from scripts import X` in tests works WITHOUT
+  `scripts/__init__.py` only because the `tests/` package chain
+  makes pytest prepend the REPO ROOT to sys.path — don't "fix" it
+  by adding an `__init__.py`, and don't break it by removing one
+  from `tests/`**: 2026-07-18, reviewing #1439's switch from a
+  `sys.path.insert` hack to `pytest.importorskip("scripts.sync_agents_skills")`.
+  Mechanism: `tests/`, `tests/unit/`, `tests/unit/scripts/` all
+  have `__init__.py`, so pytest's default prepend import-mode
+  walks up to the first non-package dir — the repo root — and
+  inserts THAT into sys.path; `scripts` then resolves as an
+  implicit namespace package. This holds under CI's bare `pytest`
+  invocation (no `python -m pytest` cwd-insertion needed). Two
+  fragilities to know when touching test imports: removing any
+  `tests/**/__init__.py` in the chain, or switching pytest to
+  `importmode=importlib`, silently breaks every `scripts.*` import.
+  The older per-file `spec_from_file_location` pattern
+  (`test_project_collaboration_contract.py`) is the
+  mechanism-independent alternative.
