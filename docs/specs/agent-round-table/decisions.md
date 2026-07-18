@@ -157,3 +157,33 @@ chair (unruled as of this writing): the evidence bar for lesson
 candidates (codex + claude convergent follow-up) and a pre-chair
 lint guardrail (antigravity). Promotion of the thread itself:
 chair's call, pending (R4).
+
+## Chair rulings — thread lessons-flow-001 (2026-07-18, Patrick)
+
+Promoted from `attune:roundtable:thread:lessons-flow-001` to this
+file (D2: the owning spec's decisions.md). Tier: direct decision
+record (R10 inline edit). Ruled via shorthand, with one
+moderator-pushback amendment accepted:
+
+1. **Lesson lane ratified (thread promoted here).** Lessons flow
+   via a **distinct lesson-promotion lane**: the moderator drafts
+   an atomic candidate only when a deliberation yields reusable
+   knowledge (default: no candidate); the chair
+   approves/edits/declines per item; approval writes the tracked
+   corpus; Redis re-derives at next hydration. No auto-append on
+   promotion; the table never touches the lessons corpus directly.
+2. **Evidence bar: (ii) + waiver tag.** Candidates carry receipts
+   from contact with the real system by default. The chair may
+   waive for a strong design rationale or defer until evidence
+   exists — but a waived-in lesson is recorded with an explicit
+   `unverified — design rationale (chair-waived)` marker and
+   upgrades to a normal entry when evidence lands. Transcript
+   consensus never self-qualifies; the waiver is the chair's, per
+   item. (Amendment accepted from moderator pushback: an untagged
+   waiver is invisible at retrieval time and reproduces the
+   dilution risk all three seats named.)
+3. **Pre-chair guardrail lint: accepted as a P2 task.** A check
+   enforcing lesson format + curation bar on drafted candidates
+   before they reach the chair (antigravity's R9 origination,
+   promoted). Mechanical rule the tag enables: no receipt AND no
+   waiver tag → the candidate is blocked before presentation.
