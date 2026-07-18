@@ -35,6 +35,9 @@ exclude_docs: |
   internal/
   archive/
   generated/
+  # per-branch agent handoffs (collaboration contract D1) - repo-only
+  # working artifacts, deleted at branch merge; never site content
+  handoffs/
   # architecture/ is NOT blanket-excluded (D12): projected per-feature
   # architecture pages build and are reached via their hub. Exclude only
   # the genuine non-feature architecture-concept orphans below; legacy

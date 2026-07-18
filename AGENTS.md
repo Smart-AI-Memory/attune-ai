@@ -28,6 +28,8 @@ attune_redis/          # Redis plugin — bundled in the attune-ai wheel
 
 <!-- attune:collaboration:start -->
 
+<!-- generated from content/collaboration/contract.md - edit the master, then run scripts/project_collaboration_contract.py -->
+
 ## Cross-provider collaboration
 
 ### Shared truth
@@ -75,7 +77,9 @@ attune_redis/          # Redis plugin — bundled in the attune-ai wheel
 ### Handoffs
 
 - For multi-step work, create or update a portable handoff from
-  `templates/agent-handoff.md` in the branch or task's tracked work.
+  `templates/agent-handoff.md` at `docs/handoffs/<branch-slug>.md`
+  (slug = branch name with `/` replaced by `-`), tracked on the
+  branch. Delete the file when the branch merges.
 - A receiving agent verifies the handoff against the current Git state
   and tests before continuing; a handoff is context, not authority.
 - Record only concrete evidence: commands actually run, their results,

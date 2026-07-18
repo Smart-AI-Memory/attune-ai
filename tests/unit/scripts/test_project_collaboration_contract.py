@@ -114,9 +114,115 @@ def test_handoff_projection_preserves_nested_h2_sections(tmp_path: Path) -> None
     assert "## Goal" in handoff
 
 
+def test_projected_block_carries_generated_notice(tmp_path: Path) -> None:
+    _seed_repo(tmp_path)
+
+    projector.project(tmp_path)
+
+    for target in projector.CONTRACT_TARGETS:
+        content = (tmp_path / target).read_text(encoding="utf-8")
+        start = content.index(projector.START_MARKER)
+        end = content.index(projector.END_MARKER)
+        assert projector.GENERATED_NOTICE in content[start:end]
+
+
+def test_rejects_duplicate_required_heading(tmp_path: Path) -> None:
+    _seed_repo(tmp_path)
+    master = tmp_path / projector.MASTER_PATH
+    master.write_text(
+        master.read_text(encoding="utf-8") + "\n## Shared contract\n\nSecond copy.\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(projector.ProjectionError, match="repeats required heading"):
+        projector.project(tmp_path)
+
+
 def test_rejects_target_without_exactly_one_marker_pair(tmp_path: Path) -> None:
     _seed_repo(tmp_path)
     (tmp_path / "AGENTS.md").write_text("# Missing markers\n", encoding="utf-8")
 
     with pytest.raises(projector.ProjectionError, match="marker pair"):
         projector.project(tmp_path)
+
+
+def test_invalid_claude_target_does_not_partially_update_agents(tmp_path: Path) -> None:
+    _seed_repo(tmp_path)
+    agents = tmp_path / "AGENTS.md"
+    original_agents = agents.read_bytes()
+    (tmp_path / ".claude" / "CLAUDE.md").write_text("# Missing markers\n", encoding="utf-8")
+
+    with pytest.raises(projector.ProjectionError, match="marker pair"):
+        projector.project(tmp_path)
+
+    assert agents.read_bytes() == original_agents
+
+
+def test_rejects_symlinked_target_outside_repository(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    root.mkdir()
+    _seed_repo(root)
+    external = tmp_path / "outside.md"
+    external.write_text("outside\n", encoding="utf-8")
+    handoff = root / projector.HANDOFF_TARGET
+    handoff.parent.mkdir(parents=True)
+    try:
+        handoff.symlink_to(external)
+    except OSError as error:
+        pytest.skip(f"symlinks unavailable: {error}")
+
+    with pytest.raises(projector.ProjectionError, match="must not be a symlink"):
+        projector.project(root)
+
+    assert external.read_text(encoding="utf-8") == "outside\n"
+
+
+def test_rejects_symlinked_contract_target_inside_repository(tmp_path: Path) -> None:
+    _seed_repo(tmp_path)
+    decoy = tmp_path / "docs" / "decoy.md"
+    decoy.parent.mkdir(parents=True, exist_ok=True)
+    agents = tmp_path / "AGENTS.md"
+    decoy.write_text(agents.read_text(encoding="utf-8"), encoding="utf-8")
+    original_decoy = decoy.read_text(encoding="utf-8")
+    agents.unlink()
+    try:
+        agents.symlink_to(decoy)
+    except OSError as error:
+        pytest.skip(f"symlinks unavailable: {error}")
+
+    with pytest.raises(projector.ProjectionError, match="must not be a symlink"):
+        projector.project(tmp_path)
+
+    assert decoy.read_text(encoding="utf-8") == original_decoy
+
+
+def test_main_reports_unchanged_targets(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+) -> None:
+    result = projector.ProjectionResult(unchanged=[Path("AGENTS.md")])
+    monkeypatch.setattr(projector, "project", lambda root, check: result)
+
+    assert projector.main(["--check"]) == 0
+    assert capsys.readouterr().out == "unchanged AGENTS.md\n"
+
+
+def test_main_reports_projection_drift(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+) -> None:
+    result = projector.ProjectionResult(stale=[Path(".claude/CLAUDE.md")])
+    monkeypatch.setattr(projector, "project", lambda root, check: result)
+
+    assert projector.main(["--check"]) == 1
+    assert capsys.readouterr().out == ("collaboration projection drift:\n  .claude/CLAUDE.md\n")
+
+
+def test_main_reports_projection_error(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+) -> None:
+    def fail_projection(root: Path, *, check: bool) -> None:
+        raise projector.ProjectionError("bad target")
+
+    monkeypatch.setattr(projector, "project", fail_projection)
+
+    assert projector.main([]) == 1
+    assert capsys.readouterr().out == "error: bad target\n"
