@@ -18,12 +18,14 @@ import pytest
 from attune.roundtable import compiler
 from attune.roundtable.board import LEDGER_ORDER_KEY, Board
 from attune.roundtable.producing import (
+    CITATION_EXAMPLE,
     DEFAULT_MAX_INVOCATIONS,
     FAILURE_CODES,
     TAG_EXAMPLE,
     TR6_CAP,
     FailureReceipt,
     ProducingSpec,
+    _critique_brief,
     _final_brief,
     _repair_brief,
     render_digest,
@@ -496,3 +498,32 @@ class TestBriefContracts:
     def test_repair_brief_stays_compact_without_tag_problems(self) -> None:
         repair = _repair_brief("orig brief", "prev reply", ["no requirement items found"])
         assert TAG_EXAMPLE not in repair
+
+
+class TestCritiqueCitationContract:
+    """The citation contract is taught by worked example too.
+
+    Prose alone failed live: the first spec-lifecycle-gates producing
+    run (slot 20260719-1) went LINT_DIRTY on an uncited codex critique
+    item that survived its repair round — the same heterogeneous-seat
+    format-contract class TAG_EXAMPLE closed for round 3 (#1470).
+    """
+
+    def test_critique_brief_embeds_worked_example(self) -> None:
+        brief = _critique_brief("subject", "the pack", "the draft")
+        assert CITATION_EXAMPLE in brief
+
+    def test_worked_example_actually_passes_the_citation_lint(self) -> None:
+        # The taught shape must satisfy the lint it is teaching to —
+        # wrap it exactly as a critique reply would arrive.
+        reply = CITATION_EXAMPLE.split(":\n", 1)[1] + "\nVERDICT: ready-with-edits"
+        assert compiler.lint_critique(reply) == []
+
+    def test_repair_brief_restates_example_on_uncited_problems(self) -> None:
+        problems = ["uncited critique item (no pack/file reference): '12. **RR-7:**'"]
+        repair = _repair_brief("orig brief", "prev reply", problems)
+        assert CITATION_EXAMPLE in repair
+
+    def test_repair_brief_stays_compact_without_citation_problems(self) -> None:
+        repair = _repair_brief("orig brief", "prev reply", ["no requirement items found"])
+        assert CITATION_EXAMPLE not in repair
