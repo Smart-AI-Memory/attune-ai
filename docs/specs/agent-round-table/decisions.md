@@ -297,6 +297,45 @@ probe receipt: `claude -p` under the passed-through key returned
 in-seconds with the expected reply. R5's 4-invocation cap bounds
 the per-run API spend.
 
+**Chair authorization extended to ALL seats (2026-07-18, "I will
+authorize the use of api spends for gemini/antigravity and for
+codex"):** the antigravity and codex seats may likewise
+authenticate via API keys (`GEMINI_API_KEY` / `OPENAI_API_KEY`)
+when their stored logins expire — the provider-clean scrub strips
+only `ANTHROPIC_*`/`CLAUDE*`, so those keys already pass through.
+No wiring change needed until a seat's login path actually breaks;
+this note is the standing spend authorization so future sessions
+don't re-ask. (Also formally accepts the GEMINI_API_KEY billing
+premise that parked the gemini-projector spec — reviving that spec
+remains a separate chair decision.)
+
+## Full-roster proof PASSED; weekly schedule ARMED (2026-07-18)
+
+**Run 3** (`routine-clean-run-20260718-2233`): both checks PASS,
+all three seats posted real positions (claude 22s via the API-key
+path, antigravity 5s, codex 16s), synthesis posted — exactly 4
+invocations (R5 cap used precisely), thread left unpromoted (R8).
+The synthesis showed the lane discipline working: two seats
+DECLINED to propose a lesson candidate for lack of a fresh
+receipt (the lessons-flow-001 high-bar default, observed in the
+wild on run one).
+
+**Schedule** (chair: "arm the weekly schedule after this run
+passes"): launchd agent
+`~/Library/LaunchAgents/com.smartaimemory.attune.roundtable-clean-run.plist`
+— Mondays 09:00 local, missed slots run on wake. The job sources
+`~/.attune/anthropic.env`, pins `REDIS_URL` to localhost (immune
+to the stale cloud export found in `~/.zshrc`), runs from
+`~/attune-ai` with the main venv, and logs to
+`~/.attune/logs/roundtable-clean-run.log`. Cloud scheduling was
+ruled out on mechanics: the routine needs local Redis, the local
+venv, and the agy/codex CLIs. Disarm with `launchctl bootout
+gui/$UID/com.smartaimemory.attune.roundtable-clean-run`.
+
+R8 standing: scheduled runs leave their digest threads on the
+board (7-day TTL) for the chair; review with
+`/roundtable read <thread>`, promote per-item via the skill.
+
 Post-crash hardening from the chair's own runs (same day): the
 board is reached BEFORE the check battery — a stale `REDIS_URL`
 (his `~/.zshrc` exported a retired cloud host) now fails in ~0.1s
