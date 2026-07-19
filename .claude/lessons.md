@@ -15242,7 +15242,14 @@ def ", start_idx + 1)` for module-
   lanes finish" lesson recurring — #1379's own matrix never went
   green on Windows). The 30-second main-branch check redirected the
   whole diagnosis from "what did my diff break" to a one-line
-  pre-existing hotfix (#1385). The bug class itself:
+  pre-existing hotfix (#1385). Two companion reads (2026-07-19,
+  #1471/#1472): (a) N red lanes ≠ N failures — `--log-failed | grep
+  FAILED | sort -u` collapses a full matrix to its DISTINCT failing
+  tests (five red lanes were ONE pre-existing test replicated); (b)
+  never use a docs-only PR's check list as the full-matrix baseline —
+  docs-only runs execute a REDUCED matrix (one Windows lane), so
+  "yesterday only one lane was red" may just mean yesterday ran one
+  lane. The bug class itself:
   `str(Path.relative_to(root))` yields BACKSLASHES on Windows — any
   repo-relative path destined for a URL/link/doc must use
   `.as_posix()` (health tab's `latest_llm_report`). Recovery order
