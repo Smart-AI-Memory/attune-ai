@@ -1,7 +1,9 @@
 # Run-Record Corpus (RR-1 unblock) — Requirements
 
-**Status: DRAFT — awaiting chair ruling** (drafted 2026-07-19 by
-the follow-up session, direct draft; not a producing run). This is
+**Status: chair-ruled 2026-07-19** — all three open questions
+ruled (B; chair-ruled RR-4 edit; start clean — see
+`decisions.md`). Drafted 2026-07-19 by the follow-up session
+(direct draft; not a producing run). This is
 the "separate spec" that pipeline-learner RR-1 names as its hard
 external dependency: establish and verify that workflow run
 records accumulate, so RR-1's readiness gate can ever pass.
@@ -186,12 +188,16 @@ readiness check must measure the right stream.
    real usage hasn't yet crossed RR-1's viability bar. This spec
    makes accumulation possible; it does not fake the bar.
 
-## Open questions for the chair
+## Open questions — RULED 2026-07-19
 
-1. A vs. B (drafter recommends B; investigation 1 recommended A
-   before the telemetry corpus was known).
-2. Should the RR-4 amendment go back through the table (it edits a
-   table-authored requirement), or is a chair-ruled edit citing
-   this spec sufficient?
-3. Historical backfill: mine the polluted 5-month archive through
-   the RC-4 purity filter, or start the corpus clean at cutover?
+All three ruled by the chair; rulings + evidence in
+`decisions.md`:
+
+1. A vs. B → **B** (canonicalize the telemetry stream).
+2. RR-4 amendment path → **chair-ruled edit** citing this spec;
+   lands with the RC-5 change.
+3. Historical backfill → **start clean** (89% of real-named
+   archive records sit in test-like bursts; the burst-free
+   remainder is 408 records, none newer than two months; no
+   verifiable purity filter exists). Archives stay on disk;
+   revisit only against a known-clean post-cutover stream.
