@@ -175,14 +175,33 @@ def _draft_brief(subject: str, pack: str) -> str:
     )
 
 
+#: Literal worked example of a cited critique item. Prose alone was
+#: not enough here either: the first spec-lifecycle-gates producing
+#: run (slot 20260719-1) failed LINT_DIRTY when codex emitted an
+#: uncited item and stayed dirty through its repair round — the same
+#: heterogeneous-seat format-contract class the TAG_EXAMPLE below
+#: closed for round 3 (#1470). Every item must contain the word
+#: "pack" or a concrete .py/.md path (compiler.lint_critique).
+CITATION_EXAMPLE = (
+    "EXAMPLE ITEM (copy this shape — every item cites the pack or a "
+    "concrete file path):\n"
+    "3. **RR-2:** The readiness threshold contradicts the pack's "
+    "risk-tiering seed (pack section 'Chair rulings'); align it or "
+    "record the deviation in decisions.md."
+)
+
+
 def _critique_brief(subject: str, pack: str, draft: str) -> str:
     return (
         "You are a CRITIC seat in a headless spec-authoring round "
         "table. Adversarially critique the draft below. Text only.\n\n"
         "FORMAT (mechanically linted): a numbered list; each item names "
         "a target id in bold (e.g. **RR-2:**) or **MISSING:**, and "
-        "cites a pack item or concrete file path; end with exactly one "
-        "line 'VERDICT: ready-with-edits' or 'VERDICT: needs-revision'."
+        "cites a pack item or concrete file path (the item text must "
+        "contain the word 'pack' or a .py/.md path); end with exactly "
+        "one line 'VERDICT: ready-with-edits' or "
+        "'VERDICT: needs-revision'.\n\n"
+        f"{CITATION_EXAMPLE}"
         f"\n\nSUBJECT: {subject}\n\nGROUNDING PACK:\n\n{pack}"
         f"\n\nTHE DRAFT:\n\n{draft}"
     )
@@ -232,6 +251,12 @@ def _repair_brief(brief: str, reply: str, problems: list[str]) -> str:
             "Every item heading must be followed by its own convergence "
             "tag line: '[tag: agreed]' / '[tag: 2-1 <note>]' / "
             "'[tag: contested <note>]'.\n\n" + TAG_EXAMPLE
+        )
+    if any("uncited" in p for p in problems):
+        parts.append(
+            "Every critique item must cite the grounding pack or a "
+            "concrete file path — the item text must contain the word "
+            "'pack' or a .py/.md path.\n\n" + CITATION_EXAMPLE
         )
     parts.append("Fix ONLY these problems and resend the full document.")
     parts.append("ORIGINAL BRIEF:\n\n" + brief)
