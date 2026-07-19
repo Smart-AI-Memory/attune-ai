@@ -16184,3 +16184,55 @@ def ", start_idx + 1)` for module-
   commands (permission model has no headless prompt) — members of
   an orchestrated multi-LLM exchange must be text-in/text-out with
   the orchestrator doing all I/O.
+
+- **Child `claude` CLI invocations 401 in three distinguishable
+  ways — inherited session-proxy vars, empty-string API key, and a
+  genuinely revoked stored OAuth token — scrub, then diagnose in
+  that order**: launching `claude -p` from a subprocess inside a
+  Claude Code session hit all three on 2026-07-18 (roundtable
+  proof runs): (a) the child inherits `ANTHROPIC_BASE_URL` +
+  `CLAUDE_CODE_*` from the parent and 401s "Invalid authentication
+  credentials" against the PARENT session's proxy; (b)
+  `ANTHROPIC_API_KEY=""` — the CI-keyless discipline, correct for
+  test/check subprocesses — makes the CLI 401 instead of falling
+  back to its stored subscription auth (empty ≠ absent for the
+  CLI); (c) with EVERY `ANTHROPIC_*`/`CLAUDE*` var stripped
+  (provider-clean), a remaining 401 "OAuth access token has been
+  revoked" isolates the CLI's own stored token — only an
+  interactive `claude login` fixes that, and credential flows are
+  the user's, never the agent's. Rule: subprocesses that should
+  use their OWN auth (member seats, nested claude) run
+  provider-clean; subprocesses that must stay keyless (CI-faithful
+  checks) get the empty string. Regression guard:
+  `test_seats_run_provider_clean` in
+  `tests/unit/roundtable/test_routine.py`.
+
+- **Adding the Nth plugin skill is a five-surface change — the
+  website half only fails in the FULL suite, so scoped plugin
+  suites going green is not done**: shipping the 25th skill
+  (`roundtable`, 2026-07-18) required (1) the skill dir
+  `plugin/skills/<name>/SKILL.md`, (2) an attune-hub Skills
+  Reference row (`test_all_skill_dirs_referenced_by_attune_hub`),
+  (3) the `test_skill_count` bump, (4) `python
+  scripts/sync_agents_skills.py --write` + committing the mirror,
+  and (5) website counts: `website/lib/features.ts`
+  `CAPABILITIES.skills`, count prose on home/faq/docs pages, and
+  the docs page's skill list
+  (`tests/unit/test_website_version_accuracy.py`). Surfaces 1–4
+  were caught by the scoped `tests/unit/plugins/` suite; surface 5
+  only surfaced when the roundtable routine's full-suite check ran
+  — 17,608 tests deep. When the skill count changes, run the
+  website accuracy test explicitly before calling it shipped.
+
+- **A user's bare `python -m attune.X` resolves the PyPI-installed
+  attune-ai, not any checkout — ModuleNotFoundError for modules
+  newer than the last release**: extends the editable-MAPPING
+  worktree family with the global-shell case. 2026-07-18: `python
+  -m attune.roundtable.routine` from the pyenv global (3.10.11)
+  failed `No module named 'attune.roundtable'` because that python
+  has PyPI attune-ai 10.5.0, which predates the module. Working
+  form for post-release code: `cd ~/attune-ai &&
+  .venv/bin/python -m attune.X` (main venv's editable install →
+  main src). When handing a user a `python -m` command for code
+  merged after the latest release, always spell the venv python,
+  never bare `python`.
