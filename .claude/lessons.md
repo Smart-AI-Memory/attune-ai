@@ -16291,3 +16291,47 @@ def ", start_idx + 1)` for module-
   exists before executing an instruction shaped around it) — this
   is the memory-side twin: verify the WORK still needs doing before
   recommending it from recall.
+
+- **Multi-LLM format contracts: a WORKED EXAMPLE in the brief is
+  load-bearing — prose-only format descriptions fail for some seats
+  even through a repair round carrying the literal lint output**:
+  2026-07-19, first live V2-P4 producing runs. The round-3
+  convergence-tag contract (`[tag: agreed]` after each item heading)
+  was described in prose in `_final_brief`; the antigravity drafter
+  failed `lint_final` with EVERY item untagged in two independent
+  runs — including after its one repair round, whose brief contained
+  the exact lint failures by name. Same day, the interactive loop
+  (`us-refresh-001`) gave the codex drafter a literal worked example
+  block (heading line, `[tag: agreed]` on its own line, rationale,
+  bullets) and it passed `lint_final` first try. Rule: when a brief
+  to a heterogeneous seat carries a mechanically-linted output
+  format, SHOW one complete correctly-formatted item — never rely on
+  a prose description, and don't assume the repair round fixes a
+  format the seat never saw rendered. Two supporting gotchas from
+  the same runs: (a) headless seat subprocesses run provider-clean,
+  so the claude seat needs a non-empty `ANTHROPIC_API_KEY` in the
+  LAUNCHING env — tool-shell/background envs do not source
+  `~/.zshrc`'s env-file guard, so `set -a; source
+  ~/.attune/anthropic.env; set +a` before invoking the runner (the
+  401 evidence otherwise shows `OAuth access token has been
+  revoked` from the CLI's stored-auth fallback); (b) the failures
+  were DIAGNOSED entirely from the run's own typed receipts on the
+  board digest (`SEAT_ABSENT` evidence tail + `LINT_DIRTY` literal
+  lint output) — receipts-first failure design pays for itself on
+  the first real incident.
+
+- **A spawn_task chip the user already STARTED cannot be withdrawn —
+  `dismiss_task` returns "already started" — and "run the chip" from
+  the user may mean the chip session is ALREADY running it: stand
+  down instead of duplicating**: 2026-07-19, the brief-fix chip. The
+  user said "run the brief-fix chip"; I cut a branch to implement it
+  in-session, then `dismiss_task` revealed the chip was already
+  started in a separate worktree session. Implementing in parallel
+  would have produced two PRs on the same files (the 2026-07-15
+  parallel-pickup / rebase-drops-commit class). Rule: before
+  implementing a task that exists as a chip, attempt the
+  `dismiss_task` FIRST — its "already started" response is the
+  cheap concurrency probe — and if it was started, stand down,
+  delete any just-cut branch (`git branch -D` printing `(was
+  <main-sha>)` with zero commits = nothing lost), and fold in the
+  chip session's result when it lands.
