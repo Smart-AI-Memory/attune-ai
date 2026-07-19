@@ -120,6 +120,34 @@ compile is byte-deterministic and honors approved/declined/unruled
 per item. Deferred to V2-P3 (per the phase plan): diff
 materialization, scratch-worktree validation, cross-seat review.
 
+## V2-P3 — solution materializer SHIPPED (2026-07-19)
+
+`src/attune/roundtable/solutions.py`: member proposals stay TEXT
+(R1) — full-file blocks or unified diffs; `materialize` creates a
+detached scratch git worktree (never a tracked branch), validates
+every path (absolute / traversal / git-internal rejected — the
+critical-rules file-op gate, with a six-probe security battery),
+and applies the proposal; `validate` runs named checks SERIALLY
+with exact-tail `CheckReceipt`s; `diff_against_base` renders the
+chair's review surface; `discard` removes worktree + registration
+idempotently. TAC-4 semantics enforced structurally: a failing
+candidate carries its receipts, and `Candidate.green` is False
+with zero receipts — an unvalidated candidate can never read as
+green. The repair round (one, counts against D3) and cross-seat
+review are loop orchestration in the skill's V2-P3 section.
+
+Receipts: 18 tests against REAL git repos/worktrees (no mocked
+git) — security battery, both proposal formats, non-applying diff
+fails clean with scratch cleanup, failed-with-receipts, missing
+check binary = failed receipt, idempotent discard. Board client
+hardening shipped alongside (#1463): bounded connect/socket
+timeouts so a stale REDIS_URL fails fast in bounded time (live
+chair-terminal receipt drove it).
+
+Remaining: **V2-P4** (rotation + producing-team routines) — gated
+on one more spec-authoring loop run ON the P2 compiler machinery;
+and the chair's TR-6 cap number.
+
 ## Provenance
 
 - Chair directive and rulings: live session 2026-07-18 (the same

@@ -209,6 +209,34 @@ deterministically with `compiler.parse_draft` +
 (approved items only; declined/unruled ids recorded in the header;
 thread id in provenance).
 
+## Solution generation (V2-P3)
+
+When the chair approves implementation of spec items, run the
+solution loop — members propose code as TEXT (R1 holds), the
+moderator is the only materializer:
+
+1. **Packet**: brief each proposing seat with the approved item
+   ids, exact scope, relevant source excerpts, and required
+   checks. Proposals come back as full-file blocks
+   (`--- file: <path>` + fenced content) or a unified diff.
+2. **Materialize** in an ISOLATED scratch worktree — never a
+   tracked branch (`attune.roundtable.solutions.materialize`;
+   invalid/traversal paths raise, a non-applying diff fails
+   clean).
+3. **Validate** with the named checks, serially
+   (`solutions.validate`) — every check yields an exact-tail
+   receipt; zero receipts is NOT green.
+4. **One repair round** (counts against D3): a failing candidate's
+   receipts go back to its author seat once.
+5. **Cross-seat review**: a DIFFERENT seat than the author reviews
+   `solutions.diff_against_base` output + the receipts and issues
+   a verdict.
+6. **Chair**: present diff + receipts + reviewer verdict + tier.
+   Approval → the moderator applies to a real branch and ships per
+   repo discipline; rejection or a still-failing candidate →
+   `solutions.discard` (TAC-4: failures are presented
+   failed-with-receipts or withheld — never laundered green).
+
 ## Routines (P3 — headless table runs)
 
 A routine convenes the table on a recurring question with the same
