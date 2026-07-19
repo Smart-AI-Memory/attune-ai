@@ -193,11 +193,15 @@ input):
 P4-BASELINE: thread=mem-signal-001 promoted=MI-1..MI-7 downstream=PR#1459
 P4-BASELINE: thread=table-p4-001 promoted=RR-1..RR-7 downstream=PR#1466
 
-Rotation is NOT armed (no `P4-ROTATION:` line): both baselines now
-carry non-pending downstream refs (#1466 is the P4 implementation
-consuming these requirements), so `rotation_status` reports
-**eligible_unarmed** once #1466 merges. Arming remains an explicit
-chair ruling — add `P4-ROTATION: armed <date>` here when ruled.
+Eligibility per RR-4 was met 2026-07-19 (both baselines
+non-pending once #1466 merged); the chair ARMED rotation the same
+day after reviewing the live dogfood receipts below:
+
+P4-ROTATION: armed 2026-07-19
+
+From the next producing run onward, assignment basis is
+`rotation`: the drafter is `next_owed` over the durable ledger,
+critics derived. Fixed roles end here.
 
 ## V2-P4 dogfood — first LIVE headless producing runs (2026-07-19)
 
