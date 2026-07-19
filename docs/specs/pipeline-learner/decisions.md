@@ -33,3 +33,21 @@ pytest-polluted (89% of real-named records inside test-like
 bursts) with no verifiable purity filter. RR-1's viability bar
 must be met by post-cutover accumulation — the readiness check
 reports honestly until then.
+
+## 2026-07-19 — RR-8 lifecycle: fixture-only components LAND NOW (chair)
+
+The chair chose RR-8's first lifecycle option: the
+fixture-buildable core lands now with production surfacing
+disabled. Shipped as `src/attune/pipeline_learner/` — corpus
+loader + RR-1 readiness gate (`corpus.py`, cutover pinned at
+2026-07-19T17:41:26Z, fixture-name exclusion, per-drop counters),
+RR-2 miner + RR-3 ranker (`mining.py`; stated formula
+0.35·freq + 0.25·ratio + 0.25·recency(30d half-life) +
+0.15·manual-fraction, injected `now`, support-then-lexical
+tie-breaker), RR-6 ledger (`decisions.py`, reopen delta = 3), and
+the RR-7 acceptance scaffold (`scaffold.py`, validates against
+`_DEFAULT_WORKFLOW_NAMES`, never registers). `learn()` proposes
+nothing over an unready corpus and produces zero writes. RR-5
+(curator source) is explicitly NOT built — gated until RR-1's
+readiness passes on the live corpus; when it passes, RR-5 is the
+next execution unit.
