@@ -8,9 +8,10 @@ Licensed under the Apache License, Version 2.0
 
 import json
 import logging
+import os
 from collections import deque
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, TypeVar
 
@@ -31,6 +32,25 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
+# Size guard for the canonical run stream (run-record-corpus RC-5):
+# past this, history rotates into ``<dir>/archive/`` — never deleted,
+# so the pipeline-learner corpus keeps its full span.
+_RUNS_ROTATE_BYTES = 50 * 1024 * 1024
+
+
+def _canonical_runs_file() -> Path:
+    """Canonical home-global run-record stream (run-record-corpus RC-1).
+
+    Resolved under ``ATTUNE_HOME`` (env override -> ``~/.attune``), the
+    same mechanism ``UsageTracker`` uses, so run records from every
+    checkout and worktree consolidate into ONE stream — and the test
+    suite's ``ATTUNE_HOME`` isolation fixture redirects them off the
+    real corpus automatically.
+    """
+    home = os.environ.get("ATTUNE_HOME")
+    attune_dir = Path(home).expanduser() if home else Path.home() / ".attune"
+    return attune_dir / "telemetry" / "workflow_runs.jsonl"
+
 
 class TelemetryStore:
     """JSONL file-based telemetry backend (default implementation).
@@ -41,25 +61,34 @@ class TelemetryStore:
     Supports both core telemetry and Tier 1 automation monitoring.
     """
 
-    def __init__(self, storage_dir: str = ".attune"):
+    def __init__(self, storage_dir: str | None = None):
         """Initialize telemetry store.
 
         Args:
-            storage_dir: Directory for telemetry files
+            storage_dir: Directory for telemetry files. ``None`` (the
+                production default) keeps project-scoped files under the
+                cwd-relative ``.attune`` but routes workflow RUN records
+                to the canonical home-global stream
+                ``<ATTUNE_HOME|~/.attune>/telemetry/workflow_runs.jsonl``
+                (docs/specs/run-record-corpus/ RC-1). Passing an explicit
+                directory keeps EVERY file under it.
 
         Raises:
             ValueError: If storage_dir is invalid or targets a system directory
                 (prevents CWE-22 arbitrary-write via a caller-supplied path).
 
         """
+        explicit = storage_dir is not None
         # Validate before any filesystem op — storage_dir may come from a CLI
         # arg (`--storage-dir`) or other caller-controlled input.
-        self.storage_dir = _validate_file_path(str(storage_dir))
+        self.storage_dir = _validate_file_path(str(storage_dir if explicit else ".attune"))
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
         # Core telemetry files
         self.calls_file = self.storage_dir / "llm_calls.jsonl"
-        self.workflows_file = self.storage_dir / "workflow_runs.jsonl"
+        self.workflows_file = (
+            self.storage_dir / "workflow_runs.jsonl" if explicit else _canonical_runs_file()
+        )
 
         # Tier 1 automation monitoring files
         self.task_routing_file = self.storage_dir / "task_routing.jsonl"
@@ -144,8 +173,38 @@ class TelemetryStore:
         self._append_record(self.calls_file, record)
 
     def log_workflow(self, record: WorkflowRunRecord) -> None:
-        """Log a workflow run record."""
+        """Log a workflow run record to the canonical stream (size-rotated)."""
+        try:
+            self.workflows_file.parent.mkdir(parents=True, exist_ok=True)
+            self._rotate_runs_file_if_needed()
+        except OSError as exc:
+            logger.warning("telemetry: run-stream prep failed: %s", exc)
         self._append_record(self.workflows_file, record)
+
+    def _rotate_runs_file_if_needed(self) -> None:
+        """Rotate the run stream past ``_RUNS_ROTATE_BYTES`` (RC-5).
+
+        History moves to ``<dir>/archive/workflow_runs-<utc>.jsonl`` so
+        the miner keeps its full span; the live file stays bounded.
+        Never deletes.
+        """
+        try:
+            if (
+                not self.workflows_file.is_file()
+                or self.workflows_file.stat().st_size < _RUNS_ROTATE_BYTES
+            ):
+                return
+            archive_dir = self.workflows_file.parent / "archive"
+            archive_dir.mkdir(parents=True, exist_ok=True)
+            stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+            dest = archive_dir / f"workflow_runs-{stamp}.jsonl"
+            suffix = 0
+            while dest.exists():
+                suffix += 1
+                dest = archive_dir / f"workflow_runs-{stamp}-{suffix}.jsonl"
+            self.workflows_file.rename(dest)
+        except OSError as exc:
+            logger.warning("telemetry: run-stream rotation failed: %s", exc)
 
     def log_task_routing(self, record: TaskRoutingRecord) -> None:
         """Log a task routing decision."""

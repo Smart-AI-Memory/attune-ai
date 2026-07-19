@@ -105,6 +105,15 @@ class WorkflowRunRecord:
     user_id: str | None = None
     session_id: str | None = None
 
+    # Corpus provenance (docs/specs/run-record-corpus/ RC-3) — additive
+    # and optional so pre-RC-3 records keep loading via ``from_dict``.
+    # ``trigger``: "manual" | "attune-rec"; None means unknown provenance
+    # (miners weight it as auto per pipeline-learner RR-3).
+    trigger: str | None = None
+    # Stable project identifier (repo-root name; worktree runs resolve
+    # to the parent repo). None when resolution fails or predates RC-3.
+    project: str | None = None
+
     # Stages
     stages: list[WorkflowStageRecord] = field(default_factory=list)
 

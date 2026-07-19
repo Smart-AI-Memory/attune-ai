@@ -15,6 +15,8 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
+import functools
+import inspect
 import logging
 from abc import ABC
 from typing import TYPE_CHECKING, Any
@@ -127,6 +129,34 @@ def estimate_tokens(obj: Any, max_chars: int = 1_000_000) -> int:
     return len(s) // 4
 
 
+def _wrap_execute_with_run_record(execute):
+    """Wrap a subclass ``execute`` override so it emits a run record.
+
+    SDK-native workflows override ``execute`` wholesale and never reach
+    ``ExecutionMixin.execute``'s telemetry epilogue — historically that
+    meant NO ``WorkflowRunRecord`` for exactly the workflows with real
+    usage (run-record-corpus RC-2). The wrapper closes the gap at one
+    seam instead of editing every override. Emission is best-effort and
+    idempotent (see ``TelemetryMixin._emit_workflow_telemetry``); an
+    override that raises emits nothing — a run that never produced a
+    result is not a run.
+    """
+
+    @functools.wraps(execute)
+    async def _execute(self, *args: Any, **kwargs: Any):
+        result = await execute(self, *args, **kwargs)
+        try:
+            self._emit_workflow_telemetry(result)
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: telemetry is optional diagnostics — never
+            # fail a workflow over a record write.
+            logger.debug("run-record emission failed", exc_info=True)
+        return result
+
+    _execute._emits_run_record = True
+    return _execute
+
+
 class BaseWorkflow(
     ContextProxyMixin,
     ExecutionMixin,
@@ -176,6 +206,17 @@ class BaseWorkflow(
     description: str = "Base workflow template"
     stages: list[str] = []
     tier_map: dict[str, ModelTier] = {}
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Ensure every ``execute`` override emits a run record (RC-2)."""
+        super().__init_subclass__(**kwargs)
+        execute = cls.__dict__.get("execute")
+        if (
+            execute is not None
+            and inspect.iscoroutinefunction(execute)
+            and not getattr(execute, "_emits_run_record", False)
+        ):
+            cls.execute = _wrap_execute_with_run_record(execute)
 
     # ``_stage_index`` cached_property lives on TierRoutingMixin so test
     # stubs that mix in TierRoutingMixin directly (without BaseWorkflow)

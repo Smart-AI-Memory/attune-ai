@@ -8,12 +8,31 @@ unruled: none.
 
 Chair rulings 2026-07-19: all eight items approved, including the deferred-over-cap RR-8 restaged in the same chair-initiated session (TR-6 recourse path); RR-4 2-1 upheld as tabled (bulletin deferred, antigravity dissent preserved in the thread register). Authored by a HEADLESS producing run (V2-P4 dogfood #2); replaces the 2026-05-17 draft, whose stale premises the live probes in the grounding pack falsified. Prior draft preserved in git history.
 
+> **Amendment 2026-07-19 (chair-ruled edit per
+> `docs/specs/run-record-corpus/decisions.md` D2).** The RR-1
+> external dependency resolved with a different corpus than RR-4
+> pinned: the ops-runs store works as designed but is
+> dashboard-only + 30-day pruned (its ceiling can never satisfy
+> RR-1), while the telemetry seam already persists one
+> `WorkflowRunRecord` per workflow execution. v1's single mining
+> source is therefore the canonical run stream
+> `~/.attune/telemetry/workflow_runs.jsonl` (rotated archives in
+> `~/.attune/telemetry/archive/`), NOT `~/.attune/ops/runs/`.
+> Records carry `trigger` ("manual" | "attune-rec"; absent =
+> unknown, weighted as auto per RR-3) and `project` (repo-root
+> identifier; worktrees resolve to the parent repo) — the two
+> fields RR-3/RR-4 required. Historical backfill is ruled OUT
+> (D3: start clean at cutover; the pre-cutover archive is
+> pytest-polluted with no verifiable purity filter). Source pins
+> below are amended in place and marked; everything else in the
+> table-authored text stands.
+
 ## Requirements
 
 **RR-1 — Gate v1 on a working run-persistence prerequisite**
 The "thousands of runs going back months" premise is false today: `~/.attune/ops/runs/` has 15 workflow dirs but exactly 1 run JSON total (PACK-3), and the bulletin archive is 3 stale files (2026-05-27 → 2026-06-06). Mining is worthless without a corpus, and the 15-dirs-1-file signature strongly implies run persistence itself is broken or disabled. v1 must not ship a miner on top of a dry pipe; it must first establish and verify that runs accumulate.
 
-- A prerequisite check inspects `~/.attune/ops/runs/**/*.json` and reports: total eligible records (schema-valid, timestamp-parseable), distinct workflows, distinct active days, and date span before any mining runs.
+- A prerequisite check inspects `~/.attune/telemetry/workflow_runs.jsonl` (+ rotated archives; amended 2026-07-19) and reports: total eligible records (schema-valid, timestamp-parseable), distinct workflows, distinct active days, and date span before any mining runs. Eligibility excludes records predating the 2026-07-19 cutover (D3: start clean).
 - Readiness is operationally defined, not proxied by a single number: the corpus is "viable" only when it holds ≥ (2 × min-support) eligible records across ≥ 7 distinct active days AND at least one candidate pair clears min-support; otherwise the learner emits an explicit "insufficient corpus — not yet viable" status, prints the shortfall, and exits without proposing anything.
 - Persistence diagnosis is scoped OUT of the learner's own code: the spec names, as a hard external dependency with a named owner in `decisions.md`, the confirmation that `src/attune/ops/runner.py` persists one JSON per run. The learner's acceptance probe is "the readiness check runs and reports"; fixing the 15-dir/1-file anomaly is a separate spec's responsibility, not a circular self-dependency.
 (table: agreed; chair: approved)
@@ -21,7 +40,7 @@ The "thousands of runs going back months" premise is false today: `~/.attune/ops
 **RR-2 — Pair-mining algorithm testable against a fixture corpus with a declared record schema**
 The mining design (pair-mining, 30-min window, min-support ~5 / ratio ~0.5) is sound and does not depend on live-corpus size to be correct (PACK-4). Its correctness must be provable on committed fixtures so the algorithm can land and be trusted even while the live corpus is thin — but only if the fixture record shape and the pair semantics are pinned.
 
-- The spec declares the canonical fixture record schema mirroring `~/.attune/ops/runs/**/*.json`: the exact fields consumed (workflow name, start timestamp, provenance flag, project identifier). One schema, ops-runs only (bulletin deferred per RR-4); no dual-format fixture.
+- The spec declares the canonical fixture record schema mirroring `WorkflowRunRecord` JSONL rows in `~/.attune/telemetry/workflow_runs.jsonl` (amended 2026-07-19): the exact fields consumed (`workflow_name`, `started_at`, `trigger`, `project`). One schema, one source (bulletin deferred per RR-4); no dual-format fixture.
 - Pair semantics are fully specified so a fixture cannot pass two incompatible algorithms: ordering is by start timestamp; the ratio denominator is "count of A occurrences"; intervening unrelated workflows do not break an A→B pair within the window; A→A self-sequences are excluded; duplicate records and malformed/timezone-naive timestamps are normalized to UTC or dropped (and the drop is counted).
 - A fixture corpus containing a known 7-occurrence A→B sequence surfaces exactly that pair above the support/ratio thresholds; noise sequences below min-support (2–3 occurrences) are filtered; and an off-by-window case (two steps > 30 min apart) is asserted excluded.
 (table: agreed; chair: approved)
@@ -37,8 +56,8 @@ The mining design (pair-mining, 30-min window, min-support ~5 / ratio ~0.5) is s
 **RR-4 — Single input contract (ops-runs), single-project scope, bulletin explicitly deferred**
 The draft simultaneously described ops runs as the corpus, left bulletin open, and assumed a nested `YYYY-MM-DD/` archive layout that PACK-3 contradicts (archives are flat `archive/2026-05-27.jsonl`). A commit-or-kill spec cannot carry an ambiguous input contract.
 
-- v1 mines exactly one source: `~/.attune/ops/runs/**/*.json`. The bulletin archive is DEFERRED (Non-goal), and the spec deletes the stale nested-directory assumption, recording the observed flat shape as the reason deferral is cheap to reverse later.
-- Single-project scope is enforced, not assumed: a host-global `~/.attune/ops/runs/` can mix repositories, so the learner filters on a stable project identifier read from each record. RR-1's readiness check validates that field is present; if it is absent, viability is gated on adding it (named as a dependency), not silently mined across mixed projects.
+- v1 mines exactly one source: `~/.attune/telemetry/workflow_runs.jsonl` + its rotated archives (amended 2026-07-19 per run-record-corpus D1/D2). The bulletin archive is DEFERRED (Non-goal), and the spec deletes the stale nested-directory assumption, recording the observed flat shape as the reason deferral is cheap to reverse later.
+- Single-project scope is enforced, not assumed: the host-global canonical stream mixes repositories by design, so the learner filters on the `project` field each record now carries (amended 2026-07-19 — the dependency RR-4 named is DELIVERED by run-record-corpus RC-3). RR-1's readiness check validates that field is present; records without it are ineligible, not silently mined across mixed projects.
 - The spec cites `src/attune/ops/runner.py` as the record producer and pins the record fields the learner depends on, so a schema change surfaces as a failing readiness check rather than silent mis-mining.
 (table: 2-1 antigravity would fold bulletin in as a second v1 input; drafter + codex defer it to keep the contract commit-or-kill; chair: approved)
 
@@ -80,7 +99,7 @@ Per the chair's commit-or-kill framing (PACK-1) and the moderator read (PACK-4),
 - Mining the bulletin archive (`~/.attune/bulletin/archive/*.jsonl`) — DEFERRED to a later version; v1 is ops-runs only (RR-4).
 - Semantic understanding of what a sequence *means*; ranking is frequency/recency/provenance-based, not intent-based.
 - Real-time next-workflow prediction or in-session suggestion.
-- Cross-project mining — v1 filters to a single project identifier within the local `~/.attune/ops/runs/` corpus (RR-4).
+- Cross-project mining — v1 filters to a single project identifier within the canonical run stream (RR-4, amended 2026-07-19).
 - Sequences longer than pairs (triples/n-grams) — v1 is pair-mining only.
 - Fixing or redesigning the ops run-record schema — RR-1 confirms persistence works and names an owner; the fix itself is a separate spec.
 

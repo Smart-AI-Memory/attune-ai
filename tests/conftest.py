@@ -676,9 +676,26 @@ def _isolate_attune_home(tmp_path, monkeypatch):
             # INTENTIONAL: telemetry is optional; env isolation still applies.
             pass
 
+    def _reset_store_singleton():
+        # The TelemetryStore singleton resolves the canonical run-record
+        # stream under ATTUNE_HOME at construction (run-record-corpus
+        # RC-1/RC-4). Reset it so each test re-resolves under its own tmp
+        # dir — a cached instance would leak one test's tmp path (or,
+        # constructed before this fixture, the REAL ~/.attune corpus)
+        # into every later test.
+        try:
+            import attune.models.telemetry as _mt
+
+            _mt._store_instance = None
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: telemetry is optional; env isolation still applies.
+            pass
+
     _reset_usage_singleton()
+    _reset_store_singleton()
     yield
     _reset_usage_singleton()
+    _reset_store_singleton()
 
 
 @pytest.fixture(autouse=True, scope="function")
