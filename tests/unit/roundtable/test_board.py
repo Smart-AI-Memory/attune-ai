@@ -59,6 +59,7 @@ def _fresh_thread() -> str:
 
 class TestSchemaAndKeys:
     def test_kinds_cover_spec_enum(self) -> None:
+        # question..halt: P0 enum; event + candidate: V2-P4 (RR-1/RR-6).
         assert set(KINDS) == {
             "question",
             "position",
@@ -66,6 +67,8 @@ class TestSchemaAndKeys:
             "ruling",
             "suggestion",
             "halt",
+            "event",
+            "candidate",
         }
 
     def test_thread_key_uses_board_keyspace(self) -> None:
