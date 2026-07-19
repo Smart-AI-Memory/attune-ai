@@ -16405,3 +16405,55 @@ def ", start_idx + 1)` for module-
   paths exist AND verify paths-to-be-created do NOT (or decide the
   cohabitation deliberately). One `ls`/`find_spec` on the
   destination at design time is the whole cost.
+
+- **A best-effort telemetry catch converts SHAPE bugs into silent
+  data loss — before building the "missing seam" a follow-up note
+  names, probe the mechanism; the note's attribution can be wrong
+  even one session old**: 2026-07-19, RC-2 follow-up
+  ("agent-team workflows bypass BaseWorkflow entirely... need their
+  own emission seam"). The attribution was wrong: all three
+  workflows (orchestrated-health-check, documentation-orchestrator,
+  secure-release) subclass BaseWorkflow and WERE wrapped by the
+  RC-2 execute seam — what they bypass is the WorkflowResult
+  SHAPE. `_emit_workflow_telemetry` died on `result.stages`
+  (AttributeError), the wrapper's `except Exception: logger.debug`
+  swallowed it, and the run recorded nothing ("ran green, emitted
+  nothing"). A 10-line repro probe (fake report-shaped result +
+  scratch ATTUNE_HOME) found this in minutes and turned "build a
+  new seam" into "make emission shape-tolerant" (PR #1483). Two
+  rules: (1) follow-up notes name symptoms, not verified causes —
+  re-derive the mechanism with a probe before implementing the
+  named fix, even when the note is from the same day; (2) any
+  best-effort catch around a data write is a silent-loss surface —
+  when debugging "X never records", enable that logger's DEBUG
+  first; the swallowed traceback usually IS the diagnosis.
+
+- **Changing a mixin method's signature requires updating every MRO
+  override — inside a best-effort catch, the TypeError from a stale
+  override is SWALLOWED and the feature silently no-ops**:
+  2026-07-19, adding `started_at`/`completed_at` kwargs to
+  `TelemetryMixin._emit_workflow_telemetry`. `ContextProxyMixin`
+  (earlier in BaseWorkflow's MRO) overrides that method with the
+  OLD signature; without updating it, the wrapper's keyword call
+  would raise TypeError — caught by the same `except Exception`
+  that hides emission failures, reproducing the exact bug being
+  fixed. Rule: before changing a method signature on a mixin, grep
+  for every `def <method>` override in the MRO chain
+  (`grep -rn "def _emit_workflow_telemetry" src/`) and update all
+  of them in the same change; treat "call site is inside a broad
+  except" as removing your safety net for signature drift.
+
+- **Mid-commit, a session hook is destructively rewriting
+  usage-signals spec Status lines — inspect any unexpected
+  working-tree modification before staging; do NOT commit it**:
+  2026-07-19, observed twice while committing an unrelated PR:
+  `docs/specs/usage-signals/requirements.md` gained a duplicate
+  `**Status:** approved` line above the real status header, and
+  `decisions.md`'s status line `R6 spend alarm shipped (2026-06-20)`
+  was REWRITTEN to `approved (2026-06-20)` — destroying real
+  status. Prime suspect: spec-lifecycle-gates activation (#1480)
+  invoked from a hook. Until the chip fixing it lands
+  (task_5d1b2e1f), treat unexpected `M docs/specs/*/…` entries in
+  `git status` as hook artifacts: `git diff` them, `git checkout --`
+  to discard, and keep them out of unrelated PRs — committing the
+  mangle would silently corrupt spec state on main.
