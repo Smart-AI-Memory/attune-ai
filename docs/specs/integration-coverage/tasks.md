@@ -1,5 +1,5 @@
 # Tasks: Integration Coverage Program
-**Status:** parked (2026-07-13) — Phases 0–1 + task 7 shipped (#703/#704/#727 revival + CI job, surface inventory #768); auth job live on weekly cadence (#952, green 2026-07-13); remaining: tasks 8–10 (per-surface round-trips, nightly wiring, gate-forward rule) + no-auth job required-check promotion — no activity since 2026-06-11.
+**Status:** parked (2026-07-13; re-affirmed 2026-07-19, chair ruling T1 of `q-briefing-triage-001`) — Resume-Trigger: evergreen, no external clock; restart whenever a coverage slot opens (coverage work has no decay cost). Phases 0–1 + task 7 shipped (#703/#704/#727 revival + CI job, surface inventory #768); auth job live on weekly cadence (#952, green 2026-07-13); remaining: tasks 8–10 (per-surface round-trips, nightly wiring, gate-forward rule) + no-auth job required-check promotion — no activity since 2026-06-11.
 ---
 
 ## Phase 0 — Audit before design

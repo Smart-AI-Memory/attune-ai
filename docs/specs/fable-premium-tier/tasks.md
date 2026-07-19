@@ -5,7 +5,10 @@
 > Execution plan for Claude Code:
 > [.claude/plans/fable-premium-tier.md](../../../.claude/plans/fable-premium-tier.md).
 
-**Status**: in-progress (2026-07-13) — approved 2026-07-10 (Patrick:
+**Status**: parked (2026-07-19, chair ruling T1 of
+`q-briefing-triage-001`) — Resume-Trigger: 2026-07-28 (after the
+DEC-7 mid-window read on 07-27 and fable task 9's ≥07-28 window).
+Previously: in-progress (2026-07-13) — approved 2026-07-10 (Patrick:
 "GO"); tasks 1–8 done on feat/fable-premium-tier (PR #1361); task 9
 (release) parked ≥07-28. Amendment ratified during task 1:
 `BASELINE_MODEL` moves to `claude-fable-5` — see task 7 note and
