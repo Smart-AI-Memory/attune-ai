@@ -202,6 +202,18 @@ class TestPlumbing:
         code, out = default_invoke_seat(probe, "unused")
         assert code == 0 and "leaked= key=sk-real" in out
 
+    def test_seat_reply_keeps_head_and_drops_stderr_on_success(self) -> None:
+        """Live-run regression: tail-truncation cut a position off
+        mid-sentence, and CLI stderr warnings polluted board bodies."""
+        code, out = default_invoke_seat(
+            ("sh", "-c", 'echo "POSITION first"; echo "warning noise" >&2'), "unused"
+        )
+        assert code == 0 and out == "POSITION first"
+        code, out = default_invoke_seat(
+            ("sh", "-c", 'echo partial; echo "the diagnosis" >&2; exit 3'), "unused"
+        )
+        assert code == 3 and "the diagnosis" in out
+
     def test_seats_drop_empty_api_key(self, monkeypatch) -> None:
         """An EMPTY key must be removed, not passed through — empty
         401s the claude CLI instead of letting stored auth kick in."""

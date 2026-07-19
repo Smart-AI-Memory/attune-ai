@@ -37,8 +37,12 @@ from attune.roundtable.board import Board
 CHECK_TIMEOUT = 900
 SEAT_TIMEOUT = 300
 
-#: Output kept per check/seat before truncation — briefs stay bounded.
+#: Check output kept (the TAIL — the failure summary lives at the end).
 TAIL_CHARS = 2000
+
+#: Seat reply kept (the HEAD — the position leads; live receipt
+#: 2026-07-18: a 2000-char tail cut claude's position off mid-sentence).
+SEAT_REPLY_CHARS = 8000
 
 
 @dataclass
@@ -147,6 +151,17 @@ def run_command(
         return 127, f"{argv[0]}: not found"
     except subprocess.TimeoutExpired:
         return 124, f"timed out after {timeout}s"
+    if provider_clean:
+        # Seat replies: the position leads, so keep the HEAD — and on
+        # success drop stderr entirely (CLIs emit permission/connector
+        # warnings there that otherwise pollute the board body). On
+        # failure stderr carries the diagnosis, so keep both.
+        if proc.returncode == 0:
+            reply = proc.stdout.strip()
+        else:
+            reply = (proc.stdout + proc.stderr).strip()
+        return proc.returncode, reply[:SEAT_REPLY_CHARS]
+    # Check output: the failure summary lives at the END — keep the tail.
     out = (proc.stdout + proc.stderr).strip()
     return proc.returncode, out[-TAIL_CHARS:]
 
