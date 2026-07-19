@@ -188,6 +188,22 @@ def _critique_brief(subject: str, pack: str, draft: str) -> str:
     )
 
 
+#: Literal worked example of a tagged item. Prose alone was not
+#: enough: two live headless runs had the drafter fail lint_final
+#: with every item untagged, twice each, until the brief showed
+#: this exact shape (receipts in the roundtable-producing-team
+#: spec's decisions.md).
+TAG_EXAMPLE = (
+    "EXAMPLE ITEM (copy this shape — the tag line sits alone on the "
+    "line immediately after the heading):\n"
+    "**RR-1 — Example requirement title**\n"
+    "[tag: agreed]\n"
+    "One-sentence rationale for the requirement.\n"
+    "- first acceptance bullet\n"
+    "- second acceptance bullet"
+)
+
+
 def _final_brief(subject: str, draft: str, critiques: dict[str, str]) -> str:
     parts = [
         "You are the DRAFTER seat. Revise your draft into the round-3 "
@@ -196,6 +212,7 @@ def _final_brief(subject: str, draft: str, critiques: dict[str, str]) -> str:
         "'[tag: agreed]' / '[tag: 2-1 <note>]' / '[tag: contested "
         "<note>]'; a '## Non-goals' section; a '## Dissent register' "
         "section (or the literal attestation 'Empty — attested').",
+        TAG_EXAMPLE,
         f"SUBJECT: {subject}",
         f"YOUR DRAFT:\n\n{draft}",
     ]
@@ -207,15 +224,19 @@ def _final_brief(subject: str, draft: str, critiques: dict[str, str]) -> str:
 
 
 def _repair_brief(brief: str, reply: str, problems: list[str]) -> str:
-    return (
-        "Your previous reply failed the mechanical lint. Problems:\n- "
-        + "\n- ".join(problems)
-        + "\n\nFix ONLY these problems and resend the full document."
-        + "\n\nORIGINAL BRIEF:\n\n"
-        + brief
-        + "\n\nYOUR PREVIOUS REPLY:\n\n"
-        + reply
-    )
+    parts = [
+        "Your previous reply failed the mechanical lint. Problems:\n- " + "\n- ".join(problems)
+    ]
+    if any("convergence tag" in p for p in problems):
+        parts.append(
+            "Every item heading must be followed by its own convergence "
+            "tag line: '[tag: agreed]' / '[tag: 2-1 <note>]' / "
+            "'[tag: contested <note>]'.\n\n" + TAG_EXAMPLE
+        )
+    parts.append("Fix ONLY these problems and resend the full document.")
+    parts.append("ORIGINAL BRIEF:\n\n" + brief)
+    parts.append("YOUR PREVIOUS REPLY:\n\n" + reply)
+    return "\n\n".join(parts)
 
 
 class _Terminal(Exception):
