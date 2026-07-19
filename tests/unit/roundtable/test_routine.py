@@ -185,24 +185,31 @@ class TestPlumbing:
         code, out = default_invoke_seat(("cat", "-"), "stdin brief")
         assert code == 0 and out == "stdin brief"
 
-    def test_seats_run_provider_clean(self, monkeypatch) -> None:
-        """Live-run regression: seats must not inherit ANTHROPIC_*/
-        CLAUDE* vars — an empty key or the parent session's BASE_URL
-        401s the claude CLI instead of its own stored auth."""
+    def test_seats_run_provider_clean_but_keep_real_api_key(self, monkeypatch) -> None:
+        """Live-run regression: seats must not inherit the parent
+        session's BASE_URL/CLAUDE* vars (401 against its proxy), but a
+        NON-EMPTY API key passes through (chair-authorized API path)."""
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-real")  # pragma: allowlist secret
         monkeypatch.setenv("ANTHROPIC_BASE_URL", "http://parent-proxy")
         monkeypatch.setenv("CLAUDECODE", "1")
         monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "cli")
-        code, out = default_invoke_seat(
-            (
-                "sh",
-                "-c",
-                'echo "leaked=${ANTHROPIC_API_KEY+k}${ANTHROPIC_BASE_URL+u}'
-                '${CLAUDECODE+c}${CLAUDE_CODE_ENTRYPOINT+e}."',
-            ),
-            "unused",
+        probe = (
+            "sh",
+            "-c",
+            'echo "leaked=${ANTHROPIC_BASE_URL+u}${CLAUDECODE+c}'
+            '${CLAUDE_CODE_ENTRYPOINT+e} key=${ANTHROPIC_API_KEY:-none}"',
         )
-        assert code == 0 and "leaked=." in out
+        code, out = default_invoke_seat(probe, "unused")
+        assert code == 0 and "leaked= key=sk-real" in out
+
+    def test_seats_drop_empty_api_key(self, monkeypatch) -> None:
+        """An EMPTY key must be removed, not passed through — empty
+        401s the claude CLI instead of letting stored auth kick in."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "")
+        code, out = default_invoke_seat(
+            ("sh", "-c", 'echo "set=${ANTHROPIC_API_KEY+yes}"'), "unused"
+        )
+        assert code == 0 and "set=yes" not in out
 
     def test_synthesis_failure_is_visible_on_the_thread(self) -> None:
         """Live-run regression: a failed synthesis must not read as a

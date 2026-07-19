@@ -116,16 +116,22 @@ def run_command(
       — CI-faithful (unset would let dotenv re-inject a real key
       downstream).
     - Seats (``provider_clean=True``): every ``ANTHROPIC_*`` and
-      ``CLAUDE*`` variable REMOVED. When the runner itself executes
-      inside a Claude Code session, the child inherits
+      ``CLAUDE*`` variable REMOVED — except a NON-EMPTY
+      ``ANTHROPIC_API_KEY``, which passes through (chair-authorized
+      API path for the claude seat, 2026-07-18). When the runner
+      executes inside a Claude Code session, the child inherits
       ``ANTHROPIC_BASE_URL`` + ``CLAUDE_CODE_*`` and 401s against the
       parent session's proxy; an EMPTY ``ANTHROPIC_API_KEY`` likewise
-      401s the ``claude`` CLI instead of letting its own stored auth
-      kick in. Scrubbing the whole provider surface fixes both and
+      401s the ``claude`` CLI instead of letting its stored auth kick
+      in. Scrubbing those while keeping a real key gives the claude
+      seat two working auth paths (API key, else stored login) and
       keeps harness identifiers out of member processes (R1 hygiene).
     """
     if provider_clean:
         env = {k: v for k, v in os.environ.items() if not k.startswith(("ANTHROPIC_", "CLAUDE"))}
+        api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        if api_key:
+            env["ANTHROPIC_API_KEY"] = api_key
     else:
         env = {**os.environ, "ANTHROPIC_API_KEY": ""}
     try:

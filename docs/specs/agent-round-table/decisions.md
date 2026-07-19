@@ -286,3 +286,21 @@ schedule wait on an interactive `claude login` re-auth (agent
 must not perform credential flows), then one rerun of
 `python -m attune.roundtable.routine clean-run`. Until then the
 routine runs as a two-seat table with a visible synthesis halt.
+
+**Unblocked (chair, 2026-07-18, "the api is available for this
+process"):** the claude seat and synthesis may authenticate via a
+real `ANTHROPIC_API_KEY` — provider-clean now passes a NON-EMPTY
+key through while still stripping `ANTHROPIC_BASE_URL`/`CLAUDE*`
+(an empty key is still dropped). The seat gets two working auth
+paths: API key when present, else the CLI's stored login. Live
+probe receipt: `claude -p` under the passed-through key returned
+in-seconds with the expected reply. R5's 4-invocation cap bounds
+the per-run API spend.
+
+Post-crash hardening from the chair's own runs (same day): the
+board is reached BEFORE the check battery — a stale `REDIS_URL`
+(his `~/.zshrc` exported a retired cloud host) now fails in ~0.1s
+with the URL and the local-default override, instead of burning
+the 5-minute suite and dying in a raw traceback. Routine progress
+(checks, seats, synthesis) streams to stdout as it happens —
+silence had read as a hang and produced duplicate concurrent runs.
