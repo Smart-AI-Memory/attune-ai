@@ -36,7 +36,15 @@ from .result import (
     SuggestedAction,
 )
 from .schema import output_schema
-from .sources import bulletin, git_state, recommendations, specs, sweep, telemetry
+from .sources import (
+    bulletin,
+    git_state,
+    recommendations,
+    spec_drift,
+    specs,
+    sweep,
+    telemetry,
+)
 
 if TYPE_CHECKING:
     from anthropic import AsyncAnthropic
@@ -63,6 +71,7 @@ _MAX_OUTPUT_TOKENS = 4096
 _SOURCE_MODULES = [
     bulletin,
     specs,
+    spec_drift,
     sweep,
     telemetry,
     recommendations,

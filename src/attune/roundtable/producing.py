@@ -554,6 +554,29 @@ class _ProducingRun:
                 self._receipt("COMPILE_ERROR", detail=f"{type(exc).__name__}: {exc}")
             ) from exc
 
+        # Requirements-boundary gate over the final document
+        # (spec-lifecycle-gates T5, design trigger #2). NON-terminal:
+        # candidates still stage for the chair — the finding rides the
+        # digest as a LINT_DIRTY-class degradation (closed taxonomy;
+        # the slot-3 confabulation episode is the motivating receipt).
+        try:
+            from attune.gates.lifecycle import symbol_reality_gate
+
+            gate = symbol_reality_gate(
+                final_text, Path.cwd(), phase="requirements", target=spec.slug
+            )
+            if gate.state != "PASS":
+                self._receipt(
+                    "LINT_DIRTY",
+                    round=3,
+                    role="gate",
+                    detail=f"symbol-reality gate {gate.state}: "
+                    f"{len(gate.findings)} unresolvable citation(s)",
+                    evidence="\n".join(gate.findings),
+                )
+        except ImportError:
+            pass  # gates package absent (partial install) — never block authoring
+
         return final_draft, *self._stage(final_draft)
 
     def _round_one(self, owed: str, pack: str) -> tuple[str, str]:
