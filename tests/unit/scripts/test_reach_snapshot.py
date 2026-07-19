@@ -20,6 +20,18 @@ SCRIPT_PATH = REPO_ROOT / "scripts" / "reach_snapshot.py"
 STATS = {"last_day": 1, "last_week": 7, "last_month": 30}
 
 
+def _age_attempts(out_dir: Path, *, minutes: int) -> None:
+    """Rewrite the day file's attempt timestamps ``minutes`` into the past."""
+    from datetime import datetime, timedelta, timezone
+
+    (day_file,) = out_dir.glob("*.json")
+    data = json.loads(day_file.read_text(encoding="utf-8"))
+    aged = (datetime.now(timezone.utc) - timedelta(minutes=minutes)).isoformat()
+    for attempt in data.get("attempts", []):
+        attempt["at"] = aged
+    day_file.write_text(json.dumps(data), encoding="utf-8")
+
+
 @pytest.fixture(scope="module")
 def mod():
     spec = importlib.util.spec_from_file_location("_reach_snapshot", SCRIPT_PATH)
@@ -133,6 +145,86 @@ class TestRenderTable:
         assert "GitHub:" not in mod.render_table(snap)
 
 
+class TestUs4CompletenessAndBudget:
+    """US-4: manifest contract, attempt budget, retry guidance."""
+
+    def test_complete_capture_manifest(self, mod, tmp_path: Path, monkeypatch) -> None:
+        monkeypatch.setattr(mod, "fetch_pypistats_recent", lambda pkg: dict(STATS))
+        monkeypatch.setattr(mod, "fetch_github_signals", lambda: {})
+        rc = mod.main(["--out", str(tmp_path), "--spacing", "0", "--packages", "a", "b"])
+        assert rc == 0
+        (day_file,) = tmp_path.glob("*.json")
+        data = json.loads(day_file.read_text(encoding="utf-8"))
+        manifest = data["manifest"]
+        assert manifest["complete"] is True
+        assert manifest["expected"] == manifest["captured"] == ["a", "b"]
+        assert manifest["missing"] == []
+        assert manifest["source"] == mod.SOURCE
+        assert data["attempts"][-1]["outcome"] == "complete"
+
+    def test_rerun_within_gap_refused_before_any_request(
+        self, mod, tmp_path: Path, monkeypatch, capsys
+    ) -> None:
+        def boom(pkg: str):
+            raise mod.RateLimitedError("rate-limited")
+
+        monkeypatch.setattr(mod, "fetch_pypistats_recent", boom)
+        argv = ["--out", str(tmp_path), "--spacing", "0", "--packages", "a"]
+        assert mod.main(argv) == 1
+
+        fetched: list[str] = []
+        monkeypatch.setattr(mod, "fetch_pypistats_recent", lambda pkg: fetched.append(pkg))
+        assert mod.main(argv) == 1  # refused: last attempt seconds ago
+        err = capsys.readouterr().err
+        assert ">= 60 minutes apart" in err
+        assert fetched == []  # refused BEFORE any request
+
+    def test_attempt_budget_exhausted_after_three(
+        self, mod, tmp_path: Path, monkeypatch, capsys
+    ) -> None:
+        def boom(pkg: str):
+            raise mod.RateLimitedError("rate-limited")
+
+        monkeypatch.setattr(mod, "fetch_pypistats_recent", boom)
+        argv = ["--out", str(tmp_path), "--spacing", "0", "--packages", "a"]
+        for _ in range(3):
+            assert mod.main(argv) == 1
+            _age_attempts(tmp_path, minutes=61)
+        capsys.readouterr()
+
+        fetched: list[str] = []
+        monkeypatch.setattr(mod, "fetch_pypistats_recent", lambda pkg: fetched.append(pkg))
+        assert mod.main(argv) == 1
+        err = capsys.readouterr().err
+        assert "attempt budget exhausted" in err
+        assert "INCOMPLETE SNAPSHOT" in err
+        assert fetched == []
+        (day_file,) = tmp_path.glob("*.json")
+        data = json.loads(day_file.read_text(encoding="utf-8"))
+        assert len(data["attempts"]) == 3  # the refused run logs no attempt
+
+    def test_completed_snapshot_rerun_skips_budget(self, mod, tmp_path: Path, monkeypatch) -> None:
+        monkeypatch.setattr(mod, "fetch_pypistats_recent", lambda pkg: dict(STATS))
+        monkeypatch.setattr(mod, "fetch_github_signals", lambda: {})
+        argv = ["--out", str(tmp_path), "--spacing", "0", "--packages", "a"]
+        assert mod.main(argv) == 0
+        # Immediate rerun: nothing remaining → no request, no budget trip.
+        assert mod.main(argv) == 0
+
+    def test_429_retry_after_header_is_reported(self, mod, monkeypatch) -> None:
+        import io
+        import urllib.error
+
+        def raise_429(url, timeout):
+            raise urllib.error.HTTPError(
+                url, 429, "Too Many Requests", {"Retry-After": "1800"}, io.BytesIO(b"")
+            )
+
+        monkeypatch.setattr(mod.urllib.request, "urlopen", raise_429)
+        with pytest.raises(mod.RateLimitedError, match="retry after 1800s"):
+            mod.fetch_pypistats_recent("attune-ai")
+
+
 class TestCli:
     def test_writes_dated_json_and_prints_table(
         self, mod, tmp_path: Path, monkeypatch, capsys
@@ -149,17 +241,30 @@ class TestCli:
         out = capsys.readouterr().out
         assert "| attune-ai | 1 | 7 | 30 |" in out
 
-    def test_rate_limited_exit_1_with_wait_message(
+    def test_rate_limited_exit_1_logs_attempt_even_with_zero_capture(
         self, mod, tmp_path: Path, monkeypatch, capsys
     ) -> None:
+        """US-4 zero-package capture: unmistakable warning + durable attempt."""
+
         def boom(pkg: str):
             raise mod.RateLimitedError("pypistats rate-limited. Wait 15 minutes")
 
         monkeypatch.setattr(mod, "fetch_pypistats_recent", boom)
         rc = mod.main(["--out", str(tmp_path), "--spacing", "0", "--packages", "attune-ai"])
         assert rc == 1
-        assert "Wait 15 minutes" in capsys.readouterr().err
-        assert not list(tmp_path.glob("*.json"))
+        err = capsys.readouterr().err
+        assert "Wait 15 minutes" in err
+        assert "INCOMPLETE SNAPSHOT" in err
+        assert "0/1 captured" in err
+        # Even a zero-capture run persists its attempt — else the US-4
+        # budget could never engage.
+        (day_file,) = tmp_path.glob("*.json")
+        data = json.loads(day_file.read_text(encoding="utf-8"))
+        assert data["pypi_recent"] == {}
+        assert data["manifest"]["complete"] is False
+        assert data["manifest"]["missing"] == ["attune-ai"]
+        assert len(data["attempts"]) == 1
+        assert data["attempts"][0]["outcome"] == "rate-limited"
 
     def test_partial_then_rate_limit_persists_progress(
         self, mod, tmp_path: Path, monkeypatch, capsys
@@ -175,12 +280,15 @@ class TestCli:
         rc = mod.main(["--out", str(tmp_path), "--spacing", "0", "--packages", "a", "b", "c"])
         assert rc == 1
         err = capsys.readouterr().err
-        assert "captured 2/3 today" in err
+        assert "INCOMPLETE SNAPSHOT" in err
+        assert "2/3 captured" in err
         # the day file holds the two packages fetched before the 429
         files = list(tmp_path.glob("*.json"))
         assert len(files) == 1
         data = json.loads(files[0].read_text(encoding="utf-8"))
         assert set(data["pypi_recent"]) == {"a", "b"}
+        assert data["manifest"]["missing"] == ["c"]
+        assert data["manifest"]["complete"] is False
 
     def test_rerun_completes_remainder_then_clears(
         self, mod, tmp_path: Path, monkeypatch, capsys
@@ -202,7 +310,8 @@ class TestCli:
         assert mod.main(argv) == 1
         assert fetched == ["a", "b", "c"]
 
-        # cooldown over: rerun skips a,b and fetches only c
+        # cooldown over (age the logged attempt past the 60-min gap):
+        _age_attempts(tmp_path, minutes=61)
         flaky["raise_on_c"] = False
         fetched.clear()
         assert mod.main(argv) == 0

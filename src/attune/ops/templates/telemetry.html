@@ -57,6 +57,50 @@
   <p class="meta">Last event recorded: <code>{{ telemetry.last_event_at }}</code></p>
 {% endif %}
 
+{# US-6 three-panel receipt: reach + freshness + spend together. #}
+<section class="panel" id="reach-panel">
+  <h2>Reach — latest complete snapshot</h2>
+  {% if reach.latest_complete %}
+    <p class="meta">Snapshot <code>{{ reach.latest_complete.date }}</code>
+      observed <code>{{ reach.latest_complete.taken_at }}</code></p>
+    <table class="data-table">
+      <thead><tr><th>Package</th><th class="num">last_day</th><th class="num">last_week</th><th class="num">last_month</th></tr></thead>
+      <tbody>
+        {% for pkg, stats in reach.latest_complete.packages.items() %}
+          <tr><td><code>{{ pkg }}</code></td><td class="num">{{ stats.last_day }}</td><td class="num">{{ stats.last_week }}</td><td class="num">{{ stats.last_month }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No complete reach snapshot yet.</p>
+  {% endif %}
+  {% if reach.newer_incomplete %}
+    <p class="meta warn">
+      ⚠ Newer snapshot <code>{{ reach.newer_incomplete.date }}</code> is
+      <strong>INCOMPLETE</strong> (missing:
+      {% for pkg in reach.newer_incomplete.missing %}<code>{{ pkg }}</code>{% if not loop.last %}, {% endif %}{% endfor %})
+      — it does not replace the complete snapshot above.
+    </p>
+  {% endif %}
+</section>
+
+<section class="panel" id="freshness-panel">
+  <h2>Freshness — usage.jsonl last write</h2>
+  {% if freshness.exists %}
+    <p class="meta">Last write: <code>{{ freshness.last_write_at }}</code>
+      ({{ '%.1f'|format(freshness.age_hours) }}h ago)</p>
+    {% if freshness.stale %}
+      <p class="meta warn">⚠ <strong>STALE</strong> — no usage.jsonl write in over 48 hours.</p>
+    {% else %}
+      <p class="meta">Fresh (under the 48-hour threshold).</p>
+    {% endif %}
+  {% else %}
+    <p class="empty warn">⚠ usage.jsonl not found — freshness unknown (treated as stale).</p>
+  {% endif %}
+</section>
+
+{% include "_spend_alarm.html" %}
+
 <section class="panel">
   <h2>Short-term memory</h2>
   <p class="page-sub">

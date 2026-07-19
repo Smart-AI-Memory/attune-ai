@@ -192,6 +192,19 @@ async def telemetry_page(request: Request) -> HTMLResponse:
     memory_signal = data.estimate_intervention_signal(cfg.memory_events_path)
     # Noise side — findings surfaced then dropped as noise.
     memory_feedback = data.estimate_feedback_signal(cfg.memory_events_path)
+    # US-6 three-panel receipt: reach + freshness + spend TOGETHER on
+    # one page. Reach reads the tracked snapshots dir; freshness reads
+    # usage.jsonl's mtime; spend reuses the shipped D13 alarm (local
+    # source here — the account-level fetch stays on the home route).
+    reach = data.read_reach_panel(cfg)
+    freshness = data.read_usage_freshness(cfg)
+    try:
+        spend = data.build_spend_alarm(cfg, None)
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: the alarm is a best-effort signal; never block
+        # the telemetry page on it (mirrors the home route).
+        logger.debug("data.build_spend_alarm raised", exc_info=True)
+        spend = None
     return _render(
         request,
         "telemetry.html",
@@ -202,6 +215,9 @@ async def telemetry_page(request: Request) -> HTMLResponse:
         memory_summary=memory_summary,
         memory_signal=memory_signal,
         memory_feedback=memory_feedback,
+        reach=reach,
+        freshness=freshness,
+        spend=spend,
     )
 
 
