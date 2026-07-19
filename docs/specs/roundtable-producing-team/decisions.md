@@ -64,6 +64,32 @@ adopted as initial settings WITH two accepted amendments:
 
 **Open (chair):** the candidate-per-session cap NUMBER (TR-6).
 
+## TAC-1 receipt — V2-P1 first spec-authoring loop SHIPPED (2026-07-19)
+
+Thread `mem-signal-001` → `docs/specs/memory-feedback-signal/`
+(requirements APPROVED per-REQ by the chair; provenance names the
+thread). All three ratified P1 settings exercised for real:
+
+- **Grounding pack** killed the first subject before any member
+  spend (workflow-failure-exit-propagation: already shipped +
+  archived; the stale memory that recommended it was fixed) and
+  grounded the actual loop in PR #1366 / session_stash / ops/data
+  code facts.
+- **Typed rounds**: draft (6 REQs) → two adversarial critiques
+  (6 + 14 cited items; codex's injection catch became MI-7) →
+  revision (7 REQs, six agreed, one 2-1, dissent register,
+  nothing rejected). Four of five open questions settled by
+  deliberation; ONE reached the chair.
+- **Per-REQ promotion**: chair approved all seven; the 2-1
+  resolved by ruling with both critics' positions surviving
+  (antigravity's formula = headline; codex's reversibility =
+  reader shape).
+
+Field note carried to V2-P2: seat-reply caps must be ROLE-AWARE
+(the 8000-char cap truncated the drafter's revision; positions and
+documents need different budgets — fold into the typed round
+contracts).
+
 ## Provenance
 
 - Chair directive and rulings: live session 2026-07-18 (the same
