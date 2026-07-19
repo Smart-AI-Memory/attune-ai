@@ -194,7 +194,17 @@ class Board:
             import redis  # noqa: PLC0415 — optional dependency, import at use
 
             url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
-            client = redis.Redis.from_url(url, decode_responses=True)
+            # Bounded connect/ops: a stale REDIS_URL pointing at a dead
+            # remote host must fail in seconds, not hang for minutes in
+            # DNS/connect (live receipt 2026-07-19 — the fail-fast
+            # message in the routine runner was unreachable because the
+            # unbounded connect stalled first).
+            client = redis.Redis.from_url(
+                url,
+                decode_responses=True,
+                socket_connect_timeout=3.0,
+                socket_timeout=10.0,
+            )
         self.client = client
         self.ttl_seconds = ttl_seconds
 
