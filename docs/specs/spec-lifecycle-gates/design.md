@@ -1,6 +1,8 @@
 # Spec-Lifecycle Gates v1 — Design
 
-**Status: design draft — awaiting chair review** (2026-07-19).
+**Status: design chair-approved as written** (2026-07-19; both open
+questions ruled per the moderator's recommendations — see G4/G5 in
+`decisions.md`).
 Grounded per RR-5's chair edit: every seam below was re-verified by
 import in this session; probe receipts inline. Requirements:
 `requirements.md` (thread `producing-spec-lifecycle-gates-20260719-3`,
@@ -135,11 +137,13 @@ receipts run serially per the delegation-receipts discipline.
    `spec_drift` source → RR-9 suite. Implementation starts only
    after chair approval of this design.
 
-## Open questions for the chair
+## Open questions — RULED 2026-07-19 (chair, per recommendation)
 
-1. RR-7 re-admission with the measured baseline (above) — now, or
-   after v1 ships and real `CHAIR_REQUIRED` volume is observed?
-2. Should the `/spec` skill HARD-block on `BLOCKED` receipts
-   (cannot proceed) or soft-block (proceed with the receipt
-   rendered and an explicit chair acknowledgment)? Design assumes
-   hard-block for `BLOCKED`, soft for `CHAIR_REQUIRED`.
+1. **RR-7 re-admitted NOW** with the measured baseline (G4):
+   requirements.md carries the amended RR-7 — batching threshold =
+   gate-generated `CHAIR_REQUIRED` volume exceeding 20% of the
+   measured ~26.5/week baseline, re-measured at implementation.
+2. **Hard-block on `BLOCKED`, soft-block on `CHAIR_REQUIRED`**
+   (G5): the `/spec` skill cannot proceed past a `BLOCKED` receipt;
+   `CHAIR_REQUIRED` proceeds only with the receipt rendered and an
+   explicit chair acknowledgment recorded.

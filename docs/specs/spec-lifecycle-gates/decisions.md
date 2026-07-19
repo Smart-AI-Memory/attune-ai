@@ -74,3 +74,26 @@ Compiled deterministically (`compiler.compile_requirements`,
 approved items only, declined RR-7 in the header) into
 `requirements.md`; thread `producing-spec-lifecycle-gates-20260719-3`
 promoted per-item.
+
+## 2026-07-19 — Design chair-approved as written; G4/G5 ruled (chair)
+
+The chair approved `design.md` as written, adopting the moderator's
+recommendations on both open questions:
+
+**G4 — RR-7 re-admitted amended, effective now.** The declined
+batching requirement returns with the MEASURED baseline (~26.5
+decisions.md commits/week; 159 commits / 6 weeks on main — an
+upper-bound proxy, re-measured at implementation) replacing the
+drafter's invented figure. Threshold: gate-generated
+`CHAIR_REQUIRED` volume > 20% of baseline → weekly batch summary;
+security-surface and `BLOCKED` escalations never batch.
+requirements.md amended in place.
+
+**G5 — Block semantics at /spec boundaries.** Hard-block on
+`BLOCKED` (the skill cannot proceed); soft-block on
+`CHAIR_REQUIRED` (proceed only with the receipt rendered and an
+explicit chair acknowledgment recorded).
+
+Next: Phase 3 (tasks.md decomposition) then implementation, gated
+on #1475's merge for the corpus-readiness seam. Sequencing per
+design.md's dependency section.

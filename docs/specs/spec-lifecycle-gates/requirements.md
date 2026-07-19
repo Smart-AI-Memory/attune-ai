@@ -3,7 +3,7 @@
 **Status: requirements chair-ruled per item** — authored by the
 round table (thread `producing-spec-lifecycle-gates-20260719-3`); compiled deterministically by
 `attune.roundtable.compiler` (V2-P2). Approved items only;
-declined: RR-7;
+declined: none (RR-7 re-admitted amended, G4 2026-07-19);
 unruled: none.
 
 Chair rulings 2026-07-19 ('as recommended', this thread): RR-2/RR-8/RR-9 approved clean (RR-8/RR-9 restaged from deferred_over_cap per the TR-6 recourse path); RR-1/RR-3/RR-4/RR-5/RR-6 approved WITH chair edits — the drafter's cited module paths were confabulated (verified against the tree: every specific entry point it named was missing) and are corrected in place, marked '[chair edit]'; the verdict-ledger destination is corrected to the G1-ruled machine ledger. RR-7 DECLINED as written: its 'measured' chair-interaction baseline (~3.2 rulings/week) was invented by a text-only seat — re-admit once the count is actually measured. The confabulation itself is recorded as live evidence FOR the symbol-reality gate this spec mandates.
@@ -61,6 +61,13 @@ To verify gate correctness and prevent regression, every gate boundary must be v
 - Acceptance test suites (`tests/unit/gates/test_lifecycle_gates.py`) must probe each lifecycle boundary with both positive cases (valid inputs yielding expected candidate state) and negative cases (malformed receipts, out-of-bounds diffs, or unhandled exceptions triggering conservative `BLOCKED` or `CHAIR_REQUIRED` states).
 - At least one live integration test must exercise the full seam from phase event trigger -> enforcer probe -> verdict-ledger write (`~/.attune/ops/gates/verdicts.jsonl` (the G1-ruled machine ledger) [chair edit]) -> `decisions.md` chair resolution linkage.
 (table: agreed; chair: approved)
+
+**RR-7 — Measured Chair-Interaction Cost and Decision Batching Policy (re-admitted amended, G4)**
+[chair edit — re-admitted 2026-07-19 with a MEASURED baseline replacing the declined draft's invented figure]
+To protect the chair from decision fatigue, gate escalation thresholds must be governed by measured decision volume.
+- Baseline: ~26.5 `docs/specs/*/decisions.md` commits/week (159 commits over the 6 weeks to 2026-07-19; an upper-bound proxy — commits, not individual rulings). The baseline must be re-measured at implementation time and recorded in the verdict ledger's config.
+- When gate-generated `CHAIR_REQUIRED` candidate volume exceeds 20% of the measured weekly baseline, the gate system activates batching mode: non-urgent `CHAIR_REQUIRED` candidates group into a single weekly review summary artifact for chair evaluation.
+- Urgent classes (security surface, `BLOCKED` escalations) never batch.
 
 ## Non-goals
 
