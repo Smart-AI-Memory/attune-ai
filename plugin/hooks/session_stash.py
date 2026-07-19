@@ -445,6 +445,20 @@ def main() -> int:
                 return 0  # too little so far; let a later, fuller stop capture it
 
         text = _read_transcript_tail(transcript_path)
+
+        # Memory-feedback-signal STEP 2 (MI-1..MI-4): score this session's
+        # surfacing records against the tail. Isolated — a scorer failure
+        # must never disturb the stash duties below (MI-4), and an empty
+        # tail still yields per-item `unscored` verdicts (MI-2).
+        try:
+            from _memory_verdicts import score_session
+
+            n = score_session(session_id, text)
+            if n:
+                _diag(f"verdicts session={session_id} scored={n}")
+        except Exception:  # noqa: BLE001 — verdict scoring is best-effort
+            _diag(f"verdict scoring failed (isolated) session={session_id}")
+
         if not text.strip():
             return 0
 
