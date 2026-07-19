@@ -226,15 +226,50 @@ class TelemetryService:
         self,
         result: Any,
         model_for_tier_fn: Any = None,
+        *,
+        started_at: datetime | None = None,
+        completed_at: datetime | None = None,
     ) -> None:
         """Emit a WorkflowRunRecord to the telemetry backend.
 
         Args:
-            result: The WorkflowResult to record
+            result: The WorkflowResult (or report object) to record
             model_for_tier_fn: Optional callable to resolve model name for a tier
+            started_at: Wall-clock start from the execute-wrapper; used
+                only for report-shaped results without own timestamps.
+            completed_at: Wall-clock end, same caveat as ``started_at``.
 
         """
         from attune.models import WorkflowRunRecord, WorkflowStageRecord
+        from attune.workflows.telemetry_mixin import (
+            build_fallback_run_record,
+            is_workflow_result_shaped,
+        )
+
+        # Idempotence guard mirroring TelemetryMixin's (run-record-corpus
+        # RC-2): only the first emission for a given result records.
+        if result is None or getattr(result, "_run_record_emitted", False) is True:
+            return
+        try:
+            result._run_record_emitted = True
+        except (AttributeError, TypeError):
+            pass  # non-standard result object — emit unguarded
+
+        # Report-shaped results (orchestrator/agent-team workflows) lack
+        # the WorkflowResult surface — emit the degraded record instead
+        # of dying on ``result.stages``.
+        if not is_workflow_result_shaped(result):
+            self._log_run_record(
+                build_fallback_run_record(
+                    run_id=self._run_id or str(uuid.uuid4()),
+                    workflow_name=self._workflow_name,
+                    provider=self._provider,
+                    result=result,
+                    started_at=started_at,
+                    completed_at=completed_at,
+                )
+            )
+            return
 
         stages = [
             WorkflowStageRecord(
@@ -277,6 +312,10 @@ class TelemetryService:
             providers_used=[self._provider],
             tiers_used=list(result.cost_report.by_tier.keys()),
         )
+        self._log_run_record(record)
+
+    def _log_run_record(self, record: Any) -> None:
+        """Write a run record to the backend — never raises."""
         try:
             if self._backend is not None:
                 self._backend.log_workflow(record)

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
 from attune.workflows.agent_sdk_adapter import AgentRunResult
@@ -31,6 +31,68 @@ try:
 except ImportError:
     TELEMETRY_AVAILABLE = False
     UsageTracker = None  # type: ignore
+
+
+def is_workflow_result_shaped(result: Any) -> bool:
+    """True when ``result`` carries the ``WorkflowResult`` surface.
+
+    The full run-record builder reads ``stages``, ``cost_report`` and
+    the ``started_at``/``completed_at`` datetimes. Orchestrator and
+    agent-team workflows return report objects (``HealthCheckReport``,
+    ``OrchestratorResult``, ``SecureReleaseResult``) that lack these —
+    they get :func:`build_fallback_run_record` instead (run-record-corpus
+    RC-2 follow-up).
+    """
+    return all(
+        hasattr(result, attr) for attr in ("stages", "cost_report", "started_at", "completed_at")
+    )
+
+
+def build_fallback_run_record(
+    *,
+    run_id: str,
+    workflow_name: str,
+    provider: str,
+    result: Any,
+    started_at: datetime | None,
+    completed_at: datetime | None,
+) -> Any:
+    """Build a degraded ``WorkflowRunRecord`` for a report-shaped result.
+
+    Stage/cost detail is unavailable on these results, so the record
+    carries identity, provenance, timing and outcome only — enough for
+    the run-record corpus miner (sequence, name, time, success), with
+    token/cost totals honestly zero rather than guessed.
+
+    ``started_at``/``completed_at`` come from the caller's wall clock
+    (the ``BaseWorkflow`` execute-wrapper); both default to now.
+    """
+    from attune.models import WorkflowRunRecord
+    from attune.models.telemetry.run_context import (
+        resolve_project_identity,
+        resolve_run_trigger,
+    )
+
+    now = datetime.now(timezone.utc)
+    start = started_at or now
+    end = completed_at or now
+    # ``is not False``: report objects without a ``success`` field count
+    # as success — the run returned a result without raising.
+    success = getattr(result, "success", True) is not False
+    error_raw = getattr(result, "error", None)
+    error = error_raw if isinstance(error_raw, str) and error_raw else None
+    return WorkflowRunRecord(
+        run_id=run_id,
+        workflow_name=workflow_name,
+        trigger=resolve_run_trigger(),
+        project=resolve_project_identity(),
+        started_at=start.isoformat(),
+        completed_at=end.isoformat(),
+        total_duration_ms=max(0, int((end - start).total_seconds() * 1000)),
+        success=success,
+        error=error,
+        providers_used=[provider],
+    )
 
 
 class TelemetryMixin:
@@ -260,11 +322,20 @@ class TelemetryMixin:
             # INTENTIONAL: Telemetry is optional diagnostics - never crash workflow
             logger.debug("Unexpected error logging call telemetry")
 
-    def _emit_workflow_telemetry(self, result: Any) -> None:
+    def _emit_workflow_telemetry(
+        self,
+        result: Any,
+        *,
+        started_at: datetime | None = None,
+        completed_at: datetime | None = None,
+    ) -> None:
         """Emit a WorkflowRunRecord to the telemetry backend.
 
         Args:
-            result: The WorkflowResult to record
+            result: The WorkflowResult (or report object) to record
+            started_at: Wall-clock start from the execute-wrapper; used
+                only for report-shaped results without own timestamps.
+            completed_at: Wall-clock end, same caveat as ``started_at``.
 
         """
         from attune.models import WorkflowRunRecord, WorkflowStageRecord
@@ -285,6 +356,22 @@ class TelemetryMixin:
             result._run_record_emitted = True
         except (AttributeError, TypeError):
             pass  # non-standard result object — emit unguarded
+
+        # Report-shaped results (orchestrator/agent-team workflows) lack
+        # the WorkflowResult surface — emit the degraded record instead
+        # of dying on ``result.stages`` (run-record-corpus RC-2).
+        if not is_workflow_result_shaped(result):
+            self._log_run_record(
+                build_fallback_run_record(
+                    run_id=self._run_id or str(uuid.uuid4()),
+                    workflow_name=self.name,
+                    provider=getattr(self, "_provider_str", "unknown"),
+                    result=result,
+                    started_at=started_at,
+                    completed_at=completed_at,
+                )
+            )
+            return
 
         # Build stage records
         stages = [
@@ -327,6 +414,10 @@ class TelemetryMixin:
             providers_used=[getattr(self, "_provider_str", "unknown")],
             tiers_used=list(result.cost_report.by_tier.keys()),
         )
+        self._log_run_record(record)
+
+    def _log_run_record(self, record: Any) -> None:
+        """Write a run record to the backend — never raises."""
         try:
             if self._telemetry_backend is not None:
                 self._telemetry_backend.log_workflow(record)

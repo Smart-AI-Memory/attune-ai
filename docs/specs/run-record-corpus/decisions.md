@@ -92,3 +92,42 @@ send on next-workflow recommendation clicks. Until it lands,
 dashboard runs record as `manual` (correct for workflow-button
 clicks, conservative for rec clicks per `resolve_run_trigger`'s
 stated bias).
+
+## 2026-07-19 — RC-2 follow-up closed: report-shaped results emit
+
+**Root-cause correction.** The named follow-up ("agent-team
+workflows that bypass `BaseWorkflow` entirely") was mis-attributed:
+`OrchestratedHealthCheckWorkflow`, `DocumentationOrchestrator`, and
+`SecureReleasePipeline` all subclass `BaseWorkflow` and ARE wrapped
+by the RC-2 `__init_subclass__` seam. What they bypass is the
+`WorkflowResult` SHAPE: their `execute` returns report objects
+(`HealthCheckReport`, `OrchestratorResult`, `SecureReleaseResult`)
+without `stages`/`cost_report`/timestamps, so
+`_emit_workflow_telemetry` died on `result.stages`
+(`AttributeError`), was swallowed by the wrapper's best-effort
+catch, and recorded nothing — reproduced by probe before the fix.
+
+**Fix.** Emission is now shape-tolerant in BOTH emit paths
+(`TelemetryMixin._emit_workflow_telemetry` and
+`TelemetryService.emit_workflow_record`): a report-shaped result
+gets a degraded record — identity, `trigger`/`project` provenance,
+wall-clock timing captured by the execute-wrapper, success/error —
+with stage detail and cost totals honestly zero, not guessed. The
+service path also gained the idempotence marker it lacked (double
+emission was possible when ctx-based workflows chain
+`super().execute()`).
+
+**Receipts.** Repro probe (report-shaped result → 0 files,
+AttributeError in debug log) then post-fix probe (1 record,
+idempotent on re-emit); live-fire keyless
+`OrchestratedHealthCheckWorkflow(mode="daily").execute(path=".")`
+from this worktree against a scratch `ATTUNE_HOME` landed
+`workflow_name=orchestrated-health-check`, `trigger=manual`,
+`project=attune-ai`, `success=False` (one agent failed keyless —
+honest), `total_duration_ms=116339`. Serial suite:
+`tests/unit/telemetry/test_run_record_corpus.py` 22 passed (6 new
+in `TestReportShapedEmission`); breadth:
+`tests/unit/workflows tests/unit/telemetry` 3324 passed.
+
+**Still open (unchanged).** The dashboard rec-click attribution
+stamp (RC-3 follow-up) — dashboard runs still record as `manual`.

@@ -178,13 +178,21 @@ class ContextProxyMixin:
             fallback_used,
         )
 
-    def _emit_workflow_telemetry(self, result: Any) -> None:
+    def _emit_workflow_telemetry(
+        self,
+        result: Any,
+        *,
+        started_at: Any = None,
+        completed_at: Any = None,
+    ) -> None:
         """Emit workflow record -- delegates to TelemetryService when ctx is provided."""
         if self._ctx and self._ctx.telemetry:
             model_fn = self.get_model_for_tier if hasattr(self, "get_model_for_tier") else None
-            self._ctx.telemetry.emit_workflow_record(result, model_fn)
+            self._ctx.telemetry.emit_workflow_record(
+                result, model_fn, started_at=started_at, completed_at=completed_at
+            )
             return
-        super()._emit_workflow_telemetry(result)
+        super()._emit_workflow_telemetry(result, started_at=started_at, completed_at=completed_at)
 
     def _generate_run_id(self) -> str:
         """Generate run ID -- delegates to TelemetryService when ctx is provided."""
