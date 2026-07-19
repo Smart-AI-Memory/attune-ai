@@ -54,12 +54,20 @@ class TestPathSecurity:
     @pytest.mark.parametrize(
         "bad",
         [
+            # Unix-style absolute: on Windows, Path(...).is_absolute()
+            # is False for these (rooted, drive-less) — the validator
+            # must flag them under POSIX flavor explicitly. Regression
+            # guard for the windows-latest lane failure (2026-07-19).
             "/etc/passwd",
+            "/abs/unix.py",
             "../outside.py",
             "a/../../outside.py",
             ".git/hooks/pre-commit",
             "~/x.py",
             "C:evil.py",
+            "C:\\evil.py",
+            "\\\\server\\share\\evil.py",
+            "\\rooted.py",
         ],
     )
     def test_dangerous_paths_rejected(self, bad: str) -> None:

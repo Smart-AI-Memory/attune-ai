@@ -32,7 +32,7 @@ import subprocess  # nosec B404 — fixed argv git/check commands, never shell=T
 import tempfile
 import uuid
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 #: Output kept per check (tail — failure summaries live at the end).
 RECEIPT_TAIL_CHARS = 2000
@@ -89,7 +89,20 @@ def _validate_rel_path(raw: str) -> str:
     if not path:
         raise ProposalError("empty file path in proposal")
     pure = Path(path)
-    if pure.is_absolute() or path.startswith(("~", "\\")) or re.match(r"^[A-Za-z]:", path):
+    # Check absoluteness under BOTH path flavors, not the running
+    # platform's: on Windows, Path("/etc/passwd").is_absolute() is False
+    # (rooted but drive-less), so a platform-native check waves through
+    # Unix-style absolute paths — caught live by the windows-latest CI
+    # lanes. PurePosixPath flags "/..." everywhere; PureWindowsPath
+    # flags "C:\\..." and UNC "\\\\server\\share" everywhere; the
+    # prefix/drive checks keep rejecting rooted ("\\x") and
+    # drive-relative ("C:evil.py") forms neither flavor calls absolute.
+    if (
+        PurePosixPath(path).is_absolute()
+        or PureWindowsPath(path).is_absolute()
+        or path.startswith(("~", "/", "\\"))
+        or re.match(r"^[A-Za-z]:", path)
+    ):
         raise ProposalError(f"absolute path rejected: {path!r}")
     parts = pure.parts
     if ".." in parts:
