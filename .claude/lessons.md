@@ -16236,3 +16236,37 @@ def ", start_idx + 1)` for module-
   main src). When handing a user a `python -m` command for code
   merged after the latest release, always spell the venv python,
   never bare `python`.
+
+- **`git push` printing `* [new branch]` for a branch you pushed
+  minutes ago is the tell that its PR auto-merged underneath you —
+  the follow-up commit is now on an orphan recreation, not in any
+  PR**: 2026-07-19, a follow-up commit to PR #1453's branch pushed
+  as `[new branch]` because the PR had squash-merged (+ deleted
+  the branch) while the commit was being authored. The push
+  silently recreated the branch; the commit was in no PR and
+  based on pre-merge history. Recovery: cherry-pick the stranded
+  commit onto a fresh branch off `origin/main`, open a new PR,
+  `git push origin --delete` the recreated orphan. Prevention:
+  before pushing a follow-up to an auto-merge-armed PR, check
+  `gh pr view <n> --json state` — or just always cut follow-ups
+  as fresh branches once a PR is armed. Extends the
+  "auto-merge-safe class strands follow-up commits" lesson to ANY
+  armed PR whose CI window closes mid-work; the `[new branch]`
+  output line is the diagnostic the original lesson lacked.
+
+- **A `.claude/skills/<name>/` shim makes a plugin-shipped skill
+  usable in-repo BEFORE the next plugin release — and new skill
+  dirs register in the LIVE session on write, no restart**:
+  2026-07-19, `/roundtable` returned "Unknown command" because the
+  skill lives in `plugin/skills/` and the installed plugin (10.5.0)
+  predated it. Fix: a thin `.claude/skills/roundtable/SKILL.md`
+  shim — real frontmatter (name/description/argument-hint so the
+  slash command registers) + a body that just says "Read the
+  plugin copy and follow it exactly" (no content duplication; the
+  plugin copy stays canonical and `sync_agents_skills.py`
+  correctly shadows the shim for the `.agents/` mirror). The
+  harness picked the new skill up mid-session — the very next
+  `/roundtable` invocation worked without restart. Pattern applies
+  to any plugin skill developed in-repo: ship the shim for
+  dogfooding, remember the real availability for users still
+  requires a plugin release.
