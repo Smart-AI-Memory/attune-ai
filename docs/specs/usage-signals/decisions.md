@@ -585,3 +585,22 @@ evidence the experiment can produce — sharper than an undisturbed
 quiet window. The 07-27 interpretation must therefore read THREE
 series together: the download curve, the tag date, and the
 LinkedIn-response count. Not a violation; an instrumented probe.
+
+## D14 — requirements refreshed by the round table (2026-07-19)
+
+The 2026-06-11 requirements froze at approval while D1–D13 shipped
+most of them; the spec had no honest done/remaining split and no
+termination condition. The round table's third spec-authoring loop —
+the FIRST under armed rotation (thread `us-refresh-001`, codex
+drafted per `next_owed`, claude + antigravity critiqued 12 + 6 cited
+items, dissent register attested empty and moderator-verified) —
+authored the replacement; the chair approved all seven items
+(US-1..US-7) per-item, 2026-07-19.
+
+Headline outcomes: US-1/US-2/spend marked DONE with regression-pin
+requirements; US-3 = bounded direct outreach (the real remaining
+work); US-4 = reach-capture strategy (pre-tag before-snapshots,
+completeness manifest — kills the 10.5.0 silent-0/5 class); US-6 =
+R3 closes only on a three-panel receipt; US-7 = D11a/D11b ledger
+disambiguation + the refreshed done-when. `requirements.md` replaced
+(prior text in git history).
