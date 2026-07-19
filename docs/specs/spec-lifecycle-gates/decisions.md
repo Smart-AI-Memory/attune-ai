@@ -48,3 +48,52 @@ primitives, migrations → always chair). Sub-spec-tier work (the
 xml-enhanced-prompts "Do NOT use" list) sees only the baseline —
 the ceremony-inflation guard all three seats demanded. (Resolves
 follow-up (c), codex seat.)
+
+## 2026-07-19 — Requirements authored by producing run; ruled per item (chair: "as recommended")
+
+Slot history: `20260719-1` failed honestly (LINT_DIRTY — uncited
+codex critique; fixed by the CITATION_EXAMPLE worked-example brief,
+PR #1478); `20260719-2` failed pre-invocation (INPUT_INVALID —
+moderator-side stale pack path; zero spend); `20260719-3` produced
+(drafter: antigravity per rotation; 4 invocations; 9 items; 7
+staged + 2 deferred over the TR-6 cap; dissent empty-attested).
+
+Rulings: RR-1..RR-6, RR-8, RR-9 APPROVED (RR-8/RR-9 restaged from
+deferred_over_cap per the TR-6 recourse); RR-1/RR-3/RR-4/RR-5/RR-6
+carry in-place chair edits — every specific module path the drafter
+cited was verified MISSING against the tree (text-only seat
+confabulation), corrected and marked `[chair edit]`, and the
+verdict-ledger destination corrected to G1's machine ledger. RR-7
+DECLINED as written: its "measured ~3.2 rulings/week" baseline was
+invented; re-admit once the chair-interaction count is actually
+measured. The confabulation episode is itself the live evidence for
+this spec's symbol-reality gate — recorded here so the design phase
+treats seat-cited paths as claims to verify, never facts.
+
+Compiled deterministically (`compiler.compile_requirements`,
+approved items only, declined RR-7 in the header) into
+`requirements.md`; thread `producing-spec-lifecycle-gates-20260719-3`
+promoted per-item.
+
+## 2026-07-19 — Design chair-approved as written; G4/G5 ruled (chair)
+
+The chair approved `design.md` as written, adopting the moderator's
+recommendations on both open questions:
+
+**G4 — RR-7 re-admitted amended, effective now.** The declined
+batching requirement returns with the MEASURED baseline (~26.5
+decisions.md commits/week; 159 commits / 6 weeks on main — an
+upper-bound proxy, re-measured at implementation) replacing the
+drafter's invented figure. Threshold: gate-generated
+`CHAIR_REQUIRED` volume > 20% of baseline → weekly batch summary;
+security-surface and `BLOCKED` escalations never batch.
+requirements.md amended in place.
+
+**G5 — Block semantics at /spec boundaries.** Hard-block on
+`BLOCKED` (the skill cannot proceed); soft-block on
+`CHAIR_REQUIRED` (proceed only with the receipt rendered and an
+explicit chair acknowledgment recorded).
+
+Next: Phase 3 (tasks.md decomposition) then implementation, gated
+on #1475's merge for the corpus-readiness seam. Sequencing per
+design.md's dependency section.
