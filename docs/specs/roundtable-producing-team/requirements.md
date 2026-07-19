@@ -92,9 +92,9 @@ apply-ready diff output contracts (antigravity).
 - **TR-5** The dissent register is non-empty or explicitly
   attested empty in every chair presentation; a table that never
   disagrees is a defect signal, not a convergence signal.
-- **TR-6** Candidates per session are capped (number: chair
-  decision, open) so chair attention stays real; per-item
-  invocation budgets kill stuck items cheaply.
+- **TR-6** Candidates per session are capped at **7** (chair-ruled
+  2026-07-19) so chair attention stays real; per-item invocation
+  budgets kill stuck items cheaply.
 - **TR-7** Spec drafts stage in untracked scratch or the board,
   structured per-REQ; chair rules item-by-item; only approved
   REQs are written to the spec file.

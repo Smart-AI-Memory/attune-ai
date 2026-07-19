@@ -146,7 +146,57 @@ chair-terminal receipt drove it).
 
 Remaining: **V2-P4** (rotation + producing-team routines) — gated
 on one more spec-authoring loop run ON the P2 compiler machinery;
-and the chair's TR-6 cap number.
+and the chair's TR-6 cap number. *(Both closed 2026-07-19 — next
+section.)*
+
+## Loop #2 + P4 requirements — thread table-p4-001 (2026-07-19, chair: Patrick)
+
+The phase gate ("one more spec-authoring loop ON the P2 compiler
+machinery") was satisfied by running the loop WITH V2-P4 itself as
+the subject — chair-chosen over waiving the gate. Second full loop
+through the P1–P3 machinery, fixed roles (claude drafts, codex +
+antigravity critique):
+
+- **TR-6 ruled: 7** candidates per session (matches the first live
+  loop's 7 REQs; requirements.md updated).
+- **Loop receipts**: draft 7 REQs, `lint_draft` clean first pass;
+  critiques codex 15 items (103s) + antigravity 9 items (51s),
+  both `lint_critique` clean, both `needs-revision` — headline
+  catches: the RR-2/RR-3 rotation-pointer self-contradiction
+  (both critics independently), quorum-abort vs binding R6
+  (codex), headless compile has no chair rulings so it must
+  assemble an UNRULED candidate compilation (codex), lint repairs
+  must not consume the D3 ceiling (antigravity), missing
+  schedulable input contract (both), board TTL vs durable rotation
+  ledger (codex). Final revision `lint_final` clean: 5 agreed,
+  RR-3 contested, RR-5 2-1, dissent register 4 entries. Objection
+  ledger linked (19 objections across 7 items). Compiled
+  deterministically to
+  [p4-requirements.md](p4-requirements.md) via
+  `compile_requirements`.
+- **Chair rulings (elicit-form, 2026-07-19)**: all seven items
+  APPROVED. RR-3 quorum: **proceed + UNCRITIQUED flag** (binding
+  R6 preserved; the drafter's abort alternative declined — the
+  dissent survives in the register). RR-5 R5 cap:
+  **max_invocations = 10 RATIFIED** (4 role invocations + 4
+  repairs + 2 discovery margin; codex's pre-ratification dissent
+  recorded 2-1). Producing-run cadence: **per-spec arming** (the
+  chair queues a grounding pack per subject; no standing spec
+  cadence).
+- Board thread `table-p4-001` (TTL 7d from 2026-07-19): question +
+  grounding pack, draft, both critiques, final, synthesis, chair
+  ruling; promoted (item 5) to p4-requirements.md.
+
+Baseline ledger per RR-4 (structured lines; `rotation_status`
+input):
+
+P4-BASELINE: thread=mem-signal-001 promoted=MI-1..MI-7 downstream=PR#1459
+P4-BASELINE: thread=table-p4-001 promoted=RR-1..RR-7 downstream=pending
+
+Rotation is NOT armed (no `P4-ROTATION:` line): eligibility per
+RR-4 needs the second baseline's downstream ref to become
+non-pending (the P4 implementation PR consuming these
+requirements), then an explicit chair arming ruling.
 
 ## Provenance
 
