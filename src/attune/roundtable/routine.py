@@ -116,16 +116,22 @@ def run_command(
       — CI-faithful (unset would let dotenv re-inject a real key
       downstream).
     - Seats (``provider_clean=True``): every ``ANTHROPIC_*`` and
-      ``CLAUDE*`` variable REMOVED. When the runner itself executes
-      inside a Claude Code session, the child inherits
+      ``CLAUDE*`` variable REMOVED — except a NON-EMPTY
+      ``ANTHROPIC_API_KEY``, which passes through (chair-authorized
+      API path for the claude seat, 2026-07-18). When the runner
+      executes inside a Claude Code session, the child inherits
       ``ANTHROPIC_BASE_URL`` + ``CLAUDE_CODE_*`` and 401s against the
       parent session's proxy; an EMPTY ``ANTHROPIC_API_KEY`` likewise
-      401s the ``claude`` CLI instead of letting its own stored auth
-      kick in. Scrubbing the whole provider surface fixes both and
+      401s the ``claude`` CLI instead of letting its stored auth kick
+      in. Scrubbing those while keeping a real key gives the claude
+      seat two working auth paths (API key, else stored login) and
       keeps harness identifiers out of member processes (R1 hygiene).
     """
     if provider_clean:
         env = {k: v for k, v in os.environ.items() if not k.startswith(("ANTHROPIC_", "CLAUDE"))}
+        api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        if api_key:
+            env["ANTHROPIC_API_KEY"] = api_key
     else:
         env = {**os.environ, "ANTHROPIC_API_KEY": ""}
     try:
@@ -179,10 +185,38 @@ def run_routine(
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
     thread = f"routine-{spec.name}-{stamp}"
 
+    # Progress goes to stdout as it happens: a routine's first check
+    # can run for minutes, and silence reads as a hang (live-run
+    # receipt, 2026-07-18 — the chair ran it twice).
+    print(f"routine {spec.name!r}: thread {thread!r}", flush=True)
+
+    if not dry_run:
+        # Reach the board BEFORE the check battery: a stale REDIS_URL
+        # (live receipt: a retired cloud host in ~/.zshrc) must fail
+        # in seconds with a pointer, not after minutes of checks with
+        # a raw traceback.
+        board = board or Board()
+        import redis  # noqa: PLC0415 — optional dependency, import at use
+
+        try:
+            board.ensure_functions()
+        except redis.RedisError as exc:
+            url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
+            print(
+                f"cannot reach the round-table board ({url}): {exc}\n"
+                "A stale REDIS_URL export is the usual cause. Point it at a "
+                "reachable instance or run with the local default:\n"
+                "  REDIS_URL=redis://127.0.0.1:6379/0 "
+                f"python -m attune.roundtable.routine {spec.name}",
+                flush=True,
+            )
+            raise SystemExit(2) from exc
     evidence: list[str] = []
     for label, argv in spec.checks:
+        print(f"  check {label} ... running (up to {CHECK_TIMEOUT}s)", flush=True)
         code, tail = run_check(argv, timeout=CHECK_TIMEOUT)
         status = "PASS" if code == 0 else f"FAIL (exit {code})"
+        print(f"  check {label}: {status}", flush=True)
         evidence.append(f"### {label}: {status}\n{tail}")
     question = spec.question + "\n\n" + "\n\n".join(evidence)
     brief = BRIEF_PREAMBLE + question
@@ -191,8 +225,6 @@ def run_routine(
         print(f"[dry-run] thread would be {thread!r}; brief follows:\n\n{brief}")
         return thread
 
-    board = board or Board()
-    board.ensure_functions()
     board.post_message(thread, "moderator", "question", question, routine=spec.name)
 
     invocations = 0
@@ -209,10 +241,12 @@ def run_routine(
             )
             break
         invocations += 1
+        print(f"  seat {seat} ... briefing", flush=True)
         started = datetime.datetime.now()
         code, reply = invoke_seat(recipe, brief)
         duration = f"{(datetime.datetime.now() - started).total_seconds():.0f}s"
         if code != 0 or not reply.strip():
+            print(f"  seat {seat}: ABSENT (exit {code}, {duration})", flush=True)
             board.post_message(
                 thread,
                 seat,
@@ -222,6 +256,7 @@ def run_routine(
                 duration=duration,
             )
             continue
+        print(f"  seat {seat}: position posted ({duration})", flush=True)
         board.post_message(thread, seat, "position", reply, round=1, duration=duration)
         positions.append((seat, reply))
 
@@ -234,10 +269,13 @@ def run_routine(
             "compact. Text only.\n\n"
             + "\n\n".join(f"## {seat}\n{reply}" for seat, reply in positions)
         )
+        print("  synthesis ... running", flush=True)
         code, digest = invoke_seat(("claude", "-p", "{brief}"), synthesis_brief)
         if code == 0 and digest.strip():
+            print("  synthesis: posted", flush=True)
             board.post_message(thread, "moderator", "synthesis", digest, round=1)
         else:
+            print(f"  synthesis: FAILED (exit {code})", flush=True)
             # Silence here would read as success — name the failure on
             # the thread so the chair sees a digest-less run for what
             # it is.
