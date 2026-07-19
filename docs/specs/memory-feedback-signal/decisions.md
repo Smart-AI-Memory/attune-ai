@@ -66,9 +66,51 @@ pass from `project_memory_as_insurance` /
   chair attention was spent on ONE genuinely-open question, not
   five.
 
+## Implementation SHIPPED — receipts (2026-07-19, PR #1459)
+
+Built same-day on the chair's "go build" (tier: structured
+one-shot — MI-1..MI-7 proved tightly bounded, as predicted).
+`plugin/hooks/_memory_verdicts.py` + `session_stash.py` wiring +
+`ops/data.py` `read_memory_signal` / caption swap.
+
+**MI-6 receipts, as specified:**
+
+- **MI-6a (CI-mandatory, non-mocked):** real `log_memory_event`
+  surfacing write → real scorer run with Ollama ABSENT (dead
+  loopback port) → real reader aggregation — all `unscored`,
+  rates `None` (never fabricated zeros), caption UNCHANGED
+  (all-unscored must not flip it). In
+  `tests/unit/hooks/test_memory_verdicts.py`.
+- **MI-6b (hermetic, CI):** a real loopback fake-Ollama HTTP
+  server (not a mocked client) exercises all three scored labels
+  including the 2026-07-08 stale-`/recall` `wrong` case, the MI-7
+  injection coercions (attacker-chosen labels and unknown items
+  never survive), idempotent re-run, and the caption swap firing
+  on scored verdicts (`wrong_rate` 0.5 rendered with the
+  denominator note).
+- **MI-6c (real-Ollama, recorded pre-release):** live
+  `llama3.1:8b` run in an isolated `ATTUNE_HOME` (2026-07-19):
+  a followed lesson scored `acted_on`, a stale finding scored
+  `wrong` — real nondeterministic model output surviving the
+  strict parse contract, exactly the false-positive class that
+  motivated the feature.
+
+Suite: 11 new tests; hooks + ops = 2191 passed. All pre-commit
+hooks green.
+
+**Operational caveat (recorded, not a blocker):** the 3s default
+verdict timeout is the session-end latency budget; a COLD
+`llama3.1:8b` needs longer (the MI-6c receipt used
+`ATTUNE_MEMORY_VERDICT_TIMEOUT=60`). Warm-model sessions score
+fine; cold-start sessions degrade to `unscored` — which is the
+designed honest behavior, but expect early denominators to skew
+`unscored` until usage keeps the model warm. Revisit the default
+only with measured data.
+
 ## Next
 
-Implementation is NOT started (this loop authored requirements
-only, per the V2-P1 ratified scope). Build shape when taken up:
-likely a structured one-shot or XML task set (MI-1..MI-7 are
-tightly bounded); tier recommendation at pickup per R10.
+The denominator now builds itself: every session's Stop hook
+scores its own injections. After a few weeks of accumulation,
+read `wrong_rate` via `attune.ops.data.read_memory_signal` and
+let task-shape routing fall out of the measured noise (ratified
+frame) — no earlier.
