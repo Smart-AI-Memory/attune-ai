@@ -1065,6 +1065,104 @@ INTERVENTION_SIGNAL_CAPTION = (
     "helpful interventions, never a cost-savings percentage."
 )
 
+#: Appended to the caption ONLY when scored memory_signal verdicts exist
+#: in the same aggregation scope (MI-5): the denominator the base
+#: caption calls missing is then actually measured. Still never a
+#: savings figure.
+INTERVENTION_DENOMINATOR_NOTE = (
+    " A measured verdict denominator is present for this scope: "
+    "wrong_rate is the headline hard-noise metric (chair ruling "
+    "2026-07-19); ignored surfacings are expected premium, reported "
+    "separately — still not a savings percentage."
+)
+
+#: Verdict labels the memory_signal reader admits (memory-feedback-signal
+#: MI-2/MI-5); anything else fails schema validation and is dropped.
+MEMORY_SIGNAL_LABELS = ("acted_on", "ignored", "wrong", "unscored")
+
+
+def read_memory_signal(path: Path | None = None) -> dict[str, Any]:
+    """Aggregate ``memory_signal`` verdicts into the noise denominator.
+
+    Implements MI-5 of ``docs/specs/memory-feedback-signal``: scoped
+    to the events-file family at ``path`` (the live file plus rotated
+    ``memory_events.*.jsonl`` siblings in the same directory, so
+    rotation-split verdicts still aggregate), deduped on the full
+    verdict identity ``(session_id, surfacing_id, item_id)`` keeping
+    the latest record, with ``unscored`` counted separately and
+    excluded from every rate denominator.
+
+    Rates (chair ruling 2026-07-19, thread ``mem-signal-001``):
+    ``wrong_rate = wrong / (acted_on + wrong)`` is the HEADLINE
+    hard-noise metric; ``ignored_rate`` and the combined
+    ``candidate_noise_rate`` are co-reported, reversible fields.
+    Rates are ``None`` (never fabricated zeros) when their
+    denominator is empty. This is deliberately not, and must never
+    become, a savings figure.
+
+    Args:
+        path: Override the live events-file location (tests pass a
+            fixture). ``None`` resolves to the default
+            ``memory_events.jsonl``.
+
+    Returns:
+        JSON-serializable dict with ``counts`` (per label),
+        ``scored``, ``unscored``, ``wrong_rate``, ``ignored_rate``,
+        ``candidate_noise_rate``, and ``headline`` (the ruled metric
+        name). Missing files yield zeroed counts, never an exception.
+    """
+    if path is None:
+        path = attune_home() / "telemetry" / "memory_events.jsonl"
+
+    files: list[Path] = []
+    if path.parent.is_dir():
+        files = sorted(p for p in path.parent.glob("memory_events.*.jsonl") if p != path)
+    if path.exists():
+        files.append(path)  # live file last so its records win the dedup
+
+    latest: dict[tuple[str, str, str], str] = {}
+    for file in files:
+        try:
+            with file.open("r", encoding="utf-8") as fh:
+                for line in fh:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        rec: dict[str, Any] = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if rec.get("event") != "memory_signal":
+                        continue
+                    verdict = rec.get("verdict")
+                    if verdict not in MEMORY_SIGNAL_LABELS:
+                        continue  # schema validation: unknown labels dropped
+                    key = (
+                        str(rec.get("session_id", "")),
+                        str(rec.get("surfacing_id", "")),
+                        str(rec.get("item_id", "")),
+                    )
+                    latest[key] = verdict
+        except OSError:
+            continue
+
+    counts = dict.fromkeys(MEMORY_SIGNAL_LABELS, 0)
+    for verdict in latest.values():
+        counts[verdict] += 1
+    scored = counts["acted_on"] + counts["ignored"] + counts["wrong"]
+    hard_denom = counts["acted_on"] + counts["wrong"]
+    return {
+        "counts": counts,
+        "scored": scored,
+        "unscored": counts["unscored"],
+        "wrong_rate": (counts["wrong"] / hard_denom) if hard_denom else None,
+        "ignored_rate": (counts["ignored"] / scored) if scored else None,
+        "candidate_noise_rate": (
+            (counts["wrong"] + counts["ignored"]) / scored if scored else None
+        ),
+        "headline": "wrong_rate",
+    }
+
 
 def estimate_intervention_signal(path: Path | None = None) -> dict[str, Any]:
     """Estimate a LABELED benefit signal from ``jit_recall`` surfacings.
@@ -1117,12 +1215,21 @@ def estimate_intervention_signal(path: Path | None = None) -> dict[str, Any]:
             surfacings = 0
 
     top_rules = heapq.nlargest(10, rule_counts.items(), key=lambda kv: kv[1])
-    return {
+    result: dict[str, Any] = {
         "rule_surfacings": surfacings,
         "distinct_rules": len(rule_counts),
         "top_rules": [[rule, count] for rule, count in top_rules],
         "caption": INTERVENTION_SIGNAL_CAPTION,
     }
+    # MI-5: present the measured noise denominator alongside the upper
+    # bound ONLY when at least one valid SCORED verdict exists in the
+    # same aggregation scope (this path family). All-unscored, orphaned,
+    # or absent verdicts keep the upper-bound-only caption unchanged.
+    signal = read_memory_signal(path)
+    if signal["scored"] > 0:
+        result["noise_denominator"] = signal
+        result["caption"] = INTERVENTION_SIGNAL_CAPTION + INTERVENTION_DENOMINATOR_NOTE
+    return result
 
 
 #: Honesty caption for the feedback (noise) signal. A rejection rate is
