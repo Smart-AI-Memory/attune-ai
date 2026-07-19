@@ -1,13 +1,11 @@
 # Spec-Lifecycle Gates v1 — Tasks
 
-**Status: tasks drafted — awaiting chair approval to execute**
-(2026-07-19). Decomposition per the approved `design.md`
-(dependency order honored; PR #1475 merged, so the
-corpus-readiness seam resolves on main). Each task is
-cold-handoff executable and names the requirement(s) it
-discharges plus its delegation-receipt type. Implementation
-starts only on explicit chair go — tasks may land as separate
-PRs or one stacked series, executor's call per repo discipline.
+**Status: executed** (2026-07-19, chair go "go on implementation";
+all seven tasks landed in one PR — receipts per task below and in
+`decisions.md`'s closure entry). One implementation-discovered
+deviation: the design's `src/attune/gates/` destination was already
+the collaboration-gates package, resolved as the
+`attune.gates.lifecycle` subpackage (parent untouched).
 
 ## T1 — Protocol + ledger (RR-1, RR-2, G1)
 

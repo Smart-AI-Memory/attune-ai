@@ -500,6 +500,47 @@ class TestBriefContracts:
         assert TAG_EXAMPLE not in repair
 
 
+class TestSymbolRealityGateOnFinal:
+    """T5 of spec-lifecycle-gates: the post-compile boundary gate.
+
+    A final draft citing unresolvable paths must degrade the run
+    with a LINT_DIRTY gate receipt in the digest — candidates still
+    stage for the chair (non-terminal, per the design's trigger #2;
+    motivating episode: the slot-3 confabulated draft).
+    """
+
+    def test_confabulated_final_degrades_with_gate_receipt(self, tmp_path) -> None:
+        board = _real_board_or_skip()
+        confabulated_final = FINAL_OK.replace(
+            "Rationale one.",
+            "Rationale one, per `attune/nonexistent/thing.py`.",
+        )
+        spec = _spec(tmp_path)
+        try:
+            seats = FakeSeats(final=confabulated_final)
+            result = run_producing(spec, board=board, invoke=seats)
+            assert result.status == "degraded"
+            gate_receipts = [
+                r
+                for r in result.receipts
+                if r.code == "LINT_DIRTY" and "symbol-reality" in r.detail
+            ]
+            assert len(gate_receipts) == 1
+            assert "attune/nonexistent/thing.py" in (gate_receipts[0].evidence or "")
+            assert result.staged  # non-terminal: candidates still staged
+        finally:
+            _cleanup(board, spec.run_id)
+
+    def test_clean_final_stays_clean(self, tmp_path) -> None:
+        board = _real_board_or_skip()
+        spec = _spec(tmp_path)
+        try:
+            result = run_producing(spec, board=board, invoke=FakeSeats())
+            assert result.status == "clean"  # gate PASS adds no receipt
+        finally:
+            _cleanup(board, spec.run_id)
+
+
 class TestCritiqueCitationContract:
     """The citation contract is taught by worked example too.
 

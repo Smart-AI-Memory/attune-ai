@@ -136,6 +136,21 @@ When the user chooses "Start a new spec":
 5. Use `AskUserQuestion`: "Spec saved with N tasks.
    Ready to review?"
 
+### Boundary gate (spec-lifecycle-gates, G5)
+
+When the plan belongs to a spec under `docs/specs/<slug>/`, run the
+lifecycle gates before presenting the review:
+
+```bash
+attune gates check tasks --spec <slug> --changed <paths the plan touches>
+```
+
+Render every receipt to the user. G5 semantics are binding: exit 2
+(`BLOCKED`) — do NOT proceed to review; the findings must be fixed
+first. Exit 1 (`CHAIR_REQUIRED`) — present the receipts and proceed
+only after the user explicitly acknowledges them (record the
+acknowledgment in the session). Exit 0 — proceed.
+
 ## Stage 2: Review
 
 1. Load tasks:
@@ -192,6 +207,12 @@ Use `AskUserQuestion`: "Ready to start executing?"
 - "Go back to review"
 
 ## Stage 4: Execute
+
+Before the first task, when the plan belongs to a
+`docs/specs/<slug>/` spec, run the execution-boundary gates
+(`attune gates check execution --spec <slug> --changed <paths>`)
+with the same G5 semantics as the Stage 2 gate — hard-stop on
+`BLOCKED`, explicit user acknowledgment on `CHAIR_REQUIRED`.
 
 For each pending task:
 

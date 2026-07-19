@@ -97,3 +97,48 @@ explicit chair acknowledgment recorded).
 Next: Phase 3 (tasks.md decomposition) then implementation, gated
 on #1475's merge for the corpus-readiness seam. Sequencing per
 design.md's dependency section.
+
+## 2026-07-19 — Implementation executed (T1–T7); closure receipts (chair go)
+
+All seven tasks landed on `feat/spec-lifecycle-gates-v1` in one PR.
+
+**Deviation recorded:** the design's `src/attune/gates/` destination
+was already taken by the collaboration-gates package (spend gate) —
+a collision the design's seam probes missed because they verified
+sources, not the destination namespace. Resolved as the
+`attune.gates.lifecycle` subpackage; the parent's dependency-light
+`__init__` is untouched. (Filed as evidence that the symbol-reality
+discipline must also cover DESTINATION paths in future designs.)
+
+**Receipts:**
+- Suite: 85 gates tests serial (protocol closure, ledger isolation
+  drift guard, activation surface-map cases, waiver expiry,
+  full-seam event→ledger→ruling linkage); 35 producing serial (the
+  post-compile gate degrades a confabulated final non-terminally,
+  LINT_DIRTY-coded, candidates still staged); 137 curator (the
+  spec_drift SourceReader surfaces stale / approved-not-shipped
+  buckets; registered in `core._SOURCE_MODULES`).
+- Behavioral: the slot-3 confabulated draft is a permanent
+  regression fixture — symbol-reality yields BLOCKED with all seven
+  missing paths named.
+- Live-fire: `attune gates check requirements --spec
+  run-record-corpus` → PASS/exit 0 after the resolver learned
+  spec-relative, repo-idiomatic (`src/attune` prefix), and
+  `~`-runtime path classes (three false-positive classes found and
+  fixed BY the live fire); the dogfood run `attune gates check
+  tasks --spec spec-lifecycle-gates` → PASS/exit 0 — the gates
+  gate their own spec.
+- G5 semantics verified: BLOCKED → exit 2 (hard), CHAIR_REQUIRED →
+  exit 1 (soft), receipts always ledgered, spec tree never mutated.
+
+**Trigger wiring:** `/spec` skill Stage 2 + Stage 4 boundary gates
+(G5 binding; `.agents` mirror re-projected via
+`sync_agents_skills.py`); producing runs gate the compiled
+requirements post-compile (closed taxonomy honored — gate findings
+ride LINT_DIRTY, never a new code).
+
+**G4 note:** the batching threshold's baseline re-measure hook
+lives with the ledger config; activation exposes
+`BATCH_THRESHOLD_FRACTION = 0.20`. Batch-mode surfacing itself is
+deferred to first real CHAIR_REQUIRED volume (nothing to batch on
+day one — honest sequencing, not scope cut).
