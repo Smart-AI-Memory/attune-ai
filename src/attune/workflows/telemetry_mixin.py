@@ -268,6 +268,23 @@ class TelemetryMixin:
 
         """
         from attune.models import WorkflowRunRecord, WorkflowStageRecord
+        from attune.models.telemetry.run_context import (
+            resolve_project_identity,
+            resolve_run_trigger,
+        )
+
+        # Idempotence guard (run-record-corpus RC-2): the BaseWorkflow
+        # execute-wrapper AND ExecutionMixin's epilogue both call this;
+        # if a future override chains through super().execute(), only
+        # the first emission for a given result object records.
+        # ``is True`` (not truthiness): a MagicMock result fabricates a
+        # truthy attr on access; only OUR literal marker counts.
+        if result is None or getattr(result, "_run_record_emitted", False) is True:
+            return
+        try:
+            result._run_record_emitted = True
+        except (AttributeError, TypeError):
+            pass  # non-standard result object — emit unguarded
 
         # Build stage records
         stages = [
@@ -293,6 +310,8 @@ class TelemetryMixin:
         record = WorkflowRunRecord(
             run_id=self._run_id or str(uuid.uuid4()),
             workflow_name=self.name,
+            trigger=resolve_run_trigger(),
+            project=resolve_project_identity(),
             started_at=result.started_at.isoformat(),
             completed_at=result.completed_at.isoformat(),
             stages=stages,

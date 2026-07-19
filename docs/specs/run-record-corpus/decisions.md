@@ -44,6 +44,51 @@ not mined. Evidence (measured 2026-07-19, this session):
   validation that does not exist today.
 
 Requirements header flipped DRAFT → chair-ruled in the same
-commit. Execution is NOT yet armed — next step is the chair
-queueing/authorizing implementation per the per-spec-arming
-cadence ruling (roundtable-producing-team decisions).
+commit.
+
+## 2026-07-19 — Execution armed and implemented (chair: option 1)
+
+Chair armed execution the same day. Implementation (branch
+`feat/run-record-corpus`): RC-1 canonical stream routing in
+`TelemetryStore` (explicit `storage_dir` still keeps every file
+local — test isolation unchanged); RC-3 `trigger`/`project` fields
++ `run_context.py` resolvers wired into BOTH emit paths
+(`TelemetryMixin` and `TelemetryService`); RC-4 store singleton
+reset added to the existing `_isolate_attune_home` autouse fixture
++ drift-guard test; RC-5 no-delete 50 MB rotation into
+`telemetry/archive/` + ops-prune non-interference test; RR-4
+amendment landed in pipeline-learner (see its decisions.md).
+
+**RC-2 audit result — the SDK-era dry pipe had a second cause.**
+Live-fire probing found the modern SDK-native workflows
+(code-review, security-audit, etc. — 17 files) override
+`execute()` wholesale and never reach `ExecutionMixin.execute`'s
+telemetry epilogue: they logged per-stage usage but NO run record.
+That, not only worktree fragmentation, is why the corpus has
+near-zero real records in the June–July SDK era. Closed at one
+seam: `BaseWorkflow.__init_subclass__` wraps any subclass-defined
+async `execute` to emit best-effort after completion, with an
+idempotence marker on the result object (guarded `is True` so
+MagicMock results can't fake it). A run that raises without
+producing a result emits nothing — not a run. Receipts: live-fire
+`CodeReviewWorkflow.execute()` from this worktree against a
+scratch `ATTUNE_HOME` landed records on both the validation-error
+and keyless-SDK-failure paths with `trigger=manual`,
+`project=attune-ai` (worktree resolved to parent repo); full unit
+suite 17,719 passed; new module serial-clean.
+
+**Audit gap (named follow-up, out of this PR):** agent-team
+workflows that bypass `BaseWorkflow` entirely (observed:
+`health-check`, `agents_executed=3`, ran green, emitted nothing)
+need their own emission seam. Low corpus impact — the volume is in
+the SDK workflows — but RC-2's "every path" is not fully closed
+until it lands.
+
+**Named follow-up (RC-3, not in this PR):** the dashboard
+rec-click attribution stamp — threading a `trigger` field through
+`POST /workflows/{name}/run` → `RunnerService.execute` →
+`ATTUNE_RUN_TRIGGER` in the subprocess env, plus the client-side
+send on next-workflow recommendation clicks. Until it lands,
+dashboard runs record as `manual` (correct for workflow-button
+clicks, conservative for rec clicks per `resolve_run_trigger`'s
+stated bias).

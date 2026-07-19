@@ -252,9 +252,16 @@ class TelemetryService:
             for s in result.stages
         ]
 
+        from attune.models.telemetry.run_context import (
+            resolve_project_identity,
+            resolve_run_trigger,
+        )
+
         record = WorkflowRunRecord(
             run_id=self._run_id or str(uuid.uuid4()),
             workflow_name=self._workflow_name,
+            trigger=resolve_run_trigger(),
+            project=resolve_project_identity(),
             started_at=result.started_at.isoformat(),
             completed_at=result.completed_at.isoformat(),
             stages=stages,
