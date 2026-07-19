@@ -256,6 +256,36 @@ the results → one synthesis pass → digest thread
 `routine-clean-run-<date>`. Review it with
 `/roundtable read <thread>`; promote per-item via Step 6.
 
+## Producing runs (V2-P4 — headless spec-authoring routines)
+
+A producing run executes the full spec-authoring loop headlessly
+(`attune.roundtable.producing`): draft → critique → final, every
+round gated by the compiler lints before posting, then an UNRULED
+candidate compilation staged on thread `producing-<slug>-<slot>` —
+at most 7 promotable candidates (TR-6, chair-ruled), overflow held
+as `deferred_over_cap`, R8 absolute (the run never promotes).
+
+```bash
+python -m attune.roundtable.producing <slug> "<subject>" <pack.md> --slot <slot>
+```
+
+- **Per-spec arming (chair-ruled)**: the chair queues a grounding
+  pack per subject; there is no standing spec cadence.
+- **Rotation** is computed from the owning spec's decisions.md
+  (`attune.roundtable.rotation.rotation_status`): fixed roles until
+  an explicit `P4-ROTATION: armed` chair line exists; the drafter
+  pointer (`next_owed`) advances only on served drafts, over the
+  rotation ledger (TTL-exempt, `Board.ledger_read`).
+- **Failure honesty**: a closed 12-code taxonomy
+  (`producing.FAILURE_CODES`); every degradation is receipted in
+  the digest, failures and dissent BEFORE candidates;
+  `BOARD_UNREACHABLE` receipts land in the launchd log (the one
+  class that cannot reach the board). R5 cap: `max_invocations=10`
+  (chair-ratified).
+- Review a run with `/roundtable read producing-<slug>-<slot>`;
+  the chair rules per item and the moderator recompiles with the
+  rulings (`compiler.compile_requirements`) — Step 6 unchanged.
+
 ## Arguments
 
 - `/roundtable <question>` — full deliberation (Steps 0–6).

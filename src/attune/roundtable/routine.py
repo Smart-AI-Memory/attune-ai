@@ -111,6 +111,7 @@ def run_command(
     stdin_text: str | None = None,
     timeout: int = SEAT_TIMEOUT,
     provider_clean: bool = False,
+    reply_chars: int = SEAT_REPLY_CHARS,
 ) -> tuple[int, str]:
     """Run one fixed-argv command keyless; return (exit code, output tail).
 
@@ -160,18 +161,28 @@ def run_command(
             reply = proc.stdout.strip()
         else:
             reply = (proc.stdout + proc.stderr).strip()
-        return proc.returncode, reply[:SEAT_REPLY_CHARS]
+        return proc.returncode, reply[:reply_chars]
     # Check output: the failure summary lives at the END — keep the tail.
     out = (proc.stdout + proc.stderr).strip()
     return proc.returncode, out[-TAIL_CHARS:]
 
 
-def default_invoke_seat(recipe: Sequence[str], brief: str) -> tuple[int, str]:
-    """Invoke one seat CLI with the brief substituted per its recipe."""
+def default_invoke_seat(
+    recipe: Sequence[str],
+    brief: str,
+    reply_chars: int = SEAT_REPLY_CHARS,
+) -> tuple[int, str]:
+    """Invoke one seat CLI with the brief substituted per its recipe.
+
+    ``reply_chars`` lets spec loops pass role-aware budgets
+    (``compiler.ROLE_REPLY_CHARS``) instead of the flat routine cap —
+    the V2-P1 field-note fix, threaded through for producing runs
+    (RR-5).
+    """
     if recipe[-1] == "-":
-        return run_command(recipe, stdin_text=brief, provider_clean=True)
+        return run_command(recipe, stdin_text=brief, provider_clean=True, reply_chars=reply_chars)
     argv = [brief if part == "{brief}" else part for part in recipe]
-    return run_command(argv, provider_clean=True)
+    return run_command(argv, provider_clean=True, reply_chars=reply_chars)
 
 
 def run_routine(

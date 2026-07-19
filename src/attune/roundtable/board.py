@@ -29,7 +29,10 @@ from dataclasses import dataclass, field
 from typing import Any
 
 #: Message kinds the schema admits (requirements P0; R9 adds
-#: member-originated ``question``/``suggestion`` as first-class).
+#: member-originated ``question``/``suggestion`` as first-class;
+#: V2-P4 adds ``event`` — append-only role-provenance events, RR-1 —
+#: and ``candidate`` — staged promotable items from producing runs,
+#: RR-6).
 KINDS: tuple[str, ...] = (
     "question",
     "position",
@@ -37,10 +40,18 @@ KINDS: tuple[str, ...] = (
     "ruling",
     "suggestion",
     "halt",
+    "event",
+    "candidate",
 )
 
 #: Every board key lives under this prefix (R3).
 THREAD_KEY_PREFIX = "attune:roundtable:thread:"
+
+#: Rotation-ledger keys (RR-1) — same R3 keyspace, deliberately
+#: TTL-EXEMPT: the ledger of drafter service must outlive the 7-day
+#: thread TTL, or RR-2's pointer loses its input.
+LEDGER_ORDER_KEY = "attune:roundtable:ledger:rotation"
+LEDGER_RECORD_PREFIX = "attune:roundtable:ledger:rotation:"
 
 #: Default thread TTL — 7 days, refreshed on each post (AC-6).
 THREAD_TTL_SECONDS = 604_800
@@ -59,6 +70,7 @@ LIBRARY_SOURCE = """#!lua name=attune_roundtable
 local KINDS = {
   question = true, position = true, synthesis = true,
   ruling = true, suggestion = true, halt = true,
+  event = true, candidate = true,
 }
 
 local function validate(msg)
@@ -136,9 +148,44 @@ local function promote(keys, args)
   return redis.call('LRANGE', msgs_key, 0, -1)
 end
 
+local function ledger_reserve(keys, args)
+  -- keys[1] = order list, keys[2] = record hash for this run_id.
+  -- args: run_id, spec_subject, owed_seat. Atomic CAS (RR-2): a
+  -- duplicate run_id is rejected with no ledger writes.
+  local run_id, subject, owed = args[1], args[2], args[3]
+  if type(run_id) ~= 'string' or #run_id == 0 then
+    return redis.error_reply('rt_ledger_reserve: run_id is required')
+  end
+  if type(subject) ~= 'string' or #subject == 0 then
+    return redis.error_reply('rt_ledger_reserve: spec_subject is required')
+  end
+  if type(owed) ~= 'string' or #owed == 0 then
+    return redis.error_reply('rt_ledger_reserve: owed_seat is required')
+  end
+  if redis.call('EXISTS', keys[2]) == 1 then
+    return redis.error_reply('rt_ledger_reserve: duplicate run_id ' .. run_id)
+  end
+  redis.call('HSET', keys[2], 'run_id', run_id, 'spec_subject', subject,
+    'owed_seat', owed, 'actual_drafter', '', 'served', '0')
+  redis.call('RPUSH', keys[1], run_id)
+  -- Deliberately no EXPIRE: the ledger is TTL-exempt (RR-1).
+  return redis.call('LLEN', keys[1])
+end
+
+local function ledger_record(keys, args)
+  -- keys[2] = record hash; args: run_id, actual_drafter, served.
+  if redis.call('EXISTS', keys[2]) == 0 then
+    return redis.error_reply('rt_ledger_record: unknown run_id ' .. args[1])
+  end
+  redis.call('HSET', keys[2], 'actual_drafter', args[2], 'served', args[3])
+  return 1
+end
+
 redis.register_function('rt_post_message', post_message)
 redis.register_function('rt_read_thread', read_thread)
 redis.register_function('rt_promote', promote)
+redis.register_function('rt_ledger_reserve', ledger_reserve)
+redis.register_function('rt_ledger_record', ledger_record)
 """
 
 
@@ -277,3 +324,73 @@ class Board:
             args.append(json.dumps(sorted(set(item_ids))))
         raw = self.client.fcall("rt_promote", 1, self.thread_key(thread), *args)
         return [BoardMessage.from_json(entry) for entry in raw or []]
+
+    def post_event(self, thread: str, event: str, **fields: Any) -> int:
+        """Append one role-provenance event to a thread (RR-1).
+
+        Events are append-only by construction: they land in the same
+        RPUSH-only message list as every other kind, and neither the
+        client nor the server library exposes an in-place update.
+
+        Args:
+            thread: Thread id.
+            event: Event name (e.g. ``scheduled-assignment``,
+                ``fallback``, ``seat-lost``).
+            **fields: Structured event payload, stored verbatim.
+        """
+        return self.post_message(thread, "moderator", "event", event, **fields)
+
+    def read_events(self, thread: str) -> list[BoardMessage]:
+        """Return a thread's provenance events, oldest first."""
+        return [m for m in self.read_thread(thread) if m.kind == "event"]
+
+    @staticmethod
+    def ledger_record_key(run_id: str) -> str:
+        """Return the ledger hash key for a run id (R3 keyspace)."""
+        if not run_id or any(c.isspace() for c in run_id):
+            raise ValueError(f"invalid run id: {run_id!r}")
+        return LEDGER_RECORD_PREFIX + run_id
+
+    def ledger_reserve(self, run_id: str, spec_subject: str, owed_seat: str) -> int:
+        """Atomically reserve a rotation-ledger slot for a run (RR-2 CAS).
+
+        A duplicate ``run_id`` raises ``redis.ResponseError`` with no
+        ledger writes — the caller receipts it as ``DUPLICATE_RUN``.
+        """
+        reply = self.client.fcall(
+            "rt_ledger_reserve",
+            2,
+            LEDGER_ORDER_KEY,
+            self.ledger_record_key(run_id),
+            run_id,
+            spec_subject,
+            owed_seat,
+        )
+        return int(reply)
+
+    def ledger_record(self, run_id: str, actual_drafter: str, served: bool) -> None:
+        """Record who actually drafted and whether the draft was served.
+
+        Served means the Round-1 draft passed ``lint_draft`` (RR-2:
+        the pointer advances only on served drafts).
+        """
+        self.client.fcall(
+            "rt_ledger_record",
+            2,
+            LEDGER_ORDER_KEY,
+            self.ledger_record_key(run_id),
+            run_id,
+            actual_drafter,
+            "1" if served else "0",
+        )
+
+    def ledger_read(self) -> list[dict[str, Any]]:
+        """Return all rotation-ledger records in reservation order."""
+        run_ids = self.client.lrange(LEDGER_ORDER_KEY, 0, -1) or []
+        records: list[dict[str, Any]] = []
+        for run_id in run_ids:
+            raw = self.client.hgetall(self.ledger_record_key(str(run_id)))
+            if raw:
+                raw["served"] = raw.get("served") == "1"
+                records.append(raw)
+        return records
