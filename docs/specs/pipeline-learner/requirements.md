@@ -1,283 +1,90 @@
-# Spec: Pipeline Learner
+# Pipeline Learner v1 (table-refreshed) — Requirements
 
-> A mining workflow that reads workflow run history + bulletin
-> archive, identifies common multi-step sequences, and offers
-> to canonicalize them as declarative pipelines. The bottom-up
-> path to pipeline authoring — songs that emerge from what
-> we've actually played.
+**Status: requirements chair-ruled per item** — authored by the
+round table (thread `producing-pipeline-learner-v1-20260719-2`); compiled deterministically by
+`attune.roundtable.compiler` (V2-P2). Approved items only;
+declined: none;
+unruled: none.
 
-**Status:** draft — kill proposed at 2026-07-14 triage, SPARED by Patrick; commit-or-kill again next triage
-**Created:** 2026-05-17
-**Owner:** TBD
-**Related:**
-- [`multi-actor-bulletin`](../multi-actor-bulletin/requirements.md) — provides the archived run history this workflow mines
-- [`bulletin-curator`](../bulletin-curator/requirements.md) — sibling consumer; the curator surfaces this learner's output to Patrick
-- [`project_bulletin_and_pipeline_learner.md`](~/.claude/projects/-Users-patrickroebuck-attune-ai/memory/project_bulletin_and_pipeline_learner.md) — high-level synthesis
+Chair rulings 2026-07-19: all eight items approved, including the deferred-over-cap RR-8 restaged in the same chair-initiated session (TR-6 recourse path); RR-4 2-1 upheld as tabled (bulletin deferred, antigravity dissent preserved in the thread register). Authored by a HEADLESS producing run (V2-P4 dogfood #2); replaces the 2026-05-17 draft, whose stale premises the live probes in the grounding pack falsified. Prior draft preserved in git history.
 
----
+## Requirements
 
-## Problem statement
+**RR-1 — Gate v1 on a working run-persistence prerequisite**
+The "thousands of runs going back months" premise is false today: `~/.attune/ops/runs/` has 15 workflow dirs but exactly 1 run JSON total (PACK-3), and the bulletin archive is 3 stale files (2026-05-27 → 2026-06-06). Mining is worthless without a corpus, and the 15-dirs-1-file signature strongly implies run persistence itself is broken or disabled. v1 must not ship a miner on top of a dry pipe; it must first establish and verify that runs accumulate.
 
-The current state of pipeline authoring in attune-ai:
-**top-down only.** Songs (`release-prep`, `secure-release`,
-`doc-orchestrator`) are hardcoded as Python workflow classes.
-There's no way for anyone — Patrick, downstream users, or me —
-to look at the working patterns that actually emerge in real
-use and canonicalize them as named, declarative pipelines.
+- A prerequisite check inspects `~/.attune/ops/runs/**/*.json` and reports: total eligible records (schema-valid, timestamp-parseable), distinct workflows, distinct active days, and date span before any mining runs.
+- Readiness is operationally defined, not proxied by a single number: the corpus is "viable" only when it holds ≥ (2 × min-support) eligible records across ≥ 7 distinct active days AND at least one candidate pair clears min-support; otherwise the learner emits an explicit "insufficient corpus — not yet viable" status, prints the shortfall, and exits without proposing anything.
+- Persistence diagnosis is scoped OUT of the learner's own code: the spec names, as a hard external dependency with a named owner in `decisions.md`, the confirmation that `src/attune/ops/runner.py` persists one JSON per run. The learner's acceptance probe is "the readiness check runs and reports"; fixing the 15-dir/1-file anomaly is a separate spec's responsibility, not a circular self-dependency.
+(table: agreed; chair: approved)
 
-The persisted run history in `~/.attune/ops/runs/<wf>/*.json`
-contains thousands of runs going back months. Patterns are in
-there — *"after security-audit on $path, code-review on the
-same path runs within 30 min, 80% of the time"* — but nothing
-mines them. They stay implicit in Patrick's working memory,
-which means:
+**RR-2 — Pair-mining algorithm testable against a fixture corpus with a declared record schema**
+The mining design (pair-mining, 30-min window, min-support ~5 / ratio ~0.5) is sound and does not depend on live-corpus size to be correct (PACK-4). Its correctness must be provable on committed fixtures so the algorithm can land and be trusted even while the live corpus is thin — but only if the fixture record shape and the pair semantics are pinned.
 
-1. **They're not transferable.** New users (downstream) can't
-   benefit from working patterns Patrick has discovered.
-2. **They're not version-controlled.** A great working pattern
-   today can be forgotten next quarter.
-3. **They can't be automated.** Without a canonical name,
-   nothing can invoke "the security-then-review pattern" as a
-   first-class thing.
+- The spec declares the canonical fixture record schema mirroring `~/.attune/ops/runs/**/*.json`: the exact fields consumed (workflow name, start timestamp, provenance flag, project identifier). One schema, ops-runs only (bulletin deferred per RR-4); no dual-format fixture.
+- Pair semantics are fully specified so a fixture cannot pass two incompatible algorithms: ordering is by start timestamp; the ratio denominator is "count of A occurrences"; intervening unrelated workflows do not break an A→B pair within the window; A→A self-sequences are excluded; duplicate records and malformed/timezone-naive timestamps are normalized to UTC or dropped (and the drop is counted).
+- A fixture corpus containing a known 7-occurrence A→B sequence surfaces exactly that pair above the support/ratio thresholds; noise sequences below min-support (2–3 occurrences) are filtered; and an off-by-window case (two steps > 30 min apart) is asserted excluded.
+(table: agreed; chair: approved)
 
-This spec defines the workflow that mines the history and
-proposes canonicalization candidates. Acceptance — turning a
-candidate into a real pipeline file — stays with Patrick (the
-detector never writes; the writer never decides).
+**RR-3 — Rank candidates with a reproducible, manual-over-auto weighted formula**
+`ATTUNE_REC` is real and referenced in `code_review.py`, `curator/sources/recommendations.py`, and `ops/runner.py` (PACK-3), so the manual-vs-auto distinction remains meaningful: a sequence a human ran deliberately is stronger evidence than one an auto-recommendation triggered. But the ranking must be a deterministic function, not a prose "combines".
 
----
+- The score is a stated formula over frequency, ratio, recency, and manual-fraction, with named normalization, a fixed recency decay constant (half-life in days), and a deterministic tie-breaker (e.g. higher support, then lexical member order). Two runs of the ranker over the same corpus produce identical ordering.
+- Provenance is read from a named persisted field: the requirement names the exact attribute `src/attune/ops/runner.py` writes to distinguish an `ATTUNE_REC`-triggered run from a manual one, and RR-1's readiness check verifies that field is present in eligible records. If historical records lack it, they count as unknown-provenance (weighted as auto), and this is stated — the mere existence of `ATTUNE_REC` in source does not prove records preserve attribution.
+- Given two sequences with identical frequency/ratio, the `ATTUNE_REC`-triggered one ranks strictly below the manual one (asserted); recency decay is asserted so a months-old burst does not outrank a smaller recent pattern of equal support.
+(table: agreed; chair: approved)
 
-## Goals
+**RR-4 — Single input contract (ops-runs), single-project scope, bulletin explicitly deferred**
+The draft simultaneously described ops runs as the corpus, left bulletin open, and assumed a nested `YYYY-MM-DD/` archive layout that PACK-3 contradicts (archives are flat `archive/2026-05-27.jsonl`). A commit-or-kill spec cannot carry an ambiguous input contract.
 
-1. **Mine run history** for common multi-step sequences with
-   minimum-support thresholds.
-2. **Rank candidates** by signal strength (frequency,
-   consistency, recency, time-window tightness).
-3. **Surface candidates** through the bulletin-curator's
-   ranked-attention list as *"Save this as a named pipeline?"*
-   items.
-4. **Generate scaffolding** when accepted — write a candidate
-   YAML pipeline file to `docs/specs/pipelines/<slug>.yaml`
-   that Patrick can edit and commit.
-5. **Stay opt-in.** No silent canonicalization. The learner
-   proposes; Patrick disposes.
+- v1 mines exactly one source: `~/.attune/ops/runs/**/*.json`. The bulletin archive is DEFERRED (Non-goal), and the spec deletes the stale nested-directory assumption, recording the observed flat shape as the reason deferral is cheap to reverse later.
+- Single-project scope is enforced, not assumed: a host-global `~/.attune/ops/runs/` can mix repositories, so the learner filters on a stable project identifier read from each record. RR-1's readiness check validates that field is present; if it is absent, viability is gated on adding it (named as a dependency), not silently mined across mixed projects.
+- The spec cites `src/attune/ops/runner.py` as the record producer and pins the record fields the learner depends on, so a schema change surfaces as a failing readiness check rather than silent mis-mining.
+(table: 2-1 antigravity would fold bulletin in as a second v1 input; drafter + codex defer it to keep the contract commit-or-kill; chair: approved)
+
+**RR-5 — Surface candidates through the SHIPPED curator via its real extension contract**
+The draft cited `docs/specs/multi-actor-bulletin/` and `docs/specs/bulletin-curator/`, both now absent (PACK-3). A curator SHIPPED in code at `src/attune/curator/` with a `sources/` surface (`bulletin.py`, `recommendations.py`, `specs.py`, `sweep.py`). Integration must target that live surface by its actual contract, not by placing a parallel file and assuming it is discovered.
+
+- The requirement names the exact callable/protocol and aggregation path a curator source implements (as `curator/sources/recommendations.py` does) and the execution lifecycle it must honor (synchronous sweep vs. background evaluation, per `sweep.py`). The learner conforms to that contract.
+- An integration test proves a mined candidate actually reaches the chair-facing curator output — not merely that a module exists in `sources/`. The spec removes all references to the deleted sibling specs.
+- A candidate item carries enough evidence (support, ratio, member workflows, sample run IDs, provenance mix) to let the chair decide without re-mining.
+(table: agreed; chair: approved)
+
+**RR-6 — Strictly opt-in with durable decision state; learner proposes, chair disposes**
+The core safety property: the learner never materializes a pipeline without explicit acceptance, and re-runs are idempotent — which requires decision state to live somewhere concrete, resolving the draft's self-contradiction (idempotency with "only acceptance writes").
+
+- Candidate identity is a stated fingerprint (ordered member workflows + window class); accept/decline decisions are persisted to a named ledger (e.g. `~/.attune/ops/pipeline_learner/decisions.jsonl`) that is itself an authorized, non-artifact write — distinct from the pipeline-artifact write and explicitly permitted.
+- Running the learner with no acceptance produces zero writes under the pipeline-artifact path `docs/specs/pipelines/` (asserted). Only an explicit accept writes the YAML + evidence. Already-accepted or already-declined fingerprints are not re-proposed; a declined candidate reopens only when its evidence materially changes (support crosses a stated delta) — stated behavior, not implicit.
+(table: agreed; chair: approved)
+
+**RR-7 — Acceptance scaffolds a safe, drift-guard-clean artifact that VALIDATES (not mutates) the registry**
+On acceptance the learner scaffolds a YAML pipeline + `evidence.json` under `docs/specs/pipelines/`. The prior draft required wiring the scaffold into `_DEFAULT_WORKFLOW_NAMES` (`src/attune/workflows/__init__.py`), which would mutate core Python during curator acceptance — contradicting opt-in-only writes and the mines-and-scaffolds Non-goal. Reframed: the pipeline is a composition of EXISTING workflows and must never register a new workflow name.
+
+- Acceptance writes `<name>.yaml` and `<name>.evidence.json` atomically (both or neither; rollback on partial failure; create the destination dir if absent). The evidence file cites mined support, ratio, contributing run IDs, and provenance mix.
+- The scaffolded YAML's member workflow names are VALIDATED against `_DEFAULT_WORKFLOW_NAMES` — a pipeline referencing an unknown workflow fails a test. No pipeline name is ever added to `src/attune/workflows/__init__.py`; the registry drift-guard stays green because nothing was registered.
+- Name sanitization and path containment under `docs/specs/pipelines/` are enforced (chair-supplied names cannot escape the directory), collision behavior is defined, and malformed scaffolds fail a schema test rather than landing silently.
+(table: contested — antigravity + codex both flag that wiring into `_DEFAULT_WORKFLOW_NAMES` conflicts with RR-6 and the "mines and scaffolds only" Non-goal; drafter concedes and reframes to validation-only; chair: approved)
+
+**RR-8 — Honest viability statement and lifecycle stated in the spec now**
+Per the chair's commit-or-kill framing (PACK-1) and the moderator read (PACK-4), the requirements must not restate the stale "months of rich history" premise, and must not be left incomplete pending an external ruling (the prior draft's `decisions.md` circularity).
+
+- The requirements document states plainly: the algorithm (RR-2/RR-3) and safety/scaffold surfaces (RR-6/RR-7) are buildable and testable NOW on fixtures with production surfacing disabled; the live VALUE premise is unmet until RR-1's readiness gate passes.
+- The spec states the proposed lifecycle up front rather than deferring to a chair ruling to be complete: fixture-only components MAY land now with live curator surfacing gated behind RR-1's readiness check; kill/park is the alternative. The chair's actual choice is recorded in `docs/specs/pipeline-learner/decisions.md` — a named, existing artifact target — but the requirements are complete without it.
+- No requirement asserts a live-corpus size or history depth that the 2026-07-19 probes contradict.
+(table: agreed; chair: approved)
 
 ## Non-goals
 
-- **Executing pipelines.** That's a separate concern handled by
-  whatever pipeline runner lands later (the
-  hybrid-with-decision-nodes design from the chord→song
-  whiteboard discussion).
-- **Reading semantic meaning** of workflow purposes. The miner
-  works on observable patterns (workflow name, scope, timing),
-  not on what the workflows do.
-- **Predicting the next workflow** in real-time. That's the
-  ATTUNE_REC channel's job. The learner mines *retrospectively*
-  for patterns worth promoting.
-- **Auto-applying canonical pipelines** as ATTUNE_REC
-  suggestions. Possible v2; not v1.
-- **Cross-host / multi-project mining.** Same-host, same-project
-  in v1. Cross-project mining is a follow-up that depends on
-  the Phase 3 Redis Streams bulletin backend (cross-host data
-  source).
+- Executing or scheduling pipelines — v1 mines, ranks, and scaffolds only.
+- Registering new workflow names or mutating `_DEFAULT_WORKFLOW_NAMES` / `src/attune/workflows/__init__.py` — scaffolds validate against the registry, never write to it (RR-7).
+- Mining the bulletin archive (`~/.attune/bulletin/archive/*.jsonl`) — DEFERRED to a later version; v1 is ops-runs only (RR-4).
+- Semantic understanding of what a sequence *means*; ranking is frequency/recency/provenance-based, not intent-based.
+- Real-time next-workflow prediction or in-session suggestion.
+- Cross-project mining — v1 filters to a single project identifier within the local `~/.attune/ops/runs/` corpus (RR-4).
+- Sequences longer than pairs (triples/n-grams) — v1 is pair-mining only.
+- Fixing or redesigning the ops run-record schema — RR-1 confirms persistence works and names an owner; the fix itself is a separate spec.
 
----
+## Dissent register
 
-## Design
-
-### Input: the corpus
-
-Two source pools, merged:
-
-1. `~/.attune/ops/runs/<wf>/*.json` — every persisted dashboard
-   run since the dashboard started recording. Already has
-   `workflow`, `scope`, `started_at`, `completed_at`, `status`,
-   `actor` (after the bulletin spec lands).
-2. `~/.attune/bulletin/archive/YYYY-MM-DD/*.jsonl` — daily
-   rotated bulletin entries. Same shape; covers CLI / MCP /
-   scheduled actors the dashboard doesn't see.
-
-Both pools merge into a flat list of "actor X ran workflow Y on
-scope Z, starting at T, completing at T+D, status S".
-
-### Mining algorithm
-
-A simple **temporal-sequence frequent-pattern mining** pass.
-For each pair `(A, B)` of distinct workflows, count how often:
-
-- Workflow A completed successfully on scope `P_A`
-- Workflow B then ran on a scope `P_B` where `P_B ⊆ P_A` or
-  `P_A ⊆ P_B`
-- Both within the same actor's timeline (or same project, in v2)
-- Within a configurable time window (default: 30 min)
-
-Yields pair-frequency counts. Filter by minimum support (e.g.
-`count ≥ 5 AND ratio_when_A_runs ≥ 0.5`). Extend to triples /
-n-grams in a second pass; pair-mining is the v1 deliverable.
-
-The thing being mined is **operator behavior** — when Patrick
-manually runs A then B, that's signal. When ATTUNE_REC
-auto-runs B from A, that's *different* signal (it's already a
-canonicalized edge in the source code); the miner should
-**weight manual sequences higher** because those represent
-genuine emergent patterns, not encoded suggestions.
-
-### Candidate output shape
-
-For each above-threshold pair (or n-gram), emit:
-
-```json
-{
-  "candidate_id": "security-audit_then_code-review",
-  "sequence": [
-    {"workflow": "security-audit", "scope_relation": "self_or_parent"},
-    {"workflow": "code-review", "scope_relation": "from_predecessor"}
-  ],
-  "support": {
-    "occurrences": 14,
-    "first_seen": "2026-04-03",
-    "last_seen": "2026-05-16",
-    "ratio_when_first_step_runs": 0.78,
-    "manual_vs_attune_rec": "12 manual / 2 attune-rec",
-    "actors_observed": ["cc-session-abc", "dashboard-localhost-..."]
-  },
-  "confidence_score": 0.82,
-  "suggested_pipeline_yaml": "docs/specs/pipelines/security-audit_then_code-review.yaml",
-  "rationale": "Manual sequence emerged 12 times across 6 weeks; same-or-narrower scope on follow-up; 78% follow-rate."
-}
-```
-
-The `confidence_score` is a weighted blend of frequency,
-ratio, recency, and manual-fraction. Tuned later; sensible v1
-defaults baked in.
-
-### YAML pipeline scaffolding
-
-When Patrick accepts a candidate (via the curator's
-`AskUserQuestion` card), the learner writes a starter pipeline
-YAML to `docs/specs/pipelines/<slug>.yaml`:
-
-```yaml
-# Auto-generated 2026-05-17 by pipeline-learner.
-# Supporting evidence in docs/specs/pipelines/<slug>.evidence.json
-# Edit freely. Original support metrics preserved in the evidence file.
-
-name: security-audit_then_code-review
-summary: "Run security-audit then code-review on the same scope."
-pipeline:
-  - workflow: security-audit
-    scope: ${input.scope}
-  - workflow: code-review
-    scope: ${prev.scope}
-```
-
-Plus a sibling `.evidence.json` with the full support metrics
-so the pipeline's provenance is auditable. Patrick edits the
-YAML to taste, commits it, and the pipeline becomes a
-first-class song.
-
-### Invocation model
-
-`pipeline-learner` is itself a workflow registered in the
-existing workflow registry. Runs on-demand (`attune workflow
-run pipeline-learner`) or on a schedule (weekly cron). Outputs
-its candidates to:
-
-1. `~/.attune/pipeline-learner/candidates.jsonl` — durable
-   output the curator reads as one of its sources.
-2. The dashboard's `/specs` or a new `/pipelines/candidates`
-   surface.
-
-Mining is CPU-bound, not LLM-backed in v1 (deterministic
-algorithm; no agent calls needed). v2 might add an LLM pass to
-generate human-readable pipeline names and summaries, but the
-core mining is pure algorithm.
-
----
-
-## Acceptance criteria
-
-1. **Surfaces a known pattern.** Seed the corpus with 10
-   fixture runs that contain the security-audit →
-   code-review pattern 7 times. Run the learner. The candidate
-   appears with `occurrences: 7` and a sensible confidence
-   score.
-2. **Filters noise.** Same fixture also contains 2 isolated
-   workflow runs that aren't part of any pattern. They do not
-   appear as candidates.
-3. **Manual vs auto weighting.** Add 3 ATTUNE_REC-triggered
-   security-audit → bug-predict pairs. The candidate scores
-   them with `manual_vs_attune_rec: "0 manual / 3 attune-rec"`
-   and confidence is lower than an equivalent-count manual
-   pattern.
-4. **Scaffolding lands.** Acceptance via the curator's
-   AskUserQuestion writes a non-empty
-   `docs/specs/pipelines/<slug>.yaml` + sibling evidence file.
-5. **Idempotent re-runs.** Running the learner twice in a row
-   without new corpus data produces identical candidates.
-6. **No silent writes.** The learner never writes to
-   `docs/specs/pipelines/` without an explicit acceptance
-   signal.
-
----
-
-## Tasks (phased)
-
-### Phase 1 — Corpus reader + mining algorithm (~4h)
-
-| # | Task | Effort |
-|---|------|--------|
-| 1 | `attune.pipeline_learner.corpus` — merge dashboard runs + bulletin archive | 1h |
-| 2 | Pair-mining algorithm with scope-relation logic | 2h |
-| 3 | Confidence scoring (frequency / ratio / recency / manual-weight) | 1h |
-
-### Phase 2 — Workflow registration + outputs (~2h)
-
-| # | Task | Effort |
-|---|------|--------|
-| 4 | `PipelineLearnerWorkflow` class registered in `_DEFAULT_WORKFLOW_NAMES` | 30m |
-| 5 | Persist candidates to `~/.attune/pipeline-learner/candidates.jsonl` | 30m |
-| 6 | Wire into the four registry drift-guard gates (per CLAUDE.md lesson) | 30m |
-| 7 | Unit tests against fixture corpora | 30m |
-
-### Phase 3 — Curator integration + scaffolding (~2h)
-
-| # | Task | Effort |
-|---|------|--------|
-| 8 | Curator reads candidates as one of its sources | 30m |
-| 9 | `AskUserQuestion` acceptance handler writes the YAML + evidence file | 1h |
-| 10 | End-to-end test: fixture corpus → mine → curator → accept → YAML lands | 30m |
-
-### Phase 4 — Triples / n-grams (~2h, deferrable)
-
-| # | Task | Effort |
-|---|------|--------|
-| 11 | Extend mining to 3-step sequences with cohesion threshold | 1.5h |
-| 12 | Tests | 30m |
-
-**Total estimated:** 8h for v1 (Phases 1–3); +2h for triples.
-
----
-
-## Open questions
-
-1. **Scope-relation logic.** Subset-relations are easy on
-   absolute paths (`src/attune/security/` ⊂ `src/attune/`). But
-   the bulletin allows custom scope strings, and discovery-sweep
-   uses scope hashes. Lean: treat unrecognized scope strings
-   as "scope: opaque" and only mine pairs where the scope
-   relationship is determinable. Document the limitation.
-2. **What counts as the same "operator behavior"?** Within a
-   Claude Code session, sequential runs are clearly the same
-   operator. Across sessions, less clear. Lean: same actor_id
-   AND same project for v1. The bulletin-curator can later
-   merge cross-session candidates if signals agree.
-3. **Threshold tuning.** Defaults: 5 occurrences, 0.5 ratio.
-   These are guesses; iterate based on what surfaces. The
-   confidence score deliberately separates the inputs so we
-   can re-weight without rerunning the miner.
-4. **Negative evidence.** When Patrick dismisses a candidate
-   ("not a real pattern"), the learner should suppress it
-   from future surfacings. Per-candidate suppression for N
-   days is simple; lean that for v1. Learning to *predict*
-   which candidates will be dismissed is a v2 problem.
+- **RR-4 (bulletin as a v1 input) — antigravity dissents (2-1).** Antigravity holds that the bulletin archive is available data and excluding it needlessly narrows v1's corpus, especially given how thin ops-runs is. Drafter and codex prevail: adding a second source with a different record shape (flat `.jsonl` lines vs. run JSON) widens the input contract exactly when commit-or-kill demands it be pinned, and the ops-runs corpus must be proven first. Bulletin is deferred, not rejected — RR-4 records the flat-directory reality so re-inclusion is cheap. Revisit once RR-1's readiness gate passes on ops-runs alone.
+- **RR-7 (registry wiring) — resolved, no standing dissent.** Both reviewers flagged the `_DEFAULT_WORKFLOW_NAMES` mutation as contradicting opt-in-only writes and the mines-and-scaffolds Non-goal; drafter conceded and reframed to validation-only. Recorded as contested→resolved rather than open dissent.
