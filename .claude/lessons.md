@@ -15242,7 +15242,14 @@ def ", start_idx + 1)` for module-
   lanes finish" lesson recurring — #1379's own matrix never went
   green on Windows). The 30-second main-branch check redirected the
   whole diagnosis from "what did my diff break" to a one-line
-  pre-existing hotfix (#1385). The bug class itself:
+  pre-existing hotfix (#1385). Two companion reads (2026-07-19,
+  #1471/#1472): (a) N red lanes ≠ N failures — `--log-failed | grep
+  FAILED | sort -u` collapses a full matrix to its DISTINCT failing
+  tests (five red lanes were ONE pre-existing test replicated); (b)
+  never use a docs-only PR's check list as the full-matrix baseline —
+  docs-only runs execute a REDUCED matrix (one Windows lane), so
+  "yesterday only one lane was red" may just mean yesterday ran one
+  lane. The bug class itself:
   `str(Path.relative_to(root))` yields BACKSLASHES on Windows — any
   repo-relative path destined for a URL/link/doc must use
   `.as_posix()` (health tab's `latest_llm_report`). Recovery order
@@ -16380,22 +16387,3 @@ def ", start_idx + 1)` for module-
   Reliable orders: (a) one Edit whose old/new spans both the import
   block and the first use, or (b) usage edit first, import edit
   second, then grep the import line to confirm it stuck.
-
-- **Five red Windows lanes ≠ five failures — count DISTINCT failing
-  tests before suspecting your diff; docs-only PRs run a REDUCED
-  matrix so the baseline comparison misleads**: 2026-07-19, PR
-  #1472 (feature) showed all five `test (windows-latest, 3.10–3.14)`
-  lanes red where the prior docs-only PR #1471 had shown only one —
-  which read as "my path-handling change broke Windows." Reality:
-  `--log-failed | grep FAILED | sort -u` showed ONE distinct test
-  (the pre-existing roundtable `/etc/passwd` rejection bug on main),
-  reproduced identically in every lane; #1471 had "only one red
-  lane" because docs-only runs execute a reduced Windows matrix
-  (3.12 only), not because main was healthier then. Diagnostic
-  order: (1) extract distinct FAILED test ids across lanes and
-  compare against known-on-main failures BEFORE diffing your
-  change; (2) never use a docs-only PR's check list as the
-  full-matrix baseline — the matrices differ by change class.
-  Pairs with the "admin-merging before Windows lanes complete"
-  lesson (that one is about waiting; this one is about reading
-  what the wait produced).
