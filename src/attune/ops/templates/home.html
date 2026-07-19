@@ -83,42 +83,7 @@
   </section>
 {% endif %}
 
-{# Spend alarm (R6 of usage-signals). Daily API-spend anomaly + approach
-   to the monthly ceiling. ``spend.source`` is "account" (admin
-   cost-report — sees CI) or "local" (usage.jsonl, CI-blind). The panel's
-   accent follows ``spend.level``: ok / alarm / insufficient_data. #}
-{% if spend is not none %}
-  <section class="panel spend-alarm spend-alarm-{{ spend.level }}">
-    <div class="spend-alarm-head">
-      <h2>API spend watch</h2>
-      {% if spend.level == "alarm" %}
-        <span class="chip chip-danger">⚠ anomaly</span>
-      {% elif spend.level == "insufficient_data" %}
-        <span class="chip chip-muted">building baseline</span>
-      {% else %}
-        <span class="chip chip-ok">normal</span>
-      {% endif %}
-    </div>
-    <p class="spend-alarm-detail">{{ spend.detail }}</p>
-    <div class="spend-gauge" role="img"
-         aria-label="Month-to-date ${{ '%.0f'|format(spend.month_to_date) }} of ${{ '%.0f'|format(spend.monthly_ceiling) }} monthly ceiling ({{ '%.0f'|format(spend.ceiling_pct) }}%)">
-      <div class="spend-gauge-track">
-        {# Cap the visual fill at 100% so an over-ceiling month doesn't
-           overflow the bar; the numeric % below still shows the truth. #}
-        <div class="spend-gauge-fill{% if 'ceiling' in spend.triggered_by %} spend-gauge-fill-hot{% endif %}"
-             style="width: {{ [spend.ceiling_pct, 100]|min }}%;"></div>
-      </div>
-      <div class="spend-gauge-foot">
-        <span>${{ '%.2f'|format(spend.month_to_date) }} MTD</span>
-        <span>{{ '%.0f'|format(spend.ceiling_pct) }}% of ${{ '%.0f'|format(spend.monthly_ceiling) }}</span>
-      </div>
-    </div>
-    <p class="spend-alarm-source">
-      Source: {{ "Anthropic account billing (includes CI)" if spend.source == "account" else "local telemetry only — CI spend not counted" }}
-    </p>
-  </section>
-{% endif %}
-
+{% include "_spend_alarm.html" %}
 <section class="panel">
   <h2>Recent runs</h2>
   {% if recent_runs %}

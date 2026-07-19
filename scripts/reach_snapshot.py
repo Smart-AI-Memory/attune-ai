@@ -55,8 +55,44 @@ PACKAGES = [
 REPO = "Smart-AI-Memory/attune-ai"
 
 
+#: US-4: the manifest names its data source explicitly.
+SOURCE = "pypistats.org/api/recent"
+
+#: US-4 attempt budget: one initial attempt plus at most two
+#: additional attempts per day, separated by >= 60 minutes.
+MAX_ATTEMPTS_PER_DAY = 3
+MIN_ATTEMPT_GAP_SECONDS = 60 * 60
+
+
 class RateLimitedError(RuntimeError):
     """pypistats returned 429 — stop immediately, retrying makes it worse."""
+
+
+class AttemptBudgetError(RuntimeError):
+    """The US-4 per-day attempt budget is exhausted or the gap unmet."""
+
+
+def build_manifest(
+    expected: list[str],
+    captured: dict[str, dict[str, int]],
+    observed_at: str,
+) -> dict[str, object]:
+    """The US-4 completeness contract: expected vs captured vs missing.
+
+    A snapshot is complete only when every allowlisted package has a
+    valid observation; the status travels with the artifact so an
+    incomplete snapshot is unmistakable downstream (dashboard, release
+    ritual) rather than silently shaped like a complete one.
+    """
+    missing = [pkg for pkg in expected if pkg not in captured]
+    return {
+        "expected": list(expected),
+        "captured": [pkg for pkg in expected if pkg in captured],
+        "missing": missing,
+        "source": SOURCE,
+        "observed_at": observed_at,
+        "complete": not missing,
+    }
 
 
 def fetch_pypistats_recent(package: str) -> dict[str, int]:
@@ -71,10 +107,17 @@ def fetch_pypistats_recent(package: str) -> dict[str, int]:
             payload = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         if e.code == 429:
+            # US-4: honor server-provided retry guidance when present.
+            retry_after = e.headers.get("Retry-After") if e.headers else None
+            guidance = (
+                f"server says retry after {retry_after}s"
+                if retry_after
+                else "wait at least 60 minutes (the penalty outlasts short retries)"
+            )
             raise RateLimitedError(
-                f"pypistats rate-limited on {package}. Wait 15 minutes, "
-                "then rerun with --spacing 60 (the penalty outlasts "
-                "short retries)."
+                f"pypistats rate-limited on {package}; {guidance}. "
+                "Rerun later — already-captured packages are reused, "
+                "and at most two additional attempts are budgeted today."
             ) from e
         raise
     data = payload.get("data", {})
@@ -167,6 +210,8 @@ def build_snapshot(
             "taken_at": taken_at,
             "pypi_recent": pypi,
             "github": github,
+            # US-4: the completeness contract travels with the artifact.
+            "manifest": build_manifest(list(packages), pypi, taken_at),
         }
 
     remaining = [pkg for pkg in packages if pkg not in pypi]
@@ -201,12 +246,8 @@ def render_table(snapshot: dict[str, object]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _load_seed(path: Path) -> dict[str, dict[str, int]]:
-    """Load already-captured pypi_recent from today's day file, if any.
-
-    Best-effort: a missing or malformed file degrades to an empty seed
-    (a fresh full run), never an error.
-    """
+def _load_day(path: Path) -> dict[str, object]:
+    """Load today's day file; missing/malformed degrades to empty."""
     if not path.exists():
         return {}
     try:
@@ -214,10 +255,55 @@ def _load_seed(path: Path) -> dict[str, dict[str, int]]:
     except (OSError, json.JSONDecodeError) as e:
         logger.warning("could not load existing snapshot %s: %s", path, e)
         return {}
-    pypi = data.get("pypi_recent", {})
+    return data if isinstance(data, dict) else {}
+
+
+def _load_seed(path: Path) -> dict[str, dict[str, int]]:
+    """Load already-captured pypi_recent from today's day file, if any.
+
+    Best-effort: a missing or malformed file degrades to an empty seed
+    (a fresh full run), never an error.
+    """
+    pypi = _load_day(path).get("pypi_recent", {})
     if not isinstance(pypi, dict):
         return {}
     return {pkg: stats for pkg, stats in pypi.items() if isinstance(stats, dict)}
+
+
+def check_attempt_budget(
+    attempts: list[dict[str, object]],
+    now: datetime,
+    *,
+    remaining: int,
+) -> None:
+    """Enforce the US-4 per-day attempt budget BEFORE any request.
+
+    One initial attempt + at most two additional per day, separated by
+    at least 60 minutes. Only enforced when packages remain — a rerun
+    on an already-complete snapshot costs no pypistats request.
+
+    Raises:
+        AttemptBudgetError: budget exhausted or the gap unmet.
+    """
+    if remaining <= 0 or not attempts:
+        return
+    if len(attempts) >= MAX_ATTEMPTS_PER_DAY:
+        raise AttemptBudgetError(
+            f"attempt budget exhausted ({MAX_ATTEMPTS_PER_DAY}/day). Proceed "
+            "with the incomplete receipt — do not keep retrying (US-4)."
+        )
+    last_raw = attempts[-1].get("at")
+    try:
+        last_at = datetime.fromisoformat(str(last_raw))
+    except ValueError:
+        return  # malformed ledger entry — do not block on it
+    gap = (now - last_at).total_seconds()
+    if gap < MIN_ATTEMPT_GAP_SECONDS:
+        wait_min = int((MIN_ATTEMPT_GAP_SECONDS - gap) // 60) + 1
+        raise AttemptBudgetError(
+            f"last attempt was {int(gap // 60)} minutes ago; attempts must be "
+            f">= 60 minutes apart — wait ~{wait_min} more minutes (US-4)."
+        )
 
 
 def _atomic_write_json(path: Path, data: dict[str, object]) -> None:
@@ -253,34 +339,76 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
 
     args.out.mkdir(parents=True, exist_ok=True)
-    date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    now = datetime.now(timezone.utc)
+    date = now.strftime("%Y-%m-%d")
     out_path = args.out / f"{date}.json"
+    day = _load_day(out_path)
     seed = _load_seed(out_path)
+    attempts = day.get("attempts") if isinstance(day.get("attempts"), list) else []
+
+    remaining = [pkg for pkg in args.packages if pkg not in seed]
+    try:
+        check_attempt_budget(attempts, now, remaining=len(remaining))
+    except AttemptBudgetError as e:
+        print(f"error: {e}", file=sys.stderr)
+        _warn_if_incomplete(args.packages, seed)
+        return 1
 
     def persist(snapshot: dict[str, object]) -> None:
+        snapshot["attempts"] = attempts
         _atomic_write_json(out_path, snapshot)
 
+    outcome = "complete"
+    snapshot: dict[str, object] = {}
     try:
         snapshot = build_snapshot(
             args.packages, args.spacing, seed=seed, date=date, persist=persist
         )
     except RateLimitedError as e:
-        captured = len(_load_seed(out_path))
-        total = len(args.packages)
+        outcome = "rate-limited"
         print(f"error: {e}", file=sys.stderr)
-        print(
-            f"captured {captured}/{total} today; rerun after the cooldown " "to finish the rest.",
-            file=sys.stderr,
-        )
-        return 1
     except (urllib.error.URLError, OSError) as e:
+        outcome = "error"
         print(f"error: network failure: {e}", file=sys.stderr)
+
+    if remaining:  # a pypistats request was actually made — log the attempt
+        captured_now = len(args.packages) if outcome == "complete" else len(_load_seed(out_path))
+        attempts.append({"at": now.isoformat(), "captured": captured_now, "outcome": outcome})
+
+    if outcome != "complete":
+        # ALWAYS persist the day file on failure — even a zero-capture
+        # run must durably log its attempt, or the US-4 budget could
+        # never engage and retries would be unbounded.
+        partial = _load_day(out_path) or {
+            "date": date,
+            "taken_at": now.isoformat(),
+            "pypi_recent": dict(seed),
+            "github": {},
+            "manifest": build_manifest(list(args.packages), seed, now.isoformat()),
+        }
+        partial["attempts"] = attempts
+        _atomic_write_json(out_path, partial)
+        _warn_if_incomplete(args.packages, _load_seed(out_path))
         return 1
 
+    snapshot["attempts"] = attempts
     _atomic_write_json(out_path, snapshot)
     print(render_table(snapshot))
     print(f"wrote {out_path}")
     return 0
+
+
+def _warn_if_incomplete(expected: list[str], captured: dict[str, dict[str, int]]) -> None:
+    """US-4: an incomplete snapshot must be UNMISTAKABLE, never silent."""
+    missing = [pkg for pkg in expected if pkg not in captured]
+    if missing:
+        print(
+            "WARNING: INCOMPLETE SNAPSHOT — missing packages: "
+            + ", ".join(missing)
+            + f" ({len(captured)}/{len(expected)} captured). A release may "
+            "continue only with this incomplete-receipt warning attached.",
+            file=sys.stderr,
+        )
 
 
 if __name__ == "__main__":

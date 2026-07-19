@@ -1745,3 +1745,113 @@ def _resolve_version(package: str) -> FamilyVersion:
     except Exception:  # noqa: BLE001
         # INTENTIONAL: metadata resolution is best-effort.
         return FamilyVersion(package=package, version=None, source="missing")
+
+
+# ---------------------------------------------------------------------------
+# US-6 three-panel receipt: reach + freshness (spend is build_spend_alarm)
+# ---------------------------------------------------------------------------
+
+#: The five expected reach packages — mirrors ``scripts/reach_snapshot.py``
+#: ``PACKAGES`` (the US-4 allowlist). A legacy snapshot without a manifest
+#: counts complete only when all five are present.
+REACH_PACKAGES: tuple[str, ...] = (
+    "attune-ai",
+    "attune-rag",
+    "attune-help",
+    "attune-author",
+    "attune-verify",
+)
+
+#: US-6: the freshness panel flags a usage.jsonl last-write age above this.
+USAGE_STALE_HOURS = 48.0
+
+
+@dataclass
+class ReachPanel:
+    """Latest COMPLETE reach snapshot + any newer incomplete one (US-6).
+
+    An incomplete snapshot never replaces the latest complete snapshot —
+    it is surfaced separately, labeled incomplete.
+    """
+
+    latest_complete: dict[str, Any] | None
+    newer_incomplete: dict[str, Any] | None
+
+
+def _snapshot_is_complete(data: dict[str, Any]) -> bool:
+    manifest = data.get("manifest")
+    if isinstance(manifest, dict):
+        return manifest.get("complete") is True
+    pypi = data.get("pypi_recent")
+    return isinstance(pypi, dict) and set(REACH_PACKAGES) <= set(pypi)
+
+
+def read_reach_panel(config: Config) -> ReachPanel:
+    """Scan the tracked snapshots dir for the reach panel's data (US-6).
+
+    Reads ``<project_root>/docs/specs/usage-signals/snapshots/*.json``
+    newest-first (dated filenames sort chronologically). The first
+    complete snapshot wins; incomplete snapshots encountered BEFORE it
+    (i.e. newer) are reported separately with their missing packages.
+    """
+    snap_dir = config.project_root / "docs" / "specs" / "usage-signals" / "snapshots"
+    latest_complete: dict[str, Any] | None = None
+    newer_incomplete: dict[str, Any] | None = None
+    if not snap_dir.is_dir():
+        return ReachPanel(None, None)
+    for path in sorted(snap_dir.glob("*.json"), reverse=True):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            logger.warning("ops.reach: unreadable snapshot %s: %s", path, exc)
+            continue
+        if not isinstance(data, dict):
+            continue
+        if _snapshot_is_complete(data):
+            latest_complete = {
+                "date": data.get("date") or path.stem,
+                "taken_at": data.get("taken_at"),
+                "packages": data.get("pypi_recent") or {},
+            }
+            break
+        if newer_incomplete is None:
+            pypi = data.get("pypi_recent") if isinstance(data.get("pypi_recent"), dict) else {}
+            manifest = data.get("manifest") if isinstance(data.get("manifest"), dict) else {}
+            missing = manifest.get("missing") or [pkg for pkg in REACH_PACKAGES if pkg not in pypi]
+            newer_incomplete = {
+                "date": data.get("date") or path.stem,
+                "taken_at": data.get("taken_at"),
+                "captured": sorted(pypi),
+                "missing": missing,
+            }
+    return ReachPanel(latest_complete=latest_complete, newer_incomplete=newer_incomplete)
+
+
+@dataclass
+class UsageFreshness:
+    """Last-write age of ``usage.jsonl`` for the freshness panel (US-6)."""
+
+    exists: bool
+    last_write_at: str | None
+    age_hours: float | None
+    stale: bool  # age > USAGE_STALE_HOURS
+
+
+def read_usage_freshness(config: Config, *, now: datetime | None = None) -> UsageFreshness:
+    """Compute usage.jsonl freshness from file mtime (real boundary)."""
+    path = config.telemetry_path
+    if not path.is_file():
+        return UsageFreshness(exists=False, last_write_at=None, age_hours=None, stale=True)
+    try:
+        mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+    except OSError as exc:
+        logger.warning("ops.freshness: cannot stat %s: %s", path, exc)
+        return UsageFreshness(exists=False, last_write_at=None, age_hours=None, stale=True)
+    current = now or datetime.now(timezone.utc)
+    age_hours = max((current - mtime).total_seconds(), 0.0) / 3600.0
+    return UsageFreshness(
+        exists=True,
+        last_write_at=mtime.isoformat(),
+        age_hours=age_hours,
+        stale=age_hours > USAGE_STALE_HOURS,
+    )

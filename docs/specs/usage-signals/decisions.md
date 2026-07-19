@@ -409,7 +409,7 @@ into the 8.6.0 release; the client ships default-OFF as already built.
 
 No copy changes needed — existing telemetry text remains accurate.
 
-## D11 — first-run consent prompt shipped (the D9 opt-in lever) (2026-06-20, 8.6.1)
+## D11a — first-run consent prompt shipped (the D9 opt-in lever) (2026-06-20, 8.6.1)
 
 D9 kept the ping default-OFF and named a first-run consent prompt as the
 opt-in lever, deferred to a follow-up. After 8.6.0 shipped the client,
@@ -441,15 +441,15 @@ approved by Patrick. Remaining: Phase 2c Reach dashboard, R5/R6.
 
 ## D12 — consent ask also reaches the plugin/MCP channel (2026-06-20)
 
-D11's prompt fires only from `cli_minimal.main()` in an interactive
+D11a's prompt fires only from `cli_minimal.main()` in an interactive
 terminal. But the dominant channel is the **Claude Code plugin + MCP
 tools**, which never call `main()` — yet their workflows still write
 local `usage.jsonl` records. So plugin users generate the data but were
-never offered the choice: the exact "nobody was ever told" gap D11 closed
+never offered the choice: the exact "nobody was ever told" gap D11a closed
 for the CLI persisted verbatim for the larger audience.
 
 **Constraint:** hooks run as piped subprocesses (no TTY) and the MCP
-server is a JSON-RPC stdio server, so neither can reuse D11's
+server is a JSON-RPC stdio server, so neither can reuse D11a's
 `input()`-based prompt — `_is_interactive()` would always skip.
 
 **Shipped:** a SessionStart hook `plugin/hooks/usage_consent_notice.py`
@@ -555,7 +555,7 @@ any useful timescale; the product-direction-review instruments
 ones. No further investment here recommended until a conversation
 or inbound report proves a human population to measure.
 
-## D11 — attune-rag download figure declared uninterpreted noise (2026-07-12)
+## D11b — attune-rag download figure declared uninterpreted noise (2026-07-12)
 
 The 2026-07-12 snapshot shows attune-rag at **27,410
 downloads/month — 5× attune-ai's 5,501** — for a sub-package with
@@ -604,3 +604,54 @@ completeness manifest — kills the 10.5.0 silent-0/5 class); US-6 =
 R3 closes only on a three-panel receipt; US-7 = D11a/D11b ledger
 disambiguation + the refreshed done-when. `requirements.md` replaced
 (prior text in git history).
+
+## D15 — US-4/US-6/US-7 executed: capture contract, three-panel receipt, ledger annotation (2026-07-19)
+
+Executed by the follow-up session on branch
+`feat/usage-signals-us4-us6-us7`; evidence per US-7's closure rule.
+
+**US-4 (reach capture reliability) — SHIPPED.**
+`scripts/reach_snapshot.py` now enforces the full capture contract:
+an explicit five-package allowlist with a persisted `manifest`
+(expected/captured/missing, source, observed_at, complete) on every
+snapshot including partial writes; Retry-After honored in the 429
+message; a per-day attempt budget (1 initial + 2 additional, ≥60 min
+apart) enforced BEFORE any request via a durable `attempts` ledger in
+the day file — a zero-capture run still logs its attempt, so the
+budget cannot be bypassed; incomplete snapshots exit non-zero with an
+unmistakable `WARNING: INCOMPLETE SNAPSHOT` (never silent completion,
+never indefinite blocking). Receipts: 16 tests in
+`tests/unit/scripts/test_reach_snapshot.py` covering complete,
+partial, and zero-package captures, the simulated 429 boundary with
+Retry-After, gap refusal before any request, and budget exhaustion.
+
+**US-6 (three-panel receipt) — SHIPPED; R3 DONE on this receipt.**
+The `/telemetry` page now renders all three panels together:
+reach (latest COMPLETE snapshot with per-package values +
+observation timestamp; a newer incomplete snapshot is labeled
+INCOMPLETE with its missing packages and does NOT replace the
+complete one — `read_reach_panel`), freshness (usage.jsonl
+last-write age via file mtime, STALE flag above 48h —
+`read_usage_freshness`), and spend (the shipped D13 alarm, extracted
+to a shared `_spend_alarm.html` include used by home + telemetry).
+Receipts: 9 tests in `tests/unit/ops/test_telemetry_three_panels.py`
+through the real file-to-render boundary (persisted snapshot JSONs +
+usage.jsonl → FastAPI route → rendered HTML), including the
+47.5h/48.5h boundary flip and the three-panels-together assertion.
+
+**US-7 (ledger annotation) — DONE in this entry's commit.**
+The duplicate D11 identifiers are annotated non-destructively:
+consent entry → **D11a**, attune-rag noise verdict → **D11b**
+(headers + intra-entry prose; dates, text, and order unchanged;
+no other decisions renumbered; DEC-* identifiers preserved). Audit:
+zero bare `D11` references remain in `docs/specs/usage-signals/`,
+tracked handoffs, or the tracked memory corpus (the memory hit for
+"D11" belongs to the help single-source spec, not this ledger).
+The original spend-alarm requirement is marked **DONE citing D13**;
+no additional spend-monitoring scope is opened.
+
+**NOT closed by this entry:** US-3 (chair-led outreach) and US-5
+(comparable release pair — bound to the next planned release using
+the US-4 strategy). The refreshed done-when therefore remains open;
+this entry contributes the US-4 receipts, the US-6 three-panel
+receipt, and the completed ledger audit toward it.
