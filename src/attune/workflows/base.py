@@ -144,9 +144,18 @@ def _wrap_execute_with_run_record(execute):
 
     @functools.wraps(execute)
     async def _execute(self, *args: Any, **kwargs: Any):
+        from datetime import datetime, timezone
+
+        started = datetime.now(timezone.utc)
         result = await execute(self, *args, **kwargs)
         try:
-            self._emit_workflow_telemetry(result)
+            # Wall-clock timestamps feed the fallback record for
+            # report-shaped results, which carry no timing of their own.
+            self._emit_workflow_telemetry(
+                result,
+                started_at=started,
+                completed_at=datetime.now(timezone.utc),
+            )
         except Exception:  # noqa: BLE001
             # INTENTIONAL: telemetry is optional diagnostics — never
             # fail a workflow over a record write.

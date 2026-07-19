@@ -234,3 +234,102 @@ class TestRetention:
         assert deleted == 1
         assert not stale.exists()
         assert store.workflows_file.exists()  # the corpus is not prunable
+
+
+class TestReportShapedEmission:
+    """RC-2 follow-up: orchestrator/agent-team workflows emit too.
+
+    Their ``execute`` overrides return report objects
+    (``HealthCheckReport``, ``OrchestratorResult``,
+    ``SecureReleaseResult``) without the ``WorkflowResult`` surface;
+    emission must degrade to a minimal record instead of dying on
+    ``result.stages`` and silently recording nothing.
+    """
+
+    def _mixin(self, captured):
+        wf = TelemetryMixin.__new__(TelemetryMixin)
+        wf.name = "orchestrated-health-check"
+        wf._run_id = "rid-report"
+        wf._telemetry_backend = SimpleNamespace(log_workflow=captured.append)
+        return wf
+
+    def test_report_shaped_result_emits_fallback_record(self, tmp_path, monkeypatch):
+        repo = tmp_path / "teamproj"
+        (repo / ".git").mkdir(parents=True)
+        monkeypatch.chdir(repo)
+        captured: list[WorkflowRunRecord] = []
+        wf = self._mixin(captured)
+        report = SimpleNamespace(success=True, agents_executed=3)
+        start = datetime(2026, 7, 19, 12, 0, 0, tzinfo=timezone.utc)
+        end = datetime(2026, 7, 19, 12, 0, 2, tzinfo=timezone.utc)
+        wf._emit_workflow_telemetry(report, started_at=start, completed_at=end)
+        assert len(captured) == 1
+        rec = captured[0]
+        assert rec.workflow_name == "orchestrated-health-check"
+        assert rec.project == "teamproj"
+        assert rec.trigger == "manual"
+        assert rec.success is True
+        assert rec.stages == []
+        assert rec.total_cost == 0.0
+        assert rec.total_duration_ms == 2000
+        assert rec.started_at == start.isoformat()
+        assert rec.completed_at == end.isoformat()
+
+    def test_report_failure_and_error_string_preserved(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        captured: list[WorkflowRunRecord] = []
+        wf = self._mixin(captured)
+        report = SimpleNamespace(success=False, error="agent blew up")
+        wf._emit_workflow_telemetry(report)
+        assert captured[0].success is False
+        assert captured[0].error == "agent blew up"
+
+    def test_report_without_success_field_counts_as_success(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        captured: list[WorkflowRunRecord] = []
+        wf = self._mixin(captured)
+        wf._emit_workflow_telemetry(SimpleNamespace(agents_executed=1))
+        assert captured[0].success is True
+        assert captured[0].error is None
+
+    def test_report_emission_is_idempotent(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        captured: list[WorkflowRunRecord] = []
+        wf = self._mixin(captured)
+        report = SimpleNamespace(success=True)
+        wf._emit_workflow_telemetry(report)
+        wf._emit_workflow_telemetry(report)
+        assert len(captured) == 1
+
+    def test_service_path_emits_fallback_record(self, tmp_path, monkeypatch):
+        from attune.workflows.services.telemetry_service import TelemetryService
+
+        monkeypatch.chdir(tmp_path)
+        captured: list[WorkflowRunRecord] = []
+        svc = TelemetryService.__new__(TelemetryService)
+        svc._workflow_name = "orchestrated-health-check"
+        svc._provider = "anthropic"
+        svc._run_id = "rid-svc"
+        svc._backend = SimpleNamespace(log_workflow=captured.append)
+        report = SimpleNamespace(success=True)
+        svc.emit_workflow_record(report)
+        svc.emit_workflow_record(report)  # idempotent on the ctx path too
+        assert len(captured) == 1
+        assert captured[0].workflow_name == "orchestrated-health-check"
+        assert captured[0].providers_used == ["anthropic"]
+
+    def test_orchestrator_family_execute_is_wrapped(self):
+        from attune.workflows.documentation_orchestrator import (
+            DocumentationOrchestrator,
+        )
+        from attune.workflows.orchestrated_health_check import (
+            OrchestratedHealthCheckWorkflow,
+        )
+        from attune.workflows.secure_release import SecureReleasePipeline
+
+        for cls in (
+            OrchestratedHealthCheckWorkflow,
+            DocumentationOrchestrator,
+            SecureReleasePipeline,
+        ):
+            assert getattr(cls.execute, "_emits_run_record", False) is True, cls
