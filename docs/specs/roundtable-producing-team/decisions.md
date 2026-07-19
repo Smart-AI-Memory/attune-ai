@@ -90,6 +90,36 @@ Field note carried to V2-P2: seat-reply caps must be ROLE-AWARE
 documents need different budgets — fold into the typed round
 contracts).
 
+## V2-P2 — artifact compiler + proposal ledger SHIPPED (2026-07-19)
+
+Built AFTER V2-P1's real loop, exactly as the phase gate required —
+every design choice traces to something the live loop did by hand:
+
+- `src/attune/roundtable/compiler.py`: typed round-contract LINTS
+  (`lint_draft` / `lint_critique` / `lint_final` — TR-4's
+  mechanical gate applied to spec loops: uncited critique items,
+  untagged final items, and unattested-empty dissent registers are
+  rejected before posting); `parse_draft` (drafter documents →
+  per-item structures with convergence tags); `link_critiques`
+  (the proposal ledger's objection column: critique items attached
+  to the requirement they target); `compile_requirements`
+  (deterministic assembly honoring per-item chair rulings —
+  approved items only, declined/unruled ids recorded honestly in
+  the header, thread id in provenance per R10).
+- **Role-aware output budgets** (`ROLE_REPLY_CHARS`): the V2-P1
+  field-note fix — drafter 40k / critic 16k / position 8k chars.
+- Skill gains the spec-loop section (lint before post; budgets;
+  compile after rulings).
+
+Receipts: 14 golden tests validating the compiler against the REAL
+`mem-signal-001` artifacts (tracked as fixtures): round-1 draft
+parses 6 items, round-3 final parses 7 with MI-5's 2-1 tag and the
+dissent register, both real critiques lint clean with their
+verdicts extracted, codex's four MI-1 objections link to MI-1,
+compile is byte-deterministic and honors approved/declined/unruled
+per item. Deferred to V2-P3 (per the phase plan): diff
+materialization, scratch-worktree validation, cross-seat review.
+
 ## Provenance
 
 - Chair directive and rulings: live session 2026-07-18 (the same

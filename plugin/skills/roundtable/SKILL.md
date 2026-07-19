@@ -189,6 +189,28 @@ Deliberation is TTL'd; only promoted content is durable. If the
 chair wants a raw thread kept past 7 days, promotion to a report is
 the mechanism — say so rather than extending TTLs ad hoc.
 
+## Spec-authoring loops (V2-P1/P2)
+
+For a spec-authoring deliberation (drafter + critics per the
+producing-team spec), run every round output through the compiler
+lints BEFORE posting it to the board — the TR-4 mechanical gate:
+
+```bash
+F="/tmp/rt-round.md" K="draft" python -c "import os; from attune.roundtable import compiler; f=open(os.environ['F']).read(); print(getattr(compiler, 'lint_' + os.environ['K'])(f) or 'clean')"
+```
+
+`K` is `draft` (round 1: REQ-ID items + acceptance bullets),
+`critique` (round 2: targeted, cited items + VERDICT line), or
+`final` (round 3: every item tagged, dissent register present or
+attested). A lint-dirty output goes back to its seat, not to the
+board. Use role-aware budgets (`compiler.ROLE_REPLY_CHARS`) when
+invoking seats — drafter documents need more room than positions.
+After the chair rules per item, assemble the tracked file
+deterministically with `compiler.parse_draft` +
+`compiler.link_critiques` + `compiler.compile_requirements`
+(approved items only; declined/unruled ids recorded in the header;
+thread id in provenance).
+
 ## Routines (P3 — headless table runs)
 
 A routine convenes the table on a recurring question with the same
