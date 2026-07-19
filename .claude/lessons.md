@@ -16335,3 +16335,48 @@ def ", start_idx + 1)` for module-
   delete any just-cut branch (`git branch -D` printing `(was
   <main-sha>)` with zero commits = nothing lost), and fold in the
   chip session's result when it lands.
+
+- **A shared-seam feature (telemetry epilogue, hooks) verified only
+  on the BASE-class path is silently bypassed by every subclass
+  that overrides the entry point — grep for overrides of the
+  wrapped method, then live-fire a MODERN caller, not the base
+  path**: 2026-07-19, run-record-corpus RC-2. The
+  `_emit_workflow_telemetry` seam existed, 3,380 telemetry/workflow
+  tests were green, and `ExecutionMixin.execute`'s epilogue called
+  it unconditionally — yet the canonical stream stayed empty on
+  live-fire because all 17 SDK-native workflows (`code-review`,
+  `security-audit`, …) override `execute()` wholesale and never
+  reach the epilogue. That was the SDK-era corpus dry-pipe's real
+  cause (five months of `workflow_runs.jsonl` had ~zero real
+  records while `usage.jsonl` showed ~418 real events/month).
+  Diagnostic pair: `grep -rln "async def execute"
+  src/attune/workflows/` (the override surface) + one live run of a
+  CURRENT-era workflow with `ATTUNE_HOME` pointed at scratch (the
+  receipt). Fix shape: close at ONE seam
+  (`BaseWorkflow.__init_subclass__` wraps subclass overrides) with
+  an idempotence marker, not N per-file edits. Extends "registered
+  ≠ working": unit tests of the seam prove the seam, not that
+  production paths still route through it.
+
+- **Guards keyed on a sentinel attribute must identity-check the
+  literal (`is True`), never truthiness — MagicMock fabricates a
+  truthy attr on ANY getattr**: 2026-07-19, the run-record
+  idempotence guard `getattr(result, "_run_record_emitted", False)`
+  returned a truthy auto-created child Mock for every
+  MagicMock-built result, so the guard skipped emission and a
+  mocked emit test failed with "record never constructed". Rule:
+  when production code checks a marker it also sets, compare `is
+  True` (or use a module-private sentinel object) so mock-built
+  objects can't accidentally satisfy — or defeat — the check.
+
+- **"Import and first use in the SAME edit" means the same Edit
+  TOOL CALL, not the same assistant message — batching the import
+  edit and the usage edit as two parallel calls still lets the
+  PostToolUse ruff-fix strip the import in between**: hit twice on
+  2026-07-19 (storage.py `os`/`timezone`, base.py
+  `functools`/`inspect`) despite knowing the existing lesson. The
+  hook runs after EACH Edit call, so an import-only edit is always
+  a strip candidate no matter what lands next in the same message.
+  Reliable orders: (a) one Edit whose old/new spans both the import
+  block and the first use, or (b) usage edit first, import edit
+  second, then grep the import line to confirm it stuck.
