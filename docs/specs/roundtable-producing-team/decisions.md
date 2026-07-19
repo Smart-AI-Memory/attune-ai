@@ -199,6 +199,38 @@ consuming these requirements), so `rotation_status` reports
 **eligible_unarmed** once #1466 merges. Arming remains an explicit
 chair ruling — add `P4-ROTATION: armed <date>` here when ruled.
 
+## V2-P4 dogfood — first LIVE headless producing runs (2026-07-19)
+
+Chair-authorized dogfood, same day #1466 merged. Subject:
+pipeline-learner v1 requirements refresh (commit-or-kill input).
+Two runs, both paths of the machinery exercised for real:
+
+- **Run 1 (`producing-pipeline-learner-v1-20260719`) — honest
+  failure.** The claude seat 401'd (revoked stored OAuth; no API
+  key in the launching env — fix: source `~/.attune/anthropic.env`
+  into the runner's env). RR-3 fallback fired live: antigravity
+  substituted as drafter, `fallback` event posted, ledger recorded
+  `owed=claude / actual=antigravity / served=1` (owed turn
+  preserved). Antigravity's round-3 final failed `lint_final`
+  (all items untagged) after its one repair → typed `LINT_DIRTY`
+  terminal, zero candidates, dissent-and-failure-first digest.
+  TAC-4 spirit held end-to-end: nothing laundered.
+- **Run 2 (`producing-pipeline-learner-v1-20260719-2`) —
+  success.** 5 of 10 invocations: claude drafted, both critics
+  returned cited needs-revision critiques, final passed all lint
+  gates. 8 items → 7 staged + RR-8 `deferred_over_cap` (TR-6
+  respected, full text preserved); real dissent reached the
+  register (RR-4 2-1 bulletin-deferral; RR-7 contested→resolved,
+  registry mutation killed by both critics). R8 held: zero
+  promotions by the routine.
+- **Chair ruling**: all eight approved; RR-8 restaged
+  chair-initiated (the RR-6 recourse path, exercised live); RR-4
+  2-1 upheld. Compiled to
+  `docs/specs/pipeline-learner/requirements.md`, replacing the
+  falsified 2026-05-17 draft.
+
+P4-BASELINE: thread=producing-pipeline-learner-v1-20260719-2 promoted=RR-1..RR-8 downstream=pending
+
 ## Provenance
 
 - Chair directive and rulings: live session 2026-07-18 (the same
