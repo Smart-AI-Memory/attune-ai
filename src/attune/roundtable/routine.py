@@ -179,10 +179,16 @@ def run_routine(
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
     thread = f"routine-{spec.name}-{stamp}"
 
+    # Progress goes to stdout as it happens: a routine's first check
+    # can run for minutes, and silence reads as a hang (live-run
+    # receipt, 2026-07-18 — the chair ran it twice).
+    print(f"routine {spec.name!r}: thread {thread!r}", flush=True)
     evidence: list[str] = []
     for label, argv in spec.checks:
+        print(f"  check {label} ... running (up to {CHECK_TIMEOUT}s)", flush=True)
         code, tail = run_check(argv, timeout=CHECK_TIMEOUT)
         status = "PASS" if code == 0 else f"FAIL (exit {code})"
+        print(f"  check {label}: {status}", flush=True)
         evidence.append(f"### {label}: {status}\n{tail}")
     question = spec.question + "\n\n" + "\n\n".join(evidence)
     brief = BRIEF_PREAMBLE + question
@@ -209,10 +215,12 @@ def run_routine(
             )
             break
         invocations += 1
+        print(f"  seat {seat} ... briefing", flush=True)
         started = datetime.datetime.now()
         code, reply = invoke_seat(recipe, brief)
         duration = f"{(datetime.datetime.now() - started).total_seconds():.0f}s"
         if code != 0 or not reply.strip():
+            print(f"  seat {seat}: ABSENT (exit {code}, {duration})", flush=True)
             board.post_message(
                 thread,
                 seat,
@@ -222,6 +230,7 @@ def run_routine(
                 duration=duration,
             )
             continue
+        print(f"  seat {seat}: position posted ({duration})", flush=True)
         board.post_message(thread, seat, "position", reply, round=1, duration=duration)
         positions.append((seat, reply))
 
@@ -234,10 +243,13 @@ def run_routine(
             "compact. Text only.\n\n"
             + "\n\n".join(f"## {seat}\n{reply}" for seat, reply in positions)
         )
+        print("  synthesis ... running", flush=True)
         code, digest = invoke_seat(("claude", "-p", "{brief}"), synthesis_brief)
         if code == 0 and digest.strip():
+            print("  synthesis: posted", flush=True)
             board.post_message(thread, "moderator", "synthesis", digest, round=1)
         else:
+            print(f"  synthesis: FAILED (exit {code})", flush=True)
             # Silence here would read as success — name the failure on
             # the thread so the chair sees a digest-less run for what
             # it is.
