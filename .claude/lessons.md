@@ -16387,3 +16387,21 @@ def ", start_idx + 1)` for module-
   Reliable orders: (a) one Edit whose old/new spans both the import
   block and the first use, or (b) usage edit first, import edit
   second, then grep the import line to confirm it stuck.
+
+- **A design that names a NEW package/module destination must probe
+  the DESTINATION for existence, not just its cited sources — a
+  taken namespace fails late and can silently cohabit**: 2026-07-19,
+  spec-lifecycle-gates implementation. The design pinned
+  `src/attune/gates/` as "new package" and its seam-verification
+  pass import-probed every cited SOURCE seam — but nobody checked
+  the destination, which was already the collaboration-gates
+  package (spend gate/envelope/meter). Caught only because the
+  planned `__init__.py` Write collided with the existing file; with
+  different filenames the two concerns would have silently cohabited
+  under one package docstring that describes only one of them.
+  Resolution: subpackage (`attune.gates.lifecycle`), parent
+  untouched, deviation recorded in the spec's decisions.md. Rule:
+  the symbol-reality discipline runs BOTH directions — verify cited
+  paths exist AND verify paths-to-be-created do NOT (or decide the
+  cohabitation deliberately). One `ls`/`find_spec` on the
+  destination at design time is the whole cost.
