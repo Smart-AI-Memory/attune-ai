@@ -183,6 +183,28 @@ def run_routine(
     # can run for minutes, and silence reads as a hang (live-run
     # receipt, 2026-07-18 — the chair ran it twice).
     print(f"routine {spec.name!r}: thread {thread!r}", flush=True)
+
+    if not dry_run:
+        # Reach the board BEFORE the check battery: a stale REDIS_URL
+        # (live receipt: a retired cloud host in ~/.zshrc) must fail
+        # in seconds with a pointer, not after minutes of checks with
+        # a raw traceback.
+        board = board or Board()
+        import redis  # noqa: PLC0415 — optional dependency, import at use
+
+        try:
+            board.ensure_functions()
+        except redis.RedisError as exc:
+            url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
+            print(
+                f"cannot reach the round-table board ({url}): {exc}\n"
+                "A stale REDIS_URL export is the usual cause. Point it at a "
+                "reachable instance or run with the local default:\n"
+                "  REDIS_URL=redis://127.0.0.1:6379/0 "
+                f"python -m attune.roundtable.routine {spec.name}",
+                flush=True,
+            )
+            raise SystemExit(2) from exc
     evidence: list[str] = []
     for label, argv in spec.checks:
         print(f"  check {label} ... running (up to {CHECK_TIMEOUT}s)", flush=True)
@@ -197,8 +219,6 @@ def run_routine(
         print(f"[dry-run] thread would be {thread!r}; brief follows:\n\n{brief}")
         return thread
 
-    board = board or Board()
-    board.ensure_functions()
     board.post_message(thread, "moderator", "question", question, routine=spec.name)
 
     invocations = 0

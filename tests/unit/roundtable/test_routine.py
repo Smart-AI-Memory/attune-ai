@@ -127,6 +127,36 @@ class TestRunRoutine:
         halts = [m for m in msgs if m.kind == "halt"]
         assert len(halts) == 1 and "cap (2) reached" in halts[0].body
 
+    def test_unreachable_board_fails_fast_before_checks(self, capsys) -> None:
+        """Live-run regression: a stale REDIS_URL must fail in seconds
+        with a pointer — not after minutes of checks with a traceback."""
+        redis = pytest.importorskip("redis")
+
+        class DeadBoard:
+            client = None
+
+            def ensure_functions(self):
+                raise redis.exceptions.ConnectionError("nodename nor servname")
+
+        checks_run: list = []
+
+        def recording_check(argv, timeout=0):
+            checks_run.append(argv)
+            return 0, "ok"
+
+        with pytest.raises(SystemExit) as excinfo:
+            run_routine(
+                _spec(),
+                board=DeadBoard(),
+                invoke_seat=lambda r, b: (0, "pos"),
+                run_check=recording_check,
+            )
+        assert excinfo.value.code == 2
+        assert checks_run == []  # failed BEFORE the check battery
+        out = capsys.readouterr().out
+        assert "cannot reach the round-table board" in out
+        assert "REDIS_URL" in out
+
     def test_dry_run_touches_nothing(self, capsys) -> None:
         def boom(*a, **k):
             raise AssertionError("no invocation in dry-run")
