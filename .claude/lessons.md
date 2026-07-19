@@ -16270,3 +16270,24 @@ def ", start_idx + 1)` for module-
   to any plugin skill developed in-repo: ship the shim for
   dogfooding, remember the real availability for users still
   requires a plugin release.
+
+- **A memory's `description:` line is the RECALL SURFACE — closing
+  out work recorded in the body without updating the description
+  resurfaces dead work as "next work"**: 2026-07-19, the
+  `project_next_work_sequence` memory's body correctly marked both
+  sequenced items ✅ DONE (one shipped #612 and spec-archived, the
+  other automated 07-14), but its description still read "Sequenced
+  post-7.4.0 proactive work — (1) workflow-failure-exit-propagation,
+  then (2) spec-backlog triage." Recall surfaces descriptions, not
+  bodies — so the stale line drove a confident recommendation of
+  already-shipped work as the round table's first spec subject, and
+  only a pre-work grep (the grounding-pack step) caught it before
+  member invocations were spent. Rule: when work recorded in a
+  memory completes, update the DESCRIPTION to say CLOSED/DONE (and
+  the MEMORY.md index line) in the same pass as the body — a body
+  marked done under a live-sounding description is worse than no
+  update, because the description is the only part retrieval reads.
+  Pairs with the phantom-referent lesson (verify the artifact
+  exists before executing an instruction shaped around it) — this
+  is the memory-side twin: verify the WORK still needs doing before
+  recommending it from recall.
