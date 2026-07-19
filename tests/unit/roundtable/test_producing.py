@@ -15,13 +15,17 @@ import uuid
 
 import pytest
 
+from attune.roundtable import compiler
 from attune.roundtable.board import LEDGER_ORDER_KEY, Board
 from attune.roundtable.producing import (
     DEFAULT_MAX_INVOCATIONS,
     FAILURE_CODES,
+    TAG_EXAMPLE,
     TR6_CAP,
     FailureReceipt,
     ProducingSpec,
+    _final_brief,
+    _repair_brief,
     render_digest,
     run_producing,
 )
@@ -417,7 +421,6 @@ class TestReceiptsAndDigest:
             assert FailureReceipt(code=code, run_id="r").to_dict()["code"] == code
 
     def test_digest_puts_failures_before_candidates(self) -> None:
-        from attune.roundtable import compiler
 
         receipt = FailureReceipt(code="SEAT_ABSENT", run_id="r", seat="codex")
         final = compiler.parse_draft(FINAL_OK)
@@ -461,3 +464,35 @@ class TestRoleBudgets:
         )
         assert code == 0
         assert len(reply) == 8_000
+
+
+class TestBriefContracts:
+    """The convergence-tag contract is taught by worked example.
+
+    Prose alone failed twice in live headless runs (see the
+    roundtable-producing-team spec's decisions.md): the drafter
+    shipped every item untagged, including after the repair round.
+    A literal example block got the drafter through lint_final on
+    the first attempt in the interactive loop (us-refresh-001).
+    """
+
+    def test_final_brief_embeds_worked_example(self) -> None:
+        brief = _final_brief("subject", "the draft", {})
+        assert TAG_EXAMPLE in brief
+        assert "**RR-1 — Example requirement title**\n[tag: agreed]" in brief
+
+    def test_worked_example_actually_carries_the_tag(self) -> None:
+        # The taught shape must satisfy the parser it is teaching to.
+        draft = compiler.parse_draft(TAG_EXAMPLE)
+        assert [i.item_id for i in draft.items] == ["RR-1"]
+        assert draft.items[0].tag == "agreed"
+
+    def test_repair_brief_restates_example_on_tag_problems(self) -> None:
+        problems = ["RR-2: missing convergence tag (agreed / 2-1 / contested)"]
+        repair = _repair_brief("orig brief", "prev reply", problems)
+        assert TAG_EXAMPLE in repair
+        assert "ORIGINAL BRIEF:\n\norig brief" in repair
+
+    def test_repair_brief_stays_compact_without_tag_problems(self) -> None:
+        repair = _repair_brief("orig brief", "prev reply", ["no requirement items found"])
+        assert TAG_EXAMPLE not in repair
