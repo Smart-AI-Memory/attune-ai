@@ -112,7 +112,11 @@ class TestLoop:
         result = run_fix_loop(_record(), repo, seats=roster, invoke_seat=invoke)
         assert result["disposition"] == "proposed"
         assert result["repair_rounds"] == 1
-        assert "failed" in calls[1][1]  # repair brief carries the error
+        # The repair brief names the failure and restates the file-block
+        # contract — the old "fix the format" wording steered seats
+        # toward unified diffs (live-fire 2).
+        assert "could not be materialized" in calls[1][1]
+        assert "no unified diff" in calls[1][1]
 
     def test_reviewer_reject_is_rejected(self, repo):
         roster, invoke, _calls = _seats((0, GOOD_PROPOSAL), (0, "VERDICT: REJECT\nrisky"))
@@ -120,10 +124,11 @@ class TestLoop:
         assert result["disposition"] == "rejected"
         assert "risky" in result["review"]
 
-    def test_proposer_absent_is_explicit(self, repo):
-        roster, invoke, _calls = _seats((1, "401 revoked"), (0, "VERDICT: APPROVE"))
+    def test_all_proposers_absent_is_explicit(self, repo):
+        roster, invoke, _calls = _seats((1, "401 revoked"), (1, "also down"))
         result = run_fix_loop(_record(), repo, seats=roster, invoke_seat=invoke)
         assert result["disposition"] == "proposer-absent"
+        assert result["absent_proposers"] == ["proposer", "reviewer"]
 
     def test_scratch_worktrees_discarded(self, repo, tmp_path):
         roster, invoke, _calls = _seats((0, GOOD_PROPOSAL), (0, "VERDICT: APPROVE"))
@@ -132,3 +137,99 @@ class TestLoop:
             ["git", "worktree", "list"], cwd=repo, capture_output=True, text=True
         ).stdout
         assert "rt-candidate-" not in leaked  # discard ran (finally)
+
+
+class TestRoleFit:
+    """v1.1 role fit — the proposer must be a code-emitting seat."""
+
+    @staticmethod
+    def _invoke(replies):
+        """replies: seat name -> (code, text) or an in-order list of them."""
+        calls = []
+
+        def invoke(recipe, brief):
+            calls.append((recipe[0], brief))
+            reply = replies[recipe[0]]
+            if isinstance(reply, list):
+                return reply.pop(0) if reply else (1, "")
+            return reply
+
+        return invoke, calls
+
+    def test_plan_only_seat_never_proposes(self, repo):
+        roster = (("plan-seat", ("plan-seat",)), ("coder", ("coder",)))
+        invoke, calls = self._invoke(
+            {"plan-seat": (0, "VERDICT: APPROVE"), "coder": (0, GOOD_PROPOSAL)}
+        )
+        result = run_fix_loop(
+            _record(),
+            repo,
+            seats=roster,
+            invoke_seat=invoke,
+            plan_only=frozenset({"plan-seat"}),
+        )
+        assert result["disposition"] == "proposed"
+        assert result["proposer"] == "coder"  # roster head skipped: plan-only
+        assert result["reviewer"] == "plan-seat"  # plan seats review fine
+        assert [c[0] for c in calls] == ["coder", "plan-seat"]
+
+    def test_all_plan_only_roster_is_explicit_without_spend(self, repo):
+        roster = (("plan-seat", ("plan-seat",)),)
+        invoke, calls = self._invoke({"plan-seat": (0, "anything")})
+        result = run_fix_loop(
+            _record(),
+            repo,
+            seats=roster,
+            invoke_seat=invoke,
+            plan_only=frozenset({"plan-seat"}),
+        )
+        assert result["disposition"] == "no-code-emitting-proposer"
+        assert calls == []  # no seat invoked, no spend
+
+    def test_absent_proposer_falls_to_next_code_emitting_seat(self, repo):
+        roster = (("p1", ("p1",)), ("p2", ("p2",)), ("plan-seat", ("plan-seat",)))
+        invoke, calls = self._invoke(
+            {
+                "p1": (1, "401 revoked"),
+                "p2": (0, GOOD_PROPOSAL),
+                "plan-seat": (0, "VERDICT: APPROVE"),
+            }
+        )
+        result = run_fix_loop(
+            _record(),
+            repo,
+            seats=roster,
+            invoke_seat=invoke,
+            plan_only=frozenset({"plan-seat"}),
+        )
+        assert result["disposition"] == "proposed"
+        assert result["proposer"] == "p2"
+        assert result["absent_proposers"] == ["p1"]
+        assert result["reviewer"] == "plan-seat"  # p1 skipped: known-absent
+        assert "detail" not in result  # the absent seat's error is not stale-carried
+
+    def test_failed_materialize_never_seat_shops(self, repo):
+        roster = (("p1", ("p1",)), ("p2", ("p2",)))
+        invoke, calls = self._invoke({"p1": (0, "prose, both rounds"), "p2": (0, GOOD_PROPOSAL)})
+        result = run_fix_loop(_record(), repo, seats=roster, invoke_seat=invoke)
+        assert result["disposition"] == "failed-materialize"
+        assert result["proposer"] == "p1"
+        assert [c[0] for c in calls] == ["p1", "p1"]  # repair round, then stop
+
+    def test_solo_roster_never_launders_unreviewed(self, repo):
+        roster = (("solo", ("solo",)),)
+        invoke, _calls = self._invoke({"solo": (0, GOOD_PROPOSAL)})
+        result = run_fix_loop(_record(), repo, seats=roster, invoke_seat=invoke)
+        assert result["disposition"] == "rejected"
+        assert result["reviewer"] is None
+        assert "no distinct reviewer" in result["review"]
+
+
+class TestProposerBrief:
+    def test_brief_carries_worked_example(self, repo):
+        roster, invoke, calls = _seats((0, GOOD_PROPOSAL), (0, "VERDICT: APPROVE"))
+        run_fix_loop(_record(), repo, seats=roster, invoke_seat=invoke)
+        brief = calls[0][1]
+        assert "EXAMPLE REPLY" in brief
+        assert "--- file: src/example/target.py" in brief
+        assert "do NOT" in brief  # the contract names what not to send
