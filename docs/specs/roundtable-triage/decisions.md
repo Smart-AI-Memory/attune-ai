@@ -1,6 +1,6 @@
 # Roundtable Triage — Decisions
 
-**Status:** active (2026-07-20) — chartered 2026-07-19 (n=1); n=2 validated 2026-07-20; requirements not yet authored
+**Status:** active (2026-07-20) — chartered 2026-07-19 (n=1); n=2 validated 2026-07-20; requirements authored + headless appendix implemented (see below)
 
 ## 2026-07-19 — Charter (chair, "as synthesized"; thread q-briefing-triage-001)
 
@@ -114,3 +114,20 @@ chair-invoked.
 Deviation noted: n=2's question was posted as author `moderator`
 (chair pre-authorized but did not compose the brief live; n=1 used
 `chair`).
+
+## 2026-07-20 — Headless appendix implemented + requirements authored (chair "go 1")
+
+`attune.roundtable.triage_appendix` lands the T4-armed contract:
+read-only briefing pull (curator sources + gate ledger + usage
+freshness), deterministic ≤5-item distillation with named drops,
+same-thread appendix (question → seats → synthesis) under a
+4-invocation sub-cap (clean-run + appendix ≤ 8 < R5 ceiling 10),
+`ATTUNE_TRIAGE_APPENDIX=off` kill switch, and the T4 demotion loop
+(digest records in `~/.attune/ops/triage_appendix.json`;
+`record_rulings()` is the ruling session's write; two RECORDED
+zero-ruling digests demote; unrecorded never demotes).
+`requirements.md` (TA-1..TA-8) codifies the ruled contract — no new
+scope. Receipts: 15 contract tests in
+`tests/unit/roundtable/test_triage_appendix.py`; first live receipt
+= next Monday's 06:00 scheduled run. TA-5's CI-artifact fetch stays
+the queued follow-on (A4).
