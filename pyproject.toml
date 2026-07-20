@@ -75,7 +75,7 @@ dependencies = [
     "langsmith>=0.7.31,<2.0.0",  # GHSA-rr7j-v2q5-chgv (transitive via langchain-core)
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
     "python-frontmatter>=1.0.0,<2.0.0",  # YAML frontmatter parsing for help templates — required by attune.help.engine which backs the help_lookup MCP tool (progressive/workflow_help/precursor/search_tag modes all parse template files). Vanilla pip install attune-ai without this breaks every help_lookup mode except `preamble`.
-    "attune-rag>=0.1.5,<0.9",  # RAG grounding for rag-code-gen workflow + rag_knowledge_query MCP tool. Core dep (not optional) — required for acceptable retrieval accuracy. Cap is <0.9: re-validated against attune-rag 0.8.0 (lock bumped 0.7.0->0.8.0; purely additive — model tiers premium/capable/cheap replace hardcoded model IDs, claude-fable-5 as premium default; all 0.7.x public symbols unchanged, confirmed by importing every attune-ai-consumed symbol); next minor (0.9.0) still requires explicit re-validation before lifting the cap.
+    "attune-rag>=0.1.5,<0.10",  # RAG grounding for rag-code-gen workflow + rag_knowledge_query MCP tool. Core dep (not optional) — required for acceptable retrieval accuracy. Cap is <0.9: re-validated against attune-rag 0.8.0 (lock bumped 0.7.0->0.8.0; purely additive — model tiers premium/capable/cheap replace hardcoded model IDs, claude-fable-5 as premium default; all 0.7.x public symbols unchanged, confirmed by importing every attune-ai-consumed symbol); next minor (0.9.0) still requires explicit re-validation before lifting the cap.
     "attune-verify>=0.1.0,<0.3",  # Generation fact-checker backing the /verify skill (deterministic entity checks: imports/flags/links/counts). Core dep — stdlib-only (zero transitive deps), so promoting to core is cheap and lets /verify work out of the box without an extra. Semantic layer is opt-in (the skill acts as the ambient judge). Cap raised to <0.3 to admit 0.2.0 (full dotted-path import resolution — catches private-submodule hallucinations the 0.1.0 top-level-only checker missed; purely additive, no API break).
     "tomli>=2.0.0; python_version < '3.11'",  # tomllib fallback for Python 3.10. Used by attune.utils.coverage (loaded transitively from release-prep + orchestrated-health-check workflows). Without this, those workflows fail to load on 3.10.
     # Redis memory runtime — CORE as of the 2026-07-04 packaging
@@ -233,7 +233,7 @@ dev = [
     # branches (rag tests use pytest.importorskip). Floor
     # matches the [rag] extra so dev + runtime deps stay in
     # lock-step.
-    "attune-rag>=0.1.5,<0.9",
+    "attune-rag>=0.1.5,<0.10",
     # Test deps for paths that import optional runtime libs
     # unconditionally. Without these, the unit suite fails at
     # collection on a fresh `pip install -e .[dev]`. See
@@ -413,7 +413,7 @@ dev = [
     # branches (rag tests use pytest.importorskip). Floor
     # matches the [rag] extra so dev + runtime deps stay in
     # lock-step.
-    "attune-rag>=0.1.5,<0.9",
+    "attune-rag>=0.1.5,<0.10",
     # Test deps for paths that import optional runtime libs
     # unconditionally. Without these, the unit suite fails at
     # collection on a fresh `pip install -e .[dev]`. See
