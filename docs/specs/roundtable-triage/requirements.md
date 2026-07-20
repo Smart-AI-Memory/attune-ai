@@ -60,6 +60,16 @@ ceiling (its own sub-cap of 4 invocations keeps clean-run + appendix
 ≤ 8, under the ruled ceiling of 10), tolerates absent seats (R6),
 and NEVER promotes its own thread (R8).
 
+**TA-8a — Evidence tiers (added 2026-07-20, chair "go all" on the
+session-feedback items).** Every digest item labels its evidence
+``[receipt]`` (read live this run — source-reader output, ledger
+rows, CI fetches) or ``[claim]`` (narrated/derived, unverified this
+run). Seats are instructed to weigh claim-tier evidence as softer
+ground; the chair sees which rulings rest on it BEFORE spending a
+batched "go". Born from the 2026-07-20 sitting, where two false
+claims rode through an 8-item ruling unmarked. Applies to headless
+AND interactive digests.
+
 **TA-8 — Kill switch.** `ATTUNE_TRIAGE_APPENDIX=off` skips the
 appendix with a printed notice — operational off-ramp without a
 code change.
