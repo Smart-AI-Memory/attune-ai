@@ -1,8 +1,9 @@
 # Spec: SDK teardown-exit-1 guard
 
-**Status:** approved (2026-07-20, chair — design approved as drafted
-D1–D3 and execution ARMED, see decisions.md; was DRAFT 2026-06-26,
-recommitted at 2026-07-14 triage, failure class still live)
+**Status:** shipped (2026-07-20) — design approved as drafted D1–D3
+and execution ARMED by the chair 2026-07-20, executed the same day;
+see decisions.md execution log (was draft 2026-06-26, recommitted at
+2026-07-14 triage, failure class still live)
 **Owner:** Patrick + agent
 **Prior art (archived):**
 `docs/specs/archive/sdk-error-message-fidelity/` — flagged this exact

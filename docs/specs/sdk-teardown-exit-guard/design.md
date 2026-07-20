@@ -1,6 +1,7 @@
 # Design: SDK teardown-exit-1 guard
 
-**Status:** DRAFT (2026-06-26) — recommitted at 2026-07-14 triage (failure class still live)
+**Status:** shipped (2026-07-20) — approved as drafted by the chair
+2026-07-20; see decisions.md execution log
 **Requirements:** [requirements.md](requirements.md) ·
 **Decisions:** [decisions.md](decisions.md)
 

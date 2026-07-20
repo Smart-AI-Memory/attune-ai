@@ -30,6 +30,7 @@ from ..agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
+    iter_agent_messages,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -189,63 +190,65 @@ class TestGenerationWorkflow(BaseWorkflow):
         assistant_parts: list[str] = []
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
-        async for message in claude_agent_sdk.query(
-            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
-            options=claude_agent_sdk.ClaudeAgentOptions(
-                **sdk_isolation_kwargs(),
-                system_prompt=_SYSTEM_PROMPT,
-                cwd=resolve_cwd_for_path(resolved_path),
-                max_budget_usd=get_max_budget_usd(depth),
-                allowed_tools=["Read", "Glob", "Grep", "Agent"],
-                permission_mode="default",
-                max_turns=max_turns,
-                agents={
-                    "function-identifier": claude_agent_sdk.AgentDefinition(
-                        description="Identifies untested or under-tested functions.",
-                        prompt=(
-                            "You are a function identifier. Scan the "
-                            "codebase and identify functions that are "
-                            "untested or under-tested. For each function, "
-                            "report: file path, function name, signature, "
-                            "current test coverage status, and complexity "
-                            "level. Prioritize public API functions and "
-                            "functions with complex logic."
+        async for message in iter_agent_messages(
+            claude_agent_sdk.query(
+                prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+                options=claude_agent_sdk.ClaudeAgentOptions(
+                    **sdk_isolation_kwargs(),
+                    system_prompt=_SYSTEM_PROMPT,
+                    cwd=resolve_cwd_for_path(resolved_path),
+                    max_budget_usd=get_max_budget_usd(depth),
+                    allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                    permission_mode="default",
+                    max_turns=max_turns,
+                    agents={
+                        "function-identifier": claude_agent_sdk.AgentDefinition(
+                            description="Identifies untested or under-tested functions.",
+                            prompt=(
+                                "You are a function identifier. Scan the "
+                                "codebase and identify functions that are "
+                                "untested or under-tested. For each function, "
+                                "report: file path, function name, signature, "
+                                "current test coverage status, and complexity "
+                                "level. Prioritize public API functions and "
+                                "functions with complex logic."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("function-identifier"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("function-identifier"),
-                    ),
-                    "test-designer": claude_agent_sdk.AgentDefinition(
-                        description="Designs test cases for identified functions.",
-                        prompt=(
-                            "You are a test designer. For each function "
-                            "identified by the function-identifier, design "
-                            "comprehensive test cases covering: happy path "
-                            "scenarios, edge cases (empty input, boundary "
-                            "values, None/null), error handling paths, and "
-                            "integration points. Report each test case with "
-                            "a descriptive name, input values, and expected "
-                            "outcome."
+                        "test-designer": claude_agent_sdk.AgentDefinition(
+                            description="Designs test cases for identified functions.",
+                            prompt=(
+                                "You are a test designer. For each function "
+                                "identified by the function-identifier, design "
+                                "comprehensive test cases covering: happy path "
+                                "scenarios, edge cases (empty input, boundary "
+                                "values, None/null), error handling paths, and "
+                                "integration points. Report each test case with "
+                                "a descriptive name, input values, and expected "
+                                "outcome."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("test-designer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("test-designer"),
-                    ),
-                    "test-writer": claude_agent_sdk.AgentDefinition(
-                        description="Writes pytest test code following project conventions.",
-                        prompt=(
-                            "You are a test writer. Using the test cases "
-                            "designed by the test-designer, write pytest "
-                            "test code that follows project conventions: "
-                            "use pytest fixtures, parametrize where "
-                            "appropriate, include type hints, add "
-                            "docstrings, and follow the naming convention "
-                            "test_{function}_{scenario}_{expected}. Group "
-                            "related tests in classes."
+                        "test-writer": claude_agent_sdk.AgentDefinition(
+                            description="Writes pytest test code following project conventions.",
+                            prompt=(
+                                "You are a test writer. Using the test cases "
+                                "designed by the test-designer, write pytest "
+                                "test code that follows project conventions: "
+                                "use pytest fixtures, parametrize where "
+                                "appropriate, include type hints, add "
+                                "docstrings, and follow the naming convention "
+                                "test_{function}_{scenario}_{expected}. Group "
+                                "related tests in classes."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("test-writer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("test-writer"),
-                    ),
-                },
-            ),
+                    },
+                ),
+            )
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:

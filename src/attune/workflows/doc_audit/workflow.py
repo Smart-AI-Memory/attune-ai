@@ -28,6 +28,7 @@ from ..agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
+    iter_agent_messages,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -206,57 +207,59 @@ class DocAuditWorkflow(BaseWorkflow):
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
         system_prompt = _SYSTEM_PROMPT + (self._system_prompt_suffix or "")
-        async for message in claude_agent_sdk.query(
-            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
-            options=claude_agent_sdk.ClaudeAgentOptions(
-                **sdk_isolation_kwargs(),
-                system_prompt=system_prompt,
-                cwd=resolve_cwd_for_path(resolved_path),
-                max_budget_usd=get_max_budget_usd(depth, explicit=max_budget_usd),
-                allowed_tools=["Read", "Glob", "Grep", "Agent"],
-                permission_mode="default",
-                max_turns=max_turns,
-                agents={
-                    "staleness-checker": claude_agent_sdk.AgentDefinition(
-                        description="Staleness checker that finds outdated documentation.",
-                        prompt=(
-                            "You are a documentation staleness checker. "
-                            "Focus on: outdated docs, stale version "
-                            "references, dead links, and obsolete "
-                            "examples. Report each finding with file "
-                            "path, line number, severity, and "
-                            "remediation advice."
+        async for message in iter_agent_messages(
+            claude_agent_sdk.query(
+                prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+                options=claude_agent_sdk.ClaudeAgentOptions(
+                    **sdk_isolation_kwargs(),
+                    system_prompt=system_prompt,
+                    cwd=resolve_cwd_for_path(resolved_path),
+                    max_budget_usd=get_max_budget_usd(depth, explicit=max_budget_usd),
+                    allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                    permission_mode="default",
+                    max_turns=max_turns,
+                    agents={
+                        "staleness-checker": claude_agent_sdk.AgentDefinition(
+                            description="Staleness checker that finds outdated documentation.",
+                            prompt=(
+                                "You are a documentation staleness checker. "
+                                "Focus on: outdated docs, stale version "
+                                "references, dead links, and obsolete "
+                                "examples. Report each finding with file "
+                                "path, line number, severity, and "
+                                "remediation advice."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("staleness-checker"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("staleness-checker"),
-                    ),
-                    "accuracy-reviewer": claude_agent_sdk.AgentDefinition(
-                        description="Accuracy reviewer that verifies docs match code.",
-                        prompt=(
-                            "You are a documentation accuracy reviewer. "
-                            "Focus on: verifying docs match current code "
-                            "behavior, API signatures, and config "
-                            "options. Report each finding with file "
-                            "path, severity, and correction advice."
+                        "accuracy-reviewer": claude_agent_sdk.AgentDefinition(
+                            description="Accuracy reviewer that verifies docs match code.",
+                            prompt=(
+                                "You are a documentation accuracy reviewer. "
+                                "Focus on: verifying docs match current code "
+                                "behavior, API signatures, and config "
+                                "options. Report each finding with file "
+                                "path, severity, and correction advice."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("accuracy-reviewer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("accuracy-reviewer"),
-                    ),
-                    "gap-finder": claude_agent_sdk.AgentDefinition(
-                        description="Gap finder that identifies missing documentation.",
-                        prompt=(
-                            "You are a documentation gap finder. Focus "
-                            "on: identifying missing docs for public "
-                            "APIs, undocumented features, and missing "
-                            "examples. Report each finding with the "
-                            "affected module, severity, and what "
-                            "documentation should be added."
+                        "gap-finder": claude_agent_sdk.AgentDefinition(
+                            description="Gap finder that identifies missing documentation.",
+                            prompt=(
+                                "You are a documentation gap finder. Focus "
+                                "on: identifying missing docs for public "
+                                "APIs, undocumented features, and missing "
+                                "examples. Report each finding with the "
+                                "affected module, severity, and what "
+                                "documentation should be added."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("gap-finder"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("gap-finder"),
-                    ),
-                },
-            ),
+                    },
+                ),
+            )
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:

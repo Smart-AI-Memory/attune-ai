@@ -85,6 +85,15 @@ run-record corpus that future releases learn from.
 
 ### Fixed
 
+- **SDK teardown-exit guard now covers every SDK workflow** — the
+  seven consumption loops the sdk-teardown-exit-guard spec's list
+  predated (`deep-review`, `refactor-plan`, `release-prep`,
+  `test-gen`, `test-audit`, `doc-audit`, `document-gen`) now wrap
+  `claude_agent_sdk.query()` in `iter_agent_messages`, so a nested
+  run whose subprocess exits 1 during teardown AFTER a successful
+  `ResultMessage` keeps its result instead of discarding it as a
+  failure. A drift-guard test fails on any future bare consumption
+  loop.
 - **Ops spec status-flip never duplicates or rewrites descriptive
   status lines** (#1488) — the writer refuses to insert a second
   `**Status:**` line above a variant it cannot parse.

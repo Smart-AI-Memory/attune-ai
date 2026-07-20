@@ -29,6 +29,7 @@ from ..agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
+    iter_agent_messages,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -236,59 +237,61 @@ class TestAuditWorkflow(BaseWorkflow):
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
         system_prompt = _SYSTEM_PROMPT + (self._system_prompt_suffix or "")
-        async for message in claude_agent_sdk.query(
-            prompt=_TASK_PROMPT_TEMPLATE.format(src_path=resolved_path),
-            options=claude_agent_sdk.ClaudeAgentOptions(
-                **sdk_isolation_kwargs(),
-                system_prompt=system_prompt,
-                cwd=resolve_cwd_for_path(resolved_path),
-                max_budget_usd=get_max_budget_usd(depth, explicit=max_budget_usd),
-                allowed_tools=["Read", "Glob", "Grep", "Bash", "Agent"],
-                permission_mode="default",
-                max_turns=max_turns,
-                agents={
-                    "coverage-auditor": claude_agent_sdk.AgentDefinition(
-                        description="Coverage auditor that analyzes test coverage metrics.",
-                        prompt=(
-                            "You are a test coverage auditor. Focus on: "
-                            "running pytest --cov to collect coverage data, "
-                            "analyzing line, branch, and function coverage, "
-                            "identifying modules with low coverage, and "
-                            "reporting coverage percentages per module. "
-                            "Use Bash to run coverage commands when possible."
+        async for message in iter_agent_messages(
+            claude_agent_sdk.query(
+                prompt=_TASK_PROMPT_TEMPLATE.format(src_path=resolved_path),
+                options=claude_agent_sdk.ClaudeAgentOptions(
+                    **sdk_isolation_kwargs(),
+                    system_prompt=system_prompt,
+                    cwd=resolve_cwd_for_path(resolved_path),
+                    max_budget_usd=get_max_budget_usd(depth, explicit=max_budget_usd),
+                    allowed_tools=["Read", "Glob", "Grep", "Bash", "Agent"],
+                    permission_mode="default",
+                    max_turns=max_turns,
+                    agents={
+                        "coverage-auditor": claude_agent_sdk.AgentDefinition(
+                            description="Coverage auditor that analyzes test coverage metrics.",
+                            prompt=(
+                                "You are a test coverage auditor. Focus on: "
+                                "running pytest --cov to collect coverage data, "
+                                "analyzing line, branch, and function coverage, "
+                                "identifying modules with low coverage, and "
+                                "reporting coverage percentages per module. "
+                                "Use Bash to run coverage commands when possible."
+                            ),
+                            tools=["Read", "Glob", "Grep", "Bash"],
+                            model=get_subagent_model("coverage-auditor"),
                         ),
-                        tools=["Read", "Glob", "Grep", "Bash"],
-                        model=get_subagent_model("coverage-auditor"),
-                    ),
-                    "gap-analyzer": claude_agent_sdk.AgentDefinition(
-                        description="Gap analyzer that finds untested code paths.",
-                        prompt=(
-                            "You are a test gap analyzer. Focus on: "
-                            "untested code paths, missing edge cases, "
-                            "untested error handling branches, uncovered "
-                            "exception handlers, and missing boundary "
-                            "condition tests. Report each gap with file "
-                            "path, line number, and risk assessment."
+                        "gap-analyzer": claude_agent_sdk.AgentDefinition(
+                            description="Gap analyzer that finds untested code paths.",
+                            prompt=(
+                                "You are a test gap analyzer. Focus on: "
+                                "untested code paths, missing edge cases, "
+                                "untested error handling branches, uncovered "
+                                "exception handlers, and missing boundary "
+                                "condition tests. Report each gap with file "
+                                "path, line number, and risk assessment."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("gap-analyzer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("gap-analyzer"),
-                    ),
-                    "test-planner": claude_agent_sdk.AgentDefinition(
-                        description="Test planner that creates prioritized test plans.",
-                        prompt=(
-                            "You are a test planner. Based on coverage "
-                            "gaps and untested paths, create a prioritized "
-                            "test plan. For each suggested test include: "
-                            "test name, target file and function, test "
-                            "type (unit/integration/e2e), estimated effort "
-                            "(small/medium/large), and priority (high/"
-                            "medium/low). Order by priority then effort."
+                        "test-planner": claude_agent_sdk.AgentDefinition(
+                            description="Test planner that creates prioritized test plans.",
+                            prompt=(
+                                "You are a test planner. Based on coverage "
+                                "gaps and untested paths, create a prioritized "
+                                "test plan. For each suggested test include: "
+                                "test name, target file and function, test "
+                                "type (unit/integration/e2e), estimated effort "
+                                "(small/medium/large), and priority (high/"
+                                "medium/low). Order by priority then effort."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("test-planner"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("test-planner"),
-                    ),
-                },
-            ),
+                    },
+                ),
+            )
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:
