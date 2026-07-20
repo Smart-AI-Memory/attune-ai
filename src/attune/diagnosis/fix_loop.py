@@ -113,14 +113,6 @@ def run_fix_loop(
 
     proposer, proposer_recipe = seats[0]
     reviewer, reviewer_recipe = seats[1 % len(seats)]
-    hypothesis = record.hypotheses[0].statement
-    brief = _PROPOSER_BRIEF.format(
-        synthesis=record.synthesis or record.symptom,
-        hypothesis=hypothesis,
-        repo=repo.name,
-        repair="",
-    )
-
     result: dict[str, Any] = {
         "proposer": proposer,
         "reviewer": reviewer,
@@ -128,29 +120,9 @@ def run_fix_loop(
     }
     candidate: Candidate | None = None
     try:
-        for attempt in range(2):  # initial + ONE repair round
-            code, proposal = invoke_seat(proposer_recipe, brief)
-            if code != 0 or not proposal.strip():
-                result["disposition"] = "proposer-absent"
-                result["detail"] = (proposal or "no reply")[-300:]
-                return result
-            try:
-                candidate = materialize(proposal, repo)
-            except (ProposalError, RuntimeError) as exc:
-                if attempt == 0:
-                    result["repair_rounds"] = 1
-                    brief = _PROPOSER_BRIEF.format(
-                        synthesis=record.synthesis or record.symptom,
-                        hypothesis=hypothesis,
-                        repo=repo.name,
-                        repair=f"\nYour previous proposal failed: {exc}\nFix the format.",
-                    )
-                    continue
-                result["disposition"] = "failed-materialize"
-                result["detail"] = str(exc)[:300]
-                return result
-            break
-        assert candidate is not None  # loop either set it or returned
+        candidate = _propose_candidate(record, repo, proposer_recipe, invoke_seat, result)
+        if candidate is None:
+            return result  # disposition already set by the propose step
 
         candidate = validate(candidate, checks or _default_checks(candidate))
         result["checks"] = [
@@ -164,24 +136,77 @@ def run_fix_loop(
             result["disposition"] = "failed-validation"
             return result
 
-        review_code, review = invoke_seat(
-            reviewer_recipe,
-            _REVIEWER_BRIEF.format(
-                synthesis=record.synthesis or record.symptom,
-                diff=diff[:DIFF_CHARS],
-                receipts="\n".join(
-                    f"[{c['label']}] exit {c['exit_code']}" for c in result["checks"]
-                ),
-            ),
-        )
-        verdict_line = next(
-            (ln for ln in (review or "").splitlines() if ln.strip().upper().startswith("VERDICT")),
-            "",
-        )
-        result["review"] = (review or "")[-600:] if review_code == 0 else "reviewer absent"
-        approved = review_code == 0 and "APPROVE" in verdict_line.upper()
-        result["disposition"] = "proposed" if approved else "rejected"
+        _review_candidate(record, diff, reviewer_recipe, invoke_seat, result)
         return result
     finally:
         if candidate is not None:
             discard(candidate)
+
+
+def _propose_candidate(
+    record: DiagnosisRecord,
+    repo: Path,
+    proposer_recipe: tuple[str, ...],
+    invoke_seat: Callable[[Sequence[str], str], tuple[int, str]],
+    result: dict[str, Any],
+) -> Candidate | None:
+    """Invoke the proposer and materialize, with ONE repair round.
+
+    Returns the candidate, or ``None`` after setting the terminal
+    disposition (``proposer-absent`` / ``failed-materialize``) on
+    ``result``.
+    """
+    hypothesis = record.hypotheses[0].statement
+    brief = _PROPOSER_BRIEF.format(
+        synthesis=record.synthesis or record.symptom,
+        hypothesis=hypothesis,
+        repo=repo.name,
+        repair="",
+    )
+    for attempt in range(2):  # initial + ONE repair round
+        code, proposal = invoke_seat(proposer_recipe, brief)
+        if code != 0 or not proposal.strip():
+            result["disposition"] = "proposer-absent"
+            result["detail"] = (proposal or "no reply")[-300:]
+            return None
+        try:
+            return materialize(proposal, repo)
+        except (ProposalError, RuntimeError) as exc:
+            if attempt == 0:
+                result["repair_rounds"] = 1
+                brief = _PROPOSER_BRIEF.format(
+                    synthesis=record.synthesis or record.symptom,
+                    hypothesis=hypothesis,
+                    repo=repo.name,
+                    repair=f"\nYour previous proposal failed: {exc}\nFix the format.",
+                )
+                continue
+            result["disposition"] = "failed-materialize"
+            result["detail"] = str(exc)[:300]
+            return None
+    return None  # unreachable — loop returns on every path
+
+
+def _review_candidate(
+    record: DiagnosisRecord,
+    diff: str,
+    reviewer_recipe: tuple[str, ...],
+    invoke_seat: Callable[[Sequence[str], str], tuple[int, str]],
+    result: dict[str, Any],
+) -> None:
+    """Different-seat review; sets ``proposed`` / ``rejected`` on result."""
+    review_code, review = invoke_seat(
+        reviewer_recipe,
+        _REVIEWER_BRIEF.format(
+            synthesis=record.synthesis or record.symptom,
+            diff=diff[:DIFF_CHARS],
+            receipts="\n".join(f"[{c['label']}] exit {c['exit_code']}" for c in result["checks"]),
+        ),
+    )
+    verdict_line = next(
+        (ln for ln in (review or "").splitlines() if ln.strip().upper().startswith("VERDICT")),
+        "",
+    )
+    result["review"] = (review or "")[-600:] if review_code == 0 else "reviewer absent"
+    approved = review_code == 0 and "APPROVE" in verdict_line.upper()
+    result["disposition"] = "proposed" if approved else "rejected"
