@@ -1,5 +1,7 @@
 # Gemini Projector Integration — Decisions
 
+**Status:** superseded (2026-07-18) — see [requirements.md](requirements.md)
+
 ## D1 — adapter shape (OPEN, receipt pending)
 
 **Candidate (a), config-only adapter, staged for the live test.**
