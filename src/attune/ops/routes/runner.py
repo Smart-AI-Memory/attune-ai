@@ -89,10 +89,10 @@ async def _read_run_body(request: Request) -> tuple[str | None, str | None]:
     raw_trigger = raw.get("trigger")
     if raw_trigger == "":
         raw_trigger = None
-    if raw_trigger is not None and raw_trigger not in ("manual", "attune-rec"):
+    if raw_trigger is not None and raw_trigger not in ("manual", "attune-rec", "attune-heal"):
         raise HTTPException(
             status_code=400,
-            detail="trigger must be 'manual' or 'attune-rec'",
+            detail="trigger must be 'manual', 'attune-rec', or 'attune-heal'",
         )
     return raw_path, raw_trigger
 

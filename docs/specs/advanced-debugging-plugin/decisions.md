@@ -72,3 +72,28 @@ surface, T6/T7/T8 loops), one PR per phase, receipts named per
 task. Execution NOT yet armed — Phase A starts on a separate
 chair go. T4/T6 live-fire receipts are billable and each needs a
 spend go at execution time.
+
+## 2026-07-20 — Phase A executed (T1 + T2)
+
+Substrate landed: `DiagnosisRecord` (+ evidence/hypothesis
+dataclasses, `schema_version=1`, `config_used` stamped) in the
+telemetry models; `diagnosis_records.jsonl` as the canonical third
+stream (shared rotate-to-archive); `attune.diagnosis` package with
+the purity-ruled loader (counted drops) and `records_for_run`;
+`attune-heal` accepted by the trigger contract, route validator,
+and runner env-export, excluded from mining with a counted
+`dropped_attune_heal` stat.
+
+**Deviation from tasks.md (T2):** `mining.py` untouched —
+corpus-layer exclusion makes the named manual-fraction change
+unreachable dead code; the trigger normalizer already maps
+non-manual values to None.
+
+**Receipts:** live-fire T1 — the real failed run `63c533fb6e46`
+(2026-07-15 code-review) diagnosed, persisted, reloaded with
+provenance intact; live-fire T2 — an attune-heal-stamped record in
+the stream omitted by a mining pass (`dropped_attune_heal=1`); 77
+affected tests serial; 2715-test breadth pass. **Honest finding:**
+the real canonical run stream does not exist yet — all post-cutover
+runs to date were suite-isolated; RR-1 readiness accumulation
+starts from zero as of 2026-07-20.

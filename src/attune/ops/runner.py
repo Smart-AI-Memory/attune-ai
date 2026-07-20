@@ -803,7 +803,7 @@ class RunnerService:
         # Run provenance for the workflow's run record (run-record-corpus
         # RC-3). Only known values cross the boundary; the child's
         # ``resolve_run_trigger`` treats anything else as ``manual``.
-        if run.trigger in ("manual", "attune-rec"):
+        if run.trigger in ("manual", "attune-rec", "attune-heal"):
             from attune.models.telemetry.run_context import TRIGGER_ENV
 
             proc_env[TRIGGER_ENV] = run.trigger

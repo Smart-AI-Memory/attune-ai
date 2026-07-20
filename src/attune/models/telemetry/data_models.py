@@ -6,7 +6,7 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from typing import Any
 
 
@@ -147,6 +147,93 @@ class WorkflowRunRecord:
         """Create from dictionary."""
         stages = [WorkflowStageRecord(**s) for s in data.pop("stages", [])]
         return cls(stages=stages, **data)
+
+
+@dataclass
+class DiagnosisEvidence:
+    """One evidence entry in a diagnosis (advanced-debugging-plugin RR-1).
+
+    ``kind`` separates recalled lesson priors from evidence observed in
+    the failed run itself (RR-4: priors are never merged with observed
+    evidence).
+    """
+
+    kind: str  # "prior" | "observed"
+    source: str  # lesson ref, file path, "run-record", "log-tail", ...
+    content: str = ""
+
+
+@dataclass
+class DiagnosisHypothesis:
+    """One ranked root-cause hypothesis."""
+
+    statement: str
+    rank: int = 1
+    confidence: str = "low"  # values from config_used["confidence_scale"]
+    supporting: list[str] = field(default_factory=list)  # evidence sources
+    contradicting: list[str] = field(default_factory=list)
+
+
+@dataclass
+class DiagnosisRecord:
+    """Record of one diagnosis of a failed workflow run.
+
+    The core artifact of docs/specs/advanced-debugging-plugin/ (RR-1):
+    symptom -> evidence chain -> hypotheses -> synthesis -> proposed
+    fix -> verification, persisted beside the run corpus. Later phases
+    fill ``panel`` (RR-5) and ``proposed_fix`` (RR-6) — both are plain
+    dicts so Phase A ships no speculative schema for them
+    (``schema_version`` exists for hardening later).
+    """
+
+    # Identification
+    diagnosis_id: str
+    source_run_id: str
+    workflow_name: str
+    created_at: str  # ISO format
+    schema_version: int = 1
+
+    # Lifecycle: open | fix-proposed | verified | rejected | graduated
+    status: str = "open"
+
+    # Symptom + priors (RR-4)
+    symptom: str = ""
+    prior_lessons: list[str] = field(default_factory=list)
+    priors_degraded: str | None = None  # reason recall was unavailable
+
+    # Evidence and reasoning
+    evidence: list[DiagnosisEvidence] = field(default_factory=list)
+    hypotheses: list[DiagnosisHypothesis] = field(default_factory=list)
+    synthesis: str | None = None
+    dissent: list[str] = field(default_factory=list)
+
+    # Panel receipts (RR-5, Phase B) and fix proposal (RR-6, Phase D)
+    panel: dict[str, Any] = field(default_factory=dict)
+    proposed_fix: dict[str, Any] = field(default_factory=dict)
+
+    # Policy is data (dissent register): the confidence scale and fix
+    # threshold used for THIS diagnosis, never hard-coded elsewhere.
+    config_used: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "DiagnosisRecord":
+        """Create from dictionary.
+
+        Tolerant in both directions: missing fields fall back to
+        defaults (pre-v1 records), unknown keys are dropped (records
+        written by a NEWER schema still load).
+        """
+        evidence = [DiagnosisEvidence(**e) for e in data.pop("evidence", []) if isinstance(e, dict)]
+        hypotheses = [
+            DiagnosisHypothesis(**h) for h in data.pop("hypotheses", []) if isinstance(h, dict)
+        ]
+        known = {f.name for f in fields(cls)}
+        kwargs = {k: v for k, v in data.items() if k in known}
+        return cls(evidence=evidence, hypotheses=hypotheses, **kwargs)
 
 
 @dataclass

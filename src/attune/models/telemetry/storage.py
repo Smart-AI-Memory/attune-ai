@@ -21,6 +21,7 @@ from .backend import _parse_timestamp
 from .data_models import (
     AgentAssignmentRecord,
     CoverageRecord,
+    DiagnosisRecord,
     FileTestRecord,
     LLMCallRecord,
     TaskRoutingRecord,
@@ -50,6 +51,14 @@ def _canonical_runs_file() -> Path:
     home = os.environ.get("ATTUNE_HOME")
     attune_dir = Path(home).expanduser() if home else Path.home() / ".attune"
     return attune_dir / "telemetry" / "workflow_runs.jsonl"
+
+
+def _canonical_diagnoses_file() -> Path:
+    """Canonical home-global diagnosis stream (advanced-debugging-plugin
+    RR-1) — the telemetry layer's third file, resolved exactly like the
+    run stream so isolation and consolidation ride the same mechanism.
+    """
+    return _canonical_runs_file().parent / "diagnosis_records.jsonl"
 
 
 class TelemetryStore:
@@ -88,6 +97,11 @@ class TelemetryStore:
         self.calls_file = self.storage_dir / "llm_calls.jsonl"
         self.workflows_file = (
             self.storage_dir / "workflow_runs.jsonl" if explicit else _canonical_runs_file()
+        )
+        self.diagnoses_file = (
+            self.storage_dir / "diagnosis_records.jsonl"
+            if explicit
+            else _canonical_diagnoses_file()
         )
 
         # Tier 1 automation monitoring files
@@ -176,35 +190,45 @@ class TelemetryStore:
         """Log a workflow run record to the canonical stream (size-rotated)."""
         try:
             self.workflows_file.parent.mkdir(parents=True, exist_ok=True)
-            self._rotate_runs_file_if_needed()
+            self._rotate_stream_if_needed(self.workflows_file, "workflow_runs")
         except OSError as exc:
             logger.warning("telemetry: run-stream prep failed: %s", exc)
         self._append_record(self.workflows_file, record)
 
-    def _rotate_runs_file_if_needed(self) -> None:
-        """Rotate the run stream past ``_RUNS_ROTATE_BYTES`` (RC-5).
+    def log_diagnosis(self, record: "DiagnosisRecord") -> None:
+        """Log a diagnosis record (advanced-debugging-plugin RR-1).
 
-        History moves to ``<dir>/archive/workflow_runs-<utc>.jsonl`` so
-        the miner keeps its full span; the live file stays bounded.
+        Same canonical-stream discipline as run records: home-global,
+        size-rotated into ``archive/``, never deleted.
+        """
+        try:
+            self.diagnoses_file.parent.mkdir(parents=True, exist_ok=True)
+            self._rotate_stream_if_needed(self.diagnoses_file, "diagnosis_records")
+        except OSError as exc:
+            logger.warning("telemetry: diagnosis-stream prep failed: %s", exc)
+        self._append_record(self.diagnoses_file, record)
+
+    def _rotate_stream_if_needed(self, stream: Path, prefix: str) -> None:
+        """Rotate ``stream`` past ``_RUNS_ROTATE_BYTES`` (RC-5).
+
+        History moves to ``<dir>/archive/<prefix>-<utc>.jsonl`` so
+        miners keep their full span; the live file stays bounded.
         Never deletes.
         """
         try:
-            if (
-                not self.workflows_file.is_file()
-                or self.workflows_file.stat().st_size < _RUNS_ROTATE_BYTES
-            ):
+            if not stream.is_file() or stream.stat().st_size < _RUNS_ROTATE_BYTES:
                 return
-            archive_dir = self.workflows_file.parent / "archive"
+            archive_dir = stream.parent / "archive"
             archive_dir.mkdir(parents=True, exist_ok=True)
             stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-            dest = archive_dir / f"workflow_runs-{stamp}.jsonl"
+            dest = archive_dir / f"{prefix}-{stamp}.jsonl"
             suffix = 0
             while dest.exists():
                 suffix += 1
-                dest = archive_dir / f"workflow_runs-{stamp}-{suffix}.jsonl"
-            self.workflows_file.rename(dest)
+                dest = archive_dir / f"{prefix}-{stamp}-{suffix}.jsonl"
+            stream.rename(dest)
         except OSError as exc:
-            logger.warning("telemetry: run-stream rotation failed: %s", exc)
+            logger.warning("telemetry: stream rotation failed for %s: %s", stream.name, exc)
 
     def log_task_routing(self, record: TaskRoutingRecord) -> None:
         """Log a task routing decision."""

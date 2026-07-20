@@ -20,7 +20,10 @@ logger = logging.getLogger(__name__)
 # a manual run. Values outside the valid set degrade to "manual".
 TRIGGER_ENV = "ATTUNE_RUN_TRIGGER"
 
-_VALID_TRIGGERS = frozenset({"manual", "attune-rec"})
+# "attune-heal" marks diagnostic runs (advanced-debugging-plugin RR-2):
+# they enter the corpus stamped but are excluded from mining, triage
+# selection, and lesson graduation.
+_VALID_TRIGGERS = frozenset({"manual", "attune-rec", "attune-heal"})
 
 
 def resolve_run_trigger() -> str:

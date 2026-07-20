@@ -71,6 +71,7 @@ class LoadStats:
     dropped_no_project: int = 0
     dropped_other_project: int = 0
     dropped_duplicate: int = 0
+    dropped_attune_heal: int = 0
 
 
 def default_stream_paths() -> list[Path]:
@@ -121,6 +122,11 @@ def _classify_line(line: str, project: str, cutover: datetime) -> RunRecord | st
         return "dropped_other_project"
     run_id = data.get("run_id")
     trigger = data.get("trigger")
+    # Diagnostic self-records are stamped but never mined
+    # (advanced-debugging-plugin RR-2) — no diagnose-the-diagnosis
+    # feedback into the learner.
+    if trigger == "attune-heal":
+        return "dropped_attune_heal"
     return RunRecord(
         workflow=name,
         started_at=started,
