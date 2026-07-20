@@ -23,17 +23,68 @@ MEMORY_INDEX = "idx:attune_memory"
 
 #: Error-shape token patterns, in extraction order: exception classes
 #: (``ValueError``), dotted module paths (``attune.ops.runner``),
-#: backtick-quoted names, and ``*.py`` basenames.
+#: backtick-quoted names, ``*.py`` basenames, and snake_case
+#: identifiers (``sdk_error_kind`` — live defect D17: real ops
+#: symptoms carry bare identifiers, not tracebacks).
 _TERM_PATTERNS = (
     re.compile(r"\b[A-Z][A-Za-z0-9_]*(?:Error|Exception)\b"),
     re.compile(r"\b[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]+){1,}\b"),
     re.compile(r"`([^`\n]{2,60})`"),
     re.compile(r"\b([A-Za-z0-9_]+\.py)\b"),
+    re.compile(r"\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b"),
+)
+
+#: Plain-word fallback (D17): fires ONLY when every shape pattern
+#: missed — terse operational symptoms ("path argument is required")
+#: previously extracted zero terms and degraded priors on 3/3 real
+#: records (2026-07-20). Generic failure vocabulary is stopworded so
+#: the fallback recalls the SPECIFIC nouns, not "failed"/"error".
+_PLAIN_WORD_RE = re.compile(r"\b[a-zA-Z][a-zA-Z0-9-]{2,}\b")
+_FALLBACK_STOPWORDS = frozenset(
+    {
+        "and",
+        "are",
+        "argument",
+        "been",
+        "being",
+        "code",
+        "command",
+        "error",
+        "exit",
+        "failed",
+        "failure",
+        "for",
+        "from",
+        "has",
+        "have",
+        "into",
+        "missing",
+        "none",
+        "not",
+        "null",
+        "required",
+        "run",
+        "the",
+        "that",
+        "this",
+        "unknown",
+        "was",
+        "were",
+        "with",
+        "without",
+        "workflow",
+    }
 )
 
 
 def extract_error_terms(text: str, *, limit: int = 8) -> list[str]:
-    """Extract dedup'd error-shape terms from failure text."""
+    """Extract dedup'd error-shape terms from failure text.
+
+    Shape patterns lead; when ALL of them miss (the terse-symptom
+    class), a stopword-filtered plain-word fallback supplies terms so
+    priors recall never degrades to ``no-terms-extracted`` on text
+    that carries any signal at all.
+    """
     terms: list[str] = []
     for pattern in _TERM_PATTERNS:
         for match in pattern.findall(text or ""):
@@ -42,6 +93,15 @@ def extract_error_terms(text: str, *, limit: int = 8) -> list[str]:
                 terms.append(token)
             if len(terms) >= limit:
                 return terms
+    if terms:
+        return terms
+    for match in _PLAIN_WORD_RE.findall(text or ""):
+        token = match.strip()
+        if token.lower() in _FALLBACK_STOPWORDS or token in terms:
+            continue
+        terms.append(token)
+        if len(terms) >= limit:
+            break
     return terms
 
 
