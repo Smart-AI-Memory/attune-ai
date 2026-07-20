@@ -149,3 +149,39 @@ dashboard restarted on worktree code (launch.json MAPPING fix,
 local-only) renders the button beside the failed chip on the real
 2026-07-15 run `63c533fb6e46`. The button was deliberately NOT
 clicked — a click launches a billable panel run (spend-gated).
+
+## 2026-07-20 — Phase D executed (T6 + T7 + T8)
+
+Loops landed: the propose-only fix loop binding the solutions
+lifecycle (threshold gate by scale index, one repair round,
+reviewer != proposer, failed validation visible, discard in
+finally with a leaked-worktree sweep assertion); the manual-only
+triage command (`python -m attune.diagnosis.triage`, dry-run mode,
+batch cap, heal/success/diagnosed exclusions, hypothesis
+clustering that never merges conflicting evidence, board digest
+with R8 stated); the read-only curator source with ALLOWLIST
+redaction; and the `LessonPublisher` protocol whose only v1
+implementation renders for the chair (source-level guard: no write
+primitives in the module).
+
+**Deviations (recorded):** (1) triage is NOT registered in
+`roundtable.routine.ROUTINES` — the routine runner's check-battery
+shape doesn't fit a diagnosis batch, and standalone keeps the 2-1
+manual-only binding structurally true (guard test asserts
+absence); (2) T6's seat-side live-fire (a real seat proposing a
+real fix) is deferred to a chair spend go — the MECHANICAL
+boundary is live-fired in tests (real `git worktree` materialize,
+real py-compile validation receipts, real discard against a real
+repo), only the seats are mocked.
+
+**Receipts:** 69 diagnosis tests serial (25 new: threshold
+gating with zero spend below threshold, repair round, visible
+failed-validation, reviewer-differs, worktree-sweep, selection
+exclusions, cap, cluster/digest honesty, redaction allowlist,
+graduation lint gates, no-write guard); 2329-test breadth over
+diagnosis/curator/roundtable/ops/telemetry.
+
+**Still open:** the two dissent-register rulings (lesson-corpus
+ownership; confidence-scale value review) — the interface keeps
+both unblocking; and the deferred seat-side live-fires (T6 fix
+proposal, full browser click-through) under one future spend go.
