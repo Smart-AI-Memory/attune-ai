@@ -205,3 +205,16 @@ only shrinks; the count prints on every run.
 **Documented exclusions:** CHANGELOG, docs/specs/, docs/history/,
 lessons corpus, generated website mirrors, the gate's own files;
 Redis `empathy:*` wire-format keys remain P2B (data format).
+
+### G5 retro-flag addendum (2026-07-20, fix-set-balloon rule applied in hindsight)
+
+The three behavior-adjacent edits from the G5 sweep, retro-checked
+at the chair's request: (1) `deployments/wizards-backend/` — the
+app NEVER imports the dependency; the requirement line was dead
+weight in both brandings, now deleted outright; the dir carries
+Railway configs but no repo-side deploy wiring. (2)
+`agent_config.py` `project` default — zero consumers read
+`.project` in src/; inert. (3) `.claude/PROJECT-CONTEXT.xml` —
+zero consumers; stale artifact, future deletion candidate. All
+three retired with grep receipts; the sweep's only correction was
+replacing a fictional rebrand with an honest deletion.
