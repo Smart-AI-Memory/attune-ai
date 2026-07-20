@@ -185,3 +185,59 @@ diagnosis/curator/roundtable/ops/telemetry.
 ownership; confidence-scale value review) — the interface keeps
 both unblocking; and the deferred seat-side live-fires (T6 fix
 proposal, full browser click-through) under one future spend go.
+
+## 2026-07-20 — Deferred live-fires executed (chair-armed); spec complete
+
+**Live-fire 1 — browser click-through (full circle).** On the
+dashboard served from merged main: a fresh REAL failed run was
+created through the production runner (`diagnose` dispatched with
+no argument — exit 2, zero spend), its run view rendered the
+"Why did this fail?" button beside the failed chip, and a REAL
+CLICK dispatched `attune diagnose` stamped `attune-heal`; the
+diagnostic run streamed live on its own run view (chained-from
+badge rendered) and completed exit 0. Panel: **3 seats, 0 absent,
+3 invocations** — claude, antigravity, and codex each
+independently identified the exact root cause (missing `run_id`
+positional). `DiagnosisRecord 40482304b805` persisted to the
+canonical stream; the source run's view now renders
+`diagnosed: 40482304b805` with the button retired (idempotency
+surface verified live). An earlier diagnosis (`7e751fed728a`,
+03:04, from a pre-logout session stretch) independently confirmed
+the chip path on run `63c533fb6e46`.
+
+**Live-fire 2 — fix loop with real seats (honest-failure
+receipt).** `run_fix_loop` on the high-confidence real diagnosis
+`7e751fed728a` against the main repo. Findings, per TAC-4
+(failures presented failed-with-receipts, never laundered):
+
+- claude seat: stored OAuth revoked in shell contexts →
+  `proposer-absent` (recipe-scrub verified working as designed —
+  the dashboard subprocess carries its own credential).
+- antigravity as proposer: exit 0 with EMPTY output — `--mode
+  plan` (reasoning-only, correct for R1 positions) structurally
+  cannot emit file-block code proposals. Seat-ROLE fit is real:
+  plan-mode seats review; code-native seats propose.
+- codex as proposer, antigravity reviewing: codex answered BOTH
+  rounds, **the one-repair-round path fired live**, and both
+  proposals failed materialize honestly (`unified diff names no
+  target files`) — the loop refused to launder, main tree
+  byte-identical before/after, zero leaked scratch worktrees.
+
+**Named follow-ups (recorded, not fixed here):**
+
+1. The diagnosis engine's own execution emits NO canonical run
+   record (`attune diagnose` is a CLI command, not a workflow —
+   RC-2's seam has nothing to stamp), so `attune-heal` records
+   exist today only in the ops store; the mining exclusion guards
+   an empty set until the engine emits its own heal-stamped
+   record.
+2. Proposer-brief hardening for codex's output format (accept its
+   diff/prose interleaving or teach the format by worked example,
+   the producing-run precedent) + roster role-fit (proposer must
+   be a code-emitting seat).
+3. claude CLI re-auth owed (`claude login`) for shell-context
+   seats.
+
+With all four phases, all eight RR receipts, and both live-fires
+executed, this spec is COMPLETE; the follow-ups above are the v1.1
+backlog.

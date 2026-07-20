@@ -1,6 +1,6 @@
 # Advanced Debugging Plugin — Tasks
 
-**Status:** draft for chair review (2026-07-19). Eight tasks across
+**Status: executed** (2026-07-20 — all four phases shipped, live-fires receipted; see decisions.md). Eight tasks across
 the design's four phases (A substrate, B engine, C surface,
 D loops). One PR per phase; each task names its RR receipts.
 Execute in order — every task builds on the previous task's
