@@ -1,8 +1,13 @@
-"""PostToolUse hook: auto-maintain .help/ after git commits.
+"""PostToolUse hook: check .help/ staleness after git commits.
 
 When the user runs a successful `git commit`, checks if
 any committed files match features in .help/features.yaml.
 If stale features are found, reports them via stderr.
+
+Check-only by design: this hook never regenerates templates,
+spends LLM budget, or writes to the working tree — run_hook()
+runs in dry-run mode (docs/specs/post-commit-help-check-only).
+Regeneration happens only via /coach maintain at release prep.
 
 Only fires on Bash tool calls that contain `git commit`.
 Exits 0 always (informational, never blocks).
@@ -95,23 +100,14 @@ def main() -> None:
         return
 
     if hook_result.stale_count > 0:
-        regen = hook_result.regenerated_count
-        if regen > 0:
-            print(
-                f"attune: auto-updated {regen} help "
-                f"template(s) in .help/. Stage and commit "
-                f"the changes with your next commit.",
-                file=sys.stderr,
-            )
-        else:
-            stale = hook_result.staleness.stale_features
-            names = ", ".join(stale[:5])
-            print(
-                f"attune: {hook_result.stale_count} help feature(s) "
-                f"are stale ({names}). Run /coach maintain "
-                f"to update.",
-                file=sys.stderr,
-            )
+        stale = hook_result.staleness.stale_features
+        names = ", ".join(stale[:5])
+        print(
+            f"attune: {hook_result.stale_count} help feature(s) "
+            f"are stale ({names}). Run /coach maintain "
+            f"to update.",
+            file=sys.stderr,
+        )
 
 
 if __name__ == "__main__":
