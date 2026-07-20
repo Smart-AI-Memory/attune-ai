@@ -97,3 +97,29 @@ affected tests serial; 2715-test breadth pass. **Honest finding:**
 the real canonical run stream does not exist yet — all post-cutover
 runs to date were suite-isolated; RR-1 readiness accumulation
 starts from zero as of 2026-07-20.
+
+## 2026-07-20 — Phase B executed (T3 + T4) with live-fire receipt
+
+Engine landed: priors recall (explicit degradation), deterministic
+bounded evidence packs, the seat panel on the shipped roundtable
+machinery, `engine.diagnose()`, and `attune diagnose <run_id>`.
+44 diagnosis tests serial; 724-test breadth.
+
+**T4 live-fire receipt (chair-armed spend, 2026-07-20).** A real
+keyless workflow failure was generated into the REAL canonical
+stream (run `85c88fd9…`, code-review, "path argument is required" —
+the stream's first real record), then `attune diagnose` ran with
+REAL seats: claude ABSENT (revoked OAuth — the absent-seat receipt
+observed live, 2 retry invocations), antigravity + codex answered
+independently; BOTH top hypotheses correctly identified the missing
+path argument (high confidence), both offered a distinct
+low-confidence regression alternative citing the git-log evidence;
+4 invocations under the cap of 10; no dissent (material agreement
+detected). DiagnosisRecord `3264a8f6107b` persisted to the real
+diagnosis stream with `config_used` stamped and reload verified.
+
+**Observation for Phase C/D tuning:** priors degraded
+`no-terms-extracted` — the symptom text ("path argument is
+required") carries no error-class/module tokens; term extraction
+should also derive terms from the workflow name and argument names.
+Recorded, not fixed here.
