@@ -46,9 +46,9 @@ Utility commands:
 
 For interactive development, use Claude Code skills:
     /dev        Developer tools (commit, review, debug, refactor)
-    /testing    Run tests, coverage, generate tests
-    /workflows  AI-powered workflows (security, bug prediction)
-    /docs       Documentation generation
+    /smart-test Find test gaps, generate tests
+    /attune     AI-powered workflows via Socratic discovery
+    /doc-gen    Documentation generation
     /release    Release preparation
 """
 
@@ -583,9 +583,9 @@ NOTE: This CLI is for automation only. For interactive development,
 use Claude Code skills in VSCode or Claude Desktop:
 
     /dev        Developer tools (commit, review, debug, refactor)
-    /testing    Run tests, coverage, generate tests
-    /workflows  AI-powered workflows (security, bug prediction)
-    /docs       Documentation generation
+    /smart-test Find test gaps, generate tests
+    /attune     AI-powered workflows via Socratic discovery
+    /doc-gen    Documentation generation
     /release    Release preparation
 
 Documentation: https://smartaimemory.com/framework-docs/
@@ -731,7 +731,7 @@ Get started:
 For interactive development in Claude Code:
   /attune       Socratic discovery — finds the right workflow for you
   /dev          Developer tools (commit, review, debug, refactor)
-  /testing      Run tests, coverage, generate tests
+  /smart-test   Find test gaps, generate tests
   /wizard run   Guided multi-step wizards
 
 More: attune --help | Docs: https://smartaimemory.com/framework-docs/
