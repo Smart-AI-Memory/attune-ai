@@ -80,3 +80,17 @@ the error-translation path unchanged.
 - Seam: `src/attune/workflows/agent_sdk_adapter.py`
   (`collect_agent_output`); `code_review.py:396-400` (representative
   consumption loop).
+
+---
+
+## 2026-07-20 — Design approved + execution armed (chair: Patrick)
+
+Ruled in the chair-rulings sitting (stepped-through review). The
+design stands as drafted with the already-resolved D1–D3 (success
+signal `subtype == "success"`; pass-through async generator at the
+`collect_agent_output` seam; `saw_success` gate primary +
+`"command failed"` substring secondary, `Exception` only).
+Implementation may proceed — one seam, regression-guarded, with
+the named constraint that the false-green dispatcher behavior
+(`attune workflow run` exits 0 on `success=False`) must not
+worsen.

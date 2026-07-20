@@ -187,3 +187,21 @@ not as separate gate conditions.
 **Reference:** opportunity surfaced 2026-05-27 during
 post-merge review of PR #484 (`docs/specs/ops-help-page`);
 locked here so Phase 1 implementation doesn't re-litigate.
+
+---
+
+## 2026-07-20 — CLOSED stale on premise drift (chair: Patrick)
+
+Ruled in the chair-rulings sitting. The motivating premise —
+docs say 80% while the codecov patch gate enforces ~90%, so
+agents targeting the documented bar get rejected by CI (PR #485)
+— has INVERTED since the 2026-05-27 draft: today codecov's patch
+gate is 50% (±5%) with project at 80% (±2%), `pyproject.toml`
+`fail_under=85`, and CLAUDE.md still says 80%. The strict-gate
+pain is gone; the residual misalignment runs the OTHER way (a
+patch can land at 50% while docs claim an 80% floor). Controls
+3–4 were partially overtaken by process shipped since (delegation
+receipts ratified 2026-07-14; the living test-quality-program).
+Ruling: close the spec; the one live residue — aligning the
+80/85/50 numbers to one story — is a small standalone hygiene
+fix, chipped separately, not a four-control spec.
