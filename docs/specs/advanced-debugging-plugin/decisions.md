@@ -325,3 +325,36 @@ Receipts: 8 contract tests in
 `tests/unit/diagnosis/test_origin_seam.py` (default + legacy load,
 last-wins + superseded counter, retag round-trip, vocabulary guard,
 source exclusion); diagnosis+curator 218 passed.
+
+## 2026-07-20 — v1.1 backlog item 2: proposer-brief hardening + roster role-fit (chair-picked)
+
+Both remedies from live-fire 2's named follow-up, executed:
+
+- **Roster role-fit.** `PLAN_ONLY_SEATS` (routine.py, deny-list —
+  antigravity's `--mode plan` structurally cannot emit file blocks;
+  new seats default code-emitting). `run_fix_loop` now: (1) selects
+  the proposer only from code-emitting seats, with an explicit
+  `no-code-emitting-proposer` disposition (zero spend) when the
+  roster has none; (2) on `proposer-absent`, falls to the NEXT
+  code-emitting seat (the live-fire's manual recovery — claude
+  absent → codex proposed, antigravity reviewed — is now the loop's
+  own behavior; `absent_proposers` recorded); `failed-materialize`
+  stays terminal — the loop never seat-shops a format failure;
+  (3) picks the reviewer skipping the proposer AND known-absent
+  seats; a roster with no distinct reviewer is `rejected`, never
+  laundered to `proposed`.
+- **Proposer-brief hardening** (teach-by-worked-example, the
+  producing-run precedent — `TAG_EXAMPLE` class): literal
+  `FILE_BLOCK_EXAMPLE` embedded in the brief. Root-cause note: the
+  old repair message ("unified diff names no target files / Fix the
+  format") actively steered seats TOWARD unified diffs; the repair
+  brief now names the materialize failure and restates the
+  file-block contract with the example. Accept-diff/prose-
+  interleaving was NOT built — codex's exact output shape wasn't
+  captured, so parser guessing is speculative; revisit only if a
+  worked-example round still fails live.
+
+Receipts: 14 fix-loop tests serial (5 new role-fit: plan-only skip,
+all-plan-only zero-spend, absent-fallback with reviewer exclusion,
+no-seat-shopping, solo-roster honesty; 1 new brief guard);
+diagnosis+roundtable 243 passed serial.
