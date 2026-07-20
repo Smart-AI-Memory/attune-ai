@@ -520,6 +520,16 @@ async def run_view_page(run_id: str, request: Request) -> HTMLResponse:
     # Live runs get an empty list — the SSE replay fills the pre on
     # subscribe. Disk-loaded runs ship their captured log inline.
     server_rendered_lines = list(run.lines) if loaded_from_disk else []
+    # Existing diagnoses for this run (advanced-debugging-plugin T5) —
+    # drives the "diagnosed" chip and suppresses the diagnose button.
+    # Best-effort: a broken diagnosis store never breaks the run view.
+    try:
+        from attune.diagnosis import records_for_run
+
+        diagnosis_ids = [r.diagnosis_id for r in records_for_run(run_id)]
+    except Exception:  # noqa: BLE001 — page render must survive store faults
+        logger.debug("ops.run_view: diagnosis lookup failed", exc_info=True)
+        diagnosis_ids = []
     return _render(
         request,
         "run_view.html",
@@ -528,6 +538,7 @@ async def run_view_page(run_id: str, request: Request) -> HTMLResponse:
         stream_url=stream_url,
         allow_run=request.app.state.config.allow_run,
         server_rendered_lines=server_rendered_lines,
+        diagnosis_ids=diagnosis_ids,
     )
 
 

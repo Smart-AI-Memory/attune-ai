@@ -38,29 +38,68 @@ class DiagnosisSourceError(ValueError):
 
 
 def find_source_run(run_id: str, *, stream: Path | None = None) -> WorkflowRunRecord | None:
-    """Find a run record by id in the canonical stream (newest wins)."""
+    """Find a run record by id — canonical stream first, ops store second.
+
+    Dashboard (ops) run ids and telemetry run ids are DIFFERENT id
+    spaces: the runner allocates 12-hex ids while the telemetry seam
+    allocates uuid4. The run-view "Why did this fail?" button hands us
+    an ops id, so a miss in the canonical stream falls back to the
+    persisted ops record, synthesized into a ``WorkflowRunRecord``
+    (design deviation recorded in decisions.md, Phase C).
+    """
     path = stream if stream is not None else _canonical_runs_file()
-    if not path.is_file():
-        return None
     found: WorkflowRunRecord | None = None
-    try:
-        lines = path.read_text(encoding="utf-8").splitlines()
-    except OSError as exc:
-        logger.warning("diagnosis: run-stream read failed: %s", exc)
-        return None
-    for line in lines:
-        if not line.strip() or f'"{run_id}"' not in line:
-            continue
+    if path.is_file():
         try:
-            data = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(data, dict) and data.get("run_id") == run_id:
-            try:
-                found = WorkflowRunRecord.from_dict(data)
-            except (TypeError, ValueError):
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except OSError as exc:
+            logger.warning("diagnosis: run-stream read failed: %s", exc)
+            lines = []
+        for line in lines:
+            if not line.strip() or f'"{run_id}"' not in line:
                 continue
-    return found
+            try:
+                data = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(data, dict) and data.get("run_id") == run_id:
+                try:
+                    found = WorkflowRunRecord.from_dict(data)
+                except (TypeError, ValueError):
+                    continue
+    if found is not None or stream is not None:
+        return found
+    return _source_from_ops_record(run_id)
+
+
+def _source_from_ops_record(run_id: str) -> WorkflowRunRecord | None:
+    """Synthesize a source record from a persisted ops dashboard run."""
+    import os  # noqa: PLC0415
+
+    home = os.environ.get("ATTUNE_HOME")
+    attune_dir = Path(home).expanduser() if home else Path.home() / ".attune"
+    for candidate in (attune_dir / "ops" / "runs").glob(f"*/{run_id}.json"):
+        try:
+            data = json.loads(candidate.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        exit_code = data.get("exit_code")
+        return WorkflowRunRecord(
+            run_id=run_id,
+            workflow_name=str(data.get("workflow") or "unknown"),
+            started_at=str(data.get("started_at") or ""),
+            trigger=(data.get("trigger") if isinstance(data.get("trigger"), str) else None),
+            success=data.get("status") == "completed" and exit_code == 0,
+            error=(
+                str(data.get("sdk_stderr"))
+                if data.get("sdk_stderr")
+                else f"ops run failed (exit {exit_code}, sdk_error_kind="
+                f"{data.get('sdk_error_kind')})"
+            ),
+        )
+    return None
 
 
 def diagnose(
