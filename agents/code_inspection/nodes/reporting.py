@@ -547,7 +547,7 @@ def format_report_sarif(state: CodeInspectionState) -> str:
                     "driver": {
                         "name": "empathy-inspect",
                         "version": "2.2.9",
-                        "informationUri": "https://github.com/smart-ai-memory/empathy-framework",
+                        "informationUri": "https://github.com/Smart-AI-Memory/attune-ai",
                         "rules": rules,
                     },
                 },

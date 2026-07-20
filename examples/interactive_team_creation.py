@@ -15,7 +15,7 @@ Usage:
     python examples/interactive_team_creation.py --mode auto
 
 Requirements:
-    pip install empathy-framework
+    pip install attune-ai
 """
 
 import asyncio

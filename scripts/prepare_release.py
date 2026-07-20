@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Release Preparation Script
-Automates version bumping and CHANGELOG updates for empathy-framework releases.
+Automates version bumping and CHANGELOG updates for attune-ai releases.
 
 Usage:
     python scripts/prepare_release.py patch   # 1.6.4 -> 1.6.5

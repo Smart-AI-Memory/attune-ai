@@ -11,4 +11,4 @@ python-multipart>=0.0.9
 aiofiles>=24.0.0
 
 # Attune AI with all features
-empathy-framework[full]>=2.2.9
+attune-ai[full]>=2.2.9

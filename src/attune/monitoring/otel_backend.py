@@ -185,7 +185,7 @@ class OTELBackend:
             # Create resource with service name
             resource = Resource.create(
                 {
-                    "service.name": "empathy-framework",
+                    "service.name": "attune-ai",
                     "service.version": "3.8.0-alpha",
                 },
             )

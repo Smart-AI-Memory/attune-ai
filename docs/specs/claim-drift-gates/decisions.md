@@ -180,3 +180,28 @@ now advertised post-fix). Reassess the list after a month.
 
 Next per ship order: G3 (blocked on hook-timeout-budgets Phase 0.2
 values) or G5.
+## 2026-07-20 — G5 landed (red-first proven); burn-down baseline recorded
+
+`scripts/check_brand_drift.py` (pre-commit gate #9 + CI's
+pre-commit job — the one gate D7 keeps in pre-commit) +
+`.claude/gates/empathy-allowlist.txt` + gate-logic tests.
+
+**Red-first receipt:** the hard-fail scan found **27 files** —
+nine times the spec's predicted red set (the repo moved in the
+nine days since review). Fix set: deleted `install.sh`,
+`rename_to_attune.sh`, `Dockerfile.scanner`, `bin/empathy-scan`,
+`.pre-commit-config.example.yaml` (all dead, references checked);
+archived the two root `metrics-review-2026-02-06*.md` to
+`docs/history/`; rebranded 20 files of string/comment/default
+references (`empathy-framework` → `attune-ai`) across src,
+scripts, agents, deployments, examples, tests, and
+`.claude/PROJECT-CONTEXT.xml`. Shrink-on-fix fired live during
+the fix (two de-branded files forced off the allowlist).
+
+**Burn-down baseline (as ruled by the spec):** 36 user-facing +
+107 internal files on the empathy ratchet allowlist. The list
+only shrinks; the count prints on every run.
+
+**Documented exclusions:** CHANGELOG, docs/specs/, docs/history/,
+lessons corpus, generated website mirrors, the gate's own files;
+Redis `empathy:*` wire-format keys remain P2B (data format).

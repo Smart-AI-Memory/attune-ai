@@ -10,7 +10,6 @@
 
 alias ee="empathy"  # E = Empathy
 alias ee="empathy-legacy"  # E = Empathy Legacy
-alias ee="empathy-scan"  # E = Empathy Scan
 alias ee="empathy-memory"  # E = Empathy Memory
 alias ee="empathy-inspect"  # E = Empathy Inspect
 alias ee="empathy-sync-claude"  # E = Empathy Sync Claude

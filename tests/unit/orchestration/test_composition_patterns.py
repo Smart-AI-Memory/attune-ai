@@ -75,7 +75,7 @@ def test_agents():
 def test_context():
     """Get test context dictionary."""
     return {
-        "project": "empathy-framework",
+        "project": "attune-ai",
         "version": "3.12.0",
         "project_root": ".",
         "target_path": "src",
