@@ -38,7 +38,7 @@ curator source, unanimously agreed by seats.
 - `LINT_DIRTY` round 3: symbol-reality gate blocked one bare
   `producing.py` citation; staged texts carry full paths.
 
-**Dissent register (stands until ruled):**
+**Dissent register (ruled 2026-07-20 — entry at end of file):**
 
 - Lesson-corpus ownership unresolved — graduated diagnostic
   lessons to `.claude/lessons.md` directly vs. a dedicated
@@ -424,3 +424,35 @@ Reopen condition: if the first live scheduled fire (Monday
 — reopen (c) and the chair runs an interactive `claude login`.
 With (a) #1524, (b) #1523, and (c) here, the v1.1 backlog is
 fully closed.
+
+## 2026-07-20 — Dissent register ruled (chair: Patrick, both items)
+
+Both items open since the 2026-07-19 requirements entry are ruled;
+the register is clear.
+
+**Lesson-corpus ownership — RULED: direct append to
+`.claude/lessons.md`.** Graduated diagnostic lessons go into the one
+canonical corpus, chair-gated per entry, with the candidate's
+`diagnosis:<id>` thread embedded inline as provenance (machine-
+graduated entries stay distinguishable from session-written ones).
+Rationale: graduation volume is a trickle (verified diagnosis +
+chair go per lesson), so projector/drift-guard machinery for a
+dedicated source is ceremony; the corpus stays one corpus with one
+hydration path. The `LessonPublisher` protocol REMAINS the seam — a
+`LessonsFilePublisher` implementing this ruling is the follow-up
+build, and a projected source stays a cheap later pivot if volume
+ever justifies it. Until the file-writing publisher lands,
+`RenderForChairPublisher` remains the only implementation.
+
+**Confidence policy — RULED: defaults ratified as-is.** The
+3-point scale (`low`/`medium`/`high`) and
+`fix_proposal_threshold="high"` stand. The threshold only gates
+fix-proposal STAGING (v1 is propose-only; the chair rules on every
+fix regardless), so `high` is a spend limiter, not a decision
+gate; the coarse scale matches what heterogeneous seats express
+reliably (T4 live receipt: `high` on the correct hypothesis, `low`
+on the alternative). Named revisit trigger: if live operation
+shows verified-correct diagnoses sitting at `medium` and
+systematically blocked from staging, lower the threshold to
+`medium` — the stream's own `config_used`-stamped records are the
+evidence base.
