@@ -16552,3 +16552,25 @@ def ", start_idx + 1)` for module-
   Diagnostic rule: when a scheduled run fails but the same suite
   passes in your shell, diff the ENV (PATH, pinentry/tty,
   exported service vars) before reading a single traceback.
+
+- **A recording probe that reads a NONEXISTENT field silently
+  fabricates a defect — `dict.get("wrong_key")` returns empties
+  that then get recorded as evidence; verify field names against
+  the schema before recording any data-quality claim**: 2026-07-20,
+  the q-briefing-triage-002 A3 entry recorded "the 05:49 record's
+  hypotheses have EMPTY summaries" as half of a Phase B defect and
+  queued a fix task for it. The probe had printed
+  `h.get('summary','')` — but `DiagnosisHypothesis` has no
+  `summary` field; it's `statement`, and the real hypotheses were
+  substantive (three seats correctly naming the missing CLI arg).
+  The false claim survived into a decisions ledger and was only
+  caught when the fix task started by re-reading the records with
+  the right key (D17 carries the inline correction — correct the
+  ledger, don't silently rewrite it). Rule: before recording ANY
+  claim about record contents, print `list(record.keys())` or read
+  the dataclass definition first; a probe whose miss-mode is an
+  empty string (get-with-default, getattr-with-default, jq //
+  empty) can only ever CONFIRM absence-shaped hypotheses, so its
+  "empty" output is not evidence of emptiness. Same silent-default
+  family as `jq '.field // empty'` on a typo'd field and
+  `getattr(obj, "nmae", None)`.
