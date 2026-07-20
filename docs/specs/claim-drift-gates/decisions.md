@@ -135,3 +135,23 @@ is the only work item blocked on an open decision (D4).
 With D4 (2026-07-12) and these two, every open decision on this
 spec is resolved — implementation (G1 first per the ship order) is
 fully unblocked.
+## 2026-07-20 — G1 landed (red-first proven)
+
+`tests/unit/gates/test_claim_drift.py`: live values derived from the
+owning registries (skills glob, `EmpathyMCPServer().tools`,
+`discover_workflows()` slugs AND distinct classes per D4,
+pyproject version) against a 13-entry claim-site manifest across
+README, marketplace.json, plugin/README, quickstart-plugin,
+mcp-integration, first-steps, and .claude/CLAUDE.md.
+Unmatched-regex is itself a failure (vanished claim = drift).
+
+**Red-first receipt:** against the pre-fix tree the gate failed
+10 of 14 checks — including drift ACCUMULATED SINCE THE 2026-07-11
+REVIEW (skills 24→25, tools 47→53 while docs still said 23/41/43/
+47), proving both the thesis and the gate. Same-PR fix set: all 10
+flagged instances updated to live values (skills 25, tools 53,
+workflows 20 per D4, plugin version 10.5.0); gate green 14/14;
+adjacent guards (plugins, website-version, mcp-tools) 300 passed.
+
+Per D7 the gate is CI-only (rides the unit suite); no pre-commit
+hook added. Next per ship order: G2.
