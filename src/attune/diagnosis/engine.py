@@ -102,6 +102,38 @@ def _source_from_ops_record(run_id: str) -> WorkflowRunRecord | None:
     return None
 
 
+def _emit_heal_run_record(store: TelemetryStore, started: datetime, completed: datetime) -> None:
+    """Emit the engine's own heal-stamped canonical run record.
+
+    ``attune diagnose`` is a CLI command, not a workflow — RC-2's
+    execute-wrapper seam has nothing to stamp, so the engine emits its
+    own ``WorkflowRunRecord`` after a diagnosis persists (v1.1 backlog
+    item (a)): without it the mining exclusion guards an empty set.
+    ``trigger`` is the ``attune-heal`` CONSTANT, never the env
+    resolver — a diagnostic run is a self-record by construction,
+    regardless of how it was launched. Best-effort: an emission
+    failure never fails the diagnosis itself.
+    """
+    from attune.models.telemetry.run_context import (  # noqa: PLC0415
+        resolve_project_identity,
+    )
+
+    record = WorkflowRunRecord(
+        run_id=str(uuid.uuid4()),
+        workflow_name="diagnose",
+        started_at=started.isoformat(),
+        completed_at=completed.isoformat(),
+        trigger="attune-heal",
+        project=resolve_project_identity(),
+        success=True,
+        total_duration_ms=max(0, int((completed - started).total_seconds() * 1000)),
+    )
+    try:
+        store.log_workflow(record)
+    except OSError as exc:
+        logger.warning("diagnosis: heal run-record emission failed: %s", exc)
+
+
 def diagnose(
     run_id: str,
     config: DiagnosisConfig | None = None,
@@ -115,10 +147,15 @@ def diagnose(
 ) -> DiagnosisRecord:
     """Diagnose one failed run end-to-end and persist the record.
 
+    A completed diagnosis also emits a heal-stamped run record into
+    the canonical stream; a diagnose that raises emits nothing —
+    not a run (RC-2's precedent).
+
     Raises:
         DiagnosisSourceError: Unknown run, non-failed run, or an
             ``attune-heal`` self-record (no diagnose-the-diagnosis).
     """
+    started = datetime.now(timezone.utc)
     config = config or DiagnosisConfig.from_env()
     run = find_source_run(run_id, stream=run_stream)
     if run is None:
@@ -168,5 +205,7 @@ def diagnose(
         config_used=config.to_config_used(),
         origin=origin,
     )
-    (store or TelemetryStore()).log_diagnosis(record)
+    telemetry_store = store or TelemetryStore()
+    telemetry_store.log_diagnosis(record)
+    _emit_heal_run_record(telemetry_store, started, datetime.now(timezone.utc))
     return record

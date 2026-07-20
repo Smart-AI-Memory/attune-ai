@@ -129,6 +129,107 @@ class TestEndToEnd:
         assert priors and observed  # distinct kinds, both present (RR-4)
 
 
+class TestHealRunRecord:
+    """The engine emits its own heal-stamped canonical run record
+    (advanced-debugging-plugin v1.1 backlog (a)) — without it the
+    mining exclusion guards an empty set.
+    """
+
+    def _diagnose(self, tmp_path, store, **overrides):
+        kwargs = {
+            "store": store,
+            "run_stream": _stream(tmp_path, [_failed()]),
+            "redis_client": _NoRedis(),
+            "invoke_seat": _invoke,
+            "repo_root": tmp_path,
+        }
+        kwargs.update(overrides)
+        return diagnose("run-f", DiagnosisConfig(), **kwargs)
+
+    def _heal_records(self, store):
+        if not store.workflows_file.is_file():
+            return []
+        lines = store.workflows_file.read_text(encoding="utf-8").splitlines()
+        return [json.loads(line) for line in lines if line.strip()]
+
+    def test_successful_diagnosis_emits_heal_stamped_run_record(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "home"))
+        monkeypatch.delenv("ATTUNE_RUN_TRIGGER", raising=False)
+        store = TelemetryStore()
+        self._diagnose(tmp_path, store)
+
+        records = self._heal_records(store)
+        assert len(records) == 1
+        (rec,) = records
+        assert rec["trigger"] == "attune-heal"
+        assert rec["workflow_name"] == "diagnose"
+        assert rec["success"] is True
+        assert rec["run_id"] != "run-f"
+        assert rec["started_at"] and rec["completed_at"]
+        assert rec["total_duration_ms"] >= 0
+
+    def test_heal_trigger_is_constant_not_env_resolved(self, tmp_path, monkeypatch):
+        # Even a launcher stamping "manual" cannot un-heal the record:
+        # a diagnosis run is a self-record by construction.
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "home"))
+        monkeypatch.setenv("ATTUNE_RUN_TRIGGER", "manual")
+        store = TelemetryStore()
+        self._diagnose(tmp_path, store)
+        assert self._heal_records(store)[0]["trigger"] == "attune-heal"
+
+    def test_refusal_emits_no_run_record(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "home"))
+        store = TelemetryStore()
+        stream = _stream(tmp_path, [_failed(run_id="run-ok", success=True)])
+        with pytest.raises(DiagnosisSourceError):
+            diagnose("run-ok", DiagnosisConfig(), store=store, run_stream=stream)
+        assert self._heal_records(store) == []
+
+    def test_engine_failure_emits_no_run_record(self, tmp_path, monkeypatch):
+        # RC-2 precedent: a run that raises without producing a result
+        # emits nothing — not a run.
+        import attune.diagnosis.engine as engine_mod
+
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "home"))
+        store = TelemetryStore()
+
+        def _boom(*args, **kwargs):
+            raise RuntimeError("panel exploded")
+
+        monkeypatch.setattr(engine_mod, "convene_panel", _boom)
+        with pytest.raises(RuntimeError, match="panel exploded"):
+            self._diagnose(tmp_path, store)
+        assert self._heal_records(store) == []
+
+    def test_emission_failure_never_fails_the_diagnosis(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "home"))
+        store = TelemetryStore()
+
+        def _disk_full(record):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(store, "log_workflow", _disk_full)
+        record = self._diagnose(tmp_path, store)
+        # Diagnosis persisted and returned despite the emission failure
+        assert records_for_run("run-f")
+        assert record.source_run_id == "run-f"
+
+    def test_mining_excludes_and_counts_the_heal_record(self, tmp_path, monkeypatch):
+        # Live-fire the exclusion end-to-end: the record the engine
+        # just emitted is what dropped_attune_heal counts.
+        from attune.models.telemetry import run_context
+        from attune.pipeline_learner.corpus import load_corpus
+
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "home"))
+        monkeypatch.setattr(run_context, "resolve_project_identity", lambda start=None: "proj-x")
+        store = TelemetryStore()
+        self._diagnose(tmp_path, store)
+
+        records, stats = load_corpus("proj-x", paths=[store.workflows_file])
+        assert stats.dropped_attune_heal == 1
+        assert records == [] and stats.eligible == 0
+
+
 class TestCli:
     def test_cmd_diagnose_reports_refusal_as_exit_1(self, tmp_path, monkeypatch, capsys):
         from argparse import Namespace

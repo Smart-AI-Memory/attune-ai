@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **The diagnosis engine emits its own heal-stamped canonical run
+  record.** `attune diagnose` is a CLI command, not a workflow, so
+  RC-2's execute-wrapper seam never stamped it — the pipeline-learner
+  mining exclusion (`dropped_attune_heal`) guarded an empty set. A
+  completed diagnosis now appends a `WorkflowRunRecord` with the
+  `attune-heal` trigger constant (never env-resolved) to the canonical
+  stream; a diagnose that raises emits nothing, per RC-2's precedent
+  (advanced-debugging-plugin v1.1 backlog (a)).
+
 ## [10.5.0] — 2026-07-17
 
 Feature release: the analysis-workflow widget surface is now complete
