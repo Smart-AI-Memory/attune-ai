@@ -16574,3 +16574,32 @@ def ", start_idx + 1)` for module-
   "empty" output is not evidence of emptiness. Same silent-default
   family as `jq '.field // empty'` on a typo'd field and
   `getattr(obj, "nmae", None)`.
+
+- **A handed-in bug report can be STALE-VALID: the local checkout
+  confirms the bug because the checkout itself predates the fix —
+  verify the premise against origin/main, not the worktree base,
+  before implementing**: 2026-07-20, a session brief described the
+  jit_recall shared-"unknown" sentinel bucket (from 2026-07-13
+  trap-battery forensics) with fix options and a test plan. I read
+  the local code, confirmed the bug existed, implemented a full fix
+  (helper + 8 regression tests + lessons note, commit `2fb05dc6f`) —
+  and only at push time discovered #1356 had merged the same fix
+  (`_state.resolve_session_key`, fail-open) SEVEN DAYS earlier, the
+  same evening the forensics were written. The trap: the worktree's
+  base commit predated #1356, so "verify against the code" PASSED —
+  it verified the report against the same stale snapshot the report
+  was written from. The tells were on screen at session start and I
+  read past them: starter-reconcile's "main has NEWER merges the
+  starter omits" and hydrate's "N commits behind origin/main". Rule:
+  before implementing any bug report carried across sessions (starter
+  file, forensics doc, chip, spec), run `git fetch origin main` then
+  (a) `git log origin/main --oneline --grep="<symptom keywords>"` and
+  (b) read the suspect functions FROM `origin/main:` — the local
+  checkout only proves the bug existed at ITS base. Cost of the miss:
+  a full redundant implementation; recovery = reset to origin/main
+  and salvage the deltas main lacked (here: `session_stash.py`, the
+  one sentinel writer #1356 didn't migrate). Pairs with "spec-named
+  work-scope drifts from code reality" and "re-validate a spec's
+  premise" — same family, new surface: the premise goes stale not
+  because the spec text rotted, but because a PARALLEL session
+  already shipped the fix.
