@@ -130,6 +130,14 @@ class TestGetRedisMemory:
 
 @pytest.mark.unit
 class TestCheckRedisConnection:
+    @pytest.fixture(autouse=True)
+    def _no_ambient_redis_url(self, monkeypatch):
+        # The dev shell and the weekly clean-run launchd env export
+        # REDIS_URL, which outranks the vars these tests set.
+        monkeypatch.delenv("REDIS_URL", raising=False)
+        monkeypatch.delenv("REDIS_PRIVATE_URL", raising=False)
+        monkeypatch.delenv("REDIS_PUBLIC_URL", raising=False)
+
     def test_mock_mode_returns_connected_true(self):
         mock_cfg = {"use_mock": True}
         with patch("attune.memory.config.get_redis_config", return_value=mock_cfg):

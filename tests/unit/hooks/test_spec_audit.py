@@ -1161,7 +1161,17 @@ class TestDriftSignalPrecision:
 
 def _git(cwd: Path, *args: str) -> None:
     _subprocess.run(
-        ["git", "-c", "user.email=t@t", "-c", "user.name=t", *args],
+        [
+            "git",
+            "-c",
+            "user.email=t@t",
+            "-c",
+            "user.name=t",
+            # A global commit.gpgsign=true has no pinentry under launchd/CI.
+            "-c",
+            "commit.gpgsign=false",
+            *args,
+        ],
         cwd=str(cwd),
         check=True,
         capture_output=True,

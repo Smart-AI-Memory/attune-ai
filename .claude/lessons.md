@@ -16534,3 +16534,21 @@ def ", start_idx + 1)` for module-
   explanation text is scanned like any other text. Describe the
   removal generically ("former framework dependency") or point at
   the decisions entry instead of naming the token.
+
+- **A scheduled/headless (launchd) run inherits a DIFFERENT env
+  than your shell — three distinct test-failure classes from one
+  root cause** (2026-07-20, first scheduled clean-run: 13 red rows
+  → 2 real families + 1 infra gap, each receipted): (1) launchd's
+  default PATH lacks `~/.local/bin` / `~/.npm-global/bin`, so seat
+  CLIs report "ABSENT (exit 127)" — fix the plist PATH, not the
+  seats; (2) no tty/pinentry means a global `commit.gpgsign=true`
+  fails `git commit` inside test fixtures that create real repos —
+  fixtures MUST set `commit.gpgsign=false` (receipt: breaking
+  GNUPGHOME reproduces the exact ERROR set); (3) any var the
+  runner itself must export (here `REDIS_URL` for the board)
+  leaks into env-precedence tests — tests asserting config-source
+  precedence must `monkeypatch.delenv` the higher-precedence vars
+  first (receipt: 3 fail with `REDIS_URL` set, 7 pass without).
+  Diagnostic rule: when a scheduled run fails but the same suite
+  passes in your shell, diff the ENV (PATH, pinentry/tty,
+  exported service vars) before reading a single traceback.
