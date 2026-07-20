@@ -456,3 +456,36 @@ shows verified-correct diagnoses sitting at `medium` and
 systematically blocked from staging, lower the threshold to
 `medium` — the stream's own `config_used`-stamped records are the
 evidence base.
+
+## 2026-07-20 — LessonsFilePublisher shipped (implements the corpus-ownership ruling)
+
+The follow-up build named in the dissent-register ruling above
+landed (#1529): `LessonsFilePublisher`
+(`src/attune/diagnosis/graduation.py`) — appends the rendered
+candidate to `.claude/lessons.md` in the corpus's entry format
+(dash-bulleted bold-lead, ~72-col wrap with two-space hanging
+indent, blank line between entries), keeps the
+RenderForChairPublisher lint gate (GraduationError), and validates
+the target against the project root via `_validate_file_path`
+(CWE-22). Opt-in at the call site: `graduate()`'s default stays
+render-for-chair.
+
+- **Duplicate policy (ruled here):** re-publishing a diagnosis whose
+  thread marker (`thread diagnosis:<id>)` — suffix-matched so `d1`
+  never false-matches `d12`) already appears in the corpus is
+  receipted as **already-published**, an idempotent no-op. A retried
+  chair-approval flow must neither double-append nor raise on a
+  state that is actually success.
+- The old source-level guard (`test_v1_publisher_writes_no_files`,
+  "no file writes anywhere in the module") pinned the UNRULED state
+  and is superseded by behavior pins: the default publisher writes
+  nothing; file writes are confined to `LessonsFilePublisher`.
+
+Receipts: 22 tests in
+`tests/unit/diagnosis/test_curator_graduation.py` (append format +
+72-col wrap, provenance thread, lint gate leaves file untouched,
+already-published no-op, prefix-id non-collision, missing-file
+create, no-trailing-newline seed, default path; security: traversal,
+absolute-escape, null byte, symlink escape all rejected);
+diagnosis+roundtable 261 passed serial; graduation.py 100% line
+coverage.
