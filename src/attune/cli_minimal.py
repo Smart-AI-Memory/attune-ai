@@ -65,6 +65,7 @@ from attune.cli_commands.cost_commands import (
     cmd_costs_today,
 )
 from attune.cli_commands.curator import cmd_curator
+from attune.cli_commands.diagnosis_commands import cmd_diagnose
 from attune.cli_commands.gates_commands import cmd_gates_check
 from attune.cli_commands.help_commands import cmd_help
 from attune.cli_commands.memory_agent import cmd_memory_agent
@@ -200,6 +201,19 @@ def _add_workflow_subparsers(subparsers: argparse._SubParsersAction) -> None:
             "plan, research) are unaffected."
         ),
     )
+
+
+def _add_diagnose_subparser(subparsers: argparse._SubParsersAction) -> None:
+    """Attach the diagnosis-engine command (advanced-debugging-plugin).
+
+    Args:
+        subparsers: Parent subparsers action to attach to
+
+    """
+    diagnose_parser = subparsers.add_parser(
+        "diagnose", help="Diagnose a failed workflow run from the canonical stream"
+    )
+    diagnose_parser.add_argument("run_id", help="run_id of a failed run to diagnose")
 
 
 def _add_gates_subparsers(subparsers: argparse._SubParsersAction) -> None:
@@ -588,6 +602,7 @@ Documentation: https://smartaimemory.com/framework-docs/
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     _add_workflow_subparsers(subparsers)
+    _add_diagnose_subparser(subparsers)
     _add_gates_subparsers(subparsers)
     _add_telemetry_subparsers(subparsers)
     _add_costs_subparsers(subparsers)
@@ -656,6 +671,7 @@ _SUBCOMMAND_DISPATCH: dict[str, dict[str, object]] = {
 }
 
 _SIMPLE_DISPATCH: dict[str, object] = {
+    "diagnose": cmd_diagnose,
     "remember": cmd_remember,
     "forget": cmd_forget,
     "lessons": cmd_lessons,
