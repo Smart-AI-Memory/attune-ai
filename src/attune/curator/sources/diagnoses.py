@@ -42,6 +42,10 @@ def read(
 
         records, stats = load_diagnoses()
         for record in records:
+            # D18: only operational records reach the briefing —
+            # dogfood/live-fire artifacts are closed by their tag.
+            if getattr(record, "origin", "operational") != "operational":
+                continue
             top = record.hypotheses[0] if record.hypotheses else None
             # ALLOWLIST rendering — never diff or raw evidence content.
             detail_parts = [

@@ -319,6 +319,17 @@ def run_routine(
             f"invocation cap ({spec.max_invocations}) reached before synthesis",
         )
 
+    # T4 (armed 2026-07-20): the weekly clean-run carries the briefing
+    # triage appendix on the SAME thread — one weekly ruling sitting.
+    # Its own sub-cap keeps the combined run under the R5 ceiling of
+    # 10; kill switch + auto-demotion live in the appendix module.
+    if spec.name == "clean-run":
+        from pathlib import Path  # noqa: PLC0415
+
+        from attune.roundtable.triage_appendix import run_triage_appendix  # noqa: PLC0415
+
+        invocations += run_triage_appendix(board, thread, Path.cwd(), invoke_seat, SEAT_RECIPES)
+
     print(
         f"routine {spec.name!r} complete: thread {thread!r} ({invocations} invocations). Review with /roundtable read {thread}; the thread is NOT promoted (R8)."
     )

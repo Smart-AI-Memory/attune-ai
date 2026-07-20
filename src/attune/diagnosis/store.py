@@ -35,6 +35,7 @@ class DiagnosisLoadStats:
     dropped_malformed: int = 0
     dropped_fixture: int = 0
     dropped_pre_cutover: int = 0
+    dropped_superseded: int = 0
 
 
 def _parse_created_at(value: object) -> datetime | None:
@@ -85,6 +86,7 @@ def load_diagnoses(
     except OSError as exc:
         logger.warning("diagnosis: store read failed: %s", exc)
         return records, stats
+    by_id: dict[str, DiagnosisRecord] = {}
     for line in lines:
         if not line.strip():
             continue
@@ -93,8 +95,15 @@ def load_diagnoses(
         if isinstance(outcome, str):
             setattr(stats, outcome, getattr(stats, outcome) + 1)
             continue
-        stats.eligible += 1
-        records.append(outcome)
+        # Last-wins by diagnosis_id (D18 closure seam): re-appending a
+        # record with the same id UPDATES it — the stream stays
+        # append-only, superseded lines are counted, never silent.
+        if outcome.diagnosis_id in by_id:
+            stats.dropped_superseded += 1
+        else:
+            stats.eligible += 1
+        by_id[outcome.diagnosis_id] = outcome
+    records.extend(by_id.values())
     return records, stats
 
 

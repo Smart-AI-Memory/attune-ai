@@ -145,7 +145,7 @@ def check_redis_connection() -> dict:
     if os.getenv("REDIS_URL"):
         result["config_source"] = "REDIS_URL"
     elif os.getenv("REDIS_PUBLIC_URL"):
-        result["config_source"] = "REDIS_PUBLIC_URL (Railway)"
+        result["config_source"] = "REDIS_PUBLIC_URL"
     elif os.getenv("REDIS_PRIVATE_URL"):
         result["config_source"] = "REDIS_PRIVATE_URL"
     elif os.getenv("REDIS_HOST"):
@@ -169,15 +169,16 @@ def check_redis_connection() -> dict:
     return result
 
 
-# Convenience function for Railway deployments
-def get_railway_redis() -> RedisShortTermMemory:
-    """Get Redis configured for Railway deployment.
+# Convenience function for managed Redis deployments
+def get_managed_redis() -> RedisShortTermMemory:
+    """Get Redis configured from a managed-platform URL.
 
-    Railway automatically sets REDIS_URL when you add a Redis service.
-    For external access (like from VSCode extension), use REDIS_PUBLIC_URL.
+    Managed Redis platforms (Upstash/Vercel, Heroku, Railway, ...) set
+    REDIS_URL automatically; some also set REDIS_PUBLIC_URL (external
+    access) or REDIS_PRIVATE_URL.
 
     Returns:
-        RedisShortTermMemory configured for Railway
+        RedisShortTermMemory configured from the managed Redis URL
 
     Raises:
         EnvironmentError: If no Redis URL is set
@@ -189,9 +190,27 @@ def get_railway_redis() -> RedisShortTermMemory:
 
     if not redis_url:
         raise OSError(
-            "REDIS_URL not found. Make sure Redis is added to your Railway project.\n"
-            "Run: railway add --database redis\n"
-            "For external access, use REDIS_PUBLIC_URL",
+            "REDIS_URL not found. Set REDIS_URL (or REDIS_PUBLIC_URL / "
+            "REDIS_PRIVATE_URL) to your managed Redis URL "
+            "(Upstash/Vercel, Heroku, Railway, ...).",
         )
 
     return get_redis_memory(url=redis_url)
+
+
+def get_railway_redis() -> RedisShortTermMemory:
+    """Deprecated alias for :func:`get_managed_redis`.
+
+    .. deprecated::
+        The mechanism is platform-neutral; use ``get_managed_redis()``.
+
+    """
+    import warnings
+
+    warnings.warn(
+        "get_railway_redis() is deprecated; use get_managed_redis() — "
+        "the URL detection is platform-neutral, not Railway-specific.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return get_managed_redis()

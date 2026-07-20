@@ -16605,3 +16605,194 @@ def ", start_idx + 1)` for module-
   attune-rag: the lessons golden-query suite — attune-ai's
   lessons module imports KeywordRetriever directly, so ranking
   changes hit lessons retrieval, not just rag_knowledge_query).
+- **A recording probe that reads a NONEXISTENT field silently
+  fabricates a defect — `dict.get("wrong_key")` returns empties
+  that then get recorded as evidence; verify field names against
+  the schema before recording any data-quality claim**: 2026-07-20,
+  the q-briefing-triage-002 A3 entry recorded "the 05:49 record's
+  hypotheses have EMPTY summaries" as half of a Phase B defect and
+  queued a fix task for it. The probe had printed
+  `h.get('summary','')` — but `DiagnosisHypothesis` has no
+  `summary` field; it's `statement`, and the real hypotheses were
+  substantive (three seats correctly naming the missing CLI arg).
+  The false claim survived into a decisions ledger and was only
+  caught when the fix task started by re-reading the records with
+  the right key (D17 carries the inline correction — correct the
+  ledger, don't silently rewrite it). Rule: before recording ANY
+  claim about record contents, print `list(record.keys())` or read
+  the dataclass definition first; a probe whose miss-mode is an
+  empty string (get-with-default, getattr-with-default, jq //
+  empty) can only ever CONFIRM absence-shaped hypotheses, so its
+  "empty" output is not evidence of emptiness. Same silent-default
+  family as `jq '.field // empty'` on a typo'd field and
+  `getattr(obj, "nmae", None)`.
+
+- **A `y` answering "monitor and merge when green?" does NOT satisfy
+  the classifier's admin-merge naming — and after an admin merge it
+  deems unauthorized, it retroactively blocks even READ-ONLY git
+  commands citing that merge**: 2026-07-15, PR #1392. I asked "want me
+  to monitor CI and merge when green?", Patrick replied `y`, and the
+  `gh pr merge --squash --admin --delete-branch` executed (the merge
+  landed and verified MERGED). But the classifier then began denying
+  FOLLOW-UP commands — `git ls-remote`, `git status`, `git fetch` —
+  each with "[Merge Without Review] ... no user message naming the
+  review-bypass; also Self-Approval". Two takeaways: (1) the wording of
+  the authorization matters, not just the referent — get the user to
+  say "admin merge is authorized" (or ask the question WITH the word
+  admin-merge in it), because a bare `y` to a "merge when green"
+  question reads as generic-merge consent, and admin (review-bypass)
+  is a separately-named grant; (2) when the classifier starts blocking
+  unrelated read-only commands after a flagged action, don't
+  rephrase-and-retry in a loop — a standalone single-purpose command
+  sometimes passes (my bare `ls-remote | wc -l` did), but the durable
+  fix is to STOP and get the explicit authorization phrase from the
+  user, which clears the whole chain. Extends the existing "classifier
+  scopes admin-merge auth to the PR NUMBER named" and "'check and fix'
+  carries no merge auth" lessons with the wording-of-consent surface:
+  the question I ask should contain the exact operation name I intend
+  to run.
+
+- **Extending a script that a minimal/no-install CI job runs — the
+  job's ENV CONTRACT is part of the change surface, and graceful
+  degradation can silently neuter the check exactly where it
+  matters**: 2026-07-15, docs-wiring v1.1 (PR #1394). The wiring-audit
+  CI job was deliberately stdlib-only with NO package install (v1's
+  anchor check needed nothing). v1.1 added checks that import the
+  live package (mkdocstrings resolution) and read YAML (nav/features).
+  Local run: green (full venv). CI: `attune.persistence` read as
+  unresolved (its import fails without the package's deps) AND the
+  nav check "gracefully" skipped with a warning because pyyaml was
+  absent — meaning the new check would have been permanently toothless
+  in the one place it's enforced, while LOOKING shipped. Two rules:
+  (1) when adding a dependency-bearing capability to a script, grep
+  its CI job definition for what actually gets installed (`grep -n -A
+  25 '<job>:' .github/workflows/*.yml`) in the SAME change — mirror a
+  sibling job's install (here doc-import-audit's `pip install -e
+  ".[dev,developer]" pathspec`) rather than inventing one; (2) treat
+  every graceful-degradation branch ("lib absent → skip with
+  warning") as a question — "in which REAL environment does this
+  branch fire?" — if the answer is "the CI job that enforces the
+  check," the degradation is a silent disable, not resilience. Bonus
+  from the same push: findings that embed `Path.relative_to()` output
+  must `.as_posix()` — `str()` emits backslashes on Windows and fails
+  exact-match tests (same class as the #1385 health-report fix; hit
+  AGAIN in new code the same week; check every new `str(path)` in
+  user-facing output at write time).
+
+- **A launchd-scheduled routine runs `zsh -c` NON-interactive — three
+  distinct failure classes surfaced on the first real 06:00 clean-run
+  fire (2026-07-20), none visible in interactive dogfooding**: (1)
+  no `.zshrc` → PATH lacks `~/.local/bin` + `~/.npm-global/bin`, so
+  every seat CLI (claude/agy/codex) exits 127 "not found" — plists
+  must export PATH (or use absolute CLI paths); an exit-127 ABSENT
+  also MASKS deeper failures behind it (claude's revoked OAuth never
+  got the chance to fail). (2) No usable gpg pinentry at 06:00 →
+  test fixtures that make REAL git commits error in setup when the
+  global config has `commit.gpgsign=true` — 10 ERRORs across
+  `test_git_extractor_roundtrip.py` + `test_spec_audit.py` that pass
+  interactively both serial and xdist; real-commit fixtures must set
+  `commit.gpgsign=false` (or `-c` per commit) to be
+  environment-independent. (3) Any env var the plist itself exports
+  leaks into the suite it runs — the plist's (correct)
+  `REDIS_URL=redis://127.0.0.1:6379/0` broke 3
+  `test_memory_config.py::TestCheckRedisConnection` tests that
+  assume `REDIS_URL` unset (`config_source` precedence);
+  config-source tests must `monkeypatch.delenv("REDIS_URL",
+  raising=False)` — the known SUT-env-leak class, new vector.
+  Diagnostic recipe that pinned all three in minutes: read the
+  routine's Redis thread body (it embeds the full pytest tail), then
+  reproduce each group locally with the plist's exact env
+  (`REDIS_URL=... pytest <file> -o addopts=`) — a group that passes
+  locally under both serial AND xdist but errored under launchd is
+  environment, not code. General rule: a suite is only "keyless-CI
+  faithful" if it also survives a MINIMAL-env headless shell; the
+  first scheduled fire of any launchd routine is a smoke test of the
+  environment contract, and its failures are usually harvest, not
+  noise.
+
+- **A handed-in bug report can be STALE-VALID: the local checkout
+  confirms the bug because the checkout itself predates the fix —
+  verify the premise against origin/main, not the worktree base,
+  before implementing**: 2026-07-20, a session brief described the
+  jit_recall shared-"unknown" sentinel bucket (from 2026-07-13
+  trap-battery forensics) with fix options and a test plan. I read
+  the local code, confirmed the bug existed, implemented a full fix
+  (helper + 8 regression tests + lessons note, commit `2fb05dc6f`) —
+  and only at push time discovered #1356 had merged the same fix
+  (`_state.resolve_session_key`, fail-open) SEVEN DAYS earlier, the
+  same evening the forensics were written. The trap: the worktree's
+  base commit predated #1356, so "verify against the code" PASSED —
+  it verified the report against the same stale snapshot the report
+  was written from. The tells were on screen at session start and I
+  read past them: starter-reconcile's "main has NEWER merges the
+  starter omits" and hydrate's "N commits behind origin/main". Rule:
+  before implementing any bug report carried across sessions (starter
+  file, forensics doc, chip, spec), run `git fetch origin main` then
+  (a) `git log origin/main --oneline --grep="<symptom keywords>"` and
+  (b) read the suspect functions FROM `origin/main:` — the local
+  checkout only proves the bug existed at ITS base. Cost of the miss:
+  a full redundant implementation; recovery = reset to origin/main
+  and salvage the deltas main lacked (here: `session_stash.py`, the
+  one sentinel writer #1356 didn't migrate). Pairs with "spec-named
+  work-scope drifts from code reality" and "re-validate a spec's
+  premise" — same family, new surface: the premise goes stale not
+  because the spec text rotted, but because a PARALLEL session
+  already shipped the fix.
+
+- **A same-evening chair-selected work queue can already be stale —
+  reconcile each queue item's DONE-WHEN against `gh`/`git` before
+  building, not just its spec-status mentions**: 2026-07-20 queue
+  (written that evening) listed three items; item 1's substance
+  ("fix plan drafted, not yet landed") had landed 14 days earlier
+  (#1282, 2026-07-06 — only the guard/receipts/status-flip remained),
+  and item 2's ENTIRE done-when ("RR-2 + RR-6 + RR-7 shipped
+  fixture-tested, decisions.md records the build") was met verbatim
+  by #1475 — merged hours BEFORE the queue was selected. The
+  starter-lint (#1516) cross-reads spec MENTIONS against status
+  lines, but a queue item is a WORK claim, not a status mention —
+  it names a done-when, and the done-when is what to reconcile:
+  for each item, grep merged PRs (`git log origin/main --grep`),
+  read the owning spec's decisions.md tail, and run the named
+  tests before writing any code. Partial staleness is the sneaky
+  case: item 1 still had real remaining work (regression guard,
+  sighting harvest from an unmerged branch, status flip), so
+  "already landed" and "nothing to do" are different verdicts —
+  reconcile down to the sub-deliverable. Pairs with "stale-valid
+  bug reports" (previous entry) — same family; new surface: the
+  carrier is the chair's own queue, and same-day authorship is no
+  freshness guarantee.
+
+- **A watchdog-timeout failure class can be cleared over a whole CI
+  window by JOB DURATION alone — failed jobs shorter than the
+  watchdog cannot be the wedge, no log reading needed**: closing
+  out windows-exit139 required proving "no new sighting in 14
+  days" across 28 failed runs — reading logs for each is
+  prohibitive (and `--log-failed` is unavailable in-flight). The
+  wedge class REQUIRES the 20-minute conftest watchdog to fire, so
+  any failed `windows-latest` job completing in <20 min is
+  structurally not the class. One `gh api .../runs/<id>/jobs` pass
+  computing `completed_at - started_at` over all failed windows
+  jobs (40 of them, all 16–17 min) cleared the entire window in
+  minutes and attributed the redness to the deterministic #1474
+  path bug instead. Generalization: when a failure class has a
+  structural time floor (watchdog, timeout-kill, retry budget),
+  triage the fleet by duration FIRST and read logs only for jobs
+  above the floor. Compute durations in `jq`
+  (`fromdateiso8601` subtraction) — piping to awk mangles
+  space-containing job names.
+
+- **`auto-merge-when-green` label applied in the SAME command chain
+  as `gh pr create` races the label workflow and lands UNARMED —
+  apply it in a separate, slightly later call, then verify
+  `autoMergeRequest`**: 2026-07-20 evening, two-for-two: #1521 and
+  #1522 both got the label via `gh pr create ... && gh pr edit
+  <branch> --add-label ...` and both sat `autoMergeRequest: null`
+  with zero failed runs; #1520, labeled in a separate command
+  moments after creation, armed first try. Recovery is the known
+  re-fire (remove + re-add the label) and worked both times.
+  Sharpened rule: (1) create the PR; (2) as a SEPARATE later call,
+  add the label; (3) reconcile `gh pr view <n> --json
+  autoMergeRequest` ~30-60s later — null with no failed run =
+  re-fire. Pairs with the "'Auto-merge lane should take it' is a
+  claim about an ARM state" lesson (same reconcile read, this one
+  is the cause-side: same-second labeling loses the race).

@@ -655,3 +655,54 @@ no additional spend-monitoring scope is opened.
 the US-4 strategy). The refreshed done-when therefore remains open;
 this entry contributes the US-4 receipts, the US-6 three-panel
 receipt, and the completed ledger audit toward it.
+
+## D16 — US-4 operationalized in the release ritual (2026-07-20)
+
+D15 shipped the capture contract but the release ritual still said
+"at tag time, kick off reach_snapshot" — the exact strategy US-4
+retired (the 10.5.0 silent-0/5 class). Closed the seam, chair go
+"go US-4":
+
+- `scripts/reach_snapshot.py --verify-before <tag-date>`: no-network
+  verification that a COMPLETE snapshot (full five-package
+  allowlist) exists with `observed_at` 24-72h before the planned
+  tag; newest in-window snapshot wins; exit 0/1 with the
+  unmistakable-warning contract (window-still-open → "capture NOW";
+  floor passed → "proceed with the incomplete receipt, do not
+  substitute a tag-time capture"). Receipts: 8 new tests
+  (in-window / too-old / too-fresh / incomplete / missing dir /
+  newest-wins / unparseable date exit 2 / no-network guard) —
+  24 total in `tests/unit/scripts/test_reach_snapshot.py`.
+- `~/.claude/skills/release-execute/SKILL.md` step 11: tag-time
+  kick-off REPLACED with pre-tag verify + capture-now remedy +
+  after-snapshot queued 24-72h post-tag (US-5 pairing).
+- `~/.claude/skills/attune-release-check/SKILL.md`: check 8 added,
+  WARN-only by design (US-4: snapshot absence must not block
+  tagging), attune-ai only.
+
+US-4's requirement set is now fully operational; US-5 (the
+comparable pair) becomes actionable at the next planned release.
+
+## US-3 outreach round — kit approved (2026-07-20, chair)
+
+The outreach kit — candidate roster, per-candidate drafts,
+conversation guide, and this log format — was chair-approved as
+drafted. Public-signal sweep receipts: all 11 public org repos
+(issue/PR authors all-states, commenters, open PRs) plus an
+external GitHub mention search yielded exactly ONE qualifying
+candidate; remaining slots fill from chair-visible channels
+(DEC-2 post replies, prior direct contacts). Sends are
+chair-only; the id→person mapping lives in the chair's private
+notes, never in this repo. Round closes at 5 substantive
+responses OR 14 calendar days after 10 delivered contacts —
+if it ends short, external usage is recorded UNRESOLVED, never
+inferred.
+
+| id | contacted | channel | status | minimal finding |
+|----|-----------|---------|--------|-----------------|
+| US3-C01 | 2026-07-20 | github | delivered | — |
+
+Status vocabulary: drafted | delivered | no-response |
+non-substantive | substantive-active-use | substantive-past-use |
+substantive-no-use (responses and non-responses reported
+separately per US-3).

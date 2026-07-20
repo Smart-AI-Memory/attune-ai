@@ -795,10 +795,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#option-3-railway-production" class="md-nav__link">
+  <a href="#option-3-managed-redis-production" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Option 3: Railway (Production)
+        Option 3: Managed Redis (Production)
       
     </span>
   </a>
@@ -4812,10 +4812,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#option-3-railway-production" class="md-nav__link">
+  <a href="#option-3-managed-redis-production" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Option 3: Railway (Production)
+        Option 3: Managed Redis (Production)
       
     </span>
   </a>
@@ -5084,20 +5084,18 @@
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>attune-redis<span class="w"> </span>redis-cli<span class="w"> </span>ping
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># Should return: PONG</span>
 </code></pre></div>
-<h3 id="option-3-railway-production">Option 3: Railway (Production)<a class="headerlink" href="#option-3-railway-production" title="Permanent link">&para;</a></h3>
-<ol>
-<li>Go to your Railway project dashboard</li>
-<li>Click <strong>+ New</strong> → <strong>Database</strong> → <strong>Redis</strong></li>
-<li>Railway automatically sets <code>REDIS_URL</code> for linked services</li>
-</ol>
+<h3 id="option-3-managed-redis-production">Option 3: Managed Redis (Production)<a class="headerlink" href="#option-3-managed-redis-production" title="Permanent link">&para;</a></h3>
+<p>Managed platforms (Upstash/Vercel, Heroku, Railway, ...) provision Redis
+from their dashboard and set <code>REDIS_URL</code> automatically for linked
+services — Attune picks it up with no extra configuration.</p>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
 <h3 id="environment-variable">Environment Variable<a class="headerlink" href="#environment-variable" title="Permanent link">&para;</a></h3>
 <p>Add to your <code>.env</code> file:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Local development</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nv">REDIS_URL</span><span class="o">=</span>redis://localhost:6379
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Railway (auto-set when Redis service is linked)</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># REDIS_URL=redis://default:password@host.railway.internal:6379</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Managed Redis (auto-set when the platform links a Redis service)</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># REDIS_URL=redis://default:password@your-managed-host:6379</span>
 </code></pre></div>
 <h3 id="verify-connection">Verify Connection<a class="headerlink" href="#verify-connection" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_redis_memory</span>

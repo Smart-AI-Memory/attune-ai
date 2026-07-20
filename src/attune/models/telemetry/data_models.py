@@ -196,6 +196,12 @@ class DiagnosisRecord:
     # Lifecycle: open | fix-proposed | verified | rejected | graduated
     status: str = "open"
 
+    # Provenance (D18): operational | dogfood | live-fire. Stamped at
+    # creation; the diagnoses curator source surfaces ONLY
+    # operational records, so tagging an artifact IS its closure —
+    # the status enum stays closed and nothing is retro-deleted.
+    origin: str = "operational"
+
     # Symptom + priors (RR-4)
     symptom: str = ""
     prior_lessons: list[str] = field(default_factory=list)

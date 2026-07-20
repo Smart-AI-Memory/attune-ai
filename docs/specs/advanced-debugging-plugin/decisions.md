@@ -263,12 +263,65 @@ updating them. Two queued follow-ons (behind the T2 hygiene PR, per
 the codex no-parallel-program risk):
 
 1. **Phase B priors defect** — all 3/3 real records carry
-   `priors_degraded: no-terms-extracted` and the 05:49 record's
-   hypotheses have EMPTY summaries: the term extractor gets zero
-   signal from real symptoms. One fix task; not inline.
+   `priors_degraded: no-terms-extracted`: the term extractor gets
+   zero signal from real symptoms. One fix task; not inline.
+   (CORRECTED 2026-07-20, D17: this entry originally also claimed
+   the 05:49 record's hypotheses had "EMPTY summaries" — that was
+   the recording probe reading a nonexistent `summary` key; the
+   field is `statement` and the hypotheses are substantive. The
+   defect was only ever the extractor.)
 2. **Origin-tag + closure seam** — an `origin` field
    (live-fire | dogfood | operational) stamped at creation, a
    status-update seam (last-wins by `diagnosis_id` or a tombstone
    record), and automated-suite exclusion for the diagnoses curator
    source, mirroring the RR corpus suite-isolation rule. Ruled
    2-1: tag, never retro-delete (D3 no-backfill spirit).
+
+## D17 — Priors term extraction fixed for terse operational symptoms (2026-07-20, chair "go 2")
+
+The four Phase B shape patterns (exception classes, dotted paths,
+backticks, `*.py`) all missed the real symptom class — terse
+operational phrases like "path argument is required" and "ops run
+failed (exit 1, sdk_error_kind=None)" — degrading priors on 3/3
+live records. Two-part fix in `diagnosis/priors.py`:
+
+- a fifth shape pattern for snake_case identifiers
+  (`sdk_error_kind`), always active;
+- a stopword-filtered plain-word FALLBACK that fires only when
+  every shape pattern missed — generic failure vocabulary
+  (failed/error/exit/run/...) is stopworded so recall keys on the
+  specific nouns ("path", "code-review"), and traceback-shaped
+  text extracts exactly what it did before (precision unchanged,
+  test-pinned).
+
+Receipts: the three live symptoms as regression tests (each now
+extracts recall-able terms; "path argument is required" →
+`["path", "code-review"]`), fallback-suppression test on
+traceback-shaped text; diagnosis suite 73 passed. Also corrected
+the A3 entry's false "empty hypothesis summaries" claim (probe
+misread, see annotation there).
+
+## D18 — Origin-tag + closure seam shipped; A3 disposition executed (2026-07-20, chair "go 3")
+
+- `DiagnosisRecord.origin` (operational | dogfood | live-fire),
+  stamped at creation (`diagnose(origin=...)`; `attune diagnose
+  --origin`). Legacy records load as operational (tolerant
+  from_dict).
+- Closure seam: the loader is now last-wins by `diagnosis_id` with a
+  `dropped_superseded` counter — an update is a re-appended full
+  record (`attune.diagnosis.retag_origin`), the stream stays
+  append-only, nothing is rewritten or deleted. The status enum
+  stays CLOSED: tagging an artifact's origin IS its closure, because
+  the diagnoses curator source surfaces operational records only.
+- A3 executed with the new seam: 3264a8f6/7e751fed retagged
+  live-fire, 40482304 retagged dogfood. Receipt: loader shows 3
+  superseded lines counted; the briefing source now surfaces 0
+  diagnosis items.
+- Automated-suite exclusion: already carried by the ATTUNE_HOME
+  test-isolation fixture + FIXTURE_NAMES drop; origin covers the
+  remaining dogfood/live-fire-in-real-home class.
+
+Receipts: 8 contract tests in
+`tests/unit/diagnosis/test_origin_seam.py` (default + legacy load,
+last-wins + superseded counter, retag round-trip, vocabulary guard,
+source exclusion); diagnosis+curator 218 passed.

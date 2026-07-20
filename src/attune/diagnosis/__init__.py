@@ -8,6 +8,10 @@ point the CLI, the ops endpoint (Phase C), and the triage routine
 (Phase D) all call.
 """
 
+from .annotate import (  # noqa: E402  — ordered after store imports
+    ORIGINS,
+    retag_origin,
+)
 from .config import DiagnosisConfig
 from .engine import DiagnosisSourceError, diagnose, find_source_run
 from .panel import PanelResult, convene_panel
@@ -30,7 +34,9 @@ __all__ = [
     "diagnose",
     "extract_error_terms",
     "find_source_run",
+    "ORIGINS",
     "load_diagnoses",
     "recall_priors",
     "records_for_run",
+    "retag_origin",
 ]
