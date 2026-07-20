@@ -354,6 +354,23 @@ def reconcile(text: str, pkg: str | None, cwd: Path | None) -> dict:
     return results
 
 
+def _spec_lines(specs: dict[str, str]) -> list[str]:
+    """Banner lines for the spec-status cross-read (empty when none)."""
+    if not specs:
+        return []
+    joined = " · ".join(f"{slug}={status}" for slug, status in specs.items())
+    lines = [f"  specs: {joined}"]
+    closed = [slug for slug, st in specs.items() if st.startswith("terminal:")]
+    if closed:
+        lines.append(
+            "  ⚠ starter mentions CLOSED spec(s): "
+            + ", ".join(closed)
+            + " — cross-read the queue item against the spec's status "
+            "line before executing (shipped-and-quiet trap)"
+        )
+    return lines
+
+
 def format_banner(results: dict, label: str, path: Path) -> str | None:
     """Render the freshness banner, or None if nothing to report."""
     prs = results["prs"]
@@ -380,17 +397,7 @@ def format_banner(results: dict, label: str, path: Path) -> str | None:
             f"  ⚠ main has NEWER merges the starter omits: {listed}{tail}"
             " — work may have landed since it was written"
         )
-    if specs:
-        joined = " · ".join(f"{slug}={status}" for slug, status in specs.items())
-        lines.append(f"  specs: {joined}")
-        closed = [s2 for s2, st in specs.items() if st.startswith("terminal:")]
-        if closed:
-            lines.append(
-                "  ⚠ starter mentions CLOSED spec(s): "
-                + ", ".join(closed)
-                + " — cross-read the queue item against the spec's status "
-                "line before executing (shipped-and-quiet trap)"
-            )
+    lines.extend(_spec_lines(specs))
     if pypi is not None:
         suffix = f" (starter mentions: {', '.join(versions)})" if versions else ""
         pkg = results.get("pkg") or ""
