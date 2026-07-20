@@ -322,3 +322,86 @@ class TestCli:
         data = json.loads(files[0].read_text(encoding="utf-8"))
         assert set(data["pypi_recent"]) == {"a", "b", "c"}
         assert data["github"] == {"stars": 9}
+
+
+class TestVerifyBefore:
+    """US-4 pre-tag window verification (--verify-before)."""
+
+    @staticmethod
+    def _write_snapshot(out_dir, mod, *, hours_before, tag_at, complete=True, name="day.json"):
+        from datetime import timedelta
+
+        out_dir.mkdir(parents=True, exist_ok=True)
+        packages = list(mod.PACKAGES) if complete else list(mod.PACKAGES[:3])
+        observed = (tag_at - timedelta(hours=hours_before)).isoformat()
+        captured = {pkg: dict(STATS) for pkg in packages}
+        day = {
+            "date": "2026-07-18",
+            "taken_at": observed,
+            "pypi_recent": captured,
+            "github": {},
+            "manifest": mod.build_manifest(list(mod.PACKAGES), captured, observed),
+        }
+        (out_dir / name).write_text(json.dumps(day), encoding="utf-8")
+
+    def _tag_at(self):
+        from datetime import datetime, timezone
+
+        return datetime(2026, 7, 25, 12, 0, 0, tzinfo=timezone.utc)
+
+    def test_complete_snapshot_in_window_exits_0(self, mod, tmp_path, capsys):
+        tag = self._tag_at()
+        self._write_snapshot(tmp_path / "snaps", mod, hours_before=48, tag_at=tag)
+        rc = mod.main(["--out", str(tmp_path / "snaps"), "--verify-before", tag.isoformat()])
+        assert rc == 0
+        assert "before-snapshot OK" in capsys.readouterr().out
+
+    def test_snapshot_too_old_exits_1(self, mod, tmp_path, capsys):
+        tag = self._tag_at()
+        self._write_snapshot(tmp_path / "snaps", mod, hours_before=90, tag_at=tag)
+        rc = mod.main(["--out", str(tmp_path / "snaps"), "--verify-before", tag.isoformat()])
+        assert rc == 1
+        assert "NO COMPLETE BEFORE-SNAPSHOT" in capsys.readouterr().err
+
+    def test_snapshot_too_fresh_exits_1(self, mod, tmp_path, capsys):
+        tag = self._tag_at()
+        self._write_snapshot(tmp_path / "snaps", mod, hours_before=2, tag_at=tag)
+        rc = mod.main(["--out", str(tmp_path / "snaps"), "--verify-before", tag.isoformat()])
+        assert rc == 1
+        assert "NO COMPLETE BEFORE-SNAPSHOT" in capsys.readouterr().err
+
+    def test_incomplete_snapshot_in_window_exits_1(self, mod, tmp_path, capsys):
+        tag = self._tag_at()
+        self._write_snapshot(tmp_path / "snaps", mod, hours_before=48, tag_at=tag, complete=False)
+        rc = mod.main(["--out", str(tmp_path / "snaps"), "--verify-before", tag.isoformat()])
+        assert rc == 1
+        assert "NO COMPLETE BEFORE-SNAPSHOT" in capsys.readouterr().err
+
+    def test_missing_dir_exits_1(self, mod, tmp_path, capsys):
+        rc = mod.main(
+            ["--out", str(tmp_path / "absent"), "--verify-before", self._tag_at().isoformat()]
+        )
+        assert rc == 1
+        assert "NO COMPLETE BEFORE-SNAPSHOT" in capsys.readouterr().err
+
+    def test_newest_in_window_snapshot_wins(self, mod, tmp_path):
+        tag = self._tag_at()
+        snaps = tmp_path / "snaps"
+        self._write_snapshot(snaps, mod, hours_before=70, tag_at=tag, name="older.json")
+        self._write_snapshot(snaps, mod, hours_before=30, tag_at=tag, name="newer.json")
+        found = mod.find_before_snapshot(snaps, tag, list(mod.PACKAGES))
+        assert found is not None
+        assert found[0].name == "newer.json"
+
+    def test_unparseable_date_exits_2(self, mod, tmp_path, capsys):
+        rc = mod.main(["--out", str(tmp_path), "--verify-before", "not-a-date"])
+        assert rc == 2
+        assert "unparseable" in capsys.readouterr().err
+
+    def test_verify_mode_makes_no_network_requests(self, mod, tmp_path, monkeypatch):
+        def boom(_pkg):
+            raise AssertionError("verify mode must not fetch")
+
+        monkeypatch.setattr(mod, "fetch_pypistats_recent", boom)
+        rc = mod.main(["--out", str(tmp_path), "--verify-before", self._tag_at().isoformat()])
+        assert rc == 1
