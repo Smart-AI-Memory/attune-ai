@@ -60,15 +60,21 @@ def _ensure_allowed(request: Request) -> None:
         )
 
 
-async def _read_scope(request: Request) -> str | None:
-    """Parse optional ``{"path": "..."}`` body. Empty body → None.
+async def _read_run_body(request: Request) -> tuple[str | None, str | None]:
+    """Parse the optional ``{"path": ..., "trigger": ...}`` run body.
 
-    Treats an empty string the same as omitted so the picker's
+    Returns ``(path, trigger)``; an empty body yields ``(None, None)``.
+    Treats an empty-string path the same as omitted so the picker's
     "Project-wide" option doesn't have to send anything special.
+    ``trigger`` is the run's provenance stamp (run-record-corpus RC-3):
+    ``"attune-rec"`` for recommendation-launched runs, ``"manual"`` or
+    omitted otherwise; any other value is a 400 (the contract is
+    explicit at the API edge even though the subprocess-side resolver
+    is junk-tolerant).
     """
     body_bytes = await request.body()
     if not body_bytes:
-        return None
+        return None, None
     try:
         raw = json.loads(body_bytes)
     except json.JSONDecodeError as exc:
@@ -76,11 +82,19 @@ async def _read_scope(request: Request) -> str | None:
     if not isinstance(raw, dict):
         raise HTTPException(status_code=400, detail="body must be a JSON object")
     raw_path = raw.get("path")
-    if raw_path is None or raw_path == "":
-        return None
-    if not isinstance(raw_path, str):
+    if raw_path == "":
+        raw_path = None
+    if raw_path is not None and not isinstance(raw_path, str):
         raise HTTPException(status_code=400, detail="path must be a string")
-    return raw_path
+    raw_trigger = raw.get("trigger")
+    if raw_trigger == "":
+        raw_trigger = None
+    if raw_trigger is not None and raw_trigger not in ("manual", "attune-rec"):
+        raise HTTPException(
+            status_code=400,
+            detail="trigger must be 'manual' or 'attune-rec'",
+        )
+    return raw_path, raw_trigger
 
 
 @router.post("/workflows/{name}/run")
@@ -92,7 +106,7 @@ async def start_run(
     _ensure_allowed(request)
     svc = _service(request)
 
-    scope = await _read_scope(request)
+    scope, trigger = await _read_run_body(request)
     if scope is not None:
         # Reject scope for workflows that don't accept a path arg. The
         # registry is the source of truth for path-arg support; a
@@ -116,7 +130,7 @@ async def start_run(
         scope = str(validated)
 
     try:
-        run = await svc.start(name, path=scope)
+        run = await svc.start(name, path=scope, trigger=trigger)
     except RunnerBusyError as exc:
         raise HTTPException(
             status_code=409,
