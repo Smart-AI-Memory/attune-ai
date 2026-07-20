@@ -16553,6 +16553,58 @@ def ", start_idx + 1)` for module-
   passes in your shell, diff the ENV (PATH, pinentry/tty,
   exported service vars) before reading a single traceback.
 
+- **"No activity since <date>" in a triage briefing misreads
+  shipped-and-quiet as silent-rot — cross-read the spec's own
+  status line before the recency signal feeds a sequencing
+  ruling**: 2026-07-20, triage n=2 (q-briefing-triage-002 A1)
+  found that n=1's T1 ruling had advanced docs-wiring-audit as
+  the "next work unit" on the evidence line "approved, no
+  activity since 2026-07-15" — but the spec's own status said v1
+  shipped with a REQUIRED CI check on main and v1.1 shipped ON
+  2026-07-15; the quiet was completion, not rot. The table
+  reversed it 3-0 (closed as shipped). Rule: activity recency is
+  not lifecycle state; any staleness/rot claim about a spec must
+  be paired with its declared status (and now its lifecycle
+  bucket — `shipped` is a terminal token precisely so this class
+  is machine-visible). Same family as "re-validate a spec's
+  premise" and "grep the actual instances before executing the
+  named scope".
+
+- **A label applied while its label-triggered workflow is still
+  an OPEN PR is INERT — labeled-events don't replay; re-fire the
+  label (remove + re-add) after the mechanism merges**:
+  2026-07-20, `auto-merge-when-green` labels were applied to
+  #1505/#1507 while #1504 (the workflow that arms native
+  auto-merge on that label) was still open — `autoMergeRequest`
+  stayed null with no error anywhere. After #1504 merged, a
+  remove+re-add of the label fired the event against the
+  now-existing workflow and both PRs armed (one merged within
+  seconds). GitHub evaluates label events against the workflow
+  set on the DEFAULT branch at event time; there is no queue and
+  no retro-fire. Diagnostic: label present + `autoMergeRequest:
+  null` + no failed run = the workflow didn't exist (or didn't
+  match) when the label landed.
+
+- **Dependabot cap-widening PRs on the re-validated pins
+  (attune-rag class) are wrong by construction in this repo —
+  close them and do the cap-lift as a deliberate PR**: reviewed
+  2026-07-20 on #1493 (attune-rag <0.9 → <0.10). Three
+  structural reasons, independent of the specific dep: (1) the
+  pin's inline comment carries a re-validation contract ("next
+  minor requires explicit re-validation before lifting the cap")
+  that dependabot can neither perform nor rewrite — merging
+  creates claim-drift inside pyproject (the one file G1 doesn't
+  sweep; the ~L814 dependency-map comment block drifts too); (2)
+  `uv.lock` is untouched, so the merge installs nothing — the
+  real upgrade is the lock bump, which is where the receipts
+  belong; (3) the pyproject-only diff trips the help-freshness
+  regen hook in required pre-commit ("files were modified"),
+  a deterministic fail no rerun clears. The 0.8.0 lift is the
+  template: one human PR = pin widen + comment rewrite recording
+  the re-validation + lock bump + consumer receipts (for
+  attune-rag: the lessons golden-query suite — attune-ai's
+  lessons module imports KeywordRetriever directly, so ranking
+  changes hit lessons retrieval, not just rag_knowledge_query).
 - **A recording probe that reads a NONEXISTENT field silently
   fabricates a defect — `dict.get("wrong_key")` returns empties
   that then get recorded as evidence; verify field names against
