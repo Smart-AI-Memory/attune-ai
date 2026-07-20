@@ -16728,3 +16728,19 @@ def ", start_idx + 1)` for module-
   above the floor. Compute durations in `jq`
   (`fromdateiso8601` subtraction) — piping to awk mangles
   space-containing job names.
+
+- **`auto-merge-when-green` label applied in the SAME command chain
+  as `gh pr create` races the label workflow and lands UNARMED —
+  apply it in a separate, slightly later call, then verify
+  `autoMergeRequest`**: 2026-07-20 evening, two-for-two: #1521 and
+  #1522 both got the label via `gh pr create ... && gh pr edit
+  <branch> --add-label ...` and both sat `autoMergeRequest: null`
+  with zero failed runs; #1520, labeled in a separate command
+  moments after creation, armed first try. Recovery is the known
+  re-fire (remove + re-add the label) and worked both times.
+  Sharpened rule: (1) create the PR; (2) as a SEPARATE later call,
+  add the label; (3) reconcile `gh pr view <n> --json
+  autoMergeRequest` ~30-60s later — null with no failed run =
+  re-fire. Pairs with the "'Auto-merge lane should take it' is a
+  claim about an ARM state" lesson (same reconcile read, this one
+  is the cause-side: same-second labeling loses the race).
