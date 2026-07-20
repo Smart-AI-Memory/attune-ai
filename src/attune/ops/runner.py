@@ -117,6 +117,11 @@ class Run:
     # otherwise. Exported to the subprocess as ``ATTUNE_RUN_TRIGGER`` so
     # the workflow's run record carries the attribution.
     trigger: str | None = None
+    # Extra argv appended after the command builder's output (and after
+    # ``--path``). Used by non-workflow dispatches like ``diagnose
+    # <source_run_id>`` (advanced-debugging-plugin T5). Ephemeral —
+    # ``command`` captures the full argv for persistence.
+    extra_args: list[str] | None = None
     # Full command line (argv list) the subprocess was invoked with.
     # Captured at execute time so the persistence record can reproduce
     # exactly what ran. ``None`` for runs that never executed.
@@ -343,7 +348,14 @@ def _default_command(workflow: str) -> Sequence[str]:
     Scope (``--path``) is appended by :meth:`RunnerService._execute` after
     the builder's output, so custom builders (test fixtures, alternative
     CLIs) don't need to know about it.
+
+    ``diagnose`` is a top-level CLI command, not a workflow — the
+    diagnosis engine (advanced-debugging-plugin T5) dispatches through
+    the runner to inherit SSE streaming, the busy-lock, and run
+    persistence; its source-run argument arrives via ``Run.extra_args``.
     """
+    if workflow == "diagnose":
+        return (sys.executable, "-m", "attune.cli_minimal", "diagnose")
     return (sys.executable, "-m", "attune.cli_minimal", "workflow", "run", workflow)
 
 
@@ -662,12 +674,19 @@ class RunnerService:
         *,
         path: str | None = None,
         trigger: str | None = None,
+        extra_args: list[str] | None = None,
     ) -> Run:
         async with self._lock:
             current = self.current
             if current is not None:
                 raise RunnerBusyError(current.id)
-            run = Run(id=uuid.uuid4().hex[:12], workflow=workflow, path=path, trigger=trigger)
+            run = Run(
+                id=uuid.uuid4().hex[:12],
+                workflow=workflow,
+                path=path,
+                trigger=trigger,
+                extra_args=list(extra_args) if extra_args else None,
+            )
             self._runs[run.id] = run
             while len(self._runs) > self._history_limit:
                 self._runs.popitem(last=False)
@@ -769,6 +788,8 @@ class RunnerService:
         # PATH_ARG_REGISTRY at the workflow layer.
         if run.path:
             cmd.extend(["--path", run.path])
+        if run.extra_args:
+            cmd.extend(run.extra_args)
         run.command = list(cmd)
         run.append_line(f"$ {' '.join(shlex.quote(c) for c in cmd)}")
         # Opt the spawned CLI process into the ATTUNE_RUN_META

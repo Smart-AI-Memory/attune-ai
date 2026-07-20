@@ -146,6 +146,67 @@ async def start_run(
     )
 
 
+@router.post("/runs/{run_id}/diagnose")
+async def diagnose_run(
+    run_id: str,
+    request: Request,
+    _client: None = Depends(require_client_token),  # noqa: B008
+) -> JSONResponse:
+    """On-demand diagnosis of a failed run (advanced-debugging-plugin RR-3).
+
+    Validates the source run exists and FAILED, is idempotent (an
+    existing diagnosis for this run returns its id instead of
+    double-spending), then dispatches exactly ONE runner subprocess —
+    ``attune diagnose <run_id>`` stamped ``attune-heal`` — so the
+    diagnostic run streams on the standard run view. Nothing here
+    auto-starts: this endpoint only fires on an explicit client POST.
+    """
+    _ensure_allowed(request)
+    svc = _service(request)
+    source = svc.get_or_load(run_id)
+    if source is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    if not source.is_terminal or source.status != "failed":
+        raise HTTPException(
+            status_code=400,
+            detail="only terminal FAILED runs can be diagnosed",
+        )
+    if source.trigger == "attune-heal":
+        raise HTTPException(
+            status_code=400,
+            detail="diagnostic self-records are not diagnosable",
+        )
+
+    from attune.diagnosis import records_for_run
+
+    existing = records_for_run(run_id)
+    if existing:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "existing": True,
+                "diagnosis_id": existing[-1].diagnosis_id,
+                "source_run_id": run_id,
+            },
+        )
+
+    try:
+        run = await svc.start("diagnose", trigger="attune-heal", extra_args=[run_id])
+    except RunnerBusyError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"message": "runner busy", "current_run_id": exc.current_run_id},
+        ) from exc
+    return JSONResponse(
+        status_code=201,
+        content={
+            "run_id": run.id,
+            "stream_url": f"/runs/{run.id}/stream",
+            "status_url": f"/runs/{run.id}",
+        },
+    )
+
+
 @router.get("/runs/{run_id}")
 async def get_run(run_id: str, request: Request) -> JSONResponse:
     svc = _service(request)

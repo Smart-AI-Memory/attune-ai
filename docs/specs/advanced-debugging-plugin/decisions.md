@@ -123,3 +123,29 @@ diagnosis stream with `config_used` stamped and reload verified.
 required") carries no error-class/module tokens; term extraction
 should also derive terms from the workflow name and argument names.
 Recorded, not fixed here.
+
+## 2026-07-20 — Phase C executed (T5)
+
+On-demand surface landed: `POST /runs/{run_id}/diagnose` (token +
+allow-run gated, failed-terminal-only, attune-heal sources
+refused, idempotent via `records_for_run`), dispatching ONE runner
+subprocess `attune diagnose <run_id>` stamped `attune-heal`; the
+run-view "Why did this fail?" button (terminal-failed runs only,
+explicit click, never auto-starts) and the "diagnosed" chip;
+`Run.extra_args` threading + a `diagnose` case in the runner's
+command builder.
+
+**Design deviation (recorded):** dashboard run ids (12-hex) and
+telemetry run ids (uuid4) are DIFFERENT id spaces —
+`find_source_run` gained an ops-record fallback that synthesizes a
+source `WorkflowRunRecord` from the persisted ops run, so the
+button's ops id diagnoses correctly.
+
+**Receipts:** endpoint suite incl. a real subprocess dispatch
+round-trip observing `ATTUNE_RUN_TRIGGER=attune-heal` + the source
+run id in the child argv; 1516-test ops+diagnosis breadth;
+source-level no-auto-start guards; BROWSER receipt — the ops
+dashboard restarted on worktree code (launch.json MAPPING fix,
+local-only) renders the button beside the failed chip on the real
+2026-07-15 run `63c533fb6e46`. The button was deliberately NOT
+clicked — a click launches a billable panel run (spend-gated).
