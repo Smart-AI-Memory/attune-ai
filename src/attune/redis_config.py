@@ -6,7 +6,8 @@ Superseded by attune_redis.AMSMemoryBackend (the Redis Agent Memory Server integ
     Use ``attune_redis.config.RedisPluginConfig`` for new code.
 
 Handles connection to Redis from environment variables.
-Supports Redis Cloud, Railway, local Docker, managed Redis, or mock mode.
+Supports Redis Cloud, managed Redis (Upstash/Vercel, Heroku, Railway, ...),
+local Docker, or mock mode.
 
 Environment Variables:
     REDIS_MODE: "cloud" or "local" (inferred from REDIS_HOST if not set)
@@ -39,9 +40,10 @@ Environment Variables:
     REDIS_SENTINEL_HOSTS: Comma-separated host:port pairs
     REDIS_SENTINEL_MASTER: Sentinel master name
 
-Railway Auto-Detection:
-    When deployed on Railway, REDIS_URL is automatically set.
-    For Railway Redis with SSL, the URL starts with "rediss://"
+Managed Redis Auto-Detection:
+    Managed platforms (Upstash/Vercel, Heroku, Railway, ...) set REDIS_URL
+    automatically; some also set REDIS_PRIVATE_URL.
+    For SSL-terminated managed Redis, the URL starts with "rediss://"
 
 Usage:
     from attune.redis_config import get_redis_memory
@@ -168,7 +170,8 @@ def get_redis_config() -> RedisConfig:
 
     Priority:
     1. EMPATHY_REDIS_MOCK=true -> mock mode
-    2. REDIS_URL (full URL, used by Railway/Heroku/managed services)
+    2. REDIS_URL (full URL, set by managed Redis platforms —
+       Upstash/Vercel, Heroku, Railway, ...)
     3. REDIS_MODE + individual env vars:
        - "cloud": uses REDIS_HOST, REDIS_PORT, REDIS_PASSWORD
        - "local": uses localhost:6379, no password (ignores REDIS_PASSWORD)
@@ -187,7 +190,7 @@ def get_redis_config() -> RedisConfig:
     if (get_attune_env("REDIS_MOCK", "") or "").lower() == "true":
         return RedisConfig(use_mock=True)
 
-    # Check for full URL (Railway, Heroku, managed services)
+    # Check for full URL (managed Redis — Upstash/Vercel, Heroku, Railway, ...)
     redis_url = os.getenv("REDIS_URL") or os.getenv("REDIS_PRIVATE_URL")
     if redis_url:
         url_config = parse_redis_url(redis_url)
@@ -397,14 +400,15 @@ def check_redis_connection() -> dict:
     return result
 
 
-# Convenience function for Railway deployments
-def get_railway_redis() -> RedisShortTermMemory:
-    """Get Redis configured for Railway deployment.
+# Convenience function for managed Redis deployments
+def get_managed_redis() -> RedisShortTermMemory:
+    """Get Redis configured from a managed-platform URL.
 
-    Railway automatically sets REDIS_URL when you add a Redis service.
+    Managed Redis platforms (Upstash/Vercel, Heroku, Railway, ...) set
+    REDIS_URL automatically; some also set REDIS_PRIVATE_URL.
 
     Returns:
-        RedisShortTermMemory configured for Railway
+        RedisShortTermMemory configured from the managed Redis URL
 
     Raises:
         EnvironmentError: If REDIS_URL is not set
@@ -414,8 +418,26 @@ def get_railway_redis() -> RedisShortTermMemory:
 
     if not redis_url:
         raise OSError(
-            "REDIS_URL not found. Make sure Redis is added to your Railway project.\n"
-            "Run: railway add --database redis",
+            "REDIS_URL not found. Set REDIS_URL (or REDIS_PRIVATE_URL) to your "
+            "managed Redis URL (Upstash/Vercel, Heroku, Railway, ...).",
         )
 
     return get_redis_memory(url=redis_url)
+
+
+def get_railway_redis() -> RedisShortTermMemory:
+    """Deprecated alias for :func:`get_managed_redis`.
+
+    .. deprecated::
+        The mechanism is platform-neutral; use ``get_managed_redis()``.
+
+    """
+    import warnings
+
+    warnings.warn(
+        "get_railway_redis() is deprecated; use get_managed_redis() — "
+        "the URL detection is platform-neutral, not Railway-specific.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return get_managed_redis()

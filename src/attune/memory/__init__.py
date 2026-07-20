@@ -64,6 +64,7 @@ if TYPE_CHECKING:
     from .claude_memory import ClaudeMemoryConfig, ClaudeMemoryLoader
     from .config import (
         check_redis_connection,
+        get_managed_redis,
         get_railway_redis,
         get_redis_config,
         get_redis_memory,
@@ -135,6 +136,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "ClaudeMemoryLoader": (".claude_memory", "ClaudeMemoryLoader"),
     # config
     "check_redis_connection": (".config", "check_redis_connection"),
+    "get_managed_redis": (".config", "get_managed_redis"),
     "get_railway_redis": (".config", "get_railway_redis"),
     "get_redis_config": (".config", "get_redis_config"),
     "get_redis_memory": (".config", "get_redis_memory"),
@@ -341,6 +343,7 @@ __all__ = [
     "ensure_redis",
     "generate_agent_id",
     "get_file_session_memory",
+    "get_managed_redis",
     "get_railway_redis",
     "get_redis_config",
     "get_redis_memory",

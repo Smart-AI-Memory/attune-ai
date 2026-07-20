@@ -37,11 +37,11 @@ docker exec attune-redis redis-cli ping
 # Should return: PONG
 ```
 
-### Option 3: Railway (Production)
+### Option 3: Managed Redis (Production)
 
-1. Go to your Railway project dashboard
-2. Click **+ New** → **Database** → **Redis**
-3. Railway automatically sets `REDIS_URL` for linked services
+Managed platforms (Upstash/Vercel, Heroku, Railway, ...) provision Redis
+from their dashboard and set `REDIS_URL` automatically for linked
+services — Attune picks it up with no extra configuration.
 
 ## Configuration
 
@@ -53,8 +53,8 @@ Add to your `.env` file:
 # Local development
 REDIS_URL=redis://localhost:6379
 
-# Railway (auto-set when Redis service is linked)
-# REDIS_URL=redis://default:password@host.railway.internal:6379
+# Managed Redis (auto-set when the platform links a Redis service)
+# REDIS_URL=redis://default:password@your-managed-host:6379
 ```
 
 ### Verify Connection
