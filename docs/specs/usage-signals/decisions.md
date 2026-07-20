@@ -700,7 +700,7 @@ inferred.
 
 | id | contacted | channel | status | minimal finding |
 |----|-----------|---------|--------|-----------------|
-| US3-C01 | — | github | drafted | — |
+| US3-C01 | 2026-07-20 | github | delivered | — |
 
 Status vocabulary: drafted | delivered | no-response |
 non-substantive | substantive-active-use | substantive-past-use |
