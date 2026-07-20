@@ -111,6 +111,12 @@ class Run:
     # ``None`` means the workflow runs project-wide (no ``--path`` flag).
     # See docs/specs/ops-runner-tier2/ Phase 2.
     path: str | None = None
+    # Run provenance (run-record-corpus RC-3): ``"attune-rec"`` when the
+    # client launched this run from a next-workflow recommendation
+    # (chain pill, rec card, suggestion chip), ``"manual"`` or ``None``
+    # otherwise. Exported to the subprocess as ``ATTUNE_RUN_TRIGGER`` so
+    # the workflow's run record carries the attribution.
+    trigger: str | None = None
     # Full command line (argv list) the subprocess was invoked with.
     # Captured at execute time so the persistence record can reproduce
     # exactly what ran. ``None`` for runs that never executed.
@@ -159,6 +165,7 @@ class Run:
             "duration_seconds": self.duration_seconds,
             "line_count": len(self.lines),
             "path": self.path,
+            "trigger": self.trigger,
             "command": list(self.command) if self.command else None,
             "sdk_stderr": self.sdk_stderr,
             "sdk_error_kind": self.sdk_error_kind,
@@ -212,6 +219,7 @@ class Run:
             started_at=_parse_dt(data.get("started_at")),
             completed_at=_parse_dt(data.get("completed_at")),
             path=str(data["path"]) if isinstance(data.get("path"), str) else None,
+            trigger=(str(data["trigger"]) if isinstance(data.get("trigger"), str) else None),
             command=command,
             sdk_stderr=sdk_stderr,
             sdk_error_kind=sdk_error_kind,
@@ -648,12 +656,18 @@ class RunnerService:
     def recent(self, limit: int = 5) -> list[Run]:
         return list(reversed(list(self._runs.values())))[:limit]
 
-    async def start(self, workflow: str, *, path: str | None = None) -> Run:
+    async def start(
+        self,
+        workflow: str,
+        *,
+        path: str | None = None,
+        trigger: str | None = None,
+    ) -> Run:
         async with self._lock:
             current = self.current
             if current is not None:
                 raise RunnerBusyError(current.id)
-            run = Run(id=uuid.uuid4().hex[:12], workflow=workflow, path=path)
+            run = Run(id=uuid.uuid4().hex[:12], workflow=workflow, path=path, trigger=trigger)
             self._runs[run.id] = run
             while len(self._runs) > self._history_limit:
                 self._runs.popitem(last=False)
@@ -786,6 +800,13 @@ class RunnerService:
             # default elsewhere (keeps unit tests deterministic).
             "ATTUNE_SDK_ERROR_PROBE": "1",
         }
+        # Run provenance for the workflow's run record (run-record-corpus
+        # RC-3). Only known values cross the boundary; the child's
+        # ``resolve_run_trigger`` treats anything else as ``manual``.
+        if run.trigger in ("manual", "attune-rec"):
+            from attune.models.telemetry.run_context import TRIGGER_ENV
+
+            proc_env[TRIGGER_ENV] = run.trigger
         try:
             proc = await asyncio.create_subprocess_exec(
                 *cmd,

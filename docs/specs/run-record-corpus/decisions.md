@@ -131,3 +131,29 @@ in `TestReportShapedEmission`); breadth:
 
 **Still open (unchanged).** The dashboard rec-click attribution
 stamp (RC-3 follow-up) — dashboard runs still record as `manual`.
+
+## 2026-07-19 — RC-3 follow-up closed: rec-click attribution stamp
+
+The dashboard now stamps recommendation-launched runs end-to-end:
+the three rec surfaces in `run_view.js` (chain pills, rec cards,
+suggestion chips) send `{"trigger": "attune-rec"}` in the run POST;
+`POST /workflows/{name}/run` validates the field (unknown values
+400 at the API edge, though the child-side resolver stays
+junk-tolerant); `RunnerService.start` threads it onto the `Run`
+(persisted in the ops record via `to_dict`/`from_record`, additive
+— pre-RC-3 records load as `None`); and `_execute` exports
+`ATTUNE_RUN_TRIGGER` into the subprocess env so the workflow's own
+canonical run record carries the attribution via
+`resolve_run_trigger`. The manual Run button (`runner.js`) sends no
+trigger and keeps resolving to `manual` — `resolve_run_trigger`'s
+conservative bias is now only the fallback, not the steady state.
+
+Receipts: `tests/unit/ops/test_run_trigger_attribution.py` (9
+tests, serial) — including a REAL subprocess round-trip through
+`_execute` observing `ENV_TRIGGER=attune-rec` in the child, the
+400-on-junk contract, record round-trip, and source-level guards
+that all three rec surfaces stamp while the manual button doesn't;
+`tests/unit/ops` breadth 1463 passed. Browser-click verification
+deferred deliberately: a live dashboard click launches a real
+billable workflow; the subprocess seam test exercises the same
+boundary keylessly.

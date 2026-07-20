@@ -316,7 +316,9 @@
       );
       return;
     }
-    var body = {};
+    // Chain pills are next-workflow recommendations — stamp the run's
+    // provenance so its record carries trigger=attune-rec (RC-3).
+    var body = { trigger: "attune-rec" };
     if (SOURCE_PATH) body.path = SOURCE_PATH;
     // Disable the pill to deduplicate double-clicks while the POST is
     // in flight.
@@ -539,7 +541,8 @@
       if (kind === "next-workflow") {
         var name = payload.name;
         if (!name) { action.disabled = false; return; }
-        var body_json = {};
+        // Rec-card runs are recommendation-launched (RC-3 provenance).
+        var body_json = { trigger: "attune-rec" };
         if (payload.args && typeof payload.args.path === "string") {
           body_json.path = payload.args.path;
         }
@@ -676,7 +679,8 @@
     }
     chip.addEventListener("click", function () {
       chip.disabled = true;
-      var body = {};
+      // Suggestion chips are next-workflow recommendations (RC-3).
+      var body = { trigger: "attune-rec" };
       if (DATA && typeof DATA.path === "string" && DATA.path) {
         body.path = DATA.path;
       }
