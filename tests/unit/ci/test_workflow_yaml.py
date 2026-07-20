@@ -500,3 +500,85 @@ class TestDynamicMatrixRequiredLane:
             f"required check `test ({self.REQUIRED_OS}, {self.REQUIRED_PY})` "
             "would never emit and the PR would be blocked forever."
         )
+
+
+# ---------------------------------------------------------------------------
+# auto-merge-safe.yml — Class 2 "when-green" invariants (archive spec D8)
+#
+# The opt-in class arms GitHub NATIVE auto-merge for a human-labeled
+# PR. Invariants: the job exists, fires on label lifecycle events, is
+# gated on the owner + the exact label name, re-verifies the path
+# carve-out via the guard's when-green mode, disarms on unlabeled,
+# and NEVER uses an admin bypass (branch protection stays enforced).
+# ---------------------------------------------------------------------------
+
+
+class TestAutoMergeWhenGreen:
+    """Drift guard for the opt-in auto-merge-when-green class."""
+
+    WF = "auto-merge-safe.yml"
+    JOB = "when-green"
+
+    @staticmethod
+    def _workflow() -> dict:
+        return ALL_WORKFLOWS["auto-merge-safe.yml"]
+
+    @classmethod
+    def _trigger_types(cls) -> list[str]:
+        wf = cls._workflow()
+        # YAML 1.1 parses a bare `on:` key as boolean True.
+        trigger = wf.get("on") or wf.get(True)
+        return trigger["pull_request_target"]["types"]
+
+    @classmethod
+    def _job(cls) -> dict:
+        return cls._workflow()["jobs"][cls.JOB]
+
+    @classmethod
+    def _run_text(cls) -> str:
+        return "\n".join(step.get("run", "") or "" for step in cls._job().get("steps", []))
+
+    def test_when_green_job_exists(self):
+        assert self.JOB in self._workflow()["jobs"], (
+            "auto-merge-safe.yml must define the `when-green` job "
+            "(Class 2, opt-in label — archive spec D8)."
+        )
+
+    def test_label_lifecycle_triggers_present(self):
+        types = self._trigger_types()
+        for needed in ("labeled", "unlabeled", "synchronize"):
+            assert needed in types, (
+                f"pull_request_target types must include {needed!r}: labeled "
+                "arms, unlabeled disarms, synchronize re-verifies the class "
+                "after every push (stranded-follow-ups defense)."
+            )
+
+    def test_job_gated_on_owner_and_label_name(self):
+        cond = self._job().get("if", "")
+        assert "silversurfer562" in cond
+        assert "auto-merge-when-green" in cond
+
+    def test_uses_native_auto_merge_never_admin(self):
+        run_text = self._run_text()
+        assert "--auto" in run_text, "when-green must arm GitHub native auto-merge"
+        assert "--admin" not in run_text, (
+            "the when-green class must NEVER admin-bypass branch protection — "
+            "full-green enforcement by GitHub is the whole design (D8)."
+        )
+
+    def test_reverifies_path_class_with_when_green_mode(self):
+        assert "auto_merge_guard.py --mode when-green" in self._run_text(), (
+            "the job must re-verify the .github/ carve-out via the guard's "
+            "when-green mode before arming (label = necessary, not sufficient)."
+        )
+
+    def test_disarms_on_unlabeled(self):
+        assert "--disable-auto" in self._run_text(), (
+            "removing the label must disarm native auto-merge, or a stripped "
+            "label would still merge."
+        )
+
+    def test_class1_merge_job_untouched(self):
+        # Regression guard: adding Class 2 must not remove Class 1's jobs.
+        jobs = self._workflow()["jobs"]
+        assert "label" in jobs and "merge" in jobs
