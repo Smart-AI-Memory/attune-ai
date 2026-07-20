@@ -16856,3 +16856,44 @@ def ", start_idx + 1)` for module-
   conflict. Same family as "a chair-selected queue item can
   already be stale" — this is the conflict-fixing surface: a
   conflict is not proof the PR still carries value.
+
+- **Branch-subsumption scans that check only ADDED lines are blind
+  to deletion-work — a branch whose value is REMOVALS reads as
+  "fully contained in main" and gets wrongly deleted**: 2026-07-20
+  branch sweep (35 remote branches deleted with receipts).
+  `claude/phase2-consolidation` was ruled subsumed and deleted,
+  then restored (960d091cd): its diff vs origin/main is 4
+  insertions / 96 deletions — the scan found the handful of added
+  lines already on main and never asked whether the DELETIONS had
+  landed. Deletions still present on main = unlanded work, same as
+  missing added lines. Receipt recipe for a subsumption ruling:
+  check BOTH directions — added lines
+  (`git diff origin/main...<tip> | grep '^+'` each present on
+  main) AND removed lines (`grep '^-'` each ABSENT from main); any
+  removed line still on main = the branch carries unlanded
+  deletion-work, keep it. Same family as "a DIRTY PR may be fully
+  SUPERSEDED" (2026-07-20) — both are containment reads; this one
+  is the inverse polarity. If the sweep re-runs, the scan must
+  count deletions (chair-ruled, session 2026-07-20 evening).
+
+- **A DIRTY detached worktree whose dirt is ALL-UNTRACKED files may
+  carry zero work — triage recipe: untracked-only status, byte-compare
+  the untracked set across worktrees, then containment-check HEAD both
+  directions**: 2026-07-20, the two chair-look worktrees
+  (`batch-4-run-da8b18`, `practical-bohr-89aec9`, "19 dirty files
+  each"). (1) `git status --short` showed ONLY `??` entries — no
+  modified tracked files, so no in-progress edits at risk. (2) The
+  untracked sets were byte-identical BETWEEN the two unrelated
+  sessions (`diff -rq` across worktrees) — two independent sessions
+  producing identical files proves deterministic generated output
+  (here: old codex/agents projections), not session work. (3) HEAD
+  containment checked both ways: one was `merge-base --is-ancestor`
+  of main; the other's diff-vs-main looked like unlanded work
+  (+121/−6) but direct file compare showed main was byte-equal on one
+  file and STRICTLY NEWER on the other (a squash-landed twin PR plus
+  a later ratification pass) — the three-dot diff shows branch-side
+  changes even when equivalent content already landed via squash, so
+  always confirm with a two-dot/file-level compare before calling
+  content unlanded. Both pruned with receipts. Pairs with the
+  deletion-counting subsumption lesson (same day) and the
+  prune-worktree-self-deletion hazard memory.
