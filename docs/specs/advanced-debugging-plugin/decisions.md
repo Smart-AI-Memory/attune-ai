@@ -326,6 +326,41 @@ Receipts: 8 contract tests in
 last-wins + superseded counter, retag round-trip, vocabulary guard,
 source exclusion); diagnosis+curator 218 passed.
 
+## D19 — v1.1 backlog (a) closed: the engine emits its own heal-stamped canonical run record (2026-07-20, chair-approved "do 2 in a new session")
+
+Named follow-up 1 from the spec-complete entry is closed.
+`diagnose()` now emits a `WorkflowRunRecord` into the canonical run
+stream after the DiagnosisRecord persists — one seam in the engine,
+so the CLI, the ops endpoint's subprocess, and every triage batch
+item all emit. Shape rulings:
+
+- **`trigger` is the `attune-heal` CONSTANT, never
+  `resolve_run_trigger()`** — a diagnosis run is a self-record by
+  construction; a launcher stamping `ATTUNE_RUN_TRIGGER=manual`
+  cannot un-heal it (test-pinned). `workflow_name="diagnose"`
+  matches the ops dispatch's name; `project` resolves via the RC-3
+  resolver; `run_id` is uuid4 per the telemetry seam's convention.
+- **Raise-without-result emits nothing** (RC-2's precedent):
+  refusals and mid-pipeline failures leave the run stream untouched.
+  Emission is best-effort — an `OSError` on the write is logged and
+  never fails the diagnosis.
+
+**Receipts:** 6 new tests in `tests/unit/diagnosis/test_engine.py`
+(emission shape, constant-trigger-not-env, refusal silence,
+engine-failure silence, best-effort, and a mining live-fire where
+`load_corpus` counts `dropped_attune_heal=1` from the record the
+engine just wrote); diagnosis suite 87 passed serial; breadth
+telemetry+pipeline_learner+ops+cli 2056 passed. CLI live-fire: real
+`attune diagnose` subprocess against a scratch `ATTUNE_HOME` with
+seat CLIs off PATH (2 seats absent, 4 invocations, zero spend) —
+exit 0, heal-stamped record `30ae1f7e…` landed in the scratch
+canonical stream (`trigger=attune-heal`, `project=attune-ai`), and
+the real miner over that stream reported `eligible=1,
+dropped_attune_heal=1`. The mining exclusion now guards a non-empty
+set. Backlog item (b) proposer-brief hardening + roster role-fit
+closed in parallel (#1523, entry below); (c) claude CLI re-auth
+remains open.
+
 ## 2026-07-20 — v1.1 backlog item 2: proposer-brief hardening + roster role-fit (chair-picked)
 
 Both remedies from live-fire 2's named follow-up, executed:
