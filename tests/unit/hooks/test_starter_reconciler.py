@@ -526,3 +526,78 @@ class TestReconcileWidening:
         assert called["n"] == 0
         assert results["newer_merges"] == []
         assert results["pr_ceiling"] is None
+
+
+class TestSpecStatusCrossRead:
+    """The 2026-07-20 shipped-and-quiet guard: starter spec mentions
+    are cross-read against the specs' own status lines."""
+
+    def _spec(self, root, slug, statuses):
+        d = root / "docs" / "specs" / slug
+        d.mkdir(parents=True)
+        for fname, status in statuses.items():
+            (d / fname).write_text(f"# T\n\n{status}\n", encoding="utf-8")
+        return d
+
+    def test_terminal_spec_flagged(self, hook_module, tmp_path):
+        self._spec(
+            tmp_path,
+            "done-spec",
+            {"requirements.md": "**Status:** shipped (2026-07-20) — closed"},
+        )
+        specs = hook_module.check_specs("see docs/specs/done-spec for next work", tmp_path)
+        assert specs == {"done-spec": "terminal:shipped"}
+
+    def test_active_spec_reports_leading_token(self, hook_module, tmp_path):
+        self._spec(
+            tmp_path,
+            "live-spec",
+            {"requirements.md": "**Status:** active (2026-07-06) — fix plan drafted"},
+        )
+        specs = hook_module.check_specs("queue: docs/specs/live-spec", tmp_path)
+        assert specs == {"live-spec": "active"}
+
+    def test_whole_bold_convention_parses(self, hook_module, tmp_path):
+        self._spec(
+            tmp_path,
+            "bold-spec",
+            {"requirements.md": "**Status: approved (2026-07-19)** — chair"},
+        )
+        specs = hook_module.check_specs("docs/specs/bold-spec", tmp_path)
+        assert specs == {"bold-spec": "approved"}
+
+    def test_missing_dir_and_no_status(self, hook_module, tmp_path):
+        self._spec(tmp_path, "silent-spec", {"decisions.md": "just a log"})
+        text = "docs/specs/silent-spec and docs/specs/ghost-spec"
+        specs = hook_module.check_specs(text, tmp_path)
+        assert specs == {"silent-spec": "no-status", "ghost-spec": "missing"}
+
+    def test_mixed_statuses_not_terminal(self, hook_module, tmp_path):
+        self._spec(
+            tmp_path,
+            "half-spec",
+            {
+                "requirements.md": "**Status:** shipped (2026-07-19)",
+                "tasks.md": "**Status:** parked (2026-07-13) — Resume-Trigger: evergreen",
+            },
+        )
+        specs = hook_module.check_specs("docs/specs/half-spec", tmp_path)
+        assert specs == {"half-spec": "shipped"}
+
+    def test_banner_carries_closed_warning(self, hook_module, tmp_path):
+        results = {
+            "prs": {},
+            "branches": {},
+            "pypi": None,
+            "versions": [],
+            "newer_merges": [],
+            "pr_ceiling": None,
+            "specs": {"done-spec": "terminal:shipped", "live-spec": "active"},
+        }
+        banner = hook_module.format_banner(results, "global", tmp_path / "s.md")
+        assert "done-spec=terminal:shipped" in banner
+        assert "CLOSED spec(s): done-spec" in banner
+        assert "live-spec" not in banner.split("CLOSED")[1]
+
+    def test_none_repo_root_is_empty(self, hook_module):
+        assert hook_module.check_specs("docs/specs/x", None) == {}
