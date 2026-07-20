@@ -37,12 +37,16 @@ renders "dark" in the brief. The appendix never schedules or
 performs LLM sweeps to freshen a source; refresh happens only when
 a chair-authorized run does it anyway. (T3)
 
-**TA-5 — Gate-verdict input via CI artifacts.** The durable
-gate-verdict input is a CI-artifact fetch at digest render time
+**TA-5 — Gate-verdict input from CI at render time.** The durable
+gate-verdict input is fetched from CI at digest render time
 (timestamped unavailable/expired handling, no scheduled refresh).
-Until that lands, the local ledger is read and its
-darkness-by-construction (D7 CI-only gates) is rendered honestly.
-(A4 ruling, 2026-07-20; follow-on queued)
+SHIPPED 2026-07-20: implemented as a check-run-conclusions fetch on
+main head (`gh api .../commits/main/check-runs`) — the CI-truth
+surface that exists today; nothing in CI uploads a verdicts
+artifact, so an artifact fetch would read a void (see decisions.md).
+The local ledger is still read for producing-run receipts and its
+darkness-by-construction (D7 CI-only test gates) rendered honestly.
+(A4 ruling, 2026-07-20)
 
 **TA-6 — Auto-demotion with a recorded-outcome ledger.** Each digest
 records `{thread, at, items, rulings: null}` in the appendix state
@@ -69,5 +73,5 @@ code change.
   live scheduled run's thread.
 - The demotion loop closes: digests recorded, rulings recordable,
   two recorded zero-ruling digests demote (test-receipted).
-- TA-5's CI-artifact fetch replaces the local-ledger read (queued
-  follow-on; not blocking the headless arming).
+- TA-5's CI verdict fetch renders alongside the local-ledger read
+  (SHIPPED — see decisions.md 2026-07-20 follow-on entry).

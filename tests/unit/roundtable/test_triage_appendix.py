@@ -166,3 +166,45 @@ class TestPullBriefing:
         assert set(dark) <= set(ta.DARK_RENDER_SOURCES)
         assert any("gate verdict ledger" in line for line in extra)
         assert any("local spend" in line for line in extra)
+
+
+class TestCiGateVerdicts:
+    """A4/TA-5 — CI verdict fetch: timestamped, injectable, never raises."""
+
+    def test_success_path_counts_and_names_failures(self, tmp_path):
+        def runner(argv, cwd):
+            if "repo" in argv:
+                return 0, "Smart-AI-Memory/attune-ai"
+            return 0, (
+                '{"runs": [{"name": "pre-commit", "conclusion": "success"},'
+                ' {"name": "coverage", "conclusion": "failure"},'
+                ' {"name": "label", "conclusion": "skipped"}]}'
+            )
+
+        (line,) = ta._ci_gate_verdicts(tmp_path, runner=runner)
+        assert "3 checks" in line
+        assert "1 failure" in line and "1 success" in line
+        assert "FAILING: coverage" in line
+        assert "fetched" in line
+
+    def test_gh_missing_renders_timestamped_unavailable(self, tmp_path):
+        def runner(argv, cwd):
+            return 127, "gh not found"
+
+        (line,) = ta._ci_gate_verdicts(tmp_path, runner=runner)
+        assert "unavailable" in line and "checked" in line
+
+    def test_unparseable_reply_renders_unavailable(self, tmp_path):
+        def runner(argv, cwd):
+            if "repo" in argv:
+                return 0, "o/r"
+            return 0, "not-json"
+
+        (line,) = ta._ci_gate_verdicts(tmp_path, runner=runner)
+        assert "unparseable" in line
+
+    def test_pull_briefing_includes_ci_line(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "home"))
+        monkeypatch.setattr(ta, "_ci_gate_verdicts", lambda root: ["CI gate verdicts: STUB"])
+        _c, _d, extra = ta.pull_briefing(tmp_path)
+        assert "CI gate verdicts: STUB" in extra

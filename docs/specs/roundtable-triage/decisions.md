@@ -131,3 +131,25 @@ scope. Receipts: 15 contract tests in
 `tests/unit/roundtable/test_triage_appendix.py`; first live receipt
 = next Monday's 06:00 scheduled run. TA-5's CI-artifact fetch stays
 the queued follow-on (A4).
+
+## 2026-07-20 — TA-5 shipped: CI gate verdicts fetched at render time (chair "go 4")
+
+Mechanism note (implementation latitude within the A4 ruling; chair
+may veto): the ruling's illustrative mechanism was "artifact fetch,"
+but nothing in CI uploads a verdicts artifact — the claim-drift
+gates run as plain pytest and the lifecycle runner's ledger writes
+land on the runner's discarded home. The CI-truth surface that
+EXISTS is check-run conclusions on main head, so
+`_ci_gate_verdicts()` fetches those via `gh api` (network-only, no
+LLM, at render time only — T3-compliant), rendering
+`N checks — counts by conclusion; FAILING: <names>` with the fetch
+timestamp, and a TIMESTAMPED unavailable line on any failure (gh
+missing, network, unparseable). The local ledger line stays for
+producing-run receipts. Live receipt at ship time: "30 checks — 6
+skipped, 24 success" against real main. If the chair prefers a true
+artifact pipeline (gates writing receipts in CI + upload +
+download), that is NEW scope needing its own approval.
+
+Queued follow-ons from q-briefing-triage-002 are now ALL closed:
+item 1 #1511, item 2 #1512 (D17), item 3 #1514 (D18), item 4 this
+entry.
