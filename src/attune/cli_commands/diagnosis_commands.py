@@ -19,7 +19,7 @@ def cmd_diagnose(args: Namespace) -> int:
     from attune.diagnosis.engine import DiagnosisSourceError, diagnose
 
     try:
-        record = diagnose(args.run_id)
+        record = diagnose(args.run_id, origin=getattr(args, "origin", "operational"))
     except DiagnosisSourceError as exc:
         print(f"cannot diagnose: {exc}")
         return 1

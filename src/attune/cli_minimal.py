@@ -214,6 +214,15 @@ def _add_diagnose_subparser(subparsers: argparse._SubParsersAction) -> None:
         "diagnose", help="Diagnose a failed workflow run from the canonical stream"
     )
     diagnose_parser.add_argument("run_id", help="run_id of a failed run to diagnose")
+    diagnose_parser.add_argument(
+        "--origin",
+        choices=("operational", "dogfood", "live-fire"),
+        default="operational",
+        help=(
+            "provenance stamp (D18): dogfood/live-fire records are "
+            "excluded from the ops briefing; default operational"
+        ),
+    )
 
 
 def _add_gates_subparsers(subparsers: argparse._SubParsersAction) -> None:

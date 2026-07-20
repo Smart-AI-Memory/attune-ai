@@ -300,3 +300,28 @@ extracts recall-able terms; "path argument is required" →
 traceback-shaped text; diagnosis suite 73 passed. Also corrected
 the A3 entry's false "empty hypothesis summaries" claim (probe
 misread, see annotation there).
+
+## D18 — Origin-tag + closure seam shipped; A3 disposition executed (2026-07-20, chair "go 3")
+
+- `DiagnosisRecord.origin` (operational | dogfood | live-fire),
+  stamped at creation (`diagnose(origin=...)`; `attune diagnose
+  --origin`). Legacy records load as operational (tolerant
+  from_dict).
+- Closure seam: the loader is now last-wins by `diagnosis_id` with a
+  `dropped_superseded` counter — an update is a re-appended full
+  record (`attune.diagnosis.retag_origin`), the stream stays
+  append-only, nothing is rewritten or deleted. The status enum
+  stays CLOSED: tagging an artifact's origin IS its closure, because
+  the diagnoses curator source surfaces operational records only.
+- A3 executed with the new seam: 3264a8f6/7e751fed retagged
+  live-fire, 40482304 retagged dogfood. Receipt: loader shows 3
+  superseded lines counted; the briefing source now surfaces 0
+  diagnosis items.
+- Automated-suite exclusion: already carried by the ATTUNE_HOME
+  test-isolation fixture + FIXTURE_NAMES drop; origin covers the
+  remaining dogfood/live-fire-in-real-home class.
+
+Receipts: 8 contract tests in
+`tests/unit/diagnosis/test_origin_seam.py` (default + legacy load,
+last-wins + superseded counter, retag round-trip, vocabulary guard,
+source exclusion); diagnosis+curator 218 passed.
