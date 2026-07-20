@@ -1,6 +1,6 @@
 # Advanced Debugging Plugin — Design
 
-**Status:** draft for chair review (2026-07-19). Requirements
+**Status:** shipped (2026-07-20) — executed as designed. Requirements
 chair-ruled per item (RR-1..RR-8, thread
 `producing-advanced-debugging-plugin-001`); this design binds each
 requirement to concrete seams and names the build phases.

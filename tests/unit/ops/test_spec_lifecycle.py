@@ -508,6 +508,7 @@ class TestRealWorldSpecShapes:
 
 
 VALID_BUCKETS = {
+    "parked",
     "paused",
     "complete",
     "stale",
@@ -527,6 +528,88 @@ VALID_BUCKETS = {
     ],
 )
 def test_derive_lifecycle_always_returns_known_bucket(spec_factory):
-    """Even pathological inputs must return one of the 6 known buckets."""
+    """Even pathological inputs must return one of the 7 known buckets."""
     result = derive_lifecycle(spec_factory(), now=NOW)
     assert result in VALID_BUCKETS
+
+
+# ----- Rules 1b/2b + vocabulary tokens (q-briefing-triage-002 A2) -----
+
+
+class TestParkedRule:
+    """Rule 1b — a leading-token 'parked' on ANY phase wins (chair park)."""
+
+    def test_parked_tasks_wins_over_approved_not_shipped(self):
+        # The fable-premium-tier shape that motivated the rule: approved
+        # requirements + parked tasks previously alarmed as
+        # approved-not-shipped, hiding the chair's ruling.
+        spec = _Spec(
+            phases=_all_phases(
+                requirements="approved (2026-07-10)",
+                tasks="parked (2026-07-19) — Resume-Trigger: 2026-07-28",
+            ),
+            last_modified=FRESH,
+        )
+        assert derive_lifecycle(spec, now=NOW) == "parked"
+
+    def test_parked_is_leading_token_only(self):
+        # A prose MENTION of parking in an annotation must not trip it.
+        spec = _Spec(
+            phases=_all_phases(
+                requirements="approved (2026-07-10) — sibling spec parked separately", tasks="draft"
+            ),
+            last_modified=FRESH,
+        )
+        assert derive_lifecycle(spec, now=NOW) != "parked"
+
+    def test_parked_wins_over_stale(self):
+        old = (NOW - timedelta(days=STALE_THRESHOLD_DAYS + 10)).isoformat()
+        spec = _Spec(
+            phases=_all_phases(requirements="parked (2026-06-01) — Resume-Trigger: evergreen"),
+            last_modified=old,
+        )
+        assert derive_lifecycle(spec, now=NOW) == "parked"
+
+
+class TestLivingAndShippedTokens:
+    """Rule 2b (living -> active) + shipped/superseded complete-aliases."""
+
+    def test_living_is_active_never_stale(self):
+        old = (NOW - timedelta(days=STALE_THRESHOLD_DAYS + 10)).isoformat()
+        spec = _Spec(
+            phases=_all_phases(requirements="living (ongoing program)", tasks="living"),
+            last_modified=old,
+        )
+        assert derive_lifecycle(spec, now=NOW) == "active"
+
+    def test_shipped_all_phases_is_complete(self):
+        spec = _Spec(
+            phases=_all_phases(requirements="shipped (2026-07-20)", tasks="shipped (2026-07-20)"),
+            last_modified=FRESH,
+        )
+        assert derive_lifecycle(spec, now=NOW) == "complete"
+
+    def test_superseded_is_complete(self):
+        spec = _Spec(
+            phases=_all_phases(requirements="superseded (2026-07-18) — see sibling"),
+            last_modified=FRESH,
+        )
+        assert derive_lifecycle(spec, now=NOW) == "complete"
+
+    def test_active_token_skips_approved_not_shipped(self):
+        # 'active' requirements + tasks present + nothing complete used
+        # to alarm; the alarm is reserved for token 'approved' exactly.
+        spec = _Spec(
+            phases=_all_phases(
+                requirements="active (2026-07-18) — D1 ratified; D2+ open", tasks="draft"
+            ),
+            last_modified=FRESH,
+        )
+        assert derive_lifecycle(spec, now=NOW) == "active"
+
+    def test_approved_token_still_alarms(self):
+        spec = _Spec(
+            phases=_all_phases(requirements="approved (2026-07-10)", tasks="draft"),
+            last_modified=FRESH,
+        )
+        assert derive_lifecycle(spec, now=NOW) == "approved-not-shipped"

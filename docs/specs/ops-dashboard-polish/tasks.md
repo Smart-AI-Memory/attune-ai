@@ -1,6 +1,6 @@
 # Tasks — Ops Dashboard Polish
 
-**Status:** parked (2026-07-13) — Phases A+B shipped (#361 #365 #367; B2 in #371), C2 Sessions (#377 #387 #390), D5 (#376); remaining: C1 /memory page, C3 memory nav+KPIs, D1 sweep+CI gate, D2-D4, D6.
+**Status:** parked (2026-07-13) — Phases A+B shipped (#361 #365 #367; B2 in #371), C2 Sessions (#377 #387 #390), D5 (#376); remaining: C1 /memory page, C3 memory nav+KPIs, D1 sweep+CI gate, D2-D4, D6 · Resume-Trigger: evergreen (no external clock).
 **Owner:** Patrick
 
 Cross-references the QA punch list at

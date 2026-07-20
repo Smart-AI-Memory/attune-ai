@@ -1,5 +1,7 @@
 # Run-Record Corpus — Decisions
 
+**Status:** shipped (2026-07-19) — see [requirements.md](requirements.md)
+
 ## 2026-07-19 — Chair rulings on the three open questions (Patrick)
 
 **D1 — Fork: Option B (canonicalize the existing telemetry

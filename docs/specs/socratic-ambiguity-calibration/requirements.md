@@ -1,7 +1,7 @@
 # Socratic Ambiguity Calibration — Requirements
 
 **Status:** parked (2026-07-13; reqs+design shipped #1071/#1072; #1068 = paired trigger fix, not this scope; remaining: G1–G4 impl — see
-[decisions.md](decisions.md)) · **Owner:** Patrick + agent
+[decisions.md](decisions.md)) · Resume-Trigger: evergreen (no external clock) · **Owner:** Patrick + agent
 **Sequencing:** queued **behind 9.0.0** (the Empathy framework removal).
 **Born:** the 8.10.0-ship session (2026-06-25). After a compound reply
 I'd *guessed* at, Patrick's feedback was "always query me on an

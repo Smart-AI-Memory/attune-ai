@@ -1,6 +1,6 @@
 # Gemini Projector Integration — Requirements
 
-**Status: PARKED — SUPERSEDED (ratified 2026-07-18, Patrick)** by
+**Status:** superseded (2026-07-18, ratified by Patrick) — replaced by
 [../antigravity-adapter/](../antigravity-adapter/requirements.md).
 Google retired the Gemini CLI's free individual tier the same day
 this spec was drafted (`IneligibleTierError` → "migrate to the

@@ -1,5 +1,7 @@
 # Roundtable Triage — Decisions
 
+**Status:** active (2026-07-20) — chartered 2026-07-19 (n=1); n=2 validated 2026-07-20; requirements not yet authored
+
 ## 2026-07-19 — Charter (chair, "as synthesized"; thread q-briefing-triage-001)
 
 Born from a live demo in conversation: the moderator pulled the ops
@@ -57,3 +59,58 @@ The T2 status-line lint requires a `Resume-Trigger:` clause on any
 chair queues a pack, or direct) covering the appendix digest format,
 the ≤5-item cap mechanics, the freshness thresholds, and the
 demotion rule; n=2 manual validation runs alongside.
+
+## 2026-07-20 — n=2 validation run (thread q-briefing-triage-002; chair ruled "go all")
+
+Pre-authorized 2026-07-19 evening; run alongside the first scheduled
+clean-run digest (one sitting, per T4). Four items (cap held), none
+duplicating the clean-run digest. Seats: claude (session), agy,
+codex — independent, one round, halting.
+
+**A1 (3-0, ruled).** docs-wiring-audit CLOSED as shipped — n=1's
+"no activity since 07-15" evidence line misread shipped-and-quiet
+as silent-rot (v1 + required CI check on main; v1.1 07-15; only
+deferred Task 10 open). Status flipped in all four phase files.
+Lesson for briefing evidence: "no activity" must be cross-read
+against the spec's own status line before it feeds a sequencing
+ruling.
+
+**A2 (3-0, ruled).** T2 hygiene unit EXECUTED as the replacement
+next work unit, one PR: token-first status backfill (~24 dirs),
+`parked`/`living`/`shipped`/`superseded` in the detector vocabulary
+(+ `parked` lifecycle bucket), the third status-line bolding
+convention in the parser, the `status-line` baseline gate
+(CI sweep, D7 pattern), R9 Resume-Trigger enforcement, and the A1
+flip folded in (codex amendment). Scope guard honored: the Item-3
+tag parser did NOT ride in. usage-signals US-4 named the product
+unit next.
+
+**A3 (ruled).** The three 2026-07-20 diagnosis records are
+live-fire/dogfood artifacts (85c88fd9 + 63c533fb are the
+advanced-debugging spec's named receipts; 0910cf10 falls inside the
+overnight Phase C/D dogfood window). No closure/annotation seam
+exists yet (store is append-only by design), so the canonical
+stream was NOT hand-edited; disposition recorded in
+advanced-debugging-plugin/decisions.md with two queued follow-ons
+(priors defect; origin-tag + closure seam + automated-suite
+exclusion). RR corpus record 85c88fd9 stays (D3 no-backfill; 2-1
+tag-don't-delete, recorded evidence over agy's cleanup).
+
+**A4 (effective 3-0, ruled).** Gate verdict ledger is dark locally
+BY CONSTRUCTION (D7 CI-only; nothing invokes the lifecycle runner
+locally). Briefing contract amended: fetch CI gate verdicts at
+briefing render time (timestamped unavailable/expired handling, no
+scheduled refresh — T3-compliant). Queued behind this PR with the
+A3 follow-ons; not a parallel program (codex risk).
+
+**T4 (ruled: armed).** n=2 validation PASSED — cap held (4/5), zero
+digest overlap, and the appendix caught a mis-ruled work unit the
+clean-run alone would have missed. Headless appendix is ARMED per
+T4; implementation (extend the clean-run routine with the briefing
+appendix) queues behind the A3/A4 follow-ons. Auto-demote rule
+stands: two consecutive zero-ruling digests demote to
+chair-invoked.
+
+Deviation noted: n=2's question was posted as author `moderator`
+(chair pre-authorized but did not compose the brief live; n=1 used
+`chair`).

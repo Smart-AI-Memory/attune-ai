@@ -1,6 +1,6 @@
 # Spec-Lifecycle Gates v1 — Tasks
 
-**Status: executed** (2026-07-19, chair go "go on implementation";
+**Status:** shipped (2026-07-19) — executed (chair go "go on implementation";
 all seven tasks landed in one PR — receipts per task below and in
 `decisions.md`'s closure entry). One implementation-discovered
 deviation: the design's `src/attune/gates/` destination was already

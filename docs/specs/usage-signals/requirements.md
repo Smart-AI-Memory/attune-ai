@@ -1,6 +1,6 @@
 # Usage Signals (table-refreshed) — Requirements
 
-**Status: requirements chair-ruled per item** — authored by the
+**Status:** approved (2026-07-19) — chair-ruled per item; US-3 chair-led, US-4/US-6/US-7 open. Authored by the
 round table (thread `us-refresh-001`); compiled deterministically by
 `attune.roundtable.compiler` (V2-P2). Approved items only;
 declined: none;

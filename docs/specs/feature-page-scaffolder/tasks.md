@@ -1,6 +1,6 @@
 # Feature-Page Scaffolder — Tasks
 
-**Status:** parked (2026-07-13) — spec docs shipped (#1190); implementation not started (T1–T4 remain: template, scaffold/build verbs, tests, playbook retirement) · implements
+**Status:** parked (2026-07-13) — spec docs shipped (#1190); implementation not started (T1–T4 remain: template, scaffold/build verbs, tests, playbook retirement) · Resume-Trigger: evergreen (no external clock) · implements
 [design.md](design.md). Each task names its acceptance.
 
 ## T1 — Template + `scaffold` verb

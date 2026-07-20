@@ -1,6 +1,6 @@
 # Advanced Debugging Plugin — Requirements
 
-**Status: requirements chair-ruled per item** — authored by the
+**Status:** shipped (2026-07-20) — Phases A–D landed (#1487–#1503); requirements chair-ruled per item — authored by the
 round table (thread `producing-advanced-debugging-plugin-001`); compiled deterministically by
 `attune.roundtable.compiler` (V2-P2). Approved items only;
 declined: none;
