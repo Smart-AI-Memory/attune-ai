@@ -119,3 +119,19 @@ Patrick approved the spec as drafted. D1, D2, D3, D5, D6 ratified;
 D4 (workflow-count wording), D7 (pre-commit scope for test gates),
 and D8 (inverse command report) remain open. G1's claim manifest
 is the only work item blocked on an open decision (D4).
+
+## 2026-07-20 — D7 and D8 ruled (chair: Patrick, via briefing triage)
+
+- **D7 RULED: CI-only for the test gates (G1/G2/G3); pre-commit
+  carries G5 only.** The spec's stated default, ratified as-is:
+  pre-commit's isolated env can't guarantee an importable `attune`
+  for all contributors. Revisit only if drift keeps reaching CI.
+- **D8 RULED: report-only (non-gating).** The inverse-direction
+  report (exists-but-unadvertised commands) ships as a warning-tier
+  report; reassess after a month of real output. Gating would
+  manufacture failures for deliberate soft-launches; dropping it
+  loses a cheap signal.
+
+With D4 (2026-07-12) and these two, every open decision on this
+spec is resolved — implementation (G1 first per the ship order) is
+fully unblocked.
