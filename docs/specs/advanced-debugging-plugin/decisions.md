@@ -38,7 +38,7 @@ curator source, unanimously agreed by seats.
 - `LINT_DIRTY` round 3: symbol-reality gate blocked one bare
   `producing.py` citation; staged texts carry full paths.
 
-**Dissent register (stands until ruled):**
+**Dissent register (ruled 2026-07-20 — entry at end of file):**
 
 - Lesson-corpus ownership unresolved — graduated diagnostic
   lessons to `.claude/lessons.md` directly vs. a dedicated
@@ -359,7 +359,7 @@ the real miner over that stream reported `eligible=1,
 dropped_attune_heal=1`. The mining exclusion now guards a non-empty
 set. Backlog item (b) proposer-brief hardening + roster role-fit
 closed in parallel (#1523, entry below); (c) claude CLI re-auth
-remains open.
+closed 2026-07-20 — no login owed (entry at end of file).
 
 ## 2026-07-20 — v1.1 backlog item 2: proposer-brief hardening + roster role-fit (chair-picked)
 
@@ -393,3 +393,66 @@ Receipts: 14 fix-loop tests serial (5 new role-fit: plan-only skip,
 all-plan-only zero-spend, absent-fallback with reviewer exclusion,
 no-seat-shopping, solo-roster honesty; 1 new brief guard);
 diagnosis+roundtable 243 passed serial.
+
+## 2026-07-20 — v1.1 backlog (c) closed: no `claude login` owed; the seat's auth path is the API key
+
+Named follow-up 3 from the spec-complete entry is closed with
+receipts, without a credential flow.
+
+The 2026-07-18 provider-clean probe that found the CLI's stored
+OAuth token revoked is real but MOOT: the chair authorized the
+API-key path the same day (agent-round-table decisions.md,
+"the api is available for this process"), and that path is fully
+wired end-to-end:
+
+- The launchd job (`com.smartaimemory.attune.roundtable-clean-run`)
+  sources `~/.attune/anthropic.env` (`set -a; source …; set +a`)
+  before invoking the runner — verified in the plist ProgramArguments.
+- `routine.py` passes a NON-EMPTY `ANTHROPIC_API_KEY` through the
+  provider-clean seat env (empty string still dropped, keyless
+  checks unaffected).
+- `~/.attune/anthropic.env` exists, `-rw-------` (0600), with a
+  key line present (existence checked; contents never read).
+- Bare `claude -p` 401ing INSIDE a Claude Code session is by
+  design (nested-session auth isolation, receipt 2026-07-20) —
+  it is not evidence of a seat problem and cannot be used to
+  probe seat health from an agent session.
+
+Reopen condition: if the first live scheduled fire (Monday
+2026-07-27 06:00, runbook step 1) shows the claude seat
+`SEAT_ABSENT` with a 401 under the sourced key, this closes wrong
+— reopen (c) and the chair runs an interactive `claude login`.
+With (a) #1524, (b) #1523, and (c) here, the v1.1 backlog is
+fully closed.
+
+## 2026-07-20 — Dissent register ruled (chair: Patrick, both items)
+
+Both items open since the 2026-07-19 requirements entry are ruled;
+the register is clear.
+
+**Lesson-corpus ownership — RULED: direct append to
+`.claude/lessons.md`.** Graduated diagnostic lessons go into the one
+canonical corpus, chair-gated per entry, with the candidate's
+`diagnosis:<id>` thread embedded inline as provenance (machine-
+graduated entries stay distinguishable from session-written ones).
+Rationale: graduation volume is a trickle (verified diagnosis +
+chair go per lesson), so projector/drift-guard machinery for a
+dedicated source is ceremony; the corpus stays one corpus with one
+hydration path. The `LessonPublisher` protocol REMAINS the seam — a
+`LessonsFilePublisher` implementing this ruling is the follow-up
+build, and a projected source stays a cheap later pivot if volume
+ever justifies it. Until the file-writing publisher lands,
+`RenderForChairPublisher` remains the only implementation.
+
+**Confidence policy — RULED: defaults ratified as-is.** The
+3-point scale (`low`/`medium`/`high`) and
+`fix_proposal_threshold="high"` stand. The threshold only gates
+fix-proposal STAGING (v1 is propose-only; the chair rules on every
+fix regardless), so `high` is a spend limiter, not a decision
+gate; the coarse scale matches what heterogeneous seats express
+reliably (T4 live receipt: `high` on the correct hypothesis, `low`
+on the alternative). Named revisit trigger: if live operation
+shows verified-correct diagnoses sitting at `medium` and
+systematically blocked from staging, lower the threshold to
+`medium` — the stream's own `config_used`-stamped records are the
+evidence base.
