@@ -531,8 +531,8 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
     { name = "attune-author", marker = "extra == 'author'", specifier = ">=0.23,<0.26" },
     { name = "attune-help", marker = "extra == 'author'", specifier = ">=0.10.0" },
-    { name = "attune-rag", specifier = ">=0.1.5,<0.9" },
-    { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<0.9" },
+    { name = "attune-rag", specifier = ">=0.1.5,<0.10" },
+    { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<0.10" },
     { name = "attune-verify", specifier = ">=0.1.0,<0.3" },
     { name = "bandit", marker = "extra == 'all'", specifier = ">=1.7,<2.0" },
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.7,<2.0" },
@@ -677,7 +677,7 @@ provides-extras = ["author", "anthropic", "llm", "memdocs", "agents", "backend",
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "attune-rag", specifier = ">=0.1.5,<0.9" },
+    { name = "attune-rag", specifier = ">=0.1.5,<0.10" },
     { name = "bandit", specifier = ">=1.7,<2.0" },
     { name = "black", specifier = ">=24.3.0,<27.0" },
     { name = "coverage", specifier = ">=7.0,<8.0" },
@@ -731,7 +731,7 @@ wheels = [
 
 [[package]]
 name = "attune-rag"
-version = "0.8.0"
+version = "0.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
@@ -740,9 +740,9 @@ dependencies = [
     { name = "rich" },
     { name = "structlog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/66/f9/f4b9413c642fb1faf229f84183b620f590e01bdfc716957d8f3e78b91731/attune_rag-0.8.0.tar.gz", hash = "sha256:58bde0d1eda1ad8dee417fc136c258053e3b23287598ad536951fb7a4a81ee14", size = 128746, upload-time = "2026-07-09T15:37:35.185Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/fe/3028c782ac2808edfb5827de43367bf009bf3a99bbbfcdd4a6c5e652344e/attune_rag-0.9.0.tar.gz", hash = "sha256:eedd8909c632241f1ca358069afd470830598d4bbc07b61c5ac0c8305745a903", size = 129596, upload-time = "2026-07-18T00:44:19.715Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/50/e1/75e163599f3cf8c9613a04e759423268d52e3284684a8dec3d36be733f88/attune_rag-0.8.0-py3-none-any.whl", hash = "sha256:cf013a6843eac4b78c41a094405ccde3095894dc4fea5ad26f111a2de6f23346", size = 139146, upload-time = "2026-07-09T15:37:33.841Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/aa/77b4da4c089ff6515b971460ea2323da515cc5acdc10960762831050bedd/attune_rag-0.9.0-py3-none-any.whl", hash = "sha256:d4e5be798cbabe732d72502adbce6e48136febc217150dbc38f064ed61e90596", size = 139957, upload-time = "2026-07-18T00:44:18.027Z" },
 ]
 
 [[package]]
