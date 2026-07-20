@@ -97,6 +97,13 @@ SEAT_RECIPES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("codex", ("codex", "exec", "--skip-git-repo-check", "-")),
 )
 
+#: Seats that structurally CANNOT emit code proposals: antigravity
+#: runs ``--mode plan`` (reasoning-only, correct for R1 positions) and
+#: exits 0 with EMPTY output when asked for file blocks — live-fire 2,
+#: advanced-debugging-plugin decisions.md, 2026-07-20. Plan-mode seats
+#: review; code-native seats propose.
+PLAN_ONLY_SEATS: frozenset[str] = frozenset({"antigravity"})
+
 BRIEF_PREAMBLE = (
     "You are one seat at a three-model round table (Claude, "
     "Antigravity, Codex), convened by a scheduled routine. Answer "
