@@ -39,6 +39,7 @@ from attune.ops.security import require_client_token
 # still do `from attune.ops.routes.specs import SpecRecord, ...`.
 from attune.ops.specs_data import (  # noqa: F401
     _PHASE_FILES,
+    _STATUS_LIKE_RE,
     _STATUS_RE,
     SpecPhase,
     SpecRecord,
@@ -253,6 +254,64 @@ def _atomic_write(target: Path, text: str) -> None:
         raise
 
 
+class UnsafeStatusRewrite(ValueError):
+    """A status flip that would duplicate or destroy an existing line.
+
+    Raised by :func:`_rewrite_status_line` when the file's status line
+    is descriptive (chair-ruled prose, shipped-evidence annotations) or
+    in a shape the rewriter cannot parse. The route maps this to a 409
+    — a status stamp must be additive and idempotent or not happen at
+    all (2026-07-19 usage-signals corruption postmortem).
+    """
+
+
+# Leading tokens a flip may safely replace. Anything else — "R6 spend
+# alarm shipped …", "requirements chair-ruled per item" — is descriptive
+# content, not a status token, and replacing it destroys information.
+_FLIPPABLE_TOKENS: frozenset[str] = frozenset(
+    {
+        "draft",
+        "in-review",
+        "approved",
+        "in-progress",
+        "implemented",
+        "complete",
+        "completed",
+        "done",
+        "shipped",
+        "closed",
+        "retired",
+        "superseded",
+        "parked",
+        "paused",
+        "blocked",
+        "deferred",
+        "pending",
+        "open",
+        "not",  # "not started"
+        "active",
+        "stale",
+        "living",
+        "ongoing",
+        "resolved",
+    }
+)
+
+_LEADING_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z-]*")
+
+
+def _leading_token(value: str) -> str:
+    """Lowercased leading word of a status value (hyphens kept).
+
+    Leading check glyphs (``✓`` / ``✅``) are decorators, not the token —
+    ``✓ Resolved (2026-05-11)`` reads as ``resolved`` (same treatment as
+    ``_state.py``'s ``_leading_verdict``).
+    """
+    stripped = value.strip().lstrip("*_`✓✅ \t")
+    match = _LEADING_TOKEN_RE.match(stripped)
+    return match.group(0).lower() if match else ""
+
+
 def _rewrite_status_line(original: str, status: str) -> str:
     """Return ``original`` with its first **Status** line replaced by ``status``.
 
@@ -263,25 +322,62 @@ def _rewrite_status_line(original: str, status: str) -> str:
     the first delimiter (em-dash, hyphen-with-spaces, open-paren, or
     comma) in the previous value.
 
-    If no recognized status line exists, inserts ``**Status:** {status}``
-    near the top (after the first ``# `` heading if present).
+    If NO status-like line exists anywhere, inserts ``**Status:** {status}``
+    near the top (after the first ``# `` heading if present). Running the
+    same flip twice is byte-idempotent.
+
+    Raises :class:`UnsafeStatusRewrite` instead of writing when the flip
+    would lose information (guards from the 2026-07-19 usage-signals
+    corruption):
+
+    - the first status-like line is a shape the strict pattern cannot
+      parse (e.g. ``**Status: chair-ruled per item**``) — rewriting
+      would previously INSERT a duplicate ``**Status:**`` line above it;
+    - the existing value's leading word is not a recognized status token
+      (``R6 spend alarm shipped …``) — replacing it destroys the record.
     """
     match = _STATUS_RE.search(original)
-    if match:
-        old_value = match.group(1)
-        annotation = _extract_status_annotation(old_value)
-        new_value = (status + annotation) if annotation else status
-        # Use a lambda for sub() so the replacement is treated as a
-        # literal — `\g<...>` / numeric backrefs in annotations can't
-        # accidentally trigger expansion.
-        return _STATUS_RE.sub(lambda _m: f"**Status:** {new_value}", original, count=1)
-    lines = original.splitlines()
-    insert_at = 1 if lines and lines[0].startswith("# ") else 0
-    lines.insert(insert_at, f"\n**Status:** {status}\n")
-    new_text = "\n".join(lines)
-    if not new_text.endswith("\n"):
-        new_text += "\n"
-    return new_text
+    status_like = _STATUS_LIKE_RE.search(original)
+    if match is None:
+        if status_like is not None:
+            raise UnsafeStatusRewrite(
+                "existing status line is in a shape this endpoint cannot "
+                f"safely rewrite: {status_like.group(0).strip()!r} — edit the file directly"
+            )
+        lines = original.splitlines()
+        stamp = f"**Status:** {status}"
+        insert_at = 1 if lines and lines[0].startswith("# ") else 0
+        block = ([""] if insert_at else []) + [stamp]
+        if len(lines) > insert_at and lines[insert_at].strip():
+            block.append("")
+        lines[insert_at:insert_at] = block
+        new_text = "\n".join(lines)
+        if not new_text.endswith("\n"):
+            new_text += "\n"
+        return new_text
+
+    if status_like is not None and status_like.start() < match.start():
+        # An earlier, unparseable status-ish line is the document's real
+        # header; rewriting the later strict match would corrupt prose.
+        raise UnsafeStatusRewrite(
+            "first status line is in a shape this endpoint cannot safely "
+            f"rewrite: {status_like.group(0).strip()!r} — edit the file directly"
+        )
+
+    old_value = match.group(1)
+    if _leading_token(old_value) not in _FLIPPABLE_TOKENS:
+        raise UnsafeStatusRewrite(
+            f"existing status value {old_value!r} is descriptive, not a "
+            "status token — flipping it would destroy information; edit the file directly"
+        )
+
+    annotation = _extract_status_annotation(old_value)
+    new_value = (status + annotation) if annotation else status
+    # Splice by span (never re.sub): with re.MULTILINE a pattern-level
+    # sub over surrounding whitespace previously swallowed the blank
+    # lines around the status line.
+    start, end = match.span()
+    return f"{original[:start]}**Status:** {new_value}{original[end:]}"
 
 
 def _extract_status_annotation(old_value: str) -> str:
@@ -413,7 +509,10 @@ async def update_phase_status(
     except OSError as exc:
         raise HTTPException(status_code=500, detail=f"read failed: {exc}") from exc
 
-    new_text = _rewrite_status_line(original, status)
+    try:
+        new_text = _rewrite_status_line(original, status)
+    except UnsafeStatusRewrite as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
     try:
         _atomic_write(target, new_text)

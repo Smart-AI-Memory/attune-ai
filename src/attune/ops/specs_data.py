@@ -30,17 +30,36 @@ _PHASE_FILES: tuple[str, ...] = (
     "tasks.md",
 )
 
-# Status line pattern — accepts three Markdown bolding conventions:
-#   **Status:** value    (colon inside the bolding — attune-ai convention)
-#   **Status**: value    (colon outside — attune-gui convention)
-#   **Status: value**    (whole line bold — table-authored specs; the
-#                         closing ** may sit on the same line only)
-# Captures the value, stripping trailing whitespace. Ordered
-# alternation: the closed-bold forms first so `**Status:** x` never
-# matches the whole-bold branch.
+# Status line pattern — accepts both Markdown bolding conventions:
+#   **Status:** value   (colon inside the bolding — attune-ai convention)
+#   **Status**: value   (colon outside — attune-gui convention)
+# Captures the value, stripping trailing whitespace.
+#
+# NB: horizontal whitespace ONLY ([ \t]*, never \s*). With re.MULTILINE,
+# a leading/trailing \s* spans newlines, so a re.sub over the match
+# silently swallowed the blank lines around the status line — the
+# 2026-07-19 usage-signals corruption (blank line after the H1 deleted).
 _STATUS_RE = re.compile(
-    r"^\s*\*\*Status(?::\*\*|\*\*:)\s*(.+?)\s*$|^\s*\*\*Status:\s*(.+?)\*\*",
+    r"^[ \t]*\*\*Status(?::\*\*|\*\*:)[ \t]*(.+?)[ \t]*$",
     re.MULTILINE,
+)
+
+# Third convention seen in the wild (usage-signals requirements.md):
+# the whole line bolded with the colon inside — ``**Status: value**``,
+# optionally followed by trailing prose. Parsed for listing; the writer
+# treats it as descriptive (refuses to rewrite it).
+_STATUS_WRAPPED_RE = re.compile(
+    r"^[ \t]*\*\*Status:[ \t]*([^*\n]+?)[ \t]*\*\*",
+    re.MULTILINE,
+)
+
+# Liberal detector for "some kind of status line exists" — any bold /
+# plain ``Status:`` label at line start, any case. Used by the writer
+# so it NEVER inserts a second status line above a variant it cannot
+# parse (the duplicate-``**Status:** approved`` corruption shape).
+_STATUS_LIKE_RE = re.compile(
+    r"^[ \t]*\**[ \t]*Status\**[ \t]*:",
+    re.IGNORECASE | re.MULTILINE,
 )
 
 
@@ -89,12 +108,15 @@ class SpecRecord:
 
 
 def _extract_status(text: str) -> str | None:
-    """Pull the value after `**Status**:` from a markdown file."""
-    match = _STATUS_RE.search(text)
+    """Pull the value after `**Status**:` from a markdown file.
+
+    Falls back to the fully-bolded ``**Status: value**`` convention so
+    specs using that shape list with their real status instead of None.
+    """
+    match = _STATUS_RE.search(text) or _STATUS_WRAPPED_RE.search(text)
     if not match:
         return None
-    value = match.group(1) if match.group(1) is not None else match.group(2)
-    return value.strip()
+    return match.group(1).strip()
 
 
 def _scan_spec_dir(spec_dir: Path) -> list[SpecPhase]:
