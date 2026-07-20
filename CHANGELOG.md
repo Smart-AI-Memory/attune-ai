@@ -7,16 +7,96 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+When a workflow fails, attune can now tell you why: `attune diagnose`
+convenes a multi-model panel over the failed run's evidence and hands
+you ranked root-cause hypotheses — one click from the dashboard. The
+same release brings the multi-LLM round table (Claude, Antigravity,
+and Codex deliberating with receipts), a cross-provider collaboration
+contract so non-Claude agents work this repo safely, and a canonical
+run-record corpus that future releases learn from.
+
 ### Added
 
-- **The diagnosis engine emits its own heal-stamped canonical run
-  record.** `attune diagnose` is a CLI command, not a workflow, so
-  RC-2's execute-wrapper seam never stamped it — the pipeline-learner
-  mining exclusion (`dropped_attune_heal`) guarded an empty set. A
-  completed diagnosis now appends a `WorkflowRunRecord` with the
-  `attune-heal` trigger constant (never env-resolved) to the canonical
-  stream; a diagnose that raises emits nothing, per RC-2's precedent
-  (advanced-debugging-plugin v1.1 backlog (a)).
+- **Self-healing diagnosis engine** (#1487, #1494, #1496, #1498).
+  `attune diagnose <run_id>` diagnoses any failed run end-to-end:
+  recalled priors, a bounded evidence pack, and a seat panel produce
+  ranked hypotheses persisted as `DiagnosisRecord`s. The ops dashboard
+  grows a "Why did this fail?" button on failed runs; a propose-only
+  fix loop and a manual triage command (`python -m
+  attune.diagnosis.triage`) close the loop — every fix is chair-ruled,
+  never auto-applied. Diagnostic runs are stamped `attune-heal` and
+  excluded from mining. Follow-ups shipped in the same window: priors
+  term extraction for terse symptoms (#1512), origin tagging + an
+  append-only closure seam (#1514), proposer role-fit + brief
+  hardening (#1523), and the engine's own heal-stamped canonical run
+  record (#1524).
+- **Multi-LLM round table** (#1450, #1451, #1462, #1464, #1466,
+  #1511, #1515, #1517). `/roundtable` convenes Claude, Antigravity,
+  and Codex to deliberate a question on a Redis-backed board; the
+  chair rules on promotion. V2 adds the artifact compiler, proposal
+  ledger, solution materializer with receipt validation, seat
+  rotation, headless producing routines, a headless triage appendix,
+  CI-gate verdicts fetched at briefing render time, and
+  receipt-vs-claim evidence tiers in digests.
+- **Cross-provider collaboration contract** (#1432–#1447). A
+  projector-owned contract teaches any agent (Claude Code, Codex,
+  Antigravity) the repo's shared truth: tracked `AGENTS.md` +
+  `.agents/` mirrors, a read-only collaboration preflight script, the
+  Antigravity adapter, and the shared Redis memory index taught to
+  every agent surface.
+- **Canonical run-record corpus** (#1472, #1483, #1485). Every
+  workflow run now lands one record in a home-global stream
+  (`~/.attune/telemetry/workflow_runs.jsonl`) with trigger and project
+  provenance — including SDK-native and report-shaped workflows that
+  previously emitted nothing, and dashboard rec-click attribution.
+- **Pipeline learner core** (#1475). Readiness-gated pattern miner,
+  ranker, and suggestion ledger over the run-record corpus; it never
+  mines an unready corpus, and diagnostic self-records are excluded
+  by construction.
+- **Claim-drift gates** (#1497, #1501, #1502). Three CI gates that
+  keep public claims honest: G1 count-and-claim drift, G2
+  advertised-command validation, G5 brand-drift + empathy-term
+  ratchet. Each landed red on real drift, then fixed green.
+- **Spec-lifecycle gates** (#1480, #1507). Specs now declare a
+  status from a single-sourced vocabulary; a gate enforces it, with
+  lifecycle buckets (including `parked`) surfaced on the ops specs
+  page and a whole-line-bold status convention parsed (#1488).
+- **Usage-signals tooling** (#1476, #1510, #1427). Reach snapshots
+  from a fixed runner IP, a pre-tag `--verify-before` window check,
+  three-panel receipts, and ledger annotations — measurement
+  infrastructure for release reads.
+- **Memory feedback signal, step 2** (#1459). A Stop-hook verdict
+  scorer and noise-denominator reader make injected-memory value
+  measurable per surfacing.
+- **Opt-in auto-merge CI class** (#1504). The `auto-merge-when-green`
+  label arms native auto-merge — no review bypass, `.github/`
+  changes carved out.
+- **Starter-lint hook** (#1516). SessionStart cross-reads the session
+  starter's spec mentions against each spec's own status line and
+  flags stale threads.
+
+### Changed
+
+- **Managed-Redis naming is platform-neutral** (#1506).
+  `get_managed_redis_config` replaces the Railway-specific name;
+  `get_railway_redis_config` remains as a deprecated alias.
+- **attune-rag cap lifted to `<0.10`**, lock at 0.9.0, re-validated
+  against the lessons golden-query suite (#1509).
+
+### Fixed
+
+- **Ops spec status-flip never duplicates or rewrites descriptive
+  status lines** (#1488) — the writer refuses to insert a second
+  `**Status:**` line above a variant it cannot parse.
+- **Report-shaped workflow results emit run records** (#1483) —
+  `HealthCheckReport`-class results previously died silently in
+  telemetry emission.
+- **Roundtable robustness**: citation and convergence-tag contracts
+  taught by worked example (#1470, #1478), bounded board client
+  timeouts (#1463), Windows path validation in proposals (#1474),
+  project-skill shim + seat-reply hygiene (#1454), routine progress
+  streaming (#1453).
+- **Fix-loop complexity refactored below grade D** (#1500).
 
 ## [10.5.0] — 2026-07-17
 
