@@ -155,3 +155,28 @@ adjacent guards (plugins, website-version, mcp-tools) 300 passed.
 
 Per D7 the gate is CI-only (rides the unit suite); no pre-commit
 hook added. Next per ship order: G2.
+## 2026-07-20 — G2 landed (red-first proven)
+
+`tests/unit/gates/test_advertised_commands.py`: the advertised set
+is extracted by CALLING the render surfaces (`create_parser()`
+epilog, `_show_welcome`, `cmd_setup` with `Path.home` pointed at
+tmp), never by grepping source. Every line-leading `/token` must
+resolve to `src/attune/commands/<name>.md` or
+`plugin/commands/<name>.md`.
+
+**Red-first receipt:** exactly the spec's predicted ghosts —
+epilog advertised `/testing`, `/workflows`, `/docs` (the epilog
+block existed TWICE in cli_minimal.py, both stale) and the welcome
+screen advertised `/testing`. Fix set retargeted per the spec's
+candidates: `/testing`→`/smart-test`, `/workflows`→`/attune`,
+`/docs`→`/doc-gen`, both blocks. Gate green; 116-test gates+cli
+breadth.
+
+**D8 inverse report (report-only, as ruled)** fired its first
+output: 12 commands exist but are advertised on no CLI surface —
+agent, brainstorm, bulk, code-quality, deep-review, doc-gen*,
+fix-test, handoff, pipeline, plan, refactor, remember (*doc-gen
+now advertised post-fix). Reassess the list after a month.
+
+Next per ship order: G3 (blocked on hook-timeout-budgets Phase 0.2
+values) or G5.
