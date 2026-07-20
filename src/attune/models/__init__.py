@@ -68,6 +68,7 @@ from .tasks import (
 from .telemetry import (
     AgentAssignmentRecord,
     CoverageRecord,
+    DiagnosisRecord,
     FileTestRecord,
     LLMCallRecord,
     TaskRoutingRecord,
@@ -99,6 +100,7 @@ __all__ = [
     "CircuitBreaker",
     "CircuitBreakerState",
     "CoverageRecord",
+    "DiagnosisRecord",
     "EmpathyLLMExecutor",
     "ExecutionContext",
     "FallbackPolicy",
