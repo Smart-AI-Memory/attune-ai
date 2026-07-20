@@ -11,7 +11,7 @@ Usage:
     python examples/anthropic_patterns_demo.py
 
 Requirements:
-    pip install empathy-framework[developer]
+    pip install attune-ai[developer]
 """
 
 import asyncio

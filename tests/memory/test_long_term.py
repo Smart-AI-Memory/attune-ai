@@ -194,9 +194,9 @@ class TestPatternMetadata:
             sanitization_applied=True,
             pii_removed=0,
             secrets_detected=0,
-            custom_metadata={"project": "empathy-framework", "version": "3.0"},
+            custom_metadata={"project": "attune-ai", "version": "3.0"},
         )
-        assert metadata.custom_metadata["project"] == "empathy-framework"
+        assert metadata.custom_metadata["project"] == "attune-ai"
 
     def test_metadata_defaults(self):
         """Test metadata default values."""

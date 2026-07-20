@@ -181,7 +181,7 @@ class MemDocsConfig(BaseModel):
     """Configuration for MemDocs pattern storage integration."""
 
     enabled: bool = Field(default=True, description="Enable MemDocs integration")
-    project: str = Field(default="empathy-framework", description="Project identifier")
+    project: str = Field(default="attune-ai", description="Project identifier")
 
     collections: dict[str, str] = Field(
         default_factory=lambda: {

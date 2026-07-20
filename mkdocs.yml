@@ -35,6 +35,9 @@ exclude_docs: |
   internal/
   archive/
   generated/
+  # historical reports archived out of the repo root (G5 sweep) -
+  # records, never site content
+  history/
   # per-branch agent handoffs (collaboration contract D1) - repo-only
   # working artifacts, deleted at branch merge; never site content
   handoffs/

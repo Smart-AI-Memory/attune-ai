@@ -199,7 +199,7 @@ _loaded_modules: dict[str, object] = {}
 # still importable; it is not used by the Claude Code workflow plugin at
 # runtime and is slated for removal in a future release. Accessing it
 # emits DeprecationWarning. See CHANGELOG and
-# docs/specs/empathy-framework-retirement/.
+# the EmpathyOS retirement spec under docs/specs/.
 _DEPRECATED_FRAMEWORK: frozenset[str] = frozenset(
     {
         "StateManager",

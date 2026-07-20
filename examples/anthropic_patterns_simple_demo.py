@@ -8,7 +8,7 @@ Usage:
     python examples/anthropic_patterns_simple_demo.py
 
 Requirements:
-    pip install empathy-framework
+    pip install attune-ai
 """
 
 import asyncio
