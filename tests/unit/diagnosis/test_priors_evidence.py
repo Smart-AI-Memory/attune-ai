@@ -42,6 +42,33 @@ class TestTermExtraction:
         assert len(terms) == 5
         assert terms.count("TimeoutError") == 1
 
+    def test_terse_symptom_falls_back_to_plain_words(self):
+        # D17 regression — the three REAL 2026-07-20 records that
+        # degraded priors with no-terms-extracted. Each must now
+        # extract something recall-able.
+        for symptom in (
+            "path argument is required code-review",
+            "ops run failed (exit 1, sdk_error_kind=None) code-review",
+            "ops run failed (exit 2, sdk_error_kind=None) diagnose",
+        ):
+            terms = extract_error_terms(symptom)
+            assert terms, symptom
+
+    def test_snake_case_identifier_is_a_shape_term(self):
+        terms = extract_error_terms("ops run failed (exit 1, sdk_error_kind=None)")
+        assert "sdk_error_kind" in terms
+
+    def test_fallback_stopwords_generic_failure_vocabulary(self):
+        terms = extract_error_terms("path argument is required")
+        assert terms == ["path"]
+
+    def test_fallback_does_not_fire_when_shape_terms_exist(self):
+        # A traceback-shaped text must extract EXACTLY what it did
+        # before D17 — the fallback adds nothing when shapes hit.
+        terms = extract_error_terms("ValueError in attune.ops.runner something broke badly")
+        assert "ValueError" in terms and "attune.ops.runner" in terms
+        assert "something" not in terms and "broke" not in terms
+
     def test_empty_text_yields_no_terms(self):
         assert extract_error_terms("") == []
 
