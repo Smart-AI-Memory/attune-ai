@@ -16897,3 +16897,29 @@ def ", start_idx + 1)` for module-
   content unlanded. Both pruned with receipts. Pairs with the
   deletion-counting subsumption lesson (same day) and the
   prune-worktree-self-deletion hazard memory.
+
+- **Spec status lines carry a CONTROLLED VOCABULARY — invented tokens
+  (e.g. `EXECUTED`) fail EVERY CI test lane via the corpus sweep;
+  pick from `STATUS_VOCABULARY` before flipping a status**: hit
+  2026-07-20 on PR #1534. Flipping sdk-teardown-exit-guard's three
+  phase files to `**Status:** EXECUTED (...)` failed
+  `tests/unit/gates/test_status_line_gate.py::
+  test_corpus_sweep_every_spec_dir_is_legible[<spec>]` on every
+  OS/Python lane — the status-line baseline gate (landed on main the
+  SAME DAY, in the 2026-07-20 chair-rulings window) enforces
+  membership in `attune.ops.spec_lifecycle.STATUS_VOCABULARY`:
+  `complete/completed/done/shipped/superseded` (terminal),
+  `approved/active/living` (in-flight), `draft/parked/paused`
+  (`parked` additionally requires a `Resume-Trigger:` clause).
+  `shipped` is the ruled terminal token for "deliverable landed";
+  `EXECUTED` and `RATIFIED` are out-of-vocabulary by design. Two
+  durable takeaways: (1) before writing/flipping any
+  `**Status:**` line under `docs/specs/`, use a vocabulary token —
+  the annotation after the em-dash is free text, the LEADING token
+  is not; (2) diagnostic shape: when EVERY test lane fails uniformly
+  right after a docs-only or spec-status change, suspect a single
+  corpus-sweep gate test and reproduce locally
+  (`pytest -x` found it in one run) instead of waiting out the
+  in-flight-run log lock. Same freshly-landed-gate class as the
+  admin-merge/docs-build lessons: main moves daily — a gate that
+  didn't exist when your branch was cut can still fail your PR.
