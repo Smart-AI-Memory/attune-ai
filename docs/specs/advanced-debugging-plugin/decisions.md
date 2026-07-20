@@ -63,3 +63,12 @@ publication behind a `LessonPublisher` protocol and `config_used`
 stamped per record (dissent honored structurally); (5) four build
 phases (substrate → engine → surface → loops), one PR each with
 that phase's RR receipts.
+
+## 2026-07-19 — Tasks approved (chair)
+
+tasks.md ratified as drafted: eight XML-decomposed tasks across
+the four design phases (T1/T2 substrate, T3/T4 engine, T5
+surface, T6/T7/T8 loops), one PR per phase, receipts named per
+task. Execution NOT yet armed — Phase A starts on a separate
+chair go. T4/T6 live-fire receipts are billable and each needs a
+spend go at execution time.
