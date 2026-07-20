@@ -173,23 +173,87 @@ def pull_briefing(project_root: Path) -> tuple[list[TriageItem], list[str], list
                     )
                 )
     extra.extend(_gate_ledger_evidence())
+    extra.extend(_ci_gate_verdicts(project_root))
     extra.append(_usage_freshness_evidence())
     return candidates, dark, extra
+
+
+def _run_gh(argv: list[str], cwd: Path) -> tuple[int, str]:
+    """Run one fixed-argv gh command; (127, reason) when unavailable."""
+    import subprocess  # noqa: PLC0415 — nosec B404: fixed argv, never shell
+
+    try:
+        proc = subprocess.run(  # nosec B603
+            argv, capture_output=True, text=True, timeout=30, cwd=str(cwd)
+        )
+    except FileNotFoundError:
+        return 127, "gh not found"
+    except subprocess.TimeoutExpired:
+        return 124, "gh timed out"
+    return proc.returncode, (proc.stdout if proc.returncode == 0 else proc.stderr).strip()
+
+
+def _ci_gate_verdicts(project_root: Path, runner=None) -> list[str]:
+    """A4/TA-5: fetch CI gate verdicts (main check-run conclusions).
+
+    Network-only, no LLM, fetched at render time — never scheduled
+    (T3). Any failure renders a TIMESTAMPED unavailable line instead
+    of raising. ``runner`` is injectable for tests.
+    """
+    run = runner or _run_gh
+    checked_at = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    code, repo = run(
+        ["gh", "repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"], project_root
+    )
+    if code != 0 or not repo.strip():
+        return [
+            f"CI gate verdicts: unavailable (repo resolution: {repo[:80]}; checked {checked_at})"
+        ]
+    code, raw = run(
+        [
+            "gh",
+            "api",
+            f"repos/{repo.strip()}/commits/main/check-runs",
+            "--jq",
+            '{"runs": [.check_runs[] | {name, conclusion}]}',
+        ],
+        project_root,
+    )
+    if code != 0:
+        return [f"CI gate verdicts: unavailable ({raw[:80]}; checked {checked_at})"]
+    try:
+        runs = json.loads(raw).get("runs", [])
+    except json.JSONDecodeError:
+        return [f"CI gate verdicts: unavailable (unparseable reply; checked {checked_at})"]
+    by: dict[str, int] = {}
+    failing: list[str] = []
+    for entry in runs:
+        conclusion = str(entry.get("conclusion") or "pending")
+        by[conclusion] = by.get(conclusion, 0) + 1
+        if conclusion == "failure":
+            failing.append(str(entry.get("name", "?")))
+    counts = ", ".join(f"{n} {k}" for k, n in sorted(by.items()))
+    line = f"CI gate verdicts (main head, fetched {checked_at}): {len(runs)} checks — {counts}"
+    if failing:
+        line += "; FAILING: " + ", ".join(failing[:5])
+    return [line]
 
 
 def _gate_ledger_evidence() -> list[str]:
     """Gate-verdict input: local ledger read; honest darkness otherwise.
 
-    Per the A4 ruling the durable input is a CI-artifact fetch at
-    render time; until that follow-on lands, the local ledger (dark by
-    construction — D7 runs the gates CI-only) is rendered honestly.
+    The local ledger carries producing-run receipts when they exist;
+    it is dark by construction for the CI-only test gates (D7) — the
+    CI-truth half comes from :func:`_ci_gate_verdicts` (A4/TA-5).
     """
     try:
         from attune.gates.lifecycle import ledger  # noqa: PLC0415
 
         path = ledger.ledger_path()
         if not path.is_file():
-            return [f"gate verdict ledger: dark (no local ledger at {path}; A4 CI fetch pending)"]
+            return [
+                f"gate verdict ledger: dark (no local ledger at {path}; CI half is fetched live)"
+            ]
         unresolved = ledger.unresolved_chair_required()
         if unresolved:
             return [
