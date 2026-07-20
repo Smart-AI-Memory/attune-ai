@@ -92,7 +92,7 @@ class SpecRecord:
     # `__post_init__` so callers don't need to coordinate. `init=False`
     # keeps the constructor signature backward-compatible with the many
     # `SpecRecord(slug=..., phases=..., last_modified=...)` test fixtures.
-    # One of: "paused", "complete", "stale", "draft",
+    # One of: "paused", "parked", "complete", "stale", "draft",
     # "approved-not-shipped", "active". See
     # [docs/specs/ops-specs-page-refinement/decisions.md](../../../docs/specs/ops-specs-page-refinement/decisions.md).
     lifecycle: str = field(init=False, default="")

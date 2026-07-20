@@ -1,15 +1,26 @@
 name: Auto-merge safe (tests/docs only)
 
-# Pre-authorized auto-merge for a TIGHT class of PRs: every changed
-# file is under tests/, docs/, .help/, or is a root-level *.md, the
-# author is the repo owner, and the `coverage` required check is
-# green. The merge is performed DETERMINISTICALLY by GitHub Actions
-# (no agent, no safety classifier) and admin-bypasses only the
-# REDUNDANT hung lane (e.g. `test (ubuntu-latest, 3.12)`) — never the
-# `coverage` gate, which re-runs the full suite.
+# Pre-authorized auto-merge, two classes (both merged
+# DETERMINISTICALLY by GitHub Actions — no agent, no classifier):
 #
-# See docs/specs/archive/auto-merge-safe-class/ for the class definition and
-# the rejected alternatives.
+# Class 1 (tests/docs only, automation-labeled `auto-merge-safe`):
+# every changed file is under tests/, docs/, .help/, or is a
+# root-level *.md, the author is the repo owner, and the `coverage`
+# required check is green. Admin-bypasses only the REDUNDANT hung
+# lane (e.g. `test (ubuntu-latest, 3.12)`) — never the `coverage`
+# gate, which re-runs the full suite.
+#
+# Class 2 (opt-in, HUMAN-labeled `auto-merge-when-green`, D8):
+# labeling means "this PR is final; merge when fully green." The
+# `when-green` job arms GitHub NATIVE auto-merge — no --admin, no
+# check parsing by us; branch protection stays fully enforced and
+# GitHub's engine decides green-ness. Carve-out: any .github/ change
+# is out-of-class (merge automation can never self-merge); a push
+# that goes out-of-class disarms and strips the label; removing the
+# label disarms.
+#
+# See docs/specs/archive/auto-merge-safe-class/ for the class
+# definitions (D1, D8) and the rejected alternatives.
 #
 # Credential: the merge job authenticates with ADMIN_MERGE_TOKEN, a
 # fine-grained PAT owned by an admin (silversurfer562), repo-scoped,
@@ -19,7 +30,8 @@ name: Auto-merge safe (tests/docs only)
 
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types:
+      [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
   # NOT check_run: a check_run produced by the `Tests` workflow runs
   # under GITHUB_TOKEN, and GitHub does NOT start a new workflow run
   # from a GITHUB_TOKEN-triggered event (anti-recursion). So the
@@ -49,7 +61,10 @@ jobs:
   label:
     if: >-
       github.event_name == 'pull_request_target' &&
-      github.event.pull_request.user.login == 'silversurfer562'
+      github.event.pull_request.user.login == 'silversurfer562' &&
+      contains(fromJSON(
+        '["opened","synchronize","reopened","ready_for_review"]'),
+        github.event.action)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -260,3 +275,122 @@ jobs:
               echo "::warning::PR #$pr unresolved after 5 merge attempts (left open)"
             echo "::endgroup::"
           done
+
+  # ---------------------------------------------------------------
+  # Class 2 (D8): opt-in `auto-merge-when-green`. A HUMAN applies
+  # the label ("PR is final; merge when fully green"); this job arms
+  # GitHub NATIVE auto-merge. No --admin, no check parsing here —
+  # branch protection stays fully enforced and GitHub's own engine
+  # decides green-ness (hung required lane = no merge, fail-closed).
+  #   labeled     -> verify gates, arm --auto (or plain-merge if
+  #                  already green; still non-admin)
+  #   synchronize -> if labeled, re-verify the path carve-out; a
+  #                  push that goes out-of-class disarms + unlabels
+  #   unlabeled   -> disarm
+  # ---------------------------------------------------------------
+  when-green:
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      github.event.pull_request.user.login == 'silversurfer562' &&
+      (github.event.action == 'synchronize' ||
+       ((github.event.action == 'labeled' ||
+         github.event.action == 'unlabeled') &&
+        github.event.label.name == 'auto-merge-when-green'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      # Default ref on pull_request_target is the BASE branch, so we
+      # always run the trusted base copy of the guard.
+      - name: Checkout base repo (trusted guard)
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Arm, keep, or disarm native auto-merge
+        env:
+          # The PAT (not GITHUB_TOKEN) so the eventual merge is
+          # attributed to a user and downstream main-push workflows
+          # fire (GITHUB_TOKEN-initiated merges are anti-recursion
+          # suppressed).
+          GH_TOKEN: ${{ secrets.ADMIN_MERGE_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          ACTION: ${{ github.event.action }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "ADMIN_MERGE_TOKEN not set; when-green job inert (fail-closed)."
+            exit 0
+          fi
+          # D6 defense: strip stray whitespace from the secret.
+          GH_TOKEN="$(printf '%s' "$GH_TOKEN" | tr -d '[:space:]')"
+          export GH_TOKEN
+
+          if [ "$ACTION" = "unlabeled" ]; then
+            gh pr merge "$PR" --disable-auto || true
+            echo "label removed -> native auto-merge disarmed"
+            exit 0
+          fi
+
+          meta=$(gh api "repos/$REPO/pulls/$PR" --jq '{
+            state: .state, draft: .draft, base_ref: .base.ref,
+            head_repo: .head.repo.full_name,
+            base_repo: .base.repo.full_name,
+            armed: (.auto_merge != null),
+            has_label: ([.labels[].name] |
+                        index("auto-merge-when-green") != null)
+          }')
+
+          # synchronize on an unlabeled PR: nothing to manage.
+          if [ "$ACTION" = "synchronize" ] && \
+             [ "$(echo "$meta" | jq -r .has_label)" != "true" ]; then
+            echo "skip: no auto-merge-when-green label"
+            exit 0
+          fi
+
+          disarm() {
+            echo "Disarming (fail-closed): $1"
+            gh pr merge "$PR" --disable-auto || true
+            gh pr edit "$PR" --remove-label auto-merge-when-green || true
+            exit 0
+          }
+
+          [ "$(echo "$meta" | jq -r .state)" = "open" ] || \
+            { echo "skip: PR not open"; exit 0; }
+          [ "$(echo "$meta" | jq -r .draft)" = "false" ] || \
+            disarm "draft PR"
+          [ "$(echo "$meta" | jq -r .base_ref)" = "main" ] || \
+            disarm "base != main"
+          [ "$(echo "$meta" | jq -r .head_repo)" = \
+            "$(echo "$meta" | jq -r .base_repo)" ] || disarm "fork PR"
+
+          # Path carve-out, re-verified on every event (label =
+          # necessary, not sufficient): .github/ can never self-merge.
+          mapfile -t paths < <(
+            gh api --paginate "repos/$REPO/pulls/$PR/files" \
+              --jq '.[] | .filename, (.previous_filename // empty)'
+          )
+          if [ "${#paths[@]}" -eq 0 ] || \
+             ! printf '%s\n' "${paths[@]}" | \
+             python3 .github/scripts/auto_merge_guard.py --mode when-green; then
+            disarm "out-of-class path(s) for the when-green class"
+          fi
+
+          # Already armed: the class was just re-verified on the
+          # current head; GitHub re-evaluates green-ness itself.
+          if [ "$(echo "$meta" | jq -r .armed)" = "true" ]; then
+            echo "auto-merge already armed; class re-verified"
+            exit 0
+          fi
+
+          # Arm native auto-merge. If the PR is ALREADY fully green,
+          # enabling auto-merge is rejected ("clean status") — fall
+          # back to a plain NON-ADMIN merge; protection is still
+          # enforced, so a non-green PR fails loudly and stays open.
+          if gh pr merge "$PR" --auto --squash --delete-branch; then
+            echo "native auto-merge armed for PR #$PR"
+          else
+            echo "arming failed (already green, or already armed) -> plain merge attempt"
+            gh pr merge "$PR" --squash --delete-branch || \
+              echo "::warning::PR #$PR neither armed nor merged (left open, fail-closed)"
+          fi

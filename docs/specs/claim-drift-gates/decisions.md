@@ -119,3 +119,105 @@ Patrick approved the spec as drafted. D1, D2, D3, D5, D6 ratified;
 D4 (workflow-count wording), D7 (pre-commit scope for test gates),
 and D8 (inverse command report) remain open. G1's claim manifest
 is the only work item blocked on an open decision (D4).
+
+## 2026-07-20 — D7 and D8 ruled (chair: Patrick, via briefing triage)
+
+- **D7 RULED: CI-only for the test gates (G1/G2/G3); pre-commit
+  carries G5 only.** The spec's stated default, ratified as-is:
+  pre-commit's isolated env can't guarantee an importable `attune`
+  for all contributors. Revisit only if drift keeps reaching CI.
+- **D8 RULED: report-only (non-gating).** The inverse-direction
+  report (exists-but-unadvertised commands) ships as a warning-tier
+  report; reassess after a month of real output. Gating would
+  manufacture failures for deliberate soft-launches; dropping it
+  loses a cheap signal.
+
+With D4 (2026-07-12) and these two, every open decision on this
+spec is resolved — implementation (G1 first per the ship order) is
+fully unblocked.
+## 2026-07-20 — G1 landed (red-first proven)
+
+`tests/unit/gates/test_claim_drift.py`: live values derived from the
+owning registries (skills glob, `EmpathyMCPServer().tools`,
+`discover_workflows()` slugs AND distinct classes per D4,
+pyproject version) against a 13-entry claim-site manifest across
+README, marketplace.json, plugin/README, quickstart-plugin,
+mcp-integration, first-steps, and .claude/CLAUDE.md.
+Unmatched-regex is itself a failure (vanished claim = drift).
+
+**Red-first receipt:** against the pre-fix tree the gate failed
+10 of 14 checks — including drift ACCUMULATED SINCE THE 2026-07-11
+REVIEW (skills 24→25, tools 47→53 while docs still said 23/41/43/
+47), proving both the thesis and the gate. Same-PR fix set: all 10
+flagged instances updated to live values (skills 25, tools 53,
+workflows 20 per D4, plugin version 10.5.0); gate green 14/14;
+adjacent guards (plugins, website-version, mcp-tools) 300 passed.
+
+Per D7 the gate is CI-only (rides the unit suite); no pre-commit
+hook added. Next per ship order: G2.
+## 2026-07-20 — G2 landed (red-first proven)
+
+`tests/unit/gates/test_advertised_commands.py`: the advertised set
+is extracted by CALLING the render surfaces (`create_parser()`
+epilog, `_show_welcome`, `cmd_setup` with `Path.home` pointed at
+tmp), never by grepping source. Every line-leading `/token` must
+resolve to `src/attune/commands/<name>.md` or
+`plugin/commands/<name>.md`.
+
+**Red-first receipt:** exactly the spec's predicted ghosts —
+epilog advertised `/testing`, `/workflows`, `/docs` (the epilog
+block existed TWICE in cli_minimal.py, both stale) and the welcome
+screen advertised `/testing`. Fix set retargeted per the spec's
+candidates: `/testing`→`/smart-test`, `/workflows`→`/attune`,
+`/docs`→`/doc-gen`, both blocks. Gate green; 116-test gates+cli
+breadth.
+
+**D8 inverse report (report-only, as ruled)** fired its first
+output: 12 commands exist but are advertised on no CLI surface —
+agent, brainstorm, bulk, code-quality, deep-review, doc-gen*,
+fix-test, handoff, pipeline, plan, refactor, remember (*doc-gen
+now advertised post-fix). Reassess the list after a month.
+
+Next per ship order: G3 (blocked on hook-timeout-budgets Phase 0.2
+values) or G5.
+## 2026-07-20 — G5 landed (red-first proven); burn-down baseline recorded
+
+`scripts/check_brand_drift.py` (pre-commit gate #9 + CI's
+pre-commit job — the one gate D7 keeps in pre-commit) +
+`.claude/gates/empathy-allowlist.txt` + gate-logic tests.
+
+**Red-first receipt:** the hard-fail scan found **27 files** —
+nine times the spec's predicted red set (the repo moved in the
+nine days since review). Fix set: deleted `install.sh`,
+`rename_to_attune.sh`, `Dockerfile.scanner`, `bin/empathy-scan`,
+`.pre-commit-config.example.yaml` (all dead, references checked);
+archived the two root `metrics-review-2026-02-06*.md` to
+`docs/history/`; rebranded 20 files of string/comment/default
+references (`empathy-framework` → `attune-ai`) across src,
+scripts, agents, deployments, examples, tests, and
+`.claude/PROJECT-CONTEXT.xml`. Shrink-on-fix fired live during
+the fix (two de-branded files forced off the allowlist).
+
+**Burn-down baseline (as ruled by the spec):** 36 user-facing +
+107 internal files on the empathy ratchet allowlist. The list
+only shrinks; the count prints on every run.
+
+**Documented exclusions:** CHANGELOG, docs/specs/, docs/history/,
+lessons corpus, generated website mirrors, the gate's own files;
+Redis `empathy:*` wire-format keys remain P2B (data format).
+
+### G5 retro-flag addendum (2026-07-20, fix-set-balloon rule applied in hindsight)
+
+The three behavior-adjacent edits from the G5 sweep, retro-checked
+at the chair's request: (1) `deployments/wizards-backend/` — the
+app NEVER imports the dependency; the requirement line was dead
+weight in both brandings, now deleted outright; the dir carries
+Railway configs but no repo-side deploy wiring — chair confirmed
+2026-07-20 that NO active Railway services exist (hosting moved to
+Vercel); the whole directory is a dead deployment artifact, chipped
+for cleanup. (2)
+`agent_config.py` `project` default — zero consumers read
+`.project` in src/; inert. (3) `.claude/PROJECT-CONTEXT.xml` —
+zero consumers; stale artifact, future deletion candidate. All
+three retired with grep receipts; the sweep's only correction was
+replacing a fictional rebrand with an honest deletion.

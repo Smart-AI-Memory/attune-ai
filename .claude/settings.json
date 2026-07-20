@@ -1,4 +1,9 @@
 {
+  "permissions": {
+    "allow": [
+      "Edit(tests/unit/**)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {

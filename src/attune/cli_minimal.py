@@ -46,9 +46,9 @@ Utility commands:
 
 For interactive development, use Claude Code skills:
     /dev        Developer tools (commit, review, debug, refactor)
-    /testing    Run tests, coverage, generate tests
-    /workflows  AI-powered workflows (security, bug prediction)
-    /docs       Documentation generation
+    /smart-test Find test gaps, generate tests
+    /attune     AI-powered workflows via Socratic discovery
+    /doc-gen    Documentation generation
     /release    Release preparation
 """
 
@@ -65,6 +65,7 @@ from attune.cli_commands.cost_commands import (
     cmd_costs_today,
 )
 from attune.cli_commands.curator import cmd_curator
+from attune.cli_commands.diagnosis_commands import cmd_diagnose
 from attune.cli_commands.gates_commands import cmd_gates_check
 from attune.cli_commands.help_commands import cmd_help
 from attune.cli_commands.memory_agent import cmd_memory_agent
@@ -198,6 +199,28 @@ def _add_workflow_subparsers(subparsers: argparse._SubParsersAction) -> None:
             "(see _SUBAGENT_MODEL_MAP) onto Haiku. Subagents pinned to "
             "opus/sonnet by keyword (security, vuln, architect, quality, "
             "plan, research) are unaffected."
+        ),
+    )
+
+
+def _add_diagnose_subparser(subparsers: argparse._SubParsersAction) -> None:
+    """Attach the diagnosis-engine command (advanced-debugging-plugin).
+
+    Args:
+        subparsers: Parent subparsers action to attach to
+
+    """
+    diagnose_parser = subparsers.add_parser(
+        "diagnose", help="Diagnose a failed workflow run from the canonical stream"
+    )
+    diagnose_parser.add_argument("run_id", help="run_id of a failed run to diagnose")
+    diagnose_parser.add_argument(
+        "--origin",
+        choices=("operational", "dogfood", "live-fire"),
+        default="operational",
+        help=(
+            "provenance stamp (D18): dogfood/live-fire records are "
+            "excluded from the ops briefing; default operational"
         ),
     )
 
@@ -569,9 +592,9 @@ NOTE: This CLI is for automation only. For interactive development,
 use Claude Code skills in VSCode or Claude Desktop:
 
     /dev        Developer tools (commit, review, debug, refactor)
-    /testing    Run tests, coverage, generate tests
-    /workflows  AI-powered workflows (security, bug prediction)
-    /docs       Documentation generation
+    /smart-test Find test gaps, generate tests
+    /attune     AI-powered workflows via Socratic discovery
+    /doc-gen    Documentation generation
     /release    Release preparation
 
 Documentation: https://smartaimemory.com/framework-docs/
@@ -588,6 +611,7 @@ Documentation: https://smartaimemory.com/framework-docs/
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     _add_workflow_subparsers(subparsers)
+    _add_diagnose_subparser(subparsers)
     _add_gates_subparsers(subparsers)
     _add_telemetry_subparsers(subparsers)
     _add_costs_subparsers(subparsers)
@@ -656,6 +680,7 @@ _SUBCOMMAND_DISPATCH: dict[str, dict[str, object]] = {
 }
 
 _SIMPLE_DISPATCH: dict[str, object] = {
+    "diagnose": cmd_diagnose,
     "remember": cmd_remember,
     "forget": cmd_forget,
     "lessons": cmd_lessons,
@@ -715,7 +740,7 @@ Get started:
 For interactive development in Claude Code:
   /attune       Socratic discovery — finds the right workflow for you
   /dev          Developer tools (commit, review, debug, refactor)
-  /testing      Run tests, coverage, generate tests
+  /smart-test   Find test gaps, generate tests
   /wizard run   Guided multi-step wizards
 
 More: attune --help | Docs: https://smartaimemory.com/framework-docs/

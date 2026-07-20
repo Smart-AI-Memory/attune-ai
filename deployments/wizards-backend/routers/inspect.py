@@ -98,7 +98,7 @@ async def run_inspection(request: InspectRequest):
     except ImportError as e:
         raise HTTPException(
             status_code=503,
-            detail=f"Inspection agent not available: {e!s}. Install empathy-framework[full]",
+            detail=f"Inspection agent not available: {e!s}. Install attune-ai[full]",
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -36,8 +36,8 @@ class CampaignMetricsTracker:
     def __init__(
         self,
         repo_owner: str = "Smart-AI-Memory",
-        repo_name: str = "empathy-framework",
-        package_name: str = "empathy-framework",
+        repo_name: str = "attune-ai",
+        package_name: str = "attune-ai",
     ):
         """Initialize tracker with repository and package info."""
         self.repo_owner = repo_owner
@@ -337,12 +337,12 @@ Examples:
 
     parser.add_argument(
         "--repo",
-        help="Repository in format owner/name (default: Smart-AI-Memory/empathy-framework)",
+        help="Repository in format owner/name (default: Smart-AI-Memory/attune-ai)",
     )
 
     parser.add_argument(
         "--package",
-        help="PyPI package name (default: empathy-framework)",
+        help="PyPI package name (default: attune-ai)",
     )
 
     args = parser.parse_args()
@@ -355,9 +355,9 @@ Examples:
         repo_owner, repo_name = args.repo.split("/", 1)
     else:
         repo_owner = "Smart-AI-Memory"
-        repo_name = "empathy-framework"
+        repo_name = "attune-ai"
 
-    package_name = args.package or "empathy-framework"
+    package_name = args.package or "attune-ai"
 
     # Create tracker
     tracker = CampaignMetricsTracker(repo_owner, repo_name, package_name)

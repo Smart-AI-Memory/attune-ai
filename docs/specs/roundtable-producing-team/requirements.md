@@ -1,7 +1,7 @@
 # Round Table v2 — Producing Team: Requirements
 
-**Status: requirements DRAFTED from thread `table-v2-001`
-(2026-07-18)** — architecture converged by the table itself in one
+**Status:** active (2026-07-18) — requirements drafted from
+thread `table-v2-001`; architecture converged by the table itself in one
 round; initial settings chair-ratified same day (phase-1-minimal +
 fixed-roles-first, moderator pushback accepted — see
 [decisions.md](decisions.md)).

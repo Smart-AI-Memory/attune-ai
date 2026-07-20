@@ -88,7 +88,7 @@ Then restart Claude Desktop.
 
 ---
 
-## Available Tools (41 core + 5 with attune-redis)
+## Available Tools (53)
 
 The Attune MCP server exposes all production workflows as tools:
 

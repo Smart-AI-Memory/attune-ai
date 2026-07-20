@@ -236,3 +236,48 @@ self-merge — correct). Pairs with D6 (the token-newline auth fix):
 both are "the merge job resolved the PR but the merge call failed"
 shapes — D6 was an auth error swallowed by process substitution,
 D7 is a race swallowed by `|| echo`.
+
+---
+
+## D8 — Class 2: opt-in `auto-merge-when-green` (native auto-merge)
+
+**Date:** 2026-07-20
+**Status:** chair-approved (Patrick — Option A, `.github/`-only
+carve-out)
+
+**Problem.** Class 1 covers only tests/docs PRs, so a routine
+cascade of green src PRs (e.g. the 2026-07-20 overnight
+advanced-debugging/claim-gates run, ~10 PRs) still needed a session
+babysitting every merge with a gated one-liner.
+
+**Class definition** (all fail-closed):
+
+| # | Gate | Detail |
+|---|------|--------|
+| 1 | Opt-in label | `auto-merge-when-green`, applied by a HUMAN only — semantics "PR is final; merge when fully green." Automation never applies it (inverse of Class 1's label ownership). Resolves the stranded-follow-ups trap (2026-06-20 lesson) by intent instead of a settle-timer |
+| 2 | Author/provenance | author == `silversurfer562`, head repo == base repo, not draft, open, base `main` (same as Class 1) |
+| 3 | Path carve-out | no changed path (incl. rename origins) under `.github/` — merge automation can never self-merge, even labeled (`auto_merge_guard.py --mode when-green`) |
+| 4 | Full green | ALL required contexts must pass — enforced by GitHub's NATIVE auto-merge engine, never by our own check parsing. **No `--admin` for this class**; branch protection stays fully enforced |
+| 5 | Re-verify on push | `synchronize` re-runs the carve-out; a push that goes out-of-class disarms (`--disable-auto`) and strips the label; `unlabeled` disarms |
+
+**Why native auto-merge (Option A), not a custom evaluator
+(Option B).** The check-bucket-parsing trap (`gh pr checks` exits 0
+with failures) is eliminated rather than mitigated — GitHub's own
+engine decides green-ness. The original Rejected-C ("`--auto` waits
+forever on a hung required check") was a rejection for **Class 1**,
+whose purpose was to bypass a hung redundant lane; for Class 2 a
+hung lane correctly blocks the merge (for src PRs the full matrix
+is signal, not redundancy) — fail-closed and visible. Prereq
+`allow_auto_merge: true` verified live; the pattern is already
+proven in-repo by `dependabot-auto-merge.yml`. Arming uses
+`ADMIN_MERGE_TOKEN` (not `GITHUB_TOKEN`) so the eventual merge is
+user-attributed and downstream main-push workflows are not
+anti-recursion suppressed.
+
+**Receipt (D1 red-first, claim-drift-gates protocol).** Guard-mode
+tests (`tests/unit/github_scripts/test_auto_merge_guard.py`) and
+workflow invariants (`tests/unit/ci/test_workflow_yaml.py`:
+`TestAutoMergeWhenGreen` — job exists, label-lifecycle triggers,
+owner+label gate, `--auto` never `--admin`, guard re-verification,
+disarm on unlabeled) landed red first; the implementation commits
+in the same PR turned them green.

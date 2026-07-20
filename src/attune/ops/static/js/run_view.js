@@ -1057,6 +1057,88 @@
     }
   }
 
+  // --- "Why did this fail?" — on-demand diagnosis (adv-debugging T5).
+  // Renders ONLY for terminal FAILED runs on an explicit user click;
+  // nothing here auto-starts a diagnosis on page load or run ingestion.
+  function renderDiagnosedChip(diagnosisId) {
+    if (!statusEl || !statusEl.parentNode) return;
+    if (document.querySelector("[data-diagnosed-chip]")) return;
+    var chip = document.createElement("span");
+    chip.className = "chip chip-muted";
+    chip.setAttribute("data-diagnosed-chip", diagnosisId);
+    chip.textContent = "diagnosed: " + diagnosisId;
+    statusEl.parentNode.insertBefore(chip, statusEl.nextSibling);
+  }
+
+  function renderDiagnoseButton() {
+    if (!statusEl || !statusEl.parentNode) return;
+    if (document.querySelector("[data-diagnose-btn]")) return;
+    var btn = document.createElement("button");
+    btn.className = "btn btn-rec";
+    btn.type = "button";
+    btn.setAttribute("data-diagnose-btn", "1");
+    btn.textContent = "Why did this fail?";
+    btn.addEventListener("click", function () {
+      btn.disabled = true;
+      fetch("/runs/" + encodeURIComponent(RUN_ID) + "/diagnose", {
+        method: "POST",
+        headers: attuneClientHeaders({ Accept: "application/json" })
+      }).then(function (resp) {
+        return resp.json().then(function (data) {
+          return { status: resp.status, data: data };
+        });
+      }).then(function (result) {
+        if (result.status === 201 && result.data.run_id) {
+          window.location.assign(
+            "/runs/" + encodeURIComponent(result.data.run_id) +
+            "/view?from=" + encodeURIComponent(SOURCE_WORKFLOW)
+          );
+          return;
+        }
+        if (result.status === 200 && result.data.existing) {
+          btn.remove();
+          renderDiagnosedChip(result.data.diagnosis_id);
+          return;
+        }
+        btn.disabled = false;
+        if (result.status === 409) {
+          showInlineError(
+            "Cannot diagnose — run " + result.data.detail.current_run_id +
+            " is still active."
+          );
+          return;
+        }
+        showInlineError("Diagnosis request failed (" + result.status + ").");
+      }).catch(function () {
+        btn.disabled = false;
+        showInlineError("Diagnosis request failed.");
+      });
+    });
+    statusEl.parentNode.insertBefore(btn, statusEl.nextSibling);
+  }
+
+  function initDiagnose(status) {
+    if (!RUN_ID || !ALLOW_RUN) return;
+    if (DATA.trigger === "attune-heal") return;  // no self-diagnosis
+    var existing = DATA.diagnosis_ids || [];
+    if (existing.length) {
+      renderDiagnosedChip(existing[existing.length - 1]);
+      return;
+    }
+    if (status !== "failed") return;
+    renderDiagnoseButton();
+  }
+
+  initDiagnose(INITIAL_STATUS);
+  // A live run that fails after page load grows the button on "done".
+  if (typeof es !== "undefined" && es) {
+    es.addEventListener("done", function (ev) {
+      try {
+        initDiagnose(JSON.parse(ev.data).status);
+      } catch (e) { /* malformed done payload — no button */ }
+    });
+  }
+
   // Expose internals for tests.
   if (typeof window !== "undefined") {
     window.__attuneRunView = {

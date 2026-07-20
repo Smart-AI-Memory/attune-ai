@@ -174,7 +174,7 @@ def deliver_email(alert: AlertConfig, event: AlertEvent) -> bool:
     smtp_port = int(os.environ.get("SMTP_PORT", "587"))
     smtp_user = os.environ.get("SMTP_USER", "")
     smtp_password = os.environ.get("SMTP_PASSWORD", "")
-    from_email = os.environ.get("SMTP_FROM", "alerts@empathy-framework.local")
+    from_email = os.environ.get("SMTP_FROM", "alerts@attune-ai.local")
 
     msg = MIMEMultipart()
     msg["From"] = from_email

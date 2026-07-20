@@ -150,3 +150,113 @@ def test_cli_stdin_unsafe_exits_one(guard, monkeypatch):
 def test_cli_empty_stdin_is_unsafe(guard, monkeypatch):
     monkeypatch.setattr(sys, "stdin", io.StringIO(""))
     assert guard.main(["prog"]) == 1
+
+
+# ---------------------------------------------------------------------------
+# when-green mode (Class 2 — opt-in `auto-merge-when-green` label, D8)
+#
+# The when-green class allows ANY path EXCEPT `.github/` (merge
+# automation and CI config can never self-merge, even labeled). The
+# green-ness gate itself is GitHub native auto-merge, not this guard.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "src/attune/config.py",
+        "pyproject.toml",
+        "uv.lock",
+        "tests/unit/test_a.py",
+        "docs/guide.md",
+        "plugin/skills/x/SKILL.md",
+        "scripts/release.py",
+        "mkdocs.yml",
+        "attune_redis/foo.py",
+    ],
+)
+def test_when_green_allows_non_github_paths(guard, path):
+    assert guard.is_when_green_safe(path) is True
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        ".github/workflows/auto-merge-safe.yml",
+        ".github/scripts/auto_merge_guard.py",
+        ".github/workflows/tests.yml",
+        ".github/dependabot.yml",
+    ],
+)
+def test_when_green_blocks_github_paths(guard, path):
+    assert guard.is_when_green_safe(path) is False
+
+
+def test_when_green_blocks_traversal_and_empty(guard):
+    assert guard.is_when_green_safe("src/../.github/evil.yml") is False
+    assert guard.is_when_green_safe("") is False
+
+
+def test_when_green_mode_full_set_flags_github_offender(guard):
+    safe, offending = guard.is_safe_change(
+        ["src/a.py", ".github/workflows/x.yml"], mode="when-green"
+    )
+    assert safe is False
+    assert offending == [".github/workflows/x.yml"]
+
+
+def test_when_green_mode_all_safe(guard):
+    safe, offending = guard.is_safe_change(
+        ["src/a.py", "pyproject.toml", "tests/t.py"], mode="when-green"
+    )
+    assert safe is True
+    assert offending == []
+
+
+def test_when_green_mode_empty_set_failclosed(guard):
+    safe, offending = guard.is_safe_change([], mode="when-green")
+    assert safe is False
+    assert offending == []
+
+
+def test_when_green_rename_out_of_github_is_unsafe(guard):
+    # filename + previous_filename: a rename OUT of .github/ must be
+    # caught via the previous path.
+    safe, offending = guard.is_safe_change(
+        ["scripts/moved.py", ".github/scripts/old.py"], mode="when-green"
+    )
+    assert safe is False
+    assert ".github/scripts/old.py" in offending
+
+
+def test_default_mode_is_tests_docs(guard):
+    # No mode arg -> the original tight class; src/ stays out.
+    safe, _ = guard.is_safe_change(["src/a.py"])
+    assert safe is False
+
+
+# ---------------------------------------------------------------------------
+# CLI — --mode flag
+# ---------------------------------------------------------------------------
+
+
+def test_cli_mode_when_green_safe_exits_zero(guard):
+    assert guard.main(["prog", "--mode", "when-green", "src/a.py"]) == 0
+
+
+def test_cli_mode_when_green_unsafe_exits_one(guard):
+    assert guard.main(["prog", "--mode", "when-green", ".github/workflows/tests.yml"]) == 1
+
+
+def test_cli_mode_when_green_reads_stdin(guard, monkeypatch):
+    monkeypatch.setattr(sys, "stdin", io.StringIO("src/a.py\npyproject.toml\n"))
+    assert guard.main(["prog", "--mode", "when-green"]) == 0
+
+
+def test_cli_default_mode_unchanged(guard):
+    # Regression guard: adding --mode must not loosen the default class.
+    assert guard.main(["prog", "src/a.py"]) == 1
+
+
+def test_cli_unknown_mode_exits_two(guard):
+    assert guard.main(["prog", "--mode", "bogus", "src/a.py"]) == 2

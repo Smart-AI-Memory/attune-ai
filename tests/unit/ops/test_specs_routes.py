@@ -551,6 +551,7 @@ class TestParseSpecsURLState:
             "active",
             "approved-not-shipped",
             "paused",
+            "parked",
             "stale",
             "draft",
         }
@@ -576,6 +577,7 @@ class TestParseSpecsURLState:
             "active",
             "approved-not-shipped",
             "paused",
+            "parked",
             "stale",
             "draft",
         }
@@ -603,6 +605,7 @@ class TestParseSpecsURLState:
             "active",
             "approved-not-shipped",
             "paused",
+            "parked",
             "stale",
             "draft",
         }

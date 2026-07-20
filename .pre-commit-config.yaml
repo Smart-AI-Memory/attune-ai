@@ -207,3 +207,15 @@ repos:
         files: ^docs/.*\.md$
         verbose: true
         stages: [pre-commit]
+
+      # G5 (claim-drift-gates): stale-brand lint + empathy ratchet.
+      # Hard-fails legacy identifiers; the empathy allowlist only
+      # shrinks. The ONE gate D7 keeps in pre-commit (needs no
+      # importable attune — pure git ls-files + text scan).
+      - id: check-brand-drift
+        name: Brand drift gate (G5 — legacy identifiers + empathy ratchet)
+        entry: python scripts/check_brand_drift.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]

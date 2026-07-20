@@ -1,6 +1,6 @@
 # Agent Round Table — Requirements
 
-**Status: requirements APPROVED-pending-review (2026-07-18)** —
+**Status:** approved (2026-07-18) — pending final review;
 foundations chat-ratified by Patrick same day; D1/D2 picked, D3
 provisional (see [decisions.md](decisions.md), including the
 promoted probe-001 transcript).

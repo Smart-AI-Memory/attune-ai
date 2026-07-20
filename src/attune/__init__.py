@@ -111,6 +111,7 @@ if TYPE_CHECKING:
         UnifiedMemory,
         check_redis_connection,
         detect_secrets,
+        get_managed_redis,
         get_railway_redis,
         get_redis_config,
         get_redis_memory,
@@ -177,6 +178,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "UnifiedMemory": (".memory", "UnifiedMemory"),
     "check_redis_connection": (".memory", "check_redis_connection"),
     "detect_secrets": (".memory", "detect_secrets"),
+    "get_managed_redis": (".memory", "get_managed_redis"),
     "get_railway_redis": (".memory", "get_railway_redis"),
     "get_redis_config": (".memory", "get_redis_config"),
     "get_redis_memory": (".memory", "get_redis_memory"),
@@ -199,7 +201,7 @@ _loaded_modules: dict[str, object] = {}
 # still importable; it is not used by the Claude Code workflow plugin at
 # runtime and is slated for removal in a future release. Accessing it
 # emits DeprecationWarning. See CHANGELOG and
-# docs/specs/empathy-framework-retirement/.
+# the EmpathyOS retirement spec under docs/specs/.
 _DEPRECATED_FRAMEWORK: frozenset[str] = frozenset(
     {
         "StateManager",
@@ -310,6 +312,7 @@ __all__ = [
     "detect_secrets",
     # Logging
     "get_logger",
+    "get_managed_redis",
     "get_railway_redis",
     "get_redis_config",
     # Redis Configuration

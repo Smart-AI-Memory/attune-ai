@@ -6,7 +6,7 @@
 > Δp (prevention) term of the memory-as-insurance EV — and, once
 > stable, doubles as the memory system's regression suite.
 
-**Status:** MEASUREMENT CLOSED (2026-07-14) — phase 1 executed (pilot,
+**Status:** complete (2026-07-14) — measurement closed; phase 1 executed (pilot,
 verdicts in decisions.md); phase 2 designed, APPROVED, and **EXECUTED**
 as the full v2 battery (120 sessions, $32.40, 2026-07-14). Every cell
 favored memory-ON; nothing reached p<0.05 (best p=0.11). **No further

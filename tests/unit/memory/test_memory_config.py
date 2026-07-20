@@ -5,7 +5,8 @@ Covers:
 - get_redis_config: use_mock=True path, real config path
 - get_redis_memory: use_mock=True, explicit URL, env-based (mock), env-based (real)
 - check_redis_connection: mock mode, REDIS_URL env, other env vars, ping success, exception
-- get_railway_redis: no URL → OSError, URL present → returns memory
+- get_managed_redis: no URL → OSError, URL present → returns memory
+- get_railway_redis: deprecated alias, warns and delegates
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ import pytest
 
 from attune.memory.config import (
     check_redis_connection,
+    get_managed_redis,
     get_railway_redis,
     get_redis_config,
     get_redis_memory,
@@ -130,6 +132,14 @@ class TestGetRedisMemory:
 
 @pytest.mark.unit
 class TestCheckRedisConnection:
+    @pytest.fixture(autouse=True)
+    def _no_ambient_redis_url(self, monkeypatch):
+        # The dev shell and the weekly clean-run launchd env export
+        # REDIS_URL, which outranks the vars these tests set.
+        monkeypatch.delenv("REDIS_URL", raising=False)
+        monkeypatch.delenv("REDIS_PRIVATE_URL", raising=False)
+        monkeypatch.delenv("REDIS_PUBLIC_URL", raising=False)
+
     def test_mock_mode_returns_connected_true(self):
         mock_cfg = {"use_mock": True}
         with patch("attune.memory.config.get_redis_config", return_value=mock_cfg):
@@ -188,7 +198,7 @@ class TestCheckRedisConnection:
         assert result["connected"] is False
         assert "refused" in result["error"]
 
-    def test_railway_env_sets_config_source(self):
+    def test_redis_public_url_env_sets_config_source(self):
         mock_cfg = {"use_mock": False, "host": "h", "port": 6379}
         mock_memory = MagicMock()
         mock_memory.ping.return_value = False
@@ -198,12 +208,12 @@ class TestCheckRedisConnection:
             patch("attune.memory.config.get_redis_memory", return_value=mock_memory),
             patch.dict(
                 "os.environ",
-                {"REDIS_PUBLIC_URL": "redis://railway"},
+                {"REDIS_PUBLIC_URL": "redis://managed-host"},
                 clear=False,
             ),
         ):
             result = check_redis_connection()
-        assert "Railway" in result["config_source"] or "PUBLIC_URL" in result["config_source"]
+        assert result["config_source"] == "REDIS_PUBLIC_URL"
 
     def test_redis_private_url_env_sets_config_source(self):
         mock_cfg = {"use_mock": False, "host": "h", "port": 6379}
@@ -220,12 +230,12 @@ class TestCheckRedisConnection:
 
 
 # ---------------------------------------------------------------------------
-# get_railway_redis
+# get_managed_redis (+ deprecated get_railway_redis alias)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.unit
-class TestGetRailwayRedis:
+class TestGetManagedRedis:
     def test_no_url_raises_os_error(self):
         with patch.dict(
             "os.environ",
@@ -239,12 +249,22 @@ class TestGetRailwayRedis:
                 os.environ.pop(key, None)
 
             with pytest.raises(OSError, match="REDIS_URL not found"):
-                get_railway_redis()
+                get_managed_redis()
 
     def test_redis_url_returns_memory(self):
         with (
             patch.dict("os.environ", {"REDIS_URL": "redis://localhost:6379"}, clear=False),
             patch("attune.memory.config.get_redis_memory") as mock_mem,
+        ):
+            mock_mem.return_value = MagicMock()
+            get_managed_redis()
+        mock_mem.assert_called_once_with(url="redis://localhost:6379")
+
+    def test_railway_alias_warns_and_delegates(self):
+        with (
+            patch.dict("os.environ", {"REDIS_URL": "redis://localhost:6379"}, clear=False),
+            patch("attune.memory.config.get_redis_memory") as mock_mem,
+            pytest.warns(DeprecationWarning, match="get_managed_redis"),
         ):
             mock_mem.return_value = MagicMock()
             get_railway_redis()

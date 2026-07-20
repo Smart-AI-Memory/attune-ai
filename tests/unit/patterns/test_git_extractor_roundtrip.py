@@ -42,6 +42,8 @@ def real_repo(tmp_path):
     _git(repo, "init", "-q")
     _git(repo, "config", "user.email", "tester@example.com")
     _git(repo, "config", "user.name", "Round Trip Tester")
+    # A global commit.gpgsign=true has no pinentry under launchd/CI.
+    _git(repo, "config", "commit.gpgsign", "false")
     (repo / "app.py").write_text("def f(x):\n    return x\n", encoding="utf-8")
     _git(repo, "add", "app.py")
     _git(repo, "commit", "-q", "-m", "fix: handle null input in f")

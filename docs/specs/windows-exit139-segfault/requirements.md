@@ -1,6 +1,6 @@
 # windows-exit139-segfault — requirements stub
 
-**Status:** open — fixable hypothesis confirmed (2026-07-06); fix plan drafted, not yet landed
+**Status:** shipped (2026-07-20) — fix #1282 landed 2026-07-06; verification bar met (receipts in README)
 
 This spec's substance lives in [README.md](README.md) (class
 signature, capture log, hypothesis, and fix plan — split from

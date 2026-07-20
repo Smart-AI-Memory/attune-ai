@@ -123,7 +123,9 @@
   "run_id": {{ run.id|tojson }},
   "workflow": {{ run.workflow|tojson }},
   "path": {{ run.path|tojson }},
-  "allow_run": {{ allow_run|tojson }}
+  "trigger": {{ run.trigger|tojson }},
+  "allow_run": {{ allow_run|tojson }},
+  "diagnosis_ids": {{ diagnosis_ids|tojson }}
 }
 </script>
 {# runner.js provides the shared setupRecentRuns helper that

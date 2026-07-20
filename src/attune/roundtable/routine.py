@@ -97,6 +97,13 @@ SEAT_RECIPES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("codex", ("codex", "exec", "--skip-git-repo-check", "-")),
 )
 
+#: Seats that structurally CANNOT emit code proposals: antigravity
+#: runs ``--mode plan`` (reasoning-only, correct for R1 positions) and
+#: exits 0 with EMPTY output when asked for file blocks — live-fire 2,
+#: advanced-debugging-plugin decisions.md, 2026-07-20. Plan-mode seats
+#: review; code-native seats propose.
+PLAN_ONLY_SEATS: frozenset[str] = frozenset({"antigravity"})
+
 BRIEF_PREAMBLE = (
     "You are one seat at a three-model round table (Claude, "
     "Antigravity, Codex), convened by a scheduled routine. Answer "
@@ -318,6 +325,17 @@ def run_routine(
             "halt",
             f"invocation cap ({spec.max_invocations}) reached before synthesis",
         )
+
+    # T4 (armed 2026-07-20): the weekly clean-run carries the briefing
+    # triage appendix on the SAME thread — one weekly ruling sitting.
+    # Its own sub-cap keeps the combined run under the R5 ceiling of
+    # 10; kill switch + auto-demotion live in the appendix module.
+    if spec.name == "clean-run":
+        from pathlib import Path  # noqa: PLC0415
+
+        from attune.roundtable.triage_appendix import run_triage_appendix  # noqa: PLC0415
+
+        invocations += run_triage_appendix(board, thread, Path.cwd(), invoke_seat, SEAT_RECIPES)
 
     print(
         f"routine {spec.name!r} complete: thread {thread!r} ({invocations} invocations). Review with /roundtable read {thread}; the thread is NOT promoted (R8)."

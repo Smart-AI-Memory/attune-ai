@@ -2,7 +2,7 @@
 <project-context>
   <metadata>
     <name>Empathy Framework 4.7.0 Enhancement</name>
-    <description>Integrating patterns from everything-claude-code into empathy-framework</description>
+    <description>Integrating patterns from everything-claude-code into attune-ai</description>
     <version>4.7.0-dev</version>
     <date>2025-01-23</date>
   </metadata>
@@ -19,9 +19,9 @@
       <license>MIT</license>
     </source>
     <target>
-      <name>empathy-framework</name>
+      <name>attune-ai</name>
       <org>Smart AI Memory, LLC</org>
-      <url>https://github.com/Smart-AI-Memory/empathy-framework</url>
+      <url>https://github.com/Smart-AI-Memory/attune-ai</url>
       <license>Fair Source 0.9</license>
     </target>
   </attribution>
@@ -40,7 +40,7 @@
     </reference-project>
 
     <target-project>
-      <path>/Users/patrickroebuck/Documents/empathy1-11-2025-local/empathy-framework</path>
+      <path>/path/to/attune-ai</path>
       <purpose>Active development - ALL CHANGES HERE</purpose>
       <key-folders>
         <folder purpose="Python modules">empathy_llm_toolkit/</folder>
@@ -265,7 +265,7 @@ result = run_evaluate_session({"collaboration_state": state, "user_id": user_id}
   </integration-points>
 
   <existing-commands-reference>
-    <note>23 existing commands in empathy-framework .claude/commands/</note>
+    <note>23 existing commands in attune-ai .claude/commands/</note>
     <commands>
       benchmark, commit, create-agent, create-team, debug, deps, explain,
       feature-overview, init, manage-docs, memory, pr, profile, publish,
@@ -319,8 +319,8 @@ result = run_evaluate_session({"collaboration_state": state, "user_id": user_id}
 
   <instructions>
     <instruction priority="high">
-      All development happens in empathy-framework project at:
-      /Users/patrickroebuck/Documents/empathy1-11-2025-local/empathy-framework
+      All development happens in the attune-ai project at:
+      /path/to/attune-ai
     </instruction>
     <instruction priority="high">
       Reference everything-claude-code for patterns only - do not modify that project.

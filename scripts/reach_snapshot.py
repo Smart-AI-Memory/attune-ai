@@ -335,8 +335,20 @@ def main(argv: list[str] | None = None) -> int:
         default=PACKAGES,
         help="packages to snapshot",
     )
+    parser.add_argument(
+        "--verify-before",
+        metavar="TAG_DATE",
+        help=(
+            "verify a complete before-snapshot exists 24-72h before the "
+            "planned tag date (ISO date or datetime); exits non-zero with "
+            "an unmistakable warning otherwise. Makes no network requests."
+        ),
+    )
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
+
+    if args.verify_before:
+        return verify_before(args.out, args.verify_before, list(args.packages))
 
     args.out.mkdir(parents=True, exist_ok=True)
     now = datetime.now(timezone.utc)
@@ -396,6 +408,90 @@ def main(argv: list[str] | None = None) -> int:
     print(render_table(snapshot))
     print(f"wrote {out_path}")
     return 0
+
+
+#: US-4 pre-tag window: the before snapshot must be captured 24-72
+#: hours before the planned tag, persisted before release activity.
+BEFORE_WINDOW_MIN_HOURS = 24
+BEFORE_WINDOW_MAX_HOURS = 72
+
+
+def find_before_snapshot(
+    out_dir: Path,
+    tag_at: datetime,
+    expected: list[str],
+) -> tuple[Path, dict[str, object]] | None:
+    """Return the newest COMPLETE snapshot inside the pre-tag window.
+
+    A qualifying snapshot has a manifest with ``complete: true`` for
+    the expected allowlist and an ``observed_at`` between 24 and 72
+    hours before ``tag_at``. Returns ``None`` when no day file
+    qualifies (missing dir, malformed files, incomplete or
+    out-of-window snapshots all degrade to None — the caller renders
+    the unmistakable warning, per US-4).
+    """
+    if not out_dir.is_dir():
+        return None
+    best: tuple[datetime, Path, dict[str, object]] | None = None
+    for path in sorted(out_dir.glob("*.json")):
+        day = _load_day(path)
+        manifest = day.get("manifest")
+        if not isinstance(manifest, dict) or not manifest.get("complete"):
+            continue
+        if sorted(manifest.get("expected", [])) != sorted(expected):
+            continue
+        try:
+            observed = datetime.fromisoformat(str(manifest.get("observed_at")))
+        except ValueError:
+            continue
+        if observed.tzinfo is None:
+            observed = observed.replace(tzinfo=timezone.utc)
+        age = (tag_at - observed).total_seconds() / 3600
+        if BEFORE_WINDOW_MIN_HOURS <= age <= BEFORE_WINDOW_MAX_HOURS:
+            if best is None or observed > best[0]:
+                best = (observed, path, day)
+    return (best[1], best[2]) if best else None
+
+
+def verify_before(out_dir: Path, tag_raw: str, expected: list[str]) -> int:
+    """CLI mode: exit 0 iff a complete before-snapshot is in-window.
+
+    ``tag_raw`` is the planned tag instant — a full ISO datetime, or a
+    bare date (interpreted as 00:00 UTC of that day).
+    """
+    try:
+        tag_at = datetime.fromisoformat(tag_raw)
+    except ValueError:
+        print(f"error: --verify-before got unparseable date {tag_raw!r}", file=sys.stderr)
+        return 2
+    if tag_at.tzinfo is None:
+        tag_at = tag_at.replace(tzinfo=timezone.utc)
+    found = find_before_snapshot(out_dir, tag_at, expected)
+    if found:
+        path, day = found
+        manifest = day["manifest"]
+        assert isinstance(manifest, dict)
+        print(f"before-snapshot OK: {path} (observed_at {manifest['observed_at']}, complete 5/5)")
+        return 0
+    now = datetime.now(timezone.utc)
+    hours_left = (tag_at - now).total_seconds() / 3600
+    if hours_left > BEFORE_WINDOW_MIN_HOURS:
+        remedy = (
+            "the window is still open — run `python scripts/reach_snapshot.py` "
+            f"NOW (planned tag is ~{int(hours_left)}h away)"
+        )
+    else:
+        remedy = (
+            "the 24h window floor has passed — the release may continue only "
+            "with this incomplete-receipt warning attached (US-4); do not "
+            "capture a substitute at tag time"
+        )
+    print(
+        "WARNING: NO COMPLETE BEFORE-SNAPSHOT in the 24-72h pre-tag window "
+        f"(planned tag {tag_at.isoformat()}). {remedy}.",
+        file=sys.stderr,
+    )
+    return 1
 
 
 def _warn_if_incomplete(expected: list[str], captured: dict[str, dict[str, int]]) -> None:

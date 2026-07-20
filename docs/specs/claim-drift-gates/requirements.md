@@ -1,6 +1,6 @@
 # Spec: Claim-drift gates
 
-**Status:** approved (2026-07-11) — see `decisions.md`; D4 ratified 2026-07-12 (option a, "20 workflows"); D7, D8 remain open; G1's claim manifest is now unblocked
+**Status:** approved (2026-07-11) — see `decisions.md`; D4 ratified 2026-07-12 (option a, "20 workflows"); D7, D8 ruled 2026-07-20 (CI-only test gates; report-only inverse) — all decisions resolved
 **Opened:** 2026-07-11
 **Layer:** attune-ai (tests / pre-commit / docs / plugin metadata)
 **Owner:** Patrick + agent

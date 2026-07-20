@@ -19,6 +19,7 @@ from .backend import TelemetryBackend
 from .data_models import (
     AgentAssignmentRecord,
     CoverageRecord,
+    DiagnosisRecord,
     FileTestRecord,
     LLMCallRecord,
     TaskRoutingRecord,
@@ -106,6 +107,7 @@ __all__ = [
     "TaskRoutingRecord",
     "TestExecutionRecord",
     "CoverageRecord",
+    "DiagnosisRecord",
     "AgentAssignmentRecord",
     "FileTestRecord",
     # Backend

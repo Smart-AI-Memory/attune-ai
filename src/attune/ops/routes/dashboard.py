@@ -520,6 +520,16 @@ async def run_view_page(run_id: str, request: Request) -> HTMLResponse:
     # Live runs get an empty list — the SSE replay fills the pre on
     # subscribe. Disk-loaded runs ship their captured log inline.
     server_rendered_lines = list(run.lines) if loaded_from_disk else []
+    # Existing diagnoses for this run (advanced-debugging-plugin T5) —
+    # drives the "diagnosed" chip and suppresses the diagnose button.
+    # Best-effort: a broken diagnosis store never breaks the run view.
+    try:
+        from attune.diagnosis import records_for_run
+
+        diagnosis_ids = [r.diagnosis_id for r in records_for_run(run_id)]
+    except Exception:  # noqa: BLE001 — page render must survive store faults
+        logger.debug("ops.run_view: diagnosis lookup failed", exc_info=True)
+        diagnosis_ids = []
     return _render(
         request,
         "run_view.html",
@@ -528,6 +538,7 @@ async def run_view_page(run_id: str, request: Request) -> HTMLResponse:
         stream_url=stream_url,
         allow_run=request.app.state.config.allow_run,
         server_rendered_lines=server_rendered_lines,
+        diagnosis_ids=diagnosis_ids,
     )
 
 
@@ -561,7 +572,7 @@ async def specs_page(request: Request) -> HTMLResponse:
     # so the template can render chips with `0` counts for empty buckets
     # (better UX than missing chips that pop in/out as data shifts).
     bucket_counts = dict.fromkeys(
-        ("active", "approved-not-shipped", "complete", "paused", "stale", "draft"), 0
+        ("active", "approved-not-shipped", "complete", "paused", "parked", "stale", "draft"), 0
     )
     for s in specs:
         bucket_counts[s["lifecycle"]] = bucket_counts.get(s["lifecycle"], 0) + 1
@@ -598,7 +609,7 @@ async def specs_page(request: Request) -> HTMLResponse:
 # without spinning up the full FastAPI app.
 
 _VALID_BUCKETS: frozenset[str] = frozenset(
-    {"active", "approved-not-shipped", "complete", "paused", "stale", "draft"}
+    {"active", "approved-not-shipped", "complete", "paused", "parked", "stale", "draft"}
 )
 _VALID_SORTS: frozenset[str] = frozenset({"recent", "alpha", "oldest"})
 # Defaults match the JS DEFAULT_BUCKETS in specs_refined.js exactly:
@@ -607,6 +618,7 @@ _DEFAULT_BUCKETS: tuple[str, ...] = (
     "active",
     "approved-not-shipped",
     "paused",
+    "parked",
     "stale",
     "draft",
 )

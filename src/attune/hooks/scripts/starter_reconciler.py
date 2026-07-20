@@ -85,6 +85,24 @@ VERSION_RE = re.compile(r"\b\d+\.\d+\.\d+\b")
 #: ``feat(x): thing (#1133)``. The parentheses distinguish a real merge
 #: marker from an inline ``#1133`` cross-reference in prose.
 MERGE_PR_RE = re.compile(r"\(#(\d{1,6})\)")
+#: ``docs/specs/<slug>`` mentions — the starter's work-queue claims.
+SPEC_RE = re.compile(r"docs/specs/([a-z0-9][a-z0-9-]+)")
+#: Cap spec-status reads (local file reads, but keep the banner short).
+MAX_SPECS = 8
+#: Status-line pattern — the three conventions recognized by the
+#: canonical parser (``attune.ops.specs_data._STATUS_RE``); duplicated
+#: here because hooks are standalone-by-design (no attune import).
+#: Keep in sync with that module.
+STATUS_RE = re.compile(
+    r"^\s*\*\*Status(?::\*\*|\*\*:)\s*(.+?)\s*$|^\s*\*\*Status:\s*(.+?)\*\*",
+    re.MULTILINE,
+)
+#: Terminal leading tokens (mirror of the shipped-side of
+#: ``attune.ops.spec_lifecycle.STATUS_VOCABULARY``) — a starter that
+#: queues work on a spec whose statuses are ALL terminal is repeating
+#: the twice-burned 2026-07-20 shipped-and-quiet mistake.
+TERMINAL_TOKENS = frozenset({"shipped", "complete", "completed", "done", "superseded"})
+SPEC_PHASE_FILES = ("requirements.md", "design.md", "tasks.md", "decisions.md")
 
 
 def _find_project_starter(start: Path | None = None) -> Path | None:
@@ -214,6 +232,53 @@ def newer_unmentioned(text: str, merged_main_prs: list[int]) -> list[int]:
     return sorted(newer, reverse=True)[:MAX_NEWER_MERGES]
 
 
+def _spec_leading_token(status: str) -> str:
+    """Leading token, mirroring ``spec_lifecycle._normalize``."""
+    head = status.strip().lower()
+    for sep in (" ", "(", ",", ";", "—", "-"):
+        idx = head.find(sep)
+        if idx >= 0:
+            head = head[:idx]
+    return head.strip()
+
+
+def check_specs(text: str, repo_root: Path | None) -> dict[str, str]:
+    """Status summary for each ``docs/specs/<slug>`` the starter mentions.
+
+    Local file reads only (no network). Per slug the value is:
+    ``terminal:<token>`` when EVERY parseable status is a terminal
+    token; the requirements/first token otherwise; ``no-status`` when
+    nothing parses; ``missing`` when the dir doesn't exist. The banner
+    warns on ``terminal:`` — a queued item pointing at a closed spec
+    is the shipped-and-quiet trap (twice-burned 2026-07-20).
+    """
+    if repo_root is None:
+        return {}
+    out: dict[str, str] = {}
+    for slug in _dedupe(SPEC_RE.findall(text))[:MAX_SPECS]:
+        spec_dir = repo_root / "docs" / "specs" / slug
+        if not spec_dir.is_dir():
+            out[slug] = "missing"
+            continue
+        tokens: list[str] = []
+        for fname in SPEC_PHASE_FILES:
+            try:
+                content = (spec_dir / fname).read_text(encoding="utf-8")
+            except OSError:
+                continue
+            match = STATUS_RE.search(content)
+            if match:
+                value = match.group(1) if match.group(1) is not None else match.group(2)
+                tokens.append(_spec_leading_token(value))
+        if not tokens:
+            out[slug] = "no-status"
+        elif all(t in TERMINAL_TOKENS for t in tokens):
+            out[slug] = f"terminal:{tokens[0]}"
+        else:
+            out[slug] = tokens[0]
+    return out
+
+
 def pypi_latest(pkg: str) -> str | None:
     """Return the latest version string for ``pkg`` on PyPI, or None."""
     url = f"https://pypi.org/pypi/{pkg}/json"
@@ -244,6 +309,8 @@ def reconcile(text: str, pkg: str | None, cwd: Path | None) -> dict:
         "versions": versions,
         "newer_merges": [],
         "pr_ceiling": None,
+        # Local file reads — outside the network executor by design.
+        "specs": check_specs(text, cwd),
     }
     # Widening: a starter is also stale when newer PRs landed on main that
     # it never names. Only worth a git call if it names *any* PR (else
@@ -287,6 +354,23 @@ def reconcile(text: str, pkg: str | None, cwd: Path | None) -> dict:
     return results
 
 
+def _spec_lines(specs: dict[str, str]) -> list[str]:
+    """Banner lines for the spec-status cross-read (empty when none)."""
+    if not specs:
+        return []
+    joined = " · ".join(f"{slug}={status}" for slug, status in specs.items())
+    lines = [f"  specs: {joined}"]
+    closed = [slug for slug, st in specs.items() if st.startswith("terminal:")]
+    if closed:
+        lines.append(
+            "  ⚠ starter mentions CLOSED spec(s): "
+            + ", ".join(closed)
+            + " — cross-read the queue item against the spec's status "
+            "line before executing (shipped-and-quiet trap)"
+        )
+    return lines
+
+
 def format_banner(results: dict, label: str, path: Path) -> str | None:
     """Render the freshness banner, or None if nothing to report."""
     prs = results["prs"]
@@ -294,7 +378,8 @@ def format_banner(results: dict, label: str, path: Path) -> str | None:
     pypi = results["pypi"]
     versions = results["versions"]
     newer = results.get("newer_merges") or []
-    if not prs and not branches and pypi is None and not newer:
+    specs = results.get("specs") or {}
+    if not prs and not branches and pypi is None and not newer and not specs:
         return None
 
     lines = [f"[starter-reconcile:{label}] {path}"]
@@ -312,6 +397,7 @@ def format_banner(results: dict, label: str, path: Path) -> str | None:
             f"  ⚠ main has NEWER merges the starter omits: {listed}{tail}"
             " — work may have landed since it was written"
         )
+    lines.extend(_spec_lines(specs))
     if pypi is not None:
         suffix = f" (starter mentions: {', '.join(versions)})" if versions else ""
         pkg = results.get("pkg") or ""

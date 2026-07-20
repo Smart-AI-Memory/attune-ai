@@ -92,6 +92,18 @@ class TestRoute:
         assert "trigger" in resp.json()["detail"]
 
     @pytest.mark.asyncio
+    async def test_attune_heal_reaches_subprocess_env(self, tmp_path, monkeypatch):
+        """Diagnostic runs stamp attune-heal end-to-end (adv-debugging RR-2)."""
+        app, runner = _make_app(tmp_path, monkeypatch)
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            resp = await client.post("/workflows/code-review/run", json={"trigger": "attune-heal"})
+            assert resp.status_code == 201
+            run = await _wait_terminal(runner, resp.json()["run_id"])
+        assert run.trigger == "attune-heal"
+        assert any("ENV_TRIGGER=attune-heal" in ln for ln in run.lines)
+
+    @pytest.mark.asyncio
     async def test_explicit_manual_is_accepted(self, tmp_path, monkeypatch):
         app, runner = _make_app(tmp_path, monkeypatch)
         transport = ASGITransport(app=app)

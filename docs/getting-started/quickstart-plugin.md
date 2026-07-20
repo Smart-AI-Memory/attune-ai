@@ -21,7 +21,7 @@ inside the Claude Code session you already have.
 
 ## What you get
 
-The plugin ships **17 auto-triggering skills**. You don't memorize commands —
+The plugin ships **25 auto-triggering skills**. You don't memorize commands —
 you describe what you want, and the right skill activates.
 
 | Say something like… | Skill that activates | What it does |
@@ -120,7 +120,7 @@ Other skills worth trying by name or description:
 | If you want to… | Go to |
 |-----------------|-------|
 | Run workflows from a terminal or Python | [First Steps](first-steps.md) |
-| Add the full MCP toolset (41 tools) + CLI | [MCP Integration](mcp-integration.md) |
+| Add the full MCP toolset (53 tools) + CLI | [MCP Integration](mcp-integration.md) |
 | Pick a longer learning path | [Choose Your Path](choose-your-path.md) |
 | See every workflow | [First Steps → Try More Workflows](first-steps.md#try-more-workflows) |
 

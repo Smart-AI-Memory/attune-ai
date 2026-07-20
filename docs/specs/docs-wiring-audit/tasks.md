@@ -1,5 +1,5 @@
 # Tasks: Documentation Wiring Audit
-**Status:** approved (2026-07-13) — v1 shipped (#518/#523 anchor check via `scripts/audit_docs_wiring.py`; #540 CI job, since promoted to a required check on main); v1.1 shipped 2026-07-15 (Tasks 3, 4 adapted, 9 — see decisions.md Phase 4 entry); remaining: See-Also advisory (Task 10, deferred).
+**Status:** shipped (2026-07-20, closed per q-briefing-triage-002 A1) — v1 shipped (#518/#523 anchor check via `scripts/audit_docs_wiring.py`; #540 CI job, since promoted to a required check on main); v1.1 shipped 2026-07-15 (Tasks 3, 4 adapted, 9 — see decisions.md Phase 4 entry); remaining: See-Also advisory (Task 10, deferred).
 **Phase:** 3 — Tasks
 **Predecessor:** [design.md](./design.md) (Phase 2 authored
 2026-05-31)
