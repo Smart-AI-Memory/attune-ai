@@ -1,6 +1,8 @@
 # Post-Commit Help Maintenance → Check-Only
 
-**Status:** draft — awaiting review; recommitted at 2026-07-14 triage
+**Status:** approved (2026-07-20, chair — D1 ruled option A, see
+[decisions.md](decisions.md); was draft since 2026-06-22, recommitted
+at 2026-07-14 triage)
 **Owner:** Patrick + agent
 **Created:** 2026-06-22
 
