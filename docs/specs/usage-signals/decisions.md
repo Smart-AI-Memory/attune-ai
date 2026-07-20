@@ -682,3 +682,27 @@ retired (the 10.5.0 silent-0/5 class). Closed the seam, chair go
 
 US-4's requirement set is now fully operational; US-5 (the
 comparable pair) becomes actionable at the next planned release.
+
+## US-3 outreach round — kit approved (2026-07-20, chair)
+
+The outreach kit — candidate roster, per-candidate drafts,
+conversation guide, and this log format — was chair-approved as
+drafted. Public-signal sweep receipts: all 11 public org repos
+(issue/PR authors all-states, commenters, open PRs) plus an
+external GitHub mention search yielded exactly ONE qualifying
+candidate; remaining slots fill from chair-visible channels
+(DEC-2 post replies, prior direct contacts). Sends are
+chair-only; the id→person mapping lives in the chair's private
+notes, never in this repo. Round closes at 5 substantive
+responses OR 14 calendar days after 10 delivered contacts —
+if it ends short, external usage is recorded UNRESOLVED, never
+inferred.
+
+| id | contacted | channel | status | minimal finding |
+|----|-----------|---------|--------|-----------------|
+| US3-C01 | 2026-07-20 | github | delivered | — |
+
+Status vocabulary: drafted | delivered | no-response |
+non-substantive | substantive-active-use | substantive-past-use |
+substantive-no-use (responses and non-responses reported
+separately per US-3).
