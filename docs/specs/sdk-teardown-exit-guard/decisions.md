@@ -120,9 +120,17 @@ eight spec-named workflows.
   `capture_subprocess_failure` / error translation as before; the
   dispatcher's exit-0-on-`success=False` behavior was not touched.
 
-T3 (optional real nested dogfood run) not run this session — it
-spends real API money and stays a manual/keyed receipt per the
-design's risk note.
+**T3 dogfood receipt (2026-07-20, chair-authorized spend):** a real
+`CodeReviewWorkflow` run at quick depth over a planted-issue temp
+file, executed nested inside a live Claude Code session (the repro
+condition), returned `success=True`, `subtype="success"`,
+`is_error=False`, cost $0.60, 7 turns, with genuine findings (the
+planted command injection and path traversal). The teardown exit did
+NOT fire on this particular run (adapter guard warning absent — the
+stream ended cleanly), so the recovery branch was not exercised
+live; the design's T3 validation (success + findings + cost > 0
+while nested) is met, and the guard-fire path remains proven by the
+unit suite.
 
 ---
 
