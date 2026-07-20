@@ -16499,3 +16499,38 @@ def ", start_idx + 1)` for module-
   spec-scope. Pairs with the spec-scope-drift lesson (grep reality
   before executing a named scope) — this is its authorization-side
   twin.
+
+- **`gh pr checks` exits 0 even when checks FAIL — a compound
+  `checks-read && gh pr merge --admin` does NOT gate the merge, it
+  decorates it** (2026-07-20, receipted the hard way: #1498 was
+  admin-merged over 18 red lanes + mergeStateStatus BLOCKED; main
+  carried a failing required check ~20 min until hotfix #1500). The
+  read and the merge must be CONDITIONED, not sequenced:
+  `BLOCKING=$(gh pr checks N --json bucket --jq '[.[]|select(
+  .bucket=="fail" or .bucket=="pending")]|length')` then
+  `[ "$BLOCKING" = "0" ] && gh pr merge ...`. Extends the "never
+  trust `--watch` exit codes" family to the merge side: every gh
+  exit code in the merge path is untrustworthy as a gate; only
+  parsed check-bucket counts gate.
+
+- **New src modules must include `tests/unit/quality/` in their
+  breadth runs — the complexity ratchet
+  (`test_no_new_d_or_worse_blocks`) fails the WHOLE matrix on one
+  CC-grade-D function** (2026-07-20: `run_fix_loop` scored D; every
+  lane failed identically on the single test, 21,718 others green).
+  The suite-scoped breadth habit (run the suites adjacent to your
+  change) misses repo-wide ratchets by construction — add
+  `tests/unit/quality` to any breadth set that includes new or
+  substantially grown functions, or better: refactor to <21 CC
+  before committing (extract stage helpers).
+
+- **When fixing violations flagged by a token/brand hard-fail gate,
+  the fix's own comments must not quote the banned token — the gate
+  blocks its author** (2026-07-20, twice in one night: G5's commit
+  survived only because the gate ran pre-commit; a later retro-flag
+  commit was blocked because the explanatory comment said "former
+  <banned-token> dependency removed"). Same family as the
+  security_guard heredoc trap and comment-quoting regex-test trap:
+  explanation text is scanned like any other text. Describe the
+  removal generically ("former framework dependency") or point at
+  the decisions entry instead of naming the token.
