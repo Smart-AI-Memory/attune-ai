@@ -68,11 +68,20 @@ DARK_RENDER_SOURCES = frozenset({"bulletin", "git_state", "recommendations", "sw
 
 @dataclass
 class TriageItem:
-    """One decidable briefing item put to the table."""
+    """One decidable briefing item put to the table.
+
+    ``evidence_kind`` is the TA-9 tier: "receipt" for evidence that
+    was READ live (source-reader output, ledger rows, CI fetches);
+    "claim" for narrated/derived statements nobody re-verified this
+    run. Seats and chair weigh claim-tier evidence as unverified —
+    the 2026-07-20 sitting shipped two false claims precisely
+    because the digest didn't distinguish.
+    """
 
     title: str
     evidence: str
     question: str
+    evidence_kind: str = "receipt"
 
 
 def _state_path() -> Path:
@@ -299,7 +308,10 @@ def compose_brief(
         "rulings in docs/specs/roundtable-triage/decisions.md are "
         "NOT to be re-litigated. For EACH item give a concrete "
         "recommendation with a one-line rationale, then the main "
-        "RISK of your triage.",
+        "RISK of your triage. Evidence is tiered: [receipt] was read "
+        "live this run; [claim] is narrated and UNVERIFIED — treat "
+        "claim-tier evidence as softer ground and say so if your "
+        "recommendation leans on it.",
         "",
         f"Briefing evidence gathered read-only {stamp}.",
         "Dark sources (T3, rendered honestly, no refresh spend): "
@@ -310,7 +322,7 @@ def compose_brief(
     for i, item in enumerate(items, 1):
         lines += [
             f"ITEM {i} — {item.title}",
-            f"  evidence: {item.evidence[:500]}",
+            f"  evidence[{item.evidence_kind}]: {item.evidence[:500]}",
             f"  QUESTION: {item.question}",
             "",
         ]

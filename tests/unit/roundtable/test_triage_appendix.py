@@ -208,3 +208,47 @@ class TestCiGateVerdicts:
         monkeypatch.setattr(ta, "_ci_gate_verdicts", lambda root: ["CI gate verdicts: STUB"])
         _c, _d, extra = ta.pull_briefing(tmp_path)
         assert "CI gate verdicts: STUB" in extra
+
+
+class TestEvidenceTiers:
+    """TA-9 — receipt-vs-claim labels travel into the brief."""
+
+    def test_default_kind_is_receipt_and_rendered(self):
+        brief = ta.compose_brief([ta.TriageItem("t", "live read", "q?")], [], [], 0, "S")
+        assert "evidence[receipt]: live read" in brief
+
+    def test_claim_kind_rendered_and_instruction_present(self):
+        item = ta.TriageItem("t", "narrated statement", "q?", evidence_kind="claim")
+        brief = ta.compose_brief([item], [], [], 0, "S")
+        assert "evidence[claim]: narrated statement" in brief
+        assert "UNVERIFIED" in brief
+
+    def test_pull_briefing_items_are_receipts(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "home"))
+
+        class _Item:
+            title = "drift"
+            detail = "bucket x"
+            item_id = "spec-drift:x"
+            metadata = {}
+
+        class _Summary:
+            items = [_Item()]
+
+        real_import = ta.importlib.import_module
+
+        def fake_import(name):
+            if name.endswith(".spec_drift"):
+
+                class _Mod:
+                    @staticmethod
+                    def read(*, project_root):
+                        return _Summary()
+
+                return _Mod
+            return real_import(name)
+
+        monkeypatch.setattr(ta.importlib, "import_module", fake_import)
+        monkeypatch.setattr(ta, "_ci_gate_verdicts", lambda root: [])
+        candidates, _dark, _extra = ta.pull_briefing(tmp_path)
+        assert candidates and all(c.evidence_kind == "receipt" for c in candidates)
