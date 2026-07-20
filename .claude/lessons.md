@@ -16686,3 +16686,45 @@ def ", start_idx + 1)` for module-
   premise" — same family, new surface: the premise goes stale not
   because the spec text rotted, but because a PARALLEL session
   already shipped the fix.
+
+- **A same-evening chair-selected work queue can already be stale —
+  reconcile each queue item's DONE-WHEN against `gh`/`git` before
+  building, not just its spec-status mentions**: 2026-07-20 queue
+  (written that evening) listed three items; item 1's substance
+  ("fix plan drafted, not yet landed") had landed 14 days earlier
+  (#1282, 2026-07-06 — only the guard/receipts/status-flip remained),
+  and item 2's ENTIRE done-when ("RR-2 + RR-6 + RR-7 shipped
+  fixture-tested, decisions.md records the build") was met verbatim
+  by #1475 — merged hours BEFORE the queue was selected. The
+  starter-lint (#1516) cross-reads spec MENTIONS against status
+  lines, but a queue item is a WORK claim, not a status mention —
+  it names a done-when, and the done-when is what to reconcile:
+  for each item, grep merged PRs (`git log origin/main --grep`),
+  read the owning spec's decisions.md tail, and run the named
+  tests before writing any code. Partial staleness is the sneaky
+  case: item 1 still had real remaining work (regression guard,
+  sighting harvest from an unmerged branch, status flip), so
+  "already landed" and "nothing to do" are different verdicts —
+  reconcile down to the sub-deliverable. Pairs with "stale-valid
+  bug reports" (previous entry) — same family; new surface: the
+  carrier is the chair's own queue, and same-day authorship is no
+  freshness guarantee.
+
+- **A watchdog-timeout failure class can be cleared over a whole CI
+  window by JOB DURATION alone — failed jobs shorter than the
+  watchdog cannot be the wedge, no log reading needed**: closing
+  out windows-exit139 required proving "no new sighting in 14
+  days" across 28 failed runs — reading logs for each is
+  prohibitive (and `--log-failed` is unavailable in-flight). The
+  wedge class REQUIRES the 20-minute conftest watchdog to fire, so
+  any failed `windows-latest` job completing in <20 min is
+  structurally not the class. One `gh api .../runs/<id>/jobs` pass
+  computing `completed_at - started_at` over all failed windows
+  jobs (40 of them, all 16–17 min) cleared the entire window in
+  minutes and attributed the redness to the deterministic #1474
+  path bug instead. Generalization: when a failure class has a
+  structural time floor (watchdog, timeout-kill, retry budget),
+  triage the fleet by duration FIRST and read logs only for jobs
+  above the floor. Compute durations in `jq`
+  (`fromdateiso8601` subtraction) — piping to awk mangles
+  space-containing job names.
