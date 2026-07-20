@@ -16923,3 +16923,30 @@ def ", start_idx + 1)` for module-
   in-flight-run log lock. Same freshly-landed-gate class as the
   admin-merge/docs-build lessons: main moves daily — a gate that
   didn't exist when your branch was cut can still fail your PR.
+
+- **Pruning the session's OWN worktree is survivable and has a fixed
+  recipe — receipts first, run the removal from the MAIN checkout in
+  one compound command, expect dangling-hook noise, and the harness
+  recycles a fresh worktree on the same branch**: done deliberately
+  2026-07-20 (user-requested) on `suspicious-bhabha-7db586` after its
+  PR merged. The recipe: (1) **receipts before deletion, squash-aware**
+  — `git log origin/main..HEAD` shows "unmerged" commits even when
+  everything landed (squash merge rewrites SHAs); the authoritative
+  receipt is a content diff (`git fetch && git diff origin/main HEAD
+  --stat`) being empty for every file the session touched (files main
+  gained from OTHER PRs show as deletions — expected). A post-merge
+  commit pushed to a labeled-auto-merge PR before it fires gets swept
+  INTO the squash — check content, not commit ancestry. (2) **run the
+  removal as one compound command that `cd`s to the main checkout
+  first** (`cd <main> && git worktree remove <path> && git branch -D
+  <branch>`) so the shell isn't standing in the directory being
+  deleted; the harness resets the shell cwd to main afterward.
+  (3) **expected fallout, don't chase it**: PostToolUse hooks
+  referencing `$CLAUDE_PROJECT_DIR` error with "No such file or
+  directory" for the rest of the session (the env var still points at
+  the deleted path) — cosmetic, self-heals next session. (4) the
+  harness may auto-recycle the session onto a FRESH worktree
+  checked out to the same branch — old absolute paths die; re-read
+  from the new root. Pairs with the `prune_worktree_self_deletion_
+  hazard` global memory (which is about NOT deleting the active
+  worktree by accident); this is the deliberate-case procedure.
