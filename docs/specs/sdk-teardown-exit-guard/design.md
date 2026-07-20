@@ -1,6 +1,6 @@
 # Design: SDK teardown-exit-1 guard
 
-**Status:** EXECUTED (2026-07-20) — approved as drafted by the chair
+**Status:** shipped (2026-07-20) — approved as drafted by the chair
 2026-07-20; see decisions.md execution log
 **Requirements:** [requirements.md](requirements.md) ·
 **Decisions:** [decisions.md](decisions.md)
