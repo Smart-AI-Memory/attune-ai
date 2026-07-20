@@ -49,3 +49,17 @@ curator source, unanimously agreed by seats.
 Board thread promoted with item ids 6–13; requirements compiled
 deterministically by `attune.roundtable.compiler`
 (`compile_requirements`, approved-only).
+
+## 2026-07-19 — Design approved (chair)
+
+Design ratified as drafted. Load-bearing choices: (1) a diagnosis
+IS a dashboard run — the on-demand endpoint spawns
+`attune diagnose <run_id>` through `RunnerService` with
+`trigger=attune-heal`, reusing the RC-3 seam end-to-end;
+(2) `diagnosis_records.jsonl` as the telemetry layer's third file
+(inherits isolation + rotation); (3) panel/fix-loop bind to the
+shipped roundtable seams, no parallel executor; (4) lesson
+publication behind a `LessonPublisher` protocol and `config_used`
+stamped per record (dissent honored structurally); (5) four build
+phases (substrate → engine → surface → loops), one PR each with
+that phase's RR receipts.
