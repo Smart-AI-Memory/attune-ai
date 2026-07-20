@@ -212,7 +212,10 @@ The three behavior-adjacent edits from the G5 sweep, retro-checked
 at the chair's request: (1) `deployments/wizards-backend/` — the
 app NEVER imports the dependency; the requirement line was dead
 weight in both brandings, now deleted outright; the dir carries
-Railway configs but no repo-side deploy wiring. (2)
+Railway configs but no repo-side deploy wiring — chair confirmed
+2026-07-20 that NO active Railway services exist (hosting moved to
+Vercel); the whole directory is a dead deployment artifact, chipped
+for cleanup. (2)
 `agent_config.py` `project` default — zero consumers read
 `.project` in src/; inert. (3) `.claude/PROJECT-CONTEXT.xml` —
 zero consumers; stale artifact, future deletion candidate. All
