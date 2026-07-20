@@ -16457,3 +16457,45 @@ def ", start_idx + 1)` for module-
   `git status` as hook artifacts: `git diff` them, `git checkout --`
   to discard, and keep them out of unrelated PRs — committing the
   mangle would silently corrupt spec state on main.
+
+- **Red-first is the DEFAULT for any new guard/gate — no gate ships
+  without its red receipt** (ratified 2026-07-20, from claim-drift
+  G1/G5): land the gate against the CURRENT tree first and capture
+  the failure output (G1: 10/14 claim sites stale, including drift
+  accumulated in the nine days since the spec's own review; G5: 27
+  hard-fail files vs the spec's predicted 3), then fix every flagged
+  instance in the SAME PR until green. The red run is the only proof
+  the gate catches its class — "added a guard, tests pass" proves
+  only that the guard tolerates today's tree. Squash-merge the
+  red→green sequence together so the receipt rides the history.
+
+- **Stacked-phase cascade recipe — one branch per phase, PR only
+  when the base merges, surgical `--onto` rebase of ONLY the phase's
+  own commits** (ratified 2026-07-20, from the advanced-debugging
+  A→B→C→D cascade): naive `git rebase origin/main` on a stacked
+  branch replays the already-squash-merged parent commits and
+  CONFLICTS (patch-ids don't survive squashes) — and a compound
+  command then pushes the stale tip into the fresh PR. The recipe:
+  (1) keep each phase on its own branch stacked locally; (2) open a
+  phase's PR only after its base merges; (3) rebase with
+  `git rebase --onto origin/main <parent-tip> <branch>` so only the
+  phase's own commits replay; (4) verify `headRefOid` == local tip
+  after force-push-with-lease; (5) re-run the phase's suite
+  post-rebase; (6) fresh `gh pr checks` on every watcher fire —
+  never the watcher's exit code. Two mid-cascade failures
+  (conflicted replay, DIRTY from a sibling docs merge) self-healed
+  inside this pattern with zero lost work.
+
+- **When a red-first fix set balloons past the spec's prediction by
+  ~an order of magnitude, STOP and show the chair the fix inventory
+  before executing** (ratified 2026-07-20, chair pushback-accepted):
+  G5's spec predicted a 3-item red set; the live scan found 27
+  files (deletions, archive moves, 20 rebrands) and the whole set
+  was executed under autonomy without a pause. It was string-level
+  and receipted, but "start G5" authorized a gate, not a 25-surface
+  sweep — scope authorization doesn't stretch with the discovery.
+  The classify step (comment/string vs live logic) stays; the
+  execute step gains a chair checkpoint when discovered-scope ≫
+  spec-scope. Pairs with the spec-scope-drift lesson (grep reality
+  before executing a named scope) — this is its authorization-side
+  twin.
