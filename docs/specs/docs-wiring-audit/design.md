@@ -1,5 +1,5 @@
 # Design: Documentation Wiring Audit
-**Status:** approved (2026-05-31)
+**Status:** shipped (2026-07-20, closed per q-briefing-triage-002 A1; approved 2026-05-31)
 **Phase:** 2 — Design
 **Predecessor:** [requirements.md](./requirements.md) (Phase 1
 approved 2026-05-31, see [decisions.md](./decisions.md))

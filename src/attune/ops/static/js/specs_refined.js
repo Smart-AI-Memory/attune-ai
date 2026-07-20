@@ -23,6 +23,7 @@
     "active",
     "approved-not-shipped",
     "paused",
+    "parked",
     "stale",
     "draft",
   ];
@@ -32,6 +33,7 @@
     "approved-not-shipped",
     "complete",
     "paused",
+    "parked",
     "stale",
     "draft",
   ]);

@@ -1,6 +1,6 @@
 # Usage Signals — Decisions
 
-**Status:** R6 spend alarm shipped (2026-06-20) · Phase 2b live (D8) ·
+**Status:** active (2026-06-20) — R6 spend alarm shipped · Phase 2b live (D8) ·
 Phase 2 scoped (2026-06-15) · Phase 0 complete (2026-06-11)
 
 ## D1 — Phase 0 baseline snapshot (2026-06-11)

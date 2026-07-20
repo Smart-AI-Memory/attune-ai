@@ -1,6 +1,6 @@
 # Cross-Provider Collaboration Projector — Requirements
 
-**Status: RATIFIED** — D1–D6 all ratified by Patrick 2026-07-18
+**Status:** active (2026-07-18) — D1–D6 all ratified by Patrick
 (option a in each; see [decisions.md](decisions.md)). Implementation state is recorded
 honestly: R1–R6 are already implemented on `codex/using-projectors`;
 R7+ are open pending decisions.

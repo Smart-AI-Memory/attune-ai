@@ -2594,6 +2594,13 @@ a.kpi:hover {
   color: #065f46;
   border-color: #a7f3d0;
 }
+/* Parked: cool slate — a deliberate chair park, calmer than Paused's
+   amber (parked is ruled-and-resting, paused is mid-flight). */
+.specs-toolbar .chip-active.bucket-parked {
+  background: #e2e8f0;
+  color: #334155;
+  border-color: #cbd5e1;
+}
 .specs-toolbar .chip-active.bucket-draft {
   background: #f3f4f6;
   color: #374151;

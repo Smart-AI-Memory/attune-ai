@@ -1,6 +1,6 @@
 # Elicitation Form Surface — Requirements
 
-**Status:** v1 shipped (verified 2026-07-14 — src/attune/elicitation + MCP elicitation_* tools); v2 scope (v2-1/v2-2 reqs) recommitted at 2026-07-14 triage
+**Status:** shipped (v1, verified 2026-07-14 — src/attune/elicitation + MCP elicitation_* tools); v2 scope (v2-1/v2-2 reqs) recommitted at 2026-07-14 triage
 **Born:** a post-9.0.0 chat. Patrick — tech-writing / hypertext-help
 background — said he'd "missed the form-related options from working
 with HTML" and wanted to explore them, multi-select first. Two live

@@ -1,6 +1,6 @@
 # attune-author Consolidation — Design
 
-**Status:** parked (2026-07-13) — T1 (#1193) + T2a (#1203/#1205) shipped: projector/staleness/fact_check absorbed into attune.authoring, help_data in-process; remaining: scripts' attune_author consumer repoints (T1 acceptance), resolver fold-in (T2/#1191), T3 polish-upstream (D10), T4 package fate, T5 docs repoints · pairs with
+**Status:** parked (2026-07-13) — T1 (#1193) + T2a (#1203/#1205) shipped: projector/staleness/fact_check absorbed into attune.authoring, help_data in-process; remaining: scripts' attune_author consumer repoints (T1 acceptance), resolver fold-in (T2/#1191), T3 polish-upstream (D10), T4 package fate, T5 docs repoints · Resume-Trigger: evergreen (no external clock) · pairs with
 [requirements.md](requirements.md).
 
 ## The new home

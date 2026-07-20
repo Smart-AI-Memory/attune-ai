@@ -30,12 +30,16 @@ _PHASE_FILES: tuple[str, ...] = (
     "tasks.md",
 )
 
-# Status line pattern — accepts both Markdown bolding conventions:
-#   **Status:** value   (colon inside the bolding — attune-ai convention)
-#   **Status**: value   (colon outside — attune-gui convention)
-# Captures the value, stripping trailing whitespace.
+# Status line pattern — accepts three Markdown bolding conventions:
+#   **Status:** value    (colon inside the bolding — attune-ai convention)
+#   **Status**: value    (colon outside — attune-gui convention)
+#   **Status: value**    (whole line bold — table-authored specs; the
+#                         closing ** may sit on the same line only)
+# Captures the value, stripping trailing whitespace. Ordered
+# alternation: the closed-bold forms first so `**Status:** x` never
+# matches the whole-bold branch.
 _STATUS_RE = re.compile(
-    r"^\s*\*\*Status(?::\*\*|\*\*:)\s*(.+?)\s*$",
+    r"^\s*\*\*Status(?::\*\*|\*\*:)\s*(.+?)\s*$|^\s*\*\*Status:\s*(.+?)\*\*",
     re.MULTILINE,
 )
 
@@ -69,7 +73,7 @@ class SpecRecord:
     # `__post_init__` so callers don't need to coordinate. `init=False`
     # keeps the constructor signature backward-compatible with the many
     # `SpecRecord(slug=..., phases=..., last_modified=...)` test fixtures.
-    # One of: "paused", "complete", "stale", "draft",
+    # One of: "paused", "parked", "complete", "stale", "draft",
     # "approved-not-shipped", "active". See
     # [docs/specs/ops-specs-page-refinement/decisions.md](../../../docs/specs/ops-specs-page-refinement/decisions.md).
     lifecycle: str = field(init=False, default="")
@@ -89,7 +93,8 @@ def _extract_status(text: str) -> str | None:
     match = _STATUS_RE.search(text)
     if not match:
         return None
-    return match.group(1).strip()
+    value = match.group(1) if match.group(1) is not None else match.group(2)
+    return value.strip()
 
 
 def _scan_spec_dir(spec_dir: Path) -> list[SpecPhase]:

@@ -2,7 +2,7 @@
 
 > Four mechanical controls that close the test-coverage discipline
 > gap surfaced by PR #485 — without adopting strict TDD.
-**Status:** in-review
+**Status:** draft (2026-05-27) — in review
 **Created:** 2026-05-27
 **Owner:** TBD
 **Related:**

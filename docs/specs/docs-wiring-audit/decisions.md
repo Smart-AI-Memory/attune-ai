@@ -1,6 +1,6 @@
 # Per-decision log — Docs wiring audit
 
-**Status:** approved
+**Status:** shipped (2026-07-20, closed per q-briefing-triage-002 A1)
 
 
 Append-only log. Resolutions for the open questions enumerated in

@@ -1,6 +1,6 @@
 # Spec-Lifecycle Gates v1 — Design
 
-**Status: design chair-approved as written** (2026-07-19; both open
+**Status:** approved (2026-07-19) — design chair-approved as written (both open
 questions ruled per the moderator's recommendations — see G4/G5 in
 `decisions.md`).
 Grounded per RR-5's chair edit: every seam below was re-verified by

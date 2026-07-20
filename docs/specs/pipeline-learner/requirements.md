@@ -1,6 +1,6 @@
 # Pipeline Learner v1 (table-refreshed) — Requirements
 
-**Status: requirements chair-ruled per item** — authored by the
+**Status:** approved (2026-07-19) — chair-ruled per item; live surfacing gated on RR-1 corpus readiness. Authored by the
 round table (thread `producing-pipeline-learner-v1-20260719-2`); compiled deterministically by
 `attune.roundtable.compiler` (V2-P2). Approved items only;
 declined: none;

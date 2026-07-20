@@ -572,7 +572,7 @@ async def specs_page(request: Request) -> HTMLResponse:
     # so the template can render chips with `0` counts for empty buckets
     # (better UX than missing chips that pop in/out as data shifts).
     bucket_counts = dict.fromkeys(
-        ("active", "approved-not-shipped", "complete", "paused", "stale", "draft"), 0
+        ("active", "approved-not-shipped", "complete", "paused", "parked", "stale", "draft"), 0
     )
     for s in specs:
         bucket_counts[s["lifecycle"]] = bucket_counts.get(s["lifecycle"], 0) + 1
@@ -609,7 +609,7 @@ async def specs_page(request: Request) -> HTMLResponse:
 # without spinning up the full FastAPI app.
 
 _VALID_BUCKETS: frozenset[str] = frozenset(
-    {"active", "approved-not-shipped", "complete", "paused", "stale", "draft"}
+    {"active", "approved-not-shipped", "complete", "paused", "parked", "stale", "draft"}
 )
 _VALID_SORTS: frozenset[str] = frozenset({"recent", "alpha", "oldest"})
 # Defaults match the JS DEFAULT_BUCKETS in specs_refined.js exactly:
@@ -618,6 +618,7 @@ _DEFAULT_BUCKETS: tuple[str, ...] = (
     "active",
     "approved-not-shipped",
     "paused",
+    "parked",
     "stale",
     "draft",
 )

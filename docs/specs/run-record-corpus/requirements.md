@@ -1,6 +1,6 @@
 # Run-Record Corpus (RR-1 unblock) — Requirements
 
-**Status: chair-ruled 2026-07-19** — all three open questions
+**Status:** shipped (2026-07-19) — implemented same day (#1472); chair-ruled: all three open questions
 ruled (B; chair-ruled RR-4 edit; start clean — see
 `decisions.md`). Drafted 2026-07-19 by the follow-up session
 (direct draft; not a producing run). This is

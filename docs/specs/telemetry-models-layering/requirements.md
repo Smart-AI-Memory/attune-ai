@@ -1,6 +1,6 @@
 # Telemetry / Models Layering + Pricing Single-Source — requirements
 
-**Status:** parked (2026-07-13) — no phase shipped; #1167/#1168 are the origin PRs that deferred this scope here, not implementers; remaining: Phases 1–4 (pricing single-source, layering, SRP splits, typed schemas) · **Owner:** Patrick + agent
+**Status:** parked (2026-07-13) — no phase shipped; #1167/#1168 are the origin PRs that deferred this scope here, not implementers; remaining: Phases 1–4 (pricing single-source, layering, SRP splits, typed schemas) · Resume-Trigger: evergreen (no external clock) · **Owner:** Patrick + agent
 
 Consolidates the **architectural** findings deferred from two code-review
 fix PRs — #1167 (`usage_tracker`) and #1168 (`auth_strategy`, `registry`,

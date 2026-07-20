@@ -1,5 +1,7 @@
 # Advanced Debugging Plugin — Decisions
 
+**Status:** shipped (2026-07-20) — spec complete (#1503)
+
 ## 2026-07-19 — Origin and pre-spec rulings (chair: Patrick)
 
 Born from a live brainstorm the same day the run-record corpus
@@ -241,3 +243,32 @@ receipt).** `run_fix_loop` on the high-confidence real diagnosis
 With all four phases, all eight RR receipts, and both live-fires
 executed, this spec is COMPLETE; the follow-ups above are the v1.1
 backlog.
+
+## 2026-07-20 — First-content triage of the diagnoses stream (q-briefing-triage-002 A3, chair ruled)
+
+The stream's first three records are all artifacts of this spec's own
+ship day, not operational failures:
+
+- `3264a8f6107b` (run `85c88fd9…`, "path argument is required") and
+  `7e751fed728a` (run `63c533fb46…`, ops exit 1) are the live-fire
+  receipt runs named in this file's Phase A/B entries.
+- `40482304b805` (run `0910cf106403`, diagnose exit 2, 05:49 UTC)
+  falls inside the overnight Phase C/D dogfood window; treated as
+  dogfood pending contrary evidence.
+
+The canonical stream was NOT hand-edited: `store.py` is
+read-only-by-design and append-only via `TelemetryStore.log_diagnosis`
+with no dedupe, so a "closure" append would double records instead of
+updating them. Two queued follow-ons (behind the T2 hygiene PR, per
+the codex no-parallel-program risk):
+
+1. **Phase B priors defect** — all 3/3 real records carry
+   `priors_degraded: no-terms-extracted` and the 05:49 record's
+   hypotheses have EMPTY summaries: the term extractor gets zero
+   signal from real symptoms. One fix task; not inline.
+2. **Origin-tag + closure seam** — an `origin` field
+   (live-fire | dogfood | operational) stamped at creation, a
+   status-update seam (last-wins by `diagnosis_id` or a tombstone
+   record), and automated-suite exclusion for the diagnoses curator
+   source, mirroring the RR corpus suite-isolation rule. Ruled
+   2-1: tag, never retro-delete (D3 no-backfill spirit).

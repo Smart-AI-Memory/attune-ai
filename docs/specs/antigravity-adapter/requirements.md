@@ -1,6 +1,6 @@
 # Antigravity Adapter — Requirements
 
-**Status: D1 RATIFIED (a)** — receipts passed and Patrick
+**Status:** active (2026-07-18) — D1 ratified (a); receipts passed and Patrick
 ratified option (a) same day (2026-07-18,
 app 2.3.1 + agy CLI 1.1.4; transcripts in
 [decisions.md](decisions.md)); D2 largely

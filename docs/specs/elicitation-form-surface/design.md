@@ -1,6 +1,6 @@
 # Elicitation Form Surface — Design (v1)
 
-**Status:** v1 shipped (verified 2026-07-14); v2+ status tracked in [requirements.md](requirements.md)
+**Status:** shipped (v1, verified 2026-07-14); v2+ status tracked in [requirements.md](requirements.md)
 
 Design for the [requirements](requirements.md), post-Phase 0. Surface
 decision is [decisions.md](decisions.md) **D4**: AskUserQuestion-first,
