@@ -3,4 +3,5 @@
 - Use type hints
 - Follow PEP 8
 - Write docstrings
-- Target 90%+ test coverage
+- Test coverage: 80% enforced floor (codecov project + patch);
+  target 85%+ (the local `fail_under` bar)

@@ -6,7 +6,9 @@ coverage:
         threshold: 2%
     patch:
       default:
-        target: 50%
+        # Chair-ruled 2026-07-20 ("floor 80, local 85" story): the
+        # patch gate enforces the documented 80% changed-code floor.
+        target: 80%
         threshold: 5%
 
 ignore:
