@@ -111,6 +111,7 @@ def diagnose(
     redis_client: Any = None,
     invoke_seat: Callable[[Sequence[str], str], tuple[int, str]] | None = None,
     repo_root: Path | None = None,
+    origin: str = "operational",
 ) -> DiagnosisRecord:
     """Diagnose one failed run end-to-end and persist the record.
 
@@ -165,6 +166,7 @@ def diagnose(
         dissent=panel.dissent,
         panel=panel.meta,
         config_used=config.to_config_used(),
+        origin=origin,
     )
     (store or TelemetryStore()).log_diagnosis(record)
     return record
