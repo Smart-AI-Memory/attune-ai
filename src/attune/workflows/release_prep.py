@@ -27,6 +27,7 @@ from .agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
+    iter_agent_messages,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -195,71 +196,73 @@ class ReleasePreparationWorkflow(BaseWorkflow):
         assistant_parts: list[str] = []
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
-        async for message in claude_agent_sdk.query(
-            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
-            options=claude_agent_sdk.ClaudeAgentOptions(
-                **sdk_isolation_kwargs(),
-                system_prompt=_SYSTEM_PROMPT,
-                cwd=resolve_cwd_for_path(resolved_path),
-                max_budget_usd=get_max_budget_usd(depth),
-                allowed_tools=["Read", "Glob", "Grep", "Bash", "Agent"],
-                permission_mode="default",
-                max_turns=max_turns,
-                agents={
-                    "health-checker": claude_agent_sdk.AgentDefinition(
-                        description="Health checker that runs tests and verifies CI status.",
-                        prompt=(
-                            "You are a release health checker. Focus on: "
-                            "running the test suite, checking dependency "
-                            "versions and lock files, verifying CI pipeline "
-                            "status, and confirming build artifacts are "
-                            "reproducible. Report each finding with status "
-                            "(pass/fail), details, and remediation if needed."
+        async for message in iter_agent_messages(
+            claude_agent_sdk.query(
+                prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+                options=claude_agent_sdk.ClaudeAgentOptions(
+                    **sdk_isolation_kwargs(),
+                    system_prompt=_SYSTEM_PROMPT,
+                    cwd=resolve_cwd_for_path(resolved_path),
+                    max_budget_usd=get_max_budget_usd(depth),
+                    allowed_tools=["Read", "Glob", "Grep", "Bash", "Agent"],
+                    permission_mode="default",
+                    max_turns=max_turns,
+                    agents={
+                        "health-checker": claude_agent_sdk.AgentDefinition(
+                            description="Health checker that runs tests and verifies CI status.",
+                            prompt=(
+                                "You are a release health checker. Focus on: "
+                                "running the test suite, checking dependency "
+                                "versions and lock files, verifying CI pipeline "
+                                "status, and confirming build artifacts are "
+                                "reproducible. Report each finding with status "
+                                "(pass/fail), details, and remediation if needed."
+                            ),
+                            tools=["Read", "Glob", "Grep", "Bash"],
+                            model=get_subagent_model("health-checker"),
                         ),
-                        tools=["Read", "Glob", "Grep", "Bash"],
-                        model=get_subagent_model("health-checker"),
-                    ),
-                    "security-scanner": claude_agent_sdk.AgentDefinition(
-                        description="Security scanner for vulnerabilities and secret leaks.",
-                        prompt=(
-                            "You are a security scanner for release prep. "
-                            "Focus on: known vulnerabilities in dependencies, "
-                            "outdated packages with CVEs, hardcoded secrets "
-                            "or credentials, eval/exec usage, and path "
-                            "traversal risks. Report each finding with "
-                            "severity, file path, and remediation advice."
+                        "security-scanner": claude_agent_sdk.AgentDefinition(
+                            description="Security scanner for vulnerabilities and secret leaks.",
+                            prompt=(
+                                "You are a security scanner for release prep. "
+                                "Focus on: known vulnerabilities in dependencies, "
+                                "outdated packages with CVEs, hardcoded secrets "
+                                "or credentials, eval/exec usage, and path "
+                                "traversal risks. Report each finding with "
+                                "severity, file path, and remediation advice."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("security-scanner"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("security-scanner"),
-                    ),
-                    "changelog-generator": claude_agent_sdk.AgentDefinition(
-                        description="Changelog generator from git history.",
-                        prompt=(
-                            "You are a changelog generator. Use git log to "
-                            "identify notable changes since the last release "
-                            "tag. Categorize changes as: Features, Fixes, "
-                            "Breaking Changes, Documentation, and Internal. "
-                            "Output a draft CHANGELOG section in Keep a "
-                            "Changelog format."
+                        "changelog-generator": claude_agent_sdk.AgentDefinition(
+                            description="Changelog generator from git history.",
+                            prompt=(
+                                "You are a changelog generator. Use git log to "
+                                "identify notable changes since the last release "
+                                "tag. Categorize changes as: Features, Fixes, "
+                                "Breaking Changes, Documentation, and Internal. "
+                                "Output a draft CHANGELOG section in Keep a "
+                                "Changelog format."
+                            ),
+                            tools=["Read", "Glob", "Grep", "Bash"],
+                            model=get_subagent_model("changelog-generator"),
                         ),
-                        tools=["Read", "Glob", "Grep", "Bash"],
-                        model=get_subagent_model("changelog-generator"),
-                    ),
-                    "release-assessor": claude_agent_sdk.AgentDefinition(
-                        description="Release assessor for overall readiness and go/no-go.",
-                        prompt=(
-                            "You are a release readiness assessor. Review "
-                            "the overall state of the project including: "
-                            "test coverage, documentation completeness, "
-                            "version bumps, migration guides, and any "
-                            "release blockers. Provide a clear go/no-go "
-                            "recommendation with justification."
+                        "release-assessor": claude_agent_sdk.AgentDefinition(
+                            description="Release assessor for overall readiness and go/no-go.",
+                            prompt=(
+                                "You are a release readiness assessor. Review "
+                                "the overall state of the project including: "
+                                "test coverage, documentation completeness, "
+                                "version bumps, migration guides, and any "
+                                "release blockers. Provide a clear go/no-go "
+                                "recommendation with justification."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("release-assessor"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("release-assessor"),
-                    ),
-                },
-            ),
+                    },
+                ),
+            )
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:

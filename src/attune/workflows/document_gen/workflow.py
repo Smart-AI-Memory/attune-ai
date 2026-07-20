@@ -27,6 +27,7 @@ from ..agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
+    iter_agent_messages,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -201,62 +202,64 @@ class DocumentGenerationWorkflow(BaseWorkflow):
         assistant_parts: list[str] = []
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
-        async for message in claude_agent_sdk.query(
-            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
-            options=claude_agent_sdk.ClaudeAgentOptions(
-                **sdk_isolation_kwargs(),
-                system_prompt=_SYSTEM_PROMPT,
-                cwd=resolve_cwd_for_path(resolved_path),
-                max_budget_usd=get_max_budget_usd(depth),
-                allowed_tools=["Read", "Glob", "Grep", "Agent"],
-                permission_mode="default",
-                max_turns=max_turns,
-                agents={
-                    "outline-planner": claude_agent_sdk.AgentDefinition(
-                        description="Outline planner that analyzes codebase structure.",
-                        prompt=(
-                            "You are a documentation outline planner. "
-                            "Analyze the codebase structure and plan a "
-                            "comprehensive documentation outline. Focus "
-                            "on: module organization, public APIs, key "
-                            "classes and functions, configuration options, "
-                            "and usage examples. Produce a structured "
-                            "outline with sections and subsections."
+        async for message in iter_agent_messages(
+            claude_agent_sdk.query(
+                prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+                options=claude_agent_sdk.ClaudeAgentOptions(
+                    **sdk_isolation_kwargs(),
+                    system_prompt=_SYSTEM_PROMPT,
+                    cwd=resolve_cwd_for_path(resolved_path),
+                    max_budget_usd=get_max_budget_usd(depth),
+                    allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                    permission_mode="default",
+                    max_turns=max_turns,
+                    agents={
+                        "outline-planner": claude_agent_sdk.AgentDefinition(
+                            description="Outline planner that analyzes codebase structure.",
+                            prompt=(
+                                "You are a documentation outline planner. "
+                                "Analyze the codebase structure and plan a "
+                                "comprehensive documentation outline. Focus "
+                                "on: module organization, public APIs, key "
+                                "classes and functions, configuration options, "
+                                "and usage examples. Produce a structured "
+                                "outline with sections and subsections."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("outline-planner"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("outline-planner"),
-                    ),
-                    "content-writer": claude_agent_sdk.AgentDefinition(
-                        description="Content writer that produces documentation text.",
-                        prompt=(
-                            "You are a documentation content writer. "
-                            "Write clear, accurate documentation for "
-                            "each section of the outline. Include: "
-                            "module descriptions, function signatures "
-                            "with type hints, parameter explanations, "
-                            "return value descriptions, code examples, "
-                            "and usage patterns. Use Google-style "
-                            "docstring format for API references."
+                        "content-writer": claude_agent_sdk.AgentDefinition(
+                            description="Content writer that produces documentation text.",
+                            prompt=(
+                                "You are a documentation content writer. "
+                                "Write clear, accurate documentation for "
+                                "each section of the outline. Include: "
+                                "module descriptions, function signatures "
+                                "with type hints, parameter explanations, "
+                                "return value descriptions, code examples, "
+                                "and usage patterns. Use Google-style "
+                                "docstring format for API references."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("content-writer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("content-writer"),
-                    ),
-                    "polish-reviewer": claude_agent_sdk.AgentDefinition(
-                        description="Polish reviewer that checks docs for quality.",
-                        prompt=(
-                            "You are a documentation polish reviewer. "
-                            "Review the generated documentation for: "
-                            "clarity and readability, technical accuracy, "
-                            "completeness of API coverage, correct code "
-                            "examples, consistent formatting, and missing "
-                            "sections. Report issues and suggest specific "
-                            "improvements."
+                        "polish-reviewer": claude_agent_sdk.AgentDefinition(
+                            description="Polish reviewer that checks docs for quality.",
+                            prompt=(
+                                "You are a documentation polish reviewer. "
+                                "Review the generated documentation for: "
+                                "clarity and readability, technical accuracy, "
+                                "completeness of API coverage, correct code "
+                                "examples, consistent formatting, and missing "
+                                "sections. Report issues and suggest specific "
+                                "improvements."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("polish-reviewer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("polish-reviewer"),
-                    ),
-                },
-            ),
+                    },
+                ),
+            )
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:

@@ -11,6 +11,9 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+import re
+from pathlib import Path
+
 import pytest
 
 import attune.workflows.agent_sdk_adapter as adapter
@@ -125,3 +128,34 @@ async def test_clean_stream_passes_through():
     """No teardown exit: every message yielded, loop completes."""
     a, b = object(), _FakeResultMessage(subtype="success")
     assert await _drain(_FakeQuery([a, b])) == [a, b]
+
+
+# Direct consumption of the raw SDK stream, e.g.
+# ``async for message in claude_agent_sdk.query(...)``. Such a loop
+# discards an already-successful result when the SDK subprocess raises
+# during teardown — the exact failure class iter_agent_messages exists
+# to fix.
+_UNWRAPPED_LOOP_RE = re.compile(r"async for .+ in claude_agent_sdk\.query\(")
+
+
+def test_every_workflow_query_loop_is_wrapped():
+    """Drift guard: no workflow consumes claude_agent_sdk.query() bare.
+
+    Every SDK consumption loop must go through iter_agent_messages so
+    the teardown-exit guard applies. A new workflow (or a revert) that
+    iterates the raw query stream reintroduces the discarded-success
+    bug this spec fixed — fail loudly with the offending locations.
+    """
+    workflows_dir = Path(adapter.__file__).resolve().parent
+    offenders: list[str] = []
+    for path in sorted(workflows_dir.rglob("*.py")):
+        if path.name == "agent_sdk_adapter.py":
+            # The wrapper's own module documents the raw pattern.
+            continue
+        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            if _UNWRAPPED_LOOP_RE.search(line):
+                offenders.append(f"{path.relative_to(workflows_dir)}:{lineno}")
+    assert not offenders, (
+        "SDK consumption loops not wrapped in iter_agent_messages "
+        f"(teardown-exit guard bypassed): {offenders}"
+    )

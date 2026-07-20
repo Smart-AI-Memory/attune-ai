@@ -30,6 +30,7 @@ from .agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
+    iter_agent_messages,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -220,61 +221,63 @@ class RefactorPlanWorkflow(BaseWorkflow):
         assistant_parts: list[str] = []
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
-        async for message in claude_agent_sdk.query(
-            prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
-            options=claude_agent_sdk.ClaudeAgentOptions(
-                **sdk_isolation_kwargs(),
-                system_prompt=_SYSTEM_PROMPT,
-                cwd=resolve_cwd_for_path(resolved_path),
-                max_budget_usd=get_max_budget_usd(depth),
-                allowed_tools=["Read", "Glob", "Grep", "Agent"],
-                permission_mode="default",
-                max_turns=max_turns,
-                agents={
-                    "debt-scanner": claude_agent_sdk.AgentDefinition(
-                        description=(
-                            "Tech debt scanner that finds code smells" " and duplication."
+        async for message in iter_agent_messages(
+            claude_agent_sdk.query(
+                prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+                options=claude_agent_sdk.ClaudeAgentOptions(
+                    **sdk_isolation_kwargs(),
+                    system_prompt=_SYSTEM_PROMPT,
+                    cwd=resolve_cwd_for_path(resolved_path),
+                    max_budget_usd=get_max_budget_usd(depth),
+                    allowed_tools=["Read", "Glob", "Grep", "Agent"],
+                    permission_mode="default",
+                    max_turns=max_turns,
+                    agents={
+                        "debt-scanner": claude_agent_sdk.AgentDefinition(
+                            description=(
+                                "Tech debt scanner that finds code smells" " and duplication."
+                            ),
+                            prompt=(
+                                "You are a tech debt scanner. Focus on: "
+                                "code smells, duplication, complex conditionals, "
+                                "dead code, overly long functions, and deeply "
+                                "nested logic. Report each finding with file "
+                                "path, line number, severity, and a brief "
+                                "description of the issue."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("debt-scanner"),
                         ),
-                        prompt=(
-                            "You are a tech debt scanner. Focus on: "
-                            "code smells, duplication, complex conditionals, "
-                            "dead code, overly long functions, and deeply "
-                            "nested logic. Report each finding with file "
-                            "path, line number, severity, and a brief "
-                            "description of the issue."
+                        "impact-analyzer": claude_agent_sdk.AgentDefinition(
+                            description=("Impact analyzer for refactoring risk assessment."),
+                            prompt=(
+                                "You are a refactoring impact analyzer. Focus on: "
+                                "test coverage of affected code, dependency chains, "
+                                "API surface changes, and downstream consumers. "
+                                "For each refactoring candidate, report the impact "
+                                "on tests, dependencies, and public interfaces."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("impact-analyzer"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("debt-scanner"),
-                    ),
-                    "impact-analyzer": claude_agent_sdk.AgentDefinition(
-                        description=("Impact analyzer for refactoring risk assessment."),
-                        prompt=(
-                            "You are a refactoring impact analyzer. Focus on: "
-                            "test coverage of affected code, dependency chains, "
-                            "API surface changes, and downstream consumers. "
-                            "For each refactoring candidate, report the impact "
-                            "on tests, dependencies, and public interfaces."
+                        "plan-generator": claude_agent_sdk.AgentDefinition(
+                            description=(
+                                "Plan generator that creates prioritized" " refactoring plans."
+                            ),
+                            prompt=(
+                                "You are a refactoring plan generator. Using "
+                                "findings from the debt scanner and impact "
+                                "analyzer, create a prioritized refactoring plan. "
+                                "For each item include: effort estimate "
+                                "(small/medium/large), risk level (low/medium/high), "
+                                "expected benefit, and suggested implementation order."
+                            ),
+                            tools=["Read", "Glob", "Grep"],
+                            model=get_subagent_model("plan-generator"),
                         ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("impact-analyzer"),
-                    ),
-                    "plan-generator": claude_agent_sdk.AgentDefinition(
-                        description=(
-                            "Plan generator that creates prioritized" " refactoring plans."
-                        ),
-                        prompt=(
-                            "You are a refactoring plan generator. Using "
-                            "findings from the debt scanner and impact "
-                            "analyzer, create a prioritized refactoring plan. "
-                            "For each item include: effort estimate "
-                            "(small/medium/large), risk level (low/medium/high), "
-                            "expected benefit, and suggested implementation order."
-                        ),
-                        tools=["Read", "Glob", "Grep"],
-                        model=get_subagent_model("plan-generator"),
-                    ),
-                },
-            ),
+                    },
+                ),
+            )
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:

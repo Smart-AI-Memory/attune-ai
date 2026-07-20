@@ -1,6 +1,7 @@
 # Decisions: SDK teardown-exit-1 guard
 
-**Status:** DRAFT (2026-06-26) — recommitted at 2026-07-14 triage (failure class still live)
+**Status:** EXECUTED (2026-07-20) — design approved as drafted and
+execution armed by the chair 2026-07-20; see the execution log below
 **Requirements:** [requirements.md](requirements.md) ·
 **Design:** [design.md](design.md)
 
@@ -65,6 +66,63 @@ the error-translation path unchanged.
 - **OQ3 → D3.** Teardown matching: `saw_success` gate (primary) +
   `"command failed"` substring (secondary); `Exception` only, never
   `BaseException`.
+
+---
+
+## Execution log — 2026-07-20
+
+Design approved as drafted; execution armed by the chair 2026-07-20.
+
+**Already landed before this session (PR #1099):** T1 — the
+`iter_agent_messages` + `_is_benign_teardown_exit` wrapper in
+`agent_sdk_adapter.py`, its unit tests
+(`tests/unit/workflows/test_iter_agent_messages.py`: R1 recover,
+R2 pre-success propagates, R3 non-success propagates, D1
+`is_error=True`-with-`subtype="success"` still recovers,
+message-mismatch post-success propagates, `BaseException`
+propagates, clean stream passes through), and T2 adoption in the
+eight spec-named workflows.
+
+**This session — scope drift corrected + T2 completed + guards:**
+
+- Grepping the actual `async for … in claude_agent_sdk.query(`
+  instances (per the spec-scope-drift lesson) found SEVEN more
+  consumption loops the spec's list predated: `refactor_plan`,
+  `release_prep`, `deep_review`, `test_gen/workflow`,
+  `test_audit/workflow`, `doc_audit/workflow`,
+  `document_gen/workflow`. All seven now wrap the query in
+  `iter_agent_messages(...)` — the same one-line adoption, no other
+  body changes. No `claude_agent_sdk.query(` call sites exist
+  outside `src/attune/workflows/`.
+- Regression guard added
+  (`test_every_workflow_query_loop_is_wrapped`): scans
+  `src/attune/workflows/**/*.py` and fails on any bare
+  `async for … in claude_agent_sdk.query(` loop, so a new workflow
+  or a revert cannot silently reintroduce the discarded-success bug.
+- `CHANGELOG.md` `### Fixed` entry added.
+
+**Receipts (probes actually run):**
+
+- `pytest tests/unit/workflows/test_iter_agent_messages.py`
+  (serial, `-o addopts=`): 8 passed.
+- Existing unit tests for the seven newly wrapped workflows
+  (doc_audit, document_gen, test_audit, test_gen dirs +
+  deep_review / refactor_plan / release_prep / parallel_test_gen
+  execute+behavioral files, serial): 531 passed.
+- Coverage on the seven modified modules (coverage-from-/tmp
+  worktree dance): 98% total — deep_review 91%, test_audit 99%,
+  test_gen 99%, doc_audit / document_gen / refactor_plan /
+  release_prep 100%.
+- Pinned pre-commit `black` + `ruff` pre-flighted on all touched
+  files: Passed.
+- D3 false-green constraint unchanged: the wrapper still re-raises
+  everything pre-success (R2/R3 tests), so genuine failures reach
+  `capture_subprocess_failure` / error translation as before; the
+  dispatcher's exit-0-on-`success=False` behavior was not touched.
+
+T3 (optional real nested dogfood run) not run this session — it
+spends real API money and stays a manual/keyed receipt per the
+design's risk note.
 
 ---
 
