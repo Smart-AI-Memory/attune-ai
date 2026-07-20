@@ -16451,9 +16451,23 @@ def ", start_idx + 1)` for module-
   `**Status:** approved` line above the real status header, and
   `decisions.md`'s status line `R6 spend alarm shipped (2026-06-20)`
   was REWRITTEN to `approved (2026-06-20)` — destroying real
-  status. Prime suspect: spec-lifecycle-gates activation (#1480)
-  invoked from a hook. Until the chip fixing it lands
-  (task_5d1b2e1f), treat unexpected `M docs/specs/*/…` entries in
-  `git status` as hook artifacts: `git diff` them, `git checkout --`
-  to discard, and keep them out of unrelated PRs — committing the
-  mangle would silently corrupt spec state on main.
+  status. RESOLVED 2026-07-19 (PR #1488): the writer was NOT a
+  hook and NOT spec-lifecycle-gates (#1480 — the gates runner
+  never mutates spec files). The pending-writes journal
+  (`~/.attune/ops/pending_writes.jsonl`) held the receipt: two
+  `set_spec_status` entries from the ops dashboard's
+  `PUT /api/specs/{slug}/{phase}/status` endpoint
+  (`_rewrite_status_line` in `src/attune/ops/routes/specs.py`),
+  which (a) didn't recognize the `**Status: value**` convention
+  and inserted a duplicate stamp, (b) replaced descriptive
+  status values wholesale, and (c) used `\s*` under
+  `re.MULTILINE` so the sub swallowed adjacent blank lines.
+  Fixed: flips are refused (409, file byte-untouched) unless the
+  existing value's leading token is a recognized status token;
+  no insert when ANY status-like line exists; span-splice
+  replacement. Durable diagnostics: (1) unexpected spec-file
+  modifications → grep the pending-writes journal FIRST — it
+  names the endpoint, pid, project_root, and timestamp; (2)
+  still treat unexpected `M docs/specs/*/…` entries as
+  artifacts to `git diff` + discard, never commit into
+  unrelated PRs.
