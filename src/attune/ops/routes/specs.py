@@ -243,7 +243,9 @@ def _atomic_write(target: Path, text: str) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".tmp", dir=str(target.parent))
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
+        # newline="\n" keeps LF on every platform — Windows text-mode
+        # translation would otherwise stamp CRLF into tracked LF markdown.
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
             f.write(text)
         os.replace(tmp, target)
     except Exception:  # noqa: BLE001
