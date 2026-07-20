@@ -16856,3 +16856,22 @@ def ", start_idx + 1)` for module-
   conflict. Same family as "a chair-selected queue item can
   already be stale" — this is the conflict-fixing surface: a
   conflict is not proof the PR still carries value.
+
+- **Branch-subsumption scans that check only ADDED lines are blind
+  to deletion-work — a branch whose value is REMOVALS reads as
+  "fully contained in main" and gets wrongly deleted**: 2026-07-20
+  branch sweep (35 remote branches deleted with receipts).
+  `claude/phase2-consolidation` was ruled subsumed and deleted,
+  then restored (960d091cd): its diff vs origin/main is 4
+  insertions / 96 deletions — the scan found the handful of added
+  lines already on main and never asked whether the DELETIONS had
+  landed. Deletions still present on main = unlanded work, same as
+  missing added lines. Receipt recipe for a subsumption ruling:
+  check BOTH directions — added lines
+  (`git diff origin/main...<tip> | grep '^+'` each present on
+  main) AND removed lines (`grep '^-'` each ABSENT from main); any
+  removed line still on main = the branch carries unlanded
+  deletion-work, keep it. Same family as "a DIRTY PR may be fully
+  SUPERSEDED" (2026-07-20) — both are containment reads; this one
+  is the inverse polarity. If the sweep re-runs, the scan must
+  count deletions (chair-ruled, session 2026-07-20 evening).
