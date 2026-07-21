@@ -1,5 +1,9 @@
 # Antigravity Adapter — Decisions
 
+**Status:** shipped (2026-07-21) — completion pass below;
+reopen condition: Antigravity self-update breaks a verified
+mechanism
+
 ## D1 — contract delivery: RATIFIED (a) — 2026-07-18, Patrick
 
 Live receipts, 2026-07-18, Antigravity app 2.3.1 + `agy` CLI 1.1.4
@@ -186,3 +190,29 @@ Carried risk (unchanged from D1): the IDE-native
 `.agents/AGENTS.md` load path and the CLI's `trigger:` frontmatter
 + relative @-expansion are verified behaviors on app 2.3.1 /
 agy 1.1.4 — re-verify after self-updates.
+
+## 2026-07-21 — Completion pass: spec shipped (chair-requested)
+
+All design forks resolved and every acceptance criterion receipted;
+the stale "D3 still open" status line is corrected in this pass.
+
+| AC | Receipt | Where |
+|---|---|---|
+| AC-1 skills (zero-work) | PASS 41/41 mirrored skills discovered (`--add-dir`/workspace required — recorded caveat) | entry above (2026-07-18) |
+| AC-2 contract via rules | PASS with two doc-vs-tool corrections (`trigger: always_on` frontmatter; rules-file-relative `@`-paths) | entry above + transcripts |
+| AC-3 drift guard | D1=(a) ruled, so the (b)-conditional lapses; #1445's `.agents/AGENTS.md` fourth projector target carries `--check` drift-guarding + two tests anyway | #1445 (`cc2e7d1a2`) |
+| AC-4 preflight + checks | Re-run LIVE this pass: preflight 0 failed (governance 76 passed, skills-projection in sync), `project_collaboration_contract.py --check` all four targets unchanged, `sync_agents_skills.py --check` 42 ok | this entry |
+| AC-5 full keyless suite | All 10 required contexts green incl. the Windows lane | #1445 |
+
+R1-R6 hold: contract reaches Antigravity mechanically (rule file +
+`.agents/AGENTS.md` byte-copy), skills mirror consumed as-is, R4
+preflight check silent-when-absent, global config untouched. No
+design.md was ever authored — the design forks (D1-D3) lived in
+requirements.md and were resolved by receipts in this file; the
+stage ladder reads this spec as shipped from the terminal statuses.
+
+**Carried risk (standing, unchanged):** the verified behaviors are
+pinned to app 2.3.1 / agy 1.1.4 — re-verify the `trigger:`
+frontmatter, relative `@`-expansion, and IDE `.agents/AGENTS.md`
+load path after Antigravity self-updates. Reopen via a dated entry
+here if a self-update breaks either mechanism.
