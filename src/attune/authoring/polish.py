@@ -803,36 +803,7 @@ def build_source_summary(
         parts.append("")
         parts.append("Classes:")
         for cls in classes[:10]:
-            doc = cls.get("doc", "")
-            name = cls["name"]
-            dc_tag = " [dataclass]" if cls.get("is_dataclass") else ""
-            parts.append(f"  - {name}{dc_tag}" + (f": {doc}" if doc else ""))
-            methods = cls.get("methods", "").strip()
-            if methods:
-                for method_line in methods.splitlines():
-                    stripped = method_line.strip()
-                    if stripped:
-                        parts.append(f"      {stripped}")
-            for dc_field in cls.get("dataclass_fields", []) or []:
-                field_name = dc_field.get("name", "")
-                field_type = dc_field.get("type", "")
-                field_default = dc_field.get("default", "")
-                line = f"      field: {field_name}"
-                if field_type:
-                    line += f": {field_type}"
-                if field_default:
-                    line += f" = {field_default}"
-                parts.append(line)
-            for prop in cls.get("properties", []) or []:
-                prop_name = prop.get("name", "")
-                prop_type = prop.get("return_type", "")
-                prop_doc = prop.get("doc", "")
-                line = f"      property: {prop_name}"
-                if prop_type:
-                    line += f" -> {prop_type}"
-                if prop_doc:
-                    line += f"  # {prop_doc}"
-                parts.append(line)
+            parts.extend(_summarize_class(cls))
 
     functions = function_signatures or [
         {
@@ -846,32 +817,7 @@ def build_source_summary(
         parts.append("")
         parts.append("Functions:")
         for fn in functions[:10]:
-            sig = fn.get("signature", "").strip()
-            doc = fn.get("doc", "")
-            if sig:
-                header = f"  - {sig}"
-            else:
-                header = f"  - {fn['name']}()"
-            if doc:
-                header = f"{header} — {doc}"
-            parts.append(header)
-            raises = fn.get("raises") or []
-            for r in raises:
-                class_name = r.get("class_name", "") if isinstance(r, dict) else r
-                message = r.get("message", "") if isinstance(r, dict) else ""
-                if message:
-                    parts.append(f"      raises: {class_name} — {message!r}")
-                else:
-                    parts.append(f"      raises: {class_name}")
-            param_literals = fn.get("param_literals") or {}
-            for pname, values in param_literals.items():
-                parts.append(f"      {pname} allowed values: {', '.join(values)}")
-            return_data = fn.get("return_data")
-            if return_data is not None:
-                parts.append("      returns (literal data — render this content in the reference):")
-                rendered = _format_return_data(return_data)
-                for line in rendered.splitlines():
-                    parts.append(f"        {line}")
+            parts.extend(_summarize_function(fn))
 
     if module_constants:
         parts.append("")
@@ -890,3 +836,69 @@ def build_source_summary(
     parts.append(f"Total source files: {file_count}")
 
     return "\n".join(parts)
+
+
+def _summarize_class(cls: dict) -> list[str]:
+    """Summary lines for one class entry (see build_source_summary)."""
+    lines: list[str] = []
+    doc = cls.get("doc", "")
+    name = cls["name"]
+    dc_tag = " [dataclass]" if cls.get("is_dataclass") else ""
+    lines.append(f"  - {name}{dc_tag}" + (f": {doc}" if doc else ""))
+    methods = cls.get("methods", "").strip()
+    if methods:
+        for method_line in methods.splitlines():
+            stripped = method_line.strip()
+            if stripped:
+                lines.append(f"      {stripped}")
+    for dc_field in cls.get("dataclass_fields", []) or []:
+        field_name = dc_field.get("name", "")
+        field_type = dc_field.get("type", "")
+        field_default = dc_field.get("default", "")
+        line = f"      field: {field_name}"
+        if field_type:
+            line += f": {field_type}"
+        if field_default:
+            line += f" = {field_default}"
+        lines.append(line)
+    for prop in cls.get("properties", []) or []:
+        prop_name = prop.get("name", "")
+        prop_type = prop.get("return_type", "")
+        prop_doc = prop.get("doc", "")
+        line = f"      property: {prop_name}"
+        if prop_type:
+            line += f" -> {prop_type}"
+        if prop_doc:
+            line += f"  # {prop_doc}"
+        lines.append(line)
+    return lines
+
+
+def _summarize_function(fn: dict) -> list[str]:
+    """Summary lines for one function entry (see build_source_summary)."""
+    lines: list[str] = []
+    sig = fn.get("signature", "").strip()
+    doc = fn.get("doc", "")
+    if sig:
+        header = f"  - {sig}"
+    else:
+        header = f"  - {fn['name']}()"
+    if doc:
+        header = f"{header} — {doc}"
+    lines.append(header)
+    for r in fn.get("raises") or []:
+        class_name = r.get("class_name", "") if isinstance(r, dict) else r
+        message = r.get("message", "") if isinstance(r, dict) else ""
+        if message:
+            lines.append(f"      raises: {class_name} — {message!r}")
+        else:
+            lines.append(f"      raises: {class_name}")
+    for pname, values in (fn.get("param_literals") or {}).items():
+        lines.append(f"      {pname} allowed values: {', '.join(values)}")
+    return_data = fn.get("return_data")
+    if return_data is not None:
+        lines.append("      returns (literal data — render this content in the reference):")
+        rendered = _format_return_data(return_data)
+        for line in rendered.splitlines():
+            lines.append(f"        {line}")
+    return lines
