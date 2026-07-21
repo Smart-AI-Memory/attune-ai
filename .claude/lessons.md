@@ -17036,3 +17036,24 @@ def ", start_idx + 1)` for module-
   the derivation logic — on a fast-merging day the main checkout is
   stale within hours. Extends the editable-MAPPING launch lesson
   (same server recipe) with the data-side staleness trap.
+
+- **A duplicate test FUNCTION NAME in one module silently shadows the
+  earlier definition — the shadowed test never runs and the suite
+  stays green**: 2026-07-21, adding a `test_removed_pages_404` for
+  the Patterns/Sessions removal to `tests/unit/ops/test_smoke.py`
+  when a function of that exact name already existed further down
+  (the earlier /memory + /releases removal guard). Python module
+  semantics: the later `def` rebinds the name, pytest collects only
+  the surviving definition — my new 404 guard passed review, the
+  suite reported green, and the guard NEVER EXECUTED. No error, no
+  warning in the run output (ruff's F811 catches it only when the
+  linter runs on the file — pre-commit did flag it as "2 fixed"
+  only after the merge-fix; the in-between state ran clean). Rules:
+  (1) before adding a test function, grep the module for the name —
+  and for an existing test of the same CONCEPT: the right fix here
+  was extending the existing parametrize list, not a new function;
+  (2) after adding a test, verify it actually RAN
+  (`pytest <file> -k <name> -v` showing the node, or check the
+  count went up by the expected number) — "suite green after adding
+  a test" is not proof the test executed. Same receipt-discipline
+  family as "registered != working", applied to the test layer.
