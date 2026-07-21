@@ -34,7 +34,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from attune.ops import data, health_snapshot
 from attune.ops.security import require_client_token
@@ -70,7 +70,7 @@ def _maybe_kick_refresh(request: Request, snapshot: dict[str, object] | None) ->
     request.app.state.health_refresh.start(cfg.project_root, cfg.attune_home)
 
 
-@router.get("/health/library", response_class=HTMLResponse)
+@router.get("/health", response_class=HTMLResponse)
 async def health_library_page(request: Request) -> HTMLResponse:
     """Render the latest library-health snapshot, refreshing in the background if stale."""
     cfg = request.app.state.config
@@ -89,6 +89,7 @@ async def health_library_page(request: Request) -> HTMLResponse:
             refreshing=request.app.state.health_refresh.running,
             stale_after_hours=health_snapshot.DEFAULT_STALE_AFTER_HOURS,
             latest_report=health_snapshot.latest_llm_report(cfg.project_root),
+            env=data.env_health(cfg),
         ),
     )
 
@@ -117,3 +118,10 @@ async def health_library_status(request: Request) -> JSONResponse:
             "collected_at": snapshot.get("collected_at") if snapshot else None,
         }
     )
+
+
+@router.get("/health/library")
+async def health_library_redirect() -> RedirectResponse:
+    """Permanent redirect — the Library Health page merged into /health
+    (chair-ruled 2026-07-21). Old bookmarks and links keep working."""
+    return RedirectResponse(url="/health", status_code=301)

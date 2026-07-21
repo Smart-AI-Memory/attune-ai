@@ -114,12 +114,12 @@ def _no_real_collection(monkeypatch: pytest.MonkeyPatch) -> None:
 
 class TestEmptyState:
     def test_renders_200_with_no_snapshot(self, client: TestClient) -> None:
-        resp = client.get("/health/library")
+        resp = client.get("/health")
         assert resp.status_code == 200
         assert "No snapshot collected yet" in resp.text
 
     def test_empty_state_kicks_background_refresh(self, client: TestClient, cfg: Config) -> None:
-        client.get("/health/library")
+        client.get("/health")
         # A snapshot with no prior data is "stale" by definition, so
         # the GET should have started a background refresh.
         resp = client.get("/api/health/library/status")
@@ -137,7 +137,7 @@ class TestPopulatedSnapshot:
     def test_renders_scoreboard_values(self, client: TestClient, cfg: Config) -> None:
         snapshot = _fresh_snapshot()
         hs.persist_snapshot(snapshot, cfg.attune_home)
-        resp = client.get("/health/library")
+        resp = client.get("/health")
         assert resp.status_code == 200
         body = resp.text
         assert "94.1%" in body
@@ -150,7 +150,7 @@ class TestPopulatedSnapshot:
         snapshot = _fresh_snapshot()
         del snapshot["signals"]["sloc"]["value"]["test_function_count"]
         hs.persist_snapshot(snapshot, cfg.attune_home)
-        resp = client.get("/health/library")
+        resp = client.get("/health")
         assert resp.status_code == 200
         assert "993 files" in resp.text
 
@@ -159,7 +159,7 @@ class TestPopulatedSnapshot:
     ) -> None:
         snapshot = _fresh_snapshot()
         hs.persist_snapshot(snapshot, cfg.attune_home)
-        resp = client.get("/health/library")
+        resp = client.get("/health")
         assert 'id="health-stale-badge"' not in resp.text
         assert "fresh" in resp.text
 
@@ -175,7 +175,7 @@ class TestPopulatedSnapshot:
         # assertion (it would overwrite latest.json mid-test).
         monkeypatch.setattr(hs.HealthRefreshRunner, "start", lambda self, *a, **k: False)
 
-        resp = client.get("/health/library")
+        resp = client.get("/health")
         assert resp.status_code == 200
         assert 'id="health-stale-badge"' in resp.text
         assert old_ts in resp.text
@@ -183,7 +183,7 @@ class TestPopulatedSnapshot:
     def test_unavailable_signal_renders_dash(self, client: TestClient, cfg: Config) -> None:
         snapshot = _fresh_snapshot(coverage={"status": "unavailable", "reason": "network down"})
         hs.persist_snapshot(snapshot, cfg.attune_home)
-        resp = client.get("/health/library")
+        resp = client.get("/health")
         assert resp.status_code == 200
         assert "unavailable" in resp.text
 
@@ -195,13 +195,13 @@ class TestPopulatedSnapshot:
             }
         )
         hs.persist_snapshot(snapshot, cfg.attune_home)
-        resp = client.get("/health/library")
+        resp = client.get("/health")
         assert "findings (exit 1)" in resp.text
 
     def test_hotspots_table_renders_churn_files(self, client: TestClient, cfg: Config) -> None:
         snapshot = _fresh_snapshot()
         hs.persist_snapshot(snapshot, cfg.attune_home)
-        resp = client.get("/health/library")
+        resp = client.get("/health")
         assert "src/attune/ops/data.py" in resp.text
 
     def test_links_to_latest_llm_report_when_present(self, client: TestClient, cfg: Config) -> None:
@@ -210,13 +210,13 @@ class TestPopulatedSnapshot:
         (reports_dir / "library-health-2026-07-14.md").write_text("report", encoding="utf-8")
         snapshot = _fresh_snapshot()
         hs.persist_snapshot(snapshot, cfg.attune_home)
-        resp = client.get("/health/library")
+        resp = client.get("/health")
         assert "docs/reports/library-health-2026-07-14.md" in resp.text
 
     def test_no_report_shows_fallback_message(self, client: TestClient, cfg: Config) -> None:
         snapshot = _fresh_snapshot()
         hs.persist_snapshot(snapshot, cfg.attune_home)
-        resp = client.get("/health/library")
+        resp = client.get("/health")
         assert "No LLM narrative report found" in resp.text
 
 
@@ -269,3 +269,22 @@ class TestStatusRoute:
         resp = client.get("/api/health/library/status")
         assert resp.status_code == 200
         assert resp.json()["collected_at"] is None
+
+
+def test_old_library_path_redirects(client):
+    """/health/library 301s to /health — the pages merged (2026-07-21).
+
+    Old bookmarks keep working; the refresh POST and status API keep
+    their original /health/library/* paths untouched.
+    """
+    resp = client.get("/health/library", follow_redirects=False)
+    assert resp.status_code == 301
+    assert resp.headers["location"] == "/health"
+
+
+def test_health_page_includes_environment_section(client):
+    """The merged page carries the former Health page's env table."""
+    resp = client.get("/health")
+    assert resp.status_code == 200
+    assert "Environment" in resp.text
+    assert "attune-home" in resp.text
