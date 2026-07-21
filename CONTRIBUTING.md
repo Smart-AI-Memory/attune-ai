@@ -35,11 +35,10 @@ cd attune-ai
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install in development mode
-pip install -e .
-
-# Install development dependencies
-pip install pytest pytest-cov pytest-asyncio
+# Install in development mode with the dev tooling the test suite
+# needs (pytest + xdist/timeout/asyncio plugins, black, ruff, mypy).
+# The quotes matter in zsh.
+pip install -e ".[dev]"
 
 # Run tests to verify setup
 pytest tests/

@@ -255,6 +255,35 @@ a separate CI job by D6's own carve-out, staged advisory→required;
 next G4 unit. G3 stays blocked on hook-timeout-budget Phase 0.2
 values.
 
+## 2026-07-21 — G4(c) SHIPPED red-first (same held PR): clean-venv lane
+
+`scripts/extract_contributing_setup.py` extracts CONTRIBUTING.md's
+LITERAL setup fence at run time (drift-guard seam: hardcoding the
+commands in the workflow would itself be claim-drift), rewriting
+only three contracted line classes — `git clone` / `cd attune-ai`
+(commented; CI runs in the checkout under test) and the bare
+`pytest tests/` verification line (gets `-x -k smoke`). Doc
+restructuring fails LOUDLY (missing heading/fence/pytest line →
+exit 1). `.github/workflows/contributing-smoke.yml` runs it in a
+fresh venv, keyless (empty-string key), on PRs touching the
+setup-relevant files + weekly + dispatch. **ADVISORY**
+(`continue-on-error: true`); promote to required after two green
+weeks per the ci-matrix-right-sizing precedent — promotion check
+due ~2026-08-04.
+
+**Red-first receipt (LOCAL live-fire, not simulated):** executing
+the doc's then-current literal commands in a fresh venv died with
+`pytest: error: unrecognized arguments: -n` (exit 4) — the exact
+`[dev]`-extra/pytest-xdist drift the 07-11 fix set predicted: the
+doc installed bare `pytest pytest-cov pytest-asyncio` while
+pytest.ini's addopts require xdist. Fix: the setup fence now
+installs `pip install -e ".[dev]"`. Green rerun: exit 0, 172
+passed / 5 skipped in the fresh venv under the doc's own commands.
+
+**G4 is now fully built (a+b+c, one held PR).** The gate family's
+remaining unit is G3 only (blocked on hook-timeout-budget Phase
+0.2 values).
+
 ## 2026-07-21 — G4 build receipt + design-phase waiver (chair)
 
 G4 (a+b+c) is complete on branch `feat/claim-drift-g4` as **held
