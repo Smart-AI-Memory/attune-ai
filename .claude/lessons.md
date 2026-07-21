@@ -16956,3 +16956,47 @@ def ", start_idx + 1)` for module-
   from the new root. Pairs with the `prune_worktree_self_deletion_
   hazard` global memory (which is about NOT deleting the active
   worktree by accident); this is the deliberate-case procedure.
+
+- **`auto-merge-when-green` fires on REQUIRED checks only — Windows
+  lanes are NOT required, so a Windows-relevant diff can auto-merge
+  before any Windows lane runs it; hold the label until they pass**:
+  2026-07-20, the exact mechanism that put a real bug on main. The
+  spec-status writer (#1488, `_atomic_write` in
+  `src/attune/ops/routes/specs.py`) opened its temp file in text
+  mode without `newline=`, so Windows translated LF→CRLF — failing
+  `test_double_put_is_byte_identical` on every windows-latest lane.
+  It auto-merged anyway (required set: pre-commit/lint/coverage/
+  `test (ubuntu 3.12)`/CodeQL/…, no Windows lane), main went
+  Windows-red for a day, and every full-matrix PR inherited the
+  failure (#1529 was blamed for it). Fix #1536 + procedure: for a
+  diff touching path handling, subprocess, encoding, or file I/O,
+  REMOVE/withhold `auto-merge-when-green`, wait for the 5
+  windows-latest lanes (~16-19 min), then re-add the label — the
+  label-on-green convenience is only safe for platform-neutral
+  diffs. Bug-class rider: atomic/temp-file writers must pin
+  `newline="\n"` (text mode default translates on Windows and
+  corrupts tracked LF markdown); a byte-identity round-trip test is
+  the guard that catches it. Extends the core "admin-merging before
+  Windows lanes complete buries a real bug on main" lesson to the
+  auto-merge surface.
+
+- **Chair-rulings commits on main collide with spec-executing
+  branches in `decisions.md` — resolve by keeping main's RULING
+  record and appending the branch's IMPLEMENTATION evidence as its
+  own dated entry, never by duplicating the ruling text**: hit twice
+  on 2026-07-20 (#1529 rebase: same-file tail-append collision;
+  #1532 rebase: add/add — both sides CREATED the spec's
+  decisions.md). The chair's sitting writes the ruling to main while
+  the executing branch, in flight, writes its own ruling+evidence
+  record — a squash-window race that recurs every rulings day.
+  Resolution shape: `git checkout --ours` (main's file during
+  rebase) as the base, then append the branch's unique value — the
+  execution/receipts section retitled as an implementation entry
+  ("Shipped (#NNNN): execution evidence") with its duplicate
+  restatement of the ruling dropped; merge the two status lines into
+  one in-vocabulary token with both provenances in the annotation.
+  Same discipline for CHANGELOG same-anchor collisions: keep both
+  bullets. Pairs with the sibling-worktree shepherding lesson (do
+  these edits via Bash in the branch's own worktree) and the
+  status-vocabulary lesson (the merged status line must still lead
+  with a vocabulary token).
