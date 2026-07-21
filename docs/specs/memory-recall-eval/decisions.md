@@ -247,3 +247,30 @@ heuristic label) when Ollama is unavailable, because a garbage label
 is worse than none. Plus an `ops/data.py` reader that turns verdicts
 into the noise denominator `estimate_intervention_signal`'s caption
 says is missing. Design pass owed before build.
+
+## 2026-07-20 — Design approved: OQ1–OQ4 ruled (chair: Patrick)
+
+Design pass for this spec's own content (the PersonalMemory
+recall-accuracy benchmark — NOT the feedback-signal step-2 scorer,
+which is homed in `docs/specs/memory-feedback-signal/`; the
+cross-stamped status line pointing there is corrected as part of
+this entry). All four open questions ruled as recommended
+(`1a 2a 3a 4a`); see [design.md](design.md) for the full option
+text.
+
+- **D1 — Harness home: standalone script**
+  (`scripts/eval_personal_memory_recall.py`). Zero CI surface, no
+  marker plumbing; matches R6 "cheap, not infrastructure."
+- **D2 — Corpus write path: real `capture()` under a keyless env**
+  (`ANTHROPIC_API_KEY=""`). Exercises the actual write path the MCP
+  tools use; polish degrades to the deterministic skeleton, zero
+  spend, zero variance.
+- **D3 — Negative-query FP criterion: self-calibrating threshold.**
+  FP = a negative query whose top-1 score ≥ the minimum top-1 score
+  among correctly-answered positive queries; degenerate cases
+  reported as "criterion inapplicable," never a fake rate.
+- **D4 — Report destination: script prints a paste-ready markdown
+  block**; the agent writes the single dated decisions.md entry
+  (R5). No script write-access to spec files.
+
+Execution armed: T1–T4 per design.md's task blocks.

@@ -5,7 +5,7 @@
 > recalls curated memory correctly — before investing further in the
 > subsystem or deciding it needs work.
 
-**Status:** active (2026-07-14) — feedback-signal step 1 (per-surfacing capture records on all three injection surfaces) shipped 2026-07-14; step 2 (Stop-hook verdict scorer + noise-denominator reader) scoped in decisions.md, design pass owed
+**Status:** approved (2026-07-20, chair — design OQ1–OQ4 ruled, execution armed; see design.md + decisions.md. Note: the prior status line here mistakenly described memory-feedback-signal work — that spec is tracked separately)
 **Owner:** Patrick + agent
 **Related:**
 
