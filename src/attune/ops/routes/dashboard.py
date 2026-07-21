@@ -221,13 +221,6 @@ async def telemetry_page(request: Request) -> HTMLResponse:
     )
 
 
-@router.get("/health", response_class=HTMLResponse)
-async def health_page(request: Request) -> HTMLResponse:
-    cfg = request.app.state.config
-    snapshot = data.env_health(cfg)
-    return _render(request, "health.html", page="health", snapshot=snapshot)
-
-
 # ---------------------------------------------------------------------------
 # Help — see docs/specs/ops-help-page/
 # ---------------------------------------------------------------------------

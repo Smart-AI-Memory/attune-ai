@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Library Health{% endblock %}
+{% block title %}Health{% endblock %}
 {% block content %}
 <section class="page-head">
   <h1>Library Health</h1>
@@ -245,4 +245,24 @@
   {% endif %}
 })();
 </script>
+
+<section class="page-head" style="margin-top: 2rem;">
+  <h2>Environment</h2>
+  <p class="page-sub">Environment + state file presence (formerly the standalone Health page).</p>
+</section>
+
+<table class="data-table kv">
+  <tbody>
+    <tr><th>Python</th><td><code>{{ env.python }}</code></td></tr>
+    <tr><th>Platform</th><td><code>{{ env.platform }}</code></td></tr>
+    <tr><th>Project root</th><td><code>{{ env.project_root }}</code></td></tr>
+    <tr><th>attune-home</th><td><code>{{ env.attune_home }}</code></td></tr>
+    <tr><th>attune-home exists</th><td>{% if env.attune_home_exists %}<span class="chip chip-ok">yes</span>{% else %}<span class="chip chip-warn">no</span>{% endif %}</td></tr>
+    <tr><th>Telemetry log</th><td>{% if env.telemetry_present %}<span class="chip chip-ok">present</span>{% else %}<span class="chip chip-muted">absent</span>{% endif %}</td></tr>
+    <tr><th>Memory dir</th><td>{% if env.memory_dir_present %}<span class="chip chip-ok">present</span>{% else %}<span class="chip chip-muted">absent</span>{% endif %}</td></tr>
+    <tr><th>Sessions dir</th><td>{% if env.sessions_dir_present %}<span class="chip chip-ok">present</span>{% else %}<span class="chip chip-muted">absent</span>{% endif %}</td></tr>
+    <tr><th>ANTHROPIC_API_KEY</th><td>{% if env.anthropic_api_key %}<span class="chip chip-ok">set</span>{% else %}<span class="chip chip-muted">unset</span>{% endif %}</td></tr>
+  </tbody>
+</table>
+
 {% endblock %}
