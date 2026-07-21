@@ -17232,3 +17232,50 @@ def ", start_idx + 1)` for module-
   never commit-in-place. Same family as "--delete-branch orphans
   stacked PRs": merge automation acts on branch state you've
   already moved past.
+
+- **Piping `git commit` output through `tail`/`grep` can hide a
+  genuinely FAILING pre-commit hook — three "silent skips" that were
+  actually one loud ruff failure**: 2026-07-21, three consecutive
+  commit attempts "landed nothing" (old HEAD, files still staged)
+  and looked like the known auto-fixer-skip trap. The real cause:
+  pinned ruff was FAILING (UP038) on every attempt, and my
+  `git commit -q ... | tail -1` filter showed only the last hook
+  line ("Brand drift gate Passed") — the Failed line scrolled by
+  unseen, so a hard failure masqueraded as a silent skip. Two rules:
+  (1) when a commit doesn't land, rerun it UNFILTERED (or capture
+  full output to a file) before theorizing — the hook tells you
+  exactly what's wrong; (2) `tail -1` on multi-hook output is only
+  safe for detecting "did it land" via `git log`, never for
+  diagnosing WHY it didn't. Related trap same session: local
+  `uv run ruff` PASSED what pinned ruff failed — pre-flight with
+  `uv run --with pre-commit pre-commit run ruff --files ...`, not
+  the venv's ruff.
+
+- **Visible markup accidentally left inside `{% block scripts %}`
+  renders OUTSIDE `<main>` — the section escapes the centered page
+  container with no CSS clue**: the Health page's Environment
+  heading + table sat after the `</script>` tag but inside the
+  scripts block, which base.html renders AFTER `</main>` — so the
+  section rendered full-viewport-width at left:0 while its siblings
+  centered at the container width. CSS inspection finds nothing
+  (the classes are fine); the tell is DOM ancestry:
+  `el.closest('main')` → null. Diagnostic recipe for "this section
+  ignores the page layout": check the element's live parent chain
+  first, not its styles. Fix = move the markup into the content
+  block; grep for a second `{% endblock %}` in the template to
+  find the block boundary you didn't know you were inside.
+
+- **Before building a reader over a Redis namespace, census the
+  VALUE TYPES — one namespace can mix hashes, lists, strings, and
+  sets, and a hash-only reader renders the rest blank (or dies)**:
+  the /memory page assumed `attune:memory:*` was all hashes;
+  reality: hashes (nodes/lessons/files) + LISTS of JSON edge
+  objects + string/set markers. Census recipe:
+  `redis-cli --scan --pattern 'ns:*' | while read k; do echo
+  "$(redis-cli type "$k") $k"; done | awk '...' | sort | uniq -c`.
+  Reader pattern that survives mixed types: pipeline TYPE first,
+  then per-type fetch, with `execute(raise_on_error=False)` so one
+  odd key degrades to one odd row, not a dead page. Test-fake trap
+  found the same session: redis `LRANGE stop` is INCLUSIVE and
+  `-1` means end-of-list — a python-slice fake (`value[start:stop+1]`)
+  silently returns `[]` for `lrange(k, 0, -1)`.
