@@ -17057,3 +17057,68 @@ def ", start_idx + 1)` for module-
   count went up by the expected number) — "suite green after adding
   a test" is not proof the test executed. Same receipt-discipline
   family as "registered != working", applied to the test layer.
+
+- **Reviewing another provider-agent's "completed" work: locate ALL
+  of it first (it may not be in the repo), then re-run every ✅
+  claim — completion summaries are claims, not receipts**:
+  2026-07-21, reviewing Antigravity's "Implementation Complete
+  Across All 5 PR Tracks / fully tested!" delivery. Reality: only
+  1 of 5 tracks was in the attune-ai checkout (untracked, on main,
+  no branch); the other 4 lived in a stray `~/antigravity IDE/`
+  directory that is NOT a git repo — the summary's `file://` link
+  paths pointing outside the repo root were the tell. Re-running
+  its own suites: one suite could not even be COLLECTED (`Optional`
+  used but never imported → NameError at import time — the module
+  had never once executed), and the flagship "verifies 50%+
+  compression" test FAILED (0.467 measured). Two of five per-suite
+  ✅ claims were false. Rules: (1) before reviewing external-agent
+  work, inventory where it actually lives — `git status` on the
+  main checkout AND provider-owned scratch dirs; check the
+  summary's link paths against the repo root; (2) re-run per-suite
+  pass claims verbatim before any code-level review; (3) rescue
+  stray work onto repo branches BEFORE deep review, or it can be
+  lost to a scratch-dir cleanup. Same family as "registered ≠
+  working" and receipt-declared delegation, applied to
+  cross-provider handoffs.
+
+- **`uv run ruff check` in this repo AUTO-FIXES (fix enabled in
+  config) — a "read-only" lint pass mutates the files under
+  review**: 2026-07-21, linting Antigravity's uncommitted files
+  printed "Found 23 errors (23 fixed, 0 remaining)" and rewrote 3
+  files I was reviewing, silently changing the artifact under
+  review. When lint-checking someone else's uncommitted work, use
+  `ruff check --no-fix` (or copy first); disclose any accidental
+  mutation in the review report. Companion to the "pre-commit
+  auto-fix vs staging" family — same auto-fix surprise, at review
+  time against work you don't own.
+
+- **`gh pr checks` output is TAB-separated — awk's default
+  whitespace splitting shifts fields for check names containing
+  spaces, and the shifted rows are exactly the Windows lanes**:
+  2026-07-21, a CI watcher counting `awk '$2=="pending"'` declared
+  ALL REQUIRED CHECKS COMPLETE while `test (windows-latest, 3.12)`
+  — the REQUIRED Windows canary — was still pending on all three
+  PRs: the name's spaces pushed "pending" to $4, so pending rows
+  with spaced names were invisible to the filter, and the spaced
+  names are precisely the matrix lanes (`test (windows-latest,
+  3.12)`). Only reading the watcher's final full-table dump caught
+  it pre-merge. Rule: parse `gh pr checks` with `awk -F'\t'` (or
+  `--json`), and have watchers print the full table at exit so the
+  conclusion is verifiable against raw rows.
+
+- **Subprocess hook tests resolve the LIVE AMS backend even with
+  HOME sandboxed — force `AMS_BASE_URL` to an unreachable port or
+  the test writes into real memory**: 2026-07-21, trap_stash hook
+  tests redirected HOME/USERPROFILE to tmp_path (file-backend
+  sandboxing) but the subprocess's `resolve_backend()` entry-point
+  scan preferred the CONNECTED AMS upgrade backend (localhost:8000
+  default, independent of HOME) — 5 test entries landed in the
+  real memory store (cleaned via `backend.forget`, verified 0
+  remaining). HOME redirection sandboxes only the FALLBACK file
+  backend; the upgrade backend's reachability is env-URL-driven.
+  Rule for any test spawning a process that touches
+  `resolve_backend()`: set `AMS_BASE_URL=http://127.0.0.1:9` (and
+  drop `REDIS_URL`) in the child env. Extends the
+  "entry-point-resolved backends resolve DIFFERENTLY per env —
+  verify the live process's resolution" lesson with the test-
+  isolation corollary.
