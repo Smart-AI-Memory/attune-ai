@@ -161,3 +161,19 @@ per-phase pills live on in the chip tooltip. Receipts: 139
 lifecycle/routes/rewrite tests serial-green incl. 8 new
 derive_stage + 3 ledger-reader tests; live render verified against
 a worktree-code server (31 specs, honest stages, editable chips).
+
+## 2026-07-21 — P2 gate-triage inbox ruled (thread q-roundtable-extensions-001; chair: Patrick)
+
+The round table adopted (modified) the gate-triage inbox as the
+consumption surface for this spec's RR-1 ledger, to be built AFTER
+the P3 skeptic (order ruled on the moderator's fact-check:
+`verdicts.jsonl` not yet emitting). V1 shape: a READ-ONLY routine
+that groups unresolved CHAIR_REQUIRED receipts by spec+gate,
+convenes ONE D3-capped mini-table only past a threshold (N≥3
+pending OR oldest >48h), emits one disposition per shortfall from a
+closed enum, appends a single chair digest, and marks receipts
+triaged (dedup mandatory — never re-deliberate the same shortfall).
+Never alters gate state; RR-4 risk tiers govern eligibility from
+day one. P3 skeptic dissents route into this digest (one chair
+inbox). Failure mode on record: inbox ceremony — a meeting queue
+noisier than the raw ledger.
