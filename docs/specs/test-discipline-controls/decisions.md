@@ -3,7 +3,9 @@
 > Decision log. Append-only — each entry stamped with date and
 > the question it resolves.
 
-**Status:** living document
+**Status:** superseded (2026-07-20 — spec closed stale on premise;
+D1–D6 remain the historical record; D5 stays live policy via
+CLAUDE.md)
 **Created:** 2026-05-27
 
 ---

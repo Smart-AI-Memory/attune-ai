@@ -4,8 +4,9 @@
 > [`requirements.md`](requirements.md). Pairs with
 > [`tasks.md`](tasks.md) for the execution prompts.
 
-**Status:** draft
-**Last updated:** 2026-05-27
+**Status:** superseded (2026-07-20 — spec closed stale on premise;
+see [requirements.md](requirements.md))
+**Last updated:** 2026-07-21
 
 ---
 

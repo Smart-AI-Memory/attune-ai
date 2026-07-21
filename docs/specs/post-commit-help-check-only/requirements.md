@@ -1,6 +1,6 @@
 # Post-Commit Help Maintenance → Check-Only
 
-**Status:** approved (2026-07-20, chair — D1 ruled option A, see
+**Status:** shipped (2026-07-20, chair — D1 ruled option A, see
 [decisions.md](decisions.md); implemented same day in #1532; was
 draft since 2026-06-22, recommitted at 2026-07-14 triage)
 **Owner:** Patrick + agent

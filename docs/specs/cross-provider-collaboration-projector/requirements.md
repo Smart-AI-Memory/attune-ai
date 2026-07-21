@@ -1,9 +1,9 @@
 # Cross-Provider Collaboration Projector — Requirements
 
-**Status:** active (2026-07-18) — D1–D6 all ratified by Patrick
-(option a in each; see [decisions.md](decisions.md)). Implementation state is recorded
-honestly: R1–R6 are already implemented on `codex/using-projectors`;
-R7+ are open pending decisions.
+**Status:** shipped (2026-07-18) — D1–D6 all ratified by Patrick
+(option a in each; see [decisions.md](decisions.md)); T1–T6 executed
+the same day (#1436), landing R7–R10 on top of the pre-existing
+R1–R6. Only non-goals remain (CLI productization deferred by D6a).
 
 ## Problem
 

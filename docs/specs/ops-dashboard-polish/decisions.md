@@ -1,5 +1,8 @@
 # Decisions — Ops Dashboard Polish
-**Status:** active (2026-07-20) — partial: Phase A complete; Phase B (4/5), C (Sessions shipped, Memory not started), D (1/6) in progress
+**Status:** parked (2026-07-13 chair park, T1 of
+`q-briefing-triage-001`; progress snapshot 2026-07-20: Phase A
+complete, B 4/5, C Sessions shipped / Memory not started, D 1/6)
+· Resume-Trigger: evergreen (no external clock)
 **Owner:** Patrick
 **Opened:** 2026-05-14
 **Predecessors:**

@@ -1,5 +1,7 @@
 # Design — Cross-Provider Collaboration Projector
 
+**Status:** shipped (2026-07-18) — implemented as designed (#1436)
+
 ## Data flow
 
 ```text

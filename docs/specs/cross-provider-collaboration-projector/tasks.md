@@ -1,5 +1,7 @@
 # Tasks — Cross-Provider Collaboration Projector
 
+**Status:** shipped (2026-07-18) — T1–T6 all executed (#1436)
+
 ## Done (on codex/using-projectors — do not redo)
 
 - [x] Master `content/collaboration/contract.md` (contract +

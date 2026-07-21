@@ -1,5 +1,8 @@
 # Post-Commit Help Check-Only — Decisions
 
+**Status:** shipped (2026-07-20) — D1 implemented same day in
+#1532; drift-guard tests landed with it.
+
 ## 2026-07-20 — Spec approved; D1 ruled: option A (chair: Patrick)
 
 Approved in the chair-rulings sitting (stepped-through review).

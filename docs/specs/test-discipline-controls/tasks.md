@@ -5,7 +5,12 @@
 > Companion to [`requirements.md`](requirements.md) and
 > [`design.md`](design.md).
 
-**Status:** parked (2026-06-09, deferred) · Resume-Trigger: evergreen (no external clock) — decisions recorded (D1–D6); D5 ("pre-push hook MUST run `--branch`") adopted as live policy (cited in CLAUDE.md); D1 decided (TDD rejected); remaining: coverage-gate hook, XML `<branches>` schema, drift-guard tests (unimplemented; PR #485 only motivated this spec).
+**Status:** superseded (2026-07-20 — spec closed stale on premise;
+see [requirements.md](requirements.md)). Previously parked
+2026-06-09; the unimplemented tasks (coverage-gate hook, XML
+`<branches>` schema, drift-guard tests) die with the closure. D5
+("pre-push hook MUST run `--branch`") stays live policy via
+CLAUDE.md.
 **Last updated:** 2026-05-27
 **Total estimate:** ~5.5h across 3 phases.
 

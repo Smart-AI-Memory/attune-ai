@@ -1,5 +1,9 @@
 # Memory Feedback Signal — Decisions
 
+**Status:** shipped (2026-07-19) — implemented same day (#1459);
+receipts recorded below. Remaining thread is operational only:
+read `wrong_rate` after weeks of Stop-hook accumulation.
+
 ## Thread mem-signal-001 — the first V2-P1 spec-authoring loop
 
 Promoted from `attune:roundtable:thread:mem-signal-001` (chair:

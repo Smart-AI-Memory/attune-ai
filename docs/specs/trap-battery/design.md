@@ -1,8 +1,8 @@
 # Design — Trap Battery Phase 2 (re-derived under the injection-surface rule)
 
-**Status:** approved (2026-07-13, Patrick — all three open questions
-resolved same day; see §Open questions and decisions.md); build gate
-OPEN, paid pilot still needs a stated-cost go
+**Status:** complete (approved 2026-07-13; executed — phase-2
+measurement CLOSED 2026-07-14 at ~$53.80 total, see decisions.md
+tail; no further paid runs)
 **Owner:** Patrick + agent
 **Inputs:** `benchmarks/trap_battery_results_2026-07-13.md` (FINAL
 REFRAME), decisions.md 2026-07-13 entries, requirements.md swap
