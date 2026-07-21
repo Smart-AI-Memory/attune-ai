@@ -32,7 +32,6 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import logging
-import os
 import re
 from pathlib import Path
 
@@ -145,14 +144,16 @@ async def serve_llm_report(request: Request, name: str) -> PlainTextResponse:
     Closes the one broken link the 2026-07-21 link-QA crawl found:
     the Health page links ``/{{ latest_report }}`` but nothing served
     ``/docs/reports/...``. Read-only, strictly validated: the name
-    must match the report pattern AND resolve inside
-    ``<project_root>/docs/reports`` (no traversal), else 404.
+    must match the report pattern AND equal an entry actually listed
+    in ``<project_root>/docs/reports`` (the served path comes from
+    the directory listing, never from the request), else 404.
     """
     if not _REPORT_NAME_RE.match(name):
         raise HTTPException(status_code=404)
     cfg = request.app.state.config
     reports_dir = (Path(cfg.project_root) / "docs" / "reports").resolve()
-    target = (reports_dir / name).resolve()
-    if not str(target).startswith(str(reports_dir) + os.sep) or not target.is_file():
-        raise HTTPException(status_code=404)
-    return PlainTextResponse(target.read_text(encoding="utf-8"))
+    if reports_dir.is_dir():
+        for report in reports_dir.glob("library-health-*.md"):
+            if report.name == name and report.is_file():
+                return PlainTextResponse(report.read_text(encoding="utf-8"))
+    raise HTTPException(status_code=404)
