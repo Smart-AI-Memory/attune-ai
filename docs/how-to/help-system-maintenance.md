@@ -43,7 +43,8 @@ gh workflow run help-freshness.yml --ref main
 at 12:00 UTC (and on manual dispatch). It:
 
 1. Lists stale features via
-   `attune_author.check_staleness`.
+   `scripts/list_stale_help_features.py` (the
+   hash-based staleness check).
 2. Regenerates them with `attune-author generate
    <feature> --help-dir .help --all-kinds` (all 11
    template kinds, not just the 3-depth core).
@@ -76,9 +77,8 @@ either way. Installed via `.claude/settings.json` under
 
 ## Completeness + coverage checks
 
-Two scripts that mirror the concurrency of
-`attune-author status` (which is hash-based) with
-structural checks:
+Two scripts that complement the hash-based
+staleness check with structural checks:
 
 ```bash
 # Enforce: every manifest feature has all 11 template kinds,
