@@ -731,7 +731,9 @@ omit = [
     "*/memory/cross_session.py",  # Requires Redis server
     "*/memory/control_panel_api.py",  # FastAPI REST server
     "*/memory/short_term/sessions.py",  # Requires Redis server
-    "*/memory/claude_memory.py",  # Requires Claude API
+    # claude_memory.py omit entry removed 2026-07-21 (#1569): its
+    # Requires-Claude-API label was false — pure file I/O, keyless
+    # 60-test suite, measures ~100% covered.
     # Agent modules requiring live LLM
     "*/agents/release/release_prep_team.py",  # Requires LLM API calls
     # OpenTelemetry backend (requires otel infrastructure)
