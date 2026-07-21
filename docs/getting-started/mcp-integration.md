@@ -37,12 +37,12 @@ The MCP server is automatically configured via `.claude/mcp.json`:
 ```json
 {
   "mcpServers": {
-    "attune": {
-      "command": "python",
-      "args": ["-m", "attune.mcp.server"],
+    "attune-ai": {
+      "command": "uv",
+      "args": ["run", "python", "-m", "attune.mcp.server"],
       "env": {
         "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
-        "PYTHONPATH": "${workspaceFolder}/src"
+        "ATTUNE_REDIS_REQUIRED": "false"
       }
     }
   }

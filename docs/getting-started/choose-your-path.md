@@ -58,9 +58,9 @@ Add to Claude Desktop config:
 ```json
 {
     "mcpServers": {
-        "socratic": {
+        "attune-ai": {
             "command": "python",
-            "args": ["-m", "attune.socratic.mcp_server"],
+            "args": ["-m", "attune.mcp.server"],
             "env": {"ANTHROPIC_API_KEY": "your-key"}
         }
     }

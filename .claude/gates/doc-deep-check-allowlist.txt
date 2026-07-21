@@ -1,0 +1,9 @@
+# G4 deep-check allowlist (claim-drift-gates G4, D6).
+# Files listed here opt IN to kwarg/attr + MCP-config resolution in
+# scripts/audit_doc_imports.py. Format: <repo-rel path> :: <reason>
+# The reason string is REQUIRED — a line without one is a finding.
+docs/getting-started/choose-your-path.md :: onboarding fork page — copy-paste snippets must bind against the live API
+docs/getting-started/mcp-integration.md :: MCP config fences must import and match the real .claude/mcp.json
+docs/getting-started/installation.md :: install snippets are the first thing a new user runs
+docs/getting-started/first-steps.md :: first-session snippets must bind against the live API
+docs/getting-started/quickstart-plugin.md :: plugin quickstart snippets must bind against the live API

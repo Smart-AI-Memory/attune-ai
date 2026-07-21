@@ -222,6 +222,39 @@ zero consumers; stale artifact, future deletion candidate. All
 three retired with grep receipts; the sweep's only correction was
 replacing a fictional rebrand with an honest deletion.
 
+## 2026-07-21 — G4(a)+(b) SHIPPED red-first (merge held for post-tag)
+
+The kwarg/attr and MCP-config layers landed as new checkers behind
+`audit_doc_imports.py`'s existing walk (per D6), opt-in via
+`.claude/gates/doc-deep-check-allowlist.txt` (`<path> :: <reason>`,
+reason REQUIRED — a bare path is itself a finding). Seeded with the
+five getting-started pages.
+
+**Red-first receipt (4 real findings on first run):**
+`choose-your-path.md` documented the dead
+`attune.socratic.mcp_server` module (the requirements' literal
+example) plus a `socratic` server; `mcp-integration.md`'s
+`.claude/mcp.json` fence drifted from the real file (server name
+`attune` vs `attune-ai`, `python` vs `uv run python`, stale
+`PYTHONPATH` env). All fixed; gate green over the full published
+scope (446 imports / 383 fences / 93 files; 5 deep-checked).
+
+**Checker-scope correction found by the red run:** the real-file
+diff fired on Claude Desktop config examples too — the spec's
+wording ("documented `.claude/mcp.json` fences") is now enforced
+literally: the diff runs only when `.claude/mcp.json` is named
+within 10 lines above the fence. Kwarg/attr checking is dataclass-
+field + signature-bind only (non-dataclass instance attrs skipped —
+instance-only attrs would false-positive); fences are still never
+executed. The 07-11 red-first fix set had partially self-healed:
+the kwarg/attr layer found ZERO live drift (those snippets were
+fixed by interim passes) — the live drift was all MCP-config class.
+
+**Remaining G4 scope:** (c) the CONTRIBUTING clean-venv CI lane —
+a separate CI job by D6's own carve-out, staged advisory→required;
+next G4 unit. G3 stays blocked on hook-timeout-budget Phase 0.2
+values.
+
 ## 2026-07-21 — G4 build receipt + design-phase waiver (chair)
 
 G4 (a+b+c) is complete on branch `feat/claim-drift-g4` as **held
