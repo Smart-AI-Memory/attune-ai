@@ -1,60 +1,116 @@
-"""Trap Failure Listener for Attune AI.
+"""Trap failure listener for Attune AI.
 
-Listens to hook execution logs, test outputs, and CLI non-zero exits to extract
-structured failure telemetry.
+Deterministic, zero-LLM extraction of structured failure events from
+Bash tool output. Two signature families (spec: self-healing-traps,
+R2/non-goals): pre-commit hook rejections and pytest failures.
 """
 
-from typing import Any
+import hashlib
+import re
+from dataclasses import dataclass
+
+#: Upper bound on the detail excerpt carried into the stash.
+MAX_DETAIL_CHARS = 600
+
+# A pre-commit failure block renders as
+#   black....................Failed
+#   - hook id: black
+#   - exit code: 1
+# Passing hooks may also print "- hook id:" lines (duration output),
+# so the id only counts when the preceding status line says Failed.
+_PRECOMMIT_FAILED_HOOK = re.compile(r"Failed\s*\n- hook id:\s+(\S+)")
+
+_GIT_COMMIT_COMMAND = re.compile(r"\bgit\b[^\n;|&]*\bcommit\b")
+
+# pytest short-summary lines: "FAILED tests/x.py::test_y - Assertion…"
+# and collection errors: "ERROR tests/x.py - ImportError…".
+_PYTEST_FAILED_NODE = re.compile(r"^(?:FAILED|ERROR)\s+(\S+)", re.MULTILINE)
+_PYTEST_COUNTS_LINE = re.compile(r"^=+.*\b(?:failed|error)\b.*=+\s*$", re.MULTILINE)
 
 
-class TrapFailureListener:
-    """Captures execution failures from pre-commit hooks, tests, and CLI runs."""
+@dataclass
+class TrapEvent:
+    """A single deterministic failure capture.
 
-    def capture_precommit_failure(
-        self,
-        hook_id: str,
-        command: str,
-        output: str,
-        file_target: str | None = None,
-    ) -> dict[str, Any]:
-        """Captures telemetry from a failed pre-commit hook execution.
+    Attributes:
+        family: Signature family (``precommit_rejection`` or
+            ``pytest_failure``).
+        signature: Stable per-failure dedupe key (same failure in the
+            same session must produce the same signature).
+        detail: Bounded factual excerpt of the failure evidence.
+        command: The command line that produced the failure.
+    """
 
-        Args:
-            hook_id: Name/ID of the failing hook (e.g. 'eval-exec-guard').
-            command: Command that was executed.
-            output: Error output or stdout/stderr stream.
-            file_target: Target file path if applicable.
+    family: str
+    signature: str
+    detail: str
+    command: str
 
-        Returns:
-            Structured failure telemetry dictionary.
-        """
-        return {
-            "failure_type": "pre_commit_hook_rejection",
-            "hook_id": hook_id,
-            "command": command,
-            "error_output": output,
-            "file_target": file_target or "",
-        }
 
-    def capture_test_failure(
-        self,
-        test_name: str,
-        error_message: str,
-        file_path: str | None = None,
-    ) -> dict[str, Any]:
-        """Captures telemetry from a failed unit or integration test.
+def extract_trap(command: str, output: str) -> TrapEvent | None:
+    """Extract a trap event from a Bash command's output, if any.
 
-        Args:
-            test_name: Identifier of the failing test.
-            error_message: Stack trace or failure assertion.
-            file_path: Path of the test file.
+    Args:
+        command: The command line that ran.
+        output: Combined tool output text.
 
-        Returns:
-            Structured failure telemetry dictionary.
-        """
-        return {
-            "failure_type": "unit_test_failure",
-            "test_name": test_name,
-            "error_message": error_message,
-            "file_path": file_path or "",
-        }
+    Returns:
+        A TrapEvent for the first matching signature family, or None
+        when the output shows no recognized failure.
+    """
+    if not command or not output:
+        return None
+
+    trap = _extract_precommit(command, output)
+    if trap is not None:
+        return trap
+    return _extract_pytest(command, output)
+
+
+def _extract_precommit(command: str, output: str) -> TrapEvent | None:
+    if not _GIT_COMMIT_COMMAND.search(command):
+        return None
+    failed_hooks = sorted(set(_PRECOMMIT_FAILED_HOOK.findall(output)))
+    if not failed_hooks:
+        return None
+
+    first = output.find("Failed")
+    excerpt = output[max(0, first - 80) : first + 300].strip()
+    return TrapEvent(
+        family="precommit_rejection",
+        signature="precommit:" + ",".join(failed_hooks),
+        detail=_bound(f"failed hooks: {', '.join(failed_hooks)}\n{excerpt}"),
+        command=command,
+    )
+
+
+def _extract_pytest(command: str, output: str) -> TrapEvent | None:
+    nodes = _PYTEST_FAILED_NODE.findall(output)
+    if not nodes:
+        return None
+    counts = _PYTEST_COUNTS_LINE.findall(output)
+    if not counts and "short test summary info" not in output:
+        # "FAILED ..." lines without any pytest tail — not a test run.
+        return None
+
+    unique_nodes = sorted(set(nodes))
+    digest = hashlib.sha256("\n".join(unique_nodes).encode("utf-8")).hexdigest()[:12]
+    shown = unique_nodes[:5]
+    lines = [f"failing: {', '.join(shown)}"]
+    if len(unique_nodes) > len(shown):
+        lines.append(f"(+{len(unique_nodes) - len(shown)} more)")
+    if counts:
+        lines.append(counts[-1].strip().strip("= "))
+    return TrapEvent(
+        family="pytest_failure",
+        signature=f"pytest:{digest}",
+        detail=_bound("\n".join(lines)),
+        command=command,
+    )
+
+
+def _bound(text: str) -> str:
+    text = text.strip()
+    if len(text) <= MAX_DETAIL_CHARS:
+        return text
+    return text[: MAX_DETAIL_CHARS - 1] + "…"

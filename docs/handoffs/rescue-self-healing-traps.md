@@ -1,43 +1,38 @@
 # Handoff — rescue/self-healing-traps
 
-**Branch:** `rescue/self-healing-traps` · **Status:** DESIGN-GATED, do not merge as-is
+**Branch:** `rescue/self-healing-traps` · **Status:** EXECUTED per
+spec docs/specs/self-healing-traps/ (D1/D2 chair-ruled 2026-07-21);
+PR #1554 carries the implementation.
 
-## What this branch is
+## What landed
 
-Rescue of Antigravity's "PR 3: Self-Healing Traps" track (round-table
-thread `q-review-five-implementation-plans-001`), which was written to
-the non-repo directory `~/antigravity IDE/` and would otherwise be lost.
-Code: `src/attune/telemetry/lessons/` (listener, synthesizer, hydrator)
-+ `tests/unit/telemetry/test_self_healing_traps.py`.
+- `attune.telemetry.lessons`: `listener.py` (deterministic
+  `extract_trap` — pre-commit rejection + pytest failure signatures),
+  `synthesizer.py` (`format_trap`, factual, no boilerplate),
+  `process_bash_result` composition in `__init__`. `hydrator.py`
+  DELETED (D3 — no corpus writes).
+- `plugin/hooks/trap_stash.py`: PostToolUse/Bash hook, per-session
+  signature dedupe under `~/.attune/trap_stash/`,
+  `ATTUNE_TRAP_STASH=0` disable, degrades open. Registered in
+  `hooks.json`.
+- Tests: 16 (extraction units on real output shapes; R5 non-mocked
+  round trip through a real `FileStashBackend` → `recall_entries`;
+  hook stdin subprocess round trips with HOME sandboxed and
+  `AMS_BASE_URL` forced unreachable so no live backend is touched).
 
-## What was verified
+## Verified (receipts)
 
-- `pytest tests/unit/telemetry/test_self_healing_traps.py` → 4 passed
-  (they exercise dict construction and markdown formatting only).
-- ruff/black clean; hydrator writes with `encoding="utf-8", newline="\n"`
-  (the CRLF/cp1252 class fixed on main in #1536).
-- The original docstring claimed Redis hydration; no Redis code exists.
-  Claim removed.
+- `pytest tests/unit/telemetry/test_self_healing_traps.py
+  tests/unit/hooks/test_trap_stash_hook.py` → 16 passed (serial).
+- `tests/unit/plugins/test_plugin_config_validation.py` → green with
+  the new hooks.json entry.
+- Cleanup receipt: 5 entries leaked into the live AMS by a
+  pre-isolation test run were forgotten (`backend.forget`, verified
+  0 remaining).
 
-## Why it is design-gated (must be ruled before wiring)
+## Remaining before spec flips to `shipped`
 
-1. **The listener doesn't listen.** Both methods are dict constructors;
-   nothing subscribes to pre-commit, pytest, or CLI failures. The
-   integration (hook? pytest plugin? wrapper?) is the actual design
-   decision and it is unmade.
-2. **Curation gate.** `.claude/lessons.md` is a curated, human-ratified
-   corpus. Auto-appending synthesized boilerplate ("Prevention: Inspect
-   file parameters…") would pollute it. Any wiring must route through a
-   review inbox / chair ruling, mirroring the round-table promotion
-   pattern — never straight to the corpus.
-3. **Duplication.** The repo already has a lessons pipeline (tracked
-   corpus → Redis hydration at session start). This must integrate with
-   that, not stand beside it.
-
-## Next action
-
-Chair rules on the design questions above (or routes them through
-`/spec`). If ruled valuable: design the capture seam + inbox, then wire.
-If not: close the PR; the rescue served its purpose.
-
-Delete this file when the branch merges or closes.
+Live-fire receipt (requirements R5 / Done-when): in a real session
+with the plugin hook active, hit a genuine pre-commit rejection or
+pytest failure, then show the finding via `/recall`; record it in the
+spec's decisions.md. Then merge PR #1554 and delete this file.
