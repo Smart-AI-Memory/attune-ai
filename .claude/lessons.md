@@ -17279,3 +17279,22 @@ def ", start_idx + 1)` for module-
   found the same session: redis `LRANGE stop` is INCLUSIVE and
   `-1` means end-of-list — a python-slice fake (`value[start:stop+1]`)
   silently returns `[]` for `lrange(k, 0, -1)`.
+
+- **Don't bundle `.claude/lessons.md` appends into a HELD feature
+  draft — lessons.md is the repo's highest-churn file, so the held
+  PR goes DIRTY within hours as lessons-only PRs merge**: caught
+  2026-07-21 evening reviewing the session starter. The starter
+  (written ~15:35 UTC) recorded ONE dirty held PR (#1578); ~4h
+  later THREE were dirty — #1574 (T3) had bundled a lessons.md
+  append, and two lessons-only merges (#1579, #1580) landed in the
+  gap and conflicted it. A held draft's whole point is to sit for
+  days (`hold-until-07-27`), which multiplies exposure: every
+  docs-class auto-merge touching the same file converts the draft
+  into conflict surgery at lift time. Two rules: (1) ship lessons
+  appends as their own docs-class PR (auto-merge-when-green,
+  merges in minutes) — never inside a PR that will be held;
+  (2) a starter's DIRTY/clean annotations on a held queue are
+  perishable — re-run `gh pr list --label <hold-label> --json
+  number,mergeStateStatus` at pickup instead of trusting the
+  written count. Extends the "starter stale on arrival" lesson
+  to merge-state claims specifically.
