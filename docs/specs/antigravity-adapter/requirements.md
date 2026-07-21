@@ -1,14 +1,11 @@
 # Antigravity Adapter — Requirements
 
-**Status:** active (2026-07-18) — D1 ratified (a); receipts passed and Patrick
-ratified option (a) same day (2026-07-18,
-app 2.3.1 + agy CLI 1.1.4; transcripts in
-[decisions.md](decisions.md)); D2 largely
-resolved by the receipts; D3 (IDE parity) still open. Two
-mechanisms differ from the live docs — rules need
-`trigger: always_on` frontmatter and only rules-file-relative
-`@`-paths inline — exactly the schema-drift class the
-gemini-projector spec predicted.
+**Status:** shipped (2026-07-21 — D1 ratified (a) + #1445's
+.agents/AGENTS.md target; D2 resolved by receipts; D3 CLOSED
+(IDE parity probe PASS post-#1445); AC-1..AC-5 receipted, AC-4
+re-run live at close; see decisions.md completion pass. Carried
+risk: behaviors pinned to app 2.3.1 / agy 1.1.4 — re-verify
+after self-updates)
 
 Sibling of [gemini-projector](../gemini-projector/requirements.md)
 (PARKED 2026-07-18 — Google sunset the Gemini CLI free tier in
