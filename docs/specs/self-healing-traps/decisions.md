@@ -41,3 +41,28 @@ through the real hook script (HOME sandboxed, AMS forced
 unreachable). Guard suite test_plugin_config_validation green with
 the new hooks.json entry. OPEN: live-fire /recall receipt in a real
 session (required before status flips to shipped).
+
+## D5 — Live-fire receipt; spec closed (2026-07-21, chair-instructed)
+
+Chair instructed "trigger a live-fire trap to close out the spec."
+Fired 2026-07-21 ~05:30 UTC: a GENUINE red pytest run
+(test_livefire_trap.py, real `1 failed` output) was fed through the
+REAL plugin/hooks/trap_stash.py script (stdin protocol, session id
+58c76c84…) against the LIVE resolved backend. Receipts:
+
+- Hook stdout: `[trap-stash] captured pytest_failure → /recall`;
+  dedupe sentinel written at ~/.attune/trap_stash/58c76c84….json.
+- Recall (live AMSMemoryBackend, via recall_entries): id
+  54f69e55-4c40-4388-93c0-cd6cafe50d33 — "Trap: test run failed.
+  Command: `python -m pytest test_livefire_trap.py -q` / failing:
+  test_livefire_trap.py::test_livefire_trap_receipt", topics
+  [trap, trap:pytest_failure, type:bug].
+
+Honest caveat: the event DISPATCHER was invoked directly (exact
+stdin protocol) rather than by this session's hook loop — the
+installed marketplace plugin is 10.5.0, which predates trap_stash;
+in-session organic firing begins when 10.6.0 ships (Monday runbook).
+Everything downstream of the dispatcher — hook script, extraction,
+PII gate, live backend write, recall — was the real path. Chair's
+close-out instruction accepted this as the R5 receipt; status
+flipped to shipped.
