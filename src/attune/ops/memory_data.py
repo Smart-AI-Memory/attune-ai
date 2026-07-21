@@ -113,6 +113,62 @@ def _scan_keys(client: Any) -> list[str]:
     return sorted(k for k in client.scan_iter(match=MEMORY_KEY_PREFIX + "*", count=_SCAN_COUNT))
 
 
+def _candidate_types(client: Any, candidates: list[str]) -> list[str]:
+    """TYPE for every candidate key, one pipelined roundtrip.
+
+    The index holds three value shapes; an HMGET-only pass rendered
+    every non-hash row blank (live catch 2026-07-21).
+    raise_on_error=False keeps one odd key from degrading the page.
+    """
+    pipe = client.pipeline(transaction=False)
+    for key in candidates:
+        pipe.type(key)
+    return [
+        t if not isinstance(t, Exception) else "none" for t in pipe.execute(raise_on_error=False)
+    ]
+
+
+def _hash_kinds(client: Any, candidates: list[str], key_types: list[str]) -> dict[str, str]:
+    """The ``type`` hash field for hash candidates — each key's KIND.
+
+    Resolves the kind counts and the kind filter. Local index ≤ a few
+    thousand keys — one pipelined roundtrip.
+    """
+    hash_keys = [k for k, t in zip(candidates, key_types, strict=False) if t == "hash"]
+    pipe = client.pipeline(transaction=False)
+    for key in hash_keys:
+        pipe.hmget(key, "type")
+    kinds: dict[str, str] = {}
+    for key, result in zip(hash_keys, pipe.execute(raise_on_error=False), strict=False):
+        raw = None if isinstance(result, Exception) else (result or [None])[0]
+        kinds[key] = raw or _family_of(key)
+    return kinds
+
+
+def _fetch_window_rows(
+    client: Any,
+    window: list[tuple[str, str]],
+    hash_kinds: dict[str, str],
+) -> list[MemoryNodeRow]:
+    """Full row data for the visible page window only, type-dispatched."""
+    pipe = client.pipeline(transaction=False)
+    for key, key_type in window:
+        if key_type == "hash":
+            pipe.hmget(key, "type", "description", "text")
+        elif key_type == "list":
+            pipe.lrange(key, 0, -1)
+        elif key_type == "string":
+            pipe.get(key)
+        elif key_type == "set":
+            pipe.smembers(key)
+        else:
+            pipe.exists(key)
+    return [
+        _build_row(key, key_type, result, hash_kinds)
+        for (key, key_type), result in zip(window, pipe.execute(raise_on_error=False), strict=False)
+    ]
+
+
 def read_overview(
     family: str | None = None,
     kind: str | None = None,
@@ -149,31 +205,8 @@ def read_overview(
             counts[fam] = counts.get(fam, 0) + 1
 
         candidates = [k for k in keys if family is None or _family_of(k) == family]
-
-        # Pass 1 — TYPE for every candidate (the index holds three
-        # value shapes; an HMGET-only pass rendered every non-hash
-        # row blank — live catch 2026-07-21). raise_on_error=False
-        # keeps one odd key from degrading the whole page.
-        type_pipe = client.pipeline(transaction=False)
-        for key in candidates:
-            type_pipe.type(key)
-        key_types = [
-            t if not isinstance(t, Exception) else "none"
-            for t in type_pipe.execute(raise_on_error=False)
-        ]
-
-        # Pass 2 — the ``type`` hash field for hash candidates, which
-        # resolves each key's KIND (and with it the kind counts and
-        # the kind filter). Local index ≤ a few thousand keys — one
-        # pipelined roundtrip.
-        kind_pipe = client.pipeline(transaction=False)
-        hash_keys = [k for k, t in zip(candidates, key_types, strict=False) if t == "hash"]
-        for key in hash_keys:
-            kind_pipe.hmget(key, "type")
-        hash_kinds: dict[str, str] = {}
-        for key, result in zip(hash_keys, kind_pipe.execute(raise_on_error=False), strict=False):
-            raw = None if isinstance(result, Exception) else (result or [None])[0]
-            hash_kinds[key] = raw or _family_of(key)
+        key_types = _candidate_types(client, candidates)
+        hash_kinds = _hash_kinds(client, candidates, key_types)
 
         kinds = [
             _kind_of(key, key_type, hash_kinds)
@@ -191,26 +224,7 @@ def read_overview(
         pages = max(1, -(-len(selected) // PAGE_SIZE))
         page = min(max(1, page), pages)
         window = selected[(page - 1) * PAGE_SIZE : page * PAGE_SIZE]
-
-        # Pass 3 — full row data for the visible window only.
-        fetch_pipe = client.pipeline(transaction=False)
-        for key, key_type in window:
-            if key_type == "hash":
-                fetch_pipe.hmget(key, "type", "description", "text")
-            elif key_type == "list":
-                fetch_pipe.lrange(key, 0, -1)
-            elif key_type == "string":
-                fetch_pipe.get(key)
-            elif key_type == "set":
-                fetch_pipe.smembers(key)
-            else:
-                fetch_pipe.exists(key)
-
-        rows = []
-        for (key, key_type), result in zip(
-            window, fetch_pipe.execute(raise_on_error=False), strict=False
-        ):
-            rows.append(_build_row(key, key_type, result, hash_kinds))
+        rows = _fetch_window_rows(client, window, hash_kinds)
         return MemoryOverview(
             total=len(keys),
             family_counts=counts,
