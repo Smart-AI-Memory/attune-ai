@@ -17122,3 +17122,32 @@ def ", start_idx + 1)` for module-
   "entry-point-resolved backends resolve DIFFERENTLY per env —
   verify the live process's resolution" lesson with the test-
   isolation corollary.
+
+- **A bare `cat > file` (no heredoc, no stdin) inside a tool Bash
+  command blocks forever reading stdin — and the resulting timeout
+  gets misattributed to whatever legitimate slow step follows**:
+  2026-07-21, the T1-repoints commit. A compound command opened with
+  `cat > /tmp/.../msg.txt 2>/dev/null || true` (intended as a
+  create-empty, actually a stdin-wait) before a heredoc + `git
+  commit`; the 4-minute timeout was blamed on first-run pre-commit
+  hook-env installs. The reconcile pass (per the interrupted-compound
+  lesson) showed hooks never even ran in that attempt. Rules: (1)
+  never write `cat > f` without a heredoc or input in tool commands —
+  use the Write tool or `: > f`; (2) when a compound command times
+  out, identify WHICH step was executing before theorizing (here the
+  retry surfaced `fatal: could not read log file` proving the msg
+  file was never created — the diagnostic gift was in the error).
+
+- **zsh does NOT word-split unquoted `$VAR` — `pre-commit run
+  --files $FILES` reports "(no files to check)Skipped" and looks
+  like a pass**: 2026-07-21 pre-flight. `FILES="a.py b.py"` then
+  `pre-commit run black --files $FILES` passed ONE argument
+  containing spaces; pre-commit matched no file and printed
+  Skipped (reads as success), while `ruff check $FILES` errored on
+  the mega-filename ("--> a.py b.py:1:1"). In bash this splits; in
+  zsh (this harness's shell) it does not. Fix: zsh arrays —
+  `FILES=(a.py b.py); cmd $FILES` — or `${=FILES}`. Detection:
+  "(no files to check)Skipped" from a hook you explicitly passed
+  files to = the file list never split; do NOT read it as "files
+  are clean". Companion to the JIT `=word` PATH-expansion rule —
+  same shell, different trap.
