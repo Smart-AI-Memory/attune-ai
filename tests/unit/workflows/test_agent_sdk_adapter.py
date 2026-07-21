@@ -148,6 +148,65 @@ class TestAgentSDKResultAdapterConversion:
 
 
 @pytest.mark.unit
+class TestAgentSDKResultAdapterSuccessDerivation:
+    """success derives from the SDK's own result signal (false-green fix).
+
+    A cleanly-completed stream can still end in an error-shaped
+    ResultMessage (budget cut, max-turns, in-run error); those runs must
+    not report success=True — the CLI exit-code contract and the ops
+    dashboard chip both key off WorkflowResult.success.
+    """
+
+    def _result(self, run_result: AgentRunResult | None) -> WorkflowResult:
+        return AgentSDKResultAdapter.from_agent_output(
+            result_text=_SAMPLE_REVIEW,
+            subagent_names=_SUBAGENT_NAMES,
+            started_at=_now(),
+            completed_at=_now(),
+            agent_run_result=run_result,
+        )
+
+    def test_success_subtype_is_success(self) -> None:
+        run = AgentRunResult(result_text="", subtype="success", is_error=False)
+        result = self._result(run)
+        assert result.success is True
+        assert result.error is None
+
+    def test_error_subtype_fails(self) -> None:
+        """Regression: error ResultMessage no longer yields a green result."""
+        run = AgentRunResult(
+            result_text="",
+            subtype="error_during_execution",
+            is_error=True,
+            stop_reason="error",
+            errors=["Command failed with exit code 1"],
+        )
+        result = self._result(run)
+        assert result.success is False
+        assert result.error is not None
+        assert "error_during_execution" in result.error
+        assert "Command failed with exit code 1" in result.error
+
+    def test_is_error_true_with_success_subtype_stays_green(self) -> None:
+        """D1: subtype wins over is_error (the CLI 2.1.178 lying window)."""
+        run = AgentRunResult(result_text="", subtype="success", is_error=True)
+        assert self._result(run).success is True
+
+    def test_no_subtype_falls_back_to_is_error(self) -> None:
+        run = AgentRunResult(result_text="", subtype=None, is_error=True)
+        result = self._result(run)
+        assert result.success is False
+        assert result.error is not None
+
+    def test_no_subtype_not_error_is_green(self) -> None:
+        run = AgentRunResult(result_text="", subtype=None, is_error=False)
+        assert self._result(run).success is True
+
+    def test_no_run_result_defaults_green(self) -> None:
+        """Text-only callers (no AgentRunResult) keep today's behavior."""
+        assert self._result(None).success is True
+
+
 class TestAgentSDKResultAdapterStages:
     """Test subagent-to-stage mapping."""
 

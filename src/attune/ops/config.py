@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -69,6 +70,41 @@ class Config:
         return self.attune_home / "bulletin"
 
 
+def _default_project_root() -> Path:
+    """Resolve the default project root, worktree-aware.
+
+    When the dashboard is launched from a LINKED git worktree
+    (``.claude/worktrees/<slug>/``) without ``--project-root``, a bare
+    ``Path.cwd()`` labels the PROJECT as the worktree slug and points
+    every project-scoped surface (specs, docs gates) at the worktree
+    checkout. The main checkout is what the dashboard should serve —
+    ``git rev-parse --git-common-dir`` names the main checkout's
+    ``.git`` from any linked worktree, and degrades to the plain cwd
+    for normal checkouts (where the common dir IS ``<cwd>/.git``) and
+    non-repo directories (nonzero exit).
+    """
+    cwd = Path.cwd()
+    try:
+        proc = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return cwd
+    if proc.returncode != 0:
+        return cwd
+    common_dir = Path(proc.stdout.strip())
+    if not common_dir.is_absolute():
+        common_dir = (cwd / common_dir).resolve()
+    if common_dir.name == ".git" and common_dir.parent.is_dir():
+        return common_dir.parent
+    return cwd
+
+
 def attune_home() -> Path:
     """Resolve the user's attune home dir (env override -> ~/.attune)."""
     override = os.environ.get("ATTUNE_HOME")
@@ -102,7 +138,7 @@ def build_config(
     (:func:`attune.ops.ops_config_store.resolve_specs_candidates_enabled`)
     overlays persisted state when the caller has computed it.
     """
-    root = (project_root or Path.cwd()).expanduser().resolve()
+    root = (project_root or _default_project_root()).expanduser().resolve()
     return Config(
         project_root=root,
         attune_home=attune_home(),
