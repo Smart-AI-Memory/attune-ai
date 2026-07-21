@@ -130,6 +130,16 @@
             "timeout": 5000
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/trap_stash.py",
+            "timeout": 5000
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
