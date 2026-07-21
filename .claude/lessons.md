@@ -17172,3 +17172,63 @@ def ", start_idx + 1)` for module-
   reads of the .md files miss the absent header because absence
   doesn't look like a value. Extends the "status drift lives ACROSS
   files within one spec dir" lesson with the headerless-file case.
+
+- **Bulk sed over a package dir sweeps files owned by parallel/held
+  PRs AND corrupts prose mentions — diff-audit the touched set
+  against the INTENDED set before staging**: hit 2026-07-21 during
+  the T3 absorb. A generic `s/attune_author\./attune.authoring./g`
+  over `src/attune/authoring` + `tests/unit/authoring` rewrote (a)
+  `fact_check/report.py` — a file held PR #1562 also edits (docstring
+  change = guaranteed rebase conflict at the Monday lift), and (b) a
+  comment in `test_source_introspection.py` into nonsense ("must
+  resolve from attune.authoring, not attune.authoring" — the old
+  name appeared in prose CONTRASTING it with the new one). Neither
+  was in the absorb set. Recipe: after any bulk sed, `git status
+  --short` and read the diff of every file you didn't deliberately
+  target; `git checkout --` the non-targets. Prose/comment mentions
+  of the old name need eyes, not sed — a contrast sentence inverts
+  meaning when both sides get renamed.
+
+- **Absorbing MORE modules from a partially-absorbed sibling package
+  = version-skew risk on the ALREADY-absorbed modules — normalize
+  package names and diff them against the sibling's HEAD first**:
+  T3 absorbed generator/polish from attune-author 0.25.0, but the
+  repo's earlier T1 absorb (manifest/staleness/projector) predated
+  0.25.0's `Feature.status` field; symptom was an AttributeError
+  deep inside the newly-copied generator. Diff recipe:
+  `diff <(sed 's/attune_author/XPKG/g' sibling/mod.py)
+  <(sed 's/attune\.authoring/XPKG/g' src/.../mod.py)` per module —
+  and judge DIRECTION per file: manifest/staleness were behind
+  (port the delta), projector was AHEAD in-repo (keep, don't sync),
+  and source_introspection/symbols didn't exist in the sibling at
+  all (relocated here — in-repo canonical). One absorb, three
+  different directions.
+
+- **"Import and first usage in the SAME edit" means the same Edit
+  CALL, not the same message — parallel Edit calls in one message
+  still run the format-on-save hook between them**: 2026-07-21,
+  sent two Edit calls in one message (add `_maybe_polish` to an
+  import line; switch the call site to `_maybe_polish`). The hook
+  ran after the FIRST edit, saw the import unused (usage edit not
+  yet applied), stripped it → NameError at runtime. The existing
+  lesson's "same edit" wording is load-bearing: batch the import
+  line and the usage into ONE Edit old_string/new_string, or make
+  the usage edit first and the import edit second.
+
+- **Never commit a second concern onto a branch whose PR has
+  `auto-merge-when-green` armed — the label doesn't know the PR's
+  class changed**: 2026-07-21 near-miss. #1577 was opened
+  tests+docs-only with auto-merge armed (legitimately merge-free
+  under the 10.6.0 hold); the next work unit (production CSS a11y
+  fixes) was then committed onto the SAME branch out of momentum.
+  Had it been pushed, the armed label would have merged production
+  code straight past the hold the moment checks went green — the
+  classification happened at label time, not per-commit. Caught
+  before push; recovery was clean because the remote hadn't seen
+  the commit: `git branch <new>` at HEAD, `git reset --hard
+  <pr-commit>` on the PR branch, push the new branch separately.
+  Rule: an armed auto-merge label makes a branch APPEND-FROZEN —
+  new work units start `git switch -c` off the PR head or main,
+  never commit-in-place. Same family as "--delete-branch orphans
+  stacked PRs": merge automation acts on branch state you've
+  already moved past.
