@@ -17214,3 +17214,21 @@ def ", start_idx + 1)` for module-
   lesson's "same edit" wording is load-bearing: batch the import
   line and the usage into ONE Edit old_string/new_string, or make
   the usage edit first and the import edit second.
+
+- **Never commit a second concern onto a branch whose PR has
+  `auto-merge-when-green` armed — the label doesn't know the PR's
+  class changed**: 2026-07-21 near-miss. #1577 was opened
+  tests+docs-only with auto-merge armed (legitimately merge-free
+  under the 10.6.0 hold); the next work unit (production CSS a11y
+  fixes) was then committed onto the SAME branch out of momentum.
+  Had it been pushed, the armed label would have merged production
+  code straight past the hold the moment checks went green — the
+  classification happened at label time, not per-commit. Caught
+  before push; recovery was clean because the remote hadn't seen
+  the commit: `git branch <new>` at HEAD, `git reset --hard
+  <pr-commit>` on the PR branch, push the new branch separately.
+  Rule: an armed auto-merge label makes a branch APPEND-FROZEN —
+  new work units start `git switch -c` off the PR head or main,
+  never commit-in-place. Same family as "--delete-branch orphans
+  stacked PRs": merge automation acts on branch state you've
+  already moved past.
