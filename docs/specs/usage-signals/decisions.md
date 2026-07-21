@@ -701,6 +701,7 @@ inferred.
 | id | contacted | channel | status | minimal finding |
 |----|-----------|---------|--------|-----------------|
 | US3-C01 | 2026-07-20 | github | delivered | — |
+| US3-C02 | — | github | drafted | — |
 
 Status vocabulary: drafted | delivered | no-response |
 non-substantive | substantive-active-use | substantive-past-use |
@@ -719,12 +720,11 @@ excluded. Results:
 
 - **1 qualifying**: the empathy-framework PR #39 author — already
   in the round as US3-C01 (delivered 2026-07-20).
-- **1 borderline, chair to rule**: one attune-ai FORK owner. A fork
-  alone reads as the stars-class (passive signal, not a
-  contribution and not self-reported use) — strictly out under the
-  ruled bar. If the chair rules fork+contactable qualifies, it
-  becomes US3-C02; otherwise it stays excluded and this line is the
-  record of why.
+- **1 borderline — RULED QUALIFYING (chair, 2026-07-21)**: one
+  attune-ai FORK owner. A fork alone reads as the stars-class, but
+  the chair ruled fork+contactable qualifies for this round →
+  enrolled as US3-C02 (drafted; send is chair-only, id→person
+  mapping stays in the chair's private notes).
 - **0 other externals** across all four repos' issues/PRs/
   discussions (only the owner, Copilot-bot PRs, and one
   self-authored discussion).
