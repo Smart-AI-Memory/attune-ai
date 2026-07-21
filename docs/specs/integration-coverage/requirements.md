@@ -1,5 +1,8 @@
 # Spec: Integration Coverage Program
-**Status:** approved
+**Status:** parked (2026-07-13; re-affirmed 2026-07-19, chair
+ruling T1 of `q-briefing-triage-001`) · Resume-Trigger: evergreen
+(no external clock) — Phases 0–1 + task 7 shipped (see
+decisions.md); remaining: tasks 8–10
 **Created**: 2026-05-13
 **Origin**: Complement to the `test-quality-program` umbrella
 ([requirements.md](../test-quality-program/requirements.md)).

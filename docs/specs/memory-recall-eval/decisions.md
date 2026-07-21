@@ -1,5 +1,8 @@
 # Decisions: Memory Recall-Accuracy Eval
 
+**Status:** shipped (2026-07-20) — benchmark run, verdict: keep
+as-is, no tuning owed (final entry below).
+
 Results and verdicts from running the benchmark described in
 `requirements.md`. One dated entry per run.
 

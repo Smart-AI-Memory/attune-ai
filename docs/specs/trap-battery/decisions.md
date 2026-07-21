@@ -1,5 +1,9 @@
 # Decisions — trap-battery
 
+**Status:** complete (2026-07-14) — phase-2 measurement closed
+(~$53.80); the two surviving trap classes stay as regression
+fixtures (final entry below).
+
 ## 2026-07-08 — Spec originated; pilot scale ratified
 
 - **Origin:** next-session-starter queue item 3 ("the real next

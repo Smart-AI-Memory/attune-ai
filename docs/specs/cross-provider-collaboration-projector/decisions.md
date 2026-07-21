@@ -1,5 +1,8 @@
 # Decisions — Cross-Provider Collaboration Projector
 
+**Status:** shipped (2026-07-18) — ratified + executed same day
+(#1436)
+
 **All six RATIFIED by Patrick, 2026-07-18 — the recommended option
 (a) in every case** ("D1a D2a D3a D4a D5a D6a — ratify all six").
 

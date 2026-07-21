@@ -1,5 +1,8 @@
 # Decisions — self-healing-traps
 
+**Status:** shipped (2026-07-21) — implementation #1554; D5
+live-fire receipt recorded, close-out #1557.
+
 ## D1 — Positioning: feed the existing stash (2026-07-21, Patrick)
 
 Ruled via AskUserQuestion during the /spec pass on PR #1554's design

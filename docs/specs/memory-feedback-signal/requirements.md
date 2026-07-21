@@ -1,7 +1,8 @@
 # Memory Feedback Signal (STEP 2) — Requirements
 
-**Status:** approved (2026-07-19, chair: Patrick — all
-seven items, per-REQ) — authored by the round table in its first
+**Status:** shipped (2026-07-19 — chair approved all seven items
+per-REQ AND implemented same day in #1459; MI-6a/b/c receipts in
+[decisions.md](decisions.md)) — authored by the round table in its first
 V2-P1 spec-authoring loop (thread `mem-signal-001`, three rounds:
 draft → adversarial critique ×2 → revision; full record in
 [decisions.md](decisions.md)). Implements the memory-as-insurance
