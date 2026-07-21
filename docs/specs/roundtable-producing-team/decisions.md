@@ -295,3 +295,5 @@ Flip to terminal when BOTH: (a) the chair commits the
 `P4-ROTATION: armed` line here, and (b) the first rotated-roles
 producing run lands its receipts. Reviewed at each Monday sitting
 so "active while arming" cannot become permanently open.
+
+PHASE-WAIVED: design (2026-07-20 — waiver entry above; thread q-producing-team-design-need-001)
