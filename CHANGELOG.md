@@ -74,6 +74,29 @@ run-record corpus that future releases learn from.
 - **Starter-lint hook** (#1516). SessionStart cross-reads the session
   starter's spec mentions against each spec's own status line and
   flags stale threads.
+- **Adaptive Friction Matrix + friction gate** (#1551).
+  `attune.orchestration.friction` scores commands into friction
+  zones; a new `friction_gate` PreToolUse/Bash plugin hook surfaces
+  the zone advisory-by-default, with `ATTUNE_FRICTION_ENFORCE=1`
+  blocking zone-4 commands. The hook activates organically once the
+  installed plugin updates to this release.
+- **AST context budgeting** (#1552). `attune.context` gains
+  `ASTSkeletonGenerator`, `TokenBudgetAllocator`, and
+  `ContextInflater` — skeleton-first file context that fits a token
+  budget and inflates on demand (Redis AST caching deliberately
+  deferred).
+- **Ghost Simulator sandbox** (#1553). `attune.orchestration.ghosts`
+  runs what-if changes in ephemeral git worktrees: repo-root-scoped
+  git, loud `GhostWorktreeError`, and a promoter branch-guard that
+  keeps the worktree on failure. Library-only in this release — no
+  consumer wired yet.
+- **Self-healing traps** (#1554). `attune.telemetry.lessons` + a new
+  `trap_stash` PostToolUse/Bash plugin hook deterministically capture
+  pre-commit and pytest failures into the existing session stash
+  (zero LLM spend, per-session dedupe, `ATTUNE_TRAP_STASH=0` to
+  disable); findings surface through the existing `/recall` flow.
+  Activates organically with the plugin update, like the friction
+  gate.
 
 ### Changed
 
