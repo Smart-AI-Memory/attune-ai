@@ -5,7 +5,8 @@
 > recalls curated memory correctly — before investing further in the
 > subsystem or deciding it needs work.
 
-**Status:** approved (2026-07-20, chair — design OQ1–OQ4 ruled, execution armed; see design.md + decisions.md. Note: the prior status line here mistakenly described memory-feedback-signal work — that spec is tracked separately)
+**Status:** shipped (2026-07-20 — benchmark run, verdict: keep
+as-is; hit@1 96%, hit@3 100%, FP 0%. See decisions.md)
 **Owner:** Patrick + agent
 **Related:**
 

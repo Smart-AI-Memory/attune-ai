@@ -1,8 +1,7 @@
 # Design: Memory Recall-Accuracy Eval
 
-**Status:** approved (2026-07-20, chair — OQ1–OQ4 ruled as
-recommended, `1a 2a 3a 4a`; rulings recorded as D1–D4 in
-decisions.md; execution armed)
+**Status:** shipped (2026-07-20 — executed same day; benchmark
+verdict in decisions.md)
 **Requirements:** [requirements.md](requirements.md) ·
 **Decisions:** [decisions.md](decisions.md)
 
