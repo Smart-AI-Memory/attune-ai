@@ -1,5 +1,9 @@
 # Agent Round Table — Decisions
 
+**Status:** approved (2026-07-20) — completion pass recorded
+(thread q-agent-round-table-completion-001); final review =
+2026-07-27 scheduled-fire receipt
+
 ## Chat-ratified foundations (2026-07-18, Patrick)
 
 Ratified live in the originating session (the same session that
@@ -364,3 +368,64 @@ process rulings adopted:
   to `shipped` (or `living` if kept as the routines umbrella —
   chair's pick at the sitting); active work is carried by
   roundtable-triage and roundtable-producing-team.
+
+## 2026-07-20 — Completion pass (round-table thread q-agent-round-table-completion-001; chair: Patrick)
+
+The table deliberated "what remains to complete this spec" (1 round,
+4 invocations, all seats present, unanimous shape). Chair promoted
+C1 (closure shape), C2 (AC audit + evidence tiers), C3 (launchd seam
+check); declined C4 (scope-drift reconcile). Tier: structured
+one-shot, executed same session. Board messages 2/3/4/8 promoted;
+ruling posted as message 9.
+
+**C1 — closure shape (ruled).** Completion = this receipts-backed
+entry. A full `design.md` backfill is **WAIVED** (unanimous:
+reverse-engineered archaeology, drift-prone, unread; the status-line
+gate does NOT require a design.md for a terminal token — verified
+against `attune.gates.lifecycle`). As-built pointer instead: the
+design lives in `src/attune/roundtable/` (`board.py` Redis-Functions
+substrate; `compiler.py` lint gates; `solutions.py` isolated
+materialization; `producing.py` headless authoring + 12-code failure
+taxonomy; `rotation.py` ledger; `routine.py` clean-run;
+`triage_appendix.py`; `lessons.py` candidate lint),
+`plugin/skills/roundtable/SKILL.md` (the moderator protocol), the
+launchd unit `com.smartaimemory.attune.roundtable-clean-run`, and
+`tests/unit/roundtable/` (156 tests, serial-green this pass).
+
+**C2 — R1–R10 receipt audit.** Evidence tiers: LIVE = non-mocked,
+observed in the real system; UNIT = test-suite evidence only.
+
+| Req | Receipt | Tier |
+|---|---|---|
+| R1 members text-only | This thread: 3 seats invoked headlessly (agy plan-mode shell-denied, codex sandboxed, claude subagent); zero member board/file I/O | LIVE |
+| R2 schema-validated writes | Probe this pass: post with empty `kind` atomically rejected — `rt_post_message: kind is required and must be one of: question\|position\|synthesis\|ruling\|suggestion\|halt` (AC-1) | LIVE |
+| R3 board keyspace + TTL only | `tests/unit/roundtable/test_board.py`; hydration derives `attune:memory:*` separately | UNIT |
+| R4 no auto-promotion | This thread: promotion happened only after explicit per-item chair ruling (message 9); declined C4 wrote nothing | LIVE |
+| R5 budget cap + halt | Manual clean-run pass used exactly 4 invocations (cap used precisely, recorded above); producing `max_invocations=10` chair-ratified | LIVE |
+| R6 absent seat degrades | `test_routine.py` / `test_producing.py` absent handling; no live absence has occurred yet — acceptable: handling is tested, live occurrence will happen naturally | UNIT |
+| R7 receipted invocations | This thread: positions 2–4 carry duration (30s/41s/21s) + token figures where reported | LIVE |
+| R8 routines never promote | Manual clean-run digest left unpromoted on the board for the chair (recorded above) | LIVE |
+| R9 member-originated items | This thread: messages 5–7 (one follow-up question per seat), moderator-posted, triaged in synthesis | LIVE |
+| R10 tier-routed promotion | This ruling: tier recommended (structured one-shot) and chair-ratified in the promotion question | LIVE |
+
+Suite receipt: `tests/unit/roundtable/` 156 passed serially this
+pass. Lesson-lint gate probed live: receipt-less unwaived candidate
+BLOCKED with the exact gate message.
+
+**C3 — launchd seam verified (pre-07-27 operational item).** Job
+loaded in launchd (`launchctl print` resolves it; state idle),
+`stdout path` bound to `~/.attune/logs/roundtable-clean-run.log`,
+log present from the manual pass (634 bytes), log dir writable,
+plist carries the hardened invocation (fixed PATH, `anthropic.env`
+sourced, `REDIS_URL` pinned to localhost, main-checkout venv).
+
+**Scheduled-fire criterion — implemented, awaiting bound receipt.**
+Final review = the 2026-07-27 06:00 first scheduled fire (#1539).
+07-27 slot, to be filled at the sitting:
+
+> 2026-07-27 fire receipt: _<pending — launchd result, seat roster
+> observed, digest thread id>_
+
+On a green fire: flip this spec to shipped (or living — chair's
+pick); roundtable-triage / roundtable-producing-team carry active
+status.
