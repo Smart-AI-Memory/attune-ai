@@ -1,0 +1,69 @@
+{% import '_partials/problem_macros.j2' as m %}
+# Quickstart: {{ title | lower }}
+
+{{ m.feature_intro(
+  title,
+  description,
+  "Get started with " ~ title | lower ~ " in a few
+minutes. The polish pass rewrites this as a concrete,
+runnable walkthrough based on the source."
+) }}
+
+## Prerequisites
+
+- The project is cloned and installed locally
+{% if file_patterns %}
+- Access to the files under {{ file_patterns[0] }}
+{% endif %}
+
+## First steps
+
+{% if public_functions %}
+1. **Import the public API.** The main entry point for
+   {{ title | lower }} is one of:
+
+{{ m.related_functions(public_functions, limit=3) }}
+
+2. **Call the function with minimum arguments.** Read the
+   docstring above to see what the function needs, then
+   invoke it in a REPL or a small script to see the
+   happy path working.
+
+3. **Inspect the return value.** Whatever
+   {{ title | lower }} returns, print it and confirm the
+   shape matches what you expected.
+{% elif public_classes %}
+1. **Instantiate the main class.** The primary building
+   block is one of:
+
+{{ m.related_classes(public_classes, limit=3) }}
+
+2. **Call a method with minimum arguments.** Pick the
+   method whose docstring best matches your use case and
+   invoke it on the instance.
+
+3. **Inspect the result.** Print what you get back and
+   confirm it matches expectations.
+{% else %}
+1. **Open the source files** listed below.
+
+2. **Read the module docstrings** for a one-sentence
+   description of what each file is for.
+
+3. **Run the related tests** to see the expected usage
+   demonstrated: `pytest -k "{{ feature_name }}"`.
+{% endif %}
+
+## What to do next
+
+- For a deeper dive, read the concept and reference pages
+  for this feature.
+- For common pitfalls, see the warning page.
+- For failure modes, see the error or troubleshooting
+  pages.
+
+## Source files
+
+{{ m.key_files(file_patterns) }}
+
+{{ m.tags_line(tags) }}

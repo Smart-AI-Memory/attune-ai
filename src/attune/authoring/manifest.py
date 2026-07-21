@@ -78,6 +78,15 @@ class Feature:
             feature (e.g., ``"ops"`` for ``attune ops``). Optional;
             absence skips the CLI-help block during ground-truth
             context injection. See polish-fact-check Phase 2.
+        status: Maintenance mode for the feature's help content.
+            ``"auto"`` (default) means the generator owns the
+            templates: staleness tracking and LLM regeneration
+            apply. ``"manual"`` means the content is owned
+            elsewhere (hand-written or projected from a
+            single-source master); staleness checks skip the
+            feature and ``generate`` refuses to run for it
+            without ``overwrite=True``. The entry stays in the
+            manifest so topic resolution still routes to it.
     """
 
     name: str
@@ -90,6 +99,7 @@ class Feature:
     arch_path: str | None = None
     doc_nav_section: str | None = None
     cli_command: str | None = None
+    status: str = "auto"
 
     def __post_init__(self) -> None:
         """Keep ``doc_paths`` and ``doc_path`` in sync.
@@ -201,6 +211,7 @@ def load_manifest(help_dir: str | Path) -> FeatureManifest:
             arch_path=spec.get("arch_path"),
             doc_nav_section=spec.get("doc_nav_section"),
             cli_command=spec.get("cli_command"),
+            status=str(spec.get("status", "auto")),
         )
 
     # Top-level _docs bucket (hand-written narrative docs).
@@ -257,6 +268,8 @@ def save_manifest(manifest: FeatureManifest, help_dir: str | Path) -> Path:
             entry["doc_nav_section"] = feat.doc_nav_section
         if feat.cli_command:
             entry["cli_command"] = feat.cli_command
+        if feat.status != "auto":
+            entry["status"] = feat.status
         data["features"][name] = entry
 
     out.write_text(

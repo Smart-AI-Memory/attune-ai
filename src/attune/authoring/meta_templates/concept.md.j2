@@ -1,0 +1,64 @@
+# {{ title }}
+
+## How it works
+
+{% if description %}
+{{ description }}.
+{% elif module_docstrings %}
+{{ module_docstrings[0] }}.
+{% else %}
+{{ title }} is a subsystem in this project.
+{% endif %}
+
+{% if public_classes %}
+The main building blocks are:
+
+{% for cls in public_classes[:5] %}
+- **`{{ cls.name }}`** — {{ cls.doc if cls.doc else "core component" }}
+{% endfor %}
+
+{% elif public_functions %}
+The main entry points are:
+
+{% for fn in public_functions[:5] %}
+- **`{{ fn.name }}()`** — {{ fn.doc if fn.doc else "core function" }}
+{% endfor %}
+
+{% endif %}
+{% if module_docstrings and module_docstrings | length > 1 %}
+Under the hood, this feature spans {{ file_count }} source
+files covering:
+
+{% for doc in module_docstrings[1:4] %}
+- {{ doc }}
+{% endfor %}
+
+{% endif %}
+## What connects to it
+
+{% if tags %}
+This feature relates to: {{ tags | join(", ") }}.
+{% endif %}
+
+{% if public_classes %}
+Other parts of the codebase interact with
+{{ title | lower }} through these interfaces:
+
+| Interface | Purpose | File |
+|-----------|---------|------|
+{% for cls in public_classes[:5] %}
+| `{{ cls.name }}` | {{ cls.doc if cls.doc else "—" }} | `{{ cls.file }}` |
+{% endfor %}
+{% elif public_functions %}
+Other parts of the codebase call into
+{{ title | lower }} through these functions:
+
+| Function | Purpose | File |
+|----------|---------|------|
+{% for fn in public_functions[:5] %}
+| `{{ fn.name }}()` | {{ fn.doc if fn.doc else "—" }} | `{{ fn.file }}` |
+{% endfor %}
+{% else %}
+See the source files ({{ file_count }} files) for
+integration points.
+{% endif %}

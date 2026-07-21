@@ -1,0 +1,85 @@
+# How to use {{ title | lower }}
+
+{% if description %}
+{{ description }}.
+{% endif %}
+
+## Why and when
+
+{% if tags %}
+Reach for {{ title | lower }} when working with
+{{ tags[:3] | join(", ") }}.
+{% else %}
+Use {{ title | lower }} when you need this capability
+in your workflow.
+{% endif %}
+
+## Quick start
+
+{% if public_functions %}
+```python
+# {{ public_functions[0].doc if public_functions[0].doc else public_functions[0].name }}
+{{ public_functions[0].name }}(...)
+```
+{% elif public_classes %}
+```python
+# {{ public_classes[0].doc if public_classes[0].doc else public_classes[0].name }}
+{{ public_classes[0].name }}(...)
+```
+{% else %}
+See source in `{{ file_patterns[0] if file_patterns else feature_name }}`.
+{% endif %}
+
+## Core API
+
+{% if public_functions %}
+| Function | Purpose |
+|----------|---------|
+{% for fn in public_functions %}
+| `{{ fn.name }}()` | {{ fn.doc if fn.doc else "—" }} |
+{% endfor %}
+{% elif public_classes %}
+| Class | Purpose |
+|-------|---------|
+{% for cls in public_classes %}
+| `{{ cls.name }}` | {{ cls.doc if cls.doc else "—" }} |
+{% endfor %}
+{% else %}
+See `{{ file_patterns[0] if file_patterns else feature_name }}` for
+the public API.
+{% endif %}
+
+## Configuration
+
+{% if config_keys %}
+| Key | Purpose |
+|-----|---------|
+{% for key in config_keys %}
+| `{{ key }}` | — |
+{% endfor %}
+{% else %}
+No configuration keys discovered. Check the source for environment
+variables or config parameters.
+{% endif %}
+
+## Integration patterns
+
+{% if public_classes %}
+Typical pattern: instantiate `{{ public_classes[0].name }}`, call
+its methods, handle the result. Compose with other subsystems
+through the return types.
+{% elif public_functions %}
+Import the functions above directly. No global state; all inputs
+are explicit parameters.
+{% else %}
+Compose with the rest of the codebase by importing from
+`{{ file_patterns[0] if file_patterns else feature_name }}`.
+{% endif %}
+
+## See also
+
+{% if tags %}
+{% for tag in tags %}
+- {{ tag }}
+{% endfor %}
+{% endif %}
