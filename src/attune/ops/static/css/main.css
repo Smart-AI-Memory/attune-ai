@@ -3217,3 +3217,15 @@ a.kpi:hover {
 .pagination-status {
   color: var(--fg-muted);
 }
+
+.memory-kind-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.memory-kind-toolbar .chip,
+.memory-table .col-kind .chip {
+  text-decoration: none;
+}

@@ -30,24 +30,65 @@ class FakeWrongType(Exception):
     """Stands in for redis.exceptions.ResponseError WRONGTYPE."""
 
 
+def _shape(value: object) -> str:
+    if isinstance(value, dict):
+        return "hash"
+    if isinstance(value, list):
+        return "list"
+    if isinstance(value, set | frozenset):
+        return "set"
+    if isinstance(value, str):
+        return "string"
+    return "none"
+
+
 class FakePipeline:
-    """Values in the store may be dicts (hashes) or strs (strings) —
-    HMGET on a string yields an in-list exception when
-    ``raise_on_error=False``, mirroring redis-py."""
+    """Store values map to redis types by Python shape: dict=hash,
+    list=list, set=set, str=string. A type-mismatched command yields
+    an in-list exception under ``raise_on_error=False``, mirroring
+    redis-py."""
 
     def __init__(self, store: dict[str, object]) -> None:
         self._store = store
-        self._calls: list[tuple[str, tuple[str, ...]]] = []
+        self._calls: list[tuple[str, str, tuple]] = []
 
     def hmget(self, key: str, *fields: str) -> None:
-        self._calls.append((key, fields))
+        self._calls.append(("hmget", key, fields))
+
+    def type(self, key: str) -> None:
+        self._calls.append(("type", key, ()))
+
+    def lrange(self, key: str, start: int, stop: int) -> None:
+        self._calls.append(("lrange", key, (start, stop)))
+
+    def get(self, key: str) -> None:
+        self._calls.append(("get", key, ()))
+
+    def smembers(self, key: str) -> None:
+        self._calls.append(("smembers", key, ()))
+
+    def exists(self, key: str) -> None:
+        self._calls.append(("exists", key, ()))
 
     def execute(self, raise_on_error: bool = True) -> list[object]:
         results: list[object] = []
-        for key, fields in self._calls:
-            value = self._store.get(key, {})
-            if isinstance(value, dict):
-                results.append([value.get(f) for f in fields])
+        for cmd, key, args in self._calls:
+            value = self._store.get(key)
+            shape = _shape(value)
+            if cmd == "type":
+                results.append(shape)
+            elif cmd == "exists":
+                results.append(int(value is not None))
+            elif cmd == "hmget" and shape == "hash":
+                results.append([value.get(f) for f in args])
+            elif cmd == "lrange" and shape == "list":
+                start, stop = args
+                # redis LRANGE stop is inclusive; -1 means end-of-list.
+                results.append(value[start:] if stop == -1 else value[start : stop + 1])
+            elif cmd == "get" and shape == "string":
+                results.append(value)
+            elif cmd == "smembers" and shape == "set":
+                results.append(set(value))
             elif raise_on_error:
                 raise FakeWrongType("WRONGTYPE")
             else:
@@ -72,10 +113,7 @@ class FakeRedis:
         return FakePipeline(self._store)
 
     def type(self, key: str) -> str:
-        value = self._store.get(key)
-        if value is None:
-            return "none"
-        return "hash" if isinstance(value, dict) else "string"
+        return _shape(self._store.get(key))
 
     def hgetall(self, key: str) -> dict[str, str]:
         value = self._store.get(key, {})
@@ -87,23 +125,43 @@ class FakeRedis:
         value = self._store.get(key)
         return value if isinstance(value, str) else None
 
+    def lrange(self, key: str, start: int, stop: int) -> list[str]:
+        value = self._store.get(key)
+        if not isinstance(value, list):
+            raise FakeWrongType("WRONGTYPE")
+        # redis LRANGE stop is inclusive; -1 means end-of-list.
+        return value[start:] if stop == -1 else value[start : stop + 1]
+
+    def smembers(self, key: str) -> set[str]:
+        value = self._store.get(key)
+        if not isinstance(value, set | frozenset):
+            raise FakeWrongType("WRONGTYPE")
+        return set(value)
+
 
 def _store() -> dict[str, object]:
+    """Mirrors the live index's shapes (censused 2026-07-21):
+    hashes (node/lesson/file), a JSON-edge LIST, and marker keys."""
     return {
-        f"{MEMORY_KEY_PREFIX}curated:north_star": {
+        f"{MEMORY_KEY_PREFIX}node:north_star": {
             "type": "project",
             "description": "the ratified direction",
             "updated_at": "2026-07-21",
             "text": "one wheel",
         },
-        f"{MEMORY_KEY_PREFIX}lesson:42": {"text": "bulk sed sweeps need audits"},
+        # Lessons carry only ``text`` — the description column must
+        # fall back to its first line, not render blank.
+        f"{MEMORY_KEY_PREFIX}lesson:42": {"text": "bulk sed sweeps need audits\nmore detail"},
         f"{MEMORY_KEY_PREFIX}file:global:feedback_x": {
             "type": "feedback",
             "description": "pointer",
         },
-        # A plain-string marker key in the namespace — the live index
-        # has these (attune:memory:context); they must not degrade the
-        # page (2026-07-21 dogfood catch).
+        # Edges are LISTS of JSON edge objects (the blank-columns bug,
+        # reported 2026-07-21).
+        f"{MEMORY_KEY_PREFIX}edges:file:project:project_x": [
+            '{"target": "file:project:project_y", "type": "RELATED_TO"}',
+        ],
+        # A plain-string marker key in the namespace.
         f"{MEMORY_KEY_PREFIX}context": "hydrated 2026-07-21",
         "unrelated:key": {"text": "never listed"},
     }
@@ -141,17 +199,18 @@ class TestDataLayer:
     def test_family_counts_and_rows(self, fake: FakeRedis) -> None:
         overview = read_overview()
         assert overview is not None
-        assert overview.total == 4  # unrelated:key never counted
+        assert overview.total == 5  # unrelated:key never counted
         assert overview.family_counts == {
-            "curated": 1,
+            "node": 1,
             "lesson": 1,
             "file": 1,
+            "edges": 1,
             "context": 1,
         }
-        assert {r.family for r in overview.rows} == {"curated", "lesson", "file", "context"}
-        curated = next(r for r in overview.rows if r.family == "curated")
+        assert {r.family for r in overview.rows} == {"node", "lesson", "file", "edges", "context"}
+        curated = next(r for r in overview.rows if r.family == "node")
         assert curated.name == "north_star"
-        assert curated.node_type == "project"
+        assert curated.kind == "project"
         assert curated.description == "the ratified direction"
 
     def test_family_filter(self, fake: FakeRedis) -> None:
@@ -159,7 +218,7 @@ class TestDataLayer:
         assert overview is not None
         assert [r.family for r in overview.rows] == ["lesson"]
         # Counts still cover every family even when filtered.
-        assert overview.family_counts["curated"] == 1
+        assert overview.family_counts["node"] == 1
 
     def test_pagination_windows_and_clamps(self, monkeypatch: pytest.MonkeyPatch) -> None:
         store = {
@@ -184,15 +243,15 @@ class TestDataLayer:
         assert read_node("unrelated:key") is None
 
     def test_read_node_returns_fields(self, fake: FakeRedis) -> None:
-        fields = read_node(f"{MEMORY_KEY_PREFIX}curated:north_star")
+        fields = read_node(f"{MEMORY_KEY_PREFIX}node:north_star")
         assert fields is not None
         assert fields["text"] == "one wheel"
 
     def test_read_node_missing_key(self, fake: FakeRedis) -> None:
-        assert read_node(f"{MEMORY_KEY_PREFIX}curated:nope") is None
+        assert read_node(f"{MEMORY_KEY_PREFIX}node:nope") is None
 
     def test_node_count(self, fake: FakeRedis) -> None:
-        assert memory_data.node_count() == 4
+        assert memory_data.node_count() == 5
 
     def test_string_key_does_not_degrade_overview(self, fake: FakeRedis) -> None:
         """The live-index regression (2026-07-21): a plain-string key in
@@ -200,8 +259,56 @@ class TestDataLayer:
         overview = read_overview()
         assert overview is not None
         context_row = next(r for r in overview.rows if r.family == "context")
-        assert context_row.node_type == ""
-        assert context_row.description == ""
+        assert context_row.kind == "marker"
+        assert context_row.description == "hydrated 2026-07-21"
+
+    def test_kind_counts_and_filter(self, fake: FakeRedis) -> None:
+        """Kinds are the second-level filter: counts cover the family
+        selection; the filter narrows rows without changing counts."""
+        overview = read_overview()
+        assert overview is not None
+        assert overview.kind_counts == {
+            "project": 1,
+            "lesson": 1,
+            "feedback": 1,
+            "edge list": 1,
+            "marker": 1,
+        }
+        filtered = read_overview(kind="feedback")
+        assert filtered is not None
+        assert [r.kind for r in filtered.rows] == ["feedback"]
+        assert filtered.kind_counts == overview.kind_counts
+
+    def test_kind_filter_within_family(self, fake: FakeRedis) -> None:
+        overview = read_overview(family="file", kind="feedback")
+        assert overview is not None
+        assert [r.name for r in overview.rows] == ["global:feedback_x"]
+
+    def test_edge_rows_render_count_and_target(self, fake: FakeRedis) -> None:
+        """The blank-columns bug (reported 2026-07-21): edge keys are
+        LISTS of JSON edge objects and must render a count + target
+        preview, never blank Type/Description."""
+        overview = read_overview()
+        assert overview is not None
+        edge_row = next(r for r in overview.rows if r.family == "edges")
+        assert edge_row.kind == "edge list"
+        assert edge_row.description == "\u2192 file:project:project_y (RELATED_TO)"
+        assert edge_row.size == "1 edge"
+
+    def test_lesson_description_falls_back_to_text(self, fake: FakeRedis) -> None:
+        """Lessons carry only ``text`` — the description column shows
+        its first line instead of rendering blank."""
+        overview = read_overview()
+        assert overview is not None
+        lesson = next(r for r in overview.rows if r.family == "lesson")
+        assert lesson.kind == "lesson"
+        assert lesson.description == "bulk sed sweeps need audits"
+        assert lesson.size.endswith("chars")
+
+    def test_edge_node_detail_renders_items(self, fake: FakeRedis) -> None:
+        fields = read_node(f"{MEMORY_KEY_PREFIX}edges:file:project:project_x")
+        assert fields is not None
+        assert "RELATED_TO" in fields["edge 1"]
 
     def test_read_node_string_key(self, fake: FakeRedis) -> None:
         fields = read_node(f"{MEMORY_KEY_PREFIX}context")
@@ -226,7 +333,7 @@ class TestRoutes:
         assert 'href="/memory"' in resp.text
 
     def test_node_detail_renders(self, client: TestClient, fake: FakeRedis) -> None:
-        key = f"{MEMORY_KEY_PREFIX}curated:north_star"
+        key = f"{MEMORY_KEY_PREFIX}node:north_star"
         resp = client.get("/memory/node", params={"key": key})
         assert resp.status_code == 200
         assert "one wheel" in resp.text

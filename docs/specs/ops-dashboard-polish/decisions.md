@@ -261,3 +261,31 @@ the row's read-only list/click-through/pagination intent:
 - C3's memory half rides along: `/memory` in the top nav, and a
   Home "Memory nodes" KPI that HIDES on unreachable Redis instead
   of rendering a lying zero.
+
+## C1 chair call RESOLVED — /memory page stays (Patrick, 2026-07-21)
+
+Patrick, same day in-session: "I like the Memory page and think it
+will be useful." The #1545-lens question is settled: /memory ships.
+Same message reported the blank-columns bug on edges rows; fixed in
+the same held draft — the index holds THREE value shapes (hash /
+JSON-edge LIST / string+set markers), and the row builder now
+dispatches on TYPE: edge rows render count + target preview, lessons
+fall back to their text's first line, markers show their value.
+Family census also corrected the tiles: curated nodes hydrate under
+`node` (not `curated`), and the `rule` family exists.
+
+## /memory columns redesigned with Patrick (2026-07-21, approved "I love it")
+
+Live review iterations, all same-day: (1) edges/lessons rows rendered
+blank Type/Description — fixed by TYPE-dispatching reads (three value
+shapes in the index). (2) Updated column dropped — only the 14
+curated nodes carry ``updated_at``; replaced with **Size** (text KB /
+edge count / member count), derivable for every row. (3) Family+Type
+merged into one **Kind** chip column (they were redundant for
+lessons/edges); the named ambiguity (nodes and file pointers share
+kind values) is mitigated by the family tiles + full-key tooltips.
+(4) Patrick's requirement "we need the ability to filter the list" →
+kinds are the second-level filter: a kind-chip toolbar with counts
+appears whenever the selection has >1 kind, and every row's Kind chip
+links to its filter. Verified live: file pointers split
+feedback (97) / project (51) / reference (5) / user (13).

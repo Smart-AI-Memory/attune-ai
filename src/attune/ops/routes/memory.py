@@ -46,13 +46,14 @@ def _ctx(request: Request, **extra: object) -> dict[str, object]:
 
 @router.get("/memory", response_class=HTMLResponse)
 async def memory_page(request: Request) -> HTMLResponse:
-    """Family counts + one page of the node table."""
+    """Family counts, kind chips, and one page of the node table."""
     family = request.query_params.get("family") or None
+    kind = request.query_params.get("kind") or None
     try:
         page = max(1, int(request.query_params.get("page", "1")))
     except ValueError:
         page = 1
-    overview = memory_data.read_overview(family=family, page=page)
+    overview = memory_data.read_overview(family=family, kind=kind, page=page)
     templates = request.app.state.templates
     return templates.TemplateResponse(
         request,

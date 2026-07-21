@@ -48,14 +48,30 @@
     </a>
   </section>
 
+  {% set fam_q = 'family=' ~ overview.family ~ '&' if overview.family else '' %}
+  {% if overview.kind_counts | length > 1 %}
+    {# Second-level filter: KIND within the current family selection.
+       Row Kind chips link here too — every value shown is filterable. #}
+    <div class="memory-kind-toolbar" role="group" aria-label="Filter by kind">
+      <a class="chip {% if overview.kind is none %}chip-ok{% else %}chip-muted{% endif %}"
+         href="/memory?{{ fam_q }}">All kinds
+        ({{ '{:,}'.format(overview.kind_counts.values() | sum) }})</a>
+      {% for k, n in overview.kind_counts.items() | sort %}
+        <a class="chip {% if overview.kind == k %}chip-ok{% else %}chip-muted{% endif %}"
+           href="/memory?{{ fam_q }}kind={{ k | urlencode }}"
+           aria-label="Filter to kind {{ k }}">{{ k }} ({{ '{:,}'.format(n) }})</a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   <table class="data-table memory-table">
     <thead>
       <tr>
         <th class="col-name">Node</th>
-        <th class="col-family">Family</th>
-        <th class="col-type">Type</th>
+        <th class="col-kind"
+            data-tooltip="Content kind — the node's type field for curated nodes and file pointers, the value shape otherwise. Click a chip to filter.">Kind</th>
         <th class="col-desc">Description</th>
-        <th class="col-updated">Updated</th>
+        <th class="col-size">Size</th>
       </tr>
     </thead>
     <tbody>
@@ -67,12 +83,12 @@
               <code>{{ row.name }}</code>
             </a>
           </td>
-          <td class="col-family">
-            <span class="chip chip-muted">{{ row.family }}</span>
+          <td class="col-kind">
+            <a class="chip chip-muted" href="/memory?{{ fam_q }}kind={{ row.kind | urlencode }}"
+               aria-label="Filter to kind {{ row.kind }}">{{ row.kind }}</a>
           </td>
-          <td class="col-type">{{ row.node_type or '—' }}</td>
           <td class="col-desc">{{ row.description or '—' }}</td>
-          <td class="col-updated">{{ row.updated_at or '—' }}</td>
+          <td class="col-size">{{ row.size or '—' }}</td>
         </tr>
       {% endfor %}
     </tbody>
@@ -80,7 +96,8 @@
 
   {% if overview.pages > 1 %}
     <nav class="pagination" aria-label="Memory pages">
-      {% set base = '/memory?family=' ~ overview.family ~ '&' if overview.family else '/memory?' %}
+      {% set kind_q = 'kind=' ~ (overview.kind | urlencode) ~ '&' if overview.kind else '' %}
+      {% set base = '/memory?' ~ fam_q ~ kind_q %}
       {% if overview.page > 1 %}
         <a class="link" href="{{ base }}page={{ overview.page - 1 }}">← Newer</a>
       {% endif %}

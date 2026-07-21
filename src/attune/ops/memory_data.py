@@ -29,10 +29,13 @@ MEMORY_KEY_PREFIX = "attune:memory:"
 
 #: Family → human label, in display order. A key's family is the
 #: segment after the prefix (``attune:memory:<family>:...``).
+#: Families verified against the live index 2026-07-21: curated
+#: nodes hydrate under ``node``, not ``curated``.
 FAMILY_LABELS: dict[str, str] = {
-    "curated": "Curated nodes",
+    "node": "Curated nodes",
     "lesson": "Lessons",
     "file": "File pointers",
+    "rule": "Rules",
     "edges": "Edges",
 }
 
@@ -49,19 +52,21 @@ class MemoryNodeRow:
     key: str
     family: str
     name: str
-    node_type: str = ""
+    kind: str = ""
     description: str = ""
-    updated_at: str = ""
+    size: str = ""
 
 
 @dataclass
 class MemoryOverview:
-    """Family counts + one page of node rows."""
+    """Family counts, kind counts, and one page of node rows."""
 
     total: int
     family_counts: dict[str, int] = field(default_factory=dict)
+    kind_counts: dict[str, int] = field(default_factory=dict)
     rows: list[MemoryNodeRow] = field(default_factory=list)
     family: str | None = None
+    kind: str | None = None
     page: int = 1
     pages: int = 1
 
@@ -110,14 +115,23 @@ def _scan_keys(client: Any) -> list[str]:
 
 def read_overview(
     family: str | None = None,
+    kind: str | None = None,
     page: int = 1,
     client: Any | None = None,
 ) -> MemoryOverview | None:
-    """Family counts plus one page of node rows.
+    """Family counts, kind counts, and one page of node rows.
+
+    A key's *kind* is its content type: the ``type`` hash field for
+    node/file hashes (``project``/``feedback``/…), the family itself
+    for hashes without one (lessons), ``edge list`` for the JSON-edge
+    lists, ``marker`` / ``set`` for the marker keys. Kinds are the
+    second-level filter under the family tiles.
 
     Args:
-        family: Restrict the row table to one family (counts always
-            cover every family). Unknown families yield zero rows.
+        family: Restrict rows to one family (family counts always
+            cover every family).
+        kind: Restrict rows to one kind within the family selection
+            (kind counts always cover the whole family selection).
         page: 1-based page over the (sorted) filtered keys.
         client: Injected Redis client (tests); ``None`` connects.
 
@@ -134,38 +148,76 @@ def read_overview(
             fam = _family_of(key)
             counts[fam] = counts.get(fam, 0) + 1
 
-        filtered = [k for k in keys if family is None or _family_of(k) == family]
-        pages = max(1, -(-len(filtered) // PAGE_SIZE))
+        candidates = [k for k in keys if family is None or _family_of(k) == family]
+
+        # Pass 1 — TYPE for every candidate (the index holds three
+        # value shapes; an HMGET-only pass rendered every non-hash
+        # row blank — live catch 2026-07-21). raise_on_error=False
+        # keeps one odd key from degrading the whole page.
+        type_pipe = client.pipeline(transaction=False)
+        for key in candidates:
+            type_pipe.type(key)
+        key_types = [
+            t if not isinstance(t, Exception) else "none"
+            for t in type_pipe.execute(raise_on_error=False)
+        ]
+
+        # Pass 2 — the ``type`` hash field for hash candidates, which
+        # resolves each key's KIND (and with it the kind counts and
+        # the kind filter). Local index ≤ a few thousand keys — one
+        # pipelined roundtrip.
+        kind_pipe = client.pipeline(transaction=False)
+        hash_keys = [k for k, t in zip(candidates, key_types, strict=False) if t == "hash"]
+        for key in hash_keys:
+            kind_pipe.hmget(key, "type")
+        hash_kinds: dict[str, str] = {}
+        for key, result in zip(hash_keys, kind_pipe.execute(raise_on_error=False), strict=False):
+            raw = None if isinstance(result, Exception) else (result or [None])[0]
+            hash_kinds[key] = raw or _family_of(key)
+
+        kinds = [
+            _kind_of(key, key_type, hash_kinds)
+            for key, key_type in zip(candidates, key_types, strict=False)
+        ]
+        kind_counts: dict[str, int] = {}
+        for k in kinds:
+            kind_counts[k] = kind_counts.get(k, 0) + 1
+
+        selected = [
+            (key, key_type)
+            for key, key_type, k in zip(candidates, key_types, kinds, strict=False)
+            if kind is None or k == kind
+        ]
+        pages = max(1, -(-len(selected) // PAGE_SIZE))
         page = min(max(1, page), pages)
-        window = filtered[(page - 1) * PAGE_SIZE : page * PAGE_SIZE]
+        window = selected[(page - 1) * PAGE_SIZE : page * PAGE_SIZE]
+
+        # Pass 3 — full row data for the visible window only.
+        fetch_pipe = client.pipeline(transaction=False)
+        for key, key_type in window:
+            if key_type == "hash":
+                fetch_pipe.hmget(key, "type", "description", "text")
+            elif key_type == "list":
+                fetch_pipe.lrange(key, 0, -1)
+            elif key_type == "string":
+                fetch_pipe.get(key)
+            elif key_type == "set":
+                fetch_pipe.smembers(key)
+            else:
+                fetch_pipe.exists(key)
 
         rows = []
-        pipe = client.pipeline(transaction=False)
-        for key in window:
-            pipe.hmget(key, "type", "description", "updated_at")
-        # raise_on_error=False: a non-hash key in the namespace (e.g. a
-        # plain-string marker like attune:memory:context) yields a
-        # WRONGTYPE entry in the result list instead of failing the
-        # whole page — dogfooded live 2026-07-21.
-        for key, fields in zip(window, pipe.execute(raise_on_error=False), strict=False):
-            if isinstance(fields, Exception):
-                fields = (None, None, None)
-            node_type, description, updated_at = fields
-            rows.append(
-                MemoryNodeRow(
-                    key=key,
-                    family=_family_of(key),
-                    name=_display_name(key),
-                    node_type=node_type or "",
-                    description=(description or "")[:300],
-                    updated_at=updated_at or "",
-                )
-            )
+        for (key, key_type), result in zip(
+            window, fetch_pipe.execute(raise_on_error=False), strict=False
+        ):
+            rows.append(_build_row(key, key_type, result, hash_kinds))
         return MemoryOverview(
             total=len(keys),
             family_counts=counts,
+            kind_counts=kind_counts,
             rows=rows,
             family=family,
+            kind=kind,
             page=page,
             pages=pages,
         )
@@ -174,6 +226,89 @@ def read_overview(
         # an initial connect failure.
         logger.debug("Redis read failed; /memory degrades", exc_info=True)
         return None
+
+
+def _kind_of(key: str, key_type: str, hash_kinds: dict[str, str]) -> str:
+    if key_type == "hash":
+        return hash_kinds.get(key, _family_of(key))
+    if key_type == "list":
+        return "edge list"
+    if key_type == "set":
+        return "set"
+    if key_type == "string":
+        return "marker"
+    return "unknown"
+
+
+def _human_size(chars: int) -> str:
+    if chars >= 1024:
+        return f"{chars / 1024:.1f} KB"
+    return f"{chars} chars"
+
+
+def _first_line(text: str) -> str:
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped:
+            return stripped
+    return ""
+
+
+def _edge_preview(items: list[str]) -> str:
+    """Human summary of a JSON edge list: ``→ target (TYPE)``."""
+    import json  # noqa: PLC0415
+
+    parts = []
+    for raw in items[:2]:
+        try:
+            edge = json.loads(raw)
+        except (TypeError, ValueError):
+            continue
+        target = edge.get("target", "?")
+        edge_type = edge.get("type", "")
+        parts.append(f"→ {target}" + (f" ({edge_type})" if edge_type else ""))
+    return "; ".join(parts)
+
+
+def _build_row(
+    key: str,
+    key_type: str,
+    result: object,
+    hash_kinds: dict[str, str],
+) -> MemoryNodeRow:
+    """One table row from a key's TYPE + type-appropriate fetch."""
+    family = _family_of(key)
+    name = _display_name(key)
+    kind = _kind_of(key, key_type, hash_kinds)
+    description = ""
+    size = ""
+    if isinstance(result, Exception):
+        result = None
+    if key_type == "hash" and isinstance(result, list | tuple):
+        _raw_type, raw_desc, raw_text = (list(result) + [None] * 3)[:3]
+        # Lessons (and some pointers) carry only ``text`` — fall back
+        # to its first line so the column is informative, not blank.
+        description = raw_desc or _first_line(raw_text or "")
+        size = _human_size(len(raw_text or raw_desc or ""))
+    elif key_type == "list" and isinstance(result, list | tuple):
+        count = len(result)
+        description = _edge_preview(list(result))
+        size = f"{count} edge{'s' if count != 1 else ''}"
+    elif key_type == "string":
+        description = str(result or "")
+        size = _human_size(len(description))
+    elif key_type == "set" and isinstance(result, list | set | tuple | frozenset):
+        members = sorted(str(m) for m in result)
+        description = ", ".join(members[:5]) + ("…" if len(members) > 5 else "")
+        size = f"{len(members)} member{'s' if len(members) != 1 else ''}"
+    return MemoryNodeRow(
+        key=key,
+        family=family,
+        name=name,
+        kind=kind,
+        description=description[:300],
+        size=size,
+    )
 
 
 def read_node(key: str, client: Any | None = None) -> dict[str, str] | None:
@@ -190,12 +325,18 @@ def read_node(key: str, client: Any | None = None) -> dict[str, str] | None:
     if client is None:
         return None
     try:
-        # Most nodes are hashes; a few namespace keys are plain strings
-        # (e.g. hydration markers). Dispatch on the actual type so a
-        # non-hash node renders its value instead of degrading.
+        # Dispatch on the actual type: hashes (nodes/lessons/files),
+        # LISTS of JSON edge objects (edges family), plain-string and
+        # set markers all live in the namespace.
         key_type = client.type(key)
         if key_type == "hash":
             fields = client.hgetall(key)
+        elif key_type == "list":
+            items = client.lrange(key, 0, 199)
+            fields = {f"edge {i + 1}": item for i, item in enumerate(items)}
+        elif key_type == "set":
+            members = sorted(str(m) for m in client.smembers(key))
+            fields = {"members": "\n".join(members)}
         elif key_type == "string":
             value = client.get(key)
             fields = {"value": value} if value is not None else {}
