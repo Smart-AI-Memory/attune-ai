@@ -247,3 +247,73 @@ heuristic label) when Ollama is unavailable, because a garbage label
 is worse than none. Plus an `ops/data.py` reader that turns verdicts
 into the noise denominator `estimate_intervention_signal`'s caption
 says is missing. Design pass owed before build.
+
+## 2026-07-20 — Design approved: OQ1–OQ4 ruled (chair: Patrick)
+
+Design pass for this spec's own content (the PersonalMemory
+recall-accuracy benchmark — NOT the feedback-signal step-2 scorer,
+which is homed in `docs/specs/memory-feedback-signal/`; the
+cross-stamped status line pointing there is corrected as part of
+this entry). All four open questions ruled as recommended
+(`1a 2a 3a 4a`); see [design.md](design.md) for the full option
+text.
+
+- **D1 — Harness home: standalone script**
+  (`scripts/eval_personal_memory_recall.py`). Zero CI surface, no
+  marker plumbing; matches R6 "cheap, not infrastructure."
+- **D2 — Corpus write path: real `capture()` under a keyless env**
+  (`ANTHROPIC_API_KEY=""`). Exercises the actual write path the MCP
+  tools use; polish degrades to the deterministic skeleton, zero
+  spend, zero variance.
+- **D3 — Negative-query FP criterion: self-calibrating threshold.**
+  FP = a negative query whose top-1 score ≥ the minimum top-1 score
+  among correctly-answered positive queries; degenerate cases
+  reported as "criterion inapplicable," never a fake rate.
+- **D4 — Report destination: script prints a paste-ready markdown
+  block**; the agent writes the single dated decisions.md entry
+  (R5). No script write-access to spec files.
+
+Execution armed: T1–T4 per design.md's task blocks.
+
+## 2026-07-20 — Benchmark run 1: results + verdict (T3)
+
+Run per D1–D4: `ANTHROPIC_API_KEY="" .venv/bin/python
+scripts/eval_personal_memory_recall.py` — 18-entry corpus (4 kinds),
+26 positive / 6 negative hand-authored queries, isolated tmp roots
+(global + explicit project root, neither under `~/.attune` or the
+repo), keyless so `capture()` stayed on the deterministic skeleton
+path. Retriever in play: `KeywordRetriever` (lexical), per-query
+~3 ms.
+
+**Numbers:**
+
+- **hit@1: 25/26 (96%)**
+- **hit@3: 26/26 (100%)**
+- **FP rate: 0/6 (0%)** — D3 criterion; threshold = min
+  correct-positive top-1 score (3.0); three negatives returned zero
+  hits outright, three returned weak hits (score 2.5) below
+  threshold.
+
+**The one hit@1 miss (concrete example):** "where should API keys be
+stored on this machine?" → `keyless-test-runs` at rank 1 and the
+expected `secret-storage-location` at rank 2 with IDENTICAL scores
+(5.0 vs 5.0) — a tie-break ordering loss, not a retrieval miss.
+
+**Verdict: keep as-is.** Write-then-recall round-trips correctly;
+ranking is accurate at k=3 with zero false-positive over-confidence
+on no-match queries. No tuning owed. Honest caveat for future
+readers: the retriever is keyword-based, so these numbers cover
+natural-question phrasing with SOME vocabulary overlap (how people
+actually query); pure-paraphrase robustness with zero shared terms
+is untested and would be the first probe if a live recall complaint
+ever contradicts this verdict. Longitudinal re-runs stay a
+non-goal (R6) unless that happens.
+
+## 2026-07-20 — Close-out (T4): spec shipped
+
+All Done-when items met: corpus + ground truth exist
+(`scripts/eval_personal_memory_recall.py`, self-cross-checking),
+benchmark run once against current `PersonalMemory`, this file
+carries the numbers + failure example + verdict. Status flipped to
+shipped across the three phase files; the cross-stamped status line
+was corrected in the design-approval entry above.
