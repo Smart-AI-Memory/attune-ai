@@ -1,6 +1,6 @@
 # Spec-Lifecycle Gates v1 (table-authored) — Requirements
 
-**Status:** approved (2026-07-19) — chair-ruled per item; authored by the
+**Status:** shipped (2026-07-21 status-truth; approved 2026-07-19) — chair-ruled per item; authored by the
 round table (thread `producing-spec-lifecycle-gates-20260719-3`); compiled deterministically by
 `attune.roundtable.compiler` (V2-P2). Approved items only;
 declined: none (RR-7 re-admitted amended, G4 2026-07-19);

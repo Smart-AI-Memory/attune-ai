@@ -221,3 +221,17 @@ for cleanup. (2)
 zero consumers; stale artifact, future deletion candidate. All
 three retired with grep receipts; the sweep's only correction was
 replacing a fictional rebrand with an honest deletion.
+
+## 2026-07-21 — G4 build receipt + design-phase waiver (chair)
+
+G4 (a+b+c) is complete on branch `feat/claim-drift-g4` as **held
+draft #1561** (`hold-until-07-27`); it merges after the 10.6.0 tag
+per the standing merge hold. Recorded here so the spec's stage
+reflects reality on main: built, pending merge — not un-started.
+
+The chair ruled this session (AskUserQuestion, 2026-07-21) that the
+design phase is waived: G4 was chair-ruled and built without a
+design.md, and the requirements header already records every ruling
+(D4, D7, D8). The stage ladder honors the marker line below.
+
+PHASE-WAIVED: design (2026-07-21 — chair ruling this session; G4 built without a design phase, held #1561)

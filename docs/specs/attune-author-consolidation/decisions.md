@@ -1,6 +1,6 @@
 # attune-author Consolidation — Decisions
 
-**Status:** draft (2026-06-30) · log for
+**Status:** active (2026-07-21; opened 2026-06-30) · log for
 [requirements.md](requirements.md) / [design.md](design.md).
 
 ## D1 — The split is authoring vs. mechanics, not "the package"
