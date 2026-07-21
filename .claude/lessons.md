@@ -17151,3 +17151,24 @@ def ", start_idx + 1)` for module-
   files to = the file list never split; do NOT read it as "files
   are clean". Companion to the JIT `=word` PATH-expansion rule —
   same shell, different trap.
+
+- **A decisions.md with NO `**Status:**` header silently blocks the
+  Stage ladder's `shipped` derivation — "tasks.md says shipped but
+  the dashboard says executing" means check EVERY phase file's
+  header, including decisions.md**: 2026-07-21 status-truth pass.
+  spec-lifecycle-gates had requirements/design `approved` + tasks
+  `shipped`, yet derived stage=executing. Two stacked causes: (1)
+  `approved` is not in `_COMPLETE_STATUSES` (terminal = complete/
+  completed/done/shipped/superseded — approved/active/living are
+  in-flight); (2) decisions.md IS one of the four `_PHASE_FILES`,
+  and the shipped rule requires every EXISTING phase file to carry
+  a terminal token — a decisions.md with no Status line at all has
+  `status=None` and fails the check invisibly (nothing renders as
+  "missing"; the spec just never ships). Fix shape (#1570): flip
+  approved→shipped on the phase files AND add the missing Status
+  header to decisions.md. Diagnostic: run the real deriver over the
+  spec (`_list_specs_in_root` / `derive_stage`) and print per-phase
+  `(name, exists, status)` — the None jumps out instantly; eyeball
+  reads of the .md files miss the absent header because absence
+  doesn't look like a value. Extends the "status drift lives ACROSS
+  files within one spec dir" lesson with the headerless-file case.
