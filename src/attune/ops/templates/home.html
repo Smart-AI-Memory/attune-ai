@@ -33,6 +33,14 @@
     <div class="kpi-foot">{% if workflow_count == 0 %}attune package not importable{% else %}runnable from CLI / MCP / dashboard{% endif %}</div>
   </a>
 
+  {% if memory_nodes is not none %}
+    <a class="kpi" href="/memory">
+      <div class="kpi-label">Memory nodes</div>
+      <div class="kpi-value">{{ '{:,}'.format(memory_nodes) }}</div>
+      <div class="kpi-foot">Redis-derived index, hydrated from the corpus</div>
+    </a>
+  {% endif %}
+
   <a class="kpi" href="#family-snapshot">
     <div class="kpi-label">attune-ai</div>
     <div class="kpi-value">{% if attune_ai and attune_ai.version %}v{{ attune_ai.version }}{% else %}—{% endif %}</div>

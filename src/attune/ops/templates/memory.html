@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-head">
+  <h1>Memory</h1>
+  <p class="page-sub">
+    Read-only view of the Redis-derived memory index
+    (<code>attune:memory:*</code>) — curated nodes, lessons, and file
+    pointers hydrated from the tracked corpus at session start. The
+    index is derived: edit the corpus, never these keys.
+  </p>
+</section>
+
+{% if overview is none %}
+  <div class="specs-empty-state" role="status">
+    <div class="empty-state-title">Memory index unreachable</div>
+    <div class="empty-state-hint">
+      Local Redis is not answering, so the derived index can't be
+      read. Sessions degrade gracefully without it — start Redis and
+      reload to browse the corpus here.
+    </div>
+  </div>
+{% elif overview.total == 0 %}
+  <div class="specs-empty-state" role="status">
+    <div class="empty-state-title">No memory nodes yet</div>
+    <div class="empty-state-hint">
+      Redis is up but holds no <code>attune:memory:*</code> keys. The
+      index hydrates at session start from the tracked corpus (curated
+      memories, lessons, file pointers).
+    </div>
+  </div>
+{% else %}
+  <section class="kpi-grid">
+    {% for fam, label in family_labels.items() %}
+      {% if overview.family_counts.get(fam) %}
+        <a class="kpi {% if overview.family == fam %}is-active{% endif %}"
+           href="/memory?family={{ fam }}"
+           aria-label="Filter to {{ label }}">
+          <div class="kpi-label">{{ label }}</div>
+          <div class="kpi-value">{{ '{:,}'.format(overview.family_counts[fam]) }}</div>
+        </a>
+      {% endif %}
+    {% endfor %}
+    <a class="kpi {% if overview.family is none %}is-active{% endif %}"
+       href="/memory" aria-label="Show all families">
+      <div class="kpi-label">All keys</div>
+      <div class="kpi-value">{{ '{:,}'.format(overview.total) }}</div>
+    </a>
+  </section>
+
+  <table class="data-table memory-table">
+    <thead>
+      <tr>
+        <th class="col-name">Node</th>
+        <th class="col-family">Family</th>
+        <th class="col-type">Type</th>
+        <th class="col-desc">Description</th>
+        <th class="col-updated">Updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in overview.rows %}
+        <tr>
+          <td class="col-name">
+            <a class="link" href="/memory/node?key={{ row.key | urlencode }}"
+               data-tooltip="{{ row.key }}" aria-label="{{ row.key }}">
+              <code>{{ row.name }}</code>
+            </a>
+          </td>
+          <td class="col-family">
+            <span class="chip chip-muted">{{ row.family }}</span>
+          </td>
+          <td class="col-type">{{ row.node_type or '—' }}</td>
+          <td class="col-desc">{{ row.description or '—' }}</td>
+          <td class="col-updated">{{ row.updated_at or '—' }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if overview.pages > 1 %}
+    <nav class="pagination" aria-label="Memory pages">
+      {% set base = '/memory?family=' ~ overview.family ~ '&' if overview.family else '/memory?' %}
+      {% if overview.page > 1 %}
+        <a class="link" href="{{ base }}page={{ overview.page - 1 }}">← Newer</a>
+      {% endif %}
+      <span class="pagination-status">page {{ overview.page }} of {{ overview.pages }}</span>
+      {% if overview.page < overview.pages %}
+        <a class="link" href="{{ base }}page={{ overview.page + 1 }}">Older →</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% endif %}
+{% endblock %}

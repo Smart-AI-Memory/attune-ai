@@ -54,9 +54,9 @@ QA scope but don't exist as pages.
 
 | ID | Task | Status | Closes | PR / location |
 |----|------|--------|--------|----|
-| C1 | `/memory` page: read-only view of `~/.attune/memory/` — list top-level memory keys, allow click-through to view value JSON; pagination if >50 keys; same table styling as Specs | todo | PL-P3-A | not started |
+| C1 | `/memory` page: read-only view of the memory serving layer — premise re-validated 2026-07-21 (decisions.md): targets the post-#1239 Redis-derived index (`attune:memory:*`), not the retired `~/.attune/memory/`; family counts + paginated node table + detail view, degrade-on-unreachable | pr-open | PL-P3-A | held draft (2026-07-21): `src/attune/ops/memory_data.py`, `routes/memory.py`, `templates/memory{,_node}.html`, tests in `tests/unit/ops/test_memory_page.py` |
 | C2 | `/sessions` page: read-only view of `~/.attune/sessions/` — most-recent-first list of session JSONL summaries (start time, duration, project, workflow count if any); link to viewing raw JSONL with syntax highlighting | removed | PL-P3-B | shipped in #377/#387/#390, then **deliberately removed in [#1545](https://github.com/Smart-AI-Memory/attune-ai/pull/1545)** (chair-ruled 2026-07-21); summarizer/cache kept surface-less |
-| C3 | Add `/memory` and `/sessions` to top nav; add Memory/Sessions counters to Home KPI grid if data exists | partial | PL-P3-C | `/sessions` added to top nav at `src/attune/ops/server.py:87-94`; `/memory` blocked on C1; KPI counters not yet added |
+| C3 | Add `/memory` and `/sessions` to top nav; add Memory/Sessions counters to Home KPI grid if data exists | pr-open | PL-P3-C | `/sessions` in top nav (server.py); `/memory` nav + Home "Memory nodes" KPI (hides on unreachable Redis) ride in the C1 held draft (2026-07-21) |
 
 **Phase C definition of done:** Partial — Sessions shipped end-to-end; Memory (C1) and the Memory portion of C3 + KPI counters remain.
 

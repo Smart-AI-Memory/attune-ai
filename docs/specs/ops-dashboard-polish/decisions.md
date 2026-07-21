@@ -234,3 +234,30 @@ rationales differ (Patterns was structurally empty; /memory has
 the same ops-research lens could rule a memory browse page off too.
 #1576 is a held draft precisely so this is a deliberate Monday call,
 not a default-in.
+
+## C1 premise re-validated — /memory targets the Redis-derived index (2026-07-21)
+
+The original C1 row ("read-only view of `~/.attune/memory/` — list
+top-level memory keys") predates memory-unification (#1239). That
+directory is dev scratch today; the real serving layer is the local
+Redis derived index — `attune:memory:*` hashes hydrated at session
+start from the tracked corpus (lessons, file pointers, edges,
+curated nodes; ~1,050 keys live). C1 built against THAT, preserving
+the row's read-only list/click-through/pagination intent:
+
+- `attune.ops.memory_data` (framework-free): family counts,
+  paginated rows, node detail. Degradation contract mirrors the
+  corpus rule — every function returns `None` when Redis is
+  unreachable and the page renders an explanatory empty state,
+  never a 500. The detail view refuses keys outside the
+  `attune:memory:` namespace (the page must never become a generic
+  Redis browser).
+- Dogfood catch during the build: the namespace holds a few
+  plain-STRING keys (e.g. `attune:memory:context`) — an `HMGET`
+  pipeline against them WRONGTYPEs and would have degraded the
+  whole page. Fixed with `execute(raise_on_error=False)` + a
+  type-dispatching detail read; regression-locked in
+  `tests/unit/ops/test_memory_page.py`.
+- C3's memory half rides along: `/memory` in the top nav, and a
+  Home "Memory nodes" KPI that HIDES on unreachable Redis instead
+  of rendering a lying zero.
