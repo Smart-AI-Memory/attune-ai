@@ -22,6 +22,8 @@ import pytest
 from attune.ops.spec_lifecycle import (
     STALE_THRESHOLD_DAYS,
     derive_lifecycle,
+    derive_stage,
+    read_gate_verdicts,
 )
 
 # ----- Test fixtures --------------------------------------------------
@@ -613,3 +615,147 @@ class TestLivingAndShippedTokens:
             last_modified=FRESH,
         )
         assert derive_lifecycle(spec, now=NOW) == "approved-not-shipped"
+
+
+# ----- Stage derivation (spec-lifecycle-gates UI phase) ----------------
+
+
+class TestDeriveStage:
+    """derive_stage: pipeline position + next transition."""
+
+    def test_shipped_when_all_existing_terminal(self):
+        spec = _Spec(phases=_all_phases(requirements="shipped (2026-07-20)", decisions="shipped"))
+        info = derive_stage(spec)
+        assert info.stage == "shipped"
+        assert info.next_phase is None
+
+    def test_requirements_stage_when_missing(self):
+        spec = _Spec(phases=_all_phases(decisions="draft"))
+        info = derive_stage(spec)
+        assert info.stage == "requirements"
+        assert info.next_phase == "requirements"
+        assert "Draft" in info.next_action
+
+    def test_requirements_stage_when_unapproved(self):
+        spec = _Spec(phases=_all_phases(requirements="draft (2026-07-01)"))
+        info = derive_stage(spec)
+        assert info.stage == "requirements"
+        assert info.next_action == "Approve requirements"
+
+    def test_design_stage_when_design_unapproved(self):
+        spec = _Spec(
+            phases=_all_phases(requirements="approved (2026-07-19)", design="draft — OQ open")
+        )
+        info = derive_stage(spec)
+        assert info.stage == "design"
+        assert info.next_phase == "design"
+        assert info.next_action == "Approve design"
+
+    def test_design_stage_when_design_missing(self):
+        spec = _Spec(phases=_all_phases(requirements="approved (2026-07-19)"))
+        info = derive_stage(spec)
+        assert info.stage == "design"
+        assert "waiver" in info.next_action
+
+    def test_tasks_stage_when_tasks_unapproved(self):
+        spec = _Spec(
+            phases=_all_phases(
+                requirements="approved", design="approved (2026-07-19)", tasks="draft"
+            )
+        )
+        info = derive_stage(spec)
+        assert info.stage == "tasks"
+        assert info.next_phase == "tasks"
+
+    def test_executing_when_all_present_approved(self):
+        spec = _Spec(
+            phases=_all_phases(
+                requirements="approved", design="approved", tasks="approved", decisions="active"
+            )
+        )
+        info = derive_stage(spec)
+        assert info.stage == "executing"
+        assert info.next_phase == "decisions"
+
+    def test_partial_terminal_is_not_shipped(self):
+        """One shipped phase + one in-flight phase != shipped spec."""
+        spec = _Spec(phases=_all_phases(requirements="shipped", design="draft"))
+        assert derive_stage(spec).stage == "design"
+
+
+class TestReadGateVerdicts:
+    """read_gate_verdicts: RR-1 ledger reader, graceful everywhere."""
+
+    def test_missing_ledger_returns_empty(self, tmp_path):
+        assert read_gate_verdicts(tmp_path / "nope.jsonl") == {}
+
+    def test_reads_latest_receipt_per_slug(self, tmp_path):
+        ledger = tmp_path / "verdicts.jsonl"
+        ledger.write_text(
+            '{"receipt_id": "r1", "target_artifact": "docs/specs/my-spec/design.md", '
+            '"evaluation_state": "REVISE", "gate_id": "g1", "phase": "design"}\n'
+            '{"receipt_id": "r2", "target_artifact": "docs/specs/my-spec/design.md", '
+            '"evaluation_state": "PASS", "gate_id": "g1", "phase": "design"}\n',
+            encoding="utf-8",
+        )
+        verdicts = read_gate_verdicts(ledger)
+        assert verdicts["my-spec"]["evaluation_state"] == "PASS"
+        assert verdicts["my-spec"]["receipt_id"] == "r2"
+
+    def test_malformed_lines_skipped(self, tmp_path):
+        ledger = tmp_path / "verdicts.jsonl"
+        ledger.write_text(
+            "not json at all\n"
+            '["a", "list"]\n'
+            '{"no_target": true}\n'
+            '{"target_artifact": "docs/specs/ok-spec/requirements.md", '
+            '"evaluation_state": "CHAIR_REQUIRED"}\n',
+            encoding="utf-8",
+        )
+        verdicts = read_gate_verdicts(ledger)
+        assert list(verdicts) == ["ok-spec"]
+
+
+class TestStageWaiverSignal:
+    """PHASE-WAIVED chair lines satisfy the ladder for ABSENT files."""
+
+    def test_waived_design_advances_past_design(self):
+        spec = _Spec(phases=_all_phases(requirements="approved (2026-07-18)"))
+        spec.waived_phases = ("design",)
+        info = derive_stage(spec)
+        assert info.stage == "executing"
+        assert info.next_phase == "decisions"
+
+    def test_waiver_ignored_when_design_file_exists(self):
+        """An existing file's own status governs; waiving it is contradictory."""
+        spec = _Spec(phases=_all_phases(requirements="approved", design="draft"))
+        spec.waived_phases = ("design",)
+        info = derive_stage(spec)
+        assert info.stage == "design"
+        assert info.next_action == "Approve design"
+
+    def test_no_waiver_still_demands_design(self):
+        spec = _Spec(phases=_all_phases(requirements="approved"))
+        info = derive_stage(spec)
+        assert info.stage == "design"
+        assert "waiver" in info.next_action
+
+    def test_scan_waived_phases_reads_chair_line(self, tmp_path):
+        from attune.ops.specs_data import _scan_waived_phases
+
+        d = tmp_path / "some-spec"
+        d.mkdir()
+        (d / "decisions.md").write_text(
+            "# Decisions\n\nbody text\n\n"
+            "PHASE-WAIVED: design (2026-07-20 — thread q-x-001)\n"
+            "PHASE-WAIVED: nonsense (not a phase)\n",
+            encoding="utf-8",
+        )
+        assert _scan_waived_phases(d) == ("design",)
+
+    def test_scan_waived_phases_missing_decisions(self, tmp_path):
+        from attune.ops.specs_data import _scan_waived_phases
+
+        d = tmp_path / "bare-spec"
+        d.mkdir()
+        assert _scan_waived_phases(d) == ()

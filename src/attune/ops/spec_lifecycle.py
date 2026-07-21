@@ -20,8 +20,11 @@ build SpecRecord objects via ``routes/specs.py`` and pass them here.
 
 from __future__ import annotations
 
+import json
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Protocol, runtime_checkable
+from pathlib import Path
+from typing import Any, Protocol, runtime_checkable
 
 # 30-day stale threshold. Ratified 2026-05-31 in decisions.md D1.
 # Revisit if 30d proves too noisy or too quiet in practice.
@@ -159,6 +162,132 @@ def derive_lifecycle(spec: _SpecLike, *, now: datetime | None = None) -> str:
 
     # 6. Active — default
     return "active"
+
+
+@dataclass(frozen=True)
+class StageInfo:
+    """Pipeline position + next transition for one spec.
+
+    The Specs page's Stage column (spec-lifecycle-gates UI phase,
+    chair-ruled 2026-07-20): ``stage`` is where the spec sits in the
+    authoring pipeline, ``next_phase`` names the phase file the next
+    chair action targets (None when shipped), ``next_action`` is the
+    short human hint rendered in the tooltip. Derived exclusively
+    from the phase files' own status lines — there is no separate
+    tracking store to drift.
+    """
+
+    stage: str
+    next_phase: str | None
+    next_action: str
+
+
+def derive_stage(spec: _SpecLike) -> StageInfo:
+    """Return the pipeline stage + next transition for one spec.
+
+    Ladder (first match wins); ``ok`` means the phase's leading token
+    is in ``_APPROVED_STATUSES`` (which includes the terminal set):
+
+    1. **shipped** — at least one phase exists and every existing
+       phase carries a terminal token.
+    2. **requirements** — requirements.md missing or not approved.
+    3. **design** — design.md exists but not approved, OR design.md
+       missing (next action: author it or record a waiver — the
+       round table's completion ruling made waivers first-class).
+    4. **tasks** — tasks.md exists but not approved.
+    5. **executing** — everything present is approved; the remaining
+       work is execution receipts in decisions.md + status flips.
+
+    A ``PHASE-WAIVED: <phase>`` chair line in decisions.md (surfaced
+    as ``spec.waived_phases``) satisfies the ladder for a phase whose
+    file is ABSENT — the waiver-aware branch skips it instead of
+    demanding authorship. A file that exists is always governed by
+    its own status line; waiving an existing file is contradictory
+    and ignored.
+    """
+    phase_by_name = {p.name: p for p in spec.phases}
+    waived = set(getattr(spec, "waived_phases", ()) or ())
+
+    def _ok(name: str) -> bool:
+        p = phase_by_name.get(name)
+        return (
+            p is not None
+            and p.exists
+            and p.status is not None
+            and _normalize(p.status) in _APPROVED_STATUSES
+        )
+
+    def _exists(name: str) -> bool:
+        p = phase_by_name.get(name)
+        return p is not None and p.exists
+
+    existing = [p for p in spec.phases if p.exists]
+    if existing and all(
+        p.status is not None and _normalize(p.status) in _COMPLETE_STATUSES for p in existing
+    ):
+        return StageInfo("shipped", None, "Complete — archive when ready")
+
+    if not _ok("requirements"):
+        action = (
+            "Approve requirements" if _exists("requirements") else "Draft + approve requirements"
+        )
+        return StageInfo("requirements", "requirements", action)
+
+    if _exists("design") and not _ok("design"):
+        return StageInfo("design", "design", "Approve design")
+    if not _exists("design") and "design" not in waived:
+        return StageInfo("design", "design", "Author design.md (or record a waiver)")
+
+    if _exists("tasks") and not _ok("tasks"):
+        return StageInfo("tasks", "tasks", "Approve tasks")
+
+    return StageInfo(
+        "executing",
+        "decisions",
+        "Execute; record receipts in decisions.md, then flip statuses to shipped",
+    )
+
+
+def read_gate_verdicts(ledger_path: Path) -> dict[str, dict[str, Any]]:
+    """Latest gate receipt per spec slug from the verdicts ledger.
+
+    Reads the spec-lifecycle-gates machine ledger (RR-1:
+    ``~/.attune/ops/gates/verdicts.jsonl``) and returns the newest
+    receipt per spec slug, keyed by slug. A receipt is attributed to
+    a slug when the slug appears as a path segment of its
+    ``target_artifact``. Missing ledger, unreadable file, and
+    malformed lines all degrade to "no verdict" — the Specs page
+    renders identically to the pre-gates world.
+    """
+    if not ledger_path.is_file():
+        return {}
+    verdicts: dict[str, dict[str, Any]] = {}
+    try:
+        lines = ledger_path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return {}
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            receipt = json.loads(line)
+        except ValueError:
+            continue
+        if not isinstance(receipt, dict):
+            continue
+        target = str(receipt.get("target_artifact", ""))
+        if not target:
+            continue
+        for segment in Path(target).parts:
+            if segment in {"docs", "specs", ""}:
+                continue
+            # Ledger order is append-only; later receipts win.
+            if segment.endswith(".md"):
+                continue
+            verdicts[segment] = receipt
+            break
+    return verdicts
 
 
 def _normalize(status: str) -> str:

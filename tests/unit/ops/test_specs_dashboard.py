@@ -73,17 +73,17 @@ def test_specs_page_lists_specs_with_status_chips(tmp_path):
 
 
 def test_specs_page_writeable_mode_shows_editable_pills(tmp_path):
-    """allow_run=True → status renders as an editable pill (click-to-edit).
+    """allow_run=True → the Stage chip is editable (click-to-edit).
 
-    Earlier versions rendered inline ``<select>`` dropdowns server-side.
-    PR #358 swapped that for compact status pills that swap to a select
-    on click via specs.js. We verify the writeable-mode markers
-    (status-pill-editable class, role=button, tabindex, data attributes)
-    are present, and that no inline ``<select>`` is rendered until the
-    user clicks the pill.
+    Earlier versions rendered per-phase pills (PR #358); the Stage
+    column replaced them with ONE derived chip that reuses the same
+    click-to-edit machinery, pre-targeted at the next-action phase.
+    We verify the writeable-mode markers (status-pill-editable class,
+    role=button, tabindex, data attributes) are present, and that no
+    inline ``<select>`` is rendered until the user clicks the chip.
     """
     root = tmp_path / "specs"
-    _make_spec(root, "alpha", files={"tasks.md": "**Status:** draft\n"})
+    _make_spec(root, "alpha", files={"requirements.md": "**Status:** draft\n"})
     client = _client(tmp_path, specs_roots=(root,), allow_run=True)
     r = client.get("/specs")
     assert r.status_code == 200
@@ -97,9 +97,11 @@ def test_specs_page_writeable_mode_shows_editable_pills(tmp_path):
     assert "status-pill-editable" in r.text
     assert 'role="button"' in r.text
     assert 'tabindex="0"' in r.text
-    # Per-cell data attributes feed the PUT /api/specs/.../status call.
+    # Per-cell data attributes feed the PUT /api/specs/.../status call —
+    # the chip targets the NEXT-action phase (unapproved requirements
+    # here) with its current status prefilled.
     assert 'data-slug="alpha"' in r.text
-    assert 'data-phase="tasks"' in r.text
+    assert 'data-phase="requirements"' in r.text
     assert 'data-original="draft"' in r.text
 
 
@@ -122,14 +124,19 @@ def test_specs_page_readonly_mode_no_status_dropdowns(tmp_path):
 
 
 def test_specs_page_shows_em_dash_for_missing_phases(tmp_path):
-    """A spec with only tasks.md → other 3 phase columns show em-dash."""
+    """A spec with only tasks.md → missing phases marked in the Stage tooltip.
+
+    The per-phase pills (and their ``chip-muted`` em-dash cells) were
+    replaced by the Stage chip; missing phases now render as
+    ``<name>: —`` inside the chip's tooltip summary.
+    """
     root = tmp_path / "specs"
     _make_spec(root, "alpha", files={"tasks.md": "**Status:** draft\n"})
     client = _client(tmp_path, specs_roots=(root,), allow_run=False)
-    r = client.text if False else client.get("/specs").text
-    # 3 missing phases → 3 em-dashes (one per cell). We can't count exactly because
-    # the page chrome may also contain em-dashes, but we can verify the chip class.
-    assert "chip-muted" in r
+    r = client.get("/specs").text
+    assert "requirements: —" in r
+    assert "design: —" in r
+    assert "tasks: draft" in r
 
 
 def test_specs_page_includes_specs_js_when_writeable(tmp_path):

@@ -142,3 +142,22 @@ lives with the ledger config; activation exposes
 `BATCH_THRESHOLD_FRACTION = 0.20`. Batch-mode surfacing itself is
 deferred to first real CHAIR_REQUIRED volume (nothing to batch on
 day one — honest sequencing, not scope cut).
+
+## 2026-07-20 — UI surface phase: the Specs page Stage column (chair-ruled)
+
+Chair asked for the Phases column to become tracked, managed phase
+state; pushback accepted (option 1): NO separate tracking store —
+stage is DERIVED at render time from the phase files' own status
+lines (`derive_stage`, `attune.ops.spec_lifecycle`), the same
+single-source discipline the status-line gate enforces. The column
+shows pipeline position (requirements → design → tasks → executing
+→ shipped) + a next-transition hint; the chip reuses the existing
+chair-gated status editor targeting the next-action phase (RR-2:
+advancement stays a chair action). A gate-verdict badge reads the
+RR-1 machine ledger (`~/.attune/ops/gates/verdicts.jsonl`,
+`read_gate_verdicts`) and degrades to nothing until gates emit —
+this column is the spec's render surface from day one. Old
+per-phase pills live on in the chip tooltip. Receipts: 139
+lifecycle/routes/rewrite tests serial-green incl. 8 new
+derive_stage + 3 ledger-reader tests; live render verified against
+a worktree-code server (31 specs, honest stages, editable chips).

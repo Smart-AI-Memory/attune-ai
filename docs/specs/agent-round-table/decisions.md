@@ -429,3 +429,5 @@ Final review = the 2026-07-27 06:00 first scheduled fire (#1539).
 On a green fire: flip this spec to shipped (or living — chair's
 pick); roundtable-triage / roundtable-producing-team carry active
 status.
+
+PHASE-WAIVED: design (2026-07-20 — completion pass above; thread q-agent-round-table-completion-001)

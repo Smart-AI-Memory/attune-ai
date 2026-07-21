@@ -112,6 +112,10 @@ async def list_specs(request: Request) -> dict:
                 "path": s.path,
                 "phases": [asdict(p) for p in s.phases],
                 "lifecycle": s.lifecycle,
+                "stage": s.stage,
+                "next_phase": s.next_phase,
+                "next_action": s.next_action,
+                "waived_phases": list(s.waived_phases),
             }
             for s in specs
         ],
