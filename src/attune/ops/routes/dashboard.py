@@ -570,6 +570,7 @@ async def specs_page(request: Request) -> HTMLResponse:
                     "next_phase": record.next_phase,
                     "next_action": record.next_action,
                     "next_phase_status": record.next_phase_status,
+                    "waived_phases": list(record.waived_phases),
                 }
             )
     # Bucket counts for the chip filter row. All 6 keys are always present

@@ -164,6 +164,8 @@
             {%- for phase in s.phases -%}
               {%- if phase.exists -%}
                 {%- set _ = phase_summary.append(phase.name ~ ': ' ~ (phase.status or '(no status)')) -%}
+              {%- elif phase.name in (s.waived_phases or []) -%}
+                {%- set _ = phase_summary.append(phase.name ~ ': waived') -%}
               {%- else -%}
                 {%- set _ = phase_summary.append(phase.name ~ ': —') -%}
               {%- endif -%}

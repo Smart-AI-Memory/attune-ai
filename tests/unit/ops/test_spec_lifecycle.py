@@ -714,3 +714,48 @@ class TestReadGateVerdicts:
         )
         verdicts = read_gate_verdicts(ledger)
         assert list(verdicts) == ["ok-spec"]
+
+
+class TestStageWaiverSignal:
+    """PHASE-WAIVED chair lines satisfy the ladder for ABSENT files."""
+
+    def test_waived_design_advances_past_design(self):
+        spec = _Spec(phases=_all_phases(requirements="approved (2026-07-18)"))
+        spec.waived_phases = ("design",)
+        info = derive_stage(spec)
+        assert info.stage == "executing"
+        assert info.next_phase == "decisions"
+
+    def test_waiver_ignored_when_design_file_exists(self):
+        """An existing file's own status governs; waiving it is contradictory."""
+        spec = _Spec(phases=_all_phases(requirements="approved", design="draft"))
+        spec.waived_phases = ("design",)
+        info = derive_stage(spec)
+        assert info.stage == "design"
+        assert info.next_action == "Approve design"
+
+    def test_no_waiver_still_demands_design(self):
+        spec = _Spec(phases=_all_phases(requirements="approved"))
+        info = derive_stage(spec)
+        assert info.stage == "design"
+        assert "waiver" in info.next_action
+
+    def test_scan_waived_phases_reads_chair_line(self, tmp_path):
+        from attune.ops.specs_data import _scan_waived_phases
+
+        d = tmp_path / "some-spec"
+        d.mkdir()
+        (d / "decisions.md").write_text(
+            "# Decisions\n\nbody text\n\n"
+            "PHASE-WAIVED: design (2026-07-20 — thread q-x-001)\n"
+            "PHASE-WAIVED: nonsense (not a phase)\n",
+            encoding="utf-8",
+        )
+        assert _scan_waived_phases(d) == ("design",)
+
+    def test_scan_waived_phases_missing_decisions(self, tmp_path):
+        from attune.ops.specs_data import _scan_waived_phases
+
+        d = tmp_path / "bare-spec"
+        d.mkdir()
+        assert _scan_waived_phases(d) == ()

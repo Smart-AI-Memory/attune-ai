@@ -197,8 +197,16 @@ def derive_stage(spec: _SpecLike) -> StageInfo:
     4. **tasks** — tasks.md exists but not approved.
     5. **executing** — everything present is approved; the remaining
        work is execution receipts in decisions.md + status flips.
+
+    A ``PHASE-WAIVED: <phase>`` chair line in decisions.md (surfaced
+    as ``spec.waived_phases``) satisfies the ladder for a phase whose
+    file is ABSENT — the waiver-aware branch skips it instead of
+    demanding authorship. A file that exists is always governed by
+    its own status line; waiving an existing file is contradictory
+    and ignored.
     """
     phase_by_name = {p.name: p for p in spec.phases}
+    waived = set(getattr(spec, "waived_phases", ()) or ())
 
     def _ok(name: str) -> bool:
         p = phase_by_name.get(name)
@@ -227,7 +235,7 @@ def derive_stage(spec: _SpecLike) -> StageInfo:
 
     if _exists("design") and not _ok("design"):
         return StageInfo("design", "design", "Approve design")
-    if not _exists("design"):
+    if not _exists("design") and "design" not in waived:
         return StageInfo("design", "design", "Author design.md (or record a waiver)")
 
     if _exists("tasks") and not _ok("tasks"):

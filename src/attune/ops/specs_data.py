@@ -87,6 +87,10 @@ class SpecRecord:
     # (which shouldn't happen since _list_specs_in_root requires at
     # least one canonical phase file, but handled defensively).
     last_modified: str | None = None
+    # Phases waived by `PHASE-WAIVED: <phase>` chair lines in this
+    # spec's decisions.md (see `_scan_waived_phases`). Only consulted
+    # by stage derivation for phase files that are ABSENT.
+    waived_phases: tuple[str, ...] = ()
     # Lifecycle bucket derived from `phases` + `last_modified` via
     # `attune.ops.spec_lifecycle.derive_lifecycle`. Computed in
     # `__post_init__` so callers don't need to coordinate. `init=False`
@@ -137,6 +141,28 @@ def _extract_status(text: str) -> str | None:
     if not match:
         return None
     return match.group(1).strip()
+
+
+# Chair waiver line for a phase, committed in decisions.md — the same
+# chair-line-in-decisions pattern as `P4-ROTATION: armed`. Example:
+# `PHASE-WAIVED: design (2026-07-20 — thread q-..., see entry below)`.
+# Only the phase token is machine-read; the parenthetical is provenance
+# for humans. A waiver affects stage derivation ONLY for phases whose
+# file is absent — an existing file's own status always governs.
+_PHASE_WAIVED_RE = re.compile(r"^PHASE-WAIVED:\s*([a-z]+)", re.MULTILINE)
+
+
+def _scan_waived_phases(spec_dir: Path) -> tuple[str, ...]:
+    """Return phases waived by chair lines in this spec's decisions.md."""
+    decisions = spec_dir / "decisions.md"
+    if not decisions.is_file():
+        return ()
+    try:
+        text = decisions.read_text(encoding="utf-8")
+    except OSError:
+        return ()
+    valid = {p.removesuffix(".md") for p in _PHASE_FILES}
+    return tuple(m for m in _PHASE_WAIVED_RE.findall(text) if m in valid)
 
 
 def _scan_spec_dir(spec_dir: Path) -> list[SpecPhase]:
@@ -203,6 +229,7 @@ def _list_specs_in_root(root: Path) -> list[SpecRecord]:
                 path=str(child),
                 phases=_scan_spec_dir(child),
                 last_modified=_newest_md_mtime(child),
+                waived_phases=_scan_waived_phases(child),
             )
         )
     return records
