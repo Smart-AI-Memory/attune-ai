@@ -6,8 +6,8 @@
 > so the next session that hits the same wall finds the prior
 > encounter via `/recall` instead of rediscovering it.
 
-**Status:** approved (2026-07-21 — positioning + capture seam
-chair-ruled; see decisions.md D1/D2)
+**Status:** shipped (2026-07-21 — merged in #1554; live-fire
+receipt recorded in decisions.md D5)
 **Owner:** Patrick + agent
 **Related:** PR #1554 (rescue branch), `plugin/hooks/session_stash.py`,
 `attune.memory.session_stash`, docs/handoffs/rescue-self-healing-traps.md

@@ -1,7 +1,7 @@
 # Design — self-healing traps
 
-**Status:** approved (2026-07-21 — chair approved design + T1-T5 via
-AskUserQuestion; execute on rescue/self-healing-traps → PR #1554)
+**Status:** shipped (2026-07-21 — merged in #1554; live-fire
+receipt recorded in decisions.md D5)
 
 ---
 
