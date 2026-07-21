@@ -208,3 +208,29 @@ scope here per the "one PR per item" discipline rule.
 - A scheduler/cron for background collection — decision 2 is
   explicit: page-load and Refresh-button triggers only.
 - Renaming/merging the existing `/health` Environment Health page.
+
+## D2 sweep executed + Phase C status truth (2026-07-21)
+
+**D2 (empty/error-state sweep):** the unified pass exists as
+`tests/unit/ops/test_empty_states.py` — every page on main renders
+meaningfully against a blank project root / empty telemetry / no
+runs / no key / no snapshot (9 assertions, all passing WITHOUT
+production changes — Phases A/B already handled the states; D2's
+deliverable is the regression LOCK). Two findings from the sweep:
+
+- **Run history is an API surface** (`/api/runs/{workflow}` feeding
+  the workflows page), not a page — the D2 row's "Run history with
+  no runs" is asserted as clean-empty-JSON.
+- **C2/Sessions status truth:** the Sessions page was built
+  (#377/#387/#390) and then **deliberately removed in #1545**
+  (chair-ruled 2026-07-21; −1,215 lines; summarizer/cache kept,
+  surface-less). C2's "done ... template at templates/sessions.html"
+  row no longer describes main; updated to "removed".
+
+**Flag for the chair (Monday, with held draft #1576):** C1 /memory
+was built the same day #1545 ruled Sessions OFF the dashboard. The
+rationales differ (Patterns was structurally empty; /memory has
+~1,050 live keys and serves the memory-is-the-product thesis), but
+the same ops-research lens could rule a memory browse page off too.
+#1576 is a held draft precisely so this is a deliberate Monday call,
+not a default-in.
