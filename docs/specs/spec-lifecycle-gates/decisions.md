@@ -1,5 +1,9 @@
 # Spec-Lifecycle Gates — Decisions
 
+**Status:** shipped (2026-07-19; header added 2026-07-21 status-truth) —
+gates executed (chair go, tasks.md); the triage consumption surface is
+homed in `roundtable-triage`, ordered after the P3 skeptic (#1559).
+
 ## 2026-07-19 — Charter (chair; round-table thread q-spec-gates-001)
 
 The chair convened the table on where to insert intelligent

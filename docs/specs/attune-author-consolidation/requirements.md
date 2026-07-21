@@ -1,6 +1,7 @@
 # attune-author Consolidation & Retirement — Requirements
 
-**Status:** draft (2026-06-30) · **Owner:** Patrick + agent
+**Status:** approved (2026-07-21 status-truth — executed through D12;
+drafted 2026-06-30) · **Owner:** Patrick + agent
 **Absorbs:** single-source-authoring (merged 2026-07-14 at triage —
 same domain; archived copy retains its draft reqs/design)
 **Born:** the single-source insights discussion. Patrick: "attune-author
