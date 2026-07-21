@@ -136,15 +136,52 @@ class TestRunHook:
         assert result is None
 
     @patch("attune.help.maintenance.get_changed_files")
-    def test_regenerates_affected_features(self, mock_changed: object, project: Path) -> None:
+    def test_reports_stale_without_regenerating(self, mock_changed: object, project: Path) -> None:
+        """Check-only: stale features are reported, never regenerated."""
         # Make auth source stale first
         (project / "src" / "auth" / "login.py").write_text("def login(u): pass\n", encoding="utf-8")
         mock_changed.return_value = ["src/auth/login.py"]  # type: ignore[union-attr]
 
-        result = run_hook(project / ".help", project)
+        template_dir = project / ".help" / "templates" / "auth"
+        before = {p: p.read_bytes() for p in sorted(template_dir.rglob("*")) if p.is_file()}
+
+        with patch("attune.help.maintenance.generate_feature_templates") as mock_gen:
+            result = run_hook(project / ".help", project)
+
         assert result is not None
-        assert result.regenerated_count == 1
-        assert result.regenerated[0].feature == "auth"
+        assert result.stale_count == 1
+        assert result.regenerated_count == 0
+        mock_gen.assert_not_called()
+        after = {p: p.read_bytes() for p in sorted(template_dir.rglob("*")) if p.is_file()}
+        assert after == before, "post-commit hook must not write template files"
+
+    @patch("attune.help.maintenance.get_changed_files")
+    def test_drift_guard_hook_cannot_reach_regenerating_branch(
+        self, mock_changed: object, project: Path
+    ) -> None:
+        """Regression guard (docs/specs/post-commit-help-check-only).
+
+        The post-commit hook path must never invoke the template
+        generator — the per-commit LLM re-polish must not silently
+        return. The generator stub raises if reached.
+        """
+        (project / "src" / "auth" / "login.py").write_text("def login(u): pass\n", encoding="utf-8")
+        (project / "src" / "api" / "routes.py").write_text("def routes(x): pass\n")
+        mock_changed.return_value = [  # type: ignore[union-attr]
+            "src/auth/login.py",
+            "src/api/routes.py",
+        ]
+
+        def _forbidden(*args: object, **kwargs: object) -> None:
+            raise AssertionError("post-commit hook reached the regenerating branch")
+
+        with patch("attune.help.maintenance.generate_feature_templates", side_effect=_forbidden):
+            result = run_hook(project / ".help", project)
+
+        assert result is not None
+        assert result.stale_count == 2
+        assert result.regenerated_count == 0
+        assert result.failed == []
 
 
 class TestFormatStatusReport:

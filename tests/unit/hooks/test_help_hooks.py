@@ -339,6 +339,74 @@ class TestHelpPostCommit:
         # Should not crash
         assert True
 
+    def test_stale_feature_warns_without_regenerating(self, mod, tmp_path: Path) -> None:
+        """Check-only end-to-end: stale feature → stderr warning, no regen.
+
+        Regression guard for docs/specs/post-commit-help-check-only:
+        the generator stub raises if the hook path ever reaches the
+        regenerating branch, and template bytes must be untouched.
+        """
+        pytest.importorskip("yaml")
+        from attune.help.generator import generate_feature_templates
+        from attune.help.manifest import Feature, FeatureManifest, save_manifest
+
+        src = tmp_path / "src" / "auth"
+        src.mkdir(parents=True)
+        (src / "login.py").write_text("def login(): pass\n", encoding="utf-8")
+        manifest = FeatureManifest(
+            version=1,
+            features={
+                "auth": Feature(
+                    name="auth",
+                    description="Authentication",
+                    files=["src/auth/**"],
+                ),
+            },
+        )
+        help_dir = tmp_path / ".help"
+        save_manifest(manifest, help_dir)
+        generate_feature_templates(manifest.features["auth"], help_dir, tmp_path)
+
+        # Make the feature stale
+        (src / "login.py").write_text("def login(user): pass\n", encoding="utf-8")
+
+        template_dir = help_dir / "templates" / "auth"
+        before = {p: p.read_bytes() for p in sorted(template_dir.rglob("*")) if p.is_file()}
+
+        payload = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "git commit -m 'test'"},
+                "tool_result": {"stdout": "[main abc1234] test"},
+            }
+        )
+        stderr_capture = StringIO()
+
+        def _forbidden(*args: object, **kwargs: object) -> None:
+            raise AssertionError("post-commit hook reached the regenerating branch")
+
+        with (
+            patch("sys.stdin", StringIO(payload)),
+            patch("sys.stderr", stderr_capture),
+            patch("pathlib.Path.cwd", return_value=tmp_path),
+            patch(
+                "attune.help.maintenance.get_changed_files",
+                return_value=["src/auth/login.py"],
+            ),
+            patch(
+                "attune.help.maintenance.generate_feature_templates",
+                side_effect=_forbidden,
+            ),
+        ):
+            mod.main()
+
+        output = stderr_capture.getvalue()
+        assert "1 help feature(s) are stale (auth)" in output
+        assert "/coach maintain" in output
+        assert "auto-updated" not in output
+        after = {p: p.read_bytes() for p in sorted(template_dir.rglob("*")) if p.is_file()}
+        assert after == before, "post-commit hook must not write template files"
+
     def test_tool_input_as_string(self, mod) -> None:
         """Handles tool_input as a plain string."""
         payload = json.dumps(

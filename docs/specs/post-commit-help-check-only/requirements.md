@@ -1,8 +1,8 @@
 # Post-Commit Help Maintenance → Check-Only
 
 **Status:** approved (2026-07-20, chair — D1 ruled option A, see
-[decisions.md](decisions.md); was draft since 2026-06-22, recommitted
-at 2026-07-14 triage)
+[decisions.md](decisions.md); implemented same day in #1532; was
+draft since 2026-06-22, recommitted at 2026-07-14 triage)
 **Owner:** Patrick + agent
 **Created:** 2026-06-22
 
@@ -98,6 +98,8 @@ real non-release caller that wants regen (none known).
 
 ## Open questions
 
-- **D1**: approve A (dry-run flip) vs B (param)?
+- **D1**: approve A (dry-run flip) vs B (param)? — **RESOLVED: A**
+  (2026-07-20, Patrick; see decisions.md).
 - Is there any caller of `run_hook`/`run_maintenance` that *wants*
-  per-commit regen? (Grep found only the post-commit hook.)
+  per-commit regen? (Grep found only the post-commit hook —
+  re-verified at implementation: `engine.py` only re-exports.)

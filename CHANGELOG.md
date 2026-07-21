@@ -94,6 +94,14 @@ run-record corpus that future releases learn from.
   `ResultMessage` keeps its result instead of discarding it as a
   failure. A drift-guard test fails on any future bare consumption
   loop.
+- **Post-commit help hook is now check-only** — `run_hook()` runs
+  `run_maintenance(...)` in dry-run mode, so committing a file under a
+  feature's glob only warns "N feature(s) are stale — run /coach
+  maintain"; it no longer LLM-re-polishes the feature's whole
+  `.help/templates/` corpus per commit (repeat API spend +
+  stash-and-reappear churn). Drift-guard tests keep the regenerating
+  branch unreachable from the hook path
+  (docs/specs/post-commit-help-check-only).
 - **Ops spec status-flip never duplicates or rewrites descriptive
   status lines** (#1488) — the writer refuses to insert a second
   `**Status:**` line above a variant it cannot parse.

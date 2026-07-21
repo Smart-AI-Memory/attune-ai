@@ -22,3 +22,20 @@ Validation per the spec: unit test asserting
 drift-guard regression test so the regen path cannot silently
 return; the stale pre-commit-hook lesson in `.claude/lessons.md`
 corrected to name the real surface as part of the close-out.
+## 2026-07-20 — Shipped (#1532): execution evidence
+
+- Unit: `run_hook` with a stubbed generator asserts
+  `regenerated_count == 0`, generator never called, template
+  bytes unchanged, and the hook emits the stale warning
+  (`tests/unit/help/test_maintenance.py`,
+  `tests/unit/hooks/test_help_hooks.py`).
+- Drift guard: both suites include a test whose generator stub
+  RAISES if the post-commit path ever reaches the regenerating
+  branch, so the per-commit LLM re-polish cannot silently return.
+- The hook's `regenerated_count > 0` "auto-updated" branch became
+  dead code and was removed; the surviving behavior is the
+  `stale_count > 0` stderr warning ("N feature(s) are stale — run
+  /coach maintain").
+- Close-out: the stale lesson blaming the PRE-commit hook was
+  corrected in `.claude/lessons.md` (and its CLAUDE.md core
+  mirror) to name the post-commit surface and record the fix.

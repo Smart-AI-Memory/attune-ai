@@ -7134,25 +7134,31 @@ files.
   report --rcfile=/dev/null -m` (the `-m` shows exact missing
   lines/branches). Took a 24-test suite at 84% patch → 37 tests at 99%.
 
-- **The `.help` regen pre-commit hook does a full LLM RE-POLISH of a
-  feature's entire help corpus when ANY source file under that
-  feature's glob is added/changed — discard it from focused feature
-  PRs (it's warn-only / not CI-required), don't commit a −200-line LLM
-  rewrite**: adding `src/attune/memory/memory_tool.py` (a "memory"
-  feature source) made `regenerate-help-templates` rewrite
-  `.help/templates/memory/{concept,reference,task}.md` with a net
-  −207/+149 diff — NOT additive bridge docs, but the polish pass
-  re-doing the whole memory feature (with the attendant hallucination
-  risk). pre-commit stashes it as "unstaged" and it reappears on the
-  next commit. For a feature PR, `git checkout -- .help/templates/
-  <feature>/` to keep the PR focused — CI doesn't require it (the hook
-  is gated/warn-only). Extends the existing "Pre-commit's .help
-  template regen creates a stash-and-reappear dance" lesson with the
-  key nuance: the regen is a *whole-feature re-polish*, not an additive
-  doc update, so committing it blindly into an unrelated PR risks
-  losing/hallucinating help content. The durable fix (deferred) is to
-  make the regen additive-or-tightly-scoped, or stop leaving unstaged
-  files behind.
+- **The `.help` whole-feature LLM RE-POLISH fired from the POST-commit
+  hook, not pre-commit — both hook paths are now check-only (fixed
+  2026-07-20)**: this lesson originally blamed the pre-commit
+  `regenerate-help-templates` hook for rewriting
+  `.help/templates/memory/{concept,reference,task}.md` (net −207/+149,
+  a whole-feature re-polish with hallucination risk, reappearing
+  unstaged on the next commit). Premise corrected by
+  docs/specs/post-commit-help-check-only: the PRE-commit path was
+  already check-only (polish-cost-reduction lever 1, ratified
+  2026-06-10 — `scripts/regenerate_help_templates.py` warns which
+  features lag, never regenerates, never spends LLM); the live
+  re-polish surface was `plugin/hooks/help_post_commit.py` →
+  `attune.help.maintenance.run_hook()` calling `run_maintenance(...)`
+  in regenerate mode after every `git commit` (this is what rewrote
+  the plugin templates during the 8.7.1 ship). Fixed 2026-07-20:
+  `run_hook` passes `dry_run=True`, so the post-commit hook only
+  warns "N feature(s) are stale — run /coach maintain"; drift-guard
+  tests in `tests/unit/help/test_maintenance.py` and
+  `tests/unit/hooks/test_help_hooks.py` raise if the regenerating
+  branch is ever reachable from the hook path again. Still-true
+  guidance: if an unstaged LLM rewrite of `.help/templates/
+  <feature>/` ever appears in a focused PR, don't commit it —
+  `git checkout -- .help/templates/<feature>/`; polish-bearing regen
+  belongs at release-prep cadence (`/coach maintain` /
+  `attune-author regenerate`), never per-commit.
 
 - **Composing Anthropic's `BetaAbstractMemoryTool` at call time keeps
   the SDK helper off the module import path; the Memory tool maps onto

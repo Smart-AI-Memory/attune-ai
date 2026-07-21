@@ -153,20 +153,23 @@ def run_hook(
     help_dir: str | Path,
     project_root: str | Path,
 ) -> MaintenanceResult | None:
-    """Post-commit hook entry point.
+    """Post-commit hook entry point — check-only.
 
     Gets changed files from the latest commit, matches them
-    against the feature manifest, and regenerates templates
-    for affected features only.
+    against the feature manifest, and reports staleness for
+    affected features. Never regenerates templates: hooks must
+    not spend LLM budget or write to the working tree
+    (docs/specs/post-commit-help-check-only). Regeneration
+    happens only at release-prep cadence via /coach maintain.
 
     Args:
         help_dir: Path to the .help/ directory.
         project_root: Project root directory.
 
     Returns:
-        MaintenanceResult if any features were affected,
-        None if the manifest doesn't exist or no features
-        matched.
+        MaintenanceResult (staleness report only) if any
+        features were affected, None if the manifest doesn't
+        exist or no features matched.
     """
     help_path = Path(help_dir)
     if not (help_path / "features.yaml").exists():
@@ -197,6 +200,7 @@ def run_hook(
         help_dir=help_dir,
         project_root=project_root,
         features=affected_names,
+        dry_run=True,
     )
 
 
