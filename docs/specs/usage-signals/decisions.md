@@ -701,8 +701,51 @@ inferred.
 | id | contacted | channel | status | minimal finding |
 |----|-----------|---------|--------|-----------------|
 | US3-C01 | 2026-07-20 | github | delivered | — |
+| US3-C02 | — | github | drafted | — |
 
 Status vocabulary: drafted | delivered | no-response |
 non-substantive | substantive-active-use | substantive-past-use |
 substantive-no-use (responses and non-responses reported
 separately per US-3).
+
+## US-3 candidate sweep — public sources exhausted (2026-07-21)
+
+Bounded public-source sweep for qualifying candidates (US-3 bar:
+prior direct contact, public issue/contribution, or self-reported
+use — stars/downloads/marketplace counts do not qualify). Method:
+`gh api` over issues, PRs, discussions, and forks across
+Smart-AI-Memory/{attune-ai, attune-help, attune-author,
+empathy-framework} (attune-redis has no public repo), bot authors
+excluded. Results:
+
+- **1 qualifying**: the empathy-framework PR #39 author — already
+  in the round as US3-C01 (delivered 2026-07-20).
+- **1 borderline — RULED QUALIFYING (chair, 2026-07-21)**: one
+  attune-ai FORK owner. A fork alone reads as the stars-class, but
+  the chair ruled fork+contactable qualifies for this round →
+  enrolled as US3-C02 (drafted; send is chair-only, id→person
+  mapping stays in the chair's private notes).
+- **0 other externals** across all four repos' issues/PRs/
+  discussions (only the owner, Copilot-bot PRs, and one
+  self-authored discussion).
+
+Implication for the round's arithmetic: slots C-02+ can fill ONLY
+from chair-private channels (DEC-2 post replies per N1, prior
+direct contacts, self-reports). The 10-contact cap is therefore an
+upper bound the public record cannot reach — if private channels
+yield fewer than 10, the round closes on the 14-day clock from
+however many were delivered, and a short round records external
+usage UNRESOLVED per the requirement.
+
+**US-5 arming note**: for the planned 2026-07-27 tag, the complete
+BEFORE snapshot must land in the 24–72h window = 2026-07-24 through
+2026-07-26. Command: `python scripts/reach_snapshot.py` (respect
+the attempts budget), then
+`python scripts/reach_snapshot.py --verify-before 2026-07-27`
+(offline check) — armed 2026-07-21 as launchd job
+`com.smartaimemory.attune.us5-before-snapshot` (fires Fri 07-25
+09:03 + Sat 07-26 09:03 local, hardened PATH, logs to
+`~/.attune/logs/us5-before-snapshot.log`; Monday sitting reads
+the log, commits the snapshot, and DISARMS the job — recurs
+yearly if left). Also in the session starter's runbook. US-4's budget contract applies: one batch
++ at most two retries ≥60 min apart, reuse captured results.
