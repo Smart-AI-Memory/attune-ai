@@ -1,5 +1,9 @@
 # Round Table v2 — Producing Team: Decisions
 
+**Status:** active (2026-07-20) — design phase waived
+(entry below); bounded flip condition written; reviewed each
+Monday sitting
+
 ## Thread table-v2-001 — promoted (2026-07-18, chair: Patrick)
 
 Promoted from `attune:roundtable:thread:table-v2-001` per D2 (this
@@ -241,3 +245,53 @@ P4-BASELINE: thread=producing-pipeline-learner-v1-20260719-2 promoted=RR-1..RR-8
   session that shipped v1 P1–P3, #1451–#1455).
 - Board thread `table-v2-001` (TTL 7d from 2026-07-18): question,
   three positions with R7 receipts, synthesis, ruling.
+
+## 2026-07-20 — Design phase WAIVED (round-table thread q-producing-team-design-need-001; chair: Patrick)
+
+The table deliberated whether this spec needs a design.md (1 round,
+all seats, unanimous on the core; status split ruled with the 2-seat
+majority). Board messages 2/3/4/7 promoted; ruling posted as
+message 8-adjacent (see thread). Precedent: the agent-round-table
+completion ruling earlier today — waiver + as-built pointer beats
+retroactive design archaeology; rotation arming is operational
+state, not missing architecture.
+
+**As-built map (the design lives here):**
+`src/attune/roundtable/producing.py` (headless draft→critique→final
+loop; the 12-code failure taxonomy is `producing.FAILURE_CODES` —
+point at the enum, never restate it), `compiler.py` (round lint
+gates: draft/critique/final), `rotation.py` (ledger semantics;
+FIXED roles until an explicit `P4-ROTATION: armed` chair line in
+THIS file — the arming transition commits here, answering the
+table's follow-up), the R5 cap `max_invocations=10`
+(chair-ratified), and `tests/unit/roundtable/`
+(test_producing/test_compiler/test_rotation).
+
+**Embodied invariants (load-bearing per all three seats):**
+compiler-gated rounds — lint-dirty output returns to its seat,
+never the board; failure honesty — the closed taxonomy receipts
+every degradation, failures and dissent BEFORE candidates, nothing
+laundered green; R8 absolute — a producing run never promotes;
+TR-6 — at most 7 promotable candidates, overflow held as
+`deferred_over_cap` with full text preserved.
+
+**Verification receipts:** Run 1 (`producing-<slug>-…`, LINT_DIRTY
+terminal, zero candidates — the honest-failure invariant observed
+live) and Run 2 (`producing-pipeline-learner-v1-20260719-2`, 7
+staged + 1 deferred, real dissent in the register, chair-ruled and
+compiled into pipeline-learner) — both recorded above in this file.
+
+**Open-design register (NOT settled; resolution lands as chair
+rulings in this file):** rotation arming semantics beyond the
+fixed-roles default; evolving P4 items in p4-requirements.md.
+
+**Divergence rule:** if the implementation departs structurally
+from the invariants above, design REOPENS via a new dated entry
+(and a real design pass if warranted) — never by silently editing
+this waiver.
+
+**Status ruling (bounded active):** requirements.md STAYS `active`.
+Flip to terminal when BOTH: (a) the chair commits the
+`P4-ROTATION: armed` line here, and (b) the first rotated-roles
+producing run lands its receipts. Reviewed at each Monday sitting
+so "active while arming" cannot become permanently open.
