@@ -769,3 +769,18 @@ not deprecated first).
 consider a check that flags `omit` entries whose files import cleanly
 keyless (the mislabel that let this debt accumulate). Tracked in
 omit-audit.md §Recommendations.
+
+## Tier-2 #1 resolved — claude_memory was an omit-mask illusion (2026-07-21, #1569)
+
+The backlog entry read "memory/claude_memory.py (309) — mock the
+client". Reality (QA#6 pattern — cross-check `omit` first): the module
+is pure file I/O, its 57-test suite in `tests/memory/` runs keyless in
+0.24s, and it already measured **96%**; the `omit` label "Requires
+Claude API" was false. The 309-missed number was the omit mask, not a
+gap. Close-out: one net-new behavioral file
+(`test_claude_memory_standard_path.py` — the `/etc/claude/CLAUDE.md`
+fallthrough branch, precedence + negative cases), omit entry removed
+with a dated tombstone comment. Module now **100.00%** under the repo
+exclude rules. No client mocking was ever needed — Tier-2 rank 1 cost
+~an hour, not the estimated mocking effort. Next Tier-2 pick:
+`monitoring/otel_backend.py`.
