@@ -431,3 +431,47 @@ pick); roundtable-triage / roundtable-producing-team carry active
 status.
 
 PHASE-WAIVED: design (2026-07-20 — completion pass above; thread q-agent-round-table-completion-001)
+
+## 2026-07-21 — Table extensions ruled (thread q-roundtable-extensions-001; chair: Patrick)
+
+Four chair-proposed extensions deliberated (1 round, all seats;
+unanimous adopt on three, unanimous CUT on one; ordering split
+resolved by a moderator fact-check: `verdicts.jsonl` does not exist
+yet, so inbox-before-mail lost to the seats' own contingency
+logic). Build order ruled: **P3 → P2 → P4-recording; P1 cut.**
+
+**P3 — rotating skeptic for closure claims (BUILD FIRST).** V1
+shape, R1-pure per antigravity's correction: when a spec closure
+entry is staged, the HARNESS re-runs the declared cheap receipt
+commands (reusing `solutions.validate`, isolated) and feeds the raw
+output as TEXT to a rotation-picked NON-AUTHOR seat, which emits a
+structured COUNTERSIGN or DISSENT citing the exact command + tail.
+One skeptic pass. **Dissent fork ruled: one author bounce first**
+(solution-loop precedent; counts against the cap), then the chair
+digest. Failure modes on record: rubber-stamp decay; spurious
+environment dissents training the chair to ignore dissent.
+
+**P4 — role telemetry (RECORD-ONLY).** Immutable per-run events
+appended alongside the rotation ledger: seat, role, run/spec,
+artifact version, outcome, reason codes (draft survival, critique
+absorption, skeptic dissent hit-rate), and — chair-added 2026-07-21
+— **chair latency**: staged/digested timestamp → ruling timestamp
+per item, so the load on the human-in-the-loop is measured before
+it saturates (the gates spec will multiply CHAIR_REQUIRED volume;
+the 07-27+ reads should see the trend, not discover it). Aggregates exposed only past
+a chair-set minimum-N; NO assignment recommendations in v1 —
+Goodhart named independently by all three seats. Starts recording
+when P3/P2 launch.
+
+**P1 — seat-authored specialist agents: CUT (unanimous).** All
+three seats answered the cut question with P1: shelfware risk,
+meta-ceremony (RR-4), authority creep, supply-chain surface.
+Extraction path preserved: a receipt-auditor SKILL may later be
+EXTRACTED from a P3 procedure stable over N real closures plus P4
+evidence — never designed cold; the skeptic's governance
+(different-model rule, dissent semantics, caps, chair-only
+promotion) stays substrate-enforced, never agent-defined. Reopen
+only via that evidence path.
+
+P2 (gate-triage inbox) is recorded in
+`docs/specs/spec-lifecycle-gates/decisions.md` — its owning spec.
