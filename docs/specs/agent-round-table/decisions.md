@@ -454,7 +454,11 @@ environment dissents training the chair to ignore dissent.
 **P4 — role telemetry (RECORD-ONLY).** Immutable per-run events
 appended alongside the rotation ledger: seat, role, run/spec,
 artifact version, outcome, reason codes (draft survival, critique
-absorption, skeptic dissent hit-rate). Aggregates exposed only past
+absorption, skeptic dissent hit-rate), and — chair-added 2026-07-21
+— **chair latency**: staged/digested timestamp → ruling timestamp
+per item, so the load on the human-in-the-loop is measured before
+it saturates (the gates spec will multiply CHAIR_REQUIRED volume;
+the 07-27+ reads should see the trend, not discover it). Aggregates exposed only past
 a chair-set minimum-N; NO assignment recommendations in v1 —
 Goodhart named independently by all three seats. Starts recording
 when P3/P2 launch.
