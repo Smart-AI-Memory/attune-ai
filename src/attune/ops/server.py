@@ -21,12 +21,10 @@ from attune.ops.routes import dashboard
 from attune.ops.routes import health_library as health_library_routes
 from attune.ops.routes import help as help_routes
 from attune.ops.routes import interaction_counters as interaction_counters_routes
-from attune.ops.routes import patterns as patterns_routes
 from attune.ops.routes import pending_writes as pending_writes_routes
 from attune.ops.routes import runner as runner_routes
 from attune.ops.routes import runs_history as runs_history_routes
 from attune.ops.routes import session as session_routes
-from attune.ops.routes import sessions as sessions_routes
 from attune.ops.routes import specs as specs_routes
 from attune.ops.routes import sweep_results as sweep_results_routes
 from attune.ops.runner import RunnerService, prune_old_runs
@@ -106,8 +104,6 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
         ("/workflows", "Workflows"),
         ("/curator", "Briefing"),
         ("/specs", "Specs"),
-        ("/patterns", "Patterns"),
-        ("/sessions", "Sessions"),
         ("/telemetry", "Telemetry"),
         ("/health", "Health"),
         ("/health/library", "Library Health"),
@@ -142,11 +138,9 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     app.include_router(health_library_routes.router)
     app.include_router(runner_routes.router)
     app.include_router(runs_history_routes.router)
-    app.include_router(sessions_routes.router)
     app.include_router(specs_routes.router)
     app.include_router(sweep_results_routes.router)
     app.include_router(interaction_counters_routes.router)
-    app.include_router(patterns_routes.router)
     app.include_router(pending_writes_routes.router)
     app.include_router(bulletin_routes.router)
     app.include_router(curator_routes.router)

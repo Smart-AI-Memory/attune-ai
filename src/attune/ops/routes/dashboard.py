@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
@@ -368,99 +367,6 @@ async def help_feature_page(request: Request, feature: str) -> HTMLResponse:
     if feat is None:
         raise HTTPException(status_code=404, detail=f"feature not found: {feature}")
     return _render(request, "help_feature.html", page="help", feature_obj=feat)
-
-
-@router.get("/sessions", response_class=HTMLResponse)
-async def sessions_page(request: Request) -> HTMLResponse:
-    """Sessions page — recent Claude Code sessions for this project.
-
-    S3b: wires the Haiku summarizer + on-disk cache + redaction
-    behind the existing data layer. Each row's ``starter_prompt``
-    is the Haiku-or-cached summary when available, falling back
-    to the heuristic (first user prompt, truncated) when the LLM
-    is disabled, the budget is breached, or any failure path
-    fires. The ``source`` field on each :class:`Session` (one of
-    ``heuristic | haiku | cached``) tells the user which lane
-    produced the text.
-
-    Query params:
-
-    - ``?compare=1`` — dev mode. Runs the full enrichment AND
-      preserves the heuristic alongside, rendering both columns
-      side-by-side. No UI affordance (discoverable only by URL).
-      Same budget + redaction + caching applies.
-
-    Failure modes are silent fall-throughs to the empty state: no
-    Claude Code dir, all sessions older than 3 days, all JSONLs
-    unreadable — none surface as errors. The point is to be useful
-    on a fresh install, not to debug Claude Code's internal state.
-
-    S4 will add the resume-most-recent card; S5 marks the live
-    session.
-    """
-    from attune.ops.routes.sessions import enrich_with_summaries
-    from attune.ops.session_summarizer import llm_enabled, new_budget
-
-    cfg = request.app.state.config
-    compare_mode = request.query_params.get("compare") == "1"
-
-    # Both branches below call the SYNCHRONOUS Anthropic SDK
-    # (``anthropic.Anthropic(...).messages.create()``) inside a
-    # per-session loop. Running them directly inside this async route
-    # blocks the uvicorn event loop for the duration of the Haiku
-    # batch (~0.5–2s per session × N sessions), freezing every other
-    # request. Defer to a thread; the ``anthropic`` SDK is documented
-    # thread-safe and ``summarize_session``'s sync API is preserved
-    # for tests and other paths.
-    import asyncio
-
-    if compare_mode:
-        # Compare mode renders both columns. Keep the heuristic
-        # version (paths-included call) and run the enrichment
-        # alongside on the same path list so the rows align.
-        pairs = data.list_recent_sessions_with_paths(cfg.project_root, days=3)
-        heuristic_sessions = [s for s, _ in pairs]
-        budget = new_budget()
-        from attune.ops.routes.sessions import _enrich_sessions
-
-        haiku_sessions, over_budget = await asyncio.to_thread(
-            _enrich_sessions, pairs, attune_home=cfg.attune_home, budget=budget
-        )
-        sessions = heuristic_sessions
-        compare_columns = [
-            {"label": "Heuristic", "sessions": heuristic_sessions},
-            {"label": "Haiku", "sessions": haiku_sessions},
-        ]
-    else:
-        sessions, over_budget = await asyncio.to_thread(
-            enrich_with_summaries, cfg.project_root, cfg.attune_home
-        )
-        compare_columns = None
-
-    # Where the sessions live — surfaced in the empty-state so users
-    # can ``cat`` the JSONLs directly if they want to inspect more
-    # than the page shows. Reuses ``claude_sessions_dir`` so the
-    # rendered path matches what ``list_recent_sessions`` reads
-    # from disk — naive ``str.replace("/", "-")`` here leaves
-    # Windows backslashes and drive-letter colons unencoded.
-    # ``as_posix()`` so the rendered path uses ``/`` separators on every
-    # platform — on Windows ``str(Path)`` produces native backslashes,
-    # which look wrong in the UI and break tests that assert on the
-    # POSIX-style path string.
-    sessions_dir = (
-        "~/" + data.claude_sessions_dir(cfg.project_root).relative_to(Path.home()).as_posix()
-    )
-    return _render(
-        request,
-        "sessions.html",
-        page="sessions",
-        sessions=sessions,
-        sessions_dir=sessions_dir,
-        compare_mode=compare_mode,
-        compare_columns=compare_columns,
-        over_budget=over_budget,
-        llm_enabled=llm_enabled(),
-    )
 
 
 @router.get("/runs/{run_id}/view", response_class=HTMLResponse)

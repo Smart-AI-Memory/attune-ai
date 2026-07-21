@@ -20,7 +20,6 @@ import pytest
 pytest.importorskip("fastapi")
 pytest.importorskip("jinja2")
 
-from fastapi.testclient import TestClient  # noqa: E402
 
 from attune.ops import data  # noqa: E402
 from attune.ops.config import build_config  # noqa: E402
@@ -550,46 +549,3 @@ def _make_app(tmp_path, monkeypatch):
         trusted_hosts=("testserver", "test"),
     )
     return create_app(config)
-
-
-def test_sessions_page_renders_session_rows_when_data_present(tmp_path, monkeypatch):
-    """A populated sessions dir → the page renders the table, not the
-    empty state."""
-    project_root = tmp_path / "project"
-    project_root.mkdir()
-    sessions_dir = (
-        Path(tmp_path) / "home" / ".claude" / "projects" / data._encoded_project_path(project_root)
-    )
-    _write_session_jsonl(
-        sessions_dir,
-        "abcd1234-c539-4057-ba26-24ce3dffec27",
-        events=[
-            {"timestamp": "2026-05-14T10:00:00Z", "content": "Test prompt for session listing."}
-        ],
-    )
-
-    app = _make_app(tmp_path, monkeypatch)
-    with TestClient(app) as client:
-        resp = client.get("/sessions")
-    assert resp.status_code == 200
-    body = resp.text
-    # Table should render, empty-state should NOT.
-    assert "sessions-table" in body
-    assert "abcd1234" in body  # short id appears
-    assert "Test prompt" in body
-    assert "heuristic" in body
-    assert "No sessions in the last 3 days" not in body
-
-
-def test_sessions_page_renders_empty_state_when_no_sessions(tmp_path, monkeypatch):
-    """No sessions dir for this project → empty state."""
-    project_root = tmp_path / "project"
-    project_root.mkdir()
-
-    app = _make_app(tmp_path, monkeypatch)
-    with TestClient(app) as client:
-        resp = client.get("/sessions")
-    assert resp.status_code == 200
-    body = resp.text
-    assert "No sessions in the last 3 days" in body
-    assert "sessions-table" not in body
