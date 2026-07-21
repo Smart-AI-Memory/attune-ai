@@ -17000,3 +17000,39 @@ def ", start_idx + 1)` for module-
   these edits via Bash in the branch's own worktree) and the
   status-vocabulary lesson (the merged status line must still lead
   with a vocabulary token).
+
+- **The PostToolUse format hook STRIPS an import added in a separate
+  Edit from its usage — batch import + first usage into ONE Edit, and
+  re-verify imports after any multi-Edit sequence**: fired TWICE on
+  2026-07-20. (a) `import re` / `from pathlib import Path` added to a
+  test file in Edit 1, usage appended in Edit 2 of the same message —
+  the hook linted after Edit 1, saw unused imports, stripped them;
+  the file then failed with NameError at run time. (b) `import
+  subprocess` added to `src/attune/ops/config.py` in its own Edit
+  while the function using it landed in a parallel Edit — same
+  strip, surfaced as `NameError: name 'subprocess' is not defined`
+  inside the new function. Rules: (1) when adding code that needs a
+  new import, put the import and the using code in the SAME Edit
+  call, or add the import AFTER the usage exists; (2) after any
+  edit sequence that touched imports, `grep -c "import X"` before
+  running tests — the hook's modification notice ("hook modified
+  the file after your edit") is the tell that a re-check is owed.
+  Same family as the "hook reformats staged files" pre-commit
+  lessons — this is the tool-call-time sibling.
+
+- **Verifying a worktree-branch ops/dashboard change via a
+  PYTHONPATH server: a "wrong derivation" may be a STALE MAIN
+  CHECKOUT, not a code bug — ff main before debugging**: 2026-07-20,
+  the new Specs stage column showed memory-recall-eval at "design /
+  author design.md" while that spec had just shipped WITH a design.
+  The verification server (worktree code via PYTHONPATH, data via
+  `--project-root <main>`) was reading main's checkout, which sat
+  4+ commits behind origin/main — the spec's design.md didn't exist
+  THERE yet. `git -C <main> pull --ff-only` + re-query proved the
+  derivation correct on fresh data (and surfaced the honest residue:
+  the spec's decisions.md genuinely lacked a status line). Rule:
+  when a worktree-code server renders "impossible" data, check
+  `git -C <main> log --oneline -1` vs origin/main BEFORE touching
+  the derivation logic — on a fast-merging day the main checkout is
+  stale within hours. Extends the editable-MAPPING launch lesson
+  (same server recipe) with the data-side staleness trap.
