@@ -38,7 +38,7 @@ def test_home_renders(client):
 
 @pytest.mark.parametrize(
     "path",
-    ["/workflows", "/telemetry", "/health", "/sessions"],
+    ["/workflows", "/telemetry", "/health"],
 )
 def test_pages_render(client, path):
     response = client.get(path)
@@ -46,67 +46,17 @@ def test_pages_render(client, path):
     assert "<html" in response.text.lower()
 
 
-# ---------------------------------------------------------------------------
-# Sessions page S1 — scaffolding (route + template + nav)
-# ---------------------------------------------------------------------------
-
-
-def test_sessions_page_renders_with_empty_state(client):
-    """``/sessions`` returns 200 (was 404 before S1 landed) and shows
-    the empty-state copy plus a pointer to where the JSONLs live.
-
-    Regression guard for QA punch-list item P1-4. S2 will replace
-    the always-empty rendering with real data; this test exercises
-    only the scaffolding contract.
-    """
-    response = client.get("/sessions")
-    assert response.status_code == 200
-    body = response.text
-    # Empty-state copy from the spec's "no sessions in 3 days" branch
-    assert "No sessions in the last 3 days" in body
-    # The pointer to where sessions live on disk (under ~/.claude/)
-    assert ".claude/projects/" in body
-
-
-def test_sessions_appears_in_topbar_nav(client):
-    """Sessions should be reachable from the top nav on every page."""
-    response = client.get("/")
-    assert response.status_code == 200
-    body = response.text
-    # The nav builder produces ``<a href="/sessions" class="nav-link...">Sessions</a>``;
-    # check the href + label pairing rather than each piece in isolation.
-    import re
-
-    assert re.search(
-        r'<a[^>]+href="/sessions"[^>]*>[^<]*Sessions[^<]*</a>',
-        body,
-    ), "Expected a /sessions nav link in the top bar"
-
-
-def test_sessions_page_marks_active_nav(client):
-    """The Sessions nav-link gets ``is-active`` when on /sessions."""
-    response = client.get("/sessions")
-    assert response.status_code == 200
-    body = response.text
-    import re
-
-    # The Sessions nav link should carry the active class when we're
-    # on /sessions. base.html applies this when ``request.url.path ==
-    # href``.
-    active_session_re = re.compile(
-        r'<a[^>]+href="/sessions"[^>]+class="[^"]*is-active[^"]*"',
-    )
-    assert active_session_re.search(
-        body
-    ), "Sessions nav link should be marked is-active on /sessions"
-
-
 @pytest.mark.parametrize(
     "path",
-    ["/memory", "/releases"],
+    ["/memory", "/releases", "/sessions", "/patterns"],
 )
 def test_removed_pages_404(client, path):
-    """Memory + Releases tabs were removed (family info still on Home)."""
+    """Removed tabs must stay gone, not silently return.
+
+    Memory + Releases were removed earlier (family info on Home);
+    Patterns + Sessions removed 2026-07-21 (chair-ruled) — their
+    data layers (sessions data, pattern_review CLI) survive.
+    """
     response = client.get(path)
     assert response.status_code == 404
 
