@@ -4773,7 +4773,8 @@ corpus investment.</p>
 at 12:00 UTC (and on manual dispatch). It:</p>
 <ol>
 <li>Lists stale features via
-   <code>attune_author.check_staleness</code>.</li>
+   <code>scripts/list_stale_help_features.py</code> (the
+   hash-based staleness check).</li>
 <li>Regenerates them with <code>attune-author generate
    &lt;feature&gt; --help-dir .help --all-kinds</code> (all 11
    template kinds, not just the 3-depth core).</li>
@@ -4797,9 +4798,8 @@ either way. Installed via <code>.claude/settings.json</code> under
 <code>hooks.SessionStart</code>.</p>
 <hr />
 <h2 id="completeness-coverage-checks">Completeness + coverage checks<a class="headerlink" href="#completeness-coverage-checks" title="Permanent link">&para;</a></h2>
-<p>Two scripts that mirror the concurrency of
-<code>attune-author status</code> (which is hash-based) with
-structural checks:</p>
+<p>Two scripts that complement the hash-based
+staleness check with structural checks:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Enforce: every manifest feature has all 11 template kinds,</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># no orphan directories outside the manifest.</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>python<span class="w"> </span>scripts/check_help_completeness.py
