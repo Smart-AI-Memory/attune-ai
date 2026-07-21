@@ -715,6 +715,39 @@ class TestReadGateVerdicts:
         verdicts = read_gate_verdicts(ledger)
         assert list(verdicts) == ["ok-spec"]
 
+    def test_unreadable_ledger_returns_empty(self, tmp_path, monkeypatch):
+        """OSError on read degrades to "no verdict", same as a missing file."""
+        ledger = tmp_path / "verdicts.jsonl"
+        ledger.write_text("{}", encoding="utf-8")
+
+        def _boom(self, *args, **kwargs):
+            raise OSError("permission denied")
+
+        monkeypatch.setattr(type(ledger), "read_text", _boom)
+        assert read_gate_verdicts(ledger) == {}
+
+    def test_blank_lines_skipped(self, tmp_path):
+        ledger = tmp_path / "verdicts.jsonl"
+        ledger.write_text(
+            "\n"
+            '{"target_artifact": "docs/specs/ok-spec/tasks.md", '
+            '"evaluation_state": "PASS"}\n'
+            "   \n",
+            encoding="utf-8",
+        )
+        verdicts = read_gate_verdicts(ledger)
+        assert list(verdicts) == ["ok-spec"]
+
+    def test_md_only_target_yields_no_slug(self, tmp_path):
+        """A target with no slug segment (every part skipped or *.md) is dropped."""
+        ledger = tmp_path / "verdicts.jsonl"
+        ledger.write_text(
+            '{"target_artifact": "docs/requirements.md", "evaluation_state": "PASS"}\n'
+            '{"target_artifact": "docs/specs", "evaluation_state": "PASS"}\n',
+            encoding="utf-8",
+        )
+        assert read_gate_verdicts(ledger) == {}
+
 
 class TestStageWaiverSignal:
     """PHASE-WAIVED chair lines satisfy the ladder for ABSENT files."""
@@ -758,4 +791,19 @@ class TestStageWaiverSignal:
 
         d = tmp_path / "bare-spec"
         d.mkdir()
+        assert _scan_waived_phases(d) == ()
+
+    def test_scan_waived_phases_unreadable_decisions(self, tmp_path, monkeypatch):
+        """OSError on read degrades to no waivers, same as a missing file."""
+        from attune.ops.specs_data import _scan_waived_phases
+
+        d = tmp_path / "locked-spec"
+        d.mkdir()
+        decisions = d / "decisions.md"
+        decisions.write_text("PHASE-WAIVED: design\n", encoding="utf-8")
+
+        def _boom(self, *args, **kwargs):
+            raise OSError("permission denied")
+
+        monkeypatch.setattr(type(decisions), "read_text", _boom)
         assert _scan_waived_phases(d) == ()

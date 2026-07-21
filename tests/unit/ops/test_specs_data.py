@@ -169,3 +169,25 @@ def test_spec_record_computes_lifecycle() -> None:
         last_modified=None,
     )
     assert isinstance(rec.lifecycle, str) and rec.lifecycle
+
+
+def test_spec_record_executing_stage_has_no_next_phase_status() -> None:
+    """`next_phase` may name a file with no SpecPhase entry (decisions.md).
+
+    The executing stage targets decisions.md, which is not a tracked
+    phase — the prefill lookup must exhaust gracefully to None.
+    """
+    rec = SpecRecord(
+        slug="x",
+        root="/r",
+        path="/r/x",
+        phases=[
+            SpecPhase(name="requirements", file="requirements.md", exists=True, status="approved"),
+            SpecPhase(name="design", file="design.md", exists=True, status="approved"),
+            SpecPhase(name="tasks", file="tasks.md", exists=True, status="approved"),
+        ],
+        last_modified=None,
+    )
+    assert rec.stage == "executing"
+    assert rec.next_phase == "decisions"
+    assert rec.next_phase_status is None
