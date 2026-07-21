@@ -11,12 +11,18 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
+from attune.context.allocator import TokenBudgetAllocator
 from attune.context.compaction import CompactionStateManager, CompactState, WorkHandoff
+from attune.context.inflater import ContextInflater
 from attune.context.manager import ContextManager
+from attune.context.skeleton import ASTSkeletonGenerator
 
 __all__ = [
+    "ASTSkeletonGenerator",
     "CompactState",
     "CompactionStateManager",
+    "ContextInflater",
     "ContextManager",
+    "TokenBudgetAllocator",
     "WorkHandoff",
 ]
