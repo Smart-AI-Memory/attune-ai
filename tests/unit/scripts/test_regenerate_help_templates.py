@@ -33,7 +33,7 @@ _spec.loader.exec_module(regen_module)
 
 @dataclass
 class _FakeFeature:
-    """Stand-in for attune_author.Feature with the `files` attr we use."""
+    """Stand-in for attune.authoring Feature with the `files` attr we use."""
 
     files: list[str]
 
