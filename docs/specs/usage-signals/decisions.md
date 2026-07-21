@@ -742,6 +742,10 @@ BEFORE snapshot must land in the 24–72h window = 2026-07-24 through
 2026-07-26. Command: `python scripts/reach_snapshot.py` (respect
 the attempts budget), then
 `python scripts/reach_snapshot.py --verify-before 2026-07-27`
-(offline check) — added to the session starter's runbook so the
-window cannot be missed. US-4's budget contract applies: one batch
+(offline check) — armed 2026-07-21 as launchd job
+`com.smartaimemory.attune.us5-before-snapshot` (fires Fri 07-25
+09:03 + Sat 07-26 09:03 local, hardened PATH, logs to
+`~/.attune/logs/us5-before-snapshot.log`; Monday sitting reads
+the log, commits the snapshot, and DISARMS the job — recurs
+yearly if left). Also in the session starter's runbook. US-4's budget contract applies: one batch
 + at most two retries ≥60 min apart, reuse captured results.
