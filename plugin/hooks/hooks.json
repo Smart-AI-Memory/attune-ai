@@ -80,6 +80,16 @@
         ]
       },
       {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/friction_gate.py",
+            "timeout": 4000
+          }
+        ]
+      },
+      {
         "matcher": "Edit|Write",
         "hooks": [
           {
