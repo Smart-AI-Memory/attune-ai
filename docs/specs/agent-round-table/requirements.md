@@ -1,9 +1,14 @@
 # Agent Round Table — Requirements
 
-**Status:** approved (2026-07-18) — pending final review;
-foundations chat-ratified by Patrick same day; D1/D2 picked, D3
-provisional (see [decisions.md](decisions.md), including the
-promoted probe-001 transcript).
+**Status:** approved (2026-07-18; final-review clause bound
+2026-07-20) — final review = the 2026-07-27 first scheduled-fire
+receipt (Monday runbook step 1; reopen via the SEAT_ABSENT+401
+condition in advanced-debugging-plugin decisions.md). On a green
+fire, flip this spec to shipped and let roundtable-triage /
+roundtable-producing-team carry active status. Foundations
+chat-ratified by Patrick 2026-07-18; D1/D2 picked, D3 provisional
+(see [decisions.md](decisions.md), including the promoted
+probe-001 transcript).
 
 ## Vision
 

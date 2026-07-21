@@ -343,3 +343,24 @@ with the URL and the local-default override, instead of burning
 the 5-minute suite and dying in a raw traceback. Routine progress
 (checks, seats, synthesis) streams to stdout as it happens —
 silence had read as a hang and produced duplicate concurrent runs.
+
+## 2026-07-20 — Final-review clause bound to the first scheduled fire (chair: Patrick)
+
+Approval reviewed with pushback invited; ruled: no substantive
+changes — the spec's execution risks are already mitigated by
+shipped work (seat-absence handling, two-zero-ruling auto-demote,
+budget caps, stale-REDIS fail-fast, streamed progress). Two
+process rulings adopted:
+
+- **"Pending final review" is no longer open-ended.** Final review
+  = the 2026-07-27 06:00 first LIVE scheduled fire (Monday runbook
+  step 1). The manual full pass (above) proved the machinery; the
+  scheduled path (launchd fire, wake behavior, sourced env,
+  seat auth under cron conditions) is the one unproven surface —
+  the "registered ≠ working" class. Reopen condition unchanged:
+  SEAT_ABSENT + 401 under the sourced key reopens backlog (c) per
+  advanced-debugging-plugin decisions.md.
+- **Post-fire status hygiene.** On a green fire, this spec flips
+  to `shipped` (or `living` if kept as the routines umbrella —
+  chair's pick at the sitting); active work is carried by
+  roundtable-triage and roundtable-producing-team.
