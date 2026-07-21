@@ -1400,8 +1400,34 @@ class AgentSDKResultAdapter:
                 duration_ms=duration_ms,
             ).to_dict()
 
+        # A cleanly-completed stream can still carry an error-shaped
+        # ResultMessage (budget cut, max-turns, in-run error). Deriving
+        # success from the SDK's own signal keeps those runs from
+        # reporting green — the CLI exit-code contract and the ops
+        # dashboard chip both key off WorkflowResult.success. subtype
+        # is the primary signal (sdk-teardown-exit-guard D1: is_error
+        # was wrongly True on success in the CLI 2.1.178 window);
+        # is_error is the fallback for SDKs that don't expose subtype.
+        success = True
+        error: str | None = None
+        if agent_run_result is not None:
+            if agent_run_result.subtype is not None:
+                success = agent_run_result.subtype == "success"
+            else:
+                success = not agent_run_result.is_error
+            if not success:
+                detail = "; ".join(agent_run_result.errors or [])
+                error = (
+                    "SDK run ended unsuccessfully "
+                    f"(subtype={agent_run_result.subtype!r}, "
+                    f"is_error={agent_run_result.is_error}, "
+                    f"stop_reason={agent_run_result.stop_reason!r})"
+                    + (f": {detail}" if detail else "")
+                )
+
         return WorkflowResult(
-            success=True,
+            success=success,
+            error=error,
             stages=stages,
             final_output=final_output,
             cost_report=cost_report,
