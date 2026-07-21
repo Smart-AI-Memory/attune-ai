@@ -2,7 +2,7 @@
 
 Implements decision **D12** of the help-docs-single-source spec: the
 per-feature hub page (``docs/features/<F>.md``, emitted by the
-attune-author projector) is the single nav entry per feature. This hook
+``attune.authoring`` projector) is the single nav entry per feature. This hook
 scans ``docs/features/*.md`` at build time and injects one top-level
 ``Features`` nav section listing every hub — so the ~270-feature rollout
 never edits ``mkdocs.yml`` per feature.
