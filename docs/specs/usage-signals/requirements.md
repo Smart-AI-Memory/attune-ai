@@ -1,6 +1,10 @@
 # Usage Signals (table-refreshed) — Requirements
 
-**Status:** approved (2026-07-19) — chair-ruled per item; US-3 chair-led, US-4/US-6/US-7 open. Authored by the
+**Status:** approved (2026-07-21 refresh — US-4/US-6/US-7 SHIPPED
+#1476/D15; US-3 outreach in flight, public candidate sweep
+exhausted 2026-07-21; US-5 event-bound: before-window
+2026-07-24→26 for the 07-27 tag. Originally approved 2026-07-19,
+chair-ruled per item). Authored by the
 round table (thread `us-refresh-001`); compiled deterministically by
 `attune.roundtable.compiler` (V2-P2). Approved items only;
 declined: none;
