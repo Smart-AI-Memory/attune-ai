@@ -566,6 +566,10 @@ async def specs_page(request: Request) -> HTMLResponse:
                     "phases": [asdict(p) for p in record.phases],
                     "last_modified": record.last_modified,
                     "lifecycle": record.lifecycle,
+                    "stage": record.stage,
+                    "next_phase": record.next_phase,
+                    "next_action": record.next_action,
+                    "next_phase_status": record.next_phase_status,
                 }
             )
     # Bucket counts for the chip filter row. All 6 keys are always present
@@ -589,11 +593,18 @@ async def specs_page(request: Request) -> HTMLResponse:
     # like `?bucket=stale&q=rag` renders correctly without a flash of
     # default state followed by JS re-render.
     initial_buckets, initial_sort, initial_query = _parse_specs_url_state(request.query_params)
+    # Gate-verdict badges (spec-lifecycle-gates UI phase): newest
+    # machine receipt per slug from the RR-1 ledger; {} until the
+    # gates ship, and the column renders identically without it.
+    from attune.ops.spec_lifecycle import read_gate_verdicts
+
+    gate_verdicts = read_gate_verdicts(cfg.attune_home / "ops" / "gates" / "verdicts.jsonl")
     return _render(
         request,
         "specs.html",
         page="specs",
         specs=specs,
+        gate_verdicts=gate_verdicts,
         roots=[str(r) for r in roots],
         allow_run=cfg.allow_run,
         specs_candidates_enabled=cfg.specs_candidates_enabled,

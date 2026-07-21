@@ -96,15 +96,35 @@ class SpecRecord:
     # "approved-not-shipped", "active". See
     # [docs/specs/ops-specs-page-refinement/decisions.md](../../../docs/specs/ops-specs-page-refinement/decisions.md).
     lifecycle: str = field(init=False, default="")
+    # Pipeline stage + next transition (spec-lifecycle-gates UI phase):
+    # derived from the phase statuses via `derive_stage`, same
+    # single-source discipline as `lifecycle`. `next_phase_status` is
+    # the current status string of the phase the next action targets,
+    # threaded so the page's status editor can prefill it.
+    stage: str = field(init=False, default="")
+    next_phase: str | None = field(init=False, default=None)
+    next_action: str = field(init=False, default="")
+    next_phase_status: str | None = field(init=False, default=None)
 
     def __post_init__(self) -> None:
         # Lazy import to avoid any chance of an import cycle between
         # routes/specs.py and spec_lifecycle.py (defensive; no cycle
         # exists today since spec_lifecycle uses a structural Protocol).
-        from attune.ops.spec_lifecycle import derive_lifecycle
+        from attune.ops.spec_lifecycle import derive_lifecycle, derive_stage
 
         # Frozen dataclass — use object.__setattr__ to set the field.
         object.__setattr__(self, "lifecycle", derive_lifecycle(self))
+        info = derive_stage(self)
+        object.__setattr__(self, "stage", info.stage)
+        object.__setattr__(self, "next_phase", info.next_phase)
+        object.__setattr__(self, "next_action", info.next_action)
+        status = None
+        if info.next_phase is not None:
+            for p in self.phases:
+                if p.name == info.next_phase:
+                    status = p.status
+                    break
+        object.__setattr__(self, "next_phase_status", status)
 
 
 def _extract_status(text: str) -> str | None:

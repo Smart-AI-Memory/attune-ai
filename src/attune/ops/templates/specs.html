@@ -128,7 +128,7 @@
       <tr>
         <th class="col-slug">Spec</th>
         <th class="col-mtime">Updated</th>
-        <th class="col-phases" data-tooltip="Decisions / Requirements / Design / Tasks">Phases <span class="phase-axis">D&middot;R&middot;D&middot;T</span></th>
+        <th class="col-phases" data-tooltip="Pipeline position derived from the phase files' own status lines. Click a stage chip to advance the next phase; per-phase statuses in the tooltip.">Stage</th>
         <th class="col-lifecycle">Lifecycle</th>
         <th class="col-kebab" aria-label="Row actions"></th>
       </tr>
@@ -154,31 +154,43 @@
             {% endif %}
           </td>
           <td class="col-phases">
-            <span class="phase-pills" role="group" aria-label="Phase statuses for {{ s.slug }}">
-              {% for phase in s.phases %}
-                {% if not phase.exists %}
-                  <span class="status-pill chip-muted" data-phase="{{ phase.name }}" data-tooltip="No {{ phase.name }}.md file" aria-label="No {{ phase.name }}.md file">—</span>
-                {% else %}
-                  {% set cls = chip_cls(phase.status)|trim %}
-                  {% set code = status_code(phase.status)|trim %}
-                  {% set custom = is_custom(phase.status)|trim == '1' %}
-                  <span
-                    class="status-pill {{ cls }}{% if custom %} status-pill-custom{% endif %}{% if allow_run %} status-pill-editable{% endif %}"
-                    data-phase="{{ phase.name }}"
-                    data-tooltip="{{ phase.name|capitalize }}: {{ phase.status or '(no status)' }}"
-                    {% if allow_run %}
-                    data-slug="{{ s.slug }}"
-                    data-original="{{ phase.status or '' }}"
-                    role="button"
-                    tabindex="0"
-                    aria-label="Status for {{ phase.name }} of {{ s.slug }}: {{ phase.status or 'no status' }}. Click to edit."
-                    {% else %}
-                    aria-label="Status for {{ phase.name }} of {{ s.slug }}: {{ phase.status or 'no status' }}"
-                    {% endif %}
-                  ><span class="status-dot" aria-hidden="true"></span><span class="status-code">{{ code or '(none)' }}</span></span>
-                {% endif %}
-              {% endfor %}
-            </span>
+            {#- Stage chip (spec-lifecycle-gates UI phase): pipeline
+                position derived from the phase status lines; the old
+                per-phase pills live on in the tooltip text. When
+                editing is allowed and a next transition exists, the
+                chip reuses the pill editor targeting the next-action
+                phase — advancement stays a chair action (RR-2). -#}
+            {%- set phase_summary = [] -%}
+            {%- for phase in s.phases -%}
+              {%- if phase.exists -%}
+                {%- set _ = phase_summary.append(phase.name ~ ': ' ~ (phase.status or '(no status)')) -%}
+              {%- else -%}
+                {%- set _ = phase_summary.append(phase.name ~ ': —') -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {%- set stage_tip = (phase_summary | join(' · ')) ~ ' · Next: ' ~ s.next_action -%}
+            {%- set editable = allow_run and s.next_phase -%}
+            <span
+              class="lifecycle-badge stage-badge stage-{{ s.stage }}{% if editable %} status-pill-editable{% endif %}"
+              data-tooltip="{{ stage_tip }}"
+              {% if editable %}
+              data-slug="{{ s.slug }}"
+              data-phase="{{ s.next_phase }}"
+              data-original="{{ s.next_phase_status or '' }}"
+              role="button"
+              tabindex="0"
+              aria-label="Stage {{ s.stage }} for {{ s.slug }}. Next: {{ s.next_action }}. Click to edit {{ s.next_phase }} status."
+              {% else %}
+              aria-label="Stage {{ s.stage }} for {{ s.slug }}. Next: {{ s.next_action }}"
+              {% endif %}
+            >{{ s.stage }}</span>
+            {%- if s.slug in gate_verdicts -%}
+              {%- set v = gate_verdicts[s.slug] -%}
+              <span class="status-pill gate-badge gate-{{ (v.evaluation_state or 'unknown') | lower }}"
+                    data-tooltip="Gate {{ v.gate_id or '?' }} ({{ v.phase or '?' }}): {{ v.evaluation_state or 'unknown' }}"
+                    aria-label="Latest gate verdict for {{ s.slug }}: {{ v.evaluation_state or 'unknown' }}"
+              >{{ v.evaluation_state or '?' }}</span>
+            {%- endif -%}
           </td>
           <td class="col-lifecycle">
             <span class="lifecycle-badge lifecycle-{{ s.lifecycle }}" data-tooltip="Derived from phase statuses + last-modified date">
