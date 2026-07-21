@@ -12,6 +12,13 @@ own `[Unreleased]` entry:
 - [ ] sdk-teardown-exit-guard implementation (chip session)
 - [ ] post-commit help hook dry-run flip (chip session)
 - [ ] #1531 coverage-bar alignment (patch gate 50→80)
+- [x] Overnight four (2026-07-21 antigravity-review arc):
+  #1551 friction matrix + gate, #1552 AST context budgeting,
+  #1553 ghost simulator, #1554 self-healing traps — `[Unreleased]`
+  entries added same-day (this checklist's own confirm pass).
+  Draft-A candidate line: **10.6.0 activates two new plugin hooks**
+  (`friction_gate`, `trap_stash`) on plugin update — the traps
+  spec's D5 caveat names the post-publish organic-fire check.
 - [ ] Anything else merged into `[Unreleased]` this week
 
 ---
