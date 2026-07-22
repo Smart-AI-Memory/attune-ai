@@ -17305,3 +17305,40 @@ def ", start_idx + 1)` for module-
   number,mergeStateStatus` at pickup instead of trusting the
   written count. Extends the "starter stale on arrival" lesson
   to merge-state claims specifically.
+
+- **A textually clean rebase + green targeted suite can still hide a
+  SEMANTIC conflict — main grows LOCK tests against surfaces a held
+  PR reintroduces; the lock update must ride IN the held PR**:
+  2026-07-21, held #1576 (/memory page) rebased onto main with the
+  spec-file conflicts resolved and its own 43 tests green — then
+  main's `test_smoke.py::test_removed_pages_404` (added by the
+  #1545/#1577 removal arc while the PR sat held) failed the
+  required lanes: main asserts `/memory` 404s, the PR rebuilds it.
+  Neither side is wrong; the held PR is semantically stale. Rule:
+  after rebasing a held PR that ADDS or REVIVES a user-visible
+  surface (route, page, CLI command, module), grep main's tests
+  for locks on that surface (`grep -rn '<surface>' tests/` — 404
+  guards, removed-pages parametrizes, deprecation asserts) and
+  update the lock in the SAME PR with a docstring tying it to the
+  reintroduction decision — main then stays consistent whether the
+  PR merges or is closed unmerged. Held queues make this likely by
+  construction: the longer the hold, the more locks main grows.
+
+- **CodeQL `py/path-injection` (REQUIRED check) does not credit the
+  regex-allowlist + resolve + startswith containment idiom — serve
+  files by DIRECTORY-LISTING LOOKUP so the path never derives from
+  request input**: 2026-07-21, held #1578's `/docs/reports/{name}`
+  route validated with `^library-health-[A-Za-z0-9._-]+\.md$` (no
+  separators possible) plus `resolve()` + `startswith(dir + sep)`
+  containment — provably traversal-safe, yet CodeQL raised 3 high
+  alerts (taint reaches `Path` join; the sanitizer isn't a
+  recognized barrier) and the required check failed. Fix that both
+  satisfies taint analysis and is strictly safer: iterate
+  `reports_dir.glob("library-health-*.md")` and compare `p.name ==
+  name` — the served path comes from the trusted listing, user
+  input is only ever COMPARED. Constant-cost for small dirs;
+  behavior-identical (same 21 route tests green). Prefer this
+  pattern over alert-dismissal for any new file-serving route:
+  dismissals are per-alert and re-fire on refactors, the lookup
+  pattern never alerts. Pairs with "validate file paths" critical
+  rule — this is the CodeQL-clean shape of that validation.
