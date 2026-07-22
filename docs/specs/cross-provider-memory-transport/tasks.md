@@ -1,10 +1,11 @@
 # Cross-Provider Memory Transport — Tasks
 
-**Status:** EXECUTING (2026-07-22 consolidation) — T1–T3 BUILT, held as a
-three-deep stacked draft queue: T1 #1593 → T2 #1594 → T3 #1596 (label
-`hold-until-07-27`; at the lift, merge each and re-target the next to main
-BEFORE deleting its base branch). Execution evidence and the live AMS
-receipt live in `decisions.md` (D3 execution evidence section).
+**Status:** approved (2026-07-22 consolidation — in execution; T1–T3
+BUILT, held as a stacked draft queue: T1 #1593 → T2 #1594 → T3 #1596,
+label `hold-until-07-27`; at the lift, merge each and re-target the next
+to main BEFORE deleting its base branch). Execution evidence and the
+live AMS receipt are recorded in `decisions.md` (D3 execution evidence
+section).
 
 Remaining work was re-measured against the built state on 2026-07-22 and
 consolidated: most of T4-as-written was already satisfied by T1–T3 (hooks
@@ -14,9 +15,9 @@ consume `backend_status()`; the skill matrix landed in T3). What is left:
 - **T4′ (buildable now):** telemetry transport/failure fields + author
   `receipts.md` + formalize the Claude hook canary — see below.
 - **T5′ (deferred tail):** Codex and Antigravity/Gemini live probes —
-  each requires that client running; they cannot be executed from a
-  Claude Code session and land whenever those clients next run
-  (naturally post-07-27).
+  each requires that client to be running; they cannot be executed
+  from a Claude Code session and land whenever those clients next run
+  (naturally after 2026-07-27).
 
 The original T4/T5 XML blocks are preserved below the built tasks for
 provenance, superseded by T4′/T5′.
@@ -117,9 +118,9 @@ table is CI-validated.
 ## T5′ — Deferred provider probes (tail)
 
 Codex MCP canary (R8 #4) and Antigravity/Gemini probe-or-unsupported
-(R8 #6). Each requires that client live; append results to
-`receipts.md` from the next Codex / Antigravity session. A synthetic
-or mocked provider pass remains forbidden.
+(R8 #6). Each requires a live session of that client; append results
+to `receipts.md` from the next Codex / Antigravity session. A
+synthetic or mocked provider pass remains forbidden.
 
 ## Superseded original T4 (provenance)
 
