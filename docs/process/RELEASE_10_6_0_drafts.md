@@ -1,6 +1,8 @@
 # Release 10.6.0 drafts — notes + post (pre-tag working copy)
 
-**Written:** 2026-07-20 (rulings-sitting session). **Tag day:**
+**Written:** 2026-07-20 (rulings-sitting session). **Refreshed:**
+2026-07-21 evening-2 (checklist verified against `gh` + the
+CHANGELOG; Draft-A confirm-markers resolved). **Tag day:**
 2026-07-27 per the Monday runbook (tag-only; prep done in #1526).
 Derived from the CHANGELOG `[Unreleased]` section at write time.
 
@@ -8,10 +10,16 @@ Derived from the CHANGELOG `[Unreleased]` section at write time.
 against what actually merged, and confirm each landing added its
 own `[Unreleased]` entry:
 
-- [ ] #1529 LessonsFilePublisher (chip session; graduation writes)
-- [ ] sdk-teardown-exit-guard implementation (chip session)
-- [ ] post-commit help hook dry-run flip (chip session)
-- [ ] #1531 coverage-bar alignment (patch gate 50→80)
+- [x] #1529 LessonsFilePublisher — MERGED 2026-07-21. **No
+  `[Unreleased]` entry yet — OWED** (see Monday additions below).
+- [x] sdk-teardown-exit-guard — #1534 MERGED 2026-07-20; entry
+  present (Fixed: "SDK teardown-exit guard now covers every SDK
+  workflow").
+- [x] post-commit help hook dry-run flip — merged 2026-07-20;
+  entry present (Fixed: "Post-commit help hook is now
+  check-only").
+- [x] #1531 coverage-bar alignment — MERGED 2026-07-20. **No
+  `[Unreleased]` entry yet — OWED** (see Monday additions below).
 - [x] Overnight four (2026-07-21 antigravity-review arc):
   #1551 friction matrix + gate, #1552 AST context budgeting,
   #1553 ghost simulator, #1554 self-healing traps — `[Unreleased]`
@@ -19,7 +27,28 @@ own `[Unreleased]` entry:
   Draft-A candidate line: **10.6.0 activates two new plugin hooks**
   (`friction_gate`, `trap_stash`) on plugin update — the traps
   spec's D5 caveat names the post-publish organic-fire check.
-- [ ] Anything else merged into `[Unreleased]` this week
+- [x] Anything else merged into `[Unreleased]` this week — audited
+  2026-07-21 evening-2: every post-#1560 merge is internal spec
+  bookkeeping (#1564, #1570, #1572), lessons appends (#1565,
+  #1573, #1579–#1583), or test-only (#1566, #1575, #1577) — none
+  owe standalone entries. #1563's T5 docs repoints fold into the
+  consolidation entry held PR #1574 already carries.
+
+**Monday changelog additions — write in the release PR, AFTER the
+queue lift.** Held #1574 inserts its own entry at the top of
+`### Added`, so any `[Unreleased]` edit before the lift re-dirties
+the queue (verified 2026-07-21 evening-2; CHANGELOG.md is
+queue-locked until then):
+
+- #1529 graduation clause — append to the self-healing diagnosis
+  engine bullet: verified diagnoses graduate into the lessons
+  corpus with provenance (`LessonsFilePublisher`, chair-ruled).
+- #1531 — one Changed line: codecov patch gate raised 50→80,
+  enforcing the documented 80% changed-code floor.
+- #1562 (at lift) — weekly freshness report now says 0 stale, not
+  27 false positives.
+- #1571 (at lift) — tooltip unification complete + CI grep-gate.
+- #1576 — only if the chair approves the /memory page revival.
 
 ---
 
@@ -38,7 +67,7 @@ fail?"** on any failed run. A propose-only fix loop and a manual
 triage command close the loop, and every fix is chair-ruled —
 nothing auto-applies. Verified diagnoses can graduate into the
 lessons corpus with provenance, so the next failure starts smarter
-than the last. *[graduation publisher: confirm #1529 merged]*
+than the last.
 
 The loop stands on three new foundations shipped in the same
 window:
@@ -63,17 +92,16 @@ turning green; spec-lifecycle statuses come from one enforced
 vocabulary; a starter-lint hook flags stale session handoffs.
 
 **Reliability:** SDK workflow results are no longer discarded when
-the subprocess crashes during teardown after a successful result
-*[confirm guard PR merged]*; report-shaped workflows now emit run
-records; the post-commit help hook is check-only — it warns about
-stale docs but never spends LLM budget on your commits *[confirm
-flip PR merged]*; roundtable citation/convergence contracts are
-taught by worked example.
+the subprocess crashes during teardown after a successful result;
+report-shaped workflows now emit run records; the post-commit help
+hook is check-only — it warns about stale docs but never spends
+LLM budget on your commits; roundtable citation/convergence
+contracts are taught by worked example.
 
 Plus: usage-signals measurement tooling, memory feedback scoring
 (step 2), an opt-in auto-merge CI class, platform-neutral
 managed-Redis naming, and the codecov patch gate now enforcing the
-documented 80% changed-code floor *[confirm #1531]*.
+documented 80% changed-code floor.
 
 Full details in the [CHANGELOG](../../CHANGELOG.md).
 
