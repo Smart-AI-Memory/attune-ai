@@ -31,6 +31,9 @@ ROLE_REPLY_CHARS = {
     "position": 8_000,
     "critic": 16_000,
     "drafter": 40_000,
+    # cross-review one-seat reviewer (docs/specs/cross-review/ D1);
+    # findings are line-per-item, critic-sized.
+    "reviewer": 16_000,
 }
 
 #: Convergence tags the round-3 contract admits, in the normalized
