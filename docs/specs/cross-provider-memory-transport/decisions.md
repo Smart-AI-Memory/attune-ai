@@ -35,6 +35,38 @@ All decisions below are **RATIFIED**.
   sanitization, cwd, and TTL contract. Option (c) is rejected because
   agent-side composition will drift.
 
+### D3 execution evidence — T2 measurement (2026-07-22)
+
+Re-measured against the live tree before building (spec-scope-vs-code
+rule). The semantics gap is real and the verdict stands:
+
+- `redis_memory_store` → `AMSMemoryBackend.stash()` — key/value
+  working memory. No sanitization call, no cwd tagging, no
+  session-stash TTL semantics on that path.
+- `session_stash.stash_entry()` is the only chokepoint carrying the
+  full contract (sanitize → truthful write → type/cwd topics), so the
+  five `session_memory_*` adapters delegate there (option b, as
+  ratified). No existing Redis tool was duplicated; the six
+  `redis_memory_*` schemas are pinned by a freeze test.
+- **CR-2 canary found a live bug:** the PII gate was a silent no-op —
+  `DataSanitizer()` constructor defaults disable both scrubbers, so an
+  email passed to the stored representation unredacted (every prior
+  unit test mocked the gate). Fixed in T2: both gates explicitly
+  enabled; secrets fail closed (write refused). Non-mocked regression
+  tests now pin redaction and refusal through the public
+  `stash_entry()` boundary and through real MCP dispatch.
+- Boolean-to-MCP mapping (CR-5): Python `False` surfaces as
+  `{ok: false, reason: <stable_code>}` — codes `no_backend`,
+  `file_write_denied`, `write_failed`, `invalid_entry`, `not_found`,
+  `internal_error`, `session_stash_unavailable`.
+- **Live AMS receipt (R8 #3, host, 2026-07-22):** through the real
+  `session_memory_*` handlers against the resolved `AMSMemoryBackend`
+  (status `reachable`, transport `mcp`/`direct`): capture ok →
+  recall hit on attempt 1 with stored representation
+  `"T2-LIVE-CANARY-e5f1: contact [EMAIL] re parser deadlock"` (the
+  PII-bearing canary redacted in AMS) → forget deleted 1 →
+  re-recall found nothing. Canary cleaned up; cleanup confirmed.
+
 ## D4 — Caller-scoped reachability — RATIFIED
 
 - **Options:** (a) `reachable`, `unreachable_local`, `unknown`; (b) boolean

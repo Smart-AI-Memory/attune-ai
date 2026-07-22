@@ -184,6 +184,9 @@ def test_stash_noop_without_backend():
 def test_stash_calls_backend_with_ttl_seconds(monkeypatch):
     # Make the gate a pass-through so we isolate the stash path.
     class _PassThroughGate:
+        def __init__(self, **kwargs):
+            pass
+
         def sanitize(self, d):
             return (d, 0)
 
@@ -203,6 +206,9 @@ def test_stash_runs_pii_gate_before_write(monkeypatch):
     calls = {"n": 0}
 
     class _Gate:
+        def __init__(self, **kwargs):
+            pass
+
         def sanitize(self, data):
             calls["n"] += 1
             return ("<scrubbed>", 1)
@@ -222,8 +228,34 @@ def test_stash_fail_closed_when_gate_unavailable(monkeypatch):
     assert fb.stashed == [], "must not persist unsanitized content"
 
 
+def test_real_gate_redacts_pii_in_stored_representation():
+    """CR-2 regression with the REAL sanitizer (no gate mock): PII must be
+    redacted in the stored form. The gate was a silent no-op until
+    2026-07-22 — DataSanitizer() constructor defaults disabled both
+    scrubbers, so an email passed through unredacted."""
+    rb = _RememberBackend()
+    entry = _entry("reported by john@example.com during triage")
+    assert stash_entry(entry, backend=rb) is True
+    content = rb.remembered[0][0]
+    assert "john@example.com" not in content, "PII must not reach the backend"
+    assert "[EMAIL]" in content
+
+
+def test_real_gate_refuses_secret_bearing_content():
+    """The secrets detector fails CLOSED: content with a credential-shaped
+    value is refused entirely (False), never persisted."""
+    rb = _RememberBackend()
+    fake_key = "sk-abc123def456ghi789jkl"  # pragma: allowlist secret
+    entry = _entry(f'the leaked api_key = "{fake_key}" broke CI')
+    assert stash_entry(entry, backend=rb) is False
+    assert rb.remembered == [], "secret-bearing content must never persist"
+
+
 def test_stash_swallows_backend_error(monkeypatch):
     class _Sanitizer:
+        def __init__(self, **kwargs):
+            pass
+
         def sanitize(self, d):
             return (d, 0)
 
@@ -244,6 +276,9 @@ def test_stash_uses_remember_when_backend_supports_it(monkeypatch):
     """
 
     class _PassThroughGate:
+        def __init__(self, **kwargs):
+            pass
+
         def sanitize(self, d):
             return (d, 0)
 
@@ -265,6 +300,9 @@ def test_stash_falls_back_to_keyvalue_when_no_remember(monkeypatch):
     """A backend without remember() degrades to the key/value stash."""
 
     class _PassThroughGate:
+        def __init__(self, **kwargs):
+            pass
+
         def sanitize(self, d):
             return (d, 0)
 
@@ -640,6 +678,9 @@ def test_file_fallback_roundtrip_no_infra(tmp_path, monkeypatch):
     from attune.memory.file_stash import FileStashBackend
 
     class _PassThroughGate:
+        def __init__(self, **kwargs):
+            pass
+
         def sanitize(self, d):
             return (d, 0)
 

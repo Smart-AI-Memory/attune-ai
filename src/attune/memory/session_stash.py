@@ -289,11 +289,19 @@ def _sanitize(content: str) -> str | None:
     """
     try:
         from attune.memory.short_term.security import DataSanitizer
+        from attune.memory.types import SecurityError
     except Exception as exc:  # noqa: BLE001
         logger.error("PII/secrets gate unavailable; refusing stash write: %s", exc)
         return None
-    sanitizer = DataSanitizer()
-    sanitized, redactions = sanitizer.sanitize(content)
+    # Both gates ON explicitly — the constructor defaults are False, which
+    # made this a silent no-op until the cross-provider-memory-transport
+    # CR-2 live canary caught an email passing through unredacted.
+    sanitizer = DataSanitizer(pii_scrub_enabled=True, secrets_detection_enabled=True)
+    try:
+        sanitized, redactions = sanitizer.sanitize(content)
+    except SecurityError as exc:
+        logger.warning("session stash: secret detected; refusing write: %s", exc)
+        return None
     if redactions:
         logger.info("session stash: %d sensitive value(s) redacted before write", redactions)
     return sanitized if isinstance(sanitized, str) else str(sanitized)
