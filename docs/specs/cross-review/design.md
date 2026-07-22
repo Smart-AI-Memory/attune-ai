@@ -1,8 +1,8 @@
 # Cross Review — Design
 
-**Status:** RATIFIED (chair, 2026-07-22). OPEN-1..3 values
-land at the 07-27 usage read; this design names the knobs, not the
-values.
+**Status:** approved (2026-07-22) — D1–D6 ratified by the chair.
+OPEN-1..3 values land at the 07-27 usage read; this design names
+the knobs, not the values.
 
 ## Shape
 
