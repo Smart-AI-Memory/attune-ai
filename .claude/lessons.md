@@ -17382,3 +17382,36 @@ def ", start_idx + 1)` for module-
   BEFORE first-vs-inter, or a total-budget expiry mislabels as
   inter_event_timeout. Ratified budgets live in the decision
   matrix (30s/90s/180s/480s) — reuse them, don't re-invent.
+
+- **A gate/validator class constructed with permissive constructor
+  defaults is a silent no-op — pass enable flags EXPLICITLY at the
+  call site, and prove the gate's EFFECT with a non-mocked canary**:
+  2026-07-22, cross-provider-memory-transport T2. The session-stash
+  "PII/secrets gate before every write" called `DataSanitizer()`
+  bare; both `pii_scrub_enabled` and `secrets_detection_enabled`
+  default to `False`, so the gate had NEVER redacted anything in
+  production. Every unit test mocked the sanitizer class — they
+  proved the gate was *called*, not that it *did* anything. Caught
+  only by the spec's CR-2 live PII canary (email visible in the AMS
+  stored representation). Rules: (a) when wiring any gate whose
+  class takes enable flags, pass them explicitly and grep for other
+  bare constructions of the same class; (b) ship one non-mocked test
+  asserting the gate's effect on the STORED/emitted data (redaction
+  visible, secret refused), not just that sanitize() was invoked;
+  (c) test doubles that monkeypatch the gate class need
+  `def __init__(self, **kwargs)` so an explicit-flags call site
+  doesn't TypeError them. Extends "registered ≠ working" to the
+  config-defaults surface. (PR #1594.)
+
+- **`PYTHONPATH=<worktree>/src` is NOT enough for top-level sibling
+  packages — scripts importing `attune_redis` still resolve to
+  MAIN's copy**: extends the consolidated editable-install MAPPING
+  lesson. The `src`-only override fixes `attune.*` but
+  `attune_redis` lives at the repo ROOT, so a script run from
+  outside the worktree imports main's `attune_redis`
+  (symptom: ImportError for a symbol you just added, with the
+  traceback path showing `~/attune-ai/attune_redis/...` instead of
+  the worktree). Fix: `PYTHONPATH="<worktree>:<worktree>/src"`.
+  Running pytest FROM the worktree cwd masks this (cwd shadows);
+  it bites exactly when a helper script runs from a scratchpad or
+  absolute path. (Hit on the T2 live-receipt script, PR #1594.)
