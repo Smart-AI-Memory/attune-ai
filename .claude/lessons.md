@@ -17360,3 +17360,25 @@ def ", start_idx + 1)` for module-
   origin/main, docs-class PR. Leave the Codex-side originals until the
   rescue PR merges; the detached worktree is prunable and is the ONLY
   other copy. (PR #1588.)
+
+- **"Fable is silent for minutes" is a CONSUMPTION-pattern symptom,
+  not model latency — measure with streaming before blaming the
+  model, and enforce event gates with a producer thread + queue, not
+  httpx timeouts**: 2026-07-22 benchmark (merged #1590,
+  docs/process/fable-spec-benchmark/DECISION_MATRIX.md) measured
+  TTFE ~3s FLAT across 1/4/5-file spec packets while whole-block
+  consumption of the same calls had shown >150s of apparent silence
+  (4-5-file packets legitimately take ~3.5 min to COMPLETE; a
+  non-streaming caller experiences all of it as a hang). Diagnosis
+  rule: before treating a slow LLM call as a stall, re-run it
+  streaming and read time-to-first-event — 3s TTFE + long tail =
+  working as designed, needs a progress surface; no events = real
+  stall. Implementation rule (spec_runner.py, held #1591): httpx
+  read timeouts can't enforce distinct first-event vs inter-event
+  vs total budgets (one value, can't change mid-stream) — run the
+  SDK stream iterator in a daemon producer thread pushing to a
+  queue and enforce each gate at `queue.get(timeout=...)`
+  granularity; classify a timeout by checking elapsed-vs-total
+  BEFORE first-vs-inter, or a total-budget expiry mislabels as
+  inter_event_timeout. Ratified budgets live in the decision
+  matrix (30s/90s/180s/480s) — reuse them, don't re-invent.
