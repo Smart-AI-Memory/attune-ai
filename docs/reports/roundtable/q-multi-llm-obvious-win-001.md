@@ -120,7 +120,16 @@ strongest second, sequenced AFTER the 07-27 usage-signal read
   `handoff_create` / `handoff_resume` is RATIFIED as the next
   multi-LLM feature — spec to be authored AFTER the 2026-07-27
   sitting (post-lift, so it builds on the merged `session_memory_*`
-  transport). Second-pick candidates are recorded, not committed.
-- **#5** defers to the 07-27 usage-signal read.
+  transport).
+- **Amended same day:** `cross_review` is ALSO ratified — the
+  second committed multi-LLM feature, not a merely-recorded
+  candidate. Sequencing: handoff first, `cross_review` second; the
+  07-27 usage-signal read (#5) now informs `cross_review`'s
+  sequencing and design (frequency, advisory-vs-gate posture), it
+  is no longer a commitment gate. The claude seat's own risk
+  posture carries into the spec: board-only advisory first, never
+  a merge gate until dogfooded finding-quality earns it.
+- Remaining candidates (seat-executed worktree audits, provider
+  router) stay recorded, not committed.
 - **#6** left unruled on the board (TTL applies; re-raise if the
   audit idea advances to a spec).
