@@ -24,15 +24,15 @@ def server():
 
 
 class TestToolRegistration:
-    """Verify all tools are registered (46 core + 5 optional redis plugin)."""
+    """Verify all tools are registered (49 core + 6 optional redis plugin)."""
 
     def test_tools_list_returns_at_least_core_count(self, server: EmpathyMCPServer):
-        """Core tools (47) are always registered; attune-redis adds 6 more."""
+        """Core tools (49) are always registered; attune-redis adds 6 more."""
         tools = server.get_tool_list()
         tool_names = {t["name"] for t in tools}
 
-        # 47 core tools must always be present (incl. elicitation_render_widget)
-        assert len(tools) >= 47
+        # 49 core tools must always be present (incl. handoff_create/resume)
+        assert len(tools) >= 49
 
         # When attune-redis plugin is installed, all 6 redis tools are present
         redis_tools = {
@@ -44,7 +44,7 @@ class TestToolRegistration:
             "redis_memory_store",
         }
         if redis_tools.issubset(tool_names):
-            assert len(tools) == 53, f"Expected 53 tools with redis plugin, got {len(tools)}"
+            assert len(tools) == 55, f"Expected 55 tools with redis plugin, got {len(tools)}"
 
     def test_memory_tools_registered(self, server: EmpathyMCPServer):
         """Test that all memory tools are in the tool list."""
