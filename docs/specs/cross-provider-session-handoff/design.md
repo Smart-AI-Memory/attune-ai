@@ -1,6 +1,7 @@
 # Cross-Provider Session Handoff — Design
 
-**Status:** RATIFIED (chair, 2026-07-22) — D1–D6 as drafted.
+**Status:** approved (2026-07-22) — design D1–D6 ratified by the
+chair as drafted.
 **Slug:** `cross-provider-session-handoff`
 
 ## Shape
