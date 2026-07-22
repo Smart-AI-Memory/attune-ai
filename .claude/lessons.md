@@ -17415,3 +17415,24 @@ def ", start_idx + 1)` for module-
   Running pytest FROM the worktree cwd masks this (cwd shadows);
   it bites exactly when a helper script runs from a scratchpad or
   absolute path. (Hit on the T2 live-receipt script, PR #1594.)
+
+- **Spec status flips must keep the LEADING token inside
+  `STATUS_VOCABULARY` — "executing" is not a status; encode execution
+  state in the parenthetical**: 2026-07-22, the status-truth PR #1597
+  (itself a truthfulness pass) failed CI on
+  `tests/unit/gates/test_status_line_gate.py::
+  test_corpus_sweep_every_spec_dir_is_legible` because it wrote
+  `**Status:** executing (...)` and `**Status:** EXECUTING (...)`.
+  The spec-lifecycle status gate (shipped 07-21) enforces a leading-
+  token vocabulary from `attune.ops.spec_lifecycle.STATUS_VOCABULARY`
+  (`approved / active / living / draft / parked / paused / shipped /
+  superseded / complete / completed / done`) over the phase files
+  `requirements/design/tasks/decisions.md`. The established
+  convention for "approved and now being built" is
+  `approved (<date> status-truth — in execution; …)` — leading token
+  in vocabulary, execution narrative in the parenthetical (see
+  attune-author-consolidation's line, which is why ITS flip never
+  tripped the gate). Before writing any `**Status:**` line, run
+  `pytest tests/unit/gates/test_status_line_gate.py -q` locally —
+  the corpus sweep validates the REAL tree in seconds. `parked`
+  additionally requires a `Resume-Trigger:` clause in the same file.
