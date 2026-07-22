@@ -147,3 +147,88 @@ Lean (b): the claim-grounding memory
 discipline both argue for waiting until the story is a receipt.
 Chair decides at post time; do not publish Draft B as-is without
 resolving this gate.
+
+---
+
+## Draft B-v2 — LinkedIn post, multi-LLM rework (2026-07-22)
+
+Reworked per the launch plan
+(`.claude/plans/launch-10-7-0-multi-llm.md`): the release is now
+**10.7.0** (chair renumbering, 07-22), the centerpiece is the
+multi-LLM story, and the post fires TUESDAY 07-28 with the launch
+article (it is the short-form companion; the article carries the
+receipts). **Draft B-v1's structural problem is solved by
+replacement, not softening:** the new hook is the
+roundtable-picked-features story, which is ALREADY receipted (the
+promoted report `docs/reports/roundtable/q-multi-llm-obvious-win-001.md`
+is on main). The v1 self-healing anecdote is DROPPED from this
+post — that story publishes on its own day, when a real diagnosis
+receipt exists (v1 gate option (b), preserved below as its own
+backlog item).
+
+> Last week I asked three AI models a question: given everything
+> this project already has, what's the obviously-best next
+> feature?
+>
+> Claude, Codex, and Google's Antigravity answered independently —
+> they can't see each other's replies. Two of the three converged
+> on the same feature with nearly identical designs: a real
+> handoff between AI coding agents. The full deliberation, every
+> seat's position, and my rulings are a tracked report in the
+> repo.
+>
+> So that's what shipped this week in attune-ai 10.7.0:
+>
+> — Shared memory: a finding captured in one agent is recallable
+> in the next (Claude Code, Codex, Antigravity — same tools, no
+> sidecar)
+> — Handoffs that verify: the receiving agent re-checks the packet
+> against the actual git tree before continuing. Context, not
+> authority.
+> — Second opinions: your real diff, reviewed adversarially by a
+> different vendor's model. Advisory by spec — a public dogfood
+> ledger is the only thing that can ever promote it.
+>
+> Every boundary claim above carries a dated transcript in the
+> repo. The ones we couldn't prove yet are marked UNPROBED — in
+> public. That discipline already caught a real bug this week:
+> a PII scrubber that a thousand mocked tests swore was on, and
+> one live canary proved was off.
+>
+> The models deliberate; I decide. Free and open source,
+> Apache 2.0: `pip install attune-ai`
+>
+> Full story with the transcripts: [LINK: launch article]
+
+### Honesty checklist on Draft B-v2 (chair rules at post time)
+
+- [x] Roundtable-convergence hook — TRUE and receipted now
+      (report merged to main 2026-07-22; thread
+      `q-multi-llm-obvious-win-001`).
+- [x] PII-scrubber story — TRUE and receipted (transport spec
+      decisions.md + receipts.md, CR-2 live canary; ~1,600 mocked
+      tests figure verified against the T2 session record — say
+      "a thousand" only if the exact count stays unverified at
+      post time).
+- [ ] "Shared memory … recallable in the next" — requires the
+      receipt-4 Codex canary (post-lift, post-marketplace-sync).
+      DO NOT POST before it passes.
+- [ ] "Handoffs that verify" — requires the handoff live
+      round-trip receipt (spec T4). DO NOT POST before it passes;
+      if only the Claude-side receipt exists Tuesday, reword to
+      per-agent truth or hold.
+- [ ] "10.7.0 … shipped this week" — requires the v10.7.0 tag +
+      PyPI 200 on Monday.
+- [ ] Antigravity named as a memory participant — requires
+      receipt 6 (post-publish probe) OR reword to "Claude Code
+      and Codex today; Antigravity next" per its actual row.
+- [ ] [LINK: launch article] filled with the published URL.
+- [x] v1 anecdote removed — nothing in v2 claims a self-healing
+      diagnosis occurred.
+
+### Backlogged from v1 (do not lose)
+
+The self-healing-loop story (v1's hook) publishes as its OWN post
+when a real operational failure has been diagnosed end-to-end —
+v1 gate option (b). Candidate trigger: the first real failed run
+around Monday's live fire. The v1 text above stays as its draft.
