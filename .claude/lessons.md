@@ -17490,3 +17490,28 @@ def ", start_idx + 1)` for module-
   hygiene by hand. The guard's allowlist env var can't be set
   mid-session, so this is the sanctioned-intent path for
   cross-worktree branch updates.
+
+- **A docs-only spec PR failing THREE required lanes (coverage +
+  ubuntu + windows) is the STATUS_VOCABULARY gate's signature — run
+  `pytest tests/unit/gates/test_status_line_gate.py` locally before
+  digging CI logs; and `ratified`/`RATIFIED` is NOT a vocabulary
+  token**: 2026-07-22, PRs #1603/#1604 (the two freshly-authored
+  multi-LLM specs, docs-only, auto-merge armed) sat BLOCKED with
+  identical failures across all three unit-suite-bearing required
+  lanes. Root cause: `**Status:** RATIFIED (chair, …)` in each
+  design.md — the corpus-sweeping gate test runs inside the unit
+  suite, so ONE bad token in ONE spec file paints every test lane
+  red on ANY PR (one bug, lots of red — docs diffs included). The
+  #1599 lesson (write vocabulary leading tokens; run the gate test
+  before writing any Status line) was IN CONTEXT and still got
+  skipped in the flow of authoring — treat the local gate run as a
+  mechanical step of spec authoring, same reflex as pre-flighting
+  black before `git add`, not as a thing to remember under way.
+  Vocabulary (from `attune.ops.spec_lifecycle.STATUS_VOCABULARY`):
+  complete-class tokens + `approved`, `active`, `living`, `draft`,
+  `parked` (needs `Resume-Trigger:`), `paused`. Chair-ratification
+  language belongs in the ANNOTATION: `**Status:** approved
+  (2026-07-22) — design D1–D6 ratified by the chair.` Diagnosis
+  recipe: docs-only PR + 3 red test lanes → local gate run gives
+  the exact file and token in ~5s; the CI log grep is noise by
+  comparison.
