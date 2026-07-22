@@ -16548,7 +16548,14 @@ def ", start_idx + 1)` for module-
   change) misses repo-wide ratchets by construction — add
   `tests/unit/quality` to any breadth set that includes new or
   substantially grown functions, or better: refactor to <21 CC
-  before committing (extract stage helpers).
+  before committing (extract stage helpers). SECOND HIT 2026-07-21
+  (#1576: `memory_data.py::read_overview` D(29)): the local receipt
+  ran the FULL ops suite (1,527 tests) yet still missed it — suite
+  size is not breadth; only `tests/unit/quality/` catches the
+  ratchet. Caught in CI an hour later; the fix itself (extract the
+  three pipeline passes → C(13)) took minutes. When rebasing or
+  landing a held PR that ADDS source files, run the ratchet
+  locally before pushing.
 
 - **When fixing violations flagged by a token/brand hard-fail gate,
   the fix's own comments must not quote the banned token — the gate
