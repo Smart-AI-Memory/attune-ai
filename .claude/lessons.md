@@ -17342,3 +17342,21 @@ def ", start_idx + 1)` for module-
   dismissals are per-alert and re-fire on refactors, the lookup
   pattern never alerts. Pairs with "validate file paths" critical
   rule — this is the CodeQL-clean shape of that validation.
+
+- **Codex-authored work can sit as UNTRACKED files in the ephemeral
+  `~/.codex/worktrees/<hash>/attune-ai` detached-HEAD worktree — find
+  it via `git worktree list`, rescue by copying onto a proper branch**:
+  2026-07-22, "I was working on fable_spec_workflow_todo.md using
+  codex" resolved to `docs/process/FABLE_SPEC_WORKFLOW_TODO.md` plus a
+  full 4-file spec + plan, all untracked in the Codex worktree (which
+  `git worktree list` on the main repo DOES show). Filename recall may
+  differ in case/underscores from the actual file — search
+  case-insensitively before concluding it doesn't exist. Untracked
+  files can't textually conflict, so the "no conflicts" check is
+  path-collision shaped: (a) `git ls-tree origin/main` for the paths,
+  (b) each open/held PR's changed-file set (`gh pr view <n> --json
+  files`). Rescue = copy into a session worktree (absolute worktree
+  paths per the Write-path lesson), commit on a branch off
+  origin/main, docs-class PR. Leave the Codex-side originals until the
+  rescue PR merges; the detached worktree is prunable and is the ONLY
+  other copy. (PR #1588.)
