@@ -40,3 +40,17 @@ Tasks T1 (module) → T2 (skill + mirrors) → T3 (five-run dogfood
 ledger across ≥2 seats; low quality is a valid, posture-fixing
 result) → T4 (docs + OPEN closure citing usage-read data). Spec is
 now fully authored 2026-07-22; implementation staged post-07-27.
+
+## 2026-07-22 — T1+T2 BUILT (held draft #1607, chair pulled forward)
+
+Chair asked for the build same-evening; sequencing intent (handoff
+first) is preserved at the LIFT (handoff #1605 merges before #1607).
+`attune.roundtable.review` + `/cross-review` skill (plugin + shim +
+.agents mirror), attune-hub row, skill count 25→26,
+`ROLE_REPLY_CHARS['reviewer']=16k`. `DEFAULT_SEAT="codex"` and
+`DIFF_CAP_CHARS=60_000` ship PROVISIONAL per D6 — OPEN-1/OPEN-3
+rulings replace them in the 07-27 OPEN-closure commit; OPEN-2 has
+no code surface yet (skill text only). Receipts on the PR: 19 new
+tests, roundtable 175 serial-green, plugins 148 serial-green,
+mutating-git grep clean. T3 dogfooding remains gated on the
+OPEN-1..3 rulings.
