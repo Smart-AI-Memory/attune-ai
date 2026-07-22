@@ -44,3 +44,17 @@ transport dependency and MAY build early as held drafts if a slot
 opens; T3/T4 wait for the lift. Spec is now fully authored —
 requirements APPROVED, design RATIFIED, tasks APPROVED, all
 2026-07-22; implementation staged for the 07-27 sitting or after.
+
+## 2026-07-22 — T1+T2 BUILT (held draft #1605); one scope deviation
+
+Both tasks executed same-evening as held draft #1605
+(`claude/handoff-t1-t2`, hold-until-07-27). Deviation from tasks.md
+T2 wording: the real-dispatch integration tests live in a NEW file
+(`tests/integration/test_mcp_dispatch_handoff.py`) instead of
+extending `test_mcp_dispatch.py` — that module is modified by held
+PR #1594, and extending it would create a held-queue collision at
+the lift. Intent (real server, real dispatch table, real core)
+preserved. Receipts on the PR: 22 handoff unit tests + 86-test
+serial sweep (dispatch/counts/reference-validation) + quality
+ratchet green. Also recorded there: tool counts 49 core / 55 with
+redis; CHANGELOG entry owed at lift per the drafts-doc pattern.
