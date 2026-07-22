@@ -221,10 +221,20 @@ def main() -> int:
         # in that tier are dark. Surfacing this at session start is the fix
         # for the 2026-06-11 incident where AMS was down for a week unnoticed.
         health = ""
+        # Caller-scoped backend fields threaded into both telemetry
+        # emissions below (cross-provider-memory-transport T4') — one
+        # backend_status() call serves the health line AND telemetry so
+        # the 3s SessionStart budget pays the write probe only once.
+        status_fields: dict = {}
         try:
             from attune.memory.session_stash import backend_status
 
             status = backend_status()
+            status_fields = {
+                "backend": status.get("backend"),
+                "transport": status.get("transport"),
+                "reason": status.get("reason"),
+            }
             dark = status.get("unreachable_upgrade")
             if dark:
                 health = (
@@ -250,6 +260,7 @@ def main() -> int:
                     injected_chars=0,
                     reconciled_stale=len(stale_ids),
                     forgotten=forgotten,
+                    **status_fields,
                 )
             if health:
                 print(health)
@@ -272,6 +283,7 @@ def main() -> int:
                 injected_chars=len(block),
                 reconciled_stale=len(stale_ids),
                 forgotten=forgotten,
+                **status_fields,
             )
         if health:
             print(health)

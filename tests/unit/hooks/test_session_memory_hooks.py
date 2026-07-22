@@ -790,3 +790,109 @@ def test_emit_context_without_ids_falls_back(stash_mod, capsys):
     assert stash_mod._emit_additional_context(findings, written=1) > 0
     ctx = json.loads(capsys.readouterr().out)["hookSpecificOutput"]["additionalContext"]
     assert "- [note] plain" in ctx
+
+
+# ==========================================================================
+# T4' telemetry enrichment — caller-scoped backend fields on emissions
+# (cross-provider-memory-transport)
+# ==========================================================================
+
+_STATUSFUL = {
+    "backend": "AMSMemoryBackend",
+    "fallback": False,
+    "unreachable_upgrade": None,
+    "ok": True,
+    "transport": "direct",
+    "reachability": "reachable",
+    "reason": None,
+}
+
+
+def test_stash_status_fields_shape(stash_mod, monkeypatch):
+    import attune.memory.session_stash as ss
+
+    monkeypatch.setattr(ss, "backend_status", lambda: dict(_STATUSFUL))
+    assert stash_mod._status_fields() == {
+        "backend": "AMSMemoryBackend",
+        "transport": "direct",
+        "reason": None,
+    }
+
+
+def test_stash_status_fields_never_raises(stash_mod, monkeypatch):
+    import attune.memory.session_stash as ss
+
+    def _boom():
+        raise RuntimeError("status exploded")
+
+    monkeypatch.setattr(ss, "backend_status", _boom)
+    assert stash_mod._status_fields() == {}
+
+
+def test_stash_main_emits_backend_fields(stash_mod, monkeypatch, tmp_path):
+    """The session_stash event carries backend/transport/reason so degraded
+    routing is observable in local telemetry (T4')."""
+    import attune.memory.session_stash as ss
+
+    monkeypatch.setenv("ATTUNE_AI_SENTINEL_DIR", str(tmp_path))
+    tpath = tmp_path / "t.jsonl"
+    tpath.write_text(
+        json.dumps({"message": {"role": "assistant", "content": "the bug was a race"}}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(stash_mod, "estimate_utilization", lambda _p: 0.9)
+    monkeypatch.setattr(
+        stash_mod, "_extract_via_ollama", lambda _t: [{"type": "bug", "content": "z"}]
+    )
+    monkeypatch.setattr(stash_mod, "_stash_findings", lambda findings, **k: len(findings))
+    denied = dict(
+        _STATUSFUL,
+        backend="FileStashBackend",
+        ok=False,
+        transport="none",
+        reachability="unreachable_local",
+        reason="file_write_denied",
+    )
+    monkeypatch.setattr(ss, "backend_status", lambda: denied)
+    events = []
+    monkeypatch.setattr(
+        stash_mod, "log_memory_event", lambda event, **fields: events.append((event, fields))
+    )
+    _stdin(monkeypatch, {"session_id": "tf1", "transcript_path": str(tpath), "cwd": "/proj"})
+    assert stash_mod.main() == 0
+    assert events and events[-1][0] == "session_stash"
+    fields = events[-1][1]
+    assert fields["backend"] == "FileStashBackend"
+    assert fields["transport"] == "none"
+    assert fields["reason"] == "file_write_denied"
+
+
+def test_recall_main_emits_backend_fields(recall_mod, monkeypatch, capsys):
+    """Both session_recall emissions carry the caller-scoped fields, from
+    the SAME backend_status() call that feeds the health line."""
+    import attune.memory.session_stash as ss
+
+    calls = {"n": 0}
+
+    def _status():
+        calls["n"] += 1
+        return dict(_STATUSFUL)
+
+    monkeypatch.setattr(
+        ss,
+        "recent_entries",
+        lambda **k: [{"id": "abc123", "text": "a finding", "topics": ["type:note"]}],
+    )
+    monkeypatch.setattr(ss, "backend_status", _status)
+    events = []
+    monkeypatch.setattr(
+        recall_mod, "log_memory_event", lambda event, **fields: events.append((event, fields))
+    )
+    _stdin(monkeypatch, {"source": "startup", "cwd": "/proj"})
+    assert recall_mod.main() == 0
+    assert events and events[-1][0] == "session_recall"
+    fields = events[-1][1]
+    assert fields["backend"] == "AMSMemoryBackend"
+    assert fields["transport"] == "direct"
+    assert fields["reason"] is None
+    assert calls["n"] == 1, "health line and telemetry must share one status probe"
