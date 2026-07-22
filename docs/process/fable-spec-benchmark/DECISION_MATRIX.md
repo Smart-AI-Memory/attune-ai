@@ -6,7 +6,8 @@ setting the generation budget."
 namespace + fable fallbacks, `max_retries=0`).
 **Raw data:** [results-20260722T120248Z.json](results-20260722T120248Z.json)
 (one run per packet, 2026-07-22, API-key path).
-**Status:** measured; latency budget PENDING Patrick's ratification.
+**Status:** measured; latency budget RATIFIED (Patrick, 2026-07-22,
+PR #1590 review — approved as proposed).
 
 ## Measured results (n=1 per packet)
 
@@ -44,11 +45,12 @@ model is still thinking).
 | Marker validation fails | Re-request ONLY the missing/malformed document(s) per-document; never regenerate the whole packet |
 | >5 documents requested | Split into ≤5-file packets (unmeasured territory — extrapolation not licensed by this data) |
 
-## Proposed latency budget — PENDING RATIFICATION
+## Latency budget — RATIFIED 2026-07-22
 
-Derived from measurements with stated multipliers; Patrick ratifies
-or adjusts (todo item 1 forbids invented thresholds — these are
-anchored, but n=1, so the margins are deliberately generous):
+Derived from measurements with stated multipliers; ratified as
+proposed by Patrick in PR #1590 review (todo item 1 forbids invented
+thresholds — these are anchored, but n=1, so the margins are
+deliberately generous):
 
 | Bound | Proposal | Derivation |
 |---|---|---|
