@@ -73,6 +73,55 @@ class ProjectionError(RuntimeError):
 
 # --- Derivation --------------------------------------------------------
 
+# Provider packages that live in this repository. If one is importable
+# it must resolve to THIS checkout, or the derived counts describe some
+# other revision's tool set.
+_IN_REPO_PACKAGES = (("attune", "src/attune"), ("attune_redis", "attune_redis"))
+
+
+def _prepend_repo_paths(repo: Path) -> None:
+    """Self-heal import resolution: front the repo's own package roots.
+
+    ``sys.path`` entries beat the editable-install finder (it sits
+    behind PathFinder on ``sys.meta_path``), so fronting ``repo/src``
+    and ``repo`` makes a worktree run measure the tree it was pointed
+    at instead of whichever checkout the editable install maps to.
+    """
+    root = repo.resolve()
+    for entry in (str(root), str(root / "src")):
+        if entry not in sys.path:
+            sys.path.insert(0, entry)
+
+
+def _assert_in_repo_imports(repo: Path) -> None:
+    """Imported in-repo provider packages must resolve to this checkout.
+
+    Running the script as a file puts ``scripts/`` (not the repo root)
+    at ``sys.path[0]``, so ``import attune_redis`` can silently fall
+    through to another checkout via the editable install and register a
+    different plugin tool set. The core-subset guard cannot catch that
+    (core ⊆ registered still holds), so fail closed here instead.
+    """
+    root = repo.resolve()
+    for pkg, rel in _IN_REPO_PACKAGES:
+        if not (repo / rel).is_dir():
+            continue
+        module = sys.modules.get(pkg)
+        if module is None:
+            continue
+        origin = getattr(module, "__file__", None)
+        if origin is None:
+            paths = list(getattr(module, "__path__", None) or [])
+            origin = paths[0] if paths else None
+        if origin is None:
+            raise ProjectionError(f"cannot locate the imported {pkg!r} package — failing closed")
+        if not Path(origin).resolve().is_relative_to(root):
+            raise ProjectionError(
+                f"imported {pkg!r} resolves to {origin}, outside the repo root "
+                f"{root} — wrong-checkout registration; rerun with "
+                f"PYTHONPATH={root}:{root / 'src'}"
+            )
+
 
 def derive_values(repo: Path) -> dict[str, int]:
     """Derive the three semantic values from the checked-out revision.
@@ -86,6 +135,7 @@ def derive_values(repo: Path) -> dict[str, int]:
             f"no plugin/skills/*/SKILL.md found under {repo} — refusing to publish 0"
         )
 
+    _prepend_repo_paths(repo)
     try:
         from attune.mcp import tool_schemas
         from attune.mcp.server import EmpathyMCPServer
@@ -93,6 +143,16 @@ def derive_values(repo: Path) -> dict[str, int]:
         raise ProjectionError(
             f"attune is not importable ({exc}) — run from the project environment"
         ) from exc
+    if (repo / "attune_redis").is_dir():
+        # Import explicitly (not just via the server's best-effort plugin
+        # hook) so the provenance guard below can never silently skip it.
+        try:
+            import attune_redis  # noqa: F401
+        except ImportError as exc:
+            raise ProjectionError(
+                f"in-repo attune_redis is not importable ({exc}) — its plugin "
+                "tools would be silently missing from the count"
+            ) from exc
 
     tools = EmpathyMCPServer().tools
     if not isinstance(tools, dict) or not tools:
@@ -100,6 +160,7 @@ def derive_values(repo: Path) -> dict[str, int]:
             "EmpathyMCPServer().tools is not a non-empty dict — unstable registration"
         )
     registered = set(tools)
+    _assert_in_repo_imports(repo)
 
     getter_names = sorted(
         n for n in dir(tool_schemas) if n.startswith("get_") and n.endswith("_tools")
