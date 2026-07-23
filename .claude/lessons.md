@@ -17515,3 +17515,37 @@ def ", start_idx + 1)` for module-
   recipe: docs-only PR + 3 red test lanes → local gate run gives
   the exact file and token in ~5s; the CI log grep is noise by
   comparison.
+
+- **Ops route tests: a bare TestClient gets 400 (not 401/403) from
+  TrustedHostMiddleware, and the memory-page FakeRedis scan_iter
+  only honors TRAILING-star patterns**: both hit building the
+  #1612/#1613 ops pages (2026-07-22). (1) `TestClient(create_app(cfg))`
+  without `c.headers["Host"] = f"{cfg.host}:{cfg.port}"` returns
+  400 Bad Request on every GET — the allowlist middleware rejects
+  before routing, and 400 doesn't read as "host check" at first
+  glance. Copy the client fixture from
+  `tests/unit/ops/test_memory_page.py`, which sets the header.
+  (2) That file's `FakeRedis.scan_iter` computes its prefix as
+  `match.rstrip("*")`, so a mid-pattern wildcard like
+  `attune:roundtable:thread:*:meta` matches NOTHING silently.
+  Scan the trailing-star prefix and filter (`endswith(":meta")`)
+  in code — which is also the cheaper shape against real redis.
+
+- **Building on top of a HELD PR: stack on its branch (base = the
+  held branch, sequential re-target lift) — and grep every other
+  held PR's file list for overlap BEFORE picking the base**:
+  2026-07-22, the roundtable-ruled ops items. #1612 needed #1576's
+  unmerged page code, so its branch based on `ops/memory-page` and
+  its PR targets that branch (#1615), with #1613 stacked one
+  deeper (#1616) — the transport-stack pattern generalized. The
+  overlap check that shaped it: `gh pr view <n> --json files` on
+  every `hold-until-07-27` PR showed #1576 owns `server.py` +
+  `home.html` (nav), so a flat main-based branch would have
+  re-dirtied the conflict-free queue at lift; stacking makes the
+  overlap sequential instead of conflicting. Lift recipe rides in
+  the starter: merge base → `gh pr edit <next> --base main` → let
+  CI re-run → merge → repeat; ALWAYS re-target before deleting the
+  merged base branch. Corollary: a new same-area page (collab)
+  avoided depending on OTHER held work (#1605's handoff module) by
+  local mini-parsing — one stack dependency is manageable, two
+  crossing stacks are not.
