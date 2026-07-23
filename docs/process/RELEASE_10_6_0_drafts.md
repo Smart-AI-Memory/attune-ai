@@ -153,8 +153,9 @@ resolving this gate.
 ## Draft B-v2 — LinkedIn post, multi-LLM rework (2026-07-22)
 
 Reworked per the launch plan
-(`.claude/plans/launch-10-7-0-multi-llm.md`): the release is now
-**10.7.0** (chair renumbering, 07-22), the centerpiece is the
+(`.claude/plans/launch-10-6-0-multi-llm.md`): the release is
+**10.6.0** (chair briefly renumbered it 10.7.0 on 07-22, then
+reverted to 10.6.0 as originally proposed — chair, 07-22 EOD), the centerpiece is the
 multi-LLM story, and the post fires TUESDAY 07-28 with the launch
 article (it is the short-form companion; the article carries the
 receipts). **Draft B-v1's structural problem is solved by
@@ -177,7 +178,7 @@ backlog item).
 > seat's position, and my rulings are a tracked report in the
 > repo.
 >
-> So that's what shipped this week in attune-ai 10.7.0:
+> So that's what shipped this week in attune-ai 10.6.0:
 >
 > — Shared memory: a finding captured in one agent is recallable
 > in the next (Claude Code, Codex, Antigravity — same tools, no
@@ -217,7 +218,7 @@ backlog item).
       round-trip receipt (spec T4). DO NOT POST before it passes;
       if only the Claude-side receipt exists Tuesday, reword to
       per-agent truth or hold.
-- [ ] "10.7.0 … shipped this week" — requires the v10.7.0 tag +
+- [ ] "10.6.0 … shipped this week" — requires the v10.6.0 tag +
       PyPI 200 on Monday.
 - [ ] Antigravity named as a memory participant — requires
       receipt 6 (post-publish probe) OR reword to "Claude Code
