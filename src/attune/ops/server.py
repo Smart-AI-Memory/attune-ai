@@ -16,6 +16,7 @@ from attune.ops import sweep_results as sweep_results_mod
 from attune.ops.config import Config
 from attune.ops.interaction_counters import InteractionCounters
 from attune.ops.routes import bulletin as bulletin_routes
+from attune.ops.routes import collab as collab_routes
 from attune.ops.routes import curator as curator_routes
 from attune.ops.routes import dashboard
 from attune.ops.routes import health_library as health_library_routes
@@ -106,6 +107,7 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
         ("/curator", "Briefing"),
         ("/specs", "Specs"),
         ("/memory", "Memory"),
+        ("/collab", "Collab"),
         ("/telemetry", "Telemetry"),
         ("/health", "Health"),
         ("/help", "Help"),
@@ -135,6 +137,7 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     app.state.health_refresh = HealthRefreshRunner()
 
     app.include_router(session_routes.router)
+    app.include_router(collab_routes.router)
     app.include_router(dashboard.router)
     app.include_router(health_library_routes.router)
     app.include_router(runner_routes.router)
