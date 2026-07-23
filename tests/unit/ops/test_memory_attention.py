@@ -81,7 +81,7 @@ class TestReadAttention:
         assert attention.changed_since == [".claude/lessons.md"]
         assert attention.has_exceptions is True
 
-    def test_pending_threads_counted_promoted_excluded(
+    def test_pending_threads_counted_promoted_and_canaries_excluded(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         store = {
@@ -91,6 +91,8 @@ class TestReadAttention:
                 "seq": "9",
                 "status": "promoted",
             },
+            "attune:roundtable:thread:test-abc123:meta": {"seq": "1"},
+            "attune:roundtable:thread:routine-test-x-1:meta": {"seq": "1"},
         }
         monkeypatch.setattr(memory_data, "connect", lambda url=None: FakeRedis(store))
         attention = read_attention(_project(tmp_path, 5))

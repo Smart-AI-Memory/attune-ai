@@ -399,6 +399,13 @@ CORPUS_SOURCES = (
 _HYDRATED_AT_KEY = "attune:memory:hydrated_at"
 _THREAD_KEY_MATCH = "attune:roundtable:thread:*"
 _THREAD_META_SUFFIX = ":meta"
+_THREAD_ID_START = len("attune:roundtable:thread:")
+
+#: Suite-canary threads (the roundtable tests write against real
+#: Redis). Excluded from the pending count — the card means
+#: "decisions with deadlines", and live-run 2026-07-22 showed 559
+#: raw vs 28 real threads without this filter.
+_DIAGNOSTIC_THREAD_PREFIXES = ("test-", "routine-test-")
 
 
 @dataclass
@@ -454,6 +461,9 @@ def _pending_threads(client: Any) -> int:
     try:
         for key in client.scan_iter(match=_THREAD_KEY_MATCH, count=_SCAN_COUNT):
             if not str(key).endswith(_THREAD_META_SUFFIX):
+                continue
+            thread_id = str(key)[_THREAD_ID_START : -len(_THREAD_META_SUFFIX)]
+            if thread_id.startswith(_DIAGNOSTIC_THREAD_PREFIXES):
                 continue
             meta = client.hgetall(key)
             if isinstance(meta, dict) and meta.get("status") != "promoted":
