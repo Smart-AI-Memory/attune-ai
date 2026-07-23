@@ -17635,3 +17635,21 @@ def ", start_idx + 1)` for module-
   Since the block is PreToolUse, NOTHING in the compound command
   ran — staging included; re-run the whole command with the
   override rather than assuming the `git add` happened.
+
+- **A reconciler's "branch gone" can mean NOT-ON-ORIGIN while the
+  branch is alive in another worktree — disambiguate with
+  `git ls-remote` + `git branch -a` before treating a "push + PR"
+  queue item as stale**: 2026-07-23, north-star session. The
+  session starter carried "lessons branch awaiting PR:
+  `claude/new-session-starter-242d7f`"; the starter-reconciler
+  hook reported that branch "gone", inviting the reading "already
+  merged and deleted — item stale, skip it". The truth was the
+  opposite: `git ls-remote --heads origin | grep <branch>` matched
+  nothing (so "gone" = never pushed), while `git branch -a` showed
+  `+ <branch>` (the `+` prefix = checked out in another worktree,
+  alive with two unmerged lesson commits). The push + PR was still
+  owed and became #1628. Rule: "gone" is a REMOTE-visibility
+  claim, not a deletion claim — run the ls-remote / branch -a pair
+  before dropping the queue item. Same family as the reconcile
+  rule's "'already pushed' is a REMOTE claim (`git ls-remote`)";
+  this is the inverse direction (absent remotely ≠ absent).
