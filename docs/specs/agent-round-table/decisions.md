@@ -475,3 +475,24 @@ only via that evidence path.
 
 P2 (gate-triage inbox) is recorded in
 `docs/specs/spec-lifecycle-gates/decisions.md` — its owning spec.
+
+## 2026-07-22 — Digest disposition policy (chair-ruled)
+
+Standing default for routine digests once the appendix ledger
+exists (`~/.attune/ops/triage_appendix.json`, first created by the
+2026-07-27 06:00 live fire): **a stale-resolved or zero-action
+digest gets `record_rulings(thread, 0)` + deliberate TTL expiry —
+NOT archival promotion.** Archival promotion to
+`docs/reports/roundtable/` is reserved for digests whose content
+has reference value beyond "reviewed, nothing actionable." The
+recorded zeros are the T4 auto-demote counter's food; archiving by
+default would starve it and accrete non-event reports (the same
+instinct as antigravity's ban on archival search of expired
+threads).
+
+Provenance: the 2026-07-22 promotion of
+`routine-clean-run-2026-07-18` (report + PR #1618) is the one
+worked ARCHIVAL example — promoted before this policy, kept as the
+flow's demonstration; its rulings-count recording no-oped because
+the ledger predates the first live fire, which is what surfaced
+this ruling.
