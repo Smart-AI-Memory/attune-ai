@@ -89,7 +89,7 @@ MANIFEST: tuple[tuple[str, str, str, str], ...] = (
     (
         "docs/getting-started/mcp-integration.md",
         "tools heading",
-        r"## (?:<[^>]*>)?Available Tools \((\d+)\)",
+        r"## (?:<!-- cap:[a-z_]+ -->)?Available Tools \((\d+)\)",
         "tools",
     ),
     (
