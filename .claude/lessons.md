@@ -17708,3 +17708,43 @@ def ", start_idx + 1)` for module-
   declarative vercel.json changes (redirects/headers), the honest
   receipt is the PROD curl after merge — plan for that instead of
   fighting preview auth.
+
+- **Computer-use on this Mac (3 monitors, filtered screenshots,
+  TCC) — the traps from the first live Screen Studio session
+  (2026-07-23)**: consolidated for the demo-recording sessions.
+  - **Non-granted apps' windows are INVISIBLE in screenshots but
+    still hold focus and eat clicks** — the compositor filtering
+    hides them from ME, not from the click stream. Symptom: menu
+    bar says Finder is frontmost, screenshot shows bare desktop,
+    clicks vanish. Fix: re-front the granted app via
+    open_application, never click "through" apparent desktop.
+  - **Three monitors: dialogs/windows land on ANY of them** —
+    launched apps, recovered-project editors, and
+    `open "x-apple.systempreferences:..."` deep-links all appear
+    wherever that app last lived, usually NOT the captured
+    display. Recipe: switch_display + screenshot round-robin
+    BEFORE concluding a window failed to open; the app's
+    Window > Window submenu lists windows that exist but are
+    off-capture.
+  - **An app ABSENT from a Privacy & Security pane list never
+    REQUESTED that permission — absent ≠ denied.** macOS only
+    lists apps after first request. Trigger the request from
+    inside the app (e.g. selecting a mic device in Screen
+    Studio's recorder made it appear in the Microphone list,
+    toggle OFF); the user then flips the toggle. TCC.db is
+    unreadable without Full Disk Access ("authorization denied")
+    — visual verification via the granted System Settings app is
+    the route.
+  - **An in-flight recording found on app launch is the USER'S
+    data** — Screen Studio opened to a "Finish recording?"
+    dialog from Patrick's earlier session; ask (finish vs cancel
+    vs hands-off) before clicking. "Finish" is non-destructive
+    (saves + recoverable); after it, a "Recover 1 unfinished
+    recording" affordance may ALSO appear on the recorder bar.
+  - **Menu-anchored popovers shift between opens** — the exact
+    coordinates that hit "G733 Gaming Headset" on one open hit
+    the adjacent system-audio button on the next (menu re-anchors
+    to the moved button). Screenshot AFTER each menu open, then
+    click; never reuse popover coordinates across opens. Batch
+    clicks need a wait+screenshot between menu-open and item
+    click.
