@@ -17653,3 +17653,58 @@ def ", start_idx + 1)` for module-
   before dropping the queue item. Same family as the reconcile
   rule's "'already pushed' is a REMOTE claim (`git ls-remote`)";
   this is the inverse direction (absent remotely ≠ absent).
+
+- **A multi-PR lift day needs an ASSEMBLED-QUEUE preflight — per-PR
+  CI cannot see positional conflicts or parallel count-update
+  collisions**: 2026-07-23, rehearsing the 07-27 lift (roundtable
+  q-release-1060-strong-next-steps-001, chair-ordered). Mechanics:
+  scratch worktree off origin/main, `git merge` each held head
+  SEQUENTIALLY in the ratified lift order (never octopus — sequential
+  names the first bad position), then the keyless suite
+  (`ANTHROPIC_API_KEY="" pytest`) on the assembled tree. Two real
+  finds, both invisible to per-PR evidence: (1) POSITIONAL textual
+  conflict — #1576 was CLEAN vs main but conflicted with sibling
+  held PR #1578 (both append the same decisions.md region); it
+  flips DIRTY mid-lift only after the sibling merges.
+  (2) PARALLEL COUNT-UPDATE collision — #1594 (+5 MCP tools) and
+  #1605 (+2, test expectation 53→55) were each green alone because
+  each updated shared count assertions assuming main + itself; the
+  assembled truth (60) failed the test. Both green alone ≠ green
+  together. Fix prep, not panic: conflict at position N = the
+  demonstrated drift that justifies rebasing THAT branch only;
+  assembled-red/green-alone = prepare a reconciling commit to land
+  right after the second PR. Receipt shape: first assembled run 13
+  failed (all one predicted class), after projector sync + one
+  reconciling edit 18,867/0. Caveat: macOS-local — Windows behavior
+  stays unproven until the real lanes.
+
+- **`python scripts/foo.py` puts the SCRIPT'S dir at sys.path[0],
+  not the cwd — cwd-local packages silently fall through to the
+  editable install (main checkout)**: 2026-07-23, the capability
+  projector derived 55 registered tools from a worktree whose truth
+  was 60. `python -c`/pytest resolve cwd-local `attune_redis` (sys
+  .path[0] = '' / rootdir) but `python scripts/project_capabilities
+  .py` sets sys.path[0]=scripts/, so `import attune_redis` fell
+  through to MAIN's copy — silently, because the guard's subset
+  relation (core ⊆ registered) still held with the wrong plugin.
+  Same family as the editable-MAPPING lessons; this is the
+  script-file surface. Diagnostic: same derivation differing
+  between `python script.py` and an equivalent `python -c` run IS
+  this bug — print `pkg.__file__`. Fixed for the projector in
+  #1630 (sys.path self-heal + fail-closed provenance assert); any
+  OTHER repo script that imports cwd-local packages carries the
+  same trap until given the same guard.
+
+- **Vercel preview verification: the REAL preview URL is in the
+  Vercel bot's PR comment, and SSO deployment protection can block
+  curl entirely — verify on prod post-merge instead**: 2026-07-23,
+  attune-ai-dev redirect fix (#1632). Guessing the preview slug
+  from branch name fails (Vercel truncates+hashes long branch
+  slugs: `...-404-5a5276-...`); extract it from `gh pr view
+  --json comments` (vercel[bot] body). Even the right URL 302'd
+  every path to vercel.com/sso-api (deployment protection), and
+  the `get_access_to_vercel_url` bypass tool returned
+  success:false (integration unauthed for the team). For
+  declarative vercel.json changes (redirects/headers), the honest
+  receipt is the PROD curl after merge — plan for that instead of
+  fighting preview auth.
