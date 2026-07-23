@@ -54,11 +54,12 @@ async def memory_page(request: Request) -> HTMLResponse:
     except ValueError:
         page = 1
     overview = memory_data.read_overview(family=family, kind=kind, page=page)
+    attention = memory_data.read_attention(request.app.state.config.project_root)
     templates = request.app.state.templates
     return templates.TemplateResponse(
         request,
         "memory.html",
-        _ctx(request, overview=overview),
+        _ctx(request, overview=overview, attention=attention),
     )
 
 

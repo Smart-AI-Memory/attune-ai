@@ -380,3 +380,119 @@ def node_count(client: Any | None = None) -> int | None:
         # INTENTIONAL: same degradation contract as read_overview.
         logger.debug("Redis count failed; /memory degrades", exc_info=True)
         return None
+
+
+# --- Attention header (roundtable-ruled evolution, issue #1612) ---
+
+#: Hydration older than this is flagged stale.
+STALE_AFTER_HOURS = 24.0
+
+#: Repo-relative corpus sources whose modification AFTER the last
+#: hydration means the index is behind the corpus. Exact and
+#: portable — no re-parse of the hydrator's discovery rules, so no
+#: false drift from parsing mismatches.
+CORPUS_SOURCES = (
+    ".claude/lessons.md",
+    ".claude/rules-tail",
+)
+
+_HYDRATED_AT_KEY = "attune:memory:hydrated_at"
+_THREAD_KEY_MATCH = "attune:roundtable:thread:*"
+_THREAD_META_SUFFIX = ":meta"
+
+
+@dataclass
+class MemoryAttention:
+    """Exceptions-first header state for the /memory page."""
+
+    hydrated_at: str | None = None
+    age_hours: float | None = None
+    stale: bool = False
+    changed_since: list[str] = field(default_factory=list)
+    pending_threads: int = 0
+
+    @property
+    def has_exceptions(self) -> bool:
+        """True when any card should demand attention."""
+        return self.stale or bool(self.changed_since) or self.pending_threads > 0
+
+
+def _parse_stamp(raw: str | None) -> Any | None:
+    from datetime import datetime, timezone
+
+    if not raw:
+        return None
+    try:
+        stamp = datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+    return stamp if stamp.tzinfo else stamp.replace(tzinfo=timezone.utc)
+
+
+def _changed_since(project_root: Any, hydrated: Any) -> list[str]:
+    """Repo corpus files modified after the hydration stamp."""
+    from pathlib import Path
+
+    changed: list[str] = []
+    root = Path(project_root)
+    for rel in CORPUS_SOURCES:
+        source = root / rel
+        candidates = source.rglob("*.md") if source.is_dir() else [source]
+        for path in candidates:
+            try:
+                mtime = path.stat().st_mtime
+            except OSError:
+                continue
+            if mtime > hydrated.timestamp():
+                changed.append(str(path.relative_to(root)))
+    return sorted(changed)
+
+
+def _pending_threads(client: Any) -> int:
+    """Board threads not yet promoted (best-effort count)."""
+    pending = 0
+    try:
+        for key in client.scan_iter(match=_THREAD_KEY_MATCH, count=_SCAN_COUNT):
+            if not str(key).endswith(_THREAD_META_SUFFIX):
+                continue
+            meta = client.hgetall(key)
+            if isinstance(meta, dict) and meta.get("status") != "promoted":
+                pending += 1
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: attention is advisory; board absence is not an error.
+        return 0
+    return pending
+
+
+def read_attention(project_root: Any, url: str | None = None) -> MemoryAttention | None:
+    """Exceptions-first facts for the attention header, or None.
+
+    Same degradation contract as the rest of this module: ``None``
+    when Redis is unreachable (the header simply doesn't render).
+    Every fact is exact — hydration age from the hydrator's own
+    stamp, drift from file mtimes vs that stamp, pending count from
+    board thread meta. Nothing here re-parses corpus content.
+    """
+    from datetime import datetime, timezone
+
+    client = connect(url)
+    if client is None:
+        return None
+
+    attention = MemoryAttention()
+    try:
+        raw = client.get(_HYDRATED_AT_KEY)
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: degradation contract.
+        return None
+    attention.hydrated_at = raw
+    hydrated = _parse_stamp(raw)
+    if hydrated is None:
+        attention.stale = True
+    else:
+        age = (datetime.now(timezone.utc) - hydrated).total_seconds() / 3600.0
+        attention.age_hours = round(age, 1)
+        attention.stale = age > STALE_AFTER_HOURS
+        attention.changed_since = _changed_since(project_root, hydrated)
+    attention.pending_threads = _pending_threads(client)
+    return attention
