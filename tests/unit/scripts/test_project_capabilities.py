@@ -397,6 +397,37 @@ def test_write_preserves_crlf_unicode_and_unrelated_files(tmp_path):
     assert not list(repo.glob("*.capproj-tmp"))  # atomic temp cleaned up
 
 
+def test_ts_same_field_name_after_block_is_ignored(tmp_path):
+    # Copilot review (PR #1626): post-render validation must be bounded
+    # to the re-located CAPABILITIES block, not scan to EOF.
+    repo = std_repo(tmp_path)
+    trailing = "export const LEGACY = { mcpTools: 9 };\n"
+    write(repo, "features.ts", FEATURES_TS + trailing)
+    plans = proj.build_plan(repo, VALUES, std_manifest())
+    proj.apply_plan(repo, plans)
+    ts = (repo / "features.ts").read_text(encoding="utf-8")
+    assert "mcpTools: 49" in ts  # inside CAPABILITIES
+    assert ts.endswith(trailing)  # the lookalike after the block untouched
+
+
+def test_stale_temp_file_fails_closed(tmp_path, monkeypatch):
+    # Copilot review (PR #1626): a leftover .capproj-tmp from a crashed
+    # write must never be truncated — exclusive create, fail closed.
+    repo = std_repo(tmp_path)
+    stale = repo / "page.md.capproj-tmp"
+    stale.write_text("crashed partial write", encoding="utf-8")
+    before = (repo / "page.md").read_bytes()
+    plans = proj.build_plan(repo, VALUES, std_manifest())
+    with pytest.raises(proj.ProjectionError, match="stale temp file"):
+        proj.apply_plan(repo, plans)
+    assert (repo / "page.md").read_bytes() == before
+    assert stale.read_text(encoding="utf-8") == "crashed partial write"
+    # And via the CLI: the write phase exits 2, not a traceback.
+    monkeypatch.setattr(proj, "MANIFEST", std_manifest())
+    monkeypatch.setattr(proj, "derive_values", lambda _repo: dict(VALUES))
+    assert proj.main(["--write"], repo=repo) == 2
+
+
 # --- The real manifest against copies of the real files -----------------
 
 

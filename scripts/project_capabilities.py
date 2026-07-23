@@ -474,8 +474,11 @@ def _plan_ts(target: TsCapabilityTarget, text: str, expected: int) -> tuple[str,
         )
     observed = matches[0].group(1)
     new_text = _splice(text, [matches[0].span(1)], str(expected))
-    check = field_pattern.findall(new_text, block.start(1))
-    if not check or check[0] != str(expected):
+    new_blocks = list(CAPS_BLOCK.finditer(new_text))
+    if len(new_blocks) != 1:
+        raise ProjectionError(f"{where}: post-render validation failed (CAPABILITIES block)")
+    check = list(field_pattern.finditer(new_text, new_blocks[0].start(1), new_blocks[0].end(1)))
+    if len(check) != 1 or check[0].group(1) != str(expected):
         raise ProjectionError(f"{where}: post-render validation failed")
     drifts = []
     if observed != str(expected):
@@ -532,7 +535,14 @@ def drift_lines(plans: list[FilePlan]) -> list[str]:
 def _atomic_write(path: Path, data: str) -> None:
     tmp = path.with_name(path.name + ".capproj-tmp")
     try:
-        with tmp.open("w", encoding="utf-8", newline="") as fh:
+        fh = tmp.open("x", encoding="utf-8", newline="")
+    except FileExistsError as exc:
+        raise ProjectionError(
+            f"stale temp file {tmp} already exists (crashed prior write?) — "
+            "inspect and remove it, then re-run"
+        ) from exc
+    try:
+        with fh:
             fh.write(data)
         os.replace(tmp, path)
     finally:
@@ -588,7 +598,11 @@ def main(argv: list[str] | None = None, repo: Path | None = None) -> int:
     if not drift:
         print("all capability claims already match — nothing to write")
         return 0
-    changed = apply_plan(repo, plans)
+    try:
+        changed = apply_plan(repo, plans)
+    except ProjectionError as exc:
+        print(f"write failed closed: {exc}", file=sys.stderr)
+        return 2
     for line in drift:
         print(f"repaired: {line}")
     print(f"wrote {len(changed)} file(s): {', '.join(changed)}")
