@@ -17748,3 +17748,23 @@ def ", start_idx + 1)` for module-
     click; never reuse popover coordinates across opens. Batch
     clicks need a wait+screenshot between menu-open and item
     click.
+
+- **LinkedIn ARTICLES cannot host native video — link-embed only
+  (YouTube/Vimeo); native upload is a FEED-POST-only capability**
+  (verified 2026-07-23 for the dynamic-forms demo release plan):
+  if a demo video is meant to ride inside a LinkedIn article
+  (Draft-B style), it must be hosted on YouTube first and
+  embedded by URL; the 1920×1080 mp4 uploads natively only to a
+  feed post. Native feed video is also what LinkedIn's algorithm
+  favors — common pattern is native video in the post + YouTube
+  link in the first comment. Spec confirmation for exports:
+  recommended 1920×1080 16:9 ("1080p", NOT "dpi" — video is
+  pixel dimensions), mp4 H.264+AAC, 10-60 fps, ≤5 GB, ≤15 min
+  desktop; vertical social cut 9:16 (1080×1920) or 4:5
+  (1080×1350, currently best mobile-feed engagement). Patrick
+  ruled 07-23 evening (after pushback): SPLIT by cut — main cut
+  1920×1080 16:9 (forms stay readable; YouTube-native for the
+  article-embed path), 60s social cut 1080×1350 4:5 (that's
+  where the feed-engagement edge applies). Capture stays native
+  4K on the 16:9 screen 1; only the social cut needs the
+  per-beat crop check in the editor.

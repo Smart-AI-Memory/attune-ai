@@ -17,6 +17,32 @@ Pre-record checklist:
       test (the pending receipt from the 07-23 walkthrough)
 - [ ] `/elicit` and one pushback form rehearsed once, unrecorded
 - [ ] Do Not Disturb on; screen 1 clean set
+- [ ] Recorder config verified fresh: mic = G733, system audio
+      OFF, camera off (config drifts between sessions)
+
+Capture and export settings (ruled 2026-07-23, dry-run + Patrick):
+
+- Capture: full display, screen 1 (LG HDR 4K) at native 4K —
+  identify the stage by a 5s test take + thumbnail check, never
+  by display name (names disagree across tools).
+- Export, main cut (~4 min): mp4, **1920×1080 (16:9)** — the
+  full stage, forms stay readable (the product shot is "read
+  every field"), and it is YouTube-native for the article-embed
+  path. H.264 + AAC, 10-60 fps, ≤5 GB.
+- Export, 60s social cut: mp4, **1080×1350 (4:5 portrait)** —
+  best current LinkedIn mobile-feed engagement; its beats each
+  fit a portrait crop of a single window. Verify the crop per
+  beat in the editor (one-click vertical + auto-zoom reframes,
+  but eyeball each form). The 16-18pt terminal font rule is
+  even more binding at 4:5.
+- Split ruled by Patrick 2026-07-23 (supersedes both the
+  dry-run 1080p-everything ruling and the interim
+  4:5-everything ruling). Shooting is unchanged: full 16:9
+  stage, no record-time portrait framing.
+- Hosting: native video upload = FEED POST only. A LinkedIn
+  ARTICLE cannot host native video — YouTube/Vimeo embed only.
+- After EVERY take: `cp -R` the `.screenstudio` bundle out of
+  `~/Screen Studio Projects/` before touching the app again.
 
 ---
 
