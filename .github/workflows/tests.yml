@@ -321,6 +321,15 @@ jobs:
       if: needs.changes.outputs.website_only != 'true'
       run: python scripts/check_badge_freshness.py
 
+    # Capability-count projector (roundtable q-capability-count-projector-001):
+    # the three derived counts (skills, registered MCP tools, core-schema MCP
+    # tools) must match every allowlisted claim site. Needs an importable
+    # attune — this job just installed it. Repair drift with:
+    #   python scripts/project_capabilities.py --write
+    - name: Check capability count claims
+      if: needs.changes.outputs.website_only != 'true'
+      run: python scripts/project_capabilities.py --check
+
     - name: Run tests with coverage
       # Coverage RATCHET: --cov-fail-under is a one-way valve, not a static
       # floor. Main has measured 94.69–94.71% across recent runs (stable to
