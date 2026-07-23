@@ -28,6 +28,11 @@ logger = logging.getLogger(__name__)
 
 THREAD_PREFIX = "attune:roundtable:thread:"
 _META_SUFFIX = ":meta"
+
+#: Suite-canary threads (roundtable tests write against real Redis)
+#: never belong in an action inbox — live-run 2026-07-22: 559 raw
+#: vs 28 real threads without this filter.
+_DIAGNOSTIC_THREAD_PREFIXES = ("test-", "routine-test-")
 _SCAN_COUNT = 500
 _GIT_TIMEOUT_SECONDS = 10.0
 
@@ -88,6 +93,8 @@ def _pending_threads(client: Any) -> list[ThreadRow]:
     for key in client.scan_iter(match=THREAD_PREFIX + "*", count=_SCAN_COUNT):
         name = str(key)
         if name.endswith(_META_SUFFIX):
+            continue
+        if name[len(THREAD_PREFIX) :].startswith(_DIAGNOSTIC_THREAD_PREFIXES):
             continue
         meta = client.hgetall(name + _META_SUFFIX) or {}
         if meta.get("status") == "promoted":

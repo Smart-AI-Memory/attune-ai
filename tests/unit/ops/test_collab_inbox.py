@@ -125,6 +125,8 @@ class TestInboxData:
             _thread_key("q-a-001"): ["{}"],
             _thread_key("q-b-001"): ["{}", "{}"],
             _thread_key("q-c-001"): ["{}"],
+            _thread_key("test-canary1"): ["{}"],
+            _thread_key("routine-test-x-20260722"): ["{}"],
         }
         meta = {
             _thread_key("q-c-001") + ":meta": {"status": "promoted"},
