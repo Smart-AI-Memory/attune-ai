@@ -127,6 +127,50 @@ class TestDerivations:
             proj.derive_values(tmp_path)
 
 
+# --- In-repo import resolution guard ------------------------------------
+
+
+class TestInRepoImportGuard:
+    """Wrong-checkout package resolution fails closed (2026-07-23).
+
+    Running the script as a file puts scripts/ at sys.path[0], so
+    ``import attune_redis`` fell through the editable install to the
+    MAIN checkout's copy and silently derived that tree's tool count
+    (55 instead of 60 — core ⊆ registered still held, so the subset
+    guard could not catch it).
+    """
+
+    def _fake_module(self, name: str, origin: Path) -> object:
+        import types
+
+        module = types.ModuleType(name)
+        module.__file__ = str(origin)
+        return module
+
+    def test_foreign_checkout_attune_redis_fails_closed(self, monkeypatch, tmp_path):
+        foreign = tmp_path / "other-checkout" / "attune_redis" / "__init__.py"
+        monkeypatch.setitem(sys.modules, "attune_redis", self._fake_module("attune_redis", foreign))
+        with pytest.raises(proj.ProjectionError, match="outside the repo root"):
+            proj.derive_values(REPO_ROOT)
+
+    def test_guard_passes_when_packages_resolve_in_repo(self):
+        # The live environment: attune (and attune_redis, if imported)
+        # resolve under this checkout — the guard is silent.
+        proj._assert_in_repo_imports(REPO_ROOT)
+
+    def test_guard_skips_packages_absent_from_repo(self, tmp_path):
+        # A repo without src/attune or attune_redis dirs enforces nothing.
+        proj._assert_in_repo_imports(tmp_path)
+
+    def test_unlocatable_package_fails_closed(self, monkeypatch):
+        import types
+
+        ghost = types.ModuleType("attune_redis")  # no __file__, no __path__
+        monkeypatch.setitem(sys.modules, "attune_redis", ghost)
+        with pytest.raises(proj.ProjectionError, match="cannot locate"):
+            proj._assert_in_repo_imports(REPO_ROOT)
+
+
 # --- Unequal totals cannot be interchanged ------------------------------
 
 

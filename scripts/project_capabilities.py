@@ -73,6 +73,41 @@ class ProjectionError(RuntimeError):
 
 # --- Derivation --------------------------------------------------------
 
+# Provider packages that live in this repository. If one is importable
+# it must resolve to THIS checkout, or the derived counts describe some
+# other revision's tool set.
+_IN_REPO_PACKAGES = (("attune", "src/attune"), ("attune_redis", "attune_redis"))
+
+
+def _assert_in_repo_imports(repo: Path) -> None:
+    """Imported in-repo provider packages must resolve to this checkout.
+
+    Running the script as a file puts ``scripts/`` (not the repo root)
+    at ``sys.path[0]``, so ``import attune_redis`` can silently fall
+    through to another checkout via the editable install and register a
+    different plugin tool set. The core-subset guard cannot catch that
+    (core ⊆ registered still holds), so fail closed here instead.
+    """
+    root = repo.resolve()
+    for pkg, rel in _IN_REPO_PACKAGES:
+        if not (repo / rel).is_dir():
+            continue
+        module = sys.modules.get(pkg)
+        if module is None:
+            continue
+        origin = getattr(module, "__file__", None)
+        if origin is None:
+            paths = list(getattr(module, "__path__", None) or [])
+            origin = paths[0] if paths else None
+        if origin is None:
+            raise ProjectionError(f"cannot locate the imported {pkg!r} package — failing closed")
+        if not Path(origin).resolve().is_relative_to(root):
+            raise ProjectionError(
+                f"imported {pkg!r} resolves to {origin}, outside the repo root "
+                f"{root} — wrong-checkout registration; rerun with "
+                f"PYTHONPATH={root}:{root / 'src'}"
+            )
+
 
 def derive_values(repo: Path) -> dict[str, int]:
     """Derive the three semantic values from the checked-out revision.
@@ -100,6 +135,7 @@ def derive_values(repo: Path) -> dict[str, int]:
             "EmpathyMCPServer().tools is not a non-empty dict — unstable registration"
         )
     registered = set(tools)
+    _assert_in_repo_imports(repo)
 
     getter_names = sorted(
         n for n in dir(tool_schemas) if n.startswith("get_") and n.endswith("_tools")
