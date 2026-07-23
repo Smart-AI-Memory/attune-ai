@@ -60,7 +60,7 @@ MANIFEST: tuple[tuple[str, str, str, str], ...] = (
     (
         "README.md",
         "hero workflow count",
-        r"(\d+) workflows and (?:<[^>]*>)?\d+ MCP tools",
+        r"(\d+) workflows and (?:<!-- cap:[a-z_]+ -->)?\d+ MCP tools",
         "workflows",
     ),
     ("README.md", "hero tool count", r"\d+ workflows and (?:<[^>]*>)?(\d+) MCP tools", "tools"),
