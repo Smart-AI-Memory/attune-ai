@@ -552,9 +552,15 @@ def _atomic_write(path: Path, data: str) -> None:
 def apply_plan(repo: Path, plans: list[FilePlan]) -> list[str]:
     """Atomically write every changed file; returns the changed paths."""
     changed: list[str] = []
+    root = repo.resolve()
     for plan in plans:
         if plan.changed:
-            _atomic_write((repo / plan.path).resolve(), plan.new_text)
+            path = (repo / plan.path).resolve()
+            if not path.is_relative_to(root):
+                raise ProjectionError(f"target escapes the repository root: {plan.path}")
+            if not path.is_file():
+                raise ProjectionError(f"target file missing: {path}")
+            _atomic_write(path, plan.new_text)
             changed.append(plan.path)
     return changed
 
