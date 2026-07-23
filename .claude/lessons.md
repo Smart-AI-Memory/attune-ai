@@ -17616,3 +17616,22 @@ def ", start_idx + 1)` for module-
   states), then execute the specific contract. A cross-provider
   starter names its own pre-reads (AGENTS.md, the promoted report)
   — do them before touching code, same as a spec's premise check.
+
+- **`checkout_wip_guard.py` (user-level PreToolUse hook) blocks
+  `git commit` in the PRIMARY checkout on any non-main branch —
+  the sanctioned override is `ATTUNE_ALLOW_CHECKOUT_WIP=1`, and
+  cross-provider branches are the legitimate case for it**:
+  2026-07-22, committing the capability projector. The workspace
+  policy is "WIP lives in worktrees", but Codex sessions create
+  their branches IN the primary checkout (`~/attune-ai` was on
+  `codex/capability-projector` with in-flight work), so finishing
+  and shipping such a branch necessarily commits there. The hook
+  blocks with a clear message naming the override; export
+  `ATTUNE_ALLOW_CHECKOUT_WIP=1` in the same compound command as
+  the `git add`/`git commit` (env doesn't persist across Bash
+  calls). Companion to the worktree-path-guard lesson above —
+  same session shape (Claude worktree session executing a
+  primary-checkout branch), write-side vs commit-side guards.
+  Since the block is PreToolUse, NOTHING in the compound command
+  ran — staging included; re-run the whole command with the
+  override rather than assuming the `git add` happened.
