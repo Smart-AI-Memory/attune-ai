@@ -260,6 +260,44 @@ header.
 
 ---
 
+## Stage geometry (chair-ruled 2026-07-23 — record on screen 1)
+
+The recording stage is **screen 1 — LG HDR 4K (1), 3840×2160,
+native 16:9**. That matches LinkedIn's player aspect exactly, so
+the capture is the whole display, no area math:
+
+- **Capture mode: Display, screen 1.** 4K → 1080p export is a
+  clean 2× downscale — the crispest text LinkedIn will ever get
+  from us. Screen Studio's recorder: Display, pick LG HDR 4K (1).
+- **Backstage is the OTHER monitors, by construction:** the
+  ultrawide keeps Claude (director/QC + this script as
+  teleprompter); System Settings and spillover stay where they
+  are. Nothing off-stage can enter frame — no tape lines, no
+  drift risk. The only discipline: never drag a backstage window
+  onto screen 1 mid-take.
+- **Screen 1 is a CLEAN SET:** demo windows only, wallpaper
+  neutral, Dock hidden (or untouched if it lives on another
+  display), menu bar acceptable (it reads as "real machine").
+  Notifications: Do Not Disturb ON for the session.
+- **Split-screen beats** (cold open, Act 2): two side-by-side
+  panes ~**1900×2000 each**. At half-4K width, **18pt** terminal
+  font survives the 1080p export and LinkedIn compression;
+  drop below 16pt nowhere.
+- **Single-window beats** (Act 1, cross-review): one centered
+  ~3200×1900 window, 18pt.
+- **The task card** sits ON screen 1 — pinned bottom-right,
+  ~700×400 at 4K — or it doesn't exist for the viewer.
+- **Vertical-cut discipline:** the 9:16 social crop keeps
+  roughly the middle 1215px of the 4K frame. For the two beats
+  the social cut reuses (memory-recall reveal, handoff
+  round-trip), the payoff output must sit CENTERED at the
+  payoff moment — recompose those takes center-stage, or accept
+  re-recording them for the vertical.
+- **Evidence card / title cards:** author the HTML full-screen
+  at 3840×2160 (16:9); recorded full-stage they need no zoom,
+  and the three evidence rows stay within the center 1215px so
+  the vertical cut keeps them readable.
+
 ## What this script refuses to do
 
 Carried from the outline, restated because they're the point:
