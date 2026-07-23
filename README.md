@@ -36,7 +36,7 @@ store, retrieved at P@3 96% on a frozen trap-moment benchmark
 below).
 
 Around that memory core, the same package also ships a spec-driven,
-multi-agent toolkit: 20 workflows and 53 MCP tools dispatching 2–6
+multi-agent toolkit: 20 workflows and <!-- cap:mcp_registered_tool_count -->53 MCP tools<!-- /cap --> dispatching 2–6
 domain-specific subagents behind Socratic quality gates, RAG
 grounding with a citation-per-claim contract (mean per-claim
 faithfulness CI-gated at ≥ 0.97; 0.98 currently measured, N=20 runs
@@ -316,10 +316,10 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 | Capability | Plugin only | Plugin + pip |
 | ---------- | ----------- | ------------ |
-| 25 auto-triggering skills | Yes | Yes |
+| <!-- cap:skill_count -->25 auto-triggering skills<!-- /cap --> | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
-| 53 MCP tools | -- | Yes |
+| <!-- cap:mcp_registered_tool_count -->53 MCP tools<!-- /cap --> | -- | Yes |
 | `attune` CLI | -- | Yes |
 | Multi-agent workflows | -- | Yes |
 | Help system maintenance | -- | Yes |
