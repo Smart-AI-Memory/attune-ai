@@ -17549,3 +17549,20 @@ def ", start_idx + 1)` for module-
   avoided depending on OTHER held work (#1605's handoff module) by
   local mini-parsing — one stack dependency is manageable, two
   crossing stacks are not.
+
+- **A worktree-served ops preview 500s the moment you switch that
+  worktree's branch — templates resolve from disk per-request, so
+  the checkout yanks them out from under the running server**:
+  2026-07-22, showing the held ops stack live. Server launched with
+  `PYTHONPATH=<worktree>/src <main-venv-python> -m attune.ops
+  --project-root <main> --port 8781 --no-browser` from the worktree
+  on the stack tip; a later `git checkout` to a docs branch (for an
+  unrelated commit) made `/collab` return Internal Server Error —
+  Python modules stay loaded, but Jinja templates and static files
+  are read from the now-switched tree (TemplateNotFound → 500).
+  Symptom pattern: preview worked, you committed something on
+  another branch, now it 500s. Fix: switch the worktree back (page
+  recovers instantly, no restart). Prevention: do mid-demo commits
+  from a DIFFERENT checkout, or accept the flicker. Corollary: the
+  preview always shows whatever branch the worktree is on — which
+  is also why it's the right tool for demoing held-draft UI.
