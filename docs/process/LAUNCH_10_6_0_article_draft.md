@@ -1,7 +1,7 @@
-# Launch article draft — 10.7.0, the multi-LLM release
+# Launch article draft — 10.6.0, the multi-LLM release
 
 **Written:** 2026-07-22 (launch plan item 1 —
-`.claude/plans/launch-10-7-0-multi-llm.md`). **Fires:** Tuesday
+`.claude/plans/launch-10-6-0-multi-llm.md`). **Fires:** Tuesday
 2026-07-28, AFTER the lift + live receipts (chair-ratified timing).
 **Venue:** LinkedIn article. **Status:** draft — `[RECEIPT: …]`
 slots fill from Monday's real transcripts; publishing with an
@@ -10,7 +10,7 @@ unfilled slot is forbidden (no claim without a receipt).
 Pre-publish checklist:
 
 - [ ] All `[RECEIPT: …]` slots filled with real transcript excerpts
-- [ ] Version/date claims match the actual v10.7.0 tag + PyPI 200
+- [ ] Version/date claims match the actual v10.6.0 tag + PyPI 200
 - [ ] Chair honesty-gate pass (same ruling session as Draft B)
 - [ ] Counts ("five tools", "26 skills") re-verified against the
       merged registries, not this draft
@@ -29,7 +29,7 @@ session knew is gone. The goal, the decisions, the half-finished
 state, the "don't touch that file, it's load-bearing" — all of it
 evaporates at the provider boundary. You paste fragments and hope.
 
-attune-ai 10.7.0 is about deleting that boundary. One plugin, three
+attune-ai 10.6.0 is about deleting that boundary. One plugin, three
 agents, and the interesting part isn't any single feature — it's
 that the features had to be *provable* across vendors before we'd
 call them shipped.
@@ -140,7 +140,7 @@ it gets a seat at the table and a key to the memory, not a fork.
 pip install attune-ai
 ```
 
-10.7.0 is on PyPI now. The round table is open.
+10.6.0 is on PyPI now. The round table is open.
 
 ---
 

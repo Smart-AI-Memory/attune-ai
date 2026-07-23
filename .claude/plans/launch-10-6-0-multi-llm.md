@@ -1,12 +1,12 @@
-# 10.7.0 Launch — The Multi-LLM Release
+# 10.6.0 Launch — The Multi-LLM Release
 
 **Created:** 2026-07-22
-**Version note:** chair renumbered the release 10.6.0 → 10.7.0 in-session 2026-07-22 (multi-LLM wave widens the scope); the RELEASE_10_6_0_drafts.md doc and Monday-runbook tag references need the same rename at the sitting.
+**Version note:** chair briefly renumbered 10.6.0 → 10.7.0 in-session 2026-07-22, then REVERTED to **10.6.0 as originally proposed** (chair, 2026-07-22 EOD). All launch materials and the Monday runbook tag 10.6.0.
 **Source:** /brainstorm session (chair-ratified direction)
 
 ## Problem
 
-10.7.0 ships Monday 07-27 with a genuine story — one plugin, three
+10.6.0 ships Monday 07-27 with a genuine story — one plugin, three
 AI coding agents (Claude, Codex, Antigravity/Gemini) sharing memory,
 handing off work, and giving second opinions — but the launch
 materials (Draft A/B in `docs/process/RELEASE_10_6_0_drafts.md`)
@@ -56,7 +56,7 @@ Monday architecture-framed fire).
 4. Fri/Sat: website diffs staged (features.ts + counts + multi-LLM
    feature page); apply + verify post-lift.
 5. Mon (sitting, already runbooked): lift, receipts, publish
-   10.7.0.
+   10.6.0.
 6. Tue: apply website/docs PRs → fill receipt slots → chair rules
    the honesty gate → publish article + post.
 
