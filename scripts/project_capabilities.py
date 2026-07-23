@@ -79,6 +79,20 @@ class ProjectionError(RuntimeError):
 _IN_REPO_PACKAGES = (("attune", "src/attune"), ("attune_redis", "attune_redis"))
 
 
+def _prepend_repo_paths(repo: Path) -> None:
+    """Self-heal import resolution: front the repo's own package roots.
+
+    ``sys.path`` entries beat the editable-install finder (it sits
+    behind PathFinder on ``sys.meta_path``), so fronting ``repo/src``
+    and ``repo`` makes a worktree run measure the tree it was pointed
+    at instead of whichever checkout the editable install maps to.
+    """
+    root = repo.resolve()
+    for entry in (str(root), str(root / "src")):
+        if entry not in sys.path:
+            sys.path.insert(0, entry)
+
+
 def _assert_in_repo_imports(repo: Path) -> None:
     """Imported in-repo provider packages must resolve to this checkout.
 
@@ -121,6 +135,7 @@ def derive_values(repo: Path) -> dict[str, int]:
             f"no plugin/skills/*/SKILL.md found under {repo} — refusing to publish 0"
         )
 
+    _prepend_repo_paths(repo)
     try:
         from attune.mcp import tool_schemas
         from attune.mcp.server import EmpathyMCPServer
@@ -128,6 +143,16 @@ def derive_values(repo: Path) -> dict[str, int]:
         raise ProjectionError(
             f"attune is not importable ({exc}) — run from the project environment"
         ) from exc
+    if (repo / "attune_redis").is_dir():
+        # Import explicitly (not just via the server's best-effort plugin
+        # hook) so the provenance guard below can never silently skip it.
+        try:
+            import attune_redis  # noqa: F401
+        except ImportError as exc:
+            raise ProjectionError(
+                f"in-repo attune_redis is not importable ({exc}) — its plugin "
+                "tools would be silently missing from the count"
+            ) from exc
 
     tools = EmpathyMCPServer().tools
     if not isinstance(tools, dict) or not tools:

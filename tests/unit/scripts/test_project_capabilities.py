@@ -170,6 +170,25 @@ class TestInRepoImportGuard:
         with pytest.raises(proj.ProjectionError, match="cannot locate"):
             proj._assert_in_repo_imports(REPO_ROOT)
 
+    def test_self_heal_prepends_repo_paths_to_front(self, monkeypatch, tmp_path):
+        # Layer 1: repo/src and repo land at the FRONT of sys.path so a
+        # worktree run resolves its own packages ahead of the editable
+        # install's mapping (which sits behind PathFinder).
+        monkeypatch.setattr(sys, "path", list(sys.path))
+        proj._prepend_repo_paths(tmp_path)
+        root = tmp_path.resolve()
+        assert sys.path[:2] == [str(root / "src"), str(root)]
+        # Idempotent: a second call must not duplicate the entries.
+        proj._prepend_repo_paths(tmp_path)
+        assert sys.path.count(str(root)) == 1
+
+    def test_attune_redis_imported_explicitly_for_the_guard(self):
+        # The guard must not depend on the server's best-effort plugin
+        # hook having imported attune_redis as a side effect.
+        assert (REPO_ROOT / "attune_redis").is_dir()
+        proj.derive_values(REPO_ROOT)
+        assert "attune_redis" in sys.modules
+
 
 # --- Unequal totals cannot be interchanged ------------------------------
 
