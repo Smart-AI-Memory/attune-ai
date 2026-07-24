@@ -1,6 +1,8 @@
 # Dynamic Forms Demo Script — rehearsal + releasable (Patrick's voice)
 
-**Written:** 2026-07-23. **Status:** draft — this is the Thu/Fri
+**Written:** 2026-07-23. **Amended:** 2026-07-24, per roundtable
+thread `q-demo-scripts-review-002` (chair-ruled; caption-carried
+caveats per amended ruling). **Status:** draft — this is the Thu/Fri
 CAPTURE REHEARSAL subject (chair-ruled): it exercises the full
 recording pipeline before Tuesday's 10.6.0 shoot, and the footage
 is releasable in its own right after the chair's honesty-gate
@@ -16,6 +18,14 @@ Pre-record checklist:
 - [ ] Screen Studio mic toggle flipped + 2-second audio-track
       test (the pending receipt from the 07-23 walkthrough)
 - [ ] `/elicit` and one pushback form rehearsed once, unrecorded
+- [ ] Cold-open prompt PRE-SELECTED: 2–3 candidate prompts
+      rehearsal-verified to reliably yield ~3 sequential
+      questions; the specimen is picked before the take, not
+      during it (table ruling, q-demo-scripts-review-002 —
+      curation of a live run, never simulation)
+- [ ] Pushback example LOCKED: a rehearsed, real, low-context
+      disagreement whose two options fit on screen and whose
+      consequence reads in one sentence
 - [ ] Do Not Disturb on; screen 1 clean set
 - [ ] Recorder config verified fresh: mic = G733, system audio
       OFF, camera off (config drifts between sessions)
@@ -60,13 +70,22 @@ Capture and export settings (ruled 2026-07-23, dry-run + Patrick):
 
 ## Cold open (0:00–0:30) — the interrogation
 
-**Screen:** Claude Code, real repo. Ask for something genuinely
-ambiguous — "help me test this module."
+**Screen:** Claude Code, real repo. Use the PRE-SELECTED prompt
+(see checklist) — a genuinely ambiguous ask, e.g. "help me test
+this module," chosen because rehearsal showed it reliably draws
+~3 sequential questions.
 
 The agent asks a question. One button row. Answer it. It asks the
-next. Answer that. A third appears.
+next. Answer that. A third appears. **Production:** the
+interrogation itself holds ~12–15 seconds of screen time —
+jump-cut the agent-latency waits (raw footage will run 60–90s)
+and burn in a turn-counter caption that makes the compression
+honest: "question 1 of 3 · turn 1" → "question 2 of 3 · turn 2" →
+"question 3 of 3 · turn 3." Same visible-compression grammar as
+the 10.6.0 install jump-cut. Let the visual rhythm land BEFORE
+the philosophy narration starts.
 
-**Narration:**
+**Narration (over the third question appearing):**
 
 > This is Socratic discovery, and it's the right instinct — the
 > agent scopes before it executes instead of guessing. But it's
@@ -95,30 +114,50 @@ Work starts.
 > Same questions. One form. The dimensions of a decision I was
 > going to make anyway — asked together, because they're
 > independent.
->
-> And the honest part, because it's the part that makes this
-> good: there's a rule about when NOT to do this. If one answer
-> changes the next question, it stays sequential. If I already
-> said it, it's not asked. If only one thing is unknown, one
-> question is correct. The form never invents fields — it batches
-> exactly what Socratic judgment would have asked anyway.
 
 **Production:** hold on the rendered form long enough to read
-every field. This is the product shot of the video.
+every field, with MINIMAL narration over the hold. This is the
+product shot of the video — the viewer cannot read fields and
+parse policy by ear at the same time. Use the SAME
+scope/focus/depth wording the cold-open questions used, so "same
+questions, one form" is visually provable; a brief "3 turns →
+1 turn" caption may punctuate the transition.
 
-**Narration, over the answered form:**
+**Narration (after the hold) — captions carry the rules (chair
+ruling, amended 2026-07-24: caveats live on screen, narration
+stays on the payoff):**
 
-> Under the hood this is data, not code — a declarative form,
-> validated on the way in and the way out, rendered through the
-> same tools any MCP client can call.
+> And the honest part, because it's the part that makes this
+> good: there's a rule about when NOT to do this — it's on
+> screen. The form never invents fields. It batches exactly what
+> Socratic judgment would have asked anyway.
+
+**Caption stack (burned in, cumulative, one line appearing per
+beat of the narration pause):**
+
+> one answer changes the next question → stays sequential
+> already said → not asked
+> one unknown → one question
+
+**On-screen caption (over the answered form, not narrated):**
+
+> Declarative form · validated in and out · rendered via MCP —
+> any client can call it.
 
 ## The pushback form (1:45–2:45) — disagreement as a decision
 
-**Screen:** a real fork: tell the agent to do something where it
-has a better alternative (use the day's genuine example — there
-is always one). The disagreement renders AS A FORM: my approach
-labeled "your approach," its alternative badged "I'd suggest
-instead," a one-line "why I'd push back."
+**Screen:** the LOCKED pushback example (see checklist) — a
+real fork, rehearsed in advance: two options that fit on screen,
+a consequence that reads in one sentence. The disagreement
+renders AS A FORM: my approach labeled "your approach," its
+alternative badged "I'd suggest instead," a one-line "why I'd
+push back."
+
+**Production:** click OVERRULE on screen — not accept. Hold ~2
+seconds on the agent acknowledging the override and executing
+the original plan. The caption's claim ("the human stays the
+chair") is only proven by the overrule path; showing only
+acceptance reads as the agent still winning arguments.
 
 **Narration:**
 
@@ -137,14 +176,18 @@ instead," a one-line "why I'd push back."
 
 **Screen:** a real chair-ruling form from this week's roundtable
 work (a promotion ruling — multi-select, per-item). Flash the
-promoted report it produced.
+promoted report it produced. THEN show the receipt for the
+closing line: the actual form that scoped this demo, captured
+that morning (it will genuinely exist — screenshot it at scoping
+time; the strongest claim in the script gets pixels, not just
+voice).
 
 **Narration:**
 
-> This isn't a feature I built and forgot. Every ruling in this
-> repository — which findings get promoted, which work ships,
-> which plans get overruled — runs through these forms. The demo
-> you're watching was scoped with one this morning.
+> This isn't a feature I built and forgot. The rulings that run
+> this repository — which findings get promoted, which work
+> ships, which plans get overruled — go through these forms. The
+> demo you're watching was scoped with one this morning.
 
 ## Close (3:30–4:00)
 
@@ -158,20 +201,32 @@ promoted report it produced.
 > Socratic discovery that respects your time. It ships in the
 > plugin today.
 
-**Screen:** `pip install attune-ai` · attune-ai.dev
+**Screen:** the answered form from Act 1 flowing into the first
+concrete work action — the decision becoming work, not a static
+logo. The install line lands as the FINAL OVERLAY over that
+motion, not as a separate closing card:
+`pip install attune-ai` · attune-ai.dev
 
 ---
 
 ## Social cut (~60s)
 
-- 0:00–0:10 — the form, cold: `/elicit` rendering three
-  dimensions in one turn. Caption: "Every question at once —
+Order ruled 2026-07-24 (problem-first, q-demo-scripts-review-002):
+establish the friction, resolve it, END on the pushback click.
+LinkedIn autoplays MUTED — every beat carries a burned-in caption
+that works with no audio.
+
+- 0:00–0:05 — sequential-question friction, compressed: three
+  quick question-turns with the turn-counter. Caption: "Three
+  decisions. Three round trips."
+- 0:05–0:20 — smash-cut to `/elicit`: the same three dimensions
+  as one form, with a brief 3-turns-vs-1-form contrast frame
+  (split or before/after). Caption: "Every question at once —
   when that's correct."
-- 0:10–0:25 — the interrogation it replaced (compressed, three
-  quick question-turns).
-- 0:25–0:45 — the pushback form + one-click overrule. Caption:
+- 0:20–0:50 — the pushback form + one-click OVERRULE + the
+  agent's acknowledgment (the decision receipt). Caption:
   "Pushback you can click."
-- 0:45–1:00 — install line.
+- 0:50–1:00 — install overlay over the form-into-work motion.
 
 ---
 
