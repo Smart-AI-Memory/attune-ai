@@ -17768,3 +17768,53 @@ def ", start_idx + 1)` for module-
   where the feed-engagement edge applies). Capture stays native
   4K on the 16:9 screen 1; only the social cut needs the
   per-beat crop check in the editor.
+
+- **Screen Studio recording-state + stage-ID forensics (2026-07-23
+  rehearsal session)**: three durable mechanics. (a) "Is it still
+  recording?" is answered inside the bundle, not by the bundle —
+  live recordings append `.m4s` segments under
+  `<project>.screenstudio/recording/` WITHOUT touching the
+  top-level dir mtime; compare segment counts / newest-file time
+  there. The recorder HUD's presence on another display and that
+  display's menu bar tell you nothing about a recording running on
+  a different screen. (b) Stage identification without ffmpeg:
+  `qlmanage -t -s 1600 -o <dir> recording/channel-1-display-0.mp4`
+  renders a frame — the authoritative "which display did this
+  capture" receipt (display NAMES still disagree across tools;
+  `metadata.json` carries displayId + logical width/height).
+  (c) PARALLEL-SESSION TRAP: the Claude window on camera may be a
+  DIFFERENT conversation than the one directing — a captured frame
+  showed a sibling session's transcript directing the same shoot.
+  Before assuming your beats were recorded, verify the captured
+  frame shows YOUR session, and check the recording's time window
+  brackets when the beats actually ran.
+
+- **Computer-use can never be granted "Claude" (self-control
+  prohibition) — and one denied app rejects the whole
+  request_access batch**: retry without it. Consequence for
+  demo/QC work: with native screenshot filtering the Claude window
+  is INVISIBLE in live screenshots, so directing form beats
+  on camera is blind-by-design — QC happens from the recorded
+  footage after cut (Screen Studio captures the real screen
+  regardless of the agent's filter). Browsers add a same-turn
+  double-call: request_access for a browser errors once with
+  "retry in THIS turn to confirm" — the retry must not wait for
+  the next user turn.
+
+- **website/ pages mount Navigation/Footer PER-PAGE, not in
+  app/layout.tsx** — a new `website/app/<route>/page.tsx` renders
+  bare (no nav, no footer) unless it imports and renders
+  `@/components/Navigation` + `@/components/Footer` itself; copy
+  the `<><Navigation /><main id="main-content" ...>...<Footer /></>`
+  scaffold from pricing/page.tsx. Caught live: /learn rendered
+  without nav and the "no Learn link" verification read as a false
+  pass on the empty-nav 404 page.
+
+- **Worktree website builds: symlink main's node_modules**
+  (`ln -sfn ~/attune-ai/website/node_modules website/node_modules`)
+  — worktrees don't get an npm install, and the symlink is enough
+  for `tsc --noEmit`, eslint, and `next dev`. Two caveats: main's
+  install currently lacks vitest, so `tsc` reports 5 pre-existing
+  TS2307 errors in test/ files (verify against untouched main
+  before blaming your diff); remove the symlink before leaving the
+  worktree (a later main dep bump silently changes your toolchain).
