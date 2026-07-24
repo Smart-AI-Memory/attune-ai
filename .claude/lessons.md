@@ -17818,3 +17818,36 @@ def ", start_idx + 1)` for module-
   TS2307 errors in test/ files (verify against untouched main
   before blaming your diff); remove the symlink before leaving the
   worktree (a later main dep bump silently changes your toolchain).
+
+- **Complexity ratchet fires on MODIFIED functions, not just new
+  files — and an armed-but-red PR is a wedge only a full-suite or
+  ratchet run reveals**: third ratchet hit (2026-07-24, PR #1639).
+  Amends the #1582 second-hit rule ("run the ratchet when a PR adds
+  NEW source files"): #1639 added a 2-branch feature block to the
+  EXISTING `project_feature` (C(19) → D(21)) — its targeted suite
+  (`test_projector.py`) stayed green while every full-suite CI lane
+  went red, with auto-merge armed so the PR just sat wedged.
+  Broadened rule: any src diff that adds conditional branches to an
+  existing function gets a local `radon cc -s <file>` (grade must
+  stay < D(21)) or a `tests/unit/quality/test_complexity_ratchet.py`
+  run before push. Fix shape is the #1576 precedent: extract the
+  biggest loop/phase into a module-level helper (here
+  `_project_help_kinds`: D(21) → C(12) + B(10)). Session pre-flight
+  sweeps should also list open PRs and treat armed-auto-merge +
+  red-required-checks as a wedge needing a fix push, not a wait.
+
+- **Editing a PR branch that's checked out in ANOTHER worktree:
+  don't switch that worktree — create a differently-named local
+  branch in YOUR worktree and push back to the PR ref**: hit
+  2026-07-24 fixing #1639. `git checkout <branch>` fails
+  (`already used by worktree at <path>`) and the
+  `worktree_path_guard` PreToolUse hook correctly BLOCKS Edit/Write
+  into the other worktree's tree. The clean path: in the session
+  worktree `git checkout -b fix/<slug> origin/<branch>` (git only
+  forbids two checkouts of the same BRANCH NAME, not the same
+  commit), edit/commit there, then `git push origin
+  HEAD:<branch>` — the PR updates, the other worktree stays
+  untouched (merely behind origin, harmless if clean). Pairs with
+  the "create a new worktree ..." reuse lesson — reuse applies when
+  you can WORK there; the rename-branch path is for when guards or
+  discipline forbid touching the other tree.
