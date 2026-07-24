@@ -17918,3 +17918,67 @@ def ", start_idx + 1)` for module-
   --all-files`); never run a floating detect-secrets against the
   tracked baseline. Companion to the existing stash-pop baseline
   lesson — same file, different mutation vector.
+
+- **zsh does NOT word-split unquoted variables — a shell-loop
+  built command like `pytest $args` passes ONE bogus
+  space-containing arg and the run silently no-ops**: hit twice
+  in one session building per-module coverage loops
+  (`for m in "mod|paths"; do … pytest -q $args; done`): every
+  iteration printed `No data to report` while the identical
+  straight-line command worked. In zsh (this harness's shell),
+  `$args` holding "path1 path2" expands as a single word →
+  pytest collects nothing → coverage collects nothing, all
+  exit-0-quiet. Rule: in Bash-tool loops, don't accumulate
+  multi-word args in a scalar; write the commands straight-line
+  per target (or use arrays `"${arr[@]}"`). Companion to the
+  existing `=word` PATH-expansion and read-only-`status` zsh
+  lessons — same shell, different trap.
+
+- **Scoped coverage runs manufacture phantom gaps, and dotted
+  SUBMODULE `--source` args silently under-collect — measure a
+  module under its OWN full test set with `--source=<package>`
+  before calling anything a gap**: two traps in one session.
+  (1) `--source=attune.context` under only the new AST test file
+  reported compaction.py 33% / manager.py 29% — both are 88%/99%
+  under their real suites (`tests/context/` + `tests/unit/context/`);
+  a scoped run's number for sibling modules is noise, not a gap
+  (same family as the QA#6 omit-mask illusion). (2) Passing
+  dotted submodules (`--source=attune.context.skeleton
+  --source=attune.context.allocator`) collected only ONE of the
+  three named modules (or nothing at all) with just a
+  no-data-collected warning; whole-package `--source=attune.context`
+  collected everything. Rule: measure with the package-level
+  `--source` plus ALL test dirs that target the package, then read
+  per-file rows for the modules you care about.
+
+- **`git checkout -- <path>` is a SILENT NO-OP on UNTRACKED files —
+  the "revert to re-seed" half of a verify cycle leaves the change
+  APPLIED, and the pass count is the only tell**: 2026-07-24,
+  building the notes-search demo fixture
+  (`examples/demo_notes_search/`, deliberately seeded with one
+  failing test so the fix-test tutorial has live material). To prove
+  the seeded bug was really fixable I applied the one-line fix and
+  ran the suite (9 passed — the FIXED state), then ran `git checkout
+  -- examples/demo_notes_search/` to re-seed and re-ran: still 9
+  passed. The revert did nothing. Every file in that dir was
+  UNTRACKED (pre-first-commit) and checkout only restores paths git
+  already tracks; it exits 0 with NO output on a DIRECTORY argument
+  holding only untracked files (a bare untracked FILE path at least
+  errors `did not match any file(s) known to git` — the directory
+  form is the quiet one). Committing from there would have shipped
+  the fixture with its seeded bug already fixed, destroying the whole
+  point of the fixture. Easy to miss because this corpus hands out
+  `git checkout -- <dir>` as THE revert recipe in ~7 places (help
+  templates, generated plugin dirs, `.agents/skills/`, and the
+  "revert the src and confirm the new tests fail" loop) — every one
+  silently assumes TRACKED files, while a new fixture, a new
+  generated file, or anything before its first commit is untracked by
+  construction. Rules: (1) after a revert-to-verify cycle assert the
+  EXPECTED POST-REVERT SIGNAL, never just "the suite ran" — here
+  1 failed/8 passed = seeded and 9 passed = fixed, so a revert that
+  leaves the FIXED number IS a failed revert; (2) `git status --short
+  <path>` before trusting any revert — `??` means checkout will not
+  touch it, so use `git clean -fd <path>` or re-apply the change by
+  Edit instead; (3) a fixture README's "reset after a take"
+  instruction only becomes true once the fixture is TRACKED — say so
+  in the README, or the user's first reset is a silent no-op.
