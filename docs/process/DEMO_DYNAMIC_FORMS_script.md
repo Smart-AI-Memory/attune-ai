@@ -22,10 +22,13 @@ Pre-record checklist:
       rehearsal-verified to reliably yield ~3 sequential
       questions; the specimen is picked before the take, not
       during it (table ruling, q-demo-scripts-review-002 —
-      curation of a live run, never simulation)
+      curation of a live run, never simulation). Candidates
+      locked 2026-07-24 — see "Locked specimens" below; the
+      unrecorded live pass is what remains before ticking this.
 - [ ] Pushback example LOCKED: a rehearsed, real, low-context
       disagreement whose two options fit on screen and whose
-      consequence reads in one sentence
+      consequence reads in one sentence. Specimen locked and
+      render-verified 2026-07-24 — see "Locked specimens" below.
 - [ ] Do Not Disturb on; screen 1 clean set
 - [ ] Recorder config verified fresh: mic = G733, system audio
       OFF, camera off (config drifts between sessions)
@@ -53,6 +56,104 @@ Capture and export settings (ruled 2026-07-23, dry-run + Patrick):
   ARTICLE cannot host native video — YouTube/Vimeo embed only.
 - After EVERY take: `cp -R` the `.screenstudio` bundle out of
   `~/Screen Studio Projects/` before touching the app again.
+
+---
+
+## Locked specimens (2026-07-24)
+
+### Cold-open candidates (primary first)
+
+Each candidate's dimensions map onto the same scope/focus/depth
+wording the Act-1 form uses, so "same questions, one form" is
+visually provable. The candidates are drawn from the repo's own
+Socratic Interaction Rule examples (the rule text itself
+instructs these questions, which is what makes them reliable
+triggers); the final reliability check is the unrecorded
+rehearsal pass.
+
+1. **"help me test this module"** (primary — matches the Act-1
+   `/elicit testing this module` line). Expected sequence:
+   Q1 scope — "Which module should we test?"; Q2 focus —
+   "What's the focus?" (run existing tests / find coverage
+   gaps / generate new tests / coverage of changed code);
+   Q3 depth — "How deep?" (quick smoke pass / full unit
+   suite / full suite + coverage report).
+2. **"review my recent changes"** — Q1 scope (branch diff,
+   staged, or last N commits); Q2 focus (security / quality /
+   performance / tests); Q3 depth (quick pass vs multi-pass
+   deep review). If used, Act 1 becomes
+   `/elicit reviewing my recent changes`.
+3. **"clean up this code"** — Q1 scope (which path); Q2 focus
+   (simplify / refactor / dead code); Q3 depth (safe-only vs
+   structural). If used, Act 1 becomes
+   `/elicit cleaning up <path>`.
+
+### Act-1 form (primary specimen)
+
+Dogfood-verified 2026-07-24 through the live
+`elicitation_render_form` MCP tool on the installed 10.5.0
+plugin — validates clean and batches all three fields into a
+single turn:
+
+```json
+{
+  "title": "Scope this testing work",
+  "fields": [
+    {"id": "scope", "text": "Which module should we test?",
+     "type": "single_select",
+     "options": ["src/attune/elicitation/",
+                 "src/attune/workflows/",
+                 "src/attune/hooks/", "attune_redis/"]},
+    {"id": "focus", "text": "What's the focus?",
+     "type": "multi_select",
+     "options": ["run existing tests", "find coverage gaps",
+                 "generate new tests",
+                 "coverage of changed code"]},
+    {"id": "depth", "text": "How deep?",
+     "type": "single_select",
+     "options": ["quick smoke pass", "full unit suite",
+                 "full suite + coverage report"]}
+  ]
+}
+```
+
+### Pushback specimen (LOCKED) — "Scope of the fix"
+
+Setup: Patrick says "just fix the failing test and let's ship";
+the agent has found the same unvalidated call in four sibling
+modules and pushes back with a one-sweep alternative. Patrick
+clicks OVERRULE (keeps "Fix only the failing test") — the
+overrule reads as smallest-unit-of-work discipline, not
+recklessness, which is why this fork was chosen. The agent
+acknowledges, executes the focused fix, and files the sweep as
+a follow-up. Low-context: any developer reads the fork cold,
+and the consequence is one sentence.
+
+```json
+{
+  "title": "Scope of the fix",
+  "fields": [
+    {"id": "fix_scope",
+     "text": "How much of this do we fix now?",
+     "type": "pushback",
+     "options": ["Fix only the failing test",
+                 "Fix the pattern in all five modules"],
+     "user_position": "Fix only the failing test",
+     "recommended": "Fix the pattern in all five modules",
+     "rationale": "The same unvalidated call exists in four sibling modules — fixing one leaves four known-broken.",
+     "option_notes": {
+       "Fix only the failing test": "Small, reviewable, ships today",
+       "Fix the pattern in all five modules": "One sweep, no repeat visits"}}
+  ]
+}
+```
+
+Receipts (2026-07-24, live on the installed 10.5.0 plugin, no
+API credits spent): the widget render returns the exact demo
+shot — "I'd suggest instead" badged and ordered first, "your
+approach" tag on Patrick's option, "Why I'd push back" callout —
+and the overrule answer round-trips
+`elicitation_collect_response` cleanly (resp-20260724-091558).
 
 ---
 
