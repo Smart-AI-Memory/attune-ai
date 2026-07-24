@@ -271,6 +271,9 @@ def project_feature(
         else:
             body = _join_sections(master, titles)
             kind_title = title
+        if kind == "concept" and (video := _video_meta(master)) is not None:
+            url, video_title = video
+            body = f"**Watch:** [{video_title}]({url})\n\n{body}"
         content = _wrap_help(
             master.feature, kind, source_hash, generated_help, body, title=kind_title
         )
@@ -461,6 +464,10 @@ def _render_hub(master: MasterFile) -> str | None:
     if summary and str(summary).strip():
         lines += [str(summary).strip(), ""]
 
+    if (video := _video_meta(master)) is not None:
+        url, video_title = video
+        lines += [f"**Watch:** [{video_title}]({url})", ""]
+
     if hero is not None:
         lines += [
             '!!! tip "Start here"',
@@ -487,6 +494,24 @@ def _render_hub(master: MasterFile) -> str | None:
         lines += ["</div>", ""]
 
     return "\n".join(lines).rstrip("\n") + "\n"
+
+
+def _video_meta(master: MasterFile) -> tuple[str, str] | None:
+    """Return ``(url, title)`` from frontmatter ``video``, or ``None``.
+
+    Accepts a bare URL string or a ``{url, title}`` mapping. A mapping
+    without a ``url`` projects nothing (the field is optional and
+    advisory — never an error).
+    """
+    raw = master.frontmatter.get("video")
+    if isinstance(raw, str) and raw.strip():
+        return raw.strip(), "Watch the video"
+    if isinstance(raw, dict):
+        url = str(raw.get("url") or "").strip()
+        if url:
+            title = str(raw.get("title") or "").strip() or "Watch the video"
+            return url, title
+    return None
 
 
 def _feature_title(master: MasterFile) -> str:

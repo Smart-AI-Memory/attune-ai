@@ -17,6 +17,14 @@ run-record corpus that future releases learn from.
 
 ### Added
 
+- **Video pointers on help surfaces.** Feature masters
+  (`content/features/<feature>.md`) accept an optional `video:`
+  frontmatter field (bare URL or `{url, title}`); the projector emits
+  a "Watch:" link into the `.help` concept kind and the feature hub
+  page. The website gains a single-source video registry
+  (`website/lib/videos.ts`) feeding a `/learn` walkthrough page and a
+  conditional "Learn" nav link — both stay hidden until the first
+  video lands.
 - **Self-healing diagnosis engine** (#1487, #1494, #1496, #1498).
   `attune diagnose <run_id>` diagnoses any failed run end-to-end:
   recalled priors, a bounded evidence pack, and a seat panel produce
