@@ -17851,3 +17851,27 @@ def ", start_idx + 1)` for module-
   the "create a new worktree ..." reuse lesson — reuse applies when
   you can WORK there; the rename-branch path is for when guards or
   discipline forbid touching the other tree.
+
+- **Worktree website dev server needs its OWN `npm ci` — a missing
+  `website/node_modules` makes Node resolution walk UP to
+  `~/node_modules` (the home-dir Next.js app) and fail with a
+  misleading error**: hit 2026-07-23 verifying the VideoEmbed
+  component. `npm run dev --prefix website` from the worktree
+  started Next 15 fine but every page 500'd with `Cannot find
+  module '@tailwindcss/postcss'` — the require stack showed
+  `/Users/patrickroebuck/node_modules/next/...`, i.e. the HOME
+  directory's Next install (the loose `~/` Next.js app), because
+  the worktree's `website/node_modules` had never been installed
+  and resolution walked up past the repo. Fix: `cd website &&
+  npm ci` in the worktree (9s, lockfile present), then restart.
+  Node-side sibling of the "worktree venv lacks extras" lesson —
+  same root cause family (worktrees share tracked files, not
+  installed deps). Related receipts from the same session:
+  (a) `.claude/launch.json` is GITIGNORED (line 262) — a
+  `website` dev-server entry added there is local convenience,
+  never PR content; (b) when browser-verifying a Next.js client
+  component, the FIRST click can land pre-hydration and no-op
+  (facade button click produced "no iframe"); re-read the page
+  and click again before diagnosing the component — verify state
+  via a DOM probe (`document.querySelector('iframe').src`), not
+  the click's success.
