@@ -17875,3 +17875,46 @@ def ", start_idx + 1)` for module-
   and click again before diagnosing the component — verify state
   via a DOM probe (`document.querySelector('iframe').src`), not
   the click's success.
+
+- **Full-suite-only ImportErrors that vanish in isolation = sys.path
+  pollution from ANOTHER collected module — grep test tree for
+  `sys.path.insert` and repro by collecting both paths in one
+  worker**: QA pass 1 (2026-07-24, PR #1641): the full keyless suite
+  failed collection on `tests/unit/scripts/` (`import scripts`
+  resolved to the EMPTY `tests/scripts/` package) while
+  `tests/unit/scripts` alone passed 235/235.
+  `tests/integration/test_llm_integration.py` had a vestigial
+  `sys.path.insert(0, …/tests)` — its own imports came from the
+  installed package, so the insert did nothing but shadow the
+  repo-root `scripts/` package for any xdist worker that collected
+  it first (worker-distribution-dependent, so CI stayed green by
+  luck). Deterministic repro: `pytest
+  tests/integration/test_llm_integration.py tests/unit/scripts -p
+  no:xdist` — fails 100% pre-fix. Fix = delete the insert. Same
+  smell applies to any `tests/<name>/__init__.py` package whose name
+  collides with a repo-root package.
+
+- **Background-Bash pytest runs can complete "exit 0" with ZERO
+  captured output — empty output + exit 0 is NOT a receipt; rerun
+  foreground before trusting or diagnosing**: same session, twice:
+  the full pytest suite launched via run_in_background produced an
+  empty task-output file (and an empty `>`-redirected log) while
+  pre-commit and mkdocs background runs captured fine. Foreground
+  rerun of the identical command worked and took 4m16s. Rule: when a
+  background task's output file is empty, treat the run as
+  unobserved — verify with a small foreground subset, then run the
+  real thing foreground with a generous `timeout` (600000ms covers
+  the suite).
+
+- **`detect-secrets scan --baseline .secrets.baseline` REWRITES the
+  baseline in place — with an unpinned (newer) detect-secrets that's
+  a multi-thousand-line churn diff, not a findings report**: QA pass
+  2: `uv run --with detect-secrets detect-secrets scan --baseline …`
+  (latest version vs the repo's pinned v1.5.0) rewrote the baseline
+  (+4777/−844). The check was already covered by the pinned
+  pre-commit hook over all files; recovery is `git checkout --
+  .secrets.baseline`. Rule: for "any new secrets?" use the PINNED
+  hook (`uv run --with pre-commit pre-commit run detect-secrets
+  --all-files`); never run a floating detect-secrets against the
+  tracked baseline. Companion to the existing stash-pop baseline
+  lesson — same file, different mutation vector.
