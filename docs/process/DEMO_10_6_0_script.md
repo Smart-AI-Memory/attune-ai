@@ -1,6 +1,8 @@
 # 10.6.0 Demo Script — expanded draft (Patrick's voice)
 
-**Written:** 2026-07-23. **Status:** draft — records Tuesday
+**Written:** 2026-07-23. **Amended:** 2026-07-24, per roundtable
+thread `q-demo-scripts-review-002` (chair-ruled; caption-carried
+caveats per amended ruling). **Status:** draft — records Tuesday
 07-28 after the lift and live receipts; every `[RECEIPT]` beat
 must exist before its segment records (cut-don't-fake, binding).
 **Structure:** expands
@@ -15,6 +17,21 @@ Pre-record checklist:
 - [ ] Codex canary green (marketplace re-synced)
 - [ ] Antigravity probe ruled go/no-go — no-go = two-provider cut
 - [ ] Every command below rehearsed once, unrecorded, same machine
+- [ ] Cold-open FINDING pre-selected the day before, from
+      candidates passing a one-sentence stranger-legibility test;
+      the read is rehearsed (table ruling,
+      q-demo-scripts-review-002)
+- [ ] VERBATIM-RECALL receipt: rehearsal confirms whether
+      `session_memory_recall` returns the stored finding verbatim
+      or a ranked digest — if a digest, the "not a summary — the
+      finding itself" narration is REWRITTEN before recording,
+      not softened in the edit
+- [ ] TASK FIXTURE built: one prebuilt task supplies the finding,
+      branch, changed files, handoff next-action, and
+      cross-review diff — every Act 2 beat draws from it
+- [ ] Cross-review diff pre-selected from 2–3 rehearsed
+      candidates where the second model demonstrably surfaces
+      something real
 
 ---
 
@@ -26,7 +43,7 @@ Pre-record checklist:
 | Day one | 0:45–1:45 | Install → one useful result |
 | One task, two agents | 1:45–5:15 | Memory + handoff, one story |
 | The second opinion | 5:15–6:45 | A real finding from a rival model |
-| The receipts | 6:45–7:45 | Evidence card, one ask |
+| The receipts | 6:45–7:15 | Evidence card, one ask |
 
 ---
 
@@ -39,14 +56,20 @@ Pre-record checklist:
 > I run three AI coding agents on the same repository. Watch what
 > happens at the boundary between them.
 >
-> Claude just worked something out — [reads the actual finding,
-> whatever it is that day, e.g. "the projector was importing the
-> wrong package because of where Python puts a script's
-> directory"]. That took real work to learn.
+> Claude just worked something out — [reads the PRE-SELECTED
+> finding (see checklist): chosen the day before, rehearsed, and
+> short enough to compare verbatim when recall succeeds in Act
+> 2. It must pass the stranger-legibility test — one sentence a
+> viewer who has never seen this repo understands]. That took
+> real work to learn.
 
-**Screen:** fresh Codex session, same repo. Type: *"What did the
-last session learn about this repo?"* Codex answers honestly: it
-has no idea.
+**Screen:** fresh Codex session, same repo. Ask a
+TOPIC-SPECIFIC question about the finding — e.g. *"What do we
+know about <the finding's topic> in this repo?"* — not the
+generic "what did the last session learn?" (a question no tool
+answers reads as a straw man; a specific question Codex SHOULD
+answer, and can't, is the honest failure). Codex answers
+honestly: it has no idea.
 
 **On-screen caption:**
 
@@ -84,34 +107,55 @@ is visible because hiding it would be a claim.
 attune security-audit .
 ```
 
-Real output on the real repo. Point at one finding, not the
-report.
+Real output on the real repo. Point at ONE finding — and it is
+not a throwaway: this finding is the task fixture's seed, the
+exact artifact the rest of the video carries across every
+boundary (Act 2's capture, recall, handoff, and the cross-review
+all trace back to it). One artifact, one story — a Day-one
+finding that disappears would make Acts 1 and 2 two disconnected
+demos. Keep this whole segment tight (~30–40s): install and
+audit are commodity beats; the differentiated product starts at
+the boundary.
 
 **Narration:**
 
 > That's day one: install, run, get something useful back. Fine.
 > Every tool demo you've ever seen stops here. Everything from
-> this point is what 10.6.0 adds.
+> this point is what 10.6.0 adds — and it's all about THIS
+> finding.
 
 ## One task, two agents (1:45–5:15)
 
 **Production:** persistent task card in the corner from here on —
-Finding / Branch / Changed files / Next action. Every boundary
-crossing is me typing a command on screen. Nothing moves on its
-own, and I say so.
+Finding / Branch / Changed files / Next action, all drawn from
+the ONE task fixture (see checklist). Every boundary crossing is
+me typing a command on screen. Nothing moves on its own, and I
+say so. **Agent-seat distinction:** across 3.5 minutes of
+boundary crossings viewers lose track of whose terminal is on
+screen — give each seat an unmistakable look (distinct terminal
+theme or a color-coded header/border per agent; cheapest variant
+that survives 1080p). For the cold open's failure beat, prefer
+the two sessions side-by-side so the boundary is visible in one
+frame.
 
 ### Wiring the second agent (1:45–2:15)
 
 **Screen:** the actual Codex config — the marketplace entry /
 MCP stanza, however many lines it really is.
 
+**Production:** cap this segment at ~30 seconds regardless of
+config length. Show the FULL config on screen for one readable
+pause (nothing hidden), narrate only the two lines that matter,
+caption "full config linked below." A 60-second config read
+sits exactly where the drop-off curve is steepest; honesty is
+preserved by the full-frame pause plus the linked receipt.
+
 **Narration:**
 
 > First, the honest part: here's how Codex gets these tools.
 > [If it's one stanza: "One config block. That's the whole
-> setup."] [If it's more: walk it, at real speed. A reveal you
-> can't reproduce at your desk is a magic trick, and I'm not
-> selling tickets.]
+> setup."] [If it's more: "It's this block — the whole thing is
+> on screen and linked below."]
 
 `[RECEIPT: marketplace re-sync canary — R8 #4]`
 
@@ -126,18 +170,29 @@ from the cold open — I trigger the capture, on screen.
 > use session_memory_recall to check what's known about <topic>
 ```
 
-The exact finding comes back. Hold on it.
+The finding comes back — the fixture finding, the same one from
+the cold open and the Day-one audit. **Hold 4+ seconds, zoomed
+or highlighted on the matched text, composed CENTERED** (this is
+the social cut's opening beat; it must survive the vertical
+crop — center-stage compose ruling, no dedicated vertical take).
 
-**Narration:**
+**Narration (scoped to what the verbatim-recall receipt proved
+in rehearsal — if recall returns a digest, this line was already
+rewritten at the checklist stage, not here):**
 
 > Codex just remembered something Claude learned. Not a summary I
-> pasted — the finding itself, PII-scrubbed on the way in, pulled
-> from the same store.
->
-> One honest caveat, on screen because it stays true: Claude gets
-> automatic capture through lifecycle hooks. Codex and Antigravity
-> get the same memory surface through MCP — but automatic hooks
-> are not promised there. Same memory, different reflexes.
+> pasted — pulled straight from the shared store. Let the reveal
+> breathe.
+
+**Honesty card (on-screen caption, AFTER the reveal has landed —
+chair ruling, amended 2026-07-24: caveats live on screen, not
+over the payoff):**
+
+> Captured with PII scrubbed on the way in.
+> Claude: automatic capture via lifecycle hooks.
+> Codex / Antigravity: same memory surface via MCP —
+> automatic hooks not promised there.
+> Same memory, different reflexes.
 
 `[RECEIPT: post-lift Codex canary transcript]`
 
@@ -202,16 +257,21 @@ edit.)*
 /cross-review
 ```
 
-on a real diff from this repo. Show the actual finding the second
-provider caught — read it out.
+on the PRE-SELECTED diff (see checklist — the fixture's diff,
+chosen from 2–3 rehearsed candidates where the second model
+demonstrably surfaces something real). Show what the second
+provider surfaced — read it out.
 
-**Narration:**
+**Narration (say "caught something" ONLY if it is demonstrably a
+defect; otherwise it is an independent observation — overcalling
+a style note as a catch spends the credibility the receipts
+built):**
 
 > A different vendor's model just reviewed my actual diff — not a
-> summary of it — and caught something. Different model, different
-> blind spots. It's advisory, and it stays advisory until
-> dogfooded quality earns it more. I don't let it block a merge
-> and neither should you, yet.
+> summary of it — and surfaced something I hadn't considered.
+> Different model, different blind spots. It's advisory, and it
+> stays advisory until dogfooded quality earns it more. I don't
+> let it block a merge and neither should you, yet.
 
 **Screen:** 3-second flash of the promoted roundtable report
 header.
@@ -224,21 +284,33 @@ header.
 >
 > The models advise. You decide.
 
-## The receipts (6:45–7:45)
+## The receipts (6:45–7:15)
 
-**Screen:** hold a three-row evidence card, long enough to read:
+Compressed to ~30s (table ruling): a full minute on a static
+table is where a 7-minute video loses its ending.
 
-| Claim | Providers | When | Transcript |
-|-------|-----------|------|------------|
-| Cross-provider recall | Claude → Codex | `[ts]` | `[link]` |
-| Handoff, tree-verified | Claude → Codex | `[ts]` | `[link]` |
-| Independent review | `[pair]` | `[ts]` | `[link]` |
+**Screen:** the evidence card, rows ANIMATING IN as each is
+narrated. The card must work as a standalone still (it will be
+screenshot-shared and re-embedded, where "linked below" breaks):
+one short human-typeable URL on the card itself — a single
+receipts index page (e.g. `attune-ai.dev/receipts/10-6-0`) —
+instead of dead per-row `[link]` cells. Full links stay in the
+description.
+
+| Claim | Providers | When |
+|-------|-----------|------|
+| Cross-provider recall | Claude → Codex | `[ts]` |
+| Handoff, tree-verified | Claude → Codex | `[ts]` |
+| Independent review | `[pair]` | `[ts]` |
+
+Card footer: `all transcripts: attune-ai.dev/receipts/10-6-0`
 
 **Narration:**
 
-> Every claim in this video has a transcript, and they're linked
-> below — including the unedited runs behind the jump cuts. That's
-> the rule this project runs on: no claim without a receipt.
+> Every claim in this video has a transcript — one URL, on
+> screen, including the unedited runs behind the jump cuts.
+> That's the rule this project runs on: no claim without a
+> receipt.
 >
 > Install the plugin. Run one workflow. Cross providers when the
 > task needs another seat.
@@ -247,16 +319,28 @@ header.
 
 ---
 
-## Social cut (~90s)
+## Social cut (~90s YouTube + 45–60s feed variant)
 
-- 0:00–0:10 — the miracle, cold: Codex recalling Claude's finding.
-  Caption: "Codex just remembered something Claude learned."
-- 0:10–0:20 — the loss beat, compressed: "every new session starts
-  from zero — until now."
-- 0:20–0:30 — `pip install attune-ai` flash.
-- 0:30–1:10 — the handoff round-trip, verification held on screen.
-- 1:10–1:30 — evidence card + "The models advise. You decide." +
+Causal order (problem → payoff, matching the chair's
+problem-first ruling on the dynamic-forms cut): the miracle is
+unparseable without the loss beat first. All beats carry
+burned-in captions — LinkedIn autoplays muted.
+
+- 0:00–0:05 — the loss, cold: Codex not knowing, next to
+  Claude's finding. Caption: "Every new AI session starts from
+  zero."
+- 0:05–0:15 — the recall reveal (centered take). Caption:
+  "Codex just remembered something Claude learned."
+- 0:15–0:25 — `pip install attune-ai` flash.
+- 0:25–1:05 — the handoff round-trip, verification held on
+  screen. Caption: "Handoffs are git-verified, not pasted."
+- 1:05–1:30 — evidence card + "The models advise. You decide." +
   install line.
+
+Feed variant (45–60s, LinkedIn-native): loss → recall reveal →
+verification hold → evidence card; cut the install flash, keep
+the final install overlay. 90s is YouTube-Shorts-tolerable but
+long for feed retention.
 
 ---
 
