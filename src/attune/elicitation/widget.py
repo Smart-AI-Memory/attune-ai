@@ -21,6 +21,7 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+import uuid
 from collections.abc import Callable
 from html import escape
 
@@ -504,7 +505,11 @@ def _needed_css(form: FormSchema) -> str:
     return _CSS_BASE + "".join(css for name, css in _CSS_FAMILIES if name in used)
 
 
-def form_to_widget_html(form: FormSchema, message: str = "") -> str:
+def form_to_widget_html(
+    form: FormSchema,
+    message: str = "",
+    instance_id: str | None = None,
+) -> str:
     """Render a declarative form as an inline ``show_widget`` HTML form.
 
     The S1 surface (D8). The returned HTML is self-contained (scoped
@@ -519,33 +524,45 @@ def form_to_widget_html(form: FormSchema, message: str = "") -> str:
     DOM generically by ``data-*`` attributes — so a malicious label or
     option cannot inject markup or script.
 
+    Element ids are suffixed per render so two forms shown on the same
+    page (e.g. a demo's basic + advanced beats) never collide in the
+    DOM — a duplicate id would make the second form's submit script
+    read the first form's fields.
+
     Args:
         form: The validated form to render (build it with
             :func:`form_from_dict` first).
         message: Optional prompt shown above the form.
+        instance_id: Optional alphanumeric suffix for the element ids;
+            defaults to a fresh random one per call. Pass a fixed value
+            only when a deterministic render is needed (tests, golden
+            output).
 
     Returns:
         An HTML string ready to pass straight to
         ``mcp__visualize__show_widget``.
     """
+    sfx = "".join(c for c in (instance_id or "") if c.isalnum()) or uuid.uuid4().hex[:8]
+    form_id = f"attune-elicit-form-{sfx}"
     intro = f'<p class="ae-msg">{_esc(message)}</p>' if message else ""
     desc = f'<p class="ae-desc">{_esc(form.description)}</p>' if form.description else ""
     fields = "".join(_field_html(q) for q in form.questions)
+    css = _needed_css(form).replace("#attune-elicit-form", f"#{form_id}")
 
     return f"""<h2 class="sr-only">{_esc(form.title)} — interactive form</h2>
-<form id="attune-elicit-form" data-form-title="{_esc(form.title)}">
+<form id="{form_id}" data-form-title="{_esc(form.title)}">
 <style>
-{_needed_css(form)}</style>
+{css}</style>
 <h3>{_esc(form.title)}</h3>
 {intro}{desc}
 {fields}
-<button type="button" id="ae-submit" class="ae-submit">Submit</button>
-<div id="ae-error" class="ae-error" role="alert"></div>
+<button type="button" id="ae-submit-{sfx}" class="ae-submit">Submit</button>
+<div id="ae-error-{sfx}" class="ae-error" role="alert"></div>
 <script>
 (function() {{
-  var form = document.getElementById('attune-elicit-form');
-  var btn = document.getElementById('ae-submit');
-  var err = document.getElementById('ae-error');
+  var form = document.getElementById('{form_id}');
+  var btn = document.getElementById('ae-submit-{sfx}');
+  var err = document.getElementById('ae-error-{sfx}');
   if (!form || !btn) return;
   btn.addEventListener('click', function() {{
     var answers = {{}};
