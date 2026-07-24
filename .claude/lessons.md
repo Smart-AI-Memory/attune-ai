@@ -17769,6 +17769,89 @@ def ", start_idx + 1)` for module-
   4K on the 16:9 screen 1; only the social cut needs the
   per-beat crop check in the editor.
 
+- **Screen Studio recording-state + stage-ID forensics (2026-07-23
+  rehearsal session)**: three durable mechanics. (a) "Is it still
+  recording?" is answered inside the bundle, not by the bundle —
+  live recordings append `.m4s` segments under
+  `<project>.screenstudio/recording/` WITHOUT touching the
+  top-level dir mtime; compare segment counts / newest-file time
+  there. The recorder HUD's presence on another display and that
+  display's menu bar tell you nothing about a recording running on
+  a different screen. (b) Stage identification without ffmpeg:
+  `qlmanage -t -s 1600 -o <dir> recording/channel-1-display-0.mp4`
+  renders a frame — the authoritative "which display did this
+  capture" receipt (display NAMES still disagree across tools;
+  `metadata.json` carries displayId + logical width/height).
+  (c) PARALLEL-SESSION TRAP: the Claude window on camera may be a
+  DIFFERENT conversation than the one directing — a captured frame
+  showed a sibling session's transcript directing the same shoot.
+  Before assuming your beats were recorded, verify the captured
+  frame shows YOUR session, and check the recording's time window
+  brackets when the beats actually ran.
+
+- **Computer-use can never be granted "Claude" (self-control
+  prohibition) — and one denied app rejects the whole
+  request_access batch**: retry without it. Consequence for
+  demo/QC work: with native screenshot filtering the Claude window
+  is INVISIBLE in live screenshots, so directing form beats
+  on camera is blind-by-design — QC happens from the recorded
+  footage after cut (Screen Studio captures the real screen
+  regardless of the agent's filter). Browsers add a same-turn
+  double-call: request_access for a browser errors once with
+  "retry in THIS turn to confirm" — the retry must not wait for
+  the next user turn.
+
+- **website/ pages mount Navigation/Footer PER-PAGE, not in
+  app/layout.tsx** — a new `website/app/<route>/page.tsx` renders
+  bare (no nav, no footer) unless it imports and renders
+  `@/components/Navigation` + `@/components/Footer` itself; copy
+  the `<><Navigation /><main id="main-content" ...>...<Footer /></>`
+  scaffold from pricing/page.tsx. Caught live: /learn rendered
+  without nav and the "no Learn link" verification read as a false
+  pass on the empty-nav 404 page.
+
+- **Worktree website builds: symlink main's node_modules**
+  (`ln -sfn ~/attune-ai/website/node_modules website/node_modules`)
+  — worktrees don't get an npm install, and the symlink is enough
+  for `tsc --noEmit`, eslint, and `next dev`. Two caveats: main's
+  install currently lacks vitest, so `tsc` reports 5 pre-existing
+  TS2307 errors in test/ files (verify against untouched main
+  before blaming your diff); remove the symlink before leaving the
+  worktree (a later main dep bump silently changes your toolchain).
+
+- **Complexity ratchet fires on MODIFIED functions, not just new
+  files — and an armed-but-red PR is a wedge only a full-suite or
+  ratchet run reveals**: third ratchet hit (2026-07-24, PR #1639).
+  Amends the #1582 second-hit rule ("run the ratchet when a PR adds
+  NEW source files"): #1639 added a 2-branch feature block to the
+  EXISTING `project_feature` (C(19) → D(21)) — its targeted suite
+  (`test_projector.py`) stayed green while every full-suite CI lane
+  went red, with auto-merge armed so the PR just sat wedged.
+  Broadened rule: any src diff that adds conditional branches to an
+  existing function gets a local `radon cc -s <file>` (grade must
+  stay < D(21)) or a `tests/unit/quality/test_complexity_ratchet.py`
+  run before push. Fix shape is the #1576 precedent: extract the
+  biggest loop/phase into a module-level helper (here
+  `_project_help_kinds`: D(21) → C(12) + B(10)). Session pre-flight
+  sweeps should also list open PRs and treat armed-auto-merge +
+  red-required-checks as a wedge needing a fix push, not a wait.
+
+- **Editing a PR branch that's checked out in ANOTHER worktree:
+  don't switch that worktree — create a differently-named local
+  branch in YOUR worktree and push back to the PR ref**: hit
+  2026-07-24 fixing #1639. `git checkout <branch>` fails
+  (`already used by worktree at <path>`) and the
+  `worktree_path_guard` PreToolUse hook correctly BLOCKS Edit/Write
+  into the other worktree's tree. The clean path: in the session
+  worktree `git checkout -b fix/<slug> origin/<branch>` (git only
+  forbids two checkouts of the same BRANCH NAME, not the same
+  commit), edit/commit there, then `git push origin
+  HEAD:<branch>` — the PR updates, the other worktree stays
+  untouched (merely behind origin, harmless if clean). Pairs with
+  the "create a new worktree ..." reuse lesson — reuse applies when
+  you can WORK there; the rename-branch path is for when guards or
+  discipline forbid touching the other tree.
+
 - **Worktree website dev server needs its OWN `npm ci` — a missing
   `website/node_modules` makes Node resolution walk UP to
   `~/node_modules` (the home-dir Next.js app) and fail with a
