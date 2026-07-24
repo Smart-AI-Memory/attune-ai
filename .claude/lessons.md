@@ -17918,3 +17918,35 @@ def ", start_idx + 1)` for module-
   --all-files`); never run a floating detect-secrets against the
   tracked baseline. Companion to the existing stash-pop baseline
   lesson — same file, different mutation vector.
+
+- **zsh does NOT word-split unquoted variables — a shell-loop
+  built command like `pytest $args` passes ONE bogus
+  space-containing arg and the run silently no-ops**: hit twice
+  in one session building per-module coverage loops
+  (`for m in "mod|paths"; do … pytest -q $args; done`): every
+  iteration printed `No data to report` while the identical
+  straight-line command worked. In zsh (this harness's shell),
+  `$args` holding "path1 path2" expands as a single word →
+  pytest collects nothing → coverage collects nothing, all
+  exit-0-quiet. Rule: in Bash-tool loops, don't accumulate
+  multi-word args in a scalar; write the commands straight-line
+  per target (or use arrays `"${arr[@]}"`). Companion to the
+  existing `=word` PATH-expansion and read-only-`status` zsh
+  lessons — same shell, different trap.
+
+- **Scoped coverage runs manufacture phantom gaps, and dotted
+  SUBMODULE `--source` args silently under-collect — measure a
+  module under its OWN full test set with `--source=<package>`
+  before calling anything a gap**: two traps in one session.
+  (1) `--source=attune.context` under only the new AST test file
+  reported compaction.py 33% / manager.py 29% — both are 88%/99%
+  under their real suites (`tests/context/` + `tests/unit/context/`);
+  a scoped run's number for sibling modules is noise, not a gap
+  (same family as the QA#6 omit-mask illusion). (2) Passing
+  dotted submodules (`--source=attune.context.skeleton
+  --source=attune.context.allocator`) collected only ONE of the
+  three named modules (or nothing at all) with just a
+  no-data-collected warning; whole-package `--source=attune.context`
+  collected everything. Rule: measure with the package-level
+  `--source` plus ALL test dirs that target the package, then read
+  per-file rows for the modules you care about.
