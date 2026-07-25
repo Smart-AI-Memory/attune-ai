@@ -12,8 +12,11 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+import json
+import os
 from collections.abc import Callable
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from attune.meta_workflows.models import (
@@ -22,6 +25,7 @@ from attune.meta_workflows.models import (
     FormSchema,
     QuestionType,
 )
+from attune.telemetry.form_events import log_surface_decision
 
 #: The answer values accepted for a BOOLEAN question (its
 #: ``to_ask_user_format`` renders as a Yes/No single-select).
@@ -470,11 +474,11 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
     )
 
 
-#: Question types with no portable ``AskUserQuestion`` control. A form
-#: using any of these must render on the widget or native-elicitation
-#: surface; a form using only the remaining types (single/multi-select,
-#: boolean, short text) renders natively on ``AskUserQuestion`` — one
-#: call, no HTML round-trip. See :func:`needs_widget`.
+#: Question types that lose fidelity on ``AskUserQuestion`` — either
+#: because the surface has no control for them at all
+#: (:data:`_NO_PORTABLE_CONTROL`) or because the construct's card layout
+#: flattens into prose (``decision`` / ``pushback`` / ``progress``).
+#: See :func:`needs_widget`.
 _WIDGET_ONLY_TYPES = frozenset(
     {
         QuestionType.NUMBER,
@@ -486,32 +490,246 @@ _WIDGET_ONLY_TYPES = frozenset(
     }
 )
 
+#: The strict subset with NO portable ``AskUserQuestion`` control at
+#: all. A form using any of these cannot be asked on ``AskUserQuestion``
+#: in any form — unlike the v3–v5 constructs, which are expressible but
+#: lossy (they degrade to a recommendation-first single-select). D21
+#: splits these two cases: "impossible" is a hard routing constraint,
+#: "lossy" is a fidelity preference the user may override.
+_NO_PORTABLE_CONTROL = frozenset(
+    {
+        QuestionType.NUMBER,
+        QuestionType.DATE,
+        QuestionType.TEXTAREA,
+    }
+)
+
+#: An option label longer than this is evidence the author folded
+#: tradeoffs into the label text — the thing a card renders properly.
+#: Used by :func:`is_trivial_form` as a mechanical "this wanted to be a
+#: card" detector (D21, Claude seat).
+_TRIVIAL_OPTION_LABEL_MAX = 120
+
+#: Max options a form may carry and still count as trivial. Comparison
+#: strain starts around here, and it is also ``AskUserQuestion``'s own
+#: practical ceiling for a scannable button row.
+_TRIVIAL_MAX_OPTIONS = 3
+
 
 def needs_widget(form: FormSchema) -> bool:
-    """Return True iff ``form`` needs the widget / native-elicitation surface.
+    """Return True iff ``form`` loses fidelity on ``AskUserQuestion``.
 
-    Routing predicate for surface selection. A form renders natively on
-    ``AskUserQuestion`` — a single call with no HTML round-trip — when
-    every field is a control that surface can express (single/multi-
-    select, boolean, short text). The moment any field is a rich control
-    (``number`` / ``date`` / ``textarea``) or a v3–v5 construct
-    (``decision`` / ``pushback`` / ``progress``), the form must use the
-    widget (``elicitation_render_widget`` → ``show_widget``) or native
-    elicitation instead, because those controls have no portable
-    ``AskUserQuestion`` equivalent.
+    True when any field is a rich control (``number`` / ``date`` /
+    ``textarea``) or a v3–v5 construct (``decision`` / ``pushback`` /
+    ``progress``) — the controls that either have no portable
+    ``AskUserQuestion`` equivalent or flatten into prose on it.
 
-    Sending an ``AskUserQuestion``-eligible form to the widget costs a
-    second tool call plus a multi-kB HTML round-trip through the model
-    for no gain; this predicate is the cheap check that avoids it.
+    .. note::
+       This predicate no longer owns the surface decision (D21). It is
+       the low-level *controls* check; :func:`select_form_surface` is
+       the product-level router and calls this as one input among
+       several. Prefer the selector at call sites.
+
+    Args:
+        form: The form to inspect.
+
+    Returns:
+        True if rendering on ``AskUserQuestion`` would lose fidelity.
+    """
+    return any(question.type in _WIDGET_ONLY_TYPES for question in form.questions)
+
+
+def is_trivial_form(form: FormSchema) -> bool:
+    """Return True iff ``form`` is small enough that buttons lose nothing.
+
+    Mechanical and deliberately narrow (D21): a form is trivial only
+    when it is a single low-ceremony choice with nothing to compare.
+    Every clause must hold — one question, a plain select/boolean,
+    at most :data:`_TRIVIAL_MAX_OPTIONS` options, and no option label
+    long enough to suggest a tradeoff was folded into it.
+
+    The length clause is the load-bearing one: when an author smuggles
+    tradeoffs into option text, the strings get long, and that is
+    exactly the form that wanted a card.
+
+    Args:
+        form: The form to inspect.
+
+    Returns:
+        True if the form can go to ``AskUserQuestion`` with no loss.
+    """
+    if len(form.questions) != 1:
+        return False
+    question = form.questions[0]
+    if question.type not in (QuestionType.SINGLE_SELECT, QuestionType.BOOLEAN):
+        return False
+    options = question.options or []
+    if len(options) > _TRIVIAL_MAX_OPTIONS:
+        return False
+    return all(len(str(option)) <= _TRIVIAL_OPTION_LABEL_MAX for option in options)
+
+
+def select_form_surface(
+    form: FormSchema,
+    *,
+    widget_capable: bool = True,
+    keyboard_mode: bool = False,
+) -> str:
+    """Choose the surface to render ``form`` on. Returns ``"widget"`` or ``"ask"``.
+
+    The product-level router (D21). The rich widget is the **default**;
+    ``AskUserQuestion`` is the explicit fallback. Latency is not an
+    input — the axis is how much of the option space the user can see
+    at once, not how many tool calls it costs.
+
+    Precedence, highest first:
+
+    1. **Capability floor** — a client that cannot render widgets gets
+       ``"ask"`` regardless of fidelity loss. A constraint, not a
+       preference.
+    2. **No portable control** — ``number`` / ``date`` / ``textarea``
+       have no ``AskUserQuestion`` equivalent, so the widget is forced.
+       This outranks ``keyboard_mode`` so the opt-out can never
+       silently drop a field.
+    3. **Keyboard mode** — the user's opt-out (D17). Applies only to
+       forms ``AskUserQuestion`` can actually express, which by this
+       point is all that remain.
+    4. **Triviality** — see :func:`is_trivial_form`.
+    5. Otherwise the widget, which is the default.
 
     Args:
         form: The form to route.
+        widget_capable: Whether the client can render inline HTML.
+        keyboard_mode: Whether the user opted into terse/keyboard mode.
 
     Returns:
-        True if a widget / native-elicitation surface is required; False
-        if the form can render on ``AskUserQuestion``.
+        ``"widget"`` or ``"ask"``.
     """
-    return any(question.type in _WIDGET_ONLY_TYPES for question in form.questions)
+    surface, reason = _route(form, widget_capable=widget_capable, keyboard_mode=keyboard_mode)
+    log_surface_decision(surface, reason=reason, question_count=len(form.questions))
+    return surface
+
+
+def _route(
+    form: FormSchema,
+    *,
+    widget_capable: bool,
+    keyboard_mode: bool,
+) -> tuple[str, str]:
+    """Pure routing decision + the reason, for :func:`select_form_surface`.
+
+    Split out so the reason is available to telemetry without the
+    caller-facing signature carrying it.
+    """
+    if not widget_capable:
+        return "ask", "client_not_widget_capable"
+    if any(question.type in _NO_PORTABLE_CONTROL for question in form.questions):
+        return "widget", "no_portable_control"
+    if keyboard_mode:
+        return "ask", "keyboard_mode"
+    if is_trivial_form(form):
+        return "ask", "trivial_form"
+    return "widget", "default"
+
+
+#: Values read as "on" / "off" for :func:`keyboard_mode_enabled`.
+_TRUTHY = frozenset({"1", "true", "yes", "on"})
+_FALSEY = frozenset({"0", "false", "no", "off"})
+
+#: Project-local config file the preference persists in. This is the
+#: established project-scope convention (``config/loader.py``); we read
+#: the one key directly rather than pulling the full unified-config
+#: loader into the routing path.
+_PROJECT_CONFIG = "attune.config.json"
+
+#: The key holding the preference inside :data:`_PROJECT_CONFIG`.
+_KEYBOARD_MODE_KEY = "keyboard_mode"
+
+
+def _project_keyboard_mode(project_root: Path | None = None) -> bool:
+    """Read the persisted per-project preference. False on any problem.
+
+    Best-effort: a missing file, unreadable file, malformed JSON, or
+    absent key all mean "not opted in" rather than an error. Surface
+    routing must never fail because a config file is bad.
+    """
+    base = Path(project_root) if project_root is not None else Path.cwd()
+    try:
+        raw = (base / _PROJECT_CONFIG).read_text(encoding="utf-8")
+        data = json.loads(raw)
+    except (OSError, ValueError):
+        return False
+    if not isinstance(data, dict):
+        return False
+    value = data.get(_KEYBOARD_MODE_KEY)
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in _TRUTHY
+
+
+def keyboard_mode_enabled(project_root: Path | None = None) -> bool:
+    """True when the user opted into terse/keyboard mode.
+
+    D17 ratified keyboard mode as an on-demand opt-in available from day
+    one — no tenure timer, no per-user tenure state. The chair ruled
+    (2026-07-25) that the preference persists **per project**, so it
+    lives under ``keyboard_mode`` in the project-local
+    ``attune.config.json``.
+
+    ``ATTUNE_KEYBOARD_MODE`` remains a session-scoped override in both
+    directions: set it truthy to force terse mode for one shell, or
+    falsey to force rich forms even where the project opted out. Unset
+    (or unrecognised) defers to the project file.
+
+    Args:
+        project_root: Directory holding ``attune.config.json``. Defaults
+            to the current working directory.
+
+    Returns:
+        True if terse/keyboard mode is on.
+    """
+    env = os.environ.get("ATTUNE_KEYBOARD_MODE", "").strip().lower()
+    if env in _TRUTHY:
+        return True
+    if env in _FALSEY:
+        return False
+    return _project_keyboard_mode(project_root)
+
+
+def form_response_summary(form: FormSchema, response: FormResponse) -> str:
+    """Render an answered form as a compact markdown summary.
+
+    The collapse path (chair-ruled 2026-07-25, from the Antigravity
+    seat's context-bloat objection): once a form is submitted, the
+    multi-kB rendered HTML has done its job and only the question/answer
+    pairs still carry meaning. Callers substitute this summary for the
+    rendered form so a long session accumulates a few lines per ask
+    instead of a screenful of markup.
+
+    Unanswered questions are omitted — the summary reports what was
+    decided, not what was displayed. List answers (multi-select) join
+    with commas; booleans render Yes/No.
+
+    Args:
+        form: The form that was asked.
+        response: The validated response to it.
+
+    Returns:
+        A markdown summary. Title line plus one bullet per answer.
+    """
+    lines = [f"**{form.title}** — answered ({response.response_id})"]
+    for question in form.questions:
+        if question.id not in response.responses:
+            continue
+        value = response.responses[question.id]
+        if isinstance(value, bool):
+            rendered = "Yes" if value else "No"
+        elif isinstance(value, list):
+            rendered = ", ".join(str(item) for item in value) or "(none)"
+        else:
+            rendered = str(value)
+        lines.append(f"- {question.text}: **{rendered}**")
+    return "\n".join(lines)
 
 
 def form_to_askuserquestion(form: FormSchema, batch_size: int = 4) -> list[list[dict[str, Any]]]:

@@ -22,6 +22,11 @@ type: reference
 | `form_to_widget_html(form, message="")` | Render the rich inline HTML form for `show_widget`. |
 | `form_to_askuserquestion(form, batch_size=4)` | Render batched `AskUserQuestion` payloads (the fallback surface). |
 | `form_to_elicitation_schema(form)` | Render a native MCP elicitation JSON schema. |
+| `select_form_surface(form, widget_capable=True, keyboard_mode=False)` | Choose the surface: `"widget"` (the default) or `"ask"`. |
+| `is_trivial_form(form)` | True when a form is small enough that buttons lose nothing: one select/boolean, ≤3 options, no label >120 chars. |
+| `keyboard_mode_enabled(project_root=None)` | Read the per-project opt-out (`keyboard_mode` in `./attune.config.json`; `ATTUNE_KEYBOARD_MODE` overrides). |
+| `form_response_summary(form, response)` | Collapse an answered form to a compact markdown summary. |
+| `needs_widget(form)` | Low-level controls check — True if `AskUserQuestion` would lose fidelity. Does not own the surface decision. |
 | `collect_form_response(form, raw_answers, template_id="")` | Validate answers (R4) and return a `FormResponse`; raises `FormValidationError`. |
 | `WIDGET_RESPONSE_MARKER` | The sentinel key the widget posts back under. |
 | `FormValidationError` | Raised for a malformed definition or answer; lists every problem. |

@@ -2,29 +2,71 @@
 
 **Written:** 2026-07-23. **Amended:** 2026-07-24, per roundtable
 thread `q-demo-scripts-review-002` (chair-ruled; caption-carried
-caveats per amended ruling). **Status:** draft — this is the Thu/Fri
-CAPTURE REHEARSAL subject (chair-ruled): it exercises the full
-recording pipeline before Tuesday's 10.6.0 shoot, and the footage
-is releasable in its own right after the chair's honesty-gate
-pass. **Everything shown is live on PyPI 10.5.0 today** — no
-receipt slots to wait for; the pre-record check is just "the
-commands run on this machine." **Format:** ~4 min main cut + 60s
-social cut. Stage geometry: record on screen 1 per the
+caveats per amended ruling). **Re-cut:** 2026-07-25, per roundtable
+thread `q-forms-default-vs-latency-001` and decisions.md D21 —
+the arc changed because the product changed (see "Why this was
+re-cut" below). **Status:** draft — this is the Thu/Fri CAPTURE
+REHEARSAL subject (chair-ruled): it exercises the full recording
+pipeline before Tuesday's 10.6.0 shoot, and the footage is
+releasable in its own right after the chair's honesty-gate pass.
+
+> **Version gate — READ BEFORE CAPTURE.** This script now shows
+> **10.6.0 behaviour, which is NOT on PyPI yet** (10.5.0 is
+> current). The forms-by-default routing and keyboard mode land in
+> 10.6.0. Capture against the branch/local build, and do not
+> publish the main cut until 10.6.0 is live. The previous version
+> of this script claimed "everything shown is live on PyPI 10.5.0
+> today" — that claim is now false and has been removed rather
+> than quietly left standing.
+
+**Format:** ~4 min main cut + 60s social cut. Stage geometry:
+record on screen 1 per the
 [10.6.0 script's](DEMO_10_6_0_script.md) Stage geometry section —
 same rules, same set.
+
+## Why this was re-cut (2026-07-25)
+
+The old arc was **"3 turns → 1 turn"**: cold-open on the agent
+asking three sequential button questions, then `/elicit` collapsing
+them into one form. That arc no longer reproduces. D21 flipped the
+default — a multi-dimension ask now renders as one form
+*immediately*, without `/elicit`, because the Socratic rule was
+rewritten to batch independent dimensions. The three-question
+interrogation the cold open depended on is the behaviour we
+removed.
+
+Rather than lose the visual proof, the re-cut makes it
+**deterministic**: keyboard mode reproduces the sequential
+experience on demand, so the same prompt gives both takes from one
+machine. This is strictly better than the old approach, which
+needed a specimen "rehearsal-verified to reliably yield ~3
+sequential questions" and could still misfire on the day.
+
+The demo's claim also gets stronger and more honest: the good
+behaviour is no longer a move the user has to know to ask for — it
+is what the product does by default.
 
 Pre-record checklist:
 
 - [ ] Screen Studio mic toggle flipped + 2-second audio-track
       test (the pending receipt from the 07-23 walkthrough)
-- [ ] `/elicit` and one pushback form rehearsed once, unrecorded
-- [ ] Cold-open prompt PRE-SELECTED: 2–3 candidate prompts
-      rehearsal-verified to reliably yield ~3 sequential
-      questions; the specimen is picked before the take, not
-      during it (table ruling, q-demo-scripts-review-002 —
-      curation of a live run, never simulation). Candidates
-      locked 2026-07-24 — see "Locked specimens" below; the
-      unrecorded live pass is what remains before ticking this.
+- [ ] Both takes and one pushback form rehearsed once, unrecorded
+- [ ] Cold-open prompt PRE-SELECTED (one prompt, two takes — see
+      "The two-take method" below). The specimen is picked before
+      the take, not during it (table ruling,
+      q-demo-scripts-review-002 — curation of a live run, never
+      simulation). Candidates locked 2026-07-24, method re-cut
+      2026-07-25; the unrecorded live pass is what remains before
+      ticking this.
+- [ ] Keyboard-mode toggle verified BOTH directions on the capture
+      machine: `ATTUNE_KEYBOARD_MODE=1` yields sequential button
+      turns, unset yields one form, on the SAME prompt. This is the
+      re-cut's load-bearing mechanism — if it doesn't flip cleanly,
+      the cold open doesn't work.
+- [ ] Running against a build that HAS D21 (forms-by-default). Check
+      with `python -c "from attune.elicitation import
+      select_form_surface; print('ok')"` — an ImportError means the
+      stage is on 10.5.0 and the whole arc reverts to the old one.
 - [ ] Pushback example LOCKED: a rehearsed, real, low-context
       disagreement whose two options fit on screen and whose
       consequence reads in one sentence. Specimen locked and
@@ -63,16 +105,28 @@ Capture and export settings (ruled 2026-07-23, dry-run + Patrick):
 
 ### Cold-open candidates (primary first)
 
-Each candidate's dimensions map onto the same scope/focus/depth
-wording the Act-1 form uses, so "same questions, one form" is
-visually provable. The candidates are drawn from the repo's own
-Socratic Interaction Rule examples (the rule text itself
-instructs these questions, which is what makes them reliable
-triggers); the final reliability check is the unrecorded
-rehearsal pass.
+**Re-cut 2026-07-25:** these are now the prompt for BOTH takes, not
+just the interrogation take. Each candidate's dimensions map onto
+the same scope/focus/depth wording, so "same questions, one form"
+is visually provable across the cut.
 
-1. **"help me test this module"** (primary — matches the Act-1
-   `/elicit testing this module` line). Expected sequence:
+The reliability problem the old note worried about is gone.
+Previously the specimen had to be "rehearsal-verified to reliably
+yield ~3 sequential questions" — a hope, since the agent chose the
+shape. Now take A gets the sequential shape because
+`ATTUNE_KEYBOARD_MODE=1` *makes* it sequential, and take B gets one
+form because that is the default. Both takes are deterministic; the
+rehearsal pass is confirming wording and pacing, not fishing for a
+behaviour.
+
+The candidates are still drawn from the repo's own Socratic
+Interaction Rule examples — note that rule was rewritten by D21, and
+its worked example (`"security audit" → path + focus + depth → ONE
+form`) is now the *batching* instruction rather than the sequential
+one.
+
+1. **"help me test this module"** (primary — typed verbatim in
+   BOTH takes). Take-A sequence, under keyboard mode:
    Q1 scope — "Which module should we test?"; Q2 focus —
    "What's the focus?" (run existing tests / find coverage
    gaps / generate new tests / coverage of changed code);
@@ -81,19 +135,23 @@ rehearsal pass.
 2. **"review my recent changes"** — Q1 scope (branch diff,
    staged, or last N commits); Q2 focus (security / quality /
    performance / tests); Q3 depth (quick pass vs multi-pass
-   deep review). If used, Act 1 becomes
-   `/elicit reviewing my recent changes`.
+   deep review).
 3. **"clean up this code"** — Q1 scope (which path); Q2 focus
    (simplify / refactor / dead code); Q3 depth (safe-only vs
-   structural). If used, Act 1 becomes
-   `/elicit cleaning up <path>`.
+   structural).
+
+Whichever candidate is used, take B types the SAME words with no
+flag and no slash command — that identity is the whole proof.
 
 ### Act-1 form (primary specimen)
 
 Dogfood-verified 2026-07-24 through the live
-`elicitation_render_form` MCP tool on the installed 10.5.0
-plugin — validates clean and batches all three fields into a
-single turn:
+`elicitation_render_form` MCP tool — validates clean and batches
+all three fields into a single turn. **Re-cut note:** this is now
+what take B renders *by default* from the plain prompt; the
+`/elicit` command is no longer needed to produce it, and the
+verification must be re-run against a D21 build (the 10.5.0 run
+proved the form validates, not that it is the default).
 
 ```json
 {
@@ -161,20 +219,39 @@ and the overrule answer round-trips
 
 | Segment | Time | What the viewer sees |
 |---------|------|----------------------|
-| Cold open | 0:00–0:30 | Question-by-question interrogation, live |
-| One form | 0:30–1:45 | The same scoping as a single form |
+| Cold open | 0:00–0:30 | Question-by-question interrogation (take A, keyboard mode) |
+| One form | 0:30–1:45 | Same prompt, one form, no command (take B, the default) |
 | The pushback form | 1:45–2:45 | Disagreement as a decision, not an argument |
 | Dogfood | 2:45–3:30 | This repo's own rulings ran on these forms |
 | Close | 3:30–4:00 | The rule + the install line |
 
 ---
 
+## The two-take method (production note — read first)
+
+Both opening acts use **one prompt and one flag**. Record take A,
+flip the flag, record take B, cut them together. Same repo, same
+prompt, same session shape — the only variable is the mode, which
+is exactly what makes the comparison honest and repeatable.
+
+```bash
+ATTUNE_KEYBOARD_MODE=1 claude    # take A — sequential button turns
+```
+
+```bash
+claude                            # take B — one form (the default)
+```
+
+Nothing is staged or simulated: take A is a real, shipping,
+user-selectable mode, not a re-enactment of an old version. That
+distinction is what keeps this inside the table's
+"curation of a live run, never simulation" ruling.
+
 ## Cold open (0:00–0:30) — the interrogation
 
-**Screen:** Claude Code, real repo. Use the PRE-SELECTED prompt
-(see checklist) — a genuinely ambiguous ask, e.g. "help me test
-this module," chosen because rehearsal showed it reliably draws
-~3 sequential questions.
+**Screen:** Claude Code, real repo, **take A**. Use the
+PRE-SELECTED prompt (see checklist) — a genuinely ambiguous ask,
+e.g. "help me test this module."
 
 The agent asks a question. One button row. Answer it. It asks the
 next. Answer that. A third appears. **Production:** the
@@ -199,30 +276,36 @@ the philosophy narration starts.
 
 ## One form (0:30–1:45) — the same scoping, one turn
 
-**Screen:**
+**Screen:** **take B** — the identical prompt, typed the same way,
+with no flag and no slash command.
 
 ```text
-/elicit testing this module
+help me test this module
 ```
 
-One form renders: the independent dimensions of the decision —
-scope, focus, depth — batched into a single turn, multi-select
-where it fits, a recommended option marked. Fill it in one pass.
-Work starts.
+One form renders immediately: the independent dimensions of the
+decision — scope, focus, depth — batched into a single turn,
+multi-select where it fits, a recommended option marked. Fill it
+in one pass. Work starts.
 
 **Narration:**
 
-> Same questions. One form. The dimensions of a decision I was
-> going to make anyway — asked together, because they're
-> independent.
+> Same prompt. Same questions. One form. I didn't ask for this —
+> I didn't type a command, I didn't opt in. The dimensions of a
+> decision I was going to make anyway, asked together, because
+> they're independent. That's just what it does now.
 
 **Production:** hold on the rendered form long enough to read
 every field, with MINIMAL narration over the hold. This is the
 product shot of the video — the viewer cannot read fields and
-parse policy by ear at the same time. Use the SAME
-scope/focus/depth wording the cold-open questions used, so "same
-questions, one form" is visually provable; a brief "3 turns →
-1 turn" caption may punctuate the transition.
+parse policy by ear at the same time. The scope/focus/depth
+wording is identical across both takes, so "same questions, one
+form" is visually provable; a "3 turns → 1 turn" caption
+punctuates the cut.
+
+**Caption (burned in over the cut between takes):**
+
+> same prompt · no command · the default changed
 
 **Narration (after the hold) — captions carry the rules (chair
 ruling, amended 2026-07-24: caveats live on screen, narration
@@ -317,13 +400,14 @@ establish the friction, resolve it, END on the pushback click.
 LinkedIn autoplays MUTED — every beat carries a burned-in caption
 that works with no audio.
 
-- 0:00–0:05 — sequential-question friction, compressed: three
-  quick question-turns with the turn-counter. Caption: "Three
-  decisions. Three round trips."
-- 0:05–0:20 — smash-cut to `/elicit`: the same three dimensions
-  as one form, with a brief 3-turns-vs-1-form contrast frame
-  (split or before/after). Caption: "Every question at once —
-  when that's correct."
+- 0:00–0:05 — sequential-question friction, compressed (take A):
+  three quick question-turns with the turn-counter. Caption:
+  "Three decisions. Three round trips."
+- 0:05–0:20 — smash-cut to take B: the SAME prompt, no command,
+  the same three dimensions as one form, with a brief
+  3-turns-vs-1-form contrast frame (split or before/after).
+  Caption: "Same prompt. Every question at once — when that's
+  correct."
 - 0:20–0:50 — the pushback form + one-click OVERRULE + the
   agent's acknowledgment (the decision receipt). Caption:
   "Pushback you can click."

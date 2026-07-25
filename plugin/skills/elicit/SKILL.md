@@ -237,16 +237,43 @@ no blocked items there is nothing to ask — just narrate the report.
 
 ## Choosing a surface
 
-**Route by the form's controls first.** If **every** field is a
-select, boolean, or short text, the form renders natively on
-`AskUserQuestion` — one call, no HTML round-trip — so use that; don't
-reach for the widget. Use a rich surface (native elicitation / widget)
-**only** when at least one field is a `number`, `date`, `textarea`, or a
-`decision` / `pushback` / `progress` construct — those have no portable
-`AskUserQuestion` control. (The `needs_widget` predicate in
-`attune.elicitation` is this same check in code.) Sending an
-AskUserQuestion-eligible form to the widget costs a second tool call and
-a multi-kB HTML round-trip for no gain.
+**The widget is the default. `AskUserQuestion` is the fallback.**
+(D21 — this reverses the earlier cheapest-surface-that-fits rule.)
+Don't route on what the surface can technically express; route on how
+much of the option space the user can see at once. Folding three
+options and their tradeoffs into prose above a single-select turns a
+scan into a serial read the user has to hold in their head — that loss
+is real even though a control-type check can't see it.
+
+`select_form_surface(form, widget_capable=…, keyboard_mode=…)` in
+`attune.elicitation` is this rule in code. Call it instead of deciding
+by hand. Precedence, highest first:
+
+1. **Client can't render widgets** → `AskUserQuestion`. A constraint,
+   not a preference.
+2. **A `number` / `date` / `textarea` field** → widget, always. These
+   have no `AskUserQuestion` control at all, so this outranks the
+   opt-out and the user can never silently lose a field.
+3. **Keyboard mode on** → `AskUserQuestion`. The user's opt-out,
+   persisted per project in `attune.config.json` (`keyboard_mode`),
+   with `ATTUNE_KEYBOARD_MODE` as a session override.
+4. **Trivial form** → `AskUserQuestion`. Trivial is narrow and
+   mechanical: exactly one `single_select`/`boolean`, ≤3 options, and
+   no option label over 120 chars. A long label means tradeoffs got
+   folded into the text — that form wanted a card.
+5. **Otherwise** → widget.
+
+**Latency is not a reason to downgrade a form.** The extra tool call is
+a real cost but it is not the axis; if a form is worth asking, it is
+worth asking legibly. `needs_widget` still exists as the low-level
+"does this lose fidelity on AskUserQuestion" check, but it no longer
+owns the decision — don't route on it directly.
+
+**After the answer comes back,** collapse the form rather than leaving
+the rendered markup in the transcript: `form_response_summary(form,
+response)` returns a few lines of markdown (title + one bullet per
+answer). Use it in your narration so a long session accumulates
+summaries, not screenfuls of HTML.
 
 - **Rich / native — one call:** `elicitation_ask` renders the form as a
   native MCP elicitation dialog (supports number/date/textarea +
