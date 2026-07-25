@@ -18262,3 +18262,53 @@ def ", start_idx + 1)` for module-
   `git stash push -- <paths>` → `git checkout -b <new> origin/main` →
   `git stash pop`, and it survives having an open PR on the branch you
   left.
+
+- **Designing a debt ratchet — three ways one fails silently, and the
+  canary set that proves it works**: 2026-07-25, baselining the 22
+  cross-platform warnings that could not be mechanically cleared
+  (`.platform-compat-baseline.json`, PR #1664). A ratchet — accept
+  current debt, fail on new — is the right shape whenever a scanner
+  finds real issues that cannot go to zero today. Three design choices
+  decide whether it actually gates, and all three fail QUIETLY:
+  - **Key on file+category, NEVER on line.** Line numbers shift when
+    anything above them moves, so a line-keyed baseline goes red on
+    edits that changed nothing it cares about. That noise trains
+    everyone to regenerate the baseline reflexively, which is
+    indistinguishable from having no gate — the failure is social, not
+    technical, and no test catches it. File+category with a COUNT is
+    stable under reformatting and still catches "this file grew a new
+    one".
+  - **Report IMPROVEMENTS, not only regressions.** If fixing a warning
+    reads as drift (or as nothing at all), the accepted debt freezes at
+    its starting size forever and the "ratchet" only turns one way.
+    Emit `N improved since the baseline` plus the exact shrink command;
+    that is what converts a freeze into a ratchet.
+  - **CI must never run `--update-baseline`.** A self-regenerating
+    baseline accepts every regression it exists to catch. Regeneration
+    is a deliberate human act; the CI step only ever COMPARES.
+  **The receipt**: three canaries, each reverted afterward and the clean
+  run re-confirmed — (1) a NEW file with a violation → exit 1 naming it
+  `(new)`; (2) an EXTRA violation in an already-baselined file → exit 1
+  naming it `2 (was 1)` (the case a naive `set` comparison misses
+  entirely); (3) a violation FIXED → exit 0 plus the improvement report.
+  Also re-verify after the formatter runs — `black` reformatting the
+  checker is a real way to break it between "tested" and "committed".
+  Pairs with the gate-severity lesson (same day): that one is about a
+  gate that cannot fail, this one about a gate that can only ever fail.
+
+- **Piping a background command through `tail -N` guarantees an empty
+  output file until it exits — so "output is empty" carries NO
+  information about progress**: 2026-07-25, a 46-minute background
+  pytest launched as `pytest … 2>&1 | tail -8`. I read the empty task
+  output file three times as a progress signal ("still collecting",
+  "might be hung") when `tail` buffers the entire stream and cannot emit
+  until stdin closes — by construction there was nothing to see until
+  the very end. Diagnosis that settles it in one call: `ps -o etime -p
+  $(pgrep -f "<cmd>")` — an elapsed time proves alive; the output file
+  proves nothing. Rule: for a background command whose progress you may
+  want to watch, do NOT pipe through `tail`/`head` (neither can flush
+  incrementally); redirect raw and read the tail of the FILE instead.
+  Extends the existing "background pytest exit 0 with ZERO output is not
+  a receipt" lesson — same empty-file symptom, different cause: that one
+  is the harness failing to capture, this one is self-inflicted by the
+  pipe, and the two demand opposite responses (rerun vs simply wait).
