@@ -233,3 +233,92 @@ def test_telemetry_can_be_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ATTUNE_FORM_TELEMETRY", "0")
     select_form_surface(_form([_select(id="a"), _select(id="b")]))
     assert surface_mix() == {}
+
+
+# --------------------------------------------------------------------
+# the live call site — the MCP handlers
+# --------------------------------------------------------------------
+#
+# Without these, the router is dead code: nothing in src/ called it, so
+# the telemetry above would count zero forever. These assert the wiring,
+# not just the predicate.
+
+
+def _events() -> list[dict]:
+    """Read raw telemetry records written during the test."""
+    import json
+
+    from attune.telemetry.form_events import _events_path
+
+    path = _events_path()
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
+
+
+def _run(handler_name: str, form: dict) -> dict:
+    """Invoke an elicitation MCP handler without constructing the server."""
+    import asyncio
+
+    from attune.mcp.server import EmpathyMCPServer
+
+    server = EmpathyMCPServer.__new__(EmpathyMCPServer)
+    handler = getattr(EmpathyMCPServer, handler_name)
+    return asyncio.run(handler(server, {"form": form}))
+
+
+_RICH = {
+    "title": "T",
+    "fields": [
+        {"id": "a", "type": "single_select", "text": "Scope?", "options": ["src", "tests"]},
+        {"id": "b", "type": "single_select", "text": "Depth?", "options": ["quick", "deep"]},
+    ],
+}
+_TRIVIAL = {"title": "T", "fields": [{"id": "q", "type": "boolean", "text": "Proceed?"}]}
+
+
+def test_render_widget_handler_records_the_decision() -> None:
+    result = _run("_handle_elicitation_render_widget", _RICH)
+    assert result["success"] is True
+
+    events = _events()
+    assert len(events) == 1
+    assert events[0]["chosen"] == "widget"
+    assert events[0]["surface"] == "widget"
+    assert events[0]["agreed"] is True
+
+
+def test_render_form_handler_records_disagreement_and_nudges() -> None:
+    """Agent flattened a form the router wanted rich — both must be visible."""
+    result = _run("_handle_elicitation_render_form", _RICH)
+    assert result["success"] is True
+    assert "surface_note" in result  # the nudge back toward the widget
+
+    events = _events()
+    assert len(events) == 1
+    assert events[0]["chosen"] == "ask"
+    assert events[0]["surface"] == "widget"
+    assert events[0]["agreed"] is False
+
+
+def test_render_form_handler_stays_quiet_when_ask_is_correct() -> None:
+    """A trivial form on AskUserQuestion is right — no nag, agreement logged."""
+    result = _run("_handle_elicitation_render_form", _TRIVIAL)
+    assert "surface_note" not in result
+
+    events = _events()
+    assert events[0]["agreed"] is True
+    assert events[0]["reason"] == "trivial_form"
+
+
+def test_handler_survives_broken_telemetry(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Rendering must never fail because the receipt could not be written."""
+    import attune.elicitation.bridge as bridge
+
+    def _boom(*_args: object, **_kwargs: object) -> None:
+        raise OSError("disk full")
+
+    monkeypatch.setattr(bridge, "log_surface_decision", _boom)
+    result = _run("_handle_elicitation_render_widget", _RICH)
+    assert result["success"] is True
+    assert "html" in result

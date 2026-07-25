@@ -9,13 +9,19 @@ read answer "did the mix move?" instead of assuming it did.
 One event = one JSON line: ``v`` / ``ts`` / ``event`` / ``surface``
 plus optional routing context.
 
-**What this can and cannot measure.** It sees every form that reaches
-the router, so it measures the *surface mix* (widget vs ask) faithfully.
-It does NOT see a raw ``AskUserQuestion`` turn the agent wrote by hand
-without building a ``FormSchema`` — that path never enters Python. So
-this instruments routing, not firing; the forms-vs-raw-turns ratio the
-round table asked for is only partially observable from here, and the
-missing half has to come from transcript inspection.
+**What this can and cannot measure.** The live call site is the pair of
+MCP elicitation handlers, where the tool the agent invoked *is* its
+choice — so each record carries the router's recommendation (``surface``
+/ ``reason``), what the agent actually did (``chosen``), and whether
+they matched (``agreed``). That makes disagreement visible, not just
+volume.
+
+It still does NOT see a raw ``AskUserQuestion`` turn the agent wrote by
+hand without building a ``FormSchema`` at all — that path never enters
+Python. So the forms-vs-no-form ratio remains only partially observable
+from here, and the missing half has to come from transcript inspection.
+What *is* now observable is the narrower and more actionable signal:
+when a form was built and the agent then flattened it anyway.
 
 Consent model matches :mod:`attune.telemetry.memory_events`: LOCAL
 recording is default-on and nothing ever leaves the machine.

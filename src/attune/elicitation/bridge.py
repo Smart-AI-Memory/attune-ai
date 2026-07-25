@@ -574,6 +574,7 @@ def select_form_surface(
     *,
     widget_capable: bool = True,
     keyboard_mode: bool = False,
+    chosen: str | None = None,
 ) -> str:
     """Choose the surface to render ``form`` on. Returns ``"widget"`` or ``"ask"``.
 
@@ -601,12 +602,23 @@ def select_form_surface(
         form: The form to route.
         widget_capable: Whether the client can render inline HTML.
         keyboard_mode: Whether the user opted into terse/keyboard mode.
+        chosen: The surface the caller actually used, when known. The MCP
+            handlers pass this because the tool the agent invoked *is* its
+            choice, which lets the telemetry record agreement rather than
+            only the recommendation. ``None`` when the caller is asking
+            before deciding.
 
     Returns:
         ``"widget"`` or ``"ask"``.
     """
     surface, reason = _route(form, widget_capable=widget_capable, keyboard_mode=keyboard_mode)
-    log_surface_decision(surface, reason=reason, question_count=len(form.questions))
+    log_surface_decision(
+        surface,
+        reason=reason,
+        question_count=len(form.questions),
+        chosen=chosen,
+        agreed=None if chosen is None else chosen == surface,
+    )
     return surface
 
 

@@ -795,8 +795,23 @@ became a `FormSchema` at all, regardless of how routing resolved.
   renders an answered form as title + one bullet per answer, so a long
   session accumulates summaries instead of screenfuls of markup.
 - **Decay receipt.** `attune.telemetry.form_events` logs every routing
-  decision (surface + reason) to `~/.attune/telemetry/form_events.jsonl`;
-  `surface_mix()` reads it back.
+  decision to `~/.attune/telemetry/form_events.jsonl`; `surface_mix()`
+  reads it back. The live call site is the pair of MCP elicitation
+  handlers (`_handle_elicitation_render_form` /
+  `_handle_elicitation_render_widget`), where the tool the agent invoked
+  *is* its choice — so each record carries the recommendation
+  (`surface`, `reason`), the agent's actual pick (`chosen`), and whether
+  they matched (`agreed`). `render_form` additionally returns a
+  `surface_note` nudge when it flattens a form the router wanted rich.
+
+  **Caught in review, same session:** the first cut hung the logging off
+  `select_form_surface` alone, and *nothing in `src/` called it* — the
+  predicate was exported, tested, documented, and dead in the live path
+  (the same is true of `needs_widget`, which has never had a production
+  caller; the agent follows the skill's prose, not the function). The
+  counter would have read zero forever while the PR claimed it
+  "measures the surface mix faithfully." Registered ≠ working, again.
+  Wiring the handlers is what makes it real.
 
 **Chair's value frame** (answering the Claude seat's "what would
 falsify this?"): a form/widget should *speed up knowledge intake and
@@ -804,14 +819,17 @@ increase the clarity of messages between human and AI*. Noted as the
 stated intent — it is a direction, not yet a falsifiable metric, and
 the receipt below deliberately does not claim to measure it.
 
-**Known limit of the receipt, stated plainly.** `form_events` sees
-every form that reaches the router, so it measures the widget/ask
-**mix** faithfully. It cannot see a raw `AskUserQuestion` turn written
-by hand without building a `FormSchema` — that path never enters
-Python. So it instruments **routing, not firing**, and the
-forms-vs-raw-turns ratio the table asked for stays only partly
-observable from here. Surface mix will also rise by construction once
-the default flips; that is compliance, not value.
+**Known limit of the receipt, stated plainly.** `form_events` sees every
+form that reaches an elicitation MCP tool, so it measures the widget/ask
+**mix** and the agent's **agreement rate** faithfully. It cannot see a
+raw `AskUserQuestion` turn written by hand without building a
+`FormSchema` at all — that path never enters Python. So the
+forms-vs-no-form ratio the table asked for stays only partly observable
+from here; the missing half needs transcript inspection. Surface mix
+will also rise by construction once the default flips — that is
+compliance, not value. The `agreed` field is the one signal here that
+is not self-fulfilling: it records the agent overriding its own router,
+which no amount of flipping defaults manufactures.
 
 **Dissent preserved.** Antigravity was the only seat to argue against,
 on context rather than money: rendered HTML accumulating across a long

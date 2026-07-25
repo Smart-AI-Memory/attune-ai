@@ -752,12 +752,21 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         except FormValidationError as e:
             return {"success": False, "problems": e.problems}
 
-        return {
+        recommended = self._record_surface_choice(form, chosen="ask")
+        result = {
             "success": True,
             "title": form.title,
             "description": form.description,
             "batches": form_to_askuserquestion(form),
         }
+        if recommended == "widget":
+            result["surface_note"] = (
+                "The router recommends the widget for this form (D21 — the "
+                "rich surface is the default). AskUserQuestion will flatten "
+                "it. Use elicitation_render_widget unless the client cannot "
+                "render widgets or the user is in keyboard mode."
+            )
+        return result
 
     async def _handle_elicitation_render_widget(self, args: dict[str, Any]) -> dict[str, Any]:
         """Render a declarative form as inline HTML for ``show_widget`` (S1).
@@ -789,12 +798,47 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         except FormValidationError as e:
             return {"success": False, "problems": e.problems}
 
+        self._record_surface_choice(form, chosen="widget")
         return {
             "success": True,
             "html": form_to_widget_html(form, args.get("message") or ""),
             "title": form.title,
             "field_ids": [q.id for q in form.questions],
         }
+
+    @staticmethod
+    def _record_surface_choice(form: Any, *, chosen: str) -> str | None:
+        """Run the D21 router for telemetry and return its recommendation.
+
+        The elicitation tools are the only place the live system can observe
+        a surface decision: the tool the agent invoked *is* its choice.
+        Running the router here records both the recommendation and whether
+        the agent agreed, which is what makes the decay receipt real rather
+        than a counter nothing increments.
+
+        Best-effort in every direction — a telemetry or config problem must
+        never break form rendering, so failures return ``None`` and the
+        caller proceeds.
+
+        Args:
+            form: The validated ``FormSchema``.
+            chosen: The surface this handler represents (``"ask"`` for the
+                AskUserQuestion batches, ``"widget"`` for the HTML form).
+
+        Returns:
+            The router's recommendation, or ``None`` if it could not run.
+        """
+        try:
+            from attune.elicitation import keyboard_mode_enabled, select_form_surface
+
+            return select_form_surface(
+                form,
+                keyboard_mode=keyboard_mode_enabled(),
+                chosen=chosen,
+            )
+        except (OSError, ValueError, ImportError) as exc:
+            logger.debug("surface-choice telemetry skipped: %s", exc)
+            return None
 
     async def _handle_elicitation_collect_response(self, args: dict[str, Any]) -> dict[str, Any]:
         """Validate user answers against a declarative form (R4).
