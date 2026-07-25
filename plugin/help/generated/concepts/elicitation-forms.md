@@ -81,7 +81,7 @@ underneath.
 
 A form renders three ways, in order of richness:
 
-- **Widget** (`form_to_widget_html` → `show_widget`) — the rich surface:
+- **Widget** (`form_to_widget_html` → `show_widget`) — **the default**:
   cards, badges, the three-bucket progress board, dissent framing. Renders
   on widget-capable clients (claude.ai / Cowork). Answers post back through
   a sentinel-marked JSON block which you validate with
@@ -94,8 +94,60 @@ A form renders three ways, in order of richness:
   form for clients with native elicitation. It does not render on Claude
   Code today and lacks multi-select, so it is not the default.
 
-The terse reply vocabulary (`y` / `go` / `1`) answers any construct on any
-surface — a form never blocks a keyboard-only user.
+### Choosing a surface
+
+`select_form_surface(form, widget_capable=…, keyboard_mode=…)` decides,
+and the rich widget is what it decides by default. The axis is **how much
+of the option space the reader can see at once**, not how many tool calls
+it costs — folding three options and their tradeoffs into prose above a
+single-select turns a scan into a serial read.
+
+Precedence, highest first:
+
+1. **Client can't render widgets** → `AskUserQuestion`. A constraint.
+2. **A `number` / `date` / `textarea` field** → widget, always. No
+   `AskUserQuestion` control exists, so this outranks the opt-out and a
+   field can never be silently dropped.
+3. **Keyboard mode on** → `AskUserQuestion`.
+4. **Trivial form** → `AskUserQuestion`. Trivial is narrow and mechanical:
+   one `single_select`/`boolean`, ≤3 options, no option label over 120
+   characters. A long label means a tradeoff was folded into the text —
+   that form wanted a card.
+5. **Otherwise** → widget.
+
+Latency is not an input. `needs_widget` still exists as the low-level
+"does this lose fidelity on `AskUserQuestion`" check, but it no longer
+owns the decision.
+
+### Keyboard mode
+
+Keyboard mode is the opt-out for people who would rather type than click.
+Turn it on with the CLI:
+
+```bash
+attune config set keyboard_mode true
+```
+
+It persists **per project** as `keyboard_mode` in `./attune.config.json`,
+so it survives restarts and stays scoped to the repo you set it in.
+`attune config show` reports the current value.
+`ATTUNE_KEYBOARD_MODE=1` (or `0`) overrides it for one shell in either
+direction.
+
+Nobody has to know the setting exists to find it: after ten answered
+forms, the next submission surfaces a one-time hint pointing at the
+command (D17's usage-triggered discovery — it reaches people who have
+felt the friction, and never fires for someone already opted in). The terse reply vocabulary (`y` / `go` / `1`) answers any
+construct on any surface regardless — a form never blocks a keyboard-only
+user.
+
+### Collapsing an answered form
+
+Once a form is submitted, the rendered markup has done its job and only
+the question/answer pairs still carry meaning.
+`form_response_summary(form, response)` returns a title line plus one
+bullet per answer, so a long session accumulates summaries instead of
+screenfuls of HTML.
 
 ### The list render variant (`list_style`)
 

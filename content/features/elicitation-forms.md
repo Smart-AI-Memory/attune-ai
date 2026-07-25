@@ -82,7 +82,7 @@ underneath.
 
 A form renders three ways, in order of richness:
 
-- **Widget** (`form_to_widget_html` → `show_widget`) — the rich surface:
+- **Widget** (`form_to_widget_html` → `show_widget`) — **the default**:
   cards, badges, the three-bucket progress board, dissent framing. Renders
   on widget-capable clients (claude.ai / Cowork). Answers post back through
   a sentinel-marked JSON block which you validate with
@@ -95,8 +95,60 @@ A form renders three ways, in order of richness:
   form for clients with native elicitation. It does not render on Claude
   Code today and lacks multi-select, so it is not the default.
 
-The terse reply vocabulary (`y` / `go` / `1`) answers any construct on any
-surface — a form never blocks a keyboard-only user.
+### Choosing a surface
+
+`select_form_surface(form, widget_capable=…, keyboard_mode=…)` decides,
+and the rich widget is what it decides by default. The axis is **how much
+of the option space the reader can see at once**, not how many tool calls
+it costs — folding three options and their tradeoffs into prose above a
+single-select turns a scan into a serial read.
+
+Precedence, highest first:
+
+1. **Client can't render widgets** → `AskUserQuestion`. A constraint.
+2. **A `number` / `date` / `textarea` field** → widget, always. No
+   `AskUserQuestion` control exists, so this outranks the opt-out and a
+   field can never be silently dropped.
+3. **Keyboard mode on** → `AskUserQuestion`.
+4. **Trivial form** → `AskUserQuestion`. Trivial is narrow and mechanical:
+   one `single_select`/`boolean`, ≤3 options, no option label over 120
+   characters. A long label means a tradeoff was folded into the text —
+   that form wanted a card.
+5. **Otherwise** → widget.
+
+Latency is not an input. `needs_widget` still exists as the low-level
+"does this lose fidelity on `AskUserQuestion`" check, but it no longer
+owns the decision.
+
+### Keyboard mode
+
+Keyboard mode is the opt-out for people who would rather type than click.
+Turn it on with the CLI:
+
+```bash
+attune config set keyboard_mode true
+```
+
+It persists **per project** as `keyboard_mode` in `./attune.config.json`,
+so it survives restarts and stays scoped to the repo you set it in.
+`attune config show` reports the current value.
+`ATTUNE_KEYBOARD_MODE=1` (or `0`) overrides it for one shell in either
+direction.
+
+Nobody has to know the setting exists to find it: after ten answered
+forms, the next submission surfaces a one-time hint pointing at the
+command (D17's usage-triggered discovery — it reaches people who have
+felt the friction, and never fires for someone already opted in). The terse reply vocabulary (`y` / `go` / `1`) answers any
+construct on any surface regardless — a form never blocks a keyboard-only
+user.
+
+### Collapsing an answered form
+
+Once a form is submitted, the rendered markup has done its job and only
+the question/answer pairs still carry meaning.
+`form_response_summary(form, response)` returns a title line plus one
+bullet per answer, so a long session accumulates summaries instead of
+screenfuls of HTML.
 
 ### The list render variant (`list_style`)
 
@@ -224,6 +276,12 @@ form = form_from_dict({
 | `form_to_widget_html(form, message="")` | Render the rich inline HTML form for `show_widget`. |
 | `form_to_askuserquestion(form, batch_size=4)` | Render batched `AskUserQuestion` payloads (the fallback surface). |
 | `form_to_elicitation_schema(form)` | Render a native MCP elicitation JSON schema. |
+| `select_form_surface(form, widget_capable=True, keyboard_mode=False)` | Choose the surface: `"widget"` (the default) or `"ask"`. |
+| `is_trivial_form(form)` | True when a form is small enough that buttons lose nothing: one select/boolean, ≤3 options, no label >120 chars. |
+| `keyboard_mode_enabled(project_root=None)` | Read the per-project opt-out (`keyboard_mode` in `./attune.config.json`; `ATTUNE_KEYBOARD_MODE` overrides). |
+| `set_keyboard_mode(enabled, project_root=None)` | Persist the opt-out; what `attune config set keyboard_mode` calls. Preserves other keys. |
+| `form_response_summary(form, response)` | Collapse an answered form to a compact markdown summary. |
+| `needs_widget(form)` | Low-level controls check — True if `AskUserQuestion` would lose fidelity. Does not own the surface decision. |
 | `collect_form_response(form, raw_answers, template_id="")` | Validate answers (R4) and return a `FormResponse`; raises `FormValidationError`. |
 | `WIDGET_RESPONSE_MARKER` | The sentinel key the widget posts back under. |
 | `FormValidationError` | Raised for a malformed definition or answer; lists every problem. |
@@ -343,11 +401,26 @@ blocker or omit a real one.
   block and validate it with `elicitation_collect_response`. The
   widget round-trip makes no Anthropic API call.
 - **Q:** When should a construct fire?
-  **A:** That is a judgment call governed by the agent's decision
-  routine (`.claude/rules/attune/decision-routine.md`), not by this
-  subsystem — the grammar defines the *shape*, not the *when*. And a
-  form never blocks a keyboard-only user: the terse reply vocabulary
-  (`y` / `go` / `1`) answers any construct on any surface.
+  **A:** The grammar defines the *shape*; the *when* lives in the
+  agent's Socratic rule and decision routine
+  (`.claude/rules/attune/decision-routine.md`). The short version:
+  build a form when two or more independent dimensions need settling
+  (batch them into ONE form, never N sequential turns), when there are
+  three or more alternatives or two with real tradeoffs, when you are
+  disagreeing with the user, or when the answer is a number, date, or
+  more than a phrase of text. A raw button-turn is right only for a
+  single low-stakes choice among a few options. And a form never blocks
+  a keyboard-only user: the terse reply vocabulary (`y` / `go` / `1`)
+  answers any construct on any surface.
+- **Q:** Why did a simple question render as a full form?
+  **A:** The widget is the default now. If you'd rather have buttons,
+  run `attune config set keyboard_mode true` — it persists for this
+  project. `ATTUNE_KEYBOARD_MODE=1` overrides it for one shell.
+- **Q:** Doesn't defaulting to the widget cost an extra round-trip?
+  **A:** Yes, and that is deliberate. Latency was the old routing axis
+  and it made the agent quietly downgrade forms that communicated
+  better; if a question is worth asking, it is worth asking legibly.
+  Trivial one-off choices still go to buttons.
 - **Q:** Do forms cost API credits?
   **A:** No. Rendering and validation are pure local transforms — no
   model call on any surface.

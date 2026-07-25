@@ -17,6 +17,21 @@ run-record corpus that future releases learn from.
 
 ### Added
 
+- **`attune config set` / `attune config show`** — the first project-config
+  CLI. Writes allowlisted settings to `./attune.config.json` (currently
+  `keyboard_mode`), preserving other keys; an unknown key errors rather
+  than silently persisting a setting that does nothing.
+- **`form_response_summary(form, response)`** — collapses an answered
+  form to a compact markdown summary (title plus one bullet per
+  answer), so a long session accumulates summaries instead of
+  screenfuls of rendered markup.
+- **Form-surface telemetry** (`attune.telemetry.form_events`) — every
+  routing decision is logged locally to
+  `~/.attune/telemetry/form_events.jsonl` with its reason, readable
+  back via `surface_mix()`. Local-only and default-on, disabled with
+  `ATTUNE_FORM_TELEMETRY=0` or `DO_NOT_TRACK`. Note it measures the
+  widget/ask *mix*, not whether a form was built at all — a hand-written
+  question turn never reaches Python.
 - **Video pointers on help surfaces.** Feature masters
   (`content/features/<feature>.md`) accept an optional `video:`
   frontmatter field (bare URL or `{url, title}`); the projector emits
@@ -108,6 +123,28 @@ run-record corpus that future releases learn from.
 
 ### Changed
 
+- **Forms by default — the rich form surface is now what you get**
+  (D21). Previously the agent routed each form to the cheapest surface
+  that could express its controls, so a multi-dimension question
+  collapsed into plain buttons and lost its cards, tradeoffs, and
+  rationale. `select_form_surface()` replaces that judgment: the
+  widget is the default and `AskUserQuestion` is an explicit fallback,
+  taken only for a client that can't render widgets, keyboard mode, or
+  a genuinely trivial form (one select/boolean, ≤3 short options).
+  `needs_widget` remains as the low-level controls check but no longer
+  owns the decision.
+- **The Socratic rule now names the artifact, not the tool.** It asked
+  agents to use `AskUserQuestion`, so they did — and the communication
+  grammar rarely fired regardless of routing. It now asks for a
+  `FormSchema`, with an explicit batching rule: independent dimensions
+  go in ONE form instead of N sequential question-turns.
+- **Keyboard mode** — the opt-out for people who'd rather type than
+  click. Turn it on with `attune config set keyboard_mode true`; it
+  persists per project in `attune.config.json`, with
+  `ATTUNE_KEYBOARD_MODE` as a two-way session override. After ten
+  answered forms a one-time hint points at the command, so the opt-out
+  is discoverable without having to know it exists. Ratified in D17,
+  built here.
 - **Managed-Redis naming is platform-neutral** (#1506).
   `get_managed_redis_config` replaces the Railway-specific name;
   `get_railway_redis_config` remains as a deprecated alias.
