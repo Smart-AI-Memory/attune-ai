@@ -1,16 +1,6 @@
 {
-  "src/attune/config/loader.py::hardcoded_path": 3,
-  "src/attune/config/sections/persistence.py::hardcoded_path": 6,
-  "src/attune/config/sections/telemetry.py::hardcoded_path": 2,
-  "src/attune/help/session.py::hardcoded_path": 1,
-  "src/attune/hooks/scripts/worktree_path_guard.py::hardcoded_path": 1,
-  "src/attune/llm/core.py::hardcoded_path": 1,
   "src/attune/memory/claude_memory.py::hardcoded_path": 1,
-  "src/attune/memory/redis_bootstrap.py::hardcoded_path": 1,
   "src/attune/ops/routes/pending_writes.py::hardcoded_path": 1,
   "src/attune/ops/session_redaction.py::hardcoded_path": 1,
-  "src/attune/platform_utils.py::hardcoded_path": 1,
-  "src/attune/roundtable/solutions.py::hardcoded_path": 1,
-  "src/attune/telemetry/usage_ping.py::hardcoded_path": 1,
-  "src/attune/workflows/rag_code_gen.py::hardcoded_path": 1
+  "src/attune/platform_utils.py::hardcoded_path": 1
 }
