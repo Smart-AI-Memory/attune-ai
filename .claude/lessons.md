@@ -18217,3 +18217,48 @@ def ", start_idx + 1)` for module-
   watcher reports WAITING forever with no error — split on NEWLINES.
   Testing the watcher against a known-terminal PR (one already merged)
   before arming it is what surfaced this in seconds.
+
+- **"Make the required check able to fail" is not enough — check that
+  some RULE can emit the failing severity**: 2026-07-25, the
+  `platform-compat` follow-up. The obvious fix was deleting
+  `continue-on-error: true` so the job could go red. That would have
+  changed nothing: the scanner's ONLY `severity="error"` rule was
+  `scan_error` ("could not scan file") — every actual
+  platform-compatibility finding (44 × `open()` without encoding, 15 ×
+  hardcoded home path, …) was `warning`, and the step gated on
+  `summary["errors"]`. So the "fixed" check would still only go red if
+  the scanner crashed, while looking enforced. **A gate has TWO halves —
+  the job's ability to fail, and the rules' ability to produce a failing
+  finding — and fixing one while the other is broken produces a check
+  that is more misleading than the original**, because it now looks
+  audited. Recipe when arming any linter/scanner as a required check:
+  (1) `grep -c 'severity="<gating-level>"'` in the tool and read each
+  hit — if the only ones are internal errors, promote a real rule first;
+  (2) confirm the current count at that level is ZERO before arming, or
+  CI goes red instantly; (3) **prove it fires** — drop a deliberate
+  violation in, confirm the tool reports it at gating severity with the
+  file and line, then remove it. Step 3 is what distinguishes "armed"
+  from "believed to be armed". Shipped that way: promoted
+  `missing_encoding` to error, fixed all 44 first, canary-tested, then
+  removed `continue-on-error`.
+
+- **Check `git branch --show-current` before the FIRST EDIT of a new
+  concern, not before the commit — by commit time the recovery is a
+  32-file stash dance, and the branch you drifted onto may have an open
+  PR that auto-merges**: 2026-07-25, three times in one session. Each
+  time the shape was identical: finish concern A (branch + commit +
+  push + PR), then start concern B *without switching*, because the
+  branch is only salient while you are creating it. Hit with a README
+  edit on the lessons branch, website edits on the README branch, and
+  32 files of CI/source work on the lessons branch. The existing
+  "confirm the checkout is on the branch you mean to ship" lesson fires
+  at commit time — too late to be cheap, and in this repo actively
+  dangerous: a docs-only PR is a merge instruction (the auto-merge-safe
+  lane takes it within minutes), so source changes sitting uncommitted
+  on a docs-only branch are one `git add -A` away from either stranding
+  or reclassifying a PR mid-flight. **Trigger to attach the check to:
+  the moment you open the first file of a new concern** — not the
+  commit, not the push. Recovery when you do drift is reliable:
+  `git stash push -- <paths>` → `git checkout -b <new> origin/main` →
+  `git stash pop`, and it survives having an open PR on the branch you
+  left.
