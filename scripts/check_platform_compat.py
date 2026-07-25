@@ -270,6 +270,58 @@ def format_json_report(result: ScanResult) -> str:
     )
 
 
+#: Default location of the accepted-warning baseline. Root-level, matching
+#: the `.secrets.baseline` convention already used here.
+DEFAULT_BASELINE = ".platform-compat-baseline.json"
+
+
+def baseline_key(issue: "Issue") -> str:
+    """Stable key for a warning: file + category, NOT line.
+
+    Line numbers shift whenever anything above them moves, so keying on
+    them would make the baseline fail on unrelated edits — noise that
+    trains people to regenerate it reflexively, which defeats the gate.
+    File+category with a count is stable under reformatting and still
+    catches "this file grew a new hardcoded path".
+    """
+    return f"{issue.file}::{issue.category}"
+
+
+def build_baseline(result: "ScanResult") -> dict[str, int]:
+    """Count current warnings per file+category."""
+    counts: dict[str, int] = {}
+    for issue in result.issues:
+        if issue.severity != "warning":
+            continue
+        counts[baseline_key(issue)] = counts.get(baseline_key(issue), 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def compare_to_baseline(
+    result: "ScanResult", baseline: dict[str, int]
+) -> tuple[list[str], list[str]]:
+    """Return (regressions, improvements) against ``baseline``.
+
+    A regression is a file+category with MORE warnings than accepted, or
+    one absent from the baseline entirely. An improvement is one with
+    fewer — reported so the baseline can be shrunk and the debt actually
+    ratchets down instead of being frozen forever.
+    """
+    current = build_baseline(result)
+    regressions = []
+    for key, count in sorted(current.items()):
+        accepted = baseline.get(key, 0)
+        if count > accepted:
+            where = "new" if key not in baseline else f"was {accepted}"
+            regressions.append(f"{key}: {count} ({where})")
+    improvements = []
+    for key, accepted in sorted(baseline.items()):
+        count = current.get(key, 0)
+        if count < accepted:
+            improvements.append(f"{key}: {count} (baseline allows {accepted})")
+    return regressions, improvements
+
+
 def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -302,6 +354,21 @@ def main() -> int:
         default=[],
         help="Additional directories to exclude",
     )
+    parser.add_argument(
+        "--baseline",
+        nargs="?",
+        const=DEFAULT_BASELINE,
+        help=(
+            "Compare warnings against a baseline file and exit 1 on any "
+            f"regression (default path: {DEFAULT_BASELINE})"
+        ),
+    )
+    parser.add_argument(
+        "--update-baseline",
+        nargs="?",
+        const=DEFAULT_BASELINE,
+        help="Write the current warnings as the accepted baseline",
+    )
 
     args = parser.parse_args()
 
@@ -332,11 +399,56 @@ def main() -> int:
     else:
         print(format_text_report(result, show_suggestions=args.fix))
 
+    # Write the baseline and stop — this is the "shrink it" path, run by
+    # hand after fixing warnings, never automatically in CI (a baseline
+    # that regenerates itself accepts every regression it was meant to
+    # catch).
+    if args.update_baseline:
+        path = Path(args.update_baseline)
+        counts = build_baseline(result)
+        path.write_text(json.dumps(counts, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        total = sum(counts.values())
+        print(f"wrote {path} — {total} accepted warning(s) across {len(counts)} file/category")
+        return 0
+
+    exit_code = 0
+
+    if args.baseline:
+        path = Path(args.baseline)
+        if not path.exists():
+            print(f"Error: baseline '{path}' does not exist", file=sys.stderr)
+            print(
+                "Create it with --update-baseline once the current state is accepted.",
+                file=sys.stderr,
+            )
+            return 1
+        try:
+            baseline = json.loads(path.read_text(encoding="utf-8"))
+        except ValueError as exc:
+            print(f"Error: baseline '{path}' is not valid JSON: {exc}", file=sys.stderr)
+            return 1
+        regressions, improvements = compare_to_baseline(result, baseline)
+        if improvements:
+            print(f"\n{len(improvements)} file/category improved since the baseline:")
+            for line in improvements:
+                print(f"  - {line}")
+            print(f"Shrink it: python {sys.argv[0]} {args.path} --update-baseline")
+        if regressions:
+            print(f"\nNEW cross-platform warnings not in the baseline ({len(regressions)}):")
+            for line in regressions:
+                print(f"  - {line}")
+            print("\nFix them, or accept them deliberately with --update-baseline.")
+            exit_code = 1
+        else:
+            print("\nNo new cross-platform warnings.")
+
     # Exit code
     if args.strict and (result.errors > 0 or result.warnings > 0):
         return 1
+    if result.errors > 0:
+        return 1
 
-    return 0
+    return exit_code
 
 
 if __name__ == "__main__":

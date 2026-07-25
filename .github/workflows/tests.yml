@@ -537,6 +537,19 @@ jobs:
             sys.exit(1)
         EOF
 
+    # The ratchet. The 22 pre-existing warnings (hardcoded home/etc/tmp
+    # paths) cannot be mechanically cleared the way the encoding errors
+    # were, so they are ACCEPTED in `.platform-compat-baseline.json` and
+    # anything beyond them fails. Keyed on file+category rather than line,
+    # so moving code never trips it — a baseline that cries wolf gets
+    # regenerated reflexively, which is the same as not having one.
+    #
+    # Fixing warnings is reported as an improvement, not a failure, with
+    # the command to shrink the baseline. CI never regenerates it: a
+    # self-updating baseline accepts every regression it exists to catch.
+    - name: No new cross-platform warnings (ratchet)
+      run: python scripts/check_platform_compat.py src/ --baseline
+
   code-quality:
     runs-on: ubuntu-latest
     timeout-minutes: 10
