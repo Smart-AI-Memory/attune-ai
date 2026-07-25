@@ -24,9 +24,12 @@ Licensed under the Apache License, Version 2.0
 """
 
 import argparse
+import ast
+import io
 import json
 import re
 import sys
+import tokenize
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -70,8 +73,77 @@ HARDCODED_PATHS = [
     (r'["\']\/tmp\/', "Hardcoded /tmp path"),
     (r'["\']\/etc\/', "Hardcoded /etc path"),
     (r'["\']\/home\/', "Hardcoded /home path"),
-    (r'["\']~\/', "Hardcoded home directory path"),
 ]
+
+#: A ``~/…`` literal is NOT a cross-platform defect on its own —
+#: ``expanduser()`` resolves it on every platform, Windows included, and
+#: ``"~/.attune/x"`` + ``.expanduser()`` is this repo's portable idiom (and
+#: was 15 of the 22 warnings the first baseline froze). It is a bug only
+#: when handed straight to a filesystem call unexpanded, which fails
+#: everywhere including Linux. So the rule fires on that COMBINATION,
+#: never on the literal.
+TILDE_LITERAL = re.compile(r'["\']~[\\/]')
+FILESYSTEM_CALL = re.compile(
+    r"\b(?:open|Path|PurePath|io\.open|os\.\w+|os\.path\.\w+|shutil\.\w+)\s*\(",
+)
+
+
+def docstring_line_numbers(content: str) -> set[int]:
+    """1-based line numbers occupied by module/class/function docstrings."""
+    try:
+        tree = ast.parse(content)
+    except (SyntaxError, ValueError):
+        return set()
+
+    numbers: set[int] = set()
+    for node in ast.walk(tree):
+        if not isinstance(
+            node,
+            (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef),
+        ):
+            continue
+        body = getattr(node, "body", None)
+        if not body:
+            continue
+        first = body[0]
+        if (
+            isinstance(first, ast.Expr)
+            and isinstance(first.value, ast.Constant)
+            and isinstance(first.value.value, str)
+        ):
+            numbers.update(range(first.lineno, (first.end_lineno or first.lineno) + 1))
+    return numbers
+
+
+def code_lines(content: str) -> list[str]:
+    """Split ``content`` into lines with comments and docstrings blanked.
+
+    A scanner that matches prose reports the CODE COMMENT WARNING ABOUT a
+    hardcoded path as a hardcoded path — four of the first baseline's 22
+    entries were exactly that, including a comment explaining a Windows
+    path bug. Blanking keeps line numbers intact so reported lines still
+    point at the real source.
+    """
+    lines = content.split("\n")
+
+    try:
+        for token in tokenize.generate_tokens(io.StringIO(content).readline):
+            if token.type != tokenize.COMMENT:
+                continue
+            row, col = token.start
+            if 1 <= row <= len(lines):
+                lines[row - 1] = lines[row - 1][:col]
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        # Unparseable file — fall back to the raw lines rather than
+        # silently scanning nothing.
+        lines = content.split("\n")
+
+    for row in docstring_line_numbers(content):
+        if 1 <= row <= len(lines):
+            lines[row - 1] = ""
+
+    return lines
+
 
 OPEN_WITHOUT_ENCODING = re.compile(
     r"\bopen\s*\([^)]*\)\s*(?:as\s+\w+)?(?!\s*#.*encoding)",
@@ -90,7 +162,9 @@ def scan_file(filepath: Path, result: ScanResult) -> None:
     """Scan a single Python file for compatibility issues."""
     try:
         content = filepath.read_text(encoding="utf-8")
-        lines = content.split("\n")
+        # Comments and docstrings are prose, not code — scanning them
+        # reports discussion of a defect as the defect itself.
+        lines = code_lines(content)
         relative_path = str(filepath)
 
         # Check for hardcoded paths
@@ -107,15 +181,27 @@ def scan_file(filepath: Path, result: ScanResult) -> None:
                             suggestion="Use attune.platform_utils for platform-appropriate paths",
                         ),
                     )
+            if (
+                TILDE_LITERAL.search(line)
+                and FILESYSTEM_CALL.search(line)
+                and "expanduser" not in line
+            ):
+                result.add_issue(
+                    Issue(
+                        file=relative_path,
+                        line=line_num,
+                        category="hardcoded_path",
+                        message="Unexpanded '~' passed to a filesystem call",
+                        severity="warning",
+                        suggestion='Wrap it: Path("~/…").expanduser()',
+                    ),
+                )
 
         # Check for open() without encoding
         for line_num, line in enumerate(lines, 1):
             if "open(" in line and "encoding" not in line:
                 # Skip binary mode opens
                 if "'rb'" in line or '"rb"' in line or "'wb'" in line or '"wb"' in line:
-                    continue
-                # Skip if it's a comment
-                if line.strip().startswith("#"):
                     continue
                 # Check if it's a text mode open
                 if (
