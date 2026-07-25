@@ -18159,3 +18159,106 @@ def ", start_idx + 1)` for module-
     orphan lessons prescribe recovery by cherry-pick from reflog; the
     patch is cheaper insurance, is immune to the local branch being
     deleted with the remote, and turns a recovery into a paste.
+
+- **A REQUIRED check can be structurally incapable of failing, or can
+  cover far less than its name implies — audit gate INTEGRITY, not gate
+  presence**: 2026-07-25, auditing why a Windows-only regression could
+  merge green. Two independent holes in the same required set, both
+  invisible because a passing check and a check that *cannot fail* look
+  identical on the PR page.
+  - **`platform-compat` is required and cannot fail.** Its final step
+    ends `continue-on-error: true` and emits `::warning::` instead of
+    exiting non-zero, so the context is always green regardless of what
+    the scan found. A required check that always passes is decoration.
+    Diagnostic for any required context: read the job and ask *what
+    input would make this red?* — if there is no such input, it gates
+    nothing. Grep the workflows for `continue-on-error` and cross-check
+    against `required_status_checks`.
+  - **The required set names TWO matrix lanes, not the matrix.**
+    `test (ubuntu-latest, 3.12)` + `test (windows-latest, 3.12)` are
+    required; on a full run the other ten — including windows
+    3.10/3.11/3.13/3.14 — report and gate nothing. This is the
+    mechanism behind the existing "auto-merge ignores non-required
+    lanes" and "admin-merging before Windows lanes complete" lessons.
+  - **You cannot fix it by adding the lanes to branch protection.**
+    `ci-matrix-right-sizing` runs a SLIM matrix on docs/tests-only PRs,
+    which never spawns those lanes, and a required check that never runs
+    reports `missing` and blocks the PR forever. `tests.yml` already
+    carries a comment warning about exactly this.
+  - **The working pattern is an always-running aggregator**: a job with
+    `needs: [test]` + `if: always()` that fails unless
+    `needs.test.result` is `success`/`skipped`, made the single required
+    context. It reports on every run (slim, full, or skipped) so it is
+    never "missing", and it covers every lane instead of two. Shipped as
+    `test-matrix-complete` (#1661). Generalizes: to gate a
+    conditionally-shaped set of jobs, require an aggregator that always
+    runs — never the conditional jobs themselves.
+
+- **The predicate you WATCH must be the predicate you PROMISED — a
+  monitor scoped narrower than your stated intent reports success at the
+  wrong moment**: 2026-07-25, third instance of mechanism-without-seam
+  in one session and the subtlest. I said "I'll wait for all five
+  Windows lanes before merging," then armed a watcher over the REQUIRED
+  check set. Both states are called "green", so nothing looked wrong —
+  and the watcher fired `READY` while four Windows lanes were still
+  `pending`. Merging on that signal would have produced exactly the
+  regression the watch existed to prevent, on the PR where I had just
+  said I would not. Caught only because the stated intent was still in
+  the conversation to compare against. **Rule**: when you announce a
+  wait condition, the watcher's exit predicate must be that literal
+  condition — re-read the sentence you wrote and diff it against the
+  code's terminating check. "Required checks pass", "all lanes pass",
+  and "PR is mergeable" are three different predicates that agree most
+  of the time and diverge exactly when it matters. Related mechanical
+  gotcha from the same watcher: `gh api …/protection --jq
+  '.required_status_checks.contexts[]'` returns names CONTAINING SPACES
+  (`test (ubuntu-latest, 3.12)`), so splitting that output on whitespace
+  shreds them into fragments that are permanently "missing" and the
+  watcher reports WAITING forever with no error — split on NEWLINES.
+  Testing the watcher against a known-terminal PR (one already merged)
+  before arming it is what surfaced this in seconds.
+
+- **"Make the required check able to fail" is not enough — check that
+  some RULE can emit the failing severity**: 2026-07-25, the
+  `platform-compat` follow-up. The obvious fix was deleting
+  `continue-on-error: true` so the job could go red. That would have
+  changed nothing: the scanner's ONLY `severity="error"` rule was
+  `scan_error` ("could not scan file") — every actual
+  platform-compatibility finding (44 × `open()` without encoding, 15 ×
+  hardcoded home path, …) was `warning`, and the step gated on
+  `summary["errors"]`. So the "fixed" check would still only go red if
+  the scanner crashed, while looking enforced. **A gate has TWO halves —
+  the job's ability to fail, and the rules' ability to produce a failing
+  finding — and fixing one while the other is broken produces a check
+  that is more misleading than the original**, because it now looks
+  audited. Recipe when arming any linter/scanner as a required check:
+  (1) `grep -c 'severity="<gating-level>"'` in the tool and read each
+  hit — if the only ones are internal errors, promote a real rule first;
+  (2) confirm the current count at that level is ZERO before arming, or
+  CI goes red instantly; (3) **prove it fires** — drop a deliberate
+  violation in, confirm the tool reports it at gating severity with the
+  file and line, then remove it. Step 3 is what distinguishes "armed"
+  from "believed to be armed". Shipped that way: promoted
+  `missing_encoding` to error, fixed all 44 first, canary-tested, then
+  removed `continue-on-error`.
+
+- **Check `git branch --show-current` before the FIRST EDIT of a new
+  concern, not before the commit — by commit time the recovery is a
+  32-file stash dance, and the branch you drifted onto may have an open
+  PR that auto-merges**: 2026-07-25, three times in one session. Each
+  time the shape was identical: finish concern A (branch + commit +
+  push + PR), then start concern B *without switching*, because the
+  branch is only salient while you are creating it. Hit with a README
+  edit on the lessons branch, website edits on the README branch, and
+  32 files of CI/source work on the lessons branch. The existing
+  "confirm the checkout is on the branch you mean to ship" lesson fires
+  at commit time — too late to be cheap, and in this repo actively
+  dangerous: a docs-only PR is a merge instruction (the auto-merge-safe
+  lane takes it within minutes), so source changes sitting uncommitted
+  on a docs-only branch are one `git add -A` away from either stranding
+  or reclassifying a PR mid-flight. **Trigger to attach the check to:
+  the moment you open the first file of a new concern** — not the
+  commit, not the push. Recovery when you do drift is reliable:
+  `git stash push -- <paths>` → `git checkout -b <new> origin/main` →
+  `git stash pop`, and it survives having an open PR on the branch you
+  left.
