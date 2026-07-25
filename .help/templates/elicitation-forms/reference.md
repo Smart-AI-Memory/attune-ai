@@ -3,8 +3,8 @@ type: reference
 name: elicitation-forms-reference
 feature: elicitation-forms
 depth: reference
-generated_at: 2026-07-25T05:58:04.934219+00:00
-source_hash: 9670395c7ce23f96b61ec57648f0a6c01aad19746a4f965901b5f07a5f070d2c
+generated_at: 2026-07-25T14:36:38.987608+00:00
+source_hash: 65dd2400b49b9d8a20605f411f62b72c1ae2d9d530b8730bb0db0acfef04fb59
 status: generated
 ---
 
@@ -25,6 +25,8 @@ status: generated
 | `keyboard_mode_enabled(project_root=None)` | Read the per-project opt-out (`keyboard_mode` in `./attune.config.json`; `ATTUNE_KEYBOARD_MODE` overrides). |
 | `set_keyboard_mode(enabled, project_root=None)` | Persist the opt-out; what `attune config set keyboard_mode` calls. Preserves other keys. |
 | `form_response_summary(form, response)` | Collapse an answered form to a compact markdown summary. |
+| `is_fully_inferred(form)` | True when every field's value was inferred — the form renders as a one-tap confirmation. |
+| `inferred_field_count(form)` | How many fields carry an inferred value. |
 | `needs_widget(form)` | Low-level controls check — True if `AskUserQuestion` would lose fidelity. Does not own the surface decision. |
 | `collect_form_response(form, raw_answers, template_id="")` | Validate answers (R4) and return a `FormResponse`; raises `FormValidationError`. |
 | `WIDGET_RESPONSE_MARKER` | The sentinel key the widget posts back under. |

@@ -235,6 +235,35 @@ summary into the question text and maps the **blocked** items to a
 `single_select` with the `recommended` item ordered first. When there are
 no blocked items there is nothing to ask — just narrate the report.
 
+## Infer first — the highest-value thing you can do
+
+Before you build the form, check what the conversation already answered.
+A three-field ask where two are inferable is a one-field ask plus a
+confirmation. This is the main defence against ceremony: forms feel
+heavy when they re-ask what you already said, not when they are rich.
+
+Set `default` to the value and `inferred_from` to why:
+
+```json
+{"id": "scope", "type": "single_select", "text": "Which path?",
+ "options": ["src", "tests"], "default": "src",
+ "inferred_from": "you have been editing src/"}
+```
+
+`inferred_from` without `default` is a definition error. Both surfaces
+mark the value as a guess — the widget badges it, `AskUserQuestion`
+folds it into help text — so a wrong inference is catchable.
+
+**Infer, then confirm — never infer and skip.** When you can infer every
+field, still render the form; it comes back as a one-tap confirmation
+with a `Confirm` button. A correct-looking wrong guess the user never
+saw is the only failure a form cannot recover from. Do not "save them a
+turn" by acting on inferences silently.
+
+Only infer what the conversation actually supports. A guess with no
+basis is worse than a question, because it costs the user a correction
+instead of an answer.
+
 ## Choosing a surface
 
 **The widget is the default. `AskUserQuestion` is the fallback.**

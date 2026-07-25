@@ -27,6 +27,8 @@ type: reference
 | `keyboard_mode_enabled(project_root=None)` | Read the per-project opt-out (`keyboard_mode` in `./attune.config.json`; `ATTUNE_KEYBOARD_MODE` overrides). |
 | `set_keyboard_mode(enabled, project_root=None)` | Persist the opt-out; what `attune config set keyboard_mode` calls. Preserves other keys. |
 | `form_response_summary(form, response)` | Collapse an answered form to a compact markdown summary. |
+| `is_fully_inferred(form)` | True when every field's value was inferred — the form renders as a one-tap confirmation. |
+| `inferred_field_count(form)` | How many fields carry an inferred value. |
 | `needs_widget(form)` | Low-level controls check — True if `AskUserQuestion` would lose fidelity. Does not own the surface decision. |
 | `collect_form_response(form, raw_answers, template_id="")` | Validate answers (R4) and return a `FormResponse`; raises `FormValidationError`. |
 | `WIDGET_RESPONSE_MARKER` | The sentinel key the widget posts back under. |

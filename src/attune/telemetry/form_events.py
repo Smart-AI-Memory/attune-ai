@@ -190,6 +190,49 @@ def submission_count() -> int:
     return count
 
 
+def inference_rate() -> dict[str, float | int]:
+    """How much inference-first is actually happening.
+
+    The decay guard for inference-first: the discipline lives in prompt
+    guidance, so the only way to know it is being followed is to count
+    it. A ``fields_inferred`` of zero across many forms means the
+    instruction is not firing, whatever the docs say.
+
+    Returns:
+        ``forms``, ``fields``, ``fields_inferred``, ``fully_inferred``,
+        and ``inferred_share`` (0.0–1.0). All zeros when nothing logged.
+    """
+    forms = fields = inferred = fully = 0
+    try:
+        with _events_path().open(encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    record = json.loads(line)
+                except ValueError:
+                    continue
+                if not isinstance(record, dict) or record.get("event") != "form_surface":
+                    continue
+                forms += 1
+                fields += int(record.get("question_count") or 0)
+                inferred += int(record.get("inferred_fields") or 0)
+                fully += 1 if record.get("fully_inferred") else 0
+    except OSError:
+        return {
+            "forms": 0,
+            "fields": 0,
+            "fields_inferred": 0,
+            "fully_inferred": 0,
+            "inferred_share": 0.0,
+        }
+    return {
+        "forms": forms,
+        "fields": fields,
+        "fields_inferred": inferred,
+        "fully_inferred": fully,
+        "inferred_share": round(inferred / fields, 3) if fields else 0.0,
+    }
+
+
 def surface_mix() -> dict[str, int]:
     """Return counts per surface from the live log.
 

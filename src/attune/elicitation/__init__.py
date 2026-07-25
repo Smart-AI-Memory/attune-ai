@@ -18,6 +18,9 @@ Public surface:
   for a non-widget client, keyboard mode, or a trivial form.
 - :func:`is_trivial_form` — the narrow, mechanical triviality test the
   router uses.
+- :func:`is_fully_inferred` / :func:`inferred_field_count` — inference
+  state. A fully-inferred form renders as a one-tap confirmation rather
+  than a question, and is never silently skipped.
 - :func:`keyboard_mode_enabled` — the user's terse/keyboard opt-out
   (D17), persisted per project in ``attune.config.json`` with
   ``ATTUNE_KEYBOARD_MODE`` as a session override.
@@ -45,6 +48,8 @@ from attune.elicitation.bridge import (
     form_from_dict,
     form_response_summary,
     form_to_askuserquestion,
+    inferred_field_count,
+    is_fully_inferred,
     is_trivial_form,
     keyboard_mode_enabled,
     needs_widget,
@@ -66,6 +71,8 @@ __all__ = [
     "form_to_askuserquestion",
     "form_to_elicitation_schema",
     "form_to_widget_html",
+    "inferred_field_count",
+    "is_fully_inferred",
     "is_trivial_form",
     "keyboard_mode_enabled",
     "needs_widget",
