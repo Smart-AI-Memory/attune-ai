@@ -4539,6 +4539,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#inference-first-dont-ask-what-you-can-already-answer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inference-first — don't ask what you can already answer
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#collapsing-an-answered-form" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4763,6 +4774,38 @@ command (D17's usage-triggered discovery — it reaches people who have
 felt the friction, and never fires for someone already opted in). The terse reply vocabulary (<code>y</code> / <code>go</code> / <code>1</code>) answers any
 construct on any surface regardless — a form never blocks a keyboard-only
 user.</p>
+<h3 id="inference-first-dont-ask-what-you-can-already-answer">Inference-first — don't ask what you can already answer<a class="headerlink" href="#inference-first-dont-ask-what-you-can-already-answer" title="Permanent link">&para;</a></h3>
+<p>Ceremony isn't caused by forms being rich. It's caused by being asked
+things you already answered. So fill in what the conversation already
+told you, and let the form confirm rather than interrogate.</p>
+<p>A field carries <code>inferred_from</code> alongside its <code>default</code> — the value plus
+why you guessed it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;scope&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;single_select&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">&quot;text&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Which path?&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nt">&quot;options&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;src&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;tests&quot;</span><span class="p">],</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;src&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="nt">&quot;inferred_from&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;you have been editing src/attune/elicitation/&quot;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">}</span>
+</code></pre></div>
+<p>An inference without a value is a definition error, so a "guessed" badge
+can never appear over an empty control.</p>
+<p><strong>A guess must look like a guess.</strong> The widget badges every inferred
+field and shows the provenance under the label; the <code>AskUserQuestion</code>
+fallback folds it into help text (<code>Guessed: src — you have been editing
+src/</code>). Neither surface presents an inferred value as settled, which is
+what makes a wrong guess catchable instead of silently accepted.</p>
+<p><strong>When every field is inferred, the form still renders</strong> — as a one-tap
+confirmation with a "Confirm" button, not a skipped step. Skipping would
+be faster, and it is the one thing that must not happen: a correct-
+looking wrong guess the user never got to see is the only failure a form
+cannot recover from. Fields stay editable, so confirming is a review.</p>
+<p><code>is_fully_inferred(form)</code> drives that mode; <code>inferred_field_count(form)</code>
+reports how much a form inferred. <code>attune.telemetry.form_events</code>
+records both per routing decision, and <code>inference_rate()</code> reads them
+back — inference-first is authoring discipline, so counting it is the
+only way to know it is being followed rather than merely documented.</p>
 <h3 id="collapsing-an-answered-form">Collapsing an answered form<a class="headerlink" href="#collapsing-an-answered-form" title="Permanent link">&para;</a></h3>
 <p>Once a form is submitted, the rendered markup has done its job and only
 the question/answer pairs still carry meaning.
@@ -4794,7 +4837,7 @@ MCP tool schema (and its count guard), and the driving skill's docs. A
 per-type "rejects out-of-option" test is the cheap guard that catches a
 missed validation site. Prove it with a non-mocked round-trip — render,
 submit, collect — not just unit tests.</p>
-<!-- attune-generated: source_hash=9670395c7ce23f96b61ec57648f0a6c01aad19746a4f965901b5f07a5f070d2c feature=elicitation-forms kind=architecture generated_at=2026-07-25 -->
+<!-- attune-generated: source_hash=65dd2400b49b9d8a20605f411f62b72c1ae2d9d530b8730bb0db0acfef04fb59 feature=elicitation-forms kind=architecture generated_at=2026-07-25 -->
 
 
 
