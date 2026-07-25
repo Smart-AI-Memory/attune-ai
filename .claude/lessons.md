@@ -18159,3 +18159,61 @@ def ", start_idx + 1)` for module-
     orphan lessons prescribe recovery by cherry-pick from reflog; the
     patch is cheaper insurance, is immune to the local branch being
     deleted with the remote, and turns a recovery into a paste.
+
+- **A REQUIRED check can be structurally incapable of failing, or can
+  cover far less than its name implies — audit gate INTEGRITY, not gate
+  presence**: 2026-07-25, auditing why a Windows-only regression could
+  merge green. Two independent holes in the same required set, both
+  invisible because a passing check and a check that *cannot fail* look
+  identical on the PR page.
+  - **`platform-compat` is required and cannot fail.** Its final step
+    ends `continue-on-error: true` and emits `::warning::` instead of
+    exiting non-zero, so the context is always green regardless of what
+    the scan found. A required check that always passes is decoration.
+    Diagnostic for any required context: read the job and ask *what
+    input would make this red?* — if there is no such input, it gates
+    nothing. Grep the workflows for `continue-on-error` and cross-check
+    against `required_status_checks`.
+  - **The required set names TWO matrix lanes, not the matrix.**
+    `test (ubuntu-latest, 3.12)` + `test (windows-latest, 3.12)` are
+    required; on a full run the other ten — including windows
+    3.10/3.11/3.13/3.14 — report and gate nothing. This is the
+    mechanism behind the existing "auto-merge ignores non-required
+    lanes" and "admin-merging before Windows lanes complete" lessons.
+  - **You cannot fix it by adding the lanes to branch protection.**
+    `ci-matrix-right-sizing` runs a SLIM matrix on docs/tests-only PRs,
+    which never spawns those lanes, and a required check that never runs
+    reports `missing` and blocks the PR forever. `tests.yml` already
+    carries a comment warning about exactly this.
+  - **The working pattern is an always-running aggregator**: a job with
+    `needs: [test]` + `if: always()` that fails unless
+    `needs.test.result` is `success`/`skipped`, made the single required
+    context. It reports on every run (slim, full, or skipped) so it is
+    never "missing", and it covers every lane instead of two. Shipped as
+    `test-matrix-complete` (#1661). Generalizes: to gate a
+    conditionally-shaped set of jobs, require an aggregator that always
+    runs — never the conditional jobs themselves.
+
+- **The predicate you WATCH must be the predicate you PROMISED — a
+  monitor scoped narrower than your stated intent reports success at the
+  wrong moment**: 2026-07-25, third instance of mechanism-without-seam
+  in one session and the subtlest. I said "I'll wait for all five
+  Windows lanes before merging," then armed a watcher over the REQUIRED
+  check set. Both states are called "green", so nothing looked wrong —
+  and the watcher fired `READY` while four Windows lanes were still
+  `pending`. Merging on that signal would have produced exactly the
+  regression the watch existed to prevent, on the PR where I had just
+  said I would not. Caught only because the stated intent was still in
+  the conversation to compare against. **Rule**: when you announce a
+  wait condition, the watcher's exit predicate must be that literal
+  condition — re-read the sentence you wrote and diff it against the
+  code's terminating check. "Required checks pass", "all lanes pass",
+  and "PR is mergeable" are three different predicates that agree most
+  of the time and diverge exactly when it matters. Related mechanical
+  gotcha from the same watcher: `gh api …/protection --jq
+  '.required_status_checks.contexts[]'` returns names CONTAINING SPACES
+  (`test (ubuntu-latest, 3.12)`), so splitting that output on whitespace
+  shreds them into fragments that are permanently "missing" and the
+  watcher reports WAITING forever with no error — split on NEWLINES.
+  Testing the watcher against a known-terminal PR (one already merged)
+  before arming it is what surfaced this in seconds.
