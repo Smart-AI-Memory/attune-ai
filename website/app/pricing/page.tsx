@@ -9,8 +9,8 @@ export const metadata: Metadata = genMeta({
   title: 'Pricing — Free & Open Source',
   description:
     'Attune-AI is the spec-driven development platform — AI workflows, ' +
-    'project memory, retrieval grounding, and verification — fully open ' +
-    'source under Apache 2.0. No paid tiers, no usage limits, no license keys.',
+    'project memory, retrieval grounding, and verification — released ' +
+    'under the Apache License 2.0.',
   url: 'https://smartaimemory.com/pricing',
 });
 
@@ -32,7 +32,6 @@ const includedItems = [
   'Retrieval grounding — attune-rag is built in',
   'Local-first project memory and lessons corpus',
   'Verification: fact-check generated content before it ships',
-  'Works on a Claude subscription or an API key',
   'Full source code access',
   'Community support on GitHub',
   'Commercial use rights (Apache 2.0)',
@@ -65,10 +64,7 @@ export default function PricingPage() {
                 The whole platform, free &amp; open source
               </h1>
               <p className="text-xl opacity-90 mb-8">
-                Turn requirements into reliable software with no paywall in
-                the way. Apache License 2.0 — no paid tiers, no usage limits,
-                no license keys. Run it on a Claude subscription or your own
-                API key.
+                Apache License 2.0 — full source, commercial use included.
               </p>
               <a
                 href="https://github.com/Smart-AI-Memory/attune-ai"
@@ -90,11 +86,11 @@ export default function PricingPage() {
                 What You Get
               </span>
               <h2 className="text-4xl font-extrabold">
-                The full platform — nothing held back
+                What&apos;s included
               </h2>
               <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
-                Every pillar, every workflow, every tool. There&apos;s no
-                upgrade tier to unlock — {getPricingSummary().toLowerCase()}.
+                Every pillar, every workflow, every tool —{' '}
+                {getPricingSummary().toLowerCase()}.
               </p>
             </div>
 
