@@ -346,6 +346,24 @@ def _parse_progress_extras(
     return progress_style, progress_items, [*style_problems, *item_problems]
 
 
+def _parse_inferred_from(where: str, raw: dict[str, Any]) -> tuple[str | None, list[str]]:
+    """Parse ``inferred_from`` — the provenance of an inferred default.
+
+    An inference with no value is meaningless, so ``inferred_from``
+    requires ``default``. Rejecting that pairing here keeps the renderer
+    honest: it can mark a field as a guess only when there is a guess to
+    mark, so a "(guessed)" badge can never appear over an empty control.
+    """
+    inferred_from = raw.get("inferred_from")
+    if inferred_from is None:
+        return None, []
+    if not isinstance(inferred_from, str) or not inferred_from.strip():
+        return None, [f"{where} 'inferred_from' must be a non-empty string"]
+    if raw.get("default") is None:
+        return None, [f"{where} 'inferred_from' requires 'default' (the inferred value)"]
+    return inferred_from.strip(), []
+
+
 def _parse_list_style(
     where: str, raw: dict[str, Any], qtype: QuestionType
 ) -> tuple[str | None, list[str]]:
@@ -441,6 +459,9 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
         list_style, list_style_problems = _parse_list_style(where, raw, qtype)
         problems.extend(list_style_problems)
 
+        inferred_from, inferred_problems = _parse_inferred_from(where, raw)
+        problems.extend(inferred_problems)
+
         if fid and text and isinstance(fid, str) and isinstance(text, str):
             questions.append(
                 FormQuestion(
@@ -461,6 +482,7 @@ def form_from_dict(data: dict[str, Any]) -> FormSchema:
                     progress_items=progress_items,
                     progress_style=progress_style,
                     list_style=list_style,
+                    inferred_from=inferred_from,
                 )
             )
 
@@ -569,6 +591,34 @@ def is_trivial_form(form: FormSchema) -> bool:
     return all(len(str(option)) <= _TRIVIAL_OPTION_LABEL_MAX for option in options)
 
 
+def is_fully_inferred(form: FormSchema) -> bool:
+    """Return True iff every field's value was inferred from context.
+
+    Such a form has nothing left to ask — the agent already believes it
+    knows every answer. It is still rendered, as a one-tap confirmation
+    rather than a question (chair-ruled 2026-07-25): skipping would be
+    faster, but a silent correct-looking guess is the one failure a form
+    cannot recover from, because the user never gets the chance to catch
+    it. Confirmation keeps inference reviewable.
+
+    Empty forms are not "fully inferred" — there is nothing to confirm.
+
+    Args:
+        form: The form to inspect.
+
+    Returns:
+        True if every question carries an inferred value.
+    """
+    if not form.questions:
+        return False
+    return all(question.inferred_from for question in form.questions)
+
+
+def inferred_field_count(form: FormSchema) -> int:
+    """Number of fields whose value was inferred from context."""
+    return sum(1 for question in form.questions if question.inferred_from)
+
+
 def select_form_surface(
     form: FormSchema,
     *,
@@ -618,6 +668,8 @@ def select_form_surface(
         question_count=len(form.questions),
         chosen=chosen,
         agreed=None if chosen is None else chosen == surface,
+        inferred_fields=inferred_field_count(form),
+        fully_inferred=is_fully_inferred(form),
     )
     return surface
 

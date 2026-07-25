@@ -25,6 +25,7 @@ import uuid
 from collections.abc import Callable
 from html import escape
 
+from attune.elicitation.bridge import is_fully_inferred
 from attune.meta_workflows.models import FormQuestion, FormSchema, QuestionType
 
 #: Sentinel key the submit payload carries so the agent can recognise a
@@ -370,11 +371,22 @@ def _field_html(q: FormQuestion) -> str:
         if q.rationale
         else ""
     )
+    # An inferred value is the agent's GUESS. It must never read as a
+    # settled fact — the badge is what makes a wrong inference catchable,
+    # and is the difference between inference-first being a mechanism and
+    # being a paragraph of guidance.
+    inferred_html = (
+        f'<div class="ae-inferred"><span class="ae-inferred-b">guessed</span>'
+        f"{_esc(q.inferred_from)}</div>"
+        if q.inferred_from
+        else ""
+    )
+    inferred_attr = ' data-inferred="1"' if q.inferred_from else ""
     return (
         f'<div class="ae-field" data-fid="{_esc(q.id)}" '
-        f'data-ftype="{_esc(q.type.value)}">'
+        f'data-ftype="{_esc(q.type.value)}"{inferred_attr}>'
         f'<label class="ae-label">{_esc(q.text)}{req}</label>'
-        f"{help_html}{_control_html(q)}{rationale_html}</div>"
+        f"{help_html}{inferred_html}{_control_html(q)}{rationale_html}</div>"
     )
 
 
@@ -394,6 +406,16 @@ _CSS_BASE = """#attune-elicit-form { display:block; width:100%; padding:1rem 0;
 #attune-elicit-form .ae-label { display:block; font-weight:500;
   margin:0 0 .35rem; }
 #attune-elicit-form .ae-req { color:var(--text-accent); margin-left:2px; }
+#attune-elicit-form .ae-confirm { font-size:14px; color:var(--text-secondary);
+  border-left:3px solid var(--border-accent); border-radius:0;
+  padding:.35rem .6rem; margin:0 0 1rem; }
+#attune-elicit-form .ae-inferred { font-size:13px; color:var(--text-muted);
+  margin:0 0 .35rem; }
+#attune-elicit-form .ae-inferred-b { display:inline-block; font-size:11px;
+  font-weight:500; text-transform:uppercase; letter-spacing:.04em;
+  color:var(--text-accent); background:var(--bg-accent);
+  border:1px solid var(--border-accent); border-radius:var(--radius);
+  padding:0 .35rem; margin-right:.4rem; }
 #attune-elicit-form .ae-help { font-size:13px; color:var(--text-muted);
   margin:0 0 .35rem; }
 #attune-elicit-form .ae-submit { margin-top:.5rem; padding:.55rem 1.1rem;
@@ -549,14 +571,28 @@ def form_to_widget_html(
     fields = "".join(_field_html(q) for q in form.questions)
     css = _needed_css(form).replace("#attune-elicit-form", f"#{form_id}")
 
+    # Fully-inferred forms are confirmations, not questions: the agent
+    # believes it knows every answer already. Chair-ruled 2026-07-25 to
+    # RENDER rather than skip — a silent correct-looking guess is the one
+    # failure a form cannot recover from. The banner and button label are
+    # what tell the user this is a review, not an interrogation.
+    confirm = is_fully_inferred(form)
+    confirm_html = (
+        '<p class="ae-confirm">Everything below was filled in from '
+        "context. Change anything that&#x27;s wrong, then confirm.</p>"
+        if confirm
+        else ""
+    )
+    submit_label = "Confirm" if confirm else "Submit"
+
     return f"""<h2 class="sr-only">{_esc(form.title)} — interactive form</h2>
 <form id="{form_id}" data-form-title="{_esc(form.title)}">
 <style>
 {css}</style>
 <h3>{_esc(form.title)}</h3>
-{intro}{desc}
+{intro}{desc}{confirm_html}
 {fields}
-<button type="button" id="ae-submit-{sfx}" class="ae-submit">Submit</button>
+<button type="button" id="ae-submit-{sfx}" class="ae-submit">{submit_label}</button>
 <div id="ae-error-{sfx}" class="ae-error" role="alert"></div>
 <script>
 (function() {{

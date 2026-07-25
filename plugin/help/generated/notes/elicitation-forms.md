@@ -141,6 +141,47 @@ felt the friction, and never fires for someone already opted in). The terse repl
 construct on any surface regardless — a form never blocks a keyboard-only
 user.
 
+### Inference-first — don't ask what you can already answer
+
+Ceremony isn't caused by forms being rich. It's caused by being asked
+things you already answered. So fill in what the conversation already
+told you, and let the form confirm rather than interrogate.
+
+A field carries `inferred_from` alongside its `default` — the value plus
+why you guessed it:
+
+```json
+{
+  "id": "scope",
+  "type": "single_select",
+  "text": "Which path?",
+  "options": ["src", "tests"],
+  "default": "src",
+  "inferred_from": "you have been editing src/attune/elicitation/"
+}
+```
+
+An inference without a value is a definition error, so a "guessed" badge
+can never appear over an empty control.
+
+**A guess must look like a guess.** The widget badges every inferred
+field and shows the provenance under the label; the `AskUserQuestion`
+fallback folds it into help text (`Guessed: src — you have been editing
+src/`). Neither surface presents an inferred value as settled, which is
+what makes a wrong guess catchable instead of silently accepted.
+
+**When every field is inferred, the form still renders** — as a one-tap
+confirmation with a "Confirm" button, not a skipped step. Skipping would
+be faster, and it is the one thing that must not happen: a correct-
+looking wrong guess the user never got to see is the only failure a form
+cannot recover from. Fields stay editable, so confirming is a review.
+
+`is_fully_inferred(form)` drives that mode; `inferred_field_count(form)`
+reports how much a form inferred. `attune.telemetry.form_events`
+records both per routing decision, and `inference_rate()` reads them
+back — inference-first is authoring discipline, so counting it is the
+only way to know it is being followed rather than merely documented.
+
 ### Collapsing an answered form
 
 Once a form is submitted, the rendered markup has done its job and only

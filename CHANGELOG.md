@@ -17,6 +17,18 @@ run-record corpus that future releases learn from.
 
 ### Added
 
+- **Inference-first forms.** A field can carry `inferred_from` alongside
+  its `default` — the value the agent guessed from context, plus why.
+  Both surfaces mark it as a guess (the widget badges the field and
+  shows the provenance; `AskUserQuestion` folds it into help text), so a
+  wrong inference is catchable rather than silently accepted. When
+  *every* field is inferred the form still renders, as a one-tap
+  confirmation with a `Confirm` button — never skipped, because a
+  correct-looking wrong guess the user never saw is the one failure a
+  form cannot recover from. `is_fully_inferred()` /
+  `inferred_field_count()` expose the state, and
+  `form_events.inference_rate()` measures whether the discipline is
+  actually being followed.
 - **`attune config set` / `attune config show`** — the first project-config
   CLI. Writes allowlisted settings to `./attune.config.json` (currently
   `keyboard_mode`), preserving other keys; an unknown key errors rather
