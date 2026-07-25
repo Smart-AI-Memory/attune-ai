@@ -18084,3 +18084,78 @@ def ", start_idx + 1)` for module-
   always a hope). Pairs with "Spec-named work-scope drifts from code
   reality" (same family: a tracked artifact goes stale against the code;
   this one is the artifact-PERFORMS-it surface, and it has a deadline).
+
+- **Mechanism without seam — the generalized pattern behind both
+  2026-07-25 misses: shipping the thing, but not the way in**: twice in
+  one session I built a capability, tested it green, and shipped it with
+  no path by which the real world could reach it. (1) Routing telemetry
+  lived inside `select_form_surface`, which nothing in `src/` calls — the
+  counter would have read zero forever. (2) Keyboard mode persisted to
+  `attune.config.json` with no `attune config` command in existence, so
+  enabling it meant hand-editing JSON, and nothing surfaced it to anyone
+  who had not already read the source. The second had EIGHT passing
+  tests. **Why tests don't catch it**: a unit test is itself a caller, so
+  it supplies the very seam production lacks. Coverage measures whether
+  the function behaves, never whether anything invokes it. Both misses
+  were found by asking a different question — *what does a person
+  actually do to reach this?* — not by testing harder. **The check, one
+  line per capability shipped**: name the concrete actor and the concrete
+  act (a user types X; the MCP handler calls Y on tool Z; the hook fires
+  at event W). If the answer is "the agent will follow the instructions"
+  or "the caller passes it in", the seam is prose, not code — that may be
+  fine (this repo deliberately routes some rules through skill prose),
+  but then it must not carry a side effect, a counter, or a promise that
+  something is being measured. **Highest-risk shapes**: observability
+  hung off a pure helper; a setting with no setter; a config key with no
+  CLI; a hint that requires knowing the feature exists; anything whose
+  PR body claims it "measures", "records", or "surfaces" something.
+  Grep-level tell: `grep -rn "<name>" src/ | grep -v "def <name>"`
+  returning only `__init__` re-exports and docstrings. Instances:
+  "A predicate with no production caller is a safe pattern until you hang
+  a SIDE EFFECT off it" (same day) and the D21 affordance gap
+  (docs/specs/elicitation-form-surface/decisions.md).
+
+- **CI watchers report ABSENCE as success — four ways a green-looking
+  read was wrong in one merge (2026-07-25, #1652)**: same shape as
+  "mechanism without seam" one layer up — *absence renders identically
+  to success*, and a watcher that only knows how to report bad news goes
+  quiet when the thing it watches stops existing.
+  - **A docs-only push RE-SCOPES the matrix so Windows lanes never
+    spawn.** Pushing a lessons-only commit onto a code PR dropped
+    `gh pr checks` from 49 rows to 13 with **zero** windows lanes; the
+    real Windows run was still executing against the PREVIOUS sha,
+    invisible to the PR rollup (`gh run list --branch <b>` showed
+    `Tests` in_progress on the older sha). A monitor waiting on windows
+    lanes then sits SILENT forever — indistinguishable from "still
+    running". Merging there would have put a Windows-relevant diff (path
+    handling) on main with no Windows coverage on the head sha.
+    Detection after ANY push to a code PR:
+    `gh pr checks <n> --json name,bucket | jq '[.[]|select(.name|test("windows"))]|length'`
+    — zero on a diff that previously had them = re-scoped, not finished.
+    Caveat in the other direction: allow ~60–90 s before trusting a low
+    count; a read at 30 s showed 32 checks / 0 windows purely because CI
+    was still attaching check-runs.
+  - **`bucket=="fail"` is not the only bad bucket — `cancel` hides
+    there.** My watcher printed "no failing checks anywhere" while
+    `Run Security Scanner` sat in `cancel`, which is exactly what made
+    `mergeStateStatus=UNSTABLE`. Taxonomy is
+    pass/fail/pending/skipping/**cancel**. Don't grep buckets at all —
+    assert on the REQUIRED set: read
+    `gh api .../branches/main/protection --jq '.required_status_checks.contexts[]'`
+    and check each by name. UNSTABLE with every required context `pass`
+    is cosmetic and safe to merge.
+  - **A plain `gh pr merge --squash --delete-branch` from a SUB-WORKTREE
+    prints `fatal: 'main' is already used by worktree at <parent>` and
+    exits 0.** The existing merge lesson documents this for `--admin`
+    and says exit 1; the plain squash form exits **0** while printing a
+    fatal, so both the message and the code mislead. The REMOTE merge
+    succeeded; only the local post-merge checkout failed. Always verify
+    `gh pr view <n> --json state,mergedAt,mergeCommit` before retrying —
+    a retry 404s.
+  - **Preserve unpushed commits BEFORE `--delete-branch`, not after.**
+    `git format-patch -1 <sha> -o <scratch>` while the commit is still
+    reachable, then after the merge
+    `git checkout -b <new> origin/main && git am <patch>`. The existing
+    orphan lessons prescribe recovery by cherry-pick from reflog; the
+    patch is cheaper insurance, is immune to the local branch being
+    deleted with the remote, and turns a recovery into a paste.
