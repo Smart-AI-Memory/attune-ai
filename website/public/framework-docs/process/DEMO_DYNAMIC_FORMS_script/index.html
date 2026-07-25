@@ -4461,6 +4461,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#why-this-was-re-cut-2026-07-25" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why this was re-cut (2026-07-25)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#locked-specimens-2026-07-24" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4515,6 +4526,17 @@
     <span class="md-ellipsis">
       
         The journey
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-two-take-method-production-note-read-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The two-take method (production note — read first)
       
     </span>
   </a>
@@ -4632,28 +4654,66 @@
 <h1 id="dynamic-forms-demo-script-rehearsal-releasable-patricks-voice">Dynamic Forms Demo Script — rehearsal + releasable (Patrick's voice)<a class="headerlink" href="#dynamic-forms-demo-script-rehearsal-releasable-patricks-voice" title="Permanent link">&para;</a></h1>
 <p><strong>Written:</strong> 2026-07-23. <strong>Amended:</strong> 2026-07-24, per roundtable
 thread <code>q-demo-scripts-review-002</code> (chair-ruled; caption-carried
-caveats per amended ruling). <strong>Status:</strong> draft — this is the Thu/Fri
-CAPTURE REHEARSAL subject (chair-ruled): it exercises the full
-recording pipeline before Tuesday's 10.6.0 shoot, and the footage
-is releasable in its own right after the chair's honesty-gate
-pass. <strong>Everything shown is live on PyPI 10.5.0 today</strong> — no
-receipt slots to wait for; the pre-record check is just "the
-commands run on this machine." <strong>Format:</strong> ~4 min main cut + 60s
-social cut. Stage geometry: record on screen 1 per the
+caveats per amended ruling). <strong>Re-cut:</strong> 2026-07-25, per roundtable
+thread <code>q-forms-default-vs-latency-001</code> and decisions.md D21 —
+the arc changed because the product changed (see "Why this was
+re-cut" below). <strong>Status:</strong> draft — this is the Thu/Fri CAPTURE
+REHEARSAL subject (chair-ruled): it exercises the full recording
+pipeline before Tuesday's 10.6.0 shoot, and the footage is
+releasable in its own right after the chair's honesty-gate pass.</p>
+<blockquote>
+<p><strong>Version gate — READ BEFORE CAPTURE.</strong> This script now shows
+<strong>10.6.0 behaviour, which is NOT on PyPI yet</strong> (10.5.0 is
+current). The forms-by-default routing and keyboard mode land in
+10.6.0. Capture against the branch/local build, and do not
+publish the main cut until 10.6.0 is live. The previous version
+of this script claimed "everything shown is live on PyPI 10.5.0
+today" — that claim is now false and has been removed rather
+than quietly left standing.</p>
+</blockquote>
+<p><strong>Format:</strong> ~4 min main cut + 60s social cut. Stage geometry:
+record on screen 1 per the
 <a href="../DEMO_10_6_0_script/">10.6.0 script's</a> Stage geometry section —
 same rules, same set.</p>
+<h2 id="why-this-was-re-cut-2026-07-25">Why this was re-cut (2026-07-25)<a class="headerlink" href="#why-this-was-re-cut-2026-07-25" title="Permanent link">&para;</a></h2>
+<p>The old arc was <strong>"3 turns → 1 turn"</strong>: cold-open on the agent
+asking three sequential button questions, then <code>/elicit</code> collapsing
+them into one form. That arc no longer reproduces. D21 flipped the
+default — a multi-dimension ask now renders as one form
+<em>immediately</em>, without <code>/elicit</code>, because the Socratic rule was
+rewritten to batch independent dimensions. The three-question
+interrogation the cold open depended on is the behaviour we
+removed.</p>
+<p>Rather than lose the visual proof, the re-cut makes it
+<strong>deterministic</strong>: keyboard mode reproduces the sequential
+experience on demand, so the same prompt gives both takes from one
+machine. This is strictly better than the old approach, which
+needed a specimen "rehearsal-verified to reliably yield ~3
+sequential questions" and could still misfire on the day.</p>
+<p>The demo's claim also gets stronger and more honest: the good
+behaviour is no longer a move the user has to know to ask for — it
+is what the product does by default.</p>
 <p>Pre-record checklist:</p>
 <ul>
 <li>[ ] Screen Studio mic toggle flipped + 2-second audio-track
       test (the pending receipt from the 07-23 walkthrough)</li>
-<li>[ ] <code>/elicit</code> and one pushback form rehearsed once, unrecorded</li>
-<li>[ ] Cold-open prompt PRE-SELECTED: 2–3 candidate prompts
-      rehearsal-verified to reliably yield ~3 sequential
-      questions; the specimen is picked before the take, not
-      during it (table ruling, q-demo-scripts-review-002 —
-      curation of a live run, never simulation). Candidates
-      locked 2026-07-24 — see "Locked specimens" below; the
-      unrecorded live pass is what remains before ticking this.</li>
+<li>[ ] Both takes and one pushback form rehearsed once, unrecorded</li>
+<li>[ ] Cold-open prompt PRE-SELECTED (one prompt, two takes — see
+      "The two-take method" below). The specimen is picked before
+      the take, not during it (table ruling,
+      q-demo-scripts-review-002 — curation of a live run, never
+      simulation). Candidates locked 2026-07-24, method re-cut
+      2026-07-25; the unrecorded live pass is what remains before
+      ticking this.</li>
+<li>[ ] Keyboard-mode toggle verified BOTH directions on the capture
+      machine: <code>ATTUNE_KEYBOARD_MODE=1</code> yields sequential button
+      turns, unset yields one form, on the SAME prompt. This is the
+      re-cut's load-bearing mechanism — if it doesn't flip cleanly,
+      the cold open doesn't work.</li>
+<li>[ ] Running against a build that HAS D21 (forms-by-default). Check
+      with <code>python -c "from attune.elicitation import
+      select_form_surface; print('ok')"</code> — an ImportError means the
+      stage is on 10.5.0 and the whole arc reverts to the old one.</li>
 <li>[ ] Pushback example LOCKED: a rehearsed, real, low-context
       disagreement whose two options fit on screen and whose
       consequence reads in one sentence. Specimen locked and
@@ -4689,16 +4749,26 @@ same rules, same set.</p>
 <hr />
 <h2 id="locked-specimens-2026-07-24">Locked specimens (2026-07-24)<a class="headerlink" href="#locked-specimens-2026-07-24" title="Permanent link">&para;</a></h2>
 <h3 id="cold-open-candidates-primary-first">Cold-open candidates (primary first)<a class="headerlink" href="#cold-open-candidates-primary-first" title="Permanent link">&para;</a></h3>
-<p>Each candidate's dimensions map onto the same scope/focus/depth
-wording the Act-1 form uses, so "same questions, one form" is
-visually provable. The candidates are drawn from the repo's own
-Socratic Interaction Rule examples (the rule text itself
-instructs these questions, which is what makes them reliable
-triggers); the final reliability check is the unrecorded
-rehearsal pass.</p>
+<p><strong>Re-cut 2026-07-25:</strong> these are now the prompt for BOTH takes, not
+just the interrogation take. Each candidate's dimensions map onto
+the same scope/focus/depth wording, so "same questions, one form"
+is visually provable across the cut.</p>
+<p>The reliability problem the old note worried about is gone.
+Previously the specimen had to be "rehearsal-verified to reliably
+yield ~3 sequential questions" — a hope, since the agent chose the
+shape. Now take A gets the sequential shape because
+<code>ATTUNE_KEYBOARD_MODE=1</code> <em>makes</em> it sequential, and take B gets one
+form because that is the default. Both takes are deterministic; the
+rehearsal pass is confirming wording and pacing, not fishing for a
+behaviour.</p>
+<p>The candidates are still drawn from the repo's own Socratic
+Interaction Rule examples — note that rule was rewritten by D21, and
+its worked example (<code>"security audit" → path + focus + depth → ONE
+form</code>) is now the <em>batching</em> instruction rather than the sequential
+one.</p>
 <ol>
-<li><strong>"help me test this module"</strong> (primary — matches the Act-1
-   <code>/elicit testing this module</code> line). Expected sequence:
+<li><strong>"help me test this module"</strong> (primary — typed verbatim in
+   BOTH takes). Take-A sequence, under keyboard mode:
    Q1 scope — "Which module should we test?"; Q2 focus —
    "What's the focus?" (run existing tests / find coverage
    gaps / generate new tests / coverage of changed code);
@@ -4707,18 +4777,21 @@ rehearsal pass.</p>
 <li><strong>"review my recent changes"</strong> — Q1 scope (branch diff,
    staged, or last N commits); Q2 focus (security / quality /
    performance / tests); Q3 depth (quick pass vs multi-pass
-   deep review). If used, Act 1 becomes
-   <code>/elicit reviewing my recent changes</code>.</li>
+   deep review).</li>
 <li><strong>"clean up this code"</strong> — Q1 scope (which path); Q2 focus
    (simplify / refactor / dead code); Q3 depth (safe-only vs
-   structural). If used, Act 1 becomes
-   <code>/elicit cleaning up &lt;path&gt;</code>.</li>
+   structural).</li>
 </ol>
+<p>Whichever candidate is used, take B types the SAME words with no
+flag and no slash command — that identity is the whole proof.</p>
 <h3 id="act-1-form-primary-specimen">Act-1 form (primary specimen)<a class="headerlink" href="#act-1-form-primary-specimen" title="Permanent link">&para;</a></h3>
 <p>Dogfood-verified 2026-07-24 through the live
-<code>elicitation_render_form</code> MCP tool on the installed 10.5.0
-plugin — validates clean and batches all three fields into a
-single turn:</p>
+<code>elicitation_render_form</code> MCP tool — validates clean and batches
+all three fields into a single turn. <strong>Re-cut note:</strong> this is now
+what take B renders <em>by default</em> from the plain prompt; the
+<code>/elicit</code> command is no longer needed to produce it, and the
+verification must be re-run against a D21 build (the 10.5.0 run
+proved the form validates, not that it is the default).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Scope this testing work&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">&quot;fields&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
@@ -4786,12 +4859,12 @@ and the overrule answer round-trips
 <tr>
 <td>Cold open</td>
 <td>0:00–0:30</td>
-<td>Question-by-question interrogation, live</td>
+<td>Question-by-question interrogation (take A, keyboard mode)</td>
 </tr>
 <tr>
 <td>One form</td>
 <td>0:30–1:45</td>
-<td>The same scoping as a single form</td>
+<td>Same prompt, one form, no command (take B, the default)</td>
 </tr>
 <tr>
 <td>The pushback form</td>
@@ -4811,11 +4884,23 @@ and the overrule answer round-trips
 </tbody>
 </table>
 <hr />
+<h2 id="the-two-take-method-production-note-read-first">The two-take method (production note — read first)<a class="headerlink" href="#the-two-take-method-production-note-read-first" title="Permanent link">&para;</a></h2>
+<p>Both opening acts use <strong>one prompt and one flag</strong>. Record take A,
+flip the flag, record take B, cut them together. Same repo, same
+prompt, same session shape — the only variable is the mode, which
+is exactly what makes the comparison honest and repeatable.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">ATTUNE_KEYBOARD_MODE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>claude<span class="w">    </span><span class="c1"># take A — sequential button turns</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>claude<span class="w">                            </span><span class="c1"># take B — one form (the default)</span>
+</code></pre></div>
+<p>Nothing is staged or simulated: take A is a real, shipping,
+user-selectable mode, not a re-enactment of an old version. That
+distinction is what keeps this inside the table's
+"curation of a live run, never simulation" ruling.</p>
 <h2 id="cold-open-000030-the-interrogation">Cold open (0:00–0:30) — the interrogation<a class="headerlink" href="#cold-open-000030-the-interrogation" title="Permanent link">&para;</a></h2>
-<p><strong>Screen:</strong> Claude Code, real repo. Use the PRE-SELECTED prompt
-(see checklist) — a genuinely ambiguous ask, e.g. "help me test
-this module," chosen because rehearsal showed it reliably draws
-~3 sequential questions.</p>
+<p><strong>Screen:</strong> Claude Code, real repo, <strong>take A</strong>. Use the
+PRE-SELECTED prompt (see checklist) — a genuinely ambiguous ask,
+e.g. "help me test this module."</p>
 <p>The agent asks a question. One button row. Answer it. It asks the
 next. Answer that. A third appears. <strong>Production:</strong> the
 interrogation itself holds ~12–15 seconds of screen time —
@@ -4837,26 +4922,32 @@ I haven't started working yet.</p>
 <p>The questions are right. The pacing is wrong.</p>
 </blockquote>
 <h2 id="one-form-030145-the-same-scoping-one-turn">One form (0:30–1:45) — the same scoping, one turn<a class="headerlink" href="#one-form-030145-the-same-scoping-one-turn" title="Permanent link">&para;</a></h2>
-<p><strong>Screen:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>/elicit testing this module
+<p><strong>Screen:</strong> <strong>take B</strong> — the identical prompt, typed the same way,
+with no flag and no slash command.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>help me test this module
 </code></pre></div>
-<p>One form renders: the independent dimensions of the decision —
-scope, focus, depth — batched into a single turn, multi-select
-where it fits, a recommended option marked. Fill it in one pass.
-Work starts.</p>
+<p>One form renders immediately: the independent dimensions of the
+decision — scope, focus, depth — batched into a single turn,
+multi-select where it fits, a recommended option marked. Fill it
+in one pass. Work starts.</p>
 <p><strong>Narration:</strong></p>
 <blockquote>
-<p>Same questions. One form. The dimensions of a decision I was
-going to make anyway — asked together, because they're
-independent.</p>
+<p>Same prompt. Same questions. One form. I didn't ask for this —
+I didn't type a command, I didn't opt in. The dimensions of a
+decision I was going to make anyway, asked together, because
+they're independent. That's just what it does now.</p>
 </blockquote>
 <p><strong>Production:</strong> hold on the rendered form long enough to read
 every field, with MINIMAL narration over the hold. This is the
 product shot of the video — the viewer cannot read fields and
-parse policy by ear at the same time. Use the SAME
-scope/focus/depth wording the cold-open questions used, so "same
-questions, one form" is visually provable; a brief "3 turns →
-1 turn" caption may punctuate the transition.</p>
+parse policy by ear at the same time. The scope/focus/depth
+wording is identical across both takes, so "same questions, one
+form" is visually provable; a "3 turns → 1 turn" caption
+punctuates the cut.</p>
+<p><strong>Caption (burned in over the cut between takes):</strong></p>
+<blockquote>
+<p>same prompt · no command · the default changed</p>
+</blockquote>
 <p><strong>Narration (after the hold) — captions carry the rules (chair
 ruling, amended 2026-07-24: caveats live on screen, narration
 stays on the payoff):</strong></p>
@@ -4941,13 +5032,14 @@ establish the friction, resolve it, END on the pushback click.
 LinkedIn autoplays MUTED — every beat carries a burned-in caption
 that works with no audio.</p>
 <ul>
-<li>0:00–0:05 — sequential-question friction, compressed: three
-  quick question-turns with the turn-counter. Caption: "Three
-  decisions. Three round trips."</li>
-<li>0:05–0:20 — smash-cut to <code>/elicit</code>: the same three dimensions
-  as one form, with a brief 3-turns-vs-1-form contrast frame
-  (split or before/after). Caption: "Every question at once —
-  when that's correct."</li>
+<li>0:00–0:05 — sequential-question friction, compressed (take A):
+  three quick question-turns with the turn-counter. Caption:
+  "Three decisions. Three round trips."</li>
+<li>0:05–0:20 — smash-cut to take B: the SAME prompt, no command,
+  the same three dimensions as one form, with a brief
+  3-turns-vs-1-form contrast frame (split or before/after).
+  Caption: "Same prompt. Every question at once — when that's
+  correct."</li>
 <li>0:20–0:50 — the pushback form + one-click OVERRULE + the
   agent's acknowledgment (the decision receipt). Caption:
   "Pushback you can click."</li>
