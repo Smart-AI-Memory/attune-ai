@@ -17997,9 +17997,14 @@ def ", start_idx + 1)` for module-
   and #1642 — labeled by a PARALLEL session — sat CLEAN, 29/29 green
   and UNMERGED for ~17 hours until Patrick noticed and asked for it.
   Two cheap procedural rules: (1) every `gh pr edit --add-label
-  auto-merge-when-green` is immediately followed by `gh pr view <n>
-  --json autoMergeRequest` — null means arm it (`gh pr merge --auto`)
-  or merge it now; the label is a REQUEST, the arm is the STATE.
+  auto-merge-when-green` is followed by `gh pr view <n> --json
+  autoMergeRequest` — but the label-triggered workflow is ASYNC, so
+  give it ~15-30s first. A check fired in the same breath as the label
+  reads NULL even when arming succeeds (dogfooded on #1651 while
+  writing this entry: NULL instantly, SQUASH ~15s later — an instant
+  check would have been a FALSE alarm every time). The real signal is
+  a null that PERSISTS past ~30-60s: arm it (`gh pr merge --auto`) or
+  merge it now. The label is a REQUEST, the arm is the STATE.
   (2) A labeled-but-still-OPEN PR is a suspect, not a handled item —
   when you notice one (yours or another session's), check the arm
   state before assuming the lane owns it. Corollary for starters and
