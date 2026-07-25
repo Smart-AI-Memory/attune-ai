@@ -3,8 +3,8 @@ type: reference
 name: elicitation-forms-reference
 feature: elicitation-forms
 depth: reference
-generated_at: 2026-07-25T05:20:20.482906+00:00
-source_hash: 660990a441ecd2b722e6ade0d914a0d81e15357900f19a08cc3f511a5b9b13ff
+generated_at: 2026-07-25T05:58:04.934219+00:00
+source_hash: 9670395c7ce23f96b61ec57648f0a6c01aad19746a4f965901b5f07a5f070d2c
 status: generated
 ---
 
@@ -23,6 +23,7 @@ status: generated
 | `select_form_surface(form, widget_capable=True, keyboard_mode=False)` | Choose the surface: `"widget"` (the default) or `"ask"`. |
 | `is_trivial_form(form)` | True when a form is small enough that buttons lose nothing: one select/boolean, ≤3 options, no label >120 chars. |
 | `keyboard_mode_enabled(project_root=None)` | Read the per-project opt-out (`keyboard_mode` in `./attune.config.json`; `ATTUNE_KEYBOARD_MODE` overrides). |
+| `set_keyboard_mode(enabled, project_root=None)` | Persist the opt-out; what `attune config set keyboard_mode` calls. Preserves other keys. |
 | `form_response_summary(form, response)` | Collapse an answered form to a compact markdown summary. |
 | `needs_widget(form)` | Low-level controls check — True if `AskUserQuestion` would lose fidelity. Does not own the surface decision. |
 | `collect_form_response(form, raw_answers, template_id="")` | Validate answers (R4) and return a `FormResponse`; raises `FormValidationError`. |

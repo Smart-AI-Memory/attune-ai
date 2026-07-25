@@ -93,8 +93,8 @@ answers any construct on any surface.
 ## Why did a simple question render as a full form?
 
 The widget is the default now. If you'd rather have buttons,
-turn on keyboard mode — `{"keyboard_mode": true}` in the project's
-`./attune.config.json`, or `ATTUNE_KEYBOARD_MODE=1` for one shell.
+run `attune config set keyboard_mode true` — it persists for this
+project. `ATTUNE_KEYBOARD_MODE=1` overrides it for one shell.
 
 ## Doesn't defaulting to the widget cost an extra round-trip?
 

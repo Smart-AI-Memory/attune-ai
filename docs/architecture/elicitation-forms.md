@@ -110,14 +110,22 @@ owns the decision.
 ### Keyboard mode
 
 Keyboard mode is the opt-out for people who would rather type than click.
-It persists **per project** as `keyboard_mode` in `./attune.config.json`:
+Turn it on with the CLI:
 
-```json
-{ "keyboard_mode": true }
+```bash
+attune config set keyboard_mode true
 ```
 
+It persists **per project** as `keyboard_mode` in `./attune.config.json`,
+so it survives restarts and stays scoped to the repo you set it in.
+`attune config show` reports the current value.
 `ATTUNE_KEYBOARD_MODE=1` (or `0`) overrides it for one shell in either
-direction. The terse reply vocabulary (`y` / `go` / `1`) answers any
+direction.
+
+Nobody has to know the setting exists to find it: after ten answered
+forms, the next submission surfaces a one-time hint pointing at the
+command (D17's usage-triggered discovery — it reaches people who have
+felt the friction, and never fires for someone already opted in). The terse reply vocabulary (`y` / `go` / `1`) answers any
 construct on any surface regardless — a form never blocks a keyboard-only
 user.
 
@@ -161,4 +169,4 @@ per-type "rejects out-of-option" test is the cheap guard that catches a
 missed validation site. Prove it with a non-mocked round-trip — render,
 submit, collect — not just unit tests.
 
-<!-- attune-generated: source_hash=660990a441ecd2b722e6ade0d914a0d81e15357900f19a08cc3f511a5b9b13ff feature=elicitation-forms kind=architecture generated_at=2026-07-25 -->
+<!-- attune-generated: source_hash=9670395c7ce23f96b61ec57648f0a6c01aad19746a4f965901b5f07a5f070d2c feature=elicitation-forms kind=architecture generated_at=2026-07-25 -->

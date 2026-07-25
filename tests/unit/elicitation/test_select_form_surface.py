@@ -322,3 +322,93 @@ def test_handler_survives_broken_telemetry(monkeypatch: pytest.MonkeyPatch) -> N
     result = _run("_handle_elicitation_render_widget", _RICH)
     assert result["success"] is True
     assert "html" in result
+
+
+# --------------------------------------------------------------------
+# the opt-out's affordance — reachable and discoverable (D17)
+# --------------------------------------------------------------------
+#
+# The mechanism shipping without these is how D17 sat unbuilt for a
+# month: every seat called the opt-out "essential", and an opt-out
+# nobody can find is not one.
+
+
+def test_set_keyboard_mode_round_trips(tmp_path: Path) -> None:
+    from attune.elicitation import set_keyboard_mode
+
+    set_keyboard_mode(True, tmp_path)
+    assert keyboard_mode_enabled(tmp_path) is True
+    set_keyboard_mode(False, tmp_path)
+    assert keyboard_mode_enabled(tmp_path) is False
+
+
+def test_set_keyboard_mode_preserves_other_settings(tmp_path: Path) -> None:
+    """Writing one key must not eat the user's other config."""
+    from attune.elicitation import set_keyboard_mode
+
+    (tmp_path / "attune.config.json").write_text(json.dumps({"project_name": "attune", "tier": 3}))
+    set_keyboard_mode(True, tmp_path)
+
+    data = json.loads((tmp_path / "attune.config.json").read_text())
+    assert data == {"project_name": "attune", "tier": 3, "keyboard_mode": True}
+
+
+def test_set_keyboard_mode_refuses_to_clobber_bad_json(tmp_path: Path) -> None:
+    """Malformed config raises — overwriting would silently lose data."""
+    from attune.elicitation import set_keyboard_mode
+
+    (tmp_path / "attune.config.json").write_text("{not json")
+    with pytest.raises(ValueError, match="not valid JSON"):
+        set_keyboard_mode(True, tmp_path)
+
+
+def test_config_cli_sets_and_shows(tmp_path: Path, monkeypatch, capsys) -> None:
+    from attune.cli_minimal import main
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["config", "set", "keyboard_mode", "true"]) == 0
+    assert json.loads((tmp_path / "attune.config.json").read_text())["keyboard_mode"] is True
+
+    capsys.readouterr()
+    assert main(["config", "show"]) == 0
+    assert "keyboard_mode = true" in capsys.readouterr().out
+
+
+def test_config_cli_rejects_unknown_key_and_bad_value(tmp_path: Path, monkeypatch) -> None:
+    """A typo must not be silently persisted as a setting that does nothing."""
+    from attune.cli_minimal import main
+
+    monkeypatch.chdir(tmp_path)
+    assert main(["config", "set", "keybord_mode", "true"]) == 1
+    assert main(["config", "set", "keyboard_mode", "maybe"]) == 1
+    assert not (tmp_path / "attune.config.json").exists()
+
+
+def test_keyboard_hint_fires_once_at_the_threshold() -> None:
+    from attune.telemetry.form_events import (
+        _HINT_AFTER_SUBMISSIONS,
+        log_submission,
+        maybe_keyboard_hint,
+    )
+
+    for _ in range(_HINT_AFTER_SUBMISSIONS - 1):
+        log_submission()
+        assert maybe_keyboard_hint() is None  # not yet earned
+
+    log_submission()
+    assert maybe_keyboard_hint() is not None  # earned
+
+    log_submission()
+    assert maybe_keyboard_hint() is None  # and never again
+
+
+def test_keyboard_hint_never_fires_for_users_already_opted_in() -> None:
+    from attune.telemetry.form_events import (
+        _HINT_AFTER_SUBMISSIONS,
+        log_submission,
+        maybe_keyboard_hint,
+    )
+
+    for _ in range(_HINT_AFTER_SUBMISSIONS + 5):
+        log_submission()
+    assert maybe_keyboard_hint(keyboard_mode=True) is None

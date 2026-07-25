@@ -17,6 +17,10 @@ run-record corpus that future releases learn from.
 
 ### Added
 
+- **`attune config set` / `attune config show`** — the first project-config
+  CLI. Writes allowlisted settings to `./attune.config.json` (currently
+  `keyboard_mode`), preserving other keys; an unknown key errors rather
+  than silently persisting a setting that does nothing.
 - **`form_response_summary(form, response)`** — collapses an answered
   form to a compact markdown summary (title plus one bullet per
   answer), so a long session accumulates summaries instead of
@@ -135,9 +139,12 @@ run-record corpus that future releases learn from.
   `FormSchema`, with an explicit batching rule: independent dimensions
   go in ONE form instead of N sequential question-turns.
 - **Keyboard mode** — the opt-out for people who'd rather type than
-  click, persisted per project as `keyboard_mode` in
-  `attune.config.json`, with `ATTUNE_KEYBOARD_MODE` as a two-way
-  session override. Ratified in D17, built here.
+  click. Turn it on with `attune config set keyboard_mode true`; it
+  persists per project in `attune.config.json`, with
+  `ATTUNE_KEYBOARD_MODE` as a two-way session override. After ten
+  answered forms a one-time hint points at the command, so the opt-out
+  is discoverable without having to know it exists. Ratified in D17,
+  built here.
 - **Managed-Redis naming is platform-neutral** (#1506).
   `get_managed_redis_config` replaces the Railway-specific name;
   `get_railway_redis_config` remains as a deprecated alias.

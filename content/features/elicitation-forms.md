@@ -123,14 +123,22 @@ owns the decision.
 ### Keyboard mode
 
 Keyboard mode is the opt-out for people who would rather type than click.
-It persists **per project** as `keyboard_mode` in `./attune.config.json`:
+Turn it on with the CLI:
 
-```json
-{ "keyboard_mode": true }
+```bash
+attune config set keyboard_mode true
 ```
 
+It persists **per project** as `keyboard_mode` in `./attune.config.json`,
+so it survives restarts and stays scoped to the repo you set it in.
+`attune config show` reports the current value.
 `ATTUNE_KEYBOARD_MODE=1` (or `0`) overrides it for one shell in either
-direction. The terse reply vocabulary (`y` / `go` / `1`) answers any
+direction.
+
+Nobody has to know the setting exists to find it: after ten answered
+forms, the next submission surfaces a one-time hint pointing at the
+command (D17's usage-triggered discovery — it reaches people who have
+felt the friction, and never fires for someone already opted in). The terse reply vocabulary (`y` / `go` / `1`) answers any
 construct on any surface regardless — a form never blocks a keyboard-only
 user.
 
@@ -271,6 +279,7 @@ form = form_from_dict({
 | `select_form_surface(form, widget_capable=True, keyboard_mode=False)` | Choose the surface: `"widget"` (the default) or `"ask"`. |
 | `is_trivial_form(form)` | True when a form is small enough that buttons lose nothing: one select/boolean, ≤3 options, no label >120 chars. |
 | `keyboard_mode_enabled(project_root=None)` | Read the per-project opt-out (`keyboard_mode` in `./attune.config.json`; `ATTUNE_KEYBOARD_MODE` overrides). |
+| `set_keyboard_mode(enabled, project_root=None)` | Persist the opt-out; what `attune config set keyboard_mode` calls. Preserves other keys. |
 | `form_response_summary(form, response)` | Collapse an answered form to a compact markdown summary. |
 | `needs_widget(form)` | Low-level controls check — True if `AskUserQuestion` would lose fidelity. Does not own the surface decision. |
 | `collect_form_response(form, raw_answers, template_id="")` | Validate answers (R4) and return a `FormResponse`; raises `FormValidationError`. |
@@ -405,8 +414,8 @@ blocker or omit a real one.
   answers any construct on any surface.
 - **Q:** Why did a simple question render as a full form?
   **A:** The widget is the default now. If you'd rather have buttons,
-  turn on keyboard mode — `{"keyboard_mode": true}` in the project's
-  `./attune.config.json`, or `ATTUNE_KEYBOARD_MODE=1` for one shell.
+  run `attune config set keyboard_mode true` — it persists for this
+  project. `ATTUNE_KEYBOARD_MODE=1` overrides it for one shell.
 - **Q:** Doesn't defaulting to the widget cost an extra round-trip?
   **A:** Yes, and that is deliberate. Latency was the old routing axis
   and it made the agent quietly downgrade forms that communicated

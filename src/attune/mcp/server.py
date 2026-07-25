@@ -869,11 +869,38 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         except FormValidationError as e:
             return {"success": False, "problems": e.problems}
 
-        return {
+        result = {
             "success": True,
             "responses": response.responses,
             "response_id": response.response_id,
         }
+        hint = self._maybe_keyboard_hint()
+        if hint:
+            result["hint"] = hint
+        return result
+
+    @staticmethod
+    def _maybe_keyboard_hint() -> str | None:
+        """Record the submission and return D17's one-time keyboard hint.
+
+        A validated submission is the only honest place to count "forms
+        the user actually answered" — rendering a form proves nothing
+        about whether they engaged with it. D17 ratified usage-triggered
+        discovery over a calendar timer precisely so the hint reaches
+        people who have felt the friction and nobody else.
+
+        Best-effort: a telemetry problem must never break the submission
+        the user just made.
+        """
+        try:
+            from attune.elicitation import keyboard_mode_enabled
+            from attune.telemetry.form_events import log_submission, maybe_keyboard_hint
+
+            log_submission()
+            return maybe_keyboard_hint(keyboard_mode=keyboard_mode_enabled())
+        except (OSError, ValueError, ImportError) as exc:
+            logger.debug("keyboard-mode hint skipped: %s", exc)
+            return None
 
     @staticmethod
     def _elicitation_session() -> tuple[Any, Any]:

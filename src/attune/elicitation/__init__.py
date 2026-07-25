@@ -21,6 +21,8 @@ Public surface:
 - :func:`keyboard_mode_enabled` — the user's terse/keyboard opt-out
   (D17), persisted per project in ``attune.config.json`` with
   ``ATTUNE_KEYBOARD_MODE`` as a session override.
+- :func:`set_keyboard_mode` — persist that preference (what
+  ``attune config set keyboard_mode`` calls).
 - :func:`needs_widget` — low-level *controls* check: True iff a form
   loses fidelity on ``AskUserQuestion``. No longer owns the surface
   decision — prefer :func:`select_form_surface`.
@@ -47,6 +49,7 @@ from attune.elicitation.bridge import (
     keyboard_mode_enabled,
     needs_widget,
     select_form_surface,
+    set_keyboard_mode,
 )
 from attune.elicitation.elicitation_schema import form_to_elicitation_schema
 from attune.elicitation.reference_form import EXAMPLE_ANSWERS, REFERENCE_FORM
@@ -67,4 +70,5 @@ __all__ = [
     "keyboard_mode_enabled",
     "needs_widget",
     "select_form_surface",
+    "set_keyboard_mode",
 ]

@@ -254,9 +254,11 @@ by hand. Precedence, highest first:
 2. **A `number` / `date` / `textarea` field** → widget, always. These
    have no `AskUserQuestion` control at all, so this outranks the
    opt-out and the user can never silently lose a field.
-3. **Keyboard mode on** → `AskUserQuestion`. The user's opt-out,
-   persisted per project in `attune.config.json` (`keyboard_mode`),
-   with `ATTUNE_KEYBOARD_MODE` as a session override.
+3. **Keyboard mode on** → `AskUserQuestion`. The user's opt-out, set
+   with `attune config set keyboard_mode true` and persisted per project
+   in `attune.config.json`, with `ATTUNE_KEYBOARD_MODE` as a session
+   override. If a user says forms feel like too much, point them at that
+   command rather than arguing the default.
 4. **Trivial form** → `AskUserQuestion`. Trivial is narrow and
    mechanical: exactly one `single_select`/`boolean`, ≤3 options, and
    no option label over 120 chars. A long label means tradeoffs got

@@ -122,14 +122,22 @@ owns the decision.
 ### Keyboard mode
 
 Keyboard mode is the opt-out for people who would rather type than click.
-It persists **per project** as `keyboard_mode` in `./attune.config.json`:
+Turn it on with the CLI:
 
-```json
-{ "keyboard_mode": true }
+```bash
+attune config set keyboard_mode true
 ```
 
+It persists **per project** as `keyboard_mode` in `./attune.config.json`,
+so it survives restarts and stays scoped to the repo you set it in.
+`attune config show` reports the current value.
 `ATTUNE_KEYBOARD_MODE=1` (or `0`) overrides it for one shell in either
-direction. The terse reply vocabulary (`y` / `go` / `1`) answers any
+direction.
+
+Nobody has to know the setting exists to find it: after ten answered
+forms, the next submission surfaces a one-time hint pointing at the
+command (D17's usage-triggered discovery — it reaches people who have
+felt the friction, and never fires for someone already opted in). The terse reply vocabulary (`y` / `go` / `1`) answers any
 construct on any surface regardless — a form never blocks a keyboard-only
 user.
 

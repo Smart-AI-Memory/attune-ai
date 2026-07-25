@@ -708,6 +708,45 @@ def keyboard_mode_enabled(project_root: Path | None = None) -> bool:
     return _project_keyboard_mode(project_root)
 
 
+def set_keyboard_mode(enabled: bool, project_root: Path | None = None) -> Path:
+    """Persist the keyboard-mode preference for this project.
+
+    Writes ``keyboard_mode`` into the project-local ``attune.config.json``,
+    preserving any other keys already in the file. A missing file is
+    created; a malformed one raises rather than silently discarding the
+    user's other settings.
+
+    Args:
+        enabled: The preference to store.
+        project_root: Directory holding ``attune.config.json``. Defaults
+            to the current working directory.
+
+    Returns:
+        The path written.
+
+    Raises:
+        ValueError: The existing config file is not valid JSON, or holds
+            something other than a JSON object. Overwriting it would lose
+            data, so the caller must fix it first.
+    """
+    base = Path(project_root) if project_root is not None else Path.cwd()
+    path = base / _PROJECT_CONFIG
+
+    data: dict[str, Any] = {}
+    if path.exists():
+        try:
+            loaded = json.loads(path.read_text(encoding="utf-8"))
+        except ValueError as exc:
+            raise ValueError(f"{path} is not valid JSON — fix it before setting keys") from exc
+        if not isinstance(loaded, dict):
+            raise ValueError(f"{path} does not hold a JSON object")
+        data = loaded
+
+    data[_KEYBOARD_MODE_KEY] = bool(enabled)
+    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return path
+
+
 def form_response_summary(form: FormSchema, response: FormResponse) -> str:
     """Render an answered form as a compact markdown summary.
 

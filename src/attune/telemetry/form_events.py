@@ -105,6 +105,91 @@ def log_surface_decision(surface: str, **fields: object) -> None:
         pass  # telemetry is best-effort; never break the caller
 
 
+#: Form submissions before the one-time keyboard-mode hint fires. D17
+#: ratified usage-triggered discovery ("after N form submissions"), not a
+#: calendar timer — someone who never feels the friction never sees it.
+_HINT_AFTER_SUBMISSIONS = 10
+
+#: Shown to a user who has answered enough forms to have an opinion.
+_KEYBOARD_HINT = (
+    "You've answered several forms. If you'd rather answer with the "
+    "keyboard than the mouse, turn on keyboard mode — "
+    "`attune config set keyboard_mode true` — and asks that fit a plain "
+    "question will come back as button turns instead of forms."
+)
+
+
+def log_submission() -> None:
+    """Record that a user submitted a form. Best-effort, never raises."""
+    try:
+        if not _enabled():
+            return
+        path = _events_path()
+        path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        _rotate_if_huge(path)
+        record = {
+            "v": "1.0",
+            "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "event": "form_submitted",
+        }
+        with path.open("a", encoding="utf-8") as fh:
+            json.dump(record, fh, separators=(",", ":"))
+            fh.write("\n")
+    except OSError:
+        pass
+
+
+def _hint_marker() -> Path:
+    """Path of the once-only marker for the keyboard-mode hint."""
+    return _events_path().with_name("keyboard_hint_shown")
+
+
+def maybe_keyboard_hint(keyboard_mode: bool = False) -> str | None:
+    """Return the keyboard-mode hint the first time it is earned, else None.
+
+    Fires at most once ever, only after the user has actually answered
+    :data:`_HINT_AFTER_SUBMISSIONS` forms, and never when they already
+    have keyboard mode on. Writes the marker before returning so a caller
+    that fires twice in one session still only shows it once.
+
+    Args:
+        keyboard_mode: Whether the user has already opted in.
+
+    Returns:
+        The hint text, or ``None``.
+    """
+    try:
+        if keyboard_mode or not _enabled():
+            return None
+        marker = _hint_marker()
+        if marker.exists():
+            return None
+        if submission_count() < _HINT_AFTER_SUBMISSIONS:
+            return None
+        marker.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        marker.write_text("shown\n", encoding="utf-8")
+        return _KEYBOARD_HINT
+    except OSError:
+        return None
+
+
+def submission_count() -> int:
+    """Number of form submissions recorded in the live log."""
+    count = 0
+    try:
+        with _events_path().open(encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    record = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(record, dict) and record.get("event") == "form_submitted":
+                    count += 1
+    except OSError:
+        return 0
+    return count
+
+
 def surface_mix() -> dict[str, int]:
     """Return counts per surface from the live log.
 
