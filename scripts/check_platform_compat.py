@@ -132,7 +132,15 @@ def scan_file(filepath: Path, result: ScanResult) -> None:
                             line=line_num,
                             category="missing_encoding",
                             message="open() without encoding specified",
-                            severity="warning",
+                            # ERROR, not warning: on Windows a text-mode
+                            # open() without encoding uses the locale
+                            # codepage (typically cp1252), not UTF-8 —
+                            # the highest-yield source of Windows-only
+                            # failures in this repo. Gated as of the
+                            # encoding-first ratchet; the remaining
+                            # warning categories are baselined and will
+                            # be promoted in turn.
+                            severity="error",
                             suggestion='Add encoding="utf-8" parameter',
                         ),
                     )

@@ -152,7 +152,7 @@ def cmd_analyze(args):
         json_output = analysis.to_dict()
         json_file = Path(f"{workflow_id}_risk_analysis.json")
         validated_json = _validate_file_path(str(json_file))
-        with open(validated_json, "w") as f:
+        with open(validated_json, "w", encoding="utf-8") as f:
             json.dump(json_output, f, indent=2)
         print(f"\n✓ JSON output written to: {validated_json}")
 

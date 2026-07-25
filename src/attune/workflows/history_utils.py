@@ -167,7 +167,7 @@ def _save_workflow_run(
     history = history[-max_history:]
 
     validated_path = _validate_file_path(str(path))
-    with open(validated_path, "w") as f:
+    with open(validated_path, "w", encoding="utf-8") as f:
         json.dump(history, f, indent=2)
 
 
