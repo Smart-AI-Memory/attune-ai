@@ -437,6 +437,47 @@ jobs:
     - name: Security scan with Bandit
       run: bandit -c .bandit -r src/ attune_software/ --severity-level medium --confidence-level medium
 
+  # Gate on the WHOLE test matrix, not just the two required lanes.
+  #
+  # Branch protection requires `test (ubuntu-latest, 3.12)` and
+  # `test (windows-latest, 3.12)`. On a full-matrix run the other ten
+  # lanes — including windows 3.10/3.11/3.13/3.14 — report but gate
+  # nothing, so a Windows-only regression can merge green and then sit on
+  # main while every later PR shows the same red lanes that nothing
+  # blocks on. That has happened (see the "admin-merging before Windows
+  # lanes complete" and "auto-merge ignores non-required lanes" lessons).
+  #
+  # Adding those lanes to branch protection directly does NOT work: the
+  # slim matrix does not run them, and a required check that never runs
+  # reports as "missing" and blocks the PR forever. So instead this job
+  # ALWAYS runs, aggregates whatever the matrix actually did, and is the
+  # single required context. Slim run -> nothing failed -> green. Full
+  # run with a red windows 3.13 -> red, and the merge is blocked.
+  test-matrix-complete:
+    needs: [test]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - name: Require every test lane that ran to have passed
+      shell: bash
+      env:
+        RESULT: ${{ needs.test.result }}
+      run: |
+        set -euo pipefail
+        echo "test matrix result: $RESULT"
+        case "$RESULT" in
+          success|skipped)
+            echo "All test lanes that ran passed (or the matrix was skipped)."
+            ;;
+          *)
+            echo "::error::One or more test lanes did not pass (result: $RESULT)."
+            echo "Check the non-required lanes too — windows 3.10/3.11/3.13/3.14"
+            echo "are exactly the ones this gate exists to catch."
+            exit 1
+            ;;
+        esac
+
   platform-compat:
     runs-on: ubuntu-latest
     timeout-minutes: 10
