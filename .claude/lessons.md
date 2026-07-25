@@ -18026,3 +18026,61 @@ def ", start_idx + 1)` for module-
   for `uses:` / `gh ` / `git push` / `github-script` and confirm every
   hit is read-only. The 2026-07-18 `persist-credentials` 403 lesson is
   the same wall hit from the other side, after the fact.
+- **A predicate with no production caller is a safe pattern until you
+  hang a SIDE EFFECT off it — then it silently measures nothing**:
+  2026-07-25, D21 (forms-by-default, PR #1652). `attune.elicitation`
+  deliberately keeps routing predicates that nothing in `src/` calls —
+  `needs_widget` has never had one. That is not a bug: the agent follows
+  the skill's prose, and the function is the executable mirror of the
+  rule, kept honest by tests. I added `select_form_surface` in the same
+  shape and put the "decay receipt" telemetry INSIDE it. Everything was
+  green — 20 tests, 99% coverage, a non-mocked route→persist→read
+  round-trip — because the tests called it directly. In the live system
+  nothing did, so `form_events.jsonl` would have stayed empty forever
+  while the PR body claimed it "measures the surface mix faithfully."
+  **Diagnostic**: after adding any observability/persistence/IO to an
+  existing pure helper, `grep -rn "<name>" --include="*.py" src/ | grep
+  -v "def <name>"` and confirm a REAL caller outside `__init__`
+  re-exports and docstrings; a passing round-trip test proves the
+  function works, never that anything invokes it. **Fix pattern**: move
+  the call to the seam that the live system actually crosses — here the
+  MCP handlers, where the tool the agent invoked *is* the datum worth
+  recording (which also upgraded the metric: `chosen` + `agreed` catch
+  the agent overriding its own router, a signal that flipping a default
+  cannot manufacture, unlike volume which rises by construction).
+  Extends "Registered ≠ working — dogfood the live loop" with the case
+  where the code was correctly architected and the DEFECT WAS
+  INTRODUCED BY INHERITING that architecture for something that needs a
+  caller.
+
+- **A behavioral-default change can invalidate a scheduled DEMO or
+  marketing artifact whose whole premise is the old behavior — grep the
+  non-code surfaces before shipping**: 2026-07-25, same PR.
+  `docs/process/DEMO_DYNAMIC_FORMS_script.md` was chair-ruled, had
+  locked specimens, and was scheduled for a Thu/Fri capture. Its arc was
+  "3 turns → 1 turn": cold-open on the agent asking three sequential
+  button questions, then `/elicit` collapsing them. D21's firing-rule
+  rewrite makes the agent batch those dimensions into one form
+  immediately — **the three-question before-state the demo depended on
+  is exactly what the change removes**. Filming it would have either
+  failed to reproduce, or reproduced only because the agent ignored its
+  own new rule. The script even said its specimens were reliable
+  *because* they were "drawn from the repo's own Socratic Interaction
+  Rule examples" — the rule I rewrote. It also carried "everything shown
+  is live on PyPI 10.5.0 today," which the change falsifies. **Rule**:
+  when changing a default or an always-loaded instruction, grep
+  `docs/process/`, `content/`, `website/`, and any blog/demo/script dirs
+  for artifacts that DEMONSTRATE the old behavior — not just docs that
+  describe it. A doc that describes old behavior is stale; a demo that
+  *performs* it is broken, and one with a capture date is urgent.
+  **Resolution worth reusing**: the fix was not to delete the beat but
+  to make it reproducible on purpose — the new opt-out
+  (`ATTUNE_KEYBOARD_MODE=1`) reproduces the old sequential experience on
+  demand, so the same prompt yields both takes deterministically. A
+  user-selectable mode is a live run, not a simulation, so it stays
+  inside the table's "curation of a live run, never simulation" ruling
+  — and it removed the script's standing reliability risk (a specimen
+  "rehearsal-verified to reliably yield ~3 sequential questions" was
+  always a hope). Pairs with "Spec-named work-scope drifts from code
+  reality" (same family: a tracked artifact goes stale against the code;
+  this one is the artifact-PERFORMS-it surface, and it has a deadline).
