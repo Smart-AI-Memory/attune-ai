@@ -493,21 +493,49 @@ jobs:
       id: compat
       run: |
         python scripts/check_platform_compat.py src/ --json > compat-report.json
-        python scripts/check_platform_compat.py src/ --fix
+        python scripts/check_platform_compat.py src/ --fix || true
 
     - name: Upload compatibility report
+      if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: platform-compat-report
         path: compat-report.json
 
-    - name: Fail on errors (non-blocking for now)
+    # This step USED to warn and `continue-on-error: true`, which made
+    # `platform-compat` a required check that could not fail — and even
+    # without that, no platform rule emitted `error`, so the only error
+    # severity was the scanner failing to read a file. It gated nothing.
+    #
+    # Now: `missing_encoding` is an error (a text-mode open() without
+    # encoding uses the Windows locale codepage, not UTF-8 — the
+    # highest-yield source of Windows-only breakage here), the 44
+    # pre-existing instances are fixed, and this step FAILS the build.
+    #
+    # The other categories (hardcoded home/etc/tmp paths, os.path
+    # preference) stay warnings for now and are reported below without
+    # failing — the agreed sequence is encoding first, then ratchet the
+    # rest against a baseline.
+    - name: Fail on cross-platform errors
       run: |
-        ERRORS=$(python -c "import json; r=json.load(open('compat-report.json')); print(r['summary']['errors'])")
-        if [ "$ERRORS" -gt 0 ]; then
-          echo "::warning::Found $ERRORS cross-platform compatibility errors"
-        fi
-      continue-on-error: true
+        set -euo pipefail
+        python - <<'EOF'
+        import json, sys
+        report = json.load(open("compat-report.json"))
+        summary = report["summary"]
+        errors = summary["errors"]
+        print(f"scanned {summary['files_scanned']} files: "
+              f"{errors} error(s), {summary['warnings']} warning(s)")
+        if summary["warnings"]:
+            print(f"::notice::{summary['warnings']} cross-platform warnings "
+                  "(not yet gated — see the encoding-first ratchet)")
+        if errors:
+            for issue in report.get("issues", []):
+                if issue.get("severity") == "error":
+                    print(f"::error file={issue['file']},line={issue['line']}::"
+                          f"{issue['message']}")
+            sys.exit(1)
+        EOF
 
   code-quality:
     runs-on: ubuntu-latest

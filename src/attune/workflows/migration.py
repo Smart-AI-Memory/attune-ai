@@ -123,7 +123,7 @@ class MigrationConfig:
         config_path = config_dir / "migration.json"
 
         try:
-            with config_path.open("w") as f:
+            with config_path.open("w", encoding="utf-8") as f:
                 json.dump(
                     {
                         "mode": self.mode,
