@@ -56,6 +56,30 @@ developer workflow hub; `attune-gui` is the docs hub.
 
 ---
 
+## What this costs
+
+There are two ways to run Attune, and they bill differently. Pick the
+row you're in:
+
+| How you run it | What it costs |
+| -------------- | ------------- |
+| **Plugin in Claude Code** (skills, hooks, forms) | Your Claude subscription. No API key, no extra charge. |
+| **`attune` CLI + MCP tools** | Direct Anthropic API calls — needs `ANTHROPIC_API_KEY` with **API credits**. |
+
+**The one thing people get wrong:** a Claude Pro/Max subscription does
+*not* include API credits. They are separate products. The subscription
+powers Claude Code — and therefore the plugin — but the CLI and MCP
+tools call the Anthropic API directly, so a key without pay-as-you-go
+credit returns `credit balance is too low`. If you only use the plugin,
+this never comes up.
+
+Free on either path, because they never call a model: the elicitation
+forms, the security hooks, path validation, memory storage and recall,
+and every local transform. See [API Mode](#api-mode) for keys and
+routing, and [Installation Options](#installation-options) for extras.
+
+---
+
 <!-- ROTATING SLOT: this "New in <version>" section is replaced each
      release with the headline feature; the displaced content moves to
      a permanent section below (see "Dynamic forms" for the pattern).
@@ -327,8 +351,8 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 | Ops dashboard (`attune ops`) — run history, cost tiles, telemetry | -- | Yes |
 
 > **Note:** Skills use your Claude subscription at no extra cost.
-> CLI and MCP tools make direct Anthropic API calls — API key
-> required. See [API Mode](#api-mode).
+> CLI and MCP tools make direct Anthropic API calls — API key with
+> credits required. See [What this costs](#what-this-costs).
 
 ---
 
@@ -547,10 +571,20 @@ spammed to the session.
 
 ## API Mode
 
+API mode is what the `attune` CLI and the MCP tools run on. **It is not
+required to use Attune** — the Claude Code plugin runs on your
+subscription and needs none of this (see
+[What this costs](#what-this-costs)). Set these up only if you want the
+CLI or MCP surfaces:
+
 ```bash
-export ANTHROPIC_API_KEY="sk-ant-..."     # Required
+export ANTHROPIC_API_KEY="sk-ant-..."     # Required *for API mode*
 export REDIS_URL="redis://localhost:6379"  # Optional
 ```
+
+The key must belong to an org with pay-as-you-go API credit. A Claude
+Pro/Max subscription does not grant it — without credit the calls
+return `credit balance is too low`.
 
 ### Model Routing
 
