@@ -17982,3 +17982,47 @@ def ", start_idx + 1)` for module-
   Edit instead; (3) a fixture README's "reset after a take"
   instruction only becomes true once the fixture is TRACKED — say so
   in the README, or the user's first reset is a silent no-op.
+
+- **Applying `auto-merge-when-green` is not DONE until
+  `autoMergeRequest` is non-null — make the arm-check a post-condition
+  of the label action, not something you recall later**: the arming
+  trap is already documented twice (2026-07-17: CLEAN + null
+  `autoMergeRequest` = never armed; 2026-07-20: labeled-events don't
+  replay, so a label applied while the arming workflow was itself an
+  open PR is inert). Both are framed for a LATER moment — reconciling
+  a handoff claim, or diagnosing a PR already known to be stuck.
+  Neither fires at the moment you apply the label yourself, which is
+  why 2026-07-24 hit it twice in one session: #1648 was labeled and
+  silently didn't arm (caught only because I polled for the merge),
+  and #1642 — labeled by a PARALLEL session — sat CLEAN, 29/29 green
+  and UNMERGED for ~17 hours until Patrick noticed and asked for it.
+  Two cheap procedural rules: (1) every `gh pr edit --add-label
+  auto-merge-when-green` is followed by `gh pr view <n> --json
+  autoMergeRequest` — but the label-triggered workflow is ASYNC, so
+  give it ~15-30s first. A check fired in the same breath as the label
+  reads NULL even when arming succeeds (dogfooded on #1651 while
+  writing this entry: NULL instantly, SQUASH ~15s later — an instant
+  check would have been a FALSE alarm every time). The real signal is
+  a null that PERSISTS past ~30-60s: arm it (`gh pr merge --auto`) or
+  merge it now. The label is a REQUEST, the arm is the STATE.
+  (2) A labeled-but-still-OPEN PR is a suspect, not a handled item —
+  when you notice one (yours or another session's), check the arm
+  state before assuming the lane owns it. Corollary for starters and
+  handoffs: "#N will auto-merge" records an intent that may never
+  have taken effect — it is not a receipt.
+
+- **Before merging a workflow-hardening PR that adds a top-level
+  `permissions:` block, audit every job in the touched workflows for
+  write needs — a top-level block applies to every job that declares
+  none**: 2026-07-24, #1642 (branch `claude/qa2-…`, so more of this
+  class are coming) added `permissions: contents: read` to
+  `integration-tests.yml` and `website-accuracy.yml`. Safe here —
+  both run only `actions/checkout` + `actions/setup-python`, with no
+  `gh` calls, no comment posting and no pushes — but the audit is the
+  point, and the PR being green is NOT the whole receipt: a
+  workflow's `schedule` / `workflow_dispatch` / push-only jobs never
+  execute in a PR run, so a starved permission on those paths first
+  surfaces on main. Probe before merging: grep the touched workflows
+  for `uses:` / `gh ` / `git push` / `github-script` and confirm every
+  hit is read-only. The 2026-07-18 `persist-credentials` 403 lesson is
+  the same wall hit from the other side, after the fact.
