@@ -18367,3 +18367,43 @@ def ", start_idx + 1)` for module-
   merge serially, rather than refresh-then-merge each in turn. Pairs with
   "`gh pr checks` exits 0 even when checks FAIL" (both: the rollup is not
   the gate) and with the stacked-PR re-target rules.
+
+- **The first check to go red is usually DOWNSTREAM of the real failure
+  — never diagnose from an unsettled matrix**: 2026-07-25, refreshing 9
+  held PRs against current main. Two PRs showed `fail=1 [coverage]` while
+  17 lanes were still `pending`, and I theorised the refresh had moved the
+  project coverage denominator (89 commits of main merged in — plausible,
+  and wrong). When the runs settled, the truth was that the ENTIRE test
+  matrix was failing on a claim-drift gate; `coverage` merely reported
+  first because it is the fastest job. The generalisable point: check
+  completion order is arbitrary and roughly inverse to job duration, so
+  the first red is biased toward *fast* checks, which are usually
+  aggregates or downstream consumers rather than root causes. `fail=N` on
+  a run with `pending>0` tells you THAT something broke and carries almost
+  no information about WHAT. Compounding trap: `gh run view --log-failed`
+  returns "run is still in progress" until the whole run completes, so the
+  moment you can see a failure is precisely the moment you cannot yet
+  diagnose it — which is exactly when the temptation to theorise peaks.
+  Rule: wait for `pending=0` before forming a story; if you must say
+  something earlier, label it a hypothesis and name the probe that would
+  settle it. Pairs with "`gh pr checks` exits 0 even when checks FAIL"
+  (both: the rollup is not the gate).
+
+- **A monitor that ends with ZERO events is a monitor FAILURE, not quiet
+  progress — re-read the state directly before believing it**: 2026-07-25,
+  a polling monitor armed over 10 PRs ended `completed` having emitted
+  nothing at all — not even for the PR I already knew had settled — and
+  its output file did not exist to inspect. Re-querying `gh pr checks`
+  showed six PRs green and three red, and had been so for some time. This
+  is the documented "silence is not success" trap in a new shape: the
+  known form is a filter too NARROW to match failures (grep for the
+  success marker only); this form is a monitor that produces no output
+  whatsoever, where the absence looks identical to "nothing has settled
+  yet" — and the longer it runs the more it resembles patience. Cheap
+  discriminator: every monitor should have a TERMINAL event (`WAVE
+  COMPLETE`, `ALL SETTLED`); if the stream ends without it, treat the run
+  as untrusted and re-read the underlying state with one direct query.
+  Corollary for authoring: prefer a monitor whose loop emits a heartbeat
+  or a final summary line unconditionally, so "ended with no terminal
+  event" is distinguishable from "ended normally". Extends the Monitor
+  coverage guidance from filter-breadth to stream-liveness.
