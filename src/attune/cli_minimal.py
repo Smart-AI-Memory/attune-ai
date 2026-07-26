@@ -56,6 +56,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 
 from attune.cli_commands.cost_commands import (
@@ -254,6 +255,23 @@ def _add_gates_subparsers(subparsers: argparse._SubParsersAction) -> None:
         default=[],
         help="Changed paths for blast-radius classification",
     )
+
+
+def _add_config_subparsers(subparsers: argparse._SubParsersAction) -> None:
+    """Add project-config subcommand parsers.
+
+    Args:
+        subparsers: Parent subparsers action to attach to
+
+    """
+    config_parser = subparsers.add_parser("config", help="Project settings")
+    config_sub = config_parser.add_subparsers(dest="config_command")
+
+    set_parser = config_sub.add_parser("set", help="Set a project setting")
+    set_parser.add_argument("key", help=f"Setting name ({', '.join(sorted(_CONFIG_KEYS))})")
+    set_parser.add_argument("value", help="Value (true/false)")
+
+    config_sub.add_parser("show", help="Show current project settings")
 
 
 def _add_telemetry_subparsers(subparsers: argparse._SubParsersAction) -> None:
@@ -613,12 +631,65 @@ Documentation: https://smartaimemory.com/framework-docs/
     _add_workflow_subparsers(subparsers)
     _add_diagnose_subparser(subparsers)
     _add_gates_subparsers(subparsers)
+    _add_config_subparsers(subparsers)
     _add_telemetry_subparsers(subparsers)
     _add_costs_subparsers(subparsers)
     _add_misc_subparsers(subparsers)
     _add_ops_subparser(subparsers)
 
     return parser
+
+
+#: Settings ``attune config set`` will write. An allowlist, not a
+#: free-form key/value store — an unknown key is a typo, and silently
+#: persisting it would leave the user believing a setting took effect.
+_CONFIG_KEYS: frozenset[str] = frozenset({"keyboard_mode"})
+
+_CONFIG_TRUTHY = {"true", "1", "yes", "on"}
+_CONFIG_FALSEY = {"false", "0", "no", "off"}
+
+
+def cmd_config_set(args) -> int:
+    """Set a project setting in ./attune.config.json."""
+    from attune.elicitation import set_keyboard_mode
+
+    key = args.key.strip()
+    if key not in _CONFIG_KEYS:
+        print(f"Unknown setting: {key!r}")
+        print(f"Known settings: {', '.join(sorted(_CONFIG_KEYS))}")
+        return 1
+
+    raw = args.value.strip().lower()
+    if raw in _CONFIG_TRUTHY:
+        value = True
+    elif raw in _CONFIG_FALSEY:
+        value = False
+    else:
+        print(f"Expected true or false, got {args.value!r}")
+        return 1
+
+    try:
+        path = set_keyboard_mode(value)
+    except (OSError, ValueError) as exc:
+        print(f"Could not write the setting: {exc}")
+        return 1
+
+    print(f"{key} = {str(value).lower()}  ({path})")
+    if key == "keyboard_mode" and value:
+        print("Forms that fit a plain question will now come back as button turns.")
+    return 0
+
+
+def cmd_config_show(args) -> int:
+    """Show the current project settings."""
+    from attune.elicitation import keyboard_mode_enabled
+
+    del args
+    enabled = keyboard_mode_enabled()
+    print(f"keyboard_mode = {str(enabled).lower()}")
+    if os.environ.get("ATTUNE_KEYBOARD_MODE", "").strip():
+        print("  (overridden for this shell by ATTUNE_KEYBOARD_MODE)")
+    return 0
 
 
 _SUBCOMMAND_DISPATCH: dict[str, dict[str, object]] = {
@@ -637,6 +708,11 @@ _SUBCOMMAND_DISPATCH: dict[str, dict[str, object]] = {
     "gates": {
         "_attr": "gates_command",
         "check": cmd_gates_check,
+    },
+    "config": {
+        "_attr": "config_command",
+        "set": cmd_config_set,
+        "show": cmd_config_show,
     },
     "telemetry": {
         "_attr": "telemetry_command",

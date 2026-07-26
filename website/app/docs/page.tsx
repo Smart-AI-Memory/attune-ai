@@ -40,7 +40,7 @@ const faqItems = [
   {
     question: 'Is it free? What do I need to run it?',
     answer:
-      'Fully open source under Apache 2.0 — free for personal, commercial, and enterprise use, with no license keys and no usage limits. It works on a Claude subscription or an API key, so you can run it with whichever access you already have.',
+      'Released under the Apache License 2.0 — free for personal, commercial, and enterprise use, with full source access.',
   },
   {
     question: 'What Claude Code skills are included?',
