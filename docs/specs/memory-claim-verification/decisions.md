@@ -63,10 +63,78 @@ re-broadening fails loudly instead of silently refilling the store.
 
 ## Open, for the chair
 
-- **OQ1** — does `llama3.1:8b` reliably emit `refs`? Measure before
-  building P2; if not, heuristic back-fill from `content` becomes the
-  permanent mechanism and R3 may not be viable.
+- **OQ1 — MEASURED 2026-07-26. Answer: NO, and neither does the
+  fallback.** See "OQ1 measurement" below. Awaiting a chair ruling on
+  the mechanism.
 - **OQ2** — on contradiction, reject or demote? Proposal: demote to
   `interpretation` with the contradiction recorded.
 - **OQ3** — should a grounded finding outlive the 30-day TTL? Changes the
   store's character from working-memory to durable.
+
+---
+
+## OQ1 measurement — 2026-07-26
+
+Harness: `scripts/measure_stash_refs.py`. Replays real session
+transcripts through the REAL tail extractor
+(`plugin/hooks/session_stash.py::_read_transcript_tail`) and the REAL
+Ollama call, with the shipped prompt plus a minimal `refs` clause —
+measuring the model, not prompt craft.
+
+| Metric | n=18 (>20 KB) | n=12 (>200 KB) |
+|---|---|---|
+| JSON parse ok | 100% | 100% |
+| findings WITH refs | 79.7% | 85.1% |
+| refs well-formed | 81.2% | **56.4%** |
+| refs **grounded in the tail** | **28.1%** | **21.8%** |
+| findings heuristic-backfillable | 10.1% | 8.5% |
+
+"Grounded" = the ref's value literally appears in the transcript the
+model was shown. Ungrounded means fabricated. The check is generous
+(a bare `pr:1666` scores grounded if `1666` appears anywhere).
+
+### Two findings, both decisive
+
+**1. The model emits refs enthusiastically and gets them wrong.**
+~80–85% of findings carry refs, but only ~22–28% of those refs appear
+in the source at all. Restricting to substantial transcripts made it
+WORSE, not better — well-formedness fell to 56%. This is the worst
+possible shape for R3: confident, structured, and fabricated. Verifying
+such claims would mostly verify inventions.
+
+**2. Heuristic back-fill is not a fallback either.** Only ~10% of
+findings contain an entity a regex over `content` could recover. The
+requirements assumed back-fill was the safety net if the model failed.
+It is not — it is a narrow supplement.
+
+Both mechanisms the spec named therefore fail. The premise of OQ1 —
+"if not the model, then heuristics" — was a false dichotomy.
+
+### A third mechanism the spec did not consider
+
+Refs need not come from the model OR from the finding text. The
+transcript's `tool_use` records already contain the session's real
+entities, deterministically extractable. Probed on the newest
+transcript (148 tool_use blocks):
+
+- PR numbers recovered from commands: `1578 1605 1607 1666 1667 1668`
+  — exactly the PRs that session touched, no fabrications
+- the real merge SHA `1f6553edc24d3cf7e8adebb5a853132fa1e332ef`
+- 10 distinct file paths, from `file_path` inputs
+
+These are facts about what the session DID, not prose about what a
+model thinks it did. The hook currently DISCARDS them: `_text_of`
+replaces every `tool_use`/`tool_result` block with
+`[tool output omitted]` (correct for R1 provenance — tool output is not
+speech — but it means the structured facts are thrown away before
+extraction).
+
+**Implication:** derive the session's ref-set deterministically from
+`tool_use` blocks, then attach refs to findings by matching, rather than
+asking the model to author them. This is the same derive-don't-store
+discipline as D2, applied one layer earlier than the spec proposed.
+
+Recommendation to the chair: R3 as written is not viable; replace the
+model-authored `refs` requirement with session-derived refs. The table
+should deliberate HOW findings bind to the derived ref-set, which is a
+real design fork with defensible alternatives.
