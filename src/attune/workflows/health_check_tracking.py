@@ -39,7 +39,7 @@ def get_trend_comparison(
 
     # Read last score from history
     try:
-        with history_file.open("r") as f:
+        with history_file.open("r", encoding="utf-8") as f:
             lines = f.readlines()
             if len(lines) < 2:
                 return "First baseline established"
@@ -76,7 +76,7 @@ def save_tracking_history(
 
     try:
         # Append to history file (JSONL format)
-        with history_file.open("a") as f:
+        with history_file.open("a", encoding="utf-8") as f:
             entry = {
                 "timestamp": report.timestamp,
                 "mode": report.mode,
@@ -174,7 +174,7 @@ def save_health_json(
 
         # Write health.json
         validated_health_file = _validate_file_path(str(health_file))
-        with validated_health_file.open("w") as f:
+        with validated_health_file.open("w", encoding="utf-8") as f:
             json.dump(health_data, f, indent=2)
 
         logger.info("Saved health data to %s for VS Code extension", validated_health_file)

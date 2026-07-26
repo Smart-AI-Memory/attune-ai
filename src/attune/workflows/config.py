@@ -447,10 +447,10 @@ class WorkflowConfig:
         if validated_path.suffix in (".yaml", ".yml"):
             if not YAML_AVAILABLE:
                 raise ImportError("PyYAML required for YAML config")
-            with open(validated_path, "w") as f:
+            with open(validated_path, "w", encoding="utf-8") as f:
                 yaml.dump(data, f, default_flow_style=False)
         else:
-            with open(validated_path, "w") as f:
+            with open(validated_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
 
 

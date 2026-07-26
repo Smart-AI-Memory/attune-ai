@@ -328,7 +328,7 @@ class AttuneConfig:
         validated_path = _validate_file_path(filepath)
         data = asdict(self)
 
-        with open(validated_path, "w") as f:
+        with open(validated_path, "w", encoding="utf-8") as f:
             yaml.dump(data, f, default_flow_style=False, sort_keys=False)
 
     def to_json(self, filepath: str, indent: int = 2) -> None:
@@ -346,7 +346,7 @@ class AttuneConfig:
         validated_path = _validate_file_path(filepath)
         data = asdict(self)
 
-        with open(validated_path, "w") as f:
+        with open(validated_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=indent)
 
     def to_dict(self) -> dict[str, Any]:

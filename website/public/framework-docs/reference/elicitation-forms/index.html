@@ -4569,6 +4569,38 @@
 <td>Render a native MCP elicitation JSON schema.</td>
 </tr>
 <tr>
+<td><code>select_form_surface(form, widget_capable=True, keyboard_mode=False)</code></td>
+<td>Choose the surface: <code>"widget"</code> (the default) or <code>"ask"</code>.</td>
+</tr>
+<tr>
+<td><code>is_trivial_form(form)</code></td>
+<td>True when a form is small enough that buttons lose nothing: one select/boolean, ≤3 options, no label &gt;120 chars.</td>
+</tr>
+<tr>
+<td><code>keyboard_mode_enabled(project_root=None)</code></td>
+<td>Read the per-project opt-out (<code>keyboard_mode</code> in <code>./attune.config.json</code>; <code>ATTUNE_KEYBOARD_MODE</code> overrides).</td>
+</tr>
+<tr>
+<td><code>set_keyboard_mode(enabled, project_root=None)</code></td>
+<td>Persist the opt-out; what <code>attune config set keyboard_mode</code> calls. Preserves other keys.</td>
+</tr>
+<tr>
+<td><code>form_response_summary(form, response)</code></td>
+<td>Collapse an answered form to a compact markdown summary.</td>
+</tr>
+<tr>
+<td><code>is_fully_inferred(form)</code></td>
+<td>True when every field's value was inferred — the form renders as a one-tap confirmation.</td>
+</tr>
+<tr>
+<td><code>inferred_field_count(form)</code></td>
+<td>How many fields carry an inferred value.</td>
+</tr>
+<tr>
+<td><code>needs_widget(form)</code></td>
+<td>Low-level controls check — True if <code>AskUserQuestion</code> would lose fidelity. Does not own the surface decision.</td>
+</tr>
+<tr>
 <td><code>collect_form_response(form, raw_answers, template_id="")</code></td>
 <td>Validate answers (R4) and return a <code>FormResponse</code>; raises <code>FormValidationError</code>.</td>
 </tr>
@@ -4632,7 +4664,7 @@ three construct types <code>decision</code>, <code>pushback</code>, <code>progre
 <p><code>elicitation_render_form</code>, <code>elicitation_render_widget</code>,
 <code>elicitation_collect_response</code>, and <code>elicitation_ask</code> — the same model,
 exposed for agents that drive forms through the MCP server.</p>
-<!-- attune-generated: source_hash=ea2a2694719d75bff1894657cfe5e0f5c96ae71719ae4d7f00ce7252b9e9798a feature=elicitation-forms kind=reference generated_at=2026-07-14 -->
+<!-- attune-generated: source_hash=65dd2400b49b9d8a20605f411f62b72c1ae2d9d530b8730bb0db0acfef04fb59 feature=elicitation-forms kind=reference generated_at=2026-07-25 -->
 
 
 

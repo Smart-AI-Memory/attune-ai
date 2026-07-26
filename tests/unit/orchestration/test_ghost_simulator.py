@@ -71,6 +71,30 @@ class TestGhostWorktreeManager:
         with pytest.raises(GhostWorktreeError):
             manager.create_ghost_worktree("../escape")
 
+    def test_recreate_over_existing_ghost_gives_fresh_sandbox(self, temp_repo: Path) -> None:
+        manager = GhostWorktreeManager(repo_root=str(temp_repo))
+        first = Path(manager.create_ghost_worktree("re"))
+        (first / "scratch.txt").write_text("scratch\n", encoding="utf-8")
+
+        second = Path(manager.create_ghost_worktree("re"))
+
+        assert second == first
+        assert not (second / "scratch.txt").exists()  # fresh, not reused
+        head = _git(second, "branch", "--show-current").stdout.strip()
+        assert head == "ghost-re"
+
+    def test_remove_falls_back_to_rmtree_for_non_worktree_dir(self, temp_repo: Path) -> None:
+        # A stray directory under base_dir that git doesn't know about:
+        # `git worktree remove` fails, the rmtree fallback must still
+        # clear it and report removal.
+        manager = GhostWorktreeManager(repo_root=str(temp_repo))
+        stray = Path(manager.base_dir) / "stray"
+        stray.mkdir(parents=True)
+        (stray / "junk.txt").write_text("junk\n", encoding="utf-8")
+
+        assert manager.remove_ghost_worktree("stray") is True
+        assert not stray.exists()
+
     def test_non_repo_raises_instead_of_fake_directory(self, tmp_path: Path) -> None:
         # Regression: the original silently fell back to a bare
         # directory when git failed, faking a sandbox.
@@ -111,6 +135,23 @@ class TestMultiTrajectoryRunner:
         assert results["boom"]["success"] is False
         assert "trajectory exploded" in results["boom"]["error"]
         assert results["ok"]["success"] is True
+
+    def test_sandbox_creation_failure_reported_not_fatal(self, temp_repo: Path) -> None:
+        manager = GhostWorktreeManager(repo_root=str(temp_repo))
+        runner = MultiTrajectoryRunner(manager=manager)
+
+        def ok(path: str) -> dict:
+            return {"success": True}
+
+        # "bad/id" fails ghost-id validation → sandbox creation raises;
+        # the batch must record the failure and keep running.
+        results = runner.run_trajectories({"bad/id": ok, "good": ok})
+
+        assert results["bad/id"]["success"] is False
+        assert "invalid ghost id" in results["bad/id"]["error"]
+        assert results["bad/id"]["worktree_path"] is None
+        assert results["bad/id"]["duration_seconds"] == 0.0
+        assert results["good"]["success"] is True
 
 
 class TestTrajectoryComparator:

@@ -164,7 +164,7 @@ class ProviderConfig:
             path = Path.home() / ".attune" / "provider_config.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         validated_path = _validate_file_path(str(path))  # type: ignore[misc]
-        with open(validated_path, "w") as f:
+        with open(validated_path, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
