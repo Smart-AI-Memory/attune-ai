@@ -1,0 +1,50 @@
+[
+  {
+    "packet": "one",
+    "model": "claude-fable-5",
+    "expected_files": 1,
+    "ttfe_s": 3.03,
+    "ttft_s": 4.03,
+    "total_s": 65.52,
+    "input_tokens": 401,
+    "output_tokens": 4994,
+    "output_chars": 13891,
+    "stop_reason": "end_turn",
+    "markers_found": 1,
+    "markers_ok": true,
+    "failure_mode": null,
+    "cost_usd": 0.2537
+  },
+  {
+    "packet": "four",
+    "model": "claude-fable-5",
+    "expected_files": 4,
+    "ttfe_s": 2.88,
+    "ttft_s": 7.64,
+    "total_s": 205.61,
+    "input_tokens": 545,
+    "output_tokens": 16473,
+    "output_chars": 41526,
+    "stop_reason": "end_turn",
+    "markers_found": 4,
+    "markers_ok": true,
+    "failure_mode": null,
+    "cost_usd": 0.8291
+  },
+  {
+    "packet": "five",
+    "model": "claude-fable-5",
+    "expected_files": 5,
+    "ttfe_s": 2.93,
+    "ttft_s": 8.04,
+    "total_s": 210.64,
+    "input_tokens": 592,
+    "output_tokens": 17678,
+    "output_chars": 43407,
+    "stop_reason": "end_turn",
+    "markers_found": 5,
+    "markers_ok": true,
+    "failure_mode": null,
+    "cost_usd": 0.8898
+  }
+]

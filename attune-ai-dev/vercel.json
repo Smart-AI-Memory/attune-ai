@@ -4,6 +4,41 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/docs",
+      "destination": "https://github.com/Smart-AI-Memory/attune-ai/tree/main/docs",
+      "permanent": false
+    },
+    {
+      "source": "/docs/:path*",
+      "destination": "https://github.com/Smart-AI-Memory/attune-ai/tree/main/docs",
+      "permanent": false
+    },
+    {
+      "source": "/framework-docs/:path*",
+      "destination": "https://github.com/Smart-AI-Memory/attune-ai/tree/main/docs",
+      "permanent": false
+    },
+    {
+      "source": "/getting-started/:path*",
+      "destination": "https://github.com/Smart-AI-Memory/attune-ai/tree/main/docs/getting-started",
+      "permanent": false
+    },
+    {
+      "source": "/reference/:path*",
+      "destination": "https://github.com/Smart-AI-Memory/attune-ai/tree/main/docs/reference",
+      "permanent": false
+    },
+    {
+      "source": "/guides/:path*",
+      "destination": "https://github.com/Smart-AI-Memory/attune-ai/tree/main/docs/guides",
+      "permanent": false
+    },
+    {
+      "source": "/tutorials/:path*",
+      "destination": "https://github.com/Smart-AI-Memory/attune-ai/tree/main/docs/tutorials",
+      "permanent": false
+    },
+    {
       "source": "/privacy",
       "destination": "https://smartaimemory.com/privacy",
       "permanent": false

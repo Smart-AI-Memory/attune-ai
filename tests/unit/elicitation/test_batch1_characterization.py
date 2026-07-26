@@ -458,3 +458,47 @@ class TestFieldHtmlRationaleHeaderDefault:
             }
         )
         assert '<span class="ae-rationale-h">Why</span>' in html
+
+
+class TestFormFromDictRecommendedTypeCheck:
+    """DECISION/PUSHBACK/PROGRESS ``recommended`` type-check — the
+    construct suites exercise a valid string and a not-in-options
+    string, but never a non-string value (bridge.py's
+    "'recommended' must be a string" branch)."""
+
+    def test_non_string_recommended_rejected(self):
+        with pytest.raises(FormValidationError) as exc:
+            form_from_dict(
+                _form(
+                    {
+                        "id": "a",
+                        "text": "A?",
+                        "type": "decision",
+                        "options": ["x"],
+                        "recommended": 123,
+                    }
+                )
+            )
+        assert exc.value.problems == ["field[0] 'recommended' must be a string"]
+
+
+class TestProgressConsistencySkippedOffProgress:
+    """``progress_items`` on a NON-progress field is parsed and carried
+    but never consistency-checked — the item/option cross-check
+    early-returns for any qtype other than PROGRESS. A quirk worth
+    pinning: a decision field with stray ``progress_items`` builds
+    cleanly instead of being rejected."""
+
+    def test_decision_with_progress_items_builds_silently(self):
+        form = form_from_dict(
+            _form(
+                {
+                    "id": "a",
+                    "text": "A?",
+                    "type": "decision",
+                    "options": ["x"],
+                    "progress_items": [{"label": "L", "status": "done"}],
+                }
+            )
+        )
+        assert form.questions[0].progress_items == [{"label": "L", "status": "done"}]
