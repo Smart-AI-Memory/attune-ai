@@ -1,3 +1,58 @@
+## 2026-07-24 — elicitation/widget.py fixed element ids (dogfood, Fable 5)
+
+`src/attune/elicitation/widget.py` (`form_to_widget_html`). Found by
+DOGFOODING, not by a coverage push — logged here because this file is
+the repo's record of bug *shapes*, and there is precedent for entries
+outside the production-code classes (the 2026-06-13 test-isolation
+entry). Fixed in #1648. Does not count toward the coverage-push
+bug-find rate below.
+
+- **Bug (composition), class 6 — two forms rendered into one page share
+  element ids, so the second form's submit handler reads the FIRST
+  form's fields.** `form_to_widget_html` emitted hard-coded ids
+  (`attune-elicit-form`, `ae-submit`, `ae-error`) and its inline submit
+  script resolved them via `document.getElementById`. Render two forms
+  into one page — exactly what the dynamic-forms demo does, showing a
+  basic beat and an advanced beat together — and the ids collide;
+  `getElementById` returns the FIRST match, so submitting form 2
+  silently posts form 1's answers. There is no exception and no console
+  error: the payload is simply wrong. That is worse than a crash here,
+  because the wrong answers then validate CLEANLY through
+  `collect_form_response` and the caller gets a success receipt for
+  data the user never entered.
+
+  **Why coverage was structurally blind to it.** Every line of
+  `form_to_widget_html` was already covered and the elicitation suite
+  was 254 tests green. The defect does not live in any line — it is
+  emergent from calling the function TWICE and letting both outputs
+  coexist. No single-render test reaches it at any coverage level.
+  That is the defining property of class 6: the unit is correct in
+  isolation and wrong in composition, so line/branch coverage is not
+  merely insufficient — it is the wrong instrument.
+
+  **Class 3B also present — the test pinned the defect as the
+  contract.** `test_includes_title_and_form_shell` asserted
+  `'id="attune-elicit-form"' in html`, i.e. the exact buggy literal.
+  Nothing was mocked (so not class 3 proper), but the suite would have
+  actively RESISTED the fix: correcting the ids failed that assertion
+  and it had to be rewritten. Hard-coding a generated identifier in an
+  assertion converts "this value happens to be fixed" into "this value
+  must be fixed."
+
+  **Fix (#1648).** Ids carry a per-render suffix (random by default,
+  injectable via a new optional `instance_id` for deterministic
+  renders), and the scoped `<style>` block follows the suffixed id.
+  The regression guard asserts that two renders produce DIFFERENT ids
+  — the assertion a single-instance test cannot make.
+
+  **Generalizes to:** any generated artifact carrying a fixed
+  identifier that assumes one live instance — HTML element ids, temp
+  filenames, singleton registry keys, fixed ports, cache keys. The
+  detection move is composition, not coverage: instantiate twice and
+  assert the two differ.
+
+---
+
 ## 2026-07-16 — meta_workflows/cli_commands/agent_commands.py (QA, Opus 4.8)
 
 `meta_workflows/cli_commands/agent_commands.py` (`create_agent`,
@@ -1332,6 +1387,8 @@ they predate this log.
 | 2 | Dead defensive code | 13 |
 | 3 | Tests mocking around bugs | 1 |
 | 4 | Load-bearing comments nobody re-validated | 1 |
+| 5 | Deprecated production code outliving its tests | 2 |
+| 6 | Correct in isolation, broken in composition | 1 |
 
 **Class 2 sub-patterns observed:**
 
@@ -1353,6 +1410,23 @@ they predate this log.
   a list whose construction already excluded falsy entries. Dead.
   (1 instance: `provider_config.py`.)
 
+**Class 3 sub-patterns observed:**
+
+- **3A — Test mocks around the bug.** The original class-3 shape: the
+  mock stands in for the faulty path, so the defect never executes
+  under test. (1 instance — the existing class-3 entry.)
+- **3B — Test pins the defective value as the expected contract.**
+  Nothing is mocked; the assertion hard-codes the buggy literal, so the
+  suite RESISTS the fix rather than catching the bug — correcting the
+  code fails the test and the assertion must be rewritten. (1 instance:
+  `elicitation/widget.py`'s fixed element id, 2026-07-24 — see the
+  class 6 entry.)
+
+**Class 6 detection note.** Coverage cannot reach this class by
+construction, so it needs a different probe: instantiate/render TWICE
+and assert the two results differ in whatever identifier they carry.
+Worth a sweep wherever generated artifacts embed fixed ids.
+
 **Sessions where 0 bugs surfaced:** 1 (session 49b).
 
 **Bug-find rate:** 18 bugs across 81 modules pushed to 100% = ~22% of
@@ -1360,5 +1434,11 @@ modules contain at least one production bug surfaced by the coverage push.
 Plus 3 merge-artifact bugs surfaced by the test-infrastructure spec
 (version mismatch, commands-directory test, stale templates) that aren't
 strictly coverage-push finds but came from the same investigative posture.
+Classes 5 and 6 sit outside that denominator too: class 5 is deprecation
+debt rather than a defect, and the class 6 bug came from dogfooding, not
+a coverage push. So the table now sums to 21 while the ~22% rate still
+describes the 18 classes-1–4 coverage-push finds. (The class 5 row was
+missing from this table until 2026-07-24 — it was recorded in the
+session-49f snapshot above but never propagated here.)
 
 Modules at 100%: 81 (cumulative across all sessions).

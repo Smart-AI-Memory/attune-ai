@@ -65,6 +65,29 @@ class TestBlastRadiusClassifier:
         rel = classifier._sanitize_and_relativize("src\\attune\\auth\\login.py")
         assert "\\" not in rel
 
+    def test_empty_path_minimum_risk(self) -> None:
+        classifier = BlastRadiusClassifier()
+        assert classifier.evaluate_file_path("") == 1
+
+    def test_empty_command_minimum_risk(self) -> None:
+        classifier = BlastRadiusClassifier()
+        assert classifier.evaluate_command("") == 1
+        assert classifier.evaluate_command("   ") == 1
+
+    def test_cross_drive_relpath_falls_back_to_raw_path(self, monkeypatch) -> None:
+        # On Windows, relpath raises ValueError for a path on a
+        # different drive than the workspace root; classification must
+        # fall back to the raw path instead of crashing.
+        classifier = BlastRadiusClassifier(workspace_root="/repo")
+
+        def cross_drive(path, start):
+            raise ValueError("path is on mount 'D:', start on mount 'C:'")
+
+        monkeypatch.setattr(
+            "attune.orchestration.friction.blast_radius.os.path.relpath", cross_drive
+        )
+        assert classifier.evaluate_file_path("src/attune/auth/login.py") >= 4
+
     def test_normal_file_edit(self) -> None:
         classifier = BlastRadiusClassifier()
         assert classifier.evaluate_file_path("docs/readme.md") == 1
