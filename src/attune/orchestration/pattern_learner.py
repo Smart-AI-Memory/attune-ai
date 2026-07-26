@@ -78,7 +78,7 @@ class LearningStore:
             return
 
         try:
-            with self.file_path.open("r") as f:
+            with self.file_path.open("r", encoding="utf-8") as f:
                 data = json.load(f)
 
             # Load records
@@ -121,7 +121,7 @@ class LearningStore:
 
         try:
             validated_path = _validate_file_path(str(self.file_path))
-            with validated_path.open("w") as f:
+            with validated_path.open("w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
             self._dirty = False
             logger.info(f"Saved learning data to {validated_path}")

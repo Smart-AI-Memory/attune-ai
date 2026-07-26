@@ -23,6 +23,9 @@ on:
       - 'scripts/audit_website_versions.py'
       - '.github/workflows/website-accuracy.yml'
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true

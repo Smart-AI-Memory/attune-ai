@@ -136,7 +136,7 @@ class DiscoveryEngine:
         """Save state to storage."""
         self.state["last_updated"] = datetime.now().isoformat()
         validated_path = _validate_file_path(str(self.stats_file))
-        with open(validated_path, "w") as f:
+        with open(validated_path, "w", encoding="utf-8") as f:
             json.dump(self.state, f, indent=2)
 
     def record_command(self, command: str) -> list:

@@ -52,11 +52,20 @@ def live_values() -> dict[str, str]:
 # (file, human label, regex with ONE capture group, live-value key).
 # Every regex must match at least once in its file; every captured
 # value must equal the live value.
+# `(?:<[^>]*>)?` tolerates the `<!-- cap:... -->` ownership markers
+# that scripts/project_capabilities.py wraps around governed claims.
+# The assertion is unchanged — same wording, same number, same count;
+# this gate stays independent (no projector imports, own derivation).
 MANIFEST: tuple[tuple[str, str, str, str], ...] = (
-    ("README.md", "hero workflow count", r"(\d+) workflows and \d+ MCP tools", "workflows"),
-    ("README.md", "hero tool count", r"\d+ workflows and (\d+) MCP tools", "tools"),
-    ("README.md", "skills table row", r"\| (\d+) auto-triggering skills", "skills"),
-    ("README.md", "tools table row", r"\| (\d+) MCP tools", "tools"),
+    (
+        "README.md",
+        "hero workflow count",
+        r"(\d+) workflows and (?:<!-- cap:[a-z_]+ -->)?\d+ MCP tools",
+        "workflows",
+    ),
+    ("README.md", "hero tool count", r"\d+ workflows and (?:<[^>]*>)?(\d+) MCP tools", "tools"),
+    ("README.md", "skills table row", r"\| (?:<[^>]*>)?(\d+) auto-triggering skills", "skills"),
+    ("README.md", "tools table row", r"\| (?:<[^>]*>)?(\d+) MCP tools", "tools"),
     (
         ".claude-plugin/marketplace.json",
         "marketplace skill claims",
@@ -80,7 +89,7 @@ MANIFEST: tuple[tuple[str, str, str, str], ...] = (
     (
         "docs/getting-started/mcp-integration.md",
         "tools heading",
-        r"## Available Tools \((\d+)\)",
+        r"## (?:<!-- cap:[a-z_]+ -->)?Available Tools \((\d+)\)",
         "tools",
     ),
     (

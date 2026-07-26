@@ -278,7 +278,7 @@ class CostTracker:
         try:
             self.data["last_updated"] = datetime.now().isoformat()
             validated_path = _validate_file_path(str(self.costs_file))
-            with open(validated_path, "w") as f:
+            with open(validated_path, "w", encoding="utf-8") as f:
                 json.dump(self.data, f, indent=2)
         except (OSError, ValueError):
             pass  # Best effort - cost tracking shouldn't crash the app
@@ -295,7 +295,7 @@ class CostTracker:
         }
         try:
             validated_path = _validate_file_path(str(self.costs_summary))
-            with open(validated_path, "w") as f:
+            with open(validated_path, "w", encoding="utf-8") as f:
                 json.dump(summary_data, f, indent=2)
         except (OSError, ValueError):
             pass  # Best effort - summary is an optimization, not critical
@@ -314,7 +314,7 @@ class CostTracker:
         # Append buffered requests to JSONL file
         try:
             validated_path = _validate_file_path(str(self.costs_jsonl))
-            with open(validated_path, "a") as f:
+            with open(validated_path, "a", encoding="utf-8") as f:
                 f.writelines(json.dumps(request) + "\n" for request in self._buffer)
 
             # Update daily totals (always in memory)
