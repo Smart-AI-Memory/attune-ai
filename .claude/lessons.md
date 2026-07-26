@@ -18407,3 +18407,49 @@ def ", start_idx + 1)` for module-
   or a final summary line unconditionally, so "ended with no terminal
   event" is distinguishable from "ended normally". Extends the Monitor
   coverage guidance from filter-breadth to stream-liveness.
+
+- **Measuring an LLM's RELIABILITY at n=3 is noise with a plausible
+  face — the smoke run said 80%, n=18 said 28%**: 2026-07-26, answering
+  OQ1 of memory-claim-verification (does `llama3.1:8b` reliably emit
+  entity refs?). A 3-transcript smoke run reported 80% of emitted refs
+  grounded in the source; the same harness, same prompt, same model at
+  n=18 reported **28.1%**. I nearly reported the smoke number as the
+  answer, which would have greenlit building write-time verification on
+  a mechanism that fabricates roughly three of every four refs.
+  Distinguish two purposes: n=3 is a smoke test for the HARNESS (does
+  it parse, does it score, does it run) and is never evidence about the
+  MODEL. Reliability is a rate, and a rate needs a denominator large
+  enough that one atypical sample cannot carry it — the smoke set was
+  three large recent transcripts from one session, which is exactly the
+  favourable tail. Second half of the lesson: **the confound you expect
+  to rescue a bad result can deepen it.** The obvious objection to
+  n=18 was that small agent transcripts dragged it down, so I re-ran on
+  substantial transcripts only (>200 KB) expecting recovery — instead
+  well-formedness fell 81% → 56% and grounding 28% → 22%. Run the
+  confound check, but predict its direction first and record when you
+  are wrong. Pairs with "the first check to go red is usually downstream
+  of the real failure" — both are about forming a story before the
+  denominator justifies one.
+
+- **An open question phrased "if not A, then B" quietly asserts that B
+  works — measure the fallback, and ask what C looks like before
+  treating the pair as exhaustive**: 2026-07-26. I wrote OQ1 as "does
+  the 8B model reliably emit refs? If not, heuristic back-fill from
+  content becomes the permanent mechanism." Measurement killed BOTH: the
+  model grounded only 28% of the refs it emitted, and a regex over
+  `content` could recover an entity for just **10%** of findings. The
+  binary framing had smuggled in an untested premise — that back-fill
+  was a viable safety net — and because the fallback only gets exercised
+  when the primary fails, that premise would have gone unmeasured until
+  production. Worse, the framing hid a third mechanism sitting one layer
+  below both: the transcript's `tool_use` records already carry the
+  session's real entities (a probe recovered exactly the PRs the session
+  touched, the real merge SHA, and 10 file paths — zero fabrications),
+  and the hook was DISCARDING them via the `[tool output omitted]`
+  marker. Rules: (1) when an OQ names a fallback, measure the fallback
+  in the same pass as the primary — its cost is small and its failure is
+  invisible otherwise; (2) before accepting a binary OQ, ask what a
+  third option would have to look like; if the answer is "data we
+  already throw away", that is usually the real answer. Related to
+  "re-validate a spec's premise" — this is the same discipline applied
+  to a question rather than a scope.
