@@ -19,7 +19,7 @@ Usage:
     )
 
     # Write tests to file
-    with open("test_soap_note.py", "w") as f:
+    with open("test_soap_note.py", "w", encoding="utf-8") as f:
         f.write(tests["unit"])
 
 Copyright 2025 Smart AI Memory, LLC

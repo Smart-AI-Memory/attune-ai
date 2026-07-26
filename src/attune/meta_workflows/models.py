@@ -111,6 +111,12 @@ class FormQuestion:
             list instead of the default dropdown/checkboxes. Pure
             presentation: the answer and its validation are unchanged.
             None = the default render.
+        inferred_from: Why this field's ``default`` was inferred from
+            context, e.g. "you've been editing src/attune/elicitation/".
+            Presence means the value is the agent's GUESS, not a static
+            suggestion, and the renderer marks it visibly as such so a
+            wrong guess is catchable. Requires ``default`` to be set.
+            None = not inferred.
 
     """
 
@@ -131,6 +137,21 @@ class FormQuestion:
     progress_items: list[dict[str, str]] | None = None
     progress_style: str | None = None
     list_style: str | None = None
+    inferred_from: str | None = None
+
+    def _fallback_help(self) -> str | None:
+        """Help text for AskUserQuestion, carrying any inference provenance.
+
+        ``AskUserQuestion`` has no slot for "this value is a guess", so the
+        provenance folds into help_text — otherwise the fallback surface
+        would present an inferred value as indistinguishable from a
+        settled one, which is the exact failure the widget badge exists
+        to prevent.
+        """
+        if not self.inferred_from:
+            return self.help_text
+        note = f"Guessed: {self.default} — {self.inferred_from}"
+        return f"{self.help_text} · {note}" if self.help_text else note
 
     def to_ask_user_format(self) -> dict[str, Any]:
         """Convert to format compatible with AskUserQuestion tool.
@@ -160,7 +181,7 @@ class FormQuestion:
                 "type": "single_select",
                 "options": opts,
                 "default": self.default or self.recommended,
-                "help_text": self.help_text,
+                "help_text": self._fallback_help(),
             }
 
         # Boolean questions convert to Yes/No select
@@ -171,7 +192,7 @@ class FormQuestion:
                 "type": "single_select",
                 "options": ["Yes", "No"],
                 "default": self.default,  # Preserve default for boolean questions
-                "help_text": self.help_text,
+                "help_text": self._fallback_help(),
             }
 
         return {
@@ -180,7 +201,7 @@ class FormQuestion:
             "type": self.type.value,
             "options": self.options,
             "default": self.default,
-            "help_text": self.help_text,
+            "help_text": self._fallback_help(),
         }
 
 

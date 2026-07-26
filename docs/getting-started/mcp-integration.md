@@ -88,7 +88,7 @@ Then restart Claude Desktop.
 
 ---
 
-## Available Tools (53)
+## <!-- cap:mcp_registered_tool_count -->Available Tools (53)<!-- /cap -->
 
 The Attune MCP server exposes all production workflows as tools:
 

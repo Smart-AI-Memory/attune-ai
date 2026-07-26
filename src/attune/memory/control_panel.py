@@ -377,7 +377,7 @@ class MemoryControlPanel:
             "patterns": patterns,
         }
 
-        with open(validated_path, "w") as f:
+        with open(validated_path, "w", encoding="utf-8") as f:
             json.dump(export_data, f, indent=2)
 
         return len(patterns)
