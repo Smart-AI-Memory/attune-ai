@@ -138,3 +138,27 @@ Recommendation to the chair: R3 as written is not viable; replace the
 model-authored `refs` requirement with session-derived refs. The table
 should deliberate HOW findings bind to the derived ref-set, which is a
 real design fork with defensible alternatives.
+
+## D6 (2026-07-26): the ref-binding question waits for the table, after the fire
+
+**Ruled (chair).** OQ1's measurement retires R3-as-written but does not
+settle its replacement. The open fork — given refs are deterministically
+derivable from `tool_use` records, how does a finding BIND to them —
+goes to the round table, convened **after** the 07-27 06:00 roundtable
+fire, not before.
+
+Reasons: the fire is the north-star receipt for `agent-round-table` and
+should not share an evening with an exploratory run; the binding question
+blocks nothing until P1 is built; and the table briefs better with a
+clean run to point at, plus the measured numbers already in this file.
+
+The three candidate bindings to put to the table:
+
+1. **Session ref-set on every finding** — cheap, deterministic,
+   imprecise (a finding inherits entities it is not about).
+2. **Per-finding matching** against the derived set — precise, lossy
+   (a finding that names nothing matchable stays ungrounded).
+3. **The SESSION is the grounded unit**, not the finding — sidesteps
+   binding entirely; changes what `grounding` in R4 means.
+
+No implementation starts before that ruling.
