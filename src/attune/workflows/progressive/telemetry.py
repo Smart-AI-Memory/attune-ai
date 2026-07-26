@@ -240,7 +240,7 @@ class ProgressiveTelemetry:
                 **data,
             }
 
-            with events_file.open("a") as f:
+            with events_file.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(event) + "\n")
 
         except Exception as e:  # noqa: BLE001

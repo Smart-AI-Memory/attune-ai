@@ -159,6 +159,37 @@ T="<slug>" D="docs/reports/roundtable/<slug>.md" IDS="2,4" python -c "import os;
 Post the chair's decision as a `ruling` message (author `chair`).
 Declined items get no file writes — `git status` stays clean.
 
+### The steelman round (chair-leans variant)
+
+When the chair's lean conflicts with a round's consensus —
+especially a unanimous one — do not force a bare
+overrule-vs-capitulate choice. Offer the chair a bounded STEELMAN
+round (it counts against the D3 ceiling):
+
+- Brief every seat with: the chair's stance, a faithful summary of
+  the prior round's positions, and any NEW facts the moderator can
+  inject (settled rulings are stated as binding — seats must not
+  re-litigate them).
+- Each seat must either DESIGN the strongest version of the
+  chair-leaned position — concrete, not conciliatory — or state
+  exactly "NO <X>-SHAPED DESIGN EXISTS" plus one sentence why.
+  Both are honest completions; a seat holding its ground is not a
+  failure.
+- The post-steelman consensus is decisive under a chair rule of
+  the form "my lean stands unless the table is against it": if the
+  consensus dissolves, the chair rules among REAL alternatives; if
+  it holds unanimously, the chair has a fair-hearing record for
+  either accepting it or overruling with eyes open.
+
+Worked example: thread `q-ops-memory-multi-llm-pages-001`
+(2026-07-22, report in `docs/reports/roundtable/`) — a unanimous
+3/3 "close the memory page" dissolved to 2/3 keep-with-redesign,
+with two seats independently converging on the same
+exceptions-first design that shipped; the third seat's held
+objection ("no page-shaped design exists") was preserved in the
+ruling as the demote clause. The steelman produced a better
+outcome than either the consensus or the overrule would have.
+
 ### The lesson lane (chair rulings, thread lessons-flow-001)
 
 When — and only when — a deliberation yields reusable cross-session
