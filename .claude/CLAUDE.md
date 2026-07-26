@@ -233,27 +233,52 @@ abstraction.
 
 ## Socratic Interaction Rule
 
-**ALWAYS use `AskUserQuestion` to guide users through workflow discovery and scoping. NEVER skip straight to execution.**
+**ALWAYS guide users through discovery and scoping before executing. NEVER skip straight to execution.**
 
-This is the core design principle of Attune AI's developer experience. When a user invokes `/attune` or any workflow:
+This is the core design principle of Attune AI's developer experience.
 
-1. **Initial discovery**: Use `AskUserQuestion` to understand their goal (what are you trying to accomplish?)
-2. **Scoping**: Use `AskUserQuestion` to narrow scope (which files? what test subset? what level of detail?)
-3. **Confirmation**: Use `AskUserQuestion` if there are meaningful choices before execution (approach, format, targets)
-4. **Then execute**: Only run CLI commands or tools after the user has been guided through the relevant decisions
+**Build a form; don't hand-write a question turn.** (D21 — this rule
+used to name `AskUserQuestion`, and naming a tool got it executed as
+that tool, so the communication grammar almost never fired.) Construct
+a `FormSchema` via `attune.elicitation.form_from_dict` and let
+`select_form_surface` pick the surface. The widget is the default;
+`AskUserQuestion` is one of its fallbacks, not the starting point.
 
-**Examples of when to ask:**
+**Fire a form when ANY of these holds:**
 
-- User says "run tests" → Ask: which tests? full suite, CLI only, or quick smoke test?
-- User says "security audit" → Ask: which path? src/, tests/, or full project?
-- User says "review code" → Ask: which files or area? what focus (security, quality, performance)?
-- User says "commit" → Ask: which files to stage? what kind of change is this?
+- Two or more independent dimensions must be settled — batch them into
+  ONE form, never N sequential turns. (`AskUserQuestion` caps at 4
+  options and one question per turn, so it *structurally cannot* carry
+  a batched multi-dimension ask. This is the highest-value case.)
+- Three or more alternatives, or two with tradeoffs worth stating
+  (→ `decision` construct).
+- You are recommending against something the user named
+  (→ `pushback` construct).
+- The answer is a number, a date, or free text longer than a phrase.
+- The choice changes scope, architecture, files, external state, or
+  acceptance criteria — or is hard to reverse.
+
+**A raw button-turn is correct only when ALL of these hold:** one
+dimension, ≤3 options, no tradeoffs worth stating. Plus two standing
+exceptions: the referent is already resolved and you need a bare
+confirm (the terse-vocab path — `y` / `go` / `1`), or the user is in
+keyboard mode.
+
+**Examples:**
+
+- "run tests" → one dimension, few options → button-turn is fine.
+- "security audit" → path + focus + depth → ONE form, three fields.
+- "review code" → area + focus + output shape → ONE form.
+- "commit" → files + change kind → ONE form.
 
 **Do NOT:**
 
 - Jump straight to running commands without scoping
 - Assume the user wants the broadest possible execution
-- Skip questions just because the next step seems obvious
+- Ask N sequential button-turns for what is one form
+- Pad a form with fields you don't need — ceremony is the failure mode
+  this rule is most likely to cause. If one dimension is genuinely all
+  you need, ask for one.
 
 This rule applies to ALL workflow interactions, not just `/attune`.
 

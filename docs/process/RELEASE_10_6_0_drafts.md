@@ -1,6 +1,8 @@
 # Release 10.6.0 drafts — notes + post (pre-tag working copy)
 
-**Written:** 2026-07-20 (rulings-sitting session). **Tag day:**
+**Written:** 2026-07-20 (rulings-sitting session). **Refreshed:**
+2026-07-21 evening-2 (checklist verified against `gh` + the
+CHANGELOG; Draft-A confirm-markers resolved). **Tag day:**
 2026-07-27 per the Monday runbook (tag-only; prep done in #1526).
 Derived from the CHANGELOG `[Unreleased]` section at write time.
 
@@ -8,10 +10,16 @@ Derived from the CHANGELOG `[Unreleased]` section at write time.
 against what actually merged, and confirm each landing added its
 own `[Unreleased]` entry:
 
-- [ ] #1529 LessonsFilePublisher (chip session; graduation writes)
-- [ ] sdk-teardown-exit-guard implementation (chip session)
-- [ ] post-commit help hook dry-run flip (chip session)
-- [ ] #1531 coverage-bar alignment (patch gate 50→80)
+- [x] #1529 LessonsFilePublisher — MERGED 2026-07-21. **No
+  `[Unreleased]` entry yet — OWED** (see Monday additions below).
+- [x] sdk-teardown-exit-guard — #1534 MERGED 2026-07-20; entry
+  present (Fixed: "SDK teardown-exit guard now covers every SDK
+  workflow").
+- [x] post-commit help hook dry-run flip — merged 2026-07-20;
+  entry present (Fixed: "Post-commit help hook is now
+  check-only").
+- [x] #1531 coverage-bar alignment — MERGED 2026-07-20. **No
+  `[Unreleased]` entry yet — OWED** (see Monday additions below).
 - [x] Overnight four (2026-07-21 antigravity-review arc):
   #1551 friction matrix + gate, #1552 AST context budgeting,
   #1553 ghost simulator, #1554 self-healing traps — `[Unreleased]`
@@ -19,7 +27,28 @@ own `[Unreleased]` entry:
   Draft-A candidate line: **10.6.0 activates two new plugin hooks**
   (`friction_gate`, `trap_stash`) on plugin update — the traps
   spec's D5 caveat names the post-publish organic-fire check.
-- [ ] Anything else merged into `[Unreleased]` this week
+- [x] Anything else merged into `[Unreleased]` this week — audited
+  2026-07-21 evening-2: every post-#1560 merge is internal spec
+  bookkeeping (#1564, #1570, #1572), lessons appends (#1565,
+  #1573, #1579–#1583), or test-only (#1566, #1575, #1577) — none
+  owe standalone entries. #1563's T5 docs repoints fold into the
+  consolidation entry held PR #1574 already carries.
+
+**Monday changelog additions — write in the release PR, AFTER the
+queue lift.** Held #1574 inserts its own entry at the top of
+`### Added`, so any `[Unreleased]` edit before the lift re-dirties
+the queue (verified 2026-07-21 evening-2; CHANGELOG.md is
+queue-locked until then):
+
+- #1529 graduation clause — append to the self-healing diagnosis
+  engine bullet: verified diagnoses graduate into the lessons
+  corpus with provenance (`LessonsFilePublisher`, chair-ruled).
+- #1531 — one Changed line: codecov patch gate raised 50→80,
+  enforcing the documented 80% changed-code floor.
+- #1562 (at lift) — weekly freshness report now says 0 stale, not
+  27 false positives.
+- #1571 (at lift) — tooltip unification complete + CI grep-gate.
+- #1576 — only if the chair approves the /memory page revival.
 
 ---
 
@@ -38,7 +67,7 @@ fail?"** on any failed run. A propose-only fix loop and a manual
 triage command close the loop, and every fix is chair-ruled —
 nothing auto-applies. Verified diagnoses can graduate into the
 lessons corpus with provenance, so the next failure starts smarter
-than the last. *[graduation publisher: confirm #1529 merged]*
+than the last.
 
 The loop stands on three new foundations shipped in the same
 window:
@@ -63,17 +92,16 @@ turning green; spec-lifecycle statuses come from one enforced
 vocabulary; a starter-lint hook flags stale session handoffs.
 
 **Reliability:** SDK workflow results are no longer discarded when
-the subprocess crashes during teardown after a successful result
-*[confirm guard PR merged]*; report-shaped workflows now emit run
-records; the post-commit help hook is check-only — it warns about
-stale docs but never spends LLM budget on your commits *[confirm
-flip PR merged]*; roundtable citation/convergence contracts are
-taught by worked example.
+the subprocess crashes during teardown after a successful result;
+report-shaped workflows now emit run records; the post-commit help
+hook is check-only — it warns about stale docs but never spends
+LLM budget on your commits; roundtable citation/convergence
+contracts are taught by worked example.
 
 Plus: usage-signals measurement tooling, memory feedback scoring
 (step 2), an opt-in auto-merge CI class, platform-neutral
 managed-Redis naming, and the codecov patch gate now enforcing the
-documented 80% changed-code floor *[confirm #1531]*.
+documented 80% changed-code floor.
 
 Full details in the [CHANGELOG](../../CHANGELOG.md).
 
@@ -119,3 +147,89 @@ Lean (b): the claim-grounding memory
 discipline both argue for waiting until the story is a receipt.
 Chair decides at post time; do not publish Draft B as-is without
 resolving this gate.
+
+---
+
+## Draft B-v2 — LinkedIn post, multi-LLM rework (2026-07-22)
+
+Reworked per the launch plan
+(`.claude/plans/launch-10-6-0-multi-llm.md`): the release is
+**10.6.0** (chair briefly renumbered it 10.7.0 on 07-22, then
+reverted to 10.6.0 as originally proposed — chair, 07-22 EOD), the centerpiece is the
+multi-LLM story, and the post fires TUESDAY 07-28 with the launch
+article (it is the short-form companion; the article carries the
+receipts). **Draft B-v1's structural problem is solved by
+replacement, not softening:** the new hook is the
+roundtable-picked-features story, which is ALREADY receipted (the
+promoted report `docs/reports/roundtable/q-multi-llm-obvious-win-001.md`
+is on main). The v1 self-healing anecdote is DROPPED from this
+post — that story publishes on its own day, when a real diagnosis
+receipt exists (v1 gate option (b), preserved below as its own
+backlog item).
+
+> Last week I asked three AI models a question: given everything
+> this project already has, what's the obviously-best next
+> feature?
+>
+> Claude, Codex, and Google's Antigravity answered independently —
+> they can't see each other's replies. Two of the three converged
+> on the same feature with nearly identical designs: a real
+> handoff between AI coding agents. The full deliberation, every
+> seat's position, and my rulings are a tracked report in the
+> repo.
+>
+> So that's what shipped this week in attune-ai 10.6.0:
+>
+> — Shared memory: a finding captured in one agent is recallable
+> in the next (Claude Code, Codex, Antigravity — same tools, no
+> sidecar)
+> — Handoffs that verify: the receiving agent re-checks the packet
+> against the actual git tree before continuing. Context, not
+> authority.
+> — Second opinions: your real diff, reviewed adversarially by a
+> different vendor's model. Advisory by spec — a public dogfood
+> ledger is the only thing that can ever promote it.
+>
+> Every boundary claim above carries a dated transcript in the
+> repo. The ones we couldn't prove yet are marked UNPROBED — in
+> public. That discipline already caught a real bug this week:
+> a PII scrubber that a thousand mocked tests swore was on, and
+> one live canary proved was off.
+>
+> The models deliberate; I decide. Free and open source,
+> Apache 2.0: `pip install attune-ai`
+>
+> Full story with the transcripts: [LINK: launch article]
+
+### Honesty checklist on Draft B-v2 (chair rules at post time)
+
+- [x] Roundtable-convergence hook — TRUE and receipted now
+      (report merged to main 2026-07-22; thread
+      `q-multi-llm-obvious-win-001`).
+- [x] PII-scrubber story — TRUE and receipted (transport spec
+      decisions.md + receipts.md, CR-2 live canary; ~1,600 mocked
+      tests figure verified against the T2 session record — say
+      "a thousand" only if the exact count stays unverified at
+      post time).
+- [ ] "Shared memory … recallable in the next" — requires the
+      receipt-4 Codex canary (post-lift, post-marketplace-sync).
+      DO NOT POST before it passes.
+- [ ] "Handoffs that verify" — requires the handoff live
+      round-trip receipt (spec T4). DO NOT POST before it passes;
+      if only the Claude-side receipt exists Tuesday, reword to
+      per-agent truth or hold.
+- [ ] "10.6.0 … shipped this week" — requires the v10.6.0 tag +
+      PyPI 200 on Monday.
+- [ ] Antigravity named as a memory participant — requires
+      receipt 6 (post-publish probe) OR reword to "Claude Code
+      and Codex today; Antigravity next" per its actual row.
+- [ ] [LINK: launch article] filled with the published URL.
+- [x] v1 anecdote removed — nothing in v2 claims a self-healing
+      diagnosis occurred.
+
+### Backlogged from v1 (do not lose)
+
+The self-healing-loop story (v1's hook) publishes as its OWN post
+when a real operational failure has been diagnosed end-to-end —
+v1 gate option (b). Candidate trigger: the first real failed run
+around Monday's live fire. The v1 text above stays as its draft.

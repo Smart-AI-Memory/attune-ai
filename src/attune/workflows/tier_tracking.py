@@ -297,7 +297,7 @@ class WorkflowTierTracker:
             # Save to individual pattern file
             pattern_file = self.patterns_dir / f"{progression['pattern_id']}.json"
             validated_pattern_file = _validate_file_path(str(pattern_file))
-            with open(validated_pattern_file, "w") as f:
+            with open(validated_pattern_file, "w", encoding="utf-8") as f:
                 json.dump(progression, f, indent=2)
 
             logger.info(f"💾 Saved tier progression: {validated_pattern_file}")
@@ -468,7 +468,7 @@ class WorkflowTierTracker:
 
             # Save updated file
             validated_consolidated = _validate_file_path(str(consolidated_file))
-            with open(validated_consolidated, "w") as f:
+            with open(validated_consolidated, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
 
         except (OSError, ValueError, json.JSONDecodeError) as e:
@@ -477,7 +477,7 @@ class WorkflowTierTracker:
             try:
                 data = {"patterns": [progression]}
                 validated_consolidated = _validate_file_path(str(consolidated_file))
-                with open(validated_consolidated, "w") as f:
+                with open(validated_consolidated, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=2)
                 logger.info("Recreated consolidated patterns file")
             except (OSError, ValueError) as e2:
