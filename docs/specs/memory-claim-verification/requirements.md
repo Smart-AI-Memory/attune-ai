@@ -1,6 +1,7 @@
 # memory-claim-verification
 
-**Status:** requirements draft (2026-07-26)
+**Status:** draft (2026-07-26 — requirements; OQ1 measured, R3 retired
+pending the chair ruling in D6)
 **Owner:** Patrick (chair)
 **Origin:** 2026-07-25 session — 2 of 4 auto-stashed findings were wrong
 enough that Patrick had to ask for them to be deleted.
