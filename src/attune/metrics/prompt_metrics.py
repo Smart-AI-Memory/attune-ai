@@ -108,7 +108,7 @@ class MetricsTracker:
         """
         try:
             validated_path = _validate_file_path(str(self.metrics_file))
-            with open(validated_path, "a") as f:
+            with open(validated_path, "a", encoding="utf-8") as f:
                 f.write(json.dumps(metric.to_dict()) + "\n")
         except (OSError, ValueError) as e:
             logger.error(f"Failed to log metric: {e}")

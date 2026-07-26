@@ -13,6 +13,7 @@ from attune.telemetry.lessons import (
     format_trap,
     process_bash_result,
 )
+from attune.telemetry.lessons.listener import MAX_DETAIL_CHARS
 
 PRECOMMIT_FAILURE = """\
 black....................................................................Failed
@@ -89,6 +90,29 @@ class TestExtractTrap:
         assert extract_trap("", PYTEST_FAILURE) is None
         assert extract_trap("pytest", "") is None
 
+    def test_more_than_five_failures_summarized(self) -> None:
+        nodes = [f"tests/unit/test_mod.py::test_case_{i}" for i in range(7)]
+        output = (
+            "=========================== short test summary info ===========================\n"
+            + "\n".join(f"FAILED {n} - AssertionError" for n in nodes)
+            + "\n============================= 7 failed in 0.20s =============================\n"
+        )
+        event = extract_trap("pytest -q", output)
+        assert event is not None
+        assert "(+2 more)" in event.detail
+
+    def test_detail_bounded_to_max_chars(self) -> None:
+        long_nodes = [f"tests/unit/{'x' * 200}_{i}.py::test_long_{i}" for i in range(6)]
+        output = (
+            "=========================== short test summary info ===========================\n"
+            + "\n".join(f"FAILED {n} - AssertionError" for n in long_nodes)
+            + "\n============================= 6 failed in 0.20s =============================\n"
+        )
+        event = extract_trap("pytest -q", output)
+        assert event is not None
+        assert len(event.detail) <= MAX_DETAIL_CHARS
+        assert event.detail.endswith("…")
+
 
 class TestFormatTrap:
     """Stash-description formatting."""
@@ -120,6 +144,41 @@ class TestRoundTrip:
 
         recalled = recall_entries("test_zone_2_routing failure", backend=backend, cwd=str(tmp_path))
         assert any("test_zone_2_routing" in str(r.get("text", "")) for r in recalled)
+
+    def test_stash_layer_exception_never_raises(self, tmp_path: Path, monkeypatch) -> None:
+        # The memory layer must never break a tool call: a stash write
+        # that blows up degrades to None instead of propagating.
+        def boom(entry, backend=None):
+            raise RuntimeError("backend exploded")
+
+        monkeypatch.setattr("attune.memory.session_stash.stash_entry", boom)
+        assert (
+            process_bash_result(
+                command="pytest tests/unit -q",
+                output=PYTEST_FAILURE,
+                session_id="sess-boom",
+                cwd=str(tmp_path),
+                backend=FileStashBackend(base_dir=tmp_path),
+            )
+            is None
+        )
+
+    def test_rejected_stash_write_returns_none(self, tmp_path: Path, monkeypatch) -> None:
+        # stash_entry returning False (PII gate / no backend) yields no
+        # signature — callers must not dedupe on an unstashed trap.
+        monkeypatch.setattr(
+            "attune.memory.session_stash.stash_entry", lambda entry, backend=None: False
+        )
+        assert (
+            process_bash_result(
+                command="pytest tests/unit -q",
+                output=PYTEST_FAILURE,
+                session_id="sess-rejected",
+                cwd=str(tmp_path),
+                backend=FileStashBackend(base_dir=tmp_path),
+            )
+            is None
+        )
 
     def test_green_output_stashes_nothing(self, tmp_path: Path) -> None:
         backend = FileStashBackend(base_dir=tmp_path)

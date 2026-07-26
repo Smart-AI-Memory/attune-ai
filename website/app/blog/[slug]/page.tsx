@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import VideoEmbed from '@/components/VideoEmbed';
 import { getPostBySlug, getAllPosts, getRelatedPosts } from '@/lib/blog';
 import { generateMetadata as generateSEOMetadata, generateStructuredData } from '@/lib/metadata';
 import ReactMarkdown from 'react-markdown';
@@ -146,8 +147,15 @@ export default async function BlogPostPage({ params }: PageProps) {
                 </div>
               </header>
 
+              {/* Demo Video (takes precedence over the cover image) */}
+              {post.videoId && (
+                <div className="mb-12">
+                  <VideoEmbed videoId={post.videoId} title={post.title} />
+                </div>
+              )}
+
               {/* Cover Image */}
-              {post.coverImage && (
+              {!post.videoId && post.coverImage && (
                 <div className="mb-12 relative aspect-video">
                   <Image
                     src={post.coverImage}
