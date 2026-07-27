@@ -182,6 +182,19 @@ run-record corpus that future releases learn from.
 
 ### Fixed
 
+- **File-fallback memory writes no longer report false success**
+  (cross-provider-memory-transport T1). `FileStashBackend.remember()`
+  — and therefore the public `session_stash.stash_entry()` — now
+  returns `False` when the durable write fails (e.g. `EPERM` in a
+  sandboxed provider), instead of `True` with the finding silently
+  lost; `forget()`/`prune()` likewise report 0 when their rewrite
+  never lands. **Behavior correction:** callers that relied on an
+  unconditional `True` must handle a truthful `False`.
+  `backend_status()` gains additive caller-scoped fields (`ok`,
+  `transport`, `reachability`, `reason`, e.g. `file_write_denied`
+  backed by a real write probe) alongside the unchanged existing
+  keys — a caller-local denial is never reported as a global
+  service outage.
 - **SDK teardown-exit guard now covers every SDK workflow** — the
   seven consumption loops the sdk-teardown-exit-guard spec's list
   predated (`deep-review`, `refactor-plan`, `release-prep`,

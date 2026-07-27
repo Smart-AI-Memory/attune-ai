@@ -130,8 +130,14 @@ class FileStashBackend:
             logger.warning("file_stash_read_failed", error=str(e))
         return records
 
-    def _rewrite(self, records: list[dict[str, Any]]) -> None:
-        """Atomically rewrite the findings file (used for append + prune)."""
+    def _rewrite(self, records: list[dict[str, Any]]) -> bool:
+        """Atomically rewrite the findings file (used for append + prune).
+
+        Returns ``True`` only when the durable replace landed. Callers must
+        propagate ``False`` — reporting success for a write that never
+        persisted is the false-success data-loss bug this guards against
+        (cross-provider-memory-transport R1).
+        """
         tmp = self._findings.with_suffix(".jsonl.tmp")
         try:
             tmp.write_text(
@@ -139,8 +145,10 @@ class FileStashBackend:
                 encoding="utf-8",
             )
             tmp.replace(self._findings)  # Path.replace: cross-platform overwrite
+            return True
         except OSError as e:
             logger.warning("file_stash_write_failed", error=str(e))
+            return False
 
     # ------------------------------------------------------------------ #
     # SearchableMemoryBackend — searchable write/read
@@ -167,8 +175,7 @@ class FileStashBackend:
         try:
             kept = self._load_records()  # already TTL-pruned
             kept.append(record)
-            self._rewrite(kept)
-            return True
+            return self._rewrite(kept)
         except Exception as e:  # noqa: BLE001
             # INTENTIONAL: stash is best-effort; never break the host session.
             logger.warning("file_stash_remember_failed", error=str(e))
@@ -270,8 +277,8 @@ class FileStashBackend:
                     kept.append(rec)
                 else:
                     dropped += 1
-            if dropped:
-                self._rewrite(kept)
+            if dropped and not self._rewrite(kept):
+                return 0  # nothing actually pruned — the rewrite never landed
         except OSError as e:
             logger.warning("file_stash_prune_failed", error=str(e))
         return dropped
@@ -304,8 +311,8 @@ class FileStashBackend:
                     dropped += 1
                 else:
                     kept.append(rec)
-            if dropped:
-                self._rewrite(kept)
+            if dropped and not self._rewrite(kept):
+                return 0  # nothing actually deleted — the rewrite never landed
         except OSError as e:
             logger.warning("file_stash_forget_failed", error=str(e))
             return 0
@@ -364,6 +371,28 @@ class FileStashBackend:
 
         ks = list(self._load_kv().keys())
         return ks if pattern == "*" else [k for k in ks if fnmatch.fnmatch(k, pattern)]
+
+    def probe_write(self) -> bool:
+        """Real writability probe — write and remove a temp artifact.
+
+        Used by ``session_stash.backend_status`` to distinguish a
+        caller-local write denial (e.g. a sandboxed process where the
+        stash directory is read-only) from a healthy file tier. Says
+        nothing about any remote service. The probe artifact is removed
+        on both the success and failure paths.
+        """
+        probe = self._dir / f".write-probe-{os.getpid()}-{os.urandom(4).hex()}"
+        try:
+            probe.write_text("probe", encoding="utf-8")
+            return True
+        except OSError as e:
+            logger.warning("file_stash_probe_write_failed", error=str(e))
+            return False
+        finally:
+            try:
+                probe.unlink(missing_ok=True)
+            except OSError:
+                pass
 
     def is_connected(self) -> bool:
         """Always available — the stash directory is local and writable."""
