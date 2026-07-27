@@ -4,7 +4,7 @@
 Merges three data sources into one view:
 
   1. Completeness — count of template kinds per feature vs expected 11
-  2. Staleness    — attune_author.check_staleness report
+  2. Staleness    — attune.authoring.staleness.check_staleness report
   3. Benchmarks   — cached P@1 from .help/benchmarks/latest.json
 
 Usage:
@@ -22,8 +22,9 @@ from datetime import datetime
 from pathlib import Path
 
 import yaml
-from attune_author import check_staleness, load_manifest
 
+from attune.authoring.manifest import load_manifest
+from attune.authoring.staleness import check_staleness
 from attune.help.manifest import load_manifest as _load_help_manifest
 from attune.help.manifest import resolve_topic
 
@@ -124,10 +125,17 @@ def _load_queries() -> list[dict]:
 def aggregate() -> list[FeatureRow]:
     """Build the unified FeatureRow list by merging all three sources."""
     manifest = load_manifest(HELP_DIR)
-    report = check_staleness(manifest, HELP_DIR, REPO_ROOT)
+    # Manual/single-sourced features (no ``files:`` globs) have no
+    # source to hash — untracked (N/A), not stale (consolidation D9).
+    tracked = {name for name, feat in manifest.features.items() if feat.files}
+    entries = (
+        check_staleness(manifest, HELP_DIR, REPO_ROOT, features=sorted(tracked)).entries
+        if tracked
+        else []
+    )
     benchmarks = _load_benchmarks()
 
-    by_name = {e.feature: e for e in report.entries}
+    by_name = {e.feature: e for e in entries}
     rows: list[FeatureRow] = []
 
     for name in manifest.features:
@@ -137,7 +145,7 @@ def aggregate() -> list[FeatureRow]:
             FeatureRow(
                 name=name,
                 kinds_present=kinds,
-                is_stale=entry.is_stale if entry else True,
+                is_stale=entry.is_stale if entry else name in tracked,
                 stored_hash=entry.stored_hash if entry else None,
                 current_hash=entry.current_hash if entry else "",
                 matched_files=list(entry.matched_files) if entry else [],
@@ -190,8 +198,10 @@ def drill_in(feature_name: str) -> int:
         print(f"Known features: {', '.join(sorted(author_manifest.features))}")
         return 1
 
-    report = check_staleness(author_manifest, HELP_DIR, REPO_ROOT, features=[feature_name])
-    entry = report.entries[0] if report.entries else None
+    entry = None
+    if feat.files:
+        report = check_staleness(author_manifest, HELP_DIR, REPO_ROOT, features=[feature_name])
+        entry = report.entries[0] if report.entries else None
     p_at_1 = _load_benchmarks().get(feature_name)
 
     print(f"# {feature_name}")
@@ -202,6 +212,8 @@ def drill_in(feature_name: str) -> int:
         print("  P@1: no benchmark data")
     if entry:
         print(f"  staleness: {'STALE' if entry.is_stale else 'ok'}")
+    else:
+        print("  staleness: untracked (no files: globs)")
     print()
 
     print("## Templates")

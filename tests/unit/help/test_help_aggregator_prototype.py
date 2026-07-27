@@ -8,8 +8,6 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("attune_author")  # script imports attune_author at module level
-
 SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "help_aggregator_prototype.py"
 
 
