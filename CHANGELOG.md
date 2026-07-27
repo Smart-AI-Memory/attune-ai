@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.6.0] — 2026-07-27
+
 When a workflow fails, attune can now tell you why: `attune diagnose`
 convenes a multi-model panel over the failed run's evidence and hands
 you ranked root-cause hypotheses — one click from the dashboard. The
@@ -17,6 +19,15 @@ run-record corpus that future releases learn from.
 
 ### Added
 
+- **`/memory` page over the Redis-derived index** (#1576, #1615) —
+  ops dashboard page with kind-chip filtering and an exceptions-first
+  attention header (hydration staleness, corpus drift, pending
+  threads).
+- **`handoff_create` / `handoff_resume` MCP tools** (#1605) —
+  advisory cross-provider session handoff
+  (spec cross-provider-session-handoff).
+- **`/cross-review`** (#1607) — one-seat advisory second-opinion
+  review (spec cross-review).
 - **attune-author fully absorbed — polish machinery moves upstream**
   (attune-author-consolidation T3, ruling D10). The LLM
   generator/polish machinery now lives in `attune.authoring`
@@ -81,7 +92,8 @@ run-record corpus that future releases learn from.
   term extraction for terse symptoms (#1512), origin tagging + an
   append-only closure seam (#1514), proposer role-fit + brief
   hardening (#1523), and the engine's own heal-stamped canonical run
-  record (#1524).
+  record (#1524). Verified diagnoses graduate into the lessons corpus
+  with provenance (`LessonsFilePublisher`, #1529).
 - **Multi-LLM round table** (#1450, #1451, #1462, #1464, #1466,
   #1511, #1515, #1517). `/roundtable` convenes Claude, Antigravity,
   and Codex to deliberate a question on a Redis-backed board; the
@@ -163,6 +175,9 @@ run-record corpus that future releases learn from.
 
 ### Changed
 
+- Codecov patch gate raised 50 → 80, enforcing the documented 80%
+  changed-code floor (#1531).
+
 - **Forms by default — the rich form surface is now what you get**
   (D21). Previously the agent routed each form to the cheapest surface
   that could express its controls, so a multi-dimension question
@@ -192,6 +207,11 @@ run-record corpus that future releases learn from.
   against the lessons golden-query suite (#1509).
 
 ### Fixed
+
+- Weekly help-freshness report now reports 0 stale instead of 27
+  false positives (#1562).
+- Tooltip unification completed — last `span title=` converted, with
+  a CI grep-gate against regressions (#1571).
 
 - **File-fallback memory writes no longer report false success**
   (cross-provider-memory-transport T1). `FileStashBackend.remember()`
