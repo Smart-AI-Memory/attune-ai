@@ -11,6 +11,51 @@
   </p>
 </section>
 
+{% if attention is not none and attention.has_exceptions %}
+<section class="kpi-grid" aria-label="Memory attention"
+         data-testid="memory-attention">
+  {% if attention.stale %}
+  <div class="kpi">
+    <div class="kpi-label">Hydration stale</div>
+    <div class="kpi-value">
+      {% if attention.age_hours is not none %}
+        {{ attention.age_hours }}h old
+      {% else %}never ran{% endif %}
+    </div>
+    <div class="kpi-label">
+      re-run your SessionStart hydration hook, or:
+      <code>python3 ~/.attune/memory/hydrate.py</code>
+    </div>
+  </div>
+  {% endif %}
+  {% if attention.changed_since %}
+  <details class="kpi">
+    <summary>
+      <span class="kpi-label">Corpus changed since hydration</span>
+      <span class="kpi-value">{{ attention.changed_since | length }}
+        file(s)</span>
+    </summary>
+    <ul>
+      {% for rel in attention.changed_since[:20] %}
+      <li><code>{{ rel }}</code></li>
+      {% endfor %}
+      {% if attention.changed_since | length > 20 %}
+      <li>… and {{ attention.changed_since | length - 20 }} more</li>
+      {% endif %}
+    </ul>
+  </details>
+  {% endif %}
+  {% if attention.pending_threads %}
+  <div class="kpi">
+    <div class="kpi-label">Deliberation threads pending promotion</div>
+    <div class="kpi-value">{{ attention.pending_threads }}</div>
+    <div class="kpi-label">rule them in-session:
+      <code>/roundtable promote &lt;thread&gt;</code></div>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
 {% if overview is none %}
   <div class="specs-empty-state" role="status">
     <div class="empty-state-title">Memory index unreachable</div>
