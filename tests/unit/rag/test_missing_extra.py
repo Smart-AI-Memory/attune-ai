@@ -106,10 +106,11 @@ def _fake_attune_rag_with_failing_pipeline(message: str) -> object:
     return fake
 
 
-def test_mcp_handler_names_author_extra_on_help_corpus_error() -> None:
-    """A RuntimeError mentioning attune-help gets the [author]-extra
-    hint appended — attune-help ships via that extra, so the fix is
-    one command."""
+def test_mcp_handler_names_attune_help_package_on_help_corpus_error() -> None:
+    """A RuntimeError mentioning attune-help gets the direct-install
+    hint appended — the [author] extra that used to ship it was
+    retired (author-consolidation T4), so the hint names the package
+    itself and the fix is one command."""
     from attune.mcp.server import EmpathyMCPServer
 
     server = EmpathyMCPServer()
@@ -122,7 +123,8 @@ def test_mcp_handler_names_author_extra_on_help_corpus_error() -> None:
         result = asyncio.run(server._run_rag_knowledge_query({"query": "q"}))
         assert result["success"] is False
         assert "RAG setup error" in result["error"]
-        assert "attune-ai[author]" in result["error"]
+        assert "pip install attune-help" in result["error"]
+        assert "[author]" not in result["error"]
     finally:
         _unblock_attune_rag(saved)
 
