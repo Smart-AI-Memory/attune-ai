@@ -359,6 +359,26 @@ def _stash_findings(findings: list[dict], session_id: str, cwd: str) -> int:
     return written
 
 
+def _status_fields() -> dict:
+    """Caller-scoped backend fields for telemetry (best-effort, never raises).
+
+    Makes degraded routing observable locally (cross-provider-memory-
+    transport T4'): which backend answered, over which transport, and the
+    stable failure reason when this caller has no usable write path.
+    """
+    try:
+        from attune.memory.session_stash import backend_status
+
+        status = backend_status()
+        return {
+            "backend": status.get("backend"),
+            "transport": status.get("transport"),
+            "reason": status.get("reason"),
+        }
+    except Exception:  # noqa: BLE001 — telemetry enrichment is best-effort
+        return {}
+
+
 def _context_enabled() -> bool:
     return os.environ.get("ATTUNE_MEMORY_STASH_CONTEXT", "1").strip() not in {
         "0",
@@ -500,6 +520,7 @@ def main() -> int:
             written=written,
             extractor=extractor,
             injected_chars=injected,
+            **_status_fields(),
         )
         return 0
     except Exception:  # noqa: BLE001 — a Stop hook must never crash the session
