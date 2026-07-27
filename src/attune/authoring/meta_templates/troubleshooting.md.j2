@@ -1,0 +1,78 @@
+{% import '_partials/problem_macros.j2' as m %}
+# Troubleshoot {{ title | lower }}
+
+## Before you start
+
+{{ m.feature_intro(
+  title,
+  description,
+  "This page walks through systematic troubleshooting steps "
+  ~ "for " ~ title | lower ~ ". The polish pass will adapt "
+  ~ "these steps to the actual source code."
+) }}
+
+## Symptom table
+
+| If you observe | Check |
+|----------------|-------|
+| Unexpected exception | The raise site — Python's traceback names the file and line |
+| Silent failure / wrong result | Return values and early returns in the entry points |
+| Intermittent behavior | State held outside the function (globals, caches, env vars) |
+| Slow execution | Loops, I/O, and any calls to other subsystems |
+
+## Step-by-step diagnosis
+
+1. **Reproduce the failure in isolation.**
+   The first step for any {{ title | lower }} issue is a
+   minimal reproduction. Strip the call down to its
+   required arguments and confirm the failure still occurs
+   outside the surrounding context.
+
+2. **Enable verbose logging.**
+{% if public_functions or public_classes %}
+   If {{ title | lower }} logs anything, bump the level to
+   `DEBUG` and re-run. The log output often points directly
+   at the offending state or input.
+{% else %}
+   Instrument the source files with temporary `print` or
+   `logger.debug` calls to observe the code path.
+{% endif %}
+
+3. **Inspect the entry points.**
+{% if public_functions %}
+   Start with the functions most likely to handle the
+   failing case:
+
+{{ m.related_functions(public_functions) }}
+{% elif public_classes %}
+   Start with the classes that own the failing behavior:
+
+{{ m.related_classes(public_classes) }}
+{% else %}
+   Read the source files listed below and locate the code
+   path that matches the observed symptom.
+{% endif %}
+
+4. **Check the tests.** Run
+   `pytest -k "{{ feature_name }}" -v` to see which related
+   tests pass. If a test exercises the failing path, your
+   fix can re-use its fixtures.
+
+## Common fixes
+
+- **Input validation.** Many bugs in
+  {{ title | lower }} are actually bad inputs passed from
+  outside. Validate types and ranges at the boundary before
+  blaming internals.
+- **Stale cache or state.** If the code worked yesterday
+  but fails today without a code change, suspect caches,
+  lockfiles, or environment drift.
+- **Version mismatch.** A dependency upgrade can change
+  behavior. Run `pip show <dep>` to confirm the installed
+  version matches expectations.
+
+## Source files
+
+{{ m.key_files(file_patterns) }}
+
+{{ m.tags_line(tags) }}

@@ -18367,3 +18367,89 @@ def ", start_idx + 1)` for module-
   merge serially, rather than refresh-then-merge each in turn. Pairs with
   "`gh pr checks` exits 0 even when checks FAIL" (both: the rollup is not
   the gate) and with the stacked-PR re-target rules.
+
+- **The first check to go red is usually DOWNSTREAM of the real failure
+  — never diagnose from an unsettled matrix**: 2026-07-25, refreshing 9
+  held PRs against current main. Two PRs showed `fail=1 [coverage]` while
+  17 lanes were still `pending`, and I theorised the refresh had moved the
+  project coverage denominator (89 commits of main merged in — plausible,
+  and wrong). When the runs settled, the truth was that the ENTIRE test
+  matrix was failing on a claim-drift gate; `coverage` merely reported
+  first because it is the fastest job. The generalisable point: check
+  completion order is arbitrary and roughly inverse to job duration, so
+  the first red is biased toward *fast* checks, which are usually
+  aggregates or downstream consumers rather than root causes. `fail=N` on
+  a run with `pending>0` tells you THAT something broke and carries almost
+  no information about WHAT. Compounding trap: `gh run view --log-failed`
+  returns "run is still in progress" until the whole run completes, so the
+  moment you can see a failure is precisely the moment you cannot yet
+  diagnose it — which is exactly when the temptation to theorise peaks.
+  Rule: wait for `pending=0` before forming a story; if you must say
+  something earlier, label it a hypothesis and name the probe that would
+  settle it. Pairs with "`gh pr checks` exits 0 even when checks FAIL"
+  (both: the rollup is not the gate).
+
+- **A monitor that ends with ZERO events is a monitor FAILURE, not quiet
+  progress — re-read the state directly before believing it**: 2026-07-25,
+  a polling monitor armed over 10 PRs ended `completed` having emitted
+  nothing at all — not even for the PR I already knew had settled — and
+  its output file did not exist to inspect. Re-querying `gh pr checks`
+  showed six PRs green and three red, and had been so for some time. This
+  is the documented "silence is not success" trap in a new shape: the
+  known form is a filter too NARROW to match failures (grep for the
+  success marker only); this form is a monitor that produces no output
+  whatsoever, where the absence looks identical to "nothing has settled
+  yet" — and the longer it runs the more it resembles patience. Cheap
+  discriminator: every monitor should have a TERMINAL event (`WAVE
+  COMPLETE`, `ALL SETTLED`); if the stream ends without it, treat the run
+  as untrusted and re-read the underlying state with one direct query.
+  Corollary for authoring: prefer a monitor whose loop emits a heartbeat
+  or a final summary line unconditionally, so "ended with no terminal
+  event" is distinguishable from "ended normally". Extends the Monitor
+  coverage guidance from filter-breadth to stream-liveness.
+
+- **Measuring an LLM's RELIABILITY at n=3 is noise with a plausible
+  face — the smoke run said 80%, n=18 said 28%**: 2026-07-26, answering
+  OQ1 of memory-claim-verification (does `llama3.1:8b` reliably emit
+  entity refs?). A 3-transcript smoke run reported 80% of emitted refs
+  grounded in the source; the same harness, same prompt, same model at
+  n=18 reported **28.1%**. I nearly reported the smoke number as the
+  answer, which would have greenlit building write-time verification on
+  a mechanism that fabricates roughly three of every four refs.
+  Distinguish two purposes: n=3 is a smoke test for the HARNESS (does
+  it parse, does it score, does it run) and is never evidence about the
+  MODEL. Reliability is a rate, and a rate needs a denominator large
+  enough that one atypical sample cannot carry it — the smoke set was
+  three large recent transcripts from one session, which is exactly the
+  favourable tail. Second half of the lesson: **the confound you expect
+  to rescue a bad result can deepen it.** The obvious objection to
+  n=18 was that small agent transcripts dragged it down, so I re-ran on
+  substantial transcripts only (>200 KB) expecting recovery — instead
+  well-formedness fell 81% → 56% and grounding 28% → 22%. Run the
+  confound check, but predict its direction first and record when you
+  are wrong. Pairs with "the first check to go red is usually downstream
+  of the real failure" — both are about forming a story before the
+  denominator justifies one.
+
+- **An open question phrased "if not A, then B" quietly asserts that B
+  works — measure the fallback, and ask what C looks like before
+  treating the pair as exhaustive**: 2026-07-26. I wrote OQ1 as "does
+  the 8B model reliably emit refs? If not, heuristic back-fill from
+  content becomes the permanent mechanism." Measurement killed BOTH: the
+  model grounded only 28% of the refs it emitted, and a regex over
+  `content` could recover an entity for just **10%** of findings. The
+  binary framing had smuggled in an untested premise — that back-fill
+  was a viable safety net — and because the fallback only gets exercised
+  when the primary fails, that premise would have gone unmeasured until
+  production. Worse, the framing hid a third mechanism sitting one layer
+  below both: the transcript's `tool_use` records already carry the
+  session's real entities (a probe recovered exactly the PRs the session
+  touched, the real merge SHA, and 10 file paths — zero fabrications),
+  and the hook was DISCARDING them via the `[tool output omitted]`
+  marker. Rules: (1) when an OQ names a fallback, measure the fallback
+  in the same pass as the primary — its cost is small and its failure is
+  invisible otherwise; (2) before accepting a binary OQ, ask what a
+  third option would have to look like; if the answer is "data we
+  already throw away", that is usually the real answer. Related to
+  "re-validate a spec's premise" — this is the same discipline applied
+  to a question rather than a scope.

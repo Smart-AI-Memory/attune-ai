@@ -196,6 +196,35 @@ drop the `[author]` extra + retire the CLI paths (including the
 D11 `help_regen.py` residual) → then archive repo + PyPI status
 in one deliberate pass.
 
+## T3 executed — polish machinery absorbed upstream (2026-07-21)
+
+**Built** (session-f4b4f3, held draft under the 10.6.0 hold; D10 scope,
+issue #1567). Absorbed from attune-author 0.25.0 into
+`attune.authoring`: `generator.py`, `polish.py`, `polish_prompts.py`,
+`maintenance_contract.py`, `rag_hook.py`, `faithfulness/`,
+`ground_truth/`, `meta_templates/` (package-data entry added for
+`*.j2`). LLM calls repointed to the new `attune.models.single_turn`
+(absorbs attune-author's `auth.py` + `doc_gen/_anthropic.py`
+essentials): subscription-first routing reusing
+`sdk_isolation_kwargs()` + the #1534 `iter_agent_messages` teardown
+guard, tier routing via `attune.model_tiers.resolve_model`, API route
+via `attune.llm.fable_call.create_with_fable`, per-process auth
+counters (kept out of `UsageTracker` — telemetry-models-layering OQ-2
+is open). Version skew found and fixed during the absorb:
+in-repo `manifest.py`/`staleness.py` predated 0.25.0's
+`Feature.status` (`auto`/`manual`) + `manual_features` skip — ported.
+The D10 wiring artifact is `scripts/polish_master.py` (reviewable
+diff, `--apply` opt-in) + the author-feature skill's new Step 3.5;
+polish of projected output stays forbidden. T3-deferred consumers
+migrated: `memory/personal.py` lazy import,
+`test_website_version_accuracy` `_ALL_TEMPLATE_NAMES` (importorskip
+dropped). attune-author test suites absorbed (~700 tests green
+serially); the syrupy golden-template file was NOT absorbed (no
+syrupy dep) — guidance/problem template assertion tests +
+in-repo projector goldens cover rendering. Scripts and the
+aggregator test were left untouched — they are held PR #1562's
+surface. **T4 is now unblocked** per D12.
+
 ## Open
 
 - **T4 execution** (post-T3, per D12): drop `[author]` extra,
