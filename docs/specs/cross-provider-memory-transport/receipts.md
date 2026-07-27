@@ -10,7 +10,7 @@ actually runs.
 | 1 | File-write-failure regression | PASS | 2026-07-22 |
 | 2 | Real MCP dispatch | PASS | 2026-07-22 |
 | 3 | AMS round-trip + PII canary | PASS (live) | 2026-07-22 |
-| 4 | Codex live MCP canary | UNPROBED (blocked pre-lift) | 2026-07-22 |
+| 4 | Codex live MCP canary | PASS (live) | 2026-07-27 |
 | 5 | Claude Code hook canary | PASS (live) | 2026-07-22 |
 | 6 | Antigravity/Gemini probe | UNPROBED (recon done) | 2026-07-22 |
 
@@ -56,6 +56,19 @@ origin/main (revision `34a78b53f` at run time), and the
 `session_memory_*` adapters (`attune_redis/mcp_tools.py`) exist only
 on the held T2 branch (#1594). The probe cannot pass until the held
 stack #1593 → #1594 → #1596 → #1598 merges.
+
+**2026-07-27 PASS (live, interactive Codex session ~08:01 ET,
+plugin 10.6.0):** Patrick ran the four-leg canary interactively
+(headless `codex exec` auto-cancels MCP approvals — see below). All
+legs green with raw outputs: (1) capture `ok:true` id
+`a1c7b6e0-2668-42c5-b14a-02e8770cbf36`; (2) recall returned the
+stored representation `"R4-LIVE-CANARY-20260727: codex post-lift
+probe, contact [EMAIL] re transport receipt"` — the CR-2 PII gate
+redacted the canary email AT REST; (3) forget `requested:1
+deleted:1`; (4) re-recall: canary token and id absent. Canary
+deleted by the flow itself (D7 clean). Cosmetic finding chipped
+separately: `voice_summary` is the generic "Here's what I found."
+on capture/forget too.
 
 **2026-07-27 post-lift attempt (stack merged, 10.6.0 published):**
 Codex marketplace re-synced (`codex plugin marketplace upgrade
