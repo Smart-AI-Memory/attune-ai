@@ -18647,3 +18647,25 @@ def ", start_idx + 1)` for module-
   that opt-in is exactly for independent, non-branching dimensions of
   one decision (§4 batched form). Sequence that works: try
   elicitation_ask → on error, AskUserQuestion with metadata.source.
+- **The MCP voice layer stamps a GENERIC `voice_summary` over every
+  non-skipped tool response — plugin tools that phrase their own verbs
+  must set `voice_summary` in the handler, and failure signaling via
+  `ok` (not `success`) was invisible to the voicer**: receipt-4 canary
+  (2026-07-27) caught every `session_memory_*` verb answering "Here's
+  what I found." (only fits recall). Two mechanisms: (1) `call_tool`
+  in `src/attune/mcp/server.py` routes every tool NOT in
+  `_VOICE_SKIP_TOOLS` through `format_mcp_response`
+  (`src/attune/voice/formatter.py`), which stamped
+  `GREETING_SUCCESS`/`GREETING_FAILURE` unconditionally; (2) the
+  formatter reads the `success` key (default True) while the
+  session_memory handlers signal via `ok` — so `ok: False` failures
+  were voiced as success too. Fixed in PR #1684: handlers set an
+  action-appropriate `voice_summary` on EVERY return path, and
+  `format_mcp_response` now respects a pre-set `voice_summary`
+  (fallback greeting only when absent). Rule for new plugin MCP
+  tools: either add the tool to `_VOICE_SKIP_TOOLS`, or set a
+  per-verb `voice_summary` in the handler — and never assume the
+  voice layer understands your success key; it only knows `success`.
+  Canary test: `TestSessionMemoryVoiceSummaries` in
+  `attune_redis/tests/test_mcp_tools.py` asserts no verb emits the
+  generic greeting.
