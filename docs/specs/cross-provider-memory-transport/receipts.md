@@ -12,7 +12,7 @@ actually runs.
 | 3 | AMS round-trip + PII canary | PASS (live) | 2026-07-22 |
 | 4 | Codex live MCP canary | PASS (live) | 2026-07-27 |
 | 5 | Claude Code hook canary | PASS (live) | 2026-07-22 |
-| 6 | Antigravity/Gemini probe | BLOCKED — found real bug, fix #1681 | 2026-07-27 |
+| 6 | Antigravity/Gemini probe | PASS (live, 10.6.1) | 2026-07-27 |
 
 ## 1 — File-write-failure regression (T1, held #1593)
 
@@ -121,6 +121,18 @@ the receipt-4 canary flow. If the tools never surface in a live
 session, record an explicit `unsupported` row here. Automatic
 lifecycle hooks are NOT promised on Codex or Antigravity (D2/R5).
 
+**2026-07-27 PASS (live, attempt 2 vs PyPI 10.6.1):** with #1681's
+stdout fix published in 10.6.1 and the uvx cache refreshed, the full
+four-leg canary ran clean from a live `agy --print` session:
+(1) capture `ok:true` id `671f8282-e5b3-4f96-ad86-c0db4c587390`;
+(2) recall returned `"R6-LIVE-CANARY-20260727B: antigravity
+post-10.6.1 probe, contact [EMAIL] re transport receipt"` — CR-2 PII
+redaction at rest from the Antigravity seat; (3) forget; (4) final
+recall verified the id absent. Distribution pre-check on the same
+build: raw stdio harness against the uvx-served 10.6.1 server —
+0 non-JSON stdout lines during a PII-logging capture. All receipts
+in this ledger are now PASS — 6/6.
+
 **2026-07-27 live probe (post-10.6.0 publish) — the receipt did its
 job by FAILING on a real bug.** Steps executed: (1) uvx pre-warmed to
 10.6.0; (2) raw stdio JSON-RPC handshake against the PyPI-served
@@ -157,7 +169,15 @@ diagnosis and deleted the same hour (register below).
 - `R6-REPRO-CANARY` / id `0007863e-6150-4326-a0ee-028154ca251d` —
   deleted 2026-07-27 (receipt 6 diagnosis; raw-harness forget,
   `deleted: 1`)
-- `R6-LIVE-CANARY-20260727` — never stored (agy leg 1 failed before
-  the write)
+- `R6-LIVE-CANARY-20260727` — WAS stored server-side (the 10.6.0
+  capture succeeded; only the response frame was corrupted — the
+  earlier "never stored" note here was wrong); found via recall and
+  deleted 2026-07-27
+- `R6-LIVE-CANARY-20260727B` — deleted 2026-07-27 by the flow itself
+  (receipt 6 PASS)
+- `R6-DIST-VERIFY` — deleted 2026-07-27 (10.6.1 distribution
+  pre-check; landed in the file stash, truncated)
+- `STDOUT-PURITY-CANARY` ×4 — deleted 2026-07-27 (regression-test
+  runs leaked to the live AMS store; test isolation fixed in #1685)
 - `T5-CODEX-CANARY-6cf0` — never stored (receipt 4 probe: tools
   absent in Codex pre-lift; nothing to clean)
