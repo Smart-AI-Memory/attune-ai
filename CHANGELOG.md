@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.6.1] — 2026-07-27
+
+### Fixed
+
+- **MCP server stdout is protocol-only** — structlog now writes to
+  stderr in the server process. Strict MCP clients (Antigravity)
+  previously failed every `session_memory_*` call with "invalid
+  trailing data at the end of stream" when the session-stash PII gate
+  logged during capture; lenient clients masked the bug. Found live by
+  transport receipt 6; regression test spawns the real server and
+  asserts a JSON-only stdout (#1681).
+
 ## [10.6.0] — 2026-07-27
 
 When a workflow fails, attune can now tell you why: `attune diagnose`
