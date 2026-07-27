@@ -546,6 +546,11 @@ def _stash_failure_reason(session_stash: Any) -> str:
     return str(reason) if reason else "write_failed"
 
 
+def _plural(count: int) -> str:
+    """Return "s" for non-singular counts (voice_summary phrasing)."""
+    return "" if count == 1 else "s"
+
+
 def _clamp_top_k(args: dict[str, Any]) -> int:
     """Bound recall result counts (R4: results bounded)."""
     try:
@@ -584,6 +589,7 @@ async def handle_session_memory_capture(server: Any, args: dict[str, Any]) -> di
                 "reason": "invalid_entry",
                 "error": str(exc),
                 "source": "session-stash",
+                "voice_summary": "Couldn't stash that — the entry was invalid.",
             }
         if session_stash.stash_entry(entry):
             return {
@@ -591,18 +597,31 @@ async def handle_session_memory_capture(server: Any, args: dict[str, Any]) -> di
                 "id": entry.id,
                 "type": entry.type,
                 "source": "session-stash",
+                "voice_summary": "Stashed that finding for future recall.",
             }
+        reason = _stash_failure_reason(session_stash)
         return {
             "ok": False,
-            "reason": _stash_failure_reason(session_stash),
+            "reason": reason,
             "source": "session-stash",
+            "voice_summary": f"Couldn't stash that finding ({reason}).",
         }
     except ImportError:
-        return {"ok": False, "reason": "session_stash_unavailable", "source": "session-stash"}
+        return {
+            "ok": False,
+            "reason": "session_stash_unavailable",
+            "source": "session-stash",
+            "voice_summary": "Session memory isn't available in this environment.",
+        }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
         logger.exception("session_memory_capture failed")
-        return {"ok": False, "reason": "internal_error", "error": str(e)}
+        return {
+            "ok": False,
+            "reason": "internal_error",
+            "error": str(e),
+            "voice_summary": "Couldn't stash that finding (internal error).",
+        }
 
 
 async def handle_session_memory_recall(server: Any, args: dict[str, Any]) -> dict[str, Any]:
@@ -622,18 +641,34 @@ async def handle_session_memory_recall(server: Any, args: dict[str, Any]) -> dic
             top_k=_clamp_top_k(args),
             cwd=args.get("cwd"),
         )
+        count = len(results)
         return {
             "ok": True,
             "results": results,
-            "count": len(results),
+            "count": count,
             "source": "session-stash",
+            "voice_summary": (
+                f"Found {count} stashed finding{_plural(count)}."
+                if count
+                else "No stashed findings matched that query."
+            ),
         }
     except ImportError:
-        return {"ok": False, "reason": "session_stash_unavailable", "source": "session-stash"}
+        return {
+            "ok": False,
+            "reason": "session_stash_unavailable",
+            "source": "session-stash",
+            "voice_summary": "Session memory isn't available in this environment.",
+        }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
         logger.exception("session_memory_recall failed")
-        return {"ok": False, "reason": "internal_error", "error": str(e)}
+        return {
+            "ok": False,
+            "reason": "internal_error",
+            "error": str(e),
+            "voice_summary": "Recall didn't work (internal error).",
+        }
 
 
 async def handle_session_memory_recent(server: Any, args: dict[str, Any]) -> dict[str, Any]:
@@ -652,18 +687,38 @@ async def handle_session_memory_recent(server: Any, args: dict[str, Any]) -> dic
             top_k=_clamp_top_k(args),
             cwd=args.get("cwd"),
         )
+        count = len(results)
         return {
             "ok": True,
             "results": results,
-            "count": len(results),
+            "count": count,
             "source": "session-stash",
+            "voice_summary": (
+                "Nothing stashed yet for this project."
+                if not count
+                else (
+                    "Here is the most recent stashed finding."
+                    if count == 1
+                    else f"Here are the {count} most recent stashed findings."
+                )
+            ),
         }
     except ImportError:
-        return {"ok": False, "reason": "session_stash_unavailable", "source": "session-stash"}
+        return {
+            "ok": False,
+            "reason": "session_stash_unavailable",
+            "source": "session-stash",
+            "voice_summary": "Session memory isn't available in this environment.",
+        }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
         logger.exception("session_memory_recent failed")
-        return {"ok": False, "reason": "internal_error", "error": str(e)}
+        return {
+            "ok": False,
+            "reason": "internal_error",
+            "error": str(e),
+            "voice_summary": "Recall didn't work (internal error).",
+        }
 
 
 async def handle_session_memory_forget(server: Any, args: dict[str, Any]) -> dict[str, Any]:
@@ -686,6 +741,7 @@ async def handle_session_memory_forget(server: Any, args: dict[str, Any]) -> dic
                 "reason": "invalid_entry",
                 "error": "ids must be a list of record-ID strings",
                 "source": "session-stash",
+                "voice_summary": "Couldn't delete — ids must be record-ID strings.",
             }
         deleted = session_stash.forget_entries(
             ids,
@@ -698,17 +754,34 @@ async def handle_session_memory_forget(server: Any, args: dict[str, Any]) -> dic
             "deleted": deleted,
             "source": "session-stash",
         }
-        if not result["ok"]:
+        if result["ok"]:
+            result["voice_summary"] = (
+                "Nothing to delete."
+                if not ids
+                else f"Deleted {deleted} of {len(ids)} stashed record{_plural(len(ids))}."
+            )
+        else:
             result["reason"] = _stash_failure_reason(session_stash)
             if result["reason"] == "write_failed":
                 result["reason"] = "not_found"
+            result["voice_summary"] = f"Couldn't delete those records ({result['reason']})."
         return result
     except ImportError:
-        return {"ok": False, "reason": "session_stash_unavailable", "source": "session-stash"}
+        return {
+            "ok": False,
+            "reason": "session_stash_unavailable",
+            "source": "session-stash",
+            "voice_summary": "Session memory isn't available in this environment.",
+        }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
         logger.exception("session_memory_forget failed")
-        return {"ok": False, "reason": "internal_error", "error": str(e)}
+        return {
+            "ok": False,
+            "reason": "internal_error",
+            "error": str(e),
+            "voice_summary": "Deletion didn't work (internal error).",
+        }
 
 
 async def handle_session_memory_status(server: Any, args: dict[str, Any]) -> dict[str, Any]:
@@ -731,6 +804,12 @@ async def handle_session_memory_status(server: Any, args: dict[str, Any]) -> dic
         status["backend_transport"] = status.get("transport")
         status["transport"] = "mcp"
         status["source"] = "session-stash"
+        if status.get("ok", True):
+            backend = status.get("backend") or "file"
+            status["voice_summary"] = f"Session memory is ready ({backend} backend)."
+        else:
+            reason = status.get("reason") or "unknown"
+            status["voice_summary"] = f"Session memory is unavailable ({reason})."
         return status
     except ImportError:
         return {
@@ -738,11 +817,17 @@ async def handle_session_memory_status(server: Any, args: dict[str, Any]) -> dic
             "reason": "session_stash_unavailable",
             "transport": "mcp",
             "source": "session-stash",
+            "voice_summary": "Session memory isn't available in this environment.",
         }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
         logger.exception("session_memory_status failed")
-        return {"ok": False, "reason": "internal_error", "error": str(e)}
+        return {
+            "ok": False,
+            "reason": "internal_error",
+            "error": str(e),
+            "voice_summary": "Status check didn't work (internal error).",
+        }
 
 
 SESSION_MEMORY_TOOL_HANDLERS: dict[str, Any] = {

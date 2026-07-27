@@ -223,6 +223,23 @@ class TestFormatMcpResponse:
         assert result["voice_summary"] == personality.GREETING_FAILURE
 
     @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_handler_supplied_voice_summary_wins(self, _mock):
+        """A handler-set voice_summary is preserved, not overwritten
+        with the generic greeting (session_memory_* verbs phrase their
+        own actions — capture/forget must not say "Here's what I found.")."""
+        result = format_mcp_response(
+            "session-memory-capture",
+            {"ok": True, "voice_summary": "Stashed that finding for future recall."},
+        )
+        assert result["voice_summary"] == "Stashed that finding for future recall."
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_empty_voice_summary_falls_back_to_greeting(self, _mock):
+        """An empty/None summary still gets the generic fallback."""
+        result = format_mcp_response("code-review", {"success": True, "voice_summary": ""})
+        assert result["voice_summary"] == personality.GREETING_SUCCESS
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
     def test_skips_underscore_prefixed_keys(self, _mock):
         """Dict fallback skips _-prefixed internal keys."""
         result = format_mcp_response(
