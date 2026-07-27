@@ -12,7 +12,7 @@ actually runs.
 | 3 | AMS round-trip + PII canary | PASS (live) | 2026-07-22 |
 | 4 | Codex live MCP canary | PASS (live) | 2026-07-27 |
 | 5 | Claude Code hook canary | PASS (live) | 2026-07-22 |
-| 6 | Antigravity/Gemini probe | UNPROBED (recon done) | 2026-07-22 |
+| 6 | Antigravity/Gemini probe | BLOCKED — found real bug, fix #1681 | 2026-07-27 |
 
 ## 1 — File-write-failure regression (T1, held #1593)
 
@@ -121,9 +121,43 @@ the receipt-4 canary flow. If the tools never surface in a live
 session, record an explicit `unsupported` row here. Automatic
 lifecycle hooks are NOT promised on Codex or Antigravity (D2/R5).
 
+**2026-07-27 live probe (post-10.6.0 publish) — the receipt did its
+job by FAILING on a real bug.** Steps executed: (1) uvx pre-warmed to
+10.6.0; (2) raw stdio JSON-RPC handshake against the PyPI-served
+server listed 60 tools incl. all 5 `session_memory_*` (distribution
+receipt); (3) server registered in BOTH Antigravity configs
+(`~/.gemini/antigravity-ide/mcp_config.json` for the IDE,
+`~/.gemini/config/mcp_config.json` for the CLI — the CLI does NOT
+read the IDE file; `.bak-r6` backups beside each) plus the scoped
+permission grant `mcp(attune-ai/*)` in
+`~/.gemini/config/config.json` `userSettings.globalPermissionGrants`
+(grammar recovered from the agy binary: `mcp(server/*)`, NOT the
+error message's `mcp(<target>)`; bare `mcp(attune-ai)` does not
+match); (4) the live `agy --print` canary then failed leg 1 with
+`calling "tools/call": invalid trailing data at the end of stream`.
+Root cause reproduced with a raw harness: structlog is never
+configured in the MCP server process, so its default STDOUT
+PrintLogger interleaves the PII-gate's debug lines (`pii_scrubbed
+pii_count=1 pii_types=['email']` — the gate itself works) with the
+JSON-RPC frames; Antigravity's strict client rejects the stream while
+Claude Code's lenient client masked the bug all along. Fix + red/green
+regression test (spawn real server, assert stdout is JSON-only):
+PR #1681. Receipt 6 can pass only against DISTRIBUTION, so it stays
+blocked until the fix ships in a patch release (10.6.1 candidate) —
+then re-run the canary flow above. Repro canary
+`STDOUT-PURITY-CANARY`/id `0007863e-…` was stored server-side during
+diagnosis and deleted the same hour (register below).
+
 ## Canary cleanup register
 
 - `T2-LIVE-CANARY-e5f1` — deleted 2026-07-22 (receipt 3)
 - `T4-HOOK-CANARY-9d21` — deleted 2026-07-22 (receipt 5)
+- `R4-LIVE-CANARY-20260727` — deleted 2026-07-27 by the flow itself
+  (receipt 4 PASS)
+- `R6-REPRO-CANARY` / id `0007863e-6150-4326-a0ee-028154ca251d` —
+  deleted 2026-07-27 (receipt 6 diagnosis; raw-harness forget,
+  `deleted: 1`)
+- `R6-LIVE-CANARY-20260727` — never stored (agy leg 1 failed before
+  the write)
 - `T5-CODEX-CANARY-6cf0` — never stored (receipt 4 probe: tools
   absent in Codex pre-lift; nothing to clean)
