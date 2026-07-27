@@ -61,8 +61,13 @@ class _LineReader:
 def test_session_memory_capture_keeps_stdout_json_only(tmp_path):
     env = dict(os.environ)
     env["ATTUNE_REDIS_REQUIRED"] = "false"
-    # Keep the file-fallback stash inside the test sandbox.
+    # Keep the stash inside the test sandbox: HOME redirects the file
+    # fallback, and the dead AMS/Redis endpoints force that fallback even
+    # on machines where a real local Redis is running (otherwise the
+    # canary lands in the developer's live store — observed 2026-07-27).
     env["HOME"] = str(tmp_path)
+    env["AMS_BASE_URL"] = "http://127.0.0.1:1"
+    env["REDIS_URL"] = "redis://127.0.0.1:1/0"
     env["PYTHONIOENCODING"] = "utf-8"
 
     proc = subprocess.Popen(
