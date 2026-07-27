@@ -16,15 +16,10 @@ themselves only convert dataclasses → JSON.
 
 from __future__ import annotations
 
-import logging
-
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from attune.ops import help_data
-from attune.ops.security import require_client_token
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -115,105 +110,3 @@ async def help_recent(request: Request, limit: int = 5) -> JSONResponse:
     cfg = request.app.state.config
     recs = help_data.recently_regenerated(cfg, limit=limit)
     return JSONResponse({"recent": [r.to_dict() for r in recs]})
-
-
-# ---------------------------------------------------------------------------
-# Regen jobs — Admin tools actions
-# ---------------------------------------------------------------------------
-
-
-@router.post("/api/help/regen")
-async def help_regen_start(
-    request: Request,
-    _client: None = Depends(require_client_token),  # noqa: B008
-) -> JSONResponse:
-    """Start an attune-author regen job.
-
-    Body shape (JSON)::
-
-        {
-          "action": "generate" | "regenerate",
-          "feature": "<slug>",    // required when action == "generate"
-          "dry_run": false        // only meaningful for regenerate
-        }
-
-    Returns the created job's metadata with HTTP 202. Poll
-    ``GET /api/help/regen/<id>`` for live status + output.
-    """
-    from attune.ops.help_regen import HelpRegenBusyError
-
-    try:
-        body = await request.json()
-    except Exception:  # noqa: BLE001
-        body = {}
-    action = (body or {}).get("action")
-    if action not in ("generate", "regenerate"):
-        raise HTTPException(
-            status_code=400,
-            detail="action must be 'generate' or 'regenerate'",
-        )
-    feature = (body or {}).get("feature")
-    dry_run = bool((body or {}).get("dry_run", False))
-
-    cfg = request.app.state.config
-    runner = request.app.state.help_regen
-    try:
-        job = await runner.start(
-            action,
-            feature=feature,
-            project_root=str(cfg.project_root),
-            help_dir=str(cfg.project_root / ".help"),
-            all_kinds=True,
-            dry_run=dry_run,
-        )
-    except HelpRegenBusyError as exc:
-        # Existing job in flight — surface its id so the client
-        # can poll it directly instead of opening a second.
-        # Scrub the exception message from the response; the
-        # current_job_id field carries the only data the client needs.
-        logger.info("help_regen busy: %s", exc)
-        return JSONResponse(
-            {
-                "error": "busy",
-                "detail": "another regen job is already in flight",
-                "current_job_id": exc.current_id,
-            },
-            status_code=409,
-        )
-    except ValueError as exc:
-        logger.warning("help_regen bad request: %s", exc)
-        raise HTTPException(status_code=400, detail="invalid help_regen request") from exc
-    except FileNotFoundError as exc:
-        logger.warning("help_regen missing dependency: %s", exc)
-        raise HTTPException(
-            status_code=503,
-            detail="help_regen unavailable (missing dependency)",
-        ) from exc
-    return JSONResponse(job.to_dict(), status_code=202)
-
-
-@router.get("/api/help/regen/{job_id}")
-async def help_regen_status(request: Request, job_id: str) -> JSONResponse:
-    """Poll a regen job's status + captured output.
-
-    Returns the full ``lines`` array each call — clients can
-    diff to display incremental output. The job stays in
-    history (oldest evicted at history_limit) so this is safe
-    to poll after completion.
-    """
-    if not job_id or len(job_id) > 64 or not job_id.isalnum():
-        raise HTTPException(status_code=400, detail="invalid job id")
-    runner = request.app.state.help_regen
-    job = runner.get(job_id)
-    if job is None:
-        raise HTTPException(status_code=404, detail=f"job not found: {job_id}")
-    return JSONResponse(job.to_dict())
-
-
-@router.get("/api/help/regen")
-async def help_regen_recent(request: Request, limit: int = 5) -> JSONResponse:
-    """Recent regen jobs — used by the Admin tools UI to surface
-    in-flight + just-finished work without polling each id."""
-    limit = max(1, min(20, int(limit)))
-    runner = request.app.state.help_regen
-    return JSONResponse({"jobs": [j.to_dict() for j in runner.recent(limit=limit)]})
