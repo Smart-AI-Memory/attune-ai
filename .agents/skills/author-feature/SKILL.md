@@ -118,6 +118,23 @@ The dry-run runs the in-repo projector
 and prints fact-check findings + runnable-example problems alongside the
 planned outputs. Resolve every `error`-severity finding before building.
 
+### Step 3.5 — optional: polish-master pass (reviewable diff)
+
+When the prose needs a quality pass beyond your own editing, the D10
+polish action runs the absorbed LLM polish **on the master** and shows
+a reviewable diff — never a silent rewrite, never on projected output:
+
+```bash
+PYTHONPATH=src python scripts/polish_master.py <feature> [--apply]
+```
+
+Diff-only by default; `--apply` writes the master (then re-run the
+Step 3 gates). **This is a billable premium-tier LLM call** —
+subscription-first via `attune.models.single_turn`, cached in
+`~/.attune/polish_cache` — so name the spend to the user before
+running it. You remain the judge: reject diff hunks that drift from
+code truth; the fact-check gates re-verify whatever you keep.
+
 ### Step 4 — project for real, then sync the served bundle
 
 ```bash
@@ -158,16 +175,20 @@ pytest tests/unit/help
   `scripts/audit_doc_imports.py` (which puts the worktree `src/` on
   `sys.path`) correctly reports all imports resolve. The audit is
   authoritative.
-- **Zero API credits.** The whole flow is deterministic projection +
-  hand-authored prose. If you find yourself reaching for `attune-author
-  generate` or any LLM-polish path, stop — that path is retired; the
-  session is the author.
+- **Zero API credits by default.** The core flow is deterministic
+  projection + hand-authored prose. The one sanctioned LLM surface is
+  the optional Step 3.5 polish-master diff (D10) — on the MASTER,
+  reviewable, spend named first. If you find yourself reaching for
+  `attune-author generate` or any polish of *projected output*, stop —
+  those paths are retired; the session is the author.
 
 ## What this skill does NOT do
 
 - It does **not** generate prose for blind approval — you author *with*
-  verification, grounded in code.
-- It does **not** call any LLM-generation or polish path.
+  verification, grounded in code; even the optional polish-master pass
+  lands as a diff you judge.
+- It does **not** call any LLM path silently — the only LLM surface is
+  Step 3.5, explicit and spend-named.
 - It does **not** re-implement the projector, the audits, or the (future)
   scaffolder — it *calls* them.
 

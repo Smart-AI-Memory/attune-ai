@@ -32,16 +32,16 @@ class TestLazyImports:
         def fake_polish(text, template_type):
             return text
 
-        mod = types.ModuleType("attune_author.polish")
+        mod = types.ModuleType("attune.authoring.polish")
         mod.polish_template = fake_polish
-        monkeypatch.setitem(sys.modules, "attune_author", types.ModuleType("attune_author"))
-        monkeypatch.setitem(sys.modules, "attune_author.polish", mod)
+        monkeypatch.setitem(sys.modules, "attune.authoring.polish", mod)
 
         assert _load_author() is fake_polish
 
     def test_load_author_failure_returns_none(self, monkeypatch):
-        # A None entry forces ImportError on `from attune_author.polish import …`.
-        monkeypatch.setitem(sys.modules, "attune_author.polish", None)
+        # A None entry forces ImportError on
+        # `from attune.authoring.polish import …`.
+        monkeypatch.setitem(sys.modules, "attune.authoring.polish", None)
         assert _load_author() is None
 
     def test_load_rag_success(self, monkeypatch):

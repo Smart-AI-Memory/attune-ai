@@ -1,0 +1,6 @@
+{
+  "src/attune/memory/claude_memory.py::hardcoded_path": 1,
+  "src/attune/ops/routes/pending_writes.py::hardcoded_path": 1,
+  "src/attune/ops/session_redaction.py::hardcoded_path": 1,
+  "src/attune/platform_utils.py::hardcoded_path": 1
+}

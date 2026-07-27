@@ -254,28 +254,15 @@ def project_feature(
 
     title = _feature_title(master)
 
-    for kind, titles in HELP_KIND_SECTIONS.items():
-        if kind in skip_kinds:
-            continue
-        missing = [t for t in titles if t not in master.sections]
-        if missing:
-            result.skipped.append(f"{kind} (missing: {', '.join(missing)})")
-            continue
-        if kind == "faq":
-            body = _render_faq(master.sections["FAQ seeds"], result.warnings)
-            if not body:
-                result.skipped.append("faq (no parseable Q/A seeds)")
-                continue
-            slug_title = master.feature.replace("-", " ").replace("_", " ").title()
-            kind_title = f"{slug_title} FAQ"
-        else:
-            body = _join_sections(master, titles)
-            kind_title = title
-        content = _wrap_help(
-            master.feature, kind, source_hash, generated_help, body, title=kind_title
-        )
-        out_path = help_dir / "templates" / master.feature / f"{kind}.md"
-        result.outputs.append(ProjectedOutput(kind, "help", out_path, content))
+    _project_help_kinds(
+        master,
+        result,
+        skip_kinds=skip_kinds,
+        source_hash=source_hash,
+        generated_help=generated_help,
+        help_dir=help_dir,
+        title=title,
+    )
 
     for kind, titles in DOCS_PAGE_SECTIONS.items():
         if kind in skip_kinds:
@@ -309,6 +296,50 @@ def project_feature(
             result.written.append(out.path)
 
     return result
+
+
+def _project_help_kinds(
+    master: MasterFile,
+    result: ProjectionResult,
+    *,
+    skip_kinds: tuple[str, ...],
+    source_hash: str,
+    generated_help: str,
+    help_dir: Path,
+    title: str,
+) -> None:
+    """Render the ``.help`` kinds into ``result`` (outputs/skipped).
+
+    One :class:`ProjectedOutput` per renderable kind; kinds with missing
+    source sections (or an FAQ with no parseable seeds) are recorded in
+    ``result.skipped`` instead. The ``concept`` kind gets a **Watch**
+    link prepended when the master declares frontmatter ``video``.
+    """
+    for kind, titles in HELP_KIND_SECTIONS.items():
+        if kind in skip_kinds:
+            continue
+        missing = [t for t in titles if t not in master.sections]
+        if missing:
+            result.skipped.append(f"{kind} (missing: {', '.join(missing)})")
+            continue
+        if kind == "faq":
+            body = _render_faq(master.sections["FAQ seeds"], result.warnings)
+            if not body:
+                result.skipped.append("faq (no parseable Q/A seeds)")
+                continue
+            slug_title = master.feature.replace("-", " ").replace("_", " ").title()
+            kind_title = f"{slug_title} FAQ"
+        else:
+            body = _join_sections(master, titles)
+            kind_title = title
+        if kind == "concept" and (video := _video_meta(master)) is not None:
+            url, video_title = video
+            body = f"**Watch:** [{video_title}]({url})\n\n{body}"
+        content = _wrap_help(
+            master.feature, kind, source_hash, generated_help, body, title=kind_title
+        )
+        out_path = help_dir / "templates" / master.feature / f"{kind}.md"
+        result.outputs.append(ProjectedOutput(kind, "help", out_path, content))
 
 
 #: ``generated_at`` carriers in projected outputs: the ``.help`` YAML
@@ -461,6 +492,10 @@ def _render_hub(master: MasterFile) -> str | None:
     if summary and str(summary).strip():
         lines += [str(summary).strip(), ""]
 
+    if (video := _video_meta(master)) is not None:
+        url, video_title = video
+        lines += [f"**Watch:** [{video_title}]({url})", ""]
+
     if hero is not None:
         lines += [
             '!!! tip "Start here"',
@@ -487,6 +522,24 @@ def _render_hub(master: MasterFile) -> str | None:
         lines += ["</div>", ""]
 
     return "\n".join(lines).rstrip("\n") + "\n"
+
+
+def _video_meta(master: MasterFile) -> tuple[str, str] | None:
+    """Return ``(url, title)`` from frontmatter ``video``, or ``None``.
+
+    Accepts a bare URL string or a ``{url, title}`` mapping. A mapping
+    without a ``url`` projects nothing (the field is optional and
+    advisory — never an error).
+    """
+    raw = master.frontmatter.get("video")
+    if isinstance(raw, str) and raw.strip():
+        return raw.strip(), "Watch the video"
+    if isinstance(raw, dict):
+        url = str(raw.get("url") or "").strip()
+        if url:
+            title = str(raw.get("title") or "").strip() or "Watch the video"
+            return url, title
+    return None
 
 
 def _feature_title(master: MasterFile) -> str:

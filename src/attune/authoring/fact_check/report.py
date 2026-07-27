@@ -1,7 +1,7 @@
 """Fact-check finding + report types and soft-fail formatting.
 
 The data shapes here are shared by every check module under
-``attune_author.fact_check`` so that callers see one consistent
+``attune.authoring.fact_check`` so that callers see one consistent
 result envelope regardless of which check produced a finding.
 """
 

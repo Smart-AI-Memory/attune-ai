@@ -321,6 +321,15 @@ jobs:
       if: needs.changes.outputs.website_only != 'true'
       run: python scripts/check_badge_freshness.py
 
+    # Capability-count projector (roundtable q-capability-count-projector-001):
+    # the three derived counts (skills, registered MCP tools, core-schema MCP
+    # tools) must match every allowlisted claim site. Needs an importable
+    # attune — this job just installed it. Repair drift with:
+    #   python scripts/project_capabilities.py --write
+    - name: Check capability count claims
+      if: needs.changes.outputs.website_only != 'true'
+      run: python scripts/project_capabilities.py --check
+
     - name: Run tests with coverage
       # Coverage RATCHET: --cov-fail-under is a one-way valve, not a static
       # floor. Main has measured 94.69–94.71% across recent runs (stable to
@@ -428,6 +437,47 @@ jobs:
     - name: Security scan with Bandit
       run: bandit -c .bandit -r src/ attune_software/ --severity-level medium --confidence-level medium
 
+  # Gate on the WHOLE test matrix, not just the two required lanes.
+  #
+  # Branch protection requires `test (ubuntu-latest, 3.12)` and
+  # `test (windows-latest, 3.12)`. On a full-matrix run the other ten
+  # lanes — including windows 3.10/3.11/3.13/3.14 — report but gate
+  # nothing, so a Windows-only regression can merge green and then sit on
+  # main while every later PR shows the same red lanes that nothing
+  # blocks on. That has happened (see the "admin-merging before Windows
+  # lanes complete" and "auto-merge ignores non-required lanes" lessons).
+  #
+  # Adding those lanes to branch protection directly does NOT work: the
+  # slim matrix does not run them, and a required check that never runs
+  # reports as "missing" and blocks the PR forever. So instead this job
+  # ALWAYS runs, aggregates whatever the matrix actually did, and is the
+  # single required context. Slim run -> nothing failed -> green. Full
+  # run with a red windows 3.13 -> red, and the merge is blocked.
+  test-matrix-complete:
+    needs: [test]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - name: Require every test lane that ran to have passed
+      shell: bash
+      env:
+        RESULT: ${{ needs.test.result }}
+      run: |
+        set -euo pipefail
+        echo "test matrix result: $RESULT"
+        case "$RESULT" in
+          success|skipped)
+            echo "All test lanes that ran passed (or the matrix was skipped)."
+            ;;
+          *)
+            echo "::error::One or more test lanes did not pass (result: $RESULT)."
+            echo "Check the non-required lanes too — windows 3.10/3.11/3.13/3.14"
+            echo "are exactly the ones this gate exists to catch."
+            exit 1
+            ;;
+        esac
+
   platform-compat:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -443,21 +493,62 @@ jobs:
       id: compat
       run: |
         python scripts/check_platform_compat.py src/ --json > compat-report.json
-        python scripts/check_platform_compat.py src/ --fix
+        python scripts/check_platform_compat.py src/ --fix || true
 
     - name: Upload compatibility report
+      if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: platform-compat-report
         path: compat-report.json
 
-    - name: Fail on errors (non-blocking for now)
+    # This step USED to warn and `continue-on-error: true`, which made
+    # `platform-compat` a required check that could not fail — and even
+    # without that, no platform rule emitted `error`, so the only error
+    # severity was the scanner failing to read a file. It gated nothing.
+    #
+    # Now: `missing_encoding` is an error (a text-mode open() without
+    # encoding uses the Windows locale codepage, not UTF-8 — the
+    # highest-yield source of Windows-only breakage here), the 44
+    # pre-existing instances are fixed, and this step FAILS the build.
+    #
+    # The other categories (hardcoded home/etc/tmp paths, os.path
+    # preference) stay warnings for now and are reported below without
+    # failing — the agreed sequence is encoding first, then ratchet the
+    # rest against a baseline.
+    - name: Fail on cross-platform errors
       run: |
-        ERRORS=$(python -c "import json; r=json.load(open('compat-report.json')); print(r['summary']['errors'])")
-        if [ "$ERRORS" -gt 0 ]; then
-          echo "::warning::Found $ERRORS cross-platform compatibility errors"
-        fi
-      continue-on-error: true
+        set -euo pipefail
+        python - <<'EOF'
+        import json, sys
+        report = json.load(open("compat-report.json"))
+        summary = report["summary"]
+        errors = summary["errors"]
+        print(f"scanned {summary['files_scanned']} files: "
+              f"{errors} error(s), {summary['warnings']} warning(s)")
+        if summary["warnings"]:
+            print(f"::notice::{summary['warnings']} cross-platform warnings "
+                  "(not yet gated — see the encoding-first ratchet)")
+        if errors:
+            for issue in report.get("issues", []):
+                if issue.get("severity") == "error":
+                    print(f"::error file={issue['file']},line={issue['line']}::"
+                          f"{issue['message']}")
+            sys.exit(1)
+        EOF
+
+    # The ratchet. The 22 pre-existing warnings (hardcoded home/etc/tmp
+    # paths) cannot be mechanically cleared the way the encoding errors
+    # were, so they are ACCEPTED in `.platform-compat-baseline.json` and
+    # anything beyond them fails. Keyed on file+category rather than line,
+    # so moving code never trips it — a baseline that cries wolf gets
+    # regenerated reflexively, which is the same as not having one.
+    #
+    # Fixing warnings is reported as an improvement, not a failure, with
+    # the command to shrink the baseline. CI never regenerates it: a
+    # self-updating baseline accepts every regression it exists to catch.
+    - name: No new cross-platform warnings (ratchet)
+      run: python scripts/check_platform_compat.py src/ --baseline
 
   code-quality:
     runs-on: ubuntu-latest

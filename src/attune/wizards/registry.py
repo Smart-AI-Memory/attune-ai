@@ -123,7 +123,7 @@ def save_custom_wizard(wizard_data: dict[str, Any], base_dir: str | None = None)
     validated = _validate_file_path(str(output_path))
 
     try:
-        with validated.open("w") as f:
+        with validated.open("w", encoding="utf-8") as f:
             yaml.safe_dump(wizard_data, f, default_flow_style=False, sort_keys=False)
     except PermissionError as e:
         logger.error("Permission denied writing wizard to %s: %s", validated, e)

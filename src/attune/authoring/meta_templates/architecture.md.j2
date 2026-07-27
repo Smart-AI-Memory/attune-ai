@@ -1,0 +1,80 @@
+# {{ title }} architecture
+
+{% if description %}
+{{ description }}.
+{% endif %}
+
+## Purpose
+
+{% if module_docstrings %}
+{{ module_docstrings[0] }}.
+{% else %}
+{{ title }} is a subsystem responsible for a distinct
+slice of the project's responsibilities.
+{% endif %}
+
+{% if tags %}
+Core concerns: {{ tags | join(", ") }}.
+{% endif %}
+
+## Key classes
+
+{% if public_classes %}
+| Class | Responsibility | File |
+|-------|---------------|------|
+{% for cls in public_classes %}
+| `{{ cls.name }}` | {{ cls.doc if cls.doc else "—" }} | `{{ cls.file }}` |
+{% endfor %}
+{% else %}
+No classes discovered. This subsystem is function-oriented.
+
+{% if public_functions %}
+| Function | Responsibility | File |
+|----------|---------------|------|
+{% for fn in public_functions %}
+| `{{ fn.name }}()` | {{ fn.doc if fn.doc else "—" }} | `{{ fn.file }}` |
+{% endfor %}
+{% endif %}
+{% endif %}
+
+## Data flow
+
+```
+# Replace with an ASCII diagram of the main data path.
+# Example:
+#
+#   Input --> [{{ public_classes[0].name if public_classes else "Component" }}]
+#          --> [transform]
+#          --> Output
+```
+
+## Design decisions
+
+<!-- Describe the key architectural choices here after the
+     LLM polish pass adds project-specific context. -->
+
+- **Why this structure**: the subsystem isolates
+  {{ title | lower }} concerns from the rest of the
+  codebase, making it possible to swap implementations
+  or add backends without touching callers.
+
+{% if public_classes and public_classes | length > 1 %}
+- **Class separation**: each class owns a single
+  responsibility; they compose rather than inherit to
+  keep the dependency graph shallow.
+{% endif %}
+
+## Extension points
+
+{% if public_classes %}
+To extend {{ title | lower }}:
+
+{% for cls in public_classes[:3] %}
+- Subclass or wrap `{{ cls.name }}`
+  to add behavior without modifying the base.
+{% endfor %}
+{% else %}
+To extend {{ title | lower }}, add new functions to
+`{{ file_patterns[0] if file_patterns else feature_name }}`
+following the existing naming and error-handling conventions.
+{% endif %}

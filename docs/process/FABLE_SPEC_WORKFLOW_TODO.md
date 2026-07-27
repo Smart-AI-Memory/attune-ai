@@ -1,6 +1,9 @@
 # TODO — Reliable Fable Spec Authoring Workflow
 
-**Status:** todo
+**Status:** done (2026-07-22 — this line rides the PR that makes it
+true: item 1 merged as #1590 [benchmark + ratified decision matrix];
+items 2–5 are this PR, #1591 [`spec_runner.py` + `spec_workflow.py`];
+dogfood receipt green end-to-end, posted on #1591)
 **Priority:** high — collaboration workflow failure
 **Scope:** spec-authoring orchestration, not the cross-provider Redis-memory implementation
 **Created:** 2026-07-22

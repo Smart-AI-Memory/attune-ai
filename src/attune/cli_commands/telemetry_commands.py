@@ -142,7 +142,7 @@ def cmd_telemetry_export(args: Namespace) -> int:
         if args.format == "csv":
             import csv
 
-            with output_path.open("w", newline="") as f:
+            with output_path.open("w", newline="", encoding="utf-8") as f:
                 if data:
                     writer = csv.DictWriter(f, fieldnames=data[0].keys())
                     writer.writeheader()
@@ -150,7 +150,7 @@ def cmd_telemetry_export(args: Namespace) -> int:
             print(f"✅ Exported {len(data)} entries to {output_path}")
 
         elif args.format == "json":
-            with output_path.open("w") as f:
+            with output_path.open("w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, default=str)
             print(f"✅ Exported {len(data)} entries to {output_path}")
 

@@ -106,7 +106,7 @@ class StateManager:
         }
 
         validated_path = _validate_file_path(str(filepath))
-        with open(validated_path, "w") as f:
+        with open(validated_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
 
     def load_state(self, user_id: str) -> CollaborationState | None:
