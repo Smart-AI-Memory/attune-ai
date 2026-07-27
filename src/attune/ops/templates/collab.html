@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-head">
+  <h1>Collaboration</h1>
+  <p class="page-sub">
+    Action-required items from the multi-LLM layer — deliberation
+    threads awaiting your ruling, stale handoff packets, untriaged
+    cross-reviews. Read-only by design: promotion happens in-session
+    (<code>/roundtable promote &lt;thread&gt;</code>), never here.
+  </p>
+</section>
+
+{% if inbox.action_count == 0 %}
+  <div class="specs-empty-state" role="status">
+    <div class="empty-state-title">Nothing needs your attention</div>
+    <div class="empty-state-hint">
+      No threads pending promotion{% if not inbox.board_reachable %}
+      (board unreachable — thread state unknown){% endif %}, no stale
+      handoff packets, no untriaged cross-reviews. This page is meant
+      to disappear from your attention when it looks like this.
+    </div>
+  </div>
+{% else %}
+
+  {% if inbox.threads %}
+  <section>
+    <h2>Threads pending promotion ({{ inbox.threads | length }})</h2>
+    <table class="data-table" data-testid="collab-threads">
+      <thead>
+        <tr><th>Thread</th><th>Messages</th><th>Expires</th>
+            <th>Rule it</th></tr>
+      </thead>
+      <tbody>
+        {% for row in inbox.threads %}
+        <tr>
+          <td><a href="/collab/thread?id={{ row.thread }}">
+            {{ row.thread }}</a></td>
+          <td>{{ row.messages }}</td>
+          <td>
+            {% if row.ttl_hours is not none %}
+              {{ row.ttl_hours }}h
+            {% else %}—{% endif %}
+          </td>
+          <td><code>/roundtable promote {{ row.thread }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% elif not inbox.board_reachable %}
+  <p class="page-sub" role="status">
+    Board unreachable — pending-thread state unknown.
+  </p>
+  {% endif %}
+
+  {% if inbox.stale_handoffs %}
+  <section>
+    <h2>Stale handoff packets ({{ inbox.stale_handoffs | length }})</h2>
+    <table class="data-table" data-testid="collab-handoffs">
+      <thead>
+        <tr><th>Packet</th><th>Branch</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        {% for row in inbox.stale_handoffs %}
+        <tr>
+          <td><code>docs/handoffs/{{ row.slug }}.md</code></td>
+          <td><code>{{ row.branch }}</code></td>
+          <td>{{ row.reason }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+
+  {% if inbox.untriaged_reviews %}
+  <section>
+    <h2>Cross-review ledger</h2>
+    <p data-testid="collab-reviews">
+      {{ inbox.untriaged_reviews }} run(s) still
+      <code>not-triaged</code> in
+      <code>docs/specs/cross-review/receipts.md</code> — record a
+      disposition (<code>real</code> / <code>noise</code>) so the
+      dogfood ledger stays admissible evidence.
+    </p>
+  </section>
+  {% endif %}
+
+{% endif %}
+{% endblock %}

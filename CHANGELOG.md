@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [10.6.0] — 2026-07-27
+
 When a workflow fails, attune can now tell you why: `attune diagnose`
 convenes a multi-model panel over the failed run's evidence and hands
 you ranked root-cause hypotheses — one click from the dashboard. The
@@ -16,6 +18,32 @@ contract so non-Claude agents work this repo safely, and a canonical
 run-record corpus that future releases learn from.
 
 ### Added
+
+- **`/memory` page over the Redis-derived index** (#1576, #1615) —
+  ops dashboard page with kind-chip filtering and an exceptions-first
+  attention header (hydration staleness, corpus drift, pending
+  threads).
+- **`handoff_create` / `handoff_resume` MCP tools** (#1605) —
+  advisory cross-provider session handoff
+  (spec cross-provider-session-handoff).
+- **`/cross-review`** (#1607) — one-seat advisory second-opinion
+  review (spec cross-review).
+- **attune-author fully absorbed — polish machinery moves upstream**
+  (attune-author-consolidation T3, ruling D10). The LLM
+  generator/polish machinery now lives in `attune.authoring`
+  (generator, polish + per-kind prompts, faithfulness audit,
+  ground-truth context injection, RAG grounding hook), with all LLM
+  calls routed through the new `attune.models.single_turn` —
+  subscription-first auth with API fallback, tier routing via
+  `attune.model_tiers`, fable-aware requests, per-process auth
+  telemetry. The author-feature skill gains an optional
+  **polish-master action** (`scripts/polish_master.py`): an LLM
+  quality pass on a single-source master, surfaced as a reviewable
+  diff (`--apply` to write) — never a silent rewrite, never on
+  projected output. `Feature.status` (`auto`/`manual`) and manual-
+  feature staleness skips are ported so projector-owned features are
+  never LLM-regenerated. Unblocks T4 (archive attune-author without
+  yank, D12).
 
 - **Inference-first forms.** A field can carry `inferred_from` alongside
   its `default` — the value the agent guessed from context, plus why.
@@ -64,7 +92,8 @@ run-record corpus that future releases learn from.
   term extraction for terse symptoms (#1512), origin tagging + an
   append-only closure seam (#1514), proposer role-fit + brief
   hardening (#1523), and the engine's own heal-stamped canonical run
-  record (#1524).
+  record (#1524). Verified diagnoses graduate into the lessons corpus
+  with provenance (`LessonsFilePublisher`, #1529).
 - **Multi-LLM round table** (#1450, #1451, #1462, #1464, #1466,
   #1511, #1515, #1517). `/roundtable` convenes Claude, Antigravity,
   and Codex to deliberate a question on a Redis-backed board; the
@@ -73,6 +102,17 @@ run-record corpus that future releases learn from.
   rotation, headless producing routines, a headless triage appendix,
   CI-gate verdicts fetched at briefing render time, and
   receipt-vs-claim evidence tiers in digests.
+- **Provider-neutral `session_memory_*` MCP tools**
+  (cross-provider-memory-transport T2). Five additive tools —
+  `session_memory_capture` / `recall` / `recent` / `forget` /
+  `status` — carry the full session-stash contract (PII/secrets
+  sanitization before write, cwd-scoped recall, 30-day working TTL,
+  precise deletion) over MCP, so sandboxed providers such as Codex
+  capture and recall findings host-side instead of through blocked
+  in-process Python. Registered only when attune core is importable;
+  the six generic `redis_memory_*` tools keep their frozen schemas.
+  A failed write surfaces as `{ok: false, reason: <stable_code>}` —
+  never false success.
 - **Cross-provider collaboration contract** (#1432–#1447). A
   projector-owned contract teaches any agent (Claude Code, Codex,
   Antigravity) the repo's shared truth: tracked `AGENTS.md` +
@@ -135,6 +175,9 @@ run-record corpus that future releases learn from.
 
 ### Changed
 
+- Codecov patch gate raised 50 → 80, enforcing the documented 80%
+  changed-code floor (#1531).
+
 - **Forms by default — the rich form surface is now what you get**
   (D21). Previously the agent routed each form to the cheapest surface
   that could express its controls, so a multi-dimension question
@@ -165,6 +208,34 @@ run-record corpus that future releases learn from.
 
 ### Fixed
 
+- Weekly help-freshness report now reports 0 stale instead of 27
+  false positives (#1562).
+- Tooltip unification completed — last `span title=` converted, with
+  a CI grep-gate against regressions (#1571).
+
+- **File-fallback memory writes no longer report false success**
+  (cross-provider-memory-transport T1). `FileStashBackend.remember()`
+  — and therefore the public `session_stash.stash_entry()` — now
+  returns `False` when the durable write fails (e.g. `EPERM` in a
+  sandboxed provider), instead of `True` with the finding silently
+  lost; `forget()`/`prune()` likewise report 0 when their rewrite
+  never lands. **Behavior correction:** callers that relied on an
+  unconditional `True` must handle a truthful `False`.
+  `backend_status()` gains additive caller-scoped fields (`ok`,
+  `transport`, `reachability`, `reason`, e.g. `file_write_denied`
+  backed by a real write probe) alongside the unchanged existing
+  keys — a caller-local denial is never reported as a global
+  service outage.
+- **Session-stash PII/secrets gate actually fires now**
+  (cross-provider-memory-transport T2, CR-2). `session_stash`
+  constructed its `DataSanitizer` with constructor defaults that
+  disabled both scrubbers, making the pre-write gate a silent no-op
+  — an email-bearing finding was stored unredacted. Both gates are
+  now explicitly enabled: PII (emails, SSNs, phone numbers, card
+  numbers) is redacted in the stored representation, and
+  secret-bearing content (API keys, tokens) fails closed — the
+  write is refused rather than persisted. Caught by the spec's
+  live PII canary; non-mocked regression tests pin both behaviors.
 - **SDK teardown-exit guard now covers every SDK workflow** — the
   seven consumption loops the sdk-teardown-exit-guard spec's list
   predated (`deep-review`, `refactor-plan`, `release-prep`,

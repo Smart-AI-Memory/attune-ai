@@ -58,7 +58,8 @@ def _glob_to_regex(pattern: str) -> re.Pattern[str]:
 def _affected_features(changed_paths: list[Path], manifest_features: dict) -> set[str]:
     """Return the names of features whose source globs match any changed path.
 
-    ``manifest_features`` is ``Manifest.features`` from attune_author —
+    ``manifest_features`` is ``FeatureManifest.features`` from
+    :mod:`attune.authoring.manifest` —
     a dict[str, Feature] where each Feature has a ``files`` list of
     glob patterns relative to the repo root.
     """
@@ -90,9 +91,9 @@ def main(argv: list[str]) -> int:
         return 0
 
     try:
-        from attune_author import load_manifest
+        from attune.authoring.manifest import load_manifest
     except ImportError:
-        return 0  # attune-author not installed; skip silently.
+        return 0  # attune not importable in this env; skip silently.
 
     try:
         manifest = load_manifest(help_dir)

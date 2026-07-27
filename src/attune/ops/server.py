@@ -16,11 +16,13 @@ from attune.ops import sweep_results as sweep_results_mod
 from attune.ops.config import Config
 from attune.ops.interaction_counters import InteractionCounters
 from attune.ops.routes import bulletin as bulletin_routes
+from attune.ops.routes import collab as collab_routes
 from attune.ops.routes import curator as curator_routes
 from attune.ops.routes import dashboard
 from attune.ops.routes import health_library as health_library_routes
 from attune.ops.routes import help as help_routes
 from attune.ops.routes import interaction_counters as interaction_counters_routes
+from attune.ops.routes import memory as memory_routes
 from attune.ops.routes import pending_writes as pending_writes_routes
 from attune.ops.routes import runner as runner_routes
 from attune.ops.routes import runs_history as runs_history_routes
@@ -104,6 +106,8 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
         ("/workflows", "Workflows"),
         ("/curator", "Briefing"),
         ("/specs", "Specs"),
+        ("/memory", "Memory"),
+        ("/collab", "Collab"),
         ("/telemetry", "Telemetry"),
         ("/health", "Health"),
         ("/help", "Help"),
@@ -133,6 +137,7 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     app.state.health_refresh = HealthRefreshRunner()
 
     app.include_router(session_routes.router)
+    app.include_router(collab_routes.router)
     app.include_router(dashboard.router)
     app.include_router(health_library_routes.router)
     app.include_router(runner_routes.router)
@@ -140,6 +145,7 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     app.include_router(specs_routes.router)
     app.include_router(sweep_results_routes.router)
     app.include_router(interaction_counters_routes.router)
+    app.include_router(memory_routes.router)
     app.include_router(pending_writes_routes.router)
     app.include_router(bulletin_routes.router)
     app.include_router(curator_routes.router)

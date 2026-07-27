@@ -32,7 +32,7 @@ export const PRODUCTS: Product[] = [
     id: "attune-ai",
     name: "Attune AI",
     pypiName: "attune-ai",
-    version: "10.5.0",
+    version: "10.6.0",
     tagline: "Generate, maintain, and serve help from your code",
     installCommand: "pip install attune-ai",
     marketplaceInstall:
@@ -101,7 +101,7 @@ export const PRODUCTS: Product[] = [
     id: "claude-code-plugin",
     name: "Claude Code Plugin",
     pypiName: "attune-ai",
-    version: "10.5.0",
+    version: "10.6.0",
     tagline: "Progressive help right in your terminal",
     installCommand:
       "claude plugin marketplace add Smart-AI-Memory/attune-ai",
@@ -269,8 +269,8 @@ export const DIFFERENTIATORS: Differentiator[] = [
  */
 export const CAPABILITIES = {
   workflows: 20,
-  skills: 25,
-  mcpTools: 47,
+  skills: 26,
+  mcpTools: 49,
   templateKinds: 15,
   wizards: 5,
 } as const;

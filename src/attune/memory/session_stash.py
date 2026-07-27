@@ -192,18 +192,70 @@ def backend_status() -> dict:
       stored in that tier are dark. ``None`` when no upgrade is registered
       or the upgrade is the resolved backend.
 
+    Additive caller-scoped fields (cross-provider-memory-transport R2/D4;
+    existing keys above are preserved unchanged):
+
+    - ``ok``: True when a usable write/recall path exists *for this
+      caller*.
+    - ``transport``: ``"direct"`` (in-process upgrade backend),
+      ``"file"`` (local file tier), or ``"none"``. MCP adapters report
+      ``"mcp"`` at their own layer.
+    - ``reachability``: ``"reachable"`` / ``"unreachable_local"`` /
+      ``"unknown"`` — describes THIS caller's boundary only. A sandboxed
+      process that cannot write the stash directory is
+      ``unreachable_local``; that is never evidence the backing service
+      is down globally.
+    - ``reason``: stable machine-readable code when ``ok`` is False
+      (e.g. ``file_write_denied``, ``no_backend``), else ``None``.
+
+    The file tier's reachability comes from a real temporary-write probe
+    (``FileStashBackend.probe_write``), not an assumption — the 2026-07-22
+    Codex diagnosis found an unwritable sandbox fallback reporting success.
+
     Motivation: the 2026-06-11 triage found AMS had been down for a week
     with 51 records unreachable and nothing surfacing it — degradation was
     too graceful. Consumers (the ``/recall`` skill, the SessionStart recall
     hook) print a one-line warning when ``unreachable_upgrade`` is set.
+    Never raises.
     """
-    status: dict = {"backend": None, "fallback": False, "unreachable_upgrade": None}
+    status: dict = {
+        "backend": None,
+        "fallback": False,
+        "unreachable_upgrade": None,
+        "ok": False,
+        "transport": "none",
+        "reachability": "unknown",
+        "reason": None,
+    }
     resolved = resolve_backend(None)
     if resolved is not None:
         status["backend"] = type(resolved).__name__
         status["fallback"] = bool(getattr(resolved, "is_fallback", False))
     if resolved is not None and not status["fallback"]:
-        return status  # upgrade backend healthy — nothing to warn about
+        # Upgrade backend healthy — nothing to warn about. resolve_backend
+        # already gated on is_connected(), so this caller can reach it.
+        status.update(ok=True, transport="direct", reachability="reachable")
+        return status
+    if resolved is None:
+        status["reason"] = "no_backend"
+    else:
+        # Fallback (file) tier: verify writability with a real probe when
+        # the backend offers one. A failed probe is a CALLER-LOCAL denial.
+        probe = getattr(resolved, "probe_write", None)
+        writable: bool | None = None
+        if callable(probe):
+            try:
+                writable = bool(probe())
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: status probing is best-effort; never raise.
+                writable = False
+        if writable is None:
+            # Backend predates probe_write — usable as far as we know.
+            status.update(ok=True, transport="file")
+        elif writable:
+            status.update(ok=True, transport="file", reachability="reachable")
+        else:
+            status.update(reachability="unreachable_local", reason="file_write_denied")
     try:
         from importlib.metadata import entry_points
 
@@ -237,11 +289,19 @@ def _sanitize(content: str) -> str | None:
     """
     try:
         from attune.memory.short_term.security import DataSanitizer
+        from attune.memory.types import SecurityError
     except Exception as exc:  # noqa: BLE001
         logger.error("PII/secrets gate unavailable; refusing stash write: %s", exc)
         return None
-    sanitizer = DataSanitizer()
-    sanitized, redactions = sanitizer.sanitize(content)
+    # Both gates ON explicitly — the constructor defaults are False, which
+    # made this a silent no-op until the cross-provider-memory-transport
+    # CR-2 live canary caught an email passing through unredacted.
+    sanitizer = DataSanitizer(pii_scrub_enabled=True, secrets_detection_enabled=True)
+    try:
+        sanitized, redactions = sanitizer.sanitize(content)
+    except SecurityError as exc:
+        logger.warning("session stash: secret detected; refusing write: %s", exc)
+        return None
     if redactions:
         logger.info("session stash: %d sensitive value(s) redacted before write", redactions)
     return sanitized if isinstance(sanitized, str) else str(sanitized)

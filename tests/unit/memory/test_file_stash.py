@@ -432,3 +432,92 @@ def test_forget_swallows_read_error(backend, monkeypatch):
 
     monkeypatch.setattr(type(backend._findings), "read_text", _boom)
     assert backend.forget(["m1"]) == 0
+
+
+# --------------------------------------------------------------------------
+# Truthful durable writes (cross-provider-memory-transport T1 / R1):
+# a failed replace must surface as False — the 2026-07-22 Codex diagnosis
+# found an unwritable sandbox fallback returning True and losing the write.
+# --------------------------------------------------------------------------
+
+
+def _deny_tmp_replace(monkeypatch):
+    """Simulate EPERM on the findings temp file's durable replace only."""
+    import errno
+    from pathlib import Path
+
+    real_replace = Path.replace
+
+    def _eperm(self, target):
+        if self.name.endswith(".jsonl.tmp"):
+            raise PermissionError(errno.EPERM, "Operation not permitted")
+        return real_replace(self, target)
+
+    monkeypatch.setattr(Path, "replace", _eperm)
+
+
+def test_remember_returns_false_when_replace_denied(backend, monkeypatch):
+    _deny_tmp_replace(monkeypatch)
+    assert backend.remember("finding that never lands", memory_id="m1") is False
+    assert backend.recent() == []  # nothing durable — and we said so
+
+
+def test_eperm_through_public_stash_entry_returns_false(backend, monkeypatch):
+    """R1 regression at the PUBLIC boundary: stash_entry propagates the
+    backend's durable-write result and the failure reason is visible."""
+    from structlog.testing import capture_logs
+
+    import attune.memory.short_term.security as security_mod
+    from attune.memory.session_stash import SessionStashEntry, stash_entry
+
+    class _PassThroughGate:
+        def __init__(self, **kwargs):
+            pass
+
+        def sanitize(self, d):
+            return (d, 0)
+
+    monkeypatch.setattr(security_mod, "DataSanitizer", _PassThroughGate)
+    _deny_tmp_replace(monkeypatch)
+    entry = SessionStashEntry.create(
+        session_id="s1", cwd="/proj", type="note", content="sandbox canary"
+    )
+    with capture_logs() as logs:
+        assert stash_entry(entry, backend=backend) is False
+    assert any(rec.get("event") == "file_stash_write_failed" for rec in logs)
+
+
+def test_forget_returns_zero_when_replace_denied(backend, monkeypatch):
+    backend.remember("to delete", memory_id="m1")
+    _deny_tmp_replace(monkeypatch)
+    assert backend.forget(["m1"]) == 0  # deletion never landed
+    monkeypatch.undo()
+    assert [r["id"] for r in backend.recent()] == ["m1"]
+
+
+def test_prune_returns_zero_when_replace_denied(backend, monkeypatch):
+    now = time.time()
+    _write_records(
+        backend,
+        [{"id": "old", "text": "x", "topics": [], "cwd": None, "ts": now - 5 * 86400}],
+    )
+    _deny_tmp_replace(monkeypatch)
+    assert backend.prune(max_age_days=1) == 0  # sweep never landed
+
+
+# --------------------------------------------------------------------------
+# probe_write — the real writability probe backend_status relies on
+# --------------------------------------------------------------------------
+
+
+def test_probe_write_true_and_removes_artifact(backend):
+    assert backend.probe_write() is True
+    leftovers = list(backend._dir.glob(".write-probe-*"))
+    assert leftovers == []
+
+
+def test_probe_write_false_when_dir_is_a_file(tmp_path):
+    blocked = tmp_path / "blocked"
+    blocked.write_text("not a directory", encoding="utf-8")
+    be = FileStashBackend(base_dir=blocked)  # mkdir + probe both fail
+    assert be.probe_write() is False

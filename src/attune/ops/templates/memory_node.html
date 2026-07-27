@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-head">
+  <h1>Memory node</h1>
+  <p class="page-sub"><a class="link" href="/memory">← Back to Memory</a></p>
+</section>
+
+{% if fields is none %}
+  <div class="specs-empty-state" role="status">
+    <div class="empty-state-title">Node not available</div>
+    <div class="empty-state-hint">
+      {% if node_key %}
+        <code>{{ node_key }}</code> is not a readable memory node — it
+        may be outside the <code>attune:memory:</code> namespace, no
+        longer in the index, or Redis is unreachable.
+      {% else %}
+        No node key was given. Pick a node from the
+        <a class="link" href="/memory">Memory table</a>.
+      {% endif %}
+    </div>
+  </div>
+{% else %}
+  <p class="page-sub"><code>{{ node_key }}</code></p>
+  <table class="data-table memory-node-table">
+    <thead>
+      <tr>
+        <th class="col-field">Field</th>
+        <th class="col-value">Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for name, value in fields.items() | sort %}
+        <tr>
+          <td class="col-field"><code>{{ name }}</code></td>
+          <td class="col-value"><pre class="memory-value">{{ value }}</pre></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+{% endblock %}

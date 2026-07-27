@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-head">
+  <h1>Thread: {{ thread or "?" }}</h1>
+  <p class="page-sub">
+    Read-only board thread. To rule on it:
+    <code>/roundtable promote {{ thread }}</code> (in-session).
+    <a href="/collab">Back to the inbox</a>.
+  </p>
+</section>
+
+{% if messages is none %}
+  <div class="specs-empty-state" role="status">
+    <div class="empty-state-title">Thread unavailable</div>
+    <div class="empty-state-hint">
+      Unknown thread id, unreadable board, or an id outside the
+      thread namespace. Nothing to show.
+    </div>
+  </div>
+{% elif not messages %}
+  <div class="specs-empty-state" role="status">
+    <div class="empty-state-title">Empty thread</div>
+    <div class="empty-state-hint">The thread exists but holds no
+      messages (it may have just expired).</div>
+  </div>
+{% else %}
+  <section data-testid="collab-thread-messages">
+    {% for msg in messages %}
+    <article class="card">
+      <header>
+        <strong>#{{ msg.id }}</strong> · {{ msg.kind }} ·
+        {{ msg.author }}{% if msg.round %} · round {{ msg.round }}{% endif %}
+      </header>
+      <pre style="white-space: pre-wrap">{{ msg.body }}</pre>
+    </article>
+    {% endfor %}
+  </section>
+{% endif %}
+{% endblock %}

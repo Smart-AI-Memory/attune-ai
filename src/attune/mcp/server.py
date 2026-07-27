@@ -23,10 +23,12 @@ from mcp.types import (
     Tool,
 )
 
+from attune.mcp.handoff_handlers import HandoffHandlersMixin
 from attune.mcp.memory_handlers import MemoryHandlersMixin
 from attune.mcp.rate_limiter import RateLimiter
 from attune.mcp.tool_schemas import (
     get_elicitation_tools,
+    get_handoff_tools,
     get_help_tools,
     get_memory_tools,
     get_personal_memory_tools,
@@ -84,7 +86,7 @@ def _get_default_user_id() -> str:
         return "mcp-session"
 
 
-class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
+class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandlersMixin):
     """MCP server for Attune AI workflows.
 
     Exposes workflows and telemetry as MCP tools
@@ -189,6 +191,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         tools.update(get_utility_tools())
         tools.update(get_elicitation_tools())
         tools.update(get_help_tools())
+        tools.update(get_handoff_tools())
         return tools
 
     @staticmethod
@@ -315,6 +318,8 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "help_init": self._handle_help_init,
             "help_status": self._handle_help_status,
             "help_update": self._handle_help_update,
+            "handoff_create": self._handle_handoff_create,
+            "handoff_resume": self._handle_handoff_resume,
         }
 
     async def _dispatch_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
