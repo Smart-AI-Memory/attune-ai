@@ -18453,3 +18453,36 @@ def ", start_idx + 1)` for module-
   already throw away", that is usually the real answer. Related to
   "re-validate a spec's premise" — this is the same discipline applied
   to a question rather than a scope.
+
+- **A `git merge` whose output you pipe through `tail -N` can hide
+  earlier CONFLICT lines — judge the conflict set ONLY from
+  `git status --short | grep -E '^(U|AA|DD)'`**: hit twice in one
+  sitting (2026-07-27 lift). Merging main into #1594's branch, `tail -4`
+  showed only the test_file_stash.py conflict; CHANGELOG.md was also UU,
+  the `git commit --no-edit` failed with "U CHANGELOG.md", and the
+  projector then ran on a half-resolved tree. Same shape on #1615:
+  tail showed memory.html; decisions.md (UU) plus two add/add .py files
+  were hidden, and the commit+push pair silently no-opped ("Everything
+  up-to-date") because the commit never landed. Rule: after ANY merge
+  with conflicts, list unmerged paths from git status (never the merge
+  output tail), resolve ALL of them, and verify the merge commit landed
+  (`git log -1` shows a new SHA) before pushing. A push that prints
+  "Everything up-to-date" right after a "commit" is the tell that the
+  commit was refused.
+
+- **Refreshing a stacked child after its parent SQUASH-merges: expect
+  add/add conflicts, and resolve them with the superset receipt** —
+  `git diff :2:<file> :3:<file> | grep -c '^+[^+]'` returning 0 proves
+  main's side adds nothing the child lacks, so `git checkout --ours` is
+  safe (the child IS the evolution of what the parent squashed). If the
+  count is nonzero, read those lines — on #1615 the one theirs-only line
+  was the parent's pre-feature `_ctx(...)` call, correctly superseded by
+  ours. Two companion traps from the same wave: (a) `git worktree add
+  <path> <branch>` checks out the possibly-STALE local ref — always
+  `git checkout -B <branch> origin/<branch>` (the #1607 push was
+  rejected non-fast-forward because the local ref lagged the 07-25
+  refresh); (b) `gh pr edit <n> --base main` does NOT trigger CI
+  (base-only changes fire no synchronize event) — the refresh-merge
+  push is what buys the fresh required checks, so fold them into one
+  step: fetch, checkout -B from origin, merge origin/main, resolve from
+  git-status, push.
