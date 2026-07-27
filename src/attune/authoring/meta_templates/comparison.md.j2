@@ -1,0 +1,65 @@
+{% import '_partials/problem_macros.j2' as m %}
+# Comparison: {{ title }} vs alternatives
+
+## Context
+
+{{ m.feature_intro(
+  title,
+  description,
+  "This page compares " ~ title | lower ~ " with the
+other parts of this project that a reader might reach
+for when solving the same problem."
+) }}
+
+## When to use {{ title | lower }}
+
+{% if description %}
+Reach for {{ title | lower }} when your work involves
+{{ description | lower }}. The public API for this
+feature is purpose-built for that shape of problem.
+{% else %}
+Reach for {{ title | lower }} when your problem matches
+the concerns of the source files listed below.
+{% endif %}
+
+{% if public_functions %}
+The entry points that make this feature the right
+choice:
+
+{{ m.related_functions(public_functions, limit=5) }}
+{% elif public_classes %}
+The classes that make this feature the right choice:
+
+{{ m.related_classes(public_classes, limit=5) }}
+{% endif %}
+
+## When NOT to use it
+
+A comparison page is most useful when it is honest
+about what a feature does not do well. The polish pass
+rewrites this section to name specific non-goals based
+on the source — for now, the general rules:
+
+- If your problem spans multiple features, prefer the
+  orchestration layer above {{ title | lower }} to
+  calling it directly.
+- If you need behavior the public API does not expose,
+  do not patch internals — file an issue or propose an
+  extension point.
+- If you are doing exploratory work, a throwaway
+  script is usually better than wiring up
+  {{ title | lower }} for a single use.
+
+## Alternatives in this project
+
+Look at the other entries in `.help/features.yaml` for
+features that might overlap with {{ title | lower }}.
+Each feature's concept page states its primary purpose
+— that is the fastest way to decide which tool fits
+your use case.
+
+## Source files
+
+{{ m.key_files(file_patterns) }}
+
+{{ m.tags_line(tags) }}

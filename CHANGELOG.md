@@ -17,6 +17,23 @@ run-record corpus that future releases learn from.
 
 ### Added
 
+- **attune-author fully absorbed — polish machinery moves upstream**
+  (attune-author-consolidation T3, ruling D10). The LLM
+  generator/polish machinery now lives in `attune.authoring`
+  (generator, polish + per-kind prompts, faithfulness audit,
+  ground-truth context injection, RAG grounding hook), with all LLM
+  calls routed through the new `attune.models.single_turn` —
+  subscription-first auth with API fallback, tier routing via
+  `attune.model_tiers`, fable-aware requests, per-process auth
+  telemetry. The author-feature skill gains an optional
+  **polish-master action** (`scripts/polish_master.py`): an LLM
+  quality pass on a single-source master, surfaced as a reviewable
+  diff (`--apply` to write) — never a silent rewrite, never on
+  projected output. `Feature.status` (`auto`/`manual`) and manual-
+  feature staleness skips are ported so projector-owned features are
+  never LLM-regenerated. Unblocks T4 (archive attune-author without
+  yank, D12).
+
 - **Inference-first forms.** A field can carry `inferred_from` alongside
   its `default` — the value the agent guessed from context, plus why.
   Both surfaces mark it as a guess (the widget badges the field and
