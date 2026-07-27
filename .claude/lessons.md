@@ -18602,3 +18602,48 @@ def ", start_idx + 1)` for module-
   list. Rule of thumb: in this repo's Bash tool (zsh), treat
   "(no files to check) Skipped" from a --files invocation as a
   FAILURE of the invocation, not a pass.
+
+- **Retiring a user-visible message string: grep TESTS for the old
+  literal before the first push — src/-only sweeps buy two red matrix
+  runs**: T4 (#1689) dropped the `[author]` extra; the sweep grepped
+  src/, scripts/, plugin/ but not tests/. Push 1: `test_extras_honesty`
+  caught a stale `pip install 'attune-ai[author]'` hint in
+  `mcp/workflow_handlers.py` (the honesty test sweeps src/ install
+  hints against pyproject extras — it does the src/ half for you).
+  Push 2 (the avoidable one): the hint FIX then failed
+  `tests/unit/rag/test_missing_extra.py`, the companion test asserting
+  the OLD hint text verbatim. Rule: when changing any hint/error
+  string or removing an extra, `grep -rn "<old literal>" tests/` (and
+  the feature name, e.g. `\[author\]`) BEFORE pushing; message strings
+  ship with companion tests that assert them verbatim. Each miss costs
+  a full ~15-min matrix cycle.
+
+- **zsh does NOT word-split unquoted `$VAR` — a space-separated file
+  list becomes ONE garbage path; use `${=VAR}` or explicit args**:
+  `FILES="a.py b.py"; pre-commit run black --files $FILES` passed the
+  whole string as a single filename → black/ruff reported "no files to
+  check — Skipped" (looks like a pass!) and `ruff check $FILES` errored
+  on the concatenated path. The Skipped tell is the trap: a pre-flight
+  that silently checked nothing. In this repo's Bash tool (zsh), use
+  `${=FILES}` for intentional word-splitting, or list files explicitly.
+
+- **PostToolUse formatter strips imports that are added in one Edit
+  and used only in a LATER Edit — land imports and their usages in the
+  same Edit, or usages first**: extending test_form_events.py, Edit 1
+  added `submission_count`/`inference_rate`/`maybe_keyboard_hint` to
+  the import block, Edit 2 added the test classes using them; the
+  format hook ran between the two and dropped the "unused" imports,
+  producing NameErrors at run time. The hook's note ("hook modified
+  the file after your edit") is the tell — re-check the import block
+  whenever it fires between paired edits.
+
+- **`mcp__attune-ai__elicitation_ask` can fail with a bare McpError on
+  the Claude Code desktop surface — the D21-compliant fallback is
+  AskUserQuestion with `metadata.source: "elicit-form"` for batched
+  dimensions**: the native elicitation dialog isn't supported
+  everywhere; on failure, a 2+ question AskUserQuestion is BLOCKED by
+  the ask_question_format_guard hook ("ONE actionable question per
+  turn") unless the batched-form opt-in `metadata.source` is set —
+  that opt-in is exactly for independent, non-branching dimensions of
+  one decision (§4 batched form). Sequence that works: try
+  elicitation_ask → on error, AskUserQuestion with metadata.source.
