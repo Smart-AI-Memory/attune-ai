@@ -234,3 +234,39 @@ rationales differ (Patterns was structurally empty; /memory has
 the same ops-research lens could rule a memory browse page off too.
 #1576 is a held draft precisely so this is a deliberate Monday call,
 not a default-in.
+
+## D3 + D4 + D6 audits executed (2026-07-21)
+
+**D3 keyboard-nav (audited, one fix):** tab order is natural DOM
+order with the B4 row-link `tabindex` pattern intact; Escape closes
+the kebab menu (specs_kebab.js) and cancels pill edit mode
+(specs.js:203); 10 `:focus-visible` rules cover the custom
+interactive components, defaults elsewhere. ONE defect found and
+fixed: `.status-pill-editable:focus-visible` suppressed the outline
+(`outline: none`), leaving a color-only border tweak — exactly what
+the D3 row forbids (and the color-never-alone rule). Now a real
+2px accent ring; verified live via keyboard Tab
+(`matches(':focus-visible')` → `outline: rgb(79,70,229) solid 2px`).
+
+**D4 contrast (audited, one fix, one residual):** measured WCAG
+ratios from the actual palette (script in session): `chip-ok` 4.84
+light / 5.06 dark, `chip-warn` 4.51 / 8.73 — AA-pass. `.chip-muted`
+was a HARD FAIL in light mode (2.31, `--fg-subtle` on `--bg-soft`);
+switched to `--fg-muted` → 4.39 light / 6.58 dark. **Residual for
+the chair:** 4.39 misses strict AA (4.5) for normal-size text by
+0.11 in light mode; passing options are a dedicated
+`--chip-muted-fg` token (~`#4b5563`) or accepting AA-large. The
+`status-pill.chip-muted` variant already used `--fg-muted` (same
+4.39/6.58 numbers).
+
+**D6 visual consistency (audited, rule documented):** `.data-table`
+padding is single-sourced (8px 10px) with two deliberate,
+comment-documented overrides (row-link padding move; tighter phase
+cells); chip styling is single-sourced in main.css. One finding:
+TWO empty-state idioms coexist — the rich `.specs-empty-state`
+(title + hint + optional action) and the inline `<p class="empty">`
+one-liner (6 templates). Ruled here as a convention, not a bug:
+**rich pattern for whole-page absence, `p.empty` for inline section
+absence** — new pages follow it (the /memory page already does).
+Unifying to one idiom would flatten a deliberate density
+distinction; overrule at will.
