@@ -18524,3 +18524,65 @@ def ", start_idx + 1)` for module-
   Extends the editable-MAPPING worktree family: one more way "which
   attune am I actually running/reading" goes wrong, this time via
   METADATA resolution rather than module resolution.
+
+- **Antigravity MCP wiring is THREE separate stores, and the
+  permission-rule grammar is `mcp(server/*)` — recovered from binary
+  strings, not the error message**: wiring the attune-ai server for
+  the receipt-6 probe (2026-07-27) required: (1) server registration
+  in `~/.gemini/config/mcp_config.json` — the agy CLI does NOT read
+  `~/.gemini/antigravity-ide/mcp_config.json` (IDE-only; registering
+  there yields honest ToolNotFound in CLI runs); (2) a permission
+  grant in `~/.gemini/config/config.json` under
+  `userSettings.globalPermissionGrants.allow` — NOT
+  `~/.gemini/settings.json`, which the error text names but the CLI
+  ignores (`cli.log`'s `applyUserSettings: ... from <path>` line names
+  the real store); (3) the grant grammar is `mcp(<server>/*)` or
+  `mcp(<server>/<tool>)` — bare `mcp(<server>)` loads (allow count
+  increments) but never matches, and the error hint `mcp(<target>)`
+  under-specifies. `strings ~/.local/bin/agy | grep -o 'mcp([^)]*)'`
+  settled it. Companion: headless `codex exec` runs approval:never
+  which AUTO-CANCELS MCP tool calls ("user cancelled MCP tool call"
+  in ~0.01s, deterministic) — an interactive session is the sanctioned
+  path; the harness classifier rightly blocks spawning codex/agy with
+  their skip-permissions flags.
+
+- **A lenient primary MCP client masks protocol-stream pollution —
+  test stdout purity at the STRICT boundary, and remember structlog's
+  default sink is stdout**: 10.6.0 shipped with the session-stash PII
+  gate logging structlog debug lines to stdout inside the MCP server
+  process (nothing ever called `structlog.configure` there, and the
+  default PrintLoggerFactory writes stdout). Claude Code tolerated
+  interleaved non-JSON for months; Antigravity's strict client failed
+  every `session_memory_*` call with `invalid trailing data at the end
+  of stream` — hence 10.6.1 same-day. Two rules: (1) any stdio-protocol
+  server must pin EVERY logger (stdlib + structlog + prints) to
+  stderr/file at the entrypoint; (2) "works from our client" is not a
+  protocol receipt — the regression test that counts spawns the real
+  server and asserts every stdout line parses as JSON
+  (tests/integration/test_mcp_stdout_purity.py, red-then-green).
+
+- **HOME-override does NOT sandbox a spawned server's memory writes
+  when a local Redis/AMS is up — force the backend with dead
+  endpoints**: the stdout-purity test set `HOME=tmp_path` believing
+  the stash was sandboxed; `resolve_backend()` preferred the CONNECTED
+  AMS backend (which ignores HOME), so every local test run stored its
+  canary in the developer's live store (4 leaked before noticing —
+  surfaced by the SessionStart recall hook of all things). Fix
+  (#1685): also set `AMS_BASE_URL=http://127.0.0.1:1` and
+  `REDIS_URL=redis://127.0.0.1:1/0` so the connectivity gate fails and
+  the file fallback (which honors HOME) wins. General rule: sandboxing
+  a subprocess's persistence means forcing the BACKEND SELECTION, not
+  just relocating one backend's directory. Related cleanup receipt:
+  recall-then-forget by id; and a canary that "failed" at the client
+  may still have been STORED server-side (the 10.6.0 agy capture
+  succeeded before its response frame corrupted — the ledger's "never
+  stored" claim was wrong until checked by recall).
+
+- **`grep -v X file > tmp && mv tmp file` silently no-ops when the
+  file contains ONLY matching lines**: grep -v exits 1 when it emits
+  nothing, so the `&&` chain stops before mv — original file
+  untouched, empty tmp left as debris, and a trailing `; echo done`
+  prints success anyway. Bit during canary cleanup (the file held
+  exactly one line — the canary). Use `grep -v X file > tmp; mv tmp
+  file` (or truncate when emptiness is the goal: `: > file`), and
+  verify with a post-condition read, not the chain's exit.
