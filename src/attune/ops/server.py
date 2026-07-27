@@ -122,14 +122,8 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     # changes). In-memory only; resets on restart. See
     # ``interaction_counters.py`` for bucket layout.
     app.state.interaction_counters = InteractionCounters()
-    # Help-corpus regen runner — wraps attune-author subprocess
-    # invocations. Single concurrent job, one history per server
-    # instance. See docs/specs/ops-help-page/.
-    from attune.ops.help_regen import HelpRegenRunner
-
-    app.state.help_regen = HelpRegenRunner()
     # Library-health snapshot background refresh — single in-flight
-    # job, mirrors help_regen's shape but runs in a plain thread
+    # job, runs in a plain thread
     # (the collector is blocking-subprocess/HTTP, not asyncio-native).
     # See docs/specs/ops-dashboard-polish/decisions.md Phase E.
     from attune.ops.health_snapshot import HealthRefreshRunner
