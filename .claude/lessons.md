@@ -18586,3 +18586,19 @@ def ", start_idx + 1)` for module-
   exactly one line — the canary). Use `grep -v X file > tmp; mv tmp
   file` (or truncate when emptiness is the goal: `: > file`), and
   verify with a post-condition read, not the chain's exit.
+
+- **zsh does NOT word-split unquoted `$VAR` — a space-separated
+  file list in a variable reaches pre-commit/ruff as ONE bogus
+  path, and pre-commit's failure mode is a green-looking
+  "(no files to check) Skipped"**: `FILES="a.py b.py"; pre-commit
+  run black --files $FILES` in zsh passes the whole string as a
+  single filename (sh/bash split it; zsh's SH_WORD_SPLIT is off
+  by default). pre-commit finds no matching file and prints
+  "Skipped" — which reads as a PASS, so the pinned-black
+  pre-flight silently checked nothing (ruff at least errors
+  loudly on the concatenated path). Hit 2026-07-27 pre-flighting
+  the T4 diff. Fixes: `${=FILES}` (zsh forced splitting), a real
+  array (`files=(a.py b.py); ... --files $files`), or inline the
+  list. Rule of thumb: in this repo's Bash tool (zsh), treat
+  "(no files to check) Skipped" from a --files invocation as a
+  FAILURE of the invocation, not a pass.
