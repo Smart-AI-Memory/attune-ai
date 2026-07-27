@@ -1,0 +1,54 @@
+{% import '_partials/problem_macros.j2' as m %}
+# Note: {{ title | lower }}
+
+## Context
+
+{{ m.feature_intro(
+  title,
+  description,
+  "This note captures background information about "
+  ~ title | lower ~ " that does not fit the concept,
+task, or reference shapes. The polish pass replaces
+this placeholder with concrete content from the
+source."
+) }}
+
+## Content
+
+{% if public_classes and public_functions %}
+{{ title }} exposes both classes and top-level functions
+at the package boundary. The classes are:
+
+{{ m.related_classes(public_classes, limit=5) }}
+
+The top-level functions are:
+
+{{ m.related_functions(public_functions, limit=5) }}
+
+These two are intended to compose — the functions often
+accept instances of the classes as arguments, and the
+classes often expose methods that mirror the top-level
+functions.
+{% elif public_classes %}
+{{ title }} is organized around a small number of
+classes. Each class owns a coherent piece of state and
+a set of operations that act on it.
+
+{{ m.related_classes(public_classes, limit=5) }}
+{% elif public_functions %}
+{{ title }} is a function-first module — it exposes
+top-level functions that you call directly without
+instantiating anything. The main ones are:
+
+{{ m.related_functions(public_functions, limit=5) }}
+{% else %}
+{{ title }} does not expose classes or functions at the
+package level. Its behavior is reached through the
+source files listed below.
+{% endif %}
+
+## Source files
+
+{{ m.key_files(file_patterns) }}
+
+{{ m.tags_line(tags) }}

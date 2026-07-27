@@ -48,14 +48,17 @@ def test_pages_render(client, path):
 
 @pytest.mark.parametrize(
     "path",
-    ["/memory", "/releases", "/sessions", "/patterns"],
+    ["/releases", "/sessions", "/patterns"],
 )
 def test_removed_pages_404(client, path):
     """Removed tabs must stay gone, not silently return.
 
-    Memory + Releases were removed earlier (family info on Home);
+    Releases was removed earlier (family info on Home);
     Patterns + Sessions removed 2026-07-21 (chair-ruled) — their
     data layers (sessions data, pattern_review CLI) survive.
+    /memory left this list when C1 rebuilt it against the
+    Redis-derived index (this PR — see ops-dashboard-polish
+    decisions.md, C1 premise re-validated 2026-07-21).
     """
     response = client.get(path)
     assert response.status_code == 404

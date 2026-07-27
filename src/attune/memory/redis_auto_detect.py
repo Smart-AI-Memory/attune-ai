@@ -94,7 +94,7 @@ class RedisAutoDetector:
         try:
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
             validated_path = _validate_file_path(str(self.config_path))
-            with open(validated_path, "w") as f:
+            with open(validated_path, "w", encoding="utf-8") as f:
                 yaml.safe_dump(self.config, f, default_flow_style=False)
         except (yaml.YAMLError, OSError, ValueError) as e:
             logger.error(f"Failed to save config: {e}")

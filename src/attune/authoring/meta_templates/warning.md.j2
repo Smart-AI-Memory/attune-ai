@@ -1,0 +1,61 @@
+{% import '_partials/problem_macros.j2' as m %}
+# {{ title }} cautions
+
+## What to watch for
+
+{{ m.feature_intro(
+  title,
+  description,
+  "Working with " ~ title | lower ~ " has several non-obvious "
+  ~ "pitfalls. The polish pass rewrites this section to name "
+  ~ "concrete risks based on the source."
+) }}
+
+## Risk areas
+
+{% if public_functions %}
+The following functions are the most common sources of
+subtle bugs in {{ title | lower }}. Each one has behavior
+that is not obvious from its signature alone.
+
+{{ m.related_functions(public_functions) }}
+
+Before calling any of the functions above, read the
+docstring fully — the risk is usually in a parameter
+default, an edge-case return value, or a side effect
+that is easy to miss.
+{% elif public_classes %}
+The classes below have invariants that callers must
+preserve. Subclassing or patching them without
+understanding the invariants is a common source of
+regressions.
+
+{{ m.related_classes(public_classes) }}
+{% else %}
+The risk areas for {{ title | lower }} are not visible at
+the public API level — you will need to read the source
+files to find them.
+{% endif %}
+
+## How to avoid problems
+
+1. **Test changes in isolation.** When modifying
+   {{ title | lower }}, write a targeted test first:
+   `pytest -k "{{ feature_name }}"` should catch obvious
+   regressions before the change reaches other code.
+
+2. **Watch for implicit state.** Module-level globals,
+   cached values, and environment variables can make
+   {{ title | lower }} behave differently in tests than in
+   production. If a test passes locally but fails in CI,
+   suspect implicit state first.
+
+3. **Respect the public API.** Private helpers (names
+   starting with `_`) can change without notice. Depend on
+   them and you will get surprised during refactors.
+
+## Source files
+
+{{ m.key_files(file_patterns) }}
+
+{{ m.tags_line(tags) }}

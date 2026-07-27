@@ -22,10 +22,40 @@ def _render(fields: list[dict], **form_extra: object) -> str:
 class TestStructure:
     def test_includes_title_and_form_shell(self):
         html = _render([{"id": "a", "text": "A?", "type": "text_input"}])
-        assert 'id="attune-elicit-form"' in html
+        assert 'id="attune-elicit-form-' in html
         assert "<h3>T</h3>" in html
         assert 'data-form-title="T"' in html
-        assert 'id="ae-submit"' in html
+        assert 'id="ae-submit-' in html
+
+    def test_element_ids_unique_per_render(self):
+        # Two forms shown on the same page must not collide in the DOM —
+        # a duplicate id would make the second submit script read the
+        # first form's fields.
+        fields = [{"id": "a", "text": "A?", "type": "text_input"}]
+        first = _render(fields)
+        second = _render(fields)
+
+        def form_id(html: str) -> str:
+            start = html.index('id="attune-elicit-form-')
+            return html[start:].split('"')[1]
+
+        assert form_id(first) != form_id(second)
+
+    def test_fixed_instance_id_is_deterministic_and_sanitized(self):
+        form = form_from_dict(
+            {"title": "T", "fields": [{"id": "a", "text": "A?", "type": "text_input"}]}
+        )
+        html = form_to_widget_html(form, instance_id="beat-2!")
+        # Non-alphanumeric chars are dropped; the suffix lands on every id
+        # the submit script looks up.
+        assert 'id="attune-elicit-form-beat2"' in html
+        assert 'id="ae-submit-beat2"' in html
+        assert 'id="ae-error-beat2"' in html
+        assert "getElementById('attune-elicit-form-beat2')" in html
+        assert html == form_to_widget_html(form, instance_id="beat-2!")
+        # The scoped CSS must follow the suffixed id.
+        assert "#attune-elicit-form-beat2 {" in html
+        assert "#attune-elicit-form " not in html
 
     def test_message_and_description_render_when_present(self):
         form = form_from_dict(
