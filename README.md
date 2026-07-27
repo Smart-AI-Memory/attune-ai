@@ -153,6 +153,44 @@ on our dogfood store (cl100k_base).
 
 ---
 
+## Multi-LLM collaboration — three models, one repo, receipts required
+
+**Your repo stops being single-provider.** As of 10.6.0, attune
+treats Claude Code, OpenAI Codex, and Google Antigravity as seats at
+the same table — with the discipline that a claim without a receipt
+doesn't ship:
+
+- **`/roundtable`** — convene Claude, Antigravity, and Codex to
+  deliberate a question on a Redis-backed board. Seats post
+  positions independently, synthesis compiles them, and *you* chair
+  what gets promoted — nothing lands without a ruling. Headless
+  routines run the same loop on a schedule.
+- **`/cross-review`** — a one-seat advisory second opinion on a real
+  diff from a *different* model than the one that wrote it.
+  Advisory only, board-recorded.
+- **Cross-provider session handoff** — `handoff_create` /
+  `handoff_resume` MCP tools write a portable, verifiable resume
+  brief so one agent can pick up where another stopped.
+- **Provider-neutral session memory** — the `session_memory_*` MCP
+  tools give every seat the same stash/recall/forget surface over
+  the shared store, with a PII/secrets gate that redacts at rest
+  and fails closed on secrets. Verified live from a Codex session:
+  capture → recall (email stored as `[EMAIL]`) → forget →
+  gone.
+- **A projected collaboration contract** — one master file projects
+  to `AGENTS.md` and per-provider mirrors, so any agent learns the
+  repo's rules (read-only preflight, branch discipline, shared
+  memory etiquette) without Claude-specific context.
+
+Codex installs the same plugin from its marketplace
+(`codex plugin install attune-ai@attune-ai`); Antigravity connects
+over MCP. We dogfood all of it on this repository — the multi-model
+release audit for 10.6.0 ran through the roundtable itself, and
+10.6.1 exists because a cross-provider receipt probe caught a
+protocol bug the primary client silently tolerated.
+
+---
+
 ## Ecosystem
 
 | Package | Role | Install |
