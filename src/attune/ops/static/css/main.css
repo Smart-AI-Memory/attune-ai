@@ -3188,3 +3188,54 @@ a.kpi:hover {
   font-size: 13px;
   color: var(--fg-muted);
 }
+
+/* --- Memory page (ops-dashboard-polish C1) ------------------------- */
+
+.memory-table .col-desc {
+  max-width: 480px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.memory-value {
+  margin: 0;
+  padding: 8px 10px;
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  background: var(--bg-inset, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.kpi.is-active {
+  outline: 2px solid var(--accent, #4c8bf5);
+  outline-offset: -2px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  font-size: 13px;
+}
+
+.pagination-status {
+  color: var(--fg-muted);
+}
+
+.memory-kind-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.memory-kind-toolbar .chip,
+.memory-table .col-kind .chip {
+  text-decoration: none;
+}
