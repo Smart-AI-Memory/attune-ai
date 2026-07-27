@@ -1,0 +1,146 @@
+# Feature Lead Governance — Decisions
+
+**Status:** active (2026-07-27) — OPEN-1..4 + approval-evidence +
+disposition model chair-ruled; spec revision pass owed before
+execution.
+
+Chair rulings of 2026-07-27 come from round-table thread
+`q-feature-lead-governance-001` (3 rounds, all seats present, one
+steelman round; promoted board messages 8, 9, 10, 11, 16). The
+deliberation is TTL'd — this file is the durable record.
+
+## D1 — feature lead, not permanent model owner
+
+**RULED (chair, 2026-07-27): approved — resolves OPEN-1.**
+Canonical role name is `feature lead` (3/3 seats, both rounds).
+"Lead programmer" is permitted as UI copy only — never in schema,
+contract, or event text.
+
+## D2 — coherence authority with hard limits
+
+**RULED (chair, 2026-07-27): approved in substance.** The lead
+resolves requirement-satisfying implementation choices; repository
+rules, required probes, security constraints, and the human chair
+remain above the lead. Requirements text needs the revision pass
+(authority-boundary wording and R5/D3 transfer consistency) before
+execution.
+
+## D3 — immutable review, appended disposition (as amended)
+
+**RULED (chair, 2026-07-27): approved as amended by the table's
+disposition model.**
+
+- Findings are atomic and reviewer-owed at record time: one claim,
+  exactly one classification (`rule_violation` | `preference_only`),
+  `rule_id` required iff `rule_violation`. A mixed comment is a
+  schema violation → one re-prompt; on a failed retry the whole
+  comment records as ONE blocking `rule_violation` with
+  `needs_split: true` — fail toward visibility.
+- Dispositions are per atomic finding, never per comment. `accepted`
+  alone is not a terminal state: the vocabulary is
+  `fixed | rejected_with_reason | deferred | accepted_advisory`,
+  with `open → accepted → fixed | disputed` as the rule-violation
+  state machine. Completion gates on TERMINAL states of
+  `rule_violation` findings only — this closes accept-and-ignore by
+  construction (AC-3/AC-4 restated in the revision pass).
+- **OPEN-4 resolved:** `preference_only` findings are shown
+  COLLAPSED with a count — never hidden (3/3; auditability plus the
+  D6 churn metric requires the count).
+- Schema ownership per P2 (see D5): cross-review owns the finding
+  schema as a versioned board-record revision; governance consumes
+  it and never forks it.
+
+## D4 — persistence: split registry (as amended)
+
+**RULED (chair, 2026-07-27): approved as amended — resolves
+OPEN-3.** Tracked artifact over board-only state (3/3), SPLIT:
+
+- Authority and lifecycle state live in `docs/assignments/` ON MAIN
+  (one file per assignment), mutated only by chair-merged PRs.
+- Findings and hash-chained events live branch-side with atomic
+  writes; end-of-life on merge (like handoff files).
+- Main is thereby the global comparison set for overlap rejection
+  (AC-1's cross-branch enforceability defect resolves here).
+
+## D5 — first surface: thin module + P1 + P2
+
+**RULED (chair, 2026-07-27, post-steelman): resolves OPEN-2 and
+REPLACES the drafted D5.** Governance ships as its own thin module
+consuming the SHIPPED handoff-packet and board seams (transfers ride
+the existing packet frontmatter + digest verify; no parallel
+assignment/approval/disposition stores; new fields are proposed as
+handoff/cross-review T3 amendments, never a parallel format), with
+two elements harvested from the steelman round:
+
+- **P1 — gate inheritance:** governance activation sits behind the
+  SAME chair usage-signal read that gates cross-review T3/T4. No
+  second activation criterion is invented; one chair read ungates or
+  kills both.
+- **P2 — single schema owner:** the finding/disaggregation schema is
+  owned by the cross-review spec as a versioned board record;
+  governance consumes it. Hash-chain and probe machinery stays
+  single-homed.
+
+Cross-review's ratified posture is untouched: board-only advisory,
+never a merge gate until dogfooded finding-quality earns it — and
+governance state must never be readable by any required check
+(drift-guard test owed in the revision pass).
+
+**Steelman record:** the split held 2/3 (thin module — Codex,
+Claude) vs 1/3 (cross-review T3 — Antigravity, whose decoupled
+AdvisoryReviewRecord/LeadGovernanceRecord design is preserved on
+board message 14 as the dissent). All three seats produced real
+designs; the ruling harvests the T3 vehicle's demonstrated
+advantages without housing authority state in an advisory-posture
+spec.
+
+## D6 — advisory rollout
+
+**RULED (chair, 2026-07-27): approved unchanged.** Opt-in dogfood;
+measure accepted/rejected/preference-only findings, chair
+escalations, transfers, and repeated rewrites; not mandatory until
+the data shows less churn without slower delivery. P1 supplies the
+concrete activation gate.
+
+## D7 — approval evidence: chair-merged PR to the main registry
+
+**RULED (chair, 2026-07-27): new decision — resolves the forgeable
+human-approval defect (all seats, both rounds).** Evidence standard
+(ii), unanimous in round 2: every chair transition (activate /
+cross-provider transfer / scope-expand / revoke) is evidenced by a
+chair-merged PR to the main-tracked registry. No caller-supplied
+flag, MCP confirmation relay, PR URL, or copied merge metadata is
+ever evidence — the MCP surface shrinks to propose/status/dispose
+and never claims human approval.
+
+Event schema (union of seats): `event_id`, `event_type`,
+`assignment_id`, `sequence`,
+`approval{pr_number, merge_commit_sha, merged_by, registry_blob_sha,
+registry_digest}`, `lead{provider}` (provider-level identity —
+session ids are per-event evidence; same-provider session resume is
+NOT a transfer), `timestamp`, `prev_event_digest` (hash chain),
+plus `parent_state_digest` on scope changes.
+
+Failure-sensitive probe set, each step killing a distinct forgery
+class: (1) `merge-base --is-ancestor origin/main` — fabricated SHA;
+(2) host-side PR resolution with `merged_by` in a repo-owned chair
+allowlist + commit signature verification — unsigned/non-chair;
+(3) registry blob-sha recomputed at the merge commit — a REAL but
+unrelated chair merge (replay/misbinding); (4) event hash-chain and
+registry-transition diff match — history tampering. Append-only is
+an application invariant plus DETECTION (AC-2 rewording owed in the
+revision pass); a detected mismatch leaves the prior registry state
+authoritative.
+
+Bound-in mitigations for the shared 3/3 risk (chair-merge ceremony →
+bypass): gate ONLY the four named transitions; scope changes may
+batch; urgent revocation may set an advisory `revoke_pending`
+branch-side flag that carries no authority until merged; a
+drift-probe AC flags branches with cross-review activity but no
+active assignment.
+
+## Not promoted
+
+The round-1 defect register (12 classified items) was declined for
+promotion by the chair; it informs the revision pass via the
+moderator's session review and expires with the board thread.
