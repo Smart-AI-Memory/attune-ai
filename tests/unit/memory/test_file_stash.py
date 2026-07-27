@@ -471,6 +471,9 @@ def test_eperm_through_public_stash_entry_returns_false(backend, monkeypatch):
     from attune.memory.session_stash import SessionStashEntry, stash_entry
 
     class _PassThroughGate:
+        def __init__(self, **kwargs):
+            pass
+
         def sanitize(self, d):
             return (d, 0)
 

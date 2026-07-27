@@ -90,6 +90,17 @@ run-record corpus that future releases learn from.
   rotation, headless producing routines, a headless triage appendix,
   CI-gate verdicts fetched at briefing render time, and
   receipt-vs-claim evidence tiers in digests.
+- **Provider-neutral `session_memory_*` MCP tools**
+  (cross-provider-memory-transport T2). Five additive tools —
+  `session_memory_capture` / `recall` / `recent` / `forget` /
+  `status` — carry the full session-stash contract (PII/secrets
+  sanitization before write, cwd-scoped recall, 30-day working TTL,
+  precise deletion) over MCP, so sandboxed providers such as Codex
+  capture and recall findings host-side instead of through blocked
+  in-process Python. Registered only when attune core is importable;
+  the six generic `redis_memory_*` tools keep their frozen schemas.
+  A failed write surfaces as `{ok: false, reason: <stable_code>}` —
+  never false success.
 - **Cross-provider collaboration contract** (#1432–#1447). A
   projector-owned contract teaches any agent (Claude Code, Codex,
   Antigravity) the repo's shared truth: tracked `AGENTS.md` +
@@ -195,6 +206,16 @@ run-record corpus that future releases learn from.
   backed by a real write probe) alongside the unchanged existing
   keys — a caller-local denial is never reported as a global
   service outage.
+- **Session-stash PII/secrets gate actually fires now**
+  (cross-provider-memory-transport T2, CR-2). `session_stash`
+  constructed its `DataSanitizer` with constructor defaults that
+  disabled both scrubbers, making the pre-write gate a silent no-op
+  — an email-bearing finding was stored unredacted. Both gates are
+  now explicitly enabled: PII (emails, SSNs, phone numbers, card
+  numbers) is redacted in the stored representation, and
+  secret-bearing content (API keys, tokens) fails closed — the
+  write is refused rather than persisted. Caught by the spec's
+  live PII canary; non-mocked regression tests pin both behaviors.
 - **SDK teardown-exit guard now covers every SDK workflow** — the
   seven consumption loops the sdk-teardown-exit-guard spec's list
   predated (`deep-review`, `refactor-plan`, `release-prep`,

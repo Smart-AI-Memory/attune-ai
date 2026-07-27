@@ -44,7 +44,12 @@ class TestToolRegistration:
             "redis_memory_store",
         }
         if redis_tools.issubset(tool_names):
-            assert len(tools) == 55, f"Expected 55 tools with redis plugin, got {len(tools)}"
+            # attune-redis also registers 5 session_memory_* tools when the
+            # core session stash is importable (conditional registration).
+            expected = 60 if "session_memory_status" in tool_names else 55
+            assert (
+                len(tools) == expected
+            ), f"Expected {expected} tools with redis plugin, got {len(tools)}"
 
     def test_memory_tools_registered(self, server: EmpathyMCPServer):
         """Test that all memory tools are in the tool list."""
