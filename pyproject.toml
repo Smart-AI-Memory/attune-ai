@@ -509,6 +509,7 @@ attune = "src/attune"
 
 [tool.setuptools.package-data]
 "*" = ["*.yml", "*.yaml", "*.json", "*.txt", "*.md", "*.jinja2"]
+"attune.authoring" = ["meta_templates/*.j2", "meta_templates/_partials/*.j2"]
 "attune.commands" = ["*.md"]
 "attune.commands.agents" = ["*.md"]
 "attune.ops" = ["templates/*.html", "static/css/*.css", "static/js/*.js"]

@@ -88,7 +88,7 @@
   <summary>Browse all {{ total_features }} features</summary>
   <ul>
     {% for f in features %}
-      <li><a href="/help/{{ f.name }}">{{ f.name }}</a>{% if f.has_any_stale %} <span class="help-stale-dot" title="{{ f.stale_count }} stale"></span>{% endif %}</li>
+      <li><a href="/help/{{ f.name }}">{{ f.name }}</a>{% if f.has_any_stale %} <span class="help-stale-dot" data-tooltip="{{ f.stale_count }} stale" aria-label="{{ f.stale_count }} stale"></span>{% endif %}</li>
     {% endfor %}
   </ul>
 </details>

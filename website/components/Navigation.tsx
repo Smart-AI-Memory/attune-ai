@@ -3,10 +3,13 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/lib/theme-provider';
+import { HELP_VIDEOS } from '@/lib/videos';
 
 const navItems = [
   { label: 'How It Works', href: '/how-it-works' },
   { label: 'Docs', href: '/docs' },
+  // The Learn link appears only once the video registry has entries.
+  ...(HELP_VIDEOS.length > 0 ? [{ label: 'Learn', href: '/learn' }] : []),
   { label: 'Pricing', href: '/pricing' },
   { label: 'Blog', href: '/blog' },
 ];

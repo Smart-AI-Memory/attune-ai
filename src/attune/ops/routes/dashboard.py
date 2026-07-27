@@ -7,7 +7,7 @@ import logging
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
-from attune.ops import anthropic_cost, data, workflow_concern
+from attune.ops import anthropic_cost, data, memory_data, workflow_concern
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +59,10 @@ async def home(request: Request) -> HTMLResponse:
     runner = getattr(request.app.state, "runner", None)
     recent_runs = [r.to_dict() for r in runner.recent(limit=5)] if runner else []
     attune_ai = next((v for v in versions if v.package == "attune-ai"), None)
+    # C3 (ops-dashboard-polish): memory-node KPI, shown only when the
+    # Redis-derived index is actually reachable — None hides the tile
+    # rather than rendering a lying zero.
+    memory_nodes = memory_data.node_count()
     # Anthropic account-spend tiles (Phase 2 of anthropic-cost-integration).
     # Defensive try/except — a fetch crash must not block the dashboard
     # render, so we degrade silently (no tile cluster) on unexpected
@@ -94,6 +98,7 @@ async def home(request: Request) -> HTMLResponse:
         kpis=kpis,
         sparkline=sparkline,
         recent_runs=recent_runs,
+        memory_nodes=memory_nodes,
         attune_ai=attune_ai,
         cost_summary=cost_summary,
         cost_error=cost_error,

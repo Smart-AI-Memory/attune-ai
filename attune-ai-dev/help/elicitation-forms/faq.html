@@ -324,11 +324,26 @@ sentinel-marked JSON block (<code>__elicitation_response__</code>). Parse that
 block and validate it with <code>elicitation_collect_response</code>. The
 widget round-trip makes no Anthropic API call.</p>
 <h2>When should a construct fire?</h2>
-<p>That is a judgment call governed by the agent's decision
-routine (<code>.claude/rules/attune/decision-routine.md</code>), not by this
-subsystem — the grammar defines the <em>shape</em>, not the <em>when</em>. And a
-form never blocks a keyboard-only user: the terse reply vocabulary
-(<code>y</code> / <code>go</code> / <code>1</code>) answers any construct on any surface.</p>
+<p>The grammar defines the <em>shape</em>; the <em>when</em> lives in the
+agent's Socratic rule and decision routine
+(<code>.claude/rules/attune/decision-routine.md</code>). The short version:
+build a form when two or more independent dimensions need settling
+(batch them into ONE form, never N sequential turns), when there are
+three or more alternatives or two with real tradeoffs, when you are
+disagreeing with the user, or when the answer is a number, date, or
+more than a phrase of text. A raw button-turn is right only for a
+single low-stakes choice among a few options. And a form never blocks
+a keyboard-only user: the terse reply vocabulary (<code>y</code> / <code>go</code> / <code>1</code>)
+answers any construct on any surface.</p>
+<h2>Why did a simple question render as a full form?</h2>
+<p>The widget is the default now. If you'd rather have buttons,
+run <code>attune config set keyboard_mode true</code> — it persists for this
+project. <code>ATTUNE_KEYBOARD_MODE=1</code> overrides it for one shell.</p>
+<h2>Doesn't defaulting to the widget cost an extra round-trip?</h2>
+<p>Yes, and that is deliberate. Latency was the old routing axis
+and it made the agent quietly downgrade forms that communicated
+better; if a question is worth asking, it is worth asking legibly.
+Trivial one-off choices still go to buttons.</p>
 <h2>Do forms cost API credits?</h2>
 <p>No. Rendering and validation are pure local transforms — no
 model call on any surface.</p>

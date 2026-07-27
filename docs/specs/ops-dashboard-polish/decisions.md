@@ -234,3 +234,93 @@ rationales differ (Patterns was structurally empty; /memory has
 the same ops-research lens could rule a memory browse page off too.
 #1576 is a held draft precisely so this is a deliberate Monday call,
 not a default-in.
+
+## C1 premise re-validated — /memory targets the Redis-derived index (2026-07-21)
+
+The original C1 row ("read-only view of `~/.attune/memory/` — list
+top-level memory keys") predates memory-unification (#1239). That
+directory is dev scratch today; the real serving layer is the local
+Redis derived index — `attune:memory:*` hashes hydrated at session
+start from the tracked corpus (lessons, file pointers, edges,
+curated nodes; ~1,050 keys live). C1 built against THAT, preserving
+the row's read-only list/click-through/pagination intent:
+
+- `attune.ops.memory_data` (framework-free): family counts,
+  paginated rows, node detail. Degradation contract mirrors the
+  corpus rule — every function returns `None` when Redis is
+  unreachable and the page renders an explanatory empty state,
+  never a 500. The detail view refuses keys outside the
+  `attune:memory:` namespace (the page must never become a generic
+  Redis browser).
+- Dogfood catch during the build: the namespace holds a few
+  plain-STRING keys (e.g. `attune:memory:context`) — an `HMGET`
+  pipeline against them WRONGTYPEs and would have degraded the
+  whole page. Fixed with `execute(raise_on_error=False)` + a
+  type-dispatching detail read; regression-locked in
+  `tests/unit/ops/test_memory_page.py`.
+- C3's memory half rides along: `/memory` in the top nav, and a
+  Home "Memory nodes" KPI that HIDES on unreachable Redis instead
+  of rendering a lying zero.
+
+## C1 chair call RESOLVED — /memory page stays (Patrick, 2026-07-21)
+
+Patrick, same day in-session: "I like the Memory page and think it
+will be useful." The #1545-lens question is settled: /memory ships.
+Same message reported the blank-columns bug on edges rows; fixed in
+the same held draft — the index holds THREE value shapes (hash /
+JSON-edge LIST / string+set markers), and the row builder now
+dispatches on TYPE: edge rows render count + target preview, lessons
+fall back to their text's first line, markers show their value.
+Family census also corrected the tiles: curated nodes hydrate under
+`node` (not `curated`), and the `rule` family exists.
+
+## /memory columns redesigned with Patrick (2026-07-21, approved "I love it")
+
+Live review iterations, all same-day: (1) edges/lessons rows rendered
+blank Type/Description — fixed by TYPE-dispatching reads (three value
+shapes in the index). (2) Updated column dropped — only the 14
+curated nodes carry ``updated_at``; replaced with **Size** (text KB /
+edge count / member count), derivable for every row. (3) Family+Type
+merged into one **Kind** chip column (they were redundant for
+lessons/edges); the named ambiguity (nodes and file pointers share
+kind values) is mitigated by the family tiles + full-key tooltips.
+(4) Patrick's requirement "we need the ability to filter the list" →
+kinds are the second-level filter: a kind-chip toolbar with counts
+appears whenever the selection has >1 kind, and every row's Kind chip
+links to its filter. Verified live: file pointers split
+feedback (97) / project (51) / reference (5) / user (13).
+## D3 + D4 + D6 audits executed (2026-07-21)
+
+**D3 keyboard-nav (audited, one fix):** tab order is natural DOM
+order with the B4 row-link `tabindex` pattern intact; Escape closes
+the kebab menu (specs_kebab.js) and cancels pill edit mode
+(specs.js:203); 10 `:focus-visible` rules cover the custom
+interactive components, defaults elsewhere. ONE defect found and
+fixed: `.status-pill-editable:focus-visible` suppressed the outline
+(`outline: none`), leaving a color-only border tweak — exactly what
+the D3 row forbids (and the color-never-alone rule). Now a real
+2px accent ring; verified live via keyboard Tab
+(`matches(':focus-visible')` → `outline: rgb(79,70,229) solid 2px`).
+
+**D4 contrast (audited, one fix, one residual):** measured WCAG
+ratios from the actual palette (script in session): `chip-ok` 4.84
+light / 5.06 dark, `chip-warn` 4.51 / 8.73 — AA-pass. `.chip-muted`
+was a HARD FAIL in light mode (2.31, `--fg-subtle` on `--bg-soft`);
+switched to `--fg-muted` → 4.39 light / 6.58 dark. **Residual for
+the chair:** 4.39 misses strict AA (4.5) for normal-size text by
+0.11 in light mode; passing options are a dedicated
+`--chip-muted-fg` token (~`#4b5563`) or accepting AA-large. The
+`status-pill.chip-muted` variant already used `--fg-muted` (same
+4.39/6.58 numbers).
+
+**D6 visual consistency (audited, rule documented):** `.data-table`
+padding is single-sourced (8px 10px) with two deliberate,
+comment-documented overrides (row-link padding move; tighter phase
+cells); chip styling is single-sourced in main.css. One finding:
+TWO empty-state idioms coexist — the rich `.specs-empty-state`
+(title + hint + optional action) and the inline `<p class="empty">`
+one-liner (6 templates). Ruled here as a convention, not a bug:
+**rich pattern for whole-page absence, `p.empty` for inline section
+absence** — new pages follow it (the /memory page already does).
+Unifying to one idiom would flatten a deliberate density
+distinction; overrule at will.

@@ -211,7 +211,7 @@ class ConfigurationStore:
         try:
             for config_file in self.storage_dir.glob("*.json"):
                 try:
-                    with config_file.open("r") as f:
+                    with config_file.open("r", encoding="utf-8") as f:
                         data = json.load(f)
                         config = AgentConfiguration.from_dict(data)
                         self._cache[config.id] = config
@@ -252,7 +252,7 @@ class ConfigurationStore:
 
         # Save to disk
         try:
-            with validated_path.open("w") as f:
+            with validated_path.open("w", encoding="utf-8") as f:
                 json.dump(config.to_dict(), f, indent=2)
 
             logger.info(f"Saved configuration {config.id} to {validated_path}")

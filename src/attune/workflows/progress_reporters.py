@@ -184,7 +184,7 @@ class JsonLinesProgressReporter:
         json_line = update.to_json()
 
         if self.output_file:
-            with open(self.output_file, "a") as f:
+            with open(self.output_file, "a", encoding="utf-8") as f:
                 f.write(json_line + "\n")
         else:
             print(json_line)

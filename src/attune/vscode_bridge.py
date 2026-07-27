@@ -112,7 +112,7 @@ def write_code_review_results(
     output_path = get_empathy_dir() / "code-review-results.json"
     validated_path = _validate_file_path(str(output_path))
 
-    with open(validated_path, "w") as f:
+    with open(validated_path, "w", encoding="utf-8") as f:
         json.dump(asdict(result), f, indent=2)
 
     return output_path

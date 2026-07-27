@@ -479,7 +479,11 @@ a.kpi:hover {
 }
 .chip-muted {
   background: var(--bg-soft);
-  color: var(--fg-subtle);
+  /* D4 (ops-dashboard-polish): --fg-subtle on --bg-soft measured
+     2.31:1 in light mode (hard AA fail); --fg-muted measures 4.39
+     light / 6.58 dark. Residual 0.11 gap to strict AA in light is
+     documented in the spec's decisions.md. */
+  color: var(--fg-muted);
 }
 .chip-cheap {
   background: var(--ok-soft);
@@ -840,10 +844,16 @@ a.kpi:hover {
   cursor: pointer;
   transition: border-color 0.12s ease;
 }
-.status-pill-editable:hover,
+.status-pill-editable:hover {
+  border-color: var(--accent);
+}
+/* D3 (ops-dashboard-polish): keyboard focus gets a real ring, not a
+   color-only border tweak — border-color alone fails the
+   visible-focus bar and the color-never-alone rule. */
 .status-pill-editable:focus-visible {
   border-color: var(--accent);
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 /* WCAG 2.5.5 AA target size — the visible pill is intentionally
    compact (~18-22px tall) but the click target needs ≥24×24px. The
@@ -3177,4 +3187,55 @@ a.kpi:hover {
   border-top: 1px solid var(--border);
   font-size: 13px;
   color: var(--fg-muted);
+}
+
+/* --- Memory page (ops-dashboard-polish C1) ------------------------- */
+
+.memory-table .col-desc {
+  max-width: 480px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.memory-value {
+  margin: 0;
+  padding: 8px 10px;
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  background: var(--bg-inset, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.kpi.is-active {
+  outline: 2px solid var(--accent, #4c8bf5);
+  outline-offset: -2px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  font-size: 13px;
+}
+
+.pagination-status {
+  color: var(--fg-muted);
+}
+
+.memory-kind-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.memory-kind-toolbar .chip,
+.memory-table .col-kind .chip {
+  text-decoration: none;
 }
