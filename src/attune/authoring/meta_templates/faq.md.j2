@@ -1,0 +1,65 @@
+{% import '_partials/problem_macros.j2' as m %}
+# {{ title }} FAQ
+
+## What is {{ title | lower }}?
+
+{{ m.feature_intro(
+  title,
+  description,
+  "A subsystem of this project. The polish pass replaces "
+  ~ "this answer with a concrete one based on the source."
+) }}
+
+## When should I use it?
+
+{% if description %}
+Reach for {{ title | lower }} when your work involves
+{{ description | lower }}. If your task falls outside that
+description, look at the other features in this project's
+`.help/features.yaml` first.
+{% else %}
+Reach for {{ title | lower }} when your work touches any of
+the source files listed at the bottom of this page. For
+unrelated concerns, check the other features in this
+project's `.help/features.yaml`.
+{% endif %}
+
+## What's the main entry point?
+
+{% if public_functions %}
+The most important public functions in {{ title | lower }}
+are:
+
+{{ m.related_functions(public_functions, limit=3) }}
+
+Start with the one whose name best matches what you are
+trying to do — its docstring tells you the shape of the
+inputs and outputs.
+{% elif public_classes %}
+The main building blocks are classes:
+
+{{ m.related_classes(public_classes, limit=3) }}
+
+Instantiate the one that matches your use case and read
+its docstring before calling any methods.
+{% else %}
+{{ title }} does not expose classes or functions at the
+package level — open the source files listed below to see
+the internal structure.
+{% endif %}
+
+## How do I debug it?
+
+Run the related tests first:
+`pytest -k "{{ feature_name }}" -v`. If they pass but your
+code still fails, add a `logger.debug` statement at the
+suspected failure point and re-run with logging enabled.
+
+For common failure modes, see the troubleshooting page for
+this feature.
+
+## Where are the source files?
+
+{{ m.key_files(file_patterns) }}
+
+{{ m.tags_line(tags) }}

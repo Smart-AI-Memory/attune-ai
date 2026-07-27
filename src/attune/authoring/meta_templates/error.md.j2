@@ -1,0 +1,57 @@
+{% import '_partials/problem_macros.j2' as m %}
+# {{ title }} errors
+
+## Common error signatures
+
+{{ m.feature_intro(
+  title,
+  description,
+  "This section documents failure modes for " ~ title | lower ~ ". "
+  ~ "The polish pass replaces this placeholder with concrete "
+  ~ "error signatures based on the source code."
+) }}
+
+## Where errors originate
+
+{% if public_functions %}
+Most error paths in {{ title | lower }} surface through these
+entry points. Exceptions raised here propagate to callers,
+so the symptom observed upstream usually traces back to one
+of the functions below.
+
+{{ m.related_functions(public_functions) }}
+{% elif public_classes %}
+Errors in {{ title | lower }} usually originate in methods
+on these classes. Check the method that matches the observed
+symptom before walking the call stack further.
+
+{{ m.related_classes(public_classes) }}
+{% else %}
+Error origination points are not visible at this level —
+inspect the source files listed below for the actual raise
+sites.
+{% endif %}
+
+## How to diagnose
+
+1. **Capture the full traceback.** Python's default traceback
+   output names the file, line, and exception type — that's
+   the fastest way to locate the raise site in
+   {{ title | lower }}.
+
+2. **Check the exception type.** A `ValueError` from an
+   input validation path is a different class of bug than an
+   `OSError` from a filesystem call. The type narrows the
+   investigation.
+
+3. **Re-run with verbose logging.** If {{ title | lower }}
+   uses `logging`, bump the level to `DEBUG` and re-run the
+   failing scenario. Most raised exceptions are preceded by
+   a `logger.error` or `logger.exception` call that explains
+   the state leading up to the failure.
+
+## Source files
+
+{{ m.key_files(file_patterns) }}
+
+{{ m.tags_line(tags) }}

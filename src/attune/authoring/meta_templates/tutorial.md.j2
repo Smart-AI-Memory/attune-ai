@@ -1,0 +1,132 @@
+# Tutorial: {{ title }}
+
+By the end of this tutorial you will have a working
+{{ title | lower }} integration in your project.
+
+{% if description %}
+**What you are building:** {{ description }}.
+{% endif %}
+
+## Prerequisites
+
+- Python 3.10 or newer
+- The project installed in your environment
+{% if file_patterns %}
+- Familiarity with `{{ file_patterns[0] }}`
+{% endif %}
+{% if tags %}
+- Some background in {{ tags[:2] | join(" and ") }}
+{% endif %}
+
+## What you will build
+
+A minimal end-to-end example that exercises the core
+{{ title | lower }} path: initialize, configure, run,
+and verify the output.
+
+## Step by step
+
+{% if public_functions %}
+### Step 1 — Import the entry point
+
+```python
+from {{ public_functions[0].file | replace('/', '.') | replace('.py', '') }} import {{ public_functions[0].name }}
+```
+
+This gives you access to `{{ public_functions[0].name }}()`,
+{% if public_functions[0].doc %}which {{ public_functions[0].doc | lower }}.{% endif %}
+
+### Step 2 — Prepare your inputs
+
+Every call to `{{ public_functions[0].name }}()` needs
+clearly typed inputs. Check the function signature for
+required parameters before calling.
+
+### Step 3 — Run it
+
+```python
+result = {{ public_functions[0].name }}(...)
+```
+
+At this point `result` holds the output. Inspect its
+type and fields before using it downstream.
+
+### Step 4 — Verify the output
+
+Check that `result` is not `None` (or equivalent error
+state) before proceeding. Most functions in this module
+surface errors through exceptions — wrap in `try/except`
+for production code.
+
+{% elif public_classes %}
+### Step 1 — Import the main class
+
+```python
+from {{ public_classes[0].file | replace('/', '.') | replace('.py', '') }} import {{ public_classes[0].name }}
+```
+
+### Step 2 — Instantiate
+
+```python
+obj = {{ public_classes[0].name }}(...)
+```
+
+{% if public_classes[0].doc %}
+`{{ public_classes[0].name }}` {{ public_classes[0].doc | lower }}.
+{% endif %}
+
+### Step 3 — Call the primary method
+
+Review the class API below and identify which method
+starts the operation you need. Call it with your inputs.
+
+### Step 4 — Verify the output
+
+Inspect the return value. Check for error states before
+using the result in downstream code.
+
+{% else %}
+### Step 1 — Locate the source
+
+```bash
+find . -path '{{ file_patterns[0] if file_patterns else "src/" + feature_name }}'
+```
+
+### Step 2 — Read the module docstring
+
+Understanding the design intent saves time. Open the
+file and read the module-level docstring before writing
+any code.
+
+### Step 3 — Write a minimal call
+
+Start with the simplest possible usage. Get it working,
+then add configuration or error handling.
+
+### Step 4 — Verify
+
+Run the tests and confirm your usage is correct.
+
+```bash
+pytest -k "{{ feature_name }}"
+```
+
+{% endif %}
+
+## What you learned
+
+- How to initialize and configure {{ title | lower }}
+- How to invoke the main entry point
+- How to interpret and handle the output
+
+## Next steps
+
+{% if tags %}
+Explore related topics:
+{% for tag in tags %}
+- {{ tag }}
+{% endfor %}
+{% else %}
+- Read the concept doc for a deeper understanding
+- Check the reference doc for the full API surface
+{% endif %}

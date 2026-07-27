@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compile + coroutine-misuse lint for ``python`` code blocks in docs.
 
-The static fact-check (`attune_author.fact_check`) proves that symbols
+The static fact-check (`attune.authoring.fact_check`) proves that symbols
 and imports exist; it does not prove a code example is *runnable*. This
 closes that gap (help-docs-single-source follow-up P5): for every
 fenced ``python`` block in the given files it

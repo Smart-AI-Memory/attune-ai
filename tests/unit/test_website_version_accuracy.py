@@ -237,8 +237,7 @@ class TestCapabilityCountsSync:
         )
 
     def test_template_kinds_matches_generator(self):
-        pytest.importorskip("attune_author", reason="attune_author not installed")
-        from attune_author.generator import _ALL_TEMPLATE_NAMES
+        from attune.authoring.generator import _ALL_TEMPLATE_NAMES
 
         live = len(_ALL_TEMPLATE_NAMES)
         assert _capabilities()["templateKinds"] == live, (
