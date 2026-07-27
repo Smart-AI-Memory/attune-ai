@@ -1535,6 +1535,20 @@ def main() -> None:
         ],
     )
 
+    # stdout carries ONLY the JSON-RPC stream. structlog's default
+    # PrintLoggerFactory writes to stdout, so any structlog call inside a
+    # tool handler (e.g. the session-stash PII gate) corrupts the protocol
+    # for strict clients (Antigravity rejects the frame with "invalid
+    # trailing data"; transport receipt 6, 2026-07-27). Route structlog to
+    # stderr, which MCP clients treat as free-form logging.
+    import sys
+
+    import structlog
+
+    structlog.configure(
+        logger_factory=structlog.PrintLoggerFactory(file=sys.stderr),
+    )
+
     try:
         asyncio.run(_run_stdio())
     except KeyboardInterrupt:
