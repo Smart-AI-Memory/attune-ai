@@ -18504,3 +18504,23 @@ def ", start_idx + 1)` for module-
   list, or bump from a clean tree next time. The old 7-file checklist
   in CLAUDE.md's lessons remains for archaeology but the script is
   the procedure.
+
+- **A stale `attune_ai.egg-info/` in a checkout dir SHADOWS the
+  installed dist-info for any python launched from that cwd —
+  `attune.__version__` lies while `pip show` tells the truth**:
+  post-10.6.0 publish (2026-07-27), the pyenv-global install was
+  verified 10.6.0 by `pip show`, yet `python -c "import attune;
+  print(attune.__version__)"` said 10.5.0 when run from the session
+  worktree. Cause: `__version__ = _get_version("attune-ai")` resolves
+  via importlib.metadata, which scans sys.path — and for `-c`/stdin
+  scripts cwd is on sys.path, so a leftover `attune_ai.egg-info`
+  (from an old build) in the checkout wins over site-packages'
+  `attune_ai-<ver>.dist-info`. Diagnostic that settles it in one call:
+  `python -c "from importlib.metadata import distribution;
+  d=distribution('attune-ai'); print(d._path, d.version)"` — if the
+  path is a bare `attune_ai.egg-info`, cwd shadowing is the story.
+  Fix: `rm -rf <checkout>/attune_ai.egg-info` (regenerated on next
+  build); re-verify from a clean cwd (`cd /tmp && python -c ...`).
+  Extends the editable-MAPPING worktree family: one more way "which
+  attune am I actually running/reading" goes wrong, this time via
+  METADATA resolution rather than module resolution.
