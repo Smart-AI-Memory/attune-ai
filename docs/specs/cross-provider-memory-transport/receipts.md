@@ -57,6 +57,18 @@ origin/main (revision `34a78b53f` at run time), and the
 on the held T2 branch (#1594). The probe cannot pass until the held
 stack #1593 → #1594 → #1596 → #1598 merges.
 
+**2026-07-27 post-lift attempt (stack merged, 10.6.0 published):**
+Codex marketplace re-synced (`codex plugin marketplace upgrade
+attune-ai` → plugin 10.6.0). Headless probe (`codex exec`, session
+`019fa35c-28b3-7130-afc7-786371096b52`) reached
+`session_memory_capture` — the tool IS now in Codex's list (the
+distribution blocker is gone) — but the call was auto-cancelled in
+0.009s ("user cancelled MCP tool call"): codex's headless approval
+policy denies MCP tool calls without `--full-auto`, and the
+harness classifier (correctly) blocks spawning codex with
+`--full-auto` from an agent session. Receipt stays UNPROBED; the
+canary needs one INTERACTIVE Codex run of the same flow.
+
 Post-lift procedure (07-27, after the stack merges): let the Codex
 marketplace re-sync attune-ai, then run the canary flow —
 `session_memory_capture` a dated canary → `session_memory_recall` →

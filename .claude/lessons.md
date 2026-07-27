@@ -18486,3 +18486,21 @@ def ", start_idx + 1)` for module-
   push is what buys the fresh required checks, so fold them into one
   step: fetch, checkout -B from origin, merge origin/main, resolve from
   git-status, push.
+
+- **The "version bumps touch 7+ files" checklist is superseded —
+  `scripts/bump_version.py <ver>` owns the FULL site list (11 files),
+  and it refuses same-version re-runs**: hit on the 10.6.0 release PR
+  (2026-07-27). Hand-bumping the lesson's 7 files left FOUR sites
+  stale — `plugin/README.md` (claim-drift gate), `website/lib/
+  features.ts` (×2 versions), `website/app/page.tsx` (homepage badge)
+  — failing every CI lane on `test_all_versions_match`,
+  `test_site_list_matches_actual_tree`, claim-drift, and the two
+  website-version tests. The failing assertions name the tool: run
+  `python scripts/bump_version.py <version>` FIRST (it regenerates
+  every site from one command and `test_site_list_matches_actual_tree`
+  keeps its list honest). If some sites were already hand-bumped the
+  script errors "already at <ver>" — it keys off pyproject and cannot
+  re-run idempotently; finish the remainder by hand from its site
+  list, or bump from a clean tree next time. The old 7-file checklist
+  in CLAUDE.md's lessons remains for archaeology but the script is
+  the procedure.
