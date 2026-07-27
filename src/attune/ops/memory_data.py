@@ -451,7 +451,7 @@ def _changed_since(project_root: Any, hydrated: Any) -> list[str]:
             except OSError:
                 continue
             if mtime > hydrated.timestamp():
-                changed.append(str(path.relative_to(root)))
+                changed.append(path.relative_to(root).as_posix())
     return sorted(changed)
 
 

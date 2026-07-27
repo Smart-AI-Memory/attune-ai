@@ -439,3 +439,58 @@ def test_validate_master_file_clean_when_no_source_globs(tmp_path):
 
     assert isinstance(findings, list)
     assert not any("import_repair would rewrite" in f.message for f in findings)
+
+
+# --- video frontmatter (help-page videos, A-track) --------------------------
+
+
+def _fixture_with_video(tmp_path, video_yaml: str) -> Path:
+    """Copy the spec-engine fixture with a ``video`` frontmatter block."""
+    text = FIXTURE.read_text(encoding="utf-8").replace(
+        "feature: spec-engine\n",
+        f"feature: spec-engine\n{video_yaml}",
+        1,
+    )
+    master = tmp_path / "spec-engine.md"
+    master.write_text(text, encoding="utf-8")
+    return master
+
+
+def test_video_mapping_projects_to_concept_and_hub_only(tmp_path):
+    master = _fixture_with_video(
+        tmp_path,
+        "video:\n  url: https://youtu.be/demo123\n  title: Spec engine in 4 minutes\n",
+    )
+    result = project_feature(master, tmp_path, tmp_path / ".help", dry_run=True)
+    by_kind = {o.kind: o.content for o in result.outputs}
+
+    expected = "**Watch:** [Spec engine in 4 minutes](https://youtu.be/demo123)"
+    assert expected in by_kind["concept"]
+    assert expected in by_kind["hub"]
+    # The link lands after the concept H1, not inside the frontmatter.
+    assert expected in _help_body(by_kind["concept"])
+    # No other kind carries the link.
+    for kind, content in by_kind.items():
+        if kind not in ("concept", "hub"):
+            assert "**Watch:**" not in content, kind
+
+
+def test_video_bare_url_string_gets_default_title(tmp_path):
+    master = _fixture_with_video(tmp_path, "video: https://youtu.be/demo123\n")
+    result = project_feature(master, tmp_path, tmp_path / ".help", dry_run=True)
+    by_kind = {o.kind: o.content for o in result.outputs}
+
+    assert "**Watch:** [Watch the video](https://youtu.be/demo123)" in by_kind["concept"]
+
+
+def test_video_mapping_without_url_projects_nothing(tmp_path):
+    master = _fixture_with_video(tmp_path, "video:\n  title: Title but no url\n")
+    result = project_feature(master, tmp_path, tmp_path / ".help", dry_run=True)
+
+    assert not any("**Watch:**" in o.content for o in result.outputs)
+
+
+def test_no_video_frontmatter_output_unchanged(tmp_path):
+    result = project_feature(FIXTURE, tmp_path, tmp_path / ".help", dry_run=True)
+
+    assert not any("**Watch:**" in o.content for o in result.outputs)

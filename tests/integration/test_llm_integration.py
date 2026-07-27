@@ -13,16 +13,12 @@ Licensed under the Apache License, Version 2.0
 """
 
 import os
-import sys
 
 import pytest
 from dotenv import load_dotenv
 
 # Load .env file if it exists
 load_dotenv()
-
-# Add paths for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from attune.llm.core import EmpathyLLM  # noqa: E402
 from attune.llm.providers.anthropic import AnthropicProvider  # noqa: E402

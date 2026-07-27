@@ -733,6 +733,115 @@ two design-only template sketches — `session-contract` (all-scalar) and
 needs `_substitute` to handle sole-value list slots). They bracket the
 difficulty range and belong in `design.md` when V7 designs.
 
+## D21 — forms-by-default: the routing flip and the firing rule
+
+**Date:** 2026-07-25 · **Status:** built · **owner:** patrick
+**Source:** round table `q-forms-default-vs-latency-001` (Claude,
+Antigravity, Codex; 1 round, halted on convergence).
+
+Patrick reopened D17 believing the latency-first surface default was a
+mistake. The table agreed 3/3 — and all three seats, answering blind,
+independently made the same additional point: **routing was the
+smaller half.**
+
+**What was wrong.** Two rules pulled against each other. D17 (unbuilt)
+said "Default = forms"; the shipped `needs_widget` predicate picked the
+cheapest surface that could express the form's controls, justified in
+its own docstring as saving "a second tool call plus a multi-kB HTML
+round-trip through the model FOR NO GAIN." Meanwhile the always-loaded
+Socratic rule named `AskUserQuestion` — a *tool* — so most asks never
+became a `FormSchema` at all, regardless of how routing resolved.
+
+**Decisions.**
+
+- **Routing flipped.** `select_form_surface(form, widget_capable,
+  keyboard_mode)` is the product router; the widget is the default and
+  `AskUserQuestion` is an explicit fallback. Precedence: client
+  capability → no-portable-control → keyboard mode → triviality →
+  widget. `needs_widget` survives as the low-level controls check but
+  no longer owns the decision, and the latency justification is gone
+  from its docstring — left in place it invites reversion.
+- **The axis changed, not just the default.** Route on how much of the
+  option space is visible at once, not on control-type expressibility.
+  A control-type check cannot see the loss when three options and
+  their tradeoffs get folded into prose, which is exactly why "for no
+  gain" read as reasonable.
+- **`_NO_PORTABLE_CONTROL` split from `_WIDGET_ONLY_TYPES`.**
+  `number`/`date`/`textarea` are *impossible* on AskUserQuestion; the
+  v3–v5 constructs are *lossy but expressible*. Impossible outranks
+  the keyboard-mode opt-out so the opt-out can never silently drop a
+  field; lossy yields to it.
+- **Triviality is mechanical and narrow.** One `single_select`/
+  `boolean`, ≤3 options, no option label >120 chars. The length clause
+  is the load-bearing one: when tradeoffs get smuggled into option
+  text the strings get long, so length is a testable "this wanted to
+  be a card" detector.
+- **Firing rule rewritten to name the artifact, not the tool.** The
+  Socratic rule in `.claude/CLAUDE.md` now says construct a
+  `FormSchema` and let the router choose. The batching clause carries
+  most of the value: `AskUserQuestion` caps at 4 options and one
+  question per turn, so it *structurally cannot* express a batched
+  multi-dimension ask — meaning that highest-value form already passed
+  `needs_widget` and already routed to the widget correctly. **It was
+  never routed away; it was never built.** Fixing routing without
+  firing would have fixed the smaller half.
+- **Keyboard mode built, per project.** D17 ratified the opt-out as
+  available day one and it was never built; shipping the flip without
+  it would have realised the ceremony risk rather than mitigating it.
+  Patrick ruled the preference persists **per project** —
+  `keyboard_mode` in `attune.config.json`, with
+  `ATTUNE_KEYBOARD_MODE` as a two-way session override.
+- **Collapse on submit.** `form_response_summary(form, response)`
+  renders an answered form as title + one bullet per answer, so a long
+  session accumulates summaries instead of screenfuls of markup.
+- **Decay receipt.** `attune.telemetry.form_events` logs every routing
+  decision to `~/.attune/telemetry/form_events.jsonl`; `surface_mix()`
+  reads it back. The live call site is the pair of MCP elicitation
+  handlers (`_handle_elicitation_render_form` /
+  `_handle_elicitation_render_widget`), where the tool the agent invoked
+  *is* its choice — so each record carries the recommendation
+  (`surface`, `reason`), the agent's actual pick (`chosen`), and whether
+  they matched (`agreed`). `render_form` additionally returns a
+  `surface_note` nudge when it flattens a form the router wanted rich.
+
+  **Caught in review, same session:** the first cut hung the logging off
+  `select_form_surface` alone, and *nothing in `src/` called it* — the
+  predicate was exported, tested, documented, and dead in the live path
+  (the same is true of `needs_widget`, which has never had a production
+  caller; the agent follows the skill's prose, not the function). The
+  counter would have read zero forever while the PR claimed it
+  "measures the surface mix faithfully." Registered ≠ working, again.
+  Wiring the handlers is what makes it real.
+
+**Chair's value frame** (answering the Claude seat's "what would
+falsify this?"): a form/widget should *speed up knowledge intake and
+increase the clarity of messages between human and AI*. Noted as the
+stated intent — it is a direction, not yet a falsifiable metric, and
+the receipt below deliberately does not claim to measure it.
+
+**Known limit of the receipt, stated plainly.** `form_events` sees every
+form that reaches an elicitation MCP tool, so it measures the widget/ask
+**mix** and the agent's **agreement rate** faithfully. It cannot see a
+raw `AskUserQuestion` turn written by hand without building a
+`FormSchema` at all — that path never enters Python. So the
+forms-vs-no-form ratio the table asked for stays only partly observable
+from here; the missing half needs transcript inspection. Surface mix
+will also rise by construction once the default flips — that is
+compliance, not value. The `agreed` field is the one signal here that
+is not self-fulfilling: it records the agent overriding its own router,
+which no amount of flipping defaults manufactures.
+
+**Dissent preserved.** Antigravity was the only seat to argue against,
+on context rather than money: rendered HTML accumulating across a long
+session is real context pressure, and the brief's "no money at stake"
+clause did not dispose of it because tokens-in-context are not money.
+Patrick declined to promote it as a standing risk entry; the
+collapse-on-submit decision above is the partial mitigation. Full
+thread on the board (TTL 7 days) and in the ruling, message 10.
+
+**Not done.** Wiring `surface_mix()` onto the ops Health tab — the
+counter and its reader ship here, the dashboard panel does not.
+
 ## Open
 
 - **Confirm CC elicitation support** — low priority (elicitation is

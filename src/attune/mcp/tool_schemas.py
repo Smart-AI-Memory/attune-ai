@@ -974,6 +974,78 @@ def get_memory_tools() -> dict[str, dict[str, Any]]:
     }
 
 
+def get_handoff_tools() -> dict[str, dict[str, Any]]:
+    """Cross-provider session handoff tools (spec:
+    docs/specs/cross-provider-session-handoff/)."""
+    return {
+        "handoff_create": {
+            "description": (
+                "Assemble and write the current branch's handoff packet "
+                "(docs/handoffs/<branch-slug>.md). Git-derived fields come "
+                "from git at call time; caller prose is recorded as "
+                "ASSERTED. Verification rows default to 'not run'."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "goal": {
+                        "type": "string",
+                        "description": "What should be true when this work is complete",
+                    },
+                    "acceptance_criteria": {
+                        "type": "string",
+                        "description": "Concrete conditions demonstrating completion",
+                    },
+                    "scope_assumptions": {
+                        "type": "string",
+                        "description": "Scope, branch context, and assumptions",
+                    },
+                    "current_state": {
+                        "type": "string",
+                        "description": "Status, decisions, risks, open questions",
+                    },
+                    "next_action": {
+                        "type": "string",
+                        "description": "One concrete ordered action for the receiver",
+                    },
+                    "verification": {
+                        "type": "array",
+                        "description": (
+                            "Rows of {claim, probe, result}; result defaults to "
+                            "'not run' — never claim a probe that was not run"
+                        ),
+                        "items": {"type": "object"},
+                    },
+                    "provider": {
+                        "type": "string",
+                        "description": "Authoring provider label (e.g. claude-code, codex)",
+                    },
+                },
+                "required": ["goal"],
+            },
+        },
+        "handoff_resume": {
+            "description": (
+                "Read a handoff packet and verify it against the current "
+                "tree. Returns a report (verified / warnings / asserted / "
+                "memory), never a go signal; performs no side effects."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "slug": {
+                        "type": "string",
+                        "description": (
+                            "Packet slug (branch with '/' as '-'); defaults to "
+                            "the current branch"
+                        ),
+                    },
+                },
+            },
+        },
+    }
+
+
 def get_resources() -> dict[str, dict[str, Any]]:
     """MCP resource definitions."""
     return {

@@ -182,7 +182,7 @@ class EmpathyXMLConfig:
             "metrics": asdict(self.metrics),
         }
 
-        with open(validated_path, "w") as f:
+        with open(validated_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
 
     @classmethod
