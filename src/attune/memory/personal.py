@@ -27,9 +27,9 @@ _TOPIC_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,49}$")
 
 
 def _load_author() -> Any:
-    """Lazy-import attune_author.polish.polish_template, or None."""
+    """Lazy-import attune.authoring.polish.polish_template, or None."""
     try:
-        from attune_author.polish import polish_template  # noqa: PLC0415
+        from attune.authoring.polish import polish_template  # noqa: PLC0415
 
         return polish_template
     except Exception:  # noqa: BLE001

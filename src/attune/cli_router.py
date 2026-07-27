@@ -280,7 +280,7 @@ class HybridRouter:
         }
 
         validated_path = _validate_file_path(str(self.preferences_path))
-        with open(validated_path, "w") as f:
+        with open(validated_path, "w", encoding="utf-8") as f:
             yaml.dump(data, f, default_flow_style=False)
 
     async def route(self, user_input: str, context: dict[str, Any] | None = None) -> dict[str, Any]:

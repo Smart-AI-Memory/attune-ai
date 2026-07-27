@@ -3,8 +3,8 @@ type: faq
 name: elicitation-forms-faq
 feature: elicitation-forms
 depth: faq
-generated_at: 2026-07-14T15:58:51.698621+00:00
-source_hash: ea2a2694719d75bff1894657cfe5e0f5c96ae71719ae4d7f00ce7252b9e9798a
+generated_at: 2026-07-25T14:36:38.987608+00:00
+source_hash: 65dd2400b49b9d8a20605f411f62b72c1ae2d9d530b8730bb0db0acfef04fb59
 status: generated
 ---
 
@@ -76,11 +76,30 @@ widget round-trip makes no Anthropic API call.
 
 ## When should a construct fire?
 
-That is a judgment call governed by the agent's decision
-routine (`.claude/rules/attune/decision-routine.md`), not by this
-subsystem — the grammar defines the *shape*, not the *when*. And a
-form never blocks a keyboard-only user: the terse reply vocabulary
-(`y` / `go` / `1`) answers any construct on any surface.
+The grammar defines the *shape*; the *when* lives in the
+agent's Socratic rule and decision routine
+(`.claude/rules/attune/decision-routine.md`). The short version:
+build a form when two or more independent dimensions need settling
+(batch them into ONE form, never N sequential turns), when there are
+three or more alternatives or two with real tradeoffs, when you are
+disagreeing with the user, or when the answer is a number, date, or
+more than a phrase of text. A raw button-turn is right only for a
+single low-stakes choice among a few options. And a form never blocks
+a keyboard-only user: the terse reply vocabulary (`y` / `go` / `1`)
+answers any construct on any surface.
+
+## Why did a simple question render as a full form?
+
+The widget is the default now. If you'd rather have buttons,
+run `attune config set keyboard_mode true` — it persists for this
+project. `ATTUNE_KEYBOARD_MODE=1` overrides it for one shell.
+
+## Doesn't defaulting to the widget cost an extra round-trip?
+
+Yes, and that is deliberate. Latency was the old routing axis
+and it made the agent quietly downgrade forms that communicated
+better; if a question is worth asking, it is worth asking legibly.
+Trivial one-off choices still go to buttons.
 
 ## Do forms cost API credits?
 

@@ -288,3 +288,34 @@ def test_health_page_includes_environment_section(client):
     assert resp.status_code == 200
     assert "Environment" in resp.text
     assert "attune-home" in resp.text
+
+
+class TestServeLlmReport:
+    """/docs/reports/{name} — the link-QA fix (2026-07-21): the Health
+    page links the latest narrative report; nothing served it."""
+
+    def _write_report(self, cfg: Config, name: str, body: str = "# Report\n") -> None:
+        reports = cfg.project_root / "docs" / "reports"
+        reports.mkdir(parents=True, exist_ok=True)
+        (reports / name).write_text(body, encoding="utf-8")
+
+    def test_serves_existing_report(self, cfg: Config, client: TestClient) -> None:
+        self._write_report(cfg, "library-health-2026-07-14.md", "# Findings\nok\n")
+        resp = client.get("/docs/reports/library-health-2026-07-14.md")
+        assert resp.status_code == 200
+        assert "Findings" in resp.text
+
+    def test_missing_report_404(self, client: TestClient) -> None:
+        resp = client.get("/docs/reports/library-health-2099-01-01.md")
+        assert resp.status_code == 404
+
+    def test_non_report_name_404(self, cfg: Config, client: TestClient) -> None:
+        # Even a real file outside the report pattern is refused.
+        self._write_report(cfg, "library-health-x.md")
+        (cfg.project_root / "docs" / "reports" / "secrets.md").write_text("no")
+        resp = client.get("/docs/reports/secrets.md")
+        assert resp.status_code == 404
+
+    def test_traversal_404(self, client: TestClient) -> None:
+        resp = client.get("/docs/reports/..%2F..%2Fpyproject.toml")
+        assert resp.status_code == 404

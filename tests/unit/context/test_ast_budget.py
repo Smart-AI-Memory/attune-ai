@@ -1,5 +1,7 @@
 """Unit tests for AST-driven dynamic context budgeting."""
 
+import ast
+
 from attune.context import (
     ASTSkeletonGenerator,
     ContextInflater,
@@ -68,6 +70,36 @@ class TestASTSkeletonGenerator:
         assert generator.generate_skeleton("") == ""
         assert generator.generate_skeleton("   \n") == ""
 
+    def test_async_functions_skeletonized(self) -> None:
+        src = (
+            "async def fetch(url: str) -> str:\n"
+            '    """Fetches a URL."""\n'
+            "    data = await client.get(url)\n"
+            "    return data.text\n"
+        )
+        generator = ASTSkeletonGenerator()
+        skeleton = generator.generate_skeleton(src)
+        assert "async def fetch(url: str) -> str:" in skeleton
+        assert "await client.get" not in skeleton
+
+    def test_strip_docstrings_keeps_docstring_only_class_valid(self) -> None:
+        # A class whose entire body is its docstring must get an
+        # explicit `...` body, or the skeleton fails to unparse/reparse.
+        src = 'class Marker:\n    """Only a docstring."""\n'
+        generator = ASTSkeletonGenerator(strip_docstrings=True)
+        skeleton = generator.generate_skeleton(src)
+        assert "Only a docstring." not in skeleton
+        assert "class Marker" in skeleton
+        ast.parse(skeleton)  # still valid Python
+
+    def test_unparse_failure_passes_through(self, monkeypatch) -> None:
+        def boom(tree):
+            raise ValueError("cannot unparse")
+
+        monkeypatch.setattr("attune.context.skeleton.ast.unparse", boom)
+        generator = ASTSkeletonGenerator()
+        assert generator.generate_skeleton(SAMPLE_CODE) == SAMPLE_CODE
+
 
 class TestTokenBudgetAllocator:
     """Tests for TokenBudgetAllocator."""
@@ -133,3 +165,8 @@ class TestContextInflater:
     def test_unregistered_file_keeps_context(self) -> None:
         inflater = ContextInflater()
         assert inflater.inflate_if_requested("ghost.py", "ctx", "Edit") == "ctx"
+
+    def test_register_file_makes_source_inflatable(self) -> None:
+        inflater = ContextInflater()
+        inflater.register_file("late.py", SAMPLE_CODE)
+        assert inflater.inflate_if_requested("late.py", "skel", "Edit") == SAMPLE_CODE

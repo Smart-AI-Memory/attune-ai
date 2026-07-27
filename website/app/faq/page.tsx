@@ -69,7 +69,7 @@ const faqData: FAQCategory[] = [
     questions: [
       {
         question: 'How much does Attune AI cost?',
-        answer: 'Attune AI is completely free and open source under the Apache License 2.0. Use it in personal projects, startups, or large enterprises at no cost. No license keys, no restrictions, no hidden fees.',
+        answer: 'The software is free and open source under the Apache License 2.0 — personal, commercial, and enterprise use included. Running the CLI or MCP tools makes Anthropic API calls, which bill to your own API account.',
       },
       {
         question: 'What is the Apache 2.0 License?',
@@ -98,7 +98,7 @@ const faqData: FAQCategory[] = [
       },
       {
         question: 'Do I need an API key?',
-        answer: 'No. Attune AI works on a Claude subscription or an API key — use whichever you have. The platform is open source under Apache 2.0 with no license keys or hidden fees.',
+        answer: 'Not for the Claude Code plugin — skills, hooks, and forms run on your Claude subscription. The attune CLI and the MCP tools call the Anthropic API directly, so those need an API key with credits. A Claude subscription does not include API credits; they are separate products.',
       },
       {
         question: 'Which LLM provider is supported?',

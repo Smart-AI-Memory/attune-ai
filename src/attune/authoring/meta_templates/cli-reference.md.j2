@@ -1,0 +1,64 @@
+# {{ title }} CLI reference
+
+{% if description %}
+{{ description }}.
+{% endif %}
+
+## Description
+
+{% if module_docstrings %}
+{{ module_docstrings[0] }}.
+{% else %}
+{{ title }} provides command-line access to its core operations.
+{% endif %}
+
+## Usage
+
+```
+{{ feature_name }} [OPTIONS] [ARGS]
+```
+
+{% if public_functions %}
+### Subcommands
+
+{% for fn in public_functions %}
+#### `{{ fn.name | replace('_', '-') }}`
+
+{{ fn.doc if fn.doc else "No description." }}
+
+{% endfor %}
+{% endif %}
+
+## Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--help` | — | Show this help message and exit |
+{% if config_keys %}
+{% for key in config_keys[:5] %}
+| `--{{ key | replace('_', '-') | lower }}` | — | — |
+{% endfor %}
+{% endif %}
+
+## Output
+
+```
+# Example output shown here after LLM polish pass
+```
+
+## Exit codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success |
+| `1` | General error |
+
+## Related commands
+
+{% if tags %}
+{% for tag in tags[:4] %}
+- `{{ tag }}`
+{% endfor %}
+{% else %}
+See the project README for the full command index.
+{% endif %}

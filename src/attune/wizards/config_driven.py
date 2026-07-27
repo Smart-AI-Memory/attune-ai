@@ -243,7 +243,7 @@ class ConfigDrivenWizard(BaseWizard):
 
         data = self._to_dict()
         try:
-            with validated.open("w") as f:
+            with validated.open("w", encoding="utf-8") as f:
                 yaml.safe_dump(data, f, default_flow_style=False, sort_keys=False)
         except PermissionError as e:
             logger.error("Permission denied writing wizard to %s: %s", validated, e)

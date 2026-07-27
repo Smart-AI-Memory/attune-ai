@@ -117,6 +117,7 @@ rule (a single turn can't bundle multiple ambiguous decisions). See
 | elicit | scope this, discovery form, ask me everything at once, multi-select question |
 | author-feature | author a feature page, single-source doc, new feature master, draft docs without an api |
 | roundtable | roundtable, convene the table, ask the table, what do the other models think |
+| cross-review | cross review, second opinion, ask another model to review, pre-merge check from codex |
 
 ## MCP Server Not Running
 

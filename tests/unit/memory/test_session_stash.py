@@ -514,7 +514,116 @@ def test_backend_status_no_backends():
         "backend": None,
         "fallback": False,
         "unreachable_upgrade": None,
+        "ok": False,
+        "transport": "none",
+        "reachability": "unknown",
+        "reason": "no_backend",
     }
+
+
+# --------------------------------------------------------------------------
+# backend_status — additive caller-scoped fields (R2/D4,
+# cross-provider-memory-transport): ok / transport / reachability / reason.
+# Existing keys must be preserved; a caller-local write denial must never
+# read as a global service outage.
+# --------------------------------------------------------------------------
+
+#: The pre-T1 status keys every consumer may already rely on.
+_LEGACY_STATUS_KEYS = {"backend", "fallback", "unreachable_upgrade"}
+
+
+def test_backend_status_upgrade_reports_direct_reachable(monkeypatch):
+    import importlib.metadata as md
+
+    from attune.memory.session_stash import backend_status
+
+    upgrade = _Upgrade(connected=True)
+    monkeypatch.setattr(md, "entry_points", lambda group=None: [_ep("redis", lambda: upgrade)])
+    status = backend_status()
+    assert _LEGACY_STATUS_KEYS <= status.keys()
+    assert status["ok"] is True
+    assert status["transport"] == "direct"
+    assert status["reachability"] == "reachable"
+    assert status["reason"] is None
+
+
+def test_backend_status_writable_fallback_is_ok_file_transport(monkeypatch):
+    import importlib.metadata as md
+
+    from attune.memory.session_stash import backend_status
+
+    class _WritableFallback(_Fallback):
+        def probe_write(self):
+            return True
+
+    fallback = _WritableFallback()
+    monkeypatch.setattr(md, "entry_points", lambda group=None: [_ep("file", lambda: fallback)])
+    status = backend_status()
+    assert status["ok"] is True
+    assert status["transport"] == "file"
+    assert status["reachability"] == "reachable"
+    assert status["reason"] is None
+
+
+def test_backend_status_local_denial_is_not_a_global_outage(monkeypatch):
+    """The Codex-sandbox shape: file fallback resolved but unwritable.
+
+    Must report a caller-scoped denial (unreachable_local +
+    file_write_denied), never success — and never a service-down claim.
+    """
+    import importlib.metadata as md
+
+    from attune.memory.session_stash import backend_status
+
+    class _DeniedFallback(_Fallback):
+        def probe_write(self):
+            return False
+
+    fallback = _DeniedFallback()
+    monkeypatch.setattr(md, "entry_points", lambda group=None: [_ep("file", lambda: fallback)])
+    status = backend_status()
+    assert status["backend"] == "_DeniedFallback"
+    assert status["fallback"] is True
+    assert status["ok"] is False
+    assert status["transport"] == "none"
+    assert status["reachability"] == "unreachable_local"
+    assert status["reason"] == "file_write_denied"
+    # No upgrade is registered — local denial must not invent one.
+    assert status["unreachable_upgrade"] is None
+
+
+def test_backend_status_fallback_without_probe_stays_usable(monkeypatch):
+    # A backend predating probe_write degrades to "usable, reachability
+    # unknown" — never a false denial.
+    import importlib.metadata as md
+
+    from attune.memory.session_stash import backend_status
+
+    fallback = _Fallback()
+    monkeypatch.setattr(md, "entry_points", lambda group=None: [_ep("file", lambda: fallback)])
+    status = backend_status()
+    assert status["ok"] is True
+    assert status["transport"] == "file"
+    assert status["reachability"] == "unknown"
+    assert status["reason"] is None
+
+
+def test_backend_status_probe_exception_is_denial_not_crash(monkeypatch):
+    # never-raises contract: a probe that blows up reads as a local denial.
+    import importlib.metadata as md
+
+    from attune.memory.session_stash import backend_status
+
+    class _ExplodingProbe(_Fallback):
+        def probe_write(self):
+            raise RuntimeError("probe blew up")
+
+    fallback = _ExplodingProbe()
+    monkeypatch.setattr(md, "entry_points", lambda group=None: [_ep("file", lambda: fallback)])
+    status = backend_status()
+    assert status["ok"] is False
+    assert status["reachability"] == "unreachable_local"
+    assert status["reason"] == "file_write_denied"
 
 
 # --------------------------------------------------------------------------

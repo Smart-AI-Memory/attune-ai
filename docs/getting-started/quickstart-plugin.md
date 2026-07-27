@@ -21,7 +21,7 @@ inside the Claude Code session you already have.
 
 ## What you get
 
-The plugin ships **25 auto-triggering skills**. You don't memorize commands —
+The plugin ships <!-- cap:skill_count -->**26 auto-triggering skills**<!-- /cap -->. You don't memorize commands —
 you describe what you want, and the right skill activates.
 
 | Say something like… | Skill that activates | What it does |
@@ -120,12 +120,12 @@ Other skills worth trying by name or description:
 | If you want to… | Go to |
 |-----------------|-------|
 | Run workflows from a terminal or Python | [First Steps](first-steps.md) |
-| Add the full MCP toolset (53 tools) + CLI | [MCP Integration](mcp-integration.md) |
+| Add the full MCP toolset <!-- cap:mcp_registered_tool_count -->(55 tools)<!-- /cap --> + CLI | [MCP Integration](mcp-integration.md) |
 | Pick a longer learning path | [Choose Your Path](choose-your-path.md) |
 | See every workflow | [First Steps → Try More Workflows](first-steps.md#try-more-workflows) |
 
 !!! note "Plugin vs. package"
-    The **plugin** gives you the 17 natural-language skills with zero setup.
+    The **plugin** gives you the <!-- cap:skill_count -->26 natural-language skills<!-- /cap --> with zero setup.
     Installing the **Python package** (`pip install attune-ai`) adds the
-    `attune` CLI, the MCP server, and 41 MCP tools on top. You can start with
+    `attune` CLI, the MCP server, and <!-- cap:mcp_registered_tool_count -->55 MCP tools<!-- /cap --> on top. You can start with
     the plugin today and add the package later — they layer cleanly.
