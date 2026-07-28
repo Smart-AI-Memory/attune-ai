@@ -211,18 +211,26 @@ backlog item).
       tests figure verified against the T2 session record — say
       "a thousand" only if the exact count stays unverified at
       post time).
-- [ ] "Shared memory … recallable in the next" — requires the
-      receipt-4 Codex canary (post-lift, post-marketplace-sync).
-      DO NOT POST before it passes.
-- [ ] "Handoffs that verify" — requires the handoff live
-      round-trip receipt (spec T4). DO NOT POST before it passes;
-      if only the Claude-side receipt exists Tuesday, reword to
-      per-agent truth or hold.
-- [ ] "10.6.0 … shipped this week" — requires the v10.6.0 tag +
-      PyPI 200 on Monday.
-- [ ] Antigravity named as a memory participant — requires
-      receipt 6 (post-publish probe) OR reword to "Claude Code
-      and Codex today; Antigravity next" per its actual row.
+- [x] "Shared memory … recallable in the next" — CLEARED
+      2026-07-28. Transport receipt 4 PASSED live 2026-07-27
+      (interactive Codex, plugin 10.6.0): capture → recall of the
+      stored representation → forget `deleted:1` → empty re-recall.
+- [ ] "Handoffs that verify" — **STILL OPEN; chair must rule.** The
+      Claude side is a live PASS (`handoff_create` through the real MCP
+      server at 10.6.1, git-derived `head_sha`), and Codex dispatch
+      is PROVEN (`handoff_resume` in its tool list, dispatch
+      started) — but codex's headless approval policy auto-cancelled
+      the call, so **no receiving-agent drift report exists**. Take
+      this line's pre-authorized reword-to-per-agent-truth path, or
+      close it with one interactive Codex run. Same ruling as the
+      article's 4th receipt slot — decide both together.
+- [x] "10.6.0 … shipped this week" — CLEARED 2026-07-28. Tags
+      `v10.6.0` and `v10.6.1` exist; both return PyPI 200; latest
+      = 10.6.1.
+- [x] Antigravity named as a memory participant — CLEARED
+      2026-07-28. Transport receipt 6 PASSED live 2026-07-27 against
+      PyPI 10.6.1 (`agy --print`, four legs clean, PII redacted at
+      rest from the Antigravity seat). No reword needed.
 - [ ] [LINK: launch article] filled with the published URL.
 - [x] v1 anecdote removed — nothing in v2 claims a self-healing
       diagnosis occurred.
