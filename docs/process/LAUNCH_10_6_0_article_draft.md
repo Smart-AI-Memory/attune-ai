@@ -24,13 +24,14 @@ Pre-publish checklist:
       collaboration" section this article describes. **Re-verify with
       `curl -s https://pypi.org/pypi/attune-ai/json` immediately
       before firing** — a later patch moves this number again.
-- [ ] Chair honesty-gate pass (same ruling session as Draft B).
-      **Three items are queued for that ruling:** (1) the 4th receipt
-      slot — close it with an interactive Codex run, or reword to
-      per-agent truth; (2) the "third proposed the audit pattern"
-      sentence — flagged inline as unsupported by the report it
-      links, with a receipted replacement drafted; (3) the closing
-      variant (a/b/c, noted at the draft's foot).
+- [ ] Chair honesty-gate pass — **RULED 2026-07-28, 2 of 3 applied.**
+      (1) 4th receipt slot → **path (a): close it for real** with one
+      interactive Codex run; reword is fallback-only. **STILL OPEN —
+      this is the last thing between the draft and publication.**
+      (2) "third proposed the audit pattern" sentence → replacement
+      APPLIED; every claim in that paragraph now traces to the linked
+      report. (3) Closing variant → **(c)** APPLIED, layered after the
+      install line.
 - [x] Counts re-verified against the merged registries (2026-07-28):
       "five `session_memory_*` tools" = 5, names match
       (`attune_redis.mcp_tools.SESSION_MEMORY_TOOL_DEFINITIONS`).
@@ -103,9 +104,13 @@ authority" for months; now it's mechanical.
 [RECEIPT: create-in-Claude → resume-in-Codex transcript, showing
 the drift report on a real branch]
 
-<!-- BLOCKING — CHAIR RULING REQUIRED (2026-07-28). This slot cannot
-be filled honestly today. What IS receipted (handoff spec receipts.md,
-2026-07-27):
+<!-- BLOCKING — RULED 2026-07-28 (chair): take path (a), CLOSE IT FOR
+REAL with one interactive Codex run. Do NOT reword to per-agent truth
+unless that run is attempted and fails; path (b) below is the
+same-day fallback, not the plan. This slot stays unfilled — and the
+article stays unpublished — until the run produces a drift report.
+
+What IS receipted today (handoff spec receipts.md, 2026-07-27):
 
   - Claude leg, LIVE PASS: handoff_create through the real MCP server
     (plugin 10.6.1) on branch claude/handoff-t4-docs — ok:true, packet
@@ -167,35 +172,29 @@ next win?*
 
 Two of three converged, unprompted, on the same feature with
 nearly identical designs: the cross-provider handoff. The third
-proposed the audit pattern that shaped our review discipline. I
-chaired, ratified, and the specs were authored and built the same
+proposed a verification pattern I ruled out — it needed seats to
+run shell, which our contract forbids. But all three, unprompted,
+flagged the same risk: any of these features rots into ceremony
+unless the receipts stay real and the output stays advisory. That
+shaped the review discipline more than the feature picks did.
+
+I chaired, ratified, and the specs were authored and built the same
 evening — with the deliberation thread, every seat's position, and
 my rulings promoted to a tracked report in the repo.
 
-<!-- HONESTY FLAG (2026-07-28) — one sentence above is not supported
-by the report it links. "The third proposed the audit pattern that
-shaped our review discipline": the third seat (Antigravity) proposed
-roundtable_audit_worktree, and the chair ruling records it as
-"recorded, not committed" — it collides with R1 (members never touch
-shell). Grep confirms zero linkage into docs/specs/cross-review/.
-What IS true and receipted in the same report (#7 synthesis): all
-three seats independently named the same risk — that every candidate
-degrades into ceremony/noise/false precision unless receipts stay
-real and outputs stay advisory-not-authoritative. THAT is what shaped
-the review discipline, and it's a better line anyway (three-way
-convergence on the risk, not just the feature).
-
-Suggested replacement, chair to approve:
-  "The third proposed a verification pattern I ruled out — it needed
-  seats to run shell, which our contract forbids. But all three,
-  unprompted, flagged the same risk: any of these features rots into
-  ceremony unless the receipts stay real and the output stays
-  advisory. That shaped the review discipline more than the feature
-  picks did."
-
-The two verified claims in this paragraph stand as written: 2-of-3
-convergence on the handoff (report #7, verbatim), and specs authored
-same-day (#1603 and #1604 both merged 2026-07-22). -->
+<!-- RULED 2026-07-28 (chair). The prior sentence — "the third
+proposed the audit pattern that shaped our review discipline" — was
+NOT supported by the report it links: that seat proposed
+roundtable_audit_worktree, which the ruling records as "recorded, not
+committed" (collides with R1, members never touch shell), and grep
+confirmed zero linkage into docs/specs/cross-review/. Replaced above
+with the receipted version: report #7's synthesis records all three
+seats independently naming the ceremony/noise/false-precision risk.
+Every claim in this paragraph now traces to the linked report:
+2-of-3 convergence on the handoff (#7 verbatim), the third seat's
+proposal ruled out on R1 (chair ruling), the three-way risk
+convergence (#7), and specs authored same-day (#1603 + #1604, both
+merged 2026-07-22). -->
 
 
 
@@ -251,10 +250,23 @@ pip install attune-ai
 10.6.1 is on PyPI now — 10.6.0 plus a same-day patch. The round
 table is open.
 
+One question before you go: **what boundary kills your context?**
+
+Mine was the provider boundary — that's the one this release
+attacks. Yours might be somewhere else entirely: the gap between
+sessions, between you and the teammate picking up your branch,
+between staging and prod. I read the replies, and they feed the
+same loop the round table does — the last set of answers is part of
+why these features got built and not others.
+
 ---
 
-*Draft note (not for publication): candidate closing variants —
-(a) the install-line close above; (b) a question close inviting
-readers to name which agent they'd hand off to first; (c) the
-DEC-2-style ask ("what boundary kills your context?"). Chair picks
-at the honesty-gate ruling.*
+*Draft note (not for publication): closing variant RULED 2026-07-28
+(chair) — variant (c), the DEC-2-style ask, layered AFTER the
+install-line close rather than replacing it. Variant (b) (which
+agent would you hand off to first) is not used. Rationale: the
+DEC-2 ask is the pattern that earned replies on 07-17, and replies
+feed the US-3 slots; the install line still does the conversion
+work above it. The "I read the replies … feed the same loop" claim
+is true and cheap to keep true — log the replies (N1) as they
+arrive.*
