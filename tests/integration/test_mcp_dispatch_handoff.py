@@ -39,6 +39,54 @@ def _git(repo: Path, *args: str) -> str:
     return result.stdout.strip()
 
 
+class _MemBackend:
+    """Searchable backend double at the session_stash boundary (T3).
+
+    Dispatch, handlers, the real handoff core, and the REAL PII
+    sanitizer all run; only the storage service is substituted.
+    """
+
+    is_fallback = False
+
+    def __init__(self) -> None:
+        self.records: dict[str, dict] = {}
+
+    def is_connected(self) -> bool:
+        return True
+
+    def remember(self, content, *, memory_id=None, session_id=None, topics=None) -> bool:
+        self.records[memory_id] = {
+            "id": memory_id,
+            "text": content,
+            "session_id": session_id,
+            "topics": list(topics or []),
+        }
+        return True
+
+    def search(self, query, limit=10):
+        return [dict(r) for r in list(self.records.values())[:limit]]
+
+    def stash(self, *args, **kwargs) -> bool:
+        return True
+
+
+@pytest.fixture(autouse=True)
+def memory_offline():
+    """Default every dispatch test to no memory backend (hermetic).
+
+    The D5 linkage then degrades to a stated skip; the linkage test
+    below opts into `_MemBackend` explicitly.
+    """
+    with (
+        patch("attune.memory.session_stash.resolve_backend", return_value=None),
+        patch(
+            "attune.memory.session_stash.backend_status",
+            return_value={"ok": False, "backend": None, "reason": "no_backend"},
+        ),
+    ):
+        yield
+
+
 @pytest.fixture
 def repo(tmp_path: Path) -> Path:
     root = tmp_path / "repo"
@@ -92,7 +140,36 @@ class TestHandoffDispatch:
         assert report["verified"]["provider"] == "test-suite"
         assert report["asserted"]["goal"] == "Dispatch round trip"
         assert report["warnings"] == []
-        assert report["memory"]["status"] == "skipped"
+        assert report["memory"] == {"status": "skipped", "reason": "no_backend"}
+
+    @pytest.mark.asyncio
+    async def test_memory_linkage_through_real_dispatch(
+        self, server: EmpathyMCPServer, repo: Path
+    ) -> None:
+        """T3/D5: create stashes a handoff pointer, resume recalls it —
+        through the real dispatch chain and the real sanitizer."""
+        backend = _MemBackend()
+        with (
+            patch("attune.memory.session_stash.resolve_backend", return_value=backend),
+            patch(
+                "attune.memory.session_stash.backend_status",
+                return_value={"ok": True, "backend": "_MemBackend", "reason": None},
+            ),
+        ):
+            created = await server.call_tool(
+                "handoff_create", {"goal": "Linkage receipt", "provider": "test-suite"}
+            )
+            assert created["memory"]["status"] == "captured"
+            pointer_id = created["memory"]["id"]
+            stored = backend.records[pointer_id]
+            assert "Linkage receipt" in stored["text"]
+            assert "handoff" in stored["topics"]
+            assert "slug:feature-hand" in stored["topics"]
+
+            report = await server.call_tool("handoff_resume", {})
+            assert report["memory"]["status"] == "recalled"
+            assert report["memory"]["count"] == 1
+            assert report["memory"]["results"][0]["id"] == pointer_id
 
     @pytest.mark.asyncio
     async def test_resume_missing_packet_truthful(self, server: EmpathyMCPServer) -> None:

@@ -15,16 +15,13 @@ from typing import Any
 
 import structlog
 
+from attune.handoff import memory_link as _memory_link
 from attune.handoff import packet as _packet
 from attune.handoff import verify as _verify
 
 logger = structlog.get_logger(__name__)
 
 __all__ = ["handoff_create", "handoff_resume"]
-
-#: R3 memory linkage lands in T3; until then the report says so
-#: explicitly rather than omitting the key (stable report shape).
-_MEMORY_NOT_WIRED = {"status": "skipped", "reason": "not_implemented"}
 
 
 def handoff_create(
@@ -68,13 +65,20 @@ def handoff_create(
     slug = _verify.slugify_branch(meta["branch"] or "detached")
     sections = _packet.assemble_sections(fields)
     result = _packet.write_packet(root, slug, meta, sections)
+    memory: dict[str, Any] = {"status": "skipped", "reason": "packet_not_written"}
+    if result.get("ok"):
+        # D5: stash a topic-`handoff` pointer via the session-stash
+        # helpers; failures are reported, never raised.
+        memory = _memory_link.link_create(
+            slug, goal=goal, path=result["path"], cwd=str(root.resolve())
+        )
     logger.info(
         "handoff_create",
         slug=slug,
         ok=result.get("ok"),
         reason=result.get("reason"),
         duration_ms=round((time.monotonic() - started) * 1000),
-        memory=_MEMORY_NOT_WIRED["status"],
+        memory=memory["status"],
     )
     if not result.get("ok"):
         return result
@@ -83,7 +87,7 @@ def handoff_create(
         "path": result["path"],
         "slug": slug,
         "packet": {"verified": meta, "asserted": sections},
-        "memory": dict(_MEMORY_NOT_WIRED),
+        "memory": memory,
     }
 
 
@@ -122,12 +126,14 @@ def handoff_resume(
 
     packet_rel = f"docs/handoffs/{slug}.md"
     warnings = _verify.drift(meta, root, ignore_paths=(packet_rel,))
+    # D5: recall handoff pointers for the slug; skips are stated.
+    memory = _memory_link.link_resume(slug, cwd=str(root.resolve()))
     logger.info(
         "handoff_resume",
         slug=slug,
         warning_codes=[w["code"] for w in warnings],
         duration_ms=round((time.monotonic() - started) * 1000),
-        memory=_MEMORY_NOT_WIRED["status"],
+        memory=memory["status"],
     )
     return {
         "ok": True,
@@ -136,5 +142,5 @@ def handoff_resume(
         "verified": meta,
         "warnings": warnings,
         "asserted": sections,
-        "memory": dict(_MEMORY_NOT_WIRED),
+        "memory": memory,
     }

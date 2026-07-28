@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   labeled a surface mix, not a fire rate: hand-written
   AskUserQuestion turns never enter Python and are invisible to the
   log (#1653).
+- **Handoff memory linkage (D5) + telemetry (D6)** — `handoff_create`
+  now stashes a topic-`handoff` pointer through the session-stash
+  helpers (same sanitized path as `session_memory_capture`), and
+  `handoff_resume` recalls pointers for the slug. Unreachable
+  backends degrade to a stated `memory: {status: skipped, reason}`
+  — never an error, never a silent omission. Both tools' structlog
+  events now carry the real memory outcome
+  (spec: cross-provider-session-handoff T3, #1601).
 
 ## [10.6.1] — 2026-07-27
 
