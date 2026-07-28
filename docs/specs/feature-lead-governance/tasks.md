@@ -1,11 +1,14 @@
 # Feature Lead Governance — Tasks
 
-**Status:** DRAFT — do not execute until requirements and OPEN-1..4 are
-chair-approved.
+**Status:** draft (2026-07-27) — OPEN-1..4 ruled and the revision
+pass applied; execution remains gated by P1 (the cross-review
+usage-signal read — decisions.md D5).
 
 Pre-execution rule: re-grep all named integration points against the
-current tree. The handoff and cross-review specs are currently moving;
-their shipped APIs, not this draft, will be authoritative.
+current tree. Handoff and cross-review T1+T2 are SHIPPED dependencies
+(consume their seams as-is); their pending T3/T4, not this draft,
+will own any new packet/board fields (propose amendments, never a
+parallel format).
 
 ## T1 — governance core
 
@@ -43,9 +46,11 @@ their shipped APIs, not this draft, will be authoritative.
 ```xml
 <task id="featurelead-t2" name="mcp-surface">
   <objective>
-    Register assignment_create/status/transfer/dispose_finding/
-    complete through the existing Attune MCP server and trusted human
-    decision boundary.
+    Register the D7-shrunk surface — assignment_propose /
+    assignment_status / assignment_dispose_finding — through the
+    existing Attune MCP server. Transfer/complete/revoke requests
+    return chair_required plus registry-PR instructions; no MCP tool
+    asserts human approval (decisions.md D7).
   </objective>
   <context>
     <depends>featurelead-t1</depends>
@@ -55,12 +60,15 @@ their shipped APIs, not this draft, will be authoritative.
     <check>read-only status works without workspace write access</check>
     <check>denied writes and unavailable leads return truthful
       structured failures</check>
+    <check>a transfer/complete/revoke request returns chair_required
+      and mutates nothing</check>
   </validation>
   <risks>
-    <risk severity="high">MCP caller identity may not prove “human”;
-      implementation must identify the existing trusted decision
-      mechanism or hold mutating transitions for explicit UI
-      confirmation.</risk>
+    <risk severity="low">RESOLVED by D7 (was: MCP caller identity may
+      not prove “human”) — chair transitions moved out of MCP into
+      chair-merged registry PRs verified by the D3 probe set;
+      residual risk is probe-implementation fidelity, covered by the
+      per-probe security tests.</risk>
   </risks>
 </task>
 ```
@@ -113,6 +121,11 @@ their shipped APIs, not this draft, will be authoritative.
     <risk severity="medium">Two successful demos do not prove reduced
       rewrite churn; retain opt-in posture until repeated use shows a
       useful signal.</risk>
+    <risk severity="medium">Distribution lag: the Codex/Antigravity
+      seats consume the PUBLISHED attune-ai, so the live matrix waits
+      for a release carrying the governance tools — schedule the
+      receipts post-publish, and record seat ABSENT (not failure)
+      when a seat is unavailable (R7).</risk>
   </risks>
 </task>
 ```

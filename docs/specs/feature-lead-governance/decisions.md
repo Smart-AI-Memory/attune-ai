@@ -1,8 +1,8 @@
 # Feature Lead Governance — Decisions
 
 **Status:** active (2026-07-27) — OPEN-1..4 + approval-evidence +
-disposition model chair-ruled; spec revision pass owed before
-execution.
+disposition model chair-ruled; revision pass APPLIED to
+requirements/design/tasks/plan the same day. Execution gated by P1.
 
 Chair rulings of 2026-07-27 come from round-table thread
 `q-feature-lead-governance-001` (3 rounds, all seats present, one
