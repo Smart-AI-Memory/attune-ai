@@ -7,6 +7,24 @@ from pathlib import Path
 
 import pytest
 
+from attune.memory import session_stash
+
+
+@pytest.fixture(autouse=True)
+def memory_offline(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Handoff unit tests never touch a real memory backend.
+
+    Defaults every test to the unreachable-backend state so the D5
+    linkage degrades to a stated skip; tests that want a backend
+    override with a fake (see ``test_memory_link.backend``).
+    """
+    monkeypatch.setattr(session_stash, "resolve_backend", lambda b=None: None)
+    monkeypatch.setattr(
+        session_stash,
+        "backend_status",
+        lambda: {"ok": False, "backend": None, "reason": "no_backend"},
+    )
+
 
 def git(repo: Path, *args: str) -> str:
     """Run git in the fixture repo with signing/hooks disabled."""
