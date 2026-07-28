@@ -494,6 +494,116 @@ class TestHandleSessionStatus:
         assert result["reachability"] == "unreachable_local"
 
 
+class TestSessionMemoryVoiceSummaries:
+    """Each verb voices its own action-appropriate summary.
+
+    Regression guard for the receipt-4 canary bug (2026-07-27): every
+    session_memory_* verb answered with the generic recall greeting
+    "Here's what I found." because the shared voice layer stamped
+    GREETING_SUCCESS over responses that carried no summary of their own.
+    """
+
+    GENERIC_GREETING = "Here's what I found."
+
+    @pytest.mark.asyncio()
+    async def test_capture_voices_stashing(self, mock_server):
+        with patch("attune.memory.session_stash.stash_entry", return_value=True):
+            result = await handle_session_memory_capture(mock_server, {"content": "a finding"})
+        assert result["voice_summary"] == "Stashed that finding for future recall."
+
+    @pytest.mark.asyncio()
+    async def test_capture_failure_voices_the_reason(self, mock_server):
+        with (
+            patch("attune.memory.session_stash.stash_entry", return_value=False),
+            patch(
+                "attune.memory.session_stash.backend_status",
+                return_value={"ok": False, "reason": "file_write_denied"},
+            ),
+        ):
+            result = await handle_session_memory_capture(mock_server, {"content": "x"})
+        assert result["voice_summary"] == "Couldn't stash that finding (file_write_denied)."
+
+    @pytest.mark.asyncio()
+    async def test_recall_voices_hit_count(self, mock_server):
+        hits = [{"id": "m1", "text": "found"}]
+        with patch("attune.memory.session_stash.recall_entries", return_value=hits):
+            result = await handle_session_memory_recall(mock_server, {"query": "parser"})
+        assert result["voice_summary"] == "Found 1 stashed finding."
+
+    @pytest.mark.asyncio()
+    async def test_recall_empty_voices_no_match(self, mock_server):
+        with patch("attune.memory.session_stash.recall_entries", return_value=[]):
+            result = await handle_session_memory_recall(mock_server, {"query": "nope"})
+        assert result["voice_summary"] == "No stashed findings matched that query."
+
+    @pytest.mark.asyncio()
+    async def test_recent_voices_singular_and_empty(self, mock_server):
+        one = [{"id": "m1"}]
+        with patch("attune.memory.session_stash.recent_entries", return_value=one):
+            result = await handle_session_memory_recent(mock_server, {})
+        assert result["voice_summary"] == "Here is the most recent stashed finding."
+
+        with patch("attune.memory.session_stash.recent_entries", return_value=[]):
+            result = await handle_session_memory_recent(mock_server, {})
+        assert result["voice_summary"] == "Nothing stashed yet for this project."
+
+    @pytest.mark.asyncio()
+    async def test_forget_voices_deletion_counts(self, mock_server):
+        with patch("attune.memory.session_stash.forget_entries", return_value=2):
+            result = await handle_session_memory_forget(mock_server, {"ids": ["a", "b"]})
+        assert result["voice_summary"] == "Deleted 2 of 2 stashed records."
+
+    @pytest.mark.asyncio()
+    async def test_forget_not_found_voices_failure(self, mock_server):
+        with (
+            patch("attune.memory.session_stash.forget_entries", return_value=0),
+            patch(
+                "attune.memory.session_stash.backend_status",
+                return_value={"ok": True, "reason": None},
+            ),
+        ):
+            result = await handle_session_memory_forget(mock_server, {"ids": ["gone"]})
+        assert result["voice_summary"] == "Couldn't delete those records (not_found)."
+
+    @pytest.mark.asyncio()
+    async def test_status_voices_backend_readiness(self, mock_server):
+        underlying = {
+            "backend": "FileStashBackend",
+            "ok": True,
+            "transport": "file",
+            "reason": None,
+        }
+        with patch("attune.memory.session_stash.backend_status", return_value=underlying):
+            result = await handle_session_memory_status(mock_server, {})
+        assert result["voice_summary"] == "Session memory is ready (FileStashBackend backend)."
+
+        underlying = {"backend": None, "ok": False, "transport": "none", "reason": "no_backend"}
+        with patch("attune.memory.session_stash.backend_status", return_value=underlying):
+            result = await handle_session_memory_status(mock_server, {})
+        assert result["voice_summary"] == "Session memory is unavailable (no_backend)."
+
+    @pytest.mark.asyncio()
+    async def test_no_verb_uses_the_generic_recall_greeting(self, mock_server):
+        """The canary assertion: no session_memory verb ever says
+        "Here's what I found." — that phrasing only fits recall, and
+        recall now phrases its own count."""
+        with patch("attune.memory.session_stash.stash_entry", return_value=True):
+            capture = await handle_session_memory_capture(mock_server, {"content": "x"})
+        with patch("attune.memory.session_stash.recall_entries", return_value=[]):
+            recall = await handle_session_memory_recall(mock_server, {"query": "q"})
+        with patch("attune.memory.session_stash.recent_entries", return_value=[]):
+            recent = await handle_session_memory_recent(mock_server, {})
+        with patch("attune.memory.session_stash.forget_entries", return_value=1):
+            forget = await handle_session_memory_forget(mock_server, {"ids": ["a"]})
+        with patch(
+            "attune.memory.session_stash.backend_status",
+            return_value={"ok": True, "backend": "FileStashBackend"},
+        ):
+            status = await handle_session_memory_status(mock_server, {})
+        for result in (capture, recall, recent, forget, status):
+            assert result["voice_summary"] != self.GENERIC_GREETING
+
+
 # =========================================================================
 # Registration integration
 # =========================================================================
