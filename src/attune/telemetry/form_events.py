@@ -54,11 +54,17 @@ def _enabled() -> bool:
     return dnt is None or dnt.strip().lower() in _FALSEY
 
 
-def _events_path() -> Path:
-    """Resolve the live events file under ATTUNE_HOME (default ~/.attune)."""
-    home = os.environ.get("ATTUNE_HOME")
-    base = Path(home).expanduser() if home else Path.home() / ".attune"
-    return base / "telemetry" / "form_events.jsonl"
+def _events_path(home: Path | None = None) -> Path:
+    """Resolve the live events file under ``home`` (an attune-home base).
+
+    Defaults to ATTUNE_HOME (or ``~/.attune``) — the write path. Readers
+    with their own configured home (the ops dashboard) pass it
+    explicitly so they read the store they display, not the process env.
+    """
+    if home is None:
+        env = os.environ.get("ATTUNE_HOME")
+        home = Path(env).expanduser() if env else Path.home() / ".attune"
+    return Path(home) / "telemetry" / "form_events.jsonl"
 
 
 def _rotate_if_huge(path: Path) -> None:
@@ -233,17 +239,21 @@ def inference_rate() -> dict[str, float | int]:
     }
 
 
-def surface_mix() -> dict[str, int]:
+def surface_mix(home: Path | None = None) -> dict[str, int]:
     """Return counts per surface from the live log.
 
     Unreadable or malformed lines are skipped rather than raising, so a
     partially-written tail never breaks the read.
 
+    Args:
+        home: Optional attune-home base to read from; defaults to the
+            process's own (ATTUNE_HOME or ``~/.attune``).
+
     Returns:
         A mapping of surface name to count; empty when nothing logged.
     """
     counts: Counter[str] = Counter()
-    path = _events_path()
+    path = _events_path(home)
     try:
         with path.open(encoding="utf-8") as fh:
             for line in fh:

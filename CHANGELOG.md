@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Elicitation surface mix on the Health tab** — the ops dashboard's
+  `/health` page now reads `telemetry/form_events.jsonl` live and
+  shows which surface rendered each Python-routed form. Honestly
+  labeled a surface mix, not a fire rate: hand-written
+  AskUserQuestion turns never enter Python and are invisible to the
+  log (#1653).
+
 ## [10.6.1] — 2026-07-27
 
 ### Fixed
