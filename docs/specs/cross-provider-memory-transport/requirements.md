@@ -1,6 +1,13 @@
 # Cross-Provider Memory Transport — Requirements
 
-**Status:** APPROVED — implementation authorized 2026-07-22.
+**Status:** shipped (2026-07-28) — all six R8 boundary receipts
+PASS (4 of them live), and the full stack merged 2026-07-27:
+T1 #1593, T2 #1594, T3 #1596, T5 #1598. Shipped to PyPI in
+10.6.0 and hardened same-day in 10.6.1 (#1681 stdout purity,
+which receipt 6 caught). Flipped on the chair's promotion of
+round-table thread `routine-clean-run-20260728-1020`, whose
+appendix identified this status as the stale label; that flip
+discharges the `CHAIR_REQUIRED` receipt.
 **Slug:** `cross-provider-memory-transport`
 
 ## Problem
