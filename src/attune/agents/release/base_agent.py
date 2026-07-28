@@ -24,10 +24,10 @@ from attune.models.registry import TIER_PRICING
 from .release_models import (
     ANTHROPIC_AVAILABLE,
     LLM_MODE,
-    MODEL_CONFIG,
     ReleaseAgentResult,
     Tier,
     anthropic,
+    get_model_config,
 )
 
 logger = logging.getLogger(__name__)
@@ -177,7 +177,7 @@ class ReleaseAgent:
         if not self.llm_client:
             return "", {"model": "rule_based", "cost": 0.0}
 
-        model = MODEL_CONFIG[tier.value]
+        model = get_model_config()[tier.value]
 
         try:
             # Premium tier resolves to fable — the helper routes fable

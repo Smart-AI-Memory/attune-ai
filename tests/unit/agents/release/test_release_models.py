@@ -382,28 +382,21 @@ class TestModuleConstants:
         assert "capable" in MODEL_CONFIG
         assert "premium" in MODEL_CONFIG
 
-    def test_model_config_uses_current_model_ids(self, monkeypatch):
-        """MODEL_CONFIG uses non-deprecated model IDs.
+    def test_model_config_uses_current_model_ids(self):
+        """The tier map uses non-deprecated model IDs.
 
-        ``MODEL_CONFIG["premium"]`` resolves through ``attune.model_tiers``
-        at IMPORT time (documented in release_models.py), so the autouse
-        env scrub cannot reach it — the module may already be imported
-        with a developer's ``ATTUNE_MODEL_PREMIUM`` baked in. Clear the
-        tier overrides and reload, so this asserts the real DEFAULT
-        rather than whatever the ambient shell happened to export.
+        Resolution happens at CALL time, so the autouse env scrub is
+        sufficient — no reload choreography. (Before the 2026-07-28 lazy
+        fix this froze at import and needed importlib.reload.)
         """
-        import importlib
+        from attune.agents.release.release_models import get_model_config
 
-        import attune.agents.release.release_models as rm
-
-        for var in ("ATTUNE_MODEL_PREMIUM", "ATTUNE_MODEL_CAPABLE", "ATTUNE_MODEL_CHEAP"):
-            monkeypatch.delenv(var, raising=False)
-        module = importlib.reload(rm)
+        config = get_model_config()
 
         # Prevent regression to deprecated model IDs
-        assert module.MODEL_CONFIG["cheap"] == "claude-haiku-4-5"
-        assert module.MODEL_CONFIG["capable"] == "claude-sonnet-5"
-        assert module.MODEL_CONFIG["premium"] == "claude-fable-5"
+        assert config["cheap"] == "claude-haiku-4-5"
+        assert config["capable"] == "claude-sonnet-5"
+        assert config["premium"] == "claude-fable-5"
 
     def test_default_quality_gates_keys(self):
         """DEFAULT_QUALITY_GATES has expected keys."""

@@ -195,25 +195,15 @@ class TestCallLlmWithClient:
         assert text == ""
         assert meta["model"] != "fallback"
 
-    def test_premium_routes_via_beta_namespace(self, monkeypatch):
+    def test_premium_routes_via_beta_namespace(self):
         """Premium tier resolves to fable -> create_with_fable beta path.
 
-        The beta-namespace route is reached BECAUSE premium resolves to
-        fable, and that resolution happens at IMPORT time, so an exported
-        ``ATTUNE_MODEL_PREMIUM`` genuinely changes production routing —
-        the old failure here was a real behavior difference, not a bad
-        assertion. Clear the override and reload so the test exercises
-        the default routing deterministically, the same way
-        test_release_models.py::test_model_config_uses_current_model_ids
-        does for the literal ids.
+        Resolution is call-time since 2026-07-28, so the autouse env
+        scrub suffices and this needs no reload choreography.
         """
-        import importlib
+        from attune.agents.release.release_models import Tier, get_model_config
 
-        import attune.agents.release.release_models as rm
-
-        monkeypatch.delenv("ATTUNE_MODEL_PREMIUM", raising=False)
-        importlib.reload(rm)
-        MODEL_CONFIG, Tier = rm.MODEL_CONFIG, rm.Tier
+        MODEL_CONFIG = get_model_config()
 
         assert "fable" in MODEL_CONFIG["premium"]  # task 6 wiring
         resp = self._response("premium answer")
