@@ -1,8 +1,9 @@
 # Agent Round Table — Decisions
 
-**Status:** approved (2026-07-20) — completion pass recorded
-(thread q-agent-round-table-completion-001); final review =
-2026-07-27 scheduled-fire receipt
+**Status:** shipped (2026-07-28) — completion pass recorded
+(thread q-agent-round-table-completion-001); final review
+SATISFIED by the green fire `routine-clean-run-20260728-1020`
+(see the 2026-07-28 entry at the foot)
 
 ## Chat-ratified foundations (2026-07-18, Patrick)
 
@@ -496,3 +497,51 @@ worked ARCHIVAL example — promoted before this policy, kept as the
 flow's demonstration; its rulings-count recording no-oped because
 the ledger predates the first live fire, which is what surfaced
 this ruling.
+
+## 2026-07-28 — Green fire; spec flips to shipped (chair: Patrick)
+
+The post-fire status-hygiene clause fired. Chair picked `shipped`
+over `living` — active work is carried by roundtable-triage and
+roundtable-producing-team, so this spec has nothing left to hold.
+
+**Receipt — thread `routine-clean-run-20260728-1020`, 8 invocations:**
+
+```text
+check collaboration-preflight: PASS
+check keyless-unit-suite: PASS
+seat claude: position posted (46s)
+seat antigravity: position posted (40s)
+seat codex: position posted (12s)
+synthesis: posted
+appendix complete: 4 item(s), 4 invocation(s)
+```
+
+Thread is NOT promoted (R8) — promotion and appendix rulings are a
+separate chair action via `triage_appendix.record_rulings()`.
+
+### Why the 2026-07-27 scheduled fire did not produce this
+
+Two independent environment faults, both now recorded in
+`.claude/lessons.md`:
+
+1. **Dead stored login masked by an exported API key.** The claude
+   seat returned `ABSENT — exit 1`. `run_command(provider_clean=True)`
+   re-adds `ANTHROPIC_API_KEY` only `if api_key:`, so a NON-EMPTY key
+   sends the seat down the API path and the stored CLI login is never
+   reached. That account has no credits (`Credit balance is too low`,
+   re-confirmed live 07-28), so the seat could not pass while the key
+   was exported. The fix was `claude auth login` — **not** `claude
+   login`, which does not exist on CLI 2.1.220 and silently no-ops;
+   that stale instruction cost three diagnostic rounds. Fire with
+   `ANTHROPIC_API_KEY=` so the subscription answers.
+2. **The check battery inherits the dev shell.** A second run fired
+   the same minute WITHOUT that prefix reported
+   `keyless-unit-suite: FAIL` on a healthy tree, because `.zshrc`
+   exports `ATTUNE_MAX_BUDGET_USD=10.00` and the suite asserted
+   depth defaults. The seats then reasoned correctly to "the tree is
+   not healthy" from a poisoned brief — a right answer to a wrong
+   question. Fixed at the class level: `tests/conftest.py` now scrubs
+   ambient `ATTUNE_*` at import time and per test, with a drift guard
+   in `tests/unit/test_env_isolation_guard.py`.
+
+Neither fault was visible to CI, which exports none of these.
