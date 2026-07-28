@@ -190,34 +190,16 @@ def _import_statements(body: str) -> list[tuple[int, str]]:
 def _resolve(statement: str) -> str | None:
     """Return an error message if the import does not resolve, else None.
 
-    Import-only and in-process: imports the module and checks each name
-    with ``hasattr``. Never executes fence bodies.
+    Delegates to the shared authoritative resolver
+    (``attune.authoring.fact_check.imports``, #1586) so this gate and
+    the master fact-check produce one import verdict. Imported lazily:
+    ``main()`` puts the in-repo ``src`` on ``sys.path`` first, so the
+    script keeps working in a checkout where the package isn't
+    installed. Never executes fence bodies.
     """
-    try:
-        if statement.startswith("import "):
-            mod = statement[len("import ") :].split(" as ")[0].strip()
-            importlib.import_module(mod)
-            return None
-        # from MOD import A, B as C, ...
-        head, _, tail = statement.partition(" import ")
-        mod = head[len("from ") :].strip()
-        module = importlib.import_module(mod)
-        missing = []
-        for piece in tail.split(","):
-            name = piece.strip().split(" as ")[0].strip()
-            if name and name != "*" and not hasattr(module, name):
-                missing.append(name)
-        if missing:
-            return f"{mod} has no attribute(s): {', '.join(missing)}"
-        return None
-    except ModuleNotFoundError as e:
-        return f"ModuleNotFoundError: {e}"
-    except ImportError as e:
-        return f"ImportError: {e}"
-    except Exception as e:  # noqa: BLE001
-        # INTENTIONAL: a doc import that blows up any other way (e.g. a
-        # module-level error) is still a broken fence the reader would hit.
-        return f"{type(e).__name__}: {e}"
+    from attune.authoring.fact_check.imports import resolve_import_statement
+
+    return resolve_import_statement(statement)
 
 
 # --- G4 deep checks (kwargs/attrs + MCP module paths) ----------------------
