@@ -39,14 +39,60 @@ def test_suite_managed_vars_survive_the_scrub():
     assert "ATTUNE_HOME" in _SUITE_MANAGED_ENV
 
 
-def test_import_time_override_does_not_reach_module_constants():
-    """An exported override must not survive into import-time constants.
+def test_no_module_level_binding_freezes_a_resolver_result():
+    """No module global may freeze an env-reading resolver at import.
 
-    ``release_models.MODEL_CONFIG`` resolves the premium tier at IMPORT
-    time and ``base_agent`` binds that dict, so a per-test fixture is too
-    late — the scrub has to run before the first ``attune`` import. This
-    spawns a real subprocess with the override set, which is the only way
-    to prove the ordering holds.
+    This is the invariant that lets the per-test scrub be sufficient. A
+    module-level ``X = resolve_something()`` captures the ambient env at
+    import, before any fixture can run, and any consumer doing
+    ``from … import X`` then holds a snapshot that ``importlib.reload``
+    cannot refresh.
+
+    Ruled 2026-07-28 (round table ``q-conftest-env-scrub-001``):
+    ``ATTUNE_*`` overrides are observable after import. At that ruling
+    the codebase had 61 call-time reads, 0 import-time reads, and
+    exactly ONE violation — ``release_models.MODEL_CONFIG`` — which was
+    made lazy. This guard keeps that at zero; a new violation should
+    fail HERE, loudly, rather than be masked by scrubbing env before
+    the first import.
+    """
+    import ast
+
+    resolvers = {
+        "resolve_model",
+        "get_max_budget_usd",
+        "get_model_config",
+        "get_cache_ttl",
+        "keyboard_mode_enabled",
+        "get_auto_approve_max",
+    }
+    repo_root = Path(__file__).resolve().parents[2]
+    frozen = []
+    for path in (repo_root / "src" / "attune").rglob("*.py"):
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8", errors="ignore"))
+        except SyntaxError:  # pragma: no cover - unparseable file
+            continue
+        for node in tree.body:  # module level only
+            if isinstance(node, ast.Assign | ast.AnnAssign):
+                src = ast.unparse(node)
+                if any(f"{r}(" in src for r in resolvers):
+                    frozen.append(f"{path.relative_to(repo_root)}:{node.lineno}")
+    assert not frozen, (
+        "module-level binding(s) freeze a resolver result at import: "
+        f"{frozen}. Make the value lazy (a function, or module __getattr__) "
+        "so it observes the environment at call time."
+    )
+
+
+def test_import_time_override_does_not_reach_module_constants():
+    """An exported override must not change resolved model ids in a test.
+
+    Complements the static guard above with a live check: spawn a real
+    subprocess with the override set and assert the default-asserting
+    test still passes. Before the 2026-07-28 lazy fix this required
+    scrubbing env before the first ``attune`` import; it now passes on
+    the strength of the per-test fixture alone.
     """
     env = {**os.environ, "ATTUNE_MODEL_PREMIUM": "claude-opus-5", "ANTHROPIC_API_KEY": ""}
     # Absolute node id + explicit cwd: lanes do not all invoke pytest from

@@ -34,23 +34,6 @@ import pytest
 _SUITE_MANAGED_ENV = frozenset({"ATTUNE_HOME", "ATTUNE_HELP_TELEMETRY"})
 
 
-# Scrub at conftest IMPORT time, before any test module (and therefore any
-# `attune.*` module) is imported. Several defaults are resolved once at
-# import and captured by other modules — e.g. release_models.MODEL_CONFIG
-# resolves the premium tier through attune.model_tiers at import, and
-# base_agent binds that dict, so a per-test fixture is far too late to
-# undo an exported ATTUNE_MODEL_PREMIUM. Clearing here makes the suite
-# hermetic for both import-time and call-time reads; the fixture below
-# then keeps it that way for anything set mid-session.
-def _scrub_attune_env_at_import() -> None:
-    """Drop ambient ``ATTUNE_*`` overrides before any attune module loads."""
-    for name in [k for k in os.environ if k.startswith("ATTUNE_")]:
-        if name not in _SUITE_MANAGED_ENV:
-            del os.environ[name]
-
-
-_scrub_attune_env_at_import()
-
 # =============================================================================
 # Redis host guard — literal loopback, never a resolvable name
 # (windows-exit139-segfault spec)

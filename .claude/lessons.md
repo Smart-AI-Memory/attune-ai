@@ -18980,7 +18980,28 @@ def ", start_idx + 1)` for module-
   constant — a module-level `X = f(env)` is the tell. Exclude vars other
   fixtures own (`ATTUNE_HOME`): scrubbing it pointed the default
   telemetry store at the real `~/.attune` and the existing RC-4
-  `test_suite_isolation_drift_guard` caught it instantly. The
+  `test_suite_isolation_drift_guard` caught it instantly.
+  **SUPERSEDED IN PART (2026-07-28, same day): prefer REMOVING the
+  import-time capture over scrubbing earlier.** Measuring the codebase
+  settled it — 61 `ATTUNE_*` reads at call time, 0 at import, and
+  exactly ONE module-level binding freezing a resolver result
+  (`release_models.MODEL_CONFIG`). So the de-facto contract was already
+  "observable after import" and that one line was the sole violation: a
+  4-reference fix, not the `src/`-wide lazy-evaluation migration a
+  round-table seat proposed on the strength of the same symptom.
+  Making it lazy let the conftest import-time scrub be DELETED
+  (18955 passed / 0 failed under the fully poisoned env, both with and
+  without it). Two reasons the deletion is better than defence in
+  depth: (a) the import-time scrub deletes vars before `load_dotenv()`
+  runs at module level, and dotenv only injects names that do NOT
+  exist — so the scrub ARMS a `.env` injection path that a shell export
+  had been shadowing; (b) with no scrub, a future import-time freeze
+  fails LOUDLY instead of being masked by the very thing hiding it.
+  The diagnostic above still stands unchanged; what changed is the
+  remedy ranking — fix `src/`, then check whether the test-side
+  workaround is still needed at all. A static guard
+  (`test_no_module_level_binding_freezes_a_resolver_result`) keeps the
+  count at zero; verified red/green by reintroducing a freeze. The
   ANTHROPIC_API_KEY-leaks-into-pytest lesson is the same family, so
   treat "reads process env" as a standing test-isolation trigger, not
   a one-off; (2) when two runs of the same routine disagree, **diff

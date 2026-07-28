@@ -57,13 +57,13 @@ from .release_models import (  # noqa: F401
     ANTHROPIC_AVAILABLE,
     DEFAULT_QUALITY_GATES,
     LLM_MODE,
-    MODEL_CONFIG,
     REDIS_AVAILABLE,
     QualityGate,
     ReleaseAgentResult,
     ReleaseReadinessReport,
     Tier,
     anthropic,
+    get_model_config,
     redis_lib,
 )
 

@@ -46,14 +46,43 @@ except ImportError:
 # Configuration
 # =============================================================================
 
-# NOTE: the premium entry resolves through attune.model_tiers at IMPORT
-# time (this dict is read directly by base_agent/release_prep_team).
-# Set ATTUNE_MODEL_PREMIUM before importing to override it.
-MODEL_CONFIG = {
-    "cheap": "claude-haiku-4-5",
-    "capable": "claude-sonnet-5",
-    "premium": resolve_model("premium"),
-}
+#: Tiers whose model id is fixed (no env override path).
+_STATIC_MODELS = {"cheap": "claude-haiku-4-5", "capable": "claude-sonnet-5"}
+
+
+def get_model_config() -> dict[str, str]:
+    """Resolve the tier -> model-id map, reading env at CALL time.
+
+    The premium entry resolves through :mod:`attune.model_tiers`, which
+    honors ``ATTUNE_MODEL_PREMIUM``. Resolving here rather than at import
+    keeps this consistent with the rest of the codebase: every other
+    ``ATTUNE_*`` read in ``src/`` happens inside a function (61 sites),
+    and this dict was the single module-level binding that froze a
+    resolver result at import.
+
+    That freeze was a real defect, not just a testing nuisance — a
+    long-lived process (MCP server, ops dashboard) could not observe a
+    changed override without a restart, the effective value depended on
+    import order, and a consumer doing ``from … import MODEL_CONFIG``
+    captured a snapshot that ``importlib.reload`` could not refresh.
+    Ruled 2026-07-28 (round table ``q-conftest-env-scrub-001``):
+    ``ATTUNE_*`` overrides are observable after import.
+    """
+    return {**_STATIC_MODELS, "premium": resolve_model("premium")}
+
+
+def __getattr__(name: str) -> object:
+    """Keep ``release_models.MODEL_CONFIG`` working, resolved fresh.
+
+    Attribute access re-resolves; it is no longer a frozen module global.
+    Note that ``from … import MODEL_CONFIG`` still binds a snapshot at
+    the importing module's import time — call :func:`get_model_config`
+    instead when the value must track the environment.
+    """
+    if name == "MODEL_CONFIG":
+        return get_model_config()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 # LLM mode: "real" uses API calls, "simulated" uses rule-based analysis
 LLM_MODE = os.getenv("RELEASE_LLM_MODE", "simulated")
