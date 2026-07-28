@@ -222,6 +222,68 @@ zero consumers; stale artifact, future deletion candidate. All
 three retired with grep receipts; the sweep's only correction was
 replacing a fictional rebrand with an honest deletion.
 
+## 2026-07-21 — G4(a)+(b) SHIPPED red-first (merge held for post-tag)
+
+The kwarg/attr and MCP-config layers landed as new checkers behind
+`audit_doc_imports.py`'s existing walk (per D6), opt-in via
+`.claude/gates/doc-deep-check-allowlist.txt` (`<path> :: <reason>`,
+reason REQUIRED — a bare path is itself a finding). Seeded with the
+five getting-started pages.
+
+**Red-first receipt (4 real findings on first run):**
+`choose-your-path.md` documented the dead
+`attune.socratic.mcp_server` module (the requirements' literal
+example) plus a `socratic` server; `mcp-integration.md`'s
+`.claude/mcp.json` fence drifted from the real file (server name
+`attune` vs `attune-ai`, `python` vs `uv run python`, stale
+`PYTHONPATH` env). All fixed; gate green over the full published
+scope (446 imports / 383 fences / 93 files; 5 deep-checked).
+
+**Checker-scope correction found by the red run:** the real-file
+diff fired on Claude Desktop config examples too — the spec's
+wording ("documented `.claude/mcp.json` fences") is now enforced
+literally: the diff runs only when `.claude/mcp.json` is named
+within 10 lines above the fence. Kwarg/attr checking is dataclass-
+field + signature-bind only (non-dataclass instance attrs skipped —
+instance-only attrs would false-positive); fences are still never
+executed. The 07-11 red-first fix set had partially self-healed:
+the kwarg/attr layer found ZERO live drift (those snippets were
+fixed by interim passes) — the live drift was all MCP-config class.
+
+**Remaining G4 scope:** (c) the CONTRIBUTING clean-venv CI lane —
+a separate CI job by D6's own carve-out, staged advisory→required;
+next G4 unit. G3 stays blocked on hook-timeout-budget Phase 0.2
+values.
+
+## 2026-07-21 — G4(c) SHIPPED red-first (same held PR): clean-venv lane
+
+`scripts/extract_contributing_setup.py` extracts CONTRIBUTING.md's
+LITERAL setup fence at run time (drift-guard seam: hardcoding the
+commands in the workflow would itself be claim-drift), rewriting
+only three contracted line classes — `git clone` / `cd attune-ai`
+(commented; CI runs in the checkout under test) and the bare
+`pytest tests/` verification line (gets `-x -k smoke`). Doc
+restructuring fails LOUDLY (missing heading/fence/pytest line →
+exit 1). `.github/workflows/contributing-smoke.yml` runs it in a
+fresh venv, keyless (empty-string key), on PRs touching the
+setup-relevant files + weekly + dispatch. **ADVISORY**
+(`continue-on-error: true`); promote to required after two green
+weeks per the ci-matrix-right-sizing precedent — promotion check
+due ~2026-08-04.
+
+**Red-first receipt (LOCAL live-fire, not simulated):** executing
+the doc's then-current literal commands in a fresh venv died with
+`pytest: error: unrecognized arguments: -n` (exit 4) — the exact
+`[dev]`-extra/pytest-xdist drift the 07-11 fix set predicted: the
+doc installed bare `pytest pytest-cov pytest-asyncio` while
+pytest.ini's addopts require xdist. Fix: the setup fence now
+installs `pip install -e ".[dev]"`. Green rerun: exit 0, 172
+passed / 5 skipped in the fresh venv under the doc's own commands.
+
+**G4 is now fully built (a+b+c, one held PR).** The gate family's
+remaining unit is G3 only (blocked on hook-timeout-budget Phase
+0.2 values).
+
 ## 2026-07-21 — G4 build receipt + design-phase waiver (chair)
 
 G4 (a+b+c) is complete on branch `feat/claim-drift-g4` as **held

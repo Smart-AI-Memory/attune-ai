@@ -198,3 +198,121 @@ def test_scope_content_blog_always_checked(tmp_path: Path):
     _write_mkdocs(repo, nav=[], exclude=["**"])
     findings, _ = adi.audit(repo, None)
     assert len(findings) == 1
+
+
+# --- G4 deep checks (claim-drift-gates G4) ---------------------------------
+
+
+def _deep_repo(tmp_path: Path, doc_body: str, allow: str | None = None) -> Path:
+    repo = tmp_path
+    (repo / "docs" / "getting-started").mkdir(parents=True)
+    (repo / "docs" / "getting-started" / "x.md").write_text(doc_body, encoding="utf-8")
+    gates = repo / ".claude" / "gates"
+    gates.mkdir(parents=True)
+    (gates / "doc-deep-check-allowlist.txt").write_text(
+        allow if allow is not None else "docs/getting-started/x.md :: onboarding snippet\n",
+        encoding="utf-8",
+    )
+    return repo
+
+
+def test_allowlist_requires_reason(tmp_path: Path):
+    repo = _deep_repo(tmp_path, "no fences\n", allow="docs/getting-started/x.md\n")
+    findings, _ = adi.audit(repo, ["docs/getting-started/x.md"])
+    assert any("needs '<path> :: <reason>'" in f.message for f in findings)
+
+
+def test_deep_unknown_kwarg_flagged(tmp_path: Path):
+    body = (
+        "```python\n"
+        "from attune.roundtable.solutions import CheckReceipt\n"
+        'r = CheckReceipt(label="x", argv=[], exit_code=0, tail="", bogus_kwarg=1)\n'
+        "```\n"
+    )
+    repo = _deep_repo(tmp_path, body)
+    findings, stats = adi.audit(repo, ["docs/getting-started/x.md"])
+    assert stats.deep_files == 1
+    assert any("bogus_kwarg" in f.message for f in findings)
+
+
+def test_deep_dataclass_attr_flagged(tmp_path: Path):
+    body = (
+        "```python\n"
+        "from attune.roundtable.solutions import CheckReceipt\n"
+        'r = CheckReceipt(label="x", argv=[], exit_code=0, tail="")\n'
+        "print(r.tail)\n"
+        "print(r.tale_typo)\n"
+        "```\n"
+    )
+    repo = _deep_repo(tmp_path, body)
+    findings, _ = adi.audit(repo, ["docs/getting-started/x.md"])
+    msgs = [f.message for f in findings]
+    assert any("tale_typo" in m for m in msgs)
+    assert not any("'tail'" in m for m in msgs)
+
+
+def test_deep_module_attr_chain_flagged(tmp_path: Path):
+    body = "```python\nimport attune\nattune.definitely_not_real_xyz()\n```\n"
+    repo = _deep_repo(tmp_path, body)
+    findings, _ = adi.audit(repo, ["docs/getting-started/x.md"])
+    assert any("definitely_not_real_xyz" in f.message for f in findings)
+
+
+def test_deep_not_run_without_allowlist_entry(tmp_path: Path):
+    body = (
+        "```python\n"
+        "from attune.roundtable.solutions import CheckReceipt\n"
+        'r = CheckReceipt(label="x", argv=[], exit_code=0, tail="", bogus_kwarg=1)\n'
+        "```\n"
+    )
+    repo = _deep_repo(tmp_path, body, allow="# empty\n")
+    findings, stats = adi.audit(repo, ["docs/getting-started/x.md"])
+    assert stats.deep_files == 0
+    assert findings == []
+
+
+def test_json_fence_bad_module_flagged(tmp_path: Path):
+    body = '```json\n{"mcpServers": {"s": {"args": ["-m", "attune.gone_xyz"]}}}\n```\n'
+    repo = _deep_repo(tmp_path, body)
+    findings, _ = adi.audit(repo, ["docs/getting-started/x.md"])
+    assert any("attune.gone_xyz" in f.message for f in findings)
+
+
+def test_json_fence_real_module_passes(tmp_path: Path):
+    body = '```json\n{"mcpServers": {"s": {"args": ["-m", "attune.mcp.server"]}}}\n```\n'
+    repo = _deep_repo(tmp_path, body)
+    findings, _ = adi.audit(repo, ["docs/getting-started/x.md"])
+    assert findings == []
+
+
+def test_mcp_json_diff_only_when_documenting_real_file(tmp_path: Path):
+    fence = (
+        '```json\n{"mcpServers": {"other": {"command": "python",'
+        ' "args": ["-m", "attune.mcp.server"]}}}\n```\n'
+    )
+    real = '{"mcpServers": {"attune-ai": {"command": "uv", "args": ["run"]}}}'
+    # Desktop-config context: no mention of .claude/mcp.json -> no diff.
+    repo = _deep_repo(tmp_path, "Claude Desktop config:\n\n" + fence)
+    (repo / ".claude" / "mcp.json").write_text(real, encoding="utf-8")
+    findings, _ = adi.audit(repo, ["docs/getting-started/x.md"])
+    assert findings == []
+    # Documenting the real file -> the unknown server IS flagged.
+    repo2 = _deep_repo(tmp_path / "second", "Configured via `.claude/mcp.json`:\n\n" + fence)
+    (repo2 / ".claude" / "mcp.json").write_text(real, encoding="utf-8")
+    findings2, _ = adi.audit(repo2, ["docs/getting-started/x.md"])
+    assert any("not present in the real .claude/mcp.json" in f.message for f in findings2)
+
+
+def test_mcp_json_arg_drift_flagged(tmp_path: Path):
+    fence = (
+        '```json\n{"mcpServers": {"attune-ai": {"command": "python",'
+        ' "args": ["-m", "attune.mcp.server"]}}}\n```\n'
+    )
+    real = (
+        '{"mcpServers": {"attune-ai": {"command": "uv",'
+        ' "args": ["run", "python", "-m", "attune.mcp.server"]}}}'
+    )
+    repo = _deep_repo(tmp_path, "The real `.claude/mcp.json`:\n\n" + fence)
+    (repo / ".claude" / "mcp.json").write_text(real, encoding="utf-8")
+    findings, _ = adi.audit(repo, ["docs/getting-started/x.md"])
+    assert any("drifts from .claude/mcp.json" in f.message for f in findings)

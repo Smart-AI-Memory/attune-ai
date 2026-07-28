@@ -1,0 +1,56 @@
+# G4(c) — the CONTRIBUTING clean-venv lane (claim-drift-gates G4,
+# D6 carve-out): execute CONTRIBUTING.md's LITERAL setup commands —
+# extracted at run time by scripts/extract_contributing_setup.py so
+# the lane can never drift from the doc it guards — in a fresh venv,
+# keyless, smoke subset (-x -k smoke).
+#
+# ADVISORY while staging (continue-on-error: true). Promote to
+# required after two green weeks, per the ci-matrix-right-sizing
+# precedent (recorded in docs/specs/claim-drift-gates/decisions.md).
+
+name: CONTRIBUTING smoke
+
+on:
+  pull_request:
+    paths:
+      - 'CONTRIBUTING.md'
+      - 'pyproject.toml'
+      - 'pytest.ini'
+      - 'scripts/extract_contributing_setup.py'
+      - '.github/workflows/contributing-smoke.yml'
+  schedule:
+    - cron: '17 7 * * 1' # weekly drift check, Mon 07:17 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: contributing-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  clean-venv-smoke:
+    name: clean-venv setup + smoke subset
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true # advisory while staging (G4c)
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Extract the documented setup commands
+        run: |
+          python scripts/extract_contributing_setup.py | tee "$RUNNER_TEMP/contributing-setup.sh"
+
+      - name: Execute the documented setup in a fresh venv (keyless)
+        env:
+          # Empty, not unset — CI-faithful keyless discipline (dotenv
+          # cannot inject a real key over an existing empty var).
+          ANTHROPIC_API_KEY: ''
+        run: bash "$RUNNER_TEMP/contributing-setup.sh"
