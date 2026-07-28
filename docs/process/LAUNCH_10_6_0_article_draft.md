@@ -10,10 +10,19 @@ unfilled slot is forbidden (no claim without a receipt).
 Pre-publish checklist:
 
 - [ ] All `[RECEIPT: …]` slots filled with real transcript excerpts
-- [ ] Version/date claims match the actual v10.6.0 tag + PyPI 200
+- [ ] Version/date claims re-checked against **live PyPI**, not the
+      tag this draft was written against. 10.6.0 names the release;
+      **10.6.1** is the same-day patch and is what `pip install`
+      resolves to today — it carries the README "Multi-LLM
+      collaboration" section this article describes. Verify with
+      `curl -s https://pypi.org/pypi/attune-ai/json` before firing;
+      a later patch moves this number again.
 - [ ] Chair honesty-gate pass (same ruling session as Draft B)
-- [ ] Counts ("five tools", "26 skills") re-verified against the
-      merged registries, not this draft
+- [x] Counts re-verified against the merged registries (2026-07-28):
+      "five `session_memory_*` tools" = 5, names match
+      (`attune_redis.mcp_tools.SESSION_MEMORY_TOOL_DEFINITIONS`).
+      No other capability count appears in the body — the earlier
+      "26 skills" item checked a claim this draft does not make.
 
 ---
 
@@ -140,7 +149,8 @@ it gets a seat at the table and a key to the memory, not a fork.
 pip install attune-ai
 ```
 
-10.6.0 is on PyPI now. The round table is open.
+10.6.1 is on PyPI now — 10.6.0 plus a same-day patch. The round
+table is open.
 
 ---
 
