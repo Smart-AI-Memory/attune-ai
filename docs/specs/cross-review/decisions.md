@@ -54,3 +54,58 @@ no code surface yet (skill text only). Receipts on the PR: 19 new
 tests, roundtable 175 serial-green, plugins 148 serial-green,
 mutating-git grep clean. T3 dogfooding remains gated on the
 OPEN-1..3 rulings.
+
+## 2026-07-28 — OPEN-1..3 RULED; the usage-read gate is KILLED
+
+Chair ruling. The gate held OPEN-1..3 for "the 07-27 usage read."
+That read is retired as a gate — not deferred — on three findings, each
+verified rather than argued.
+
+**1. The corpus cannot answer the question.** OPEN-3 needs "frequency
+and typical diff size" of cross-review runs. `usage-signals` snapshots
+measure PyPI/GitHub adoption:
+
+```json
+{"attempts": [{"captured": 0, "outcome": "rate-limited"}],
+ "github": {}, "pypi_recent": {}, "manifest": {"complete": false}}
+```
+
+Zero occurrences of `cross-review`, `roundtable`, or `invocation` in
+the snapshot corpus. The newest snapshot (2026-07-26) captured nothing
+at all — rate-limited, zero rows.
+
+**2. The gate is circular.** OPEN-3 wants usage data → usage data comes
+from T3's five dogfood runs → T3 `<depends>` names "OPEN-1..3 ruled."
+Waiting cannot satisfy this gate; it can only expire.
+
+**3. The gate protects nothing.** `DEFAULT_SEAT = "codex"` and
+`DIFF_CAP_CHARS = 60_000` are live in shipped 10.6.1
+(`src/attune/roundtable/review.py:35-36`) — provisional values are in
+users' hands today. Withholding the ruling withheld the label, not the
+behavior.
+
+### Rulings
+
+- **OPEN-1 — default reviewer seat: FIXED default, `codex`** (the
+  shipped value) for v1. Rotation is not ruled out; it needs T3
+  evidence. Carry into that evidence the finding recorded in
+  `docs/reports/roundtable/routine-clean-run-20260728-1020.md`: in that
+  appendix the antigravity seat diverged on all four triage items by
+  reasoning from lifecycle labels and declared status rather than
+  PR/receipt state. That is a seat-behavior signal relevant to who
+  should review by default.
+- **OPEN-2 — invocation ergonomics: MANUAL-ONLY for v1.** No suggested
+  cadence, no reminder. Auto-trigger was already a v1 non-goal; this
+  makes the whole surface manual until dogfooding shows demand.
+- **OPEN-3 — diff budget: RATIFY the shipped `60_000` chars as the v1
+  cap**, explicitly provisional. T3's five runs produce the real
+  frequency and diff-size distribution; OPEN-3 is **re-ruled from that
+  evidence**, which is the data the original gate wanted and could
+  never have obtained by waiting.
+
+**T3 is UNBLOCKED.** Its `<depends>` is satisfied by this entry.
+
+Binding posture is unchanged and not reopened: board-only advisory,
+never a merge gate until dogfooded finding-quality earns it. A
+low-finding-quality outcome remains a VALID result that rules the
+advisory posture permanent (dogfood-or-remove).
