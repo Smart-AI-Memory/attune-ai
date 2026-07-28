@@ -233,9 +233,13 @@ abstraction.
 
 ## Socratic Interaction Rule
 
-**ALWAYS guide users through discovery and scoping before executing. NEVER skip straight to execution.**
+**Asking for more than one thing? That is a form. Build it before you
+write the sentence.**
 
-This is the core design principle of Attune AI's developer experience.
+Everything below elaborates that line. If you only remember one thing,
+remember that one — it is the case that fires most often and the case
+I most often get wrong, because prose is cheap to emit and a form costs
+a beat.
 
 **Build a form; don't hand-write a question turn.** (D21 — this rule
 used to name `AskUserQuestion`, and naming a tool got it executed as
@@ -244,12 +248,43 @@ a `FormSchema` via `attune.elicitation.form_from_dict` and let
 `select_form_surface` pick the surface. The widget is the default;
 `AskUserQuestion` is one of its fallbacks, not the starting point.
 
-**Fire a form when ANY of these holds:**
+### Two grammars, two directions — not a ranking
 
-- Two or more independent dimensions must be settled — batch them into
-  ONE form, never N sequential turns. (`AskUserQuestion` caps at 4
-  options and one question per turn, so it *structurally cannot* carry
-  a batched multi-dimension ask. This is the highest-value case.)
+They are not competing methods and neither is "primary". They serve
+opposite directions of the same exchange:
+
+| Direction | Grammar | When |
+|---|---|---|
+| I ask | a form | something genuinely needs settling |
+| You answer | terse vocab (`y` / `go` / `1` / `→ X`) | it is already settled |
+
+A bare confirm is **not an ask** — it is you closing a loop I opened.
+Putting a form in front of `go` adds friction to the highest-frequency
+interaction in the loop. Do not do it.
+
+The failure mode this rule guards is not "used terse vocab where a form
+belonged." It is **mis-classifying a multi-dimension ask as a bare
+confirm** because prose is faster to write.
+
+### Fire a form when ANY of these holds
+
+- **Two or more independent dimensions must be settled** — batch them
+  into ONE form, never N sequential turns. This is the highest-value
+  case, and it is the headline above.
+
+  Build the `FormSchema` even when the surface ends up being
+  `AskUserQuestion`. It is a portable, validated artifact that renders
+  to every surface — `form_to_widget_html`, `form_to_elicitation_schema`,
+  and `form_to_askuserquestion` ("render a form to BATCHED
+  `AskUserQuestion` payloads"). Hand-writing the turn skips the
+  validation and pins you to one surface.
+
+  Actual limits, so you size the form rather than guess: **2–4 options
+  per question, 1–4 questions per call.** A batch of >1 question is
+  blocked by default by `ask_question_format_guard.py` and opts in via
+  `metadata.source` containing "form" (e.g. `"elicit-form"`) — a policy
+  default with a documented hatch, NOT a structural cap. Beyond 4
+  dimensions, split into a two-tier picker.
 - Three or more alternatives, or two with tradeoffs worth stating
   (→ `decision` construct).
 - You are recommending against something the user named
@@ -258,11 +293,14 @@ a `FormSchema` via `attune.elicitation.form_from_dict` and let
 - The choice changes scope, architecture, files, external state, or
   acceptance criteria — or is hard to reverse.
 
-**A raw button-turn is correct only when ALL of these hold:** one
-dimension, ≤3 options, no tradeoffs worth stating. Plus two standing
-exceptions: the referent is already resolved and you need a bare
-confirm (the terse-vocab path — `y` / `go` / `1`), or the user is in
-keyboard mode.
+### A raw button-turn is correct only when ALL of these hold
+
+One dimension, ≤3 options, no tradeoffs worth stating. Plus one
+standing exception: the user is in keyboard mode.
+
+(The terse-vocab path is not an exception here — see "two grammars"
+above. A bare confirm of a resolved referent is not a question turn at
+all, so this test never applies to it.)
 
 **Examples:**
 
