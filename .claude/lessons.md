@@ -13756,8 +13756,8 @@ files.
   quota, no per-token charge. If neither →
   authentication fails. For subscribers who want
   attune workflows on subscription pricing: unset
-  `ANTHROPIC_API_KEY` globally, run `claude login`
-  once interactively to cache the token, and set
+  `ANTHROPIC_API_KEY` globally, run
+  `claude auth login` once interactively to cache the token, and set
   the key inline (`ANTHROPIC_API_KEY=$(...) python
   script.py`) only when a script needs direct API
   access (e.g. batch jobs, `anthropic` SDK calls).
@@ -16212,7 +16212,7 @@ def ", start_idx + 1)` for module-
   CLI); (c) with EVERY `ANTHROPIC_*`/`CLAUDE*` var stripped
   (provider-clean), a remaining 401 "OAuth access token has been
   revoked" isolates the CLI's own stored token — only an
-  interactive `claude login` fixes that, and credential flows are
+  interactive `claude auth login` fixes that, and credential flows
   the user's, never the agent's. Rule: subprocesses that should
   use their OWN auth (member seats, nested claude) run
   provider-clean; subprocesses that must stay keyless (CI-faithful
@@ -18713,7 +18713,7 @@ def ", start_idx + 1)` for module-
   `ANTHROPIC_API_KEY`, giving two auth paths that fail differently:
   (a) stored CLI login — probe with a python subprocess replicating
   that exact scrub + `claude -p "Reply with exactly: OK"`; "401 OAuth
-  access token has been revoked" means a `claude login` from earlier
+  access token has been revoked" means a `claude auth login` earlier
   didn't stick (a later login elsewhere revokes it). Do NOT probe
   with `env -i` — over-scrubbing yields a DIFFERENT failure ("Not
   logged in · Please run /login") that misdiagnoses the state. (b)
@@ -18888,7 +18888,7 @@ def ", start_idx + 1)` for module-
   takes the API path and the stored CLI login is NEVER reached, even
   when a valid `Claude Code-credentials` Keychain entry exists. So the
   2026-07-27 "credit balance is too low" (HTTP 400) failure could not
-  be fixed by `claude login` — the login was fine and unreachable.
+  be fixed by re-auth — the login was fine and unreachable.
   Conversely `ANTHROPIC_API_KEY= <cmd>` makes the branch falsy, drops
   the key, and forces the subscription/stored-login path — which is
   the sanctioned `else` branch in the docstring, not a workaround, and
@@ -18912,10 +18912,32 @@ def ", start_idx + 1)` for module-
   directly, versus through `run_command(provider_clean=True)`:
   - scrubbed FAILS + plain SUCCEEDS ⇒ the scrub strips something
     load-bearing; fix `run_command`, do NOT re-login.
-  - BOTH fail identically ⇒ the stored credential is dead; `claude
-    login` is correct (2026-07-28: both failed, and a
+  - BOTH fail identically ⇒ the stored credential is dead; re-auth is
+    correct (2026-07-28: both failed, and a
     `Claude Code-credentials` Keychain entry EXISTING is not evidence
     it is valid — a stale entry produces this exact message).
   The same two-probe shape generalizes to any "did my harness break
   it, or is it actually broken" question: hold the condition fixed and
   remove the harness.
+  (4) **THE COMMAND IS `claude auth login`, NOT `claude login` — and
+  `claude auth status` is the canonical probe. Verify the FIX EXISTS
+  before debugging why it didn't work.** On CLI 2.1.220 there is no
+  top-level `login` subcommand (`claude --help` lists `auth`,
+  `setup-token`, `gateway`); `claude login` therefore does nothing.
+  This corpus said "run `claude login`" in several places — stale
+  guidance from an older CLI — and it cost three rounds on 2026-07-28:
+  the credential never changed, and the investigation went to Keychain
+  `mdat` forensics and TTY/redirect theories while the recommended
+  command simply did not exist. `claude auth status` returns JSON
+  (`loggedIn`, `authMethod`, `subscriptionType`) and is a far better
+  receipt than timestamp archaeology — `{"loggedIn": false,
+  "authMethod": "none"}` before, `{"loggedIn": true, "authMethod":
+  "claude.ai", "subscriptionType": "max"}` after `claude auth login`,
+  and the seat probe then returned `exit 0 / OK`. **Durable rule: when
+  a prescribed fix produces no observable change, `--help` the command
+  BEFORE theorizing about why it failed.** A no-op command and a
+  failing command look identical from the outside, and vendored CLIs
+  reorganize subcommands between versions. Same family as the stale
+  `receipts.md` "run with no arguments" instruction corrected the same
+  day: instructions in the corpus rot against the tools they name, and
+  neither one is tested by anything.
