@@ -269,10 +269,22 @@ confirm** because prose is faster to write.
 ### Fire a form when ANY of these holds
 
 - **Two or more independent dimensions must be settled** — batch them
-  into ONE form, never N sequential turns. (`AskUserQuestion` caps at 4
-  options and one question per turn, so it *structurally cannot* carry
-  a batched multi-dimension ask. This is the highest-value case, and
-  it is the headline above.)
+  into ONE form, never N sequential turns. This is the highest-value
+  case, and it is the headline above.
+
+  Build the `FormSchema` even when the surface ends up being
+  `AskUserQuestion`. It is a portable, validated artifact that renders
+  to every surface — `form_to_widget_html`, `form_to_elicitation_schema`,
+  and `form_to_askuserquestion` ("render a form to BATCHED
+  `AskUserQuestion` payloads"). Hand-writing the turn skips the
+  validation and pins you to one surface.
+
+  Actual limits, so you size the form rather than guess: **2–4 options
+  per question, 1–4 questions per call.** A batch of >1 question is
+  blocked by default by `ask_question_format_guard.py` and opts in via
+  `metadata.source` containing "form" (e.g. `"elicit-form"`) — a policy
+  default with a documented hatch, NOT a structural cap. Beyond 4
+  dimensions, split into a two-tier picker.
 - Three or more alternatives, or two with tradeoffs worth stating
   (→ `decision` construct).
 - You are recommending against something the user named
