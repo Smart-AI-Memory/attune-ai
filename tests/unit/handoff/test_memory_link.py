@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +10,20 @@ import pytest
 
 from attune.handoff import handoff_create, handoff_resume
 from attune.memory import session_stash
+
+
+def _make_session_stash_unimportable(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Make ``from attune.memory import session_stash`` raise ImportError.
+
+    Both the package attribute (bound by earlier imports) and the
+    ``sys.modules`` entry must go: the attribute would satisfy the
+    ``from`` import directly, and a ``None`` module entry makes the
+    fallback submodule import raise.
+    """
+    import attune.memory
+
+    monkeypatch.delattr(attune.memory, "session_stash", raising=False)
+    monkeypatch.setitem(sys.modules, "attune.memory.session_stash", None)
 
 
 class FakeBackend:
@@ -72,6 +87,34 @@ class TestCreateLinkage:
         assert result["ok"] is True
         assert result["memory"] == {"status": "skipped", "reason": "stash_error"}
 
+    def test_create_unimportable_session_stash_skips(
+        self, repo: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The packet still writes when the memory layer can't import."""
+        _make_session_stash_unimportable(monkeypatch)
+        result = handoff_create(repo, goal="g", base_ref="main")
+        assert result["ok"] is True
+        assert Path(result["path"]).exists()
+        assert result["memory"] == {
+            "status": "skipped",
+            "reason": "session_stash_unavailable",
+        }
+
+    def test_status_probe_error_falls_back_to_write_failed(
+        self, repo: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A failed write whose reason lookup ALSO fails still reports a
+        stable skip code — never an exception."""
+        monkeypatch.setattr(session_stash, "stash_entry", lambda entry: False)
+
+        def boom() -> dict[str, Any]:
+            raise RuntimeError("status probe exploded")
+
+        monkeypatch.setattr(session_stash, "backend_status", boom)
+        result = handoff_create(repo, goal="g", base_ref="main")
+        assert result["ok"] is True
+        assert result["memory"] == {"status": "skipped", "reason": "write_failed"}
+
     def test_rejected_packet_never_reaches_the_stash(
         self, repo: Path, backend: FakeBackend
     ) -> None:
@@ -117,6 +160,18 @@ class TestResumeLinkage:
         result = handoff_resume(repo)
         assert result["ok"] is True
         assert result["memory"] == {"status": "skipped", "reason": "no_backend"}
+
+    def test_resume_unimportable_session_stash_skips(
+        self, repo: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        handoff_create(repo, goal="g", base_ref="main")
+        _make_session_stash_unimportable(monkeypatch)
+        result = handoff_resume(repo)
+        assert result["ok"] is True
+        assert result["memory"] == {
+            "status": "skipped",
+            "reason": "session_stash_unavailable",
+        }
 
     def test_resume_recall_error_skips_without_raising(
         self, repo: Path, backend: FakeBackend, monkeypatch: pytest.MonkeyPatch

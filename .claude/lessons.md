@@ -18669,3 +18669,38 @@ def ", start_idx + 1)` for module-
   Canary test: `TestSessionMemoryVoiceSummaries` in
   `attune_redis/tests/test_mcp_tools.py` asserts no verb emits the
   generic greeting.
+
+- **Tests of any module that calls the session-stash helpers hit the
+  REAL entry-point-resolved backend — a green "unit" suite silently
+  writes to the user's live memory tier; default the test dir offline
+  via an autouse fixture**: 2026-07-27, handoff T3 (#1694). The
+  pre-T3 handoff unit AND real-dispatch integration tests ran
+  `handoff_create` with no backend patching; the moment T3 wired the
+  D5 linkage, every test run stashed pointers into the live local AMS.
+  Tells: `memory=captured` in a unit test's captured structlog, and a
+  T1-era test asserting the `not_implemented` placeholder failing
+  with `captured` — the failure was the live-write leak surfacing.
+  Root cause: `session_stash.resolve_backend()` resolves from the
+  `attune.memory_backends` entry point at CALL time, so any code path
+  touching `stash_entry`/`recall_entries` is a live-write surface in
+  tests unless explicitly severed. Fix shape: an autouse fixture in
+  the test dir's conftest patching `session_stash.resolve_backend` →
+  `None` and `backend_status` → `{ok: False, reason: "no_backend"}`;
+  tests that need a backend override AFTER it (autouse fixtures
+  instantiate first, so a later fake-backend fixture's patch wins).
+  Bonus: the offline default exercises the degrade-silent skip arm
+  for free. Apply the same at-the-boundary patching in real-dispatch
+  integration files (in-memory double at the session_stash seam —
+  the `_InMemorySearchableBackend` pattern). Pairs with "Registered ≠
+  working" (dogfood separately proves the LIVE path — a deliberate
+  canary with a forget at the end, not an accidental test write).
+
+- **`auto-merge-when-green` label not armed after ~1 min → arm
+  natively with `gh pr merge <n> --auto --squash`**: 2026-07-27,
+  #1695 — label applied, `autoMergeRequest` still null a minute
+  later (the arming workflow can be inert; see the existing
+  labeled-events-don't-replay lesson). The direct command arms
+  GitHub-native auto-merge with the same no-admin-bypass semantics
+  (waits on required checks + review) and takes effect instantly.
+  Either way the arm-check post-condition stands: DONE only when
+  `gh pr view <n> --json autoMergeRequest` is non-null.
