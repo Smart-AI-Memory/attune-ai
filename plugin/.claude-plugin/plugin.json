@@ -1,6 +1,6 @@
 {
   "name": "attune-ai",
-  "version": "10.6.1",
+  "version": "11.0.0",
   "description": "Spec-driven development for Claude Code — /spec plans, reviews, and executes with quality gates; plus security audits, code reviews, test generation, and release prep from /attune.",
   "author": {
     "name": "Smart AI Memory",

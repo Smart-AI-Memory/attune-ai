@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0] — 2026-07-28
+
+Retires the last `attune-author` invocation paths. One breaking change,
+plus the cross-provider handoff and memory work that landed after
+10.6.1.
+
+### Removed
+
+- **BREAKING: the `[author]` install extra** — `pip install
+  'attune-ai[author]'` no longer resolves. It existed to pull in
+  `attune-author`, which was archived after its capability was absorbed
+  into this repo (author-consolidation T4, D12). Drop the extra from
+  your requirements; plain `pip install attune-ai` is unchanged and no
+  runtime API was removed. The `attune-help` pin moved to `[dev]`.
+- **BREAKING: the ops help-regeneration surface** — `help_regen.py`,
+  the `/api/help/regen*` routes, and the Admin-page regen UI are gone.
+  `/help/admin` is now report-only and points at `/coach maintain`,
+  which owns documentation regeneration (#1689).
+
+
 ### Added
 
 - **Elicitation surface mix on the Health tab** — the ops dashboard's
@@ -23,6 +43,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   — never an error, never a silent omission. Both tools' structlog
   events now carry the real memory outcome
   (spec: cross-provider-session-handoff T3, #1601).
+
+### Fixed
+
+- **`session_memory_*` tools answer per verb** — capture, forget, and
+  the rest returned the same generic "Here's what I found." summary
+  regardless of what they did. Each verb now reports its own outcome
+  (#1684). Surfaced by the live Codex and Antigravity receipt probes.
+- **Release model tier resolves at call time** — `MODEL_CONFIG`
+  resolved the premium tier once at import and froze it, so a
+  long-lived process could not observe a changed `ATTUNE_MODEL_PREMIUM`
+  without a restart, and the effective value depended on import order.
+  It is now resolved per call (#1714).
+
+### Changed
+
+- **Fact-check resolver is shared and authoritative** — the T2 resolver
+  fold-in gives fact-checking a single source of truth instead of a
+  parallel implementation (#1586).
 
 ## [10.6.1] — 2026-07-27
 

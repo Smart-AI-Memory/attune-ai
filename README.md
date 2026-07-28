@@ -85,19 +85,28 @@ routing, and [Installation Options](#installation-options) for extras.
      a permanent section below (see "Dynamic forms" for the pattern).
      Don't stack a second "New in" section here. -->
 
-## New in 10.0.0 — one memory architecture, no legacy layer
+## New in 11.0.0 — attune-author invocation paths retired
 
-Major version, one breaking change: the legacy memory-graph API
-(`attune.memory.MemoryGraph` and its node/edge types) is removed.
-Curated memory has been plain `.md` files served from Redis since
-9.6.0 — the graph was the layer nothing living called, confirmed by
-a usage audit before deletion (receipts in
-`docs/specs/archive/memorygraph-value-gate/`). If you never imported
-`MemoryGraph` — telemetry says that's everyone — nothing changes:
-same install, same memory loop, same measured economics below.
-Accessing a removed name raises an error naming the successor, and
-there is no data migration because the graph store was already
-retired.
+Major version, one breaking change: the **`[author]` install extra is
+removed**, along with the ops dashboard's help-regeneration surface
+(`/api/help/regen*` and the Admin-page regen UI). `/help/admin` is now
+report-only and points at `/coach maintain`, which is where
+documentation regeneration lives.
+
+**Are you affected?** Only if you install with
+`pip install 'attune-ai[author]'` — that extra no longer resolves, so
+drop it from your requirements. Plain `pip install attune-ai` is
+unchanged, and no runtime API was removed. The extra existed to pull in
+`attune-author`, which was archived after its capability was absorbed
+here; keeping an extra that points at an archived package would have been
+the dishonest option.
+
+Also in this release: handoff packets now carry memory linkage and
+report a real memory outcome instead of silence; the Health tab shows
+which surface rendered each Python-routed form; `session_memory_*` tools
+answer with per-verb summaries rather than a generic line; and the
+release model tier resolves at call time, so a changed override is
+observed without a restart.
 
 ## The memory suite — out of the box, measured
 

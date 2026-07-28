@@ -4,7 +4,7 @@ Spec-driven development for Claude Code — turn requirements
 into reliable software. <!-- cap:skill_count -->26 auto-triggering skills<!-- /cap -->, zero
 commands: say what you need and Claude picks the right skill.
 
-**Version:** 10.6.1 | **License:** Apache 2.0
+**Version:** 11.0.0 | **License:** Apache 2.0
 
 ## Install
 
