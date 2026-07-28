@@ -1,11 +1,11 @@
 # Cross-Provider Memory Transport — Tasks
 
-**Status:** approved (2026-07-22 consolidation — in execution; T1–T3
-BUILT, held as a stacked draft queue: T1 #1593 → T2 #1594 → T3 #1596,
-label `hold-until-07-27`; at the lift, merge each and re-target the next
-to main BEFORE deleting its base branch). Execution evidence and the
-live AMS receipt are recorded in `decisions.md` (D3 execution evidence
-section).
+**Status:** shipped (2026-07-28) — the held stack lifted as planned on
+2026-07-27: T1 #1593, T2 #1594, T3 #1596, T5 #1598 all MERGED, each
+re-targeted to main before its base branch was deleted. All six R8
+boundary receipts PASS (4 live) — see `receipts.md`. Execution evidence
+and the live AMS receipt remain in `decisions.md` (D3 execution
+evidence section).
 
 Remaining work was re-measured against the built state on 2026-07-22 and
 consolidated: most of T4-as-written was already satisfied by T1–T3 (hooks

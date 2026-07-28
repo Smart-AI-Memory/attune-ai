@@ -113,3 +113,37 @@ rule). The semantics gap is real and the verdict stands:
   prove the real boundary.
 - **Falsified if:** a provider cannot be run. Record an honest unsupported or
   unprobed receipt; never substitute a synthetic pass.
+
+## 2026-07-28 — Status flipped to `shipped`; CHAIR_REQUIRED discharged
+
+Chair-ruled on promotion of round-table thread
+`routine-clean-run-20260728-1020` (report:
+`docs/reports/roundtable/routine-clean-run-20260728-1020.md`). That
+thread's appendix triaged this spec as item 1; two of three seats read
+it as CLOSE-as-shipped, and the third's hold was traced to reading the
+declared status string rather than PR/receipt state — the stale label
+this entry retires.
+
+**Evidence the flip rests on** (verified at flip time, not inferred):
+
+| Receipt | Result |
+|---|---|
+| 1 File-write-failure regression | PASS |
+| 2 Real MCP dispatch | PASS |
+| 3 AMS round-trip + PII canary | PASS (live) |
+| 4 Codex live MCP canary | PASS (live) |
+| 5 Claude Code hook canary | PASS (live) |
+| 6 Antigravity/Gemini probe | PASS (live, 10.6.1) |
+
+Held stack lifted 2026-07-27: T1 #1593, T2 #1594, T3 #1596, T5 #1598 —
+all MERGED, each re-targeted to main before its base branch was
+deleted, per the tasks.md procedure.
+
+The `chair-review:cross-provider-memory-transport` ledger entry is a
+soft (exit 1) boundary marker, not a technical blocker — this status
+flip is what discharges it.
+
+**Correction to the appendix's framing:** it referred to "the five
+phase files." Only THREE carry a `**Status:**` line (`requirements.md`,
+`design.md`, `tasks.md`); `decisions.md` and `receipts.md` have none by
+construction. All three are flipped.
