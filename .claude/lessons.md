@@ -18761,3 +18761,51 @@ def ", start_idx + 1)` for module-
   in `features.ts` PRODUCTS + page prose (`app/docs`, `app/faq`,
   `app/page`) hardcode numbers outside CAPABILITIES — grep for the
   OLD numbers as the completeness check.
+
+- **A rule/doc that PRESCRIBES a command is load-bearing code —
+  when a decision changes a derivation, grep the docs that TEACH
+  the old one, not just the code that implements it** (2026-07-28,
+  PR #1706, follow-on to the #1703/#1704 divergent-guards entry
+  above): the upstream source of #1703's wrong count was
+  `.claude/rules/attune/website-content-accuracy.md`, whose
+  "Required Verification Commands" table still prescribed the
+  stage-filtered `list_workflows()` derivation that D4 rejected on
+  2026-07-12. The author followed the rule *correctly* and got 19.
+  D4's fix updated the guards and `features.ts` but not the doc
+  that hands out the method, so the rule kept dispensing the
+  pre-decision answer with full authority for 16 days. A ratified
+  derivation change is not done until every doc teaching the old
+  derivation is updated in the same PR — `grep -rln "<old-symbol>"
+  .claude/rules/ docs/` alongside the usual `tests/` sweep.
+  Corollary — **audit the WHOLE table, not the row that broke**:
+  checking all four commands in that table found a second dead one
+  (`WizardRegistry` no longer exists — `ImportError`; it is
+  `list_wizards()`), a row for a registry dropped from CAPABILITIES
+  in 2026-06, and three of the five live counts with no row at all.
+  Stale prescriptions cluster: the same neglect that stales one row
+  stales its neighbors. Fix shipped with a "if a command here and
+  the CI guard disagree, the guard wins and this table is the bug"
+  precedence line, so the doc can never again outrank the enforcer.
+
+- **An in-flight CI run on a NEWER sha invalidates any diagnosis
+  built from the older failing run — read `origin/main` HEAD before
+  proposing a fix** (2026-07-28): opened a session on a red `main`,
+  pulled the failing `Tests` run at `e21ead27b`, reproduced the
+  break from the worktree checkout (also `e21ead27b`), verified the
+  registry count independently, and proposed the exact fix — which
+  had already merged 29 minutes earlier as #1704. The tell was
+  present the whole time and I read past it: `gh run list --branch
+  main` showed `in_progress` against `b013b488a`, a sha I had not
+  accounted for. A worktree branch created before the fix looks
+  byte-identical to a genuinely broken tree; the checkout cannot
+  tell you it is stale. Cheap guard before any main-is-red fix:
+  `git fetch origin main && git log origin/main --oneline -3` and
+  reconcile every sha newer than the one whose run failed —
+  `--log-failed` on an old run is evidence about a commit, never
+  about HEAD. Second tell, softer: the session-start handoff listed
+  the same count re-verification as a queued item, which should
+  raise the prior that a parallel session is already on it (see the
+  "a chip the user asks you to run may ALREADY be running" reconcile
+  rule). Cost here was only a deleted branch, because nothing was
+  pushed before checking — but the same misread one step later is a
+  duplicate PR racing a merged fix.
