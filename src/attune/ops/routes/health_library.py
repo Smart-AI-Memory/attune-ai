@@ -45,6 +45,7 @@ from fastapi.responses import (
 
 from attune.ops import data, health_snapshot
 from attune.ops.security import require_client_token
+from attune.telemetry import form_events
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,11 @@ async def health_library_page(request: Request) -> HTMLResponse:
     stale = health_snapshot.is_stale(snapshot)
     _maybe_kick_refresh(request, snapshot)
 
+    # Live read of the routing log (#1653) — deliberately NOT the
+    # in-memory interaction counters: routing happens in the MCP/agent
+    # process, so only the JSONL sees these events.
+    surface_mix = form_events.surface_mix(home=cfg.attune_home)
+
     templates = request.app.state.templates
     return templates.TemplateResponse(
         request,
@@ -97,6 +103,8 @@ async def health_library_page(request: Request) -> HTMLResponse:
             stale_after_hours=health_snapshot.DEFAULT_STALE_AFTER_HOURS,
             latest_report=health_snapshot.latest_llm_report(cfg.project_root),
             env=data.env_health(cfg),
+            surface_mix=surface_mix,
+            surface_mix_total=sum(surface_mix.values()),
         ),
     )
 

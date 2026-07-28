@@ -144,6 +144,23 @@ class TestSurfaceMixErrorPaths:
         )
         assert surface_mix() == {"widget": 1}
 
+    def test_explicit_home_overrides_process_env(
+        self, _isolated_home: Path, tmp_path: Path
+    ) -> None:
+        """A reader with its own configured home (the ops dashboard,
+        #1653) reads THAT store, not the process's ATTUNE_HOME."""
+        other_home = tmp_path / "other-home"
+        path = other_home / "telemetry" / "form_events.jsonl"
+        path.parent.mkdir(parents=True)
+        path.write_text(
+            '{"event":"form_surface","surface":"widget"}\n'
+            '{"event":"form_surface","surface":"ask"}\n'
+            '{"event":"form_surface","surface":"widget"}\n',
+            encoding="utf-8",
+        )
+        assert surface_mix(home=other_home) == {"widget": 2, "ask": 1}
+        assert surface_mix() == {}  # env-scoped home is still empty
+
 
 class TestSubmissionPathsErrorArms:
     def test_log_submission_oserror_swallowed(self, _isolated_home: Path) -> None:

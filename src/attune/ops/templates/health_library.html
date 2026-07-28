@@ -202,6 +202,34 @@
    previously stranded in {% block scripts %}, which base.html
    renders AFTER </main> — the section escaped the centered page
    container entirely (Patrick, 2026-07-21). #}
+{# Elicitation surface mix (#1653) — a live read of
+   telemetry/form_events.jsonl, independent of the snapshot. Honest
+   framing: this is the SURFACE MIX of Python-routed forms, not a fire
+   rate — a hand-written AskUserQuestion turn never enters Python and
+   is invisible here. #}
+<section style="margin-top: 2rem;">
+  <h2>Elicitation surface mix</h2>
+  <p class="page-sub">
+    Which surface rendered each Python-routed form, read live from
+    <code>telemetry/form_events.jsonl</code>. Surface mix only, not a
+    fire rate &mdash; a hand-written AskUserQuestion turn never enters
+    Python, so it is invisible here.
+  </p>
+  {% if surface_mix %}
+    <table class="data-table">
+      <thead><tr><th>Surface</th><th class="num">Forms routed</th></tr></thead>
+      <tbody>
+        {% for surface, count in surface_mix | dictsort(by='value', reverse=true) %}
+          <tr><td><code>{{ surface }}</code></td><td class="num">{{ count }}</td></tr>
+        {% endfor %}
+        <tr><th>total</th><td class="num">{{ surface_mix_total }}</td></tr>
+      </tbody>
+    </table>
+  {% else %}
+    <p class="page-sub">No form routing events recorded yet.</p>
+  {% endif %}
+</section>
+
 <section style="margin-top: 2rem;">
   <h2>Environment</h2>
   <p class="page-sub">Environment + state file presence (formerly the standalone Health page).</p>
