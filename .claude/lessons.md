@@ -18941,3 +18941,38 @@ def ", start_idx + 1)` for module-
   `receipts.md` "run with no arguments" instruction corrected the same
   day: instructions in the corpus rot against the tools they name, and
   neither one is tested by anything.
+
+- **The clean-run routine inherits the dev shell's env for its CHECK
+  battery, so an exported `ATTUNE_MAX_BUDGET_USD` turns a HEALTHY tree
+  into a "tree is not healthy" verdict — and the seats reason
+  correctly from the poisoned brief** (2026-07-28, two clean-runs
+  eleven minutes apart on the same tree reached OPPOSITE conclusions).
+  Mechanism: `run_command`'s DEFAULT branch (checks) is
+  `env = {**os.environ, "ANTHROPIC_API_KEY": ""}` — it empties exactly
+  ONE variable and passes everything else through, so any other
+  exported `ATTUNE_*` reaches pytest. `~/.zshrc` exports
+  `ATTUNE_MAX_BUDGET_USD=10.00`; `get_max_budget_usd()` honors that
+  override for every depth, and
+  `tests/unit/workflows/test_agent_sdk_adapter.py::TestGetMaxBudgetUsd`
+  asserts the depth DEFAULTS (`deep`→25.00, `quick`→2.00) without
+  clearing the var — `assert 10.0 == 25.0`, `2 failed, 18999 passed`,
+  `keyless-unit-suite: FAIL (exit 1)`. CI never sees it (CI does not
+  export the cap) and an agent session may not either, so this is
+  invisible from both of the places you would normally look. The
+  round-table seats then read `FAIL` in their brief and correctly
+  concluded the tree was unhealthy — **a right answer to a wrong
+  question, which is the most expensive kind of wrong**. Three durable
+  points: (1) the real defect is TEST ISOLATION — env-reading code
+  needs `monkeypatch.delenv(..., raising=False)` in its tests, and the
+  ANTHROPIC_API_KEY-leaks-into-pytest lesson is the same family, so
+  treat "reads process env" as a standing test-isolation trigger, not
+  a one-off; (2) when two runs of the same routine disagree, **diff
+  the ENVIRONMENTS before believing either verdict** — here the entire
+  delta was one exported var plus one command prefix; (3) a green
+  verdict obtained from an agent session is not automatically the
+  trustworthy one — mine passed only because my env happened to lack
+  the var, which is luck, not rigor. Pairs with the sibling failure in
+  the same pair of runs: without the `ANTHROPIC_API_KEY=` prefix the
+  claude seat returned `ABSENT — Credit balance is too low` and
+  synthesis HALTED, burning the Codex and Antigravity invocations —
+  one routine fire, two independent env-shaped failures.
