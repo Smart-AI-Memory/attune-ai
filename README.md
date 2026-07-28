@@ -445,7 +445,7 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 ## MCP Tools
 
-47 tools organized into 6 categories:
+49 tools organized into 7 categories:
 
 ### Workflow (22)
 
@@ -482,6 +482,10 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 `elicitation_ask` `elicitation_render_form`
 `elicitation_collect_response` `elicitation_render_widget`
+
+### Handoff (2)
+
+`handoff_create` `handoff_resume`
 
 ---
 
@@ -525,10 +529,10 @@ from retrieval. Full methodology:
 
 | | Attune AI | Static Docs | Agent Frameworks | Coding CLIs |
 | --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 22 built-in | None | Build from scratch | None |
+| **Ready-to-use workflows** | 20 built-in | None | Build from scratch | None |
 | **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
-| **MCP integration** | 47 native tools | None | No | No |
-| **Auto-triggering skills** | 23 skills, natural language | None | None | None |
+| **MCP integration** | 49 native tools | None | No | No |
+| **Auto-triggering skills** | 26 skills, natural language | None | None | None |
 | **Socratic discovery** | Questions before execution | None | None | None |
 | **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
 
