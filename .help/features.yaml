@@ -137,6 +137,13 @@ features:
     tags: [release, changelog, advisory]
     status: manual
 
+  # session-handoff is single-sourced (status: manual) from
+  # content/features/session-handoff.md — projector-owned.
+  session-handoff:
+    description: Cross-provider session handoff — verified packet create/resume between agent sessions
+    tags: [handoff, collaboration, multi-llm, memory]
+    status: manual
+
   # release-prep is single-sourced (status: manual) from
   # content/features/release-prep.md and rendered by
   # attune_author.projector (scripts/project_features.py), which owns

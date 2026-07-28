@@ -1,9 +1,9 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 1197,
-    "linked_templates": 881,
-    "total_tags": 113
+    "total_templates": 1208,
+    "linked_templates": 885,
+    "total_tags": 116
   },
   "links": {
     "com-agents": {
@@ -194,6 +194,14 @@
         "owasp",
         "scanning",
         "cve"
+      ]
+    },
+    "com-session-handoff": {
+      "tags": [
+        "handoff",
+        "collaboration",
+        "multi-llm",
+        "memory"
       ]
     },
     "com-smart-test": {
@@ -421,6 +429,14 @@
         "owasp",
         "scanning",
         "cve"
+      ]
+    },
+    "con-session-handoff": {
+      "tags": [
+        "handoff",
+        "collaboration",
+        "multi-llm",
+        "memory"
       ]
     },
     "con-smart-test": {
@@ -3772,6 +3788,29 @@
         "faq-semantic-cache-70-hit-rate-claim-was-unmeasured"
       ]
     },
+    "err-session-handoff": {
+      "related_warning": [
+        "war-session-handoff"
+      ],
+      "prevented_by": [
+        "tip-session-handoff"
+      ],
+      "related_faq": [
+        "faq-session-handoff"
+      ],
+      "tags": [
+        "handoff",
+        "collaboration",
+        "multi-llm",
+        "memory"
+      ],
+      "embeds": [
+        {
+          "id": "tip-session-handoff",
+          "position": "after_resolution"
+        }
+      ]
+    },
     "err-session-hooks-may-be-vestigial": {
       "related_warning": [
         "war-session-hooks-may-be-vestigial"
@@ -6583,6 +6622,17 @@
         "err-semantic-cache-70-hit-rate-claim-was-unmeasured"
       ]
     },
+    "faq-session-handoff": {
+      "related_error": [
+        "err-session-handoff"
+      ],
+      "tags": [
+        "handoff",
+        "collaboration",
+        "multi-llm",
+        "memory"
+      ]
+    },
     "faq-session-hooks-may-be-vestigial": {
       "related_error": [
         "err-session-hooks-may-be-vestigial"
@@ -7469,6 +7519,17 @@
         "cve"
       ]
     },
+    "not-session-handoff": {
+      "related_reference": [
+        "ref-session-handoff"
+      ],
+      "tags": [
+        "handoff",
+        "collaboration",
+        "multi-llm",
+        "memory"
+      ]
+    },
     "not-smart-test": {
       "related_reference": [
         "ref-deep-review",
@@ -7785,6 +7846,14 @@
         "cve"
       ]
     },
+    "qui-session-handoff": {
+      "tags": [
+        "handoff",
+        "collaboration",
+        "multi-llm",
+        "memory"
+      ]
+    },
     "qui-skill-attune-hub": {
       "tags": [
         "skill",
@@ -8070,6 +8139,14 @@
         "owasp",
         "scanning",
         "cve"
+      ]
+    },
+    "ref-session-handoff": {
+      "tags": [
+        "handoff",
+        "collaboration",
+        "multi-llm",
+        "memory"
       ]
     },
     "ref-skill-attune-hub": {
@@ -8825,6 +8902,14 @@
         "cve"
       ]
     },
+    "tas-session-handoff": {
+      "tags": [
+        "handoff",
+        "collaboration",
+        "multi-llm",
+        "memory"
+      ]
+    },
     "tas-smart-test": {
       "tags": [
         "tests",
@@ -9232,6 +9317,14 @@
         "cve"
       ]
     },
+    "tip-session-handoff": {
+      "tags": [
+        "handoff",
+        "collaboration",
+        "multi-llm",
+        "memory"
+      ]
+    },
     "tip-smart-test": {
       "tags": [
         "tests",
@@ -9474,6 +9567,14 @@
         "owasp",
         "scanning",
         "cve"
+      ]
+    },
+    "tro-session-handoff": {
+      "tags": [
+        "handoff",
+        "collaboration",
+        "multi-llm",
+        "memory"
       ]
     },
     "tro-smart-test": {
@@ -11089,6 +11190,17 @@
         "err-semantic-cache-70-hit-rate-claim-was-unmeasured"
       ]
     },
+    "war-session-handoff": {
+      "related_error": [
+        "err-session-handoff"
+      ],
+      "tags": [
+        "handoff",
+        "collaboration",
+        "multi-llm",
+        "memory"
+      ]
+    },
     "war-session-hooks-may-be-vestigial": {
       "related_error": [
         "err-session-hooks-may-be-vestigial"
@@ -12037,6 +12149,19 @@
     "code-smells": [
       "con-tool-refactor-plan"
     ],
+    "collaboration": [
+      "com-session-handoff",
+      "con-session-handoff",
+      "err-session-handoff",
+      "faq-session-handoff",
+      "not-session-handoff",
+      "qui-session-handoff",
+      "ref-session-handoff",
+      "tas-session-handoff",
+      "tip-session-handoff",
+      "tro-session-handoff",
+      "war-session-handoff"
+    ],
     "commands": [
       "com-cli",
       "con-cli",
@@ -12609,6 +12734,19 @@
       "tro-rag-grounding",
       "war-rag-grounding"
     ],
+    "handoff": [
+      "com-session-handoff",
+      "con-session-handoff",
+      "err-session-handoff",
+      "faq-session-handoff",
+      "not-session-handoff",
+      "qui-session-handoff",
+      "ref-session-handoff",
+      "tas-session-handoff",
+      "tip-session-handoff",
+      "tro-session-handoff",
+      "war-session-handoff"
+    ],
     "help": [
       "com-help-system",
       "con-help-system",
@@ -12910,22 +13048,33 @@
     ],
     "memory": [
       "com-memory",
+      "com-session-handoff",
       "con-memory",
+      "con-session-handoff",
       "con-tool-memory-and-context",
       "err-memory",
+      "err-session-handoff",
       "faq-memory",
+      "faq-session-handoff",
       "not-memory",
+      "not-session-handoff",
       "qui-memory",
+      "qui-session-handoff",
       "ref-memory",
+      "ref-session-handoff",
       "ref-tool-memory-forget",
       "ref-tool-memory-retrieve",
       "ref-tool-memory-search",
       "ref-tool-memory-store",
       "tas-manage-lessons",
       "tas-memory",
+      "tas-session-handoff",
       "tip-memory",
+      "tip-session-handoff",
       "tro-memory",
-      "war-memory"
+      "tro-session-handoff",
+      "war-memory",
+      "war-session-handoff"
     ],
     "metrics": [
       "com-telemetry",
@@ -12952,6 +13101,19 @@
       "tip-models",
       "tro-models",
       "war-models"
+    ],
+    "multi-llm": [
+      "com-session-handoff",
+      "con-session-handoff",
+      "err-session-handoff",
+      "faq-session-handoff",
+      "not-session-handoff",
+      "qui-session-handoff",
+      "ref-session-handoff",
+      "tas-session-handoff",
+      "tip-session-handoff",
+      "tro-session-handoff",
+      "war-session-handoff"
     ],
     "ops": [
       "com-ops-dashboard",
