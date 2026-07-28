@@ -297,3 +297,75 @@ design.md, and the requirements header already records every ruling
 (D4, D7, D8). The stage ladder honors the marker line below.
 
 PHASE-WAIVED: design (2026-07-21 — chair ruling this session; G4 built without a design phase, held #1561)
+
+## 2026-07-28 — D4 round-tripped 20→19→20 and cost a red `main`
+
+D4 was ratified 2026-07-12. On 2026-07-28 the count was changed
+*back* to the rejected derivation, reddened `main`, and was restored
+the same morning. Recorded here because the starter is not the home
+for a ratified number, and because the failure was not in the gate —
+the gate worked exactly as designed.
+
+**Sequence.** #1703 (website-only, 06:33) set
+`CAPABILITIES.workflows` 20→19, citing the "stage-filtered registry".
+That is the derivation D4 rejected. Website-only PRs skip the Python
+suite, so `test_workflows_count_matches_registry` never ran on the PR
+that changed the number it guards. `main` went red on the next
+full-suite PR — a docs-only lessons append whose diff touched nothing
+related. #1704 (07:02) restored 20 and realigned the vitest counter to
+`len(set(discover_workflows().values()))`, so both enforcers now share
+one definition.
+
+**Root cause was upstream of both guards.**
+`.claude/rules/attune/website-content-accuracy.md` — the rule an agent
+consults *before* touching a count — still prescribed the
+stage-filtered command. #1703's author followed the rule correctly and
+got 19. D4's original fix updated the guards and `features.ts` but not
+the doc that teaches the derivation, so for sixteen days the rule kept
+dispensing the pre-decision answer with full authority.
+
+Fixed in #1706, which also audited the whole table rather than the one
+broken row: a second command was dead (`WizardRegistry` no longer
+exists — `ImportError`), a row pointed at a registry dropped from
+`CAPABILITIES` in 2026-06, and three of the five live counts had no
+row at all. The table now carries a precedence line — *if a command
+here and the CI guard disagree, the guard wins and this table is the
+bug* — so the doc can never again outrank its enforcer.
+
+**Ruling (restates D4, does not amend it).** `CAPABILITIES.workflows`
+is **20**: distinct workflow classes,
+`len(set(discover_workflows().values()))`. 19 is the stage-filtered
+count and is wrong. `release-prep`/`release-gate` and
+`orchestrated-health-check`/`health-check` are deliberate alias pairs,
+counted once each. `test_workflows_count_matches_registry` is the
+authority; prose is not.
+
+**All five counts, live-verified 2026-07-28** (each command executed,
+not copied):
+
+| Key | Value | Derivation |
+|---|---|---|
+| `workflows` | 20 | `len(set(discover_workflows().values()))` — D4 |
+| `skills` | 26 | `plugin/skills/` directory count |
+| `mcpTools` | 49 | `tool_schemas` `get_*_tools()` total — **core only** |
+| `templateKinds` | 15 | `attune_author.generator._ALL_TEMPLATE_NAMES` |
+| `wizards` | 5 | `attune.wizards.list_wizards()` |
+
+`mcpTools: 49` counts core `tool_schemas` **only**. `attune_redis`
+registers 11 more (5 `session_memory_*`, 6 `redis_*`) with zero
+overlap, so the installed surface is **60 registered / 49 core** —
+matching the projector figure. Any copy pairing "49 MCP tools" with
+"five session_memory tools" is drawing from two registries and the
+five are not inside the 49.
+
+**Standing hazard for this spec (unfixed, by design).** Website-only
+PRs emit `website_only=true` and the full-suite jobs report green
+without running pytest. Claim guards therefore do **not** run on the
+class of PR most likely to change a claim; the failure surfaces on
+whichever unrelated PR runs the full suite next. Until that gap is
+closed, a website-only PR touching a count is unguarded by
+construction — run
+`python -m pytest tests/unit/test_website_version_accuracy.py -q`
+locally before merging one. Whether to close it (e.g. always run the
+claim guards regardless of path filter) is a live question for this
+spec, not a ruled decision.
