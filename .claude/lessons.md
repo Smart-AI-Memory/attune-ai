@@ -18902,3 +18902,20 @@ def ", start_idx + 1)` for module-
   seat-1 failure. Extends the "claude-seat ABSENT has two distinct
   auth causes" lesson with the shadowing mechanism and the
   interactive-vs-non-interactive probe correction.
+  (3) **`Not logged in · Please run /login` is AMBIGUOUS — it is both
+  the over-scrubbed signature AND the genuinely-dead-login signature,
+  so one extra probe decides which.** The prior lesson taught that
+  this string means over-scrubbing (`env -i` produces it with a
+  healthy login), which makes it tempting to dismiss the message and
+  hunt the env instead. Resolve it by re-running with the SAME auth
+  condition but NO scrub — `ANTHROPIC_API_KEY= claude -p hello`
+  directly, versus through `run_command(provider_clean=True)`:
+  - scrubbed FAILS + plain SUCCEEDS ⇒ the scrub strips something
+    load-bearing; fix `run_command`, do NOT re-login.
+  - BOTH fail identically ⇒ the stored credential is dead; `claude
+    login` is correct (2026-07-28: both failed, and a
+    `Claude Code-credentials` Keychain entry EXISTING is not evidence
+    it is valid — a stale entry produces this exact message).
+  The same two-probe shape generalizes to any "did my harness break
+  it, or is it actually broken" question: hold the condition fixed and
+  remove the harness.
