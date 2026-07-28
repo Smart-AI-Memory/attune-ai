@@ -3,9 +3,15 @@
 **Written:** 2026-07-22 (launch plan item 1 —
 `.claude/plans/launch-10-6-0-multi-llm.md`). **Fires:** Tuesday
 2026-07-28, AFTER the lift + live receipts (chair-ratified timing).
-**Venue:** LinkedIn article. **Status:** draft — `[RECEIPT: …]`
-slots fill from Monday's real transcripts; publishing with an
-unfilled slot is forbidden (no claim without a receipt).
+**Venue:** LinkedIn article. **Status: PUBLISHED 2026-07-28** —
+<https://www.linkedin.com/posts/patrick-roebuck-attune-ai_this-article-talk-about-the-multi-llm-memory-activity-7487899197329993729-pGPN>
+
+All four `[RECEIPT: …]` slots were filled from real transcripts before
+firing; the no-claim-without-a-receipt rule held end to end. This file
+is now the archival source for a shipped article — the published copy
+differs only in that its one JSON block was reflowed to prose for
+LinkedIn's editor, which has no code-block primitive. Every value in
+that reflow was fact-checked against the raw receipt.
 
 Pre-publish checklist:
 
@@ -34,8 +40,11 @@ Pre-publish checklist:
       sentence → replacement APPLIED; every claim in that paragraph
       now traces to the linked report. (3) Closing variant → **(c)**
       APPLIED, layered after the install line.
-- [ ] **Publish**, then paste the article URL into Draft B-v2's
-      `[LINK: launch article]` — the last remaining step.
+- [x] **PUBLISHED 2026-07-28** —
+      https://www.linkedin.com/posts/patrick-roebuck-attune-ai_this-article-talk-about-the-multi-llm-memory-activity-7487899197329993729-pGPN
+      URL carried into Draft B-v2's `[LINK: launch article]`.
+      Pre-publish checklist fully discharged; this draft is now
+      the archival source for a shipped article.
 - [x] Counts re-verified against the merged registries (2026-07-28):
       "five `session_memory_*` tools" = 5, names match
       (`attune_redis.mcp_tools.SESSION_MEMORY_TOOL_DEFINITIONS`).
