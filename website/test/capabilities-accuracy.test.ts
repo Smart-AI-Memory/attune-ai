@@ -50,8 +50,11 @@ function resolvePython(): string | null {
 const INTROSPECT = [
   'import json',
   'd = {}',
-  'from attune.workflows import list_workflows',
-  "d['workflows'] = len([w for w in list_workflows() if w.get('stages')])",
+  // D4 (claim-drift-gates): workflows = distinct CLASSES, not slugs —
+  // release-prep/release-gate are a deliberate alias pair. Must match
+  // tests/unit/test_website_version_accuracy.py's counter exactly.
+  'from attune.workflows import discover_workflows',
+  "d['workflows'] = len(set(discover_workflows().values()))",
   'from attune.wizards import list_wizards',
   "d['wizards'] = len(list_wizards())",
   'from attune.mcp import tool_schemas as ts',
