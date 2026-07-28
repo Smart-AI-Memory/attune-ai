@@ -9,12 +9,16 @@ unfilled slot is forbidden (no claim without a receipt).
 
 Pre-publish checklist:
 
-- [ ] All `[RECEIPT: …]` slots filled with real transcript excerpts
-      — **3 of 4 filled 2026-07-28** (PII canary, round-table report
-      link, Codex live canary) from the transport spec's receipts
-      ledger. The 4th (handoff create→resume) is **BLOCKED on a chair
-      ruling** — see the inline comment at that slot: the Codex leg
-      was auto-cancelled, so no receiving-agent drift report exists.
+- [x] All `[RECEIPT: …]` slots filled with real transcript excerpts
+      — **4 of 4 filled 2026-07-28.** PII canary, round-table report
+      link, and Codex live canary from the transport spec's receipts
+      ledger; the handoff create→resume slot closed live at 09:47 EDT
+      from an **Antigravity** session (not Codex — codex's headless
+      approval policy auto-cancels, so the receiving agent was
+      switched to the seat already proven at 10.6.1 by transport
+      receipt 6). Returned `ok:true` with `head_moved` +
+      `files_diverged`. Transcript appended to the handoff spec's
+      `receipts.md`, closing R6.
 - [x] Version/date claims re-checked against **live PyPI**
       (2026-07-28): latest = **10.6.1**; tags `v10.6.0` and `v10.6.1`
       both exist and both PyPI versions return 200. The body's
@@ -24,14 +28,14 @@ Pre-publish checklist:
       collaboration" section this article describes. **Re-verify with
       `curl -s https://pypi.org/pypi/attune-ai/json` immediately
       before firing** — a later patch moves this number again.
-- [ ] Chair honesty-gate pass — **RULED 2026-07-28, 2 of 3 applied.**
-      (1) 4th receipt slot → **path (a): close it for real** with one
-      interactive Codex run; reword is fallback-only. **STILL OPEN —
-      this is the last thing between the draft and publication.**
-      (2) "third proposed the audit pattern" sentence → replacement
-      APPLIED; every claim in that paragraph now traces to the linked
-      report. (3) Closing variant → **(c)** APPLIED, layered after the
-      install line.
+- [x] Chair honesty-gate pass — **RULED 2026-07-28, all 3 applied.**
+      (1) 4th receipt slot → path (a), closed for real; the reword
+      fallback was NOT needed. (2) "third proposed the audit pattern"
+      sentence → replacement APPLIED; every claim in that paragraph
+      now traces to the linked report. (3) Closing variant → **(c)**
+      APPLIED, layered after the install line.
+- [ ] **Publish**, then paste the article URL into Draft B-v2's
+      `[LINK: launch article]` — the last remaining step.
 - [x] Counts re-verified against the merged registries (2026-07-28):
       "five `session_memory_*` tools" = 5, names match
       (`attune_redis.mcp_tools.SESSION_MEMORY_TOOL_DEFINITIONS`).
@@ -101,50 +105,28 @@ receiving agent gets context clearly separated from claims. Our
 collaboration contract has said "a handoff is context, not
 authority" for months; now it's mechanical.
 
-[RECEIPT: create-in-Claude → resume-in-Codex transcript, showing
-the drift report on a real branch]
+**Receipt** — live Antigravity session, 2026-07-28, plugin 10.6.1.
+The packet was created in Claude Code on branch
+`claude/handoff-t4-docs`; `handoff_resume` then ran in a *different
+vendor's* agent, which re-checked it against the real tree and
+reported what had moved:
 
-<!-- BLOCKING — RULED 2026-07-28 (chair): take path (a), CLOSE IT FOR
-REAL with one interactive Codex run. Do NOT reword to per-agent truth
-unless that run is attempted and fails; path (b) below is the
-same-day fallback, not the plan. This slot stays unfilled — and the
-article stays unpublished — until the run produces a drift report.
+```json
+"warnings": [
+  {"code": "head_moved",
+   "detail": "packet 3fed725b7 vs current afd3040f2"},
+  {"code": "files_diverged",
+   "detail": {"packet": [],
+              "current": ["tests/unit/telemetry/test_memory_events.py"]}}
+]
+```
 
-What IS receipted today (handoff spec receipts.md, 2026-07-27):
-
-  - Claude leg, LIVE PASS: handoff_create through the real MCP server
-    (plugin 10.6.1) on branch claude/handoff-t4-docs — ok:true, packet
-    written, git-derived head_sha 3fed725b7…, verification row stored
-    as "not run" per R1.
-  - Codex leg, REACHED BUT NOT EXECUTED: handoff_resume IS in Codex's
-    tool list and dispatch started ("mcp: attune-ai/handoff_resume
-    started") — distribution is PROVEN at 10.6.1 — but codex's headless
-    approval policy auto-cancelled the call. Verbatim:
-    [{"type":"text","text":"user cancelled MCP tool call"}]
-
-  So the drift report itself has never been produced by the receiving
-  agent. Two ways to clear this (chair picks):
-
-  (a) CLOSE IT — one INTERACTIVE Codex run from the
-      attune-ai-github-issues-0aeac3 worktree (the packet is sitting
-      uncommitted at docs/handoffs/claude-handoff-t4-docs.md):
-        codex "Call the attune-ai MCP tool handoff_resume with no
-               arguments and show the raw JSON result"
-      Expected: ok:true, verified.branch = claude/handoff-t4-docs,
-      drift warnings listing the dirty tree. Fills this slot for real.
-      Same real-terminal sitting as the clean-run re-fire.
-
-  (b) REWORD TO PER-AGENT TRUTH — publish the section claiming only
-      the Claude-side receipt plus proven cross-provider dispatch, and
-      mark the receiving-agent drift report as an honest UNPROBED row.
-      This is ON-message: the article already sells honest UNPROBED
-      rows, and Draft B-v2's checklist pre-authorizes this exact
-      reword ("if only the Claude-side receipt exists Tuesday, reword
-      to per-agent truth or hold").
-
-  Do NOT publish this section as written under either option without
-  the chair's pick. -->
-
+The world had shifted under that packet, and the receiving agent said
+so before touching anything. Note what it did *not* do: the packet's
+own verification row still reads `not run`, and it stays quarantined
+in the `asserted` block — the sending agent's prose, kept strictly
+apart from the git-rechecked facts in `verified`. Context, not
+authority, mechanically enforced.
 
 ### Second opinions from a different vendor
 

@@ -215,11 +215,17 @@ backlog item).
       2026-07-28. Transport receipt 4 PASSED live 2026-07-27
       (interactive Codex, plugin 10.6.0): capture → recall of the
       stored representation → forget `deleted:1` → empty re-recall.
-- [ ] "Handoffs that verify" — **RULED 2026-07-28: close it for real**
-      (one interactive Codex run), NOT the reword. The pre-authorized
-      reword-to-per-agent-truth path is the fallback only if that run
-      is attempted and fails. Same ruling as the article's 4th receipt
-      slot — this line and that slot clear together. Detail: The
+- [x] "Handoffs that verify" — **CLEARED 2026-07-28 09:47 EDT.** Closed
+      for real per the chair ruling; the reword fallback was not
+      needed. Live Antigravity session returned `ok:true` with
+      `head_moved` + `files_diverged` — the receiving agent re-checked
+      the packet against the real tree and reported drift before doing
+      any work. Receiving agent is Antigravity rather than Codex
+      (headless approval auto-cancels); both are different vendors, so
+      the post's "Claude Code, Codex, Antigravity — same tools" line
+      still holds on its own receipts. Full transcript + the stale-
+      instruction correction: handoff spec `receipts.md`, R6.
+      Superseded detail: The
       Claude side is a live PASS (`handoff_create` through the real MCP
       server at 10.6.1, git-derived `head_sha`), and Codex dispatch
       is PROVEN (`handoff_resume` in its tool list, dispatch
