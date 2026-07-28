@@ -18704,3 +18704,60 @@ def ", start_idx + 1)` for module-
   (waits on required checks + review) and takes effect instantly.
   Either way the arm-check post-condition stands: DONE only when
   `gh pr view <n> --json autoMergeRequest` is non-null.
+
+- **Roundtable claude-seat "ABSENT (exit 1, ~2s)" has two distinct
+  auth causes — probe BOTH paths with the runner's EXACT env scrub
+  before re-firing the routine** (2026-07-28 morning run): the seat
+  runner (`routine.py run_command(provider_clean=True)`) strips only
+  `ANTHROPIC_*`/`CLAUDE*` vars and passes through a non-empty
+  `ANTHROPIC_API_KEY`, giving two auth paths that fail differently:
+  (a) stored CLI login — probe with a python subprocess replicating
+  that exact scrub + `claude -p "Reply with exactly: OK"`; "401 OAuth
+  access token has been revoked" means a `claude login` from earlier
+  didn't stick (a later login elsewhere revokes it). Do NOT probe
+  with `env -i` — over-scrubbing yields a DIFFERENT failure ("Not
+  logged in · Please run /login") that misdiagnoses the state. (b)
+  API key — verify WITHOUT echoing the secret: source the env file in
+  a subshell, report only key length, and curl a 1-token messages
+  call; "credit balance is too low" arrives as HTTP **400** (not
+  401), i.e. the key authenticated but the account has no credits —
+  this was the real cause of the 2s exit-1. Procedural corollaries:
+  (1) when a known seat is still failing, don't fire the multi-seat
+  routine "to check" — it reproduces the failure and burns the other
+  seats' invocations; probe the one seat first. (2) read the plist
+  before assuming "next 06:00" exists — the clean-run
+  `StartCalendarInterval` has `Weekday=1` (Mondays ONLY), so on any
+  other day the re-fire is manual by construction.
+
+- **Website capability counts have DUPLICATE guards with DIVERGENT
+  counters — reconcile every guard that pins the same number before
+  "correcting" it, or a website-only PR plants a time-bomb in the
+  full suite** (2026-07-28, PRs #1703/#1704): the workflows count
+  had TWO enforcers with different definitions — the vitest
+  `capabilities-accuracy.test.ts` registry leg counted stage-filtered
+  `list_workflows()` entries (19), while
+  `tests/unit/test_website_version_accuracy.py` counts distinct
+  workflow CLASSES per claim-drift-gates D4 (20 —
+  release-prep/release-gate are a deliberate alias pair; slugs=22).
+  #1703 "verified" 19 against the vitest counter and merged as
+  website-only — which SKIPS the Python suite, so the contradicting
+  D4 guard never ran; the next full-suite PR (#1704, docs-only
+  lessons append) then failed on a test the diff never touched. D4
+  is the ratified definition; the fix realigned the vitest counter
+  to `len(set(discover_workflows().values()))` and restored 20.
+  Durable rules: (1) before changing a count, grep for EVERY test
+  asserting it (`grep -rn "workflows" tests/ website/test/`) — a
+  green guard you aligned to is not authority when a second guard
+  encodes a chair-ratified definition (the assert message cites the
+  decision; read it); (2) the website-only CI gate means
+  website↔package claim guards can contradict SILENTLY — the
+  failure surfaces on whichever unrelated PR runs the full suite
+  first; (3) the vitest registry leg is `it.skipIf(!python)` and
+  SKIPS in CI's bare-node job — run `ATTUNE_PYTHON=<venv>/bin/python
+  vitest run` locally and confirm it executed non-skipped. Also
+  real: "registered MCP tools" is ambiguous — tool_schemas total
+  (49, the enforced site figure) vs live server registration incl.
+  plugin adapters (60, the projector's figure); and bullet strings
+  in `features.ts` PRODUCTS + page prose (`app/docs`, `app/faq`,
+  `app/page`) hardcode numbers outside CAPABILITIES — grep for the
+  OLD numbers as the completeness check.
