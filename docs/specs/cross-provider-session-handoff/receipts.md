@@ -49,17 +49,71 @@ named client runs.
   limit recorded on the transport spec's receipt 4. Verbatim raw
   result: `[{"type":"text","text":"user cancelled MCP tool call"}]`.
 
-## R6 — one interactive Codex run still owed (UNPROBED past dispatch)
+## R6 — CLOSED (live Antigravity, 2026-07-28 09:47 EDT)
 
-The packet sits uncommitted at
-`docs/handoffs/claude-handoff-t4-docs.md` in the
-`attune-ai-github-issues-0aeac3` worktree. To close R6, run ONE
-interactive Codex session from that worktree and approve the call:
+**PASS.** The cross-provider round trip is proven: packet created in
+Claude Code on `claude/handoff-t4-docs`, resumed in a **different
+vendor's** agent, which re-checked it against the real tree and
+reported drift. Verbatim result:
 
-```bash
-codex "Call the attune-ai MCP tool handoff_resume with no arguments and show the raw JSON result"
+```json
+{
+  "ok": true,
+  "slug": "claude-handoff-t4-docs",
+  "path": ".../attune-ai-github-issues-0aeac3/docs/handoffs/claude-handoff-t4-docs.md",
+  "verified": {
+    "base_ref": "origin/main",
+    "branch": "claude/handoff-t4-docs",
+    "changed_files": [],
+    "created_at": "2026-07-28T03:01:42.717461+00:00",
+    "head_sha": "3fed725b7396603f0aec41284593f4474b0a85f9",
+    "merge_base": "3fed725b7396603f0aec41284593f4474b0a85f9",
+    "provider": "claude-code"
+  },
+  "warnings": [
+    {"code": "head_moved",
+     "detail": "packet 3fed725b7 vs current afd3040f2"},
+    {"code": "files_diverged",
+     "detail": {"packet": [],
+                "current": ["tests/unit/telemetry/test_memory_events.py"]}}
+  ],
+  "memory": {"status": "skipped", "reason": "not_implemented"}
+}
 ```
 
-Expected: `ok:true`, `verified.branch = claude/handoff-t4-docs`,
-drift warnings listing the uncommitted tree (`dirty_tree`) — append
-the transcript here.
+`asserted.verification` still carries the caller's row as
+`result: "not run"` — R1 honored end to end: the sending agent's
+prose stayed quarantined from the git-rechecked `verified` facts.
+
+**Receiving agent was Antigravity, not Codex** — a deliberate
+substitution, recorded honestly. Codex auto-cancels MCP calls under
+its headless `approval: never` policy (the same limit on transport
+receipt 4), and the harness rightly blocks `--full-auto`. Antigravity
+was already proven at 10.6.1 by transport receipt 6 and is equally a
+different vendor, so it satisfies the cross-provider claim. The
+packet's own prose still names Codex as the intended receiver; that
+is the sending agent's claim, not a verified fact, and it is exactly
+what the `asserted` block exists to hold.
+
+**Command that worked** (run FROM the worktree — the MCP tool exposes
+only `slug`; the repo root comes from the server's workspace):
+
+```bash
+cd <worktree> && agy --print 'Call the attune-ai MCP tool handoff_resume with slug "claude-handoff-t4-docs" and show the raw JSON result'
+```
+
+**Correction to the prior instruction — it was stale and would have
+failed even after a successful approval.** It said run "with no
+arguments", which was right on 07-27. That worktree has since moved to
+`qa/memory-events`, and with no args the slug derives from the CURRENT
+branch (`handoff/__init__.py`, `slugify_branch(snapshot()["branch"])`)
+— so it would resolve `docs/handoffs/qa-memory-events.md`, miss, and
+return `packet_not_found`, which reads like a broken feature rather
+than a stale command. **Pass the slug explicitly whenever the worktree
+may have moved.** The expected-drift note was also stale: `dirty_tree`
+does NOT fire (the packet file is in `ignore_paths`); the real codes
+are `head_moved` + `files_diverged`, which is a stronger receipt —
+two of the three drift codes the launch article names.
+
+Cosmetic, already chipped: `voice_summary` returned the generic
+"Here's what I found." on this call too.

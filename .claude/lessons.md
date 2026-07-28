@@ -18809,3 +18809,59 @@ def ", start_idx + 1)` for module-
   rule). Cost here was only a deleted branch, because nothing was
   pushed before checking — but the same misread one step later is a
   duplicate PR racing a merged fix.
+
+- **"Dispatch started" is a DISTRIBUTION receipt, never a BEHAVIOR
+  receipt — a reached-but-cancelled MCP call leaves an evidence slot
+  that looks fillable and isn't** (2026-07-28, filling the 10.6.0
+  launch article's receipt slots): the handoff spec's R6 row records
+  `mcp: attune-ai/handoff_resume started` from a live Codex session,
+  which genuinely proves the tool shipped and resolved at 10.6.1 —
+  and then `[{"type":"text","text":"user cancelled MCP tool call"}]`,
+  because headless `codex exec` runs `approval: never`. So the
+  receiving agent has never produced the drift report the article
+  claims. The trap is that the ledger row reads like a pass at a
+  glance (a live session, a real tool name, a dispatch line), and the
+  Claude-side leg beside it IS a full pass — it is very easy to stretch
+  "create passed + resume dispatched" into "the round-trip works."
+  Same shape hit the transport spec's receipt 4 a day earlier, so
+  treat it as the standing failure mode of any cross-provider probe
+  run headlessly. Rules: (1) when filling an evidence slot, ask what
+  the claimed BEHAVIOR is and find that behavior's output in the
+  transcript — a start line, a tool-list hit, or a resolved import
+  proves reachability only; (2) never merge a partial leg into a
+  full-round-trip claim, even when the missing leg is "just approval"
+  — that is exactly the gap the receipts discipline exists to catch;
+  (3) the fix is one INTERACTIVE run of the same flow, not a rerun of
+  the headless one, and the harness classifier rightly blocks
+  `--full-auto`, so this is human-terminal work by construction.
+  Corollary for launch/marketing copy: a slot you cannot fill honestly
+  is a chair decision (close it for real vs. reword to per-agent
+  truth), not an editorial one — write BOTH paths into the slot with
+  the evidence that does exist, so whoever rules can rule without
+  re-deriving it. Extends the core "Registered ≠ working" lesson to
+  the cross-provider dispatch surface.
+
+- **Claims of INFLUENCE in prose ("X shaped our Y") are grep-checkable
+  against the artifact they cite — and they go stale silently because
+  nothing tests prose** (2026-07-28): the launch article said "the
+  third [seat] proposed the audit pattern that shaped our review
+  discipline," citing a promoted round-table report. Reading the
+  report's chair ruling showed that proposal recorded as "recorded,
+  not committed" (it collided with R1 — members never touch shell),
+  and `grep -rn "audit_worktree|seat-executed" docs/specs/cross-review/`
+  returned zero — no linkage at all from the named cause to the named
+  effect. The nearby claims in the same paragraph (2-of-3 convergence,
+  specs authored same-day) both verified fine against the report and
+  `git log --diff-filter=A`, which is what made the bad one easy to
+  miss: it sat between two true statements in a paragraph whose
+  citation was real. Method worth reusing on any launch/docs claim of
+  the form "A led to B": (1) find A's actual disposition in the cited
+  artifact (ruled in? ruled out? merely recorded?); (2) grep B's
+  directory for A's identifiers — zero hits refutes the causal claim
+  even when both A and B exist; (3) prefer the receipted replacement
+  the artifact DOES support over deleting the sentence — here the same
+  report's synthesis recorded all three seats independently naming the
+  ceremony/noise risk, which is both true and a stronger line. Pairs
+  with the website-content-accuracy count lessons: same discipline
+  (verify against the live artifact), applied to causal prose instead
+  of numbers.
