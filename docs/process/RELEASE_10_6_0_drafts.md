@@ -199,7 +199,7 @@ backlog item).
 > The models deliberate; I decide. Free and open source,
 > Apache 2.0: `pip install attune-ai`
 >
-> Full story with the transcripts: [LINK: launch article]
+> Full story with the transcripts: https://www.linkedin.com/posts/patrick-roebuck-attune-ai_this-article-talk-about-the-multi-llm-memory-activity-7487899197329993729-pGPN
 
 ### Honesty checklist on Draft B-v2 (chair rules at post time)
 
@@ -241,7 +241,9 @@ backlog item).
       2026-07-28. Transport receipt 6 PASSED live 2026-07-27 against
       PyPI 10.6.1 (`agy --print`, four legs clean, PII redacted at
       rest from the Antigravity seat). No reword needed.
-- [ ] [LINK: launch article] filled with the published URL.
+- [x] [LINK: launch article] filled with the published URL
+      (2026-07-28). Article is LIVE; the post body above now carries
+      the real link. **Every item on this checklist is now closed.**
 - [x] v1 anecdote removed — nothing in v2 claims a self-healing
       diagnosis occurred.
 
