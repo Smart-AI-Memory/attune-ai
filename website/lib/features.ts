@@ -46,8 +46,8 @@ export const PRODUCTS: Product[] = [
       "Generate concept, task, and reference templates",
       "Staleness detection via source hashing",
       "Auto-regeneration of stale templates",
-      "25 Claude Code skills included",
-      "MCP server with 47 registered tools",
+      "26 Claude Code skills included",
+      "MCP server with 49 registered tools",
     ],
   },
   {
@@ -117,7 +117,7 @@ export const PRODUCTS: Product[] = [
       "/coach status — check template freshness",
       "/coach maintain — regenerate stale templates",
       "Auto-triggers on natural language (help, explain, learn)",
-      "25 auto-triggering skills (security, testing, review, etc.)",
+      "26 auto-triggering skills (security, testing, review, etc.)",
     ],
   },
 ];
@@ -268,7 +268,7 @@ export const DIFFERENTIATORS: Differentiator[] = [
  * and no page consumed them.)
  */
 export const CAPABILITIES = {
-  workflows: 20,
+  workflows: 19,
   skills: 26,
   mcpTools: 49,
   templateKinds: 15,
@@ -311,7 +311,7 @@ export const RELIABILITY_LOOP: LoopStage[] = [
     n: "03",
     name: "Build",
     description:
-      "20 workflows: review, tests, bug prediction, refactor.",
+      "19 workflows: review, tests, bug prediction, refactor.",
   },
   {
     n: "04",
@@ -362,6 +362,26 @@ export const PILLARS: Pillar[] = [
     icon: "🧠",
     color: "secondary",
   },
+  // 10.6.0 multi-LLM wave (launch plan; wording aligned with the
+  // shipped README "Multi-LLM collaboration" section).
+  {
+    id: "multi-llm",
+    tag: "Multi-LLM",
+    title: "Three AI agents, one project brain",
+    description:
+      "Claude Code, Codex, and Antigravity share the same project " +
+      "memory, hand off work with git-verified packets, and give " +
+      "each other second opinions on real diffs. The round table " +
+      "lets them deliberate a question — you chair what gets " +
+      "adopted.",
+    points: [
+      "Shared session memory via MCP — same tools in every agent",
+      "Handoffs re-verified against the actual git tree on resume",
+      "Cross-model review and deliberation — advisory; you decide",
+    ],
+    icon: "🤝",
+    color: "accent",
+  },
   {
     id: "communication",
     tag: "Dynamic forms",
@@ -387,7 +407,7 @@ export const PILLARS: Pillar[] = [
     tag: "AI workflows",
     title: "Specialist teams, not one prompt",
     description:
-      "20 workflows run teams of 2–6 Claude subagents to " +
+      "19 workflows run teams of 2–6 Claude subagents to " +
       "review code, surface vulnerabilities, generate tests, and plan " +
       "refactors — with cost-tiered model routing.",
     points: [
