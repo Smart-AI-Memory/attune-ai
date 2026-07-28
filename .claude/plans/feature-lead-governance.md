@@ -1,6 +1,7 @@
 # Feature Lead Governance — Execution Plan
 
-**Status:** DRAFT for review; not approved for execution.
+**Status:** approved (2026-07-27) — rulings applied; execution gated
+by P1 (the cross-review usage-signal read).
 **Canonical spec:** `docs/specs/feature-lead-governance/`
 
 ## Outcome
@@ -21,10 +22,14 @@ human chair.
 
 - No permanent provider ownership.
 - No model may waive repository rules or required evidence.
-- Findings are immutable; dispositions are appended.
-- Human approval remains required for activation, transfer, scope
-  expansion, revocation, and unresolved material disputes.
-- Implementation waits for spec approval and current handoff/review APIs.
+- Findings are immutable through every governance API; dispositions
+  are appended per atomic finding; out-of-band edits are detected.
+- Chair transitions (activation, cross-provider transfer, scope
+  expansion, revocation) are evidenced by chair-merged PRs to the
+  main-tracked registry (D7) — never by an MCP-relayed confirmation.
+  Same-provider session succession is an automatic event.
+- Implementation waits for the P1 activation gate (the cross-review
+  usage-signal read) and consumes the SHIPPED handoff/board seams.
 
 ## Tasks
 
