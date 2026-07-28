@@ -13,6 +13,7 @@ regression here — that is exactly why this guard exists.
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 from tests.conftest import _SUITE_MANAGED_ENV
 
@@ -48,21 +49,18 @@ def test_import_time_override_does_not_reach_module_constants():
     to prove the ordering holds.
     """
     env = {**os.environ, "ATTUNE_MODEL_PREMIUM": "claude-opus-5", "ANTHROPIC_API_KEY": ""}
+    # Absolute node id + explicit cwd: lanes do not all invoke pytest from
+    # the repo root (the coverage job notably does not), and a relative
+    # path would make this guard fail for the wrong reason.
+    repo_root = Path(__file__).resolve().parents[2]
+    target = repo_root / "tests" / "unit" / "agents" / "release" / "test_release_models.py"
+    node_id = f"{target}::TestModuleConstants::test_model_config_uses_current_model_ids"
     proc = subprocess.run(  # nosec B603 — fixed argv, shell=False
-        [
-            sys.executable,
-            "-m",
-            "pytest",
-            "tests/unit/agents/release/test_release_models.py"
-            "::TestModuleConstants::test_model_config_uses_current_model_ids",
-            "-q",
-            "--no-header",
-            "-o",
-            "addopts=",
-        ],
+        [sys.executable, "-m", "pytest", node_id, "-q", "--no-header", "-o", "addopts="],
         capture_output=True,
         text=True,
         env=env,
+        cwd=str(repo_root),
         timeout=300,
     )
     assert proc.returncode == 0, (
