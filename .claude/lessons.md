@@ -18865,3 +18865,40 @@ def ", start_idx + 1)` for module-
   with the website-content-accuracy count lessons: same discipline
   (verify against the live artifact), applied to causal prose instead
   of numbers.
+
+- **An exported `ANTHROPIC_API_KEY` SHADOWS the subscription login for
+  the roundtable claude seat — and a NON-INTERACTIVE probe will tell
+  you the key isn't there when the user's real terminal has it**
+  (2026-07-28, diagnosing the clean-run re-fire): two compounding
+  traps, either of which sends the fix in the wrong direction.
+  (1) **Probe shell mismatch.** `zsh -lc 'echo ${#ANTHROPIC_API_KEY}'`
+  reported the key unset; `zsh -ic` on the same machine reported it
+  SET at 108 chars. `~/.zshrc` sources `~/.attune/anthropic.env`, and
+  whatever gates that line, the practical result is that a
+  non-interactive login shell does not see it. Since the human fires
+  from an INTERACTIVE terminal, `zsh -ic` is the faithful probe —
+  reasoning from `-lc` (or from the agent session's own env) predicts
+  the wrong auth path. Sibling of the launchd lesson: non-interactive
+  contexts differ from the interactive one in env AND PATH; decide
+  which one you are predicting for before you probe.
+  (2) **Auth-path selection is a truthiness test, so a live key hides
+  a working subscription.** `run_command(provider_clean=True)`
+  (`routine.py`) strips every `ANTHROPIC_*`/`CLAUDE*` var, then
+  re-adds `ANTHROPIC_API_KEY` only `if api_key:`. Non-empty ⇒ the seat
+  takes the API path and the stored CLI login is NEVER reached, even
+  when a valid `Claude Code-credentials` Keychain entry exists. So the
+  2026-07-27 "credit balance is too low" (HTTP 400) failure could not
+  be fixed by `claude login` — the login was fine and unreachable.
+  Conversely `ANTHROPIC_API_KEY= <cmd>` makes the branch falsy, drops
+  the key, and forces the subscription/stored-login path — which is
+  the sanctioned `else` branch in the docstring, not a workaround, and
+  costs no API credits. **Diagnostic order that works:** (a) `zsh -ic`
+  to learn what the real terminal exports; (b) if a key is present,
+  recognize that adding account credits and re-logging-in fix DIFFERENT
+  paths and only one is live; (c) probe the free path first with
+  `ANTHROPIC_API_KEY=` before concluding the seat needs money. Also
+  standing: probe ONE seat, never the multi-seat routine — a routine
+  fire burns the Codex and Antigravity invocations reproducing a
+  seat-1 failure. Extends the "claude-seat ABSENT has two distinct
+  auth causes" lesson with the shadowing mechanism and the
+  interactive-vs-non-interactive probe correction.
