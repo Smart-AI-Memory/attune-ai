@@ -151,26 +151,11 @@ export default function DocsPage() {
               </p>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* attune-help */}
+                {/* attune-ai */}
                 <div className="bg-[var(--background)] border-2 border-[var(--primary)] rounded-lg p-6 flex flex-col relative">
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--primary)] text-white text-xs font-bold px-3 py-1 rounded-full">
                     Recommended
                   </div>
-                  <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
-                    Reader Only
-                  </div>
-                  <h3 className="text-lg font-bold mb-2">attune-help</h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
-                    Lightweight reader for .help/ templates. 1 dependency,
-                    6 files. Embed in any Python tool. No AI key required.
-                  </p>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
-                    <span className="text-white/50">$ </span>pip install attune-help
-                  </div>
-                </div>
-
-                {/* attune-ai */}
-                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
                   <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
                     Full Platform
                   </div>
@@ -185,21 +170,35 @@ export default function DocsPage() {
                   </div>
                 </div>
 
-                {/* attune-author */}
-                <div className="bg-[var(--background)] border-2 border-[var(--primary)] rounded-lg p-6 flex flex-col relative">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--primary)] text-white text-xs font-bold px-3 py-1 rounded-full">
-                    Recommended
-                  </div>
+                {/* attune-rag */}
+                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
                   <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
-                    AI Authoring
+                    Retrieval Grounding
                   </div>
-                  <h3 className="text-lg font-bold mb-2">attune-author</h3>
+                  <h3 className="text-lg font-bold mb-2">attune-rag</h3>
                   <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
-                    Generate 15 kinds of source-grounded templates with
-                    per-type polish prompts. Pairs with attune-help.
+                    Lightweight, LLM-agnostic RAG pipeline with pluggable
+                    corpora. Grounds generated content in your actual
+                    source. Also ships inside attune-ai.
                   </p>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3 break-all">
-                    <span className="text-white/50">$ </span>pip install &apos;attune-author[plugin]&apos;
+                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
+                    <span className="text-white/50">$ </span>pip install attune-rag
+                  </div>
+                </div>
+
+                {/* attune-verify */}
+                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
+                  <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
+                    Fact-Checking
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">attune-verify</h3>
+                  <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
+                    Generation fact-checker for the attune family. Verifies
+                    the named entities in LLM output — imports, CLI flags,
+                    links — so hallucinations fail before they ship.
+                  </p>
+                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
+                    <span className="text-white/50">$ </span>pip install attune-verify
                   </div>
                 </div>
 
@@ -219,28 +218,30 @@ export default function DocsPage() {
                 </div>
               </div>
 
-              {/* attune-help / attune-author install */}
+              {/* Companion packages */}
               <div className="mt-10 bg-[var(--surface-container-low)] border border-[var(--border)] rounded-lg p-6">
                 <h3 className="font-bold text-lg mb-2">
-                  Installing attune-help and attune-author
+                  Companion packages
                 </h3>
                 <p className="text-sm text-[var(--text-secondary)] mb-4">
-                  Both ship as Python packages on PyPI, and their Claude
-                  Code plugin versions now live in the same{" "}
+                  attune-help is the lightweight reader for .help/
+                  directories — 1 dependency, no AI key required. Its Claude
+                  Code plugin lives in the same{" "}
                   <code className="text-xs bg-[var(--surface-container-high)] px-1 rounded">
                     Smart-AI-Memory/attune-ai
                   </code>{" "}
-                  marketplace as attune-ai itself.
+                  marketplace as attune-ai itself. attune-author&apos;s AI
+                  authoring tools have been consolidated into attune-ai; the
+                  standalone package is archived, and all released versions
+                  stay installable.
                 </p>
                 <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-4 leading-relaxed">
                   <div className="text-white/50"># Install from PyPI</div>
                   <div>pip install attune-help</div>
-                  <div>pip install &apos;attune-author[plugin]&apos;</div>
                   <br />
-                  <div className="text-white/50"># Or as Claude Code plugins from the attune-ai marketplace</div>
+                  <div className="text-white/50"># Or as a Claude Code plugin from the attune-ai marketplace</div>
                   <div>claude plugin marketplace add Smart-AI-Memory/attune-ai</div>
                   <div>claude plugin install attune-help@attune-ai</div>
-                  <div>claude plugin install attune-author@attune-ai</div>
                 </div>
               </div>
             </div>
