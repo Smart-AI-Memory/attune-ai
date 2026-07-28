@@ -19091,3 +19091,33 @@ def ", start_idx + 1)` for module-
   to falsify, never by how sure they sound. Recording the verdicts
   (CONFIRMED / REFUTED / unverified) beside each claim in the promoted
   report is what keeps a deliberation from hardening into folklore.
+
+- **Promoting a deliberation into a tracked artifact is a RECONCILE
+  step, not a transcription step — record each item's state AT
+  PROMOTION, because faithful copying can enshrine something that went
+  false in the interval** (2026-07-28, promoting round-table thread
+  `routine-clean-run-20260728-1020`): the appendix's item 2
+  recommendation read "HOLD OPEN, narrowed to one interactive
+  `handoff_resume` probe; fix the stale recipe in the same pass." By
+  promotion time — same day, a few hours later — BOTH halves were
+  done: R6 had been closed live from an Antigravity seat, and the stale
+  reproduction recipe (a find only one seat made) had been corrected in
+  the same edit. Copying the recommendation verbatim into
+  `docs/reports/roundtable/` would have written a false open item into
+  a tracked file, and the report is exactly the artifact future
+  sessions trust over the TTL'd thread. The pull toward verbatim is
+  strong and feels like integrity — the deliberation said X, so record
+  X — which is what makes this a trap rather than an oversight.
+  **Procedure: before promoting, re-check every actionable item against
+  current state and record the recommendation AND its disposition side
+  by side** ("recommended: hold open · state now: satisfied, both
+  halves, 07-28 09:47"). That preserves the deliberation faithfully
+  while keeping the artifact true, and it makes the interval visible
+  instead of collapsing it. Same pass caught a smaller instance: the
+  appendix said "the five phase files" when only THREE carry a
+  `**Status:**` line (`decisions.md` and `receipts.md` have none by
+  construction) — recorded as a correction so the next reader does not
+  hunt for two files that never existed. Companion to "a next-session
+  starter can be STALE ON ARRIVAL" and "spec task rows lie": same
+  family, but this is the *authoring* side — you are the one about to
+  create the stale record, and the interval is hours, not weeks.
