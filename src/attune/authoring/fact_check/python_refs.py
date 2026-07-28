@@ -1,18 +1,21 @@
 """Check Python import statements and dotted-path references.
 
-Resolves each candidate against the active venv via
-``importlib.import_module`` — see spec §1.3, "catches the
-``attune.ops._readers`` class of bug where the path parses fine
-but doesn't actually exist."
+Resolves each candidate through the shared authoritative resolver
+(``fact_check/imports.py``, #1586): the repo's own ``src/`` is put
+first on ``sys.path`` before resolution, so a symbol that exists in
+the checked repo resolves even when the active venv's editable
+mapping points at a different checkout (the line-115 false-positive
+class). Catches the ``attune.ops._readers`` class of bug where the
+path parses fine but doesn't actually exist (spec §1.3).
 """
 
 from __future__ import annotations
 
 import ast
-import importlib
 import re
 from pathlib import Path
 
+from . import imports as _imports
 from .report import CHECK_PYTHON_REFS, Finding
 
 #: Match prose references like ``attune.ops._readers.Foo`` or
@@ -49,53 +52,11 @@ def _extract_code_fences(text: str) -> list[tuple[int, str]]:
     return fences
 
 
-def _try_import(module: str) -> bool:
-    """Best-effort import test. Returns True if importable."""
-    try:
-        importlib.import_module(module)
-    except Exception:  # noqa: BLE001
-        # INTENTIONAL: any failure (ImportError, syntax error in a
-        # broken dep, ValueError on a bad dotted path) means the
-        # reference is unresolvable from the active venv — exactly
-        # what we want to surface to the doc author.
-        return False
-    return True
-
-
-def _resolve_attr(module_path: str, attr: str) -> bool:
-    """Import ``module_path`` and verify ``attr`` exists on it."""
-    try:
-        module = importlib.import_module(module_path)
-    except Exception:  # noqa: BLE001
-        return False
-    return hasattr(module, attr)
-
-
-def _resolve_dotted(path: str) -> bool:
-    """Resolve a full dotted path like ``attune.ops._readers.Foo``.
-
-    Walks from longest module prefix down: tries to import each
-    prefix; if a prefix imports, checks that the suffix attribute
-    chain exists on the resulting object.
-    """
-    parts = path.split(".")
-    # Try progressively shorter module prefixes.
-    for split in range(len(parts), 0, -1):
-        module_path = ".".join(parts[:split])
-        try:
-            obj = importlib.import_module(module_path)
-        except Exception:  # noqa: BLE001
-            continue
-        # Walk remaining attributes.
-        ok = True
-        for attr in parts[split:]:
-            if not hasattr(obj, attr):
-                ok = False
-                break
-            obj = getattr(obj, attr)
-        if ok:
-            return True
-    return False
+# Resolution primitives live in the shared authoritative resolver
+# (one import verdict for this checker AND the CI doc-import gate).
+_try_import = _imports.try_import
+_resolve_attr = _imports.resolve_attr
+_resolve_dotted = _imports.resolve_dotted
 
 
 def check(polished_path: Path) -> list[Finding]:
@@ -104,6 +65,10 @@ def check(polished_path: Path) -> list[Finding]:
     Returns findings for unresolvable imports inside python code
     fences and for unresolvable dotted paths in prose.
     """
+    # Authoritative resolution (#1586): the checked repo's own src/
+    # wins over the venv's editable mapping for anything not yet
+    # imported into this process.
+    _imports.ensure_src_on_path(_imports.find_repo_root(polished_path))
     text = polished_path.read_text(encoding="utf-8")
     findings: list[Finding] = []
     seen: set[tuple[str, str]] = set()

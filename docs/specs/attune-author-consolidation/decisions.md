@@ -225,14 +225,27 @@ in-repo projector goldens cover rendering. Scripts and the
 aggregator test were left untouched — they are held PR #1562's
 surface. **T4 is now unblocked** per D12.
 
+## 2026-07-27 — Resolver fold-in EXECUTED (spec T2 / #1191, issue #1586)
+
+**Built** (post-#1561 lift, per the build-slot order). New shared
+`fact_check/imports.py` owns the authoritative import verdict:
+`find_repo_root` + `ensure_src_on_path` (repo `src/` first on
+`sys.path` — the audit script's mechanism, extracted), plus the
+resolution primitives (`resolve_import_statement` moved verbatim from
+`audit_doc_imports.py::_resolve`; `try_import` / `resolve_attr` /
+`resolve_dotted` moved from `python_refs.py`). `python_refs.check()`
+now preps the checked repo's src before resolving (kills the line-115
+false-positive class for fresh processes; a `sys.path` insert cannot
+rebind already-imported modules — documented limit). The audit
+script's `_resolve` delegates lazily (its `main()` bootstrap stays —
+it must run before any attune import). Regression test:
+`tests/unit/authoring/fact_check/test_imports.py::TestLine115Regression`
+— a symbol existing ONLY in the checked repo's src resolves, with a
+no-repo-layout negative control. 127 fact_check + audit-gate tests
+serial-green.
+
 ## Open
 
 - **T4 execution** (post-T3, per D12): drop `[author]` extra,
   retire CLI invocation paths, archive GitHub repo, set PyPI
   archived status. No new decision needed — D12 is the ruling.
-- **Resolver fold-in (spec T2 / #1191)** — extract `audit_doc_imports.py`'s
-  `src`-on-`sys.path` resolver into a shared `fact_check/imports.py` and
-  repoint the absorbed `python_refs.py` at it (kills the line-115 false
-  positive). Split OUT of T2a to keep the staleness absorb focused; it
-  touches disjoint files (`fact_check/`, `scripts/`) with its own
-  regression test. Tracked as its own follow-up.
