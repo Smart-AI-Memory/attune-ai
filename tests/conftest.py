@@ -28,6 +28,29 @@ from pathlib import Path
 import pydantic.root_model  # noqa: F401  (import for side effect: sys.modules warm-up)
 import pytest
 
+#: ``ATTUNE_*`` vars owned by the autouse fixtures further down, which
+#: set them per-test (tmp ``ATTUNE_HOME``, telemetry off). ``_scrub_attune_env``
+#: must not touch these — see its docstring for the failure it caused.
+_SUITE_MANAGED_ENV = frozenset({"ATTUNE_HOME", "ATTUNE_HELP_TELEMETRY"})
+
+
+# Scrub at conftest IMPORT time, before any test module (and therefore any
+# `attune.*` module) is imported. Several defaults are resolved once at
+# import and captured by other modules — e.g. release_models.MODEL_CONFIG
+# resolves the premium tier through attune.model_tiers at import, and
+# base_agent binds that dict, so a per-test fixture is far too late to
+# undo an exported ATTUNE_MODEL_PREMIUM. Clearing here makes the suite
+# hermetic for both import-time and call-time reads; the fixture below
+# then keeps it that way for anything set mid-session.
+def _scrub_attune_env_at_import() -> None:
+    """Drop ambient ``ATTUNE_*`` overrides before any attune module loads."""
+    for name in [k for k in os.environ if k.startswith("ATTUNE_")]:
+        if name not in _SUITE_MANAGED_ENV:
+            del os.environ[name]
+
+
+_scrub_attune_env_at_import()
+
 # =============================================================================
 # Redis host guard — literal loopback, never a resolvable name
 # (windows-exit139-segfault spec)
@@ -263,6 +286,40 @@ try:
             _ORIGINAL_TIER_MAPS[_cls] = _cls.tier_map.copy()
 except Exception:  # noqa: BLE001
     pass
+
+
+@pytest.fixture(autouse=True)
+def _scrub_attune_env(monkeypatch):
+    """Clear every ``ATTUNE_*`` override so the suite is hermetic.
+
+    The unit suite asserts DEFAULTS (tier model ids, budget caps,
+    telemetry-on, form-surface routing). Every one of those defaults is
+    overridable by an env var, and a developer shell that exports one
+    turns a healthy tree red — invisibly, because CI exports none of
+    them and so stays green.
+
+    Found 2026-07-28: a clean-run routine fired from a shell exporting
+    ``ATTUNE_MAX_BUDGET_USD=10.00`` reported ``keyless-unit-suite: FAIL``
+    on a tree that was fine, and the round-table seats then reasoned
+    correctly from that poisoned brief to "the tree is not healthy". A
+    full sweep (every value-override var set to a non-default) failed 22
+    tests across 6 files. Clearing here fixes the whole class at once
+    rather than per-test.
+
+    ``_SUITE_MANAGED_ENV`` is excluded because other autouse fixtures
+    below OWN those two — they set ``ATTUNE_HOME`` to a tmp_path and
+    ``ATTUNE_HELP_TELEMETRY=0``. Scrubbing them here is not safe on
+    fixture-ordering grounds: autouse ordering is not guaranteed to put
+    this first, and when it ran last it deleted the tmp ``ATTUNE_HOME``
+    and pointed the default telemetry store at the developer's real
+    ``~/.attune``. ``test_suite_isolation_drift_guard`` (RC-4) caught
+    exactly that — leave those two to their owners.
+
+    A test that wants an override still sets it itself via monkeypatch.
+    """
+    for name in [k for k in os.environ if k.startswith("ATTUNE_")]:
+        if name not in _SUITE_MANAGED_ENV:
+            monkeypatch.delenv(name, raising=False)
 
 
 @pytest.fixture(autouse=True)

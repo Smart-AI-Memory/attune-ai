@@ -1,11 +1,15 @@
 # Agent Round Table — Requirements
 
-**Status:** approved (2026-07-18; final-review clause bound
-2026-07-20) — final review = the 2026-07-27 first scheduled-fire
-receipt (Monday runbook step 1; reopen via the SEAT_ABSENT+401
-condition in advanced-debugging-plugin decisions.md). On a green
-fire, flip this spec to shipped and let roundtable-triage /
-roundtable-producing-team carry active status. Foundations
+**Status:** shipped (2026-07-28) — the final-review clause is
+SATISFIED: green fire `routine-clean-run-20260728-1020`, both checks
+PASS, all three seats posted (claude 46s, antigravity 40s, codex
+12s), synthesis and appendix complete, 8 invocations. The 07-27
+scheduled fire did not produce this receipt (claude seat ABSENT on a
+dead stored login); the manual 07-28 re-fire did, after
+`claude auth login` restored subscription auth. Active status is now
+carried by roundtable-triage / roundtable-producing-team. Reopen via
+the SEAT_ABSENT+401 condition in advanced-debugging-plugin
+decisions.md. Foundations
 chat-ratified by Patrick 2026-07-18; D1/D2 picked, D3 provisional
 (see [decisions.md](decisions.md), including the promoted
 probe-001 transcript).

@@ -13756,8 +13756,8 @@ files.
   quota, no per-token charge. If neither →
   authentication fails. For subscribers who want
   attune workflows on subscription pricing: unset
-  `ANTHROPIC_API_KEY` globally, run `claude login`
-  once interactively to cache the token, and set
+  `ANTHROPIC_API_KEY` globally, run
+  `claude auth login` once interactively to cache the token, and set
   the key inline (`ANTHROPIC_API_KEY=$(...) python
   script.py`) only when a script needs direct API
   access (e.g. batch jobs, `anthropic` SDK calls).
@@ -16212,7 +16212,7 @@ def ", start_idx + 1)` for module-
   CLI); (c) with EVERY `ANTHROPIC_*`/`CLAUDE*` var stripped
   (provider-clean), a remaining 401 "OAuth access token has been
   revoked" isolates the CLI's own stored token — only an
-  interactive `claude login` fixes that, and credential flows are
+  interactive `claude auth login` fixes that, and credential flows
   the user's, never the agent's. Rule: subprocesses that should
   use their OWN auth (member seats, nested claude) run
   provider-clean; subprocesses that must stay keyless (CI-faithful
@@ -18713,7 +18713,7 @@ def ", start_idx + 1)` for module-
   `ANTHROPIC_API_KEY`, giving two auth paths that fail differently:
   (a) stored CLI login — probe with a python subprocess replicating
   that exact scrub + `claude -p "Reply with exactly: OK"`; "401 OAuth
-  access token has been revoked" means a `claude login` from earlier
+  access token has been revoked" means a `claude auth login` earlier
   didn't stick (a later login elsewhere revokes it). Do NOT probe
   with `env -i` — over-scrubbing yields a DIFFERENT failure ("Not
   logged in · Please run /login") that misdiagnoses the state. (b)
@@ -18865,3 +18865,114 @@ def ", start_idx + 1)` for module-
   with the website-content-accuracy count lessons: same discipline
   (verify against the live artifact), applied to causal prose instead
   of numbers.
+
+- **An exported `ANTHROPIC_API_KEY` SHADOWS the subscription login for
+  the roundtable claude seat — and a NON-INTERACTIVE probe will tell
+  you the key isn't there when the user's real terminal has it**
+  (2026-07-28, diagnosing the clean-run re-fire): two compounding
+  traps, either of which sends the fix in the wrong direction.
+  (1) **Probe shell mismatch.** `zsh -lc 'echo ${#ANTHROPIC_API_KEY}'`
+  reported the key unset; `zsh -ic` on the same machine reported it
+  SET at 108 chars. `~/.zshrc` sources `~/.attune/anthropic.env`, and
+  whatever gates that line, the practical result is that a
+  non-interactive login shell does not see it. Since the human fires
+  from an INTERACTIVE terminal, `zsh -ic` is the faithful probe —
+  reasoning from `-lc` (or from the agent session's own env) predicts
+  the wrong auth path. Sibling of the launchd lesson: non-interactive
+  contexts differ from the interactive one in env AND PATH; decide
+  which one you are predicting for before you probe.
+  (2) **Auth-path selection is a truthiness test, so a live key hides
+  a working subscription.** `run_command(provider_clean=True)`
+  (`routine.py`) strips every `ANTHROPIC_*`/`CLAUDE*` var, then
+  re-adds `ANTHROPIC_API_KEY` only `if api_key:`. Non-empty ⇒ the seat
+  takes the API path and the stored CLI login is NEVER reached, even
+  when a valid `Claude Code-credentials` Keychain entry exists. So the
+  2026-07-27 "credit balance is too low" (HTTP 400) failure could not
+  be fixed by re-auth — the login was fine and unreachable.
+  Conversely `ANTHROPIC_API_KEY= <cmd>` makes the branch falsy, drops
+  the key, and forces the subscription/stored-login path — which is
+  the sanctioned `else` branch in the docstring, not a workaround, and
+  costs no API credits. **Diagnostic order that works:** (a) `zsh -ic`
+  to learn what the real terminal exports; (b) if a key is present,
+  recognize that adding account credits and re-logging-in fix DIFFERENT
+  paths and only one is live; (c) probe the free path first with
+  `ANTHROPIC_API_KEY=` before concluding the seat needs money. Also
+  standing: probe ONE seat, never the multi-seat routine — a routine
+  fire burns the Codex and Antigravity invocations reproducing a
+  seat-1 failure. Extends the "claude-seat ABSENT has two distinct
+  auth causes" lesson with the shadowing mechanism and the
+  interactive-vs-non-interactive probe correction.
+  (3) **`Not logged in · Please run /login` is AMBIGUOUS — it is both
+  the over-scrubbed signature AND the genuinely-dead-login signature,
+  so one extra probe decides which.** The prior lesson taught that
+  this string means over-scrubbing (`env -i` produces it with a
+  healthy login), which makes it tempting to dismiss the message and
+  hunt the env instead. Resolve it by re-running with the SAME auth
+  condition but NO scrub — `ANTHROPIC_API_KEY= claude -p hello`
+  directly, versus through `run_command(provider_clean=True)`:
+  - scrubbed FAILS + plain SUCCEEDS ⇒ the scrub strips something
+    load-bearing; fix `run_command`, do NOT re-login.
+  - BOTH fail identically ⇒ the stored credential is dead; re-auth is
+    correct (2026-07-28: both failed, and a
+    `Claude Code-credentials` Keychain entry EXISTING is not evidence
+    it is valid — a stale entry produces this exact message).
+  The same two-probe shape generalizes to any "did my harness break
+  it, or is it actually broken" question: hold the condition fixed and
+  remove the harness.
+  (4) **THE COMMAND IS `claude auth login`, NOT `claude login` — and
+  `claude auth status` is the canonical probe. Verify the FIX EXISTS
+  before debugging why it didn't work.** On CLI 2.1.220 there is no
+  top-level `login` subcommand (`claude --help` lists `auth`,
+  `setup-token`, `gateway`); `claude login` therefore does nothing.
+  This corpus said "run `claude login`" in several places — stale
+  guidance from an older CLI — and it cost three rounds on 2026-07-28:
+  the credential never changed, and the investigation went to Keychain
+  `mdat` forensics and TTY/redirect theories while the recommended
+  command simply did not exist. `claude auth status` returns JSON
+  (`loggedIn`, `authMethod`, `subscriptionType`) and is a far better
+  receipt than timestamp archaeology — `{"loggedIn": false,
+  "authMethod": "none"}` before, `{"loggedIn": true, "authMethod":
+  "claude.ai", "subscriptionType": "max"}` after `claude auth login`,
+  and the seat probe then returned `exit 0 / OK`. **Durable rule: when
+  a prescribed fix produces no observable change, `--help` the command
+  BEFORE theorizing about why it failed.** A no-op command and a
+  failing command look identical from the outside, and vendored CLIs
+  reorganize subcommands between versions. Same family as the stale
+  `receipts.md` "run with no arguments" instruction corrected the same
+  day: instructions in the corpus rot against the tools they name, and
+  neither one is tested by anything.
+
+- **The clean-run routine inherits the dev shell's env for its CHECK
+  battery, so an exported `ATTUNE_MAX_BUDGET_USD` turns a HEALTHY tree
+  into a "tree is not healthy" verdict — and the seats reason
+  correctly from the poisoned brief** (2026-07-28, two clean-runs
+  eleven minutes apart on the same tree reached OPPOSITE conclusions).
+  Mechanism: `run_command`'s DEFAULT branch (checks) is
+  `env = {**os.environ, "ANTHROPIC_API_KEY": ""}` — it empties exactly
+  ONE variable and passes everything else through, so any other
+  exported `ATTUNE_*` reaches pytest. `~/.zshrc` exports
+  `ATTUNE_MAX_BUDGET_USD=10.00`; `get_max_budget_usd()` honors that
+  override for every depth, and
+  `tests/unit/workflows/test_agent_sdk_adapter.py::TestGetMaxBudgetUsd`
+  asserts the depth DEFAULTS (`deep`→25.00, `quick`→2.00) without
+  clearing the var — `assert 10.0 == 25.0`, `2 failed, 18999 passed`,
+  `keyless-unit-suite: FAIL (exit 1)`. CI never sees it (CI does not
+  export the cap) and an agent session may not either, so this is
+  invisible from both of the places you would normally look. The
+  round-table seats then read `FAIL` in their brief and correctly
+  concluded the tree was unhealthy — **a right answer to a wrong
+  question, which is the most expensive kind of wrong**. Three durable
+  points: (1) the real defect is TEST ISOLATION — env-reading code
+  needs `monkeypatch.delenv(..., raising=False)` in its tests, and the
+  ANTHROPIC_API_KEY-leaks-into-pytest lesson is the same family, so
+  treat "reads process env" as a standing test-isolation trigger, not
+  a one-off; (2) when two runs of the same routine disagree, **diff
+  the ENVIRONMENTS before believing either verdict** — here the entire
+  delta was one exported var plus one command prefix; (3) a green
+  verdict obtained from an agent session is not automatically the
+  trustworthy one — mine passed only because my env happened to lack
+  the var, which is luck, not rigor. Pairs with the sibling failure in
+  the same pair of runs: without the `ANTHROPIC_API_KEY=` prefix the
+  claude seat returned `ABSENT — Credit balance is too low` and
+  synthesis HALTED, burning the Codex and Antigravity invocations —
+  one routine fire, two independent env-shaped failures.
