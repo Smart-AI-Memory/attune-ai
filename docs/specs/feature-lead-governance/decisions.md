@@ -144,3 +144,32 @@ active assignment.
 The round-1 defect register (12 classified items) was declined for
 promotion by the chair; it informs the revision pass via the
 moderator's session review and expires with the board thread.
+
+## 2026-07-28 — P1 gate DISCHARGED by inheritance
+
+Chair ruling. D5's P1 says governance activation "sits behind the SAME
+chair usage-signal read that gates cross-review T3/T4. No second
+activation criterion is invented; one chair read ungates or kills
+both."
+
+That read was **killed as a gate** on 2026-07-28 — it could not answer
+its own question (the `usage-signals` corpus measures PyPI/GitHub
+adoption, not feature invocation; its newest snapshot captured zero
+rows), and it was circular (the data it wanted comes from the dogfood
+runs it was blocking). Full reasoning and receipts:
+`docs/specs/cross-review/decisions.md`, 2026-07-28 entry.
+
+**By the inheritance clause, that ruling discharges P1 here.** No
+second activation criterion is invented — the clause is honored
+exactly: one chair decision resolved both, which is what it was written
+to guarantee.
+
+Also settles the artifact conflict the round table's appendix raised
+(item 4): the bucket read `approved-not-shipped` while the internal
+status token read `draft (2026-07-27)`. The appendix's antigravity seat
+concluded chair approval was missing; the other two seats read it as an
+un-run gate, not absent sign-off, and the recorded design agrees —
+P1 *inherits* cross-review's gate. It was a **label mismatch, not a
+re-approval trigger**, and this entry is the one line that fixes it.
+Re-running approval would have re-litigated approved design and
+multiplied chair work for nothing.

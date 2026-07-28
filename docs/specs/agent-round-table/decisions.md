@@ -545,3 +545,41 @@ Two independent environment faults, both now recorded in
    in `tests/unit/test_env_isolation_guard.py`.
 
 Neither fault was visible to CI, which exports none of these.
+
+## 2026-07-28 — Baseline numbers: RULED as a report line, not a ledger
+
+Chair ruling on action 3 of the weekly clean-run digest
+(`routine-clean-run-20260728-1020`): the claude seat proposed recording
+pass/skip/xfail/duration weekly so the next run has a diff, and
+pre-committed to withdrawing it rather than growing machinery.
+
+**GREEN-LIT — but as a required line in the promoted routine report,
+NOT a new ledger file.**
+
+The gap the seats named is real and was verified, not assumed: of the
+three promoted routine reports in `docs/reports/roundtable/`, the two
+older ones carry **no pass count at all**. So "absolutes without a
+prior baseline cannot distinguish stable from slowly eroding" is not
+hypothetical here — skip and xfail counts could drift upward for months
+and every weekly run would still read HEALTHY, because a growing skip
+list renders identically to a passing one.
+
+But a new ledger file is the wrong shape, and the proposing seat's
+instinct against machinery was right. **The four numbers already exist
+in every digest thread** — they are in the check output the seats are
+briefed with. They simply evaporate with the 7-day TTL unless the
+thread is promoted. So the fix is not a new artifact; it is making the
+numbers a required line in the report that promotion already produces.
+
+**Convention, effective now:** every promoted `routine-clean-run-*`
+report states pass / skip / xfail / duration in its health-verdict
+section. `routine-clean-run-20260728-1020.md` already does
+(19,001 passed / 63 skipped / 7 xfailed) and is the template.
+
+Cost: zero new files, zero new code, zero new schedule.
+
+**Accepted tradeoff, stated rather than hidden:** an unpromoted week
+loses its numbers. That is deliberate — a week not worth promoting is
+not worth baselining, and the alternative (a routine that writes to a
+tracked file on every headless fire) is exactly the machinery the
+proposing seat withdrew from.

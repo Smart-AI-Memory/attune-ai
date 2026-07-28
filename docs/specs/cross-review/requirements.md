@@ -1,8 +1,9 @@
 # Cross Review — Requirements
 
-**Status:** APPROVED (chair, 2026-07-22; OPEN-1..3 held for the
-07-27 usage read) — implementation staged post-lift, SECOND after
-cross-provider-session-handoff.
+**Status:** approved (chair, 2026-07-22) — **OPEN-1..3 RULED
+2026-07-28** and the usage-read gate KILLED as unanswerable and
+circular (see `decisions.md`). T1+T2 shipped in 10.6.1; **T3 is
+unblocked**; T4 follows T3.
 **Slug:** `cross-review`
 **Provenance:** roundtable `q-multi-llm-obvious-win-001` (chair
 same-day amendment: committed, not usage-gated) — see
