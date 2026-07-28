@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>attune help</title>
-  <meta name="description" content="Browse and search the attune help corpus — tasks, concepts, reference, and troubleshooting for every feature." />
-  <meta property="og:title" content="attune help" />
-  <meta property="og:description" content="Browse and search the attune help corpus — tasks, concepts, reference, and troubleshooting for every feature." />
+  <title>Cross-provider session handoff — verified packet create/resume so any agent can pick up a branch mid-flight — concept</title>
+  <meta name="description" content="Session-handoff lets one agent session hand a branch&#x27;s in-flight work to another — including a session run by a *different provider* — with the claims and the facts kept separate. `handoff_create` ass" />
+  <meta property="og:title" content="Cross-provider session handoff — verified packet create/resume so any agent can pick up a branch mid-flight — concept" />
+  <meta property="og:description" content="Session-handoff lets one agent session hand a branch&#x27;s in-flight work to another — including a session run by a *different provider* — with the claims and the facts kept separate. `handoff_create` ass" />
   <meta property="og:type" content="website" />
-  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <link rel="canonical" href="https://attune-ai.dev/help/session-handoff/concept" />
   <style>
     :root {
       --primary: #004ac6;
@@ -267,23 +267,77 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><span>Help</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/session-handoff">Session Handoff</a><span class="sep">&rsaquo;</span><span>concept</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
-  <main class="help-home">
-    <h1>attune help</h1>
-    <p class="lede">Learn, do, solve, and look things up — generated from the live attune codebase.</p>
-    <div class="search-wrap">
-      <input id="help-search" type="search" placeholder="Search help…" autocomplete="off" />
-      <ul id="search-results"></ul>
-    </div>
-    <div class="section-h">Browse by what you need</div>
-    <div class="intent-row"><a class="intent-card" href="/help/agents/task"><span class="it-title">Do something</span><span class="it-sub">tasks &amp; quickstarts</span></a><a class="intent-card" href="/help/agents/troubleshooting"><span class="it-title">Solve a problem</span><span class="it-sub">troubleshooting, errors, FAQ</span></a><a class="intent-card" href="/help/agents/concept"><span class="it-title">Understand a concept</span><span class="it-sub">how it works</span></a><a class="intent-card" href="/help/agents/reference"><span class="it-title">Look something up</span><span class="it-sub">reference</span></a></div>
-    <div class="section-h">All features</div>
-    <div class="feature-grid"><a class="feature-card" href="/help/agents"><span class="fc-name">Agents</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/bug-predict"><span class="fc-name">Bug Predict</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/cli"><span class="fc-name">Cli</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/code-quality"><span class="fc-name">Code Quality</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/configuration"><span class="fc-name">Configuration</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/deep-review"><span class="fc-name">Deep Review</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/doc-gen"><span class="fc-name">Doc Gen</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/elicitation-forms"><span class="fc-name">Elicitation Forms</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/fix-test"><span class="fc-name">Fix Test</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/help-system"><span class="fc-name">Help System</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/hooks"><span class="fc-name">Hooks</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/mcp-server"><span class="fc-name">Mcp Server</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/memory"><span class="fc-name">Memory</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/models"><span class="fc-name">Models</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/ops-dashboard"><span class="fc-name">Ops Dashboard</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/orchestration"><span class="fc-name">Orchestration</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/plugin"><span class="fc-name">Plugin</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/rag-grounding"><span class="fc-name">Rag Grounding</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/refactor-plan"><span class="fc-name">Refactor Plan</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/release-notes"><span class="fc-name">Release Notes</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/release-prep"><span class="fc-name">Release Prep</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/resilience"><span class="fc-name">Resilience</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/security-audit"><span class="fc-name">Security Audit</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/session-handoff"><span class="fc-name">Session Handoff</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/smart-test"><span class="fc-name">Smart Test</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/spec-engine"><span class="fc-name">Spec Engine</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/telemetry"><span class="fc-name">Telemetry</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/wizards"><span class="fc-name">Wizards</span><span class="fc-meta">11 kinds</span></a></div>
-    <script src="/help/search.js" defer></script>
-  </main>
+  <article class="markdown-body">
+<h1>Cross-provider session handoff — verified packet create/resume so any agent can pick up a branch mid-flight</h1>
+<h2>Overview</h2>
+<p>Session-handoff lets one agent session hand a branch's in-flight work
+to another — including a session run by a <em>different provider</em> — with
+the claims and the facts kept separate. <code>handoff_create</code> assembles a
+packet for the current branch: the git-derived fields (branch, head
+SHA, merge base, changed files) are read from git at call time and
+recorded as <strong>verified</strong>; the caller's prose (goal, acceptance
+criteria, current state, next action) is recorded verbatim as
+<strong>asserted</strong>. <code>handoff_resume</code> reads the packet back and re-checks
+every verified field against the current tree, reporting drift as
+warnings.</p>
+<p>The receiving side gets a <strong>report, not a go signal</strong>: resume never
+checks out branches, never writes, never runs tests. It tells the
+next session what was claimed, what is still true, and what moved —
+the session decides what to do with that.</p>
+<p>Both operations are exposed as MCP tools on the attune server, so any
+MCP client — Claude Code, Codex, Antigravity — can create or resume a
+packet. There is deliberately no CLI wrapper yet (MCP-only at ship;
+a CLI waits for a usage signal).</p>
+<h2>Concepts</h2>
+<h3>The packet: verified frontmatter, asserted body</h3>
+<p>A packet is one markdown file per branch at
+<code>docs/handoffs/&lt;branch-slug&gt;.md</code> (slug = branch name with <code>/</code> as
+<code>-</code>). YAML frontmatter carries the machine-verified fields —
+<code>branch</code>, <code>head_sha</code>, <code>merge_base</code>, <code>changed_files</code>, <code>created_at</code>,
+<code>provider</code>. The markdown body holds the asserted prose sections. This
+keeps the file human-readable while making verification mechanical:
+resume re-derives the frontmatter facts from git and surfaces the
+body untouched under <code>asserted</code>.</p>
+<h3>Verification rows never claim what was not run</h3>
+<p>The packet's verification table records claims and probes. A row's
+<code>result</code> defaults to <strong>&quot;not run&quot;</strong> — a caller cannot fabricate a
+passing probe through the create surface. The receiving session
+re-runs probes itself and updates its own record.</p>
+<h3>The drift report</h3>
+<p>Resume compares the packet against the live tree and emits report-only
+warning codes — never blocking, never auto-fixed:</p>
+<ul>
+<li><code>branch_missing</code> — the packet's branch is absent from the repo</li>
+<li><code>head_moved</code> — current HEAD differs from the packet's <code>head_sha</code></li>
+<li><code>files_diverged</code> — the actual diff set differs from
+<code>changed_files</code></li>
+<li><code>packet_stale_days</code> — the packet is older than 7 days</li>
+<li><code>dirty_tree</code> — uncommitted changes are present at resume time</li>
+</ul>
+<p>Report keys come in authority order: <code>verified</code>, <code>warnings</code>,
+<code>asserted</code>, <code>memory</code>.</p>
+<h3>Caps and overwrite semantics</h3>
+<p>Packets are terse by contract: 2048 bytes per field, 8192 bytes per
+rendered packet. Oversize input is rejected with
+<code>{ok: false, reason: &quot;field_over_cap&quot;, field, limit}</code> — never
+silently truncated. Re-creating a packet for the same branch
+overwrites in place (one packet per branch); the previous packet's
+<code>created_at</code> is preserved as <code>superseded_at</code> so staleness stays
+honest.</p>
+<h3>Memory linkage, degrade-silent but stated</h3>
+<p>Create stashes a topic-<code>handoff</code> pointer through the session-stash
+helpers (the same sanitized path <code>session_memory_capture</code> uses);
+resume recalls pointers for the slug. When no memory backend is
+reachable, the report says so instead of erroring or omitting:
+<code>memory: {status: &quot;skipped&quot;, reason: &quot;no_backend&quot;}</code>. An empty recall
+is honestly <code>{status: &quot;recalled&quot;, count: 0}</code> — a skip and a miss are
+different facts.</p>
+
+  </article>
   <footer>
     <span>Smart AI Memory</span>
     <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
