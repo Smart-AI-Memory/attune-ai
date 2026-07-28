@@ -18729,23 +18729,35 @@ def ", start_idx + 1)` for module-
   `StartCalendarInterval` has `Weekday=1` (Mondays ONLY), so on any
   other day the re-fire is manual by construction.
 
-- **Website capability counts have TWO tool registries and a
-  CI-skipped enforcement leg — verify locally with `ATTUNE_PYTHON`
-  before trusting green** (2026-07-28, PR #1703): "registered MCP
-  tools" is ambiguous — `tool_schemas` `get_*_tools()` total (49)
-  vs the live server's full registration incl. plugin adapters (60).
-  The site's canonical figure is the one its own test enforces:
-  `website/test/capabilities-accuracy.test.ts` pins
-  `CAPABILITIES.mcpTools` to the tool_schemas total, and the pricing
-  page renders that number as "registered tools" — so the site says
-  49, and the projector's "60 registered" belongs to a different
-  counter. Trap: that test's registry leg is `it.skipIf(!python)` —
-  in CI's bare-node website job it SKIPS, so count drift (site said
-  20 workflows; live stage-filtered registry says 19) survives green
-  CI indefinitely. Receipt discipline: run
-  `ATTUNE_PYTHON=<venv>/bin/python vitest run` locally and confirm
-  the registry assertion actually executed (verbose reporter shows
-  it non-skipped) before claiming counts verified. Bullet strings in
-  `features.ts` PRODUCTS and page prose (`app/docs`, `app/faq`,
-  `app/page`) hardcode the same numbers outside CAPABILITIES — grep
-  for the OLD numbers as the completeness check.
+- **Website capability counts have DUPLICATE guards with DIVERGENT
+  counters — reconcile every guard that pins the same number before
+  "correcting" it, or a website-only PR plants a time-bomb in the
+  full suite** (2026-07-28, PRs #1703/#1704): the workflows count
+  had TWO enforcers with different definitions — the vitest
+  `capabilities-accuracy.test.ts` registry leg counted stage-filtered
+  `list_workflows()` entries (19), while
+  `tests/unit/test_website_version_accuracy.py` counts distinct
+  workflow CLASSES per claim-drift-gates D4 (20 —
+  release-prep/release-gate are a deliberate alias pair; slugs=22).
+  #1703 "verified" 19 against the vitest counter and merged as
+  website-only — which SKIPS the Python suite, so the contradicting
+  D4 guard never ran; the next full-suite PR (#1704, docs-only
+  lessons append) then failed on a test the diff never touched. D4
+  is the ratified definition; the fix realigned the vitest counter
+  to `len(set(discover_workflows().values()))` and restored 20.
+  Durable rules: (1) before changing a count, grep for EVERY test
+  asserting it (`grep -rn "workflows" tests/ website/test/`) — a
+  green guard you aligned to is not authority when a second guard
+  encodes a chair-ratified definition (the assert message cites the
+  decision; read it); (2) the website-only CI gate means
+  website↔package claim guards can contradict SILENTLY — the
+  failure surfaces on whichever unrelated PR runs the full suite
+  first; (3) the vitest registry leg is `it.skipIf(!python)` and
+  SKIPS in CI's bare-node job — run `ATTUNE_PYTHON=<venv>/bin/python
+  vitest run` locally and confirm it executed non-skipped. Also
+  real: "registered MCP tools" is ambiguous — tool_schemas total
+  (49, the enforced site figure) vs live server registration incl.
+  plugin adapters (60, the projector's figure); and bullet strings
+  in `features.ts` PRODUCTS + page prose (`app/docs`, `app/faq`,
+  `app/page`) hardcode numbers outside CAPABILITIES — grep for the
+  OLD numbers as the completeness check.
