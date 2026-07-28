@@ -32,12 +32,20 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import logging
+import re
+from pathlib import Path
 
-from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import (
+    HTMLResponse,
+    JSONResponse,
+    PlainTextResponse,
+    RedirectResponse,
+)
 
 from attune.ops import data, health_snapshot
 from attune.ops.security import require_client_token
+from attune.telemetry import form_events
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +86,11 @@ async def health_library_page(request: Request) -> HTMLResponse:
     stale = health_snapshot.is_stale(snapshot)
     _maybe_kick_refresh(request, snapshot)
 
+    # Live read of the routing log (#1653) — deliberately NOT the
+    # in-memory interaction counters: routing happens in the MCP/agent
+    # process, so only the JSONL sees these events.
+    surface_mix = form_events.surface_mix(home=cfg.attune_home)
+
     templates = request.app.state.templates
     return templates.TemplateResponse(
         request,
@@ -90,6 +103,8 @@ async def health_library_page(request: Request) -> HTMLResponse:
             stale_after_hours=health_snapshot.DEFAULT_STALE_AFTER_HOURS,
             latest_report=health_snapshot.latest_llm_report(cfg.project_root),
             env=data.env_health(cfg),
+            surface_mix=surface_mix,
+            surface_mix_total=sum(surface_mix.values()),
         ),
     )
 
@@ -125,3 +140,28 @@ async def health_library_redirect() -> RedirectResponse:
     """Permanent redirect — the Library Health page merged into /health
     (chair-ruled 2026-07-21). Old bookmarks and links keep working."""
     return RedirectResponse(url="/health", status_code=301)
+
+
+_REPORT_NAME_RE = re.compile(r"^library-health-[A-Za-z0-9._-]+\.md$")
+
+
+@router.get("/docs/reports/{name}", response_class=PlainTextResponse)
+async def serve_llm_report(request: Request, name: str) -> PlainTextResponse:
+    """Serve a library-health narrative report as plain text.
+
+    Closes the one broken link the 2026-07-21 link-QA crawl found:
+    the Health page links ``/{{ latest_report }}`` but nothing served
+    ``/docs/reports/...``. Read-only, strictly validated: the name
+    must match the report pattern AND equal an entry actually listed
+    in ``<project_root>/docs/reports`` (the served path comes from
+    the directory listing, never from the request), else 404.
+    """
+    if not _REPORT_NAME_RE.match(name):
+        raise HTTPException(status_code=404)
+    cfg = request.app.state.config
+    reports_dir = (Path(cfg.project_root) / "docs" / "reports").resolve()
+    if reports_dir.is_dir():
+        for report in reports_dir.glob("library-health-*.md"):
+            if report.name == name and report.is_file():
+                return PlainTextResponse(report.read_text(encoding="utf-8"))
+    raise HTTPException(status_code=404)

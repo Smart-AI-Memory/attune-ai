@@ -4,14 +4,15 @@
 Detects which features' source globs match the files in the current
 commit and prints the list. Check-only — this hook never regenerates
 and never spends LLM budget. Polish-bearing regeneration happens at
-RELEASE-PREP cadence instead (`attune-author regenerate`), per the
-polish-cost-reduction spec (lever 1, ratified 2026-06-10): per-commit
-auto-regen re-polished whole features on every source touch, which is
-exactly the repeat-API-spend the spec eliminates.
+RELEASE-PREP cadence instead (`/coach maintain`, backed by the absorbed
+`attune.authoring` generator), per the polish-cost-reduction spec
+(lever 1, ratified 2026-06-10): per-commit auto-regen re-polished whole
+features on every source touch, which is exactly the repeat-API-spend
+the spec eliminates.
 
 Failure modes never block the commit:
 
-- `attune-author` not installed → silent exit 0
+- `attune.authoring` not importable → silent exit 0
 - `.help/features.yaml` missing → silent exit 0
 
 Pre-commit passes changed file paths on argv. Empty argv → exit 0.
@@ -58,7 +59,8 @@ def _glob_to_regex(pattern: str) -> re.Pattern[str]:
 def _affected_features(changed_paths: list[Path], manifest_features: dict) -> set[str]:
     """Return the names of features whose source globs match any changed path.
 
-    ``manifest_features`` is ``Manifest.features`` from attune_author —
+    ``manifest_features`` is ``FeatureManifest.features`` from
+    :mod:`attune.authoring.manifest` —
     a dict[str, Feature] where each Feature has a ``files`` list of
     glob patterns relative to the repo root.
     """
@@ -90,9 +92,9 @@ def main(argv: list[str]) -> int:
         return 0
 
     try:
-        from attune_author import load_manifest
+        from attune.authoring.manifest import load_manifest
     except ImportError:
-        return 0  # attune-author not installed; skip silently.
+        return 0  # attune not importable in this env; skip silently.
 
     try:
         manifest = load_manifest(help_dir)
@@ -109,8 +111,8 @@ def main(argv: list[str]) -> int:
 
     feat_list = ", ".join(sorted(affected))
     print(f"attune: {len(affected)} .help/templates feature(s) lag this change: {feat_list}")
-    print("  (check-only — polish-bearing regen runs at release-prep:")
-    print("   `attune-author regenerate --help-dir .help --project-root .`)")
+    print("  (check-only — polish-bearing regen runs at release-prep")
+    print("   via `/coach maintain`)")
     return 0
 
 

@@ -761,10 +761,11 @@ class WorkflowHandlersMixin:
             result = pipeline.run(query, k=k)
         except RuntimeError as exc:
             # Typical cause: AttuneHelpCorpus can't find attune-help.
-            # Name the extra that ships it so the fix is one command.
+            # Name the package directly so the fix is one command (the
+            # [author] extra that used to ship it was retired in T4).
             hint = ""
             if "attune-help" in str(exc) or "attune_help" in str(exc):
-                hint = " (attune-help ships via: pip install 'attune-ai[author]')"
+                hint = " (install it with: pip install attune-help)"
             return {"success": False, "error": f"RAG setup error: {exc}{hint}"}
         except Exception:  # noqa: BLE001
             # INTENTIONAL: best-effort — return structured error

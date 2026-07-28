@@ -76,6 +76,10 @@ git commit -m "feat: Add anticipatory pattern detection
 git push origin feature/your-feature-name
 ```
 
+If your change adds or removes a plugin skill or MCP tool, run
+`python scripts/project_capabilities.py --write` in the same PR to
+sync the published capability counts (CI runs `--check`).
+
 ### Commit Message Format
 
 We follow conventional commits:

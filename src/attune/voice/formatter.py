@@ -182,15 +182,17 @@ def format_mcp_response(
     if steps:
         voiced["next_steps"] = steps
 
-    # Add a one-line voice summary
-    success = response.get("success", True)
-    score = response.get("score")
-    if score is not None:
-        voiced["voice_summary"] = personality.score_commentary(score)
-    elif success:
-        voiced["voice_summary"] = personality.GREETING_SUCCESS
-    else:
-        voiced["voice_summary"] = personality.GREETING_FAILURE
+    # Add a one-line voice summary — a handler-supplied summary wins
+    # (adapters phrase their own verbs; the generic greeting is a fallback)
+    if not voiced.get("voice_summary"):
+        success = response.get("success", True)
+        score = response.get("score")
+        if score is not None:
+            voiced["voice_summary"] = personality.score_commentary(score)
+        elif success:
+            voiced["voice_summary"] = personality.GREETING_SUCCESS
+        else:
+            voiced["voice_summary"] = personality.GREETING_FAILURE
 
     return voiced
 

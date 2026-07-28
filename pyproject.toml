@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "10.5.0"
+version = "10.6.1"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -91,33 +91,19 @@ dependencies = [
     # re-validating. The [redis] extra remains as an empty alias.
     "agent-memory-client>=0.14.0,<0.15",
     "redis>=5.0.0,<9.0.0",
-    # NOTE: attune-author is a workspace-only dev dep for authoring/
-    # refactoring help content — NOT a runtime requirement.
+    # NOTE: attune-author retired 2026-07-27 (author-consolidation T4,
+    # D12: archive-without-yank) — its machinery lives in
+    # attune.authoring since T3.
 ]
 # NOTE: CrewAI dependency removed in v3.1.3 (deprecated since v4.4.0)
 # The "Crew" workflows use EmpathyLLMExecutor (Anthropic SDK) directly.
 
 [project.optional-dependencies]
 
-# Help authoring (generate / regenerate / polish the
-# project's own `.help/` templates). Optional because
-# most consumers of attune-ai don't edit help content.
-# Local devs working on attune-ai itself should install
-# this — it backs the `help_maintain` MCP tool and lets
-# the `attune-author` CLI run inside this venv without
-# a sibling checkout. `[tool.uv.sources]` (below) routes
-# to the sibling path for workspace dev; PyPI is the
-# fallback.
-author = [
-    "attune-author>=0.23,<0.26",
-    # attune-author 0.15.0 moved attune-help from its core deps to its
-    # dev extra — attune-ai had been receiving it TRANSITIVELY. The
-    # rag_knowledge_query MCP tool and help-corpus tests need it, so
-    # pin it explicitly here rather than ride resolution luck.
-    "attune-help>=0.10.0",
-]
-
-
+# [author] extra REMOVED 2026-07-27 (author-consolidation T4, D12):
+# attune-author is archived on GitHub/PyPI (not yanked — pinned
+# installs keep resolving). Help authoring is served by the absorbed
+# attune.authoring package; the attune-help pin moved to [dev].
 
 # LLM provider (Claude-native architecture)
 anthropic = ["anthropic>=0.40.0"]
@@ -234,6 +220,10 @@ dev = [
     # matches the [rag] extra so dev + runtime deps stay in
     # lock-step.
     "attune-rag>=0.1.5,<0.10",
+    # attune-help backs the rag_knowledge_query MCP tool and the
+    # help-corpus tests. Moved here from the retired [author] extra
+    # (author-consolidation T4, 2026-07-27).
+    "attune-help>=0.10.0",
     # Test deps for paths that import optional runtime libs
     # unconditionally. Without these, the unit suite fails at
     # collection on a fresh `pip install -e .[dev]`. See
@@ -414,6 +404,10 @@ dev = [
     # matches the [rag] extra so dev + runtime deps stay in
     # lock-step.
     "attune-rag>=0.1.5,<0.10",
+    # attune-help backs the rag_knowledge_query MCP tool and the
+    # help-corpus tests. Moved here from the retired [author] extra
+    # (author-consolidation T4, 2026-07-27).
+    "attune-help>=0.10.0",
     # Test deps for paths that import optional runtime libs
     # unconditionally. Without these, the unit suite fails at
     # collection on a fresh `pip install -e .[dev]`. See
@@ -509,6 +503,7 @@ attune = "src/attune"
 
 [tool.setuptools.package-data]
 "*" = ["*.yml", "*.yaml", "*.json", "*.txt", "*.md", "*.jinja2"]
+"attune.authoring" = ["meta_templates/*.j2", "meta_templates/_partials/*.j2"]
 "attune.commands" = ["*.md"]
 "attune.commands.agents" = ["*.md"]
 "attune.ops" = ["templates/*.html", "static/css/*.css", "static/js/*.js"]
@@ -815,8 +810,9 @@ exclude_lines = [
 # Sibling repos — all published to PyPI:
 #   attune-rag     — core dep (>=0.1.5,<0.10) — promoted from optional; required for accuracy
 #   attune-verify  — core dep (>=0.1.0,<0.3) — backs /verify; stdlib-only, zero transitive deps
-#   attune-author  — [author] optional extra (>=0.23,<0.26)
+#   attune-help    — [dev] pin (>=0.10.0) — rag_knowledge_query + help-corpus tests
 #   attune-rag     — [rag] optional extra (>=0.1.5,<0.10) — no-op alias since rag is core
+#   (attune-author retired 2026-07-27 — archived without yank, T4/D12)
 #
 # No [tool.uv.sources] overrides needed: CI resolves all three
 # from PyPI (https://pypi.org/simple). For local iteration against

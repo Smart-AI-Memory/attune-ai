@@ -4,7 +4,7 @@
 Deterministic projection driver for the help-docs-single-source pilot
 (T2). Reads ``content/features/<feature>.md`` and renders the 11
 ``.help`` kinds + 4 ``docs/`` pages via
-``attune_author.projector`` — no LLM, no AST, no meta-templates.
+``attune.authoring.projector`` — no LLM, no AST, no meta-templates.
 
 Usage::
 

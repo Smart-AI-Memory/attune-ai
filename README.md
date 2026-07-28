@@ -36,7 +36,7 @@ store, retrieved at P@3 96% on a frozen trap-moment benchmark
 below).
 
 Around that memory core, the same package also ships a spec-driven,
-multi-agent toolkit: 20 workflows and 53 MCP tools dispatching 2–6
+multi-agent toolkit: 20 workflows and <!-- cap:mcp_registered_tool_count -->60 MCP tools<!-- /cap --> dispatching 2–6
 domain-specific subagents behind Socratic quality gates, RAG
 grounding with a citation-per-claim contract (mean per-claim
 faithfulness CI-gated at ≥ 0.97; 0.98 currently measured, N=20 runs
@@ -53,6 +53,30 @@ That's [`attune-gui`](https://github.com/Smart-AI-Memory/attune-gui)
 — a dedicated Living Docs dashboard wrapping `attune-rag`,
 `attune-help`, and `attune-author` in a single UI. `attune-ai` is the
 developer workflow hub; `attune-gui` is the docs hub.
+
+---
+
+## What this costs
+
+There are two ways to run Attune, and they bill differently. Pick the
+row you're in:
+
+| How you run it | What it costs |
+| -------------- | ------------- |
+| **Plugin in Claude Code** (skills, hooks, forms) | Your Claude subscription. No API key, no extra charge. |
+| **`attune` CLI + MCP tools** | Direct Anthropic API calls — needs `ANTHROPIC_API_KEY` with **API credits**. |
+
+**The one thing people get wrong:** a Claude Pro/Max subscription does
+*not* include API credits. They are separate products. The subscription
+powers Claude Code — and therefore the plugin — but the CLI and MCP
+tools call the Anthropic API directly, so a key without pay-as-you-go
+credit returns `credit balance is too low`. If you only use the plugin,
+this never comes up.
+
+Free on either path, because they never call a model: the elicitation
+forms, the security hooks, path validation, memory storage and recall,
+and every local transform. See [API Mode](#api-mode) for keys and
+routing, and [Installation Options](#installation-options) for extras.
 
 ---
 
@@ -126,6 +150,44 @@ The lessons injection stays budget-capped no matter how large the
 corpus grows, and recall is a single warm Redis call — so both wins
 widen as your memory does. Numbers from `benchmarks/memory_savings.py`
 on our dogfood store (cl100k_base).
+
+---
+
+## Multi-LLM collaboration — three models, one repo, receipts required
+
+**Your repo stops being single-provider.** As of 10.6.0, attune
+treats Claude Code, OpenAI Codex, and Google Antigravity as seats at
+the same table — with the discipline that a claim without a receipt
+doesn't ship:
+
+- **`/roundtable`** — convene Claude, Antigravity, and Codex to
+  deliberate a question on a Redis-backed board. Seats post
+  positions independently, synthesis compiles them, and *you* chair
+  what gets promoted — nothing lands without a ruling. Headless
+  routines run the same loop on a schedule.
+- **`/cross-review`** — a one-seat advisory second opinion on a real
+  diff from a *different* model than the one that wrote it.
+  Advisory only, board-recorded.
+- **Cross-provider session handoff** — `handoff_create` /
+  `handoff_resume` MCP tools write a portable, verifiable resume
+  brief so one agent can pick up where another stopped.
+- **Provider-neutral session memory** — the `session_memory_*` MCP
+  tools give every seat the same stash/recall/forget surface over
+  the shared store, with a PII/secrets gate that redacts at rest
+  and fails closed on secrets. Verified live from a Codex session:
+  capture → recall (email stored as `[EMAIL]`) → forget →
+  gone.
+- **A projected collaboration contract** — one master file projects
+  to `AGENTS.md` and per-provider mirrors, so any agent learns the
+  repo's rules (read-only preflight, branch discipline, shared
+  memory etiquette) without Claude-specific context.
+
+Codex installs the same plugin from its marketplace
+(`codex plugin install attune-ai@attune-ai`); Antigravity connects
+over MCP. We dogfood all of it on this repository — the multi-model
+release audit for 10.6.0 ran through the roundtable itself, and
+10.6.1 exists because a cross-provider receipt probe caught a
+protocol bug the primary client silently tolerated.
 
 ---
 
@@ -316,10 +378,10 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 | Capability | Plugin only | Plugin + pip |
 | ---------- | ----------- | ------------ |
-| 25 auto-triggering skills | Yes | Yes |
+| <!-- cap:skill_count -->26 auto-triggering skills<!-- /cap --> | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
-| 53 MCP tools | -- | Yes |
+| <!-- cap:mcp_registered_tool_count -->60 MCP tools<!-- /cap --> | -- | Yes |
 | `attune` CLI | -- | Yes |
 | Multi-agent workflows | -- | Yes |
 | Help system maintenance | -- | Yes |
@@ -327,8 +389,8 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 | Ops dashboard (`attune ops`) — run history, cost tiles, telemetry | -- | Yes |
 
 > **Note:** Skills use your Claude subscription at no extra cost.
-> CLI and MCP tools make direct Anthropic API calls — API key
-> required. See [API Mode](#api-mode).
+> CLI and MCP tools make direct Anthropic API calls — API key with
+> credits required. See [What this costs](#what-this-costs).
 
 ---
 
@@ -547,10 +609,20 @@ spammed to the session.
 
 ## API Mode
 
+API mode is what the `attune` CLI and the MCP tools run on. **It is not
+required to use Attune** — the Claude Code plugin runs on your
+subscription and needs none of this (see
+[What this costs](#what-this-costs)). Set these up only if you want the
+CLI or MCP surfaces:
+
 ```bash
-export ANTHROPIC_API_KEY="sk-ant-..."     # Required
+export ANTHROPIC_API_KEY="sk-ant-..."     # Required *for API mode*
 export REDIS_URL="redis://localhost:6379"  # Optional
 ```
+
+The key must belong to an org with pay-as-you-go API credit. A Claude
+Pro/Max subscription does not grant it — without credit the calls
+return `credit balance is too low`.
 
 ### Model Routing
 

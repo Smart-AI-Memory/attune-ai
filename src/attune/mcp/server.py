@@ -23,10 +23,12 @@ from mcp.types import (
     Tool,
 )
 
+from attune.mcp.handoff_handlers import HandoffHandlersMixin
 from attune.mcp.memory_handlers import MemoryHandlersMixin
 from attune.mcp.rate_limiter import RateLimiter
 from attune.mcp.tool_schemas import (
     get_elicitation_tools,
+    get_handoff_tools,
     get_help_tools,
     get_memory_tools,
     get_personal_memory_tools,
@@ -84,7 +86,7 @@ def _get_default_user_id() -> str:
         return "mcp-session"
 
 
-class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
+class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandlersMixin):
     """MCP server for Attune AI workflows.
 
     Exposes workflows and telemetry as MCP tools
@@ -189,6 +191,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         tools.update(get_utility_tools())
         tools.update(get_elicitation_tools())
         tools.update(get_help_tools())
+        tools.update(get_handoff_tools())
         return tools
 
     @staticmethod
@@ -315,6 +318,8 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "help_init": self._handle_help_init,
             "help_status": self._handle_help_status,
             "help_update": self._handle_help_update,
+            "handoff_create": self._handle_handoff_create,
+            "handoff_resume": self._handle_handoff_resume,
         }
 
     async def _dispatch_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
@@ -752,12 +757,21 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         except FormValidationError as e:
             return {"success": False, "problems": e.problems}
 
-        return {
+        recommended = self._record_surface_choice(form, chosen="ask")
+        result = {
             "success": True,
             "title": form.title,
             "description": form.description,
             "batches": form_to_askuserquestion(form),
         }
+        if recommended == "widget":
+            result["surface_note"] = (
+                "The router recommends the widget for this form (D21 — the "
+                "rich surface is the default). AskUserQuestion will flatten "
+                "it. Use elicitation_render_widget unless the client cannot "
+                "render widgets or the user is in keyboard mode."
+            )
+        return result
 
     async def _handle_elicitation_render_widget(self, args: dict[str, Any]) -> dict[str, Any]:
         """Render a declarative form as inline HTML for ``show_widget`` (S1).
@@ -789,12 +803,47 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         except FormValidationError as e:
             return {"success": False, "problems": e.problems}
 
+        self._record_surface_choice(form, chosen="widget")
         return {
             "success": True,
             "html": form_to_widget_html(form, args.get("message") or ""),
             "title": form.title,
             "field_ids": [q.id for q in form.questions],
         }
+
+    @staticmethod
+    def _record_surface_choice(form: Any, *, chosen: str) -> str | None:
+        """Run the D21 router for telemetry and return its recommendation.
+
+        The elicitation tools are the only place the live system can observe
+        a surface decision: the tool the agent invoked *is* its choice.
+        Running the router here records both the recommendation and whether
+        the agent agreed, which is what makes the decay receipt real rather
+        than a counter nothing increments.
+
+        Best-effort in every direction — a telemetry or config problem must
+        never break form rendering, so failures return ``None`` and the
+        caller proceeds.
+
+        Args:
+            form: The validated ``FormSchema``.
+            chosen: The surface this handler represents (``"ask"`` for the
+                AskUserQuestion batches, ``"widget"`` for the HTML form).
+
+        Returns:
+            The router's recommendation, or ``None`` if it could not run.
+        """
+        try:
+            from attune.elicitation import keyboard_mode_enabled, select_form_surface
+
+            return select_form_surface(
+                form,
+                keyboard_mode=keyboard_mode_enabled(),
+                chosen=chosen,
+            )
+        except (OSError, ValueError, ImportError) as exc:
+            logger.debug("surface-choice telemetry skipped: %s", exc)
+            return None
 
     async def _handle_elicitation_collect_response(self, args: dict[str, Any]) -> dict[str, Any]:
         """Validate user answers against a declarative form (R4).
@@ -825,11 +874,38 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         except FormValidationError as e:
             return {"success": False, "problems": e.problems}
 
-        return {
+        result = {
             "success": True,
             "responses": response.responses,
             "response_id": response.response_id,
         }
+        hint = self._maybe_keyboard_hint()
+        if hint:
+            result["hint"] = hint
+        return result
+
+    @staticmethod
+    def _maybe_keyboard_hint() -> str | None:
+        """Record the submission and return D17's one-time keyboard hint.
+
+        A validated submission is the only honest place to count "forms
+        the user actually answered" — rendering a form proves nothing
+        about whether they engaged with it. D17 ratified usage-triggered
+        discovery over a calendar timer precisely so the hint reaches
+        people who have felt the friction and nobody else.
+
+        Best-effort: a telemetry problem must never break the submission
+        the user just made.
+        """
+        try:
+            from attune.elicitation import keyboard_mode_enabled
+            from attune.telemetry.form_events import log_submission, maybe_keyboard_hint
+
+            log_submission()
+            return maybe_keyboard_hint(keyboard_mode=keyboard_mode_enabled())
+        except (OSError, ValueError, ImportError) as exc:
+            logger.debug("keyboard-mode hint skipped: %s", exc)
+            return None
 
     @staticmethod
     def _elicitation_session() -> tuple[Any, Any]:
@@ -1457,6 +1533,20 @@ def main() -> None:
         handlers=[
             logging.FileHandler(str(log_dir / "attune-mcp.log")),
         ],
+    )
+
+    # stdout carries ONLY the JSON-RPC stream. structlog's default
+    # PrintLoggerFactory writes to stdout, so any structlog call inside a
+    # tool handler (e.g. the session-stash PII gate) corrupts the protocol
+    # for strict clients (Antigravity rejects the frame with "invalid
+    # trailing data"; transport receipt 6, 2026-07-27). Route structlog to
+    # stderr, which MCP clients treat as free-form logging.
+    import sys
+
+    import structlog
+
+    structlog.configure(
+        logger_factory=structlog.PrintLoggerFactory(file=sys.stderr),
     )
 
     try:

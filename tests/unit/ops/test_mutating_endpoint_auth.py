@@ -23,7 +23,6 @@ MUTATING_ROUTES = [
     ("PUT", "/api/specs/demo/decisions/status"),
     ("POST", "/api/specs/demo/completion-candidates/dismiss"),
     ("POST", "/workflows/security-audit/run"),
-    ("POST", "/api/help/regen"),
     ("POST", "/api/telemetry/interaction"),
     ("POST", "/curator/dismiss"),
     ("POST", "/curator/answer"),

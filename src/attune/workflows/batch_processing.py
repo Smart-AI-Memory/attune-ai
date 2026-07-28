@@ -324,7 +324,7 @@ class BatchProcessingWorkflow:
 
         path = Path(output_path)
         validated_path = _validate_file_path(str(path))
-        with open(validated_path, "w") as f:
+        with open(validated_path, "w", encoding="utf-8") as f:
             json.dump(output_data, f, indent=2)
 
         logger.info(f"Results saved to {validated_path}")

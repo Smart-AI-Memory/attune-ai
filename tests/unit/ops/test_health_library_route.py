@@ -288,3 +288,77 @@ def test_health_page_includes_environment_section(client):
     assert resp.status_code == 200
     assert "Environment" in resp.text
     assert "attune-home" in resp.text
+
+
+class TestSurfaceMixPanel:
+    """Elicitation surface-mix panel (#1653) — reads the JSONL under the
+    dashboard's configured attune-home (NOT the in-memory interaction
+    counters, which live in the wrong process)."""
+
+    def _write_events(self, cfg: Config, lines: list[str]) -> None:
+        path = cfg.attune_home / "telemetry" / "form_events.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("".join(line + "\n" for line in lines), encoding="utf-8")
+
+    def test_no_events_renders_empty_state(self, client: TestClient) -> None:
+        resp = client.get("/health")
+        assert resp.status_code == 200
+        assert "Elicitation surface mix" in resp.text
+        assert "No form routing events recorded yet." in resp.text
+
+    def test_renders_counts_from_jsonl(self, client: TestClient, cfg: Config) -> None:
+        self._write_events(
+            cfg,
+            [
+                '{"event":"form_surface","surface":"widget"}',
+                '{"event":"form_surface","surface":"widget"}',
+                '{"event":"form_surface","surface":"ask"}',
+                '{"event":"form_submitted"}',  # not a surface event
+                "{not json",  # malformed tail must not break the page
+            ],
+        )
+        resp = client.get("/health")
+        assert resp.status_code == 200
+        assert "<code>widget</code>" in resp.text
+        assert "<code>ask</code>" in resp.text
+        # widget=2, ask=1, total=3 (form_submitted + malformed excluded)
+        assert '<td class="num">2</td>' in resp.text
+        assert '<td class="num">3</td>' in resp.text
+
+    def test_panel_is_labeled_as_mix_not_fire_rate(self, client: TestClient) -> None:
+        """#1653's honest-framing requirement: the panel must say it
+        measures the surface mix, not the fire rate."""
+        resp = client.get("/health")
+        flattened = " ".join(resp.text.split())
+        assert "Surface mix only, not a fire rate" in flattened
+
+
+class TestServeLlmReport:
+    """/docs/reports/{name} — the link-QA fix (2026-07-21): the Health
+    page links the latest narrative report; nothing served it."""
+
+    def _write_report(self, cfg: Config, name: str, body: str = "# Report\n") -> None:
+        reports = cfg.project_root / "docs" / "reports"
+        reports.mkdir(parents=True, exist_ok=True)
+        (reports / name).write_text(body, encoding="utf-8")
+
+    def test_serves_existing_report(self, cfg: Config, client: TestClient) -> None:
+        self._write_report(cfg, "library-health-2026-07-14.md", "# Findings\nok\n")
+        resp = client.get("/docs/reports/library-health-2026-07-14.md")
+        assert resp.status_code == 200
+        assert "Findings" in resp.text
+
+    def test_missing_report_404(self, client: TestClient) -> None:
+        resp = client.get("/docs/reports/library-health-2099-01-01.md")
+        assert resp.status_code == 404
+
+    def test_non_report_name_404(self, cfg: Config, client: TestClient) -> None:
+        # Even a real file outside the report pattern is refused.
+        self._write_report(cfg, "library-health-x.md")
+        (cfg.project_root / "docs" / "reports" / "secrets.md").write_text("no")
+        resp = client.get("/docs/reports/secrets.md")
+        assert resp.status_code == 404
+
+    def test_traversal_404(self, client: TestClient) -> None:
+        resp = client.get("/docs/reports/..%2F..%2Fpyproject.toml")
+        assert resp.status_code == 404

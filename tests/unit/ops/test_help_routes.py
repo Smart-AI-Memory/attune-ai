@@ -217,8 +217,11 @@ class TestHelpAdminPage:
         assert "Admin tools" in body
         # incomplete-feature shows up in the incomplete table
         assert "incomplete-feature" in body
-        # Action buttons present
-        assert "Regenerate all stale" in body
+        # Report-only surface (T4 retired the regen actions): no
+        # regen buttons, and the release-prep guidance is present.
+        assert "Regenerate all stale" not in body
+        assert "data-regen-action" not in body
+        assert "/coach maintain" in body
 
 
 class TestHelpFeaturePage:

@@ -27,7 +27,46 @@ recall. It searches TWO stores and labels results by source:
 - **No query** (`/recall`): the most recent session findings for
   this project.
 
-## How To Run It
+## Pick Your Transport First
+
+Route by what YOUR client can actually do — never assume the
+universal Python recipe works everywhere (in a sandboxed provider
+it selects an unwritable file tier or a blocked socket):
+
+1. **MCP available** — the `session_memory_*` tools appear in your
+   tool list (Codex, Claude Code with the attune MCP server, any
+   MCP client): use them. They execute host-side, outside your
+   sandbox, and carry the full contract (sanitization, cwd scoping,
+   TTL). **Never run in-process Python for memory from a sandboxed
+   client, and never substitute raw `redis_memory_store` for
+   finding capture — capture goes through `session_memory_capture`
+   only.**
+2. **Trusted host context, no MCP** — you can run repo Python
+   directly (Claude Code Bash, the CLI, lifecycle hooks): the
+   Python snippets below remain valid.
+3. **Neither** — report honestly that cross-session memory is
+   unavailable in this client (no MCP tools, no trusted Python).
+   Do not fake results and do not claim the backing service is
+   down — you cannot know that from here.
+
+## MCP Tools
+
+| Tool | Use |
+|------|-----|
+| `session_memory_recall` | Semantic search (args: query, optional top_k, cwd) |
+| `session_memory_recent` | Newest findings, no query (args: top_k, cwd) |
+| `session_memory_capture` | Stash a finding (args: content, type, tags, cwd) |
+| `session_memory_forget` | Delete by full record id (args: ids, cwd) |
+| `session_memory_status` | Caller-scoped backend status |
+
+Pass the project root as `cwd` so same-project findings rank first.
+Every result carries `ok`; a failed write is `{ok: false, reason:
+<code>}` — surface the reason (`no_backend`, `file_write_denied`,
+`not_found`, …) instead of pretending success. The lessons-corpus
+search has no MCP tool — in MCP-only clients skip the lessons
+section silently; session findings still render.
+
+## Trusted-Host Python
 
 Recall is exposed through `attune.memory.session_stash`. Run the
 appropriate snippet via Bash from the project root, then present the
@@ -60,6 +99,8 @@ If this raises (older install without `attune.lessons`, or
 attune-rag missing), skip the lessons section silently — session
 findings still render.
 
+## Rendering Results
+
 Each session-finding hit is a dict with `text`, `topics` (carrying
 `type:<kind>` and `cwd:<path>`), `cwd`, and `session_id`; each
 lesson hit has `title`, `score`, and a `body` excerpt. Render them
@@ -71,22 +112,33 @@ in two labeled groups — findings first, lessons after:
 - [lesson] <title> — <one-line gist from the body>
 ```
 
-**Always name the answering backend** (from `status.backend`) in one
-short line, e.g. "(searched via AMSMemoryBackend)". If
-`status.unreachable_upgrade` is set, lead with a warning before any
-results: the named upgrade backend (e.g. Redis AMS) is down, recall is
-degraded to the local file tier, and findings stored in the upgrade
-tier are unreachable until it's restarted.
+**Always name the answering backend** (from `status.backend`; over
+MCP, `session_memory_status` reports it with `transport: "mcp"` and
+the Python layer as `backend_transport`) in one short line, e.g.
+"(searched via AMSMemoryBackend)".
+
+**Truthful status language** — status is caller-scoped:
+
+- `unreachable_upgrade` set: lead with a warning before any
+  results — the named upgrade backend (e.g. Redis AMS) is
+  unreachable *from this caller*, recall is degraded to the local
+  file tier, and findings stored in the upgrade tier are dark until
+  it is reachable again.
+- `reachability: "unreachable_local"` (with a `reason` such as
+  `file_write_denied`): THIS process cannot write the stash — a
+  sandbox denial. Say exactly that. **Never report "Redis is down"
+  or "memory is broken" from a local denial** — a sandboxed probe
+  proves nothing about the service; route via MCP instead.
 
 ## When Nothing Comes Back
 
-An empty `hits` list means no matching findings yet (the store fills as
-the Stop hook stashes findings over sessions), or no searchable backend
-is installed. Say so plainly — do **not** invent findings, and do name
-the backend that answered: "no hits" from the file tier while
-`status.unreachable_upgrade` is set means the real store may simply be
-dark, not empty. Suggest the user keep working; the soak fills the
-store over time.
+An empty `hits` list means no matching findings yet (the store fills
+as the Stop hook stashes findings over sessions), or no searchable
+backend is available. Say so plainly — do **not** invent findings,
+and do name the backend that answered: "no hits" from the file tier
+while `status.unreachable_upgrade` is set means the real store may
+simply be dark, not empty. Suggest the user keep working; the soak
+fills the store over time.
 
 ## Review / Drop Findings
 
@@ -94,27 +146,32 @@ The stash chip (`🧠 Stashed N session finding(s)…`) shows each
 finding with a short id like `` `3f2a9c1b` ``. Two correction modes:
 
 **`/recall drop <id> [<id> ...]`** — delete specific findings by
-short id prefix. Run:
+short id prefix.
+
+- *MCP path:* fetch candidates with `session_memory_recent`, match
+  each prefix against the returned `id` fields, and delete exact,
+  UNAMBIGUOUS matches with `session_memory_forget` (full ids only).
+  A prefix matching zero or multiple records is skipped — deletion
+  never guesses; show the candidates so the user can retry with a
+  longer prefix.
+- *Trusted-host path:*
 
 ```bash
 IDS="3f2a9c1b,77bd0e21" python -c "import os; from attune.memory.session_stash import forget_by_prefix; print(forget_by_prefix(os.environ['IDS'].split(','), cwd=os.getcwd()))"
 ```
 
-Report how many were deleted. A prefix matching zero or multiple
-records is skipped (deletion never guesses) — tell the user which
-ids were skipped and show the candidates via the recent-findings
-snippet so they can retry with a longer prefix.
+Report how many were deleted, and which prefixes were skipped.
 
 **`/recall review`** — interactive pruning. Fetch the recent
-findings (snippet above), then present ONE multi-select question —
+findings (either transport), then present ONE multi-select question —
 via the `elicitation_render_form` MCP tool when available (a single
 `multi_select` field; map to `AskUserQuestion` with
 `multiSelect: true`), else directly via `AskUserQuestion` — where
 each option is one finding: label = short id + `[type]`, description
 = the finding text (truncated ~100 chars). Question: "Which findings
-should be deleted?" Then delete the picked ids with the
-`forget_by_prefix` snippet and report the count. If the user picks
-nothing, delete nothing.
+should be deleted?" Then delete the picked ids (same transport rules
+as `drop`) and report the count. If the user picks nothing, delete
+nothing.
 
 ## Promote A Keeper
 

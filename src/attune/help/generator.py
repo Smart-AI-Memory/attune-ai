@@ -1,10 +1,12 @@
 """Template generation from source files.
 
 DEPRECATED: this module is the in-repo 3-depth generator
-(concept / task / reference only). New work should use
-``attune-author generate <feature> --all-kinds`` which
-produces the full 11-kind template set and is the canonical
-generator for ``.help/`` content.
+(concept / task / reference only). New work should use the
+absorbed ``attune.authoring.generator`` (via ``/coach maintain``
+at release-prep cadence), which produces the full 11-kind
+template set and is the canonical generator for ``.help/``
+content. (The ``attune-author`` CLI was retired 2026-07-27 —
+author-consolidation T4.)
 
 The in-repo generator is retained as an internal-only escape
 hatch for the MCP ``help_update`` tool and the help
@@ -123,9 +125,9 @@ def generate_feature_templates(
 
     .. deprecated::
         This is the 3-depth generator (concept/task/reference only).
-        Prefer ``attune-author generate <feature> --all-kinds`` which
-        produces the full 11-kind template set used by the weekly
-        help-freshness workflow.
+        Prefer the absorbed ``attune.authoring.generator``
+        (``generate_feature_templates``), which produces the full
+        11-kind template set.
 
     Creates concept.md, task.md, and reference.md in the
     feature's template directory. Skips files with
@@ -144,7 +146,7 @@ def generate_feature_templates(
     warnings.warn(
         "attune.help.generator.generate_feature_templates produces only "
         "3 depths and is deprecated. Use "
-        "`attune-author generate <feature> --all-kinds` for the "
+        "attune.authoring.generator.generate_feature_templates for the "
         "canonical 11-kind help template set.",
         DeprecationWarning,
         stacklevel=2,

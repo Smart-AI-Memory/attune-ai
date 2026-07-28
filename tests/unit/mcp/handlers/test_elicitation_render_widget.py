@@ -37,7 +37,7 @@ class TestRenderWidgetHandler:
         assert out["success"] is True
         assert out["title"] == "Scope"
         assert out["field_ids"] == ["goal", "note", "n", "when"]
-        assert 'id="attune-elicit-form"' in out["html"]
+        assert 'id="attune-elicit-form-' in out["html"]
         assert "fill it" in out["html"]
         # the v2.1 rich controls render (D10 enum-honesty fix)
         assert '<input type="number"' in out["html"]

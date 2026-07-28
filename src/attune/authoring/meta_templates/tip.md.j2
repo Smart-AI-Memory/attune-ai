@@ -1,0 +1,65 @@
+{% import '_partials/problem_macros.j2' as m %}
+# Tip: working effectively with {{ title | lower }}
+
+## Context
+
+{{ m.feature_intro(
+  title,
+  description,
+  "This page collects high-leverage tips for working
+with " ~ title | lower ~ "."
+) }}
+
+## Recommendations
+
+{% if public_functions %}
+1. **Lean on the public API.** The functions exposed at
+   the module level are the stable interface —
+   everything starting with an underscore is internal
+   and can change without notice.
+
+{{ m.related_functions(public_functions, limit=5) }}
+
+2. **Read the docstrings first, then the source.** Every
+   public function above has a one-line docstring that
+   explains its intent. Start there, not with the body.
+
+3. **Run the related tests before making changes.** The
+   test file names tell you which test exercises which
+   function — target with
+   `pytest -k "{{ feature_name }}"`.
+{% elif public_classes %}
+1. **Prefer composition over subclassing.** The classes
+   in {{ title | lower }} are designed to be used, not
+   extended. If you find yourself needing a subclass,
+   check whether the base class already exposes the
+   extension point you want.
+
+{{ m.related_classes(public_classes, limit=5) }}
+
+2. **Respect constructor signatures.** The `__init__`
+   methods document the required state for each class —
+   pass all the arguments, even the ones that look
+   optional.
+{% else %}
+1. **Start small.** Read one source file at a time and
+   build a mental model from the bottom up.
+
+2. **Write a throwaway test first.** Even a five-line
+   test that exercises the happy path will teach you
+   more than reading the source alone.
+{% endif %}
+
+## Why this matters
+
+Following these tips avoids the most common
+time-wasters when working with this part of the
+codebase. They are not strict rules — use judgment —
+but deviating from them usually signals that you are
+fighting the design rather than using it.
+
+## Source files
+
+{{ m.key_files(file_patterns) }}
+
+{{ m.tags_line(tags) }}

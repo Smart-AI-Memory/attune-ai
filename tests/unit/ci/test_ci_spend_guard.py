@@ -26,10 +26,9 @@ Policy enforced:
    "keyless-CI-faithful" lesson).
 4. Each allowlisted workflow's spend control is verified for what it
    actually is: ``integration-auth.yml`` caps spend via
-   ``ATTUNE_MAX_BUDGET_USD``; ``help-freshness.yml`` gates its keyed
-   step behind the manual ``regen=true`` dispatch input (attune-author
-   does not honor attune's budget env, so the control there is
-   human-in-the-loop, not a cap).
+   ``ATTUNE_MAX_BUDGET_USD``. (``help-freshness.yml`` was de-keyed
+   2026-07-27 — report-only since author-consolidation T4 retired the
+   in-CI regen path.)
 """
 
 from __future__ import annotations
@@ -48,7 +47,6 @@ WORKFLOWS_DIR = Path(__file__).resolve().parents[3] / ".github" / "workflows"
 #: a spend control verified by a test in this module.
 KEYED_ALLOWLIST: dict[str, str] = {
     "integration-auth.yml": "weekly live-key canary, ATTUNE_MAX_BUDGET_USD-capped",
-    "help-freshness.yml": "keyed regen only on manual regen=true dispatch",
     "windows-payload-capture.yml": (
         "one-shot Windows hook-payload diagnostic, dispatch-only, "
         "ATTUNE_MAX_BUDGET_USD-capped + --max-turns bounded"
@@ -167,37 +165,6 @@ def test_integration_auth_caps_spend():
         "integration-auth.yml uses the real ANTHROPIC_API_KEY but no "
         "longer sets ATTUNE_MAX_BUDGET_USD — the budget cap is its "
         "allowlist condition. Restore the cap or de-key the workflow."
-    )
-
-
-def test_help_freshness_key_gated_on_manual_regen():
-    """help-freshness's keyed step only runs on an explicit regen=true
-    dispatch (its spend control is human-in-the-loop, not a cap)."""
-    path = WORKFLOWS_DIR / "help-freshness.yml"
-    if not path.exists():
-        pytest.skip("help-freshness.yml absent")
-    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
-    keyed_steps = [
-        step
-        for job in (doc.get("jobs") or {}).values()
-        for step in job.get("steps", [])
-        if _SECRET_REF.search(yaml.safe_dump(step.get("env") or {}))
-    ]
-    assert keyed_steps, (
-        "help-freshness.yml references the secret but not at step level "
-        "— this test verifies the keyed STEP is gated on the manual "
-        "regen input; re-point it at wherever the key moved."
-    )
-    ungated = [
-        step.get("name", "<unnamed>")
-        for step in keyed_steps
-        if "regen" not in str(step.get("if", ""))
-    ]
-    assert not ungated, (
-        f"help-freshness.yml keyed step(s) {ungated} lack the "
-        f"`if: ... regen == 'true'` gate — the manual-dispatch gate is "
-        f"this workflow's spend control (attune-author does not honor "
-        f"ATTUNE_MAX_BUDGET_USD)."
     )
 
 

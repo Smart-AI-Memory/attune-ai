@@ -144,14 +144,30 @@ def _collect_attune_skill_names() -> set[str]:
 
 
 def _get_registered_tool_names() -> set[str]:
-    """Get the authoritative set of MCP tool names from schemas."""
+    """Get the authoritative set of MCP tool names.
+
+    Core tools come from tool_schemas.py; plugin-registered tools
+    (redis_memory_*, session_memory_*) come from the bundled
+    attune_redis plugin's definition dicts — skills may reference
+    either surface.
+    """
     from attune.mcp.tool_schemas import (
         get_memory_tools,
         get_utility_tools,
         get_workflow_tools,
     )
 
-    return get_workflow_tools().keys() | get_utility_tools().keys() | get_memory_tools().keys()
+    names = get_workflow_tools().keys() | get_utility_tools().keys() | get_memory_tools().keys()
+    try:
+        from attune_redis.mcp_tools import (
+            SESSION_MEMORY_TOOL_DEFINITIONS,
+            TOOL_DEFINITIONS,
+        )
+
+        names = names | TOOL_DEFINITIONS.keys() | SESSION_MEMORY_TOOL_DEFINITIONS.keys()
+    except ImportError:
+        pass  # partial environment: core tools still validate
+    return set(names)
 
 
 # ---------------------------------------------------------------------------

@@ -12,6 +12,8 @@ export interface BlogPost {
   author: string;
   excerpt: string;
   coverImage?: string;
+  /** YouTube video ID rendered above the post content when present. */
+  videoId?: string;
   tags: string[];
   content: string;
   readingTime: string;
@@ -92,6 +94,7 @@ export function getPostBySlug(slug: string): BlogPost | null {
       author: data.author || 'Smart AI Memory Team',
       excerpt: data.excerpt || '',
       coverImage: data.coverImage,
+      videoId: data.videoId,
       tags: data.tags || [],
       content,
       readingTime: stats.text,

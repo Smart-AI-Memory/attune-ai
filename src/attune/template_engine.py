@@ -108,15 +108,15 @@ def scaffold_project(
             gitignore_path = target / ".gitignore"
             validated_gitignore = _validate_file_path(str(gitignore_path))
             if validated_gitignore.exists():
-                with open(validated_gitignore, "a") as f:
+                with open(validated_gitignore, "a", encoding="utf-8") as f:
                     f.write("\n" + actual_content)
             else:
-                with open(validated_gitignore, "w") as f:
+                with open(validated_gitignore, "w", encoding="utf-8") as f:
                     f.write(actual_content)
             created_files.append(".gitignore")
         else:
             validated_path = _validate_file_path(str(full_path))
-            with open(validated_path, "w") as f:
+            with open(validated_path, "w", encoding="utf-8") as f:
                 f.write(actual_content)
             created_files.append(actual_path)
 

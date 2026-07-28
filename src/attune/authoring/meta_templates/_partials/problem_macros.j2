@@ -1,0 +1,53 @@
+{#
+Shared macros for problem-shaped templates (error, warning,
+troubleshooting). These produce the symptom/cause/fix
+structure that attune-help renders through its
+troubleshooting-lookup paths.
+
+Usage:
+  {% import '_partials/problem_macros.j2' as macros %}
+  {{ macros.related_functions(public_functions) }}
+
+Macros are kept side-effect-free: they only emit markdown
+strings. No filesystem I/O, no template inheritance.
+#}
+
+{% macro related_functions(public_functions, limit=5) -%}
+{% if public_functions %}
+{% for fn in public_functions[:limit] %}
+- `{{ fn.name }}()` in `{{ fn.file }}`{% if fn.doc %} — {{ fn.doc }}{% endif %}
+{% endfor %}
+{% endif %}
+{%- endmacro %}
+
+{% macro related_classes(public_classes, limit=5) -%}
+{% if public_classes %}
+{% for cls in public_classes[:limit] %}
+- `{{ cls.name }}` in `{{ cls.file }}`{% if cls.doc %} — {{ cls.doc }}{% endif %}
+{% endfor %}
+{% endif %}
+{%- endmacro %}
+
+{% macro key_files(file_patterns) -%}
+{% if file_patterns %}
+{% for pattern in file_patterns %}
+- `{{ pattern }}`
+{% endfor %}
+{% else %}
+No file patterns configured for this feature.
+{% endif %}
+{%- endmacro %}
+
+{% macro tags_line(tags) -%}
+{% if tags %}
+**Tags:** {% for tag in tags %}`{{ tag }}`{{ ", " if not loop.last else "" }}{% endfor %}
+{% endif %}
+{%- endmacro %}
+
+{% macro feature_intro(title, description, fallback_text) -%}
+{% if description %}
+{{ description }}.
+{% else %}
+{{ fallback_text }}
+{% endif %}
+{%- endmacro %}

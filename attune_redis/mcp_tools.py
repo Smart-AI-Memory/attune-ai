@@ -10,6 +10,22 @@ operations:
 - ``redis_memory_promote`` — promote working to long-term
 - ``redis_health_check`` — AMS + Redis health status
 
+Plus 5 conditional ``session_memory_*`` tools (registered only when
+``attune.memory.session_stash`` is importable) that carry the full
+session-stash contract — PII/secrets sanitization before write,
+cwd soft-priority, and the 30-day working TTL — over MCP for
+sandboxed clients (cross-provider-memory-transport R4/D3):
+
+- ``session_memory_capture`` — sanitized finding capture
+- ``session_memory_recall`` — semantic recall of stashed findings
+- ``session_memory_recent`` — query-less recency recall
+- ``session_memory_forget`` — precise deletion by record ID
+- ``session_memory_status`` — caller-scoped backend status
+
+The ``redis_memory_*`` tools remain generic working-memory
+operations with frozen schemas (D6); finding capture must use
+``session_memory_capture``, never raw ``redis_memory_store`` (CR-2).
+
 Copyright 2025-2026 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
@@ -143,6 +159,133 @@ TOOL_DEFINITIONS: dict[str, dict[str, Any]] = {
     "redis_health_check": {
         "name": "redis_health_check",
         "description": ("Check Redis Agent Memory Server health and connection status."),
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+        },
+    },
+}
+
+
+# Session-memory adapters (cross-provider-memory-transport T2). Kept in a
+# SEPARATE dict so the 6 redis_memory_* schemas above stay frozen (D6) and
+# registration can be conditional on attune core being importable.
+_SESSION_RECALL_MAX = 20
+
+SESSION_MEMORY_TOOL_DEFINITIONS: dict[str, dict[str, Any]] = {
+    "session_memory_capture": {
+        "name": "session_memory_capture",
+        "description": (
+            "Capture a cross-session finding through the session-stash "
+            "contract: PII/secrets sanitization before write, cwd tagging "
+            "for scoped recall, and a 30-day working TTL. Use this for "
+            "findings — never raw redis_memory_store."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "description": "The finding text (truncated to 500 chars)",
+                },
+                "type": {
+                    "type": "string",
+                    "enum": ["decision", "pattern", "bug", "reference", "note"],
+                    "description": "Entry kind (default: note)",
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Free-form tags for filtering",
+                },
+                "session_id": {
+                    "type": "string",
+                    "description": "Originating session id (default: mcp)",
+                },
+                "cwd": {
+                    "type": "string",
+                    "description": ("Project root for cwd-scoped recall (default: workspace root)"),
+                },
+            },
+            "required": ["content"],
+        },
+    },
+    "session_memory_recall": {
+        "name": "session_memory_recall",
+        "description": (
+            "Semantic recall over stashed cross-session findings. "
+            "Same-cwd findings rank first when cwd is given."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Natural language recall query",
+                },
+                "top_k": {
+                    "type": "integer",
+                    "description": "Max results (default 5, max 20)",
+                    "default": 5,
+                },
+                "cwd": {
+                    "type": "string",
+                    "description": "Prefer entries from this project root",
+                },
+            },
+            "required": ["query"],
+        },
+    },
+    "session_memory_recent": {
+        "name": "session_memory_recent",
+        "description": ("Query-less recall of the most recently stashed findings (newest first)."),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "top_k": {
+                    "type": "integer",
+                    "description": "Max results (default 5, max 20)",
+                    "default": 5,
+                },
+                "cwd": {
+                    "type": "string",
+                    "description": "Prefer entries from this project root",
+                },
+            },
+            "required": [],
+        },
+    },
+    "session_memory_forget": {
+        "name": "session_memory_forget",
+        "description": (
+            "Delete stashed findings by record ID (the `id` field from "
+            "session_memory_recall/recent results) — the correction path "
+            "when a finding is wrong or stale."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Record IDs to delete",
+                },
+                "cwd": {
+                    "type": "string",
+                    "description": "Project root recorded on the feedback event",
+                },
+            },
+            "required": ["ids"],
+        },
+    },
+    "session_memory_status": {
+        "name": "session_memory_status",
+        "description": (
+            "Caller-scoped session-memory status: resolved backend, "
+            "reachability for THIS caller, and a stable failure reason "
+            "when writes would not succeed."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {},
@@ -374,6 +517,337 @@ async def handle_redis_health_check(server: Any, args: dict[str, Any]) -> dict[s
         return {"success": False, "error": str(e)}
 
 
+# =========================================================================
+# Session-memory handlers (delegate to attune.memory.session_stash)
+# =========================================================================
+
+
+def _session_stash() -> Any:
+    """Import the session_stash module (raises ImportError when absent)."""
+    from attune.memory import session_stash
+
+    return session_stash
+
+
+def _stash_failure_reason(session_stash: Any) -> str:
+    """Map a False write result to a stable machine-readable code (CR-5).
+
+    Prefers the caller-scoped ``backend_status()`` reason (e.g.
+    ``no_backend``, ``file_write_denied``); falls back to the generic
+    ``write_failed`` when status reports healthy but the write still
+    failed (e.g. sanitizer unavailable or a backend error).
+    """
+    try:
+        status = session_stash.backend_status()
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: reason derivation is best-effort diagnostics.
+        return "write_failed"
+    reason = status.get("reason") if isinstance(status, dict) else None
+    return str(reason) if reason else "write_failed"
+
+
+def _plural(count: int) -> str:
+    """Return "s" for non-singular counts (voice_summary phrasing)."""
+    return "" if count == 1 else "s"
+
+
+def _clamp_top_k(args: dict[str, Any]) -> int:
+    """Bound recall result counts (R4: results bounded)."""
+    try:
+        top_k = int(args.get("top_k", 5))
+    except (TypeError, ValueError):
+        return 5
+    return max(1, min(top_k, _SESSION_RECALL_MAX))
+
+
+async def handle_session_memory_capture(server: Any, args: dict[str, Any]) -> dict[str, Any]:
+    """Capture a finding through the sanitizing session-stash contract.
+
+    Args:
+        server: MCP server instance (supplies the default cwd).
+        args: Tool arguments (content, type, tags, session_id, cwd).
+
+    Returns:
+        ``{ok: true, id: ...}`` on a durable write, else
+        ``{ok: false, reason: <stable_code>}`` — a False Python result
+        is never reported as success (R1/CR-5).
+    """
+    try:
+        session_stash = _session_stash()
+        cwd = args.get("cwd") or getattr(server, "_workspace_root", None) or ""
+        try:
+            entry = session_stash.SessionStashEntry.create(
+                session_id=str(args.get("session_id") or "mcp"),
+                cwd=str(cwd),
+                type=str(args.get("type") or "note"),
+                content=args.get("content", ""),
+                tags=args.get("tags"),
+            )
+        except ValueError as exc:
+            return {
+                "ok": False,
+                "reason": "invalid_entry",
+                "error": str(exc),
+                "source": "session-stash",
+                "voice_summary": "Couldn't stash that — the entry was invalid.",
+            }
+        if session_stash.stash_entry(entry):
+            return {
+                "ok": True,
+                "id": entry.id,
+                "type": entry.type,
+                "source": "session-stash",
+                "voice_summary": "Stashed that finding for future recall.",
+            }
+        reason = _stash_failure_reason(session_stash)
+        return {
+            "ok": False,
+            "reason": reason,
+            "source": "session-stash",
+            "voice_summary": f"Couldn't stash that finding ({reason}).",
+        }
+    except ImportError:
+        return {
+            "ok": False,
+            "reason": "session_stash_unavailable",
+            "source": "session-stash",
+            "voice_summary": "Session memory isn't available in this environment.",
+        }
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Graceful degradation for MCP tool errors
+        logger.exception("session_memory_capture failed")
+        return {
+            "ok": False,
+            "reason": "internal_error",
+            "error": str(e),
+            "voice_summary": "Couldn't stash that finding (internal error).",
+        }
+
+
+async def handle_session_memory_recall(server: Any, args: dict[str, Any]) -> dict[str, Any]:
+    """Semantic recall over stashed findings.
+
+    Args:
+        server: MCP server instance (unused; uniform signature).
+        args: Tool arguments (query, top_k, cwd).
+
+    Returns:
+        Result dict with ranked records (empty when degraded).
+    """
+    try:
+        session_stash = _session_stash()
+        results = session_stash.recall_entries(
+            str(args.get("query", "")),
+            top_k=_clamp_top_k(args),
+            cwd=args.get("cwd"),
+        )
+        count = len(results)
+        return {
+            "ok": True,
+            "results": results,
+            "count": count,
+            "source": "session-stash",
+            "voice_summary": (
+                f"Found {count} stashed finding{_plural(count)}."
+                if count
+                else "No stashed findings matched that query."
+            ),
+        }
+    except ImportError:
+        return {
+            "ok": False,
+            "reason": "session_stash_unavailable",
+            "source": "session-stash",
+            "voice_summary": "Session memory isn't available in this environment.",
+        }
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Graceful degradation for MCP tool errors
+        logger.exception("session_memory_recall failed")
+        return {
+            "ok": False,
+            "reason": "internal_error",
+            "error": str(e),
+            "voice_summary": "Recall didn't work (internal error).",
+        }
+
+
+async def handle_session_memory_recent(server: Any, args: dict[str, Any]) -> dict[str, Any]:
+    """Query-less recency recall of stashed findings.
+
+    Args:
+        server: MCP server instance (unused; uniform signature).
+        args: Tool arguments (top_k, cwd).
+
+    Returns:
+        Result dict with newest-first records (empty when degraded).
+    """
+    try:
+        session_stash = _session_stash()
+        results = session_stash.recent_entries(
+            top_k=_clamp_top_k(args),
+            cwd=args.get("cwd"),
+        )
+        count = len(results)
+        return {
+            "ok": True,
+            "results": results,
+            "count": count,
+            "source": "session-stash",
+            "voice_summary": (
+                "Nothing stashed yet for this project."
+                if not count
+                else (
+                    "Here is the most recent stashed finding."
+                    if count == 1
+                    else f"Here are the {count} most recent stashed findings."
+                )
+            ),
+        }
+    except ImportError:
+        return {
+            "ok": False,
+            "reason": "session_stash_unavailable",
+            "source": "session-stash",
+            "voice_summary": "Session memory isn't available in this environment.",
+        }
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Graceful degradation for MCP tool errors
+        logger.exception("session_memory_recent failed")
+        return {
+            "ok": False,
+            "reason": "internal_error",
+            "error": str(e),
+            "voice_summary": "Recall didn't work (internal error).",
+        }
+
+
+async def handle_session_memory_forget(server: Any, args: dict[str, Any]) -> dict[str, Any]:
+    """Delete stashed findings by record ID.
+
+    Args:
+        server: MCP server instance (unused; uniform signature).
+        args: Tool arguments (ids, cwd).
+
+    Returns:
+        Result dict with requested/deleted counts; ``ok`` is False with a
+        stable reason when nothing could be deleted for a non-empty request.
+    """
+    try:
+        session_stash = _session_stash()
+        ids = args.get("ids")
+        if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
+            return {
+                "ok": False,
+                "reason": "invalid_entry",
+                "error": "ids must be a list of record-ID strings",
+                "source": "session-stash",
+                "voice_summary": "Couldn't delete — ids must be record-ID strings.",
+            }
+        deleted = session_stash.forget_entries(
+            ids,
+            source="mcp_forget",
+            cwd=args.get("cwd"),
+        )
+        result: dict[str, Any] = {
+            "ok": deleted > 0 or not ids,
+            "requested": len(ids),
+            "deleted": deleted,
+            "source": "session-stash",
+        }
+        if result["ok"]:
+            result["voice_summary"] = (
+                "Nothing to delete."
+                if not ids
+                else f"Deleted {deleted} of {len(ids)} stashed record{_plural(len(ids))}."
+            )
+        else:
+            result["reason"] = _stash_failure_reason(session_stash)
+            if result["reason"] == "write_failed":
+                result["reason"] = "not_found"
+            result["voice_summary"] = f"Couldn't delete those records ({result['reason']})."
+        return result
+    except ImportError:
+        return {
+            "ok": False,
+            "reason": "session_stash_unavailable",
+            "source": "session-stash",
+            "voice_summary": "Session memory isn't available in this environment.",
+        }
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Graceful degradation for MCP tool errors
+        logger.exception("session_memory_forget failed")
+        return {
+            "ok": False,
+            "reason": "internal_error",
+            "error": str(e),
+            "voice_summary": "Deletion didn't work (internal error).",
+        }
+
+
+async def handle_session_memory_status(server: Any, args: dict[str, Any]) -> dict[str, Any]:
+    """Caller-scoped session-memory status.
+
+    Reports ``transport: "mcp"`` at this layer (the adapter executes
+    host-side); the underlying Python-layer transport moves to
+    ``backend_transport`` (cross-provider-memory-transport D4).
+
+    Args:
+        server: MCP server instance (unused; uniform signature).
+        args: Tool arguments (none).
+
+    Returns:
+        The ``backend_status()`` dict with the MCP layering applied.
+    """
+    try:
+        session_stash = _session_stash()
+        status = dict(session_stash.backend_status())
+        status["backend_transport"] = status.get("transport")
+        status["transport"] = "mcp"
+        status["source"] = "session-stash"
+        if status.get("ok", True):
+            backend = status.get("backend") or "file"
+            status["voice_summary"] = f"Session memory is ready ({backend} backend)."
+        else:
+            reason = status.get("reason") or "unknown"
+            status["voice_summary"] = f"Session memory is unavailable ({reason})."
+        return status
+    except ImportError:
+        return {
+            "ok": False,
+            "reason": "session_stash_unavailable",
+            "transport": "mcp",
+            "source": "session-stash",
+            "voice_summary": "Session memory isn't available in this environment.",
+        }
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Graceful degradation for MCP tool errors
+        logger.exception("session_memory_status failed")
+        return {
+            "ok": False,
+            "reason": "internal_error",
+            "error": str(e),
+            "voice_summary": "Status check didn't work (internal error).",
+        }
+
+
+SESSION_MEMORY_TOOL_HANDLERS: dict[str, Any] = {
+    "session_memory_capture": handle_session_memory_capture,
+    "session_memory_recall": handle_session_memory_recall,
+    "session_memory_recent": handle_session_memory_recent,
+    "session_memory_forget": handle_session_memory_forget,
+    "session_memory_status": handle_session_memory_status,
+}
+
+
+def _session_memory_available() -> bool:
+    """True when attune core's session_stash can back the adapters."""
+    try:
+        _session_stash()
+    except ImportError:
+        return False
+    return True
+
+
 # Handler dispatch table
 TOOL_HANDLERS: dict[str, Any] = {
     "redis_memory_store": handle_redis_memory_store,
@@ -400,13 +874,28 @@ def register_tools(server: Any) -> None:
         server._plugin_handlers = {}
     server._plugin_handlers.update(TOOL_HANDLERS)
 
+    registered = len(TOOL_DEFINITIONS)
+    # Session-memory adapters need attune core's session_stash; skip them
+    # cleanly in a partial environment rather than registering tools that
+    # can only fail (cross-provider-memory-transport T2).
+    if _session_memory_available():
+        server.tools.update(SESSION_MEMORY_TOOL_DEFINITIONS)
+        server._plugin_handlers.update(SESSION_MEMORY_TOOL_HANDLERS)
+        registered += len(SESSION_MEMORY_TOOL_DEFINITIONS)
+    else:
+        logger.warning(
+            "attune-redis: session_memory_* tools skipped (attune.memory.session_stash not importable)"
+        )
+
     logger.info(
         "attune-redis: registered %d MCP tools",
-        len(TOOL_DEFINITIONS),
+        registered,
     )
 
 
 __all__ = [
+    "SESSION_MEMORY_TOOL_DEFINITIONS",
+    "SESSION_MEMORY_TOOL_HANDLERS",
     "TOOL_DEFINITIONS",
     "TOOL_HANDLERS",
     "register_tools",

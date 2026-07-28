@@ -1,10 +1,10 @@
 # attune-ai
 
 Spec-driven development for Claude Code — turn requirements
-into reliable software. 18 auto-triggering skills, zero
+into reliable software. <!-- cap:skill_count -->26 auto-triggering skills<!-- /cap -->, zero
 commands: say what you need and Claude picks the right skill.
 
-**Version:** 10.5.0 | **License:** Apache 2.0
+**Version:** 10.6.1 | **License:** Apache 2.0
 
 ## Install
 
@@ -79,7 +79,7 @@ The plugin ships two security hooks:
 ## Python Package (optional — unlocks CLI + MCP)
 
 The plugin works standalone. Add the Python package
-for CLI automation, 53 MCP tools, multi-agent
+for CLI automation, <!-- cap:mcp_registered_tool_count -->60 MCP tools<!-- /cap -->, multi-agent
 workflows, and cost tracking:
 
 ```bash
@@ -88,9 +88,9 @@ pip install 'attune-ai[developer]'
 
 | Capability | Plugin only | + pip |
 | ---------- | ----------- | ----- |
-| 20 auto-triggering skills | Yes | Yes |
+| <!-- cap:skill_count -->26 auto-triggering skills<!-- /cap --> | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
-| 53 MCP tools | -- | Yes |
+| <!-- cap:mcp_registered_tool_count -->60 MCP tools<!-- /cap --> | -- | Yes |
 | `attune` CLI | -- | Yes |
 | Multi-agent workflows | -- | Yes |
 | Cost tracking | -- | Yes |

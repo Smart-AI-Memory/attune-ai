@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Elicitation surface mix on the Health tab** — the ops dashboard's
+  `/health` page now reads `telemetry/form_events.jsonl` live and
+  shows which surface rendered each Python-routed form. Honestly
+  labeled a surface mix, not a fire rate: hand-written
+  AskUserQuestion turns never enter Python and are invisible to the
+  log (#1653).
+- **Handoff memory linkage (D5) + telemetry (D6)** — `handoff_create`
+  now stashes a topic-`handoff` pointer through the session-stash
+  helpers (same sanitized path as `session_memory_capture`), and
+  `handoff_resume` recalls pointers for the slug. Unreachable
+  backends degrade to a stated `memory: {status: skipped, reason}`
+  — never an error, never a silent omission. Both tools' structlog
+  events now carry the real memory outcome
+  (spec: cross-provider-session-handoff T3, #1601).
+
+## [10.6.1] — 2026-07-27
+
+### Fixed
+
+- **MCP server stdout is protocol-only** — structlog now writes to
+  stderr in the server process. Strict MCP clients (Antigravity)
+  previously failed every `session_memory_*` call with "invalid
+  trailing data at the end of stream" when the session-stash PII gate
+  logged during capture; lenient clients masked the bug. Found live by
+  transport receipt 6; regression test spawns the real server and
+  asserts a JSON-only stdout (#1681).
+
+## [10.6.0] — 2026-07-27
+
 When a workflow fails, attune can now tell you why: `attune diagnose`
 convenes a multi-model panel over the failed run's evidence and hands
 you ranked root-cause hypotheses — one click from the dashboard. The
@@ -17,6 +48,67 @@ run-record corpus that future releases learn from.
 
 ### Added
 
+- **`/memory` page over the Redis-derived index** (#1576, #1615) —
+  ops dashboard page with kind-chip filtering and an exceptions-first
+  attention header (hydration staleness, corpus drift, pending
+  threads).
+- **`handoff_create` / `handoff_resume` MCP tools** (#1605) —
+  advisory cross-provider session handoff
+  (spec cross-provider-session-handoff).
+- **`/cross-review`** (#1607) — one-seat advisory second-opinion
+  review (spec cross-review).
+- **attune-author fully absorbed — polish machinery moves upstream**
+  (attune-author-consolidation T3, ruling D10). The LLM
+  generator/polish machinery now lives in `attune.authoring`
+  (generator, polish + per-kind prompts, faithfulness audit,
+  ground-truth context injection, RAG grounding hook), with all LLM
+  calls routed through the new `attune.models.single_turn` —
+  subscription-first auth with API fallback, tier routing via
+  `attune.model_tiers`, fable-aware requests, per-process auth
+  telemetry. The author-feature skill gains an optional
+  **polish-master action** (`scripts/polish_master.py`): an LLM
+  quality pass on a single-source master, surfaced as a reviewable
+  diff (`--apply` to write) — never a silent rewrite, never on
+  projected output. `Feature.status` (`auto`/`manual`) and manual-
+  feature staleness skips are ported so projector-owned features are
+  never LLM-regenerated. Unblocks T4 (archive attune-author without
+  yank, D12).
+
+- **Inference-first forms.** A field can carry `inferred_from` alongside
+  its `default` — the value the agent guessed from context, plus why.
+  Both surfaces mark it as a guess (the widget badges the field and
+  shows the provenance; `AskUserQuestion` folds it into help text), so a
+  wrong inference is catchable rather than silently accepted. When
+  *every* field is inferred the form still renders, as a one-tap
+  confirmation with a `Confirm` button — never skipped, because a
+  correct-looking wrong guess the user never saw is the one failure a
+  form cannot recover from. `is_fully_inferred()` /
+  `inferred_field_count()` expose the state, and
+  `form_events.inference_rate()` measures whether the discipline is
+  actually being followed.
+- **`attune config set` / `attune config show`** — the first project-config
+  CLI. Writes allowlisted settings to `./attune.config.json` (currently
+  `keyboard_mode`), preserving other keys; an unknown key errors rather
+  than silently persisting a setting that does nothing.
+- **`form_response_summary(form, response)`** — collapses an answered
+  form to a compact markdown summary (title plus one bullet per
+  answer), so a long session accumulates summaries instead of
+  screenfuls of rendered markup.
+- **Form-surface telemetry** (`attune.telemetry.form_events`) — every
+  routing decision is logged locally to
+  `~/.attune/telemetry/form_events.jsonl` with its reason, readable
+  back via `surface_mix()`. Local-only and default-on, disabled with
+  `ATTUNE_FORM_TELEMETRY=0` or `DO_NOT_TRACK`. Note it measures the
+  widget/ask *mix*, not whether a form was built at all — a hand-written
+  question turn never reaches Python.
+- **Video pointers on help surfaces.** Feature masters
+  (`content/features/<feature>.md`) accept an optional `video:`
+  frontmatter field (bare URL or `{url, title}`); the projector emits
+  a "Watch:" link into the `.help` concept kind and the feature hub
+  page. The website gains a single-source video registry
+  (`website/lib/videos.ts`) feeding a `/learn` walkthrough page and a
+  conditional "Learn" nav link — both stay hidden until the first
+  video lands.
 - **Self-healing diagnosis engine** (#1487, #1494, #1496, #1498).
   `attune diagnose <run_id>` diagnoses any failed run end-to-end:
   recalled priors, a bounded evidence pack, and a seat panel produce
@@ -29,7 +121,8 @@ run-record corpus that future releases learn from.
   term extraction for terse symptoms (#1512), origin tagging + an
   append-only closure seam (#1514), proposer role-fit + brief
   hardening (#1523), and the engine's own heal-stamped canonical run
-  record (#1524).
+  record (#1524). Verified diagnoses graduate into the lessons corpus
+  with provenance (`LessonsFilePublisher`, #1529).
 - **Multi-LLM round table** (#1450, #1451, #1462, #1464, #1466,
   #1511, #1515, #1517). `/roundtable` convenes Claude, Antigravity,
   and Codex to deliberate a question on a Redis-backed board; the
@@ -38,6 +131,17 @@ run-record corpus that future releases learn from.
   rotation, headless producing routines, a headless triage appendix,
   CI-gate verdicts fetched at briefing render time, and
   receipt-vs-claim evidence tiers in digests.
+- **Provider-neutral `session_memory_*` MCP tools**
+  (cross-provider-memory-transport T2). Five additive tools —
+  `session_memory_capture` / `recall` / `recent` / `forget` /
+  `status` — carry the full session-stash contract (PII/secrets
+  sanitization before write, cwd-scoped recall, 30-day working TTL,
+  precise deletion) over MCP, so sandboxed providers such as Codex
+  capture and recall findings host-side instead of through blocked
+  in-process Python. Registered only when attune core is importable;
+  the six generic `redis_memory_*` tools keep their frozen schemas.
+  A failed write surfaces as `{ok: false, reason: <stable_code>}` —
+  never false success.
 - **Cross-provider collaboration contract** (#1432–#1447). A
   projector-owned contract teaches any agent (Claude Code, Codex,
   Antigravity) the repo's shared truth: tracked `AGENTS.md` +
@@ -100,6 +204,31 @@ run-record corpus that future releases learn from.
 
 ### Changed
 
+- Codecov patch gate raised 50 → 80, enforcing the documented 80%
+  changed-code floor (#1531).
+
+- **Forms by default — the rich form surface is now what you get**
+  (D21). Previously the agent routed each form to the cheapest surface
+  that could express its controls, so a multi-dimension question
+  collapsed into plain buttons and lost its cards, tradeoffs, and
+  rationale. `select_form_surface()` replaces that judgment: the
+  widget is the default and `AskUserQuestion` is an explicit fallback,
+  taken only for a client that can't render widgets, keyboard mode, or
+  a genuinely trivial form (one select/boolean, ≤3 short options).
+  `needs_widget` remains as the low-level controls check but no longer
+  owns the decision.
+- **The Socratic rule now names the artifact, not the tool.** It asked
+  agents to use `AskUserQuestion`, so they did — and the communication
+  grammar rarely fired regardless of routing. It now asks for a
+  `FormSchema`, with an explicit batching rule: independent dimensions
+  go in ONE form instead of N sequential question-turns.
+- **Keyboard mode** — the opt-out for people who'd rather type than
+  click. Turn it on with `attune config set keyboard_mode true`; it
+  persists per project in `attune.config.json`, with
+  `ATTUNE_KEYBOARD_MODE` as a two-way session override. After ten
+  answered forms a one-time hint points at the command, so the opt-out
+  is discoverable without having to know it exists. Ratified in D17,
+  built here.
 - **Managed-Redis naming is platform-neutral** (#1506).
   `get_managed_redis_config` replaces the Railway-specific name;
   `get_railway_redis_config` remains as a deprecated alias.
@@ -108,6 +237,34 @@ run-record corpus that future releases learn from.
 
 ### Fixed
 
+- Weekly help-freshness report now reports 0 stale instead of 27
+  false positives (#1562).
+- Tooltip unification completed — last `span title=` converted, with
+  a CI grep-gate against regressions (#1571).
+
+- **File-fallback memory writes no longer report false success**
+  (cross-provider-memory-transport T1). `FileStashBackend.remember()`
+  — and therefore the public `session_stash.stash_entry()` — now
+  returns `False` when the durable write fails (e.g. `EPERM` in a
+  sandboxed provider), instead of `True` with the finding silently
+  lost; `forget()`/`prune()` likewise report 0 when their rewrite
+  never lands. **Behavior correction:** callers that relied on an
+  unconditional `True` must handle a truthful `False`.
+  `backend_status()` gains additive caller-scoped fields (`ok`,
+  `transport`, `reachability`, `reason`, e.g. `file_write_denied`
+  backed by a real write probe) alongside the unchanged existing
+  keys — a caller-local denial is never reported as a global
+  service outage.
+- **Session-stash PII/secrets gate actually fires now**
+  (cross-provider-memory-transport T2, CR-2). `session_stash`
+  constructed its `DataSanitizer` with constructor defaults that
+  disabled both scrubbers, making the pre-write gate a silent no-op
+  — an email-bearing finding was stored unredacted. Both gates are
+  now explicitly enabled: PII (emails, SSNs, phone numbers, card
+  numbers) is redacted in the stored representation, and
+  secret-bearing content (API keys, tokens) fails closed — the
+  write is refused rather than persisted. Caught by the spec's
+  live PII canary; non-mocked regression tests pin both behaviors.
 - **SDK teardown-exit guard now covers every SDK workflow** — the
   seven consumption loops the sdk-teardown-exit-guard spec's list
   predated (`deep-review`, `refactor-plan`, `release-prep`,

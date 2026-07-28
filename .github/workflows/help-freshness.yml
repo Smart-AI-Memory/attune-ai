@@ -1,18 +1,15 @@
 name: Help Freshness
 
-# Report-only by default (polish-cost-reduction lever 1, 2026-06-10):
-# the weekly schedule REPORTS staleness; polish-bearing regeneration
-# runs only on explicit dispatch with regen=true (release-prep cadence).
+# Report-only (polish-cost-reduction lever 1, 2026-06-10): the weekly
+# schedule REPORTS staleness. Polish-bearing regeneration happens
+# deliberately at release-prep cadence via `/coach maintain` (the
+# absorbed attune.authoring generator). The in-CI regen path was
+# retired 2026-07-27 with attune-author (author-consolidation T4).
 on:
   schedule:
     # Sunday 12:00 UTC
     - cron: '0 12 * * 0'
   workflow_dispatch:
-    inputs:
-      regen:
-        description: 'Actually regenerate (LLM polish spend) instead of report-only'
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -21,16 +18,13 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -38,18 +32,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e '.[author]'
-          # attune-help provides the bundled corpus that attune-rag's
-          # AttuneHelpCorpus loads for RAG-grounded regen. Without it,
-          # `attune-author generate` raises (ModuleNotFoundError:
-          # attune_help) and the set -e regen step fails.
-          pip install PyYAML attune-help
+          pip install -e .
+          pip install PyYAML
 
-      - name: Check completeness (pre-regen)
+      - name: Check completeness
         run: |
           python scripts/check_help_completeness.py --format=json \
-            > /tmp/completeness-before.json || true
-          cat /tmp/completeness-before.json
+            > /tmp/completeness.json || true
+          cat /tmp/completeness.json
 
       - name: List stale features
         id: list_stale
@@ -61,91 +51,14 @@ jobs:
           count=$(wc -l < /tmp/stale.txt | tr -d ' ')
           echo "count=$count" >> "$GITHUB_OUTPUT"
 
-      - name: Report staleness (report-only mode)
-        if: steps.list_stale.outputs.count != '0' && github.event.inputs.regen != 'true'
+      - name: Report staleness
+        if: steps.list_stale.outputs.count != '0'
         run: |
           {
-            echo "## Help freshness report (no regen run)"
+            echo "## Help freshness report (report-only)"
             echo
             echo "Stale features:"
             sed 's/^/- /' /tmp/stale.txt
             echo
-            echo "Regenerate deliberately at release-prep, or dispatch this"
-            echo "workflow with regen=true."
+            echo "Regenerate deliberately at release-prep via /coach maintain."
           } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: DEC-8 spend gate — block if over the monthly ceiling
-        # Enforcement half of the R6 spend alarm (see
-        # scripts/ci_spend_gate.py). Only runs when we're about to
-        # actually spend (regen=true + stale features exist). Needs
-        # ANTHROPIC_ADMIN_API_KEY to verify spend; without it, fails
-        # open with a loud warning rather than blocking the regen.
-        if: steps.list_stale.outputs.count != '0' && github.event.inputs.regen == 'true'
-        env:
-          ANTHROPIC_ADMIN_API_KEY: ${{ secrets.ANTHROPIC_ADMIN_API_KEY }}
-        run: python scripts/ci_spend_gate.py
-
-      - name: Regenerate stale features
-        if: steps.list_stale.outputs.count != '0' && github.event.inputs.regen == 'true'
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          set -e
-          while IFS= read -r feat; do
-            [ -z "$feat" ] && continue
-            echo "--- regen $feat ---"
-            attune-author generate "$feat" \
-              --help-dir .help --project-root . --all-kinds
-          done < /tmp/stale.txt
-
-      - name: Check completeness (post-regen)
-        run: |
-          python scripts/check_help_completeness.py --format=json \
-            > /tmp/completeness-after.json || true
-          cat /tmp/completeness-after.json
-
-      - name: Open PR if there are changes
-        if: github.event.inputs.regen == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -e
-          if [ -z "$(git status --porcelain .help/)" ]; then
-            echo "No .help changes to commit."
-            exit 0
-          fi
-          branch="auto/help-freshness-$(date -u +%Y-%m-%d)"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b "$branch"
-          git add .help
-          {
-            echo "docs(help): weekly freshness regen"
-            echo
-            echo "Auto-regenerated stale .help/ templates via the help-freshness"
-            echo "workflow. See completeness reports in the workflow logs."
-            echo
-            echo "See scripts/check_help_completeness.py for orphan detection."
-          } > /tmp/commit_msg.txt
-          git commit -F /tmp/commit_msg.txt
-          git push origin "$branch"
-          if gh pr list --head "$branch" --json number --jq 'length' | grep -q '^0$'; then
-            {
-              echo "Automated regen of stale .help/ templates."
-              echo
-              echo "- Workflow: .github/workflows/help-freshness.yml"
-              echo "- Regenerator: attune-author generate <feature> --all-kinds"
-              echo "- Completeness: python scripts/check_help_completeness.py"
-              echo
-              echo "Review the diff and merge if the regenerated content looks correct."
-              echo "If orphan dirs still appear in the completeness report, decide"
-              echo "whether to delete them or add them to the manifest."
-            } > /tmp/pr_body.txt
-            gh pr create \
-              --base main \
-              --head "$branch" \
-              --title "docs(help): weekly freshness regen ($(date -u +%Y-%m-%d))" \
-              --body-file /tmp/pr_body.txt
-          else
-            echo "PR already open for $branch - skipping create."
-          fi
