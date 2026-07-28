@@ -18962,8 +18962,25 @@ def ", start_idx + 1)` for module-
   round-table seats then read `FAIL` in their brief and correctly
   concluded the tree was unhealthy — **a right answer to a wrong
   question, which is the most expensive kind of wrong**. Three durable
-  points: (1) the real defect is TEST ISOLATION — env-reading code
-  needs `monkeypatch.delenv(..., raising=False)` in its tests, and the
+  points: (1) the real defect is TEST ISOLATION — and
+  `monkeypatch.delenv(..., raising=False)` per test is NOT sufficient
+  on its own: an override consumed at IMPORT time is already baked in
+  before any fixture runs. `release_models.MODEL_CONFIG` resolves the
+  premium tier at import and `base_agent` binds that dict, so clearing
+  per-test left 20 of the 22 still red, and `importlib.reload` of the
+  DEFINING module does not rescue it either (the consumer still holds
+  the old reference). Three placements, only the last works: (a)
+  autouse fixture — too late for import-time reads; (b) conftest module
+  level but BELOW conftest's own `import attune.*` lines — still too
+  late, easy to miss because that import often sits a couple hundred
+  lines down; (c) conftest module level ABOVE every package import —
+  correct (expect an E402 when you insert there; put the scrub after
+  the stdlib/pytest imports, not at the literal top). Diagnostic: if
+  clearing an env var per-test changes NOTHING, grep the asserted
+  constant — a module-level `X = f(env)` is the tell. Exclude vars other
+  fixtures own (`ATTUNE_HOME`): scrubbing it pointed the default
+  telemetry store at the real `~/.attune` and the existing RC-4
+  `test_suite_isolation_drift_guard` caught it instantly. The
   ANTHROPIC_API_KEY-leaks-into-pytest lesson is the same family, so
   treat "reads process env" as a standing test-isolation trigger, not
   a one-off; (2) when two runs of the same routine disagree, **diff
@@ -18976,3 +18993,30 @@ def ", start_idx + 1)` for module-
   claude seat returned `ABSENT — Credit balance is too low` and
   synthesis HALTED, burning the Codex and Antigravity invocations —
   one routine fire, two independent env-shaped failures.
+
+- **`cd ~/attune-ai && pytest` from a WORKTREE session verifies MAIN's
+  tree, not your fix — and the failure is indistinguishable from "my
+  fix doesn't work," so you debug correct code**: 2026-07-28, fixing
+  test isolation in a worktree's `tests/conftest.py`. The verification
+  sweep was run four times with a `cd ~/attune-ai` prefix — habit,
+  because the same session legitimately needed main for `git pull`, the
+  hydrate script, and the roundtable routine's own checks. Every run
+  reported the SAME 20 failures. The natural reading is "the fix is
+  wrong" and the natural next move is to make it more aggressive, which
+  is exactly how a correct fix gets rewritten into a worse one; ~16
+  minutes of suite time went before the tell registered. **The tell:
+  the failing set did not shrink AT ALL — not by one test.** A
+  partially-working fix moves the number; an unchanged number means the
+  code under test is not the code you edited. Cheap confirmation before
+  trusting ANY verification run from a worktree session: `grep -c
+  '<marker-from-your-edit>' <file>` in BOTH checkouts — `1` in the
+  worktree and `0` in main proves you are testing the wrong tree.
+  **Rule: commands that VERIFY your edit run from the worktree; only
+  commands that operate on main's state (pull, hydrate, a routine's
+  check battery) take a `cd ~/attune-ai`.** Mixing both in one session
+  is the trap, and it is MOST likely precisely when the session has a
+  legitimate reason to touch main — the prefix is muscle memory by then.
+  Same family as the `Write` to a bare `/Users/patrickroebuck/attune-ai/…`
+  path and the editable-install MAPPING lessons; this is the
+  VERIFICATION surface of that family, where the cost is misdirected
+  debugging rather than a misplaced file.
