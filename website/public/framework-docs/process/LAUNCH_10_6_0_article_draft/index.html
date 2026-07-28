@@ -4601,10 +4601,19 @@ unfilled slot is forbidden (no claim without a receipt).</p>
 <p>Pre-publish checklist:</p>
 <ul>
 <li>[ ] All <code>[RECEIPT: …]</code> slots filled with real transcript excerpts</li>
-<li>[ ] Version/date claims match the actual v10.6.0 tag + PyPI 200</li>
+<li>[ ] Version/date claims re-checked against <strong>live PyPI</strong>, not the
+      tag this draft was written against. 10.6.0 names the release;
+      <strong>10.6.1</strong> is the same-day patch and is what <code>pip install</code>
+      resolves to today — it carries the README "Multi-LLM
+      collaboration" section this article describes. Verify with
+      <code>curl -s https://pypi.org/pypi/attune-ai/json</code> before firing;
+      a later patch moves this number again.</li>
 <li>[ ] Chair honesty-gate pass (same ruling session as Draft B)</li>
-<li>[ ] Counts ("five tools", "26 skills") re-verified against the
-      merged registries, not this draft</li>
+<li>[x] Counts re-verified against the merged registries (2026-07-28):
+      "five <code>session_memory_*</code> tools" = 5, names match
+      (<code>attune_redis.mcp_tools.SESSION_MEMORY_TOOL_DEFINITIONS</code>).
+      No other capability count appears in the body — the earlier
+      "26 skills" item checked a claim this draft does not make.</li>
 </ul>
 <hr />
 <h2 id="your-ai-coding-agents-dont-talk-to-each-other-this-release-makes-them">Your AI coding agents don't talk to each other. This release makes them.<a class="headerlink" href="#your-ai-coding-agents-dont-talk-to-each-other-this-release-makes-them" title="Permanent link">&para;</a></h2>
@@ -4702,7 +4711,8 @@ by adapters is the growth surface: when the next agent CLI ships,
 it gets a seat at the table and a key to the memory, not a fork.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai
 </code></pre></div>
-<p>10.6.0 is on PyPI now. The round table is open.</p>
+<p>10.6.1 is on PyPI now — 10.6.0 plus a same-day patch. The round
+table is open.</p>
 <hr />
 <p><em>Draft note (not for publication): candidate closing variants —
 (a) the install-line close above; (b) a question close inviting
