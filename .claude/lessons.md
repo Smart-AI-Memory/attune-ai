@@ -1225,6 +1225,17 @@ files.
     gh api repos/OWNER/REPO/actions/runs/$RUN/pending_deployments \
       -X POST -F "environment_ids[]=$ENV_ID" -F state=approved -F comment="..."
     ```
+    **The `-F` is load-bearing and `-f` fails SILENTLY** (2026-07-28,
+    11.0.0): `-f 'environment_ids[]=<id>'` returns an EMPTY response
+    body, exits 0, prints no error — and does NOT approve. The run
+    stays `waiting` forever. `-f` sends every value as a string, so the
+    integer array never forms; `-F` types it correctly and returns the
+    deployment object (`{"id": ..., "environment": "pypi", ...}`).
+    **Postcondition, not vibes: the call must return a non-empty
+    deployment JSON.** An empty body means nothing happened. This is
+    the "silence is not success" trap wearing a release-blocking hat —
+    a publish that hangs indefinitely looks identical to one waiting on
+    a human.
   - **Trusted-publisher "Workflow name" field = the FILENAME**
     (`publish.yml`), NOT the YAML `name:` value (`Publish to
     PyPI`). Mismatch → `invalid-publisher: valid token, but no
@@ -19121,3 +19132,31 @@ def ", start_idx + 1)` for module-
   starter can be STALE ON ARRIVAL" and "spec task rows lie": same
   family, but this is the *authoring* side — you are the one about to
   create the stale record, and the interval is hours, not weeks.
+
+- **A release procedure's own step can be INVALIDATED BY the release
+  it is shipping — re-read each step against the tree you are cutting,
+  not against the last release**: 2026-07-28 cutting 11.0.0. The
+  `release-execute` skill's step 7 prescribes
+  `attune-author regenerate --help-dir .help --project-root .` as the
+  docs-regen pass. But 11.0.0 IS the release that retires every
+  `attune-author` invocation path (author-consolidation T4, D12) — the
+  `[author]` extra is removed in the same commit the step was being
+  read for. Following it would have failed, and worse, "fixing" the
+  failure by re-adding the dependency would have silently reverted the
+  release's headline change. The skill's own preamble warns that
+  release shape drifts and "never assume a step's shape from this
+  file"; this is the sharpest form of that — **the diff under your
+  cursor is what makes the instruction false, so the staleness is not
+  yet detectable from git history or a doc timestamp.** No freshness
+  check catches it; only reading the step against the actual change
+  does. Generalization beyond releases: when a change removes a tool,
+  extra, endpoint, or path, grep the PROCEDURE docs (`.claude/skills/`,
+  runbooks, `docs/process/`) for that name in the same PR — the
+  procedures that consume the thing you are deleting are part of its
+  blast radius, and they are the ones nobody thinks to update because
+  they live outside `src/`. Same family as the `claude login` →
+  `claude auth login` and stale-`receipts.md`-recipe entries, but those
+  rot over TIME; this one is falsified INSTANTLY by the commit in
+  flight. (Handled correctly here: used the check-only freshness path,
+  spent no LLM budget, and recorded the obsolescence in the release
+  PR rather than silently skipping the step.)
