@@ -173,10 +173,11 @@ next win?*
 Two of three converged, unprompted, on the same feature with
 nearly identical designs: the cross-provider handoff. The third
 proposed a verification pattern I ruled out — it needed seats to
-run shell, which our contract forbids. But all three, unprompted,
-flagged the same risk: any of these features rots into ceremony
-unless the receipts stay real and the output stays advisory. That
-shaped the review discipline more than the feature picks did.
+run shell, which our contract forbids. But all three flagged the
+same risk, still without seeing each other's answers: any of these
+features rots into ceremony unless the receipts stay real and the
+output stays advisory. That shaped the review discipline more than
+the feature picks did.
 
 I chaired, ratified, and the specs were authored and built the same
 evening — with the deliberation thread, every seat's position, and
