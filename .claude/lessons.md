@@ -19041,3 +19041,53 @@ def ", start_idx + 1)` for module-
   path and the editable-install MAPPING lessons; this is the
   VERIFICATION surface of that family, where the cost is misdirected
   debugging rather than a misplaced file.
+
+- **A reviewer proposing an architecture-wide refactor from ONE observed
+  symptom is making a scope claim — take a census of conforming vs
+  violating sites before accepting it. The census usually shrinks the
+  work by an order of magnitude** (2026-07-28, round table
+  `q-conftest-env-scrub-001`): one seat's position was that `src/`
+  should be refactored to lazy environment evaluation, possibly
+  migrating to a Pydantic `BaseSettings` model, because
+  `release_models.MODEL_CONFIG` resolved a model tier at import and
+  froze it. Reasoning from the one site everyone could see, that is a
+  coherent conclusion — and it was wrong about scope. A 20-line AST
+  census answered it: **61 `ATTUNE_*` reads at call time, 0 at import,
+  exactly ONE module-level binding freezing a resolver result.** The
+  codebase's contract was already "observable after import"; the fix
+  was 4 references (two imports, one usage, one re-export), not a
+  migration. Two more things the census bought: it collapsed a
+  three-way seat disagreement into one chair decision (a second seat
+  had refused to rule on `src/` without first settling the lifecycle
+  contract — the census settled it), and fixing the single violation
+  made a test-side workaround shipped hours earlier DELETABLE, which no
+  seat predicted. **Rule: when any reviewer — human or LLM — proposes
+  "refactor X across the codebase" from a symptom you found in one
+  place, write the query that counts conformers before costing the
+  work.** `ast.parse` + walking `tree.body` for module-level `Assign`
+  nodes is usually enough and takes minutes. The failure mode this
+  prevents is real and expensive: a plausible generalization from a
+  sample of one, arriving with enough architectural vocabulary
+  (anti-pattern, settings object, dependency injection) to sound
+  settled. Corollary worth keeping: turn the census into a static
+  guard so the count stays at zero — the guard is cheaper than the
+  migration and fails loudly on the next violation.
+
+- **Calibration on LLM reviewer claims: the most speculative-sounding
+  claim can be the live one, and the most confidently structural claim
+  can be the false one — probe by CHECKABILITY, not by confidence**
+  (2026-07-28, same thread): a seat closed with two caveats framed as
+  "things I suspect were not considered." The hedged, mechanism-heavy
+  one — *deleting env vars lets `load_dotenv` inject from `.env`,
+  because dotenv only writes names that do not already exist, so the
+  scrub could OPEN a hole* — verified as a **live armed mechanism**
+  (`load_dotenv()` at module level in `workflows/base.py`, `.env` files
+  present; latent only because no dotenv file names an `ATTUNE_*` var
+  today). The flatly-stated structural one — *a repo-root `conftest.py`
+  loads before `tests/conftest.py` and would defeat the fix* — was
+  **refuted in one `ls`**: no repo-root conftest exists. Seats are
+  text-in/text-out (R1) and cannot run anything, so every claim they
+  make is reasoning; rank them for verification by how cheap they are
+  to falsify, never by how sure they sound. Recording the verdicts
+  (CONFIRMED / REFUTED / unverified) beside each claim in the promoted
+  report is what keeps a deliberation from hardening into folklore.
