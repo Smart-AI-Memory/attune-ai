@@ -62,11 +62,11 @@ as pickable work.
 
 6. **CI spends attention, never money.** Per-push/PR workflows run
    keyless (`ANTHROPIC_API_KEY: ""`); the real secret lives only in
-   scheduled, budget-capped jobs.
-   *Enforcer: **aspirational** (ruled after the 2026-06-10 burn;
-   workflow YAML is tested for timeouts/pinning/concurrency in
-   `tests/unit/ci/test_workflow_yaml.py`, but no test yet asserts
-   the keyless invariant — candidate enforcer to add).*
+   allowlisted, manually-dispatched or budget-capped jobs.
+   *Enforcers: `tests/unit/ci/test_ci_spend_guard.py` (secret refs
+   allowlisted, non-allowlisted assignments must be `""`),
+   `tests/unit/ci/test_workflow_yaml.py`
+   (timeouts/pinning/concurrency).*
 
 7. **A failed gatekeeper fails the gate.** A security auditor that
    errors or goes missing fails the Security gate — absence is not
@@ -111,12 +111,12 @@ as pickable work.
 
 ## Notes for the chair (not part of the section)
 
-- Two principles surfaced **enforcer gaps** worth pickable-work
-  rows: (a) a workflow-YAML test asserting per-push/PR jobs pin
-  provider API-key secrets (`ANTHROPIC_API_KEY` et al.) to `""`
-  (principle 6);
-  (b) a path-validation gate for file-op code (principle 4's
-  second half).
+- One principle surfaced an **enforcer gap** worth a pickable-work
+  row: a path-validation gate for file-op code (principle 4's
+  second half). A second suspected gap (keyless-CI invariant)
+  turned out to be already enforced by
+  `tests/unit/ci/test_ci_spend_guard.py` — the grep-for-existing-
+  enforcer rule caught it before a duplicate was built.
 - Deliberately NOT included: style rules (black/ruff enforce
   themselves), and anything that is one session's preference
   rather than a cross-provider invariant.
