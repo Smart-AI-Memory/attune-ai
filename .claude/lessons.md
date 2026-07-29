@@ -19290,3 +19290,47 @@ def ", start_idx + 1)` for module-
   screenshot. Diagnostic that cracked (c): `getBoundingClientRect()`
   on the missing element plus `scrollY` — DOM present, font loaded,
   viewport just parked at the bottom.
+
+- **The complexity ratchet lives in `tests/unit/quality/`, not
+  `tests/unit/gates/` — a src-touching receipt set that skips the
+  quality tree ships a D-grade function that reddens EVERY unit-suite
+  lane**: 2026-07-29, #1559 lift. Finding-fixes grew
+  `run_skeptic_pass` to radon D(23); local receipts ran the
+  roundtable + gates trees (all green) but not `tests/unit/quality`,
+  so `test_no_new_d_or_worse_blocks` first fired in CI — the sole
+  failure among 22,869 tests, painting all 5 ubuntu lanes + 2
+  clock-tz lanes red at once (the unit suite runs in each). Two
+  rules: (a) any src-touching change adds
+  `tests/unit/quality/` (cheap, seconds) to the local receipt set;
+  (b) cheaper still, run `radon cc -s` on any function you grew and
+  refactor at D before pushing — extracting 2 helpers took
+  `run_skeptic_pass` D(23)→C(14) with zero behavior change. The
+  allowlist is the exception path, not the fix.
+
+- **Editing a SIBLING worktree's files is blocked by the
+  worktree-path-guard — `EnterWorktree {path}` is the sanctioned
+  switch, and it works repeatedly within one session**: 2026-07-29.
+  Lifting #1559 required edits in a second worktree; Edit calls to
+  `.claude/worktrees/skeptic-lift/...` from the session anchored in
+  `.claude/worktrees/morning-run-1-*` were blocked by
+  `worktree_path_guard.py` (write-side cross-tree protection, the
+  right call). The flow that works: `git -C <main> worktree add ...`
+  (or reuse), then `EnterWorktree {path: <worktree>}` to move the
+  SESSION into it — the guard then accepts, and Bash cwd follows.
+  Switching again later (skeptic-lift → gate-triage) works the same
+  way; previously-visited worktrees become read-only until
+  re-entered. Don't bypass the guard by routing edits through Bash
+  heredocs — switch properly.
+
+- **CI-cosmetic red comes under TWO check names — `security` AND
+  `Run Security Scanner` — and any PR watcher must exclude BOTH or
+  it false-alarms once per rapid re-push**: 2026-07-29, twice in one
+  sitting. Each push-within-minutes cancels the in-flight Security
+  Scan run; the cancelled guard job surfaces in `gh pr checks` as a
+  1-second `fail` row under either name (neither is in
+  `required_status_checks` — verified via the branch-protection
+  read). A merge-watch loop that filters only one name exits on the
+  other's phantom fail. Filter both
+  (`$1!="security" && $1!="Run Security Scanner"`), and treat a
+  1s-duration fail row as the cancellation signature — confirm with
+  the run's `conclusion: cancelled` before diagnosing anything.
