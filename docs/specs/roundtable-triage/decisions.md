@@ -153,3 +153,32 @@ download), that is NEW scope needing its own approval.
 Queued follow-ons from q-briefing-triage-002 are now ALL closed:
 item 1 #1511, item 2 #1512 (D17), item 3 #1514 (D18), item 4 this
 entry.
+
+## 2026-07-29 — P2 gate-triage inbox built here (issue #1587)
+
+The P2 build ruled 2026-07-21 (thread q-roundtable-extensions-001;
+V1 shape recorded in docs/specs/spec-lifecycle-gates/decisions.md)
+lands in this spec's lineage per the issue's 2026-07-28 re-scoping
+(agent-round-table is shipped; this spec carries active triage
+work). Implementation: `attune.roundtable.gate_triage` — read-only
+grouping of `unresolved_chair_required()` ledger rows by
+(target, gate_id); convene threshold N>=3 pending OR oldest >48h;
+one D3-capped mini-table (3 invocations); closed disposition enum
+(uphold | waive | revise | defer, malformed -> no-recommendation,
+never laundered); single chair digest; triaged-receipt dedup in
+`~/.attune/ops/gates/triage_state.json`; RR-4 eligibility via
+`LADDER_GATES` with ineligible receipts NAMED in the digest; P3
+skeptic dissents routed in as duck-typed records (no import
+coupling on the skeptic module). Below threshold: no board writes,
+no seat spend — the anti-ceremony guard the ruling demands.
+
+P4 role telemetry (record-only) starts recording with this launch:
+`attune.roundtable.role_telemetry` appends seat/digest events to
+`~/.attune/ops/roundtable/role_telemetry.jsonl`;
+`record_chair_ruling()` + `chair_latency_seconds()` derive chair
+latency at read time. Nothing consumes it (the ruled record-only
+posture).
+
+Pre-build drift check (the issue's mandate): `verdicts.jsonl` IS
+emitting — 7 live rows at build time; `unresolved_chair_required()`
+verified as the consumption seam.
