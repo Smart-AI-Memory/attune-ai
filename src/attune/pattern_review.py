@@ -297,3 +297,12 @@ class PersistentPatternLibrary(PatternLibrary):
         """Validate + add in memory (base behaviour), then persist to the backend."""
         PatternLibrary.contribute_pattern(self, agent_id, pattern)
         self._backend.stash(ACTIVE_PREFIX + pattern.id, _pattern_to_dict(pattern))
+
+    def record_pattern_outcome(self, pattern_id: str, success: bool) -> None:
+        """Record the outcome (base behaviour), then re-persist the pattern.
+
+        Without the re-stash, usage/success/failure counts survive only for
+        the life of the process and every reload resets ``success_rate``.
+        """
+        PatternLibrary.record_pattern_outcome(self, pattern_id, success)
+        self._backend.stash(ACTIVE_PREFIX + pattern_id, _pattern_to_dict(self.patterns[pattern_id]))

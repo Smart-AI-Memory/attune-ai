@@ -152,6 +152,29 @@ class TestPersistentLibrary:
         assert "p9" in reloaded.patterns
         assert queue.get("p9") is None
 
+    def test_record_outcome_persists_across_reload(self, tmp_path):
+        # Regression: outcomes used to mutate only the in-memory Pattern, so
+        # a reloaded library reset usage/success counts to zero.
+        lib = PersistentPatternLibrary(backend=FileStashBackend(base_dir=str(tmp_path)))
+        lib.contribute_pattern(
+            "a1",
+            Pattern(id="p1", agent_id="a1", pattern_type="behavioral", name="n", description="d"),
+        )
+        lib.record_pattern_outcome("p1", success=True)
+        lib.record_pattern_outcome("p1", success=False)
+        reloaded = PersistentPatternLibrary(backend=FileStashBackend(base_dir=str(tmp_path)))
+        got = reloaded.patterns["p1"]
+        assert got.usage_count == 2
+        assert got.success_count == 1
+        assert got.failure_count == 1
+
+    def test_record_outcome_absent_id_raises_and_persists_nothing(self, tmp_path):
+        be = FileStashBackend(base_dir=str(tmp_path))
+        lib = PersistentPatternLibrary(backend=be)
+        with pytest.raises(ValueError):
+            lib.record_pattern_outcome("ghost", success=True)
+        assert be.retrieve(ACTIVE_PREFIX + "ghost") is None
+
     def test_load_skips_unparseable_active_entry(self, tmp_path):
         be = FileStashBackend(base_dir=str(tmp_path))
         lib = PersistentPatternLibrary(backend=be)
