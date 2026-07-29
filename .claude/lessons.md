@@ -19382,3 +19382,18 @@ def ", start_idx + 1)` for module-
   named line — here the named gate fix left "failed agent with no
   error key never blocks" untouched, and the ruled fix correctly
   covered both halves.
+
+- **Lessons ship as ONE batched end-of-session PR, not one PR per
+  lesson (Patrick-ratified default, 2026-07-29)**: the morning-run
+  session shipped three separate lessons PRs (#1736/#1738/#1742) —
+  each its own branch, label dance, and full CI cycle; two cycles
+  were pure overhead. Default now: when the Stop-hook reminder
+  fires mid-session, DRAFT the lesson and queue it; at wrap-up, one
+  fresh branch off origin/main, all queued lessons in one commit,
+  one labeled PR (lessons.md stays out-of-class for Class 1; label
+  in a separate call, verify the arm). Ship a lesson early only
+  when another in-flight PR or session depends on it, or the user
+  asks. Binding record: the `feedback_batch_lessons_eod` project
+  memory. Pairs with the tail-append conflict lesson — batching
+  also cuts the number of conflict-prone appends on multi-session
+  days.
