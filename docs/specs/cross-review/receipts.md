@@ -83,5 +83,8 @@ the lift commit on the PR):
    `uncommitted_paths` raise `SkepticError` on nonzero git exit;
    an empty result can only mean "no staged closure".
 
-Regression tests for all four fixes in
-`tests/unit/roundtable/test_skeptic.py` (41 tests, serial pass).
+Copilot's PR review independently flagged findings 3 and 5 plus two
+CLI gaps (unvalidated `spec_dir` pathspec; `--dry-run` crashing on a
+bad declaration) — both CLI gaps fixed in the same lift commit.
+Regression tests for all fixes in
+`tests/unit/roundtable/test_skeptic.py` (48 tests, serial pass).

@@ -23,6 +23,7 @@ from attune.roundtable.skeptic import (
     MAX_RECEIPT_CMDS,
     SkepticError,
     build_skeptic_brief,
+    main,
     parse_receipt_commands,
     parse_skeptic_verdict,
     rerun_receipts,
@@ -375,6 +376,63 @@ class TestRunSkepticPass:
         assert all(p["kind"] != "ruling" for p in board.posts)
         digest = [p for p in board.posts if p["kind"] == "synthesis"][0]
         assert "never flips the spec status" in digest["body"]
+
+
+class TestMain:
+    """CLI seam — path validation and concise failure surfacing."""
+
+    def _stage_closure(self, repo, closure_tail):
+        spec = repo / "docs" / "specs" / "demo"
+        spec.mkdir(parents=True)
+        (spec / "decisions.md").write_text("# Decisions\n")
+        subprocess.run(["git", "-C", str(repo), "add", "docs"], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-q", "-m", "spec"],
+            check=True,
+            capture_output=True,
+        )
+        (spec / "decisions.md").write_text("# Decisions\n\n## closure\n" + closure_tail)
+
+    def test_traversal_spec_dir_rejected(self, repo, capsys):
+        code = main(["../evil", "--author", "claude", "--repo", str(repo)])
+        assert code == 2
+        assert "invalid spec_dir" in capsys.readouterr().out
+
+    def test_absolute_spec_dir_rejected(self, repo, capsys):
+        code = main([str(repo / "docs"), "--author", "claude", "--repo", str(repo)])
+        assert code == 2
+        assert "invalid spec_dir" in capsys.readouterr().out
+
+    def test_git_failure_surfaces_concise(self, tmp_path, capsys):
+        code = main(["docs/specs/x", "--author", "claude", "--repo", str(tmp_path / "nope")])
+        assert code == 2
+        assert "git diff failed" in capsys.readouterr().out
+
+    def test_nothing_staged_exits_1(self, repo, capsys):
+        code = main(["docs/specs/none", "--author", "claude", "--repo", str(repo)])
+        assert code == 1
+        assert "nothing to review" in capsys.readouterr().out
+
+    def test_dry_run_prints_brief_with_gap(self, repo, capsys):
+        self._stage_closure(repo, f"RECEIPT-CMD: smoke :: {sys.executable} -c pass\n")
+        (repo / "drifting.py").write_text("x = 1\n")
+        code = main(["docs/specs/demo", "--author", "claude", "--repo", str(repo), "--dry-run"])
+        out = capsys.readouterr().out
+        assert code == 0
+        assert "Re-run receipts" in out
+        assert "drifting.py" in out  # isolation gap named in the brief
+
+    def test_dry_run_bad_declaration_exits_2(self, repo, capsys):
+        self._stage_closure(repo, "RECEIPT-CMD: a :: echo 1\nRECEIPT-CMD: a :: echo 2\n")
+        code = main(["docs/specs/demo", "--author", "claude", "--repo", str(repo), "--dry-run"])
+        assert code == 2
+        assert "refusing this declaration" in capsys.readouterr().out
+
+    def test_dry_run_no_receipt_lines_exits_1(self, repo, capsys):
+        self._stage_closure(repo, "prose only, no receipts\n")
+        code = main(["docs/specs/demo", "--author", "claude", "--repo", str(repo), "--dry-run"])
+        assert code == 1
+        assert "no RECEIPT-CMD declarations" in capsys.readouterr().out
 
 
 class TestBrief:

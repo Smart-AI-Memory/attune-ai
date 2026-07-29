@@ -543,14 +543,26 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args(argv)
 
+    spec_path = Path(args.spec_dir)
+    if spec_path.is_absolute() or ".." in spec_path.parts:
+        print(f"invalid spec_dir {args.spec_dir!r}: must be repo-relative with no '..'")
+        return 2
     repo = Path(args.repo).resolve()
-    spec = Path(args.spec_dir).name
-    closure = staged_closure_text(repo, args.spec_dir)
+    spec = spec_path.name
+    try:
+        closure = staged_closure_text(repo, args.spec_dir)
+    except SkepticError as exc:
+        print(f"skeptic: {exc}")
+        return 2
     if not closure.strip():
         print(f"no staged decisions.md changes under {args.spec_dir!r}; nothing to review")
         return 1
     if args.dry_run:
-        checks = parse_receipt_commands(closure)
+        try:
+            checks = parse_receipt_commands(closure)
+        except SkepticError as exc:
+            print(f"skeptic: refusing this declaration — {exc}")
+            return 2
         if not checks:
             print("no RECEIPT-CMD declarations in the staged closure")
             return 1
