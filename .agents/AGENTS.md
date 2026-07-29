@@ -69,6 +69,12 @@ attune_redis/          # Redis plugin — bundled in the attune-ai wheel
   ADVISORY: their findings and drafts route through the lead, and
   they should expect the lead to integrate, amend, or decline with
   a recorded reason. Only the chair promotes (R8).
+- **Single-provider fallback:** when the lead's provider is absent
+  from a session, lead duties devolve to the CHAIR (integration and
+  final recommendation), the active provider works
+  advisory-to-the-chair, and receipt re-runs fall to whatever
+  provider is present. The contract stays executable with one
+  provider; the lead role resumes when its provider returns.
 - **Receipt-declared delegation is binding for cross-provider
   lanes**: every delegated lane names its receipt type(s) at
   launch (suite / behavioral / live-fire / metric /

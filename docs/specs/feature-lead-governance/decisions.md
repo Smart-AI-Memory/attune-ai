@@ -226,3 +226,29 @@ receipt-declared delegation rule is BINDING for cross-LLM lanes:
 every delegated lane names its receipt type at launch and the lead
 re-runs receipts centrally — a seat's self-report is never the
 receipt. Both land as the pilot's first tasks.
+
+## 2026-07-29 — Pilot FIRED; first delegated lane complete (lead record)
+
+Chair fired the D8 pilot the same evening. Receipts:
+
+- **Task A (substrate):** lead-programmer + receipt-declared
+  delegation clauses landed in the contract master and projected to
+  all three provider surfaces (AGENTS.md, .agents/AGENTS.md,
+  .claude/CLAUDE.md).
+- **Task B (pilot module):** `orchestration/_strategies/base.py`
+  46% → 100% (net-new `test_execution_strategy_base.py`, 13 tests,
+  serial pass); omit entry converted per its convert-after-QA note.
+- **Task C (delegated lane):** codex seat reviewed the REAL pilot
+  diff (6 files sent, 0 omitted; board thread
+  `review-pilot-feature-lead-base-strategies-20260729-1420`).
+  ONE high finding — the lead clause contradicted the contract's
+  single-provider requirement. **Lead disposition: ACCEPTED, fixed
+  in-branch** (single-provider fallback: lead duties devolve to the
+  chair; contract stays one-provider-executable). Ledger row
+  appended to the R5 dogfood ledger (feeds P1) with disposition
+  `real`.
+
+Pilot observation for the P1 evidence stream: the delegated seat's
+first finding was a real defect in the lead's OWN work — the
+different-model review caught what the author could not. That is
+the accepted-vs-rejected signal the gate measures, seeded run 1.
