@@ -215,9 +215,13 @@ class ReleasePrepTeam:
         quality = next((r for r in results if "Quality" in r.agent_role), None)
         docs = next((r for r in results if "Documentation" in r.agent_role), None)
 
-        # Security gate: no critical issues
-        critical_issues = 0
-        if security and security.success:
+        # Security gate: no critical issues. A FAILED (or absent)
+        # auditor can never satisfy the gate — unknown is not clean;
+        # the -1 sentinel stays as the display value so the gates
+        # table shows the auditor never produced a count.
+        security_ran = bool(security and security.success)
+        critical_issues = -1
+        if security_ran:
             critical_issues = security.findings.get("critical_issues", 0)
         elif security:
             critical_issues = security.findings.get("critical_issues", -1)
@@ -227,7 +231,8 @@ class ReleasePrepTeam:
                 name="Security",
                 threshold=float(self.quality_gates["max_critical_issues"]),
                 actual=float(critical_issues),
-                passed=critical_issues <= self.quality_gates["max_critical_issues"],
+                passed=security_ran
+                and critical_issues <= self.quality_gates["max_critical_issues"],
                 critical=True,
             ),
         )
@@ -308,8 +313,12 @@ class ReleasePrepTeam:
                     warnings.append(f"{gate.name} below threshold: {gate.message}")
 
         for result in results:
-            if not result.success and result.findings.get("error"):
-                blockers.append(f"Agent {result.agent_role} failed: {result.findings['error']}")
+            if not result.success:
+                # A failed agent ALWAYS blocks — a failure that carries
+                # no diagnostic must not read as quieter than one that
+                # does (the -1-sentinel bug's other half).
+                reason = result.findings.get("error") or "failed without diagnostic output"
+                blockers.append(f"Agent {result.agent_role} failed: {reason}")
 
         return blockers, warnings
 
