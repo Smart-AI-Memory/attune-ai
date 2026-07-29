@@ -109,3 +109,41 @@ misreports spec_from_file_location-loaded modules" and the fix in
 **Caveat:** this audit covers the "claims-untestable" entries, not the
 hook scripts or every `__init__`. Tier-2 alone is ~2,000 statements of
 currently-unmeasured, testable code.
+
+---
+
+## Pass 2 — 2026-07-29 (#1569, chair-directed)
+
+**Method:** one scoped coverage run over each candidate's own test
+files (subset lower bound — a module clearing the bar in subset is
+proven; more tests only raise it). 1027 tests, keyless, serial.
+
+**Converted (removed from omit — measured, labels were false):**
+
+| Entry | Claimed reason | Measured |
+|-------|----------------|----------|
+| `agents/release/release_prep_team.py` | "Requires LLM API calls" | 100% (#1740/#1741 suites) |
+| `monitoring/otel_backend.py` | "Requires OpenTelemetry SDK" | 100% (3 dedicated suites) |
+| `orchestration/execution_strategies.py` | "Requires live agents" | 94% (unit consumers) |
+| `meta_workflows/cli_commands/config_commands.py` | "Interactive" | 100% |
+| `meta_workflows/cli_commands/memory_commands.py` | "Interactive" | 100% |
+| `meta_workflows/cli_commands/template_commands.py` | "Interactive" | 100% |
+| `meta_workflows/cli_commands/analytics_commands.py` | "Interactive" | 99% |
+| `meta_workflows/cli_commands/agent_commands.py` | "Interactive... live Claude agent loop" | 99% |
+
+**Removed as dead:** `*/memory/cross_session.py` — the glob matches
+no file on disk (real module: `memory/short_term/cross_session.py`).
+
+**Kept omitted with honest state (measured low — need tests first):**
+
+| Entry | Measured | Note |
+|-------|----------|------|
+| `orchestration/_strategies/base.py` | 46% | Label corrected to justified-other; QA-pass candidate |
+| `project_index/index.py` | 18% | Comment's "(integration-tested)" claim stands; unit gap real |
+| `project_index/scanner_parallel.py` | 17% | Same |
+
+Not probed this pass (bounded scope): `core_modules/short_term_memory.py`
+(integration-only evidence), `memory/short_term/sessions.py`,
+`memory/control_panel_api.py`, the hook scripts, and the init/entry
+excludes. Net effect: ~930 statements of ~99%-covered production code
+re-enter the measured denominator — the project total RISES.

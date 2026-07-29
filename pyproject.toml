@@ -723,25 +723,29 @@ omit = [
     # Infrastructure requiring external deps
     # Deleted in v2.9.0: cli/, cli_unified.py, security/, pattern modules
     # Memory modules requiring Redis server
-    "*/memory/cross_session.py",  # Requires Redis server
+    # cross_session.py entry removed 2026-07-29 (#1569 omit-audit
+    # pass 2): dead glob — no file matches */memory/cross_session.py
+    # (the real module lives under memory/short_term/).
     "*/memory/control_panel_api.py",  # FastAPI REST server
     "*/memory/short_term/sessions.py",  # Requires Redis server
     # claude_memory.py omit entry removed 2026-07-21 (#1569): its
     # Requires-Claude-API label was false — pure file I/O, keyless
     # 60-test suite, measures ~100% covered.
-    # Agent modules requiring live LLM
-    "*/agents/release/release_prep_team.py",  # Requires LLM API calls
-    # OpenTelemetry backend (requires otel infrastructure)
-    "*/monitoring/otel_backend.py",  # Requires OpenTelemetry SDK
-    # Orchestration execution (requires external services)
-    "*/orchestration/execution_strategies.py",  # Requires live agents
-    "*/orchestration/_strategies/base.py",  # Abstract base strategies
-    # Meta-workflow CLI commands (interactive)
+    # release_prep_team.py entry removed 2026-07-29 (#1569 omit-audit
+    # pass 2): its Requires-LLM label was false — 100% suite lives in
+    # tests/unit/agents/ (#1740/#1741).
+    # otel_backend.py entry removed 2026-07-29 (same pass): three
+    # dedicated suites in tests/unit/monitoring/ measure it 100%.
+    # execution_strategies.py entry removed 2026-07-29 (same pass):
+    # measures 94% from existing unit consumers — no live agents used.
+    # Orchestration strategy base (undertested — convert after a QA pass)
+    "*/orchestration/_strategies/base.py",  # justified-other: 46% measured, needs tests before conversion
+    # Meta-workflow CLI commands
     "*/meta_workflows/cli_meta_workflows.py",  # CLI entry
-    "*/meta_workflows/cli_commands/analytics_commands.py",  # Interactive analytics
-    "*/meta_workflows/cli_commands/template_commands.py",  # Interactive templates
-    "*/meta_workflows/cli_commands/config_commands.py",  # Interactive config
-    "*/meta_workflows/cli_commands/memory_commands.py",  # Interactive memory
+    # The five cli_commands modules below were removed from this list
+    # 2026-07-29 (#1569 omit-audit pass 2): their Interactive labels
+    # were false — dedicated suites in tests/unit/meta_workflows/
+    # measure them 99-100% keylessly.
     # Hook scripts (run as standalone processes via Claude Code)
     "*/hooks/scripts/evaluate_session.py",  # Standalone hook
     "*/hooks/scripts/first_time_init.py",  # Standalone hook
@@ -766,7 +770,6 @@ omit = [
     # Models main entry
     "*/models/__main__.py",  # Models CLI entry point
     "*/hooks/scripts/help_freshness_nudge.py",  # Standalone hook script (not importable via pytest)
-    "*/meta_workflows/cli_commands/agent_commands.py",  # Interactive agent CLI (requires live Claude agent loop)
     "*/attune/config.py",  # Shadowed by attune/config/ package — unreachable import
 ]
 branch = true
