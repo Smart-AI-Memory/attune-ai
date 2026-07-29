@@ -219,6 +219,58 @@ def rerun_receipts_to_artifact(
     )
 
 
+def _parse_artifact_lines(artifact_path: Path) -> tuple[bytes, list[dict]]:
+    """Read the artifact and parse one JSON object per line — FAIL CLOSED."""
+    if artifact_path.is_symlink():
+        raise CountersignError(f"artifact is a symlink (refused): {artifact_path}")
+    if not artifact_path.is_file():
+        raise CountersignError(f"artifact missing: {artifact_path}")
+    raw = artifact_path.read_bytes()
+    lines = raw.decode("utf-8", errors="strict").splitlines() if raw else []
+    if not lines:
+        raise CountersignError(f"artifact empty: {artifact_path}")
+    entries: list[dict] = []
+    for n, line in enumerate(lines):
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise CountersignError(f"artifact line {n} unparseable: {exc}") from exc
+        if not isinstance(entry, dict):
+            raise CountersignError(f"artifact line {n} is not an object")
+        entries.append(entry)
+    return raw, entries
+
+
+def _validate_header(entries: list[dict]) -> dict:
+    """The artifact must open with a supported-version header entry."""
+    header = entries[0]
+    if header.get("kind") != "header" or header.get("seq") != 0:
+        raise CountersignError("artifact does not start with a header entry")
+    if header.get("version") != _ARTIFACT_VERSION:
+        raise CountersignError(f"unsupported artifact version: {header.get('version')!r}")
+    return header
+
+
+def _receipt_from_entry(entry: dict, n: int) -> CheckReceipt:
+    """Validate one receipt entry and build its CheckReceipt — FAIL CLOSED."""
+    if entry.get("kind") != "receipt" or entry.get("seq") != n:
+        raise CountersignError(f"bad sequence at entry {n}")
+    tail = entry.get("tail")
+    if not isinstance(tail, str) or not isinstance(entry.get("label"), str):
+        raise CountersignError(f"malformed receipt entry {n}")
+    if hashlib.sha256(tail.encode("utf-8")).hexdigest() != entry.get("tail_sha256"):
+        raise CountersignError(f"tail digest mismatch at entry {n}")
+    argv = entry.get("argv")
+    if not isinstance(argv, list) or not all(isinstance(a, str) for a in argv):
+        raise CountersignError(f"malformed argv at entry {n}")
+    return CheckReceipt(
+        label=entry["label"],
+        argv=list(argv),
+        exit_code=int(entry.get("exit_code", -1)),
+        tail=tail,
+    )
+
+
 def load_receipt_artifact(artifact_path: Path) -> ReceiptArtifact:
     """Load and digest-verify an artifact — FAIL CLOSED.
 
@@ -230,30 +282,8 @@ def load_receipt_artifact(artifact_path: Path) -> ReceiptArtifact:
     Raises:
         CountersignError: Any of the above.
     """
-    if artifact_path.is_symlink():
-        raise CountersignError(f"artifact is a symlink (refused): {artifact_path}")
-    if not artifact_path.is_file():
-        raise CountersignError(f"artifact missing: {artifact_path}")
-    raw = artifact_path.read_bytes()
-    lines = raw.decode("utf-8", errors="strict").splitlines() if raw else []
-    if not lines:
-        raise CountersignError(f"artifact empty: {artifact_path}")
-
-    entries: list[dict] = []
-    for n, line in enumerate(lines):
-        try:
-            entry = json.loads(line)
-        except json.JSONDecodeError as exc:
-            raise CountersignError(f"artifact line {n} unparseable: {exc}") from exc
-        if not isinstance(entry, dict):
-            raise CountersignError(f"artifact line {n} is not an object")
-        entries.append(entry)
-
-    header = entries[0]
-    if header.get("kind") != "header" or header.get("seq") != 0:
-        raise CountersignError("artifact does not start with a header entry")
-    if header.get("version") != _ARTIFACT_VERSION:
-        raise CountersignError(f"unsupported artifact version: {header.get('version')!r}")
+    raw, entries = _parse_artifact_lines(artifact_path)
+    header = _validate_header(entries)
 
     prev = ""
     receipts: list[CheckReceipt] = []
@@ -263,26 +293,8 @@ def load_receipt_artifact(artifact_path: Path) -> ReceiptArtifact:
         if _entry_digest(entry) != entry.get("entry_digest"):
             raise CountersignError(f"entry digest mismatch at entry {n}")
         prev = str(entry["entry_digest"])
-        if n == 0:
-            continue
-        if entry.get("kind") != "receipt" or entry.get("seq") != n:
-            raise CountersignError(f"bad sequence at entry {n}")
-        tail = entry.get("tail")
-        if not isinstance(tail, str) or not isinstance(entry.get("label"), str):
-            raise CountersignError(f"malformed receipt entry {n}")
-        if hashlib.sha256(tail.encode("utf-8")).hexdigest() != entry.get("tail_sha256"):
-            raise CountersignError(f"tail digest mismatch at entry {n}")
-        argv = entry.get("argv")
-        if not isinstance(argv, list) or not all(isinstance(a, str) for a in argv):
-            raise CountersignError(f"malformed argv at entry {n}")
-        receipts.append(
-            CheckReceipt(
-                label=entry["label"],
-                argv=list(argv),
-                exit_code=int(entry.get("exit_code", -1)),
-                tail=tail,
-            )
-        )
+        if n > 0:
+            receipts.append(_receipt_from_entry(entry, n))
     if not receipts:
         raise CountersignError("artifact carries no receipt entries")
     return ReceiptArtifact(
