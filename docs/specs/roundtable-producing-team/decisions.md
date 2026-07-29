@@ -297,3 +297,30 @@ producing run lands its receipts. Reviewed at each Monday sitting
 so "active while arming" cannot become permanently open.
 
 PHASE-WAIVED: design (2026-07-20 — waiver entry above; thread q-producing-team-design-need-001)
+
+## 2026-07-29 — 07-19 re-run queue ruled (chair, in-session form)
+
+The three re-runs queued by the 2026-07-22 archive ruling
+(docs/reports/roundtable/producing-runs-20260719-failure-archive.md,
+tracked as issue #1621) are dispositioned post-#1559-lift:
+
+- **spec-lifecycle-gates re-run: KILLED (moot).** The spec shipped
+  2026-07-21; its gates are built and live-consumed by the P2
+  gate-triage inbox (#1734). Nothing left for a drafting run to
+  draft.
+- **pipeline-learner-v1 re-run: KILLED (superseded).** Requirements
+  approved 2026-07-19 and the fixture core shipped; the salvaged
+  8-item draft is superseded by ruled requirements. RR-5 (next
+  unit) is gated on RR-1 corpus viability — live-checked at ruling
+  time: NOT viable (334 eligible records, 21 workflows, 3 distinct
+  active days). Viability comes from accumulation, not
+  deliberation.
+- **usage-signals-refresh re-run: DEFERRED** until the chair
+  re-ratifies the north star's third leg (the usage-signal read
+  was killed 2026-07-28 as circular). Any future arm needs a
+  re-scoped grounding pack at a stable tracked path and fresh
+  per-spec chair confirmation. Issue #1621 re-scoped to carry only
+  this subject, blocked on the re-ratification.
+
+The salvage value in the failure archive (seat drafts) remains
+minable; the archive itself is unchanged.
