@@ -133,9 +133,13 @@ as pickable work.
     *Enforcers: `tests/unit/memory/test_session_stash.py` (backend
     resolution failure degrades to None, never raises),
     `tests/unit/test_mcp_memory_tools.py` (memory tools degrade
-    gracefully when the layer is absent). The SessionStart hydrate
-    hook's own fail-open path is untested — the remaining
-    **aspirational** half.*
+    gracefully when the layer is absent),
+    `tests/unit/memory/test_session_hydrate_fail_open.py` (the
+    SessionStart hydrate hook exits 0 with a skip notice when the
+    backend is unreachable — machine-local: the hook is personal
+    infra in the attune-agent-memory checkout, so the test runs the
+    real script where `~/.attune/memory/` exists and skips
+    elsewhere, including CI).*
 
 ---
 
@@ -151,9 +155,13 @@ as pickable work.
   test).
 - Enforcer gaps worth pickable-work rows: (a) ~~a path-validation
   gate for file-op code~~ — LANDED 2026-07-29
-  (`tests/unit/gates/test_path_validation_gate.py`); (b) a
+  (`tests/unit/gates/test_path_validation_gate.py`); (b) ~~a
   fail-open test for the SessionStart hydrate hook
-  (principle 15's second half). Two suspected gaps turned out
+  (principle 15's second half)~~ — closed 2026-07-29 by
+  `tests/unit/memory/test_session_hydrate_fail_open.py`; note the
+  hook itself is out-of-repo (attune-agent-memory checkout at
+  `~/.attune/memory/`), so the test is machine-local by design.
+  Two suspected gaps turned out
   already enforced (`test_ci_spend_guard.py` for keyless CI;
   `test_session_stash.py` for memory-layer degradation) — the
   grep-for-existing-enforcer rule caught both before duplicates
