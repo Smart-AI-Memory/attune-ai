@@ -19160,3 +19160,47 @@ def ", start_idx + 1)` for module-
   flight. (Handled correctly here: used the check-only freshness path,
   spent no LLM budget, and recorded the obsolescence in the release
   PR rather than silently skipping the step.)
+
+- **`docs(lessons)` PRs do NOT Class-1 auto-merge — `.claude/lessons.md`
+  is out-of-class for the tests-docs guard; arm Class 2 explicitly**:
+  2026-07-28, #1723 ("should auto-merge") sat BLOCKED with 24 checks
+  green and no auto-merge armed. The label job had run and correctly
+  classified it Out-of-class: `auto_merge_guard.py --mode tests-docs`
+  admits only `tests/`, `docs/`, `.help/`, and root-level `*.md` —
+  `.claude/lessons.md` matches none (fail-closed by construction, not
+  a malfunction). Since lessons appends are among the most frequent PR
+  shapes in this repo, the recurring merge tax is real: either add the
+  `auto-merge-when-green` label at PR-open time (safe for a
+  markdown-only diff — the Windows-lane hold doesn't apply), or ask
+  the chair whether `.claude/lessons.md` should join the Class 1 path
+  class. Verified live: labeling #1723 flipped `autoMergeRequest`
+  non-null within seconds and it merged on green unattended.
+
+- **Removing an install extra never makes `pip install 'pkg[extra]'`
+  FAIL — pip warns and installs the base package; write the receipt
+  (and the release notes) accordingly**: 2026-07-28, verifying the
+  11.0.0 breaking change. `pip install --dry-run 'attune-ai[author]'`
+  on 11.0.0 emits `WARNING: attune-ai 11.0.0 does not provide the
+  extra 'author'` and would proceed with the base install — that IS
+  the full enforcement pip offers for unknown extras; no hard error
+  exists to test for. A verification plan (or changelog line) that
+  says the command "fails" or "no longer resolves" will read as a
+  failed receipt when the probe runs. The correct probe is the
+  WARNING line itself; the correct user-facing claim is "the extra is
+  gone from the metadata; pip warns and the author tooling is not
+  installed."
+
+- **`claude plugin list` shows the MARKETPLACE MANIFEST version, which
+  lags the nightly catalog sync — and a `mcp__attune-ai__*` call may be
+  served by the project-level server, not the plugin**: 2026-07-28,
+  post-11.0.0 testing. The starter said "the Claude plugin picks up
+  11.0.0 on this restart," but `claude plugin list` still showed
+  `attune-ai@attune-ai 10.6.1` (catalog syncs nightly; same-day
+  releases don't appear). Meanwhile TWO attune MCP servers coexist in
+  a repo session: `attune-ai` (`uv run python -m attune.mcp.server` —
+  the checkout's code) and `plugin:attune-ai:attune-ai` (`uvx --from
+  attune-ai[redis]` — PyPI-resolved at launch). Receipts gathered via
+  `mcp__attune-ai__*` exercise the CHECKOUT server; they do not prove
+  the plugin surface. When a test matters per-surface, name which
+  server answered (`claude mcp list` shows both commands) and re-run
+  plugin-surface checks after the catalog sync.
