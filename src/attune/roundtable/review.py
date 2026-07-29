@@ -29,9 +29,10 @@ from attune.roundtable.routine import SEAT_RECIPES, default_invoke_seat
 
 logger = structlog.get_logger(__name__)
 
-#: PROVISIONAL until the 07-27 usage read rules OPEN-1 (default
-#: seat) and OPEN-3 (diff budget) — see docs/specs/cross-review/
-#: design.md D6. Replace values in the OPEN-closure commit.
+#: Chair-ruled values (no longer provisional): OPEN-1 fixed the
+#: codex default and OPEN-3 ratified the 60k cap on the T3 dogfood
+#: ledger's diff-size evidence — docs/specs/cross-review/
+#: decisions.md (2026-07-28 entries) and receipts.md.
 DEFAULT_SEAT = "codex"
 DIFF_CAP_CHARS = 60_000
 

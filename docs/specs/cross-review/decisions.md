@@ -122,3 +122,32 @@ if revived. Live-fire checks pass: 5 board threads posted, one+
 run per seat, rows == runs (D7). Seat evidence for OPEN-1 and
 diff-size evidence for OPEN-3's re-rule are recorded in
 receipts.md; T4 (docs + OPEN closure) is now the remaining task.
+
+## 2026-07-28 — T4: OPEN-1..3 CLOSED on T3 evidence (chair)
+
+The 2026-07-28 rulings above set the values and named T3's ledger
+as the evidence that would re-rule them. T3 executed the same
+session (five runs, `receipts.md`); each item now closes citing
+its datum:
+
+- **OPEN-1 — default seat: CLOSED, fixed `codex`.** Datum: codex
+  produced findings on 3/3 targets (5, 1, 3 — including three
+  substantive contract gaps in the #1559 draft); antigravity
+  returned NO FINDINGS on 2/2 targets including the same 821-line
+  diff. Rotation stays an extension point, not a default.
+- **OPEN-2 — cadence: CLOSED, manual-only.** Datum: all five T3
+  runs were manual with zero invocation friction; no demand signal
+  for a suggested cadence surfaced. No code surface changes.
+- **OPEN-3 — diff budget: CLOSED, `60_000` chars ratified
+  (provisional label removed).** Datum: both code targets fit
+  whole (max 821 insertions / 3 files, 0 omitted); the one
+  truncation (30-file docs target, 23 sent / 7 omitted) degraded
+  visibly with every omitted file named, and review quality held.
+  No run needed a larger cap for code content.
+
+Same commit (D6's docs+const commit): the PROVISIONAL comment on
+`review.DEFAULT_SEAT` / `DIFF_CAP_CHARS` is replaced with the
+ruled citation, and the feature page ships
+(`content/features/cross-review.md` → 15 projected outputs).
+Binding posture unchanged: board-only advisory. With T4 done, all
+spec tasks are complete; the ledger stays open for future runs.

@@ -1,9 +1,9 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 1208,
-    "linked_templates": 885,
-    "total_tags": 116
+    "total_templates": 1219,
+    "linked_templates": 889,
+    "total_tags": 117
   },
   "links": {
     "com-agents": {
@@ -50,6 +50,14 @@
       "tags": [
         "config",
         "settings"
+      ]
+    },
+    "com-cross-review": {
+      "tags": [
+        "review",
+        "roundtable",
+        "multi-llm",
+        "advisory"
       ]
     },
     "com-deep-review": {
@@ -279,6 +287,14 @@
       "tags": [
         "help-system",
         "architecture"
+      ]
+    },
+    "con-cross-review": {
+      "tags": [
+        "review",
+        "roundtable",
+        "multi-llm",
+        "advisory"
       ]
     },
     "con-deep-review": {
@@ -1325,6 +1341,29 @@
       ],
       "tags": [
         "python"
+      ]
+    },
+    "err-cross-review": {
+      "related_warning": [
+        "war-cross-review"
+      ],
+      "prevented_by": [
+        "tip-cross-review"
+      ],
+      "related_faq": [
+        "faq-cross-review"
+      ],
+      "tags": [
+        "review",
+        "roundtable",
+        "multi-llm",
+        "advisory"
+      ],
+      "embeds": [
+        {
+          "id": "tip-cross-review",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-custom-mcp-stdio-loop-fails-claude-code-handshake": {
@@ -5041,6 +5080,17 @@
         "python"
       ]
     },
+    "faq-cross-review": {
+      "related_error": [
+        "err-cross-review"
+      ],
+      "tags": [
+        "review",
+        "roundtable",
+        "multi-llm",
+        "advisory"
+      ]
+    },
     "faq-custom-mcp-stdio-loop-fails-claude-code-handshake": {
       "related_error": [
         "err-custom-mcp-stdio-loop-fails-claude-code-handshake"
@@ -7251,6 +7301,17 @@
         "rules"
       ]
     },
+    "not-cross-review": {
+      "related_reference": [
+        "ref-cross-review"
+      ],
+      "tags": [
+        "review",
+        "roundtable",
+        "multi-llm",
+        "advisory"
+      ]
+    },
     "not-decision-d1-template-schemas-live-in-the-repo": {
       "tags": [
         "architecture",
@@ -7679,6 +7740,14 @@
         "settings"
       ]
     },
+    "qui-cross-review": {
+      "tags": [
+        "review",
+        "roundtable",
+        "multi-llm",
+        "advisory"
+      ]
+    },
     "qui-deep-review": {
       "tags": [
         "review",
@@ -8001,6 +8070,14 @@
       "tags": [
         "config",
         "settings"
+      ]
+    },
+    "ref-cross-review": {
+      "tags": [
+        "review",
+        "roundtable",
+        "multi-llm",
+        "advisory"
       ]
     },
     "ref-deep-review": {
@@ -8733,6 +8810,14 @@
         "settings"
       ]
     },
+    "tas-cross-review": {
+      "tags": [
+        "review",
+        "roundtable",
+        "multi-llm",
+        "advisory"
+      ]
+    },
     "tas-deep-review": {
       "tags": [
         "review",
@@ -9169,6 +9254,14 @@
         "discovery"
       ]
     },
+    "tip-cross-review": {
+      "tags": [
+        "review",
+        "roundtable",
+        "multi-llm",
+        "advisory"
+      ]
+    },
     "tip-deep-review": {
       "tags": [
         "review",
@@ -9394,6 +9487,14 @@
       "tags": [
         "config",
         "settings"
+      ]
+    },
+    "tro-cross-review": {
+      "tags": [
+        "review",
+        "roundtable",
+        "multi-llm",
+        "advisory"
       ]
     },
     "tro-deep-review": {
@@ -9937,6 +10038,17 @@
       ],
       "tags": [
         "python"
+      ]
+    },
+    "war-cross-review": {
+      "related_error": [
+        "err-cross-review"
+      ],
+      "tags": [
+        "review",
+        "roundtable",
+        "multi-llm",
+        "advisory"
       ]
     },
     "war-dataclassorder-true-needs-compare-false-on-list-fields": {
@@ -11638,16 +11750,27 @@
   },
   "tag_index": {
     "advisory": [
+      "com-cross-review",
       "com-release-notes",
+      "con-cross-review",
       "con-release-notes",
+      "err-cross-review",
       "err-release-notes",
+      "faq-cross-review",
       "faq-release-notes",
+      "not-cross-review",
       "not-release-notes",
+      "qui-cross-review",
       "qui-release-notes",
+      "ref-cross-review",
       "ref-release-notes",
+      "tas-cross-review",
       "tas-release-notes",
+      "tip-cross-review",
       "tip-release-notes",
+      "tro-cross-review",
       "tro-release-notes",
+      "war-cross-review",
       "war-release-notes"
     ],
     "agents": [
@@ -13103,16 +13226,27 @@
       "war-models"
     ],
     "multi-llm": [
+      "com-cross-review",
       "com-session-handoff",
+      "con-cross-review",
       "con-session-handoff",
+      "err-cross-review",
       "err-session-handoff",
+      "faq-cross-review",
       "faq-session-handoff",
+      "not-cross-review",
       "not-session-handoff",
+      "qui-cross-review",
       "qui-session-handoff",
+      "ref-cross-review",
       "ref-session-handoff",
+      "tas-cross-review",
       "tas-session-handoff",
+      "tip-cross-review",
       "tip-session-handoff",
+      "tro-cross-review",
       "tro-session-handoff",
+      "war-cross-review",
       "war-session-handoff"
     ],
     "ops": [
@@ -13653,28 +13787,52 @@
     ],
     "review": [
       "com-code-quality",
+      "com-cross-review",
       "com-deep-review",
       "con-code-quality",
+      "con-cross-review",
       "con-deep-review",
       "con-tool-code-quality",
       "err-code-quality",
+      "err-cross-review",
       "err-deep-review",
       "faq-code-quality",
+      "faq-cross-review",
       "faq-deep-review",
       "not-code-quality",
+      "not-cross-review",
       "not-deep-review",
       "qui-code-quality",
+      "qui-cross-review",
       "qui-deep-review",
       "ref-code-quality",
+      "ref-cross-review",
       "ref-deep-review",
       "tas-code-quality",
+      "tas-cross-review",
       "tas-deep-review",
       "tip-code-quality",
+      "tip-cross-review",
       "tip-deep-review",
       "tro-code-quality",
+      "tro-cross-review",
       "tro-deep-review",
       "war-code-quality",
+      "war-cross-review",
       "war-deep-review"
+    ],
+    "roundtable": [
+      "com-cross-review",
+      "con-cross-review",
+      "err-cross-review",
+      "faq-cross-review",
+      "not-cross-review",
+      "qui-cross-review",
+      "ref-cross-review",
+      "tas-cross-review",
+      "tip-cross-review",
+      "tro-cross-review",
+      "war-cross-review"
     ],
     "routing": [
       "con-tool-attune-hub",

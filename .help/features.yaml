@@ -44,6 +44,14 @@ features:
     tags: [security, audit, owasp, scanning, cve]
     status: manual
 
+  # cross-review is single-sourced (status: manual) from
+  # content/features/cross-review.md via the in-repo projector.
+  # See docs/specs/cross-review/ (T4).
+  cross-review:
+    description: One-shot second-opinion diff review by a different-model seat (Codex or Antigravity) — advisory only, board-recorded
+    tags: [review, roundtable, multi-llm, advisory]
+    status: manual
+
   # elicitation-forms is single-sourced (status: manual) from
   # content/features/elicitation-forms.md via attune_author.projector
   # (scripts/project_features.py), which owns
