@@ -109,3 +109,16 @@ Binding posture is unchanged and not reopened: board-only advisory,
 never a merge gate until dogfooded finding-quality earns it. A
 low-finding-quality outcome remains a VALID result that rules the
 advisory posture permanent (dogfood-or-remove).
+
+## 2026-07-28 — T3 EXECUTED; dispositions ruled (chair)
+
+Five real runs across two seats, 2026-07-28 ET evening session
+(2026-07-29 UTC stamps). Ledger + carried findings + T4 evidence
+notes: this spec's `receipts.md`. Chair ruled all dispositions
+as recommended: run 1's five skeptic findings carry-to-#1559;
+run 3's single lessons finding dismissed (dated context by
+design); run 5's three findings ride the stale docs branch only
+if revived. Live-fire checks pass: 5 board threads posted, one+
+run per seat, rows == runs (D7). Seat evidence for OPEN-1 and
+diff-size evidence for OPEN-3's re-rule are recorded in
+receipts.md; T4 (docs + OPEN closure) is now the remaining task.
