@@ -324,3 +324,12 @@ tracked as issue #1621) are dispositioned post-#1559-lift:
 
 The salvage value in the failure archive (seat drafts) remains
 minable; the archive itself is unchanged.
+
+## 2026-07-29 — usage-signals-refresh re-run KILLED (chair; follows leg-3 re-ratification)
+
+The subject deferred earlier today is now ruled: with the
+north-star leg 3 re-ratified onto cross-review dogfood evidence,
+the question the usage-signals-refresh producing run would
+deliberate died with its mechanism. Run KILLED; issue #1621
+closed. The 07-19 re-run queue is fully dispositioned (2 killed
+this morning, 1 killed here).
