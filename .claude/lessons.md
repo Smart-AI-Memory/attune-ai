@@ -19246,3 +19246,23 @@ def ", start_idx + 1)` for module-
   (portable validated artifact, renders to widget / MCP elicitation /
   AskUserQuestion) — it survives contact with the code, and the false
   claim did not.
+
+- **`gh pr create --label auto-merge-when-green` arms native
+  auto-merge ASYNCHRONOUSLY — `autoMergeRequest` reads null right
+  after creation; verify later instead of re-applying — and
+  tests-only PRs need no label at all**: observed three times
+  2026-07-28 evening. (a) #1727 and #1729 were created with the
+  label, yet the immediate `gh pr view --json autoMergeRequest`
+  showed `armed=false`; the label workflow's `labeled`/`opened`
+  event arms GitHub native auto-merge a poll-cycle later (both
+  read `armed=true` within ~2-5 min and merged unattended).
+  Don't re-apply the label, don't add a second arm path, don't
+  treat the first false read as failure — poll once more before
+  intervening. (b) For tests-only diffs the label is redundant:
+  the Class 1 automation applied `auto-merge-safe` to #1730/#1731
+  on its own (path class tests/ — verified live) and self-merges
+  via the workflow's admin-merge job. Save
+  `auto-merge-when-green` for diffs OUTSIDE the Class 1 path
+  class (e.g. `.claude/lessons.md` appends, src comment-only
+  changes). Pairs with the "docs(lessons) PRs do NOT Class-1
+  auto-merge" lesson from the same day.
