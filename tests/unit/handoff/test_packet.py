@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from attune.handoff import handoff_create, handoff_resume
 from attune.handoff import packet as packet_mod
 
@@ -119,3 +121,35 @@ class TestRoundTrip:
         result = handoff_resume(repo)
         assert result["ok"] is False
         assert result["reason"] == "packet_not_found"
+
+
+class TestMemoryIsolationGuard:
+    """No handoff test may write a reachable live backend (2026-07-28).
+
+    The D5 linkage is degrade-silent, so before the ``memory_offline``
+    autouse fixture landed (#1694) these tests stashed real pointers
+    into the developer's live AMS. This guard trips if that isolation
+    ever drifts — fixture removed, ``memory_link`` bypassing the
+    ``session_stash`` seam, or ``stash_entry`` no longer routing through
+    the patched ``resolve_backend``.
+    """
+
+    def test_create_cannot_reach_live_backend(self, repo: Path) -> None:
+        result = handoff_create(repo, goal="isolation-guard sentinel", base_ref="main")
+        assert result["ok"] is True
+        memory = result["memory"]
+        if memory.get("status") == "captured":
+            from attune.memory import session_stash
+
+            # Best-effort: remove the pointer this very test just leaked
+            # before failing loudly.
+            session_stash.forget_entries([memory["id"]], source="test-isolation-guard")
+            pytest.fail(
+                "handoff_create wrote to a real memory backend from a unit "
+                "test; the memory_offline autouse fixture in "
+                "tests/unit/handoff/conftest.py no longer isolates the "
+                "session_stash seam"
+            )
+        # reason pins the skip to the fixture's patched backend_status —
+        # an error-path skip (stash_error) would mask broken isolation.
+        assert memory == {"status": "skipped", "reason": "no_backend"}

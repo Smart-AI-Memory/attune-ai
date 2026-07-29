@@ -19204,3 +19204,45 @@ def ", start_idx + 1)` for module-
   the plugin surface. When a test matters per-surface, name which
   server answered (`claude mcp list` shows both commands) and re-run
   plugin-surface checks after the catalog sync.
+
+- **HALF-CITING a current, correct corpus is worse than having no
+  corpus — the claim inherits the corpus's authority while being half
+  of what the corpus says, and only a human reviewer catches it**:
+  2026-07-28, writing the Socratic rule rewrite. I asserted in an
+  ALWAYS-LOADED rule that "`AskUserQuestion` caps at 4 options and one
+  question per turn, so it *structurally cannot* carry a batched
+  multi-dimension ask." Both halves were false. The tool accepts 1-4
+  questions; the one-question default is POLICY from
+  `ask_question_format_guard.py` with a documented opt-in
+  (`metadata.source` containing "form"), not a structural cap. And
+  `attune.elicitation` ships `form_to_askuserquestion`, whose docstring
+  reads "render a form to BATCHED `AskUserQuestion` payloads" — the
+  adapter I claimed could not exist. **The memory index carried BOTH
+  halves on adjacent lines** (the 4-option cap AND the batching hatch);
+  I quoted the one that supported the point I was making.
+  **This is NOT the stale-instruction failure** (`claude login`,
+  stale `receipts.md` recipe, obsolete `release-execute` step 7) that
+  bit three times the same day — those are docs that ROTTED. Here the
+  corpus was current and correct and I read it selectively, which is
+  strictly more dangerous: staleness has tells (a dated entry, a
+  renamed command, a `--help` that disagrees) and selective reading has
+  none. The false claim reads as MORE authoritative than an
+  uncited one because it sounds sourced.
+  **Detection:** no test can catch it — the claim was about tool
+  ergonomics, in prose, in a markdown rule. It surfaced only because
+  Patrick reviewed a rule about how to communicate with him. Had it
+  merged, it would have taught every future session to avoid a
+  capability that ships in this repo, silently, forever.
+  **Discipline:** when citing the corpus for a claim of the form "X
+  cannot do Y", (a) read the WHOLE neighborhood, not the line that
+  answers your question — escape hatches live next to the limits they
+  qualify; (b) prefer reading the SOURCE over the memory of it
+  (`grep` the guard, read the docstring) when the claim is load-bearing
+  enough to write into an always-loaded file; (c) treat "structurally
+  cannot / impossible / never" as a smell in your own prose — a policy
+  default with an opt-in is the far more common shape, and the
+  stronger word is usually the one you did not verify. The honest
+  reason to prefer a `FormSchema` was available and better all along
+  (portable validated artifact, renders to widget / MCP elicitation /
+  AskUserQuestion) — it survives contact with the code, and the false
+  claim did not.
