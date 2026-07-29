@@ -173,3 +173,20 @@ P1 *inherits* cross-review's gate. It was a **label mismatch, not a
 re-approval trigger**, and this entry is the one line that fixes it.
 Re-running approval would have re-litigated approved design and
 multiplied chair work for nothing.
+
+## 2026-07-29 — P1 re-based onto the dogfood ledger (chair, in-session form)
+
+The chair usage-signal read P1 pointed at was killed 2026-07-28
+(circular; measures adoption, not invocation) and cross-review
+T3/T4 shipped, so P1's original wording gated this spec on a
+mechanism that no longer exists. Re-ruled with the north-star leg-3
+re-ratification (leg 3 = cross-review dogfood evidence):
+
+**P1 (re-based): governance stays GATED on the cross-review R5
+dogfood ledger, ungating at 10 total ledger runs (5 exist at
+ruling time) OR the first measurable accepted-vs-rejected finding
+pattern, whichever comes first — then the chair rules
+ungate-or-kill.** This honors the ledger's own calibration ("no
+gate-upgrade claim from five runs"). No second activation
+criterion is invented; the single-read principle carries over with
+the ledger as the read's new substrate.

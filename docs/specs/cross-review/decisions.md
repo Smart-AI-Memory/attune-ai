@@ -151,3 +151,15 @@ ruled citation, and the feature page ships
 (`content/features/cross-review.md` → 15 projected outputs).
 Binding posture unchanged: board-only advisory. With T4 done, all
 spec tasks are complete; the ledger stays open for future runs.
+
+## 2026-07-29 — this spec's dogfood ledger is the north star's third leg (chair)
+
+Re-ratified in-session: cross-review dogfood evidence replaces the
+killed usage-signal read as the evidence source that picks what's
+next. The R5 ledger in receipts.md is the surface; its first
+closed loop (run-1 findings → #1559 lift → 4 fixes shipped, 1
+dismissed-with-probe) is the ruling's receipt. Coupled:
+feature-lead-governance P1 re-based onto this ledger (bar: 10
+total runs OR first accepted/rejected pattern — see that spec's
+decisions.md). Posture unchanged: board-only advisory; this grants
+the ledger a ranking role, not a gate role.
