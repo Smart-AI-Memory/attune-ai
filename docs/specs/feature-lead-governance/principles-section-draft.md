@@ -51,8 +51,10 @@ as pickable work.
    `eval`/`exec`, no unvalidated file paths, no bare `except`.
    *Enforcers: `src/attune/hooks/scripts/security_guard.py`
    (PreToolUse block on eval/exec), pre-commit detect-secrets,
-   security tests required for file-op code (reviewed, not
-   gated — that half is **aspirational**).*
+   `tests/unit/gates/test_path_validation_gate.py` (AST scan —
+   modules with write-capable file ops must reference a
+   path-validation helper or hold an allowlist entry; seeded
+   2026-07-29 with 35 vetted modules, ratchets shrink-only).*
 
 5. **Coverage is a floor, not a goal.** Changed code carries
    ≥80% coverage; the local bar is 85%.
@@ -147,9 +149,10 @@ as pickable work.
   ratification the test's target constant moves from this draft
   file to the contract master (one-line change, noted in the
   test).
-- Enforcer gaps worth pickable-work rows: (a) a path-validation
-  gate for file-op code (principle 4's second half — chip filed);
-  (b) a fail-open test for the SessionStart hydrate hook
+- Enforcer gaps worth pickable-work rows: (a) ~~a path-validation
+  gate for file-op code~~ — LANDED 2026-07-29
+  (`tests/unit/gates/test_path_validation_gate.py`); (b) a
+  fail-open test for the SessionStart hydrate hook
   (principle 15's second half). Two suspected gaps turned out
   already enforced (`test_ci_spend_guard.py` for keyless CI;
   `test_session_stash.py` for memory-layer degradation) — the
