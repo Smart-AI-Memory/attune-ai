@@ -261,3 +261,88 @@ are excluded.
   design (board message 14) — kept out to avoid housing authority
   state in a spec whose ratified advisory posture is untouchable;
   its two demonstrated advantages ship anyway as P1 and P2.
+
+## Addendum (2026-07-29) — D11c design: hardened skeptic countersign
+
+Implements the D11c ruling (decisions.md 2026-07-29, roundtable
+`q-lead-verification-gap-001`): the lead's central receipt re-runs
+are countersigned by the #1559 skeptic, in the HARDENED form only.
+The rejected naive form — the skeptic judging receipts the lead
+narrates inside its own session — is "self-verification with
+another prompt attached" (codex). The design forces the evidence
+path executor → artifact → skeptic; the lead never authors the
+evidence the skeptic reads.
+
+### Evidence path
+
+1. **Executor produces the artifact.** The process that actually
+   executes the receipt commands (the isolated scratch-worktree
+   re-run machinery, same execution semantics as
+   `attune.roundtable.solutions.validate`: serial, fixed argv,
+   never a shell, 127/124 mapping, tail truncation) appends one
+   JSONL entry per receipt AS IT COMPLETES — never a summary
+   written after the fact. The artifact is append-only and
+   hash-chained: each entry carries `prev_digest` and its own
+   `entry_digest` (sha256 over the canonical entry), and a header
+   entry pins the repo commit the re-run validated. The writer
+   refuses to open an existing path (no overwrite, no append to a
+   foreign file).
+2. **Skeptic consumes ONLY the artifact.** The countersign pass
+   loads the artifact, re-verifies the full digest chain, and
+   builds the seat brief mechanically from the verified entries.
+   No free-text receipt summary enters the brief. The seat is
+   rotation-picked and never the lead (`skeptic_for` with the lead
+   as author — the different-model rule verbatim). Verdicts parse
+   through `parse_skeptic_verdict` with `valid_labels` drawn from
+   the artifact, so an invented CITE is malformed, never valid.
+3. **Countersign lands as a citable ledger token.** A verified
+   COUNTERSIGN renders as a fixed-grammar token carrying the seat,
+   the cited receipt label, and the artifact digest:
+
+   ```text
+   countersign: <seat> :: <label> :: sha256:<16+ hex>
+   dissent: <seat> :: <label> :: sha256:<16+ hex>
+   ```
+
+   The token goes in the R5 ledger row's disposition cell next to
+   the D11a material. `tests/unit/gates/test_ledger_countersign_format.py`
+   sweeps the ledger and fails on any token that does not match
+   the grammar — the regex is imported from the module (one
+   source, per the self-enforcing-citations principle). The digest
+   makes the row auditable: the chair can re-verify the named
+   artifact byte-for-byte.
+
+### Fail-closed contract
+
+The module can emit a countersign token from exactly one path: a
+digest-verified artifact plus a parsed COUNTERSIGN whose CITE
+names an executed receipt. Everything else is a recorded refusal,
+never a pass-through:
+
+- missing artifact → `no-artifact`;
+- unparseable JSON, broken chain, digest mismatch, bad sequence,
+  or zero receipt entries → `bad-artifact`;
+- no reachable non-lead seat → `skeptic-absent`;
+- unparseable or uncited verdict → `malformed-verdict` (TAC-4:
+  recorded as such for the chair, never laundered).
+
+A refusal outcome produces NO token; the ledger row then simply
+lacks a countersign, which is itself visible to the chair.
+
+### Honest limits (recorded, not solved)
+
+Single-machine trust boundary: a lead session could in principle
+run the writer against fabricated commands. The hardening is
+evidentiary, not cryptographic — fixed-argv execution, an
+append-only chain that makes post-hoc editing loud, a mechanical
+brief, and a chair-auditable digest. Process attestation is out of
+scope (same posture as D3's forgery probes: verify what git and
+hashes can verify, name what they cannot).
+
+### Placement
+
+New module `src/attune/roundtable/countersign.py` (the skeptic
+module keeps its staged-closure concern; countersign reuses its
+rotation, verdict parsing, and brief conventions). R8 intact: the
+pass never flips a status, never promotes, and the ledger token is
+advisory evidence for the chair.
