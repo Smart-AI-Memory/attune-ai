@@ -19334,3 +19334,24 @@ def ", start_idx + 1)` for module-
   (`$1!="security" && $1!="Run Security Scanner"`), and treat a
   1s-duration fail row as the cancellation signature — confirm with
   the run's `conclusion: cancelled` before diagnosing anything.
+
+- **Killing a mechanism ORPHANS every gate that references it — sweep
+  gate references at kill time, or a spec stays gated on a ghost**:
+  2026-07-29. The usage-signal read was killed 2026-07-28 (circular),
+  but feature-lead-governance's P1 gate read "activation sits behind
+  the SAME chair usage-signal read that gates cross-review T3/T4" —
+  and T3/T4 had ALSO shipped by then, so for a full day the spec was
+  gated on a mechanism that no longer existed and a condition already
+  discharged, discoverable only by re-reading its decisions.md during
+  the north-star re-ratification. The single-read principle ("one
+  read ungates or kills both") is exactly what makes this class
+  likely: shared gates create cross-spec reference edges that a kill
+  ruling severs silently. Rule: when a ruling KILLS or completes a
+  mechanism, grep `docs/specs/*/{decisions,requirements}.md` for the
+  mechanism's name in the same session and either re-base each
+  referencing gate onto a live substrate (name the new bar) or queue
+  the re-basing as an explicit chair item — never leave the dangling
+  reference for a future reader to trip over. Kill-time sweep, not
+  execute-time discovery: the existing "spec text goes stale — grep
+  before executing" lessons catch this too late, after the gate has
+  already misled someone.
