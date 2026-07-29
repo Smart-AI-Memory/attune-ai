@@ -291,3 +291,104 @@ second memory system.
 by the lead at disposition time (procedural); no automation fires
 `record_pattern_outcome` from ledger edits. Acceptable at pilot
 scale; revisit at P1 activation if manual recording drifts.
+
+## 2026-07-29 — D10: Principles section RATIFIED into the contract master (chair)
+
+Chair ratified the amended principles section ("ratify the
+principles section and land it in the contract master") after the
+lead's sufficiency review and delegated codex lane 3. Landed as the
+FIRST subsection under `## Shared contract` in
+`content/collaboration/contract.md` (principles frame the mechanics
+that follow) and projected to all three provider surfaces. Same-PR
+obligations honored: draft deleted (single-source applied to
+itself); `tests/unit/gates/test_principles_citations.py` re-pointed
+at the master with the section-end anchor adapted to the master's
+heading structure. Named cost accepted by the lead and flagged to
+the chair: ~90 lines added to every provider surface's projected
+block (full projection over a compact variant — a special-case
+summarizing projector would break the verbatim single-source model
+for a few KB). Residual aspirational-half gaps carry as chips:
+path-validation gate (principle 4), hydrate-hook fail-open test
+(principle 15).
+
+## 2026-07-29 — D11: lead-verification measures (chair, via roundtable q-lead-verification-gap-001)
+
+The chair asked the table how to close the lead-verification gap
+(the lead re-runs every seat's receipts; nobody mechanically
+verifies the lead's). Chair's initial lean was measures 1+3; all
+three seats independently rejected deferring measure 2 outright,
+and two seats independently flagged naive measure-3 wiring as
+self-verification theater. Chair promoted the table's converged
+shape (board msgs 2-4, 8; ruling msg 9):
+
+- **D11a — Verbatim rejections (adopted, effective now).** Any R5
+  ledger row whose disposition is a rejection class (`dismissed`,
+  `noise`, `rejected`) must carry the reviewing seat's claim
+  VERBATIM plus the lead's reason:
+  `<class> — claim: "<seat's words>" — reason: <lead's reason>`.
+  Enforced by `tests/unit/gates/test_ledger_rejection_format.py`;
+  rows predating this ruling are explicitly allowlisted in the
+  test, never silently exempt.
+- **D11b — Risk-triggered cross-review of lead diffs (activated).**
+  A lead-authored diff touching any risk class — security,
+  persistence, release, governance/enforcement (gates, guards,
+  ledgers, contract), external boundaries, or a disputed finding —
+  REQUIRES a different-model review lane before the chair reads
+  the recommendation. Chair may override in either direction
+  (waive on a triggered class, or demand review on an untriggered
+  one). Yield is measured in the R5 ledger toward a later
+  default-on ruling. Encoded in the collaboration contract master
+  (Lead programmer and delegation section) so stateless seats
+  carry it.
+- **D11c — Skeptic countersign, hardened form ONLY (adopted as a
+  build task).** The lead's central receipt re-runs go through the
+  #1559 skeptic with the evidence boundary hardened per the table:
+  the skeptic consumes append-only receipt artifacts produced by
+  the EXECUTOR (never lead-supplied summaries), fails closed, and
+  its countersign lands as a citable artifact in the ledger row
+  that D11a's guard test checks. Naive in-session wiring is
+  explicitly rejected ("self-verification with another prompt
+  attached" — codex). Implementation is a spec task; D11a/D11b do
+  not wait on it.
+- **(4) receipt-replay CI stays deferred** (3/3): revisit only if
+  serial-run/live-fire receipt residue still matters after
+  D11a-c land.
+
+Conflict note, recorded at the lead's own insistence: the lead
+moderated this table and its seat argued for stricter oversight of
+itself; the chair read the positions directly (verbatim per-seat
+table) rather than through the lead's summary alone.
+
+## 2026-07-29 — D12: principles-efficacy measurement (chair: "do your recommendation")
+
+Chair asked how to test the principles' impact on the DISCIPLINE
+(efficacy, not structure — the citations guard already covers
+structure). Lead recommended, chair adopted, two of three layers
+now; the third held:
+
+- **D12a — Fire-rate read (adopted).**
+  `scripts/principles_fire_rate.py`: parses enforcers from the
+  master's Principles section, scans failed CI runs in a window
+  for pytest `FAILED <enforcer>::` lines, and profiles which
+  principles' enforcers actually fired. Run at release-prep
+  cadence. Honest limits printed in the output: hook-class
+  enforcers are not CI-observable; never-fired ≠ useless
+  (deterrence and irrelevance look identical). NOTE the tool's
+  own first live-fire caught its own defect: bare-mention matching
+  inflated every count because failed-run logs name every
+  COLLECTED test file — the matcher now requires failure-shaped
+  lines, with a regression test.
+- **D12b — Principle tags on ledger rows (adopted, convention).**
+  `[P<n>]` appended to R5 dispositions where a finding maps to a
+  principle — the only measurement surface the five aspirational
+  principles have. Not gated; documented in the ledger header.
+- **D12c — Trap-battery A/B (HELD).** The rigorous version (seats
+  briefed with/without the Principles section on
+  temptation-seeded tasks) is designed-on-request only; the
+  120-session memory precedent says expect "consistent modest
+  non-negative direction", never headline percentages. Chair
+  decides if/when the question justifies the session spend.
+
+Also standing from the same exchange, NOT yet ruled: the
+enforcer-touch check (diff ∩ cited enforcers) as D11b's mechanical
+governance-trigger predicate — parked in the starter queue.

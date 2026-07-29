@@ -6,10 +6,9 @@ the numbered principles, extracts every backtick-cited repo path (including
 ``path::test_name`` forms), and fails if a cited enforcer file no longer
 exists or a cited test name no longer appears in its file.
 
-TARGET note: while the section is a draft under chair review it lives in
-the feature-lead-governance spec; on ratification the section moves into
-``content/collaboration/contract.md`` and TARGET must be re-pointed there
-in the same PR (the draft file is deleted).
+TARGET note: the section was ratified 2026-07-29 and lives in the
+collaboration-contract MASTER (the projector copies it to the provider
+surfaces, so validating the master validates them all).
 """
 
 from __future__ import annotations
@@ -18,7 +17,7 @@ import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parents[3]
-TARGET = REPO_ROOT / "docs/specs/feature-lead-governance/principles-section-draft.md"
+TARGET = REPO_ROOT / "content/collaboration/contract.md"
 
 #: A collapsed backtick span that looks like a repo file path: any known
 #: config/code/doc extension, or a slash-containing path (covers shell
@@ -34,12 +33,12 @@ def _is_repo_path(token: str) -> bool:
 
 def _principles_text() -> str:
     text = TARGET.read_text(encoding="utf-8")
-    # Anchor to the heading at line start — the literal string also appears
-    # inside a backtick span in the draft's preamble.
+    # Anchor to the heading at line start, not a backtick mention of it.
     match = re.search(r"^### Principles$", text, re.MULTILINE)
     assert match, f"no '### Principles' heading in {TARGET}"
-    # The numbered list ends at the horizontal rule before the chair notes.
-    end = text.index("\n---", match.start())
+    # The section ends at the master's next heading (### Shared truth today).
+    nxt = re.search(r"^#{2,3} ", text[match.end() :], re.MULTILINE)
+    end = match.end() + nxt.start() if nxt else len(text)
     return text[match.start() : end]
 
 
