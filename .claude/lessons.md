@@ -19515,3 +19515,24 @@ def ", start_idx + 1)` for module-
   the read was gating, run the mutation — its error/success output
   carries the state you wanted to read. Don't loop retrying
   blocked reads first.
+
+- **Delete-vs-modify rebase conflicts (`UD`): when the file you
+  DELETE was modified upstream, the upstream edit may belong in
+  the file's SUCCESSOR — resolve as a superset, never a bare
+  `git rm` (2026-07-29, principles ratification)**: the D10
+  commit deletes the ratified principles draft and moves its
+  section into the contract master. TWICE in one afternoon a chip
+  session's PR (#1753, then #1754) merged an edit to the DRAFT —
+  each adding a freshly-landed enforcer citation — putting the
+  ratification rebase into a `UD` (deleted-by-us, modified-by-
+  them) conflict. A bare `git rm` resolution would have silently
+  discarded a correct, just-shipped citation. Correct dance:
+  (1) read the upstream diff of the dying file (`git diff
+  <old-main> origin/main -- <file>`), (2) apply what belongs to
+  the file's successor (here: the master, then re-run the
+  projector), (3) `git rm` the dying file, (4) continue. Rule:
+  in any `UD` conflict where the deletion is a MOVE/ratification
+  (content lives on elsewhere), the upstream modification is a
+  candidate edit to the successor — triage it, don't drop it.
+  Pairs with the stacked-child "superset receipt" lesson (same
+  principle, different conflict shape).
