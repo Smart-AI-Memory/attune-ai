@@ -19397,3 +19397,35 @@ def ", start_idx + 1)` for module-
   memory. Pairs with the tail-append conflict lesson — batching
   also cuts the number of conflict-prone appends on multi-session
   days.
+
+- **Cross-review your own GOVERNANCE text, not just code — the
+  first feature-lead pilot lane caught the lead's clause
+  contradicting the contract it amended**: 2026-07-29 pilot
+  (PR #1746). The lead-programmer clause I authored into the
+  collaboration contract hard-coded the lead's provider while the
+  same contract requires single-provider executability two bullets
+  above — invisible to the author, one HIGH finding for the codex
+  seat on its first delegated review (6 files sent, 0 omitted).
+  Disposition: accepted, fixed in-branch (lead duties devolve to
+  the chair when the lead's provider is absent). Rules: (a)
+  contract/rule/spec text a session AUTHORS is prime cross-review
+  material — self-contradiction with surrounding requirements is
+  exactly what a different model reads fresh; (b) mechanics: the
+  cross-review module runs fine from a worktree with
+  PYTHONPATH=<worktree>/src + the main venv's python; the R5
+  ledger row + board thread are the receipts.
+
+- **Subset coverage runs are DIRECTIONAL evidence — sufficient to
+  PROVE coverage for omit-conversion, never to disprove it; and a
+  serial full-suite coverage run is a 20+ minute trap when the
+  scoped run answers in seconds**: 2026-07-29 omit-audit pass 2.
+  The full unit suite under serial coverage (xdist off for the
+  /tmp rcfile workaround) ran 15+ min with buffered `| tail`
+  output showing nothing; killed it for a scoped run over the
+  candidates' own test files — 1027 tests, ~51s, and every
+  conversion decision it supported is sound because a subset can
+  only UNDERCOUNT: a module clearing the bar in subset clears it
+  in the full suite. The known subset-baseline lesson ("subset
+  runs lie") is the same fact used in the other direction — a
+  subset number is a valid floor and an invalid ceiling. Pick
+  targets from FULL baselines; prove conversions with SCOPED runs.
