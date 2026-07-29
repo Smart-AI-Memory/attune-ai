@@ -19266,3 +19266,27 @@ def ", start_idx + 1)` for module-
   class (e.g. `.claude/lessons.md` appends, src comment-only
   changes). Pairs with the "docs(lessons) PRs do NOT Class-1
   auto-merge" lesson from the same day.
+
+- **Cowork Browser pane vs local HTML files — the working recipe**:
+  verifying a scratchpad-built HTML page (morning brief, standalone
+  preview) hit three traps in one session (2026-07-29). (a) `navigate`
+  to a `file://` path renders only a static snapshot — every
+  subsequent `computer` action (`screenshot`, `wait`, `scroll`)
+  errors "No site is open in this tab". (b) A direct `navigate` to
+  `http://localhost:<port>` is refused ("blocked by policy"); the
+  sanctioned path is `preview_start {url: "http://localhost:<port>"}`
+  (after `python3 -m http.server <port>` in the scratchpad,
+  backgrounded), then `navigate` the RETURNED tabId to the specific
+  page. (c) Once open, the pane pins scroll to the BOTTOM —
+  `scrollY == docHeight − viewportHeight` exactly, and both
+  `computer scroll up` and `window.scrollTo(0,0)` get silently
+  re-pinned — so a screenshot misses the page top while looking
+  complete. Fix: `resize_window` to a height taller than the
+  document (`document.body.scrollHeight`), then screenshot the
+  whole page in one shot. Bonus observation: one `resize_window`
+  call coincided with the tab spontaneously landing on an external
+  URL from a link on the page (mechanism unverified) — after any
+  pane-level operation, re-check the tab's URL before trusting a
+  screenshot. Diagnostic that cracked (c): `getBoundingClientRect()`
+  on the missing element plus `scrollY` — DOM present, font loaded,
+  viewport just parked at the bottom.
