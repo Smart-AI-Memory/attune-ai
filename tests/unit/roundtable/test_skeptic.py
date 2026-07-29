@@ -29,6 +29,7 @@ from attune.roundtable.skeptic import (
     run_skeptic_pass,
     skeptic_for,
     staged_closure_text,
+    uncommitted_paths,
 )
 
 
@@ -151,6 +152,20 @@ class TestParseVerdict:
         v = parse_skeptic_verdict("VERDICT: DISSENT\nREASON: because\n")
         assert v.kind == "malformed"
 
+    def test_countersign_without_cite_is_malformed(self):
+        # an uncited countersign is the rubber stamp the ruling names
+        v = parse_skeptic_verdict("VERDICT: COUNTERSIGN\n")
+        assert v.kind == "malformed"
+
+    def test_invented_cite_label_is_malformed(self):
+        v = parse_skeptic_verdict(COUNTERSIGN, valid_labels=["other"])
+        assert v.kind == "malformed"
+        assert v.cite == "smoke :: python -c pass"  # kept for the chair
+
+    def test_matching_cite_label_accepted(self):
+        v = parse_skeptic_verdict(COUNTERSIGN, valid_labels=["smoke"])
+        assert v.kind == "countersign"
+
     def test_garbage_is_malformed_never_laundered(self):
         assert parse_skeptic_verdict("LGTM, ship it!").kind == "malformed"
 
@@ -202,6 +217,29 @@ class TestStagedClosureText:
 
     def test_clean_tree_is_empty(self, repo):
         assert staged_closure_text(repo, "docs/specs/none") == ""
+
+    def test_git_failure_raises_not_empty(self, tmp_path):
+        # a failed git diff must never read as "nothing to review"
+        with pytest.raises(SkepticError, match="git diff failed"):
+            staged_closure_text(tmp_path / "not-a-repo", "docs/specs/x")
+
+
+class TestUncommittedPaths:
+    def test_clean_repo_is_empty(self, repo):
+        assert uncommitted_paths(repo) == []
+
+    def test_dirty_and_untracked_listed(self, repo):
+        (repo / "hello.py").write_text('GREETING = "changed"\n')
+        (repo / "new.py").write_text("x = 1\n")
+        assert sorted(uncommitted_paths(repo)) == ["hello.py", "new.py"]
+
+    def test_exclude_hides_the_closure_entry(self, repo):
+        (repo / "hello.py").write_text('GREETING = "changed"\n')
+        assert uncommitted_paths(repo, exclude=("hello.py",)) == []
+
+    def test_git_failure_raises(self, tmp_path):
+        with pytest.raises(SkepticError, match="git status failed"):
+            uncommitted_paths(tmp_path / "not-a-repo")
 
 
 class TestRunSkepticPass:
@@ -298,6 +336,39 @@ class TestRunSkepticPass:
         record, board = self._run(repo, closure=closure)
         assert record.outcome == "bad-declaration"
         assert board.posts[0]["kind"] == "halt"
+
+    def test_invented_cite_recorded_as_malformed(self, repo):
+        # the executed receipt label is "smoke"; the seat cites a
+        # check that never ran — never recorded as a valid verdict
+        invented = "VERDICT: COUNTERSIGN\nCITE: full-suite :: pytest -q\n"
+        record, _ = self._run(repo, replies={"antigravity": (0, invented)})
+        assert record.outcome == "malformed-verdict"
+
+    def test_isolation_gap_surfaced_when_spec_dir_given(self, repo):
+        (repo / "drifting.py").write_text("x = 1\n")
+        board = FakeBoard()
+        record = run_skeptic_pass(
+            "demo-spec",
+            CLOSURE,
+            repo,
+            "claude",
+            board=board,
+            invoke_seat=invoker({"antigravity": (0, COUNTERSIGN)}),
+            seat_recipes=RECIPES,
+            thread="t-demo",
+            spec_dir="docs/specs/demo-spec",
+        )
+        assert record.isolation_gap == ["drifting.py"]
+        brief = board.posts[0]["body"]
+        assert "Isolation note" in brief and "drifting.py" in brief
+        digest = [p for p in board.posts if p["kind"] == "synthesis"][0]
+        assert "isolation gap: 1 uncommitted path(s)" in digest["body"]
+
+    def test_no_spec_dir_means_no_gap_scan(self, repo):
+        (repo / "drifting.py").write_text("x = 1\n")
+        record, board = self._run(repo, replies={"antigravity": (0, COUNTERSIGN)})
+        assert record.isolation_gap == []
+        assert "Isolation note" not in board.posts[0]["body"]
 
     def test_never_promotes_and_never_flips_status(self, repo):
         _, board = self._run(repo, replies={"antigravity": (0, COUNTERSIGN)})

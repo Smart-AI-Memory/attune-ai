@@ -101,6 +101,7 @@ class SkepticPass:
     bounce_reply: str | None = None
     outcome: str = "pending"
     invocations: int = 0
+    isolation_gap: list[str] = field(default_factory=list)
 
 
 def parse_receipt_commands(text: str) -> list[tuple[str, list[str]]]:
@@ -140,6 +141,10 @@ def staged_closure_text(repo: Path, spec_dir: str) -> str:
     "Staged" per the ruling means the closure entry exists in the
     working tree but is not yet committed: ``git diff HEAD`` over the
     spec's ``decisions.md``, added lines only, ``+`` stripped.
+
+    Raises:
+        SkepticError: The git diff itself failed — an empty result
+            must mean "no staged closure", never a masked git error.
     """
     proc = subprocess.run(  # nosec B603 — fixed argv, shell=False
         ["git", "-C", str(repo), "diff", "HEAD", "--", f"{spec_dir}/decisions.md"],
@@ -147,6 +152,8 @@ def staged_closure_text(repo: Path, spec_dir: str) -> str:
         text=True,
         timeout=_GIT_TIMEOUT,
     )
+    if proc.returncode != 0:
+        raise SkepticError(f"git diff failed (exit {proc.returncode}): {proc.stderr.strip()[:300]}")
     added = [
         line[1:]
         for line in proc.stdout.splitlines()
@@ -192,6 +199,10 @@ def rerun_receipts(
     serial execution + tail receipts (the ruling's named mechanism);
     the worktree is always discarded, pass or fail.
 
+    Isolation contract: the worktree is created from ``base_ref``
+    (committed state) — uncommitted changes are NOT validated. Use
+    :func:`uncommitted_paths` to surface that gap to the chair.
+
     Raises:
         RuntimeError: Scratch worktree creation failed.
     """
@@ -212,6 +223,39 @@ def rerun_receipts(
         discard(candidate)
 
 
+def uncommitted_paths(repo: Path, exclude: Sequence[str] = ()) -> list[str]:
+    """Paths whose working state differs from HEAD (staged, unstaged,
+    or untracked) — the receipts' isolation blind spot.
+
+    The scratch worktree re-runs receipts from COMMITTED state, so
+    any path listed here is invisible to what the skeptic validates.
+    ``exclude`` names expected-uncommitted paths (the staged closure
+    entry itself).
+
+    Raises:
+        SkepticError: ``git status`` failed.
+    """
+    proc = subprocess.run(  # nosec B603 — fixed argv, shell=False
+        ["git", "-C", str(repo), "status", "--porcelain"],
+        capture_output=True,
+        text=True,
+        timeout=_GIT_TIMEOUT,
+    )
+    if proc.returncode != 0:
+        raise SkepticError(
+            f"git status failed (exit {proc.returncode}): {proc.stderr.strip()[:300]}"
+        )
+    paths: list[str] = []
+    for line in proc.stdout.splitlines():
+        path = line[3:].strip()
+        if " -> " in path:  # rename: validate the destination
+            path = path.split(" -> ", 1)[1]
+        path = path.strip('"')
+        if path and path not in exclude:
+            paths.append(path)
+    return paths
+
+
 def _format_receipts(receipts: Sequence[CheckReceipt]) -> str:
     blocks = []
     for r in receipts:
@@ -220,8 +264,29 @@ def _format_receipts(receipts: Sequence[CheckReceipt]) -> str:
     return "\n\n".join(blocks)
 
 
-def build_skeptic_brief(spec: str, closure_text: str, receipts: Sequence[CheckReceipt]) -> str:
-    """Build the R1 text-only brief for the skeptic seat."""
+def build_skeptic_brief(
+    spec: str,
+    closure_text: str,
+    receipts: Sequence[CheckReceipt],
+    isolation_gap: Sequence[str] = (),
+) -> str:
+    """Build the R1 text-only brief for the skeptic seat.
+
+    ``isolation_gap`` names uncommitted paths the receipts could not
+    see; the seat (and chair digest) must weigh the evidence knowing
+    the blind spot exists — TAC-4 honesty over silent omission.
+    """
+    gap_note = ""
+    if isolation_gap:
+        shown = "\n".join(f"- {p}" for p in list(isolation_gap)[:20])
+        more = len(isolation_gap) - 20
+        if more > 0:
+            shown += f"\n- … and {more} more"
+        gap_note = (
+            "\n\n## Isolation note\nReceipts were re-run from COMMITTED "
+            "state; these uncommitted paths are NOT reflected in the "
+            f"evidence:\n{shown}"
+        )
     return (
         "You are the rotating SKEPTIC seat at a three-model round "
         f"table. A closure entry for spec {spec!r} is staged. The "
@@ -242,7 +307,7 @@ def build_skeptic_brief(spec: str, closure_text: str, receipts: Sequence[CheckRe
         "the closure claim itself — spurious environment dissents "
         "train the chair to ignore dissent. Text only.\n\n"
         f"## Staged closure entry\n{closure_text}\n\n"
-        f"## Re-run receipts\n{_format_receipts(receipts)}"
+        f"## Re-run receipts\n{_format_receipts(receipts)}" + gap_note
     )
 
 
@@ -259,11 +324,16 @@ def build_bounce_brief(spec: str, verdict: SkepticVerdict, receipts: Sequence[Ch
     )
 
 
-def parse_skeptic_verdict(text: str) -> SkepticVerdict:
+def parse_skeptic_verdict(text: str, valid_labels: Sequence[str] | None = None) -> SkepticVerdict:
     """Parse the seat reply into a verdict — malformed is a verdict.
 
-    A DISSENT without a CITE is malformed (the ruling requires the
-    exact command to be cited); nothing is laundered to countersign.
+    EVERY verdict must carry a CITE (an uncited COUNTERSIGN is the
+    rubber stamp the ruling names as failure mode #1; a DISSENT
+    without the exact command cannot be bounced). When
+    ``valid_labels`` is given, the CITE's label part (before ``::``)
+    must name an executed receipt — an invented citation is
+    malformed, never recorded as valid. Nothing is laundered to
+    countersign.
     """
     m = _VERDICT_RE.search(text)
     if not m:
@@ -273,8 +343,12 @@ def parse_skeptic_verdict(text: str) -> SkepticVerdict:
     reason_m = _REASON_RE.search(text)
     cite = cite_m.group("cite") if cite_m else None
     reason = reason_m.group("reason") if reason_m else None
-    if kind == "dissent" and not cite:
+    if not cite:
         return SkepticVerdict(kind="malformed", cite=None, reason=reason, raw=text)
+    if valid_labels is not None:
+        label = cite.split("::", 1)[0].strip()
+        if label not in valid_labels:
+            return SkepticVerdict(kind="malformed", cite=cite, reason=reason, raw=text)
     return SkepticVerdict(kind=kind, cite=cite, reason=reason, raw=text)
 
 
@@ -289,6 +363,7 @@ def run_skeptic_pass(
     prior_records: Sequence[Mapping[str, object]] = (),
     thread: str | None = None,
     scratch_root: Path | None = None,
+    spec_dir: str | None = None,
 ) -> SkepticPass:
     """Run ONE skeptic pass over a staged closure; return the record.
 
@@ -297,6 +372,11 @@ def run_skeptic_pass(
     fallback to the remaining eligible seat) → on DISSENT, one
     author bounce → post the pass to the board thread for the chair.
     Never flips a status, never promotes (R8).
+
+    When ``spec_dir`` is given, uncommitted paths other than the
+    spec's own ``decisions.md`` are recorded as the isolation gap
+    (receipts validate committed state only) and surfaced in both
+    the brief and the chair digest.
     """
     from attune.roundtable.routine import SEAT_RECIPES, default_invoke_seat
 
@@ -324,7 +404,9 @@ def run_skeptic_pass(
         return record
 
     record.receipts = rerun_receipts(repo, checks, scratch_root=scratch_root)
-    brief = build_skeptic_brief(spec, closure_text, record.receipts)
+    exclude = (f"{spec_dir}/decisions.md",) if spec_dir else ()
+    record.isolation_gap = uncommitted_paths(repo, exclude=exclude) if spec_dir else []
+    brief = build_skeptic_brief(spec, closure_text, record.receipts, record.isolation_gap)
     _post(board, thread, "moderator", "question", brief, skeptic_pass=spec)
 
     eligible = [seat for seat in _rotation_order(author, prior_records) if seat in recipes]
@@ -345,7 +427,9 @@ def run_skeptic_pass(
             )
             continue
         record.skeptic = seat
-        record.verdict = parse_skeptic_verdict(reply)
+        record.verdict = parse_skeptic_verdict(
+            reply, valid_labels=[r.label for r in record.receipts]
+        )
         _post(board, thread, seat, "position", reply, skeptic_pass=spec)
         break
 
@@ -422,6 +506,11 @@ def _digest(record: SkepticPass) -> str:
     if verdict and verdict.kind == "dissent":
         lines.append(f"DISSENT cite: {verdict.cite}; reason: {verdict.reason or '(none)'}")
         lines.append("author bounce: " + ("recorded" if record.bounce_reply else "absent/none"))
+    if record.isolation_gap:
+        lines.append(
+            f"isolation gap: {len(record.isolation_gap)} uncommitted path(s) "
+            "NOT validated by the receipts"
+        )
     lines.append("Chair rules; this pass never flips the spec status (R8).")
     return "\n".join(lines)
 
@@ -466,12 +555,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             print("no RECEIPT-CMD declarations in the staged closure")
             return 1
         receipts = rerun_receipts(repo, checks)
-        print(build_skeptic_brief(spec, closure, receipts))
+        gap = uncommitted_paths(repo, exclude=(f"{args.spec_dir}/decisions.md",))
+        print(build_skeptic_brief(spec, closure, receipts, gap))
         return 0
 
     from attune.roundtable.board import Board
 
-    record = run_skeptic_pass(spec, closure, repo, args.author, board=Board())
+    record = run_skeptic_pass(
+        spec, closure, repo, args.author, board=Board(), spec_dir=args.spec_dir
+    )
     print(f"skeptic pass complete: outcome={record.outcome}")
     return 0
 

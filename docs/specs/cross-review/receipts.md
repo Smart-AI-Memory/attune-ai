@@ -57,3 +57,31 @@ For the #1559 lift review; anchors are the draft's
   pedantic (dismissed); run 5 correctly flagged a stale doc claim.
   Quality supports continuing advisory posture; no gate-upgrade
   claim from five runs.
+
+## Carried findings — #1559 dispositions (lift, 2026-07-29)
+
+Ruled at the #1559 lift (branch rebased onto main; fixes land in
+the lift commit on the PR):
+
+1. [high] worktree-from-HEAD — FIXED by surfacing, not re-design:
+   receipts still validate committed state (isolation is the
+   point), but `uncommitted_paths()` now records the blind spot
+   and the brief + chair digest name every uncommitted path the
+   receipts could not see (TAC-4 honesty over silent omission).
+2. [medium] scratch_root not created — DISMISSED, false positive:
+   `git worktree add` creates missing parents (probed live with a
+   3-level-deep nonexistent root, exit 0), and
+   `test_isolated_pass_and_fail_receipts` already passes a
+   nonexistent root — it stays as the regression guard.
+3. [medium] uncited COUNTERSIGN — FIXED: every verdict now
+   requires a CITE; an uncited countersign parses as malformed
+   (rubber-stamp decay is the ruling's named failure mode #1).
+4. [medium] CITE never validated — FIXED: `parse_skeptic_verdict`
+   accepts `valid_labels`; a CITE whose label names no executed
+   receipt records as malformed, never as a valid verdict.
+5. [low] silent git failure — FIXED: `staged_closure_text` and
+   `uncommitted_paths` raise `SkepticError` on nonzero git exit;
+   an empty result can only mean "no staged closure".
+
+Regression tests for all four fixes in
+`tests/unit/roundtable/test_skeptic.py` (41 tests, serial pass).
