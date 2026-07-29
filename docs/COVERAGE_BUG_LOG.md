@@ -1,3 +1,26 @@
+## 2026-07-29 — release_prep_team.py orchestration pass (coverage push, Fable 5)
+
+`src/attune/agents/release/release_prep_team.py` 78% → 100% via net-new
+`tests/unit/agents/test_release_prep_team_orchestration.py` (10 tests:
+assess_readiness fan-out with stub agents, confidence tiers, Redis-optional
+init branches with a fake redis_lib). One finding, flagged not fixed:
+
+- **Candidate bug (silent wrong result, class 1-adjacent — no crash):
+  a FAILED security agent passes the Security gate via the -1
+  sentinel.** `_evaluate_quality_gates` records `critical_issues = -1`
+  when the security result has `success=False`, and `-1 <=
+  max_critical_issues (0)` evaluates the gate as PASSED — greenest
+  outcome on the exact path where the auditor never ran. Partial
+  mitigation: `_identify_issues` adds a blocker when the failed
+  result's findings carry an `"error"` key — but `_execute_tier`
+  failure shapes vary per agent, so a failure without that key
+  approves the release with a green Security row (actual=-1.0 is the
+  only visible tell). NOT fixed in this pass: hardening the gate
+  (sentinel → failed) changes release-gate semantics and needs a
+  ruling; the current behavior is pinned by
+  `test_failed_security_agent_sentinel_passes_gate` with a comment
+  telling the fixer to rewrite it deliberately. Flagged as a chip.
+
 ## 2026-07-24 — elicitation/widget.py fixed element ids (dogfood, Fable 5)
 
 `src/attune/elicitation/widget.py` (`form_to_widget_html`). Found by
@@ -1441,4 +1464,4 @@ describes the 18 classes-1–4 coverage-push finds. (The class 5 row was
 missing from this table until 2026-07-24 — it was recorded in the
 session-49f snapshot above but never propagated here.)
 
-Modules at 100%: 81 (cumulative across all sessions).
+Modules at 100%: 82 (cumulative across all sessions).
