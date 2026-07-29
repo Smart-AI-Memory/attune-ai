@@ -477,6 +477,28 @@ only via that evidence path.
 P2 (gate-triage inbox) is recorded in
 `docs/specs/spec-lifecycle-gates/decisions.md` — its owning spec.
 
+## 2026-07-21 — P3 skeptic V1 BUILT (merge held for the 07-27 fire)
+
+`attune.roundtable.skeptic` implements the ruled V1 shape:
+`RECEIPT-CMD: <label> :: <command>` structured lines in a staged
+closure entry declare the cheap receipts (capped at 5, shlex-split,
+fixed argv); the harness re-runs them via `solutions.validate` in a
+detached scratch worktree (always discarded); a rotation-picked
+non-author seat (pure `skeptic_for`, RR-2 pointer semantics,
+different-model rule enforced) gets the raw evidence as TEXT and
+must emit `VERDICT: COUNTERSIGN|DISSENT` with `CITE:`; a DISSENT
+without a cite is malformed, never laundered (TAC-4). One pass,
+one absent-fallback, one author bounce on dissent
+(`PASS_MAX_INVOCATIONS = 3`), digest posted unpromoted (R8). CLI:
+`python -m attune.roundtable.skeptic <spec-dir> --author <seat>`
+(+ `--dry-run`), reading the staged `decisions.md` diff.
+
+Suite receipt: `tests/unit/roundtable/` 186 passed serially
+(+30 new). **Merge deliberately HELD until after the 2026-07-27
+06:00 fire receipt** — the fire certifies the frozen system
+(session ruling 2026-07-21); first live pass and P4 telemetry
+start-of-recording follow the merge.
+
 ## 2026-07-22 — Digest disposition policy (chair-ruled)
 
 Standing default for routine digests once the appendix ledger
