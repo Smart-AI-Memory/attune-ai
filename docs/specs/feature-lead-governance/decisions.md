@@ -291,3 +291,22 @@ second memory system.
 by the lead at disposition time (procedural); no automation fires
 `record_pattern_outcome` from ledger edits. Acceptable at pilot
 scale; revisit at P1 activation if manual recording drifts.
+
+## 2026-07-29 — D10: Principles section RATIFIED into the contract master (chair)
+
+Chair ratified the amended principles section ("ratify the
+principles section and land it in the contract master") after the
+lead's sufficiency review and delegated codex lane 3. Landed as the
+FIRST subsection under `## Shared contract` in
+`content/collaboration/contract.md` (principles frame the mechanics
+that follow) and projected to all three provider surfaces. Same-PR
+obligations honored: draft deleted (single-source applied to
+itself); `tests/unit/gates/test_principles_citations.py` re-pointed
+at the master with the section-end anchor adapted to the master's
+heading structure. Named cost accepted by the lead and flagged to
+the chair: ~90 lines added to every provider surface's projected
+block (full projection over a compact variant — a special-case
+summarizing projector would break the verbatim single-source model
+for a few KB). Residual aspirational-half gaps carry as chips:
+path-validation gate (principle 4), hydrate-hook fail-open test
+(principle 15).
