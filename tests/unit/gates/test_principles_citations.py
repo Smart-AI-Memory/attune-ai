@@ -20,8 +20,16 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).parents[3]
 TARGET = REPO_ROOT / "docs/specs/feature-lead-governance/principles-section-draft.md"
 
-#: A collapsed backtick span that looks like a repo file path.
-_PATH_RE = re.compile(r"^[\w./-]+\.(?:py|yml|yaml|md)$")
+#: A collapsed backtick span that looks like a repo file path: any known
+#: config/code/doc extension, or a slash-containing path (covers shell
+#: scripts, extensionless hooks, and directories). Dotted module names
+#: (no slash, unknown extension) stay excluded.
+_PATH_RE = re.compile(r"^[\w./-]+\.(?:py|yml|yaml|md|toml|json|sh|cfg|ini|txt)$")
+_DIR_RE = re.compile(r"^[\w.-]+(?:/[\w.-]+)+/?$")
+
+
+def _is_repo_path(token: str) -> bool:
+    return bool(_PATH_RE.match(token) or _DIR_RE.match(token))
 
 
 def _principles_text() -> str:
@@ -42,7 +50,7 @@ def _cited_enforcers() -> list[str]:
     for span in spans:
         collapsed = re.sub(r"\s+", "", span)
         path_part = collapsed.split("::")[0]
-        if _PATH_RE.match(path_part):
+        if _is_repo_path(path_part):
             cited.append(collapsed)
     return cited
 
@@ -79,6 +87,15 @@ def test_every_cited_test_name_exists_in_its_file():
             continue
         path_part, test_name = citation.split("::", 1)
         enforcer = REPO_ROOT / path_part
-        if enforcer.exists() and test_name not in enforcer.read_text(encoding="utf-8"):
+        if not enforcer.exists():
+            continue  # already reported by the path-existence test
+        # A real def/class at line start — a stale name surviving in a
+        # comment or docstring must not count (codex lane 3 finding).
+        defined = re.search(
+            rf"^\s*(?:def|class)\s+{re.escape(test_name)}\b",
+            enforcer.read_text(encoding="utf-8"),
+            re.MULTILINE,
+        )
+        if not defined:
             stale.append(citation)
     assert not stale, f"Principles section cites test names absent from their files: {stale}"

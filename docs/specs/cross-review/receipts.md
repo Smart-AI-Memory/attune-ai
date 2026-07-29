@@ -15,6 +15,7 @@ ids recorded per T3's live-fire check. Dispositions ruled by Patrick
 | 2026-07-29 | antigravity | branch vs merge-base cd55f3839 (origin/main) — lessons docs diff | 1 sent / 0 omitted | 0 (clean) | clean |
 | 2026-07-29 | codex | branch vs merge-base e7fa7e088 (origin/main) — feature-page docs branch | 23 sent / 7 omitted | 3 (findings) | stale-branch — carry only if revived |
 | 2026-07-29 | codex | branch vs merge-base 51bc7550f (origin/main) — feature-lead PILOT diff (contract lead rule + base.py QA) | 6 sent / 0 omitted | 1 (findings) | real — accepted and fixed in-branch (single-provider lead fallback) |
+| 2026-07-29 | codex | branch vs merge-base db48a3bf2 (origin/main) — pilot lane 3: principles draft + citations guard | 2 sent / 0 omitted | 2 (findings) | real — both accepted and fixed in-branch (path-scope widened; def/class-anchored name check); verify-it-fires receipts re-run |
 
 Board threads (live-fire check): `review-detached-20260729-0036`,
 `review-detached-20260729-0037`,
