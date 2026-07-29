@@ -19450,3 +19450,34 @@ def ", start_idx + 1)` for module-
   live. Pairs with "registered ≠ working" (same family: the
   mocked/single-process test passes precisely where the live loop
   fails).
+
+- **A verify-it-fires probe must assert its own mutation landed —
+  a silent no-op probe "passes" while testing nothing
+  (2026-07-29, principles citations guard)**: receipt B for the
+  citations drift-guard replaced
+  `::test_coverage_threshold_is_at_least_80` in a temp copy of the
+  draft — but the citation WRAPS across lines in the source
+  (`...py::\n   test_...`), so the literal replace matched nothing,
+  the "corrupted" copy was identical to the original, and the probe
+  reported the guard as working against a mutation that never
+  happened. Caught only because the probe printed its verdict and
+  the output read wrong. Rule: every fault-injection probe asserts
+  `mutated != original` (or `assert target_string in text` before
+  replacing) so a no-op mutation fails loudly. Same family as the
+  count-assertion lesson (a filter matching nothing passes
+  vacuously) — this is the fault-injection variant.
+
+- **`git push --force-with-lease` fails with `stale info` after a
+  label-lane merge deletes the remote branch — plain `push -u`
+  recreates it (2026-07-29)**: after PR #1748 auto-merged (the
+  `auto-merge-when-green` lane deletes the head branch), a later
+  push of new commits on the SAME local branch failed
+  `[rejected] (stale info)` — the local remote-tracking ref
+  remembers the deleted branch, and with no remote ref to compare,
+  the lease can never be satisfied. Diagnosis:
+  `git ls-remote --heads origin <branch>` returns empty = branch
+  gone; recovery is a plain `git push -u origin <branch>` (the
+  lease protects against clobbering a ref that no longer exists —
+  there is nothing to clobber). Reusing an agent branch after its
+  PR merged hits this every time; expect it and don't retry the
+  lease.
