@@ -152,6 +152,57 @@ class TestPersistentLibrary:
         assert "p9" in reloaded.patterns
         assert queue.get("p9") is None
 
+    def test_record_outcome_persists_across_reload(self, tmp_path):
+        # Regression: outcomes used to mutate only the in-memory Pattern, so
+        # a reloaded library reset usage/success counts to zero.
+        lib = PersistentPatternLibrary(backend=FileStashBackend(base_dir=str(tmp_path)))
+        lib.contribute_pattern(
+            "a1",
+            Pattern(id="p1", agent_id="a1", pattern_type="behavioral", name="n", description="d"),
+        )
+        lib.record_pattern_outcome("p1", success=True)
+        lib.record_pattern_outcome("p1", success=False)
+        reloaded = PersistentPatternLibrary(backend=FileStashBackend(base_dir=str(tmp_path)))
+        got = reloaded.patterns["p1"]
+        assert got.usage_count == 2
+        assert got.success_count == 1
+        assert got.failure_count == 1
+
+    def test_link_patterns_persists_graph_across_reload(self, tmp_path):
+        # Regression: links used to live only in the in-memory pattern_graph.
+        lib = PersistentPatternLibrary(backend=FileStashBackend(base_dir=str(tmp_path)))
+        for pid in ("p1", "p2"):
+            lib.contribute_pattern(
+                "a1",
+                Pattern(
+                    id=pid, agent_id="a1", pattern_type="behavioral", name="n", description="d"
+                ),
+            )
+        lib.link_patterns("p1", "p2")
+        reloaded = PersistentPatternLibrary(backend=FileStashBackend(base_dir=str(tmp_path)))
+        assert reloaded.pattern_graph["p1"] == ["p2"]
+        assert reloaded.pattern_graph["p2"] == ["p1"]
+
+    def test_load_drops_graph_edges_to_missing_patterns(self, tmp_path):
+        be = FileStashBackend(base_dir=str(tmp_path))
+        lib = PersistentPatternLibrary(backend=be)
+        lib.contribute_pattern(
+            "a1",
+            Pattern(id="p1", agent_id="a1", pattern_type="behavioral", name="n", description="d"),
+        )
+        # Stored graph references a pattern that no longer exists in the store.
+        be.stash("pattern_graph", {"p1": ["ghost"], "ghost": ["p1"]})
+        reloaded = PersistentPatternLibrary(backend=FileStashBackend(base_dir=str(tmp_path)))
+        assert reloaded.pattern_graph["p1"] == []
+        assert "ghost" not in reloaded.pattern_graph
+
+    def test_record_outcome_absent_id_raises_and_persists_nothing(self, tmp_path):
+        be = FileStashBackend(base_dir=str(tmp_path))
+        lib = PersistentPatternLibrary(backend=be)
+        with pytest.raises(ValueError):
+            lib.record_pattern_outcome("ghost", success=True)
+        assert be.retrieve(ACTIVE_PREFIX + "ghost") is None
+
     def test_load_skips_unparseable_active_entry(self, tmp_path):
         be = FileStashBackend(base_dir=str(tmp_path))
         lib = PersistentPatternLibrary(backend=be)

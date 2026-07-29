@@ -34,6 +34,10 @@ logger = logging.getLogger(__name__)
 STAGED_PREFIX = "staged_pattern:"
 #: Key prefix for active (promoted) library patterns in the same store.
 ACTIVE_PREFIX = "pattern:"
+#: Key holding the persisted pattern relation graph (outside the
+#: ``pattern:*`` glob, so :meth:`PersistentPatternLibrary._load` never
+#: tries to parse it as a pattern).
+GRAPH_KEY = "pattern_graph"
 #: Env var gating opt-in review routing of contributed patterns (R7).
 REVIEW_ENABLED_ENV = "ATTUNE_PATTERN_REVIEW"
 #: Truthy spellings that turn review routing on.
@@ -292,8 +296,27 @@ class PersistentPatternLibrary(PatternLibrary):
             except ValueError:
                 # Duplicate id already loaded — skip the redundant copy.
                 continue
+        stored_graph = self._backend.retrieve(GRAPH_KEY)
+        if isinstance(stored_graph, dict):
+            for pid, related in stored_graph.items():
+                if pid in self.patterns and isinstance(related, list):
+                    self.pattern_graph[pid] = [r for r in related if r in self.patterns]
 
     def contribute_pattern(self, agent_id: str, pattern: Pattern) -> None:
         """Validate + add in memory (base behaviour), then persist to the backend."""
         PatternLibrary.contribute_pattern(self, agent_id, pattern)
         self._backend.stash(ACTIVE_PREFIX + pattern.id, _pattern_to_dict(pattern))
+
+    def record_pattern_outcome(self, pattern_id: str, success: bool) -> None:
+        """Record the outcome (base behaviour), then re-persist the pattern.
+
+        Without the re-stash, usage/success/failure counts survive only for
+        the life of the process and every reload resets ``success_rate``.
+        """
+        PatternLibrary.record_pattern_outcome(self, pattern_id, success)
+        self._backend.stash(ACTIVE_PREFIX + pattern_id, _pattern_to_dict(self.patterns[pattern_id]))
+
+    def link_patterns(self, pattern_id_1: str, pattern_id_2: str) -> None:
+        """Create the bidirectional link (base behaviour), then persist the graph."""
+        PatternLibrary.link_patterns(self, pattern_id_1, pattern_id_2)
+        self._backend.stash(GRAPH_KEY, dict(self.pattern_graph))

@@ -19429,3 +19429,24 @@ def ", start_idx + 1)` for module-
   runs lie") is the same fact used in the other direction — a
   subset number is a valid floor and an invalid ceiling. Pick
   targets from FULL baselines; prove conversions with SCOPED runs.
+
+- **Persistence-by-override subclasses must cover EVERY base
+  mutator — audit the base class's mutation surface, not just the
+  method you came for (2026-07-29, pilot lane 2)**:
+  `PersistentPatternLibrary` overrode `contribute_pattern` to stash
+  on write, but `record_pattern_outcome` and `link_patterns` were
+  inherited unpersisted — outcomes and links survived only for the
+  life of the process, so cross-session `success_rate` was always
+  0.0 and the pattern graph reset on every reload. Unit tests all
+  passed (they exercised one process); the gap only showed in a
+  TWO-PROCESS round-trip probe (A: usage=2 → B: usage=0). Rules:
+  (1) when a subclass adds persistence by overriding mutators,
+  enumerate ALL base methods that mutate state and cover or
+  explicitly exempt each; (2) the receipt for "persists across
+  sessions" is a two-process probe, never a same-process
+  save-then-read; (3) serializer round-trip fields (here
+  usage/success/failure counts were already serialized) can mask
+  the gap — the WRITE path, not the schema, is where these bugs
+  live. Pairs with "registered ≠ working" (same family: the
+  mocked/single-process test passes precisely where the live loop
+  fails).
