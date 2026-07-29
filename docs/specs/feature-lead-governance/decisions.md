@@ -252,3 +252,42 @@ Pilot observation for the P1 evidence stream: the delegated seat's
 first finding was a real defect in the lead's OWN work — the
 different-model review caught what the author could not. That is
 the accepted-vs-rejected signal the gate measures, seeded run 1.
+
+## 2026-07-29 — Pilot lane 2: PatternLibrary persistence verdict + P1 signal store wired (lead record)
+
+Queued chair directive: round-trip `PatternLibrary` persistence
+FIRST; wire lead finding-dispositions into
+`record_pattern_outcome()` as the P1 accepted/rejected signal store
+if patterns survive across sessions, else log the verdict and keep
+the R5 ledger as the store.
+
+**Probe verdict (two-process receipt): MIXED.** Contributions
+survive across sessions (`PersistentPatternLibrary` stashes on
+`contribute_pattern`), but outcome recordings did NOT — the
+subclass never overrode `record_pattern_outcome`, so process A's
+`usage=2 success=1` reloaded in process B as `usage=0 success=0`.
+Links (`link_patterns`) had the same defect. Cross-session
+`success_rate` was fiction — exactly the field the P1 signal needs.
+
+**Lead action (bug-fix authority + scope-widening initiative):**
+persisted both mutators in `src/attune/pattern_review.py`
+(re-stash after `record_pattern_outcome`; graph stashed under a
+dedicated `pattern_graph` key and restored in `_load`), with
+regression tests. Post-fix probe: `usage=2 success=1` survives
+reload. With the fix, the directive's wire-up condition genuinely
+holds.
+
+**Wiring (one wheel):** seeded the live store (AMS/Redis backend)
+with pattern `cross_review_delegated_lane` — each lead disposition
+of a delegated-lane finding records `accepted=success` /
+`rejected=failure`; `success_rate` IS the P1 accepted-rate signal.
+Run 1 (codex lane, ACCEPTED) recorded: fresh-process read shows
+`usage=1 success=1 rate=1.00`. The R5 ledger stays the
+human-readable narrative receipt; the pattern store is the
+machine-readable counter — same events, one corpus each side, no
+second memory system.
+
+**Known residual (flagged, not built):** dispositions are recorded
+by the lead at disposition time (procedural); no automation fires
+`record_pattern_outcome` from ledger edits. Acceptable at pilot
+scale; revisit at P1 activation if manual recording drifts.
