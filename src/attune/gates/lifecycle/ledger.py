@@ -69,5 +69,78 @@ def latest_for(target: str, *, path: Path | None = None) -> list[GateReceipt]:
 
 
 def unresolved_chair_required(*, path: Path | None = None) -> list[GateReceipt]:
-    """CHAIR_REQUIRED receipts not yet cited by any ruling."""
-    return [r for r in _rows(path) if r.state == "CHAIR_REQUIRED" and r.decisions_ref is None]
+    """CHAIR_REQUIRED receipts not yet cited by any ruling.
+
+    Rows are superseded per ``receipt_id`` (later rows win — the
+    same discipline :func:`latest_for` applies per gate), so a
+    receipt discharged via :func:`discharge` no longer reports as
+    unresolved even though its original row remains in the
+    append-only history.
+    """
+    latest: dict[str, GateReceipt] = {}
+    for receipt in _rows(path):
+        latest[receipt.receipt_id] = receipt  # later rows supersede
+    return [r for r in latest.values() if r.state == "CHAIR_REQUIRED" and r.decisions_ref is None]
+
+
+def discharge(
+    receipt_id: str, decisions_ref: str, *, path: Path | None = None
+) -> GateReceipt | None:
+    """Cite a chair ruling on an existing receipt — append-only.
+
+    Appends a superseding copy of the receipt's latest row with
+    ``decisions_ref`` set; the original row is never touched (G1:
+    the ledger never deletes). Returns the appended receipt, or
+    ``None`` when no row carries ``receipt_id`` (nothing is
+    written — an invented discharge must fail loudly at the
+    caller, never fabricate history).
+    """
+    if not decisions_ref.strip():
+        raise ValueError("decisions_ref must name the ruling that discharges the receipt")
+    target: GateReceipt | None = None
+    for receipt in _rows(path):
+        if receipt.receipt_id == receipt_id:
+            target = receipt  # later rows supersede
+    if target is None:
+        return None
+    cited = GateReceipt(
+        gate_id=target.gate_id,
+        phase=target.phase,
+        target=target.target,
+        state=target.state,
+        findings=list(target.findings),
+        evidence_refs=list(target.evidence_refs),
+        proposed_disposition=target.proposed_disposition,
+        waived=target.waived,
+        receipt_id=target.receipt_id,
+        timestamp=target.timestamp,
+        decisions_ref=decisions_ref,
+    )
+    append(cited, path=path)
+    return cited
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI: ``python -m attune.gates.lifecycle.ledger discharge <receipt_id> <decisions_ref>``."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description="G1 verdict-ledger maintenance (append-only).")
+    sub = parser.add_subparsers(dest="command", required=True)
+    d = sub.add_parser("discharge", help="cite a chair ruling on an existing receipt")
+    d.add_argument("receipt_id")
+    d.add_argument("decisions_ref", help="e.g. docs/specs/<slug>/decisions.md#<entry>")
+    args = parser.parse_args(argv)
+
+    cited = discharge(args.receipt_id, args.decisions_ref)
+    if cited is None:
+        print(f"no ledger row carries receipt_id {args.receipt_id!r}; nothing written")
+        return 1
+    print(
+        f"discharged {cited.receipt_id} ({cited.target} :: {cited.gate_id}) "
+        f"citing {cited.decisions_ref}"
+    )
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())

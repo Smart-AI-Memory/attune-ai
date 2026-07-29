@@ -20,6 +20,7 @@ from attune.gates.lifecycle import (
     active_gates,
     append,
     blast_radius,
+    discharge,
     exit_code,
     falsifiability_gate,
     latest_for,
@@ -89,6 +90,63 @@ class TestLedger:
         append(open_r, path=f)
         append(cited, path=f)
         assert [r.gate_id for r in unresolved_chair_required(path=f)] == ["a"]
+
+    def test_discharge_supersedes_and_preserves_history(self, tmp_path):
+        f = tmp_path / "verdicts.jsonl"
+        r = GateReceipt(gate_id="chair-review", phase="tasks", target="s", state="CHAIR_REQUIRED")
+        append(r, path=f)
+        raw_before = f.read_text()
+        cited = discharge(r.receipt_id, "docs/specs/s/decisions.md#ruling", path=f)
+        assert cited is not None and cited.decisions_ref == "docs/specs/s/decisions.md#ruling"
+        assert cited.receipt_id == r.receipt_id
+        # append-only: the original row is still in the raw history
+        assert raw_before in f.read_text()
+        assert len(f.read_text().splitlines()) == 2
+        # unresolved no longer reports the discharged receipt
+        assert unresolved_chair_required(path=f) == []
+        # latest_for serves the cited version
+        (latest,) = latest_for("s", path=f)
+        assert latest.decisions_ref == "docs/specs/s/decisions.md#ruling"
+
+    def test_discharge_unknown_receipt_writes_nothing(self, tmp_path):
+        f = tmp_path / "verdicts.jsonl"
+        append(GateReceipt(gate_id="g", phase="design", target="s", state="PASS"), path=f)
+        before = f.read_text()
+        assert discharge("does-not-exist", "ref", path=f) is None
+        assert f.read_text() == before
+
+    def test_discharge_empty_ref_rejected(self, tmp_path):
+        f = tmp_path / "verdicts.jsonl"
+        r = GateReceipt(gate_id="g", phase="design", target="s", state="CHAIR_REQUIRED")
+        append(r, path=f)
+        with pytest.raises(ValueError, match="decisions_ref"):
+            discharge(r.receipt_id, "  ", path=f)
+
+    def test_unresolved_uses_last_row_per_receipt(self, tmp_path):
+        f = tmp_path / "verdicts.jsonl"
+        open_r = GateReceipt(gate_id="a", phase="design", target="s", state="CHAIR_REQUIRED")
+        append(open_r, path=f)
+        discharge(open_r.receipt_id, "ref-1", path=f)
+        other = GateReceipt(gate_id="b", phase="design", target="s", state="CHAIR_REQUIRED")
+        append(other, path=f)
+        assert [r.gate_id for r in unresolved_chair_required(path=f)] == ["b"]
+
+    def test_discharge_cli_round_trip(self, tmp_path, monkeypatch, capsys):
+        from attune.gates.lifecycle.ledger import main
+
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path))
+        r = GateReceipt(gate_id="chair-review", phase="tasks", target="s", state="CHAIR_REQUIRED")
+        append(r)
+        assert main(["discharge", r.receipt_id, "docs/specs/s/decisions.md#x"]) == 0
+        assert "discharged" in capsys.readouterr().out
+        assert unresolved_chair_required() == []
+
+    def test_discharge_cli_unknown_exits_1(self, tmp_path, monkeypatch, capsys):
+        from attune.gates.lifecycle.ledger import main
+
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path))
+        assert main(["discharge", "nope", "ref"]) == 1
+        assert "nothing written" in capsys.readouterr().out
 
     def test_default_path_is_isolated_from_real_home(self):
         """Drift guard: the suite must never touch the real ledger."""

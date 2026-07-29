@@ -26,7 +26,7 @@ from .activation import (
     waived,
 )
 from .baseline import falsifiability_gate, format_lint_gate, symbol_reality_gate
-from .ledger import append, latest_for, ledger_path, unresolved_chair_required
+from .ledger import append, discharge, latest_for, ledger_path, unresolved_chair_required
 from .protocol import PHASES, STATES, GateReceipt
 from .runner import exit_code, run_boundary
 from .status_line import RESUME_TRIGGER_CLAUSE, status_line_gate
@@ -52,6 +52,7 @@ __all__ = [
     "run_boundary",
     "status_line_gate",
     "symbol_reality_gate",
+    "discharge",
     "unresolved_chair_required",
     "waived",
 ]
