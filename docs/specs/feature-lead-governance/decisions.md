@@ -310,3 +310,51 @@ summarizing projector would break the verbatim single-source model
 for a few KB). Residual aspirational-half gaps carry as chips:
 path-validation gate (principle 4), hydrate-hook fail-open test
 (principle 15).
+
+## 2026-07-29 — D11: lead-verification measures (chair, via roundtable q-lead-verification-gap-001)
+
+The chair asked the table how to close the lead-verification gap
+(the lead re-runs every seat's receipts; nobody mechanically
+verifies the lead's). Chair's initial lean was measures 1+3; all
+three seats independently rejected deferring measure 2 outright,
+and two seats independently flagged naive measure-3 wiring as
+self-verification theater. Chair promoted the table's converged
+shape (board msgs 2-4, 8; ruling msg 9):
+
+- **D11a — Verbatim rejections (adopted, effective now).** Any R5
+  ledger row whose disposition is a rejection class (`dismissed`,
+  `noise`, `rejected`) must carry the reviewing seat's claim
+  VERBATIM plus the lead's reason:
+  `<class> — claim: "<seat's words>" — reason: <lead's reason>`.
+  Enforced by `tests/unit/gates/test_ledger_rejection_format.py`;
+  rows predating this ruling are explicitly allowlisted in the
+  test, never silently exempt.
+- **D11b — Risk-triggered cross-review of lead diffs (activated).**
+  A lead-authored diff touching any risk class — security,
+  persistence, release, governance/enforcement (gates, guards,
+  ledgers, contract), external boundaries, or a disputed finding —
+  REQUIRES a different-model review lane before the chair reads
+  the recommendation. Chair may override in either direction
+  (waive on a triggered class, or demand review on an untriggered
+  one). Yield is measured in the R5 ledger toward a later
+  default-on ruling. Encoded in the collaboration contract master
+  (Lead programmer and delegation section) so stateless seats
+  carry it.
+- **D11c — Skeptic countersign, hardened form ONLY (adopted as a
+  build task).** The lead's central receipt re-runs go through the
+  #1559 skeptic with the evidence boundary hardened per the table:
+  the skeptic consumes append-only receipt artifacts produced by
+  the EXECUTOR (never lead-supplied summaries), fails closed, and
+  its countersign lands as a citable artifact in the ledger row
+  that D11a's guard test checks. Naive in-session wiring is
+  explicitly rejected ("self-verification with another prompt
+  attached" — codex). Implementation is a spec task; D11a/D11b do
+  not wait on it.
+- **(4) receipt-replay CI stays deferred** (3/3): revisit only if
+  serial-run/live-fire receipt residue still matters after
+  D11a-c land.
+
+Conflict note, recorded at the lead's own insistence: the lead
+moderated this table and its seat argued for stricter oversight of
+itself; the chair read the positions directly (verbatim per-seat
+table) rather than through the lead's summary alone.
