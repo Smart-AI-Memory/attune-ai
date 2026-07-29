@@ -738,8 +738,9 @@ omit = [
     # dedicated suites in tests/unit/monitoring/ measure it 100%.
     # execution_strategies.py entry removed 2026-07-29 (same pass):
     # measures 94% from existing unit consumers — no live agents used.
-    # Orchestration strategy base (undertested — convert after a QA pass)
-    "*/orchestration/_strategies/base.py",  # justified-other: 46% measured, needs tests before conversion
+    # _strategies/base.py entry removed 2026-07-29 (feature-lead
+    # pilot QA pass): 46% -> 100% via
+    # tests/unit/orchestration/test_execution_strategy_base.py.
     # Meta-workflow CLI commands
     "*/meta_workflows/cli_meta_workflows.py",  # CLI entry
     # The five cli_commands modules below were removed from this list
