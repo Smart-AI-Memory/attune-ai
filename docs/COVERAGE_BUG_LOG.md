@@ -21,6 +21,17 @@ init branches with a fake redis_lib). One finding, flagged not fixed:
   `test_failed_security_agent_sentinel_passes_gate` with a comment
   telling the fixer to rewrite it deliberately. Flagged as a chip.
 
+  **DISPOSITION (same day, chair-ruled "go fix it"):** hardened —
+  a failed OR absent security result now fails the Security gate
+  (`security_ran and …`; the -1 sentinel stays as the display
+  value), and `_identify_issues` blocks on EVERY failed agent with
+  a fallback reason when no `error` key exists (the bug's other
+  half: a failure with no diagnostic must not read quieter than
+  one with). Pinned test rewritten to the new contract
+  (`test_failed_security_agent_fails_gate_and_blocks`) plus a
+  missing-result case. Class 1 (silent wrong result on a
+  never-exercised path), counted as a coverage-push find.
+
 ## 2026-07-24 — elicitation/widget.py fixed element ids (dogfood, Fable 5)
 
 `src/attune/elicitation/widget.py` (`form_to_widget_html`). Found by
@@ -1464,4 +1475,4 @@ describes the 18 classes-1–4 coverage-push finds. (The class 5 row was
 missing from this table until 2026-07-24 — it was recorded in the
 session-49f snapshot above but never propagated here.)
 
-Modules at 100%: 82 (cumulative across all sessions).
+Modules at 100%: 85 (cumulative across all sessions).

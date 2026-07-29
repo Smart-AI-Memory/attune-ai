@@ -119,14 +119,13 @@ class TestAssessReadiness:
         assert report.approved is False
         assert any("pytest crashed" in b for b in report.blockers)
 
-    def test_failed_security_agent_sentinel_passes_gate(self):
-        # CURRENT behavior, asserted deliberately: a security agent that
-        # FAILED (success=False, no error key) records the -1 sentinel,
-        # and -1 <= max_critical_issues(0) means the Security gate
-        # PASSES while the auditor never ran. Logged in
-        # docs/COVERAGE_BUG_LOG.md — if this assertion breaks because
-        # the sentinel now fails the gate, that fix is intentional:
-        # update this test to the new contract.
+    def test_failed_security_agent_fails_gate_and_blocks(self):
+        # The 2026-07-29 gate-hardening contract (chair-ruled): a
+        # security agent that FAILED (success=False, even with no
+        # error key) can never satisfy the Security gate — unknown is
+        # not clean. The -1 sentinel stays as the DISPLAY value, the
+        # gate fails, and the failed agent blocks with a fallback
+        # reason even without diagnostic output.
         replies = dict(GREEN)
         team = team_with(replies)
         team.agents[0] = StubAgent(  # type: ignore[index]
@@ -135,8 +134,19 @@ class TestAssessReadiness:
         report = asyncio.run(team.assess_readiness())
         security_gate = next(g for g in report.quality_gates if g.name == "Security")
         assert security_gate.actual == -1.0
-        assert security_gate.passed is True
-        assert report.approved is True
+        assert security_gate.passed is False
+        assert report.approved is False
+        assert report.confidence == "low"
+        assert any("failed without diagnostic output" in b for b in report.blockers)
+
+    def test_missing_security_result_fails_gate(self):
+        # No security result at all is the same unknown — the gate
+        # cannot pass on absence.
+        replies = {k: v for k, v in GREEN.items() if k != "Security Auditor"}
+        report = asyncio.run(team_with(replies).assess_readiness())
+        security_gate = next(g for g in report.quality_gates if g.name == "Security")
+        assert security_gate.passed is False
+        assert report.approved is False
 
 
 class FakeRedisClient:
