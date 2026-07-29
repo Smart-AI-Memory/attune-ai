@@ -392,3 +392,41 @@ now; the third held:
 Also standing from the same exchange, NOT yet ruled: the
 enforcer-touch check (diff ∩ cited enforcers) as D11b's mechanical
 governance-trigger predicate — parked in the starter queue.
+
+## 2026-07-29 — D11c implemented: hardened countersign shipped (lead record)
+
+Implementation evidence for the D11c ruling above (design addendum
+in design.md, same date). The evidence path is executor → artifact
+→ skeptic, as ruled — the rejected lead-narrated form is not
+reachable through the shipped API:
+
+- `src/attune/roundtable/countersign.py`:
+  `rerun_receipts_to_artifact` (the executing process streams an
+  append-only, hash-chained JSONL artifact — one entry per receipt
+  as it completes; existing paths refused), `load_receipt_artifact`
+  (fail-closed: missing file, symlink, unparseable line, broken
+  chain, digest/tail mismatch, bad sequence, and zero receipts all
+  refuse), `run_countersign_pass` (brief built mechanically from
+  the verified artifact; rotation-picked NON-LEAD seat via
+  `skeptic_for`; CITE validated against executed receipt labels; a
+  token is emitted from exactly one path), and
+  `format_countersign_token` + `COUNTERSIGN_TOKEN_RE` (the citable
+  ledger grammar, single-sourced).
+- Ledger gate: `tests/unit/gates/test_ledger_countersign_format.py`
+  imports the module regex and fails any R5 row claiming a
+  countersign/dissent without the full token (fires-on-violation
+  self-test included). Grammar documented in the ledger header.
+- Receipts: 33 new tests (tamper both ways — naive edit breaks the
+  entry digest, recomputed-digest edit breaks the tail hash or
+  chain; refusal outcomes; different-model rule; absent fallback;
+  CLI round trip); roundtable + gates suites 458 passed serially;
+  module coverage 91%.
+- R8 intact: the pass never flips a status, never promotes; a
+  refusal produces NO token, so an uncountersigned row stays
+  visibly uncountersigned for the chair.
+
+Recorded honest limit (design addendum): the hardening is
+evidentiary, not cryptographic — single-machine process
+attestation is out of scope, same posture as D3's forgery probes.
+Next evidence step: first live delegated lane whose lead re-run
+ships with an artifact + countersign token in its R5 row.

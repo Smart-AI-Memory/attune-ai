@@ -21,6 +21,17 @@ tags let the ledger passively accumulate evidence of which
 principles the review lanes actually exercise (the aspirational
 principles are measurable nowhere else).
 
+Countersign tokens (D11c, 2026-07-29): a row claiming the lead's
+central receipt re-run was skeptic-countersigned carries the full
+citable token `countersign: <seat> :: <label> :: sha256:<16+ hex>`
+(dissents: same grammar, `dissent:` prefix), produced only by
+`attune.roundtable.countersign` from an executor-written,
+digest-verified artifact. Enforced by
+`tests/unit/gates/test_ledger_countersign_format.py`, which imports
+the grammar from the module — a bare "countersign:" claim without
+the artifact digest is exactly the lead-narrated form D11c rejects,
+and it fails the gate.
+
 | Date | Seat | Target | Files | Findings | Disposition |
 |---|---|---|---|---|---|
 | 2026-07-29 | codex | branch vs merge-base 94e8459c5 (origin/main) — #1559 skeptic diff | 3 sent / 0 omitted | 5 (findings) | carry-to-#1559 |
