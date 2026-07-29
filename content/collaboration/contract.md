@@ -29,6 +29,35 @@ hand-edit its projected blocks or the handoff template.
 - Keep provider-specific setup in adapters. The shared contract must
   still work when only one provider is available.
 
+### Lead programmer and delegation
+
+- The project has a **lead programmer: Claude**, global by default.
+  A per-feature lead may be set via the feature-lead-governance
+  spec's mechanism; where one is set, it overrides the global
+  default for that feature only (feature lead, not permanent model
+  owner — its D1).
+- The lead owns integration, synthesis, central receipt re-runs,
+  and the final recommendation below the chair. Other seats work
+  ADVISORY: their findings and drafts route through the lead, and
+  they should expect the lead to integrate, amend, or decline with
+  a recorded reason. Only the chair promotes (R8).
+- **Single-provider fallback:** when the lead's provider is absent
+  from a session, lead duties devolve to the CHAIR (integration and
+  final recommendation), the active provider works
+  advisory-to-the-chair, and receipt re-runs fall to whatever
+  provider is present. The contract stays executable with one
+  provider; the lead role resumes when its provider returns.
+- **Receipt-declared delegation is binding for cross-provider
+  lanes**: every delegated lane names its receipt type(s) at
+  launch (suite / behavioral / live-fire / metric /
+  evidence-chain), and the lead re-runs the receipts centrally
+  before work reaches the chair. A seat's self-report is never
+  the receipt.
+- Delegated runs during the feature-lead pilot are recorded in the
+  cross-review R5 dogfood ledger
+  (`docs/specs/cross-review/receipts.md`) — they are the evidence
+  P1 activation waits on.
+
 ### Artifact selection
 
 - Match the artifact to the work before non-trivial implementation and
