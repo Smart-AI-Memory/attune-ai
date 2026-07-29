@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+import threading
 
 import pytest
 
@@ -106,14 +107,25 @@ def test_workflows_page_hides_run_buttons_when_disabled(tmp_path, monkeypatch):
 
 
 def test_run_busy_returns_409(tmp_path, monkeypatch):
-    """Second POST while a run is in flight returns 409."""
+    """Second POST while a run is in flight returns 409.
 
-    async def slow_executor(run):
+    The first run's executor blocks on a release event the test only
+    sets AFTER the 409 assertions, so the busy window provably spans
+    the second POST — no timer race (a 0.5s sleep flaked on the
+    Windows 3.13 lane when the run finished before the probe landed).
+    ``threading.Event`` (not ``asyncio.Event``) because the test
+    thread sets it while the executor polls it from TestClient's
+    event loop.
+    """
+    release = threading.Event()
+
+    async def gated_executor(run):
         from datetime import datetime, timezone
 
         run.status = "running"
         run.started_at = datetime.now(timezone.utc)
-        await asyncio.sleep(0.5)
+        while not release.is_set():
+            await asyncio.sleep(0.01)
         run.mark_done(0)
 
     app, _ = _make_app(
@@ -121,15 +133,20 @@ def test_run_busy_returns_409(tmp_path, monkeypatch):
         monkeypatch,
         allow_run=True,
         command_builder=lambda _: ("noop",),
-        executor=slow_executor,
+        executor=gated_executor,
     )
     with TestClient(app) as client:
-        first = client.post("/workflows/x/run")
-        assert first.status_code == 201
-        second = client.post("/workflows/x/run")
-    assert second.status_code == 409
-    detail = second.json()["detail"]
-    assert detail["current_run_id"] == first.json()["run_id"]
+        try:
+            first = client.post("/workflows/x/run")
+            assert first.status_code == 201
+            second = client.post("/workflows/x/run")
+            assert second.status_code == 409
+            detail = second.json()["detail"]
+            assert detail["current_run_id"] == first.json()["run_id"]
+        finally:
+            # Release before lifespan shutdown so the gated run can't
+            # outlive the client, even when an assertion fails.
+            release.set()
 
 
 def test_run_relative_scope_resolves_against_project_root_not_cwd(tmp_path, monkeypatch):
