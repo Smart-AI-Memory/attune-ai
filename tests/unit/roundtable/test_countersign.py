@@ -389,3 +389,151 @@ class TestCli:
         path = tmp_path / "a.jsonl"
         path.write_text("occupied")
         assert main(["rerun", str(path), "--repo", str(repo), "--check", "c :: true"]) == 2
+
+
+# ------------------------------------------------- patch-coverage closure
+
+
+def _synthetic_artifact(tmp_path, receipt_overrides: dict, *, version=None):
+    """A chain-valid two-entry artifact whose receipt entry is tampered
+    at the PAYLOAD level (digests recomputed), isolating the per-entry
+    validation branches from the chain checks that run first."""
+    from attune.roundtable.countersign import _ARTIFACT_VERSION, _entry_digest
+
+    header = {
+        "kind": "header",
+        "seq": 0,
+        "version": version or _ARTIFACT_VERSION,
+        "commit": "c" * 40,
+    }
+    tail = "ok"
+    receipt = {
+        "kind": "receipt",
+        "seq": 1,
+        "label": "greet",
+        "argv": ["true"],
+        "exit_code": 0,
+        "tail": tail,
+        "tail_sha256": hashlib.sha256(tail.encode()).hexdigest(),
+    }
+    receipt.update(receipt_overrides)
+    path = tmp_path / "synthetic.jsonl"
+    prev = ""
+    with path.open("w") as handle:
+        for entry in (header, receipt):
+            entry["prev_digest"] = prev
+            entry["entry_digest"] = _entry_digest(entry)
+            handle.write(json.dumps(entry, sort_keys=True, separators=(",", ":")) + "\n")
+            prev = str(entry["entry_digest"])
+    return path
+
+
+class TestLoadFailsClosedBranches:
+    def test_json_array_line_is_not_an_object(self, artifact):
+        artifact.write_text(artifact.read_text() + "[1,2]\n")
+        with pytest.raises(CountersignError, match="is not an object"):
+            load_receipt_artifact(artifact)
+
+    def test_unsupported_version_refused(self, tmp_path):
+        path = _synthetic_artifact(tmp_path, {}, version="v999")
+        with pytest.raises(CountersignError, match="unsupported artifact version"):
+            load_receipt_artifact(path)
+
+    def test_wrong_kind_is_bad_sequence(self, tmp_path):
+        path = _synthetic_artifact(tmp_path, {"kind": "note"})
+        with pytest.raises(CountersignError, match="bad sequence"):
+            load_receipt_artifact(path)
+
+    def test_non_string_tail_is_malformed(self, tmp_path):
+        path = _synthetic_artifact(tmp_path, {"tail": 5})
+        with pytest.raises(CountersignError, match="malformed receipt entry"):
+            load_receipt_artifact(path)
+
+    def test_non_string_argv_is_malformed(self, tmp_path):
+        path = _synthetic_artifact(tmp_path, {"argv": ["true", 3]})
+        with pytest.raises(CountersignError, match="malformed argv"):
+            load_receipt_artifact(path)
+
+
+class TestExecutorWorktreeFailure:
+    def test_unwritable_scratch_root_raises_runtime_error(self, repo, tmp_path):
+        ro_root = tmp_path / "ro"
+        ro_root.mkdir()
+        ro_root.chmod(0o555)
+        try:
+            with pytest.raises(RuntimeError, match="worktree add failed"):
+                rerun_receipts_to_artifact(
+                    repo, [PASS_CHECK], tmp_path / "a.jsonl", scratch_root=ro_root
+                )
+        finally:
+            ro_root.chmod(0o755)
+
+
+class TestBoardlessPost:
+    def test_pass_without_board_prints_instead_of_posting(self, artifact, capsys):
+        record = run_countersign_pass(
+            artifact,
+            CANONICAL_SEATS[0],
+            board=None,
+            invoke_seat=_invoke_countersign,
+            seat_recipes=RECIPES,
+        )
+        out = capsys.readouterr().out
+        assert record.outcome
+        assert "countersign" in out.lower() or "[" in out  # printed, not posted
+
+
+class TestCliRerunUnparseableCommand:
+    def test_unclosed_quote_returns_2(self, repo, tmp_path, capsys):
+        code = main(
+            ["rerun", str(tmp_path / "a.jsonl"), "--repo", str(repo), "--check", 'c :: echo "open']
+        )
+        assert code == 2
+        assert "unparseable command" in capsys.readouterr().out
+
+
+class TestCliPassCommand:
+    def test_pass_success_prints_outcome_and_token(self, artifact, monkeypatch, capsys):
+        import attune.roundtable.board as board_mod
+        import attune.roundtable.countersign as cs
+
+        class _Record:
+            outcome = "countersigned"
+            token = "COUNTERSIGN codex greet abc123"
+
+        monkeypatch.setattr(board_mod, "Board", FakeBoard)
+        monkeypatch.setattr(cs, "run_countersign_pass", lambda *a, **k: _Record())
+        lead = sorted(CANONICAL_SEATS)[0]
+        assert main(["pass", str(artifact), "--lead", lead]) == 0
+        out = capsys.readouterr().out
+        assert "outcome=countersigned" in out
+        assert "ledger token:" in out
+
+    def test_pass_without_token_skips_ledger_line(self, artifact, monkeypatch, capsys):
+        import attune.roundtable.board as board_mod
+        import attune.roundtable.countersign as cs
+
+        class _Record:
+            outcome = "dissent"
+            token = ""
+
+        monkeypatch.setattr(board_mod, "Board", FakeBoard)
+        monkeypatch.setattr(cs, "run_countersign_pass", lambda *a, **k: _Record())
+        lead = sorted(CANONICAL_SEATS)[0]
+        assert main(["pass", str(artifact), "--lead", lead]) == 0
+        out = capsys.readouterr().out
+        assert "outcome=dissent" in out
+        assert "ledger token:" not in out
+
+    def test_pass_countersign_error_returns_2(self, artifact, monkeypatch, capsys):
+        import attune.roundtable.board as board_mod
+        import attune.roundtable.countersign as cs
+
+        def _raise(*a, **k):
+            raise CountersignError("no seats answered")
+
+        monkeypatch.setattr(board_mod, "Board", FakeBoard)
+        monkeypatch.setattr(cs, "run_countersign_pass", _raise)
+        lead = sorted(CANONICAL_SEATS)[0]
+        assert main(["pass", str(artifact), "--lead", lead]) == 2
+        assert "no seats answered" in capsys.readouterr().out
