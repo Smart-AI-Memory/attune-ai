@@ -358,3 +358,37 @@ Conflict note, recorded at the lead's own insistence: the lead
 moderated this table and its seat argued for stricter oversight of
 itself; the chair read the positions directly (verbatim per-seat
 table) rather than through the lead's summary alone.
+
+## 2026-07-29 — D12: principles-efficacy measurement (chair: "do your recommendation")
+
+Chair asked how to test the principles' impact on the DISCIPLINE
+(efficacy, not structure — the citations guard already covers
+structure). Lead recommended, chair adopted, two of three layers
+now; the third held:
+
+- **D12a — Fire-rate read (adopted).**
+  `scripts/principles_fire_rate.py`: parses enforcers from the
+  master's Principles section, scans failed CI runs in a window
+  for pytest `FAILED <enforcer>::` lines, and profiles which
+  principles' enforcers actually fired. Run at release-prep
+  cadence. Honest limits printed in the output: hook-class
+  enforcers are not CI-observable; never-fired ≠ useless
+  (deterrence and irrelevance look identical). NOTE the tool's
+  own first live-fire caught its own defect: bare-mention matching
+  inflated every count because failed-run logs name every
+  COLLECTED test file — the matcher now requires failure-shaped
+  lines, with a regression test.
+- **D12b — Principle tags on ledger rows (adopted, convention).**
+  `[P<n>]` appended to R5 dispositions where a finding maps to a
+  principle — the only measurement surface the five aspirational
+  principles have. Not gated; documented in the ledger header.
+- **D12c — Trap-battery A/B (HELD).** The rigorous version (seats
+  briefed with/without the Principles section on
+  temptation-seeded tasks) is designed-on-request only; the
+  120-session memory precedent says expect "consistent modest
+  non-negative direction", never headline percentages. Chair
+  decides if/when the question justifies the session spend.
+
+Also standing from the same exchange, NOT yet ruled: the
+enforcer-touch check (diff ∩ cited enforcers) as D11b's mechanical
+governance-trigger predicate — parked in the starter queue.

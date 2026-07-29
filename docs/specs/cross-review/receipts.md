@@ -14,6 +14,13 @@ reason>` — enforced by
 `tests/unit/gates/test_ledger_rejection_format.py`; pre-D11 rows
 are allowlisted there explicitly.
 
+Principle tags (D12, 2026-07-29): where a finding maps to a
+contract principle, append `[P<n>]` to the disposition (e.g.
+`real — accepted and fixed [P1]`). Convention, not gated — the
+tags let the ledger passively accumulate evidence of which
+principles the review lanes actually exercise (the aspirational
+principles are measurable nowhere else).
+
 | Date | Seat | Target | Files | Findings | Disposition |
 |---|---|---|---|---|---|
 | 2026-07-29 | codex | branch vs merge-base 94e8459c5 (origin/main) — #1559 skeptic diff | 3 sent / 0 omitted | 5 (findings) | carry-to-#1559 |
