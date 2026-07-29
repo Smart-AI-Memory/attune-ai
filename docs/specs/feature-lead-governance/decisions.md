@@ -190,3 +190,39 @@ ungate-or-kill.** This honors the ledger's own calibration ("no
 gate-upgrade claim from five runs"). No second activation
 criterion is invented; the single-read principle carries over with
 the ledger as the read's new substrate.
+
+## 2026-07-29 — Pilot ruled; integrating-lead shape ratified (chair, in-session form)
+
+Two rulings from the evening team-model session (same day as the
+P1 re-basing above — the two are designed to compose, not
+conflict):
+
+**D8 — Pilot on ONE module; pilot runs feed the ledger.** The
+cross-LLM lead/delegation model activates as a PILOT on exactly
+one feature/module. The pilot's delegated runs are recorded in the
+cross-review R5 dogfood ledger, so the pilot GENERATES the
+evidence P1 waits on rather than bypassing it; full activation is
+ruled at the bar (10 runs / first accepted-rejected pattern).
+Lead's pilot-module recommendation (chair picks at launch):
+`orchestration/_strategies/base.py` QA pass — bounded, tests-only
+(Class 1 lane), crisp suite receipts, flagged 2026-07-29 in the
+omit-audit as needing a coverage pass. Low blast radius is the
+point: the pilot tests the TEAM MECHANISM, not the module.
+
+**D9 — Integrating lead.** Global lead programmer: Claude, unless
+a per-feature lead is set via this spec's mechanism. The lead owns
+integration, synthesis, central receipt re-runs, and the final
+recommendation BELOW the chair. Seats stay advisory; R8 untouched
+— only the chair promotes. Scope-widening initiative per the
+2026-07-29 global ruling (same-defect neighbors fixed without a
+separate ask, widening named for cheap reversal).
+
+**Substrate + discipline (lead-recommended, chair-accepted in the
+same exchange):** (a) the lead rule is encoded in the projected
+collaboration contract (scripts/project_collaboration_contract.py
+master → all provider adapters) — seats are stateless, so the
+contract carries the role, not per-prompt reminders; (b) the
+receipt-declared delegation rule is BINDING for cross-LLM lanes:
+every delegated lane names its receipt type at launch and the lead
+re-runs receipts centrally — a seat's self-report is never the
+receipt. Both land as the pilot's first tasks.
