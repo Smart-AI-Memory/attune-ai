@@ -410,28 +410,7 @@ def run_skeptic_pass(
     _post(board, thread, "moderator", "question", brief, skeptic_pass=spec)
 
     eligible = [seat for seat in _rotation_order(author, prior_records) if seat in recipes]
-    for seat in eligible[:2]:  # picked seat + one absent fallback
-        if record.invocations >= PASS_MAX_INVOCATIONS:
-            break
-        record.invocations += 1
-        code, reply = invoke(recipes[seat], brief)
-        if code != 0 or not reply.strip():
-            _post(
-                board,
-                thread,
-                seat,
-                "position",
-                f"ABSENT — exit {code}: {reply[:200]}",
-                absent=True,
-                skeptic_pass=spec,
-            )
-            continue
-        record.skeptic = seat
-        record.verdict = parse_skeptic_verdict(
-            reply, valid_labels=[r.label for r in record.receipts]
-        )
-        _post(board, thread, seat, "position", reply, skeptic_pass=spec)
-        break
+    _seek_verdict(record, eligible, recipes, invoke, brief, board, thread)
 
     if record.skeptic is None:
         record.outcome = "skeptic-absent"
@@ -452,24 +431,7 @@ def run_skeptic_pass(
         record.outcome = "malformed-verdict"
     else:
         record.outcome = "dissent"
-        if record.invocations < PASS_MAX_INVOCATIONS and author in recipes:
-            record.invocations += 1
-            code, reply = invoke(
-                recipes[author], build_bounce_brief(spec, verdict, record.receipts)
-            )
-            if code == 0 and reply.strip():
-                record.bounce_reply = reply
-                _post(board, thread, author, "position", reply, bounce=True, skeptic_pass=spec)
-            else:
-                _post(
-                    board,
-                    thread,
-                    author,
-                    "position",
-                    f"ABSENT on bounce — exit {code}: {reply[:200]}",
-                    absent=True,
-                    skeptic_pass=spec,
-                )
+        _bounce_author(record, verdict, recipes, invoke, board, thread)
 
     _post(
         board,
@@ -480,6 +442,69 @@ def run_skeptic_pass(
         skeptic_pass=spec,
     )
     return record
+
+
+def _seek_verdict(
+    record: SkepticPass,
+    eligible: Sequence[str],
+    recipes: Mapping[str, tuple[str, ...]],
+    invoke: Callable[[Sequence[str], str], tuple[int, str]],
+    brief: str,
+    board: object | None,
+    thread: str,
+) -> None:
+    """One verdict invocation, one absent fallback — mutates ``record``."""
+    for seat in eligible[:2]:  # picked seat + one absent fallback
+        if record.invocations >= PASS_MAX_INVOCATIONS:
+            break
+        record.invocations += 1
+        code, reply = invoke(recipes[seat], brief)
+        if code != 0 or not reply.strip():
+            _post(
+                board,
+                thread,
+                seat,
+                "position",
+                f"ABSENT — exit {code}: {reply[:200]}",
+                absent=True,
+                skeptic_pass=record.spec,
+            )
+            continue
+        record.skeptic = seat
+        record.verdict = parse_skeptic_verdict(
+            reply, valid_labels=[r.label for r in record.receipts]
+        )
+        _post(board, thread, seat, "position", reply, skeptic_pass=record.spec)
+        break
+
+
+def _bounce_author(
+    record: SkepticPass,
+    verdict: SkepticVerdict,
+    recipes: Mapping[str, tuple[str, ...]],
+    invoke: Callable[[Sequence[str], str], tuple[int, str]],
+    board: object | None,
+    thread: str,
+) -> None:
+    """The ONE author bounce after a dissent — mutates ``record``."""
+    author = record.author
+    if record.invocations >= PASS_MAX_INVOCATIONS or author not in recipes:
+        return
+    record.invocations += 1
+    code, reply = invoke(recipes[author], build_bounce_brief(record.spec, verdict, record.receipts))
+    if code == 0 and reply.strip():
+        record.bounce_reply = reply
+        _post(board, thread, author, "position", reply, bounce=True, skeptic_pass=record.spec)
+    else:
+        _post(
+            board,
+            thread,
+            author,
+            "position",
+            f"ABSENT on bounce — exit {code}: {reply[:200]}",
+            absent=True,
+            skeptic_pass=record.spec,
+        )
 
 
 def _rotation_order(author: str, records: Sequence[Mapping[str, object]]) -> list[str]:
