@@ -27,8 +27,9 @@ as pickable work.
    is the receipt. Delegated lanes declare their receipt type at
    launch and the lead re-runs receipts centrally.
    *Enforcer: **aspirational** (ruled discipline —
-   `decision-routine.md` delegation receipts + this contract's
-   Verification receipts section; no mechanical gate).*
+   `.claude/rules/attune/decision-routine.md` delegation receipts
+   + this contract's Verification receipts section; no mechanical
+   gate).*
 
 2. **The code is the contract; spec text is a hypothesis.** Before
    executing any spec-named scope, grep the code for the property
@@ -55,7 +56,7 @@ as pickable work.
 
 5. **Coverage is a floor, not a goal.** Changed code carries
    ≥80% coverage; the local bar is 85%.
-   *Enforcers: codecov project+patch gates (80%),
+   *Enforcers: `codecov.yml` project+patch gates (80%),
    `tests/unit/ci/test_workflow_yaml.py::
    test_coverage_threshold_is_at_least_80` (the threshold itself
    is drift-guarded).*
@@ -107,19 +108,57 @@ as pickable work.
     ratchet-by-reconstruction, but nothing blocks the direct
     write).*
 
+13. **Simpler is better.** Three clear lines beat one clever
+    abstraction: flatten nested conditionals, inline one-use
+    helpers, prefer stdlib over custom abstractions, and review
+    every change for complexity it didn't need.
+    *Enforcer: **aspirational** (ratified design philosophy,
+    carried in every provider surface's instructions; simplicity
+    is judged in review, not gated).*
+
+14. **A handoff is context, not authority.** The receiving agent
+    verifies a handoff against the current Git state and tests
+    before continuing; the current worktree, Git state, and test
+    results are the shared truth, never hidden chat context.
+    *Enforcer: **aspirational** (contract text — Shared truth +
+    Handoffs sections; inherently procedural, since the check IS
+    the receiving agent's first action).*
+
+15. **Degrade gracefully around the memory layer.** When Redis or
+    the memory index is unreachable, skip recall and proceed —
+    work is never blocked on the memory layer, and recalled
+    results are context to verify, not authority.
+    *Enforcers: `tests/unit/memory/test_session_stash.py` (backend
+    resolution failure degrades to None, never raises),
+    `tests/unit/test_mcp_memory_tools.py` (memory tools degrade
+    gracefully when the layer is absent). The SessionStart hydrate
+    hook's own fail-open path is untested — the remaining
+    **aspirational** half.*
+
 ---
 
 ## Notes for the chair (not part of the section)
 
-- One principle surfaced an **enforcer gap** worth a pickable-work
-  row: a path-validation gate for file-op code (principle 4's
-  second half). A second suspected gap (keyless-CI invariant)
-  turned out to be already enforced by
-  `tests/unit/ci/test_ci_spend_guard.py` — the grep-for-existing-
-  enforcer rule caught it before a duplicate was built.
+- **The section enforces itself:**
+  `tests/unit/gates/test_principles_citations.py` parses the
+  numbered principles, extracts every backtick-cited repo path
+  (including `path::test_name` forms), and fails if any cited
+  enforcer no longer exists — principle 3 applied recursively. On
+  ratification the test's target constant moves from this draft
+  file to the contract master (one-line change, noted in the
+  test).
+- Enforcer gaps worth pickable-work rows: (a) a path-validation
+  gate for file-op code (principle 4's second half — chip filed);
+  (b) a fail-open test for the SessionStart hydrate hook
+  (principle 15's second half). Two suspected gaps turned out
+  already enforced (`test_ci_spend_guard.py` for keyless CI;
+  `test_session_stash.py` for memory-layer degradation) — the
+  grep-for-existing-enforcer rule caught both before duplicates
+  were built.
 - Deliberately NOT included: style rules (black/ruff enforce
   themselves), and anything that is one session's preference
   rather than a cross-provider invariant.
 - If approved, the section lands in the master + one projector
   run; the draft file is then deleted (single-source rule,
-  principle 3, applied to itself).
+  principle 3, applied to itself) and the citations test is
+  re-pointed at the master in the same PR.
