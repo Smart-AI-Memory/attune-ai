@@ -1,9 +1,10 @@
 # Cross Review — Requirements
 
-**Status:** approved (chair, 2026-07-22) — **OPEN-1..3 RULED
-2026-07-28** and the usage-read gate KILLED as unanswerable and
-circular (see `decisions.md`). T1+T2 shipped in 10.6.1; **T3 is
-unblocked**; T4 follows T3.
+**Status:** complete (2026-07-28) — T1+T2 shipped in 10.6.1;
+T3 five-run dogfood ledger executed with chair-ruled dispositions
+(`receipts.md`); T4 shipped the feature page and CLOSED OPEN-1..3
+on T3 evidence (see `decisions.md`). Binding posture unchanged:
+board-only advisory. Ledger stays open for future runs.
 **Slug:** `cross-review`
 **Provenance:** roundtable `q-multi-llm-obvious-win-001` (chair
 same-day amendment: committed, not usage-gated) — see
