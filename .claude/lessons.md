@@ -19355,3 +19355,30 @@ def ", start_idx + 1)` for module-
   execute-time discovery: the existing "spec text goes stale — grep
   before executing" lessons catch this too late, after the gate has
   already misled someone.
+
+- **When a tests-only pass finds a production bug whose fix needs a
+  ruling: PIN the buggy behavior deliberately (comment addressed to
+  the future fixer), LOG it, CHIP it — never silently fix in the
+  Class 1 lane and never leave the behavior unasserted**: proven
+  end-to-end 2026-07-29 on the release-gate sentinel. The #1740
+  coverage pass found that a failed security auditor PASSES the
+  Security gate (-1 sentinel ≤ 0). Fixing it inline would have (a)
+  changed release-gate semantics without a chair read and (b) broken
+  the tests-only Class 1 lane. Instead:
+  `test_failed_security_agent_sentinel_passes_gate` asserted the
+  CURRENT wrong behavior with a comment saying exactly "if this
+  breaks because the sentinel now fails the gate, that fix is
+  intentional — rewrite to the new contract"; the bug went into
+  COVERAGE_BUG_LOG.md flagged-not-fixed; a spawn_task chip carried
+  the fix decision. Hours later the chair ruled "go fix it" and the
+  pinned test told the fixer precisely what to rewrite
+  (#1741). This is the deliberate inverse of the class-3B
+  anti-pattern ("the test pins the defect as the contract") — the
+  three markers that make a pin legitimate are the addressed-to-
+  the-fixer comment, the log entry with disposition slot, and the
+  chip/issue carrying the decision. A pin with none of those is
+  just a bug with test coverage. Fix-scope corollary: when the
+  ruling comes, re-check the bug's NEIGHBORS before fixing only the
+  named line — here the named gate fix left "failed agent with no
+  error key never blocks" untouched, and the ruled fix correctly
+  covered both halves.
