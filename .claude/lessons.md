@@ -15879,6 +15879,15 @@ def ", start_idx + 1)` for module-
   time. History: rate-limiting also hit the 10.0.x and 10.2.0
   releases (release_state memory); it is the norm at tag time, not
   weather. Defer by default; don't burn the evening.
+  *Epilogue (2026-07-29):* half (1) is FIXED — rate-limit now exits
+  1 and prints `WARNING: INCOMPLETE SNAPSHOT — missing packages: …
+  (0/5 captured)`, observed live at the 19:05 ET US-4 attempt (and
+  again at 20:20 — the IP penalty outlasted 75 minutes, consistent
+  with the hours-not-minutes horizon below). Exit codes are now
+  trustworthy for THIS script; the read-the-output rule stands —
+  the capture count in the output is still the only receipt, and
+  every OTHER backgrounded script remains guilty until proven
+  hard-failing.
 
 - **"Auto-merge lane should take it" is a claim about an ARM state —
   reconcile with `autoMergeRequest`, not the checks**: 2026-07-17
@@ -19536,3 +19545,26 @@ def ", start_idx + 1)` for module-
   candidate edit to the successor — triage it, don't drop it.
   Pairs with the stacked-child "superset receipt" lesson (same
   principle, different conflict shape).
+
+- **Taking over a stalled session's branch: the worktree path
+  guard blocks Write/Edit into BOTH the other session's worktree
+  AND any fresh scratchpad worktree — the sanctioned takeover
+  runs through YOUR OWN session worktree (2026-07-29, D11c lane,
+  #1757 complexity-ratchet fix)**: the guard compares git
+  toplevels, not paths, so "just edit in their worktree" and
+  "clone a throwaway worktree and edit there" are BOTH blocked —
+  any checkout whose toplevel differs from your session's is off
+  limits. The sanctioned dance: (1) verify the stalled worktree
+  is CLEAN — `git -C <wt> status --short` AND `git -C <wt> stash
+  list` both empty (a dirty tree or stash means unshipped work;
+  stop and surface it instead); (2) `git worktree remove <wt>` to
+  free the branch (git refuses two worktrees on one branch);
+  (3) check the branch out in YOUR session worktree and edit
+  there; (4) plain-push — append commits, never force, so the
+  stalled session's history stays intact if it revives; (5) leave
+  a PR comment recording the takeover so the stalled session (and
+  the chair) can reconcile instead of double-shipping. Pairs with
+  the "one branch per agent" discipline — a takeover is the ruled
+  exception, and the CLEAN check plus the PR comment are what
+  keep it from becoming the "committing to a branch another agent
+  has in flight" failure mode.

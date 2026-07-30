@@ -83,9 +83,9 @@
 
 ## Overview
 
-Attune AI is an AI-powered developer workflow OS for Claude
-Code. It provides cost-optimized workflows, multi-agent
-orchestration, and a unified memory system.
+Attune AI is an AI Workflow-harness for Claude Code. It
+provides cost-optimized workflows, multi-agent orchestration,
+and a unified memory system.
 
 ### Core Concepts
 

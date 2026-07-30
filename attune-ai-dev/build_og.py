@@ -60,7 +60,7 @@ def main() -> int:
     pad = 90
     # eyebrow
     eyebrow = _font(30, _FONT_CANDIDATES)
-    d.text((pad, 110), "AI WORKFLOW OS FOR CLAUDE CODE", font=eyebrow, fill=ACCENT)
+    d.text((pad, 110), "AI WORKFLOW-HARNESS FOR CLAUDE CODE", font=eyebrow, fill=ACCENT)
 
     # wordmark
     title = _font(150, _FONT_CANDIDATES)
