@@ -14,11 +14,19 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from attune.project_index.models import FileCategory, IndexConfig
 from attune.project_index.scanner_parallel import (
     ParallelProjectScanner,
     _analyze_file_worker,
 )
+
+# Record paths and test_file_map keys are OS-native relative paths
+# (both sides come from str(Path.relative_to(...))) — build expected
+# values the same way so the assertions hold on Windows.
+MOD_PATH = str(Path("src") / "mod.py")
+USES_PATH = str(Path("src") / "uses.py")
 
 
 def _make_project(tmp_path):
@@ -51,7 +59,7 @@ class TestAnalyzeFileWorker:
             {},
         )
         assert record is not None
-        assert record.path == "src/mod.py"  # relative in the record
+        assert record.path == MOD_PATH  # relative, OS-native separators
         assert record.category is FileCategory.SOURCE
         assert record.language == "python"
 
@@ -61,7 +69,7 @@ class TestAnalyzeFileWorker:
             str(tmp_path / "src" / "mod.py"),
             str(tmp_path),
             _config_dict(IndexConfig()),
-            {"src/mod.py": "test_mod.py"},
+            {MOD_PATH: "test_mod.py"},
         )
         assert record is not None
         assert record.tests_exist
@@ -86,5 +94,5 @@ class TestScanWithDependencies:
         records, summary = scanner.scan(analyze_dependencies=True)
         assert summary.total_files == 2
         by_path = {r.path: r for r in records}
-        assert by_path["src/mod.py"].imported_by == ["src/uses.py"]
-        assert by_path["src/mod.py"].impact_score > 0
+        assert by_path[MOD_PATH].imported_by == [USES_PATH]
+        assert by_path[MOD_PATH].impact_score > 0
