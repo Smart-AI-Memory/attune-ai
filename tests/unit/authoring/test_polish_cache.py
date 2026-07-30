@@ -75,8 +75,9 @@ class TestCacheKeyIncludesModel:
     """
 
     def test_model_change_invalidates_cache(self, cache_dir: Path) -> None:
-        """Changing the resolved polish model (via the premium-tier env
-        pin) produces a different key for the same
+        """Changing the resolved polish model (via the editing-model env
+        pin, ATTUNE_MODEL_EDITING — polish routes through
+        resolve_editing_model since the 2026-07-29 ruling) produces a different key for the same
         content/summary/template_type/system_prompt/context.
         """
         from attune.authoring import polish
@@ -88,7 +89,7 @@ class TestCacheKeyIncludesModel:
                 "os.environ",
                 {
                     "ANTHROPIC_API_KEY": "fake",  # pragma: allowlist secret
-                    "ATTUNE_MODEL_PREMIUM": "claude-old",
+                    "ATTUNE_MODEL_EDITING": "claude-old",
                 },
             ):
                 out_old = polish.polish_template("# T", "feat", "sum", template_type="concept")
@@ -101,7 +102,7 @@ class TestCacheKeyIncludesModel:
                 "os.environ",
                 {
                     "ANTHROPIC_API_KEY": "fake",  # pragma: allowlist secret
-                    "ATTUNE_MODEL_PREMIUM": "claude-new",
+                    "ATTUNE_MODEL_EDITING": "claude-new",
                 },
             ):
                 out_new = polish.polish_template("# T", "feat", "sum", template_type="concept")

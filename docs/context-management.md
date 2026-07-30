@@ -321,4 +321,4 @@ class CompactionStateManager:
 
 - [Hooks](hooks.md) - Event-driven extensibility
 - [Continuous Learning](continuous-learning.md) - Pattern extraction
-- [Commands](commands.md) - `/compact` command
+- [CLI Reference](reference/cli-reference.md#slash-command-system) - Slash command system

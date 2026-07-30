@@ -275,4 +275,4 @@ class HookConfig:
 
 - [Context Management](context-management.md) - State preservation
 - [Continuous Learning](continuous-learning.md) - Pattern extraction
-- [Commands](commands.md) - Command system integration
+- [CLI Reference](reference/cli-reference.md#slash-command-system) - Slash command system
