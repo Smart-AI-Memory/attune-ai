@@ -477,3 +477,29 @@ ledger behind the ruling has zero untriaged findings).
 - **Encoded:** contract master D11 bullet updated from "measured
   toward a default-on ruling" to the ruled text; projected to all
   provider surfaces.
+
+## 2026-07-30 — P1 RULED: FULL ACTIVATION (chair)
+
+Ruled by Patrick with the D8 bar closed: 11 fully-triaged R5
+ledger runs (8 accepted findings, 3 D11a-format rejections, 5
+clean; zero untriaged). Follows the same-session D11b rulings
+(contract-text risk class explicit; risk-triggered lanes
+permanent).
+
+- **What activates:** the cross-LLM lead/delegation model exits
+  pilot scope and becomes the STANDING operating mode. Global lead
+  per D9 (Claude, chair-overridable); per-feature leads set via
+  this spec's assignment mechanism; receipt-declared delegation
+  and central receipt re-runs are standing discipline; the R5
+  ledger keeps accruing as the standing evidence surface.
+- **What un-gates:** this spec's execution (T1 governance core
+  onward) is no longer P1-blocked. Tasks remain **draft** — T1+
+  starts only after tasks approval through the /spec loop; the P1
+  ruling removes the gate, it does not approve the tasks.
+- **Pilot evidence carried in:** both pilot lanes yielded accepted
+  findings on governance text; the skeptic loop closed (run-1
+  findings → #1559 lift → fixes verified in the merged tree);
+  D11a/D11c format gates exercised live.
+- **Encoded:** requirements.md status → `active`; contract master
+  pilot sentence replaced with the standing-mode text; projected
+  to all provider surfaces.

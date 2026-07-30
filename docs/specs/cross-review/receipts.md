@@ -45,6 +45,7 @@ and it fails the gate.
 | 2026-07-30 | codex | branch vs merge-base 53b62da04 (origin/main) — G5 workflow-OS hard tier + straggler sweep (D11b governance lane) | 7 sent / 0 omitted | 0 (clean) | clean |
 | 2026-07-30 | codex | staged changes — D11b refinement: authored contract/spec/rule text named explicit risk class (D11b contract-text lane; row 10, D8 count bar closed) | 5 sent / 0 omitted | 1 (findings) | real — accepted and fixed in-branch (decisions entry cited this row before it existed; row landed in the same commit) [P1] |
 | 2026-07-30 | codex | staged changes — D11b default-on RULED: risk-triggered permanent (contract master + decisions transcription; D11b contract-text lane) | 5 sent / 0 omitted | 1 (findings) | dismissed — claim: "The ruling is dated 2026-07-30 even though the current date is 2026-07-29, creating a future-dated governance record and unreliable audit chronology." — reason: this ledger records UTC dates by documented convention (header: "executed 2026-07-29 UTC (2026-07-28 ET evening session)"); it is 2026-07-30 UTC and the module-generated rows this session carry the same stamp — the chronology is consistent, not future-dated |
+| 2026-07-30 | codex | staged changes — P1 FULL ACTIVATION ruled: pilot exits to standing mode, spec status active, execution un-gated (D11b contract-text lane; row 12) | 7 sent / 0 omitted | 0 (clean) | clean |
 
 Board threads (live-fire check): `review-detached-20260729-0036`,
 `review-detached-20260729-0037`,

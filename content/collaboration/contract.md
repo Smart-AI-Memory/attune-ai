@@ -180,10 +180,13 @@ as pickable work.
   evidence-chain), and the lead re-runs the receipts centrally
   before work reaches the chair. A seat's self-report is never
   the receipt.
-- Delegated runs during the feature-lead pilot are recorded in the
-  cross-review R5 dogfood ledger
-  (`docs/specs/cross-review/receipts.md`) — they are the evidence
-  P1 activation waits on.
+- Delegated runs are recorded in the cross-review R5 dogfood
+  ledger (`docs/specs/cross-review/receipts.md`). P1 FULL
+  ACTIVATION was ruled at the D8 bar (chair, 2026-07-30, 11
+  fully-triaged runs): the lead/delegation model is the standing
+  operating mode, no longer pilot-scoped; per-feature leads are
+  set via the feature-lead-governance spec's mechanism, and the
+  ledger keeps accruing as the standing evidence surface.
 - **The lead is reviewed too (D11, 2026-07-29):** a lead-authored
   diff touching a risk class — authored contract/spec/rule text
   (named explicit 2026-07-30 as the R5 ledger's highest-yield
