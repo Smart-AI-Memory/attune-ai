@@ -706,7 +706,6 @@ omit = [
     "*/*_example.py",  # Example files
     # Utility modules with low criticality
     "*/utils/tokens.py",  # Token utilities
-    "*/memory/security/audit_logger.py",  # Optional audit logging
     # Wizard examples (not core functionality)
     "*/wizards/technology_wizard.py",  # Example wizard
     "*/wizards/customer_support_wizard.py",  # Example wizard
