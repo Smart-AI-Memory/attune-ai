@@ -15273,7 +15273,14 @@ def ", start_idx + 1)` for module-
   when main is the culprit: hotfix PR first, then
   `gh pr update-branch` the blocked PRs so their matrices rerun green
   — don't merge them over the inherited red even though Windows lanes
-  aren't required checks.
+  aren't required checks. Recurred 2026-07-30 (#1766 blocked 5/5
+  by the D11c countersign suite's chmod test — `chmod(0o555)`
+  cannot make a directory unwritable on win32, so "DID NOT RAISE";
+  hotfix #1767 added the win32 skipif, then `gh pr update-branch`
+  cleared the blocked PRs). Authoring rule from the recurrence:
+  any test that relies on chmod-based permission denial gets
+  `@pytest.mark.skipif(sys.platform == "win32", ...)` AT
+  AUTHORING TIME.
 
 - **The /tmp coverage recipe is for MEASURING one module's coverage,
   not for verifying suites — cwd-dependent tests fail en masse from
@@ -19651,29 +19658,6 @@ def ", start_idx + 1)` for module-
   ";-joined git sequence runs its destructive tail" lesson: `&&`
   every step after a can-fail heredoc, and treat "PR opened" as
   unverified until the pushed branch shows the expected commits.
-- **An UNRELATED PR failing ALL Windows lanes on one test = a
-  main-branch break that rode in on required-checks-only
-  auto-merge — read the failing test's name on the other PR's
-  lanes before touching your own diff**: 2026-07-30, PR #1766
-  (docs+ops sweep) sat BLOCKED with 5/5 windows lanes red on
-  `test_countersign.py::test_unwritable_scratch_root_raises_
-  runtime_error` ("DID NOT RAISE") — a test #1757/#1758 merged
-  the day before. `chmod(0o555)` cannot make a directory
-  unwritable on Windows, so the worktree add succeeded and
-  nothing raised; deterministic 5/5 across Python versions =
-  main break, not flake and not the PR's diff. The suite had
-  auto-merged on required checks only (the known #1488-class
-  trap — windows lanes aren't required). Recovery that
-  unblocked everything in ~20 min: hotfix branch off
-  origin/main adding `@pytest.mark.skipif(sys.platform ==
-  "win32", reason="chmod not reliable on Windows")` (the
-  repo's existing convention phrase), PR #1767, then `gh pr
-  update-branch` on the blocked PR to pick up the fix.
-  Prevention rule for authors: any test that makes a path
-  unwritable via chmod gets the win32 skipif AT AUTHORING
-  TIME — POSIX-only permission semantics never survive the
-  windows matrix.
-
 - **A gate you are authoring will fire on your own branch's
   describing artifacts (handoffs, PR-prep notes) — run the
   extended gate against the full tree as the LAST pre-push
