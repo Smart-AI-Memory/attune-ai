@@ -705,7 +705,6 @@ omit = [
     "*/agent_factory/resilient.py",  # Optional resilience module
     "*/*_example.py",  # Example files
     # Utility modules with low criticality
-    "*/utils/tokens.py",  # Token utilities
     # Wizard examples (not core functionality)
     "*/wizards/technology_wizard.py",  # Example wizard
     "*/wizards/customer_support_wizard.py",  # Example wizard
