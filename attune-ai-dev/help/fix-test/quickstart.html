@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Auto-diagnose test gaps from file changes and track test outcomes — quickstart</title>
-  <meta name="description" content="Generate a maintenance plan for the whole project. `TestMaintenanceWorkflow.run` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
+  <meta name="description" content="**Fastest path — `/fix-test` in Claude Code.** For an interactive fix, run `/fix-test &lt;test file or pattern&gt;` in a Claude Code session — it scopes the target, classifies the root cause, applies a fix," />
   <meta property="og:title" content="Auto-diagnose test gaps from file changes and track test outcomes — quickstart" />
-  <meta property="og:description" content="Generate a maintenance plan for the whole project. `TestMaintenanceWorkflow.run` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
+  <meta property="og:description" content="**Fastest path — `/fix-test` in Claude Code.** For an interactive fix, run `/fix-test &lt;test file or pattern&gt;` in a Claude Code session — it scopes the target, classifies the root cause, applies a fix," />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/quickstart" />
   <style>
@@ -274,7 +274,14 @@
   <article class="markdown-body">
 <h1>Auto-diagnose test gaps from file changes and track test outcomes</h1>
 <h2>Quickstart</h2>
-<p>Generate a maintenance plan for the whole project.
+<p><strong>Fastest path — <code>/fix-test</code> in Claude Code.</strong> For an interactive
+fix, run <code>/fix-test &lt;test file or pattern&gt;</code> in a Claude Code
+session — it scopes the target, classifies the root cause, applies
+a fix, and re-runs (up to 3 attempts) before reporting. The full
+walkthrough, including wiring a tests-on-edit hook so failures are
+caught and fixed the moment an edit creates them, is the tutorial
+at <code>docs/tutorials/fix-test.md</code>.</p>
+<p>For the Python API, generate a maintenance plan for the whole project.
 <code>TestMaintenanceWorkflow.run</code> is an async coroutine, so drive it with
 <code>asyncio.run</code> (or <code>await</code> it inside an existing event loop):</p>
 <pre><code class="language-python">import asyncio
