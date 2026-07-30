@@ -757,9 +757,15 @@ omit = [
     "*/core_modules/short_term_memory.py",  # Memory stubs
     # MCP init
     "*/mcp/__init__.py",  # MCP package init
-    # Project index (requires filesystem scanning)
-    "*/project_index/index.py",  # Full project indexing (integration-tested)
-    "*/project_index/scanner_parallel.py",  # Parallel scanner (requires multiprocessing)
+    # Project index
+    # index.py entry removed 2026-07-30 (omit-audit follow-on): its
+    # requires-filesystem-scanning label was false — the unit suite
+    # measures it 99% via tmp_path trees.
+    # scanner_parallel.py entry removed 2026-07-30 (same pass): the
+    # requires-multiprocessing label was false — the Pool path is
+    # guard-tested with a mocked spawn context, the worker fn is a
+    # plain function tested in-process, and the unreferenced benchmark
+    # helper was deleted rather than tested.
     # Commands module init
     "*/commands/__init__.py",  # Commands package init
     # Storage init
