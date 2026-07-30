@@ -43,6 +43,7 @@ and it fails the gate.
 | 2026-07-29 | codex | branch vs merge-base db48a3bf2 (origin/main) — pilot lane 3: principles draft + citations guard | 2 sent / 0 omitted | 2 (findings) | real — both accepted and fixed in-branch (path-scope widened; def/class-anchored name check); verify-it-fires receipts re-run |
 | 2026-07-30 | codex | branch vs merge-base ace35630b (origin/main) — 11.1.0 release-prep diff (#1761, D11b release-class lane) | 11 sent / 0 omitted | 0 (clean) | clean |
 | 2026-07-30 | codex | branch vs merge-base 53b62da04 (origin/main) — G5 workflow-OS hard tier + straggler sweep (D11b governance lane) | 7 sent / 0 omitted | 0 (clean) | clean |
+| 2026-07-30 | codex | staged changes — D11b refinement: authored contract/spec/rule text named explicit risk class (D11b contract-text lane; row 10, D8 count bar closed) | 5 sent / 0 omitted | 1 (findings) | real — accepted and fixed in-branch (decisions entry cited this row before it existed; row landed in the same commit) [P1] |
 
 Board threads (live-fire check): `review-detached-20260729-0036`,
 `review-detached-20260729-0037`,

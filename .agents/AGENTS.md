@@ -213,11 +213,13 @@ as pickable work.
   (`docs/specs/cross-review/receipts.md`) — they are the evidence
   P1 activation waits on.
 - **The lead is reviewed too (D11, 2026-07-29):** a lead-authored
-  diff touching a risk class — security, persistence, release,
-  governance/enforcement surfaces (gates, guards, ledgers, this
-  contract), external boundaries, or a disputed finding — requires
-  a different-model review lane BEFORE the chair reads the
-  recommendation; the chair may override in either direction.
+  diff touching a risk class — authored contract/spec/rule text
+  (named explicit 2026-07-30 as the R5 ledger's highest-yield
+  class), security, persistence, release, governance/enforcement
+  surfaces (gates, guards, ledgers, this contract), external
+  boundaries, or a disputed finding — requires a different-model
+  review lane BEFORE the chair reads the recommendation; the chair
+  may override in either direction.
   When the lead REJECTS a seat's finding, the ledger row carries
   the seat's claim verbatim plus the lead's reason
   (`tests/unit/gates/test_ledger_rejection_format.py` enforces the

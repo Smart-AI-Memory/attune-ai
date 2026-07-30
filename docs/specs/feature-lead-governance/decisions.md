@@ -430,3 +430,28 @@ evidentiary, not cryptographic — single-machine process
 attestation is out of scope, same posture as D3's forgery probes.
 Next evidence step: first live delegated lane whose lead re-run
 ships with an artifact + countersign token in its R5 row.
+
+## 2026-07-30 — D11b refined: authored contract/spec/rule text named the explicit first risk class (chair, in-session)
+
+Ruled by Patrick on the lead's recommendation while reviewing the
+R5 ledger evidence (9 rows at ruling time). The yield split was
+stark: 2 of 3 governance-text lanes produced accepted-and-fixed
+findings (including codex catching the lead's contract clause
+contradicting the contract it amended), while well-tested code and
+release diffs ran consistently clean. Until now the highest-yield
+class rode implicitly under "governance/enforcement surfaces".
+
+- **Change:** the D11 risk-class list in the contract master
+  (`content/collaboration/contract.md`) now names "authored
+  contract/spec/rule text" as its own explicit class, first in the
+  list. Projected to all provider surfaces via
+  `scripts/project_collaboration_contract.py`.
+- **Posture unchanged:** advisory lane, chair may still override
+  in either direction; R8 untouched. This is a naming refinement,
+  not a scope expansion — such diffs already triggered the lane in
+  practice.
+- **Evidence:** this amendment's own D11b lane is R5 ledger row
+  10, closing the D8 count bar (10 runs / first accepted-rejected
+  pattern) — the ledger now supports the bar-triggered ruling
+  whenever the chair takes it up; the untriaged carry-to-#1559 row
+  should be dispositioned first.
