@@ -203,6 +203,7 @@ nav:
   - Tutorials:
       - tutorials/index.md
       - Build a Workflow: tutorials/build-a-workflow.md
+      - Fix a Failing Test (and Automate It): tutorials/fix-test.md
       - Ops Dashboard: tutorials/ops-dashboard.md
       - Examples:
           - Code Review Assistant: tutorials/examples/simple-chatbot.md

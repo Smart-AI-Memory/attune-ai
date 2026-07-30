@@ -10,7 +10,16 @@ status: generated
 
 # Auto-diagnose test gaps from file changes and track test outcomes
 
-## Quickstart
+## Fastest path: /fix-test in Claude Code
+
+For an interactive fix, run `/fix-test <test file or pattern>` in a
+Claude Code session — it scopes the target, classifies the root
+cause, applies a fix, and re-runs (up to 3 attempts) before
+reporting. The full walkthrough, including wiring a tests-on-edit
+hook so failures are caught and fixed the moment an edit creates
+them, is the tutorial at `docs/tutorials/fix-test.md`.
+
+## Quickstart (Python API)
 
 Generate a maintenance plan for the whole project.
 `TestMaintenanceWorkflow.run` is an async coroutine, so drive it with
