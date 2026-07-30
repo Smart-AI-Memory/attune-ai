@@ -1,8 +1,10 @@
 # Feature Lead Governance — Requirements
 
-**Status:** approved (2026-07-27) — revision pass applied per
+**Status:** active (2026-07-30) — P1 FULL ACTIVATION ruled by the
+chair at the D8 bar (11 fully-triaged R5 runs); execution
+un-gated. History: approved 2026-07-27 with the revision pass per
 decisions.md D1–D7 (thread `q-feature-lead-governance-001`);
-execution gated by P1 (the cross-review usage-signal read).
+originally execution-gated by P1.
 **Slug:** `feature-lead-governance`
 **Artifact tier:** Spec — cross-provider authority is a durable,
 multi-session design choice.
