@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.1.0] — 2026-07-29
+
+Roundtable verification hardening and the governance layer that
+reviews the lead itself. No breaking changes.
+
+### Added
+
+- **Rotating skeptic for spec-closure claims (P3)** — roundtable
+  closure claims now draw a rotating skeptic seat that must
+  countersign or dissent before promotion (#1559).
+- **Gate-triage inbox + role telemetry (P2/P4)** — gate failures
+  land in a triage inbox with per-role telemetry so the table can
+  see which seat catches what (#1734).
+- **Hardened skeptic countersign of lead receipt re-runs (D11c)** —
+  the skeptic countersigns executor-produced, append-only receipt
+  artifacts (never lead-narrated summaries) and fails closed
+  (#1757, patch coverage to 100% in #1758).
+- **Append-only discharge path for chair-ruled ledger receipts** —
+  gate-ledger rows can be discharged with a recorded ruling instead
+  of lingering stale (#1739).
+- **Collaboration-contract principles + lead governance (D10–D12)**
+  — 15 ratified principles, each citing its mechanical enforcer or
+  marked aspirational; risk-triggered different-model review of
+  lead-authored diffs; efficacy measurement via the principles
+  fire-rate read (#1746, #1751).
+- **New drift-guard enforcers** — path-validation gate for
+  file-op modules (principle 4, #1753) and the SessionStart
+  hydrate-hook fail-open pin (principle 15, #1754).
+
+### Fixed
+
+- **A failed or absent security auditor now fails the Security
+  gate** — absence is no longer a pass (#1741).
+- **`PersistentPatternLibrary` persists outcomes and graph
+  edges** — pattern outcome recording survives process restarts
+  (#1748).
+- **Deflaked `test_run_busy_returns_409`** with an event-gated
+  busy window (#1752).
+
+### Changed
+
+- **Coverage floors raised across agents and telemetry** —
+  `agents/release/` modules and roundtable countersign at 100%
+  lines+branches; telemetry tracking/coordination branch coverage
+  to 100%; omit-audit pass 2 converted 8 mislabeled entries
+  (#1730, #1731, #1740, #1743, #1758).
+
 ## [11.0.0] — 2026-07-28
 
 Retires the last `attune-author` invocation paths. One breaking change,
