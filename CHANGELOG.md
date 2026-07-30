@@ -48,6 +48,12 @@ reviews the lead itself. No breaking changes.
 
 ### Changed
 
+- **Editing passes now run on Claude Opus 5** — writing tasks keep
+  drafting on Sonnet 5 (the CAPABLE tier); help and authoring
+  polish move to a dedicated editing model
+  (`ATTUNE_MODEL_EDITING`, default `claude-opus-5`). Authoring
+  polish drops from Fable-tier to Opus-tier pricing — half the
+  cost with Opus-class editing judgment (#1770).
 - **Coverage floors raised across agents and telemetry** —
   `agents/release/` modules and roundtable countersign at 100%
   lines+branches; telemetry tracking/coordination branch coverage
