@@ -195,8 +195,12 @@ as pickable work.
   When the lead REJECTS a seat's finding, the ledger row carries
   the seat's claim verbatim plus the lead's reason
   (`tests/unit/gates/test_ledger_rejection_format.py` enforces the
-  format). Review yield is measured in the R5 ledger toward a
-  default-on ruling.
+  format). RULED (chair, 2026-07-30, at the D8 bar with 10
+  fully-triaged runs): risk-triggered lanes are the PERMANENT
+  default — the lane is not expanded to all lead diffs (5 clean
+  lanes on well-tested code and release diffs showed cost without
+  yield there). Yield stays measured in the R5 ledger; a future
+  chair ruling can revisit either direction.
 
 ### Artifact selection
 

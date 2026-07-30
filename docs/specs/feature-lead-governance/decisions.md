@@ -455,3 +455,25 @@ class rode implicitly under "governance/enforcement surfaces".
   pattern) — the ledger now supports the bar-triggered ruling
   whenever the chair takes it up; the untriaged carry-to-#1559 row
   should be dispositioned first.
+
+## 2026-07-30 — D11b default-on question RULED: risk-triggered is the permanent default (chair)
+
+Ruled by Patrick at the D8 bar — 10 fully-triaged R5 runs (the
+carry-to-#1559 row was dispositioned the same session, so the
+ledger behind the ruling has zero untriaged findings).
+
+- **Ruling:** the different-model review lane stays RISK-TRIGGERED
+  (the D11 risk-class list, with authored contract/spec/rule text
+  explicit per the same-day refinement). It is NOT expanded to
+  default-on-all-lead-diffs.
+- **Evidence basis:** 7 accepted findings across 10 runs, ALL in
+  governance/contract text or verification-machinery code; 5 clean
+  lanes on well-tested code and release diffs — cost without yield
+  outside the risk classes. 2 rejections carry D11a claim+reason.
+- **Unchanged:** advisory posture (binding-posture upgrade remains
+  a separate, un-taken ruling per cross-review requirements); chair
+  override in either direction; R8. Yield measurement in the R5
+  ledger continues — a future chair ruling can revisit.
+- **Encoded:** contract master D11 bullet updated from "measured
+  toward a default-on ruling" to the ruled text; projected to all
+  provider surfaces.
