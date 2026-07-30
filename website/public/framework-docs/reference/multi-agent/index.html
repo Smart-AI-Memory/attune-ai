@@ -5596,9 +5596,11 @@ were removed from <code>attune.coordination</code> (v6.8.0 breaking change, see
 <a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md">CHANGELOG</a>).
 They had no internal callers in attune-ai and were blocking Redis-free
 installs. If you depended on these classes, pin
-<code>attune-ai&lt;6.8.0</code> or copy them from the v6.7.x source tree. A future
-<code>attune-redis</code> plugin will re-introduce coordination primitives with
-a proper API once it lands on PyPI.</p>
+<code>attune-ai&lt;6.8.0</code> or copy them from the v6.7.x source tree. The Redis
+plugin now ships bundled inside the attune-ai wheel (there is no
+separate <code>attune-redis</code> package on PyPI); its
+<code>attune_redis.signals.RedisSignalBus</code> provides the cross-agent
+signaling primitive.</p>
 </div>
 <hr />
 <h2 id="agentmonitor">AgentMonitor<a class="headerlink" href="#agentmonitor" title="Permanent link">&para;</a></h2>

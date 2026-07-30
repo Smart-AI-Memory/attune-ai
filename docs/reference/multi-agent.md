@@ -70,9 +70,11 @@ print(f"Collaboration efficiency: {stats['collaboration_efficiency']:.0%}")
     [CHANGELOG](https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md)).
     They had no internal callers in attune-ai and were blocking Redis-free
     installs. If you depended on these classes, pin
-    `attune-ai<6.8.0` or copy them from the v6.7.x source tree. A future
-    `attune-redis` plugin will re-introduce coordination primitives with
-    a proper API once it lands on PyPI.
+    `attune-ai<6.8.0` or copy them from the v6.7.x source tree. The Redis
+    plugin now ships bundled inside the attune-ai wheel (there is no
+    separate `attune-redis` package on PyPI); its
+    `attune_redis.signals.RedisSignalBus` provides the cross-agent
+    signaling primitive.
 
 ---
 
