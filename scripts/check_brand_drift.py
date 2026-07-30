@@ -4,8 +4,10 @@
 Two tiers, one pass over TRACKED files (``git ls-files``):
 
 1. **Hard fail, no allowlist:** the legacy identifiers
-   ``empathy-framework``, ``Deep-Study-AI``, ``empathy-scan`` may not
-   appear anywhere tracked, EXCEPT the documented historical surfaces
+   ``empathy-framework``, ``Deep-Study-AI``, ``empathy-scan`` and the
+   retired category framing ``workflow OS`` (case-insensitive;
+   ratified 2026-07-29 — say "AI Workflow-harness") may not appear
+   anywhere tracked, EXCEPT the documented historical surfaces
    below — they record the rebrand; scrubbing them would falsify
    history.
 2. **Ratchet:** the word ``empathy`` in ``src/``,
@@ -38,6 +40,13 @@ REPO = Path(__file__).resolve().parents[1]
 ALLOWLIST = REPO / ".claude" / "gates" / "empathy-allowlist.txt"
 
 HARD_TOKENS = ("empathy-framework", "Deep-Study-AI", "empathy-scan")
+
+#: Retired framing, hard tier via regex (ratified 2026-07-29): the
+#: category term is "AI Workflow-harness"; "(developer) workflow OS"
+#: may not re-enter living surfaces. Case-insensitive, tolerates a
+#: hyphen or wrapped whitespace between the words; the trailing
+#: boundary keeps "workflows", "OSS", "OSes" out.
+HARD_PATTERNS = (("workflow OS", re.compile(r"workflow[\s-]+os\b", re.IGNORECASE)),)
 RATCHET_SCOPES = ("src/", "docs/getting-started/", "plugin/")
 _RATCHET_RE = re.compile(r"empathy", re.IGNORECASE)
 
@@ -80,6 +89,7 @@ def hard_failures(files: list[str], repo: Path = REPO) -> dict[str, list[str]]:
             continue
         text = _read(repo, rel)
         found = [tok for tok in HARD_TOKENS if tok in text]
+        found += [label for label, pattern in HARD_PATTERNS if pattern.search(text)]
         if found:
             hits[rel] = found
     return hits

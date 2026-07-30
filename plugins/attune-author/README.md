@@ -86,7 +86,7 @@ multi-file module.
 | ------- | ---- |
 | `attune-help` | Lightweight reader (1 dep) |
 | `attune-author` | Author, generate, maintain (4 deps) |
-| `attune-ai` | Full developer workflow OS |
+| `attune-ai` | Full AI Workflow-harness |
 
 `attune-author` is the right choice if you want
 documentation tooling without the full attune-ai

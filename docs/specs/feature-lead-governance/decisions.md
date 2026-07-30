@@ -430,3 +430,50 @@ evidentiary, not cryptographic — single-machine process
 attestation is out of scope, same posture as D3's forgery probes.
 Next evidence step: first live delegated lane whose lead re-run
 ships with an artifact + countersign token in its R5 row.
+
+## 2026-07-30 — D11b refined: authored contract/spec/rule text named the explicit first risk class (chair, in-session)
+
+Ruled by Patrick on the lead's recommendation while reviewing the
+R5 ledger evidence (9 rows at ruling time). The yield split was
+stark: 2 of 3 governance-text lanes produced accepted-and-fixed
+findings (including codex catching the lead's contract clause
+contradicting the contract it amended), while well-tested code and
+release diffs ran consistently clean. Until now the highest-yield
+class rode implicitly under "governance/enforcement surfaces".
+
+- **Change:** the D11 risk-class list in the contract master
+  (`content/collaboration/contract.md`) now names "authored
+  contract/spec/rule text" as its own explicit class, first in the
+  list. Projected to all provider surfaces via
+  `scripts/project_collaboration_contract.py`.
+- **Posture unchanged:** advisory lane, chair may still override
+  in either direction; R8 untouched. This is a naming refinement,
+  not a scope expansion — such diffs already triggered the lane in
+  practice.
+- **Evidence:** this amendment's own D11b lane is R5 ledger row
+  10, closing the D8 count bar (10 runs / first accepted-rejected
+  pattern) — the ledger now supports the bar-triggered ruling
+  whenever the chair takes it up; the untriaged carry-to-#1559 row
+  should be dispositioned first.
+
+## 2026-07-30 — D11b default-on question RULED: risk-triggered is the permanent default (chair)
+
+Ruled by Patrick at the D8 bar — 10 fully-triaged R5 runs (the
+carry-to-#1559 row was dispositioned the same session, so the
+ledger behind the ruling has zero untriaged findings).
+
+- **Ruling:** the different-model review lane stays RISK-TRIGGERED
+  (the D11 risk-class list, with authored contract/spec/rule text
+  explicit per the same-day refinement). It is NOT expanded to
+  default-on-all-lead-diffs.
+- **Evidence basis:** 7 accepted findings across 10 runs, ALL in
+  governance/contract text or verification-machinery code; 5 clean
+  lanes on well-tested code and release diffs — cost without yield
+  outside the risk classes. 2 rejections carry D11a claim+reason.
+- **Unchanged:** advisory posture (binding-posture upgrade remains
+  a separate, un-taken ruling per cross-review requirements); chair
+  override in either direction; R8. Yield measurement in the R5
+  ledger continues — a future chair ruling can revisit.
+- **Encoded:** contract master D11 bullet updated from "measured
+  toward a default-on ruling" to the ruled text; projected to all
+  provider surfaces.
