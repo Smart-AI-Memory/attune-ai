@@ -208,6 +208,37 @@ as pickable work.
   evidence-chain), and the lead re-runs the receipts centrally
   before work reaches the chair. A seat's self-report is never
   the receipt.
+- **Lead-conduct guards (D11d, 2026-07-30 — ruled from a live
+  pushback test):** (1) CHAIR-ARMS: the lead never arms auto-merge
+  on a diff that expands lead authority or touches
+  governance/enforcement text; the chair's own label application
+  is the read-receipt, bound to the head SHA the chair armed — a
+  subsequent push invalidates the receipt, so the lead disarms and
+  the chair re-arms after re-reading. (2) COUNTER-CASE: a ruling recommendation
+  reaches the chair carrying the strongest argument against
+  itself, unprompted. (3) CADENCE BRAKE: the second
+  authority-affecting ruling in one session is flagged as such,
+  with a fresh-eyes batch offered. (4) FEEDBACK-ASK GRAMMAR, FULL
+  SCOPE: a seat asking the chair for feedback on its own conduct,
+  work, or a ruling recommendation renders the ask through the
+  communication grammar throughout, each construct firing when its
+  content exists — a counter-position as a pushback shape (the
+  user's position and the seat's alternative, side by side, with
+  the rationale), enumerable points as a per-point pick (adopt /
+  modify / reject per item), and open-ended asks as free-text form
+  fields; no construct fabricates disagreement or options to
+  satisfy the rule. The SHAPE is the requirement, not any widget:
+  seats without a form surface render the constructs as structured
+  text blocks. (Chair overruled the
+  lead's disposition-only recommendation; rich-surface mechanics
+  for Claude sessions live in
+  `.claude/rules/attune/communication-grammar.md`.)
+  (5) PROTECT-THEN-ASK: reversible protective acts against the
+  lead's OWN prior actions execute BEFORE any elicitation form is
+  built, with the form rendered afterward for the standing
+  decision; undoing a chair action is never a protective act,
+  neither directly nor by reverting an own-action the chair has
+  since endorsed or relied on.
 - Delegated runs are recorded in the cross-review R5 dogfood
   ledger (`docs/specs/cross-review/receipts.md`). P1 FULL
   ACTIVATION was ruled at the D8 bar (chair, 2026-07-30, 11

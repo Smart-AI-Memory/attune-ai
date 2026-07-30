@@ -1,8 +1,9 @@
 # Feature Lead Governance — Decisions
 
-**Status:** active (2026-07-27) — OPEN-1..4 + approval-evidence +
-disposition model chair-ruled; revision pass APPLIED to
-requirements/design/tasks/plan the same day. Execution gated by P1.
+**Status:** active (2026-07-30) — OPEN-1..4 + approval-evidence +
+disposition model chair-ruled; revision pass APPLIED 2026-07-27.
+P1 ruled 2026-07-30 (FULL ACTIVATION — execution un-gated); D11d
+lead-conduct guards ruled the same session. See dated entries.
 
 Chair rulings of 2026-07-27 come from round-table thread
 `q-feature-lead-governance-001` (3 rounds, all seats present, one
@@ -516,3 +517,66 @@ in the R5 ledger.
 - **Encoded:** requirements.md status → `active`; contract master
   pilot sentence replaced with the standing-mode text; projected
   to all provider surfaces.
+
+## 2026-07-30 — D11d lead-conduct guards, ruled from a live pushback test (chair)
+
+The chair ran a live test: after three authority-affecting rulings
+transcribed in ~90 minutes, a one-word "pushback?" — and the lead
+produced three substantive concerns that were all available BEFORE
+the invitation (an auto-merge armed on the P1 transcription the
+chair had not read; codex-deep evidence; a finding-level
+arithmetic imprecision in the lead's own entry). The test's
+lesson: the concerns existed; the surfacing discipline did not.
+
+Ratified (chair, with one lead recommendation overruled):
+
+- **D11d.1 CHAIR-ARMS** — the lead never arms auto-merge on a diff
+  expanding lead authority or touching governance/enforcement
+  text; the chair's label application is the read-receipt, BOUND
+  TO THE HEAD SHA the chair armed (lane-caught: an unbound receipt
+  lets later pushes auto-merge unread text). A push after arming
+  invalidates the receipt — the lead disarms, the chair re-arms
+  after re-reading.
+- **D11d.2 COUNTER-CASE** — ruling recommendations reach the chair
+  carrying the strongest argument against themselves, unprompted.
+- **D11d.3 CADENCE BRAKE** — the second authority-affecting ruling
+  in one session is flagged as such, with a fresh-eyes batch
+  offered.
+- **D11d.4 FEEDBACK-ASK GRAMMAR, FULL SCOPE** — feedback asks use
+  the communication grammar THROUGHOUT (generative + disposition
+  halves as constructs). The lead recommended disposition-only
+  (prose for the divergent half, arguing pre-structuring narrows
+  candor to enumerable options); the chair overruled to full
+  scope. Both positions recorded per the pushback discipline;
+  encoded in `.claude/rules/attune/communication-grammar.md`.
+- **D11d.5 PROTECT-THEN-ASK** — reversible protective acts against
+  the lead's OWN prior actions (and only those: undoing a chair
+  action, directly or by reverting an own-action the chair has
+  since endorsed or relied on, is never a protective act) execute
+  before any form is built; the form renders afterward for the
+  standing decision (the live disarm of the P1 PR's auto-merge —
+  lead-armed, chair-unread — is the worked example).
+
+Lane amendments (same session): the D11b lanes on this
+transcription ran five rounds and caught, all accepted and fixed
+in-branch — (1) the contract bullet omitted D11d.4 entirely while
+this entry claimed it encoded; (2) the carve-out's "drop a label"
+wording authorized undoing chair actions; (3) FEEDBACK-ASK bound
+every provider seat while its mechanics lived in a Claude-only
+rules file — the contract now carries the agent-agnostic SHAPE
+requirement with structured-text degradation; (4) the CHAIR-ARMS
+read-receipt was unbound — now SHA-bound (see D11d.1); (5)
+mandating counter-position + per-point picks was unsatisfiable
+for open-ended asks — resolved scope-preservingly: constructs
+fire when their content exists, open asks render as free-text
+form fields, nothing fabricates disagreement. Note for the
+record: (5) independently reprises the edge in the lead's
+overruled disposition-only recommendation; the chair's full-scope
+ruling STANDS — open asks are grammar-rendered, just via the
+grammar's free-text types.
+
+Encoded: contract master D11d bullet (projected to all provider
+surfaces); communication-grammar.md feedback-asks section.
+Enforcement: ruled discipline for now; a mechanical CHAIR-ARMS
+check (label-applier vs author on governance paths) is named
+pickable work, not built tonight.
