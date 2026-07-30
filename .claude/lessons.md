@@ -19568,3 +19568,57 @@ def ", start_idx + 1)` for module-
   exception, and the CLEAN check plus the PR comment are what
   keep it from becoming the "committing to a branch another agent
   has in flight" failure mode.
+
+- **Seat-yield is role-shaped, not model-shaped — brief
+  implementing seats with the ACTUAL runtime data shapes, and
+  route test-code review to the seat that yields there**:
+  2026-07-30, first post-activation delegated lane (codex
+  implements audit_logger tests, antigravity reviews). Codex's
+  only defects were GUESSED runtime shapes (asserted
+  `event["violation_type"]` where the real event nests
+  `event["violation"]["type"]` — the brief included the module
+  source but not a sample serialized event). Antigravity — clean
+  on all 8 prior REVIEW lanes over governance text and prod
+  code — produced its first-ever finding on TEST code
+  (builtins.open monkeypatch risking pytest/coverage
+  interference). Two rules: (1) an implementing-seat brief
+  includes a REAL sample of any serialized structure the tests
+  will assert on (one `to_dict()` dump beats 300 lines of
+  source); (2) don't read a seat's silence on one content class
+  as weakness everywhere — antigravity reviews test code with
+  teeth.
+
+- **A D11c countersign token binds to the artifact digest AND the
+  commit — any post-countersign commit (even a review fix)
+  re-mints the token against the new HEAD before it lands in a
+  ledger row**: 2026-07-30 lane. The first token was minted at
+  the initial lane commit; the antigravity review finding then
+  produced a fix commit, silently staling the token (its
+  artifact validated the PREVIOUS tree). Shipping the stale
+  token would have been exactly the lead-narrated evidence D11c
+  exists to kill. Rule: countersign LAST — after every review
+  disposition and fix is committed — or re-run
+  `rerun_receipts_to_artifact` + `run_countersign_pass` after
+  any subsequent commit; the ledger row carries the token whose
+  digest matches the shipped HEAD.
+
+- **A spent seat invocation's result must be persisted before any
+  fragile post-processing — printing `record.seat` on a dataclass
+  without that field lost a live countersign pass**: 2026-07-30.
+  `run_countersign_pass` invoked a real seat (subscription spend,
+  ~1 min), then my print crashed on a wrong attribute
+  (`CountersignPass` has `skeptic`, not `seat`) and the process
+  exited — record gone, pass re-run, spend doubled. Rule for any
+  paid/slow call inside a `python -c`/heredoc: write the raw
+  result to a file (json.dump with default=str) BEFORE any
+  formatting, or introspect the dataclass fields first
+  (`grep -n -A10 "class X"` costs nothing).
+
+- **macOS has no GNU `timeout` — `timeout 540 codex exec ...`
+  exits 127 (command not found), which reads as "codex missing"
+  when codex is fine**: 2026-07-30, first codex implementation
+  invocation. The Bash tool's own timeout parameter (or
+  `gtimeout` from coreutils) is the portable form; exit 127 on a
+  compound `timeout X <cmd>` on darwin means the WRAPPER is
+  missing, not the command — check `command -v timeout` before
+  blaming the payload.

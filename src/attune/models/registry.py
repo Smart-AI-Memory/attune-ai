@@ -185,6 +185,19 @@ ADDITIONAL_MODELS: dict[str, ModelInfo] = {
         supports_vision=True,
         supports_tools=True,
     ),
+    # Editing-pass default (attune.models.editing, ruled 2026-07-29):
+    # Sonnet drafts, Opus 5 edits. Not tier-routed — resolved via
+    # resolve_editing_model(), priced here for cost tracking.
+    "claude-opus-5": ModelInfo(
+        id="claude-opus-5",
+        provider="anthropic",
+        tier="premium",
+        input_cost_per_million=5.00,
+        output_cost_per_million=25.00,
+        max_tokens=128000,
+        supports_vision=True,
+        supports_tools=True,
+    ),
 }
 
 
