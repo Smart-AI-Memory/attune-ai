@@ -19712,3 +19712,72 @@ def ", start_idx + 1)` for module-
   convention once, cite it in the header, and disposition
   date-frame findings against THAT, not against whichever
   timezone a seat runs in.
+
+- **A HELD release-prep PR's changelog goes stale the moment
+  main moves — reconcile the release section against
+  `git log v<last>..origin/main` BEFORE executing the release,
+  not just at prep time**: 2026-07-30, #1761 (11.1.0 prep) was
+  drafted, held for release-execute, and in the ~6 hours of
+  holding, six merges landed — including the release's own
+  HEADLINE feature (#1770 editing-model split) and the G5
+  gate/P1-activation governance arc. The prep-time changelog was
+  accurate when written and silently incomplete when shipped;
+  the wheel would have carried features the changelog never
+  mentioned. Rule: release-execute Phase A gains a reconcile
+  step for held preps — diff the changelog's PR references
+  against the actual merge list since the last tag, extend the
+  section, and re-date it to the execute day. The hold
+  mechanism (draft PR) is correct; the changelog just has to be
+  re-trued at the moment of execution, the same way step 10
+  re-verifies content in the merge SHA.
+
+- **A broken-main window paints UNRELATED PRs' check history
+  red after the fix ships — compare the failing run's
+  `completedAt` against the fix's mergedAt before debugging
+  anything**: 2026-07-30, #1765 (docs-only) showed the
+  countersign chmod failure on an ubuntu lane; the run had
+  completed at 01:00 UTC, inside the window when that test broke
+  every PR, two hours before the #1767 skip merged at 03:01.
+  Nothing was wrong with the PR; `gh pr update-branch` + fresh
+  CI went green with zero code changes. The diagnostic is one
+  timestamp comparison — cheaper than any log read. Extends the
+  "stale-branch Windows-only failures" lesson: staleness can be
+  in the RUN, not the branch, and the tell is the completion
+  time predating a known main fix.
+
+- **"Armed" is not "merged" — an armed PR with a later-appearing
+  conflict (DIRTY) can never self-merge, and the arm state gives
+  no signal; the session's done-claim needs a MERGED
+  verification, not an arm verification**: 2026-07-30, #1771 was
+  armed, reported as "self-completes," and sat OPEN for nine
+  hours: lessons batches 8 and 9 merged after it was cut,
+  colliding on lessons.md's tail (DIRTY), and armed auto-merge
+  silently waits forever on a conflict. The existing lesson
+  family covers verifying the ARM took; this is the next ratchet:
+  before claiming a PR will land unattended, verify it CAN
+  (`mergeStateStatus` MERGEABLE/BLOCKED, not DIRTY/BEHIND), and
+  before claiming a batch of PRs landed, enumerate each one's
+  MERGED state — the "both merged" check that skips a sibling is
+  how one sits unnoticed. Resolution for the lessons-tail
+  collision is always the union (both blocks), via
+  stage-extraction if the guards block sibling-worktree edits.
+
+- **Corpus near-duplicates break retrieval-quality goldens by
+  crowding — fix by CONSOLIDATING the duplicate, never by
+  weakening the golden**: 2026-07-30, #1771's batch-7 windows
+  lesson near-duplicated the 2026-07-14 "ALL Windows lanes
+  failing while ubuntu/macos green" lesson; the batch-7+8 UNION
+  (only present on that PR's merge ref — every earlier PR passed)
+  shifted ranking enough to push the windows-crlf golden's
+  expected lessons out of top-3. The golden did its job: it
+  caught CONTENT duplication as a retrieval regression. Fix:
+  delete the duplicate, append the genuinely-new content to the
+  original as a dated addendum (26/26 lessons tests green after).
+  Two rules: (1) before appending a lesson, grep the corpus for
+  its headline nouns — an existing lesson to extend beats a new
+  near-twin (consolidate-over-scatter applies to lessons too);
+  (2) when a retrieval golden regresses after corpus growth, the
+  first hypothesis is duplication/crowding, and the fix is
+  content curation — editing the golden's expectations is
+  gate-weakening unless the query's ideal answer genuinely
+  changed.
