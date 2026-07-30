@@ -8,8 +8,8 @@
 
 `attune-author` is a focused documentation authoring and
 maintenance library for the attune ecosystem. It sits between
-`attune-help` (lightweight reader) and `attune-ai` (full dev
-workflow OS), providing everything needed to author, generate,
+`attune-help` (lightweight reader) and `attune-ai` (full AI
+Workflow-harness), providing everything needed to author, generate,
 and maintain documentation without the overhead of security
 audits, code review, test generation, etc.
 
