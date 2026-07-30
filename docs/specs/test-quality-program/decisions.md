@@ -784,3 +784,38 @@ with a dated tombstone comment. Module now **100.00%** under the repo
 exclude rules. No client mocking was ever needed — Tier-2 rank 1 cost
 ~an hour, not the estimated mocking effort. Next Tier-2 pick:
 `monitoring/otel_backend.py`.
+
+## Candidate policy — lane yield weighting + a 90% routine cap (2026-07-30, UNRULED)
+
+**Status: chair decision candidate, captured at Patrick's request —
+not a ruling. Nothing changes until ruled.**
+
+Evidence from the 2026-07-30 modules-needing-work session (#1788,
+#1791–#1796): ~260 new tests across 14 modules produced ONE real
+production bug (the `attune.ops` Config-shadowing find — from the
+cheapest lane, the Tier 3 shims, not the big clusters). That is ~7%
+of modules vs the program's historical ~22% bug-find rate — and the
+delta is consistent with D14's freshness thesis
+(feature-lead-governance): settled, mock-heavy modules yield less
+per test than recently-churned code.
+
+**Candidate (two parts):**
+
+1. **Pick-order weighting** — `scripts/modules_needing_work.py`
+   ranks lane candidates by miss-volume alone; add bug-find
+   likelihood signals (recent churn via `git log --since`, module
+   age, seam density) so lanes chase yield, not just coverage
+   points.
+2. **A ~90% routine-lane cap** — stop routine lanes at ~90% instead
+   of 100%; the last ten points are mostly error-path theater on
+   settled code.
+
+**Counter-case (carried per COUNTER-CASE discipline):**
+coverage-as-floor is a RATCHET, and ratchets work because they are
+not negotiated per-module. A cap invites lane-by-lane drift and
+weakens the "modules at 100%" accounting that the bug log's
+find-rate denominator depends on. If adopted, the cap must be a
+deliberate ruled policy with a bright line (e.g. "routine lanes
+target 90%; 100% remains the bar for modules touched by a bug fix"),
+never an ad-hoc stopping point. Also: tonight's 7% is one session's
+n=14 — a chair may reasonably want one more session of data first.
