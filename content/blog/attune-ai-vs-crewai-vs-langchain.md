@@ -3,7 +3,7 @@ title: "Attune AI vs CrewAI vs LangChain: Which AI Agent Framework Should You Ch
 date: "2026-03-07"
 author: "Patrick Roebuck"
 excerpt: "A developer's honest comparison of Attune AI, CrewAI, and LangChain for building AI agents and workflows. We compare architecture, cost, ease of use, and real-world performance."
-tags: ["comparison", "CrewAI", "LangChain", "AI frameworks", "AI Workflow-harness", "Attune AI"]
+tags: ["comparison", "CrewAI", "LangChain", "AI Workflow-harness", "Attune AI"]
 published: true
 ---
 
