@@ -480,11 +480,24 @@ ledger behind the ruling has zero untriaged findings).
 
 ## 2026-07-30 — P1 RULED: FULL ACTIVATION (chair)
 
-Ruled by Patrick with the D8 bar closed: 11 fully-triaged R5
-ledger runs (8 accepted findings, 3 D11a-format rejections, 5
-clean; zero untriaged). Follows the same-session D11b rulings
-(contract-text risk class explicit; risk-triggered lanes
-permanent).
+Ruled by Patrick with the D8 bar closed: 11 R5 ledger runs, every
+row carrying a ruled disposition. Precisely, at the finding level:
+14 findings — 8 accepted-and-fixed, 3 rejected with D11a
+claim+reason, and 3 PARKED under the stale-branch row's
+conditional disposition ("carry only if revived" — never judged
+on merit; they re-enter triage only if that branch revives).
+Follows the same-session D11b rulings (contract-text risk class
+explicit; risk-triggered lanes permanent).
+
+Evidence caveat (lead-surfaced at ruling time, chair-accepted):
+the finding yield is CODEX-DEEP, not mechanism-deep — all 14
+findings came from the codex seat; antigravity returned clean on
+everything it reviewed, including the 821-line skeptic diff where
+codex found five. The bar therefore proves codex-as-reviewer
+pays; whether the delegation MECHANISM generalizes across seats
+is untested. Standing follow-up: the first post-activation
+delegated lane deliberately uses the antigravity seat, recorded
+in the R5 ledger.
 
 - **What activates:** the cross-LLM lead/delegation model exits
   pilot scope and becomes the STANDING operating mode. Global lead
