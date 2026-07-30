@@ -865,6 +865,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../tutorials/fix-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fix a Failing Test (and Automate It)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../tutorials/ops-dashboard/" class="md-nav__link">
         
   
@@ -908,10 +936,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_4" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_5" >
         
           
-          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
             
   
   
@@ -929,8 +957,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_4">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -4649,7 +4677,14 @@
 
 <h1 id="fix-test">Fix Test<a class="headerlink" href="#fix-test" title="Permanent link">&para;</a></h1>
 <h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
-<p>Generate a maintenance plan for the whole project.
+<p><strong>Fastest path — <code>/fix-test</code> in Claude Code.</strong> For an interactive
+fix, run <code>/fix-test &lt;test file or pattern&gt;</code> in a Claude Code
+session — it scopes the target, classifies the root cause, applies
+a fix, and re-runs (up to 3 attempts) before reporting. The full
+walkthrough, including wiring a tests-on-edit hook so failures are
+caught and fixed the moment an edit creates them, is the tutorial
+at <code>docs/tutorials/fix-test.md</code>.</p>
+<p>For the Python API, generate a maintenance plan for the whole project.
 <code>TestMaintenanceWorkflow.run</code> is an async coroutine, so drive it with
 <code>asyncio.run</code> (or <code>await</code> it inside an existing event loop):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
@@ -4912,7 +4947,7 @@ if it is malformed; <code>get_file_test_status</code> returns the latest
 </tr>
 </tbody>
 </table>
-<!-- attune-generated: source_hash=2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b feature=fix-test kind=how-to generated_at=2026-06-22 -->
+<!-- attune-generated: source_hash=56383ae48a3d6c0dcdadb645912bf30697dbdd296c66e69e3c40100a6c12ab69 feature=fix-test kind=how-to generated_at=2026-07-30 -->
 
 
 

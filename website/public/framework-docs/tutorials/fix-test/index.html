@@ -12,13 +12,13 @@
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/features/agents/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/tutorials/fix-test/">
       
       
-        <link rel="prev" href="../">
+        <link rel="prev" href="../build-a-workflow/">
       
       
-        <link rel="next" href="../bug-predict/">
+        <link rel="next" href="../ops-dashboard/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Agents - Attune AI</title>
+        <title>Fix a Failing Test (and Automate It) - Attune AI</title>
       
     
     
@@ -85,7 +85,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#agents" class="md-skip">
+        <a href="#tutorial-fix-a-failing-test-then-make-it-automatic" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Agents
+              Fix a Failing Test (and Automate It)
             
           </span>
         </div>
@@ -268,11 +268,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../tutorials/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -408,13 +410,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../features/" class="md-tabs__link">
           
   
   
@@ -758,28 +758,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -797,7 +800,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -815,7 +818,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -843,7 +846,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/build-a-workflow/" class="md-nav__link">
+      <a href="../build-a-workflow/" class="md-nav__link">
         
   
   
@@ -868,10 +871,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../tutorials/fix-test/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fix a Failing Test (and Automate It)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -887,6 +917,120 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#part-1-see-the-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 1 — See the failure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-2-fix-it-with-fix-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 2 — Fix it with /fix-test
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-3-make-it-automatic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 3 — Make it automatic
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 3 — Make it automatic">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-add-the-hook-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1 — add the hook script
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-register-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2 — register it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-watch-the-loop-close" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3 — watch the loop close
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-built" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What you built
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to go next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -899,7 +1043,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/ops-dashboard/" class="md-nav__link">
+      <a href="../ops-dashboard/" class="md-nav__link">
         
   
   
@@ -933,10 +1077,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -945,7 +1092,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_5" >
         
           
-          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="">
             
   
   
@@ -981,7 +1128,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/examples/simple-chatbot/" class="md-nav__link">
+      <a href="../examples/simple-chatbot/" class="md-nav__link">
         
   
   
@@ -1009,7 +1156,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/examples/multi-agent-team-coordination/" class="md-nav__link">
+      <a href="../examples/multi-agent-team-coordination/" class="md-nav__link">
         
   
   
@@ -3627,31 +3774,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" checked>
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
             
   
   
@@ -3669,7 +3813,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3687,7 +3831,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../features/" class="md-nav__link">
         
   
   
@@ -3712,19 +3856,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../features/agents/" class="md-nav__link">
         
   
   
@@ -3740,7 +3875,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -3753,7 +3887,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../bug-predict/" class="md-nav__link">
+      <a href="../../features/bug-predict/" class="md-nav__link">
         
   
   
@@ -3781,7 +3915,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cli/" class="md-nav__link">
+      <a href="../../features/cli/" class="md-nav__link">
         
   
   
@@ -3809,7 +3943,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../code-quality/" class="md-nav__link">
+      <a href="../../features/code-quality/" class="md-nav__link">
         
   
   
@@ -3837,7 +3971,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
+      <a href="../../features/configuration/" class="md-nav__link">
         
   
   
@@ -3865,7 +3999,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cross-review/" class="md-nav__link">
+      <a href="../../features/cross-review/" class="md-nav__link">
         
   
   
@@ -3893,7 +4027,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deep-review/" class="md-nav__link">
+      <a href="../../features/deep-review/" class="md-nav__link">
         
   
   
@@ -3921,7 +4055,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../doc-gen/" class="md-nav__link">
+      <a href="../../features/doc-gen/" class="md-nav__link">
         
   
   
@@ -3949,7 +4083,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../elicitation-forms/" class="md-nav__link">
+      <a href="../../features/elicitation-forms/" class="md-nav__link">
         
   
   
@@ -3977,7 +4111,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../fix-test/" class="md-nav__link">
+      <a href="../../features/fix-test/" class="md-nav__link">
         
   
   
@@ -4005,7 +4139,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../help-system/" class="md-nav__link">
+      <a href="../../features/help-system/" class="md-nav__link">
         
   
   
@@ -4033,7 +4167,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../hooks/" class="md-nav__link">
+      <a href="../../features/hooks/" class="md-nav__link">
         
   
   
@@ -4061,7 +4195,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../mcp-server/" class="md-nav__link">
+      <a href="../../features/mcp-server/" class="md-nav__link">
         
   
   
@@ -4089,7 +4223,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../memory/" class="md-nav__link">
+      <a href="../../features/memory/" class="md-nav__link">
         
   
   
@@ -4117,7 +4251,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../models/" class="md-nav__link">
+      <a href="../../features/models/" class="md-nav__link">
         
   
   
@@ -4145,7 +4279,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ops-dashboard/" class="md-nav__link">
+      <a href="../../features/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -4173,7 +4307,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../orchestration/" class="md-nav__link">
+      <a href="../../features/orchestration/" class="md-nav__link">
         
   
   
@@ -4201,7 +4335,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../plugin/" class="md-nav__link">
+      <a href="../../features/plugin/" class="md-nav__link">
         
   
   
@@ -4229,7 +4363,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../rag-grounding/" class="md-nav__link">
+      <a href="../../features/rag-grounding/" class="md-nav__link">
         
   
   
@@ -4257,7 +4391,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../refactor-plan/" class="md-nav__link">
+      <a href="../../features/refactor-plan/" class="md-nav__link">
         
   
   
@@ -4285,7 +4419,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../release-notes/" class="md-nav__link">
+      <a href="../../features/release-notes/" class="md-nav__link">
         
   
   
@@ -4313,7 +4447,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../release-prep/" class="md-nav__link">
+      <a href="../../features/release-prep/" class="md-nav__link">
         
   
   
@@ -4341,7 +4475,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../resilience/" class="md-nav__link">
+      <a href="../../features/resilience/" class="md-nav__link">
         
   
   
@@ -4369,7 +4503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../security-audit/" class="md-nav__link">
+      <a href="../../features/security-audit/" class="md-nav__link">
         
   
   
@@ -4397,7 +4531,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../session-handoff/" class="md-nav__link">
+      <a href="../../features/session-handoff/" class="md-nav__link">
         
   
   
@@ -4425,7 +4559,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../smart-test/" class="md-nav__link">
+      <a href="../../features/smart-test/" class="md-nav__link">
         
   
   
@@ -4453,7 +4587,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../spec-engine/" class="md-nav__link">
+      <a href="../../features/spec-engine/" class="md-nav__link">
         
   
   
@@ -4481,7 +4615,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../telemetry/" class="md-nav__link">
+      <a href="../../features/telemetry/" class="md-nav__link">
         
   
   
@@ -4509,7 +4643,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../wizards/" class="md-nav__link">
+      <a href="../../features/wizards/" class="md-nav__link">
         
   
   
@@ -4557,6 +4691,108 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#part-1-see-the-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 1 — See the failure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-2-fix-it-with-fix-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 2 — Fix it with /fix-test
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#part-3-make-it-automatic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Part 3 — Make it automatic
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Part 3 — Make it automatic">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-add-the-hook-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1 — add the hook script
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-register-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2 — register it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-watch-the-loop-close" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3 — watch the loop close
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-built" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What you built
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to go next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -4575,34 +4811,193 @@
   
 
 
-<h1 id="agents">Agents<a class="headerlink" href="#agents" title="Permanent link">&para;</a></h1>
-<p>Universal Agent Factory — create, run, and orchestrate AI agents across frameworks</p>
-<div class="admonition tip">
-<p class="admonition-title">Start here</p>
-<p><a href="../../how-to/agents/">How-to guide</a> — task recipes for common goals.</p>
-</div>
-<div class="grid cards">
+<h1 id="tutorial-fix-a-failing-test-then-make-it-automatic">Tutorial: Fix a Failing Test — Then Make It Automatic<a class="headerlink" href="#tutorial-fix-a-failing-test-then-make-it-automatic" title="Permanent link">&para;</a></h1>
+<p>In this tutorial you'll fix a real failing test with attune-ai's
+<code>/fix-test</code> skill, then wire a Claude Code hook so every future edit
+runs its matching test immediately — failures get caught (and fixed)
+the moment they're created, not at the next full suite run.</p>
+<p><strong>You'll need:</strong> Claude Code with the attune-ai plugin installed
+(<code>pip install attune-ai</code>), and a Python project with a pytest suite.</p>
+<p><strong>Time:</strong> about 10 minutes.</p>
+<hr />
+<h2 id="part-1-see-the-failure">Part 1 — See the failure<a class="headerlink" href="#part-1-see-the-failure" title="Permanent link">&para;</a></h2>
+<p>Every fix starts with a reproducible failure. Run the failing test
+directly so you know exactly what Claude will see:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </span>tests/unit/test_pricing.py<span class="w"> </span>-v<span class="w"> </span>--tb<span class="o">=</span>short
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>FAILED tests/unit/test_pricing.py::test_discount_applies -
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>AssertionError: assert 90.0 == 85.0
+</code></pre></div>
+<p>If you don't have a failing test handy and want to follow along,
+break one on purpose — change an expected value in any assertion.</p>
+<h2 id="part-2-fix-it-with-fix-test">Part 2 — Fix it with /fix-test<a class="headerlink" href="#part-2-fix-it-with-fix-test" title="Permanent link">&para;</a></h2>
+<p>In Claude Code, run:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>/fix-test tests/unit/test_pricing.py
+</code></pre></div>
+<p>The skill scopes before it acts — expect two questions:</p>
+<ol>
+<li><strong>Target</strong> — which test is failing (you just gave it), or whether
+   it should hunt for failures itself.</li>
+<li><strong>Context</strong> — did this start failing after a recent change, or
+   has it been broken a while? (This routes the diagnosis: assertion
+   drift after a refactor is a different fix than a stale mock.)</li>
+</ol>
+<p>Then it loops: run the test, classify the root cause, apply a
+targeted fix, re-run — up to <strong>3 attempts</strong> before it stops and
+reports honestly. The root-cause classes it recognizes:</p>
+<table>
+<thead>
+<tr>
+<th>Error pattern</th>
+<th>Likely root cause</th>
+<th>Typical fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ModuleNotFoundError</code></td>
+<td>Import path changed</td>
+<td>Update the import</td>
+</tr>
+<tr>
+<td><code>AttributeError</code> on a mock</td>
+<td>Mock target wrong</td>
+<td>Match the real import path</td>
+</tr>
+<tr>
+<td><code>AssertionError</code></td>
+<td>Expected value drift</td>
+<td>Update the assertion</td>
+</tr>
+<tr>
+<td><code>TypeError: __init__</code></td>
+<td>Constructor changed</td>
+<td>Update the call site</td>
+</tr>
+<tr>
+<td><code>FileNotFoundError</code></td>
+<td>Fixture path wrong</td>
+<td>Use <code>tmp_path</code></td>
+</tr>
+</tbody>
+</table>
+<p>You get a report at the end — tests fixed, attempts used, and
+anything still failing with notes. <strong>A fix that changes the
+assertion deserves a skeptical read</strong>: if the production behavior
+changed <em>unintentionally</em>, updating the test buries a bug. The
+report names the root cause precisely so you can make that call.</p>
+<h2 id="part-3-make-it-automatic">Part 3 — Make it automatic<a class="headerlink" href="#part-3-make-it-automatic" title="Permanent link">&para;</a></h2>
+<p>The manual loop works, but the best moment to fix a test is the
+moment an edit breaks it. Claude Code <strong>hooks</strong> make that happen:
+a <code>PostToolUse</code> hook runs after every file edit, and anything it
+writes to stderr with exit code 2 is fed straight back to Claude —
+which then sees the failure <em>in the same session that caused it</em>
+and fixes it immediately.</p>
+<h3 id="step-1-add-the-hook-script">Step 1 — add the hook script<a class="headerlink" href="#step-1-add-the-hook-script" title="Permanent link">&para;</a></h3>
+<p>Save this as <code>.claude/hooks/run_matching_test.py</code> in your project:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="ch">#!/usr/bin/env python3</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="sd">&quot;&quot;&quot;PostToolUse hook: run the test file matching an edited source file.</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="sd">Reads the hook event JSON on stdin. If the edited file is production</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="sd">code, finds test files named after it (tests/**/test_&lt;stem&gt;*.py) and</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="sd">runs them. Exit 0 when they pass (silent); exit 2 with the pytest</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="sd">tail on stderr when they fail — Claude Code feeds exit-2 stderr back</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="sd">to Claude, which fixes the failure immediately.</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="n">event</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">)</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="n">edited</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tool_input&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;file_path&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">edited</span><span class="p">)</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="c1"># Only react to production .py edits — never to test edits (that</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="c1"># would loop) and never to docs/config.</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">suffix</span> <span class="o">!=</span> <span class="s2">&quot;.py&quot;</span> <span class="ow">or</span> <span class="s2">&quot;test&quot;</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;tests&quot;</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">parts</span><span class="p">:</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="n">project_root</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="n">matches</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">project_root</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;tests/**/test_</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">*.py&quot;</span><span class="p">))</span>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="p">:</span>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># no matching test file — nothing to run</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>    <span class="p">[</span><span class="s2">&quot;uv&quot;</span><span class="p">,</span> <span class="s2">&quot;run&quot;</span><span class="p">,</span> <span class="s2">&quot;pytest&quot;</span><span class="p">,</span> <span class="o">*</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">matches</span><span class="p">),</span> <span class="s2">&quot;-x&quot;</span><span class="p">,</span> <span class="s2">&quot;-q&quot;</span><span class="p">,</span> <span class="s2">&quot;--tb=short&quot;</span><span class="p">],</span>
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>    <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a>    <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>    <span class="n">timeout</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a><span class="p">)</span>
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a><span class="k">if</span> <span class="n">proc</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a>    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>
+<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a><span class="n">tail</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">proc</span><span class="o">.</span><span class="n">stdout</span> <span class="o">+</span> <span class="n">proc</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="o">-</span><span class="mi">30</span><span class="p">:])</span>
+<a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a><span class="nb">print</span><span class="p">(</span>
+<a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a>    <span class="sa">f</span><span class="s2">&quot;Tests for </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> FAILED after your edit:</span><span class="se">\n</span><span class="si">{</span><span class="n">tail</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+<a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a>    <span class="s2">&quot;Fix the failure before continuing (or run /fix-test).&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a>    <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,</span>
+<a id="__codelineno-3-43" name="__codelineno-3-43" href="#__codelineno-3-43"></a><span class="p">)</span>
+<a id="__codelineno-3-44" name="__codelineno-3-44" href="#__codelineno-3-44"></a><span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="step-2-register-it">Step 2 — register it<a class="headerlink" href="#step-2-register-it" title="Permanent link">&para;</a></h3>
+<p>Add this to your project's <code>.claude/settings.json</code> (create the file
+if it doesn't exist; if you already have a <code>hooks</code> block, merge the
+<code>PostToolUse</code> entry into it):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;hooks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">&quot;PostToolUse&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">      </span><span class="p">{</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">        </span><span class="nt">&quot;matcher&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Edit|Write&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">        </span><span class="nt">&quot;hooks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">          </span><span class="p">{</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">            </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;command&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">            </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;python3 \&quot;$CLAUDE_PROJECT_DIR/.claude/hooks/run_matching_test.py\&quot;&quot;</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">          </span><span class="p">}</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">        </span><span class="p">]</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">      </span><span class="p">}</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">    </span><span class="p">]</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="step-3-watch-the-loop-close">Step 3 — watch the loop close<a class="headerlink" href="#step-3-watch-the-loop-close" title="Permanent link">&para;</a></h3>
+<p>Ask Claude to change something in a file that has tests. The moment
+the edit lands, the hook runs the matching tests. If the edit broke
+one, Claude sees the failure output immediately and repairs it —
+usually before you'd have noticed anything was wrong. If the repair
+isn't obvious, <code>/fix-test</code> is one command away with the failure
+already on screen.</p>
+<p>Convention note: the hook maps <code>src/**/pricing.py</code> to
+<code>tests/**/test_pricing*.py</code>. If your suite names tests differently,
+adjust the <code>glob</code> pattern on the <code>matches</code> line — that one line is
+the whole mapping.</p>
+<h2 id="what-you-built">What you built<a class="headerlink" href="#what-you-built" title="Permanent link">&para;</a></h2>
 <ul>
-<li>
-<p><strong>Reference</strong></p>
-<hr />
-<p>The full API and option reference.</p>
-<p><a href="../../reference/agents/">Open the reference</a></p>
-</li>
-<li>
-<p><strong>Architecture</strong></p>
-<hr />
-<p>How it works and how to extend it.</p>
-<p><a href="../../architecture/agents/">Open the architecture</a></p>
-</li>
+<li>A diagnosis-first fix loop (<code>/fix-test</code>) that classifies root
+  causes instead of pattern-matching on error text, and knows when
+  to stop.</li>
+<li>A tests-on-edit hook that turns every edit into an immediate
+  verification, with failures routed back to the session that
+  caused them.</li>
 </ul>
-</div>
+<h2 id="where-to-go-next">Where to go next<a class="headerlink" href="#where-to-go-next" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>/smart-test</code> — find test <em>gaps</em> and generate tests for uncovered
+  code (the complement of fixing existing ones).</li>
+<li><code>/quick-test</code> — run tests affected by recent changes on demand.</li>
+<li>The <a href="../../features/fix-test/">fix-test help pages</a> cover the
+  Python-level <code>TestMaintenanceWorkflow</code> API for scripted
+  maintenance plans.</li>
+</ul>
 
 
 
 
 
 
+
+  
+  
 
 
 
