@@ -19931,3 +19931,52 @@ def ", start_idx + 1)` for module-
   review-debt register — free sweeps pre-filter, one scoped lane
   per flagged module, 1/day cap, kill criterion of two consecutive
   noise-only modules.
+
+- **Codecov's public API serves fresh per-module MISS LINES for
+  main — use it to target coverage lanes instead of a stale local
+  `.coverage` or a full worktree suite run**: 2026-07-30, the
+  modules-needing-work report + three coverage lanes (#1788,
+  #1791, #1792, #1793) were all scoped from
+  `https://api.codecov.io/api/v2/github/Smart-AI-Memory/repos/
+  attune-ai/report/?branch=main` — per-file `totals` plus
+  `line_coverage` pairs (`0`=hit, `1`=miss, `2`=partial), which
+  compress to exact missed-line ranges. This beat the two local
+  options: the main checkout's `.coverage` was a 12-day-old
+  PARTIAL run (showed `security/path_validation.py` at 5.66% when
+  main is really ~94% overall — per-module numbers from a partial
+  run are actively misleading), and re-measuring from a worktree
+  needs the /tmp recipe per module. Recipe: fetch once, extract
+  miss ranges per target, write tests against THOSE lines, then
+  re-measure only the target modules locally as the receipt.
+  Companion trap caught the same day: issue #1569's "next
+  candidates" named two modules at 80-81% that measured ~97%
+  current — always re-check a tracker's numbers against fresh
+  Codecov before picking a lane.
+
+- **The /tmp coverage recipe can FAIL cwd-sensitive tests — the
+  coverage run's pass/fail tail is NOT the suite receipt; re-run
+  the suite plainly from the repo root for that**: 2026-07-30,
+  measuring `authoring/generator.py` via the /tmp recipe showed
+  "28 failed, 742 passed" (test_projector and friends resolve
+  paths relative to cwd); the identical suite from the worktree
+  root was 770-passed green. The diagnosis and ops suites were
+  cwd-clean — whether the artifact appears depends on the suite,
+  so treat the two runs as TWO receipts: the /tmp run yields the
+  metric (coverage %), the repo-root run yields the suite tail.
+  Extends the "coverage measurement from a worktree" lesson with
+  the receipt-separation rule.
+
+- **`monkeypatch.setitem(sys.modules, "redis", None)` makes
+  `import redis` raise ImportError — the cheapest way to test
+  optional-dependency degrade paths; a `SimpleNamespace(Redis=…)`
+  entry covers the constructed-client path**: used across the
+  diagnosis-priors and ops data-layer lanes (2026-07-30) to hit
+  `redis-package-not-installed` and client-from-REDIS_URL branches
+  without uninstalling anything or touching a live server. A None
+  entry in `sys.modules` raises ImportError on import (stdlib
+  semantics); a fake module object with a `Redis.from_url`
+  classmethod captures the URL and returns a scripted client, so
+  transport-failure degrade paths (`recall-failed: ConnectionError`)
+  are testable too. Pairs with the entry-point-resolution lesson:
+  the fake must be installed BEFORE the code under test runs its
+  lazy `import redis`.
