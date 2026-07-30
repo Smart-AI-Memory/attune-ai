@@ -709,7 +709,6 @@ omit = [
     "*/wizards/technology_wizard.py",  # Example wizard
     "*/wizards/customer_support_wizard.py",  # Example wizard
     # Infrastructure servers (require HTTP/WebSocket clients, not unit-testable)
-    "*/mcp/server.py",  # MCP protocol server
     "*/workflows/progress_server.py",  # Progress streaming server
     # Interactive CLIs (require TTY/user input)
     "*/models/auth_cli.py",  # Interactive auth setup
