@@ -19568,3 +19568,81 @@ def ", start_idx + 1)` for module-
   exception, and the CLEAN check plus the PR comment are what
   keep it from becoming the "committing to a branch another agent
   has in flight" failure mode.
+
+- **An UNRELATED PR failing ALL Windows lanes on one test = a
+  main-branch break that rode in on required-checks-only
+  auto-merge — read the failing test's name on the other PR's
+  lanes before touching your own diff**: 2026-07-30, PR #1766
+  (docs+ops sweep) sat BLOCKED with 5/5 windows lanes red on
+  `test_countersign.py::test_unwritable_scratch_root_raises_
+  runtime_error` ("DID NOT RAISE") — a test #1757/#1758 merged
+  the day before. `chmod(0o555)` cannot make a directory
+  unwritable on Windows, so the worktree add succeeded and
+  nothing raised; deterministic 5/5 across Python versions =
+  main break, not flake and not the PR's diff. The suite had
+  auto-merged on required checks only (the known #1488-class
+  trap — windows lanes aren't required). Recovery that
+  unblocked everything in ~20 min: hotfix branch off
+  origin/main adding `@pytest.mark.skipif(sys.platform ==
+  "win32", reason="chmod not reliable on Windows")` (the
+  repo's existing convention phrase), PR #1767, then `gh pr
+  update-branch` on the blocked PR to pick up the fix.
+  Prevention rule for authors: any test that makes a path
+  unwritable via chmod gets the win32 skipif AT AUTHORING
+  TIME — POSIX-only permission semantics never survive the
+  windows matrix.
+
+- **A gate you are authoring will fire on your own branch's
+  describing artifacts (handoffs, PR-prep notes) — run the
+  extended gate against the full tree as the LAST pre-push
+  step, and reword rather than exclude**: 2026-07-30, the G5
+  "workflow OS" hard tier (PR #1769). After the upstream sweep
+  merged, the gate's final live-tree run failed on exactly one
+  file: this branch's OWN tracked handoff
+  (`docs/handoffs/<slug>.md`), which quoted the retired phrase
+  while describing the work. Fixed by rewording ("workflow" +
+  "OS") — NOT by adding `docs/handoffs/` to the exclusion
+  list; an exclusion added at the moment it becomes personally
+  convenient is exactly how gate scope erodes, and the
+  incident doubled as the fires-on-violation live proof. Two
+  reusable steps: (1) when adding a brand/claim token, run the
+  extended gate on the live tree FIRST and treat its hit list
+  as the authoritative sweep scope (it found 4 straggler files
+  the spec-named sweep PR missed — the code-is-the-contract
+  lesson applied to gates); (2) grep your branch's new
+  artifacts with the new pattern before the final commit, so
+  the last commit lands with the gate hook live instead of
+  SKIP'd.
+
+- **A decisions/ledger entry that cites an artifact produced BY
+  the very process being run must land ATOMICALLY with that
+  artifact — sequence the evidence chain into one commit**:
+  2026-07-30, D11b contract-text lane. The decisions.md entry
+  said "this amendment's own review lane is R5 ledger row 10",
+  but the staged diff codex reviewed contained no receipts.md
+  row — the row is generated FROM the review, so a naive
+  sequence (write decision → review → commit → append row →
+  commit) leaves a commit where the cited evidence doesn't
+  exist. Codex caught it as its finding (row 10's own row,
+  meta-honestly). Fix: run the lane on the staged diff, then
+  append the ledger row and commit decision+row together.
+  General form: when governance text cites an identifier the
+  session is about to mint (ledger row N, receipt id, board
+  thread), either mint first or land both in one commit —
+  never let the citation precede its referent in history.
+
+- **Date governance records in the ledger's documented
+  convention (UTC here) and expect local-date "future-dated"
+  false positives from reviewing seats — the convention header
+  is the citable rejection reason**: 2026-07-30 (UTC; 07-29
+  ET evening), the D11b default-on ruling transcription. Codex
+  flagged the 2026-07-30 date as "future-dated, unreliable
+  audit chronology" from its local-date frame. Dismissed with
+  D11a claim+reason citing the receipts header ("executed
+  2026-07-29 UTC (2026-07-28 ET evening session)") and the
+  module-stamped rows carrying the same UTC date — which also
+  exercised the D11a rejection-format gate on its first live
+  post-ruling row. Rule: pick the file's documented date
+  convention once, cite it in the header, and disposition
+  date-frame findings against THAT, not against whichever
+  timezone a seat runs in.
