@@ -456,6 +456,7 @@ class TestLoadFailsClosedBranches:
 
 
 class TestExecutorWorktreeFailure:
+    @pytest.mark.skipif(sys.platform == "win32", reason="chmod not reliable on Windows")
     def test_unwritable_scratch_root_raises_runtime_error(self, repo, tmp_path):
         ro_root = tmp_path / "ro"
         ro_root.mkdir()
