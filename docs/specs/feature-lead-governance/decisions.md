@@ -1,8 +1,9 @@
 # Feature Lead Governance — Decisions
 
-**Status:** active (2026-07-27) — OPEN-1..4 + approval-evidence +
-disposition model chair-ruled; revision pass APPLIED to
-requirements/design/tasks/plan the same day. Execution gated by P1.
+**Status:** active (2026-07-30) — OPEN-1..4 + approval-evidence +
+disposition model chair-ruled; revision pass APPLIED 2026-07-27.
+P1 ruled 2026-07-30 (FULL ACTIVATION — execution un-gated); D11d
+lead-conduct guards ruled the same session. See dated entries.
 
 Chair rulings of 2026-07-27 come from round-table thread
 `q-feature-lead-governance-001` (3 rounds, all seats present, one
@@ -430,3 +431,152 @@ evidentiary, not cryptographic — single-machine process
 attestation is out of scope, same posture as D3's forgery probes.
 Next evidence step: first live delegated lane whose lead re-run
 ships with an artifact + countersign token in its R5 row.
+
+## 2026-07-30 — D11b refined: authored contract/spec/rule text named the explicit first risk class (chair, in-session)
+
+Ruled by Patrick on the lead's recommendation while reviewing the
+R5 ledger evidence (9 rows at ruling time). The yield split was
+stark: 2 of 3 governance-text lanes produced accepted-and-fixed
+findings (including codex catching the lead's contract clause
+contradicting the contract it amended), while well-tested code and
+release diffs ran consistently clean. Until now the highest-yield
+class rode implicitly under "governance/enforcement surfaces".
+
+- **Change:** the D11 risk-class list in the contract master
+  (`content/collaboration/contract.md`) now names "authored
+  contract/spec/rule text" as its own explicit class, first in the
+  list. Projected to all provider surfaces via
+  `scripts/project_collaboration_contract.py`.
+- **Posture unchanged:** advisory lane, chair may still override
+  in either direction; R8 untouched. This is a naming refinement,
+  not a scope expansion — such diffs already triggered the lane in
+  practice.
+- **Evidence:** this amendment's own D11b lane is R5 ledger row
+  10, closing the D8 count bar (10 runs / first accepted-rejected
+  pattern) — the ledger now supports the bar-triggered ruling
+  whenever the chair takes it up; the untriaged carry-to-#1559 row
+  should be dispositioned first.
+
+## 2026-07-30 — D11b default-on question RULED: risk-triggered is the permanent default (chair)
+
+Ruled by Patrick at the D8 bar — 10 fully-triaged R5 runs (the
+carry-to-#1559 row was dispositioned the same session, so the
+ledger behind the ruling has zero untriaged findings).
+
+- **Ruling:** the different-model review lane stays RISK-TRIGGERED
+  (the D11 risk-class list, with authored contract/spec/rule text
+  explicit per the same-day refinement). It is NOT expanded to
+  default-on-all-lead-diffs.
+- **Evidence basis:** 7 accepted findings across 10 runs, ALL in
+  governance/contract text or verification-machinery code; 5 clean
+  lanes on well-tested code and release diffs — cost without yield
+  outside the risk classes. 2 rejections carry D11a claim+reason.
+- **Unchanged:** advisory posture (binding-posture upgrade remains
+  a separate, un-taken ruling per cross-review requirements); chair
+  override in either direction; R8. Yield measurement in the R5
+  ledger continues — a future chair ruling can revisit.
+- **Encoded:** contract master D11 bullet updated from "measured
+  toward a default-on ruling" to the ruled text; projected to all
+  provider surfaces.
+
+## 2026-07-30 — P1 RULED: FULL ACTIVATION (chair)
+
+Ruled by Patrick with the D8 bar closed: 11 R5 ledger runs, every
+row carrying a ruled disposition. Precisely, at the finding level:
+14 findings — 8 accepted-and-fixed, 3 rejected with D11a
+claim+reason, and 3 PARKED under the stale-branch row's
+conditional disposition ("carry only if revived" — never judged
+on merit; they re-enter triage only if that branch revives).
+Follows the same-session D11b rulings (contract-text risk class
+explicit; risk-triggered lanes permanent).
+
+Evidence caveat (lead-surfaced at ruling time, chair-accepted):
+the finding yield is CODEX-DEEP, not mechanism-deep — all 14
+findings came from the codex seat; antigravity returned clean on
+everything it reviewed, including the 821-line skeptic diff where
+codex found five. The bar therefore proves codex-as-reviewer
+pays; whether the delegation MECHANISM generalizes across seats
+is untested. Standing follow-up: the first post-activation
+delegated lane deliberately uses the antigravity seat, recorded
+in the R5 ledger.
+
+- **What activates:** the cross-LLM lead/delegation model exits
+  pilot scope and becomes the STANDING operating mode. Global lead
+  per D9 (Claude, chair-overridable); per-feature leads set via
+  this spec's assignment mechanism; receipt-declared delegation
+  and central receipt re-runs are standing discipline; the R5
+  ledger keeps accruing as the standing evidence surface.
+- **What un-gates:** this spec's execution (T1 governance core
+  onward) is no longer P1-blocked. Tasks remain **draft** — T1+
+  starts only after tasks approval through the /spec loop; the P1
+  ruling removes the gate, it does not approve the tasks.
+- **Pilot evidence carried in:** both pilot lanes yielded accepted
+  findings on governance text; the skeptic loop closed (run-1
+  findings → #1559 lift → fixes verified in the merged tree);
+  D11a/D11c format gates exercised live.
+- **Encoded:** requirements.md status → `active`; contract master
+  pilot sentence replaced with the standing-mode text; projected
+  to all provider surfaces.
+
+## 2026-07-30 — D11d lead-conduct guards, ruled from a live pushback test (chair)
+
+The chair ran a live test: after three authority-affecting rulings
+transcribed in ~90 minutes, a one-word "pushback?" — and the lead
+produced three substantive concerns that were all available BEFORE
+the invitation (an auto-merge armed on the P1 transcription the
+chair had not read; codex-deep evidence; a finding-level
+arithmetic imprecision in the lead's own entry). The test's
+lesson: the concerns existed; the surfacing discipline did not.
+
+Ratified (chair, with one lead recommendation overruled):
+
+- **D11d.1 CHAIR-ARMS** — the lead never arms auto-merge on a diff
+  expanding lead authority or touching governance/enforcement
+  text; the chair's label application is the read-receipt, BOUND
+  TO THE HEAD SHA the chair armed (lane-caught: an unbound receipt
+  lets later pushes auto-merge unread text). A push after arming
+  invalidates the receipt — the lead disarms, the chair re-arms
+  after re-reading.
+- **D11d.2 COUNTER-CASE** — ruling recommendations reach the chair
+  carrying the strongest argument against themselves, unprompted.
+- **D11d.3 CADENCE BRAKE** — the second authority-affecting ruling
+  in one session is flagged as such, with a fresh-eyes batch
+  offered.
+- **D11d.4 FEEDBACK-ASK GRAMMAR, FULL SCOPE** — feedback asks use
+  the communication grammar THROUGHOUT (generative + disposition
+  halves as constructs). The lead recommended disposition-only
+  (prose for the divergent half, arguing pre-structuring narrows
+  candor to enumerable options); the chair overruled to full
+  scope. Both positions recorded per the pushback discipline;
+  encoded in `.claude/rules/attune/communication-grammar.md`.
+- **D11d.5 PROTECT-THEN-ASK** — reversible protective acts against
+  the lead's OWN prior actions (and only those: undoing a chair
+  action, directly or by reverting an own-action the chair has
+  since endorsed or relied on, is never a protective act) execute
+  before any form is built; the form renders afterward for the
+  standing decision (the live disarm of the P1 PR's auto-merge —
+  lead-armed, chair-unread — is the worked example).
+
+Lane amendments (same session): the D11b lanes on this
+transcription ran five rounds and caught, all accepted and fixed
+in-branch — (1) the contract bullet omitted D11d.4 entirely while
+this entry claimed it encoded; (2) the carve-out's "drop a label"
+wording authorized undoing chair actions; (3) FEEDBACK-ASK bound
+every provider seat while its mechanics lived in a Claude-only
+rules file — the contract now carries the agent-agnostic SHAPE
+requirement with structured-text degradation; (4) the CHAIR-ARMS
+read-receipt was unbound — now SHA-bound (see D11d.1); (5)
+mandating counter-position + per-point picks was unsatisfiable
+for open-ended asks — resolved scope-preservingly: constructs
+fire when their content exists, open asks render as free-text
+form fields, nothing fabricates disagreement. Note for the
+record: (5) independently reprises the edge in the lead's
+overruled disposition-only recommendation; the chair's full-scope
+ruling STANDS — open asks are grammar-rendered, just via the
+grammar's free-text types.
+
+Encoded: contract master D11d bullet (projected to all provider
+surfaces); communication-grammar.md feedback-asks section.
+Enforcement: ruled discipline for now; a mechanical CHAIR-ARMS
+check (label-applier vs author on governance paths) is named
+pickable work, not built tonight.

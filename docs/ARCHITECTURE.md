@@ -4,7 +4,7 @@ description: Attune AI - Architecture Overview: System architecture overview wit
 
 # Attune AI - Architecture Overview
 
-**Last Updated:** April 23, 2026
+**Last Updated:** July 29, 2026
 **Status:** Living Document
 
 ---
@@ -111,28 +111,30 @@ Tier 5 — Entry Points
      cli_router ←── commands ──→ wizards
 ```
 
-### Codebase Metrics (v5.0.2)
+### Codebase Metrics (v11.0.0)
 
 | Metric | Value |
 |--------|-------|
-| Python files | 683 |
-| Lines of code | 178,974 |
-| Functions | 4,622 |
-| Classes | 1,188 |
-| Subpackages | 40 |
-| Tests | 10,860+ passing |
+| Python files | 731 |
+| Lines of code | 189,910 |
+| Functions (incl. methods) | 5,154 |
+| Classes | 889 |
+| Subpackages | 50 |
+| Tests | 23,597 collected |
 
-### Key Coupling Metrics (v5.0.2)
+### Key Coupling Metrics (v11.0.0)
+
+Dependents = files under `src/attune/` importing the module.
 
 | Module | Dependents | Role |
 |--------|-----------|------|
-| security/path_validation | 77+ | Path traversal guard |
-| config | 6 | Legacy config (decoupled) |
-| models | 14 | Model registry, tiers |
-| memory | 23 | Unified storage API |
-| meta_workflows | 25 | Orchestration hub |
-| workflows | 16 | Workflow engine |
-| mcp | 25+ tools | Claude Code integration |
+| security/path_validation | 77 | Path traversal guard |
+| config | 26 | Configuration |
+| models | 52 | Model registry, tiers |
+| memory | 53 | Unified storage API |
+| meta_workflows | 31 | Orchestration hub |
+| workflows | 59 | Workflow engine |
+| mcp | 49 core tools | Claude Code integration |
 
 ---
 

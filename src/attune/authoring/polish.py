@@ -43,19 +43,21 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from attune.authoring.polish_prompts import get_system_prompt
-from attune.model_tiers import resolve_model
 from attune.models import single_turn
+from attune.models.editing import resolve_editing_model
 from attune.models.single_turn import AnthropicCallError
 
 
 def _polish_model() -> str:
-    """Anthropic model for the polish pass: the premium tier.
+    """Anthropic model for the polish pass: the editing model.
 
-    Resolved per call (``ATTUNE_MODEL_PREMIUM`` env pin respected) and
-    fed into the cache key, so a model change — via env pin or a tier
-    default bump — invalidates cache entries automatically.
+    Sonnet drafts; polish is an editing pass and runs on the editing
+    model (``ATTUNE_MODEL_EDITING`` env pin respected, default
+    claude-opus-5 — ruled 2026-07-29). Resolved per call and fed into
+    the cache key, so a model change — via env pin or a default bump
+    — invalidates cache entries automatically.
     """
-    return resolve_model("premium")
+    return resolve_editing_model()
 
 
 #: Env var that overrides the default polish cache directory.

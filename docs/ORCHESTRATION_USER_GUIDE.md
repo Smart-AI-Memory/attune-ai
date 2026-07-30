@@ -4,8 +4,8 @@ description: Orchestration User Guide: Step-by-step tutorial with examples, best
 
 # Orchestration User Guide
 
-**Version:** 8.0.1
-**Last Updated:** June 9, 2026
+**Version:** 11.0.0
+**Last Updated:** July 29, 2026
 **Status:** Production Ready
 
 ---

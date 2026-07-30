@@ -15879,6 +15879,15 @@ def ", start_idx + 1)` for module-
   time. History: rate-limiting also hit the 10.0.x and 10.2.0
   releases (release_state memory); it is the norm at tag time, not
   weather. Defer by default; don't burn the evening.
+  *Epilogue (2026-07-29):* half (1) is FIXED — rate-limit now exits
+  1 and prints `WARNING: INCOMPLETE SNAPSHOT — missing packages: …
+  (0/5 captured)`, observed live at the 19:05 ET US-4 attempt (and
+  again at 20:20 — the IP penalty outlasted 75 minutes, consistent
+  with the hours-not-minutes horizon below). Exit codes are now
+  trustworthy for THIS script; the read-the-output rule stands —
+  the capture count in the output is still the only receipt, and
+  every OTHER backgrounded script remains guilty until proven
+  hard-failing.
 
 - **"Auto-merge lane should take it" is a claim about an ARM state —
   reconcile with `autoMergeRequest`, not the checks**: 2026-07-17
@@ -19536,3 +19545,80 @@ def ", start_idx + 1)` for module-
   candidate edit to the successor — triage it, don't drop it.
   Pairs with the stacked-child "superset receipt" lesson (same
   principle, different conflict shape).
+
+- **Taking over a stalled session's branch: the worktree path
+  guard blocks Write/Edit into BOTH the other session's worktree
+  AND any fresh scratchpad worktree — the sanctioned takeover
+  runs through YOUR OWN session worktree (2026-07-29, D11c lane,
+  #1757 complexity-ratchet fix)**: the guard compares git
+  toplevels, not paths, so "just edit in their worktree" and
+  "clone a throwaway worktree and edit there" are BOTH blocked —
+  any checkout whose toplevel differs from your session's is off
+  limits. The sanctioned dance: (1) verify the stalled worktree
+  is CLEAN — `git -C <wt> status --short` AND `git -C <wt> stash
+  list` both empty (a dirty tree or stash means unshipped work;
+  stop and surface it instead); (2) `git worktree remove <wt>` to
+  free the branch (git refuses two worktrees on one branch);
+  (3) check the branch out in YOUR session worktree and edit
+  there; (4) plain-push — append commits, never force, so the
+  stalled session's history stays intact if it revives; (5) leave
+  a PR comment recording the takeover so the stalled session (and
+  the chair) can reconcile instead of double-shipping. Pairs with
+  the "one branch per agent" discipline — a takeover is the ruled
+  exception, and the CLEAN check plus the PR comment are what
+  keep it from becoming the "committing to a branch another agent
+  has in flight" failure mode.
+
+- **Seat-yield is role-shaped, not model-shaped — brief
+  implementing seats with the ACTUAL runtime data shapes, and
+  route test-code review to the seat that yields there**:
+  2026-07-30, first post-activation delegated lane (codex
+  implements audit_logger tests, antigravity reviews). Codex's
+  only defects were GUESSED runtime shapes (asserted
+  `event["violation_type"]` where the real event nests
+  `event["violation"]["type"]` — the brief included the module
+  source but not a sample serialized event). Antigravity — clean
+  on all 8 prior REVIEW lanes over governance text and prod
+  code — produced its first-ever finding on TEST code
+  (builtins.open monkeypatch risking pytest/coverage
+  interference). Two rules: (1) an implementing-seat brief
+  includes a REAL sample of any serialized structure the tests
+  will assert on (one `to_dict()` dump beats 300 lines of
+  source); (2) don't read a seat's silence on one content class
+  as weakness everywhere — antigravity reviews test code with
+  teeth.
+
+- **A D11c countersign token binds to the artifact digest AND the
+  commit — any post-countersign commit (even a review fix)
+  re-mints the token against the new HEAD before it lands in a
+  ledger row**: 2026-07-30 lane. The first token was minted at
+  the initial lane commit; the antigravity review finding then
+  produced a fix commit, silently staling the token (its
+  artifact validated the PREVIOUS tree). Shipping the stale
+  token would have been exactly the lead-narrated evidence D11c
+  exists to kill. Rule: countersign LAST — after every review
+  disposition and fix is committed — or re-run
+  `rerun_receipts_to_artifact` + `run_countersign_pass` after
+  any subsequent commit; the ledger row carries the token whose
+  digest matches the shipped HEAD.
+
+- **A spent seat invocation's result must be persisted before any
+  fragile post-processing — printing `record.seat` on a dataclass
+  without that field lost a live countersign pass**: 2026-07-30.
+  `run_countersign_pass` invoked a real seat (subscription spend,
+  ~1 min), then my print crashed on a wrong attribute
+  (`CountersignPass` has `skeptic`, not `seat`) and the process
+  exited — record gone, pass re-run, spend doubled. Rule for any
+  paid/slow call inside a `python -c`/heredoc: write the raw
+  result to a file (json.dump with default=str) BEFORE any
+  formatting, or introspect the dataclass fields first
+  (`grep -n -A10 "class X"` costs nothing).
+
+- **macOS has no GNU `timeout` — `timeout 540 codex exec ...`
+  exits 127 (command not found), which reads as "codex missing"
+  when codex is fine**: 2026-07-30, first codex implementation
+  invocation. The Bash tool's own timeout parameter (or
+  `gtimeout` from coreutils) is the portable form; exit 127 on a
+  compound `timeout X <cmd>` on darwin means the WRAPPER is
+  missing, not the command — check `command -v timeout` before
+  blaming the payload.

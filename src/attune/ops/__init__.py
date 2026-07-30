@@ -1,4 +1,4 @@
-"""attune ops — operations dashboard for the workflow OS.
+"""attune ops — operations dashboard for the AI Workflow-harness.
 
 Exposes a local FastAPI app served at 127.0.0.1:8765 by default. Run via
 ``attune ops`` (preferred) or ``python -m attune.ops``.

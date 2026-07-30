@@ -208,21 +208,61 @@ as pickable work.
   evidence-chain), and the lead re-runs the receipts centrally
   before work reaches the chair. A seat's self-report is never
   the receipt.
-- Delegated runs during the feature-lead pilot are recorded in the
-  cross-review R5 dogfood ledger
-  (`docs/specs/cross-review/receipts.md`) — they are the evidence
-  P1 activation waits on.
+- **Lead-conduct guards (D11d, 2026-07-30 — ruled from a live
+  pushback test):** (1) CHAIR-ARMS: the lead never arms auto-merge
+  on a diff that expands lead authority or touches
+  governance/enforcement text; the chair's own label application
+  is the read-receipt, bound to the head SHA the chair armed — a
+  subsequent push invalidates the receipt, so the lead disarms and
+  the chair re-arms after re-reading. (2) COUNTER-CASE: a ruling recommendation
+  reaches the chair carrying the strongest argument against
+  itself, unprompted. (3) CADENCE BRAKE: the second
+  authority-affecting ruling in one session is flagged as such,
+  with a fresh-eyes batch offered. (4) FEEDBACK-ASK GRAMMAR, FULL
+  SCOPE: a seat asking the chair for feedback on its own conduct,
+  work, or a ruling recommendation renders the ask through the
+  communication grammar throughout, each construct firing when its
+  content exists — a counter-position as a pushback shape (the
+  user's position and the seat's alternative, side by side, with
+  the rationale), enumerable points as a per-point pick (adopt /
+  modify / reject per item), and open-ended asks as free-text form
+  fields; no construct fabricates disagreement or options to
+  satisfy the rule. The SHAPE is the requirement, not any widget:
+  seats without a form surface render the constructs as structured
+  text blocks. (Chair overruled the
+  lead's disposition-only recommendation; rich-surface mechanics
+  for Claude sessions live in
+  `.claude/rules/attune/communication-grammar.md`.)
+  (5) PROTECT-THEN-ASK: reversible protective acts against the
+  lead's OWN prior actions execute BEFORE any elicitation form is
+  built, with the form rendered afterward for the standing
+  decision; undoing a chair action is never a protective act,
+  neither directly nor by reverting an own-action the chair has
+  since endorsed or relied on.
+- Delegated runs are recorded in the cross-review R5 dogfood
+  ledger (`docs/specs/cross-review/receipts.md`). P1 FULL
+  ACTIVATION was ruled at the D8 bar (chair, 2026-07-30, 11
+  fully-triaged runs): the lead/delegation model is the standing
+  operating mode, no longer pilot-scoped; per-feature leads are
+  set via the feature-lead-governance spec's mechanism, and the
+  ledger keeps accruing as the standing evidence surface.
 - **The lead is reviewed too (D11, 2026-07-29):** a lead-authored
-  diff touching a risk class — security, persistence, release,
-  governance/enforcement surfaces (gates, guards, ledgers, this
-  contract), external boundaries, or a disputed finding — requires
-  a different-model review lane BEFORE the chair reads the
-  recommendation; the chair may override in either direction.
+  diff touching a risk class — authored contract/spec/rule text
+  (named explicit 2026-07-30 as the R5 ledger's highest-yield
+  class), security, persistence, release, governance/enforcement
+  surfaces (gates, guards, ledgers, this contract), external
+  boundaries, or a disputed finding — requires a different-model
+  review lane BEFORE the chair reads the recommendation; the chair
+  may override in either direction.
   When the lead REJECTS a seat's finding, the ledger row carries
   the seat's claim verbatim plus the lead's reason
   (`tests/unit/gates/test_ledger_rejection_format.py` enforces the
-  format). Review yield is measured in the R5 ledger toward a
-  default-on ruling.
+  format). RULED (chair, 2026-07-30, at the D8 bar with 10
+  fully-triaged runs): risk-triggered lanes are the PERMANENT
+  default — the lane is not expanded to all lead diffs (5 clean
+  lanes on well-tested code and release diffs showed cost without
+  yield there). Yield stays measured in the R5 ledger; a future
+  chair ruling can revisit either direction.
 
 ### Artifact selection
 
