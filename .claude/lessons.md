@@ -5889,7 +5889,14 @@ files.
   required contexts (`CodeQL, code-quality, coverage, lint,
   platform-compat, pre-commit, test (ubuntu-latest, 3.12)`); the other
   11 of the 12-lane `tests.yml` matrix (all Windows, all macOS, ubuntu
-  3.10/3.11/3.13) are ADVISORY. The repo is PUBLIC so minutes are free —
+  3.10/3.11/3.13) are ADVISORY. **[UPDATE 2026-07-30: the required
+  set has since grown to 12 contexts and now INCLUDES `test
+  (windows-latest, 3.12)` and `test-matrix-complete` (which waits on
+  the whole matrix), plus `default-install-smoke`, `doc-import-audit`,
+  `wiring-audit` — so a Windows lane DOES gate merges now, and the
+  "Windows lanes can't block you" half of this lesson is obsolete.
+  The durable half stands: read the protection API before treating
+  any lane as gating or advisory — the set drifts.]** The repo is PUBLIC so minutes are free —
   the cost was self-imposed latency + the temptation to treat a
   non-gating lane as a gate. Two durable rules: (1) **behavioral** —
   for a tests/docs-only diff merge on the required greens; the "wait
