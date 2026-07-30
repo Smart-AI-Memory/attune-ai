@@ -580,3 +580,99 @@ surfaces); communication-grammar.md feedback-asks section.
 Enforcement: ruled discipline for now; a mechanical CHAIR-ARMS
 check (label-applier vs author on governance paths) is named
 pickable work, not built tonight.
+
+## 2026-07-30 — D13: delegation-expansion rulings from the harder-lane experiment (chair, in-session)
+
+Ruled by Patrick after the lane 3/4/5 experiment day (R5 ledger rows
+of 2026-07-30; PRs #1785, #1787), off the lead's four-dimension menu.
+The lead's COUNTER-CASE for each dimension was presented before
+ruling (D11d.2); the CADENCE BRAKE was flagged (multiple rulings in
+one sitting, chair-picked) and the chair proceeded.
+
+**D13a — Feature-slice lanes AUTHORIZED, full lead review.** Delegated
+lanes graduate from coverage targets to small product-feature slices
+(e.g. a new MCP tool end-to-end, a user-visible fix, a P2B item).
+Full lead integration (complete diff read, central receipt re-runs,
+countersign, chair-arm) applies unchanged. GUARD (lead-proposed,
+chair-accepted): a feature lane launches only on acceptance criteria
+the chair has STATED or EXPLICITLY APPROVED — a one-line chair ask
+("add tool X that does Y") suffices; passive visibility of
+lead-written criteria does not. Without that approval the seat does
+not launch — the lead writing feature briefs alone would acquire
+product-scope authority nobody ruled on. (Wording hardened from
+"criteria the chair has seen" by the codex contract-text lane on
+this very transcription — the visibility-vs-approval gap was the
+lead softening its own guard, the exact D11b failure class.)
+Amendment rate on feature lanes is the next experiment readout.
+
+**D13b — Sampled lead review REJECTED: the counter-case wins.** The
+zero-amendment rate is endogenous — briefs are careful partly because
+the lead reads every line. Relaxing the read risks silent brief-quality
+decay that receipts would not surface (the D11c rubber-stamp-decay
+failure mode, pointed at the lead). Full lead review remains the
+standing mode for every lane class. Revisit condition: someone
+defines a working decay receipt for sampled review; until then this
+is not re-litigated.
+
+**D13c — Lane story goes to USERS, metric = conversations held.** The
+lane protocol (ground-truth brief → declared receipts → cross-model
+review → countersigned central re-run → auditable ledger) is the
+user-conversation opener, ahead of any wizard/feature build. DONE-WHEN
+is five HELD conversations with real developers (calls/DMs/replies —
+synchronous humans); a post may serve as funnel but "published" is
+explicitly not the metric (guards the impressions-vanity failure mode
+already recorded in the telemetry memory). Lead deliverable: a
+one-page ledger-backed conversation opener. Outreach is the chair's.
+
+**D13d — Seat roster HOLDS at two (codex, antigravity) + warm third
+adapter.** No unfilled yield niche justifies a third seat (roles are
+niche-shaped: codex implements/reviews governance text, antigravity
+yields on test code — 5-for-5 as of today). Exception is redundancy:
+one additional adapter kept warm via a monthly canary lane, owned by
+a scheduled task (not a memory), so subscription churn on either seat
+does not strand the protocol.
+
+Evidence base: R5 ledger 2026-07-30 rows (lanes 3, 4, lane-5
+pre-launch kill); lead amendments 0/0/0 across lanes 2–4 under
+ground-truth briefs; the single defect injected during the experiment
+came from the lead's own estimated (unmeasured) metric target, which
+the implementing seat correctly refused to chase across the scope
+boundary.
+
+## 2026-07-30 — D14: review-debt register RULED over standing review loops (chair, on lead counter-proposal)
+
+The chair proposed standing seat loops reviewing existing
+never-reviewed modules (find → lead fixes → seats review the fix).
+The lead pushed back (D11d.2 counter-case rendered concretely) and
+the chair ruled for the counter-proposal:
+
+**No standing review loops.** Ledger evidence: seat review yield
+concentrates on RECENTLY-AUTHORED work (fresh governance text, fresh
+tests); lanes over settled/well-tested code came back clean — the
+same cost-without-yield pattern that grounded D11b's rejection of
+all-diffs lanes. Cold module review without a diff or ground-truth
+brief reproduces the pre-discipline guessed-shapes failure mode, and
+loop-generated findings flood the binding constraint (lead triage +
+chair dispositions, each rejection requiring a probed D11a reason).
+
+**Instead: a FINITE review-debt register.** One-time ranked list of
+modules scored by user-traffic × churn × never-had-different-model
+review. Per module, cheapest tool first:
+(a) the product's own free sweeps (discovery-sweep, bug_predict,
+    security_audit) run as the pre-filter — only modules the cheap
+    tools flag earn a seat;
+(b) flagged modules get ONE scoped review lane each, ground-truth
+    brief, findings triaged and ledgered normally;
+(c) confirmed fixes flow through the standing lane pattern
+    (implement → different-model review → countersign → chair-arm)
+    — the fix-then-review half of the chair's proposal, which was
+    already standing mode.
+Controls: max one register module per day; yield tracked in the R5
+ledger; pre-declared KILL CRITERION — two consecutive noise-only
+modules from the ranked list ends the program. The pre-filter step
+doubles as product dogfood evidence either way (sweeps that filter
+well are a product receipt; seat catches the sweeps missed are a
+product gap).
+
+Register construction is a lead task; the ranked list and its
+scoring inputs land in this spec when built.
