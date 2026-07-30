@@ -19622,3 +19622,32 @@ def ", start_idx + 1)` for module-
   compound `timeout X <cmd>` on darwin means the WRAPPER is
   missing, not the command — check `command -v timeout` before
   blaming the payload.
+
+- **Review-seat false positives share a signature: the seat
+  assumes the CANONICAL code shape (module-level imports, local
+  timezones, standard call sites) instead of reading the actual
+  one — disposition with an executable receipt, never argument**:
+  2026-07-30, twice in one night. Codex called a UTC-dated ruling
+  "future-dated" (assumed local-date frame; the ledger header
+  documents UTC). Antigravity claimed a registry monkeypatch
+  "will not affect tokens.py if imported directly" — but
+  estimate_cost imports the symbol INSIDE the function body,
+  re-binding per call, and the test's ValueError assertion
+  passing IS the disproof. Rule: when dismissing a seat finding,
+  cite an executable receipt (the passing test, the documented
+  convention header) in the D11a reason — a receipt ends the
+  argument; a counter-assertion just extends it.
+
+- **A heredoc python step that fails does NOT stop
+  newline-separated follow-on commands — an assert-guarded append
+  failed loudly, but the unconditioned tail still opened a PR
+  missing its rows commit**: 2026-07-30, tokens lane. The ledger
+  append's anchor assert fired correctly (the branch predated the
+  sibling lane's rows — merge main BEFORE appending ledger rows),
+  but the compound command chained the append, commit, push, and
+  `gh pr create` with NEWLINES, so everything after the failed
+  python ran anyway and the PR opened without the rows. Recovery
+  was one merge+push since PRs update in place. Extends the
+  ";-joined git sequence runs its destructive tail" lesson: `&&`
+  every step after a can-fail heredoc, and treat "PR opened" as
+  unverified until the pushed branch shows the expected commits.
