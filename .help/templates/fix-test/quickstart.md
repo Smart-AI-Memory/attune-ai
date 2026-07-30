@@ -3,8 +3,8 @@ type: quickstart
 name: fix-test-quickstart
 feature: fix-test
 depth: quickstart
-generated_at: 2026-06-22T11:30:53.046085+00:00
-source_hash: 2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b
+generated_at: 2026-07-30T21:39:00.970482+00:00
+source_hash: 56383ae48a3d6c0dcdadb645912bf30697dbdd296c66e69e3c40100a6c12ab69
 status: generated
 ---
 
@@ -12,7 +12,15 @@ status: generated
 
 ## Quickstart
 
-Generate a maintenance plan for the whole project.
+**Fastest path — `/fix-test` in Claude Code.** For an interactive
+fix, run `/fix-test <test file or pattern>` in a Claude Code
+session — it scopes the target, classifies the root cause, applies
+a fix, and re-runs (up to 3 attempts) before reporting. The full
+walkthrough, including wiring a tests-on-edit hook so failures are
+caught and fixed the moment an edit creates them, is the tutorial
+at `docs/tutorials/fix-test.md`.
+
+For the Python API, generate a maintenance plan for the whole project.
 `TestMaintenanceWorkflow.run` is an async coroutine, so drive it with
 `asyncio.run` (or `await` it inside an existing event loop):
 
