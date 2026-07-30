@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Bulletin file backend: concurrent Windows writers no longer lose
+  entries** — the CRT's `O_APPEND` is seek-to-end + write (not
+  atomic), so two processes could overwrite each other's records; up
+  to 15% loss was tolerated and a CI run still rolled 19%. Appends on
+  Windows now serialize on a cross-process `msvcrt.locking`
+  sentinel-byte mutex (stdlib, no new dependency), degrading to the
+  old unlocked append on lock timeout since the bulletin is advisory.
+  The concurrency test now asserts exact zero loss on every platform.
+
 ## [11.1.0] — 2026-07-30
 
 Roundtable verification hardening and the governance layer that

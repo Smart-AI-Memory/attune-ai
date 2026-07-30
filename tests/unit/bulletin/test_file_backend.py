@@ -173,23 +173,20 @@ def _writer_task(args: tuple[str, str, int]) -> None:
 
 class TestConcurrency:
     def test_two_concurrent_writers_dont_lose_entries(self, tmp_path: Path) -> None:
-        """Concurrent appends from two processes survive correctly.
+        """Concurrent appends from two processes lose nothing, exactly.
 
         On POSIX, ``O_APPEND`` guarantees atomic appends for writes
         ≤ ``PIPE_BUF`` (typically 4096B); our ~250-400B entries are
-        well under that so the assertion is exact (zero entries lost).
+        well under that.
 
-        On Windows, ``O_APPEND`` doesn't carry the same formal
-        atomicity guarantee. Reads tolerate malformed lines, so the
-        observed failure mode is "occasional skipped entry on
-        contention" — empirically <10% in the common case but
-        boundary runs at exactly 10/100 have been seen in CI (e.g.
-        PR #488's lane). The Windows branch asserts the loss rate
-        stays AT or below 15% — a slack-bounded version of the
-        documented contract (advisory accuracy, not strict delivery)
-        that absorbs Windows scheduling variance without inviting
-        true regressions through. Switching to the Redis Streams
-        backend (Phase 3) eliminates this entirely.
+        On Windows, the CRT's ``O_APPEND`` is seek-to-end + write —
+        not atomic — so appends serialize on the backend's
+        ``msvcrt.locking`` sentinel-byte mutex. Before that lock
+        existed this branch tolerated a 15% loss rate and still
+        flaked (a 2026-07-30 CI run rolled 19/100 lost); with the
+        lock the assertion is exact on every platform. If this ever
+        fails on the Windows lane again, the lock is broken — that
+        is a real regression, not scheduling variance.
         """
         root = tmp_path / "bulletin"
         per_writer = 50
@@ -210,21 +207,87 @@ class TestConcurrency:
             f"actor-B-{i}" for i in range(per_writer)
         }
         missing = expected - run_ids
+        assert len(missing) == 0, f"lost {len(missing)} entries: {sorted(missing)[:5]}..."
 
-        if sys.platform == "win32":
-            # Advisory: occasional skipped lines OK, drift = regression.
-            # Threshold is 15% (not 10%) to absorb Windows scheduling
-            # variance — boundary runs at exactly 10/100 = 10.0% are
-            # within normal observed range, not regressions.
-            loss_rate = len(missing) / len(expected)
-            assert loss_rate <= 0.15, (
-                f"Windows loss rate {loss_rate:.1%} exceeds 15% — "
-                f"lost {len(missing)}/{len(expected)} entries: "
-                f"{sorted(missing)[:5]}..."
-            )
-        else:
-            # POSIX: O_APPEND atomicity should be exact.
-            assert len(missing) == 0, f"lost {len(missing)} entries: {sorted(missing)[:5]}..."
+
+class _FakeMsvcrt:
+    """Records locking() calls; optionally refuses non-blocking locks."""
+
+    LK_NBLCK = 1
+    LK_UNLCK = 2
+
+    def __init__(self, *, refuse_locks: bool = False) -> None:
+        self.refuse_locks = refuse_locks
+        self.calls: list[tuple[int, int, int]] = []  # (mode, offset, nbytes)
+
+    def locking(self, fd: int, mode: int, nbytes: int) -> None:
+        offset = os.lseek(fd, 0, os.SEEK_CUR)
+        self.calls.append((mode, offset, nbytes))
+        if self.refuse_locks and mode == self.LK_NBLCK:
+            raise OSError("region locked by another process")
+
+
+class TestWin32AppendChoreography:
+    """Pin _append_win32's lock choreography with a fake msvcrt.
+
+    Real mandatory-lock semantics only exist on Windows — the Windows
+    CI lane's exact-zero concurrency test above is that receipt. These
+    tests run on every platform and pin the choreography instead:
+    lock and unlock happen at the same sentinel offset around the
+    write, and a lock timeout degrades to an unlocked append rather
+    than dropping the entry.
+    """
+
+    @pytest.fixture()
+    def _posix_o_binary(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # os.O_BINARY only exists on Windows; give POSIX a no-op value
+        # (on Windows this reassigns the real value — a no-op).
+        monkeypatch.setattr(os, "O_BINARY", getattr(os, "O_BINARY", 0), raising=False)
+
+    def _line(self, run_id: str) -> bytes:
+        return (json.dumps(_entry(run_id=run_id).to_dict()) + "\n").encode("utf-8")
+
+    @pytest.mark.usefixtures("_posix_o_binary")
+    def test_locks_writes_then_unlocks_at_same_offset(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from attune.bulletin.file_backend import _WIN32_LOCK_OFFSET
+
+        fake = _FakeMsvcrt()
+        monkeypatch.setitem(sys.modules, "msvcrt", fake)
+        backend = FileBulletinBackend(tmp_path / "bulletin")
+        backend.active_path.parent.mkdir(parents=True, exist_ok=True)
+
+        backend._append_win32(self._line("locked-run"))
+
+        # Entry landed and reads back.
+        assert {e.run_id for e in backend.read_active()} == {"locked-run"}
+        # Exactly one lock + one unlock, both single-byte, both at the
+        # sentinel offset (unlocking elsewhere would leak the lock).
+        assert [(m, n) for m, o, n in fake.calls] == [
+            (fake.LK_NBLCK, 1),
+            (fake.LK_UNLCK, 1),
+        ]
+        assert [o for _m, o, _n in fake.calls] == [_WIN32_LOCK_OFFSET, _WIN32_LOCK_OFFSET]
+
+    @pytest.mark.usefixtures("_posix_o_binary")
+    def test_lock_timeout_degrades_to_unlocked_append(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from attune.bulletin import file_backend as fb
+
+        fake = _FakeMsvcrt(refuse_locks=True)
+        monkeypatch.setitem(sys.modules, "msvcrt", fake)
+        monkeypatch.setattr(fb, "_WIN32_LOCK_TIMEOUT_S", 0.01)
+        backend = FileBulletinBackend(tmp_path / "bulletin")
+        backend.active_path.parent.mkdir(parents=True, exist_ok=True)
+
+        backend._append_win32(self._line("degraded-run"))
+
+        # Entry still landed (advisory: never blocked on the lock)...
+        assert {e.run_id for e in backend.read_active()} == {"degraded-run"}
+        # ...and no unlock was attempted for a lock never acquired.
+        assert all(m == fake.LK_NBLCK for m, _o, _n in fake.calls)
 
 
 # ---------------------------------------------------------------------------
