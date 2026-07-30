@@ -466,7 +466,7 @@ redis = "attune_redis.memory:AMSMemoryBackend"
 | [ORCHESTRATION_API.md](ORCHESTRATION_API.md) | Workflow composition API |
 | [SECURITY_REVIEW.md](SECURITY_REVIEW.md) | Security analysis |
 | [REDIS_SETUP.md](REDIS_SETUP.md) | Redis configuration |
-| [SKILLS_REFERENCE.md](SKILLS_REFERENCE.md) | Plugin skills reference |
+| [SKILLS_REFERENCE.md](SKILLS_REFERENCE.md) | Pointer to the live skills registry (`/catalog`, `plugin/skills/`) |
 | [CHANGELOG.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md) | Version history |
 | [SECURITY.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/SECURITY.md) | Vulnerability reporting |
 
