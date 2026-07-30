@@ -4,8 +4,8 @@ description: Orchestration API Reference — agent templates, execution strategi
 
 # Orchestration API Reference
 
-**Version:** 8.0.1
-**Last Updated:** June 9, 2026
+**Version:** 11.0.0
+**Last Updated:** July 29, 2026
 
 ---
 
