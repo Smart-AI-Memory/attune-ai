@@ -2,11 +2,12 @@
 
 Lives outside the broader polish test suite specifically to
 catch the next model-change failure immediately. The polish model
-is now the premium *tier* (specs/fable-model-tiers): the default
-comes from ``attune.model_tiers`` and is overridable via
-``ATTUNE_MODEL_PREMIUM``. When the tier default is bumped again,
-this test fires a clear "the wire contract is stale" signal so
-the bump is mechanical.
+is the *editing* model (ruled 2026-07-29 — Sonnet drafts, the
+editing model edits): the default comes from
+``attune.models.editing`` and is overridable via
+``ATTUNE_MODEL_EDITING``. When the editing default is bumped
+again, this test fires a clear "the wire contract is stale"
+signal so the bump is mechanical.
 
 The test mocks at ``attune.models.single_turn.call_api``
 so no API tokens are spent.
@@ -20,27 +21,27 @@ import pytest
 
 from attune.authoring.polish import _polish_model, polish_template
 
-# The current premium-tier default the codebase is pinned to. Update
-# *both* this constant and model_tiers._DEFAULTS["premium"] together
+# The current editing-model default the codebase is pinned to. Update
+# *both* this constant and editing._DEFAULT_EDITING_MODEL together
 # when migrating; the co-located assertion catches half-migrations
 # where someone bumps one and forgets the other.
-_EXPECTED_MODEL = "claude-fable-5"
+_EXPECTED_MODEL = "claude-opus-5"
 
 
 def test_polish_model_matches_expected(monkeypatch: pytest.MonkeyPatch) -> None:
     """Sentinel: the resolved polish model is the alias we expect.
 
-    Failure mode: someone bumped the premium tier default in
-    ``model_tiers`` without bumping ``_EXPECTED_MODEL`` here.
-    Update both together.
+    Failure mode: someone bumped the editing default in
+    ``attune.models.editing`` without bumping ``_EXPECTED_MODEL``
+    here. Update both together.
     """
-    monkeypatch.delenv("ATTUNE_MODEL_PREMIUM", raising=False)
+    monkeypatch.delenv("ATTUNE_MODEL_EDITING", raising=False)
     assert _polish_model() == _EXPECTED_MODEL
 
 
-def test_polish_model_respects_premium_env_pin(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The CI sonnet pin (rag-gate.yml) must reach the polish path."""
-    monkeypatch.setenv("ATTUNE_MODEL_PREMIUM", "claude-sonnet-5")
+def test_polish_model_respects_editing_env_pin(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A CI model pin must reach the polish path."""
+    monkeypatch.setenv("ATTUNE_MODEL_EDITING", "claude-sonnet-5")
     assert _polish_model() == "claude-sonnet-5"
 
 
@@ -86,11 +87,11 @@ def test_polish_template_calls_sdk_with_expected_model(
 def test_polish_template_env_pin_flows_to_sdk_call(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Belt-and-suspenders: pinning ``ATTUNE_MODEL_PREMIUM`` flows
+    """Belt-and-suspenders: pinning ``ATTUNE_MODEL_EDITING`` flows
     through to the SDK call — resolution is per call, not a
     hard-coded model name at the call site.
     """
-    monkeypatch.setenv("ATTUNE_MODEL_PREMIUM", "claude-opus-4-8")
+    monkeypatch.setenv("ATTUNE_MODEL_EDITING", "claude-opus-4-8")
     with patch("attune.authoring.polish._cache_get", return_value=None):
         with patch("attune.models.single_turn.call_api", return_value="ok") as mock_call:
             with patch("attune.models.single_turn.get_client") as mock_client:
