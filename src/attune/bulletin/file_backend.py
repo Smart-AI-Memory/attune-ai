@@ -12,9 +12,18 @@ file opened in append mode are atomic. Our entries are well under
 that limit (~250-400B). This avoids the cross-platform pitfalls of
 ``fcntl`` (POSIX-only) while keeping the bulletin advisory-safe.
 
-Readers tolerate malformed lines — if a Windows race produced an
-interleaved write, the bad line is skipped and the rest of the log
-is still usable.
+On Windows, the CRT implements ``O_APPEND`` as seek-to-end + write —
+two non-atomic steps — so two processes can seek to the same EOF and
+overwrite each other's records. Appends there serialize on a
+cross-process ``msvcrt.locking`` mutex: a single sentinel byte far
+past any real data (Windows region locks are mandatory, so locking
+live data would fail concurrent readers). If the lock can't be
+acquired within a short timeout the append proceeds unlocked — the
+pre-lock behavior — because the bulletin is advisory.
+
+Readers tolerate malformed lines — if a race on the degraded Windows
+path produced an interleaved write, the bad line is skipped and the
+rest of the log is still usable.
 
 If the bulletin directory is unwritable, ``append`` logs at WARN and
 returns silently. The bulletin is advisory; it must not gate the
@@ -26,6 +35,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+import sys
+import time
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -36,6 +47,14 @@ logger = logging.getLogger(__name__)
 # Maximum line length (sanity bound — entries should be ~250-400B).
 # Any line longer than this on read is treated as corrupted.
 _MAX_LINE_BYTES = 16_384
+
+# Windows append lock: a sentinel byte locked far past any real data
+# (region locks are mandatory on Windows — locking live bytes would
+# fail concurrent readers; daily rotation keeps the log nowhere near
+# this offset). Lock waits cap at the timeout, then the append runs
+# unlocked — the bulletin is advisory and must not block workflows.
+_WIN32_LOCK_OFFSET = 0x7FFF_FFFE
+_WIN32_LOCK_TIMEOUT_S = 5.0
 
 
 class FileBulletinBackend:
@@ -89,17 +108,63 @@ class FileBulletinBackend:
             return
 
         try:
-            # O_APPEND ensures atomic appends ≤ PIPE_BUF on POSIX.
-            # On Windows the same call works but atomicity isn't
-            # formally guaranteed; reads tolerate malformed lines.
-            flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND
-            fd = os.open(str(self.active_path), flags, 0o644)
-            try:
-                os.write(fd, line)
-            finally:
-                os.close(fd)
+            if sys.platform == "win32":
+                self._append_win32(line)
+            else:
+                # O_APPEND ensures atomic appends ≤ PIPE_BUF on POSIX.
+                flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND
+                fd = os.open(str(self.active_path), flags, 0o644)
+                try:
+                    os.write(fd, line)
+                finally:
+                    os.close(fd)
         except OSError as e:
             logger.warning("bulletin: append failed: %s", e)
+
+    def _append_win32(self, line: bytes) -> None:  # pragma: no cover
+        """Append under a cross-process lock (win32 only).
+
+        The CRT's ``O_APPEND`` is seek-to-end + write, which is not
+        atomic across processes, so appends serialize on a mandatory
+        ``msvcrt.locking`` region lock at ``_WIN32_LOCK_OFFSET``. On
+        lock timeout the write proceeds unlocked (pre-lock behavior).
+
+        Not coverage-measured: coverage uploads from the Linux lane
+        only; the receipt is the Windows CI lane's zero-loss
+        concurrency test.
+        """
+        import msvcrt
+
+        flags = os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_BINARY
+        fd = os.open(str(self.active_path), flags, 0o644)
+        try:
+            locked = self._win32_try_lock(fd)
+            try:
+                os.lseek(fd, 0, os.SEEK_END)
+                os.write(fd, line)
+            finally:
+                if locked:
+                    os.lseek(fd, _WIN32_LOCK_OFFSET, os.SEEK_SET)
+                    msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+        finally:
+            os.close(fd)
+
+    @staticmethod
+    def _win32_try_lock(fd: int) -> bool:  # pragma: no cover
+        """Acquire the sentinel-byte append lock; False on timeout."""
+        import msvcrt
+
+        os.lseek(fd, _WIN32_LOCK_OFFSET, os.SEEK_SET)
+        deadline = time.monotonic() + _WIN32_LOCK_TIMEOUT_S
+        while True:
+            try:
+                msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+                return True
+            except OSError:
+                if time.monotonic() >= deadline:
+                    logger.warning("bulletin: append lock timed out; writing unlocked")
+                    return False
+                time.sleep(0.001)
 
     # ------------------------------------------------------------------
     # Read path
