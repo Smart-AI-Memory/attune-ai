@@ -8,7 +8,6 @@ Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
 """
 
-import builtins
 import json
 import logging
 import os
@@ -141,10 +140,10 @@ class TestWriting:
             enable_console_logging=True,
         )
 
-        def failing_open(*args, **kwargs):
+        def failing_dump(*args, **kwargs):
             raise OSError("disk unavailable")
 
-        monkeypatch.setattr(builtins, "open", failing_open)
+        monkeypatch.setattr(json, "dump", failing_dump)
 
         with caplog.at_level(logging.ERROR):
             audit_logger._write_event(make_event())
