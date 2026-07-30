@@ -7,6 +7,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.1.0] — 2026-07-30
+
+Roundtable verification hardening and the governance layer that
+reviews the lead itself. No breaking changes.
+
+### Added
+
+- **Rotating skeptic for spec-closure claims (P3)** — roundtable
+  closure claims now draw a rotating skeptic seat that must
+  countersign or dissent before promotion (#1559).
+- **Gate-triage inbox + role telemetry (P2/P4)** — gate failures
+  land in a triage inbox with per-role telemetry so the table can
+  see which seat catches what (#1734).
+- **Hardened skeptic countersign of lead receipt re-runs (D11c)** —
+  the skeptic countersigns executor-produced, append-only receipt
+  artifacts (never lead-narrated summaries) and fails closed
+  (#1757, patch coverage to 100% in #1758).
+- **Append-only discharge path for chair-ruled ledger receipts** —
+  gate-ledger rows can be discharged with a recorded ruling instead
+  of lingering stale (#1739).
+- **Collaboration-contract principles + lead governance (D10–D12)**
+  — 15 ratified principles, each citing its mechanical enforcer or
+  marked aspirational; risk-triggered different-model review of
+  lead-authored diffs; efficacy measurement via the principles
+  fire-rate read (#1746, #1751).
+- **New drift-guard enforcers** — path-validation gate for
+  file-op modules (principle 4, #1753) and the SessionStart
+  hydrate-hook fail-open pin (principle 15, #1754).
+- **Editing-model split** — editing/polish passes run on Opus 5
+  (env pin `ATTUNE_MODEL_EDITING`, default `claude-opus-5`);
+  writing drafts stay on Sonnet 5. Halves polish cost while
+  keeping Opus-tier editing judgment (#1770).
+- **Retired-framing hard gate (G5)** — the retired "workflow OS"
+  category framing cannot re-enter living surfaces; hard-tier
+  regex (case/hyphen/wrap tolerant) with fires-on-violation tests,
+  plus the full sweep to "AI Workflow-harness" (#1766, #1769).
+- **P1 FULL ACTIVATION + D11d lead-conduct guards** — the
+  cross-LLM lead/delegation model exits pilot to standing mode;
+  SHA-bound chair-arms read receipts, unprompted counter-case,
+  cadence brake, full-scope feedback-ask grammar, and
+  protect-then-ask (#1772).
+- **First delegated implementation lanes** — behavioral suites for
+  `memory/security/audit_logger` and `utils/tokens` (codex
+  implements, antigravity reviews, live D11c countersign tokens);
+  both modules un-omitted from coverage at 95%/96% (#1773, #1775).
+
+### Fixed
+
+- **A failed or absent security auditor now fails the Security
+  gate** — absence is no longer a pass (#1741).
+- **`PersistentPatternLibrary` persists outcomes and graph
+  edges** — pattern outcome recording survives process restarts
+  (#1748).
+- **Deflaked `test_run_busy_returns_409`** with an event-gated
+  busy window (#1752).
+- **Windows matrix unbroken** — the chmod-based unwritable-dir
+  countersign test cannot make a directory unwritable on Windows;
+  skipped on win32 (#1767, #1768).
+- **Polish cache-invalidation guard repointed** to the
+  editing-model pin it now routes through (#1770).
+
+### Changed
+
+- **Editing passes now run on Claude Opus 5** — writing tasks keep
+  drafting on Sonnet 5 (the CAPABLE tier); help and authoring
+  polish move to a dedicated editing model
+  (`ATTUNE_MODEL_EDITING`, default `claude-opus-5`). Authoring
+  polish drops from Fable-tier to Opus-tier pricing — half the
+  cost with Opus-class editing judgment (#1770).
+- **Coverage floors raised across agents and telemetry** —
+  `agents/release/` modules and roundtable countersign at 100%
+  lines+branches; telemetry tracking/coordination branch coverage
+  to 100%; omit-audit pass 2 converted 8 mislabeled entries
+  (#1730, #1731, #1740, #1743, #1758).
+
 ## [11.0.0] — 2026-07-28
 
 Retires the last `attune-author` invocation paths. One breaking change,
