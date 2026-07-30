@@ -19854,3 +19854,80 @@ def ", start_idx + 1)` for module-
   tasks run only while the app is open — a missed fireAt fires on
   next launch. Extends the existing scheduled-tasks timezone-display
   lesson with the run-model half.
+
+- **Grep importers before picking a coverage/lane target — a gap on
+  a module nothing imports is a DELETE candidate, not a test
+  target**: 2026-07-30, lane targeting. `workflows/progress_server.py`
+  (327 lines, websockets ProgressServer, own omit entry) had zero
+  importers in `src/` or `plugin/` — covering it would have wasted a
+  delegated lane on dead code. The user-traceability filter (does
+  this trace to a user-visible surface?) caught it pre-launch;
+  deletion chipped separately. Pairs with QA-6 and
+  removing-dead-code: the should-this-exist gate applies to TEST
+  targets, not just features.
+
+- **QA-6 runs BOTH directions, and the second direction cancels
+  lanes: measure with ALL owning test files before declaring a
+  block uncovered**: 2026-07-30, twice on `attune/mcp/server.py`.
+  (a) A test file existing (42 tests) proved nothing — the module
+  measured a real 34%. (b) Inverse, nearly cost a wasted lane: the
+  help-handler block showed as MISSED in every lane-receipt run,
+  but those runs listed only the lane's own files;  including the
+  pre-existing `test_help_handlers.py` showed the block already
+  covered (module 97%) and lane 5 was cancelled pre-launch. A
+  file-subset coverage run measures the SUBSET's reach, not the
+  module's coverage — always measure with every test file that
+  names the module before scoping work to its "gaps".
+
+- **Delegated-lane briefs: metric targets come from MEASURED region
+  statement counts, never estimates — and a good seat will (rightly)
+  refuse to chase a wrong target across the scope boundary**:
+  2026-07-30, lane 4. The brief declared "≥80% module coverage" from
+  eyeballed arithmetic; the in-scope elicitation block topped out at
+  74% with every in-scope line covered. Codex covered the scope,
+  refused to cross the boundary, and said so — correct behavior,
+  and the only defect injected that day was the lead's unmeasured
+  target. Corollary receipt: the brief-quality thesis held at n=3 —
+  zero lead amendments across lanes 2–4 under briefs carrying
+  live-captured runtime shapes (the capture step even catches the
+  LEAD's own shape-guessing: the elicitation form schema was
+  guessed wrong (`questions`/`choice`) and corrected by running the
+  real validator before the seat ever saw it).
+
+- **Countersign executor argv: use `/usr/bin/env PYTHONPATH=src …`
+  (RELATIVE src) so receipts run the scratch worktree's code, not
+  the editable-install MAPPING's main checkout**:
+  `rerun_receipts_to_artifact` executes checks with cwd = a
+  detached scratch worktree and injects no env; an absolute
+  PYTHONPATH or bare venv python resolves `attune` via main's
+  editable MAPPING (wrong-code receipts). Relative `PYTHONPATH=src`
+  binds to whatever commit the executor checked out — the receipt
+  provably measures the lane HEAD. Also: the executor builds from
+  committed HEAD, so countersign LAST (after the final commit), per
+  the countersign-last rule.
+
+- **A `timeout-minutes` kill records the run/job conclusion as
+  `cancelled`, NOT `failed` — recovery filters keyed on
+  `conclusion == "failure"` miss hung lanes entirely**: 2026-07-30,
+  #1787's `ubuntu-3.11` lane hit the known runner-hang class and
+  died at the 35-min job timeout with conclusion `cancelled`.
+  `gh run rerun <id> --failed` still picks such jobs up (it covers
+  cancelled jobs); the rerun greened in minutes and the armed label
+  merged. Diagnostic order that avoided a premature cancel: job
+  `started_at` age vs the workflow's own `timeout-minutes` — if the
+  timeout will fire soon, wait for it (cancelling early risks the
+  killed-coverage trap); rerun only after the self-kill.
+
+- **Seat review yield is freshness-shaped as well as role-shaped —
+  point review lanes at recently-authored diffs, not settled
+  modules**: extends the role-shaped-yield lesson with the D14
+  evidence (2026-07-30): every real finding across 26+ ledger rows
+  came from reviewing work authored hours-to-days earlier (fresh
+  governance text, fresh tests — antigravity now 5-for-5 on test
+  code); lanes over settled/well-tested code came back clean (the
+  D11b cost-without-yield base). Standing loops over old modules
+  were proposed and REJECTED for this reason (D14,
+  feature-lead-governance): the ruled alternative is a finite
+  review-debt register — free sweeps pre-filter, one scoped lane
+  per flagged module, 1/day cap, kill criterion of two consecutive
+  noise-only modules.
