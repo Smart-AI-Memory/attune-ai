@@ -109,11 +109,13 @@ def _call_llm(
         f"{content}"
     )
 
+    from attune.models.editing import resolve_editing_model
+
     response = client.messages.create(
-        # Stable alias — claude-sonnet-4-20250514 retires 2026-06-15.
-        # The stable alias routes to the same checkpoint and stays
-        # valid across model upgrades.
-        model="claude-sonnet-5",
+        # Polish is an editing pass: Sonnet drafts, the editing model
+        # (default claude-opus-5, ATTUNE_MODEL_EDITING to override)
+        # edits — ruled 2026-07-29.
+        model=resolve_editing_model(),
         max_tokens=4096,
         system=_SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_message}],
