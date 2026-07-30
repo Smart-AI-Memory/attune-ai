@@ -10,8 +10,11 @@ release status, and environment health. It reads attune state from
 
 __all__ = ["create_app", "build_config", "Config"]
 
-# Define export at module scope; actual object is still lazy-resolved in __getattr__.
-Config = None
+# ``Config`` is deliberately NOT bound at module scope: PEP 562
+# ``__getattr__`` only fires for missing attributes, so a module-level
+# ``Config = None`` placeholder shadowed the lazy resolver and every
+# ``from attune.ops import Config`` silently imported ``None``
+# (caught 2026-07-30, Tier 3 corrections — see COVERAGE_BUG_LOG.md).
 
 
 def create_app(*args, **kwargs):

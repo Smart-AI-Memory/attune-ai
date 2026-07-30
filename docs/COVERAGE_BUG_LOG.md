@@ -1,3 +1,28 @@
+## 2026-07-30 — Tier 3 shim corrections (coverage push, Fable 5)
+
+`src/attune/coordination.py` 0% → 100% (shim contract test),
+`src/attune/ops/__main__.py` 0% → 100% (entry-binding test),
+`src/attune/ops/__init__.py` 50% → 100% (lazy-delegation tests).
+One production bug found and fixed:
+
+- **Class 2-adjacent (dead lazy branch shadowed by its own
+  placeholder): `from attune.ops import Config` silently imported
+  `None`.** The package bound `Config = None` at module scope "for
+  static export" while the PEP 562 `__getattr__` carried the real
+  lazy `attune.ops.config.Config` resolution — but module
+  `__getattr__` only fires for MISSING attributes, so the
+  placeholder always won and the resolver branch was dead code
+  (masked from coverage by its own `pragma: no cover`). Any
+  consumer doing `from attune.ops import Config` got `None` and a
+  deferred `TypeError: 'NoneType' object is not callable` at first
+  use; a grep found no internal consumers, so the trap was armed
+  but unfired. Fix: the placeholder line deleted, `__getattr__` now
+  reachable; `test_config_getattr_resolves_real_class` pins the
+  contract. Detection note for the class: a `pragma: no cover` on
+  a PEP 562 `__getattr__` hides exactly this shadowing failure —
+  when a module defines both a placeholder AND a `__getattr__`
+  branch for the same name, one of them is dead by construction.
+
 ## 2026-07-29 — release_prep_team.py orchestration pass (coverage push, Fable 5)
 
 `src/attune/agents/release/release_prep_team.py` 78% → 100% via net-new
