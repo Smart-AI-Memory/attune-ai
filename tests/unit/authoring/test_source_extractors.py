@@ -15,6 +15,7 @@ four gaps the v0.3.6 hallucination benchmark surfaced.
 from __future__ import annotations
 
 import ast
+import textwrap
 
 from attune.authoring.source_introspection import (
     _extract_class_properties,
@@ -24,7 +25,12 @@ from attune.authoring.source_introspection import (
     _extract_param_literals,
     _extract_raises,
     _extract_return_data,
+    _format_class_methods,
+    _format_function_signature,
     _is_dataclass,
+    _split_signature,
+    _string_collection_values,
+    _unparse_annotation,
 )
 
 # -- return-data extraction -----------------------------------------
@@ -162,6 +168,26 @@ class TestExtractClassProperties:
         props = _extract_class_properties(_cls(src))
         assert props == [{"name": "count", "return_type": "", "doc": ""}]
 
+    def test_non_function_body_items_skipped(self) -> None:
+        src = (
+            "class C:\n"
+            "    version = '1.0'\n"
+            "    @property\n"
+            "    def count(self) -> int:\n"
+            "        return 0"
+        )
+        assert [p["name"] for p in _extract_class_properties(_cls(src))] == ["count"]
+
+    def test_qualified_abstractproperty_decorator(self) -> None:
+        """@abc.abstractproperty resolves via the Attribute decorator path."""
+        src = (
+            "class C:\n"
+            "    @abc.abstractproperty\n"
+            "    def count(self) -> int:\n"
+            "        return 0"
+        )
+        assert [p["name"] for p in _extract_class_properties(_cls(src))] == ["count"]
+
 
 def _fn(src: str) -> ast.FunctionDef:
     tree = ast.parse(src)
@@ -279,6 +305,11 @@ class TestExtractLiteralValues:
         numeric literals are rare and muddy the rendered table.
         """
         ann = ast.parse("x: Literal[1, 2, 3]", mode="exec").body[0].annotation
+        assert _extract_literal_values(ann) is None
+
+    def test_non_literal_subscript_returns_none(self) -> None:
+        """A subscript that isn't Literal[...] (e.g. list[str]) is rejected."""
+        ann = ast.parse("x: list[str]", mode="exec").body[0].annotation
         assert _extract_literal_values(ann) is None
 
 
@@ -452,3 +483,125 @@ class TestExtractModuleConstant:
 
     def test_non_string_frozenset_returns_none(self) -> None:
         assert _module_const("NUMS = frozenset({1, 2, 3})") is None
+
+    def test_qualified_frozenset_call(self) -> None:
+        """builtins.frozenset({...}) resolves via the Attribute func path."""
+        const = _module_const('TOKENS = builtins.frozenset({"a", "b"})')
+        assert const is not None
+        assert const["kind"] == "frozenset"
+        assert sorted(const["values"]) == ["a", "b"]
+
+
+# -- odd raise shapes (exception-name fall-through) -----------------
+
+
+def _raises_from_src(src: str) -> list[dict[str, str]]:
+    tree = ast.parse(textwrap.dedent(src))
+    node = tree.body[0]
+    assert isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
+    return _extract_raises(node)
+
+
+class TestExceptionNameFallThrough:
+    def test_subscript_raise_is_skipped(self) -> None:
+        """raise errs[0] has no resolvable class name — no entry."""
+        assert _raises_from_src("def f():\n    raise errs[0]\n") == []
+
+    def test_attribute_chain_not_rooted_in_name_is_skipped(self) -> None:
+        """raise factory().Error(...) — the chain roots in a Call, not a Name."""
+        assert _raises_from_src('def f():\n    raise factory().Error("boom")\n') == []
+
+
+# -- string-collection fall-through ---------------------------------
+
+
+class TestStringCollectionValues:
+    def test_dict_literal_returns_none(self) -> None:
+        node = ast.parse('{"a": 1}', mode="eval").body
+        assert _string_collection_values(node) is None
+
+    def test_list_of_strings(self) -> None:
+        node = ast.parse('["a", "b"]', mode="eval").body
+        assert _string_collection_values(node) == ["a", "b"]
+
+
+# -- signature formatting -------------------------------------------
+
+
+def _first_function(src: str) -> ast.FunctionDef | ast.AsyncFunctionDef:
+    tree = ast.parse(textwrap.dedent(src))
+    node = tree.body[0]
+    assert isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
+    return node
+
+
+class TestFormatFunctionSignature:
+    def test_defaults_vararg_kwonly_kwarg(self) -> None:
+        sig = _format_function_signature(
+            _first_function(
+                'def f(a, b: int = 1, *args: int, c: str = "x", **kw: object) -> bool:\n'
+                "    pass\n"
+            )
+        )
+        assert sig == "f(a, b: int = 1, *args: int, c: str = 'x', **kw: object) -> bool"
+
+    def test_positional_only_marker(self) -> None:
+        sig = _format_function_signature(_first_function("def g(a, /, b):\n    pass\n"))
+        assert sig == "g(a, /, b)"
+
+    def test_kwonly_without_vararg_gets_star(self) -> None:
+        sig = _format_function_signature(_first_function("def h(*, k: int = 2):\n    pass\n"))
+        assert sig == "h(*, k: int = 2)"
+
+
+class TestSplitSignature:
+    def test_mismatched_name_returns_empty(self) -> None:
+        assert _split_signature("other(a: int) -> str", "f") == ("", "")
+
+    def test_missing_close_paren_returns_empty(self) -> None:
+        assert _split_signature("f(a: int -> str", "f") == ("", "")
+
+    def test_params_and_return_split(self) -> None:
+        assert _split_signature("f(a: int, b: str) -> bool", "f") == ("a: int, b: str", "bool")
+
+    def test_no_return_annotation(self) -> None:
+        assert _split_signature("f(a)", "f") == ("a", "")
+
+
+class TestFormatClassMethods:
+    def test_public_and_init_kept_private_and_property_skipped(self) -> None:
+        src = textwrap.dedent(
+            """
+            class C:
+                def __init__(self, x: int):
+                    pass
+
+                def run(self, fast: bool = False) -> None:
+                    pass
+
+                def _hidden(self):
+                    pass
+
+                @property
+                def name(self) -> str:
+                    return "n"
+            """
+        )
+        node = ast.parse(src).body[0]
+        assert isinstance(node, ast.ClassDef)
+        methods = _format_class_methods(node)
+        assert "__init__(self, x: int)" in methods
+        assert "run(self, fast: bool = False) -> None" in methods
+        assert "_hidden" not in methods
+        assert "name" not in methods  # properties surface separately
+
+    def test_class_without_methods_is_empty(self) -> None:
+        node = ast.parse("class D:\n    x: int = 1\n").body[0]
+        assert isinstance(node, ast.ClassDef)
+        assert _format_class_methods(node) == ""
+
+
+class TestUnparseAnnotationFallback:
+    def test_malformed_node_falls_back_to_expr(self) -> None:
+        """A Name node with no id can't unparse — fallback, never raise."""
+        assert _unparse_annotation(ast.Name()) == "<expr>"
