@@ -19980,3 +19980,35 @@ def ", start_idx + 1)` for module-
   are testable too. Pairs with the entry-point-resolution lesson:
   the fake must be installed BEFORE the code under test runs its
   lazy `import redis`.
+
+- **Doc-embedded scripts get the extract-and-run receipt — regex
+  the fence out of the published page and execute THAT text, never
+  a parallel copy**: 2026-07-30, the fix-test tutorial ships a
+  ~40-line PostToolUse hook script inside a code fence. The receipt
+  that made the page trustworthy: extract the fence verbatim
+  (`re.search(r"```python\n(#!/usr/bin/env python3.*?)```", text,
+  re.DOTALL)`), write it to a scratch project, and drive every
+  documented path (pass→exit 0 silent, fail→exit 2 + stderr tail,
+  guard branches) with crafted stdin. Testing a hand-maintained
+  twin of the snippet proves nothing about the page — the fence IS
+  the artifact users copy, so the fence is what runs. Bonus: the
+  doc's "example output" block can then be the REAL captured
+  output, which principle 8 (docs may not cite fiction) wants
+  anyway. Applies to any doc carrying runnable content: hooks,
+  settings.json blocks, CI snippets.
+
+- **`git checkout -b X` in a multi-branch session stacks on the
+  CURRENT branch's HEAD — branch with an explicit start point
+  (`git checkout -b X origin/main`) and verify parentage before
+  push**: 2026-07-30, the tutorial branch was created reflexively
+  after the generator PR's branch was pushed — so it silently
+  contained the unmerged generator commit, primed for the
+  squash-orphan trap. Caught pre-push by `git log --oneline -3`
+  (the ancestry check is one line — make it the habit after every
+  `checkout -b`); fixed with `git rebase --onto origin/main
+  <base-commit>`, which replays only the new commit. Refinement to
+  the "rebase drops GPG signature" memory: with `commit.gpgsign
+  true`, the replayed commit re-signs automatically — verify with
+  `git log -1 --format='%G?'` (want `G`) rather than assuming
+  either way. Sessions that open many branches (5 lanes today) are
+  exactly where the reflexive bare `checkout -b` fires.
