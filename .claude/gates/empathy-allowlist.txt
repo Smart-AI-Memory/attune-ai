@@ -141,7 +141,6 @@ src/attune/workflows/documentation_orchestrator.py
 src/attune/workflows/escalation/chain.py
 src/attune/workflows/escalation/evaluator.py
 src/attune/workflows/executor_mixin.py
-src/attune/workflows/progress_server.py
 src/attune/workflows/progressive/README.md
 src/attune/workflows/test_gen_parallel.py
 src/attune/workflows/tier_tracking.py
