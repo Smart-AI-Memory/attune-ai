@@ -15273,7 +15273,14 @@ def ", start_idx + 1)` for module-
   when main is the culprit: hotfix PR first, then
   `gh pr update-branch` the blocked PRs so their matrices rerun green
   — don't merge them over the inherited red even though Windows lanes
-  aren't required checks.
+  aren't required checks. Recurred 2026-07-30 (#1766 blocked 5/5
+  by the D11c countersign suite's chmod test — `chmod(0o555)`
+  cannot make a directory unwritable on win32, so "DID NOT RAISE";
+  hotfix #1767 added the win32 skipif, then `gh pr update-branch`
+  cleared the blocked PRs). Authoring rule from the recurrence:
+  any test that relies on chmod-based permission denial gets
+  `@pytest.mark.skipif(sys.platform == "win32", ...)` AT
+  AUTHORING TIME.
 
 - **The /tmp coverage recipe is for MEASURING one module's coverage,
   not for verifying suites — cwd-dependent tests fail en masse from
@@ -19651,3 +19658,57 @@ def ", start_idx + 1)` for module-
   ";-joined git sequence runs its destructive tail" lesson: `&&`
   every step after a can-fail heredoc, and treat "PR opened" as
   unverified until the pushed branch shows the expected commits.
+- **A gate you are authoring will fire on your own branch's
+  describing artifacts (handoffs, PR-prep notes) — run the
+  extended gate against the full tree as the LAST pre-push
+  step, and reword rather than exclude**: 2026-07-30, the G5
+  "workflow OS" hard tier (PR #1769). After the upstream sweep
+  merged, the gate's final live-tree run failed on exactly one
+  file: this branch's OWN tracked handoff
+  (`docs/handoffs/<slug>.md`), which quoted the retired phrase
+  while describing the work. Fixed by rewording ("workflow" +
+  "OS") — NOT by adding `docs/handoffs/` to the exclusion
+  list; an exclusion added at the moment it becomes personally
+  convenient is exactly how gate scope erodes, and the
+  incident doubled as the fires-on-violation live proof. Two
+  reusable steps: (1) when adding a brand/claim token, run the
+  extended gate on the live tree FIRST and treat its hit list
+  as the authoritative sweep scope (it found 4 straggler files
+  the spec-named sweep PR missed — the code-is-the-contract
+  lesson applied to gates); (2) grep your branch's new
+  artifacts with the new pattern before the final commit, so
+  the last commit lands with the gate hook live instead of
+  SKIP'd.
+
+- **A decisions/ledger entry that cites an artifact produced BY
+  the very process being run must land ATOMICALLY with that
+  artifact — sequence the evidence chain into one commit**:
+  2026-07-30, D11b contract-text lane. The decisions.md entry
+  said "this amendment's own review lane is R5 ledger row 10",
+  but the staged diff codex reviewed contained no receipts.md
+  row — the row is generated FROM the review, so a naive
+  sequence (write decision → review → commit → append row →
+  commit) leaves a commit where the cited evidence doesn't
+  exist. Codex caught it as its finding (row 10's own row,
+  meta-honestly). Fix: run the lane on the staged diff, then
+  append the ledger row and commit decision+row together.
+  General form: when governance text cites an identifier the
+  session is about to mint (ledger row N, receipt id, board
+  thread), either mint first or land both in one commit —
+  never let the citation precede its referent in history.
+
+- **Date governance records in the ledger's documented
+  convention (UTC here) and expect local-date "future-dated"
+  false positives from reviewing seats — the convention header
+  is the citable rejection reason**: 2026-07-30 (UTC; 07-29
+  ET evening), the D11b default-on ruling transcription. Codex
+  flagged the 2026-07-30 date as "future-dated, unreliable
+  audit chronology" from its local-date frame. Dismissed with
+  D11a claim+reason citing the receipts header ("executed
+  2026-07-29 UTC (2026-07-28 ET evening session)") and the
+  module-stamped rows carrying the same UTC date — which also
+  exercised the D11a rejection-format gate on its first live
+  post-ruling row. Rule: pick the file's documented date
+  convention once, cite it in the header, and disposition
+  date-frame findings against THAT, not against whichever
+  timezone a seat runs in.
