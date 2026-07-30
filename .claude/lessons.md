@@ -20012,3 +20012,28 @@ def ", start_idx + 1)` for module-
   `git log -1 --format='%G?'` (want `G`) rather than assuming
   either way. Sessions that open many branches (5 lanes today) are
   exactly where the reflexive bare `checkout -b` fires.
+
+- **A `.help` template's `status:` frontmatter is the hand-edit
+  gate — read it BEFORE editing any `.help/templates/<feature>/`
+  file; `status: generated` means projector-owned with its master
+  at `content/features/<feature>.md`**: 2026-07-30, PR #1798 added
+  a "fastest path" section directly to
+  `.help/templates/fix-test/quickstart.md`, believing the feature
+  was `status: manual` ("hand-authoring is the sanctioned path" in
+  the PR body). The template's own frontmatter said `status:
+  generated` — three CI guards fired (projection-drift gate + both
+  help-bundle sync tests), plus coverage/matrix noise downstream.
+  The fix shape: move the content into the master's section, revert
+  the template hand-edit, then `python scripts/project_features.py
+  <feature>` AND `python scripts/sync_help_bundle.py` in the same
+  PR (the bundle is a second projection layer on top of the first —
+  syncing only the bundle still fails the drift gate, which
+  re-renders from `content/features/`). Two wrinkles: (1) the
+  projector keys sections by EXACT H2 title (`## Quickstart`), so
+  new content goes INSIDE the existing section — renaming the
+  heading silently skips every kind that depends on it (quickstart
+  AND the how-to docs page); (2) editing the master rewrites the
+  shared `source_hash` stamp in all ~14 sibling projections — a
+  15-file diff of stamp-only changes is expected, not scope creep.
+  Pairs with principle 3 (one source, projected) — this is the
+  per-file detection rule for it.
