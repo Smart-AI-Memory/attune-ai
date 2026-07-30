@@ -34,7 +34,7 @@ and it fails the gate.
 
 | Date | Seat | Target | Files | Findings | Disposition |
 |---|---|---|---|---|---|
-| 2026-07-29 | codex | branch vs merge-base 94e8459c5 (origin/main) — #1559 skeptic diff | 3 sent / 0 omitted | 5 (findings) | carry-to-#1559 |
+| 2026-07-29 | codex | branch vs merge-base 94e8459c5 (origin/main) — #1559 skeptic diff | 3 sent / 0 omitted | 5 (findings) | ruled at the #1559 lift (row closed 2026-07-30, chair-directed; fixes verified in merged tree) — 4 real, accepted and fixed in the lift commit (worktree-from-HEAD blind spot surfaced via `uncommitted_paths`; uncited COUNTERSIGN parses malformed; CITE validated against executed labels; git failures raise `SkepticError`) + 1 dismissed — claim: "caller-provided `scratch_root` is not created before `git worktree add`; nonexistent roots fail" — reason: `git worktree add` creates missing parents (probed live, 3-level nonexistent root, exit 0); `test_isolated_pass_and_fail_receipts` stays as the regression guard [P1] |
 | 2026-07-29 | antigravity | branch vs merge-base 94e8459c5 (origin/main) — #1559 skeptic diff | 3 sent / 0 omitted | 0 (clean) | clean |
 | 2026-07-29 | codex | branch vs merge-base cd55f3839 (origin/main) — lessons docs diff | 1 sent / 0 omitted | 1 (findings) | dismissed — dated context by design |
 | 2026-07-29 | antigravity | branch vs merge-base cd55f3839 (origin/main) — lessons docs diff | 1 sent / 0 omitted | 0 (clean) | clean |
