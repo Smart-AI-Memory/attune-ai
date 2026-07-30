@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [11.1.0] — 2026-07-29
+## [11.1.0] — 2026-07-30
 
 Roundtable verification hardening and the governance layer that
 reviews the lead itself. No breaking changes.
@@ -35,6 +35,23 @@ reviews the lead itself. No breaking changes.
 - **New drift-guard enforcers** — path-validation gate for
   file-op modules (principle 4, #1753) and the SessionStart
   hydrate-hook fail-open pin (principle 15, #1754).
+- **Editing-model split** — editing/polish passes run on Opus 5
+  (env pin `ATTUNE_MODEL_EDITING`, default `claude-opus-5`);
+  writing drafts stay on Sonnet 5. Halves polish cost while
+  keeping Opus-tier editing judgment (#1770).
+- **Retired-framing hard gate (G5)** — the retired "workflow OS"
+  category framing cannot re-enter living surfaces; hard-tier
+  regex (case/hyphen/wrap tolerant) with fires-on-violation tests,
+  plus the full sweep to "AI Workflow-harness" (#1766, #1769).
+- **P1 FULL ACTIVATION + D11d lead-conduct guards** — the
+  cross-LLM lead/delegation model exits pilot to standing mode;
+  SHA-bound chair-arms read receipts, unprompted counter-case,
+  cadence brake, full-scope feedback-ask grammar, and
+  protect-then-ask (#1772).
+- **First delegated implementation lanes** — behavioral suites for
+  `memory/security/audit_logger` and `utils/tokens` (codex
+  implements, antigravity reviews, live D11c countersign tokens);
+  both modules un-omitted from coverage at 95%/96% (#1773, #1775).
 
 ### Fixed
 
@@ -45,6 +62,11 @@ reviews the lead itself. No breaking changes.
   (#1748).
 - **Deflaked `test_run_busy_returns_409`** with an event-gated
   busy window (#1752).
+- **Windows matrix unbroken** — the chmod-based unwritable-dir
+  countersign test cannot make a directory unwritable on Windows;
+  skipped on win32 (#1767, #1768).
+- **Polish cache-invalidation guard repointed** to the
+  editing-model pin it now routes through (#1770).
 
 ### Changed
 
