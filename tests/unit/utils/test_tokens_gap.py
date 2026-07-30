@@ -74,7 +74,7 @@ class TestCountMessageTokens:
 
         monkeypatch.setattr(
             "attune.utils.tokens.count_tokens",
-            lambda text, model, use_api: token_counts[text],
+            lambda text, model="claude-sonnet-5", use_api=False: token_counts[text],
         )
 
         counts = count_message_tokens(messages, system_prompt=None)
