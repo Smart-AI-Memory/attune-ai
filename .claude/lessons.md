@@ -19813,3 +19813,44 @@ def ", start_idx + 1)` for module-
   content curation — editing the golden's expectations is
   gate-weakening unless the query's ideal answer genuinely
   changed.
+
+- **Rescue-via-PR of untracked files leaves the ORIGINALS blocking the
+  eventual pull — `error: The following untracked working tree files
+  would be overwritten by merge`; verify byte-identity against the
+  merge SHA, remove the untracked copies, then pull**: 2026-07-30,
+  after #1781 merged the two usage-signals snapshots rescued from the
+  main checkout's working tree, `git -C ~/attune-ai -c
+  rebase.autoStash=true pull --rebase origin main` ABORTED: the
+  untracked originals collide with the now-tracked paths, and git
+  refuses even when content is identical (autostash doesn't help —
+  stash ignores untracked files by default). Closing recipe:
+  `git show <mergeSHA>:<path> | cmp -s - <working-copy>` per file;
+  identical → `rm` the untracked copies → pull fast-forwards clean.
+  Rule: when copying untracked files OUT of a checkout to commit them
+  elsewhere (the standard rescue pattern), removing the originals
+  after the merge IS a step of the plan, not optional cleanup — until
+  it runs, every pull of that checkout aborts. Pairs with the
+  remote-session "untracked file blocks `git checkout` of the new
+  branch" lesson — same git refusal, different verb (pull vs
+  checkout) and different provenance (rescued originals vs local
+  Write leftovers).
+
+- **Claude desktop scheduled tasks: there is NO run-now MCP verb (the
+  sidebar "Run now" button is the only manual trigger), a manual
+  pre-approval run executes the FULL prompt on TODAY'S date, and tool
+  approvals stick to the task**: 2026-07-30, scheduling
+  `reach-snapshot-after-windows` for a Friday capture window. The
+  scheduler MCP exposes only create/update/delete/list — an agent
+  cannot fire a run; ask the user to click Run now (worth doing once:
+  approvals granted during any run are stored on the task, so the
+  scheduled fire won't pause on permission prompts). Consequence:
+  a prompt written for its scheduled date runs OFF-SCRIPT when the
+  user pre-approval-runs it early — write scheduled prompts
+  RUN-DATE-AWARE (state the absolute windows, open with "check
+  `date`, decide what's open now, attribute accordingly") so an
+  early manual run exercises the real tool shapes and does something
+  valid instead of following the wrong day's script. Also: a manual
+  run does NOT consume a one-time `fireAt` (it stays armed), and
+  tasks run only while the app is open — a missed fireAt fires on
+  next launch. Extends the existing scheduled-tasks timezone-display
+  lesson with the run-model half.
