@@ -19569,6 +19569,88 @@ def ", start_idx + 1)` for module-
   keep it from becoming the "committing to a branch another agent
   has in flight" failure mode.
 
+- **Seat-yield is role-shaped, not model-shaped — brief
+  implementing seats with the ACTUAL runtime data shapes, and
+  route test-code review to the seat that yields there**:
+  2026-07-30, first post-activation delegated lane (codex
+  implements audit_logger tests, antigravity reviews). Codex's
+  only defects were GUESSED runtime shapes (asserted
+  `event["violation_type"]` where the real event nests
+  `event["violation"]["type"]` — the brief included the module
+  source but not a sample serialized event). Antigravity — clean
+  on all 8 prior REVIEW lanes over governance text and prod
+  code — produced its first-ever finding on TEST code
+  (builtins.open monkeypatch risking pytest/coverage
+  interference). Two rules: (1) an implementing-seat brief
+  includes a REAL sample of any serialized structure the tests
+  will assert on (one `to_dict()` dump beats 300 lines of
+  source); (2) don't read a seat's silence on one content class
+  as weakness everywhere — antigravity reviews test code with
+  teeth.
+
+- **A D11c countersign token binds to the artifact digest AND the
+  commit — any post-countersign commit (even a review fix)
+  re-mints the token against the new HEAD before it lands in a
+  ledger row**: 2026-07-30 lane. The first token was minted at
+  the initial lane commit; the antigravity review finding then
+  produced a fix commit, silently staling the token (its
+  artifact validated the PREVIOUS tree). Shipping the stale
+  token would have been exactly the lead-narrated evidence D11c
+  exists to kill. Rule: countersign LAST — after every review
+  disposition and fix is committed — or re-run
+  `rerun_receipts_to_artifact` + `run_countersign_pass` after
+  any subsequent commit; the ledger row carries the token whose
+  digest matches the shipped HEAD.
+
+- **A spent seat invocation's result must be persisted before any
+  fragile post-processing — printing `record.seat` on a dataclass
+  without that field lost a live countersign pass**: 2026-07-30.
+  `run_countersign_pass` invoked a real seat (subscription spend,
+  ~1 min), then my print crashed on a wrong attribute
+  (`CountersignPass` has `skeptic`, not `seat`) and the process
+  exited — record gone, pass re-run, spend doubled. Rule for any
+  paid/slow call inside a `python -c`/heredoc: write the raw
+  result to a file (json.dump with default=str) BEFORE any
+  formatting, or introspect the dataclass fields first
+  (`grep -n -A10 "class X"` costs nothing).
+
+- **macOS has no GNU `timeout` — `timeout 540 codex exec ...`
+  exits 127 (command not found), which reads as "codex missing"
+  when codex is fine**: 2026-07-30, first codex implementation
+  invocation. The Bash tool's own timeout parameter (or
+  `gtimeout` from coreutils) is the portable form; exit 127 on a
+  compound `timeout X <cmd>` on darwin means the WRAPPER is
+  missing, not the command — check `command -v timeout` before
+  blaming the payload.
+
+- **Review-seat false positives share a signature: the seat
+  assumes the CANONICAL code shape (module-level imports, local
+  timezones, standard call sites) instead of reading the actual
+  one — disposition with an executable receipt, never argument**:
+  2026-07-30, twice in one night. Codex called a UTC-dated ruling
+  "future-dated" (assumed local-date frame; the ledger header
+  documents UTC). Antigravity claimed a registry monkeypatch
+  "will not affect tokens.py if imported directly" — but
+  estimate_cost imports the symbol INSIDE the function body,
+  re-binding per call, and the test's ValueError assertion
+  passing IS the disproof. Rule: when dismissing a seat finding,
+  cite an executable receipt (the passing test, the documented
+  convention header) in the D11a reason — a receipt ends the
+  argument; a counter-assertion just extends it.
+
+- **A heredoc python step that fails does NOT stop
+  newline-separated follow-on commands — an assert-guarded append
+  failed loudly, but the unconditioned tail still opened a PR
+  missing its rows commit**: 2026-07-30, tokens lane. The ledger
+  append's anchor assert fired correctly (the branch predated the
+  sibling lane's rows — merge main BEFORE appending ledger rows),
+  but the compound command chained the append, commit, push, and
+  `gh pr create` with NEWLINES, so everything after the failed
+  python ran anyway and the PR opened without the rows. Recovery
+  was one merge+push since PRs update in place. Extends the
+  ";-joined git sequence runs its destructive tail" lesson: `&&`
+  every step after a can-fail heredoc, and treat "PR opened" as
+  unverified until the pushed branch shows the expected commits.
 - **An UNRELATED PR failing ALL Windows lanes on one test = a
   main-branch break that rode in on required-checks-only
   auto-merge — read the failing test's name on the other PR's

@@ -3702,6 +3702,56 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#slash-command-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slash Command System
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Slash Command System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#command-file-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command File Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontmatter-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontmatter Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#programmatic-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Programmatic Access
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#all-cli-entry-points" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5823,6 +5873,56 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#slash-command-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slash Command System
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Slash Command System">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#command-file-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command File Format
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frontmatter-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frontmatter Fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#programmatic-access" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Programmatic Access
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#all-cli-entry-points" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -7039,6 +7139,104 @@ the workflow is marked as failed with <code>error_type: "verification"</code>.</
 </tbody>
 </table>
 <p>These provide guided, conversational experiences built on top of the same framework.</p>
+<hr />
+<h2 id="slash-command-system">Slash Command System<a class="headerlink" href="#slash-command-system" title="Permanent link">&para;</a></h2>
+<p>Slash commands ship as markdown files inside the <code>attune-ai</code>
+package (<code>attune.commands</code>). Running
+<a href="#attune-setup"><code>attune setup</code></a> copies them to
+<code>~/.claude/commands/</code> so they are available in every Claude Code
+session.</p>
+<h3 id="command-file-format">Command File Format<a class="headerlink" href="#command-file-format" title="Permanent link">&para;</a></h3>
+<p>Each command is a markdown file. YAML frontmatter is optional —
+without it, the command name is inferred from the filename.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>---
+<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>name: my-command
+<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>description: Does something useful
+<a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a>category: utility
+<a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a><span class="gu">aliases: [mc]</span>
+<a id="__codelineno-43-6" name="__codelineno-43-6" href="#__codelineno-43-6"></a><span class="gu">---</span>
+<a id="__codelineno-43-7" name="__codelineno-43-7" href="#__codelineno-43-7"></a>
+<a id="__codelineno-43-8" name="__codelineno-43-8" href="#__codelineno-43-8"></a><span class="gu">## Overview</span>
+<a id="__codelineno-43-9" name="__codelineno-43-9" href="#__codelineno-43-9"></a>
+<a id="__codelineno-43-10" name="__codelineno-43-10" href="#__codelineno-43-10"></a>Describe what this command does.
+<a id="__codelineno-43-11" name="__codelineno-43-11" href="#__codelineno-43-11"></a>
+<a id="__codelineno-43-12" name="__codelineno-43-12" href="#__codelineno-43-12"></a><span class="gu">## Execution Steps</span>
+<a id="__codelineno-43-13" name="__codelineno-43-13" href="#__codelineno-43-13"></a>
+<a id="__codelineno-43-14" name="__codelineno-43-14" href="#__codelineno-43-14"></a>Instructions for Claude...
+</code></pre></div>
+<h3 id="frontmatter-fields">Frontmatter Fields<a class="headerlink" href="#frontmatter-fields" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td>string</td>
+<td>Command identifier (required with frontmatter)</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>string</td>
+<td>Short description</td>
+</tr>
+<tr>
+<td><code>category</code></td>
+<td>string</td>
+<td>One of: workflow, git, test, docs, security, performance, learning, context, utility</td>
+</tr>
+<tr>
+<td><code>aliases</code></td>
+<td>list</td>
+<td>Alternative names</td>
+</tr>
+<tr>
+<td><code>hooks</code></td>
+<td>dict</td>
+<td><code>{pre: EventName, post: EventName}</code></td>
+</tr>
+<tr>
+<td><code>requires_user_id</code></td>
+<td>bool</td>
+<td>Needs user context</td>
+</tr>
+<tr>
+<td><code>requires_context</code></td>
+<td>bool</td>
+<td>Needs collaboration state</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td>list</td>
+<td>Searchable tags</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>string</td>
+<td>Command version</td>
+</tr>
+</tbody>
+</table>
+<h3 id="programmatic-access">Programmatic Access<a class="headerlink" href="#programmatic-access" title="Permanent link">&para;</a></h3>
+<p>The <code>attune.commands</code> package parses, loads, and registers
+command files:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.commands</span><span class="w"> </span><span class="kn">import</span> <span class="n">CommandRegistry</span>
+<a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>
+<a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a><span class="n">registry</span> <span class="o">=</span> <span class="n">CommandRegistry</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span>
+<a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a><span class="n">registry</span><span class="o">.</span><span class="n">load_default_commands</span><span class="p">()</span>  <span class="c1"># commands bundled in the package</span>
+<a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a><span class="n">registry</span><span class="o">.</span><span class="n">load_from_directory</span><span class="p">(</span><span class="s2">&quot;.claude/commands/&quot;</span><span class="p">)</span>  <span class="c1"># project-local</span>
+<a id="__codelineno-44-6" name="__codelineno-44-6" href="#__codelineno-44-6"></a>
+<a id="__codelineno-44-7" name="__codelineno-44-7" href="#__codelineno-44-7"></a><span class="n">cmd</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;spec&quot;</span><span class="p">)</span>  <span class="c1"># by name or alias</span>
+<a id="__codelineno-44-8" name="__codelineno-44-8" href="#__codelineno-44-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">registry</span><span class="o">.</span><span class="n">format_help</span><span class="p">())</span>  <span class="c1"># quick listing</span>
+</code></pre></div>
+<p><code>CommandLoader.validate_directory()</code> reports malformed command
+files. <code>CommandContext</code> and <code>CommandExecutor</code> fire the pre/post
+hooks declared in frontmatter around execution. All classes are
+exported from <code>attune.commands</code>.</p>
 <hr />
 <h2 id="all-cli-entry-points">All CLI Entry Points<a class="headerlink" href="#all-cli-entry-points" title="Permanent link">&para;</a></h2>
 <h3 id="primary-canonical">Primary (Canonical)<a class="headerlink" href="#primary-canonical" title="Permanent link">&para;</a></h3>

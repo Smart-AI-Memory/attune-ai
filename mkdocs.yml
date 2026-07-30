@@ -176,7 +176,6 @@ exclude_docs: |
   feature-overview-meta-workflows.md
   governance.md
   hooks.md
-  keyboard-shortcuts.md
   known-issues.md
   markdown-agents.md
   quickstart.md

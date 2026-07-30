@@ -114,6 +114,34 @@ failures; the picker = "which blocked task to fix/retry").
 
 ---
 
+## Feedback asks — full-scope (chair-ruled 2026-07-30)
+
+When the agent ASKS THE USER FOR FEEDBACK on its own conduct,
+work, or a ruling recommendation (including inviting pushback),
+the grammar is mandatory THROUGHOUT — both the generative half and
+the disposition half render as constructs, each construct firing
+when its content exists: `pushback` when the agent holds a
+counter-position, `decision`/multi-select when enumerable points
+await disposition, and free-text form fields (`textarea`) for the
+open-ended half — an open ask is still a form, never bare prose,
+and no construct fabricates disagreement or options to satisfy
+the rule. Ruled by the chair over the lead's
+disposition-only recommendation (both positions recorded in
+feature-lead-governance decisions.md, 2026-07-30); prose may
+accompany, never replace, the constructs.
+
+One carve-out (same ruling, PROTECT-THEN-ASK): a reversible
+protective act against the agent's OWN prior action — disarming an
+auto-merge it armed, dropping a label it applied — executes BEFORE
+any form is built; the form renders afterward for the standing
+decision. A form is a request for input; a reversible guard needs
+none. Undoing a CHAIR action is never a protective act — neither
+directly (a chair-applied label, a chair-armed merge) nor
+indirectly (reverting an own-action the chair has since endorsed
+or relied on); those always go through the chair first.
+
+---
+
 ## How to add the next construct (#5)
 
 Keep it additive and substrate-reusing. The decision (v3), pushback
