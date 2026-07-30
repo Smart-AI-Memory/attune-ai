@@ -47,4 +47,4 @@ Fix-test's public API spans two workflow modules. The record types
 | `auto_executable` | `bool` | Whether `"auto"` mode may run it (default `True`). |
 | `metadata` | `dict` | Free-form extra context. |
 
-<!-- attune-generated: source_hash=2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b feature=fix-test kind=reference generated_at=2026-06-22 -->
+<!-- attune-generated: source_hash=56383ae48a3d6c0dcdadb645912bf30697dbdd296c66e69e3c40100a6c12ab69 feature=fix-test kind=reference generated_at=2026-07-30 -->
