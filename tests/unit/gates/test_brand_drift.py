@@ -55,6 +55,46 @@ class TestHardFail:
         assert hard_failures(tracked_files(repo), repo) == {}
 
 
+class TestRetiredFramingHardFail:
+    """'workflow OS' (retired 2026-07-29) is a hard token — no allowlist."""
+
+    def test_fires_on_case_separator_and_wrap_variants(self, tmp_path):
+        repo = _repo(
+            tmp_path,
+            {
+                "a.md": "attune is a developer workflow OS for Claude",
+                "b.py": 'EYEBROW = "AI WORKFLOW OS FOR CLAUDE CODE"',
+                "c.md": "the workflow-os experiment",
+                "wrapped.md": "an AI-powered workflow\nOS for Claude Code",
+            },
+        )
+        hits = hard_failures(tracked_files(repo), repo)
+        assert set(hits) == {"a.md", "b.py", "c.md", "wrapped.md"}
+        assert hits["a.md"] == ["workflow OS"]
+
+    def test_ratified_term_and_lookalikes_pass(self, tmp_path):
+        repo = _repo(
+            tmp_path,
+            {
+                "term.md": "attune-ai is an AI Workflow-harness for Claude Code",
+                "plural.md": "20 workflows, OS-independent",
+                "oss.md": "the workflow OSS integrations",
+            },
+        )
+        assert hard_failures(tracked_files(repo), repo) == {}
+
+    def test_historical_surfaces_excluded(self, tmp_path):
+        repo = _repo(
+            tmp_path,
+            {
+                "CHANGELOG.md": "retired the workflow OS framing",
+                "docs/specs/x/decisions.md": "workflow OS -> AI Workflow-harness",
+                ".claude/lessons.md": 'quoted "workflow OS for Claude Code" verbatim',
+            },
+        )
+        assert hard_failures(tracked_files(repo), repo) == {}
+
+
 class TestRatchet:
     def test_new_file_fails_allowlisted_passes(self, tmp_path):
         repo = _repo(

@@ -69,7 +69,7 @@ Three plugins, one monorepo:
 
 | Plugin | Role | Requires |
 | ------ | ---- | -------- |
-| `attune-ai` | Full workflow OS — 14 skills, security, tests, release prep | — |
+| `attune-ai` | Full AI Workflow-harness — 14 skills, security, tests, release prep | — |
 | `attune-author` | Author .help/ templates — scan, generate, maintain, AI doc gen | Anthropic API key for `author_docs` |
 | `attune-help` | Read .help/ templates with progressive depth | — |
 

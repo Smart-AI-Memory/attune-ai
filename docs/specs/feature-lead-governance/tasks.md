@@ -1,8 +1,9 @@
 # Feature Lead Governance — Tasks
 
 **Status:** draft (2026-07-27) — OPEN-1..4 ruled and the revision
-pass applied; execution remains gated by P1 (the cross-review
-usage-signal read — decisions.md D5).
+pass applied. P1 ruled 2026-07-30 (full activation): the P1 gate
+no longer blocks execution; T1+ awaits tasks approval through the
+/spec loop.
 
 Pre-execution rule: re-grep all named integration points against the
 current tree. Handoff and cross-review T1+T2 are SHIPPED dependencies
