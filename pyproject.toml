@@ -724,7 +724,9 @@ omit = [
     # pass 2): dead glob — no file matches */memory/cross_session.py
     # (the real module lives under memory/short_term/).
     "*/memory/control_panel_api.py",  # FastAPI REST server
-    "*/memory/short_term/sessions.py",  # Requires Redis server
+    # memory/short_term/sessions.py entry removed 2026-07-30 (#1569
+    # omit-audit pass 3): its Requires-Redis label was false —
+    # tests/unit/memory/short_term/ measures it 100% keylessly.
     # claude_memory.py omit entry removed 2026-07-21 (#1569): its
     # Requires-Claude-API label was false — pure file I/O, keyless
     # 60-test suite, measures ~100% covered.
@@ -739,7 +741,10 @@ omit = [
     # pilot QA pass): 46% -> 100% via
     # tests/unit/orchestration/test_execution_strategy_base.py.
     # Meta-workflow CLI commands
-    "*/meta_workflows/cli_meta_workflows.py",  # CLI entry
+    # cli_meta_workflows.py entry removed 2026-07-30 (#1569
+    # omit-audit pass 3): its CLI-entry label was false — the module
+    # is a pure re-export shim, covered 100% by the import-contract
+    # test in tests/unit/meta_workflows/.
     # The five cli_commands modules below were removed from this list
     # 2026-07-29 (#1569 omit-audit pass 2): their Interactive labels
     # were false — dedicated suites in tests/unit/meta_workflows/
