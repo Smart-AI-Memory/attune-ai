@@ -2,14 +2,14 @@
 
 ## Goal
 
-The retired category framing "workflow OS" (ratified out
+The retired category framing ("workflow" + "OS") (ratified out
 2026-07-29 in favor of "AI Workflow-harness") cannot re-enter
 living surfaces: G5 (`scripts/check_brand_drift.py`) blocks it as
 a hard-tier token, with fires-on-violation tests.
 
 ## Acceptance criteria
 
-- `scripts/check_brand_drift.py` hard-fails on `workflow OS`
+- `scripts/check_brand_drift.py` hard-fails on the retired framing
   (case-insensitive, hyphen/wrap tolerant) outside the documented
   historical exclusions.
 - `tests/unit/gates/test_brand_drift.py` proves fire, non-fire
