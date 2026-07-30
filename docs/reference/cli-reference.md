@@ -888,6 +888,73 @@ These provide guided, conversational experiences built on top of the same framew
 
 ---
 
+## Slash Command System
+
+Slash commands ship as markdown files inside the `attune-ai`
+package (`attune.commands`). Running
+[`attune setup`](#attune-setup) copies them to
+`~/.claude/commands/` so they are available in every Claude Code
+session.
+
+### Command File Format
+
+Each command is a markdown file. YAML frontmatter is optional —
+without it, the command name is inferred from the filename.
+
+```markdown
+---
+name: my-command
+description: Does something useful
+category: utility
+aliases: [mc]
+---
+
+## Overview
+
+Describe what this command does.
+
+## Execution Steps
+
+Instructions for Claude...
+```
+
+### Frontmatter Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Command identifier (required with frontmatter) |
+| `description` | string | Short description |
+| `category` | string | One of: workflow, git, test, docs, security, performance, learning, context, utility |
+| `aliases` | list | Alternative names |
+| `hooks` | dict | `{pre: EventName, post: EventName}` |
+| `requires_user_id` | bool | Needs user context |
+| `requires_context` | bool | Needs collaboration state |
+| `tags` | list | Searchable tags |
+| `version` | string | Command version |
+
+### Programmatic Access
+
+The `attune.commands` package parses, loads, and registers
+command files:
+
+```python
+from attune.commands import CommandRegistry
+
+registry = CommandRegistry.get_instance()
+registry.load_default_commands()  # commands bundled in the package
+registry.load_from_directory(".claude/commands/")  # project-local
+
+cmd = registry.get("spec")  # by name or alias
+print(registry.format_help())  # quick listing
+```
+
+`CommandLoader.validate_directory()` reports malformed command
+files. `CommandContext` and `CommandExecutor` fire the pre/post
+hooks declared in frontmatter around execution. All classes are
+exported from `attune.commands`.
+
+---
+
 ## All CLI Entry Points
 
 ### Primary (Canonical)
