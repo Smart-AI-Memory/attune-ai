@@ -12,9 +12,13 @@
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/how-to/spec-engine/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/tutorials/fix/">
       
       
+        <link rel="prev" href="../fix-test/">
+      
+      
+        <link rel="next" href="../ops-dashboard/">
       
       
         
@@ -25,7 +29,7 @@
     
     
       
-        <title>Spec Engine - Attune AI</title>
+        <title>Outcome-First Fix (with Receipts) - Attune AI</title>
       
     
     
@@ -81,7 +85,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#spec-engine" class="md-skip">
+        <a href="#tutorial-outcome-first-fix" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Spec Engine
+              Outcome-First Fix (with Receipts)
             
           </span>
         </div>
@@ -264,11 +268,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../tutorials/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -288,7 +294,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../" class="md-tabs__link">
+        <a href="../../how-to/" class="md-tabs__link">
           
   
   
@@ -752,28 +758,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -791,7 +800,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -809,7 +818,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -837,7 +846,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/build-a-workflow/" class="md-nav__link">
+      <a href="../build-a-workflow/" class="md-nav__link">
         
   
   
@@ -865,7 +874,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/fix-test/" class="md-nav__link">
+      <a href="../fix-test/" class="md-nav__link">
         
   
   
@@ -890,10 +899,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../tutorials/fix/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Outcome-First Fix (with Receipts)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -909,6 +945,125 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-idea-in-one-paragraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The idea in one paragraph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-seed-a-bug-you-can-verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1 — Seed a bug you can verify
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-preview-the-contract-nothing-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2 — Preview the contract (nothing runs)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-run-it-and-read-the-receipt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3 — Run it and read the receipt
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-verify-more-than-one-thing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4 — Verify more than one thing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-the-same-flow-without-typing-paths-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5 — The same flow without typing paths (/fix)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to go next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -921,7 +1076,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/ops-dashboard/" class="md-nav__link">
+      <a href="../ops-dashboard/" class="md-nav__link">
         
   
   
@@ -955,10 +1110,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -967,7 +1125,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_6" >
         
           
-          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
             
   
   
@@ -1003,7 +1161,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/examples/simple-chatbot/" class="md-nav__link">
+      <a href="../examples/simple-chatbot/" class="md-nav__link">
         
   
   
@@ -1031,7 +1189,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/examples/multi-agent-team-coordination/" class="md-nav__link">
+      <a href="../examples/multi-agent-team-coordination/" class="md-nav__link">
         
   
   
@@ -1128,7 +1286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../how-to/" class="md-nav__link">
         
   
   
@@ -1210,7 +1368,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../which-memory-is-which/" class="md-nav__link">
+      <a href="../../how-to/which-memory-is-which/" class="md-nav__link">
         
   
   
@@ -1238,7 +1396,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../unified-memory-system/" class="md-nav__link">
+      <a href="../../how-to/unified-memory-system/" class="md-nav__link">
         
   
   
@@ -1266,7 +1424,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../lessons-workflow/" class="md-nav__link">
+      <a href="../../how-to/lessons-workflow/" class="md-nav__link">
         
   
   
@@ -1356,7 +1514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agent-factory/" class="md-nav__link">
+      <a href="../../how-to/agent-factory/" class="md-nav__link">
         
   
   
@@ -1384,7 +1542,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../smart-router/" class="md-nav__link">
+      <a href="../../how-to/smart-router/" class="md-nav__link">
         
   
   
@@ -1412,7 +1570,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../auto-chaining/" class="md-nav__link">
+      <a href="../../how-to/auto-chaining/" class="md-nav__link">
         
   
   
@@ -1530,7 +1688,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../security-architecture/" class="md-nav__link">
+      <a href="../../how-to/security-architecture/" class="md-nav__link">
         
   
   
@@ -1620,7 +1778,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../practical-patterns/" class="md-nav__link">
+      <a href="../../how-to/practical-patterns/" class="md-nav__link">
         
   
   
@@ -1648,7 +1806,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../resilience-patterns/" class="md-nav__link">
+      <a href="../../how-to/resilience-patterns/" class="md-nav__link">
         
   
   
@@ -1738,7 +1896,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../project-analysis-and-metrics/" class="md-nav__link">
+      <a href="../../how-to/project-analysis-and-metrics/" class="md-nav__link">
         
   
   
@@ -1766,7 +1924,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../context-management/" class="md-nav__link">
+      <a href="../../how-to/context-management/" class="md-nav__link">
         
   
   
@@ -1794,7 +1952,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../learning-and-patterns/" class="md-nav__link">
+      <a href="../../how-to/learning-and-patterns/" class="md-nav__link">
         
   
   
@@ -1822,7 +1980,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../triage-code-quality/" class="md-nav__link">
+      <a href="../../how-to/triage-code-quality/" class="md-nav__link">
         
   
   
@@ -1912,7 +2070,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../telemetry-and-signals/" class="md-nav__link">
+      <a href="../../how-to/telemetry-and-signals/" class="md-nav__link">
         
   
   
@@ -2002,7 +2160,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ops-dashboard/" class="md-nav__link">
+      <a href="../../how-to/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -2092,7 +2250,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../help-system-maintenance/" class="md-nav__link">
+      <a href="../../how-to/help-system-maintenance/" class="md-nav__link">
         
   
   
@@ -2128,7 +2286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../prerequisites/" class="md-nav__link">
+      <a href="../../how-to/prerequisites/" class="md-nav__link">
         
   
   
@@ -4601,10 +4759,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quickstart" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quickstart
+        Prerequisites
       
     </span>
   </a>
@@ -4612,135 +4770,90 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tasks" class="md-nav__link">
+  <a href="#the-idea-in-one-paragraph" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tasks
+        The idea in one paragraph
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Tasks">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#run-a-plan-programmatically-with-progress-output" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run a plan programmatically with progress output
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#resume-an-interrupted-run" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Resume an interrupted run
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#run-with-per-task-approval" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run with per-task approval
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#re-run-a-subset-of-tasks-without-restarting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Re-run a subset of tasks without restarting
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#reference" class="md-nav__link">
+  <a href="#step-1-seed-a-bug-you-can-verify" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reference
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Reference">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pipeline-execution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pipeline execution
+        Step 1 — Seed a bug you can verify
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#state-management" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-2-preview-the-contract-nothing-runs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        State management
+        Step 2 — Preview the contract (nothing runs)
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#presentation" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-3-run-it-and-read-the-receipt" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Presentation
+        Step 3 — Run it and read the receipt
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#result-fields" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-4-verify-more-than-one-thing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Result fields
+        Step 4 — Verify more than one thing
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#example-output" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-5-the-same-flow-without-typing-paths-fix" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example output
+        Step 5 — The same flow without typing paths (/fix)
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#exit-codes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exit codes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-go-next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to go next
+      
+    </span>
+  </a>
   
 </li>
       
@@ -4764,333 +4877,160 @@
   
 
 
-<h1 id="spec-engine">Spec Engine<a class="headerlink" href="#spec-engine" title="Permanent link">&para;</a></h1>
-<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
-<p>Run a spec plan end-to-end with quality gates from Python.
-<code>PipelineOrchestrator.run_all</code> is an async coroutine, so drive it with
-<code>asyncio.run</code> (or <code>await</code> it inside an existing event loop):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineOrchestrator</span><span class="p">,</span> <span class="n">PipelineResult</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">orchestrator</span> <span class="o">=</span> <span class="n">PipelineOrchestrator</span><span class="p">(</span><span class="s2">&quot;.claude/plans/my-feature.md&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">result</span><span class="p">:</span> <span class="n">PipelineResult</span> <span class="o">=</span> <span class="k">await</span> <span class="n">orchestrator</span><span class="o">.</span><span class="n">run_all</span><span class="p">()</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summary</span><span class="p">)</span>   <span class="c1"># human-readable run summary</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">)</span>   <span class="c1"># True if all tasks executed and passed gates</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+<h1 id="tutorial-outcome-first-fix">Tutorial: Outcome-First Fix<a class="headerlink" href="#tutorial-outcome-first-fix" title="Permanent link">&para;</a></h1>
+<p>You'll finish this tutorial having watched <code>attune fix</code> repair a
+real bug you seeded yourself — and, more importantly, having read
+the receipt that <em>proves</em> it: which file changed, which
+verification commands ran, and why the tool's own exit code can be
+trusted. Then you'll do the same thing again without typing a
+single path, using the <code>/fix</code> guided intake form in Claude Code.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Python 3.10 or newer</li>
+<li><code>attune-ai</code> 11.2.0 or newer (<code>pip install -U attune-ai</code>)</li>
+<li>A git repository to work in (scope verification uses git)</li>
+<li>For Step 5: the attune-ai plugin installed in Claude Code</li>
+</ul>
+<h2 id="the-idea-in-one-paragraph">The idea in one paragraph<a class="headerlink" href="#the-idea-in-one-paragraph" title="Permanent link">&para;</a></h2>
+<p>You state <strong>what should be true</strong> ("exactly 100 units should price
+as bulk") and <strong>how to check it</strong> (a probe: any command whose exit
+code verifies the claim, like <code>pytest</code>). Attune runs the fix, then
+re-runs your probes itself, in a real subprocess, <em>after</em> the fix
+agent has finished — and the receipt's verdict comes from those
+probes, never from the agent's own opinion of how it did.</p>
+<h2 id="step-1-seed-a-bug-you-can-verify">Step 1 — Seed a bug you can verify<a class="headerlink" href="#step-1-seed-a-bug-you-can-verify" title="Permanent link">&para;</a></h2>
+<p>Create a scratch module with one off-by-one bug and a test suite
+that catches it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>mkdir<span class="w"> </span>scratch_pricing
 </code></pre></div>
-<p><code>summary</code> and <code>success</code> are properties — read them, don't call them.
-Running this produces a <code>PipelineResult</code> with per-task outcomes, total
-cost, and duration.</p>
-<p>To skip quality gates during a quick smoke test, pass
-<code>skip_gates=True</code> to the constructor.</p>
-<h2 id="tasks">Tasks<a class="headerlink" href="#tasks" title="Permanent link">&para;</a></h2>
-<h3 id="run-a-plan-programmatically-with-progress-output">Run a plan programmatically with progress output<a class="headerlink" href="#run-a-plan-programmatically-with-progress-output" title="Permanent link">&para;</a></h3>
-<p><strong>Goal:</strong> read a plan, run every task through quality gates, print a
-progress bar after each task, and exit non-zero if any gate failed.</p>
-<p><strong>Steps:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<p><code>scratch_pricing/pricing.py</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">BULK_THRESHOLD</span> <span class="o">=</span> <span class="mi">100</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">PipelineOrchestrator</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">PipelineResult</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">TaskResult</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">read_spec</span><span class="p">,</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">)</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">present_tasks</span><span class="p">,</span> <span class="n">present_task_result</span><span class="p">,</span> <span class="n">format_progress_bar</span><span class="p">,</span> <span class="n">load_state</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="n">PLAN_PATH</span> <span class="o">=</span> <span class="s2">&quot;.claude/plans/my-feature.md&quot;</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="n">tasks</span> <span class="o">=</span> <span class="n">read_spec</span><span class="p">(</span><span class="n">PLAN_PATH</span><span class="p">)</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="n">state</span> <span class="o">=</span> <span class="n">load_state</span><span class="p">(</span><span class="n">PLAN_PATH</span><span class="p">)</span>          <span class="c1"># None if no prior run exists</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="nb">print</span><span class="p">(</span><span class="n">present_tasks</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">state</span><span class="p">))</span>     <span class="c1"># inspect the plan before running</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="n">completed_count</span> <span class="o">=</span> <span class="mi">0</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_task_complete</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">task_result</span><span class="p">:</span> <span class="n">TaskResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>    <span class="k">global</span> <span class="n">completed_count</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>    <span class="n">completed_count</span> <span class="o">+=</span> <span class="mi">1</span>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">format_progress_bar</span><span class="p">(</span><span class="n">completed_count</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)))</span>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">present_task_result</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">task_result</span><span class="p">))</span>
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>    <span class="n">orchestrator</span> <span class="o">=</span> <span class="n">PipelineOrchestrator</span><span class="p">(</span><span class="n">PLAN_PATH</span><span class="p">)</span>
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>    <span class="n">result</span><span class="p">:</span> <span class="n">PipelineResult</span> <span class="o">=</span> <span class="k">await</span> <span class="n">orchestrator</span><span class="o">.</span><span class="n">run_all</span><span class="p">(</span>
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>        <span class="n">on_task_complete</span><span class="o">=</span><span class="n">on_task_complete</span><span class="p">,</span>
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>    <span class="p">)</span>
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summary</span><span class="p">)</span>
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
-<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>        <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>
-<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>
-<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">tier_for_units</span><span class="p">(</span><span class="n">units</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Orders of BULK_THRESHOLD units OR MORE are bulk.&quot;&quot;&quot;</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="k">if</span> <span class="n">units</span> <span class="o">&gt;</span> <span class="n">BULK_THRESHOLD</span><span class="p">:</span>  <span class="c1"># BUG: should be &gt;=</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="k">return</span> <span class="s2">&quot;bulk&quot;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="k">return</span> <span class="s2">&quot;standard&quot;</span>
 </code></pre></div>
-<p><strong>Verify:</strong> a fully passing run prints the summary and exits <code>0</code>.
-<code>on_task_complete</code> is <strong>awaited</strong> after each task, so define it <code>async</code>
-(<code>run_all</code> awaits it). The separation between reading (<code>read_spec</code>,
-<code>present_tasks</code>) and running (<code>run_all</code>) is intentional — you can
-inspect the full plan before committing to a run.</p>
-<h3 id="resume-an-interrupted-run">Resume an interrupted run<a class="headerlink" href="#resume-an-interrupted-run" title="Permanent link">&para;</a></h3>
-<p><strong>Goal:</strong> find plans that didn't finish and continue them from where
-they stopped.</p>
-<p><strong>Steps:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineOrchestrator</span><span class="p">,</span> <span class="n">read_spec</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_pending_tasks</span><span class="p">,</span> <span class="n">find_resumable_plans</span>
+<p><code>scratch_pricing/pricing_suite.py</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">resumable</span> <span class="o">=</span> <span class="n">find_resumable_plans</span><span class="p">(</span><span class="s2">&quot;.claude/plans&quot;</span><span class="p">)</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="k">for</span> <span class="n">spec_state</span> <span class="ow">in</span> <span class="n">resumable</span><span class="p">:</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        <span class="n">tasks</span> <span class="o">=</span> <span class="n">read_spec</span><span class="p">(</span><span class="n">spec_state</span><span class="o">.</span><span class="n">plan_path</span><span class="p">)</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>        <span class="n">pending</span> <span class="o">=</span> <span class="n">get_pending_tasks</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">spec_state</span><span class="p">)</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">pending</span><span class="p">:</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>            <span class="k">continue</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>        <span class="n">completed_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">spec_state</span><span class="o">.</span><span class="n">completed</span><span class="p">)</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>        <span class="n">orchestrator</span> <span class="o">=</span> <span class="n">PipelineOrchestrator</span><span class="p">(</span><span class="n">spec_state</span><span class="o">.</span><span class="n">plan_path</span><span class="p">)</span>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">orchestrator</span><span class="o">.</span><span class="n">run_all</span><span class="p">(</span><span class="n">skip_task_ids</span><span class="o">=</span><span class="n">completed_ids</span><span class="p">)</span>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>        <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summary</span><span class="p">)</span>
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pricing</span><span class="w"> </span><span class="kn">import</span> <span class="n">tier_for_units</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_boundary_order_is_bulk</span><span class="p">():</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="k">assert</span> <span class="n">tier_for_units</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;bulk&quot;</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_small_order_is_standard</span><span class="p">():</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="k">assert</span> <span class="n">tier_for_units</span><span class="p">(</span><span class="mi">99</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;standard&quot;</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="k">def</span><span class="w"> </span><span class="nf">test_large_order_is_bulk</span><span class="p">():</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>    <span class="k">assert</span> <span class="n">tier_for_units</span><span class="p">(</span><span class="mi">101</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;bulk&quot;</span>
 </code></pre></div>
-<p><strong>Verify:</strong> <code>get_pending_tasks</code> returns only the tasks whose IDs are
-not in <code>SpecState.completed</code>. Passing those IDs as <code>skip_task_ids</code>
-prevents re-running completed work.</p>
-<h3 id="run-with-per-task-approval">Run with per-task approval<a class="headerlink" href="#run-with-per-task-approval" title="Permanent link">&para;</a></h3>
-<p><strong>Goal:</strong> pause after each task for human sign-off instead of running
-the whole plan unattended.</p>
-<p><strong>Steps:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.spec.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">execute_with_approval</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">execute_with_approval</span><span class="p">(</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="s2">&quot;.claude/plans/my-feature.md&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="n">on_task_complete</span><span class="p">,</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>        <span class="n">skip_gates</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        <span class="n">skip_tests</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="n">skip_simplify</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="p">)</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summary</span><span class="p">)</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+<p>Confirm the bug is real — the boundary test fails:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pytest<span class="w"> </span>scratch_pricing/pricing_suite.py
 </code></pre></div>
-<p><code>execute_with_approval</code> is an async coroutine — <code>await</code> it (or drive
-it with <code>asyncio.run</code>). It accepts the same <code>skip_gates</code>,
-<code>skip_tests</code>, and <code>skip_simplify</code> flags as <code>PipelineOrchestrator</code>, and
-returns the same <code>PipelineResult</code>. Flip <code>SpecState.auto_run = True</code> to
-skip the per-task pause for the rest of the run.</p>
-<p><strong>Verify:</strong> the loop pauses after each task. An interrupted approval
-run leaves a resumable <code>SpecState</code> in the plan file.</p>
-<h3 id="re-run-a-subset-of-tasks-without-restarting">Re-run a subset of tasks without restarting<a class="headerlink" href="#re-run-a-subset-of-tasks-without-restarting" title="Permanent link">&para;</a></h3>
-<p><strong>Goal:</strong> re-run specific tasks without clearing state and reprocessing
-the whole plan.</p>
-<p><strong>Steps:</strong> pass a <code>set[str]</code> of already-completed task IDs to
-<code>run_all(skip_task_ids=...)</code> (inside an async context — <code>run_all</code> is a
-coroutine):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">orchestrator</span><span class="o">.</span><span class="n">run_all</span><span class="p">(</span><span class="n">skip_task_ids</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;task-1&quot;</span><span class="p">,</span> <span class="s2">&quot;task-2&quot;</span><span class="p">})</span>
+<h2 id="step-2-preview-the-contract-nothing-runs">Step 2 — Preview the contract (nothing runs)<a class="headerlink" href="#step-2-preview-the-contract-nothing-runs" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>attune<span class="w"> </span>fix<span class="w"> </span><span class="s2">&quot;exactly 100 units should price as bulk&quot;</span><span class="w"> </span>--workflow<span class="w"> </span>fix<span class="w"> </span>--scope<span class="w"> </span>scratch_pricing<span class="w"> </span>--probe<span class="w"> </span><span class="s2">&quot;pytest scratch_pricing/pricing_suite.py&quot;</span>
 </code></pre></div>
-<p><strong>Verify:</strong> skipping completed tasks preserves <code>SpecState.completed</code>
-and keeps <code>total_cost</code> and <code>duration_ms</code> accurate in the final
-<code>PipelineResult</code>. You are responsible for knowing which IDs to skip —
-if a skipped task produced an artifact a later task depends on, check
-<code>TaskResult.quality_gate_passed</code> and <code>gate_score</code> on the result before
-assuming success.</p>
-<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
-<p>The spec engine exposes its public API through two packages:
-<code>attune.pipeline</code> (execution) and <code>attune.spec</code> (state and
-presentation). <code>execute_with_approval</code> lives in <code>attune.spec.runner</code>.</p>
-<h3 id="pipeline-execution">Pipeline execution<a class="headerlink" href="#pipeline-execution" title="Permanent link">&para;</a></h3>
+<p>Without <code>--run</code>, this is a dry preview. It renders the contract —
+your goal verbatim, the derived done conditions, the constraints,
+and the validated probes — and ends with:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>note: execution not requested — pass --run to execute this contract
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>dry preview — nothing was executed
+</code></pre></div>
+<p>Read the "Done when" list carefully. This is the checkpoint where
+you confirm the probes actually test what you meant.</p>
+<h2 id="step-3-run-it-and-read-the-receipt">Step 3 — Run it and read the receipt<a class="headerlink" href="#step-3-run-it-and-read-the-receipt" title="Permanent link">&para;</a></h2>
+<p>Arrow-up and append <code>--run</code>. The fix workflow edits the code, then
+the CLI verifies independently:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>workflow finished (success=True) — verifying independently...
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>🧾 Fix receipt
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>Changes made (attributed to this run):
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>  - scratch_pricing/pricing.py
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>Probes (evaluated independently):
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>  - [PASS] pytest scratch_pricing/pricing_suite.py (exit 0, 2902ms)
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>Safest next action: review the attributed diff and commit
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>receipt reflects independently evaluated probes — workflow exit was not trusted
+</code></pre></div>
+<p>Three things to notice:</p>
+<ol>
+<li><strong>Attribution is measured, not claimed.</strong> The receipt compares
+   against a pre-run snapshot. Files you already had in flight are
+   listed separately as pre-existing and never blamed on the run.</li>
+<li><strong>The probe was re-run by the CLI</strong>, argv and exit code
+   recorded. The workflow saying <code>success=True</code> did not decide
+   anything — the trailer line says so explicitly.</li>
+<li><strong>The exit code follows the probes.</strong> <code>echo $?</code> prints 0 only
+   because every probe passed, the diff stayed inside
+   <code>scratch_pricing</code>, and scope was verifiable.</li>
+</ol>
+<p>Check the diff yourself — the fix should be <code>&gt;</code> → <code>&gt;=</code> in
+<code>pricing.py</code>, and the tests untouched:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>git<span class="w"> </span>diff<span class="w"> </span>scratch_pricing/
+</code></pre></div>
+<h2 id="step-4-verify-more-than-one-thing">Step 4 — Verify more than one thing<a class="headerlink" href="#step-4-verify-more-than-one-thing" title="Permanent link">&para;</a></h2>
+<p>Plural probes are the point. A target probe plus a full-suite probe
+tells you the fix worked <em>and</em> broke nothing:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>attune<span class="w"> </span>fix<span class="w"> </span><span class="s2">&quot;exactly 100 units should price as bulk&quot;</span><span class="w"> </span>--workflow<span class="w"> </span>fix<span class="w"> </span>--scope<span class="w"> </span>scratch_pricing<span class="w"> </span>--probe<span class="w"> </span><span class="s2">&quot;pytest scratch_pricing/pricing_suite.py::test_boundary_order_is_bulk&quot;</span><span class="w"> </span>--probe<span class="w"> </span><span class="s2">&quot;pytest scratch_pricing/pricing_suite.py&quot;</span><span class="w"> </span>--run
+</code></pre></div>
+<p>Each probe becomes its own line in the receipt, evaluated
+independently. If any fails, the receipt names every failing probe
+with its exact command, and the exit code is 1.</p>
+<h2 id="step-5-the-same-flow-without-typing-paths-fix">Step 5 — The same flow without typing paths (<code>/fix</code>)<a class="headerlink" href="#step-5-the-same-flow-without-typing-paths-fix" title="Permanent link">&para;</a></h2>
+<p>In a Claude Code session with the attune-ai plugin, say:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>/fix exactly 100 units should price as bulk
+</code></pre></div>
+<p>The guided intake presents ONE form: your goal (carried from the
+invocation), a <strong>scope picker</strong> whose options are derived from your
+working tree's changed paths, a <strong>probe picker</strong> offering matching
+test files, and a preview-vs-run choice. The composed
+<code>attune fix ...</code> command is shown before anything executes — the
+same contract, the same receipt, no paths typed from memory.</p>
+<h2 id="exit-codes">Exit codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Symbol</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>PipelineOrchestrator(spec_path, *, skip_gates=False, skip_tests=False, skip_simplify=False)</code></td>
-<td>Load a plan file and prepare tasks for execution with optional gate overrides.</td>
-</tr>
-<tr>
-<td><code>PipelineOrchestrator.run_all(*, on_task_complete=None, skip_task_ids=None)</code></td>
-<td><strong>Async.</strong> Execute all tasks, awaiting an optional async callback after each; returns a <code>PipelineResult</code>. The callback receives <code>(task, result)</code> and may return <code>"redo"</code> / <code>"auto"</code> / <code>"stop"</code> (or <code>None</code>/<code>"approve"</code> to continue).</td>
-</tr>
-<tr>
-<td><code>PipelineOrchestrator.run_gates_for_task(task)</code></td>
-<td>Run quality gates for a single <code>DecomposedTask</code> and return a <code>TaskResult</code>.</td>
-</tr>
-<tr>
-<td><code>read_spec(plan_path)</code></td>
-<td>Parse a plan file and extract its XML task blocks into <code>DecomposedTask</code> objects. Raises <code>FileNotFoundError</code> (missing file) or <code>ValueError</code> (empty path).</td>
-</tr>
-<tr>
-<td><code>execute_with_approval(spec_path, on_task_complete, *, skip_gates=False, skip_tests=False, skip_simplify=False)</code></td>
-<td><strong>Async.</strong> Execute a spec with an interactive per-task approval loop. Import from <code>attune.spec.runner</code>.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="state-management">State management<a class="headerlink" href="#state-management" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Symbol</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>load_state(plan_path)</code></td>
-<td>Read a <code>SpecState</code> from the HTML comment embedded in a plan file; returns <code>None</code> if no state exists.</td>
-</tr>
-<tr>
-<td><code>save_state(state)</code></td>
-<td>Write or update the spec-state comment in a plan file.</td>
-</tr>
-<tr>
-<td><code>clear_state(plan_path)</code></td>
-<td>Remove the spec-state comment from a plan file.</td>
-</tr>
-<tr>
-<td><code>find_resumable_plans(plans_dir='.claude/plans')</code></td>
-<td>Return all <code>SpecState</code> objects whose plans have incomplete execution.</td>
-</tr>
-<tr>
-<td><code>get_pending_tasks(tasks, state)</code></td>
-<td>Filter a task list to those whose IDs are not in <code>state.completed</code>.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="presentation">Presentation<a class="headerlink" href="#presentation" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Symbol</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>present_tasks(tasks, state)</code></td>
-<td>Format a task list as a markdown table, optionally annotated with completion state.</td>
-</tr>
-<tr>
-<td><code>present_task_detail(task)</code></td>
-<td>Format a single task with its full acceptance criteria and metadata.</td>
-</tr>
-<tr>
-<td><code>present_task_result(task, gate_result)</code></td>
-<td>Format execution output including quality-gate status and score.</td>
-</tr>
-<tr>
-<td><code>format_progress_bar(completed, total)</code></td>
-<td>Render a visual progress indicator for a running pipeline.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="result-fields">Result fields<a class="headerlink" href="#result-fields" title="Permanent link">&para;</a></h3>
-<p><code>TaskResult</code> fields you'll inspect most often:</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
+<th>Exit</th>
 <th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>quality_gate_passed</code></td>
-<td><code>bool \| None</code></td>
-<td>Gate outcome; <code>None</code> when gates were skipped.</td>
+<td>0</td>
+<td>every probe passed, scope held, and scope was verifiable</td>
 </tr>
 <tr>
-<td><code>tests_passed</code></td>
-<td><code>bool \| None</code></td>
-<td>Test outcome; <code>None</code> when tests were skipped.</td>
+<td>1</td>
+<td>the run completed but a done condition failed</td>
 </tr>
 <tr>
-<td><code>gate_score</code></td>
-<td><code>float \| None</code></td>
-<td>Numeric quality score from the gate.</td>
+<td>2</td>
+<td>the workflow crashed (a partial receipt is still printed)</td>
 </tr>
 <tr>
-<td><code>severity</code></td>
-<td><code>str</code> (property)</td>
-<td>Classified severity of the gate result.</td>
-</tr>
-<tr>
-<td><code>error</code></td>
-<td><code>str \| None</code></td>
-<td>Error message if the task failed to execute.</td>
-</tr>
-<tr>
-<td><code>cost</code></td>
-<td><code>float</code></td>
-<td>Cost attributed to this task.</td>
+<td>3</td>
+<td>CLI error or abstention — nothing ran</td>
 </tr>
 </tbody>
 </table>
-<p><code>PipelineResult</code> top-level members:</p>
-<table>
-<thead>
-<tr>
-<th>Member</th>
-<th>Type</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>success</code></td>
-<td><code>bool</code> (property)</td>
-<td><code>True</code> only when all tasks executed and passed gates.</td>
-</tr>
-<tr>
-<td><code>summary</code></td>
-<td><code>str</code> (property)</td>
-<td>Human-readable run summary.</td>
-</tr>
-<tr>
-<td><code>tasks</code></td>
-<td><code>list[TaskResult]</code></td>
-<td>Per-task outcomes.</td>
-</tr>
-<tr>
-<td><code>total_cost</code></td>
-<td><code>float</code></td>
-<td>Aggregated cost across all tasks.</td>
-</tr>
-<tr>
-<td><code>duration_ms</code></td>
-<td><code>int</code></td>
-<td>Wall-clock time for the full run.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="example-output">Example output<a class="headerlink" href="#example-output" title="Permanent link">&para;</a></h3>
-<p>An approval run prints a progress bar, per-task gate results, and a
-final summary:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>[========--] 4/5 tasks
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>✔ task-1  add-jwt-config          gate: passed  score: 92.0  cost: $0.003
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>✔ task-2  token-service           gate: passed  score: 87.5  cost: $0.004
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>✔ task-3  auth-middleware         gate: passed  score: 81.0  cost: $0.005
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>✔ task-4  wire-routes             gate: passed  score: 78.3  cost: $0.004
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  task-5  integration-tests       pending
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>Pipeline complete: 4/5 tasks executed  total_cost: $0.016  duration: 18402ms
-</code></pre></div>
-<!-- attune-generated: source_hash=657458c4d06bb198d067760775b69a5c87288113feaddb9cdaf3df631c188617 feature=spec-engine kind=how-to generated_at=2026-07-14 -->
+<h2 id="where-to-go-next">Where to go next<a class="headerlink" href="#where-to-go-next" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>attune fix</code> vs <code>/fix-test</code>: the skill diagnoses a failing test
+  for you in conversation; <code>attune fix</code> verifies an outcome you
+  state. Neither replaces the other.</li>
+<li>The full option reference lives in
+  <a href="../../reference/fix/">reference/fix</a>; the design rationale in
+  <a href="../../architecture/fix/">architecture/fix</a>.</li>
+</ul>
 
 
 
