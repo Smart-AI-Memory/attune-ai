@@ -136,7 +136,10 @@ class TestRegistryShape:
     def test_kwarg_values_are_known_names(self) -> None:
         # Defense against typos like "paht" or "Path". Add new kwarg
         # names here as legitimate workflow patterns expand.
-        known = {"path", "project_root", "src_path", "cwd"}
+        # `scope_paths` (outcome-first-fix Phase 2) is the first entry
+        # where the path is an EDIT BOUNDARY rather than a scan root —
+        # the workflow refuses to run without it.
+        known = {"path", "project_root", "src_path", "cwd", "scope_paths"}
         used = {spec.kwarg for spec in PATH_ARG_REGISTRY.values()}
         unknown = used - known
         assert not unknown, (

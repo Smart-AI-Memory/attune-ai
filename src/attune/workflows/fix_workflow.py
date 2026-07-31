@@ -129,7 +129,12 @@ class FixWorkflow(BaseWorkflow):
             the agent's claim.
         """
         goal: str = kwargs.get("goal", "")
-        scope_raw: list[str] = kwargs.get("scope_paths", []) or []
+        scope_raw = kwargs.get("scope_paths", []) or []
+        # The ops runner rewrites `--path` into this kwarg as a bare
+        # string (PATH_ARG_REGISTRY); iterating a str would yield one
+        # Path per CHARACTER, so normalize before use.
+        if isinstance(scope_raw, str):
+            scope_raw = [scope_raw]
         done_conditions: list[str] = kwargs.get("done_conditions", []) or []
         depth: str = kwargs.get("depth", "standard")
 

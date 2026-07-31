@@ -419,3 +419,22 @@ def test_run_mode_constraint_text_is_truthful(
     out = capsys.readouterr().out
     assert "execution authorized" in out
     assert "preview only: no execution" not in out
+
+
+def test_scope_paths_accepts_bare_string_from_ops_runner(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """PATH_ARG_REGISTRY rewrites --path into scope_paths as a STRING;
+    iterating it as a sequence would yield one Path per character."""
+    import attune.workflows.fix_workflow as module
+
+    async def _empty_stream(_query):
+        return
+        yield  # pragma: no cover — makes this an async generator
+
+    monkeypatch.setattr(module, "iter_agent_messages", _empty_stream)
+    target = tmp_path / "scoped.py"
+    target.write_text("pass\n")
+
+    result = asyncio.run(FixWorkflow().execute(goal="g", scope_paths=str(target)))
+    assert result.metadata["scope_paths"] == [str(target)]

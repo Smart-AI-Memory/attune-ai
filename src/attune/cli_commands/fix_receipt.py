@@ -203,6 +203,46 @@ def run_probes(probes: list[VerificationProbe], cwd: Path) -> list[ProbeOutcome]
     return outcomes
 
 
+def _attributed_paths(baseline: Baseline, git_ok: bool, dirty_now: set[str]) -> set[str]:
+    """Paths this run changed, measured against the pre-run baseline."""
+    attributed: set[str] = set()
+    if baseline.git_available and git_ok:
+        attributed |= dirty_now - baseline.dirty_paths
+    for path_str, old_hash in baseline.scope_hashes.items():
+        if _hash_file(baseline.repo_root / path_str) != old_hash:
+            attributed.add(path_str)
+    return attributed
+
+
+def _uncertainty_lines(baseline: Baseline, git_ok: bool, skipped: list[ProbeOutcome]) -> list[str]:
+    """Everything the receipt cannot honestly claim to know."""
+    lines: list[str] = []
+    if not (baseline.git_available and git_ok):
+        lines.append("git unavailable — attribution limited to content hashes of scope files")
+    lines += [f"probe not executed: {' '.join(p.argv)} ({p.reason})" for p in skipped]
+    unhashable = sorted(p for p, h in baseline.scope_hashes.items() if h == "<unreadable>")
+    if unhashable:
+        lines.append(
+            "baseline hash unavailable for: "
+            + ", ".join(unhashable)
+            + " — further edits to these paths cannot be attributed"
+        )
+    return lines
+
+
+def _next_action(
+    violations: list[str], failed: list[ProbeOutcome], skipped: list[ProbeOutcome]
+) -> str:
+    """The safest next step, worst problem first."""
+    if violations:
+        return "revert the out-of-scope paths listed above, then re-run"
+    if failed:
+        return f"inspect the diff, then re-run probe: {' '.join(failed[0].argv)}"
+    if skipped:
+        return "make the skipped probe runnable, then re-run verification"
+    return "review the attributed diff and commit"
+
+
 def assemble_receipt(
     contract: FixContract,
     baseline: Baseline,
@@ -213,47 +253,19 @@ def assemble_receipt(
     dirty_now, git_ok = _git_dirty_paths(baseline.repo_root)
     scope_strs = {str(p) for p in scope_paths}
 
-    attributed: set[str] = set()
-    if baseline.git_available and git_ok:
-        attributed |= dirty_now - baseline.dirty_paths
-    for path_str, old_hash in baseline.scope_hashes.items():
-        if _hash_file(baseline.repo_root / path_str) != old_hash:
-            attributed.add(path_str)
-
+    attributed = _attributed_paths(baseline, git_ok, dirty_now)
     # A baseline-dirty file the run modified FURTHER is attributed
     # (hash change above) and moves out of the pre-existing section.
     pre_existing = sorted(baseline.dirty_paths - attributed)
     violations = sorted(p for p in attributed if p not in scope_strs)
-
-    uncertainty: list[str] = []
-    if not (baseline.git_available and git_ok):
-        uncertainty.append("git unavailable — attribution limited to content hashes of scope files")
     skipped = [p for p in probe_outcomes if p.status == "SKIPPED"]
-    for probe in skipped:
-        uncertainty.append(f"probe not executed: {' '.join(probe.argv)} ({probe.reason})")
-    unhashable = sorted(p for p, h in baseline.scope_hashes.items() if h == "<unreadable>")
-    if unhashable:
-        uncertainty.append(
-            "baseline hash unavailable for: "
-            + ", ".join(unhashable)
-            + " — further edits to these paths cannot be attributed"
-        )
-
     failed = [p for p in probe_outcomes if p.status == "FAIL"]
-    if violations:
-        next_action = "revert the out-of-scope paths listed above, then re-run"
-    elif failed:
-        next_action = f"inspect the diff, then re-run probe: {' '.join(failed[0].argv)}"
-    elif skipped:
-        next_action = "make the skipped probe runnable, then re-run verification"
-    else:
-        next_action = "review the attributed diff and commit"
 
     return FixReceipt(
         attributed_changes=sorted(attributed),
         pre_existing_dirty=pre_existing,
         scope_violations=violations,
         probe_outcomes=probe_outcomes,
-        uncertainty=uncertainty,
-        next_action=next_action,
+        uncertainty=_uncertainty_lines(baseline, git_ok, skipped),
+        next_action=_next_action(violations, failed, skipped),
     )

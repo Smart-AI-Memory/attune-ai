@@ -39,6 +39,9 @@ ALIASES: dict[str, str] = {
 # a real entry to features.yaml when the feature is user-facing.
 KNOWN_GAPS: set[str] = {
     "dependency-check",
+    # outcome-first-fix Phase 2: CLI-only while the surface proves
+    # out; help/docs surfaces are that spec's Phase 3 scope.
+    "fix",
     "discovery-sweep",
     "doc-audit",
     "doc-orchestrator",

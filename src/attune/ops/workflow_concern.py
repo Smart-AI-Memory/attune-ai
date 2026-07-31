@@ -80,9 +80,10 @@ _WORKFLOW_CONCERNS: dict[str, Concern] = {
     "doc-gen": "docs",
     "doc-audit": "docs",
     "doc-orchestrator": "docs",
-    # refactor
+    # refactor — the code-MUTATING bucket
     "simplify-code": "refactor",
     "refactor-plan": "refactor",
+    "fix": "refactor",
     # audit
     "discovery-sweep": "audit",
     "perf-audit": "audit",

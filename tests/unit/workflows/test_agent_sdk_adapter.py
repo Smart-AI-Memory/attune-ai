@@ -1498,8 +1498,8 @@ class TestSdkWorkflowsUseIsolationKwargs:
         )
 
     def test_sweep_covers_known_workflow_count(self) -> None:
-        """The sweep found the expected 15 construction sites."""
-        assert len(self._workflow_files()) == 15
+        """The sweep found the expected 16 construction sites."""
+        assert len(self._workflow_files()) == 16
 
 
 @pytest.mark.unit
