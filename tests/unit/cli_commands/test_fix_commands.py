@@ -205,10 +205,13 @@ def test_real_cli_entry_risky_unknown_workflow_exit_three(
 
 
 def test_bare_form_matches_explain_plus_notice(capsys: pytest.CaptureFixture[str]) -> None:
+    # Deliberate Phase 2 amendment: the Phase 1 notice claimed
+    # execution "is not yet available" — now it exists behind --run,
+    # so the truthful notice points there instead.
     workflow = _first_registered_workflow()
     assert cmd_fix(_args(explain=False, workflow=workflow)) == 0
     out = capsys.readouterr().out
-    assert "execution is not yet available (Phase 2)" in out
+    assert "pass --run to execute this contract" in out
     assert _TRAILER in out
 
 

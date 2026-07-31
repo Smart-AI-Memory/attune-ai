@@ -258,6 +258,14 @@ def _add_fix_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--scope",
         help="Path the fix diff must stay confined to (validated inside the repo)",
     )
+    fix_parser.add_argument(
+        "--run",
+        action="store_true",
+        help=(
+            "Execute the contract (Phase 2): runs the fix workflow, then "
+            "verifies every probe independently and prints the receipt"
+        ),
+    )
 
 
 def _add_gates_subparsers(subparsers: argparse._SubParsersAction) -> None:

@@ -65,7 +65,7 @@ asyncio.run(audit())
 
 ## Try More Workflows
 
-Attune AI includes 20 built-in workflows. Here are the most
+Attune AI includes 21 built-in workflows. Here are the most
 popular:
 
 | Workflow | Command | What It Does |

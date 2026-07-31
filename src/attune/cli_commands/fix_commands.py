@@ -170,7 +170,7 @@ def _select_workflow(args: Namespace) -> tuple[str | None, str]:
 
 
 def cmd_fix(args: Namespace) -> int:
-    """Render the dry Fix preview, or abstain truthfully (exit 3)."""
+    """Render the dry Fix preview, execute with --run, or abstain (exit 3)."""
     contract, error = build_contract(args)
     if contract is None:
         print(f"cannot preview: {error}")
@@ -198,7 +198,71 @@ def cmd_fix(args: Namespace) -> int:
 
     print(f"\nSelected workflow: {selected} [{detail}]")
     print("  (user-specified; contract-to-workflow compatibility is verified in Phase 2)")
+
+    if getattr(args, "run", False):
+        return _run_fix(args, contract, selected)
+
     if not getattr(args, "explain", False):
-        print("note: execution is not yet available (Phase 2); this is the same dry preview")
+        print("note: execution not requested — pass --run to execute this contract")
     print(_TRAILER)
     return EXIT_SUCCESS
+
+
+def _run_fix(args: Namespace, contract: FixContract, selected: str) -> int:
+    """Execute the contract through the existing machinery (Phase 2).
+
+    One translation of the DTO into workflow inputs; probes evaluated
+    independently by the receipt layer afterward — the workflow's own
+    result never decides the 0/1 exit (H2).
+    """
+    import asyncio
+    import traceback
+
+    from attune.cli_commands.fix_receipt import (
+        assemble_receipt,
+        capture_baseline,
+        run_probes,
+    )
+    from attune.workflows import get_workflow
+
+    if selected != "fix":
+        print(
+            f"cannot run: --run executes only the 'fix' workflow "
+            f"(got {selected!r}); pass --workflow fix"
+        )
+        return EXIT_CLI_ERROR
+
+    scope = getattr(args, "scope", None)
+    if not scope:
+        print("cannot run: --run requires --scope so the edit surface is bounded")
+        return EXIT_CLI_ERROR
+
+    repo_root = _repo_root()
+    scope_paths = [Path(scope)]
+    baseline = capture_baseline(repo_root, scope_paths)
+
+    workflow_cls = get_workflow(selected)
+    try:
+        workflow = workflow_cls()
+        result = asyncio.run(
+            workflow.execute(
+                goal=contract.goal,
+                scope_paths=[str(p) for p in scope_paths],
+                done_conditions=contract.done_conditions,
+            )
+        )
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL: uncaught workflow crash is the exit-2 branch of
+        # the pinned contract; traceback to stderr for operators.
+        traceback.print_exc()
+        print(f"fix workflow crashed: {exc}")
+        return 2
+
+    workflow_success = getattr(result, "success", None)
+    print(f"\nworkflow finished (success={workflow_success}) — verifying independently...")
+
+    probe_outcomes = run_probes(contract.probes, cwd=repo_root)
+    receipt = assemble_receipt(contract, baseline, scope_paths, probe_outcomes)
+    print()
+    print(receipt.render())
+    return receipt.exit_code()
