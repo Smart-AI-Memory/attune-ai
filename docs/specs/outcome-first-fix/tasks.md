@@ -1,163 +1,205 @@
 # Outcome-First Fix — Tasks
 
-**Status:** active (2026-07-30) — Task 0 executed (PR #1806,
-acceptance MET, see [phase0-inventory.md](phase0-inventory.md))
-and Task 1 executed, each behind its own explicit chair go. The
-Phase 2 task is NOT yet authored; later phase tasks are authored
-per-phase behind chair gates (decisions.md D2).
+**Status:** active (2026-07-30) — Tasks 0–1 executed, each
+behind its own explicit chair go (PRs #1806, #1808). Task 2
+authored 2026-07-30 (chair-authorized authoring); executing it
+requires its own chair go AND trips the spend gate (first task
+with real LLM execution). This file carries the executed log
+plus the next executable unit only (decisions.md D2).
 
 ## Executed log
 
 - **Task 0 — Phase 0 characterization proof** (PR #1806):
   seam inventory dry-trace-checked, canonical fixture live at
-  `tests/fixtures/outcome_first_fix/`, 24 characterization pins
+  `tests/fixtures/outcome_first_fix/`, characterization pins
   green keyless. Premise corrections recorded in the inventory:
   exit-code contract already 0/1/2/3 (legacy no-`success`
   loophole documented); keyless NL fix-routing goes to
   bug-predict at 0.17 confidence with no abstention.
-- **Task 1 — Phase 1 dry Fix contract** (chair go 2026-07-30):
+- **Task 1 — Phase 1 dry Fix contract** (PR #1808):
   `attune fix "<request>" --explain` ships preview-or-abstain
   with internal DTOs; 20 keyless tests through the real `main()`
-  entry, module coverage 96%, no execution paths
-  (grep-checked). Scope validation anchors to the enclosing
-  repo root (codex lane fix), selection is explicitly
-  compatibility-unverified until Phase 2. Same-session chair
-  addition: `fix` keyword → dev/debug in the router builtin map
-  (Phase 0 absence pin flipped as the change receipt).
+  entry, module coverage 96%, no execution paths (grep-checked).
+  Scope validation anchors to the enclosing repo root (codex
+  lane fix); selection is explicitly compatibility-unverified
+  until Phase 2. Same-session chair addition: `fix` keyword →
+  dev/debug in the router builtin map (Phase 0 absence pin
+  flipped as the change receipt).
 
-## Task 1 — Phase 1: dry explicit Fix contract
+## Task 2 — Phase 2: executable Fix proof
 
 ```xml
-<task id="1" name="outcome-first-fix-phase1-dry-contract">
+<task id="2" name="outcome-first-fix-phase2-executable-proof">
   <objective>
-    Ship the smallest internal boundary DTO (goal, done
-    conditions, constraints, verification probes) and a dry
-    `attune fix "<request>" --explain` preview that validates the
-    contract and names the selected existing workflow WITHOUT
-    executing anything. Truthful preview or abstention on every
-    input class; no universal public outcome schema.
+    Execute one representative Fix end-to-end: translate the
+    FixContract ONCE into existing workflow inputs, run the fix
+    through the existing registry/executor, evaluate every probe
+    INDEPENDENTLY through a real subprocess boundary, and render
+    one unified receipt (changes made, probes + provenance,
+    results, remaining uncertainty, safest next action). A
+    workflow exit alone never marks success (H2).
   </objective>
 
   <context>
-    <existing-code path="src/attune/cli_minimal.py">
-      Subparser registration pattern (_add_workflow_subparsers,
-      _add_diagnose_subparser). `attune fix` becomes a sibling.
+    <existing-code path="src/attune/cli_commands/fix_commands.py">
+      Phase 1 surface: FixContract/VerificationProbe DTOs,
+      build_contract, cmd_fix preview. Phase 2 extends cmd_fix
+      with an execution path behind --run; --explain and the
+      bare form keep Phase 1 preview semantics unchanged.
+    </existing-code>
+    <existing-code path="src/attune/workflows/test_gen_parallel.py">
+      Precedent (D5a): workflows already write project files via
+      _validate_file_path(...).write_text(...) (line ~336).
+    </existing-code>
+    <existing-code path="src/attune/workflows/agent_sdk_adapter.py">
+      The ONLY executor: sdk_isolation_kwargs() must wrap every
+      ClaudeAgentOptions construction (drift-guarded); Bash
+      PreToolUse guard rides along.
     </existing-code>
     <existing-code path="src/attune/cli_commands/_exit_codes.py">
-      Exit contract 0/1/2/3 (pinned by Phase 0). Phase 1 uses:
-      0 = truthful preview rendered; 3 (EXIT_CLI_ERROR) =
-      invalid input OR abstention (insufficient input to
-      preview truthfully). No new exit codes.
-    </existing-code>
-    <existing-code path="src/attune/workflows/__init__.py">
-      get_workflow/list_workflows — the ONLY selection surface.
-    </existing-code>
-    <existing-code path="tests/fixtures/outcome_first_fix/">
-      Canonical scenario; representative preview input in tests.
+      Exit contract reuse: 0 = every done condition VERIFIED by
+      its probe; 1 = workflow ran but >=1 done condition failed
+      or was unverifiable; 2 = uncaught crash; 3 = CLI error /
+      abstention. The 0/1 boundary is decided by PROBE RESULTS,
+      never by WorkflowResult.success alone.
     </existing-code>
     <constraint>
-      NO execution paths: Phase 1 never runs a workflow, never
-      spawns a probe subprocess, never writes files. Probes are
-      VALIDATED (well-formed argv list, no shell string), not
-      run. No LLM calls; all behavior keyless-deterministic.
+      D5: ONE new FixWorkflow registered in the EXISTING
+      registry, executed by the EXISTING adapter, returning the
+      EXISTING WorkflowResult. No new registry, executor,
+      lifecycle, evidence store, or telemetry (H3). The SDK
+      agent gets Edit/Read/Glob/Grep ONLY — no Bash (probes are
+      the CLI's job, not the agent's), scoped to the contract's
+      scope path(s).
     </constraint>
     <constraint>
-      Selection must abstain safely: `--workflow <name>` is the
-      only selection input in Phase 1. Given and registered ->
-      selected; given and unknown -> exit 3 naming the failure;
-      absent -> ABSTAIN (exit 3) listing registered candidates.
-      No inference, no default guess — a false confident route
-      is worse than abstention (ruling).
+      Probes are evaluated by the CLI via subprocess.run(argv)
+      AFTER the workflow returns — never by the agent, never
+      trusted from workflow output. Probe provenance in the
+      receipt = exact argv + returncode + duration; a probe that
+      cannot run records SKIPPED with the reason (truthful
+      uncertainty, not silent omission).
     </constraint>
     <constraint>
-      The DTO is internal (gate 2): dataclass in
-      src/attune/cli_commands/fix_commands.py, no JSON schema
-      published, no import promise outside attune.*. Docstring
-      states this explicitly.
+      Scope enforcement is post-hoc and honest: after execution,
+      diff the working tree; changed paths outside the
+      contract's scope are reported as a violation in the
+      receipt and force exit 1. Detection via git plumbing is
+      allowed ONLY in the probe-runner/diff-check module
+      (fix_receipt.py); fix_commands.py itself stays
+      subprocess-free and its Phase 1 grep check narrows to it.
+    </constraint>
+    <constraint>
+      Spend gate: executing this task's live-fire receipt makes
+      real SDK calls (~1-3 sessions, single-digit dollars). CI
+      tests stay keyless-deterministic via a stub workflow; the
+      LLM path is proven by ONE spend-gated dogfood run recorded
+      in decisions.md with the receipt pasted.
+    </constraint>
+    <constraint>
+      Default remains dry: `attune fix` without --run previews
+      exactly as Phase 1. --run requires the fix workflow
+      selection and at least one probe; anything less abstains
+      (exit 3). Do not persist prompt text beyond the run
+      (ruling: no sensitive-prompt persistence by default).
     </constraint>
   </context>
 
   <files-to-create>
-    <file path="src/attune/cli_commands/fix_commands.py">
-      VerificationProbe (argv list + description + expected exit)
-      and FixContract (goal, done_conditions, constraints,
-      probes) dataclasses; build_contract(args) mapping CLI flags
-      -> contract with validation (goal = request verbatim —
-      no inference; probes from repeated `--probe "<argv>"`
-      flags, shlex-split, never shell-executed; optional
-      `--scope <path>` constraint validated inside the repo via
-      the existing path-validation helper); cmd_fix(args)
-      rendering the preview: contract fields, selected workflow
-      (or abstention), and a "dry preview — nothing was
-      executed" trailer line. Preview is non-blocking: it never
-      prompts; anything unresolvable is abstention text + exit 3.
+    <file path="src/attune/workflows/fix_workflow.py">
+      FixWorkflow (SDK-native, registered like every other
+      workflow): input = goal, scope paths, done-condition
+      descriptions (data, not prose prompts); agent brief
+      instructs minimal in-place edit within scope; returns
+      WorkflowResult whose metadata lists agent-reported changed
+      files (advisory only — the receipt trusts the DIFF, not
+      the agent's claim).
     </file>
-    <file path="tests/unit/cli_commands/test_fix_commands.py">
-      Keyless unit coverage (>=85% on the new module):
-      representative input (canonical-scenario probes ->
-      truthful preview, exit 0, trailer present); ambiguous
-      input (no probes -> abstention naming --probe, exit 3;
-      no --workflow -> abstention listing candidates, exit 3);
-      risky input (unknown workflow -> exit 3; --scope escaping
-      the repo -> rejected via path validation; probe given as
-      shell metacharacters -> rejected, never interpreted);
-      truthfulness (preview output contains NO claim of
-      execution, selection, or verification beyond what
-      happened).
+    <file path="src/attune/cli_commands/fix_receipt.py">
+      Receipt assembly + rendering, separated from the preview:
+      dataclasses for ProbeOutcome (argv, returncode, duration,
+      status PASS/FAIL/SKIPPED+reason) and FixReceipt (changed
+      paths from the real diff, probe outcomes, scope
+      violations, remaining uncertainty, safest next action).
+      Next-action rules: all probes pass -> "review and commit";
+      any fail -> "inspect diff, re-run probe X"; scope
+      violation -> "revert out-of-scope paths". Renderer prints
+      the receipt and computes the 0/1 exit per the contract
+      above.
+    </file>
+    <file path="tests/unit/cli_commands/test_fix_receipt.py">
+      Keyless deterministic coverage (>=85% on both new
+      modules): a STUB fix workflow registered in-test applies
+      the known one-character fix to a tmp COPY of
+      tests/fixtures/outcome_first_fix/ (never the tracked
+      fixture); probes run via REAL pytest subprocess against
+      the copy — the initially-failing target probe passes
+      after the stub fix (ruling Phase 2 acceptance, through a
+      real CLI/subprocess/file boundary). Negative paths: probe
+      fails -> exit 1 + truthful FAIL row; probe binary missing
+      -> SKIPPED + uncertainty line + exit 1; out-of-scope edit
+      -> violation row + exit 1; WorkflowResult.success True
+      with failing probes -> exit 1 (H2 pinned at the receipt
+      layer); workflow crash -> exit 2.
     </file>
   </files-to-create>
 
   <files-to-modify>
-    <file path="src/attune/cli_minimal.py">
-      <change location="subparser registration block">
-        BEFORE: no `fix` subparser (namespace verified free,
-        Phase 0).
-        AFTER: _add_fix_subparser wiring `attune fix
-        "<request>" [--explain] [--workflow N] [--probe CMD]...
-        [--scope PATH]` to cmd_fix. In Phase 1 the bare form
-        behaves exactly like --explain plus one notice line that
-        execution arrives in a later phase — no divergence
-        between the two paths.
+    <file path="src/attune/cli_commands/fix_commands.py">
+      <change location="cmd_fix / subparser">
+        BEFORE: preview-only; no --run.
+        AFTER: --run flag executes: contract -> single
+        translation into FixWorkflow input -> existing executor
+        -> probe evaluation -> receipt render -> exit per
+        contract. Preview paths byte-identical to Phase 1
+        (regression-pinned by the existing 20 tests).
       </change>
     </file>
   </files-to-modify>
 
   <validation>
-    <check>New unit suite passes serially and keyless
-      (ANTHROPIC_API_KEY=""); no test mocks the contract
-      validation it claims to cover.</check>
-    <check>Phase 0 characterization suite still passes
-      unmodified — `attune workflow run`, router, and exit-code
-      pins unaffected.</check>
-    <check>`attune fix "x" --workflow no-such --explain` exits 3;
-      `attune fix "x" --explain` (no probes, no workflow)
-      abstains with exit 3; canonical-scenario invocation
-      previews truthfully with exit 0 — each proven through the
-      real CLI entry (subprocess or main() call), not only unit
-      calls.</check>
-    <check>grep confirms no subprocess/exec/file-write calls in
-      fix_commands.py (preview is dry by construction); the
-      path-validation gate test stays green.</check>
-    <check>Coverage on changed code >=85% locally; codecov
-      project + patch gates green.</check>
+    <check>Existing Phase 1 suite passes UNMODIFIED (preview
+      semantics frozen).</check>
+    <check>Stub-workflow round trip: target probe fails before,
+      passes after, via real pytest subprocess on the fixture
+      copy; receipt lists the changed file from the actual
+      diff.</check>
+    <check>H2 pin: a WorkflowResult with success=True and a
+      failing probe yields exit 1 and a FAIL row — workflow
+      exit never marks success.</check>
+    <check>Characterization + gates suites stay green; the
+      status-line corpus sweep passes (STATUS_VOCABULARY
+      leading token).</check>
+    <check>Coverage >=85% on fix_workflow.py and
+      fix_receipt.py; serial keyless run.</check>
+    <check>Live-fire (spend-gated, chair go at execution time):
+      one real `attune fix --run` on a fixture copy through the
+      real FixWorkflow; receipt pasted into decisions.md as the
+      dogfood record. Declared receipt types: suite +
+      behavioral + live-fire + metric.</check>
   </validation>
 
   <risks>
-    <risk severity="medium">Scope creep from "preview" into
-      "almost executed" — mitigation: the no-execution
-      constraint is grep-checked in validation and the trailer
-      line is pinned by tests.</risk>
-    <risk severity="medium">The DTO leaking public (gate 2) —
-      mitigation: internal-only docstring + no schema emission;
-      Phase 3 drift guards extend this.</risk>
-    <risk severity="low">Advertised-command/help gates flagging
-      the new subcommand — mitigation: run the gates suite; add
-      the minimal registration the gate requires without
-      authoring user-facing docs (Phase 3 owns docs).</risk>
+    <risk severity="high">Agent edits outside scope or edits the
+      test to make it pass — mitigation: post-hoc diff check
+      forces exit 1 on out-of-scope paths, and the canonical
+      scenario's third done condition (diff confined to
+      pricing.py) makes test-editing a reported violation.</risk>
+    <risk severity="medium">Stub-based CI proof diverging from
+      the live LLM path — mitigation: stub and FixWorkflow share
+      the same registration/translation/receipt code; only the
+      edit step differs, and the live-fire dogfood receipt
+      covers the real path once.</risk>
+    <risk severity="medium">Subprocess allowlist creep in
+      fix_commands — mitigation: probe-runner and diff-check
+      live in fix_receipt.py; fix_commands itself stays
+      subprocess-free and the grep check narrows to it.</risk>
   </risks>
 </task>
 ```
 
-**Acceptance (ruling Phase 1):** representative, ambiguous, and
-risky inputs produce truthful previews or abstention. No
-universal public outcome schema is promised.
+**Acceptance (ruling Phase 2):** an initially failing probe
+passes through a real CLI/subprocess/file boundary. Changed
+artifacts, failed or skipped probes, uncertainty, and the next
+action are truthfully reported. Workflow exit alone never marks
+success.
