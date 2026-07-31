@@ -238,6 +238,40 @@ def test_baseline_without_git_degrades_to_hash_attribution(tmp_path: Path) -> No
     assert any("git unavailable" in u for u in receipt.uncertainty)
 
 
+def test_untracked_scope_dir_edits_are_attributed(tmp_path: Path) -> None:
+    """The 'scratch copy inside the repo' flow: scope is an UNTRACKED
+    directory. Git porcelain collapses it to one `dir/` entry before
+    AND after the run, so per-file expansion must carry attribution —
+    without it the receipt falsely reads "this run changed no files;
+    the done conditions were already satisfied before it ran".
+    """
+    repo = tmp_path / "repo"
+    scratch = repo / "scratch"
+    scratch.mkdir(parents=True)
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+    for name in ("pricing.py", "pricing_suite.py"):
+        shutil.copy(FIXTURE_DIR / name, scratch / name)
+
+    baseline = capture_baseline(repo, [Path("scratch")])
+    # Directory expanded to per-file hashes; no unreadable dir entry.
+    assert "scratch/pricing.py" in baseline.scope_hashes
+    assert not any(h == "<unreadable>" for h in baseline.scope_hashes.values())
+
+    _apply_known_fix(scratch)
+    (scratch / "created_by_run.py").write_text("# new file from the run\n")
+
+    receipt = assemble_receipt(
+        contract=SimpleNamespace(probes=[]),  # type: ignore[arg-type]
+        baseline=baseline,
+        scope_paths=[Path("scratch")],
+        probe_outcomes=[ProbeOutcome(argv=["true"], status="PASS", returncode=0)],
+    )
+    assert "scratch/pricing.py" in receipt.attributed_changes
+    assert "scratch/created_by_run.py" in receipt.attributed_changes
+    assert receipt.scope_violations == []
+    assert receipt.next_action == "review the attributed diff and commit"
+
+
 # ---------------------------------------------------------------
 # Prevention layer: the Edit scope guard denies at tool-call time
 # ---------------------------------------------------------------

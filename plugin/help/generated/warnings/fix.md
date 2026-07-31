@@ -16,9 +16,9 @@ type: warning
 no probe cannot be verified, so the command abstains (exit 3) instead
 of running something it could not check. Add `--probe`.
 
-**"no --workflow given — selection abstains rather than guess"** — a
-false confident route is worse than an abstention. Pass `--workflow
-fix`.
+**"no --workflow given — Fix never guesses a route"** — a false
+confident route is worse than an abstention, so the message names the
+runnable next step. Pass `--workflow fix`.
 
 **"probe contains shell metacharacters"** — probes are argv lists.
 Rewrite the probe without pipes or redirection; if you need shell

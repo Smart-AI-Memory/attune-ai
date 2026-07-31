@@ -111,7 +111,9 @@ def test_missing_workflow_abstains_listing_candidates(
 ) -> None:
     assert cmd_fix(_args(workflow=None)) == 3
     out = capsys.readouterr().out
-    assert "abstains" in out
+    assert "never guesses a route" in out
+    # The abstention names the runnable next step, not just candidates.
+    assert "--workflow fix" in out
     assert "Registered candidates:" in out
     assert _TRAILER in out
 
@@ -153,7 +155,7 @@ def test_representative_preview_is_truthful(capsys: pytest.CaptureFixture[str]) 
     out = capsys.readouterr().out
     assert "Goal: make the boundary order price as bulk" in out
     assert f"Selected workflow: {workflow}" in out
-    assert "compatibility is verified in Phase 2" in out
+    assert "compatibility with the contract is checked at run time" in out
     assert "Probes (validated, not run):" in out
     assert _TRAILER in out
     # All three canonical done conditions, rendered.
