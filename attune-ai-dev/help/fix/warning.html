@@ -277,8 +277,9 @@
 <p><strong>&quot;no verification probes given — cannot verify a fix&quot;</strong> — a fix with
 no probe cannot be verified, so the command abstains (exit 3) instead
 of running something it could not check. Add <code>--probe</code>.</p>
-<p><strong>&quot;no --workflow given — selection abstains rather than guess&quot;</strong> — a
-false confident route is worse than an abstention. Pass <code>--workflow fix</code>.</p>
+<p><strong>&quot;no --workflow given — Fix never guesses a route&quot;</strong> — a false
+confident route is worse than an abstention, so the message names the
+runnable next step. Pass <code>--workflow fix</code>.</p>
 <p><strong>&quot;probe contains shell metacharacters&quot;</strong> — probes are argv lists.
 Rewrite the probe without pipes or redirection; if you need shell
 semantics, put them in a script and probe the script.</p>
