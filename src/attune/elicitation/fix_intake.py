@@ -141,12 +141,26 @@ def _is_test_shaped(name: str) -> bool:
     return name.startswith("test_") or name.endswith(("_test.py", "_suite.py"))
 
 
+def _is_production_path(rel: str) -> bool:
+    """True for paths under a top-level ``src/`` with no ``tests`` part.
+
+    Production packages legitimately contain modules with test-shaped
+    NAMES (``test_gen_parallel.py`` is a workflow, not a suite), so a
+    name match under ``src/`` is not probe material unless it sits in
+    an embedded ``tests`` directory.
+    """
+    parts = rel.split("/")
+    return parts[0] == "src" and "tests" not in parts
+
+
 def probe_candidates(repo_root: Path, scopes: list[str], limit: int = 4) -> list[str]:
     """Suggested ``--probe`` commands: test files related to the scopes.
 
     Three derivations, all mechanical and ranked: test-shaped files
     INSIDE a scope directory first (the suite that guards the code
-    being fixed), then the mirror test directory for a scope dir
+    being fixed — production paths under ``src/`` are excluded, since
+    a workflow module named ``test_*.py`` is not a suite), then the
+    mirror test directory for a scope dir
     (``src/pkg/x`` → ``tests/unit/x`` or ``tests/x``), then
     test-shaped files under ``tests/`` whose name contains a scope
     file's stem. Returned as runnable ``pytest <path>`` commands.
@@ -158,7 +172,9 @@ def probe_candidates(repo_root: Path, scopes: list[str], limit: int = 4) -> list
         if target.is_dir():
             for pattern in _TEST_PATTERNS:
                 for match in sorted(target.rglob(pattern)):
-                    found.setdefault(match.relative_to(repo_root).as_posix(), None)
+                    rel = match.relative_to(repo_root).as_posix()
+                    if not _is_production_path(rel):
+                        found.setdefault(rel, None)
     for scope in scopes:
         name = Path(scope).name
         target = repo_root / scope

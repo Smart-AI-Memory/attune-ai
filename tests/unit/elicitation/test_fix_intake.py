@@ -96,6 +96,19 @@ def test_fallback_skips_deleted_paths_and_degrades_without_commits(tmp_path: Pat
     assert scope_candidates(empty) == []
 
 
+def test_probe_candidates_exclude_production_src_files_with_test_names(tmp_path: Path) -> None:
+    repo = _git_repo(tmp_path)
+    pkg = repo / "src" / "pkg"
+    pkg.mkdir(parents=True)
+    (pkg / "test_gen_parallel.py").write_text("X = 1\n")
+    embedded = pkg / "tests"
+    embedded.mkdir()
+    (embedded / "test_real.py").write_text("def test_x(): pass\n")
+    probes = probe_candidates(repo, ["src/pkg"])
+    assert "pytest src/pkg/tests/test_real.py" in probes
+    assert all("test_gen_parallel" not in p for p in probes)
+
+
 def test_probe_candidates_map_scope_dir_to_mirror_test_dir(tmp_path: Path) -> None:
     repo = _git_repo(tmp_path)
     pkg = repo / "src" / "pkg" / "billing"
