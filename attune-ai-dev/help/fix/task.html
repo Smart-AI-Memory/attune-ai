@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Outcome-first fixes — state the goal and its probes, get a verified receipt — task</title>
-  <meta name="description" content="Run without `--run`. The preview prints the goal, the derived done conditions, the constraints, and the validated probes, then states that nothing was executed. Use it to check that your probes say wh" />
+  <meta name="description" content="In a Claude Code session, the `/fix` skill gathers the whole contract as ONE form — goal, `--scope`, `--probe`s, and preview-vs-run — with scope and probe options derived from your working tree (chang" />
   <meta property="og:title" content="Outcome-first fixes — state the goal and its probes, get a verified receipt — task" />
-  <meta property="og:description" content="Run without `--run`. The preview prints the goal, the derived done conditions, the constraints, and the validated probes, then states that nothing was executed. Use it to check that your probes say wh" />
+  <meta property="og:description" content="In a Claude Code session, the `/fix` skill gathers the whole contract as ONE form — goal, `--scope`, `--probe`s, and preview-vs-run — with scope and probe options derived from your working tree (chang" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix/task" />
   <style>
@@ -274,6 +274,17 @@
   <article class="markdown-body">
 <h1>Outcome-first fixes — state the goal and its probes, get a verified receipt</h1>
 <h2>Tasks</h2>
+<h3>Compose a fix interactively (guided intake)</h3>
+<p>In a Claude Code session, the <code>/fix</code> skill gathers the whole
+contract as ONE form — goal, <code>--scope</code>, <code>--probe</code>s, and
+preview-vs-run — with scope and probe options derived from your
+working tree (changed paths and matching test files) instead of
+typed from memory. The composed CLI command is previewed before
+anything executes. Under the hood:
+<code>python -m attune.elicitation.fix_intake</code> emits the form and
+candidates; <code>--compose</code> turns answers into the exact <code>attune fix</code>
+command line. The CLI itself is unchanged — the form is ergonomics
+on top of the same contract.</p>
 <h3>Preview before you commit to a run</h3>
 <p>Run without <code>--run</code>. The preview prints the goal, the derived done
 conditions, the constraints, and the validated probes, then states that
