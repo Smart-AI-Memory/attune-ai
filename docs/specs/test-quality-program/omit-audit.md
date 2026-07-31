@@ -68,11 +68,15 @@ import or a call-time dependency, not an import barrier.
 
 ## Tier 4 — Keep omitted (genuinely not unit-testable)
 
-`mcp/server.py`, `workflows/progress_server.py` (live protocol
-servers), `project_index/scanner_parallel.py` (multiprocessing),
+`mcp/server.py` (live protocol server),
+`project_index/scanner_parallel.py` (multiprocessing),
 `project_index/index.py` (integration-tested), all `__init__.py` /
 `__main__.py` package/entry stubs, `*_example.py`, deprecated
 `agent_factory/*` adapters, and `config.py` (import-shadowed).
+(`workflows/progress_server.py` was DELETED 2026-07-30 — zero
+importers, gated on `websockets` which was never a declared dep,
+so it could not even instantiate in the shipped package; its omit
+entry went with it.)
 
 **Second pass done (2026-07-16):** hook scripts and `config.py` ARE
 well-covered — the reason they read 0% in whole-repo baselines is a
