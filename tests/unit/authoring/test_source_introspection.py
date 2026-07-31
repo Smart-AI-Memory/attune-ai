@@ -79,3 +79,42 @@ class TestSourceIntrospection:
         # Should not raise — best-effort introspection logs and continues.
         info = _extract_source_info(["broken.py"], tmp_path)
         assert info.file_count == 1
+
+    def test_non_python_file_counted_but_not_parsed(self, tmp_path):
+        (tmp_path / "data.txt").write_text("not python\n")
+        info = _extract_source_info(["data.txt"], tmp_path)
+        assert info.file_count == 1
+        assert info.module_docstrings == []
+
+    def test_extracts_public_class_with_signature(self, tmp_path):
+        src = tmp_path / "mod.py"
+        src.write_text(
+            textwrap.dedent(
+                '''
+                class Widget:
+                    """A public widget."""
+
+                    def render(self) -> str:
+                        return ""
+
+
+                class _Hidden:
+                    pass
+                '''
+            )
+        )
+        info = _extract_source_info(["mod.py"], tmp_path)
+        assert [c["name"] for c in info.public_classes] == ["Widget"]
+        (sig,) = info.class_signatures
+        assert sig["name"] == "Widget"
+        assert sig["doc"] == "A public widget."
+        assert "render(self) -> str" in sig["methods"]
+        assert sig["is_dataclass"] is False
+
+    def test_module_constant_records_source_file(self, tmp_path):
+        (tmp_path / "consts.py").write_text('ALLOWED = ("a", "b")\n')
+        info = _extract_source_info(["consts.py"], tmp_path)
+        (const,) = info.module_constants
+        assert const["name"] == "ALLOWED"
+        assert const["values"] == ["a", "b"]
+        assert const["file"] == "consts.py"
