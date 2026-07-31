@@ -82,6 +82,14 @@ largest arc.
 Each item below ends with a prompt you can paste into a terminal
 running Claude Code (or the `attune` CLI directly).
 
+> **Before the 11.2.0 cut (Sat 08-01 ~09:00 ET):** the `attune fix`
+> surface is NOT in the installed 11.1.0 — a bare `attune fix …`
+> fails with `invalid choice: 'fix'` (verified live 07-31 ~23:50).
+> Until then, run fix commands repo-local:
+> `cd ~/attune-ai && PYTHONPATH=~/attune-ai/src python3 -m
+> attune.cli_minimal fix …` — after the cut, plain `attune fix`
+> works from any install.
+
 **1. Settle the canonical Fix scenario** (the open roundtable chair
 decision) by exercising the pricing fixture end-to-end and judging it:
 
