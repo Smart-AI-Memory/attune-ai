@@ -3,14 +3,27 @@ type: task
 name: fix-task
 feature: fix
 depth: task
-generated_at: 2026-07-31T14:34:15.270228+00:00
-source_hash: 8353dc181cc2bbc4f89d2c0e7750e99d9f99fe6786cb7cc1ce92a14ad2ab3762
+generated_at: 2026-07-31T16:03:37.162068+00:00
+source_hash: cf3ef4afc553319fc03470fe0a2f92a4bc77eda8b02354d75be6c4141752859d
 status: generated
 ---
 
 # Outcome-first fixes — state the goal and its probes, get a verified receipt
 
 ## Tasks
+
+### Compose a fix interactively (guided intake)
+
+In a Claude Code session, the `/fix` skill gathers the whole
+contract as ONE form — goal, `--scope`, `--probe`s, and
+preview-vs-run — with scope and probe options derived from your
+working tree (changed paths and matching test files) instead of
+typed from memory. The composed CLI command is previewed before
+anything executes. Under the hood:
+`python -m attune.elicitation.fix_intake` emits the form and
+candidates; `--compose` turns answers into the exact `attune fix`
+command line. The CLI itself is unchanged — the form is ergonomics
+on top of the same contract.
 
 ### Preview before you commit to a run
 

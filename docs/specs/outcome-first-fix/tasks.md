@@ -438,3 +438,77 @@ projected help/docs surface exists with a drift guard, prompt
 text persistence is answered with evidence, and the four
 ratified metrics are reported from suite-derived properties
 with no new telemetry.
+
+## Task 4 — Fix intake form (scope/probe picker, plugin surface)
+
+**Authored 2026-07-31; chair go given in-session ("go", with
+may-demo-Saturday framing — the CLI flow stays the demo fallback).
+Input ergonomics only: no new execution surface, no NL inference,
+the CLI contract is unchanged.**
+
+```xml
+<task id="4" name="fix-intake-form">
+  <objective>
+    Give interactive users a form-driven Fix intake: scope and
+    probes picked from derived candidates instead of typed, the
+    composed `attune fix` command previewed before any run.
+    Fires on the plugin/skill surface only — `attune fix` itself
+    stays bare argparse and scriptable.
+  </objective>
+  <context>
+    <existing-code path="src/attune/elicitation/bridge.py">
+      form_from_dict builds a validated FormSchema
+      (single_select / multi_select / textarea supported);
+      select_form_surface routes widget-first with
+      AskUserQuestion fallback (D21).
+    </existing-code>
+    <existing-code path="src/attune/cli_commands/fix_commands.py">
+      The CLI contract being composed: request positional,
+      --workflow fix, repeatable --probe, --scope, --run.
+    </existing-code>
+    <constraint>
+      Candidates are DERIVED, never hand-maintained: scope from
+      git-changed paths (the likeliest fix target), probes from
+      matching test files. No new YAML/registry (one source,
+      projected; H3). Degrade to free-text fields when git or
+      candidates are absent — the form never blocks.
+    </constraint>
+  </context>
+  <files-to-create>
+    <file path="src/attune/elicitation/fix_intake.py">
+      scope_candidates(), probe_candidates(),
+      build_fix_intake_form() -> FormSchema,
+      compose_fix_command(answers) -> argv-safe string; a
+      python -m entry printing the form as JSON and composing
+      from answers JSON (the thin seam the skill calls).
+    </file>
+    <file path="plugin/skills/fix/SKILL.md">
+      The /fix skill: helper -> form (rendered per the
+      communication grammar) -> composed preview -> confirm ->
+      --run -> receipt walkthrough. States the /fix-test
+      relationship (requirements: surfaces must not blur).
+    </file>
+    <file path="tests/unit/elicitation/test_fix_intake.py">
+      Real tmp git repos: candidate derivation, empty-repo
+      degrade, form validity via form_from_dict, command
+      composition quoting, shell-metacharacter safety.
+    </file>
+  </files-to-create>
+  <validation>
+    <check>Form builds validly with and without candidates.</check>
+    <check>Composed command round-trips through the real
+      `attune fix` preview (exit 0 with --workflow fix).</check>
+    <check>plugin reference validation passes (skill names only
+      real tools/paths).</check>
+    <check>Skills mirror re-synced; projection gates green.</check>
+  </validation>
+  <risks>
+    <risk severity="medium">Demo-eve timing — mitigation: the
+      skill is additive; the CLI demo path is unchanged and
+      remains the fallback if this lands after the cut.</risk>
+    <risk severity="low">Trigger collision with /fix-test —
+      mitigation: distinct trigger phrases + an explicit
+      relationship note in both skill bodies.</risk>
+  </risks>
+</task>
+```

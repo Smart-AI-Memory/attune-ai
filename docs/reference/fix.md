@@ -35,4 +35,4 @@ and `make_edit_scope_guard(scope_paths)`.
 VIOLATIONS` (when present) · `Probes (evaluated independently)` ·
 `Remaining uncertainty` (when present) · `Safest next action`.
 
-<!-- attune-generated: source_hash=8353dc181cc2bbc4f89d2c0e7750e99d9f99fe6786cb7cc1ce92a14ad2ab3762 feature=fix kind=reference generated_at=2026-07-31 -->
+<!-- attune-generated: source_hash=cf3ef4afc553319fc03470fe0a2f92a4bc77eda8b02354d75be6c4141752859d feature=fix kind=reference generated_at=2026-07-31 -->
