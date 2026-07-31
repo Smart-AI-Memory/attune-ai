@@ -20345,3 +20345,31 @@ def ", start_idx + 1)` for module-
   <worktree>/website/node_modules` (gitignored, instant, shares
   main's install). The node-side sibling of the "worktree venv
   lacks extras" lesson family.
+
+- **A class-level `attr: T | None = None` default on a mixin makes
+  `hasattr(cls, "attr")` TRUE for every subclass — "declared"
+  checks must be `getattr(cls, "attr", None) is not None`**:
+  2026-07-31, workflow-intake-forms Task 1. `LLMWorkflowMixin`
+  declares `input_schema: InputSchema | None = None`, so the fix
+  CLI's `hasattr(workflow_cls, "input_schema")` labeled EVERY
+  workflow "input schema: declared" while actual coverage was
+  0/21 — and the spec's requirements repeated the phantom "2/23"
+  because the grounding grep matched the machinery, not
+  declarations. Rule: for optional-declaration class attributes,
+  test the VALUE, not the attribute's existence; and a coverage
+  claim belongs to a registry sweep (`getattr(...) is not None`
+  over the live registry), never to grep hits.
+
+- **Codemod insertion anchored on "first occurrence of a body
+  line" lands in the WRONG method when a helper shares the
+  pattern — anchor from the target def's OFFSET, then search
+  forward**: 2026-07-31, wiring `validate_input` into 14
+  workflows. The shared anchor line (`assistant_parts: list[str]
+  = []`) appears in helper methods too; `text.replace(..., 1)`
+  put the call into a helper in files where the helper precedes
+  `execute()` — caught only because a behavioral test asserted
+  the CLI exit code, not by compile or import. Reliable recipe:
+  `idx = text.find("async def execute(")`, locate the docstring
+  close AFTER idx, insert there; and after any bulk codemod,
+  verify per-file via the live registry/behavior, never via
+  "patched N files" output alone.
