@@ -4,6 +4,7 @@ date: "2026-08-01"
 author: "Patrick Roebuck"
 excerpt: "Every AI coding tool says it fixed your bug. attune fix has to prove it — with a receipt built from independently re-run verification commands. Then a cold UX review caught the receipt itself lying on the happy path, and the fix for that is the most interesting part of the story."
 tags: ["verification", "receipts", "Claude Code", "attune fix", "AI workflows"]
+coverImage: "/images/blog/fix-receipt-loop.svg"
 published: false
 ---
 # The Receipt Beats the Promise: Shipping an AI Fix That Proves Itself
@@ -52,6 +53,8 @@ Probes (evaluated independently):
 Safest next action: review the attributed diff and commit
 receipt reflects independently evaluated probes — workflow exit was not trusted
 ```
+
+![Anatomy of a fix receipt — attribution, independent probes, next action, and the trailer, annotated](/images/blog/fix-receipt-anatomy.svg)
 
 Attribution is measured against a snapshot taken before the run, so
 your own in-flight edits are listed separately and never blamed on
