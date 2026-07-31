@@ -222,6 +222,17 @@ features:
     tags: [tests, debugging, fixes]
     status: manual
 
+  # `fix` is the outcome-first CLI surface (`attune fix`), distinct
+  # from the `/fix-test` skill above — see content/features/fix.md for
+  # the relationship. Single-sourced from that master and rendered by
+  # scripts/project_features.py, so `status: manual` WITHOUT `files:`
+  # keeps maintenance from overwriting the projection with LLM output
+  # (same contract as mcp-server below, DD5).
+  fix:
+    description: Outcome-first fixes — state the goal and its probes, get a verified receipt
+    tags: [fixes, verification, cli]
+    status: manual
+
   # mcp-server is single-sourced (status: manual) from
   # content/features/mcp-server.md and rendered by
   # attune_author.projector (scripts/project_features.py), which owns

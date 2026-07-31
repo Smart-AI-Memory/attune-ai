@@ -1,9 +1,9 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 1219,
-    "linked_templates": 889,
-    "total_tags": 117
+    "total_templates": 1230,
+    "linked_templates": 893,
+    "total_tags": 118
   },
   "links": {
     "com-agents": {
@@ -83,6 +83,13 @@
         "communication",
         "ux",
         "widget"
+      ]
+    },
+    "com-fix": {
+      "tags": [
+        "fixes",
+        "verification",
+        "cli"
       ]
     },
     "com-fix-test": {
@@ -326,6 +333,13 @@
       "tags": [
         "help-system",
         "telemetry"
+      ]
+    },
+    "con-fix": {
+      "tags": [
+        "fixes",
+        "verification",
+        "cli"
       ]
     },
     "con-fix-test": {
@@ -1742,6 +1756,28 @@
       ],
       "related_faq": [
         "faq-fastembed-is-the-local-embeddings-path-that-passes-a-50mb"
+      ]
+    },
+    "err-fix": {
+      "related_warning": [
+        "war-fix"
+      ],
+      "prevented_by": [
+        "tip-fix"
+      ],
+      "related_faq": [
+        "faq-fix"
+      ],
+      "tags": [
+        "fixes",
+        "verification",
+        "cli"
+      ],
+      "embeds": [
+        {
+          "id": "tip-fix",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-fix-test": {
@@ -5318,6 +5354,16 @@
         "err-fastembed-is-the-local-embeddings-path-that-passes-a-50mb"
       ]
     },
+    "faq-fix": {
+      "related_error": [
+        "err-fix"
+      ],
+      "tags": [
+        "fixes",
+        "verification",
+        "cli"
+      ]
+    },
     "faq-fix-test": {
       "related_error": [
         "err-fix-test"
@@ -7398,6 +7444,16 @@
         "widget"
       ]
     },
+    "not-fix": {
+      "related_reference": [
+        "ref-fix"
+      ],
+      "tags": [
+        "fixes",
+        "verification",
+        "cli"
+      ]
+    },
     "not-fix-test": {
       "related_reference": [
         "ref-deep-review",
@@ -7773,6 +7829,13 @@
         "widget"
       ]
     },
+    "qui-fix": {
+      "tags": [
+        "fixes",
+        "verification",
+        "cli"
+      ]
+    },
     "qui-fix-test": {
       "tags": [
         "tests",
@@ -8103,6 +8166,13 @@
         "communication",
         "ux",
         "widget"
+      ]
+    },
+    "ref-fix": {
+      "tags": [
+        "fixes",
+        "verification",
+        "cli"
       ]
     },
     "ref-fix-test": {
@@ -8849,6 +8919,13 @@
         "telemetry"
       ]
     },
+    "tas-fix": {
+      "tags": [
+        "fixes",
+        "verification",
+        "cli"
+      ]
+    },
     "tas-fix-test": {
       "tags": [
         "tests",
@@ -9287,6 +9364,13 @@
         "widget"
       ]
     },
+    "tip-fix": {
+      "tags": [
+        "fixes",
+        "verification",
+        "cli"
+      ]
+    },
     "tip-fix-test": {
       "tags": [
         "tests",
@@ -9520,6 +9604,13 @@
         "communication",
         "ux",
         "widget"
+      ]
+    },
+    "tro-fix": {
+      "tags": [
+        "fixes",
+        "verification",
+        "cli"
       ]
     },
     "tro-fix-test": {
@@ -10225,6 +10316,16 @@
     "war-fastembed-is-the-local-embeddings-path-that-passes-a-50mb": {
       "related_error": [
         "err-fastembed-is-the-local-embeddings-path-that-passes-a-50mb"
+      ]
+    },
+    "war-fix": {
+      "related_error": [
+        "err-fix"
+      ],
+      "tags": [
+        "fixes",
+        "verification",
+        "cli"
       ]
     },
     "war-fix-test": {
@@ -12244,26 +12345,37 @@
     "cli": [
       "com-cli",
       "com-cli-vs-claude-code",
+      "com-fix",
       "con-cli",
+      "con-fix",
       "err-cli",
+      "err-fix",
       "faq-cli",
+      "faq-fix",
       "not-cli",
       "not-command-hubs",
+      "not-fix",
       "qui-browse-help",
       "qui-check-costs",
       "qui-check-health",
       "qui-cli",
+      "qui-fix",
       "ref-cli",
+      "ref-fix",
       "tas-browse-help-docs",
       "tas-check-auth-status",
       "tas-cli",
       "tas-export-telemetry",
+      "tas-fix",
       "tas-manage-lessons",
       "tas-run-doctor",
       "tas-run-workflow",
       "tip-cli",
+      "tip-fix",
       "tro-cli",
-      "war-cli"
+      "tro-fix",
+      "war-cli",
+      "war-fix"
     ],
     "code-quality": [
       "not-code-simplification",
@@ -12528,17 +12640,28 @@
       "war-resilience"
     ],
     "fixes": [
+      "com-fix",
       "com-fix-test",
+      "con-fix",
       "con-fix-test",
       "con-tool-fix-test",
+      "err-fix",
       "err-fix-test",
+      "faq-fix",
       "faq-fix-test",
+      "not-fix",
       "not-fix-test",
+      "qui-fix",
       "qui-fix-test",
+      "ref-fix",
       "ref-fix-test",
+      "tas-fix",
       "tas-fix-test",
+      "tip-fix",
       "tip-fix-test",
+      "tro-fix",
       "tro-fix-test",
+      "war-fix",
       "war-fix-test"
     ],
     "formatting": [
@@ -14633,6 +14756,19 @@
       "tip-elicitation-forms",
       "tro-elicitation-forms",
       "war-elicitation-forms"
+    ],
+    "verification": [
+      "com-fix",
+      "con-fix",
+      "err-fix",
+      "faq-fix",
+      "not-fix",
+      "qui-fix",
+      "ref-fix",
+      "tas-fix",
+      "tip-fix",
+      "tro-fix",
+      "war-fix"
     ],
     "webhooks": [
       "com-hooks",
