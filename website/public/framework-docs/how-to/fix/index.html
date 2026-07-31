@@ -4596,6 +4596,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#compose-a-fix-interactively-guided-intake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Compose a fix interactively (guided intake)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#preview-before-you-commit-to-a-run" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4762,6 +4773,17 @@ nothing is written):</p>
 </tbody>
 </table>
 <h2 id="tasks">Tasks<a class="headerlink" href="#tasks" title="Permanent link">&para;</a></h2>
+<h3 id="compose-a-fix-interactively-guided-intake">Compose a fix interactively (guided intake)<a class="headerlink" href="#compose-a-fix-interactively-guided-intake" title="Permanent link">&para;</a></h3>
+<p>In a Claude Code session, the <code>/fix</code> skill gathers the whole
+contract as ONE form — goal, <code>--scope</code>, <code>--probe</code>s, and
+preview-vs-run — with scope and probe options derived from your
+working tree (changed paths and matching test files) instead of
+typed from memory. The composed CLI command is previewed before
+anything executes. Under the hood:
+<code>python -m attune.elicitation.fix_intake</code> emits the form and
+candidates; <code>--compose</code> turns answers into the exact <code>attune fix</code>
+command line. The CLI itself is unchanged — the form is ergonomics
+on top of the same contract.</p>
 <h3 id="preview-before-you-commit-to-a-run">Preview before you commit to a run<a class="headerlink" href="#preview-before-you-commit-to-a-run" title="Permanent link">&para;</a></h3>
 <p>Run without <code>--run</code>. The preview prints the goal, the derived done
 conditions, the constraints, and the validated probes, then states that
@@ -4836,7 +4858,7 @@ and <code>make_edit_scope_guard(scope_paths)</code>.</p>
 <p><code>Changes made</code> · <code>Pre-existing changes</code> (when present) · <code>SCOPE
 VIOLATIONS</code> (when present) · <code>Probes (evaluated independently)</code> ·
 <code>Remaining uncertainty</code> (when present) · <code>Safest next action</code>.</p>
-<!-- attune-generated: source_hash=8353dc181cc2bbc4f89d2c0e7750e99d9f99fe6786cb7cc1ce92a14ad2ab3762 feature=fix kind=how-to generated_at=2026-07-31 -->
+<!-- attune-generated: source_hash=cf3ef4afc553319fc03470fe0a2f92a4bc77eda8b02354d75be6c4141752859d feature=fix kind=how-to generated_at=2026-07-31 -->
 
 
 
