@@ -33,9 +33,12 @@ authorization exists).
     </constraint>
   </context>
   <files-to-modify>
-    <file path="src/attune/workflows/*.py">
+    <file path="src/attune/workflows/**/*.py (+ any module housing a registered workflow class, e.g. src/attune/agents/release/release_prep_team.py)">
       Add input_schema declarations matching each workflow's
       actual execute() consumption (read the code, not the docs).
+      The grep-derived registry sweep defines the file set — this
+      glob is illustrative, not binding (codex lane, 2026-07-31:
+      registry classes live outside workflows/ too).
     </file>
   </files-to-modify>
   <files-to-create>

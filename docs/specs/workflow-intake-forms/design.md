@@ -56,18 +56,28 @@ class FieldSlot:
     provider: str | None = None   # candidate provider name
     control: str | None = None    # override; else derived from type
     help_text: str | None = None
-    required: bool | None = None  # else derived from InputSchema
+    required: bool | None = None  # TIGHTEN-only override, see below
 ```
 
+- **Slot overrides may TIGHTEN, never LOOSEN (codex lane,
+  2026-07-31):** a slot can require a schema-optional field for the
+  interactive flow, but a schema-REQUIRED field can never be
+  rendered optional — the generator rejects such a template at
+  build time, so the UI contract cannot diverge from the execution
+  contract in the dangerous direction.
 - Providers are plain callables in a module-level dict:
   `PROVIDERS: dict[str, Callable[[ProviderContext], list[str]]]`.
   `ProviderContext` carries `repo_root`, the invocation text, and
   the already-answered fields. No entry points, no plugins — a
   dict (H3-no-parallel-framework).
-- Control derivation: `str` → `text_input`/`textarea` (by
-  `max_length`), enum-like → `single_select`, `list[str]` +
-  provider → `multi_select`, `int`/`float` → `number`, `bool` →
-  `boolean`. A slot's `control` overrides.
+- Control derivation uses ONLY what `InputSchema` actually
+  carries — the declared python type — plus the slot's explicit
+  `control` override (codex lane, 2026-07-31: the schema has no
+  `max_length` or enum metadata, so nothing may pretend to derive
+  from them): `str` → `text_input` (a slot opts into `textarea`),
+  `list` + provider → `multi_select`, `int`/`float` → `number`,
+  `bool` → `boolean`. Richer derivation arrives only if
+  `InputSchema` itself grows the metadata.
 - A field whose value is already present in the invocation text
   or context is PREFILLED, rendered as inferred (the existing
   `inferred_from` path) — never re-asked blind.
@@ -134,10 +144,14 @@ family of intake forms should read as ONE surface.
 
 - Instrument `intake_form` end-to-end (derive/build/render marks)
   behind the existing telemetry surface — no new store.
-- Cache: candidates keyed on
-  `(repo_root, HEAD, sha256(sorted dirty set))` — the key IS the
-  state, so invalidation is structural. In-process dict first;
-  the existing memory backend second.
+- Cache: providers are declared either REPO-STATE-PURE (read
+  only the tree/git — cacheable) or CONTEXT-DEPENDENT (read
+  invocation text or earlier answers — never cached in v1; codex
+  lane, 2026-07-31: a context-blind key would replay one
+  invocation's candidates into an unrelated one). Pure providers
+  key on `(repo_root, HEAD, sha256(sorted dirty set))` — the key
+  IS the state, so invalidation is structural. In-process dict
+  first; the existing memory backend second.
 - The Redis Function (chair's stored procedure): `FCALL
   intake_form_digest` assembling cached candidate fragments
   server-side for surfaces already holding a connection (MCP, ops

@@ -91,8 +91,13 @@ need exists and that it belongs in ONE place.
 
 - No new controls, renderer, or validation path — the elicitation
   spec owns those.
-- No natural-language inference at intake. Prefill comes from the
-  user's own invocation text and derived candidates only.
+- No natural-language inference at intake. Prefill is defined
+  deterministically (codex lane, 2026-07-31): the invocation text
+  is carried VERBATIM into the template's single designated
+  free-text field (goal/outcome) — never parsed, split, or
+  extracted into other fields. Every other prefill comes from
+  derived candidates. That verbatim-carry contract is what keeps
+  this non-goal and the prefill requirement consistent.
 - No hand-maintained per-workflow YAML mapping (ratified in the
   fix intake: derived, never authored — a mapping file is the
   drift generator this design exists to avoid).
