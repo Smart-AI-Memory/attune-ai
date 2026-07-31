@@ -97,6 +97,7 @@ rule (a single turn can't bundle multiple ambiguous decisions). See
 | discovery-sweep | run all audits, full sweep, what should I fix, triage findings |
 | doc-gen | generate docs, documentation, README |
 | smart-test | generate tests, test gaps, coverage |
+| fix | attune fix, scoped fix, fix with receipt |
 | fix-test | fix test, broken test, debug test |
 | planning | plan, feature, architecture, TDD |
 | refactor-plan | refactor, tech debt, simplify |

@@ -111,6 +111,19 @@ Read the exit code:
 
 ## Tasks
 
+### Compose a fix interactively (guided intake)
+
+In a Claude Code session, the `/fix` skill gathers the whole
+contract as ONE form — goal, `--scope`, `--probe`s, and
+preview-vs-run — with scope and probe options derived from your
+working tree (changed paths and matching test files) instead of
+typed from memory. The composed CLI command is previewed before
+anything executes. Under the hood:
+`python -m attune.elicitation.fix_intake` emits the form and
+candidates; `--compose` turns answers into the exact `attune fix`
+command line. The CLI itself is unchanged — the form is ergonomics
+on top of the same contract.
+
 ### Preview before you commit to a run
 
 Run without `--run`. The preview prints the goal, the derived done

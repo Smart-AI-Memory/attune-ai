@@ -385,7 +385,7 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 | Capability | Plugin only | Plugin + pip |
 | ---------- | ----------- | ------------ |
-| <!-- cap:skill_count -->26 auto-triggering skills<!-- /cap --> | Yes | Yes |
+| <!-- cap:skill_count -->27 auto-triggering skills<!-- /cap --> | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
 | <!-- cap:mcp_registered_tool_count -->60 MCP tools<!-- /cap --> | -- | Yes |

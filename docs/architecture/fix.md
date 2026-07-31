@@ -91,4 +91,4 @@ adapter is the honest design rather than a forced universal model.
 
 Full design record: `docs/specs/outcome-first-fix/`.
 
-<!-- attune-generated: source_hash=8353dc181cc2bbc4f89d2c0e7750e99d9f99fe6786cb7cc1ce92a14ad2ab3762 feature=fix kind=architecture generated_at=2026-07-31 -->
+<!-- attune-generated: source_hash=cf3ef4afc553319fc03470fe0a2f92a4bc77eda8b02354d75be6c4141752859d feature=fix kind=architecture generated_at=2026-07-31 -->
