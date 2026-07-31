@@ -31,6 +31,7 @@ from .compat import ModelTier
 from .doc_orch_filters import DocOrchFilterMixin
 from .doc_orch_report import DocOrchReportMixin
 from .doc_orch_scout import DocOrchScoutMixin
+from .validation import InputSchema
 
 logger = logging.getLogger(__name__)
 
@@ -408,6 +409,10 @@ class DocumentationOrchestrator(
         result.summary = self._generate_summary(result, summary_items)
         return result
 
+    input_schema = InputSchema(
+        optional_fields={"context": dict},
+    )
+
     async def execute(
         self,
         context: dict | None = None,
@@ -427,6 +432,7 @@ class DocumentationOrchestrator(
             OrchestratorResult with full details
 
         """
+        self.validate_input({"context": context} if context is not None else {})
         started_at = datetime.now()
         result = OrchestratorResult(success=False, phase="scout")
         errors: list[str] = []

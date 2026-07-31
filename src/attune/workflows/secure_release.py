@@ -21,6 +21,7 @@ from typing import Any
 
 from .base import BaseWorkflow, WorkflowResult
 from .compat import ModelTier
+from .validation import InputSchema
 
 logger = logging.getLogger(__name__)
 
@@ -146,6 +147,10 @@ class SecureReleasePipeline(BaseWorkflow):
         self.crew_config = crew_config or {}
         self.kwargs = kwargs
 
+    input_schema = InputSchema(
+        optional_fields={"path": str, "diff": str, "files_changed": list, "since": str},
+    )
+
     async def execute(
         self,
         path: str = ".",
@@ -167,6 +172,18 @@ class SecureReleasePipeline(BaseWorkflow):
             SecureReleaseResult with combined analysis
 
         """
+        self.validate_input(
+            {
+                k: v
+                for k, v in {
+                    "path": path,
+                    "diff": diff,
+                    "files_changed": files_changed,
+                    "since": since,
+                }.items()
+                if v is not None
+            }
+        )
         try:
             from .security_adapters import (
                 _check_crew_available,

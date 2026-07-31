@@ -41,6 +41,7 @@ from .refactor_plan_report import (
     main,  # noqa: F401 - re-exported
 )
 from .step_config import WorkflowStepConfig
+from .validation import InputSchema
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +137,10 @@ class RefactorPlanWorkflow(BaseWorkflow):
         kwargs.setdefault("enable_post_simplification", True)
         super().__init__(**kwargs)
 
+    input_schema = InputSchema(
+        optional_fields={"path": str, "depth": str},
+    )
+
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         """Execute the Agent SDK refactoring plan.
 
@@ -148,6 +153,7 @@ class RefactorPlanWorkflow(BaseWorkflow):
         Returns:
             WorkflowResult with findings, suggestions, and metadata.
         """
+        self.validate_input(kwargs)
         path_arg: str = kwargs.get("path", "")
         depth: str = kwargs.get("depth", "standard")
 

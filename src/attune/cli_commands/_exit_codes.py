@@ -31,6 +31,8 @@ import traceback
 from collections.abc import Callable
 from typing import Any
 
+from attune.workflows.validation import WorkflowValidationError
+
 logger = logging.getLogger(__name__)
 
 # Exit-code contract — see module docstring / decisions.md.
@@ -170,6 +172,15 @@ def run_workflow_with_exit_code(
             result = asyncio.run(workflow.execute(**input_data))
         else:
             result = workflow.execute(**input_data)
+    except WorkflowValidationError as exc:
+        # Malformed INPUT is a CLI-level error, not a workflow crash:
+        # name every failing field cleanly, no traceback (Task 1 of
+        # docs/specs/workflow-intake-forms/ — schemas now validate).
+        logger.info("Workflow %r rejected its input: %s", name, exc)
+        print(f"❌ Invalid input for workflow '{name}':")
+        for err in getattr(exc, "errors", None) or [str(exc)]:
+            print(f"  - {err}")
+        return EXIT_CLI_ERROR
     except Exception as exc:  # noqa: BLE001
         # INTENTIONAL: any uncaught error from the workflow is the
         # exit-2 "unplanned failure" branch. Traceback to stderr so

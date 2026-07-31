@@ -41,6 +41,7 @@ from attune.workflows.output import (
     TableSection,
     WorkflowReport,
 )
+from attune.workflows.validation import InputSchema
 
 # Re-export agent classes and helpers
 from .release_agents import (  # noqa: F401
@@ -412,6 +413,10 @@ class ReleasePrepTeamWorkflow(BaseWorkflow):
         self.quality_gates = quality_gates
         self._kwargs = kwargs
 
+    input_schema = InputSchema(
+        optional_fields={"path": str, "context": dict},
+    )
+
     async def execute(
         self,
         path: str = ".",
@@ -433,6 +438,9 @@ class ReleasePrepTeamWorkflow(BaseWorkflow):
             (``metadata["approved"]``), so a BLOCKED release still exits 0.
 
         """
+        self.validate_input(
+            {k: v for k, v in {"path": path, "context": context}.items() if v is not None}
+        )
         # Map 'target' to 'path' for VSCode/CLI compatibility
         if "target" in kwargs and path == ".":
             path = kwargs["target"]

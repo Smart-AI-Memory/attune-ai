@@ -35,6 +35,7 @@ from ..base import BaseWorkflow, ModelTier
 from ..context import WorkflowContext
 from ..data_classes import WorkflowResult
 from ..services import ParsingService, PromptService
+from ..validation import InputSchema
 from .config import DOC_GEN_STEPS, TOKEN_COSTS  # noqa: F401  # re-export
 
 logger = logging.getLogger(__name__)
@@ -121,6 +122,10 @@ class DocumentGenerationWorkflow(BaseWorkflow):
             parsing=ParsingService(xml_config=xml_config),
         )
 
+    input_schema = InputSchema(
+        optional_fields={"path": str, "depth": str},
+    )
+
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         """Execute the Agent SDK documentation generation.
 
@@ -133,6 +138,7 @@ class DocumentGenerationWorkflow(BaseWorkflow):
         Returns:
             WorkflowResult with documentation, suggestions, and metadata.
         """
+        self.validate_input(kwargs)
         path_arg: str = kwargs.get("path", "")
         depth: str = kwargs.get("depth", "standard")
 

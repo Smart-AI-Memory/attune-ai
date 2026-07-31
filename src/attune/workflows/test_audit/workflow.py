@@ -35,6 +35,7 @@ from ..agent_sdk_adapter import (
 )
 from ..base import BaseWorkflow, ModelTier
 from ..data_classes import WorkflowResult
+from ..validation import InputSchema
 
 # Backward-compatibility re-exports — subpackage modules still exist.
 from .coverage_parser import ModuleCoverage, parse_coverage_json  # noqa: F401
@@ -122,6 +123,15 @@ class TestAuditWorkflow(BaseWorkflow):
         super().__init__(**kwargs)
         self._system_prompt_suffix = system_prompt_suffix
 
+    input_schema = InputSchema(
+        optional_fields={
+            "path": str,
+            "depth": str,
+            "max_budget_usd": (int, float),
+            "src_path": str,
+        },
+    )
+
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         """Execute the Agent SDK test audit.
 
@@ -136,6 +146,7 @@ class TestAuditWorkflow(BaseWorkflow):
         Returns:
             WorkflowResult with findings, suggestions, and metadata.
         """
+        self.validate_input(kwargs)
         import warnings as _warnings  # local to keep formatter from stripping
 
         path_arg: str = kwargs.get("path", "") or kwargs.get("src_path", "")

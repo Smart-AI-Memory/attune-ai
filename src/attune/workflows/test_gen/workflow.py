@@ -36,6 +36,7 @@ from ..agent_sdk_adapter import (
 )
 from ..base import BaseWorkflow, ModelTier
 from ..data_classes import WorkflowResult
+from ..validation import InputSchema
 from .config import DEFAULT_SKIP_PATTERNS  # noqa: F401 — re-exported
 
 logger = logging.getLogger(__name__)
@@ -114,6 +115,10 @@ class TestGenerationWorkflow(BaseWorkflow):
         """
         super().__init__(**kwargs)
 
+    input_schema = InputSchema(
+        optional_fields={"path": str, "depth": str},
+    )
+
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         """Execute the Agent SDK test generation.
 
@@ -128,6 +133,7 @@ class TestGenerationWorkflow(BaseWorkflow):
             WorkflowResult with generated tests, coverage info,
             and metadata.
         """
+        self.validate_input(kwargs)
         path_arg: str = kwargs.get("path", "")
         depth: str = kwargs.get("depth", "standard")
 

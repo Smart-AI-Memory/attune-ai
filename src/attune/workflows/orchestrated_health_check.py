@@ -61,6 +61,7 @@ from .health_check_tracking import (
     save_health_json,
     save_tracking_history,
 )
+from .validation import InputSchema
 
 # Re-export public API for backward compatibility
 __all__ = [
@@ -176,6 +177,10 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
             project_root,
         )
 
+    input_schema = InputSchema(
+        optional_fields={"path": str, "project_root": str, "context": dict},
+    )
+
     async def execute(
         self,
         path: str | None = None,
@@ -204,6 +209,13 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
             ValueError: If path is invalid
 
         """
+        self.validate_input(
+            {
+                k: v
+                for k, v in {"path": path, "project_root": project_root, "context": context}.items()
+                if v is not None
+            }
+        )
         # Migrate the deprecated `project_root=` kwarg → `path=`.
         if project_root is not None and path is None:
             warnings.warn(

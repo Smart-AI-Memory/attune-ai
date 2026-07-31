@@ -40,6 +40,7 @@ from .agent_sdk_adapter import (
 from .base import BaseWorkflow, ModelTier
 from .data_classes import WorkflowResult
 from .step_config import WorkflowStepConfig
+from .validation import InputSchema
 
 # Step configurations preserved for backward compatibility
 SUMMARIZE_STEP = WorkflowStepConfig(
@@ -133,6 +134,10 @@ class ResearchSynthesisWorkflow(BaseWorkflow):
     stages = ["agent-synthesis"]
     tier_map = {"agent-synthesis": ModelTier.CAPABLE}
 
+    input_schema = InputSchema(
+        optional_fields={"path": str, "depth": str},
+    )
+
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         """Execute the Agent SDK research synthesis.
 
@@ -145,6 +150,7 @@ class ResearchSynthesisWorkflow(BaseWorkflow):
         Returns:
             WorkflowResult with findings, suggestions, and metadata.
         """
+        self.validate_input(kwargs)
         path_arg: str = kwargs.get("path", "")
         depth: str = kwargs.get("depth", "standard")
 

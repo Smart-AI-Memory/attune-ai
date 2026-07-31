@@ -48,6 +48,7 @@ from .bug_predict_patterns import (
 )
 from .data_classes import WorkflowResult
 from .step_config import WorkflowStepConfig
+from .validation import InputSchema
 
 logger = logging.getLogger(__name__)
 
@@ -142,6 +143,10 @@ class BugPredictionWorkflow(BaseWorkflow):
         super().__init__(**kwargs)
         self._system_prompt_suffix = system_prompt_suffix
 
+    input_schema = InputSchema(
+        optional_fields={"path": str, "depth": str, "max_budget_usd": (int, float)},
+    )
+
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         """Execute the Agent SDK bug prediction.
 
@@ -154,6 +159,7 @@ class BugPredictionWorkflow(BaseWorkflow):
         Returns:
             WorkflowResult with findings, suggestions, and metadata.
         """
+        self.validate_input(kwargs)
         path_arg: str = kwargs.get("path", "")
         depth: str = kwargs.get("depth", "standard")
 
