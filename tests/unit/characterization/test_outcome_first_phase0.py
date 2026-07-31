@@ -195,7 +195,9 @@ DRY_TRACE = [
     ),
     ("attune.cli_commands.workflow_commands", "cmd_workflow_run", ["args"]),
     ("attune.cli_commands.diagnosis_commands", "cmd_diagnose", ["args"]),
+    ("attune.cli_commands.workflow_commands", "_auth_preflight", []),
     ("attune.diagnosis.engine", "diagnose", ["run_id", "origin"]),
+    ("attune.routing", "RoutingDecision", None),
     ("attune.telemetry.usage_tracker", "UsageTracker", None),
     ("attune.workflows.data_classes", "WorkflowResult", None),
 ]
@@ -213,11 +215,12 @@ def test_dry_trace_seam_interface_resolves(
         target = getattr(target, part)
 
     if params is not None:
-        actual = [
-            p for p in inspect.signature(target).parameters if p not in ("self", "args", "kwargs")
-        ]
+        # Strict: only `self` is filtered. An `args` entry must be a
+        # REAL parameter named args — no unconditional escape (a
+        # vacuous check here was a codex D11 lane finding).
+        actual = [p for p in inspect.signature(target).parameters if p != "self"]
         for expected in params:
-            assert expected in actual or expected == "args", (
+            assert expected in actual, (
                 f"{module_name}.{symbol}: expected param {expected!r} " f"not in {actual!r}"
             )
 
