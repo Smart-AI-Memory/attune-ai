@@ -1,26 +1,31 @@
 # Phase 0 — Seam inventory and characterization proof
 
 **Status:** executed 2026-07-30 (Task 0, chair-authorized).
-Every row below is mechanically checked by the dry-trace section
-of `tests/unit/characterization/test_outcome_first_phase0.py` —
-a row naming an interface that stops importing fails CI.
+Rows naming a TODAY-existing interface are mechanically checked
+by the dry-trace section of
+`tests/unit/characterization/test_outcome_first_phase0.py` — a
+checked row whose interface stops importing fails CI. Rows
+marked **†** are design commitments (a Phase 1/2 deliverable or
+an out-of-repo surface) — they name where the concept WILL
+land, and the corresponding phase's tests must convert them to
+checked rows when that phase executes.
 
 ## Seam map: ruling concept → existing interface
 
 | Ruling concept | Existing interface | Notes |
 | --- | --- | --- |
-| Explicit entry (`attune fix`) | new subparser in `src/attune/cli_minimal.py` (Phase 1) | namespace verified free; sibling of `workflow`/`diagnose` |
-| Outcome contract DTO | internal dataclass translated ONCE into `execute(**input_data)` kwargs via `cmd_workflow_run`'s input path | boundary object, never a public schema (gate 2) |
+| Explicit entry (`attune fix`) † | new subparser in `src/attune/cli_minimal.py` (Phase 1) | namespace verified free; sibling of `workflow`/`diagnose` |
+| Outcome contract DTO † | internal dataclass translated ONCE into `execute(**input_data)` kwargs via `cmd_workflow_run`'s input path | boundary object, never a public schema (gate 2) |
 | Workflow selection | `attune.workflows.get_workflow` / `list_workflows` (`WORKFLOW_REGISTRY`) | no second registry |
 | Execution | `attune.cli_commands._exit_codes.run_workflow_with_exit_code` | owns the 0/1/2/3 exit contract |
 | Receipt evidence | `WorkflowResult` fields (`success`, `stages`, `final_output`, `cost_report`, `metadata`, `summary`, `suggestions`, `error`, `error_type`, `transient`) | receipt PROJECTS these; probes evaluated test-side |
-| Verification probes | real `pytest` subprocess against the scenario copy | independent of workflow exit; Phase 2 |
+| Verification probes † | real `pytest` subprocess against the scenario copy (Phase 2) | independent of workflow exit; fixture boundary already proven |
 | Routing (deferred NL) | `attune.cli_router.HybridRouter.route` / `attune.routing.SmartRouter.route_sync` | Phase 4 gate; see keyless probe below |
-| `--explain` projection | `RoutingDecision` + `workflow_cls.input_schema` (`cmd_workflow_info` path) | existing data only |
+| `--explain` projection | `attune.routing.RoutingDecision` (checked) + `workflow_cls.input_schema` † (conditional attr, Phase 1 pins it per selected workflow) | existing data only |
 | Run history / diagnosis | `attune.diagnosis.engine.diagnose` + canonical run stream | `attune diagnose` already consumes it |
-| Confirmation gates | existing auth pre-flight + spend gate inside `cmd_workflow_run` | reuse, not reinvent |
+| Confirmation gates | `_auth_preflight` (checked) + spend gate inline in `cmd_workflow_run` | reuse, not reinvent |
 | Cost/telemetry | `attune.telemetry.usage_tracker.UsageTracker` | no second telemetry system |
-| Help/docs surface | author-feature projector pipeline | projector-owned, never hand-edited |
+| Help/docs surface † | author-feature projector pipeline (out-of-repo: attune-author) | projector-owned, never hand-edited; Phase 3 adds drift guards |
 
 ## REMOVED (concepts with no interface — by design)
 
