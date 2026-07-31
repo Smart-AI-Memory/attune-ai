@@ -125,22 +125,50 @@ Telemetry is not a leak path either — `_track_sdk_run_telemetry`
 records cost, tokens, and duration only. Pinned by
 `test_fix_run_persists_no_file_containing_the_request_text`.
 
-**The ops run record would carry it.** If the `fix` WORKFLOW is
-driven through the ops daemon, the generic run-record writer
-(`_persist_run`, `src/attune/ops/runner.py`) stores every workflow's
-command line, and `attune workflow run --input '{...}'` accepts
-arbitrary kwargs — so a goal passed that way lands in
-`~/.attune/ops/runs/fix/<id>.json`, both in `command` and in the
-first log line.
+**The ops run record would carry it — but nothing can reach that
+path today (CORRECTED 2026-07-31, same day).** The first wording of
+this decision said a goal "passed that way lands in the record,"
+which implies a reachable exposure. It is not reachable, and the
+correction matters enough to state plainly:
+
+- `_persist_run` has exactly one caller, and `persistence_dir` is
+  wired ONLY in the ops dashboard server — CLI- and MCP-launched
+  runs never write an ops run record at all. So neither
+  `attune fix --run` nor `attune workflow run fix --input '{...}'`
+  from a terminal persists anything.
+- The dashboard's start endpoint (`POST /workflows/{name}/run`,
+  `src/attune/ops/routes/runner.py`) reads exactly `path` and
+  `trigger` from the body and passes only those to
+  `RunnerService.start`. There is no `--input` or `extra_args`
+  passthrough; the single `extra_args` caller in the tree is the
+  self-heal `diagnose` route passing a run id.
+- A dashboard-launched `fix` would therefore fail on "goal argument
+  is required" before any record content exists.
+
+What remains true: the writer stores whatever argv it is given, so
+the exposure would arrive the day the endpoint grows a free-text
+passthrough.
 
 **Decision: record the boundary, do NOT change the ops surface in
 this spec.** The behavior is generic to every workflow, predates
 this spec, and belongs to the ops/run-record surface — changing it
 here would alter behavior for every other workflow from inside a Fix
 phase. `test_ops_run_record_would_carry_goal_text_generic_surface`
-pins it as CHARACTERIZATION so a future change that routes Fix
-through ops inherits the consequence knowingly.
+pins the writer's behavior as CHARACTERIZATION.
 
-**Carried as a candidate, unruled:** whether the ops run record
-should redact `--input` payloads by default. That is a chair call on
-the ops surface, not a Fix decision.
+**Chair ruling on the carried candidate (Patrick, 2026-07-31):
+guard the endpoint, do not redact the writer.** Redaction was
+declined — it would change a shared surface for a path no caller can
+reach, and would mask argv fields that are genuinely useful when
+debugging a failed run. Instead the RISK BOUNDARY is guarded where
+it actually lives:
+`tests/unit/ops/test_run_start_no_freetext_passthrough.py` asserts
+the start endpoint forwards no caller-supplied arguments, that no
+prose reaches the subprocess argv or the run record, and that the
+body parser still honors exactly two keys. Demonstrated firing: with
+an `extra_args` passthrough temporarily wired into the route, the
+guard fails on the argv assertion; restored, it passes.
+
+The redaction question is CLOSED unless the endpoint gains a
+free-text passthrough — at which point the guard fails and forces
+the decision then, with the exposure real rather than theoretical.
