@@ -88,12 +88,18 @@ def scope_candidates(repo_root: Path, limit: int = 6) -> list[str]:
     return list(ordered)[:limit]
 
 
+def _is_test_shaped(name: str) -> bool:
+    return name.startswith("test_") or name.endswith(("_test.py", "_suite.py"))
+
+
 def probe_candidates(repo_root: Path, scopes: list[str], limit: int = 4) -> list[str]:
     """Suggested ``--probe`` commands: test files related to the scopes.
 
-    Two derivations, both mechanical: test-shaped files INSIDE a scope
-    directory, and files under ``tests/`` whose name contains a scope
-    file's stem. Returned as runnable ``pytest <path>`` commands.
+    Two derivations, both mechanical and ranked: test-shaped files
+    INSIDE a scope directory first (the suite that guards the code
+    being fixed), then test-shaped files under ``tests/`` whose name
+    contains a scope file's stem. Returned as runnable
+    ``pytest <path>`` commands.
     """
     found: dict[str, None] = {}
     tests_root = repo_root / "tests"
@@ -103,10 +109,13 @@ def probe_candidates(repo_root: Path, scopes: list[str], limit: int = 4) -> list
             for pattern in _TEST_PATTERNS:
                 for match in sorted(target.rglob(pattern)):
                     found.setdefault(match.relative_to(repo_root).as_posix(), None)
+    for scope in scopes:
+        target = repo_root / scope
         stem = Path(scope).stem
         if target.is_file() and tests_root.is_dir() and not stem.startswith("test"):
             for match in sorted(tests_root.rglob(f"*{stem}*.py")):
-                found.setdefault(match.relative_to(repo_root).as_posix(), None)
+                if _is_test_shaped(match.name):
+                    found.setdefault(match.relative_to(repo_root).as_posix(), None)
     return [f"pytest {path}" for path in list(found)[:limit]]
 
 
