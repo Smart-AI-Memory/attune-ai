@@ -3,8 +3,9 @@
 Task 4 of docs/specs/outcome-first-fix/: input ergonomics for the
 interactive (plugin/skill) surface. Candidates are DERIVED from the
 working tree — git-changed paths for scope, matching test files for
-probes — never from a hand-maintained registry. The CLI contract
-(`attune fix`) is composed, not changed.
+probes, and on a clean tree the recently-touched directories from
+git history — never from a hand-maintained registry. The CLI
+contract (`attune fix`) is composed, not changed.
 
 The module degrades to free-text fields when git is unavailable or
 nothing is derivable: the form never blocks intake.
@@ -70,12 +71,58 @@ def _git_changed_files(repo_root: Path) -> list[str]:
     return files
 
 
+def _git_recent_file_counts(repo_root: Path, commits: int = 40) -> dict[str, int]:
+    """Touch counts per still-existing file over recent commits.
+
+    Missing git, no history, or a timeout all degrade to {}.
+    """
+    try:
+        proc = subprocess.run(  # nosec B603 B607 — fixed argv, no shell
+            ["git", "-C", str(repo_root), "log", "--name-only", f"-{commits}", "--pretty=format:"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return {}
+    if proc.returncode != 0:
+        return {}
+    counts: dict[str, int] = {}
+    for line in proc.stdout.splitlines():
+        path = line.strip()
+        if not path or _SKIP_PARTS.intersection(path.split("/")):
+            continue
+        if (repo_root / path).is_file():
+            counts[path] = counts.get(path, 0) + 1
+    return counts
+
+
+def _fallback_scope_candidates(repo_root: Path, limit: int) -> list[str]:
+    """Recently-touched directories from git history, most-touched first.
+
+    The clean-tree fallback: with nothing changed, the places work
+    recently landed are the likeliest fix targets — still mechanical,
+    still registry-free.
+    """
+    scores: dict[str, int] = {}
+    for path, count in _git_recent_file_counts(repo_root).items():
+        parent = Path(path).parent.as_posix()
+        if parent == "." or not (repo_root / parent).is_dir():
+            continue
+        scores[parent] = scores.get(parent, 0) + count
+    ranked = sorted(scores, key=lambda d: (-scores[d], d))
+    return ranked[:limit]
+
+
 def scope_candidates(repo_root: Path, limit: int = 6) -> list[str]:
     """Likely ``--scope`` values: changed files first, then their parents.
 
     A fix usually targets where the problem already is — the changed
     set — so changed source files lead, followed by their containing
-    directories for wider scopes. Deduplicated, capped at ``limit``.
+    directories for wider scopes. On a clean tree, falls back to
+    recently-touched directories from git history, so the form keeps
+    its picker whenever history exists. Deduplicated, capped at
+    ``limit``.
     """
     changed = _git_changed_files(repo_root)
     ordered: dict[str, None] = {}
@@ -85,6 +132,8 @@ def scope_candidates(repo_root: Path, limit: int = 6) -> list[str]:
         parent = Path(path).parent.as_posix()
         if parent != ".":
             ordered.setdefault(parent, None)
+    if not ordered:
+        return _fallback_scope_candidates(repo_root, limit)
     return list(ordered)[:limit]
 
 
@@ -95,11 +144,12 @@ def _is_test_shaped(name: str) -> bool:
 def probe_candidates(repo_root: Path, scopes: list[str], limit: int = 4) -> list[str]:
     """Suggested ``--probe`` commands: test files related to the scopes.
 
-    Two derivations, both mechanical and ranked: test-shaped files
+    Three derivations, all mechanical and ranked: test-shaped files
     INSIDE a scope directory first (the suite that guards the code
-    being fixed), then test-shaped files under ``tests/`` whose name
-    contains a scope file's stem. Returned as runnable
-    ``pytest <path>`` commands.
+    being fixed), then the mirror test directory for a scope dir
+    (``src/pkg/x`` → ``tests/unit/x`` or ``tests/x``), then
+    test-shaped files under ``tests/`` whose name contains a scope
+    file's stem. Returned as runnable ``pytest <path>`` commands.
     """
     found: dict[str, None] = {}
     tests_root = repo_root / "tests"
@@ -109,6 +159,13 @@ def probe_candidates(repo_root: Path, scopes: list[str], limit: int = 4) -> list
             for pattern in _TEST_PATTERNS:
                 for match in sorted(target.rglob(pattern)):
                     found.setdefault(match.relative_to(repo_root).as_posix(), None)
+    for scope in scopes:
+        name = Path(scope).name
+        target = repo_root / scope
+        if target.is_dir() and name and not name.startswith("test"):
+            for mapped in (f"tests/unit/{name}", f"tests/{name}"):
+                if (repo_root / mapped).is_dir():
+                    found.setdefault(f"{mapped}/", None)
     for scope in scopes:
         target = repo_root / scope
         stem = Path(scope).stem
@@ -216,16 +273,47 @@ def compose_fix_command(answers: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def list_subdirectories(repo_root: Path, raw: str) -> dict[str, Any]:
+    """Immediate subdirectories of a repo-relative path, for drill-down.
+
+    Powers the "Other path" folder picker: the skill renders each
+    level's directories as pills and drills by re-calling with the
+    picked one. The path is validated to stay inside ``repo_root``;
+    escapes and non-directories return an ``error`` payload instead
+    of raising, so the picker degrades to free text.
+    """
+    base = (repo_root / raw).resolve()
+    try:
+        rel = base.relative_to(repo_root.resolve())
+    except ValueError:
+        return {"error": "path escapes the repository", "path": raw, "dirs": []}
+    if not base.is_dir():
+        return {"error": "not a directory", "path": raw, "dirs": []}
+    dirs = sorted(
+        child.name
+        for child in base.iterdir()
+        if child.is_dir() and child.name not in _SKIP_PARTS and not child.name.startswith(".")
+    )
+    return {"path": rel.as_posix(), "dirs": dirs}
+
+
 def _main(argv: list[str]) -> int:
     """CLI seam for the /fix skill.
 
     Default: print ``{"form": <form dict>, "scopes": [...],
     "probes": [...]}`` for the current repo. With ``--compose``,
-    read answers JSON on stdin and print the composed command.
+    read answers JSON on stdin and print the composed command. With
+    ``--list-dirs <path>``, print the drill-down payload for the
+    "Other path" folder picker.
     """
     if "--compose" in argv:
         answers = json.load(sys.stdin)
         print(compose_fix_command(answers))
+        return 0
+    if "--list-dirs" in argv:
+        idx = argv.index("--list-dirs")
+        raw = argv[idx + 1] if len(argv) > idx + 1 else "."
+        print(json.dumps(list_subdirectories(Path.cwd(), raw)))
         return 0
     repo_root = Path.cwd()
     scopes = scope_candidates(repo_root)

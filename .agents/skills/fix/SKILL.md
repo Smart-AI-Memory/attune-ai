@@ -32,7 +32,10 @@ python -m attune.elicitation.fix_intake
 
 The JSON payload contains a validated form definition
 (`attune.elicitation.fix_intake.build_fix_intake_form`) plus the
-derived `scopes` and `probes` lists. If the user's invocation
+derived `scopes` and `probes` lists. Changed paths lead; on a clean
+tree the candidates fall back to recently-touched directories from
+git history, so pickers render in either state — empty lists mean
+the repo has no usable history at all. If the user's invocation
 already stated the goal, carry it into the request field as the
 default rather than asking again.
 
@@ -44,6 +47,19 @@ rule: widget surface when available, `AskUserQuestion` fallback
 the batch). Never ask these as sequential single questions. When a
 field came back with no derived options it is free text — accept a
 path or command, do not invent options.
+
+When the user picks the "other (type a path)" scope option, offer a
+folder drill-down instead of bare free text:
+
+```bash
+python -m attune.elicitation.fix_intake --list-dirs .
+```
+
+Render the returned `dirs` as pills plus a "use this folder" pill
+for the current `path`; on a pick, re-run `--list-dirs` with the
+picked directory and repeat until "use this folder" (or a typed
+path) settles the scope. The payload validates paths against the
+repo root — an `error` key means degrade to free text.
 
 ## Step 3 — Compose and preview
 
