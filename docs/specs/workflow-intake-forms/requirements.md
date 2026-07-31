@@ -1,8 +1,10 @@
 # Workflow Intake Forms — Requirements
 
-**Status:** draft (2026-07-31) — chair-initiated capture; grants NO
-implementation authority. Each phase is authored and executed only
-behind its own chair gate.
+**Status:** approved (2026-07-31) — requirements ratified by the
+chair in-session ("I like your judgement calls and the
+requirements.md — go"). Implementation authority is NOT yet
+granted: each phase's task is authored and executed only behind
+its own chair gate; the next gate is Phase 1 task authoring.
 **Slug:** `workflow-intake-forms`
 **Provenance:** chair brainstorm 2026-07-31, same-day as the fix
 and spec intakes shipped (#1824, #1826). The chair named the core
