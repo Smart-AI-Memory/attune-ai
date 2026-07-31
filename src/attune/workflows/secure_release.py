@@ -172,6 +172,18 @@ class SecureReleasePipeline(BaseWorkflow):
             SecureReleaseResult with combined analysis
 
         """
+        self.validate_input(
+            {
+                k: v
+                for k, v in {
+                    "path": path,
+                    "diff": diff,
+                    "files_changed": files_changed,
+                    "since": since,
+                }.items()
+                if v is not None
+            }
+        )
         try:
             from .security_adapters import (
                 _check_crew_available,

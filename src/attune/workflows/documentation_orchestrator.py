@@ -432,6 +432,7 @@ class DocumentationOrchestrator(
             OrchestratorResult with full details
 
         """
+        self.validate_input({"context": context} if context is not None else {})
         started_at = datetime.now()
         result = OrchestratorResult(success=False, phase="scout")
         errors: list[str] = []

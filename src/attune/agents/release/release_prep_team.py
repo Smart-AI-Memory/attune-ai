@@ -438,6 +438,9 @@ class ReleasePrepTeamWorkflow(BaseWorkflow):
             (``metadata["approved"]``), so a BLOCKED release still exits 0.
 
         """
+        self.validate_input(
+            {k: v for k, v in {"path": path, "context": context}.items() if v is not None}
+        )
         # Map 'target' to 'path' for VSCode/CLI compatibility
         if "target" in kwargs and path == ".":
             path = kwargs["target"]

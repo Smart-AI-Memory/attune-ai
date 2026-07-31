@@ -209,6 +209,13 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
             ValueError: If path is invalid
 
         """
+        self.validate_input(
+            {
+                k: v
+                for k, v in {"path": path, "project_root": project_root, "context": context}.items()
+                if v is not None
+            }
+        )
         # Migrate the deprecated `project_root=` kwarg → `path=`.
         if project_root is not None and path is None:
             warnings.warn(

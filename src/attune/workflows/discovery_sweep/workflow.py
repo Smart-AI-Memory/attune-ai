@@ -534,6 +534,7 @@ class DiscoverySweepWorkflow(BaseWorkflow):
                 (the ops daemon passes its ``run_id``; CLI leaves
                 it None).
         """
+        self.validate_input(kwargs)
         path: str = kwargs.get("path", "")
         budget_usd: float = float(kwargs.get("budget_usd", DEFAULT_BUDGET_USD))
         sources: list[FindingSource] | None = kwargs.get("sources")
