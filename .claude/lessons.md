@@ -20080,3 +20080,39 @@ def ", start_idx + 1)` for module-
   flags, read `gh api` directly — `gh repo view` can serve cached
   values right after a mutation. Companion to "the receipt beats
   the promise": a receipt read too early is itself a stale claim.
+
+- **A new `docs/specs/<dir>/` must pass the status-line corpus
+  sweep — one illegible `**Status:**` line fails EVERY test lane,
+  and each stacked branch needs its own fix**: 2026-07-30,
+  outcome-first-fix. `tests/unit/gates/test_status_line_gate.py::
+  test_corpus_sweep_every_spec_dir_is_legible` requires the
+  leading token after `**Status:**` to come from
+  `attune.ops.spec_lifecycle.STATUS_VOCABULARY` (draft / active /
+  approved / complete / shipped / parked / paused / living /
+  ...). A tasks.md opening `**Status:** Task 0 authored...`
+  parses as unknown token `task` and failed 6 checks (ubuntu,
+  windows, both clock-tz lanes, coverage, matrix-complete) on an
+  otherwise docs-only PR — "a lot of failing tests" was ONE
+  parametrized test. Because the sweep runs per-tree, all four
+  stacked PRs carrying variants of the file each needed their own
+  branch-truthful fix. Pre-flight when creating or re-statusing a
+  spec: run the sweep test locally (or `status_line_gate(dir)`
+  directly); `parked` additionally requires a `Resume-Trigger:`
+  clause in the same file.
+
+- **Authority/status text must travel IN the diff — a
+  cross-provider reviewer sees only the tree, not the chat where
+  the chair said "go"**: 2026-07-30, outcome-first-fix Task 1.
+  The codex D11 lane filed a CRITICAL "implements Task 1 without
+  authorization" because tasks.md still said "NOT yet authorized
+  to execute" while the diff implemented it — the chair's go
+  existed only in conversation. The finding's premise was wrong
+  (the go preceded implementation) but the defect was real: stale
+  authority text shipped with the work it gated. Rule: when a
+  chair go (or any authorization) unlocks execution, update the
+  spec's status/authority line in the SAME commit as the first
+  executing change, so every reviewer — human, CI gate, or
+  another model — can reconstruct authorization from the tree
+  alone. Pairs with "the code is the contract" and the
+  status-line-gate lesson above (same file, same session, two
+  different truths the tree had to carry).
