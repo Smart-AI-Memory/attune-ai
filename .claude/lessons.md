@@ -20453,3 +20453,42 @@ def ", start_idx + 1)` for module-
   single bare command — the executable unit is the SURVEY
   (read-only, passes fine) plus a staged command block for
   Patrick; don't burn retries on phrasing variants.
+
+- **A hand-rendered form option the code didn't derive is a
+  LANDMINE, not a courtesy — verify every option you invent exists
+  before rendering it as a pill**: 2026-07-31 evening, dogfooding
+  the /fix intake. The derive step returned zero probe candidates
+  (clean tree), so the widget was hand-filled with a plausible
+  probe — `pytest tests/unit/workflows/test_fix.py` — which does
+  NOT exist (the fix suites live at
+  `tests/unit/cli_commands/test_fix_*.py`). The user picked it
+  TWICE: a picker affordance implies validity, so an invented
+  option is worse than free text — free text at least reads as the
+  user's own claim. The skill's "do not invent options" rule
+  existed and was violated anyway because filling the empty picker
+  felt helpful. Two fixes shipped (#1837): the intake now derives
+  fallback candidates from git history so the empty-picker
+  temptation vanishes, and `attune fix` preview warns on probe
+  paths that don't exist yet (advisory, never rejecting — a TDD
+  probe may name a file the run creates). Rule: any option string
+  you author rather than derive gets an existence check (`ls`, grep
+  the registry) BEFORE it becomes clickable.
+
+- **Inserting a new test "after" an existing one by anchoring on
+  its final assertions splices the new test INTO the old one when
+  those lines aren't actually the end — orphaning the tail
+  assertions into your new function**: 2026-07-31, adding
+  probe-warning tests to `test_fix_commands.py`. The Edit anchored
+  on two assertion lines that LOOKED like a test's ending
+  (`assert "Probes (validated, not run):" in out` +
+  `assert _TRAILER in out`) but the function continued past them —
+  result: the original test lost its tail, and the orphaned lines
+  landed at the end of the LAST inserted test, failing with
+  `NameError: name 'out' is not defined` (lucky: the orphan
+  referenced a variable the host test didn't define; with a
+  matching variable name it would have silently weakened BOTH
+  tests). Rule: before inserting after "the end" of a function,
+  read past the anchor to the actual function boundary (next `def`
+  at margin) and anchor on the true last line. Sibling of the
+  "old_string must not be a strict prefix of new_string" lesson —
+  same class, function-boundary edition.
