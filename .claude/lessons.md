@@ -20373,3 +20373,25 @@ def ", start_idx + 1)` for module-
   close AFTER idx, insert there; and after any bulk codemod,
   verify per-file via the live registry/behavior, never via
   "patched N files" output alone.
+
+- **Verify the WHOLE CLAIM, not the part you changed — one
+  pattern behind three same-day failures (2026-07-31, chair-named
+  and chair-ratified as a standing rule)**: each failure verified
+  a local slice while asserting a global claim. (1) Adding a
+  skill: ran the feature's scoped suites (green) while the CLAIM
+  "CI will pass" spanned root-level count guards — two full-matrix
+  red runs. (2) Pushing an approval commit: verified the commit
+  was right while the CLAIM "this lands on the PR" spanned the
+  PR's merge state — auto-merge had already squashed and deleted
+  the branch. (3) A spec's "grounded" coverage number: verified
+  the grep ran while the CLAIM "N workflows declare input_schema"
+  required testing declarations — the grep matched machinery, and
+  0/21 shipped as "2/23" in an approved spec. The rule: before
+  asserting a claim, name its FULL scope and run the probe that
+  covers that scope — the root guards, not the scoped suite; the
+  remote state, not the local commit; the property, not its
+  machinery. The scoped check passing is what MAKES the
+  whole-claim failure invisible, so comfort from a green partial
+  probe is itself the warning sign. (Same family as "the predicate
+  you WATCH must be the predicate you PROMISED" — this is the
+  execute-side twin of that monitoring lesson.)
