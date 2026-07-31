@@ -20163,3 +20163,57 @@ def ", start_idx + 1)` for module-
   check `gh pr list --json baseRefName` for PRs based on a branch
   you're about to close (stacked-PR orphaning, existing lesson) —
   all-`main` bases make closure safe.
+
+- **Registering a NEW workflow trips ~7 drift guards in one push —
+  run the registration pre-flight locally, because none of them
+  live near the workflow you wrote**: 2026-07-30, adding `fix`
+  (outcome-first-fix Phase 2). Local runs of every suite that
+  *looked* related were green; CI came back with 7 failures across
+  all 5 ubuntu lanes + both clock-tz lanes, one root cause — a new
+  key in `_DEFAULT_WORKFLOW_NAMES` is read by seven independent
+  registries, none of them under `src/attune/workflows/`:
+  1. `tests/unit/ops/test_path_support_registry.py` — needs a
+     `PATH_ARG_REGISTRY` entry in `src/attune/ops/data.py`; the
+     kwarg must ALSO be in that test's `known` set (it invites
+     extension for legitimate new patterns) and must literally
+     appear in the workflow's source.
+  2. `tests/unit/ops/test_workflow_concern.py` — needs a
+     `_WORKFLOW_CONCERNS` entry (`review`/`test`/`docs`/`refactor`/
+     `audit`/`meta`/`other`; `refactor` is the code-MUTATING one).
+  3. `tests/unit/help/test_coverage_script.py` — needs a
+     `.help/features.yaml` entry OR `KNOWN_GAPS` in
+     `scripts/check_help_coverage.py`.
+  4. `tests/unit/ops/test_runner_js_parsing.py` — regenerate with
+     `python scripts/sync_runner_workflow_names.py` (generated
+     file; never hand-edit `runner.js`).
+  5. `tests/unit/test_website_version_accuracy.py` — bump
+     `CAPABILITIES.workflows` in `website/lib/features.ts`
+     (distinct CLASSES, not slugs — release-prep/release-gate are
+     a deliberate alias pair sharing one class).
+  6. `tests/unit/gates/test_claim_drift.py` — the "N workflows"
+     prose claims in `README.md` and
+     `docs/getting-started/first-steps.md`.
+  7. `tests/unit/plugins/test_registry_coverage.py` — an MCP tool
+     whose name is the slug with dashes→underscores, or an entry
+     in `WORKFLOWS_WITHOUT_MCP_SURFACE` WITH A REASON.
+  Plus, for an SDK-native workflow, the construction-site count in
+  `tests/unit/workflows/test_agent_sdk_adapter.py::
+  test_sweep_covers_known_workflow_count`.
+  **Pre-flight (one command, ~40 s, catches all of them):**
+  `pytest tests/unit/ops/ tests/unit/help/test_coverage_script.py
+  tests/unit/gates/ tests/unit/plugins/test_registry_coverage.py
+  tests/unit/test_website_version_accuracy.py
+  tests/unit/workflows/test_agent_sdk_adapter.py
+  tests/unit/quality/test_complexity_ratchet.py -o addopts= -q`.
+  **The guard that paid for itself**: `PATH_ARG_REGISTRY` forces
+  you to declare HOW the workflow accepts a path — and doing so
+  exposed a real bug. The ops runner rewrites `--path` into the
+  declared kwarg as a bare STRING; `FixWorkflow` consumed
+  `scope_paths` as a sequence, so `[Path(p) for p in scope_raw]`
+  would have produced one Path per CHARACTER. Invisible from the
+  workflow's own tests (they always passed a list); only the
+  registry entry surfaced it. When a guard demands a declaration,
+  read the declaration back against the consuming code — the
+  mismatch IS the finding. Pairs with the "a new MCP tool touches
+  5 places" checklist in `plugin-reference-validation.md`; same
+  family, different registry set.
