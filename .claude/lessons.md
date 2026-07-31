@@ -20431,3 +20431,25 @@ def ", start_idx + 1)` for module-
   privacy/security finding is a (source, path, sink) triple — with
   no reachable source, the right ship is a tripwire at the
   boundary, not a behavior change to the shared writer.
+
+- **Sweeping `.claude/worktrees/` has three traps: plain dirs
+  masquerade as worktrees via `git -C` fall-through, squash merges
+  break ancestry-based "merged" checks, and the auto-mode
+  classifier blocks `git worktree remove` even one at a time**:
+  2026-07-31 evening sweep of 25 entries. (1) Three entries were
+  NOT worktrees — plain dirs holding only `website/.next/` build
+  cache — but `git -C <dir> branch --show-current` / `status`
+  walked UP to the parent repo and reported main + main's dirty
+  files, making debris read as "worktree on main with
+  uncommitted work". `git worktree list` from the main checkout is
+  the authoritative roster; reconcile every directory entry
+  against it before classifying. (2) `git merge-base
+  --is-ancestor <branch> origin/main` reported UNMERGED for every
+  squash-merged branch (the tip is never an ancestor); the
+  reliable merged-check is the PR state per head branch
+  (`gh pr list --head <br> --state all`). (3) Unlike the earlier
+  "bundled-destructive scripts" lesson where individual commands
+  passed, worktree removal was classifier-blocked even as a
+  single bare command — the executable unit is the SURVEY
+  (read-only, passes fine) plus a staged command block for
+  Patrick; don't burn retries on phrasing variants.
