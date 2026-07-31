@@ -45,6 +45,35 @@ options:
 If the user provides arguments (e.g., "resume" or a file
 path), skip the picker and route directly.
 
+### New-spec intake (one form, not N questions)
+
+When the route is "Start a new spec", gather the framing as ONE
+form per the Socratic rule — never as sequential question turns:
+
+```bash
+python -m attune.elicitation.spec_intake
+```
+
+The JSON payload carries a validated form definition
+(`attune.elicitation.spec_intake.build_spec_intake_form`) —
+outcome, done-when acceptance, primary code area (options derived
+from the tree's packages), and an optional slug — plus
+`taken_slugs` for collision awareness. Render it widget-first with
+the `AskUserQuestion` fallback (batching opts in via
+`metadata.source` containing "form"). If the user's invocation
+already stated what to build, carry it into the outcome field
+instead of asking again.
+
+Compose the answers into the session-contract block that seeds
+Stage 1:
+
+```bash
+echo '<answers JSON>' | python -m attune.elicitation.spec_intake --compose
+```
+
+A slug collision renders as a WARNING, not an error — offer to
+amend the existing spec before forking a new one.
+
 ## How It Works
 
 Five stages, one flow:
