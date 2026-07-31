@@ -1,11 +1,12 @@
 # Outcome-First Fix — Requirements
 
 **Status:** active (2026-07-30) — deliberately narrow spec
-authorized by the roundtable ruling. Task 0 EXECUTED (chair go,
-PR #1806, acceptance met); Task 1 authored and awaiting its own
-chair go. Beyond the current task in [tasks.md](tasks.md), this
-spec grants NO Build/Fix/Ship implementation authority — each
-phase's task is authored and executed only behind chair gates.
+authorized by the roundtable ruling. Tasks 0–1 EXECUTED (chair
+gos; PRs #1806, #1808); Task 2 authored and awaiting its own
+chair go + spend gate. Beyond the current task in
+[tasks.md](tasks.md), this spec grants NO Build/Fix/Ship
+implementation authority — each phase's task is authored and
+executed only behind chair gates.
 **Slug:** `outcome-first-fix`
 **Provenance:** roundtable thread `q-outcome-first-attune-ux-001`
 ([docs/reports/roundtable/q-outcome-first-attune-ux-001.md](../../reports/roundtable/q-outcome-first-attune-ux-001.md)),

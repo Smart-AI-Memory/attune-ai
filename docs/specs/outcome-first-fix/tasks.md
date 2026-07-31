@@ -81,13 +81,29 @@ plus the next executable unit only (decisions.md D2).
       uncertainty, not silent omission).
     </constraint>
     <constraint>
-      Scope enforcement is post-hoc and honest: after execution,
-      diff the working tree; changed paths outside the
-      contract's scope are reported as a violation in the
-      receipt and force exit 1. Detection via git plumbing is
-      allowed ONLY in the probe-runner/diff-check module
-      (fix_receipt.py); fix_commands.py itself stays
-      subprocess-free and its Phase 1 grep check narrows to it.
+      Pre-run baseline is MANDATORY (codex lane finding):
+      before execution, record the dirty-path set and content
+      hashes of scope files. The receipt attributes ONLY paths
+      that changed relative to that baseline; pre-existing
+      dirty paths render in their own "pre-existing changes
+      (not attributed)" section, and the next-action line never
+      recommends reverting a path that was dirty before the
+      run. Without this, a post-run diff would blame the
+      user's own in-flight work on the agent.
+    </constraint>
+    <constraint>
+      Scope enforcement is layered: (1) PREVENTION — FixWorkflow
+      installs a PreToolUse Edit/Write path guard through the
+      EXISTING adapter hook mechanism (same pattern as the Bash
+      guard in sdk_isolation_kwargs), denying edits outside the
+      contract's scope paths at tool-call time; (2) DETECTION —
+      after execution, diff vs the pre-run baseline; changed
+      paths outside scope are reported as a violation and force
+      exit 1, with the exact paths named so recovery is a
+      targeted revert. Git plumbing is allowed ONLY in the
+      probe-runner/diff-check module (fix_receipt.py);
+      fix_commands.py itself stays subprocess-free and its
+      Phase 1 grep check narrows to it.
     </constraint>
     <constraint>
       Spend gate: executing this task's live-fire receipt makes
@@ -118,9 +134,11 @@ plus the next executable unit only (decisions.md D2).
     <file path="src/attune/cli_commands/fix_receipt.py">
       Receipt assembly + rendering, separated from the preview:
       dataclasses for ProbeOutcome (argv, returncode, duration,
-      status PASS/FAIL/SKIPPED+reason) and FixReceipt (changed
-      paths from the real diff, probe outcomes, scope
-      violations, remaining uncertainty, safest next action).
+      status PASS/FAIL/SKIPPED+reason) and FixReceipt (baseline
+      snapshot, changed paths ATTRIBUTED via baseline diff,
+      pre-existing dirty paths listed unattributed, probe
+      outcomes, scope violations, remaining uncertainty, safest
+      next action).
       Next-action rules: all probes pass -> "review and commit";
       any fail -> "inspect diff, re-run probe X"; scope
       violation -> "revert out-of-scope paths". Renderer prints
@@ -163,7 +181,13 @@ plus the next executable unit only (decisions.md D2).
     <check>Stub-workflow round trip: target probe fails before,
       passes after, via real pytest subprocess on the fixture
       copy; receipt lists the changed file from the actual
-      diff.</check>
+      baseline diff.</check>
+    <check>Baseline attribution: a pre-dirtied file in the
+      fixture copy is listed as pre-existing, NOT attributed to
+      the run, and never named in a revert next-action.</check>
+    <check>Prevention layer: the Edit path guard denies an
+      out-of-scope edit at tool-call time in a unit test of the
+      hook function itself (keyless).</check>
     <check>H2 pin: a WorkflowResult with success=True and a
       failing probe yields exit 1 and a FAIL row — workflow
       exit never marks success.</check>
