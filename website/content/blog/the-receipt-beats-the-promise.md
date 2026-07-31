@@ -5,10 +5,8 @@ author: "Patrick Roebuck"
 excerpt: "Every AI coding tool says it fixed your bug. attune fix has to prove it — with a receipt built from independently re-run verification commands. Then a cold UX review caught the receipt itself lying on the happy path, and the fix for that is the most interesting part of the story."
 tags: ["verification", "receipts", "Claude Code", "attune fix", "AI workflows"]
 coverImage: "/images/blog/fix-receipt-loop.svg"
-published: false
+published: true
 ---
-# The Receipt Beats the Promise: Shipping an AI Fix That Proves Itself
-
 Every AI coding assistant ends the same way: "Done! I've fixed the
 issue." Sometimes it has. The problem is that the sentence looks
 identical either way — and if you've worked with these tools long
