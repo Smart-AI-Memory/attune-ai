@@ -144,7 +144,10 @@ def capture_baseline(repo_root: Path, scope_paths: list[Path]) -> Baseline:
     lane finding).
     """
     dirty, git_ok = _git_dirty_paths(repo_root)
-    to_hash = {str(p) for p in scope_paths} | dirty
+    # POSIX form throughout: git porcelain emits forward slashes on
+    # every platform, so str(WindowsPath("a/b")) -> "a\\b" would never
+    # match and every nested scope path would read as a violation.
+    to_hash = {Path(p).as_posix() for p in scope_paths} | dirty
     hashes = {p: _hash_file(repo_root / p) for p in sorted(to_hash)}
     return Baseline(
         repo_root=repo_root, dirty_paths=dirty, scope_hashes=hashes, git_available=git_ok
@@ -251,7 +254,7 @@ def assemble_receipt(
 ) -> FixReceipt:
     """Compute the receipt from the baseline diff + probe evidence."""
     dirty_now, git_ok = _git_dirty_paths(baseline.repo_root)
-    scope_strs = {str(p) for p in scope_paths}
+    scope_strs = {Path(p).as_posix() for p in scope_paths}  # see capture_baseline
 
     attributed = _attributed_paths(baseline, git_ok, dirty_now)
     # A baseline-dirty file the run modified FURTHER is attributed
