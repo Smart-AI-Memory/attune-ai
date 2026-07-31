@@ -7,29 +7,6 @@ convergence, D3; chair had authorized 3) · **Promoted items:**
 chair ruling, an amendment ("keep unless consensus against"), and a
 steelman round that MOVED the table 3/3-close → 2/3-keep.
 
-## #1 — question (chair)
-
-Should the attune-ops dashboard have (a) a memory page and (b) a
-multi-LLM page? Context given to seats: rebuilt /memory page exists
-as held PR #1576 (chair call pending); prior memory/sessions pages
-removed as dogfood-dead (#1545); the multi-LLM layer (roundtable
-board, session_memory_* transport, handoff packets, cross-review
-ledger, provider telemetry) has no ops surface; Health tab is
-closest.
-
-## Round 1 (msgs #2 claude, #3 antigravity, #4 codex)
-
-All three: close #1576 — a browse-only memory page repeats the
-dogfood-dead pattern; memory facts belong as a Health card
-(index count, hydration staleness, drift). On multi-LLM: claude
-wanted an "Attention" strip on Health (counts with TTL deadlines;
-page only after proven clicks); antigravity and codex each wanted
-ONE minimal Collaboration "action inbox" page. Unanimous bans:
-transcript viewers, memory CRUD/browsers, per-concern pages,
-telemetry vanity charts, archival search of expired threads.
-Follow-ups converged on one question: which surface owns the
-promotion gesture?
-
 ## #5, #6 — chair rulings (mid-deliberation)
 
 Msg 5: memory page STAYS (overrule). Msg 6 AMENDMENT: stays UNLESS
@@ -38,24 +15,6 @@ the table consensus is against it; chair elected a round-2 steelman
 Injected fact: promotion is IN-SESSION by design (R4;
 `Board.promote` via the moderator) — a dashboard cannot own the
 promote action.
-
-## Round 2 — the steelman (msgs #7 claude, #8 antigravity, #9 codex)
-
-- **claude** held: "NO PAGE-SHAPED DESIGN EXISTS" — every
-  visit-earning element is alert-shaped (card territory) or needs a
-  loop the dashboard is barred from closing. Self-corrected its
-  multi-LLM pick from the strip to (B): deciding promote-or-expire
-  requires reading the packet body, which a strip cannot render.
-- **antigravity** flipped: keep as an "Operational Memory & Recall
-  Debugger" — drift header + copyable rehydrate command,
-  recall-miss query sandbox, stale-pointer triage, cross-links to
-  collaboration items. Multi-LLM as a section ON that page (C).
-- **codex** flipped: keep as a "Memory Attention" page —
-  EXCEPTIONS-FIRST (hydration age, drift counts, recall misses,
-  memory-dependent collab items), C1+C3 browse retained BENEATH the
-  action queue; explicit kill clause (collapse alerts into Health
-  and close the page if exception-driven opens don't materialize).
-  Multi-LLM: (B).
 
 ## #10 — synthesis (moderator)
 
@@ -89,3 +48,10 @@ the usage read.
 - Bans reaffirmed as binding for both surfaces.
 - Sequencing: both AFTER the chair-queued binding build slot
   (T4+T2, then P2); they do not reorder it.
+
+---
+
+*Curated stub (local-first reports, `docs/specs/local-first-reports/`): the sections above are the
+chair-promoted content. The full deliberation transcript is
+machine-local at `~/.attune/reports/roundtable/q-ops-memory-multi-llm-pages-001.md` and is
+not distributed with the repository.*

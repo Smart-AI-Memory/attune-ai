@@ -145,15 +145,21 @@ elicitation form) — never assume. On promotion:
 1. Recommend an artifact tier per the contract's artifact-selection
    table — inline edit / structured one-shot / XML task / spec —
    sized to what the table produced. The chair ratifies the tier.
-2. Destination (D2): the owning spec's `decisions.md` when a spec
-   exists; else `docs/reports/roundtable/<slug>.md`. The artifact
-   records the thread id it came from.
+2. Destination (D2, local-first per
+   `docs/specs/local-first-reports/`): the FULL transcript report
+   always goes machine-local to
+   `~/.attune/reports/roundtable/<slug>.md` — it is the moderator's
+   development data and is never tracked. Promoted content goes to
+   the owning spec's `decisions.md` when a spec exists; else a
+   CURATED STUB at `docs/reports/roundtable/<slug>.md` carrying
+   only the chair-promoted sections plus a pointer to the local
+   transcript. The artifact records the thread id it came from.
 3. Write the artifact, then mark the thread, passing the
    chair-approved message ids so the board records exactly what was
    promoted (an unknown id rejects the whole call, no meta change):
 
 ```bash
-T="<slug>" D="docs/reports/roundtable/<slug>.md" IDS="2,4" python -c "import os; from attune.roundtable import Board; Board().promote(os.environ['T'], os.environ['D'], item_ids=[int(i) for i in os.environ['IDS'].split(',')])"
+T="<slug>" D="$HOME/.attune/reports/roundtable/<slug>.md" IDS="2,4" python -c "import os; from attune.roundtable import Board; Board().promote(os.environ['T'], os.environ['D'], item_ids=[int(i) for i in os.environ['IDS'].split(',')])"
 ```
 
 Post the chair's decision as a `ruling` message (author `chair`).
@@ -215,8 +221,9 @@ TI="<title>" B="<body>" E="<evidence or empty>" T="<slug>" python -c "import os;
   table never touches the lessons corpus directly.
 
 Deliberation is TTL'd; only promoted content is durable. If the
-chair wants a raw thread kept past 7 days, promotion to a report is
-the mechanism — say so rather than extending TTLs ad hoc.
+chair wants a raw thread kept past 7 days, promotion to a
+machine-local report (`~/.attune/reports/roundtable/`) is the
+mechanism — say so rather than extending TTLs ad hoc.
 
 ## Spec-authoring loops (V2-P1/P2)
 
