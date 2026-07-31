@@ -101,6 +101,11 @@ WORKFLOW_TOOL_ALIASES: dict[str, set[str]] = {
 # Workflows that intentionally expose no MCP tool, with the reason. Each
 # is reachable another way (skill, wizard, CLI/CI) — never a silent gap.
 WORKFLOWS_WITHOUT_MCP_SURFACE: dict[str, str] = {
+    "fix": (
+        "outcome-first-fix Phase 2: deliberately CLI-only "
+        "(`attune fix --run`) while the surface is proving out; "
+        "MCP/docs surfaces are that spec's Phase 3 scope."
+    ),
     "release-prep": (
         "Surfaced via the release-prep skill AND the release-prep "
         "builtin wizard; deliberately not a one-shot MCP tool."

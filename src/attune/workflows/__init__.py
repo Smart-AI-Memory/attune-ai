@@ -144,6 +144,7 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "CodeReviewWorkflow": (".code_review", "CodeReviewWorkflow"),
     "DependencyCheckWorkflow": (".dependency_check", "DependencyCheckWorkflow"),
     "DiscoverySweepWorkflow": (".discovery_sweep", "DiscoverySweepWorkflow"),
+    "FixWorkflow": (".fix_workflow", "FixWorkflow"),
     "DocumentGenerationWorkflow": (".document_gen", "DocumentGenerationWorkflow"),
     "DocumentManagerWorkflow": (".document_manager", "DocumentManagerWorkflow"),
     "DocumentationOrchestrator": (".documentation_orchestrator", "DocumentationOrchestrator"),
@@ -302,6 +303,8 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "doc-audit": "DocAuditWorkflow",
     "doc-gen": "DocumentGenerationWorkflow",
     "doc-orchestrator": "DocumentationOrchestrator",
+    # Outcome-first fix (docs/specs/outcome-first-fix/, Phase 2)
+    "fix": "FixWorkflow",
     # Analysis workflows
     "bug-predict": "BugPredictionWorkflow",
     "security-audit": "SecurityAuditWorkflow",

@@ -56,3 +56,57 @@ named out loud: the roundtable WAS the interview — the ruling
 already contains the hypotheses, non-goals, gates, and
 counter-case a Stage 1 interview would re-derive. The spec
 transcribes the ruling; it does not re-litigate it.
+
+## D5 — In-place source EDITING has no existing workflow; Phase 2 adds ONE fix-capable workflow to the existing registry (PROPOSED)
+
+**Lead, 2026-07-30; precision corrected by the chair in-session
+("some existing workflows do alter source files" — confirmed).**
+Grep receipts, both sides: (a) workflows that WRITE project
+files exist — `test_gen_parallel` writes generated test files
+into the tree via `_validate_file_path(...).write_text(...)`
+(test_gen_parallel.py:336), `document_gen` writes documents,
+`dependency_check_audit` writes an advisories report. (b) No
+registry workflow EDITS existing source in place to change
+behavior, and no SDK workflow grants agents `Edit`/`Write`
+(every `allowed_tools` is `Read`/`Glob`/`Grep`, plus `Agent` in
+code_review). The canonical Fix scenario requires exactly (b) —
+editing `pricing.py` in place. Interpretation adopted: Phase 2
+adds a single `FixWorkflow` INTO the existing registry, riding
+the existing `agent_sdk_adapter` executor and `WorkflowResult`
+contract; the (a) precedent shows project-tree writes are
+already established workflow practice, so a fix-capable
+workflow is USING the machinery, not building the parallel
+planner/registry/executor H3 forbids. Counter-case: a purist
+reading says Phase 2 should halt because "existing machinery"
+turned out fix-incapable; rejected — the registry is the
+designed extension point and (a) is the precedent. Chair may
+overrule.
+
+## D6 — Phase 2 live-fire dogfood receipt (RECORDED)
+
+**Lead, 2026-07-30, chair-authorized spend (Task 2 go).** One real
+`attune fix --run` through the real `FixWorkflow` (SDK session,
+subscription-first) on a scratch git copy of the canonical
+fixture:
+
+```text
+workflow finished (success=True) — verifying independently...
+
+🧾 Fix receipt
+
+Changes made (attributed to this run):
+  - pricing.py
+Probes (evaluated independently):
+  - [PASS] .../python -m pytest pricing_suite.py::test_boundary_order_is_bulk -q (exit 0, 561ms)
+  - [PASS] .../python -m pytest pricing_suite.py -q (exit 0, 567ms)
+Safest next action: review the attributed diff and commit
+receipt reflects independently evaluated probes — workflow exit was not trusted
+exit code: 0
+```
+
+Agent diff (verified by hand): exactly `>` → `>=` at the bulk
+boundary plus removal of the then-false seeded-bug comment; no
+other paths touched. Ruling Phase 2 acceptance met on the REAL
+path: the initially failing target probe passed through a real
+CLI/subprocess/file boundary, and the receipt attributed exactly
+one in-scope file from the pre-run baseline.

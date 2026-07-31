@@ -1,9 +1,12 @@
 # Outcome-First Fix — Requirements
 
-**Status:** draft (2026-07-30) — deliberately narrow spec authorized
-by the roundtable ruling. Grants NO Build/Fix/Ship implementation
-authority. Its only executable unit is Task 0 in
-[tasks.md](tasks.md), and executing it still requires a chair go.
+**Status:** active (2026-07-30) — deliberately narrow spec
+authorized by the roundtable ruling. Tasks 0–1 EXECUTED (chair
+gos; PRs #1806, #1808); Task 2 authored and awaiting its own
+chair go + spend gate. Beyond the current task in
+[tasks.md](tasks.md), this spec grants NO Build/Fix/Ship
+implementation authority — each phase's task is authored and
+executed only behind chair gates.
 **Slug:** `outcome-first-fix`
 **Provenance:** roundtable thread `q-outcome-first-attune-ux-001`
 ([docs/reports/roundtable/q-outcome-first-attune-ux-001.md](../../reports/roundtable/q-outcome-first-attune-ux-001.md)),
@@ -77,9 +80,11 @@ the fix target and the probe collapse into one.
   relationship explicitly so the surfaces don't blur.
 - Documented `attune workflow run` behavior is preserved and
   pinned by characterization tests BEFORE any facade work
-  (Task 0), including the current exit-code-vs-
-  `WorkflowResult.success` divergence, so later phases change it
-  deliberately or not at all.
+  (Task 0): the 0/1/2/3 exit contract and its one residual
+  loophole — a legacy result with no `success` attribute exits 0
+  (Phase 0 corrected the plan's premise here: the historical
+  exit-0-on-failure divergence is already fixed) — so later
+  phases change behavior deliberately or not at all.
 - Help and docs pages for this surface are projector-owned like
   every other feature page — edit the master, re-project.
 - Sensitive prompt text is not persisted by default.

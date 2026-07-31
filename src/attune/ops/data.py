@@ -112,6 +112,11 @@ PATH_ARG_REGISTRY: dict[str, PathArgSpec] = {
     # PR-3 (2026-05-13); required=True preserved (workflow errors
     # when missing).
     "test-audit": PathArgSpec(kwarg="path", required=True),
+    # Category D — the scope path IS the edit boundary, not a scan
+    # root (outcome-first-fix Phase 2). `fix` consumes `scope_paths`
+    # and errors without it; the workflow normalizes a bare string
+    # into a one-element list for this runner path.
+    "fix": PathArgSpec(kwarg="scope_paths", required=True),
 }
 
 

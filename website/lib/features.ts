@@ -268,7 +268,7 @@ export const DIFFERENTIATORS: Differentiator[] = [
  * and no page consumed them.)
  */
 export const CAPABILITIES = {
-  workflows: 20,
+  workflows: 21,
   skills: 26,
   mcpTools: 49,
   templateKinds: 15,
@@ -311,7 +311,7 @@ export const RELIABILITY_LOOP: LoopStage[] = [
     n: "03",
     name: "Build",
     description:
-      "20 workflows: review, tests, bug prediction, refactor.",
+      "21 workflows: review, tests, bug prediction, refactor.",
   },
   {
     n: "04",
