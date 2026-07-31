@@ -1,12 +1,12 @@
 # Outcome-First Fix — Tasks
 
-**Status:** Task 0 EXECUTED 2026-07-30 (chair-authorized; PR
-#1806, acceptance MET — see
-[phase0-inventory.md](phase0-inventory.md)). Task 1 authored
-2026-07-30 (chair-authorized authoring); NOT yet authorized to
-execute. This file carries the executed log plus the next
-executable unit only; later phase tasks are authored per-phase
-behind chair gates (decisions.md D2).
+**Status:** active (2026-07-30) — Task 0 executed
+(chair-authorized; PR #1806, acceptance MET — see
+[phase0-inventory.md](phase0-inventory.md)); Task 1 authored,
+awaiting its own chair go before execution. This file carries
+the executed log plus the next executable unit only; later phase
+tasks are authored per-phase behind chair gates (decisions.md
+D2).
 
 ## Executed log
 
