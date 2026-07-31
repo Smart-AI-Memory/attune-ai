@@ -251,14 +251,24 @@ def test_untracked_scope_dir_edits_are_attributed(tmp_path: Path) -> None:
     subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
     for name in ("pricing.py", "pricing_suite.py"):
         shutil.copy(FIXTURE_DIR / name, scratch / name)
+    # Nested subdirectory: expansion must recurse through it (the dir
+    # entry itself is skipped, its file is hashed).
+    (scratch / "sub").mkdir()
+    (scratch / "sub" / "helper.py").write_text("HELPER = 1\n")
+    # Cache artifacts are excluded from expansion entirely.
+    (scratch / "__pycache__").mkdir()
+    (scratch / "__pycache__" / "pricing.cpython-312.pyc").write_text("junk")
 
     baseline = capture_baseline(repo, [Path("scratch")])
     # Directory expanded to per-file hashes; no unreadable dir entry.
     assert "scratch/pricing.py" in baseline.scope_hashes
+    assert "scratch/sub/helper.py" in baseline.scope_hashes
+    assert not any("__pycache__" in p for p in baseline.scope_hashes)
     assert not any(h == "<unreadable>" for h in baseline.scope_hashes.values())
 
     _apply_known_fix(scratch)
     (scratch / "created_by_run.py").write_text("# new file from the run\n")
+    (scratch / "sub" / "helper.py").write_text("HELPER = 2\n")
 
     receipt = assemble_receipt(
         contract=SimpleNamespace(probes=[]),  # type: ignore[arg-type]
@@ -268,8 +278,30 @@ def test_untracked_scope_dir_edits_are_attributed(tmp_path: Path) -> None:
     )
     assert "scratch/pricing.py" in receipt.attributed_changes
     assert "scratch/created_by_run.py" in receipt.attributed_changes
+    assert "scratch/sub/helper.py" in receipt.attributed_changes
+    assert not any("__pycache__" in p for p in receipt.attributed_changes)
     assert receipt.scope_violations == []
     assert receipt.next_action == "review the attributed diff and commit"
+
+
+def test_unreadable_scope_file_reported_as_uncertainty(tmp_path: Path) -> None:
+    """A scope FILE that cannot be read hashes as `<unreadable>` and
+    the receipt names it in Remaining uncertainty instead of silently
+    treating it as unchanged."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+
+    baseline = capture_baseline(repo, [Path("ghost.py")])
+    assert baseline.scope_hashes["ghost.py"] == "<unreadable>"
+
+    receipt = assemble_receipt(
+        contract=SimpleNamespace(probes=[]),  # type: ignore[arg-type]
+        baseline=baseline,
+        scope_paths=[Path("ghost.py")],
+        probe_outcomes=[ProbeOutcome(argv=["true"], status="PASS", returncode=0)],
+    )
+    assert any("baseline hash unavailable" in u and "ghost.py" in u for u in receipt.uncertainty)
 
 
 # ---------------------------------------------------------------
