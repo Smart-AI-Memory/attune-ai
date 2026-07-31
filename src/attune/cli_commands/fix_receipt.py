@@ -65,14 +65,18 @@ class FixReceipt:
     probe_outcomes: list[ProbeOutcome]
     uncertainty: list[str]
     next_action: str
+    #: False when out-of-scope edits could not be DETECTED at all (no
+    #: git). Passing probes then prove the goal but NOT the scope
+    #: constraint, so success would be a claim the run cannot back.
+    scope_verified: bool = True
 
     def exit_code(self) -> int:
-        """0 only when every probe PASSED and scope held — never
-        from workflow exit (H2)."""
+        """0 only when every probe PASSED, scope held, AND scope was
+        actually verifiable — never from workflow exit (H2)."""
         all_pass = bool(self.probe_outcomes) and all(
             p.status == "PASS" for p in self.probe_outcomes
         )
-        if all_pass and not self.scope_violations:
+        if all_pass and not self.scope_violations and self.scope_verified:
             return EXIT_SUCCESS
         return EXIT_PLANNED_FAILURE
 
@@ -88,6 +92,11 @@ class FixReceipt:
         if self.scope_violations:
             lines.append("SCOPE VIOLATIONS (out-of-scope paths changed by this run):")
             lines += [f"  - {p}" for p in self.scope_violations]
+        if not self.scope_verified:
+            lines.append(
+                "SCOPE NOT VERIFIED — no git available; only the declared "
+                "scope files were hashed, so edits elsewhere are undetectable."
+            )
         lines.append("Probes (evaluated independently):")
         lines += [f"  - {p.render()}" for p in self.probe_outcomes]
         if self.uncertainty:
@@ -164,10 +173,13 @@ def run_probes(probes: list[VerificationProbe], cwd: Path) -> list[ProbeOutcome]
     """
     import os
 
+    # Extend rather than replace: clobbering PYTEST_ADDOPTS would
+    # silently change the user's configured verification semantics.
+    existing_addopts = os.environ.get("PYTEST_ADDOPTS", "").strip()
     probe_env = {
         **os.environ,
         "PYTHONDONTWRITEBYTECODE": "1",
-        "PYTEST_ADDOPTS": "-p no:cacheprovider",
+        "PYTEST_ADDOPTS": f"{existing_addopts} -p no:cacheprovider".strip(),
     }
     outcomes: list[ProbeOutcome] = []
     for probe in probes:
@@ -234,16 +246,34 @@ def _uncertainty_lines(baseline: Baseline, git_ok: bool, skipped: list[ProbeOutc
 
 
 def _next_action(
-    violations: list[str], failed: list[ProbeOutcome], skipped: list[ProbeOutcome]
+    violations: list[str],
+    failed: list[ProbeOutcome],
+    skipped: list[ProbeOutcome],
+    scope_verified: bool = True,
 ) -> str:
     """The safest next step, worst problem first."""
     if violations:
         return "revert the out-of-scope paths listed above, then re-run"
+    if not scope_verified:
+        return (
+            "review the full working tree by hand — scope could not be "
+            "verified without git, so out-of-scope edits are undetectable"
+        )
     if failed:
         return f"inspect the diff, then re-run probe: {' '.join(failed[0].argv)}"
     if skipped:
         return "make the skipped probe runnable, then re-run verification"
     return "review the attributed diff and commit"
+
+
+def _in_scope(path: str, scope_strs: set[str]) -> bool:
+    """True when ``path`` is a scope entry or lives under one.
+
+    Mirrors the workflow's PreToolUse guard, which allows a scope
+    DIRECTORY's descendants (``allowed in target.parents``). Exact
+    matching here would flag legitimate in-scope edits as violations.
+    """
+    return any(path == s or path.startswith(f"{s}/") for s in scope_strs)
 
 
 def assemble_receipt(
@@ -260,9 +290,12 @@ def assemble_receipt(
     # A baseline-dirty file the run modified FURTHER is attributed
     # (hash change above) and moves out of the pre-existing section.
     pre_existing = sorted(baseline.dirty_paths - attributed)
-    violations = sorted(p for p in attributed if p not in scope_strs)
+    violations = sorted(p for p in attributed if not _in_scope(p, scope_strs))
     skipped = [p for p in probe_outcomes if p.status == "SKIPPED"]
     failed = [p for p in probe_outcomes if p.status == "FAIL"]
+    # Without git we can only hash the declared scope files, so an edit
+    # to any OTHER path is undetectable — scope is unverified, not clean.
+    scope_verified = baseline.git_available and git_ok
 
     return FixReceipt(
         attributed_changes=sorted(attributed),
@@ -270,5 +303,6 @@ def assemble_receipt(
         scope_violations=violations,
         probe_outcomes=probe_outcomes,
         uncertainty=_uncertainty_lines(baseline, git_ok, skipped),
-        next_action=_next_action(violations, failed, skipped),
+        next_action=_next_action(violations, failed, skipped, scope_verified),
+        scope_verified=scope_verified,
     )
