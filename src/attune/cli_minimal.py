@@ -242,10 +242,10 @@ def _add_fix_subparser(subparsers: argparse._SubParsersAction) -> None:
         "fix",
         help="Preview an outcome-first fix contract (dry; --run to execute)",
         description=(
-            "State what should be fixed and how to verify it. The bare form "
-            "previews the contract (nothing runs, nothing is written); add "
-            "--run to execute the fix and get a receipt with independently "
-            "verified probes."
+            "State what should be fixed and how to verify it.\n"
+            "The bare form previews the contract (nothing runs, nothing is\n"
+            "written); add --run to execute the fix and get a receipt with\n"
+            "independently verified probes."
         ),
         epilog=(
             "example:\n"
