@@ -172,3 +172,29 @@ guard fails on the argv assertion; restored, it passes.
 The redaction question is CLOSED unless the endpoint gains a
 free-text passthrough — at which point the guard fails and forces
 the decision then, with the exposure real rather than theoretical.
+
+## D8 — Untracked-directory scopes broke receipt attribution; fixed by per-file expansion (RECORDED)
+
+**Lead, 2026-07-31, cold first-run UX review (PR #1822).** A
+`--run` whose `--scope` was an UNTRACKED directory — the natural
+"scratch copy inside the repo" demo flow — produced a false
+receipt: the workflow fixed the seeded bug and the probe passed,
+yet the receipt read "this run changed no files; the done
+conditions were already satisfied before it ran." Two mechanisms
+compounded: git porcelain collapses an untracked directory to a
+single `dir/` entry (identical before and after the run), and a
+directory cannot be content-hashed, so `capture_baseline` held
+nothing attributable. The D6 dogfood receipt missed the class
+because its scratch copy was its own git repo, giving per-file
+porcelain entries.
+
+Fix: baseline capture expands directory entries (scope dirs and
+dirty dirs) to per-file hashes, and receipt assembly rescans
+those directories so files CREATED by the run are attributed.
+Pinned by `test_untracked_scope_dir_edits_are_attributed`;
+live-fire re-run of the exact failing scenario now attributes
+`pricing.py` with next action "review the attributed diff and
+commit." Metric relevance: this was an evidence-valid receipt
+completeness failure (D3 set) found only by running the surface
+cold — the receipt rendered every section yet the attribution
+evidence inside it was false.

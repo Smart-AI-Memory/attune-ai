@@ -167,7 +167,9 @@ def _select_workflow(args: Namespace) -> tuple[str | None, str]:
 
     names = sorted(wf["name"] for wf in list_workflows())
     return None, (
-        "no --workflow given — selection abstains rather than guess.\n"
+        "no --workflow given — Fix never guesses a route.\n"
+        "For a code fix, add --workflow fix (the only workflow --run can execute):\n"
+        '  attune fix "<request>" --workflow fix --probe "<verify command>" --scope <path> --run\n'
         "Registered candidates: " + (", ".join(names) if names else "(none registered)")
     )
 
@@ -200,7 +202,7 @@ def cmd_fix(args: Namespace) -> int:
         return EXIT_CLI_ERROR
 
     print(f"\nSelected workflow: {selected} [{detail}]")
-    print("  (user-specified; contract-to-workflow compatibility is verified in Phase 2)")
+    print("  (user-specified; compatibility with the contract is checked at run time)")
 
     if getattr(args, "run", False):
         return _run_fix(args, contract, selected)

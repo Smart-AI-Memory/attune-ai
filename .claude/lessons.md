@@ -20260,3 +20260,35 @@ def ", start_idx + 1)` for module-
   earlier the same day (a dry-trace assertion with an unconditional
   escape), which is the same bug in a test rather than in
   production.
+
+- **`git status --porcelain` collapses an UNTRACKED directory to one
+  `dir/` entry — any before/after dirty-set diff or per-path hashing
+  scheme must expand directories to their contained files, or every
+  change inside an untracked dir is invisible**: 2026-07-31, cold UX
+  review of `attune fix` (PR #1822). The Fix receipt's attribution
+  compared pre/post porcelain dirty sets plus content hashes of the
+  scope paths. With `--scope <untracked-dir>` (the natural "scratch
+  copy inside the repo" demo flow), porcelain showed the identical
+  `dir/` entry before AND after the run, and `_hash_file` on the
+  directory returned `<unreadable>` — so the run's real edit was
+  unattributable and the receipt claimed "this run changed no files;
+  the done conditions were already satisfied before it ran" while
+  the probe PASSED. A truth-enforcement surface (H2) lying on the
+  happy path. Fix: expand directory entries (scope dirs AND dirty
+  dirs) to per-file hashes at baseline, and rescan those dirs at
+  receipt time so files CREATED by the run are attributed too.
+  General rule: porcelain granularity is TRACKED-file granularity;
+  untracked content only appears as collapsed directory roots.
+
+- **A dogfood receipt proves the environment SHAPE it ran in, not
+  the class — vary the git-tracking shape (tracked / untracked-dir /
+  no-git) before calling a receipt surface proven**: same session.
+  The spec's D6 live-fire dogfood ran `attune fix --run` in a scratch
+  copy that was its own fresh GIT REPO, where porcelain lists files
+  individually — attribution worked, receipt recorded as proof. The
+  first cold user-shaped run (scratch copy as an untracked dir inside
+  the main repo) hit the collapsed-`dir/` case D6 could never see.
+  Both are one command with identical flags; the only difference was
+  where `.git` sat. For any surface whose evidence derives from git
+  state, the dogfood matrix is the git-topology matrix, not the flag
+  matrix.

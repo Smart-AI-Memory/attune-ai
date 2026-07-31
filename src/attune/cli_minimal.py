@@ -241,12 +241,25 @@ def _add_fix_subparser(subparsers: argparse._SubParsersAction) -> None:
     fix_parser = subparsers.add_parser(
         "fix",
         help="Preview an outcome-first fix contract (dry; --run to execute)",
+        description=(
+            "State what should be fixed and how to verify it.\n"
+            "The bare form previews the contract (nothing runs, nothing is\n"
+            "written); add --run to execute the fix and get a receipt with\n"
+            "independently verified probes."
+        ),
+        epilog=(
+            "example:\n"
+            '  attune fix "boundary order must price as bulk" \\\n'
+            "    --workflow fix --scope src/pricing.py \\\n"
+            '    --probe "pytest tests/test_pricing.py -q" --run'
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     fix_parser.add_argument("request", help="What should be fixed, in your words")
     fix_parser.add_argument(
         "--explain",
         action="store_true",
-        help="Render the contract preview (Phase 1 default behavior)",
+        help="Render the contract preview (the default when --run is absent)",
     )
     fix_parser.add_argument(
         "--workflow",
@@ -265,8 +278,8 @@ def _add_fix_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--run",
         action="store_true",
         help=(
-            "Execute the contract (Phase 2): runs the fix workflow, then "
-            "verifies every probe independently and prints the receipt"
+            "Execute the contract: runs the fix workflow, then verifies "
+            "every probe independently and prints the receipt"
         ),
     )
 

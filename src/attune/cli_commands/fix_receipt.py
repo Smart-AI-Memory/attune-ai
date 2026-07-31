@@ -53,6 +53,11 @@ class Baseline:
     dirty_paths: set[str] = field(default_factory=set)
     scope_hashes: dict[str, str] = field(default_factory=dict)
     git_available: bool = True
+    #: Directories whose contained files were hashed individually —
+    #: rescanned at receipt time so files CREATED inside them by the
+    #: run are attributed (they appear in no hash map and no git diff
+    #: when the directory is untracked).
+    scan_dirs: set[str] = field(default_factory=set)
 
 
 @dataclass
@@ -146,6 +151,34 @@ def _hash_file(path: Path) -> str:
         return "<unreadable>"
 
 
+#: Cache/VCS artifacts excluded from directory expansion — the same
+#: rationale as the probe-runner env: their churn is not the fix.
+_EXPANSION_SKIP_PARTS = frozenset({"__pycache__", ".pytest_cache", ".git"})
+
+
+def _expand_if_dir(repo_root: Path, path_str: str) -> list[str]:
+    """A directory entry becomes its contained files, repo-relative.
+
+    Git porcelain collapses an UNTRACKED directory to a single
+    ``dir/`` entry (before and after the run alike), and a directory
+    cannot be content-hashed — so without per-file expansion, every
+    edit inside an untracked scope directory is unattributable and
+    the receipt falsely reports "this run changed no files".
+    """
+    target = repo_root / path_str
+    if not target.is_dir():
+        return [path_str]
+    files: list[str] = []
+    for child in sorted(target.rglob("*")):
+        if not child.is_file():
+            continue
+        rel = child.relative_to(repo_root).as_posix()
+        if _EXPANSION_SKIP_PARTS.intersection(rel.split("/")):
+            continue
+        files.append(rel)
+    return files
+
+
 def capture_baseline(repo_root: Path, scope_paths: list[Path]) -> Baseline:
     """Snapshot pre-run state: dirty set + content hashes.
 
@@ -153,16 +186,29 @@ def capture_baseline(repo_root: Path, scope_paths: list[Path]) -> Baseline:
     a baseline-dirty file the workflow modifies FURTHER must still
     be attributed (and flagged as a violation when out of scope) —
     the dirty-set subtraction alone would let it escape (codex D11
-    lane finding).
+    lane finding). Directory entries (a directory scope, or an
+    untracked directory in the dirty set) are expanded to their
+    contained files so each is hashed individually.
     """
     dirty, git_ok = _git_dirty_paths(repo_root)
     # POSIX form throughout: git porcelain emits forward slashes on
     # every platform, so str(WindowsPath("a/b")) -> "a\\b" would never
     # match and every nested scope path would read as a violation.
-    to_hash = {Path(p).as_posix() for p in scope_paths} | dirty
+    raw = {Path(p).as_posix() for p in scope_paths} | dirty
+    to_hash: set[str] = set()
+    scan_dirs: set[str] = set()
+    for entry in raw:
+        expanded = _expand_if_dir(repo_root, entry)
+        if expanded != [entry]:
+            scan_dirs.add(Path(entry).as_posix())
+        to_hash.update(expanded)
     hashes = {p: _hash_file(repo_root / p) for p in sorted(to_hash)}
     return Baseline(
-        repo_root=repo_root, dirty_paths=dirty, scope_hashes=hashes, git_available=git_ok
+        repo_root=repo_root,
+        dirty_paths=dirty,
+        scope_hashes=hashes,
+        git_available=git_ok,
+        scan_dirs=scan_dirs,
     )
 
 
@@ -229,6 +275,13 @@ def _attributed_paths(baseline: Baseline, git_ok: bool, dirty_now: set[str]) -> 
     for path_str, old_hash in baseline.scope_hashes.items():
         if _hash_file(baseline.repo_root / path_str) != old_hash:
             attributed.add(path_str)
+    # Rescan expanded directories: a file the run CREATED inside an
+    # untracked directory appears in no baseline hash and no git diff
+    # (porcelain still shows only `dir/`), yet it is this run's change.
+    for dir_str in baseline.scan_dirs:
+        for rel in _expand_if_dir(baseline.repo_root, dir_str):
+            if rel not in baseline.scope_hashes:
+                attributed.add(rel)
     return attributed
 
 
