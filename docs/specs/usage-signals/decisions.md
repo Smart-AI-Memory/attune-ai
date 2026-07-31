@@ -749,3 +749,22 @@ the attempts budget), then
 the log, commits the snapshot, and DISARMS the job — recurs
 yearly if left). Also in the session starter's runbook. US-4's budget contract applies: one batch
 + at most two retries ≥60 min apart, reuse captured results.
+
+**US-5 11.0.0 leg — PARTIAL (3/5) AFTER capture RULED SUFFICIENT
+(chair, 2026-07-31 ~17:30 ET, before the 19:05 ET window close).**
+The 11.0.0 AFTER window closed on a 3/5 partial: `attune-ai`
+(83/484/4552 day/week/month), `attune-rag` (4152/16570/48994), and
+`attune-help` (3272/8310/9249) captured; `attune-author` and
+`attune-verify` missing after all three budgeted runs on 07-31
+rate-limited on the tail (12:15Z 0/5, 13:21Z 3/5, 17:00Z 3/5 —
+attempts rows committed alongside this entry as the budget
+receipt). The chair ruled the partial SATISFIES the 11.0.0 US-5
+leg: the comparable pair is computed over the three captured
+packages, and the two missing packages are recorded as
+NOT-COMPARABLE for 11.0.0 (07-30 captured 0/5, so no fallback leg
+exists). This is a partial-acceptance ruling, not a waiver — US-5's
+"comparable pair or explicit waiver" disjunction is met on the
+pair side for the captured set. The 11.1.0 window stays open to
+2026-08-02 08:00 ET; a Saturday-morning run re-fetches ONLY the
+missing two (reruns reuse captured results) and is the last
+practical shot at a 5/5 pair for 11.1.0.
