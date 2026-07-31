@@ -11,6 +11,7 @@ from attune.elicitation.fix_intake import (
     OTHER,
     build_fix_intake_form,
     compose_fix_command,
+    list_subdirectories,
     probe_candidates,
     scope_candidates,
 )
@@ -21,6 +22,27 @@ def _git_repo(tmp_path: Path) -> Path:
     repo.mkdir()
     subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
     return repo
+
+
+def _commit_all(repo: Path, message: str = "x") -> None:
+    subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+    subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "-q",
+            "-m",
+            message,
+        ],
+        cwd=repo,
+        check=True,
+    )
 
 
 def test_scope_candidates_changed_files_first(tmp_path: Path) -> None:
@@ -42,6 +64,65 @@ def test_scope_candidates_skip_cache_and_degrade_without_git(tmp_path: Path) -> 
     plain = tmp_path / "plain"
     plain.mkdir()
     assert scope_candidates(plain) == []
+
+
+def test_scope_candidates_fall_back_to_recent_history_on_clean_tree(tmp_path: Path) -> None:
+    repo = _git_repo(tmp_path)
+    pkg = repo / "src" / "pkg"
+    pkg.mkdir(parents=True)
+    (pkg / "mod.py").write_text("X = 1\n")
+    docs = repo / "docs"
+    docs.mkdir()
+    (docs / "note.md").write_text("note\n")
+    _commit_all(repo, "first")
+    (pkg / "mod.py").write_text("X = 2\n")
+    _commit_all(repo, "second")
+    scopes = scope_candidates(repo)
+    assert scopes, "clean tree with history must still derive candidates"
+    assert scopes[0] == "src/pkg", "most-touched directory ranks first"
+    assert "docs" in scopes
+
+
+def test_fallback_skips_deleted_paths_and_degrades_without_commits(tmp_path: Path) -> None:
+    repo = _git_repo(tmp_path)
+    (repo / "gone.py").write_text("X = 1\n")
+    _commit_all(repo)
+    (repo / "gone.py").unlink()
+    _commit_all(repo, "remove")
+    assert scope_candidates(repo) == []
+    sub = tmp_path / "sub"
+    sub.mkdir()
+    empty = _git_repo(sub)
+    assert scope_candidates(empty) == []
+
+
+def test_probe_candidates_map_scope_dir_to_mirror_test_dir(tmp_path: Path) -> None:
+    repo = _git_repo(tmp_path)
+    pkg = repo / "src" / "pkg" / "billing"
+    pkg.mkdir(parents=True)
+    (pkg / "mod.py").write_text("X = 1\n")
+    mirror = repo / "tests" / "unit" / "billing"
+    mirror.mkdir(parents=True)
+    (mirror / "test_mod.py").write_text("def test_x(): pass\n")
+    probes = probe_candidates(repo, ["src/pkg/billing"])
+    assert "pytest tests/unit/billing/" in probes
+
+
+def test_list_subdirectories_lists_validates_and_filters(tmp_path: Path) -> None:
+    repo = _git_repo(tmp_path)
+    (repo / "src").mkdir()
+    (repo / "docs").mkdir()
+    (repo / ".hidden").mkdir()
+    (repo / "__pycache__").mkdir()
+    (repo / "file.txt").write_text("x\n")
+    top = list_subdirectories(repo, ".")
+    assert top["dirs"] == ["docs", "src"]
+    assert "error" not in top
+    escape = list_subdirectories(repo, "../outside")
+    assert escape["error"] == "path escapes the repository"
+    assert escape["dirs"] == []
+    not_dir = list_subdirectories(repo, "file.txt")
+    assert not_dir["error"] == "not a directory"
 
 
 def test_probe_candidates_from_scope_dir_and_tests_tree(tmp_path: Path) -> None:

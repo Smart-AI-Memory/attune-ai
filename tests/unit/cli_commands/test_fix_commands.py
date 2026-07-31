@@ -166,6 +166,37 @@ def test_representative_preview_is_truthful(capsys: pytest.CaptureFixture[str]) 
         assert forbidden not in out.lower()
 
 
+def test_missing_paths_flags_nonexistent_path_shaped_tokens(tmp_path: Path) -> None:
+    (tmp_path / "real.py").write_text("X = 1\n")
+    probe = VerificationProbe(
+        argv=["pytest", "real.py", "gone/test_x.py", "gone/test_x.py::test_y", "-q", "bareword"]
+    )
+    assert probe.missing_paths(tmp_path) == ["gone/test_x.py", "gone/test_x.py"]
+    assert VerificationProbe(argv=["pytest", "real.py"]).missing_paths(tmp_path) == []
+
+
+def test_preview_warns_on_missing_probe_path_but_still_previews(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A probe naming a nonexistent test path warns (advisory — the
+    fix run may create it) and the contract still previews exit 0."""
+    workflow = _first_registered_workflow()
+    assert (
+        cmd_fix(_args(workflow=workflow, probe=["pytest tests/unit/does_not_exist_suite.py"])) == 0
+    )
+    out = capsys.readouterr().out
+    assert "warning: path does not exist yet: tests/unit/does_not_exist_suite.py" in out
+    assert _TRAILER in out
+
+
+def test_preview_stays_silent_when_probe_paths_exist(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    workflow = _first_registered_workflow()
+    assert cmd_fix(_args(workflow=workflow)) == 0
+    assert "warning: path does not exist yet" not in capsys.readouterr().out
+
+
 def test_real_cli_entry_representative_exits_zero(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
