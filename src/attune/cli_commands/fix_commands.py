@@ -49,6 +49,26 @@ class VerificationProbe:
         label = self.description or " ".join(self.argv)
         return f"{label} (expect exit {self.expected_exit})"
 
+    def missing_paths(self, root: Path) -> list[str]:
+        """Path-shaped argv tokens that do not exist under ``root``.
+
+        Advisory only — a probe may legitimately name a file the fix
+        run will create (TDD), so a missing path warns in the preview
+        and never rejects the contract. A token is path-shaped when it
+        is not a flag and contains ``/`` or ends with ``.py``; pytest
+        node ids (``path::test``) are checked by their path half.
+        """
+        missing: list[str] = []
+        for token in self.argv[1:]:
+            if token.startswith("-"):
+                continue
+            if "/" not in token and not token.endswith(".py"):
+                continue
+            candidate = token.split("::", 1)[0]
+            if not (root / candidate).exists():
+                missing.append(candidate)
+        return missing
+
 
 @dataclass
 class FixContract:
@@ -193,8 +213,11 @@ def cmd_fix(args: Namespace) -> int:
     for constraint in contract.constraints:
         print(f"  - {constraint}")
     print("\nProbes (validated, not run):")
+    probe_root = _repo_root()
     for probe in contract.probes:
         print(f"  - {probe.render()}")
+        for missing in probe.missing_paths(probe_root):
+            print(f"      warning: path does not exist yet: {missing}")
 
     if selected is None:
         print(f"\n{detail}")
