@@ -20217,3 +20217,46 @@ def ", start_idx + 1)` for module-
   mismatch IS the finding. Pairs with the "a new MCP tool touches
   5 places" checklist in `plugin-reference-validation.md`; same
   family, different registry set.
+
+- **Review coverage has a TIME dimension, not just a size one — the
+  never-reviewed set is `omitted ∪ everything committed since the
+  last lane`, and re-running the scoped remainder is worth real
+  money**: 2026-07-30/31, the outcome-first-fix close-out. The
+  partial-manifest lesson above prescribes "re-run scoped when the
+  core of the diff isn't in `sent`." Doing it produced the receipt:
+  the re-review came back **9 sent / 0 omitted (36.5k of the 60k
+  cap)** and found **4 real defects, 3 of them HIGH**, inside a day
+  of the original lane. Two durable pieces:
+  1. **Scoping to PRODUCTION SOURCE is what made it fit.** The full
+     delta measured 3.5 MB because generated artifacts (docs
+     `search_index.json`, built HTML, script-generated `runner.js`)
+     dominate; excluding those left 36.5k. Before concluding "this
+     diff is too big to review," measure it WITHOUT generated files
+     — the reviewable core is usually an order of magnitude smaller.
+  2. **The omitted list UNDERSTATES the gap.** Everything committed
+     AFTER the last lane ran has never been reviewed at all, and
+     nothing tracks that. Here the never-reviewed set included the
+     whole 7-guard registration commit and an entire follow-up PR —
+     neither of which appeared in any `omitted` manifest, because
+     they didn't exist when the lanes ran. At close-out, compute the
+     never-reviewed set as the union, not the last manifest.
+
+- **A verification surface's own SUCCESS CONDITION is the
+  highest-risk code in it — grep your `return SUCCESS` branch for
+  every precondition it silently assumes**: same session. The Fix
+  receipt exists to enforce H2 ("a successful workflow exit is never
+  sufficient proof"), and its `exit_code()` returned SUCCESS when
+  every probe passed and no scope violations were listed — but when
+  git was unavailable, out-of-scope edits were UNDETECTABLE, so the
+  empty violation list meant "we couldn't look," not "nothing was
+  wrong." Exit 0 was a claim the run could not back: the exact sin
+  the surface was built to prevent, committed by the surface itself.
+  Fixed by carrying `scope_verified` and refusing success without
+  it. The general rule: for any code that emits a pass/fail verdict,
+  enumerate what the PASS branch assumes was checked, and confirm
+  each assumption was actually CHECKED rather than merely
+  UNVIOLATED — "no findings" and "no search performed" produce
+  identical empty lists. Sibling of the vacuous-verifier catch
+  earlier the same day (a dry-trace assertion with an unconditional
+  escape), which is the same bug in a test rather than in
+  production.
