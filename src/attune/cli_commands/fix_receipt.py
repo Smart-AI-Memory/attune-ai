@@ -85,7 +85,10 @@ class FixReceipt:
         lines.append("Changes made (attributed to this run):")
         lines += [f"  - {p}" for p in self.attributed_changes]
         if not self.attributed_changes:
-            lines.append("  (none detected)")
+            # Naming the no-change case explicitly: "(none detected)" read
+            # as a detection weakness, so a run where the agent did nothing
+            # was indistinguishable from a verified fix (Phase 3 G1).
+            lines.append("  (none — this run changed no files)")
         if self.pre_existing_dirty:
             lines.append("Pre-existing changes (not attributed, not revert-advised):")
             lines += [f"  - {p}" for p in self.pre_existing_dirty]
@@ -250,6 +253,7 @@ def _next_action(
     failed: list[ProbeOutcome],
     skipped: list[ProbeOutcome],
     scope_verified: bool = True,
+    changed: bool = True,
 ) -> str:
     """The safest next step, worst problem first."""
     if violations:
@@ -260,9 +264,25 @@ def _next_action(
             "verified without git, so out-of-scope edits are undetectable"
         )
     if failed:
-        return f"inspect the diff, then re-run probe: {' '.join(failed[0].argv)}"
+        # EVERY failing probe is named: advising a re-run of failed[0]
+        # alone under-reported what still has to pass (Phase 3 G2).
+        commands = "; ".join(" ".join(p.argv) for p in failed)
+        prefix = (
+            "this run changed no files, so there is no diff to inspect — re-scope, then re-run"
+            if not changed
+            else "inspect the diff, then re-run"
+        )
+        target = "probe" if len(failed) == 1 else f"all {len(failed)} failing probes"
+        return f"{prefix} {target}: {commands}"
     if skipped:
         return "make the skipped probe runnable, then re-run verification"
+    if not changed:
+        # Passing probes on an unchanged tree are honest evidence that the
+        # conditions ALREADY held — not evidence that a fix was applied.
+        return (
+            "nothing to commit — this run changed no files; the done "
+            "conditions were already satisfied before it ran"
+        )
     return "review the attributed diff and commit"
 
 
@@ -303,6 +323,8 @@ def assemble_receipt(
         scope_violations=violations,
         probe_outcomes=probe_outcomes,
         uncertainty=_uncertainty_lines(baseline, git_ok, skipped),
-        next_action=_next_action(violations, failed, skipped, scope_verified),
+        next_action=_next_action(
+            violations, failed, skipped, scope_verified, changed=bool(attributed)
+        ),
         scope_verified=scope_verified,
     )

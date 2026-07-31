@@ -1,10 +1,10 @@
 # Outcome-First Fix — Tasks
 
-**Status:** active (2026-07-30) — Tasks 0–2 executed, each
+**Status:** active (2026-07-31) — Tasks 0–2 executed, each
 behind its own explicit chair go (spend gate honored on Task 2;
-live-fire receipt in decisions.md D6). The Phase 3 task is NOT
-yet authored; later phase tasks are authored per-phase behind
-chair gates (decisions.md D2).
+live-fire receipt in decisions.md D6). Task 3 (Phase 3) is
+AUTHORED and awaiting its own chair go; Phase 4+ tasks are
+authored per-phase behind chair gates (decisions.md D2).
 
 ## Executed log
 
@@ -33,6 +33,23 @@ chair gates (decisions.md D2).
   repos and pytest subprocesses (coverage 97/94%); live-fire
   receipt recorded in decisions.md D6 — the real agent made
   exactly the minimal in-scope fix and both probes passed.
+- **Task 3 — Phase 3 robustness, compatibility, measurement**
+  (chair go 2026-07-31, keyless — no spend): the six measured
+  gaps closed. G1 no-change runs are named instead of advising a
+  nonexistent diff; G2 every failing probe is named; G3 answered
+  by an evidence-chain walk and recorded in D7 (the Fix surface
+  persists nothing; the ops run record is a generic inherited
+  surface, deliberately unchanged); G4 the `attune fix` feature
+  master ships and projects to 15 outputs, with the drift guard
+  demonstrated firing on a hand-edited twin; G5+G6 the four D3
+  metrics reported in [metrics.md](metrics.md), each with the
+  command that produced it. One pre-existing assertion was
+  amended — `test_workflow_success_with_failing_probes_exits_one_h2`
+  asserted "inspect the diff" for a stub that changes nothing,
+  which is exactly the advice G1 corrects; its H2 subject (exit 1
+  plus a truthful FAIL row) is untouched. Also corrected: the
+  `fix` subparser's help still claimed "dry — no execution yet"
+  after `--run` shipped.
 
 ## Task 2 — Phase 2: executable Fix proof
 
@@ -235,3 +252,189 @@ passes through a real CLI/subprocess/file boundary. Changed
 artifacts, failed or skipped probes, uncertainty, and the next
 action are truthfully reported. Workflow exit alone never marks
 success.
+
+## Task 3 — Phase 3: robustness, compatibility, measurement
+
+**Scoping receipt (2026-07-31, code-first):** the ruling's
+Phase 3 bullet list was checked against the tree before this
+task was authored, per the spec-scope-drift lesson. Of the six
+named robustness paths, FOUR are already covered by the 48
+tests in `tests/unit/cli_commands/test_fix_commands.py` +
+`test_fix_receipt.py` (malformed, ambiguous, failed
+verification, abstention — plus crash, git-unavailable, and
+scope-unverified, hardened by the #1814/#1815 re-review). This
+task therefore executes against the SIX measured gaps below,
+not the ruling's list verbatim:
+
+| # | Gap | Evidence |
+|---|---|---|
+| G1 | No-change path is silent | `assemble_receipt` renders `(none detected)` and `exit_code()` returns 0 when probes pass with zero attributed changes — "verified fix" and "agent did nothing" are indistinguishable |
+| G2 | Partial success unpinned | `_next_action` names `failed[0]` only; no test covers mixed PASS/FAIL across several probes |
+| G3 | Prompt text reachable by a persistence surface | `fix_workflow.py` puts verbatim `goal` in `WorkflowResult.metadata`, and `fix` is reachable through the ops runner (`PATH_ARG_REGISTRY`); telemetry itself records cost/tokens only |
+| G4 | No user-facing `attune fix` surface docs | no feature master, no `.help` kind, no docs page; requirements demand the `/fix-test` relationship be stated explicitly |
+| G5 | Compatibility unmeasured as a metric | Task 0 characterization pins exist but are not NAMED as the compatibility-regression measurement |
+| G6 | The four D3 metrics have no measurement mechanism | H3 forbids new telemetry, so they must be suite-derived properties |
+
+```xml
+<task id="3" name="outcome-first-fix-phase3-robustness-measurement">
+  <objective>
+    Close the six measured gaps above so the Fix surface is
+    truthful on its remaining paths, is documented on the
+    projected surfaces, and reports the four ratified metrics
+    (D3) as properties derived from the existing suite — with
+    NO new telemetry, store, or lifecycle (H3).
+  </objective>
+
+  <context>
+    <existing-code path="src/attune/cli_commands/fix_receipt.py">
+      `FixReceipt.exit_code()` / `.render()` / `_next_action()`
+      own every honesty decision. G1 and G2 are changes HERE,
+      not in the CLI: the receipt is the single place the run's
+      truth is computed.
+    </existing-code>
+    <existing-code path="src/attune/workflows/fix_workflow.py">
+      `metadata={"goal": goal, ...}` (line ~159) is the only
+      place the verbatim request text leaves the process.
+    </existing-code>
+    <existing-code path="src/attune/ops/runner.py">
+      The ops runner reaches registered workflows and writes
+      run artifacts; whether any of them carries `goal` is the
+      G3 question to ANSWER, not assume.
+    </existing-code>
+    <existing-code path="docs/specs/outcome-first-fix/phase0-inventory.md">
+      Task 0's characterization pins — the compatibility
+      baseline G5 names.
+    </existing-code>
+    <constraint>
+      H3 holds: no new registry, executor, evidence store,
+      telemetry system, or execution lifecycle. Metrics are
+      computed from artifacts the suite ALREADY produces.
+    </constraint>
+    <constraint>
+      Phases 1 and 2 semantics are frozen. Preview output stays
+      byte-identical; the only receipt changes are ADDITIVE
+      honesty (a no-change row, a multi-failure next action).
+      The existing 48 tests pass unmodified, or the change is
+      wrong.
+    </constraint>
+    <constraint>
+      The feature page is a single-source master that PROJECTS
+      to `.help` kinds and the docs page (contract principle 3).
+      No hand-edited twins; the drift guard is the receipt that
+      the projection is real.
+    </constraint>
+    <constraint>
+      Keyless and deterministic. No spend gate applies to this
+      task — G1–G6 are all provable without an SDK call. If any
+      sub-item is found to need live-fire, it stops and asks
+      rather than spending.
+    </constraint>
+  </context>
+
+  <files-to-modify>
+    <file path="src/attune/cli_commands/fix_receipt.py">
+      <change location="FixReceipt.render / _next_action">
+        BEFORE: zero attributed changes renders
+        "(none detected)" and, with passing probes, exits 0
+        with next action "review the attributed diff and
+        commit" — advice for a diff that does not exist.
+        AFTER: a no-change run is named as such. The probes
+        still decide the exit (H2 is not weakened: passing
+        probes on an unchanged tree mean the conditions were
+        ALREADY true), but the receipt says the run changed
+        nothing and the next action reflects that — verify the
+        goal was already satisfied rather than "commit".
+      </change>
+      <change location="_next_action failure branch">
+        BEFORE: names `failed[0]` only, so a multi-probe
+        partial success under-reports what must be re-run.
+        AFTER: all failing probes are named (worst-problem-
+        first ordering preserved).
+      </change>
+    </file>
+    <file path="src/attune/workflows/fix_workflow.py">
+      <change location="execute metadata (~line 159)">
+        BEFORE: `metadata={"goal": goal, ...}` unconditionally.
+        AFTER: only after G3's answer. If no persistence
+        surface writes it, the metadata STAYS and a test pins
+        the property (no speculative change). If a surface does
+        write it, the goal is omitted or redacted there and the
+        test pins the redaction. The verification decides the
+        change — not the other way round.
+      </change>
+    </file>
+  </files-to-modify>
+
+  <files-to-create>
+    <file path="tests/unit/cli_commands/test_fix_phase3.py">
+      G1: no-change run + passing probes renders the no-change
+      row and its distinct next action (real tmp repo).
+      G2: three probes, two failing — both failures named.
+      G3: a real ops-runner-shaped invocation of the `fix`
+      workflow writes no artifact containing the goal text
+      (assert over the actual files written, not a mock).
+      G5: the characterization pins are asserted to still hold
+      as the named compatibility-regression check.
+      G6: receipt-completeness property — every receipt the
+      suite renders carries all required sections; and
+      verification-failure honesty — every negative path emits
+      a FAIL/SKIPPED row rather than a silent omission.
+    </file>
+    <file path="docs/features/fix.md (or the authored master path the projector owns)">
+      Single-source `attune fix` feature master: what it does,
+      the contract/receipt model, the exit contract, and an
+      EXPLICIT statement of the `/fix-test` skill relationship
+      (requirements: the surfaces must not blur). Projected to
+      `.help` kinds + the docs page via the existing projector;
+      never hand-written on both sides.
+    </file>
+  </files-to-create>
+
+  <validation>
+    <check>The existing 48 fix tests pass UNMODIFIED (Phase 1
+      preview byte-identical, Phase 2 receipt semantics
+      unchanged except the additive rows).</check>
+    <check>G1: no-change + passing probes — receipt states the
+      run changed nothing and does not advise committing a
+      diff that does not exist.</check>
+    <check>G2: multi-probe partial success names every failing
+      probe.</check>
+    <check>G3: the ops-path artifact assertion runs against
+      real written files; the resulting decision (pin as-is vs
+      redact) is recorded in decisions.md with the evidence.</check>
+    <check>G4: the feature master exists, the projector runs
+      clean, and the drift guard fails on a hand-edited
+      projection (demonstrate the failure, don't assert it).</check>
+    <check>G5+G6: the four D3 metrics are reported in the spec
+      with the command that produced each number — no new
+      telemetry, store, or lifecycle introduced (grep-checked).</check>
+    <check>Coverage stays >=85% on the touched modules; serial
+      keyless run.</check>
+    <check>Declared receipt types: suite + behavioral +
+      evidence-chain (G3's per-claim file assertions). NO
+      live-fire, NO spend.</check>
+  </validation>
+
+  <risks>
+    <risk severity="medium">Scope creep into Phase 4 routing
+      metrics — mitigation: D3 defers every routing metric to
+      Phase 4; this task reports FOUR metrics and no more.</risk>
+    <risk severity="medium">G1's honesty change quietly altering
+      the 0/1 boundary — mitigation: the exit rule is untouched;
+      only rendering and next-action text change, pinned by the
+      unmodified existing tests.</risk>
+    <risk severity="low">The feature page tripping projector
+      drift guards on first authorship — mitigation: author via
+      the existing single-source path, run the projector, and
+      commit both sides in one change.</risk>
+  </risks>
+</task>
+```
+
+**Acceptance (ruling Phase 3):** the remaining robustness paths
+report truthfully, documented `attune workflow run` behavior is
+preserved and named as the compatibility measurement, the
+projected help/docs surface exists with a drift guard, prompt
+text persistence is answered with evidence, and the four
+ratified metrics are reported from suite-derived properties
+with no new telemetry.

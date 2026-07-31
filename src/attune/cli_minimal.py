@@ -228,8 +228,11 @@ def _add_diagnose_subparser(subparsers: argparse._SubParsersAction) -> None:
 
 
 def _add_fix_subparser(subparsers: argparse._SubParsersAction) -> None:
-    """Attach the dry outcome-first Fix preview (outcome-first-fix
-    spec, Phase 1). Preview-only: nothing is executed.
+    """Attach the outcome-first Fix surface (outcome-first-fix spec).
+
+    Dry by default — the bare form and ``--explain`` preview the
+    contract and execute nothing. ``--run`` (Phase 2) executes the fix
+    and verifies every probe independently.
 
     Args:
         subparsers: Parent subparsers action to attach to
@@ -237,7 +240,7 @@ def _add_fix_subparser(subparsers: argparse._SubParsersAction) -> None:
     """
     fix_parser = subparsers.add_parser(
         "fix",
-        help="Preview an outcome-first fix contract (dry — no execution yet)",
+        help="Preview an outcome-first fix contract (dry; --run to execute)",
     )
     fix_parser.add_argument("request", help="What should be fixed, in your words")
     fix_parser.add_argument(

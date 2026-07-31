@@ -152,7 +152,10 @@ def test_workflow_success_with_failing_probes_exits_one_h2(
     out = capsys.readouterr().out
     assert code == 1
     assert "[FAIL]" in out
-    assert "inspect the diff" in out
+    # This stub changes NOTHING, so Phase 3 (G1) stopped advising the
+    # user to inspect a diff that does not exist. The H2 subject of this
+    # test — exit 1 plus a truthful FAIL row — is unchanged.
+    assert "no diff to inspect" in out
 
 
 def test_out_of_scope_edit_reported_and_fails(
