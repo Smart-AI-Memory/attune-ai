@@ -42,6 +42,7 @@ from .agent_sdk_adapter import (
 )
 from .base import BaseWorkflow, ModelTier
 from .data_classes import WorkflowResult
+from .validation import InputSchema
 
 # Hoisted to module scope so an ImportError surfaces at module
 # load — not after the agent has spent real API budget. Guarded
@@ -382,6 +383,10 @@ class RagCodeGenWorkflow(BaseWorkflow):
             },
             agent_run_result=run_result,
         )
+
+    input_schema = InputSchema(
+        optional_fields={"path": str, "depth": str, "k": int, "feedback": str, "cwd": str},
+    )
 
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         params, err = self._parse_execute_kwargs(kwargs)

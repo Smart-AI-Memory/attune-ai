@@ -34,6 +34,7 @@ from ..agent_sdk_adapter import (
 )
 from ..base import BaseWorkflow, ModelTier
 from ..data_classes import WorkflowResult
+from ..validation import InputSchema
 from .checks import CheckResult, run_all_checks  # noqa: F401  # re-export
 
 logger = logging.getLogger(__name__)
@@ -113,6 +114,10 @@ class DocAuditWorkflow(BaseWorkflow):
         super().__init__(**kwargs)
         self._system_prompt_suffix = system_prompt_suffix
 
+    input_schema = InputSchema(
+        optional_fields={"path": str, "depth": str, "max_budget_usd": (int, float)},
+    )
+
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         """Execute the Agent SDK documentation audit.
 
@@ -126,6 +131,7 @@ class DocAuditWorkflow(BaseWorkflow):
             WorkflowResult with findings, suggestions, and metadata.
 
         """
+        self.validate_input(kwargs)
         path_arg: str = kwargs.get("path", "")
         depth: str = kwargs.get("depth", "standard")
 

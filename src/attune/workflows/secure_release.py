@@ -21,6 +21,7 @@ from typing import Any
 
 from .base import BaseWorkflow, WorkflowResult
 from .compat import ModelTier
+from .validation import InputSchema
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +146,10 @@ class SecureReleasePipeline(BaseWorkflow):
         self.parallel_crew = parallel_crew
         self.crew_config = crew_config or {}
         self.kwargs = kwargs
+
+    input_schema = InputSchema(
+        optional_fields={"path": str, "diff": str, "files_changed": list, "since": str},
+    )
 
     async def execute(
         self,

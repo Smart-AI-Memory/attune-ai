@@ -47,6 +47,7 @@ from .base import BaseWorkflow, ModelTier
 from .data_classes import WorkflowResult
 from .output_schemas import WORKFLOW_OUTPUT_SCHEMA
 from .step_config import WorkflowStepConfig
+from .validation import InputSchema
 
 logger = logging.getLogger(__name__)
 
@@ -204,6 +205,10 @@ class CodeReviewWorkflow(BaseWorkflow):
         """
         super().__init__(**kwargs)
 
+    input_schema = InputSchema(
+        optional_fields={"path": str, "depth": str},
+    )
+
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         """Execute the Agent SDK code review.
 
@@ -216,6 +221,7 @@ class CodeReviewWorkflow(BaseWorkflow):
         Returns:
             WorkflowResult with findings, suggestions, and metadata.
         """
+        self.validate_input(kwargs)
         path_arg: str = kwargs.get("path", "")
         depth: str = kwargs.get("depth", "standard")
 

@@ -33,6 +33,7 @@ from .agent_sdk_adapter import (
 )
 from .base import BaseWorkflow, ModelTier
 from .data_classes import WorkflowResult
+from .validation import InputSchema
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +115,11 @@ class FixWorkflow(BaseWorkflow):
     description = "Apply a minimal in-place fix within the contract's scope"
     stages = ["agent-fix"]
     tier_map = {"agent-fix": ModelTier.CAPABLE}
+
+    input_schema = InputSchema(
+        required_fields={"goal": str, "scope_paths": list},
+        optional_fields={"done_conditions": list},
+    )
 
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         """Run the scoped fix agent.

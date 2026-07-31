@@ -31,6 +31,7 @@ from attune.models import ModelTier
 from attune.workflows.base import BaseWorkflow
 from attune.workflows.data_classes import CostReport, WorkflowResult, WorkflowStage
 
+from ..validation import InputSchema
 from . import ds_stdout, verification
 
 logger = logging.getLogger(__name__)
@@ -486,6 +487,18 @@ class DiscoverySweepWorkflow(BaseWorkflow):
     def __init__(self, **kwargs: Any) -> None:
         """Pass through to BaseWorkflow."""
         super().__init__(**kwargs)
+
+    input_schema = InputSchema(
+        optional_fields={
+            "path": str,
+            "depth": str,
+            "budget_usd": (int, float),
+            "no_llm": bool,
+            "output_format": str,
+            "source": str,
+            "sources": list,
+        },
+    )
 
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         """Run the sweep.

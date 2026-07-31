@@ -31,6 +31,7 @@ from .compat import ModelTier
 from .doc_orch_filters import DocOrchFilterMixin
 from .doc_orch_report import DocOrchReportMixin
 from .doc_orch_scout import DocOrchScoutMixin
+from .validation import InputSchema
 
 logger = logging.getLogger(__name__)
 
@@ -407,6 +408,10 @@ class DocumentationOrchestrator(
         result.total_cost = self._total_cost
         result.summary = self._generate_summary(result, summary_items)
         return result
+
+    input_schema = InputSchema(
+        optional_fields={"context": dict},
+    )
 
     async def execute(
         self,

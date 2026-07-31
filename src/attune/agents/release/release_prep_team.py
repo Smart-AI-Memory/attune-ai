@@ -41,6 +41,7 @@ from attune.workflows.output import (
     TableSection,
     WorkflowReport,
 )
+from attune.workflows.validation import InputSchema
 
 # Re-export agent classes and helpers
 from .release_agents import (  # noqa: F401
@@ -411,6 +412,10 @@ class ReleasePrepTeamWorkflow(BaseWorkflow):
         super().__init__()
         self.quality_gates = quality_gates
         self._kwargs = kwargs
+
+    input_schema = InputSchema(
+        optional_fields={"path": str, "context": dict},
+    )
 
     async def execute(
         self,

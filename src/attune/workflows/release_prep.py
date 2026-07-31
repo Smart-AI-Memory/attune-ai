@@ -33,6 +33,7 @@ from .agent_sdk_adapter import (
 )
 from .base import BaseWorkflow, ModelTier
 from .data_classes import WorkflowResult
+from .validation import InputSchema
 
 __all__ = [
     "ReleasePreparationWorkflow",
@@ -115,6 +116,10 @@ class ReleasePreparationWorkflow(BaseWorkflow):
     stages = ["agent-prep"]
     tier_map = {"agent-prep": ModelTier.CAPABLE}
 
+    input_schema = InputSchema(
+        optional_fields={"path": str, "depth": str},
+    )
+
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         """Execute the Agent SDK release preparation.
 
@@ -127,6 +132,7 @@ class ReleasePreparationWorkflow(BaseWorkflow):
         Returns:
             WorkflowResult with findings, suggestions, and metadata.
         """
+        self.validate_input(kwargs)
         path_arg: str = kwargs.get("path", "")
         depth: str = kwargs.get("depth", "standard")
 

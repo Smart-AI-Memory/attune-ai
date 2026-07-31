@@ -61,6 +61,7 @@ from .health_check_tracking import (
     save_health_json,
     save_tracking_history,
 )
+from .validation import InputSchema
 
 # Re-export public API for backward compatibility
 __all__ = [
@@ -175,6 +176,10 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
             mode,
             project_root,
         )
+
+    input_schema = InputSchema(
+        optional_fields={"path": str, "project_root": str, "context": dict},
+    )
 
     async def execute(
         self,
