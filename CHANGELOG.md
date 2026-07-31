@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **attune-gui parked** — the `attune-gui` marketplace plugin is
+  deregistered and the standalone dashboard repo is archived. Its
+  surfaces were redundant with in-repo tooling: template freshness
+  via `help_status` + the post-commit check, regeneration via
+  `attune-author` / `/coach maintain`, and ops dashboards via
+  `attune ops`. Usage signal at the ruling: zero jobs in 7 days.
+  The repo stays archived (not deleted) as the GUI seed if the
+  living-docs product direction ever needs one.
+
 ### Fixed
 
 - **Bulletin file backend: concurrent Windows writers no longer lose
