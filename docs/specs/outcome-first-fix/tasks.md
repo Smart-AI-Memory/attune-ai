@@ -1,12 +1,10 @@
 # Outcome-First Fix — Tasks
 
-**Status:** Task 0 EXECUTED 2026-07-30 (chair-authorized; PR
-#1806, acceptance MET — see
-[phase0-inventory.md](phase0-inventory.md)). Task 1 EXECUTED
-2026-07-30 — authored and executed the same session, each behind
-its own explicit chair go. The Phase 2 task is NOT yet authored;
-later phase tasks are authored per-phase behind chair gates
-(decisions.md D2).
+**Status:** active (2026-07-30) — Task 0 executed (PR #1806,
+acceptance MET, see [phase0-inventory.md](phase0-inventory.md))
+and Task 1 executed, each behind its own explicit chair go. The
+Phase 2 task is NOT yet authored; later phase tasks are authored
+per-phase behind chair gates (decisions.md D2).
 
 ## Executed log
 
