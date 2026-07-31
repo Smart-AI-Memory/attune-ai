@@ -268,6 +268,14 @@ def _run_fix(args: Namespace, contract: FixContract, selected: str) -> int:
         # the pinned contract; traceback to stderr for operators.
         traceback.print_exc()
         print(f"fix workflow crashed: {exc}")
+        # A crash is exactly when the user most needs to know what was
+        # left behind: assemble the receipt anyway (probes NOT run — the
+        # run did not complete) so partial edits and scope violations are
+        # still reported. Exit stays 2.
+        partial = assemble_receipt(contract, baseline, scope_paths, [])
+        print()
+        print("partial receipt (workflow crashed — probes not run):")
+        print(partial.render())
         return 2
 
     workflow_success = getattr(result, "success", None)

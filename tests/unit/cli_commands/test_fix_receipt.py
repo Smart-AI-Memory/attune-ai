@@ -594,3 +594,85 @@ def test_porcelain_parser_handles_short_and_rename_lines(
     paths, ok = _git_dirty_paths(fix_repo)
     assert ok is True
     assert paths == {"src/real.py", "old.py", "new.py"}
+
+
+# ---------------------------------------------------------------
+# Scoped re-review findings (codex, staged lane 9 sent / 0 omitted)
+# ---------------------------------------------------------------
+
+
+def test_unverified_scope_never_reports_success(tmp_path: Path) -> None:
+    """F1: with no git, out-of-scope edits are UNDETECTABLE — passing
+    probes prove the goal but not the scope constraint, so exit 0
+    would be a claim the run cannot back (H2)."""
+    plain = tmp_path / "nogit"
+    plain.mkdir()
+    (plain / "mod.py").write_text("x = 1\n")
+    baseline = capture_baseline(plain, [Path("mod.py")])
+    assert baseline.git_available is False
+
+    receipt = assemble_receipt(
+        contract=SimpleNamespace(probes=[]),  # type: ignore[arg-type]
+        baseline=baseline,
+        scope_paths=[Path("mod.py")],
+        probe_outcomes=[ProbeOutcome(argv=["true"], status="PASS", returncode=0)],
+    )
+    assert receipt.scope_verified is False
+    assert receipt.exit_code() == 1  # NOT 0, despite every probe passing
+    assert "SCOPE NOT VERIFIED" in receipt.render()
+    assert "by hand" in receipt.next_action
+
+
+def test_directory_scope_allows_descendants(fix_repo: Path) -> None:
+    """F2: the workflow guard permits edits under a scope DIRECTORY
+    (`allowed in target.parents`), so the receipt must not flag them
+    as violations via exact-path matching."""
+    from attune.cli_commands.fix_receipt import _in_scope
+
+    scope = {"src/pkg"}
+    assert _in_scope("src/pkg", scope)
+    assert _in_scope("src/pkg/mod.py", scope)
+    assert _in_scope("src/pkg/deep/nested.py", scope)
+    # Must NOT match a sibling that merely shares a prefix string.
+    assert not _in_scope("src/pkgother.py", scope)
+    assert not _in_scope("src/other.py", scope)
+
+
+def test_crash_still_emits_a_receipt(
+    fix_repo: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """F3: a workflow that edits then crashes must still report what it
+    left behind — a crash is when that matters most."""
+
+    class _StubEditsThenCrashes:
+        async def execute(self, **kwargs):
+            _apply_known_fix(Path.cwd())
+            raise RuntimeError("exploded after editing")
+
+    _install_stub(monkeypatch, _StubEditsThenCrashes)
+    code = cmd_fix(_args())
+    out = capsys.readouterr().out
+    assert code == 2
+    assert "partial receipt" in out
+    assert "pricing.py" in out  # the edit it made before dying is reported
+
+
+def test_probe_env_preserves_user_pytest_addopts(
+    fix_repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """F4: extend PYTEST_ADDOPTS, never clobber it."""
+    import attune.cli_commands.fix_receipt as module
+    from attune.cli_commands.fix_commands import VerificationProbe
+
+    monkeypatch.setenv("PYTEST_ADDOPTS", "-x --strict-markers")
+    captured = {}
+
+    def _capture(*a, **k):
+        captured.update(k.get("env") or {})
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(module.subprocess, "run", _capture)
+    run_probes([VerificationProbe(argv=["true"])], cwd=fix_repo)
+    addopts = captured.get("PYTEST_ADDOPTS", "")
+    assert "-x --strict-markers" in addopts
+    assert "-p no:cacheprovider" in addopts
