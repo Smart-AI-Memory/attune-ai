@@ -4573,67 +4573,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#question-chair" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Question (chair)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#unanimous-33-unprompted" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Unanimous (3/3, unprompted)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#split-where-the-primary-fix-belongs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Split — where the PRIMARY fix belongs
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#moderator-verification-probes-run-against-the-real-system" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Moderator verification (probes run against the real system)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Moderator verification (probes run against the real system)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-dotenv-inversion-in-detail" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The dotenv inversion, in detail
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#promoted-items" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4729,98 +4668,6 @@
 <p><strong>Thread:</strong> <code>q-conftest-env-scrub-001</code> · <strong>Date:</strong> 2026-07-28 ·
 <strong>Roster:</strong> claude, antigravity, codex · <strong>Rounds:</strong> 1 (halted on
 convergence, D3) · <strong>Promoted items:</strong> #2 #4 #7 #8 (chair-approved).</p>
-<h2 id="question-chair">Question (chair)<a class="headerlink" href="#question-chair" title="Permanent link">&para;</a></h2>
-<p>Today's session shipped a test-isolation fix (<code>tests/conftest.py</code>
-scrubs ambient <code>ATTUNE_*</code> at conftest import time and per test, plus a
-drift guard) after a <code>clean-run</code> routine reported
-<code>keyless-unit-suite: FAIL</code> on a healthy tree. Is scrubbing env at
-conftest import time the right fix, or does it hide a design problem in
-reading env at import time? What breaks that we haven't considered?</p>
-<h2 id="unanimous-33-unprompted">Unanimous (3/3, unprompted)<a class="headerlink" href="#unanimous-33-unprompted" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Keep the scrub.</strong> No seat argued to revert. All three accept that a
-  fixture cannot undo values already captured by module globals, so
-  import-time scrubbing is NECESSARY given current module semantics.</li>
-<li><strong>It is not the complete fix</strong> — a guardrail over an unfixed <code>src/</code>
-  defect.</li>
-<li><strong>Import-time env resolution (<code>release_models.MODEL_CONFIG</code>) is a
-  real design problem</strong>, not merely a testing inconvenience.</li>
-<li><strong>Hermeticity costs override coverage.</strong> All three named this without
-  being asked to weigh it: the suite can no longer observe the override
-  paths at all, and all three proposed explicit override/contract tests
-  as the replacement. The strongest signal in the round — a work item
-  nobody was prompted toward.</li>
-</ul>
-<p>The sharpest framing (claude seat): <em>the import-order defect that
-FORCED the import-time scrub is now the exact bug the suite can never
-catch again.</em> Before the scrub, a developer with the var set gave
-accidental coverage of that read.</p>
-<h2 id="split-where-the-primary-fix-belongs">Split — where the PRIMARY fix belongs<a class="headerlink" href="#split-where-the-primary-fix-belongs" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Seat</th>
-<th>Primary fix</th>
-<th>Reasoning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>claude</td>
-<td>the RUNNER (env allowlist)</td>
-<td>generalizes to non-<code>ATTUNE_</code> vars AND to non-pytest checks; explicitly de-prioritizes its own <code>src/</code> suggestion if budget is one unit</td>
-</tr>
-<tr>
-<td>antigravity</td>
-<td><code>src/</code> lazy evaluation</td>
-<td>import-time resolution is an anti-pattern; the whitelist disappears once <code>src/</code> is lazy</td>
-</tr>
-<tr>
-<td>codex</td>
-<td>keep scrub + contract tests; <code>src/</code> verdict CONDITIONAL</td>
-<td><code>MODEL_CONFIG</code> is a defect only if overrides are meant to be observable after import — a lifecycle question, not a code question</td>
-</tr>
-</tbody>
-</table>
-<p>Codex is the only seat that refuses to rule on <code>src/</code> without first
-settling the lifecycle contract. That reframing converts a code-review
-disagreement into one chair decision.</p>
-<h2 id="moderator-verification-probes-run-against-the-real-system">Moderator verification (probes run against the real system)<a class="headerlink" href="#moderator-verification-probes-run-against-the-real-system" title="Permanent link">&para;</a></h2>
-<p>Seat positions are reasoning, not receipts (R1 — members never touch
-shell). The moderator probed the three checkable claims:</p>
-<table>
-<thead>
-<tr>
-<th>Claim (seat)</th>
-<th>Verdict</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>The check battery inherits the dev shell (claude, Defect 1)</td>
-<td><strong>CONFIRMED</strong> — <code>routine.py</code> <code>run_command</code>'s check branch is <code>env = {**os.environ, "ANTHROPIC_API_KEY": ""}</code>; everything else passes through, so <code>REDIS_URL</code> / <code>TZ</code> / <code>LANG</code> / proxies all reach pytest</td>
-</tr>
-<tr>
-<td><code>load_dotenv</code> inversion opens a hole (claude)</td>
-<td><strong>CONFIRMED AS A LIVE MECHANISM, currently LATENT</strong> — see below</td>
-</tr>
-<tr>
-<td>Repo-root <code>conftest.py</code> loads first, defeating Part 1 (claude)</td>
-<td><strong>REFUTED</strong> — no repo-root <code>conftest.py</code> exists. The entry-point-plugin half is unverified</td>
-</tr>
-</tbody>
-</table>
-<h3 id="the-dotenv-inversion-in-detail">The dotenv inversion, in detail<a class="headerlink" href="#the-dotenv-inversion-in-detail" title="Permanent link">&para;</a></h3>
-<p><code>load_dotenv()</code> runs at MODULE level in <code>src/attune/workflows/base.py:34</code>,
-and both <code>~/attune-ai/.env</code> and <code>.env.local</code> exist. Dotenv only injects
-names that do not already EXIST — so by DELETING the vars, the
-import-time scrub makes those files injectable where a shell export
-previously shadowed them. The scrub can therefore OPEN a hole rather
-than close one.</p>
-<p><strong>Currently latent:</strong> no dotenv file defines any <code>ATTUNE_*</code> var today.
-A single <code>ATTUNE_*</code> line added to <code>.env</code> would defeat the import-time
-scrub for import-time consumers. This is the same shape as the
-documented <code>env -u</code> vs <code>KEY=""</code> lesson, pointed the other direction.</p>
 <h2 id="promoted-items">Promoted items<a class="headerlink" href="#promoted-items" title="Permanent link">&para;</a></h2>
 <h3 id="1-this-report-msg-8">1 — This report (msg 8)<a class="headerlink" href="#1-this-report-msg-8" title="Permanent link">&para;</a></h3>
 <p>The synthesis, recorded. Thread is TTL'd (7 days); this file is the
@@ -4859,6 +4706,11 @@ it is not re-derived; the ruling is the chair's and has not been made.</p>
   against a currently-passing guard; the proposing seat flagged that
   risk against its own proposal.</li>
 </ul>
+<hr />
+<p><em>Curated stub (local-first reports, <code>docs/specs/local-first-reports/</code>): the sections above are the
+chair-promoted content. The full deliberation transcript is
+machine-local at <code>~/.attune/reports/roundtable/q-conftest-env-scrub-001.md</code> and is
+not distributed with the repository.</em></p>
 
 
 

@@ -4573,159 +4573,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#question" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Question
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#round-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Round 1
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#ruling-level-synthesis" class="md-nav__link">
     <span class="md-ellipsis">
       
         Ruling-level synthesis
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#artifact-strategy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Artifact strategy
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#phased-plan" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phased plan
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Phased plan">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#phase-0-architecture-and-characterization-proof" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 0 — Architecture and characterization proof
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-1-dry-explicit-fix-contract" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 1 — Dry explicit Fix contract
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-2-executable-fix-proof" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 2 — Executable Fix proof
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-3-robustness-compatibility-and-measurement" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 3 — Robustness, compatibility, and measurement
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-4-natural-language-fix-routing-gate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 4 — Natural-language Fix routing gate
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-5-ship-discovery" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 5 — Ship discovery
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#phase-6-build-discovery" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Phase 6 — Build discovery
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#expansion-gates" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Expansion gates
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#counter-case" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Counter-case
       
     </span>
   </a>
@@ -4769,38 +4620,6 @@
 <strong>Chair:</strong> Patrick Roebuck
 <strong>Mode:</strong> Planning only — no implementation authorized
 <strong>Promoted board item:</strong> synthesis message <code>6</code></p>
-<h2 id="question">Question<a class="headerlink" href="#question" title="Permanent link">&para;</a></h2>
-<p>Should attune-ai implement an outcome-first Build/Fix/Ship product
-surface over its existing workflow and orchestration machinery?</p>
-<p>The table was asked to critique the architecture, sequencing,
-compatibility strategy, metrics, and artifact scope, favoring the
-smallest user-visible vertical slice that would not create a parallel
-framework.</p>
-<h2 id="round-1">Round 1<a class="headerlink" href="#round-1" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Seat</th>
-<th>Position</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Claude</td>
-<td>Proceed with a thin explicit Fix slice; use an XML task for the first executable unit</td>
-</tr>
-<tr>
-<td>Codex</td>
-<td>Proceed Fix-first; use a narrow vision Spec with a derived XML task</td>
-</tr>
-<tr>
-<td>Antigravity</td>
-<td>Absent — tenant policy denied the repository exposure required by its CLI invocation</td>
-</tr>
-</tbody>
-</table>
-<p>The two available seats converged, so the moderator halted after one
-round.</p>
 <h2 id="ruling-level-synthesis">Ruling-level synthesis<a class="headerlink" href="#ruling-level-synthesis" title="Permanent link">&para;</a></h2>
 <p>Implement the vision only as a thin outcome facade over existing public
 interfaces. It must not introduce a parallel planner, registry,
@@ -4837,128 +4656,16 @@ changes. Routing must abstain safely: a false confident route is worse
 than abstention.</p>
 <p><code>--explain</code> and any later <code>--trace</code> surface must project existing
 execution data rather than create a second state or telemetry system.</p>
-<h2 id="artifact-strategy">Artifact strategy<a class="headerlink" href="#artifact-strategy" title="Permanent link">&para;</a></h2>
-<p>Use a deliberately narrow Spec to record:</p>
-<ul>
-<li>hypotheses;</li>
-<li>non-goals;</li>
-<li>public compatibility constraints;</li>
-<li>expansion gates;</li>
-<li>the counter-case.</li>
-</ul>
-<p>That Spec does not authorize broad Build/Fix/Ship implementation. Its
-only executable unit should be a cold-handoff-capable XML task for the
-Fix proof slice.</p>
-<p>This resolves the seats' artifact-tier split: Codex's Spec contains the
-cross-cutting product decisions, while Claude's XML task bounds the
-initial implementation.</p>
-<h2 id="phased-plan">Phased plan<a class="headerlink" href="#phased-plan" title="Permanent link">&para;</a></h2>
-<h3 id="phase-0-architecture-and-characterization-proof">Phase 0 — Architecture and characterization proof<a class="headerlink" href="#phase-0-architecture-and-characterization-proof" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Inventory the existing CLI router, workflow registry,
-  diagnosis/fix/test/review seams, result models, help projections, and
-  telemetry.</li>
-<li>Map every proposed concept to an existing interface or remove it.</li>
-<li>Pin current natural-language routing and <code>attune workflow run</code>
-  behavior with characterization cases.</li>
-<li>Select one repeatable canonical Fix scenario.</li>
-</ul>
-<p><strong>Acceptance:</strong> The scenario can be traced through existing interfaces
-without requiring a parallel registry, planner, executor, evidence
-store, lifecycle, or source of truth.</p>
-<h3 id="phase-1-dry-explicit-fix-contract">Phase 1 — Dry explicit Fix contract<a class="headerlink" href="#phase-1-dry-explicit-fix-contract" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Define the smallest internal boundary DTO for the goal, done
-  conditions, constraints, and verification probes.</li>
-<li>Design <code>attune fix "&lt;request&gt;" --explain</code> to validate and preview the
-  contract and selected existing workflow without execution.</li>
-<li>Keep the preview non-blocking by default.</li>
-<li>Require confirmation for ambiguity, destructive action, external
-  side effects, material cost, or material scope changes.</li>
-</ul>
-<p><strong>Acceptance:</strong> Representative, ambiguous, and risky inputs produce
-truthful previews or abstention. No universal public outcome schema is
-promised.</p>
-<h3 id="phase-2-executable-fix-proof">Phase 2 — Executable Fix proof<a class="headerlink" href="#phase-2-executable-fix-proof" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Translate the boundary DTO once into existing workflow inputs.</li>
-<li>Execute one representative Fix through existing machinery.</li>
-<li>Render one unified receipt using real evidence provenance and
-  independently evaluated probes.</li>
-</ul>
-<p><strong>Acceptance:</strong> An initially failing probe passes through a real
-CLI/subprocess/file boundary. Changed artifacts, failed or skipped
-probes, uncertainty, and the next action are truthfully reported.
-Workflow exit alone never marks success.</p>
-<h3 id="phase-3-robustness-compatibility-and-measurement">Phase 3 — Robustness, compatibility, and measurement<a class="headerlink" href="#phase-3-robustness-compatibility-and-measurement" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Cover malformed, ambiguous, no-change, failed-verification,
-  partial-success, and abstention paths.</li>
-<li>Preserve documented <code>attune workflow run</code> behavior.</li>
-<li>Add projected help/docs drift guards and real-boundary receipt
-  coverage.</li>
-<li>Do not persist sensitive prompt text by default.</li>
-</ul>
-<p>Measure:</p>
-<ul>
-<li>contract-edit rate;</li>
-<li>route-correction rate;</li>
-<li>false-confident-route rate;</li>
-<li>abstention rate;</li>
-<li>evidence-valid receipt completeness;</li>
-<li>verification-failure honesty;</li>
-<li>compatibility regressions;</li>
-<li>time and cost to verified outcome;</li>
-<li>abandonment before a useful result;</li>
-<li>completion without requiring knowledge of internal machinery.</li>
-</ul>
-<h3 id="phase-4-natural-language-fix-routing-gate">Phase 4 — Natural-language Fix routing gate<a class="headerlink" href="#phase-4-natural-language-fix-routing-gate" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Build a labeled evaluation corpus from real Fix requests.</li>
-<li>Set routing thresholds from measured data.</li>
-<li>Weight false confident routes more heavily than abstention.</li>
-</ul>
-<p><strong>Acceptance:</strong> Thresholds meet chair-ratified targets, and explicit Fix
-remains the safe fallback.</p>
-<h3 id="phase-5-ship-discovery">Phase 5 — Ship discovery<a class="headerlink" href="#phase-5-ship-discovery" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Inventory Git, packaging, CI, publishing, approval, rollback, and
-  other external boundaries.</li>
-<li>Test whether the Fix envelope and receipt semantics survive those
-  side effects without distortion.</li>
-<li>Promote Ship only if semantic reuse is demonstrated.</li>
-<li>If reuse fails, design a separate adapter rather than force a false
-  universal model.</li>
-</ul>
-<h3 id="phase-6-build-discovery">Phase 6 — Build discovery<a class="headerlink" href="#phase-6-build-discovery" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Begin only after users demonstrate understanding and trust in the
-  outcome surface.</li>
-<li>Require at least two intents to demonstrate genuinely shared
-  semantics.</li>
-<li>Keep Build outside the initial implementation scope.</li>
-</ul>
-<h2 id="expansion-gates">Expansion gates<a class="headerlink" href="#expansion-gates" title="Permanent link">&para;</a></h2>
-<ul>
-<li>No Build or Ship public surface before Fix has a real-boundary
-  receipt and measured routing results.</li>
-<li>No shared public outcome abstraction before at least two intents
-  demonstrate identical semantics.</li>
-<li>No <code>--trace</code> until the required data already exists and can be
-  projected.</li>
-<li>No new execution lifecycle or source of truth.</li>
-<li>This plan grants no implementation authority.</li>
-</ul>
-<h2 id="counter-case">Counter-case<a class="headerlink" href="#counter-case" title="Permanent link">&para;</a></h2>
-<p>Optimizing the contract around Fix may make Ship's side effects and
-Build's ambiguity awkward. Keep the DTO internal initially and require
-semantic-reuse evidence before promoting it into a stable public
-abstraction.</p>
 <h2 id="open-chair-decision">Open chair decision<a class="headerlink" href="#open-chair-decision" title="Permanent link">&para;</a></h2>
 <p>Choose the canonical repeatable Fix scenario used as the live-boundary
 proof. It should be important enough to exercise a code change, testing,
 evidence, and uncertainty, but narrow and deterministic enough for
 repeated evaluation.</p>
+<hr />
+<p><em>Curated stub (local-first reports, <code>docs/specs/local-first-reports/</code>): the sections above are the
+chair-promoted content. The full deliberation transcript is
+machine-local at <code>~/.attune/reports/roundtable/q-outcome-first-attune-ux-001.md</code> and is
+not distributed with the repository.</em></p>
 
 
 

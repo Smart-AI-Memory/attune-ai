@@ -4611,56 +4611,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#appendix-briefing-triage-4-items" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Appendix — briefing triage (4 items)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Appendix — briefing triage (4 items)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#item-2s-unique-find-and-why-it-mattered" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Item 2's unique find, and why it mattered
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#recorded-risks-of-this-synthesis-moderator-unprompted" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recorded risks of this synthesis (moderator, unprompted)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#still-owed-by-the-chair" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Still owed by the chair
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -4773,79 +4723,11 @@ pattern the verify-first-on-infra lesson warns against.</p>
 </table>
 <p>Action 2's resolution is the inspection the claude seat flagged itself
 for skipping — it cost one <code>git diff --stat</code> and settled the split.</p>
-<h2 id="appendix-briefing-triage-4-items">Appendix — briefing triage (4 items)<a class="headerlink" href="#appendix-briefing-triage-4-items" title="Permanent link">&para;</a></h2>
-<p><strong>Table shape:</strong> claude and codex converge item-for-item on all four.
-Antigravity diverges on all four — its positions derive from
-lifecycle-bucket labels and declared-status strings rather than
-PR/receipt state, and the recorded evidence resolves it the same way
-each time. That is a seat-level bias worth carrying into any
-default-reviewer-seat decision (input to cross-review OPEN-1).</p>
-<table>
-<thead>
-<tr>
-<th>Item</th>
-<th>Moderator recommendation</th>
-<th>State as of promotion</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1 — cross-provider-memory-transport</td>
-<td>CLOSE as shipped (2/3)</td>
-<td><strong>STILL OPEN</strong> — the five phase files still read <code>APPROVED … in execution; T1–T3</code>, the stale label the appendix identified. Receipts are 6/6 PASS and #1593/#1594/#1596/#1598 all merged 07-27</td>
-</tr>
-<tr>
-<td>2 — cross-provider-session-handoff</td>
-<td>HOLD OPEN, narrowed to ONE interactive <code>handoff_resume</code> probe; fix the stale recipe in the same pass</td>
-<td><strong>SATISFIED SINCE — both halves.</strong> R6 closed live 07-28 09:47 EDT from an Antigravity seat (<code>ok:true</code>, <code>head_moved</code> + <code>files_diverged</code>), and the stale recipe the claude seat uniquely caught was corrected in the same edit</td>
-</tr>
-<tr>
-<td>3 — cross-review</td>
-<td>PARK with a dependency-milestone resume-trigger (chair usage-signal read), NOT a date</td>
-<td><strong>PARK STANDS — gate verifiably unmet.</strong> <code>docs/specs/usage-signals/snapshots/</code> still ends at <code>2026-07-26.json</code>; no 07-27 or 07-28 snapshot exists</td>
-</tr>
-<tr>
-<td>4 — feature-lead-governance</td>
-<td>PARK behind Item 3; treat the bucket-vs-status mismatch as a label fix, not a re-approval</td>
-<td><strong>PARK STANDS</strong> — downstream of Item 3</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Compression the chair can act on:</strong> one decision — run or kill the
-deferred usage-signal read — resolves Items 3 and 4. Item 1 is a
-status flip. Item 2 is now closed.</p>
-<h3 id="item-2s-unique-find-and-why-it-mattered">Item 2's unique find, and why it mattered<a class="headerlink" href="#item-2s-unique-find-and-why-it-mattered" title="Permanent link">&para;</a></h3>
-<p>The claude seat was the only one to notice the reproduction recipe in
-<code>receipts.md</code> was stale: it named the <code>attune-ai-github-issues-0aeac3</code>
-worktree expecting <code>verified.branch = claude/handoff-t4-docs</code>, but that
-worktree had moved to <code>qa/memory-events</code>. Acting on the recipe verbatim
-would have returned <code>packet_not_found</code> — which reads like a broken
-feature rather than a stale instruction. Fixed the same day.</p>
-<h3 id="recorded-risks-of-this-synthesis-moderator-unprompted">Recorded risks of this synthesis (moderator, unprompted)<a class="headerlink" href="#recorded-risks-of-this-synthesis-moderator-unprompted" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Items 3 and 4 rest on a shared inference: that the deferred chair
-  read is ONE read serving both. The unmet gate is receipt-tier (no
-  07-27 snapshot); FLG's P1 inheriting cross-review's gate is recorded.
-  What is NOT independently verified is chair <em>intent</em> that one sitting
-  serve both — the starter asserts it, which is strong but claim-tier.
-  If the chair wants a cross-review-specific read separate from FLG
-  activation, "one decision unlocks three" becomes two decisions.</li>
-<li>Item 1's close assumes R8 receipts 4 and 6 were written from real
-  07-27 runs, not back-filled at the lift. Verbatim Codex session ids
-  and D7 no-simulation discipline make that unlikely, but freshness is
-  receipt-tier only as far as the ledger's own honesty.</li>
-<li><strong>Claim-drift surface flagged while parked:</strong> the PROVISIONAL knobs
-  <code>DEFAULT_SEAT="codex"</code> and <code>DIFF_CAP_CHARS=60_000</code> are live in
-  shipped 10.6.1, not branch-resident. Parking is safe; describing them
-  as settled in docs would be drift.</li>
-</ul>
-<h2 id="still-owed-by-the-chair">Still owed by the chair<a class="headerlink" href="#still-owed-by-the-chair" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Item 1</strong> — flip the transport spec's five phase files to <code>shipped</code>;
-  that flip discharges its <code>CHAIR_REQUIRED</code> receipt.</li>
-<li><strong>Item 3 / Item 4</strong> — run or kill the deferred usage-signal read.</li>
-<li><strong>Action 3</strong> — the four-numbers baseline ledger: green-light or drop.</li>
-</ul>
+<hr />
+<p><em>Curated stub (local-first reports, <code>docs/specs/local-first-reports/</code>): the sections above are the
+chair-promoted content. The full deliberation transcript is
+machine-local at <code>~/.attune/reports/roundtable/routine-clean-run-20260728-1020.md</code> and is
+not distributed with the repository.</em></p>
 
 
 

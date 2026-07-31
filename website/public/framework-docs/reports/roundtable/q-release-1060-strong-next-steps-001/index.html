@@ -4594,249 +4594,6 @@ live-auth probe (A) and the assembled-queue preflight (C) in the
 Wed window; DECLINE receipt-slot pre-mapping (B) — slots stay
 untouched until evidence exists (the Antigravity position prevails
 on that item).</p>
-<h2 id="1-question-chair">#1 — question (chair)<a class="headerlink" href="#1-question-chair" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p>What are the best next steps between now (Wed 2026-07-23) and Monday
-2026-07-27 to make the attune-ai 10.6.0 release VERY STRONG — and what
-should deliberately NOT be done in that window?</p>
-<p>Grounding (verified today):
-- A held queue of 16 PRs (zero DIRTY) lifts Monday in a ratified order:
-  flat lifts (#1562 #1571 #1574 #1578 #1591 #1605 #1607) -&gt; memory-transport
-  stack (#1593-&gt;#1594-&gt;#1596-&gt;#1598) -&gt; ops stack (#1576-&gt;#1615-&gt;#1616) -&gt;
-  capability-projector --write sync -&gt; release PR -&gt; tag v10.6.0 -&gt; PyPI
-  publish. Windows CI lanes (~13 min) must be waited on every src-diff PR.
-- The Monday 06:00 scheduled roundtable clean-run fire is the ship receipt
-  that flips agent-round-table to shipped/living. Dry-run rehearsal was
-  green (exit 0, 18,260-test keyless suite); only LIVE seat auth is
-  unproven.
-- Launch materials are all staged: article draft with [RECEIPT] slots,
-  LinkedIn Draft B-v2 with an honesty gate, two feature-page branches,
-  website multi-llm pillar branch. Publication fires TUESDAY 07-28, after
-  receipts. Policy: no claim without a receipt.
-- US-5 usage snapshot fires Fri/Sat via launchd; usage reads (DEC-7,
-  PersonalMemory) happen at the Monday sitting.
-- Post-lift blocked items: Codex MCP canary (needs marketplace re-sync),
-  Antigravity probe (needs the PyPI 10.6.0 publish), handoff T3/T4,
-  cross-review OPEN-1..3 rulings.</p>
-<p>"Very strong" means: the lift lands clean, the fire is green, published
-claims all carry receipts, and nothing regresses main. Answer with
-concrete, ordered actions for the Wed-&gt;Sun window specifically.</p>
-</blockquote>
-<h2 id="2-position-round-1-claude-47s">#2 — position, round 1 (claude, 47s)<a class="headerlink" href="#2-position-round-1-claude-47s" title="Permanent link">&para;</a></h2>
-<p>POSITION</p>
-<p>The window's job is to protect Monday, not to add to it. In order:</p>
-<p>Wed: (1) De-risk the one unproven link: LIVE seat auth — a minimal
-manual live-auth smoke per seat, FROM THE SAME launchd environment the
-06:00 fire will use (env-parity; a manual-shell success proves nothing
-about the scheduled context). This does not consume the ship receipt —
-the receipt is still the scheduled clean run. (2) Start a daily
-queue-health sweep (mergeStateStatus across all 16); any drift to
-BEHIND/DIRTY gets rebased now, not mid-lift. Zero-DIRTY is a snapshot,
-not a property.</p>
-<p>Thu: (3) Write the Monday lift runbook as an executable checklist:
-ratified order, per-PR receipts (Windows-lane wait per src-diff,
-git log -1 + mergeStateStatus verify after each merge, stacked-PR
-re-target check before any --delete-branch). (4) Pre-author the
-release PR content on a branch (7+ file version bumps, changelog,
-README refs) so Monday is execution, not authoring — keep rebased,
-don't merge. (5) Pre-map every [RECEIPT] slot in the drafts to the
-specific Monday artifact that fills it — Tuesday becomes
-paste-and-verify, not hunt.</p>
-<p>Fri/Sat: (6) Verify the US-5 launchd snapshot actually fired (file
-exists, non-empty) — "scheduled" is not a receipt. (7) Sat: re-run
-the identical dry-run rehearsal unchanged — cheap, catches
-environment drift; red buys two days of runway.</p>
-<p>Sun: (8) Final queue sweep, confirm gh auth / PyPI workflow readiness
-(read-only), then stop. Nothing merges after Sunday.</p>
-<p>Deliberately do NOT: lift any PR early "to lighten Monday"; touch the
-roundtable fire path (hard code freeze — the dry-run green is only
-evidence for the code that ran); attempt the blocked post-lift items
-(the T5' attempt already proved the sequencing); publish or tease
-launch content before Tuesday; add new PRs/features/scope. Idle
-capacity is a feature here.</p>
-<p>RISK</p>
-<p>The Wed live-auth smoke is the sharpest call and biggest exposure:
-(a) it could be read as pre-spending the receipt, and (b) a green
-manual smoke creates false confidence without true env-parity with
-the scheduled run — the "worked in my shell, failed under launchd"
-trap. If parity can't be established cleanly, the honest answer is
-to let Monday's fire carry the full unknown. Secondary: freeze
-discipline leaves four days under-utilized if the queue stays clean.</p>
-<p>QUESTION</p>
-<p>Does the honesty gate permit a pre-fire live-auth smoke as pure
-de-risking, or does the ratified policy require LIVE auth to stay
-untouched until the 06:00 fire so the receipt is uncontaminated?</p>
-<h2 id="3-position-round-1-antigravity-42s">#3 — position, round 1 (antigravity, 42s)<a class="headerlink" href="#3-position-round-1-antigravity-42s" title="Permanent link">&para;</a></h2>
-<h3 id="1-position-on-the-question">1. Position on the Question<a class="headerlink" href="#1-position-on-the-question" title="Permanent link">&para;</a></h3>
-<p>To guarantee a <strong>VERY STRONG</strong> <code>attune-ai 10.6.0</code> release on Monday 2026-07-27, the Wednesday-to-Sunday window must be dedicated exclusively to operational rehearsal, auth pre-flighting, telemetry monitoring, and absolute code stabilization.</p>
-<h4 id="concrete-actions-wed-2026-07-23-sun-2026-07-26"><strong>Concrete Actions (Wed 2026-07-23 → Sun 2026-07-26)</strong><a class="headerlink" href="#concrete-actions-wed-2026-07-23-sun-2026-07-26" title="Permanent link">&para;</a></h4>
-<ul>
-<li><strong>Wed 07-23 — Live-Seat Auth &amp; Credential Pre-flight:</strong></li>
-<li>Validate live seat auth tokens/API keys out-of-band for the Monday 06:00 roundtable fire. The 18,260-test dry-run was keyless; live seat auth is the single remaining unproven point of failure.</li>
-<li>
-<p>Verify token scoping, rate limits, and failure fallback behaviors across all three model providers without committing changes to main.</p>
-</li>
-<li>
-<p><strong>Thu 07-24 — Queue Lift Execution Dry-Run &amp; Scripting:</strong></p>
-</li>
-<li>Perform a non-push local rebase/merge dry run of the 16 PRs against <code>origin/main</code> in the exact ratified sequence: Flat lifts (<code>#1562</code> <code>#1571</code> <code>#1574</code> <code>#1578</code> <code>#1591</code> <code>#1605</code> <code>#1607</code>) $\rightarrow$ Memory-transport stack (<code>#1593</code> $\rightarrow$ <code>#1594</code> $\rightarrow$ <code>#1596</code> $\rightarrow$ <code>#1598</code>) $\rightarrow$ Ops stack (<code>#1576</code> $\rightarrow$ <code>#1615</code> $\rightarrow$ <code>#1616</code>) $\rightarrow$ <code>capability-projector --write</code> sync.</li>
-<li>
-<p>Verify that pre-commit auto-fix hooks run cleanly on each intermediate commit to avoid unstaged drift during Monday's fast-follow pushes.</p>
-</li>
-<li>
-<p><strong>Fri 07-25 &amp; Sat 07-26 — Telemetry Monitoring &amp; Snapshot Guarding:</strong></p>
-</li>
-<li>
-<p>Verify the automated <code>launchd</code> execution of the US-5 usage snapshot on Fri/Sat. Confirm snapshot artifact integrity so DEC-7 and PersonalMemory reads land cleanly at the Monday sitting.</p>
-</li>
-<li>
-<p><strong>Sun 07-27 — Pre-Release Freeze &amp; Runbook Lock:</strong></p>
-</li>
-<li>Enforce an absolute repository code freeze. Lock all PR branches and draft materials.</li>
-<li>Ensure the PyPI release automation and post-publish verification scripts (e.g., Antigravity probe trigger) are ready to execute immediately following tag creation.</li>
-</ul>
-<h4 id="what-deliberately-not-to-do-in-this-window"><strong>What Deliberately NOT To Do in This Window</strong><a class="headerlink" href="#what-deliberately-not-to-do-in-this-window" title="Permanent link">&para;</a></h4>
-<ul>
-<li><strong>DO NOT touch post-lift blocked items early:</strong> Strictly refrain from initiating the Codex MCP canary, Antigravity probe, T3/T4 handoffs, or resolving OPEN-1..3 cross-review rulings before the 10.6.0 PyPI tag lands.</li>
-<li><strong>DO NOT add or re-order PRs:</strong> Do not merge "small cleanups" or insert new PRs into the 16-PR queue, regardless of perceived low risk.</li>
-<li><strong>DO NOT force-push or mutate queued PR branches:</strong> Keep all 16 PR branch tips pristine to preserve verified test baselines.</li>
-<li><strong>DO NOT modify launch copy or pre-populate <code>[RECEIPT]</code> slots:</strong> Maintain strict adherence to policy—no receipts filled prior to live execution output on Monday.</li>
-</ul>
-<hr />
-<h3 id="2-main-risk-of-my-position">2. Main Risk of My Position<a class="headerlink" href="#2-main-risk-of-my-position" title="Permanent link">&para;</a></h3>
-<p><strong>Risk:</strong> <em>False-sense-of-security idle drift.</em> By locking code changes and strictly waiting for Monday, we risk discovering a live runtime edge case (e.g., an unexpected live API model response structure change or a rate-limit constraint during the 06:00 fire) during the active lift window rather than during the pre-lift window.</p>
-<hr />
-<h3 id="3-follow-up-question-for-the-table">3. Follow-up Question for the Table<a class="headerlink" href="#3-follow-up-question-for-the-table" title="Permanent link">&para;</a></h3>
-<p>"Given that Windows CI lanes take ~13 minutes per <code>src-diff</code> PR, how should we structure the execution of the 16-PR queue on Monday morning—should we run strict sequential CI waits per PR on main, or pre-stage verified stack-rebased branches locally to parallelize CI triggers without risking lane failures?"</p>
-<h2 id="4-position-round-1-codex-24s">#4 — position, round 1 (codex, 24s)<a class="headerlink" href="#4-position-round-1-codex-24s" title="Permanent link">&para;</a></h2>
-<p>(1) POSITION</p>
-<p>Treat Wed–Sun as a release-hardening window, not an implementation window.</p>
-<ol>
-<li>
-<p>Wed: Freeze scope and publish one authoritative Monday runbook containing the ratified PR order, dependency checkpoints, Windows-CI wait points, projector sync, release/tag/PyPI commands, owners, rollback/stop conditions, and required receipt locations.</p>
-</li>
-<li>
-<p>Thu: Validate every queued PR against its expected base and Monday ordering. Reconfirm zero DIRTY, required approvals, mergeability, CI expectations, and overlapping files. Run the strongest practical keyless preflight on the final projected integration state without changing the held queue.</p>
-</li>
-<li>
-<p>Fri: Verify the first US-5 launchd snapshot fired and produced readable, timestamped evidence. Perform a live-auth readiness check for each roundtable seat—credential presence, permissions, model availability, quotas, and a minimal non-publishing connectivity probe. LIVE seat auth is the largest remaining release risk.</p>
-</li>
-<li>
-<p>Sat: Verify the second usage snapshot and rehearse Monday’s operational sequence from the runbook: merge checkpoints, failure ownership, rerun policy, receipt capture, article/LinkedIn honesty gates, feature-page publication gates, and explicit abort criteria.</p>
-</li>
-<li>
-<p>Sun: Establish a quiet baseline: fresh main status, queue/CI/approval audit, PyPI and tag preconditions, secrets/auth availability, disk/runtime health, and Monday staffing. Pre-fill receipt templates with identifiers and commands, but leave outcomes blank. Then freeze all release surfaces.</p>
-</li>
-<li>
-<p>Monday execution rule: lift strictly in ratified order; after each src-diff, wait for Windows CI and stop on unexplained failure. Run projector <code>--write</code>, verify no drift, merge the release PR, tag, publish, verify the installed PyPI artifact, then run the 06:00 clean fire and capture receipts. Only afterward run post-lift canaries/probes and unlock Tuesday claims.</p>
-</li>
-</ol>
-<p>Deliberately do NOT:</p>
-<ul>
-<li>Add features, refactor, upgrade dependencies, reorganize stacks, or “clean up” adjacent code.</li>
-<li>Rebase or refresh all 16 PRs merely for freshness; touch only demonstrably stale or conflicting branches.</li>
-<li>Parallelize dependent merges or waive the Windows lanes.</li>
-<li>Treat the dry run as proof of live-seat authentication.</li>
-<li>Run the marketplace-dependent Codex canary or PyPI-dependent Antigravity probe prematurely.</li>
-<li>Fill <code>[RECEIPT]</code> slots, remove honesty gates, schedule claims as unconditional, or publish anything before evidence exists.</li>
-<li>Resolve OPEN-1..3, T3/T4, or unrelated cross-review work unless it becomes a direct release blocker.</li>
-<li>Diagnose flaky infrastructure indefinitely: after two equivalent failures, stop, classify, and choose rollback, deferment, or abort.</li>
-</ul>
-<p>(2) MAIN RISK</p>
-<p>A strict freeze can preserve a latent integration defect that only appears when the stacked queue is assembled. Mitigate this with a non-mutating final-state integration preflight and explicit Monday stop/rollback criteria—not late code churn.</p>
-<p>(3) FOLLOW-UP QUESTION</p>
-<p>What exact live-auth probe can be run before Sunday that exercises all three seats without consuming the one scheduled clean-run ship receipt?</p>
-<h2 id="8-position-round-2-claude-67s">#8 — position, round 2 (claude, 67s)<a class="headerlink" href="#8-position-round-2-claude-67s" title="Permanent link">&para;</a></h2>
-<p>(A) PROBE: A safe, meaningful probe exists. Mechanics: throwaway
-one-shot probe PLIST — copy the fire plist, change only Label +
-ProgramArguments (10-line probe script: one minimal live completion
-per seat — claude -p / codex exec / agy one-shot; success = exit 0 +
-non-empty completion in ~/.attune/ops/authprobe-<date>.log). Run via
-launchctl bootstrap gui/$UID + kickstart, then bootout + delete.
-True parity: same gui domain, session type, env block, keychain
-context — env -i approximations leak. WHEN: Wednesday — four days to
-remediate an auth failure; re-run Sunday ONLY if Wed failed and was
-fixed. Green proves credentials round-trip live under launchd; does
-NOT prove Monday-06:00 state, concurrency, or orchestration (already
-dry-run-receipted). CONTAMINATION: NO — the receipt's claim is "the
-scheduled fire ran live, unattended, via the frozen path"; caveat:
-a probe may refresh a token that would otherwise expire, making the
-receipt "fires on a maintained machine" — which is the actual product
-claim; note it in the receipt's conditions line.</p>
-<p>(B) SLOTS: Pre-fill identifiers-only. Monday morning is the
-highest-pressure window; hand-transcribing 16 PR numbers/SHAs under
-pressure is the most probable source of a WRONG receipt. Defeat the
-anchoring concern structurally: every outcome slot pre-populated
-with the literal "PENDING — no evidence yet".</p>
-<p>(C) PREFLIGHT: Yes — Thursday, sequential-assembly, NOT octopus.
-Per-PR CI proved each branch alone; never the 16-branch assembled
-state. Invisible failure classes: positional textual conflicts;
-semantic conflicts (rename + new caller, both green alone). Fresh
-scratch worktree off origin/main, git merge the 16 in ratified
-order (sequential names the first bad position), then keyless suite
-ANTHROPIC_API_KEY="" (empty, never unset). Conflict at N = the
-demonstrated DIRTY drift the ruling requires → rebase that branch
-only. Assembled-red/green-alone → prepare reconciling commit to land
-right after the second PR, or hold the later PR. Honest limit:
-macOS-local — Windows behavior stays unproven until Monday's lanes;
-preflight shrinks mid-queue-break risk, does not replace lane waits.</p>
-<h2 id="9-position-round-2-antigravity-43s">#9 — position, round 2 (antigravity, 43s)<a class="headerlink" href="#9-position-round-2-antigravity-43s" title="Permanent link">&para;</a></h2>
-<h3 id="a-probe-design">(A) PROBE DESIGN<a class="headerlink" href="#a-probe-design" title="Permanent link">&para;</a></h3>
-<ul>
-<li>
-<p><strong>launchd Environment Parity</strong>: Execute the probe inside a clean environment matching the launchd daemon context using <code>env -i</code> combined with the explicit <code>PATH</code> and environment file sourced by the plist:
-  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>env<span class="w"> </span>-i<span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:</span><span class="k">$(</span>pyenv<span class="w"> </span>root<span class="k">)</span><span class="s2">/shims&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="k">$(</span>cat<span class="w"> </span>/Users/patrickroebuck/.config/attune/anthropic.env<span class="w"> </span><span class="p">|</span><span class="w"> </span>xargs<span class="k">)</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>&lt;probe-command&gt;
-</code></pre></div></p>
-</li>
-<li>
-<p><strong>Invocation Shape per Seat</strong>:</p>
-</li>
-<li><strong>Claude seat</strong>: <code>env -i ... claude auth status</code> (or a 1-token live ping to <code>https://api.anthropic.com/v1/messages</code> verifying HTTP 200).</li>
-<li><strong>Antigravity seat</strong>: <code>env -i ... agy auth check</code> (verifying Google Cloud ADC / API credential validity).</li>
-<li>
-<p><strong>Codex seat</strong>: <code>env -i ... codex auth status</code> (verifying OpenAI API key authorization).</p>
-</li>
-<li>
-<p><strong>What a Green Result Proves</strong>: Proves that launchd environment variables correctly hydrate active, non-expired credentials and establish outbound network reachability to all three provider APIs without depending on interactive shell profiles (<code>.zshrc</code> / <code>.bashrc</code>).</p>
-</li>
-<li><strong>What a Green Result Does NOT Prove</strong>: Does not prove that multi-turn agent interaction, prompt template rendering, or payload output parsing inside the scheduled orchestration script will succeed under load on Monday.</li>
-<li><strong>Timing</strong>: Run on <strong>Sunday at 18:00 UTC</strong> (12 hours prior to the Monday 06:00 fire) to allow sufficient lead time for credential rotation or network remediation without touching the code-frozen fire path.</li>
-<li><strong>Contamination Ruling</strong>: <strong>No.</strong> An out-of-band auth probe validates credential plumbing without touching repository state, altering the frozen script, or generating the timestamped execution receipt reserved for the scheduled launchd fire.</li>
-</ul>
-<hr />
-<h3 id="b-receipt-slots">(B) RECEIPT SLOTS<a class="headerlink" href="#b-receipt-slots" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Selection</strong>: <strong>Leave slots untouched until evidence exists.</strong></li>
-<li><strong>Strongest Reason</strong>: Pre-filling receipt fields with identifiers creates a deceptive risk of unverified placeholder acceptance or partial commit pollution if execution fails mid-sequence, whereas untouched slots guarantee that every populated entry strictly represents verified, post-execution empirical log output.</li>
-</ul>
-<hr />
-<h3 id="c-integration-preflight">(C) INTEGRATION PREFLIGHT<a class="headerlink" href="#c-integration-preflight" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Ruling</strong>: <strong>Yes.</strong></li>
-<li><strong>Mechanics</strong>:</li>
-<li>Create a throwaway, detached local scratch branch on Friday: <code>git checkout -b scratch/preflight-16pr main</code>.</li>
-<li>Sequentially merge all 16 held PR branches in their exact ratified sequence into the scratch branch.</li>
-<li>Execute the full keyless unit/integration test suite (<code>uv run pytest tests/unit -q</code>) and pre-commit checks (<code>uv run --with pre-commit pre-commit run --all-files</code>).</li>
-<li>Delete the scratch branch immediately upon completion (<code>git checkout main &amp;&amp; git branch -D scratch/preflight-16pr</code>).</li>
-<li><strong>Failure Trigger</strong>: Any merge conflict, interface mismatch between dependent PRs, or test failure on the assembled tree triggers an immediate halt and isolates the offending PR before Monday's sequential lift begins.</li>
-</ul>
-<h2 id="10-position-round-2-codex-30s">#10 — position, round 2 (codex, 30s)<a class="headerlink" href="#10-position-round-2-codex-30s" title="Permanent link">&para;</a></h2>
-<p>(A) Run one minimal, read-only inference per seat on Sunday at 06:00—the same weekday-adjacent time and host state as Monday’s fire—after the final queue-health sweep.</p>
-<p>Use a temporary launchd job whose environment is copied from the production plist, including its exact <code>PATH</code>, working directory, user, and the same <code>anthropic.env</code> sourcing step. Change only the program arguments from the roundtable fire to these seat probes:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>claude -p &quot;Reply with exactly: AUTH_OK&quot;
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>agy    -p &quot;Reply with exactly: AUTH_OK&quot;
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>codex exec --ephemeral &quot;Reply with exactly: AUTH_OK&quot;
-</code></pre></div>
-<p>If the installed <code>agy</code> version uses a different non-interactive flag, substitute its documented equivalent; do not add fallback providers or interactive login. Capture exit status, stdout, stderr, resolved executable path, model/provider identity where exposed, and timestamp. Require exit 0 and exact <code>AUTH_OK</code>; redact credentials.</p>
-<p>Green proves that, from a launchd-equivalent environment, each resolved seat CLI can find its credentials, reach its provider, authenticate, and complete one inference. It does not prove Monday’s scheduler will fire, the roundtable orchestration will route correctly, all three responses will be persisted, or the downstream receipt/publish path will work.</p>
-<p>No: a green probe does not contaminate the scheduled-fire receipt because it validates only independent seat authentication, while Monday remains the first execution receipt for the frozen scheduled orchestration path.</p>
-<p>(B) Pre-map identifiers only: receipt key, scheduled timestamp, seat, expected artifact location, PR/commit identifiers, and required evidence fields; leave all outcomes, statuses, timestamps of observation, and evidence links blank.</p>
-<p>The strongest reason is attribution integrity: deterministic identifiers prepared before execution prevent Monday responders from inventing or mismatching receipt targets under pressure without asserting that any evidence already exists.</p>
-<p>(C) Yes—provided it remains disposable and cannot update held branches.</p>
-<p>Create a scratch worktree from the exact Monday base, then sequentially merge the 16 exact held PR head SHAs in the ratified lift order using <code>git merge --no-commit --no-ff &lt;sha&gt;</code>. After each merge, record conflicts and abort only the scratch assembly if necessary; after the sixteenth, run the same keyless required suite with <code>ANTHROPIC_API_KEY=""</code>, including projection/drift guards, unit tests, lint/type checks, packaging checks, and any Windows-sensitive tests available locally. Record the base SHA, all 16 head SHAs, merge order, and test results; delete the scratch assembly afterward.</p>
-<p>A merge conflict, projection drift, collection/import failure, packaging failure, or deterministic keyless test failure triggers a Monday hold and targeted investigation. It triggers branch refresh only if the failure demonstrates actual DIRTY/BEHIND drift; otherwise fix or revalidate the responsible PR without blanket rebasing.</p>
 <h2 id="11-synthesis-moderator">#11 — synthesis (moderator)<a class="headerlink" href="#11-synthesis-moderator" title="Permanent link">&para;</a></h2>
 <p>SYNTHESIS (moderator, after 2 rounds — halting on convergence).</p>
 <p>UNANIMOUS (round 1, held through round 2): Wed-Sun is a hardening
@@ -4964,13 +4721,13 @@ tools and updated <code>tests/unit/test_mcp_memory_tools.py</code> to expect
 <code>test_tools_list_returns_at_least_core_count</code> the moment #1594
 merges (after #1605). Prepared reconciling edit (verified green in
 scratch — fold into the step-3b sync commit):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>        <span class="k">if</span> <span class="n">redis_tools</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">tool_names</span><span class="p">):</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>            <span class="c1"># attune-redis also registers 5 session_memory_* tools when the</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>            <span class="c1"># core session stash is importable (conditional registration).</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>            <span class="n">expected</span> <span class="o">=</span> <span class="mi">60</span> <span class="k">if</span> <span class="s2">&quot;session_memory_status&quot;</span> <span class="ow">in</span> <span class="n">tool_names</span> <span class="k">else</span> <span class="mi">55</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>            <span class="k">assert</span> <span class="p">(</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>                <span class="nb">len</span><span class="p">(</span><span class="n">tools</span><span class="p">)</span> <span class="o">==</span> <span class="n">expected</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2"> tools with redis plugin, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tools</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>        <span class="k">if</span> <span class="n">redis_tools</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">tool_names</span><span class="p">):</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>            <span class="c1"># attune-redis also registers 5 session_memory_* tools when the</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>            <span class="c1"># core session stash is importable (conditional registration).</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>            <span class="n">expected</span> <span class="o">=</span> <span class="mi">60</span> <span class="k">if</span> <span class="s2">&quot;session_memory_status&quot;</span> <span class="ow">in</span> <span class="n">tool_names</span> <span class="k">else</span> <span class="mi">55</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>            <span class="k">assert</span> <span class="p">(</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                <span class="nb">len</span><span class="p">(</span><span class="n">tools</span><span class="p">)</span> <span class="o">==</span> <span class="n">expected</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2"> tools with redis plugin, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tools</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
 </code></pre></div>
 <p><strong>Step-3b confirmation + amendment.</strong> On the synced assembled tree
 <code>scripts/project_capabilities.py --write</code> repaired 6 files
@@ -4992,6 +4749,11 @@ class. After projector <code>--write</code> + the reconciling test edit:
 <p>No other integration failure classes surfaced. The
 complexity-ratchet and drift-guard lanes (tests/unit/quality,
 gates) ran green in the assembled state.</p>
+<hr />
+<p><em>Curated stub (local-first reports, <code>docs/specs/local-first-reports/</code>): the sections above are the
+chair-promoted content. The full deliberation transcript is
+machine-local at <code>~/.attune/reports/roundtable/q-release-1060-strong-next-steps-001.md</code> and is
+not distributed with the repository.</em></p>
 
 
 

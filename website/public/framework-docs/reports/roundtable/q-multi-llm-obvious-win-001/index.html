@@ -4573,72 +4573,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-question-chair" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        #1 — question (chair)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-position-claude-36s" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        #2 — position (claude, 36s)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-position-antigravity-43s" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        #3 — position (antigravity, 43s)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-position-codex-14s-137k-tokens" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        #4 — position (codex, 14s, 13.7k tokens)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-question-claude-r9-triage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        #5 — question (claude, R9 triage)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#6-question-antigravity-r9-triage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        #6 — question (antigravity, R9 triage)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#7-synthesis-moderator" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4684,82 +4618,6 @@
 <p><strong>Thread:</strong> <code>q-multi-llm-obvious-win-001</code> · <strong>Date:</strong> 2026-07-22 ·
 <strong>Roster:</strong> claude, antigravity, codex · <strong>Rounds:</strong> 1 (halted on
 convergence, D3) · <strong>Promoted items:</strong> #2 #3 #4 #7 (chair-approved).</p>
-<h2 id="1-question-chair">#1 — question (chair)<a class="headerlink" href="#1-question-chair" title="Permanent link">&para;</a></h2>
-<p>Review the attune-ai multi-LLM feature inventory (2026-07-22) and
-suggest the one or two features that would be the most obvious "win"
-to add next — highest user-visible value relative to effort,
-building on what exists. (Seats were briefed with the inventory:
-shipped = roundtable core + producing runs + solution loop,
-collaboration contract/projector, Antigravity adapter, shared Redis
-memory index + Ollama stash extraction, Codex marketplace
-distribution; merging 07-27 = <code>session_memory_*</code> MCP transport,
-truthful backend status, transport telemetry.)</p>
-<h2 id="2-position-claude-36s">#2 — position (claude, 36s)<a class="headerlink" href="#2-position-claude-36s" title="Permanent link">&para;</a></h2>
-<p>POSITION: two features, both compositions of shipped parts.
-(1) <code>cross_review</code> — one-shot second-opinion MCP tool (lead pick):
-before merging, a different provider reviews the real diff
-adversarially, findings posted to the board. A roundtable-lite: one
-seat, one round, no chair ceremony, reusing adapters, board posting,
-and the solution-loop receipt discipline. The full roundtable is an
-occasional instrument; a pre-merge cross-model check is a
-daily-frequency action — converts ceremony into habit.
-(2) <code>session_handoff</code> — tool-mediated cross-provider resume: create
-validates against actual git state, resume verifies before
-continuing; makes "parity by adapters" legible — providers become
-interchangeable seats on one task. Both beat: more seats, a board
-GUI, auto-Ollama for non-Claude (07-27 capture must accrue usage
-signal first).
-RISK: a headless one-shot review without full repo context may
-produce shallow or confabulated findings — a noisy reviewer erodes
-trust in the whole multi-LLM story. Mitigation: reviewer sees real
-artifacts via the solution-loop path; if dogfooding shows low
-quality, keep it board-only advisory, never a merge gate. Secondary:
-the ranking assumes frequency — if handoffs are common and reviews
-rare, the ordering flips.</p>
-<h2 id="3-position-antigravity-43s">#3 — position (antigravity, 43s)<a class="headerlink" href="#3-position-antigravity-43s" title="Permanent link">&para;</a></h2>
-<p>POSITION: (1) <code>roundtable_audit_worktree</code> — non-proposing seats
-check out the materialized worktree, execute the verification
-probes, and attach independent signed receipts to the board before
-chair approval; turns the solution loop into a true multi-model
-consensus gate without new execution environments.
-(2) <code>session_memory_harvest</code> (<code>attune session wrapup</code>) — an explicit
-wrap-up action for MCP-backed environments (Codex/Antigravity) that
-feeds the session transcript through the existing local Ollama
-extraction pipeline into the shared Redis index; closes the
-remaining parity gap since MCP hosts do not reliably emit lifecycle
-termination events.
-RISK: board over-saturation with redundant verification noise —
-chair alert fatigue; requires strict formatting/summarization rules
-for audit receipts.</p>
-<h2 id="4-position-codex-14s-137k-tokens">#4 — position (codex, 14s, 13.7k tokens)<a class="headerlink" href="#4-position-codex-14s-137k-tokens" title="Permanent link">&para;</a></h2>
-<p>POSITION: (1) Cross-provider session handoff — <code>handoff_create</code> /
-<code>handoff_resume</code> as a thin MCP workflow over the existing contract,
-handoff template, Redis recall, git inspection, and provider
-telemetry; the receiving model gets outcome, acceptance criteria,
-changed files, decisions, receipts, risks, and relevant memory, then
-checks the packet against the current worktree before proceeding
-(freshness/drift warnings, provider attribution). Clearest win
-because users experience multi-LLM value at the provider boundary,
-where context currently degrades.
-(2) Provider-aware task router — recommendation-only: suggest
-Claude/Codex/Antigravity/roundtable from task type, telemetry, and
-tool availability; user approves before execution.
-RISK: the handoff could become ceremonial context duplication; the
-router could project false precision from sparse telemetry. Both
-need terse defaults, explicit freshness checks, and
-recommendations-not-authority framing.</p>
-<h2 id="5-question-claude-r9-triage">#5 — question (claude, R9 triage)<a class="headerlink" href="#5-question-claude-r9-triage" title="Permanent link">&para;</a></h2>
-<p>Before committing to <code>cross_review</code>: what do board/telemetry records
-say about how often a FULL roundtable was convened when a
-single-seat one-shot check would have sufficed — observed demand or
-invented? (The 07-27 usage-signal read is the natural place to
-answer.)</p>
-<h2 id="6-question-antigravity-r9-triage">#6 — question (antigravity, R9 triage)<a class="headerlink" href="#6-question-antigravity-r9-triage" title="Permanent link">&para;</a></h2>
-<p>When a non-proposing seat fails a worktree audit, should the system
-auto-trigger a targeted retry loop between those two seats, or
-immediately yield to the human chair with the failed receipt
-attached? (Unruled; note R1 — members never touch shell — means any
-seat-executed probe design needs a ruling first.)</p>
 <h2 id="7-synthesis-moderator">#7 — synthesis (moderator)<a class="headerlink" href="#7-synthesis-moderator" title="Permanent link">&para;</a></h2>
 <p>STRONG CONVERGENCE on one feature: tool-mediated CROSS-PROVIDER
 SESSION HANDOFF (<code>handoff_create</code> / <code>handoff_resume</code>). Named
@@ -4800,6 +4658,11 @@ strongest second, sequenced AFTER the 07-27 usage-signal read
 <li><strong>#6</strong> left unruled on the board (TTL applies; re-raise if the
   audit idea advances to a spec).</li>
 </ul>
+<hr />
+<p><em>Curated stub (local-first reports, <code>docs/specs/local-first-reports/</code>): the sections above are the
+chair-promoted content. The full deliberation transcript is
+machine-local at <code>~/.attune/reports/roundtable/q-multi-llm-obvious-win-001.md</code> and is
+not distributed with the repository.</em></p>
 
 
 

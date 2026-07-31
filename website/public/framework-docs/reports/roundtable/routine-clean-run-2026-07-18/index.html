@@ -4573,61 +4573,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#why-archival" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Why archival
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#1-question-moderator-check-battery" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        #1 — question (moderator): check battery
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-position-claude-absent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        #2 — position (claude): ABSENT
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-position-antigravity" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        #3 — position (antigravity)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-position-codex" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        #4 — position (codex)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#chair-ruling-2026-07-22" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4668,36 +4613,6 @@ file (<code>~/.attune/ops/triage_appendix.json</code>) does not exist yet; it
 is first created by a live routine fire, so this digest predates
 the ledger and cannot feed the T4 auto-demote counter. Recorded
 here instead as the honest paper trail.</p>
-<h2 id="why-archival">Why archival<a class="headerlink" href="#why-archival" title="Permanent link">&para;</a></h2>
-<p>The digest sat unruled for four days; by promotion time every
-finding had been independently resolved. The chair chose a durable
-record over deliberate expiry. Each item below carries its
-status-as-of-2026-07-22.</p>
-<h2 id="1-question-moderator-check-battery">#1 — question (moderator): check battery<a class="headerlink" href="#1-question-moderator-check-battery" title="Permanent link">&para;</a></h2>
-<p>Keyless check results of 2026-07-18: collaboration-preflight PASS
-with warnings (6 working-tree changes preserved; main 1 behind
-cached origin/main), branch <code>claude/multi-llm-round-table-53f0b2</code>;
-keyless unit suite FAILING at the time (per seat positions below).</p>
-<h2 id="2-position-claude-absent">#2 — position (claude): ABSENT<a class="headerlink" href="#2-position-claude-absent" title="Permanent link">&para;</a></h2>
-<p><code>ABSENT — exit 1: Failed to authenticate. API Error: 401 Invalid
-authentication credentials.</code>
-<strong>Status 2026-07-22:</strong> resolved by the backlog (c) ruling — the
-claude seat runs the API-key path (launchd plist sources
-<code>anthropic.env</code>); the 07-27 06:00 fire is the live verification.
-The 07-22 dry-run rehearsal (plist-exact env) exited 0.</p>
-<h2 id="3-position-antigravity">#3 — position (antigravity)<a class="headerlink" href="#3-position-antigravity" title="Permanent link">&para;</a></h2>
-<p>Ranked: (1) capabilities drift — site advertised 24 skills, 25
-shipped (CRITICAL); (2) asyncio teardown <code>Event loop is closed</code>
-noise; (3) main 1 behind; (4) 6 uncommitted changes.
-<strong>Status 2026-07-22:</strong> (1) fixed on main (25) and moving to 26 in
-the staged 10.7.0 website branch; (2) known-cosmetic, documented in
-the session starter with an explicit don't-misread note (exit code
-unaffected); (3)/(4) transient states, long since moved.</p>
-<h2 id="4-position-codex">#4 — position (codex)<a class="headerlink" href="#4-position-codex" title="Permanent link">&para;</a></h2>
-<p>"The tree is not clean-run healthy because the keyless unit gate
-fails" + the same capability-count drift and teardown noise.
-<strong>Status 2026-07-22:</strong> the keyless unit suite ran 18,260-green in
-the 07-22 rehearsal; drift fixed as above.</p>
 <h2 id="chair-ruling-2026-07-22">Chair ruling (2026-07-22)<a class="headerlink" href="#chair-ruling-2026-07-22" title="Permanent link">&para;</a></h2>
 <p>Promote the whole thread as an archival record (items #1–#4); zero
 action items ruled — everything already resolved through other
@@ -4706,6 +4621,11 @@ until the appendix ledger exists (see header note); the Monday
 06:00 fire creates it, and digests from then on feed the
 two-zero-ruling auto-demote counter (T4). No follow-up work items
 originate here.</p>
+<hr />
+<p><em>Curated stub (local-first reports, <code>docs/specs/local-first-reports/</code>): the sections above are the
+chair-promoted content. The full deliberation transcript is
+machine-local at <code>~/.attune/reports/roundtable/routine-clean-run-2026-07-18.md</code> and is
+not distributed with the repository.</em></p>
 
 
 
