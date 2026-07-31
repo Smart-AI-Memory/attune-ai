@@ -2,11 +2,11 @@
 
 **Status:** Task 0 EXECUTED 2026-07-30 (chair-authorized; PR
 #1806, acceptance MET — see
-[phase0-inventory.md](phase0-inventory.md)). Task 1 authored
-2026-07-30 (chair-authorized authoring); NOT yet authorized to
-execute. This file carries the executed log plus the next
-executable unit only; later phase tasks are authored per-phase
-behind chair gates (decisions.md D2).
+[phase0-inventory.md](phase0-inventory.md)). Task 1 EXECUTED
+2026-07-30 — authored and executed the same session, each behind
+its own explicit chair go. The Phase 2 task is NOT yet authored;
+later phase tasks are authored per-phase behind chair gates
+(decisions.md D2).
 
 ## Executed log
 
@@ -17,6 +17,15 @@ behind chair gates (decisions.md D2).
   exit-code contract already 0/1/2/3 (legacy no-`success`
   loophole documented); keyless NL fix-routing goes to
   bug-predict at 0.17 confidence with no abstention.
+- **Task 1 — Phase 1 dry Fix contract** (chair go 2026-07-30):
+  `attune fix "<request>" --explain` ships preview-or-abstain
+  with internal DTOs; 20 keyless tests through the real `main()`
+  entry, module coverage 96%, no execution paths
+  (grep-checked). Scope validation anchors to the enclosing
+  repo root (codex lane fix), selection is explicitly
+  compatibility-unverified until Phase 2. Same-session chair
+  addition: `fix` keyword → dev/debug in the router builtin map
+  (Phase 0 absence pin flipped as the change receipt).
 
 ## Task 1 — Phase 1: dry explicit Fix contract
 

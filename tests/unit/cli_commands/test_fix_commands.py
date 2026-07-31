@@ -129,14 +129,36 @@ def _first_registered_workflow() -> str:
     return names[0]
 
 
+TARGET_PROBE = (
+    "pytest tests/fixtures/outcome_first_fix/pricing_suite.py::test_boundary_order_is_bulk"
+)
+CANONICAL_SCOPE = "tests/fixtures/outcome_first_fix/pricing.py"
+
+
 def test_representative_preview_is_truthful(capsys: pytest.CaptureFixture[str]) -> None:
+    """The CANONICAL scenario's full contract shape (D1): target
+    probe + full-suite probe + source-confined scope — all three
+    done conditions rendered."""
     workflow = _first_registered_workflow()
-    assert cmd_fix(_args(workflow=workflow)) == 0
+    assert (
+        cmd_fix(
+            _args(
+                workflow=workflow,
+                probe=[TARGET_PROBE, CANONICAL_PROBE],
+                scope=CANONICAL_SCOPE,
+            )
+        )
+        == 0
+    )
     out = capsys.readouterr().out
     assert "Goal: make the boundary order price as bulk" in out
     assert f"Selected workflow: {workflow}" in out
+    assert "compatibility is verified in Phase 2" in out
     assert "Probes (validated, not run):" in out
     assert _TRAILER in out
+    # All three canonical done conditions, rendered.
+    assert "test_boundary_order_is_bulk" in out
+    assert "  3. diff confined to" in out
     # Truthfulness: no claim of anything Phase 1 cannot have done.
     for forbidden in ("executed successfully", "verification passed", "fix applied"):
         assert forbidden not in out.lower()
@@ -154,11 +176,17 @@ def test_real_cli_entry_representative_exits_zero(
             "--workflow",
             workflow,
             "--probe",
+            TARGET_PROBE,
+            "--probe",
             CANONICAL_PROBE,
+            "--scope",
+            CANONICAL_SCOPE,
         ]
     )
     assert code == 0
-    assert _TRAILER in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert _TRAILER in out
+    assert "  3. diff confined to" in out
 
 
 def test_real_cli_entry_ambiguous_abstains_exit_three(

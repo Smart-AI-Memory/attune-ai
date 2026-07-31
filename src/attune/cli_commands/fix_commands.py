@@ -62,6 +62,23 @@ class FixContract:
     probes: list[VerificationProbe] = field(default_factory=list)
 
 
+def _repo_root() -> Path:
+    """Nearest ancestor (including cwd) containing a ``.git`` entry.
+
+    Anchors ``--scope`` validation to the repository the user is
+    working in, regardless of which subdirectory they invoke from
+    (a ``.git`` FILE counts — worktrees have one). Outside any
+    repository it falls back to the cwd; the rendered constraint
+    line shows the resolved path either way, so the anchor is
+    always visible in the preview.
+    """
+    cwd = Path.cwd().resolve()
+    for candidate in (cwd, *cwd.parents):
+        if (candidate / ".git").exists():
+            return candidate
+    return cwd
+
+
 def _parse_probe(raw: str) -> VerificationProbe:
     """Parse one ``--probe`` value into a validated probe.
 
@@ -115,7 +132,7 @@ def build_contract(args: Namespace) -> tuple[FixContract | None, str | None]:
         from attune.security.path_validation import _validate_file_path
 
         try:
-            validated = _validate_file_path(scope, allowed_dir=str(Path.cwd()))
+            validated = _validate_file_path(scope, allowed_dir=str(_repo_root()))
         except ValueError as exc:
             return None, f"invalid --scope {scope!r}: {exc}"
         constraints.append(f"scope: diff confined to {validated}")
@@ -180,6 +197,7 @@ def cmd_fix(args: Namespace) -> int:
         return EXIT_CLI_ERROR
 
     print(f"\nSelected workflow: {selected} [{detail}]")
+    print("  (user-specified; contract-to-workflow compatibility is verified in Phase 2)")
     if not getattr(args, "explain", False):
         print("note: execution is not yet available (Phase 2); this is the same dry preview")
     print(_TRAILER)
