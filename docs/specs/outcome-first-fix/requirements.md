@@ -106,11 +106,10 @@ honesty, compatibility regressions, time and cost to verified
 outcome, abandonment before a useful result, completion without
 requiring knowledge of internal machinery.
 
-Initial measurement set (RATIFIED — decisions.md D3): start with
-evidence-valid receipt completeness, verification-failure
-honesty, time-to-verified-outcome, and compatibility
-regressions; defer the routing-behavior metrics (including
-false-confident-route rate) to Phase 4, where the labeled
+Initial measurement set (PROPOSED — decisions.md D3): start with
+false-confident-route rate, evidence-valid receipt completeness,
+verification-failure honesty, and time-to-verified-outcome;
+defer the routing-behavior metrics to Phase 4, where the labeled
 corpus they require exists anyway.
 
 ## Counter-case
