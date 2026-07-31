@@ -49,10 +49,9 @@ are authored, grounded, and maintained entirely by Attune's own
 stack.
 
 **Managing and creating help-content, docs, or knowledge-bases?**
-That's [`attune-gui`](https://github.com/Smart-AI-Memory/attune-gui)
-— a dedicated Living Docs dashboard wrapping `attune-rag`,
-`attune-help`, and `attune-author` in a single UI. `attune-ai` is the
-developer workflow hub; `attune-gui` is the docs hub.
+That's `attune-help` (progressive-depth runtime) plus `attune-author`
+(AI authoring and staleness detection) — both installable from this
+marketplace and driven from the CLI or Claude Code.
 
 ---
 
@@ -205,7 +204,6 @@ protocol bug the primary client silently tolerated.
 | Package | Role | Install |
 | ------- | ---- | ------- |
 | **`attune-ai`** | Developer workflow hub (this package) | `pip install attune-ai` |
-| **`attune-gui`** | Living Docs dashboard — create, manage, search help content | standalone app |
 | **`attune-rag`** | RAG pipeline (core dep of attune-ai, v0.7+) | bundled |
 | **`attune-verify`** | Generation fact-checker — backs the `/verify` skill (core dep) | bundled |
 | **`attune-author`** | Help content authoring, staleness detection | `pip install 'attune-ai[author]'` |
@@ -796,7 +794,6 @@ If you previously installed either from `attune-docs`:
 
 - [Full Documentation](https://attune-ai.dev)
 - [Plugin Setup](https://github.com/Smart-AI-Memory/attune-ai/blob/main/plugin/README.md)
-- [attune-gui](https://github.com/Smart-AI-Memory/attune-gui) — Living Docs dashboard
 - [GitHub Repository](https://github.com/Smart-AI-Memory/attune-ai)
 
 **Apache License 2.0** — Free and open source.
