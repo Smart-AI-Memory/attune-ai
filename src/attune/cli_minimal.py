@@ -67,6 +67,7 @@ from attune.cli_commands.cost_commands import (
 )
 from attune.cli_commands.curator import cmd_curator
 from attune.cli_commands.diagnosis_commands import cmd_diagnose
+from attune.cli_commands.fix_commands import cmd_fix
 from attune.cli_commands.gates_commands import cmd_gates_check
 from attune.cli_commands.help_commands import cmd_help
 from attune.cli_commands.memory_agent import cmd_memory_agent
@@ -223,6 +224,39 @@ def _add_diagnose_subparser(subparsers: argparse._SubParsersAction) -> None:
             "provenance stamp (D18): dogfood/live-fire records are "
             "excluded from the ops briefing; default operational"
         ),
+    )
+
+
+def _add_fix_subparser(subparsers: argparse._SubParsersAction) -> None:
+    """Attach the dry outcome-first Fix preview (outcome-first-fix
+    spec, Phase 1). Preview-only: nothing is executed.
+
+    Args:
+        subparsers: Parent subparsers action to attach to
+
+    """
+    fix_parser = subparsers.add_parser(
+        "fix",
+        help="Preview an outcome-first fix contract (dry — no execution yet)",
+    )
+    fix_parser.add_argument("request", help="What should be fixed, in your words")
+    fix_parser.add_argument(
+        "--explain",
+        action="store_true",
+        help="Render the contract preview (Phase 1 default behavior)",
+    )
+    fix_parser.add_argument(
+        "--workflow",
+        help="Existing workflow to run the fix through (omit to see candidates)",
+    )
+    fix_parser.add_argument(
+        "--probe",
+        action="append",
+        help='Verification command, e.g. --probe "pytest tests/x.py" (repeatable)',
+    )
+    fix_parser.add_argument(
+        "--scope",
+        help="Path the fix diff must stay confined to (validated inside the repo)",
     )
 
 
@@ -630,6 +664,7 @@ Documentation: https://smartaimemory.com/framework-docs/
 
     _add_workflow_subparsers(subparsers)
     _add_diagnose_subparser(subparsers)
+    _add_fix_subparser(subparsers)
     _add_gates_subparsers(subparsers)
     _add_config_subparsers(subparsers)
     _add_telemetry_subparsers(subparsers)
@@ -757,6 +792,7 @@ _SUBCOMMAND_DISPATCH: dict[str, dict[str, object]] = {
 
 _SIMPLE_DISPATCH: dict[str, object] = {
     "diagnose": cmd_diagnose,
+    "fix": cmd_fix,
     "remember": cmd_remember,
     "forget": cmd_forget,
     "lessons": cmd_lessons,

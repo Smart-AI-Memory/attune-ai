@@ -144,14 +144,15 @@ def test_keyword_commit_routes_to_dev_intentional(keyless_router) -> None:
     assert result["source"] == "builtin"
 
 
-def test_fix_keyword_absent_from_builtin_map_incidental(keyless_router) -> None:
-    """INCIDENTAL: there is no 'fix' entry in the builtin keyword
-    map today — 'fix ...' input always falls through to
-    natural-language classification. The Fix facade (explicit
-    ``attune fix``) bypasses this path entirely; if a 'fix'
-    keyword is ever added, revisit the facade's routing notes.
+def test_fix_keyword_maps_to_dev_debug_incidental(keyless_router) -> None:
+    """INCIDENTAL: 'fix' keyword added 2026-07-30 (chair-requested,
+    Phase 1 session) mapping to the dev hub's debug flow
+    ("Investigate and fix a bug"). This pin originally asserted
+    the keyword's ABSENCE; its flip is the deliberate-change
+    receipt. Multi-word 'fix ...' input still falls through to
+    natural-language classification.
     """
-    assert "fix" not in keyless_router._keyword_to_skill
+    assert keyless_router._keyword_to_skill["fix"] == ("dev", "debug")
 
 
 def test_nl_fix_phrase_routes_confidently_despite_low_confidence_incidental(
