@@ -81,3 +81,32 @@ reading says Phase 2 should halt because "existing machinery"
 turned out fix-incapable; rejected — the registry is the
 designed extension point and (a) is the precedent. Chair may
 overrule.
+
+## D6 — Phase 2 live-fire dogfood receipt (RECORDED)
+
+**Lead, 2026-07-30, chair-authorized spend (Task 2 go).** One real
+`attune fix --run` through the real `FixWorkflow` (SDK session,
+subscription-first) on a scratch git copy of the canonical
+fixture:
+
+```text
+workflow finished (success=True) — verifying independently...
+
+🧾 Fix receipt
+
+Changes made (attributed to this run):
+  - pricing.py
+Probes (evaluated independently):
+  - [PASS] .../python -m pytest pricing_suite.py::test_boundary_order_is_bulk -q (exit 0, 561ms)
+  - [PASS] .../python -m pytest pricing_suite.py -q (exit 0, 567ms)
+Safest next action: review the attributed diff and commit
+receipt reflects independently evaluated probes — workflow exit was not trusted
+exit code: 0
+```
+
+Agent diff (verified by hand): exactly `>` → `>=` at the bulk
+boundary plus removal of the then-false seeded-bug comment; no
+other paths touched. Ruling Phase 2 acceptance met on the REAL
+path: the initially failing target probe passed through a real
+CLI/subprocess/file boundary, and the receipt attributed exactly
+one in-scope file from the pre-run baseline.

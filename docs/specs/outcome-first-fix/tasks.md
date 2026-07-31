@@ -1,11 +1,10 @@
 # Outcome-First Fix — Tasks
 
-**Status:** active (2026-07-30) — Tasks 0–1 executed, each
-behind its own explicit chair go (PRs #1806, #1808). Task 2
-authored 2026-07-30 (chair-authorized authoring); executing it
-requires its own chair go AND trips the spend gate (first task
-with real LLM execution). This file carries the executed log
-plus the next executable unit only (decisions.md D2).
+**Status:** active (2026-07-30) — Tasks 0–2 executed, each
+behind its own explicit chair go (spend gate honored on Task 2;
+live-fire receipt in decisions.md D6). The Phase 3 task is NOT
+yet authored; later phase tasks are authored per-phase behind
+chair gates (decisions.md D2).
 
 ## Executed log
 
@@ -25,6 +24,15 @@ plus the next executable unit only (decisions.md D2).
   until Phase 2. Same-session chair addition: `fix` keyword →
   dev/debug in the router builtin map (Phase 0 absence pin
   flipped as the change receipt).
+- **Task 2 — Phase 2 executable Fix proof** (chair go +
+  spend gate 2026-07-30): `attune fix --run` executes
+  FixWorkflow (existing registry/executor, Edit-scope PreToolUse
+  guard) and computes the receipt from a pre-run baseline +
+  independently evaluated probes; exit 0/1 never trusts
+  WorkflowResult.success. 14 keyless tests through real git
+  repos and pytest subprocesses (coverage 97/94%); live-fire
+  receipt recorded in decisions.md D6 — the real agent made
+  exactly the minimal in-scope fix and both probes passed.
 
 ## Task 2 — Phase 2: executable Fix proof
 
