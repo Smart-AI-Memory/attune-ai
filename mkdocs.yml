@@ -107,6 +107,8 @@ exclude_docs: |
   tutorials/QUICKSTART_GUIDE.md
   tutorials/campaign-metrics-tracking.md
   tutorials/installation.md
+  # video production material for tutorials/fix.md - not site content
+  tutorials/fix-shooting-script.md
 
   # how-to/ orphans
   how-to/multi-agent-coordination.md
