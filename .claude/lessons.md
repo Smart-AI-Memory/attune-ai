@@ -20292,3 +20292,56 @@ def ", start_idx + 1)` for module-
   where `.git` sat. For any surface whose evidence derives from git
   state, the dogfood matrix is the git-topology matrix, not the flag
   matrix.
+
+- **Adding a plugin skill trips a COUNT-GUARD CASCADE across four
+  surfaces — repair them all in the same commit, and the projector
+  does most of it**: 2026-07-31, the `/fix` skill (PR #1824) went
+  full-matrix red TWICE because the pinned skill count lives in
+  more places than any one gate reveals: (1)
+  `tests/unit/plugins/test_plugin_config_validation.py::
+  test_skill_count` (the literal), (2) `website/lib/features.ts`
+  (`skills:` + two prose claims, enforced by
+  `tests/unit/test_website_version_accuracy.py`), (3) the
+  claim-drift surfaces — README.md skills table,
+  `plugin/README.md`, `.claude-plugin/marketplace.json` (twice),
+  `docs/getting-started/quickstart-plugin.md` — enforced by
+  `tests/unit/gates/test_claim_drift.py` AND
+  `tests/unit/scripts/test_project_capabilities.py`. The one-stop
+  repair for class (3): `python scripts/project_capabilities.py
+  --write`. Rule: after adding/removing a skill, run the projector
+  + update the test pin + features.ts BEFORE pushing, and run
+  `pytest tests/unit/gates/test_claim_drift.py
+  tests/unit/test_website_version_accuracy.py
+  tests/unit/plugins/` locally — the scoped suites you ran for
+  the feature will NOT include these root-level guards.
+
+- **Two blog directories, only ONE serves — website/content/blog
+  is the live site's corpus (cwd-relative read); root content/blog
+  is the LinkedIn-article authoring set and NEVER reaches
+  smartaimemory.com**: 2026-07-31, publishing the receipt post.
+  `website/lib/blog.ts` reads `path.join(process.cwd(),
+  'content/blog')`, and the deployed app's cwd is `website/` — so
+  a post drafted in root `content/blog/` (following the July
+  LinkedIn-article precedent there) renders nowhere. Verified by
+  curling the live /blog/ index and diffing the two dirs
+  (disjoint sets). Also: the blog template renders the
+  frontmatter `title` as the H1 — a `# Title` in the body
+  DUPLICATES it (caught only in live preview). Publish flow that
+  works: post + images under `website/` (`website/content/blog/`,
+  `website/public/images/...`), `coverImage` frontmatter for the
+  hero/og card, body images via plain markdown (ReactMarkdown
+  renders them), no body H1.
+
+- **A worktree's `website/` has no `node_modules` — Next walks UP
+  and resolves from `$HOME`'s unrelated Next app; symlink main's
+  `website/node_modules` into the worktree**: 2026-07-31, the
+  worktree dev server failed with `Cannot find module
+  '@tailwindcss/postcss'` FROM
+  `/Users/patrickroebuck/node_modules/next/...` — the home-dir
+  Next.js app's modules, reached by Node's upward resolution when
+  `worktree/website/node_modules` is absent. The wrong-`next`
+  version failure modes are arbitrarily confusing. Fix: `ln -s
+  /Users/patrickroebuck/attune-ai/website/node_modules
+  <worktree>/website/node_modules` (gitignored, instant, shares
+  main's install). The node-side sibling of the "worktree venv
+  lacks extras" lesson family.
