@@ -106,7 +106,7 @@ honesty, compatibility regressions, time and cost to verified
 outcome, abandonment before a useful result, completion without
 requiring knowledge of internal machinery.
 
-Initial measurement set (PROPOSED — decisions.md D3): start with
+Initial measurement set (RATIFIED — decisions.md D3): start with
 evidence-valid receipt completeness, verification-failure
 honesty, time-to-verified-outcome, and compatibility
 regressions; defer the routing-behavior metrics (including
