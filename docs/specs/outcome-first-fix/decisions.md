@@ -17,9 +17,9 @@ not tests). The seeded-runtime-bug option was declined because
 an LLM-authored regression test adds nondeterminism to repeated
 evaluation; determinism won.
 
-## D2 — "XML task for the Fix proof slice" scoped to Phase 0 (RATIFIED)
+## D2 — "XML task for the Fix proof slice" scoped to Phase 0 (PROPOSED)
 
-**Lead proposed 2026-07-30; chair ratified 2026-07-30.** The ruling says the spec's only executable
+**Lead, 2026-07-30.** The ruling says the spec's only executable
 unit is a cold-handoff-capable XML task "for the Fix proof
 slice." Read literally, the proof slice spans ruling Phases 0–2,
 but one XML task covering inventory + contract design + live
@@ -28,25 +28,21 @@ Interpretation adopted: Task 0 covers ruling Phase 0
 (architecture and characterization proof) only; the Phase 1 and
 Phase 2 tasks are authored after Phase 0's acceptance passes and
 the chair gates each. Counter-reading (one task for the whole
-slice) recorded and rejected for handoff size.
+slice) recorded and rejected for handoff size. Chair may
+overrule.
 
-## D3 — Initial metric subset of four (RATIFIED)
+## D3 — Initial metric subset of four (PROPOSED)
 
-**Lead proposed 2026-07-30; chair ratified 2026-07-30, as
-amended by the codex lane finding below.** The ruling lists ten Phase 3 metrics.
+**Lead, 2026-07-30.** The ruling lists ten Phase 3 metrics.
 Standing up measurement for all ten during the thin slice risks
 building the parallel telemetry system the ruling itself
-forbids. Proposal: measure evidence-valid receipt completeness,
-verification-failure honesty, time-to-verified-outcome, and
-compatibility regressions from Phase 2 onward; the
-routing-behavior metrics (false-confident-route,
-contract-edit, route-correction, abstention, abandonment)
-activate at Phase 4 where their labeled corpus exists anyway.
-The full list remains ratified; this only sequences it.
-(Amended 2026-07-30: the codex D11 lane caught
-false-confident-route rate sitting in the Phase 2 set while the
-same decision deferred routing metrics to Phase 4 — it is a
-routing metric and moved there.)
+forbids. Proposal: measure false-confident-route rate,
+evidence-valid receipt completeness, verification-failure
+honesty, and time-to-verified-outcome from Phase 2 onward; the
+routing-behavior metrics (contract-edit, route-correction,
+abstention, abandonment) activate at Phase 4 where their labeled
+corpus exists anyway. The full list remains ratified; this only
+sequences it. Chair may overrule.
 
 ## D4 — Spec drafted directly from the roundtable synthesis (NAMED)
 
