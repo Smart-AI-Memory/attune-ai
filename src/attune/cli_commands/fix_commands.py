@@ -124,7 +124,10 @@ def build_contract(args: Namespace) -> tuple[FixContract | None, str | None]:
             'provide at least one --probe "<command>"'
         )
 
-    constraints = ["preview only: no execution, no file writes"]
+    if getattr(args, "run", False):
+        constraints = ["execution authorized: scoped workflow run + independent probe verification"]
+    else:
+        constraints = ["preview only: no execution, no file writes"]
     done_conditions = [f"probe passes: {probe.render()}" for probe in probes]
 
     scope = getattr(args, "scope", None)
@@ -238,7 +241,17 @@ def _run_fix(args: Namespace, contract: FixContract, selected: str) -> int:
         return EXIT_CLI_ERROR
 
     repo_root = _repo_root()
-    scope_paths = [Path(scope)]
+    # Normalize the (already-validated) scope to its REPO-RELATIVE
+    # form so baseline hashing and violation matching compare like
+    # with like — a `./pricing.py` or absolute spelling must never
+    # read as an out-of-scope violation (codex D11 lane finding).
+    resolved_scope = Path(scope).resolve()
+    try:
+        scope_rel = resolved_scope.relative_to(repo_root)
+    except ValueError:
+        print(f"cannot run: --scope {scope!r} resolves outside the repo root {repo_root}")
+        return EXIT_CLI_ERROR
+    scope_paths = [scope_rel]
     baseline = capture_baseline(repo_root, scope_paths)
 
     workflow_cls = get_workflow(selected)
@@ -247,7 +260,7 @@ def _run_fix(args: Namespace, contract: FixContract, selected: str) -> int:
         result = asyncio.run(
             workflow.execute(
                 goal=contract.goal,
-                scope_paths=[str(p) for p in scope_paths],
+                scope_paths=[str(resolved_scope)],
                 done_conditions=contract.done_conditions,
             )
         )

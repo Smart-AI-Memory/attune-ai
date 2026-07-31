@@ -113,8 +113,17 @@ def _git_dirty_paths(repo_root: Path) -> tuple[set[str], bool]:
         return set(), False
     paths = set()
     for line in proc.stdout.splitlines():
-        if len(line) > 3:
-            paths.add(line[3:].strip().strip('"'))
+        if len(line) <= 3:
+            continue
+        payload = line[3:].strip().strip('"')
+        # Rename/copy records are `old -> new` — record BOTH real
+        # paths, never the literal arrow payload (codex lane finding).
+        if " -> " in payload:
+            old, _, new = payload.partition(" -> ")
+            paths.add(old.strip().strip('"'))
+            paths.add(new.strip().strip('"'))
+        else:
+            paths.add(payload)
     return paths, True
 
 
@@ -126,9 +135,17 @@ def _hash_file(path: Path) -> str:
 
 
 def capture_baseline(repo_root: Path, scope_paths: list[Path]) -> Baseline:
-    """Snapshot pre-run state: dirty set + scope content hashes."""
+    """Snapshot pre-run state: dirty set + content hashes.
+
+    Hashes cover the scope files AND every already-dirty file:
+    a baseline-dirty file the workflow modifies FURTHER must still
+    be attributed (and flagged as a violation when out of scope) —
+    the dirty-set subtraction alone would let it escape (codex D11
+    lane finding).
+    """
     dirty, git_ok = _git_dirty_paths(repo_root)
-    hashes = {str(p): _hash_file(repo_root / p) for p in scope_paths}
+    to_hash = {str(p) for p in scope_paths} | dirty
+    hashes = {p: _hash_file(repo_root / p) for p in sorted(to_hash)}
     return Baseline(
         repo_root=repo_root, dirty_paths=dirty, scope_hashes=hashes, git_available=git_ok
     )
@@ -203,7 +220,9 @@ def assemble_receipt(
         if _hash_file(baseline.repo_root / path_str) != old_hash:
             attributed.add(path_str)
 
-    pre_existing = sorted(baseline.dirty_paths)
+    # A baseline-dirty file the run modified FURTHER is attributed
+    # (hash change above) and moves out of the pre-existing section.
+    pre_existing = sorted(baseline.dirty_paths - attributed)
     violations = sorted(p for p in attributed if p not in scope_strs)
 
     uncertainty: list[str] = []
@@ -212,8 +231,13 @@ def assemble_receipt(
     skipped = [p for p in probe_outcomes if p.status == "SKIPPED"]
     for probe in skipped:
         uncertainty.append(f"probe not executed: {' '.join(probe.argv)} ({probe.reason})")
-    if pre_existing:
-        uncertainty.append("pre-existing dirty paths may mask agent edits to the same files")
+    unhashable = sorted(p for p, h in baseline.scope_hashes.items() if h == "<unreadable>")
+    if unhashable:
+        uncertainty.append(
+            "baseline hash unavailable for: "
+            + ", ".join(unhashable)
+            + " — further edits to these paths cannot be attributed"
+        )
 
     failed = [p for p in probe_outcomes if p.status == "FAIL"]
     if violations:

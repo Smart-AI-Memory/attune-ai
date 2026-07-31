@@ -354,3 +354,68 @@ def test_fix_workflow_collects_stream_messages(
         FixWorkflow().execute(goal="g", scope_paths=[str(target)], done_conditions=["c"])
     )
     assert "edited pricing.py" in result.metadata["agent_reported_changes"]
+
+
+# ---------------------------------------------------------------
+# Codex lane regression pins (Phase 2 execution review)
+# ---------------------------------------------------------------
+
+
+def test_absolute_scope_spelling_is_not_a_false_violation(
+    fix_repo: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """`--scope /abs/path/pricing.py` must attribute cleanly, not
+    read as out-of-scope (raw-spelling vs repo-relative mismatch)."""
+    _install_stub(monkeypatch, _StubApplies)
+    code = cmd_fix(_args(scope=str(fix_repo / "pricing.py")))
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "SCOPE VIOLATIONS" not in out
+
+
+def test_baseline_dirty_out_of_scope_file_modified_further_is_violation(
+    fix_repo: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A file dirty BEFORE the run that the workflow modifies
+    FURTHER must be attributed and flagged — the dirty-set
+    subtraction alone would let it escape."""
+    dirty = fix_repo / "already_dirty.py"
+    dirty.write_text("# user WIP\n")
+
+    class _StubTouchesDirty:
+        async def execute(self, **kwargs):
+            _apply_known_fix(Path.cwd())
+            dirty.write_text("# user WIP\n# AGENT TAMPERED\n")
+            return SimpleNamespace(success=True, metadata={})
+
+    _install_stub(monkeypatch, _StubTouchesDirty)
+    code = cmd_fix(_args())
+    out = capsys.readouterr().out
+    assert code == 1
+    assert "SCOPE VIOLATIONS" in out
+    assert "already_dirty.py" in out
+
+
+def test_porcelain_rename_records_parse_as_paths(fix_repo: Path) -> None:
+    from attune.cli_commands.fix_receipt import _git_dirty_paths
+
+    subprocess.run(
+        ["git", "-c", "user.email=t@t", "-c", "user.name=t", "mv", "pricing.py", "renamed.py"],
+        cwd=fix_repo,
+        check=True,
+    )
+    paths, ok = _git_dirty_paths(fix_repo)
+    assert ok
+    assert "pricing.py" in paths
+    assert "renamed.py" in paths
+    assert not any(" -> " in p for p in paths)
+
+
+def test_run_mode_constraint_text_is_truthful(
+    fix_repo: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _install_stub(monkeypatch, _StubApplies)
+    assert cmd_fix(_args()) == 0
+    out = capsys.readouterr().out
+    assert "execution authorized" in out
+    assert "preview only: no execution" not in out
