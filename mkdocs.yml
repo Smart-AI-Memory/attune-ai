@@ -107,6 +107,8 @@ exclude_docs: |
   tutorials/QUICKSTART_GUIDE.md
   tutorials/campaign-metrics-tracking.md
   tutorials/installation.md
+  # video production material for tutorials/fix.md - not site content
+  tutorials/fix-shooting-script.md
 
   # how-to/ orphans
   how-to/multi-agent-coordination.md
@@ -204,6 +206,7 @@ nav:
       - tutorials/index.md
       - Build a Workflow: tutorials/build-a-workflow.md
       - Fix a Failing Test (and Automate It): tutorials/fix-test.md
+      - Outcome-First Fix (with Receipts): tutorials/fix.md
       - Ops Dashboard: tutorials/ops-dashboard.md
       - Examples:
           - Code Review Assistant: tutorials/examples/simple-chatbot.md

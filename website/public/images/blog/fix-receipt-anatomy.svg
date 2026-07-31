@@ -1,0 +1,55 @@
+<svg viewBox="0 0 1200 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t2 d2">
+  <title id="t2">Anatomy of a fix receipt</title>
+  <desc id="d2">A real fix receipt annotated line by line: attributed changes measured from a pre-run baseline, probes re-run independently with argv and exit codes, the safest next action, and the trailer stating the workflow exit was not trusted.</desc>
+  <rect width="1200" height="720" fill="#FAF9F5"/>
+  <text x="600" y="64" text-anchor="middle" font-family="ui-sans-serif, -apple-system, 'Segoe UI', sans-serif" font-size="30" font-weight="500" fill="#2C2C2A">Anatomy of a fix receipt</text>
+
+  <!-- Terminal card -->
+  <rect x="60" y="110" width="640" height="520" rx="12" fill="#2C2C2A"/>
+  <circle cx="92" cy="140" r="6" fill="#E24B4A"/>
+  <circle cx="114" cy="140" r="6" fill="#EF9F27"/>
+  <circle cx="136" cy="140" r="6" fill="#63C956"/>
+
+  <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="16">
+    <text x="92" y="188" fill="#B4B2A9">workflow finished (success=True) — verifying...</text>
+    <text x="92" y="230" fill="#F1EFE8">🧾 Fix receipt</text>
+    <text x="92" y="272" fill="#9FE1CB">Changes made (attributed to this run):</text>
+    <text x="92" y="298" fill="#F1EFE8">  - scratch_pricing/pricing.py</text>
+    <text x="92" y="340" fill="#9FE1CB">Probes (evaluated independently):</text>
+    <text x="92" y="366" fill="#F1EFE8">  - [PASS] pytest pricing_suite.py (exit 0, 2902ms)</text>
+    <text x="92" y="408" fill="#9FE1CB">Safest next action:</text>
+    <text x="92" y="434" fill="#F1EFE8">  review the attributed diff and commit</text>
+    <text x="92" y="490" fill="#FAC775">receipt reflects independently evaluated probes</text>
+    <text x="92" y="516" fill="#FAC775">— workflow exit was not trusted</text>
+    <text x="92" y="572" fill="#B4B2A9">$ echo $?</text>
+    <text x="92" y="598" fill="#F1EFE8">0</text>
+  </g>
+
+  <!-- Callouts -->
+  <g font-family="ui-sans-serif, -apple-system, 'Segoe UI', sans-serif">
+    <path d="M 704 280 L 750 280" stroke="#1D9E75" stroke-width="2" fill="none"/>
+    <rect x="754" y="240" width="390" height="84" rx="10" fill="#E1F5EE" stroke="#5DCAA5" stroke-width="1"/>
+    <text x="774" y="270" font-size="15" font-weight="500" fill="#04342C">Measured, not claimed</text>
+    <text x="774" y="292" font-size="13.5" fill="#0F6E56">changes are diffed against a pre-run snapshot —</text>
+    <text x="774" y="311" font-size="13.5" fill="#0F6E56">your own in-flight edits are never blamed on the agent</text>
+
+    <path d="M 704 356 L 750 356" stroke="#1D9E75" stroke-width="2" fill="none"/>
+    <rect x="754" y="336" width="390" height="84" rx="10" fill="#E1F5EE" stroke="#5DCAA5" stroke-width="1"/>
+    <text x="774" y="366" font-size="15" font-weight="500" fill="#04342C">Verification you chose</text>
+    <text x="774" y="388" font-size="13.5" fill="#0F6E56">every probe re-runs in a real subprocess after the fix,</text>
+    <text x="774" y="407" font-size="13.5" fill="#0F6E56">with its exact command, exit code, and duration</text>
+
+    <path d="M 704 428 L 750 428" stroke="#534AB7" stroke-width="2" fill="none"/>
+    <rect x="754" y="432" width="390" height="66" rx="10" fill="#EEEDFE" stroke="#AFA9EC" stroke-width="1"/>
+    <text x="774" y="461" font-size="15" font-weight="500" fill="#26215C">Worst problem first</text>
+    <text x="774" y="483" font-size="13.5" fill="#534AB7">violations, failures, and skips outrank "commit it"</text>
+
+    <path d="M 704 502 L 750 502" stroke="#BA7517" stroke-width="2" fill="none"/>
+    <rect x="754" y="512" width="390" height="84" rx="10" fill="#FAEEDA" stroke="#FAC775" stroke-width="1"/>
+    <text x="774" y="542" font-size="15" font-weight="500" fill="#412402">The thesis, printed every time</text>
+    <text x="774" y="564" font-size="13.5" fill="#854F0B">the exit code follows the probes and the scope check —</text>
+    <text x="774" y="583" font-size="13.5" fill="#854F0B">never the agent's opinion of its own work</text>
+  </g>
+
+  <text x="600" y="688" text-anchor="middle" font-family="ui-sans-serif, sans-serif" font-size="15" fill="#888780">a real receipt from attune fix --run · attune-ai 11.2.0</text>
+</svg>
