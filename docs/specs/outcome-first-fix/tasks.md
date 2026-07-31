@@ -69,9 +69,12 @@ unit.
       vs WorkflowResult.success divergence on mismatched input;
       (b) router mapping stability for fix-adjacent phrases
       through the REAL routing algorithm (never hand-predicted
-      tables). Mark each pin INTENTIONAL or INCIDENTAL so later
-      phases know which behavior is contract and which is
-      accident.
+      tables); (c) a dry-trace section that imports every
+      interface named in phase0-inventory.md's seam map and
+      asserts the documented call signature via introspection —
+      a prose-only mapping fails this test. Mark each pin
+      INTENTIONAL or INCIDENTAL so later phases know which
+      behavior is contract and which is accident.
     </file>
   </files-to-create>
 
@@ -84,6 +87,12 @@ unit.
     <check>phase0-inventory.md accounts for 100% of the ruling's
       concepts: each row names an existing interface or sits
       under REMOVED. Zero rows invent new machinery.</check>
+    <check>Dry-trace introspection test passes: every seam-map
+      interface imports and matches its documented signature, so
+      the traced walkthrough is mechanically checked, not prose.
+      (Live execution proof — the fix actually landing through
+      these interfaces — is ruling Phase 2's acceptance, by
+      design, not Phase 0's.)</check>
     <check>git diff shows no changes under src/attune/.</check>
   </validation>
 

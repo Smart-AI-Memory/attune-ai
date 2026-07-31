@@ -36,13 +36,17 @@ overrule.
 **Lead, 2026-07-30.** The ruling lists ten Phase 3 metrics.
 Standing up measurement for all ten during the thin slice risks
 building the parallel telemetry system the ruling itself
-forbids. Proposal: measure false-confident-route rate,
-evidence-valid receipt completeness, verification-failure
-honesty, and time-to-verified-outcome from Phase 2 onward; the
-routing-behavior metrics (contract-edit, route-correction,
-abstention, abandonment) activate at Phase 4 where their labeled
-corpus exists anyway. The full list remains ratified; this only
-sequences it. Chair may overrule.
+forbids. Proposal: measure evidence-valid receipt completeness,
+verification-failure honesty, time-to-verified-outcome, and
+compatibility regressions from Phase 2 onward; the
+routing-behavior metrics (false-confident-route,
+contract-edit, route-correction, abstention, abandonment)
+activate at Phase 4 where their labeled corpus exists anyway.
+The full list remains ratified; this only sequences it. Chair
+may overrule. (Amended 2026-07-30: the codex D11 lane caught
+false-confident-route rate sitting in the Phase 2 set while the
+same decision deferred routing metrics to Phase 4 — it is a
+routing metric and moved there.)
 
 ## D4 — Spec drafted directly from the roundtable synthesis (NAMED)
 
