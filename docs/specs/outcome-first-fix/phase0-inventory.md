@@ -57,9 +57,12 @@ bug.
 `HybridRouter.route("fix the failing test in my project")`,
 keyless: returns `bug-predict` at confidence 0.17 via keyword
 fallback — a concrete workflow, confidently, with **no
-abstention path**, and no `fix` keyword exists in the builtin
-map. This is the false-confident-route gap Phase 4 closes,
-pinned INCIDENTAL so its closure is a deliberate diff.
+abstention path**. This is the false-confident-route gap Phase 4
+closes, pinned INCIDENTAL so its closure is a deliberate diff.
+(Amended 2026-07-30: a single-word `fix` keyword now maps to the
+dev hub's debug flow — chair-requested during Phase 1; the
+original absence pin was flipped as the change receipt.
+Multi-word fix phrases still hit the NL fallback above.)
 
 ## Canonical scenario walkthrough (traced, then dry-checked)
 

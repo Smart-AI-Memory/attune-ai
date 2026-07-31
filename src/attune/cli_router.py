@@ -117,6 +117,7 @@ class HybridRouter:
         self._keyword_to_skill = {
             # Dev commands → /dev skill
             "commit": ("dev", "commit"),
+            "fix": ("dev", "debug"),
             "review": ("dev", "review"),
             "review-pr": ("dev", "review"),
             "refactor": ("dev", "refactor"),
