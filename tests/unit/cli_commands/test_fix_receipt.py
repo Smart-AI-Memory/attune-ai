@@ -494,3 +494,103 @@ def test_baseline_hash_keys_are_posix_form(fix_repo: Path) -> None:
     baseline = capture_baseline(fix_repo, [Path("pkg") / "mod.py"])
     assert "pkg/mod.py" in baseline.scope_hashes
     assert not any("\\" in k for k in baseline.scope_hashes)
+
+
+# ---------------------------------------------------------------
+# Error paths (codecov gap review) — each is reachable and each
+# asserts BEHAVIOR, not merely that the line executed.
+# ---------------------------------------------------------------
+
+
+def test_whitespace_only_probe_is_rejected() -> None:
+    """`--probe "   "` shlex-splits to [] — must abstain, not crash."""
+    from attune.cli_commands.fix_commands import build_contract
+
+    contract, error = build_contract(_args(probe=["   "], run=False))
+    assert contract is None
+    assert error is not None and "empty" in error
+
+
+def test_cmd_fix_reports_contract_failure_through_the_command(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The contract-rejection branch inside cmd_fix (not build_contract)."""
+    assert cmd_fix(_args(probe=[], run=False)) == 3
+    out = capsys.readouterr().out
+    assert "cannot preview:" in out
+    assert "--probe" in out
+
+
+def test_git_binary_missing_degrades_not_raises(
+    fix_repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """No git on PATH -> git_available False, never an exception."""
+    import attune.cli_commands.fix_receipt as module
+
+    def _boom(*a, **k):
+        raise OSError("git not found")
+
+    monkeypatch.setattr(module.subprocess, "run", _boom)
+    baseline = capture_baseline(fix_repo, [Path("pricing.py")])
+    assert baseline.git_available is False
+    assert baseline.dirty_paths == set()
+
+
+def test_git_nonzero_exit_degrades(tmp_path: Path) -> None:
+    """`git status` failing (not a repo) degrades to hash-only."""
+    from attune.cli_commands.fix_receipt import _git_dirty_paths
+
+    paths, ok = _git_dirty_paths(tmp_path)
+    assert ok is False
+    assert paths == set()
+
+
+def test_probe_oserror_records_skipped_with_reason(
+    fix_repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A probe that dies mid-spawn is SKIPPED with the reason, not lost."""
+    import attune.cli_commands.fix_receipt as module
+    from attune.cli_commands.fix_commands import VerificationProbe
+
+    def _boom(*a, **k):
+        raise OSError("spawn failed")
+
+    monkeypatch.setattr(module.subprocess, "run", _boom)
+    outcomes = run_probes([VerificationProbe(argv=["anything"])], cwd=fix_repo)
+    assert outcomes[0].status == "SKIPPED"
+    assert "spawn failed" in outcomes[0].reason
+
+
+def test_scope_guard_denies_when_path_cannot_resolve(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Unresolvable path must DENY (fail closed), never allow."""
+    import attune.workflows.fix_workflow as module
+
+    guard = make_edit_scope_guard([tmp_path])
+
+    def _boom(self):
+        raise OSError("cannot resolve")
+
+    monkeypatch.setattr(module.Path, "resolve", _boom)
+    decision = asyncio.run(guard({"tool_input": {"file_path": "whatever.py"}}, None, None))
+    assert decision["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def test_porcelain_parser_handles_short_and_rename_lines(
+    fix_repo: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Parser contract against crafted porcelain: degenerate short
+    lines are skipped, renames yield BOTH paths, normal lines pass."""
+    import attune.cli_commands.fix_receipt as module
+    from attune.cli_commands.fix_receipt import _git_dirty_paths
+
+    crafted = " M src/real.py\n??\n\nR  old.py -> new.py\n"
+    monkeypatch.setattr(
+        module.subprocess,
+        "run",
+        lambda *a, **k: SimpleNamespace(returncode=0, stdout=crafted, stderr=""),
+    )
+    paths, ok = _git_dirty_paths(fix_repo)
+    assert ok is True
+    assert paths == {"src/real.py", "old.py", "new.py"}

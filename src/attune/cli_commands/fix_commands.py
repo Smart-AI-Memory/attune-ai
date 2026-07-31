@@ -246,12 +246,11 @@ def _run_fix(args: Namespace, contract: FixContract, selected: str) -> int:
     # with like — a `./pricing.py` or absolute spelling must never
     # read as an out-of-scope violation (codex D11 lane finding).
     resolved_scope = Path(scope).resolve()
-    try:
-        scope_rel = resolved_scope.relative_to(repo_root)
-    except ValueError:
-        print(f"cannot run: --scope {scope!r} resolves outside the repo root {repo_root}")
-        return EXIT_CLI_ERROR
-    scope_paths = [scope_rel]
+    # `build_contract` already rejected any scope outside the repo via
+    # `_validate_file_path`, so `relative_to` cannot raise here — no
+    # second guard (it would be unreachable, and an unreachable guard
+    # is worse than none: it reads as protection that never fires).
+    scope_paths = [resolved_scope.relative_to(repo_root)]
     baseline = capture_baseline(repo_root, scope_paths)
 
     workflow_cls = get_workflow(selected)
