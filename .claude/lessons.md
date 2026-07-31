@@ -20116,3 +20116,50 @@ def ", start_idx + 1)` for module-
   alone. Pairs with "the code is the contract" and the
   status-line-gate lesson above (same file, same session, two
   different truths the tree had to carry).
+
+- **A cross-review lane's manifest can go PARTIAL at the 60k-char
+  cap and silently omit the very file under review — read
+  `manifest.omitted` before triaging, and re-run scoped when the
+  core of the diff isn't in `sent`**: 2026-07-30, outcome-first-fix.
+  Three consecutive codex D11 lanes on a growing stacked branch went
+  10 sent / 0 omitted → 10 / 4 → **7 sent / 14 omitted**, and the
+  last one omitted `fix_workflow.py`, the primary new module the
+  review was FOR. The findings it did return were all real and
+  valuable, which is exactly the trap: a partial lane looks like a
+  clean lane, and "codex reviewed it" reads as coverage it never
+  had. The cause is structural, not incidental — on a stacked
+  branch the lane diffs against the ORIGINAL merge-base, so the
+  brief grows with every phase and crowds out the newest work
+  (the file most in need of review is the one most likely dropped).
+  Rules: (1) `run_review` returns `manifest.sent` / `manifest.omitted`
+  — read them EVERY time, before reading findings; (2) record the
+  omitted set verbatim in the R5 ledger row (a partial review must
+  say so — the skill's own step 3 requires it); (3) when the omitted
+  set contains files central to the diff, re-run the lane against a
+  narrower target (staged mode, or after rebasing so the merge-base
+  advances) rather than accepting the partial as the receipt.
+  Pairs with "the receipt beats the promise": a review that didn't
+  see the code is a promise wearing a receipt's clothes.
+
+- **Squash-merge a STACK by rebasing only the terminal branch, then
+  verifying containment and closing the rest — merging link-by-link
+  re-conflicts every remaining PR**: 2026-07-30, five stacked PRs on
+  one spec (#1806/#1807/#1808/#1810/#1811, each based on `main`, each
+  carrying its predecessors' commits). Squash-merging the base PR
+  rewrites the shared files' history, so every remaining PR goes
+  DIRTY on the same files and needs its own rebase + full CI cycle
+  (Windows lanes ~13 min each) — N merges cost N rebases and N
+  matrices. Because the terminal branch already CONTAINS every
+  predecessor commit, the cheap path is: rebase the terminal branch
+  once, prove containment, merge it alone, close the others as
+  superseded. **Containment proof recipe** (do NOT assume it): for
+  each superseded branch B, `git diff origin/<B> <terminal> | grep
+  '^-'` and triage the lost lines, then re-run scoped to code only —
+  `git diff origin/<B> <terminal> -- 'src/***' 'tests/***'` — because
+  a docs-only loss is usually a deliberate supersession (a status
+  line, a stale count claim) while a src/tests loss is a real
+  regression. Every loss must be one you can NAME as intentional; an
+  unexplained one means the terminal branch is not a superset. Also
+  check `gh pr list --json baseRefName` for PRs based on a branch
+  you're about to close (stacked-PR orphaning, existing lesson) —
+  all-`main` bases make closure safe.
