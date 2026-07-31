@@ -1,10 +1,11 @@
 # Outcome-First Fix — Tasks
 
-**Status:** Task 0 authored 2026-07-30; NOT yet authorized to
-execute (requires a chair go). Later phase tasks are authored
-only after the prior phase's acceptance passes (decisions.md
-D2). This file never carries more than the next executable
-unit.
+**Status:** active (2026-07-30) — Task 0 executed on this
+branch (chair go; acceptance met per
+[phase0-inventory.md](phase0-inventory.md)). Later phase tasks
+are authored only after the prior phase's acceptance passes
+(decisions.md D2). This file never carries more than the next
+executable unit.
 
 ## Task 0 — Phase 0: architecture and characterization proof
 
