@@ -20395,3 +20395,61 @@ def ", start_idx + 1)` for module-
   probe is itself the warning sign. (Same family as "the predicate
   you WATCH must be the predicate you PROMISED" — this is the
   execute-side twin of that monitoring lesson.)
+
+- **mkdocs settings (`strict: false`, `omitted_files: info`) tell
+  you NOTHING about the `wiring-audit` nav gate — a new projected
+  feature page is a THREE-step landing, and verifying any one step
+  proves nothing about the other two**: 2026-07-31, landing the fix
+  feature page (#1818). The three independent steps: (1) the master
+  + its projection (`content/features/<feature>.md` through the
+  projector), (2) the `.help/features.yaml` entry, (3)
+  `python scripts/sync_help_bundle.py` so the served bundle carries
+  the rendered templates. A local mkdocs pass looked like a docs
+  receipt, but mkdocs was configured with `strict: false` and
+  `omitted_files: info`, so it never checks what the `wiring-audit`
+  CI job gates — the miss surfaced only in CI and cost a full
+  round-trip. Rule: for a projected feature page, the receipt is
+  per-step (projector drift check + features.yaml entry +
+  sync_help_bundle run), never a single "docs built locally" pass —
+  green on one step is not evidence about the others.
+
+- **A writer that stores X is not an exposure until a caller can
+  supply X — trace reachability from real entry points, not just
+  the sink, before recording a privacy finding**: 2026-07-31,
+  outcome-first-fix D7 and its same-day correction (#1819). The ops
+  run record WOULD persist a free-text goal if one ever arrived at
+  `_persist_run`, and the first D7 wording treated that sink as a
+  live exposure — nearly shipping redaction into a shared surface
+  for a path no caller can reach: `persistence_dir` is wired only
+  in the ops dashboard server (CLI/MCP runs never write a run
+  record), and the dashboard start endpoint reads exactly `path`
+  and `trigger` from the body — no free-text passthrough exists.
+  The shipped fix guards the ENDPOINT instead
+  (`tests/unit/ops/test_run_start_no_freetext_passthrough.py`),
+  which fails loudly if a passthrough is ever added and forces the
+  redaction decision at the moment a real exposure appears. Rule: a
+  privacy/security finding is a (source, path, sink) triple — with
+  no reachable source, the right ship is a tripwire at the
+  boundary, not a behavior change to the shared writer.
+
+- **Sweeping `.claude/worktrees/` has three traps: plain dirs
+  masquerade as worktrees via `git -C` fall-through, squash merges
+  break ancestry-based "merged" checks, and the auto-mode
+  classifier blocks `git worktree remove` even one at a time**:
+  2026-07-31 evening sweep of 25 entries. (1) Three entries were
+  NOT worktrees — plain dirs holding only `website/.next/` build
+  cache — but `git -C <dir> branch --show-current` / `status`
+  walked UP to the parent repo and reported main + main's dirty
+  files, making debris read as "worktree on main with
+  uncommitted work". `git worktree list` from the main checkout is
+  the authoritative roster; reconcile every directory entry
+  against it before classifying. (2) `git merge-base
+  --is-ancestor <branch> origin/main` reported UNMERGED for every
+  squash-merged branch (the tip is never an ancestor); the
+  reliable merged-check is the PR state per head branch
+  (`gh pr list --head <br> --state all`). (3) Unlike the earlier
+  "bundled-destructive scripts" lesson where individual commands
+  passed, worktree removal was classifier-blocked even as a
+  single bare command — the executable unit is the SURVEY
+  (read-only, passes fine) plus a staged command block for
+  Patrick; don't burn retries on phrasing variants.
