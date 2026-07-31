@@ -110,3 +110,37 @@ other paths touched. Ruling Phase 2 acceptance met on the REAL
 path: the initially failing target probe passed through a real
 CLI/subprocess/file boundary, and the receipt attributed exactly
 one in-scope file from the pre-run baseline.
+
+## D7 — Prompt-text persistence: the Fix surface is clean; the ops run record is a generic inherited surface (RECORDED)
+
+**Lead, 2026-07-31, Phase 3 G3.** The requirement "sensitive prompt
+text is not persisted by default" was verified rather than assumed,
+and the answer is split.
+
+**`attune fix` persists nothing.** Verified by an evidence-chain
+walk over real files, not a mock: a `--run` with a sentinel request
+string writes no file under the repo tree or an isolated `HOME`
+containing that string. The request reaches stdout and nothing else.
+Telemetry is not a leak path either — `_track_sdk_run_telemetry`
+records cost, tokens, and duration only. Pinned by
+`test_fix_run_persists_no_file_containing_the_request_text`.
+
+**The ops run record would carry it.** If the `fix` WORKFLOW is
+driven through the ops daemon, the generic run-record writer
+(`_persist_run`, `src/attune/ops/runner.py`) stores every workflow's
+command line, and `attune workflow run --input '{...}'` accepts
+arbitrary kwargs — so a goal passed that way lands in
+`~/.attune/ops/runs/fix/<id>.json`, both in `command` and in the
+first log line.
+
+**Decision: record the boundary, do NOT change the ops surface in
+this spec.** The behavior is generic to every workflow, predates
+this spec, and belongs to the ops/run-record surface — changing it
+here would alter behavior for every other workflow from inside a Fix
+phase. `test_ops_run_record_would_carry_goal_text_generic_surface`
+pins it as CHARACTERIZATION so a future change that routes Fix
+through ops inherits the consequence knowingly.
+
+**Carried as a candidate, unruled:** whether the ops run record
+should redact `--input` payloads by default. That is a chair call on
+the ops surface, not a Fix decision.
