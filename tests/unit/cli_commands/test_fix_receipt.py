@@ -438,3 +438,59 @@ def test_scope_paths_accepts_bare_string_from_ops_runner(
 
     result = asyncio.run(FixWorkflow().execute(goal="g", scope_paths=str(target)))
     assert result.metadata["scope_paths"] == [str(target)]
+
+
+def test_nested_scope_path_is_not_a_false_violation(
+    fix_repo: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Regression: scope paths were compared as `str(Path(...))`, which
+    is backslash-separated on Windows, while git porcelain always emits
+    forward slashes — so any NESTED scope path read as an out-of-scope
+    violation and forced exit 1 on a correct fix. The original fixture
+    used a flat `pricing.py` (identical under both conventions), so the
+    Windows lanes passed while the bug was live.
+    """
+    pkg = fix_repo / "pkg"
+    pkg.mkdir()
+    (pkg / "pricing.py").write_text((fix_repo / "pricing.py").read_text())
+    subprocess.run(
+        ["git", "-c", "user.email=t@t", "-c", "user.name=t", "add", "."],
+        cwd=fix_repo,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "nested"],
+        cwd=fix_repo,
+        check=True,
+    )
+
+    class _StubFixesNested:
+        async def execute(self, **kwargs):
+            t = Path.cwd() / "pkg" / "pricing.py"
+            t.write_text(
+                t.read_text().replace("if units > BULK_THRESHOLD", "if units >= BULK_THRESHOLD")
+            )
+            return SimpleNamespace(success=True, metadata={})
+
+    _install_stub(monkeypatch, _StubFixesNested)
+    code = cmd_fix(
+        _args(
+            scope="pkg/pricing.py",
+            probe=[f"{PY} -c 'raise SystemExit(0)'".replace("'", '"')],
+        )
+    )
+    out = capsys.readouterr().out
+    assert "SCOPE VIOLATIONS" not in out, out
+    assert code == 0, out
+    # Attribution is recorded in POSIX form, matching git's output.
+    assert "pkg/pricing.py" in out
+
+
+def test_baseline_hash_keys_are_posix_form(fix_repo: Path) -> None:
+    """Baseline keys must match git porcelain's forward-slash form."""
+    pkg = fix_repo / "pkg"
+    pkg.mkdir()
+    (pkg / "mod.py").write_text("x = 1\n")
+    baseline = capture_baseline(fix_repo, [Path("pkg") / "mod.py"])
+    assert "pkg/mod.py" in baseline.scope_hashes
+    assert not any("\\" in k for k in baseline.scope_hashes)

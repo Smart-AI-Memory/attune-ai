@@ -6,7 +6,7 @@ and returns one of seven concern bucket labels:
 - ``review``  — code-review, deep-review, security-audit, bug-predict
 - ``test``    — test-gen, test-audit
 - ``docs``    — doc-gen, doc-audit, doc-orchestrator
-- ``refactor``— simplify-code, refactor-plan
+- ``refactor``— simplify-code, refactor-plan, fix
 - ``audit``   — discovery-sweep, perf-audit, dependency-check
 - ``meta``    — release-prep, secure-release, orchestrated-health-check, health-check
 - ``other``   — rag-code-gen, research-synthesis
