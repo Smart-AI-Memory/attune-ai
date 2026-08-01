@@ -20634,3 +20634,36 @@ def ", start_idx + 1)` for module-
   (`isinstance(entry.get("tokens"), dict)`). Pinned by a test
   asserting the current crashing behavior as the finding's
   receipt.
+- **A wall-clock timing assertion standing in for a REGIME check
+  flakes on loaded runners — size the bound to separate regimes
+  (~10x apart), not speeds, record the measured CI datapoint at
+  the assertion site, and release parked async tasks after
+  measurement**: 2026-08-01, #1846's only red lane.
+  `test_slow_sink_does_not_block_sources` asserted `elapsed < 1.0`
+  as the proxy for "fire-and-forget delivery doesn't block";
+  windows-latest 3.12 under xdist measured 1.578s with ZERO actual
+  blocking (the diff under test was lessons-only). The property
+  distinguishes inline-awaited (~10s, the sink's wait) from
+  fire-and-forget (<2s even loaded) — a 5.0s bound separates the
+  regimes with ≥2x margin both ways where 1.0s had none. Fixed in
+  `566c1e289` with the CI datapoint in the assertion comment so
+  the next reader doesn't re-tighten it; also `sink_event.set()`
+  after measurement so parked tasks don't linger into the session.
+
+- **A threshold poll armed WHILE the work it gates is still in
+  flight fires on the stale side of the transition — arm it with a
+  lead-in past the state change, or fold the in-flight work into
+  the predicate**: 2026-08-01, the coverage-fleet flow control.
+  The gate was "launch the next wave when open lane PRs ≤ 6"; the
+  poll was re-armed the moment wave 3 LAUNCHED, so its first check
+  read the pre-wave count (5 — wave 3's PRs didn't exist yet) and
+  signaled "gate open" instantly, inviting a double-launch. The
+  count only rises AFTER lanes report and the lead opens their
+  PRs, so the poll's predicate was measuring the wrong side of a
+  lagging indicator. Caught by the judgment seat before a wave 4
+  launched over wave 3; re-armed with a 15-minute lead-in sleep.
+  Sibling of "workflow_run fires only when the WHOLE workflow
+  completes" — both are gates evaluated against state that hasn't
+  transitioned yet. Rule: a flow-control predicate over a LAGGING
+  counter must either wait out the lag (lead-in) or count the
+  in-flight work directly.
