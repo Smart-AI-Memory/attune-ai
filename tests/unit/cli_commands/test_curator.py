@@ -107,3 +107,76 @@ def test_json_serializes_cached_at(monkeypatch, capsys):
     cli_curator.cmd_curator(_args(json=True))
     payload = json.loads(capsys.readouterr().out)  # must not raise
     assert isinstance(payload["cached_at"], str)
+
+
+def test_render_run_action_with_scope(monkeypatch, capsys):
+    item = CuratorItem(
+        id="i3",
+        title="Coverage lane ready",
+        severity="nudge",
+        rationale="",
+        suggested_action=SuggestedAction(kind="run", workflow="smart-test", scope="src/attune"),
+    )
+    _patch(monkeypatch, _result([item]))
+    cli_curator.cmd_curator(_args())
+    out = capsys.readouterr().out
+    assert "Suggest: run smart-test on src/attune" in out
+
+
+def test_render_run_action_without_scope(monkeypatch, capsys):
+    item = CuratorItem(
+        id="i4",
+        title="Coverage lane ready",
+        severity="nudge",
+        rationale="",
+        suggested_action=SuggestedAction(kind="run", workflow="smart-test"),
+    )
+    _patch(monkeypatch, _result([item]))
+    cli_curator.cmd_curator(_args())
+    out = capsys.readouterr().out
+    assert "Suggest: run smart-test" in out
+    assert " on " not in out.split("Suggest: run smart-test")[1].splitlines()[0]
+
+
+def test_render_dismiss_action(monkeypatch, capsys):
+    item = CuratorItem(
+        id="i5",
+        title="Stale nudge",
+        severity="nudge",
+        rationale="",
+        suggested_action=SuggestedAction(kind="dismiss"),
+    )
+    _patch(monkeypatch, _result([item]))
+    cli_curator.cmd_curator(_args())
+    out = capsys.readouterr().out
+    assert "Suggest: snooze" in out
+
+
+def test_action_hint_fallback_uses_label(monkeypatch, capsys):
+    # kind="open" with no url falls through every branch to the label/kind
+    # fallback — exercises the unmatched-kind default path.
+    item = CuratorItem(
+        id="i6",
+        title="Unusual action",
+        severity="nudge",
+        rationale="",
+        suggested_action=SuggestedAction(kind="open", label="custom label"),
+    )
+    _patch(monkeypatch, _result([item]))
+    cli_curator.cmd_curator(_args())
+    out = capsys.readouterr().out
+    assert "Suggest: custom label" in out
+
+
+def test_action_hint_fallback_uses_kind_when_no_label(monkeypatch, capsys):
+    item = CuratorItem(
+        id="i7",
+        title="Unusual action",
+        severity="nudge",
+        rationale="",
+        suggested_action=SuggestedAction(kind="open"),
+    )
+    _patch(monkeypatch, _result([item]))
+    cli_curator.cmd_curator(_args())
+    out = capsys.readouterr().out
+    assert "Suggest: open" in out

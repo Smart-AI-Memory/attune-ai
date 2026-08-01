@@ -299,19 +299,23 @@ class TestReadStoredHash:
         help_dir.mkdir()
         assert _read_stored_hash("auth", help_dir) is None
 
-    def test_unreadable_concept_file_returns_none(self, tmp_path: Path) -> None:
+    def test_unreadable_concept_file_returns_none(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """An OSError while reading concept.md degrades to None."""
         help_dir = tmp_path / ".help"
         concept_dir = help_dir / "templates" / "auth"
         concept_dir.mkdir(parents=True)
         concept = concept_dir / "concept.md"
         concept.write_text("---\nsource_hash: abc123\n---\nbody\n", encoding="utf-8")
-        concept.chmod(0o000)
-        try:
-            assert _read_stored_hash("auth", help_dir) is None
-        finally:
-            # Restore permissions so tmp_path cleanup works
-            concept.chmod(0o644)
+
+        # chmod(0o000) can't make a file unreadable on Windows; force the
+        # OSError branch portably instead.
+        def _deny_read(self: Path, *args: object, **kwargs: object) -> str:
+            raise OSError("permission denied")
+
+        monkeypatch.setattr(Path, "read_text", _deny_read)
+        assert _read_stored_hash("auth", help_dir) is None
 
 
 class TestCheckStalenessUnknownFeature:

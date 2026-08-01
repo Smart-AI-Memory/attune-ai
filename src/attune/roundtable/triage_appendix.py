@@ -281,10 +281,13 @@ def _usage_freshness_evidence() -> str:
     usage = attune_dir / "telemetry" / "usage.jsonl"
     if not usage.is_file():
         return "local spend: dark (no usage.jsonl)"
-    age_h = (
+    age_s = (
         datetime.datetime.now(datetime.timezone.utc)
         - datetime.datetime.fromtimestamp(usage.stat().st_mtime, tz=datetime.timezone.utc)
-    ).total_seconds() / 3600
+    ).total_seconds()
+    # Filesystem mtime granularity can land ahead of the clock (seen on
+    # Windows), producing a nonsense negative age that renders as "-0h".
+    age_h = max(0.0, age_s) / 3600
     return f"local spend: usage.jsonl last write {age_h:.0f}h ago"
 
 
