@@ -69,3 +69,36 @@ for the post-cut fresh branch (D5). This entry also records the
 timestamp correction: the draft's "authored ~00:30 ET 08-01" was a
 UTC conversion error — actual authoring ~20:15 ET 07-31, caught by
 the chair in-session.
+
+## D7 — Roundtable review: guarantee honestly narrowed, amendment batch adopted (chair, 2026-07-31 ~20:55 ET)
+
+Thread `q-agent-work-report-spec-001` (full transcript
+machine-local at `~/.attune/reports/roundtable/`, msgs 2–5
+promoted). All three seats independently found the same central
+gap: **token-membership verifies existence, not truth** — a
+narrative composing valid tokens into a false relationship passes
+the designed gate, which conflicts with US-5's original "names
+only dataset facts" claim. Seats split on remedy: claude = cheap
+patches keeping free prose; codex = return for revision toward
+typed validated claims deterministically rendered (while conceding
+its own risk: that may reduce CHEAP prose to template value);
+antigravity = middle, naming the fork.
+
+**Chair ruling:** (1) v1 guarantee = HONEST WORDING + CHEAP
+PATCHES — US-5 reworded to "no unknown protected tokens and no
+disposition vocabulary"; relationship-level fabrication is a
+RECORDED v1 limit; codex's typed-claims design is the NAMED
+UPGRADE PATH, re-ruled when Task 3's drop-rate receipt provides
+evidence. (2) The uncontested amendment batch is PROMOTED and now
+lives in the spec text: comma/sign/float/currency-aware tokenizer
++ derived values in `facts()`; disposition-vocabulary ban + second
+seeded test (real id + wrong disposition); empty-dataset LLM skip;
+window semantics pinned (local time, inclusive bounds, merge-time
+PRs, committer-time commits, `since > until` errors); `--numstat`
+over `--stat`; `--stub <PATH>` with validation/atomic/no-silent-
+overwrite; per-fact provenance retained through the gate's
+failure notices; closed-book asserted by import test AND
+request-configuration test; untrusted dataset text delimited
+against injection; Task-3/4 render extension point; Task 4 prompts
+are mechanical templates only; Task 3 gains the drop-rate receipt
+(N ≥ 5 real windows).

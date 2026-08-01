@@ -101,11 +101,16 @@ with a version-precondition note when they differ.
 
 **US-5 — Closed-book narrative behind the verify gate.** The
 narrative section is produced per the architecture stance. Done
-when: a seeded-fabrication test (narrative injected with a PR
-number absent from the dataset) proves the gate drops it and the
-report renders tables-only with the notice; a keyless run (empty
+when: TWO seeded-fabrication tests pass — an invented PR number is
+dropped, AND a real thread id paired with a wrong disposition is
+dropped (the disposition-vocabulary ban, D7); a keyless run (empty
 `ANTHROPIC_API_KEY`, no subscription) renders tables-only, exit 0,
-zero spend; a passing narrative names only dataset facts.
+zero spend; a passing narrative contains **no unknown protected
+tokens and no disposition vocabulary**. (Honest-wording note, D7:
+this is deliberately narrower than "names only dataset facts" —
+relationship-level fabrication composed from valid tokens remains
+possible in v1, is a recorded limit, and the typed-claims design
+is the named upgrade path.)
 
 **US-6 — Local-first placement.** The full report writes to
 `~/.attune/reports/agent-work/<window>.md`; nothing is written

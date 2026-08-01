@@ -37,26 +37,41 @@ behavioral — default run leaves `git status` untouched.
 
 ## Task 3 — Narrative + verify gate + degradation
 
-**Scope:** `src/attune/reports/{narrative,verify}.py`.
+**Scope:** `src/attune/reports/{narrative,verify}.py` PLUS the
+narrative slot in `render.py` (roundtable amendment: Task 3
+necessarily integrates through render — the boundary is an
+explicit extension point Task 2 leaves behind, so Tasks 3 and 4
+compose without touching each other's sections).
 **Delivers:** closed-book CHEAP-tier narrative; the mechanical
-gate; keyless and gate-fail degradation to tables-only.
-**Receipts:** suite — seeded-fabrication test (invented `#9999`
-dropped with notice) + keyless run exit 0; live-fire — one real
-CHEAP-tier render over a real window with the narrative surviving
-the gate, cost reported from telemetry; drift test — `narrative.py`
-import surface pinned (closed-book by construction).
+gate; keyless, empty-dataset, and gate-fail degradation to
+tables-only.
+**Receipts:** suite — TWO seeded-fabrication tests (invented
+`#9999` dropped; real thread id + wrong disposition dropped) +
+keyless exit 0 + empty-dataset no-completion; live-fire — CHEAP
+renders over **N ≥ 5 real windows with the narrative DROP RATE
+reported** (the drop-rate receipt: a fail-safe gate that drops
+most real narratives is a dead feature masked green — measure it
+before calling Task 3 done); drift tests — `narrative.py` import
+surface AND request-configuration pinned.
 **Risks:** number-extraction false positives dropping good
-narratives (medium — the ≥ 10 floor and pattern exclusions exist
-for this; tune with table-driven cases before loosening anything).
+narratives (medium — comma/float-aware tokenizer + derived values
+in `facts()` exist for this; the drop-rate receipt is the
+detector).
 
 ## Task 4 — Copy-ready prompts (US-4)
 
-**Scope:** `render.py` prompt section + validation helper.
+**Scope:** `render.py` prompt section + validation helper, plus
+the briefs SOURCE Task 1 must define (roundtable amendment: Task 4
+consumed "standing generator briefs" that no collector produced —
+Task 1's dataset gains an open-items field fed by the stub parser
+and, when present, `docs/reports/modules-needing-work.md`).
 **Delivers:** open items from stubs/briefs rendered as paste-ready
-commands, each validated against the reader's entry point
-(installed CLI registered-command check; version-precondition note
-on mismatch — the pre-11.2.0 `attune fix` trap made this a
-requirement).
+commands — **mechanical templates only, never LLM-generated**
+(roundtable amendment closing the provenance gap: a generated
+prompt is ungated narrative by another name) — each validated
+against the reader's entry point (installed CLI registered-command
+check; version-precondition note on mismatch — the pre-11.2.0
+`attune fix` trap made this a requirement).
 **Receipts:** suite; behavioral — every emitted command in a
 sample render passes the validation it claims.
 **Risks:** low; smallest task, depends on Tasks 1–2.

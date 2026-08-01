@@ -62,10 +62,16 @@ All mechanical, all degrade to a named-unavailable marker (never
 an empty section pretending to be a zero day):
 
 - **PRs:** `gh pr list --state merged --search "merged:<window>"
-  --json number,title,mergedAt` via fixed-argv subprocess.
+  --json number,title,mergedAt` via fixed-argv subprocess, with
+  pagination handled (`--limit` high-watermark asserted in tests).
   Non-zero exit or missing `gh` → section unavailable.
-- **Commits:** `git log --since/--until` + `git diff --stat` over
-  the window boundary commits.
+- **Commits:** `git log --since/--until` + `git diff --numstat`
+  (NOT `--stat` — roundtable amendment: `--numstat` is the
+  machine-readable form) over the window boundary commits.
+- **Window semantics (pinned):** boundaries are LOCAL time,
+  inclusive on both ends; PR membership by MERGE time; commit
+  membership by COMMITTER time; `--since > --until` is a CLI
+  error, not an empty report.
 - **Telemetry:** read `~/.attune/telemetry/usage.jsonl`, filter to
   window; absent file → empty (telemetry absence is normal, not an
   outage — rendered as "no tracked spend").
@@ -82,30 +88,60 @@ Deterministic extraction over the narrative, matched against
 
 - `#\d+` tokens → must be in `pr_numbers`.
 - `q-[a-z0-9-]+-\d{3}` tokens → must be in `thread_ids`.
-- Bare integers ≥ 10 (word-boundary, excluding version strings
-  and dates by pattern) → must be in `numbers`. The ≥ 10 floor
-  keeps prose like "two arcs" from tripping the gate; every
-  load-bearing metric in this report is ≥ 10 or a PR/thread ref.
+- Numeric tokens, tokenized COMMA/SIGN/FLOAT-AWARE (roundtable
+  amendment): `+67,340` is ONE token (67340), never `67` + `340`;
+  currency (`$0.62`) and percentages (`98.5%`) are their own
+  classes matched against `facts()` cost/derived sets — they never
+  silently bypass as non-integers. Bare integers ≥ 10
+  (word-boundary, excluding version strings and dates by pattern)
+  → must be in `numbers`; `facts()` includes defined DERIVED
+  values (collection counts, totals) so truthful sums don't
+  false-drop.
+- **Disposition vocabulary is a FORBIDDEN class** (RATIFIED /
+  APPROVED / DECLINED / DEFERRED / OPEN and kin): the narrative
+  may not use these words at all — dispositions render only in
+  the mechanical tables. This is the cheap patch for the
+  motivating incident's exact shape (real thread id + invented
+  disposition).
 - Roster names (from `names`) are allowed; UNKNOWN capitalized
-  agent-like tokens are not blocked in v1 (name extraction is the
-  known-fuzzy class — recorded as a design limit, revisit with
-  evidence).
+  agent-like tokens are not blocked in v1 — a documented
+  limitation, NOT a verified token class (codex amendment).
 
 Any miss → narrative dropped, tables-only render, visible notice
-naming the offending token. The gate never edits the narrative —
-drop is the only action (an edited narrative is a new unverified
-narrative).
+naming the offending token AND the collector that failed to vouch
+(per-fact provenance is retained through `facts()`, not flattened
+away). The gate never edits the narrative — drop is the only
+action (an edited narrative is a new unverified narrative).
+
+**Recorded v1 limit (D7, honest wording):** the gate checks
+protected-token membership, not claim truth — a false relationship
+composed entirely of valid tokens passes. The named upgrade path
+is codex's typed-claims design (model emits claim objects
+referencing dataset record ids → mechanical validation →
+deterministic prose render), to be re-ruled when the drop-rate
+receipt (Task 3) provides evidence.
 
 ## Narrative
 
 - Input: `AgentWorkDataset` serialized to JSON + a fixed
-  instruction block ("write the arcs; use only these facts").
+  instruction block ("write the arcs; use only these facts; no
+  rounding or derived arithmetic; no disposition vocabulary").
+  Dataset TEXT fields (PR titles, stub excerpts) are untrusted
+  data — delimited/fenced in the prompt against injection
+  (roundtable amendment).
 - Call: one completion through the existing model-routing CHEAP
   tier — no hardcoded model id, no tools, no streaming needs.
+  Closed-book is asserted at BOTH layers: the import-boundary
+  drift test AND a request-configuration test (the built request
+  carries no tool definitions, no external context).
 - Budget: input is the dataset (~5–10k tokens for a heavy day),
   output capped ~1.5k tokens; cents per render.
 - Auth absent (empty key, no subscription) → skip the call
   entirely; render tables-only, exit 0, zero spend.
+- **Empty dataset → skip the call the same way** (roundtable
+  amendment): a closed-book model on empty input is the
+  highest-hallucination case for zero value; US-1's "no activity"
+  report renders mechanically, no completion issued.
 
 ## CLI
 
@@ -116,8 +152,12 @@ narrative).
   convention) — trips the ~7 registration drift guards; budget a
   `python scripts/project_capabilities.py --write` pass.
 - Output: stdout + `~/.attune/reports/agent-work/<window>.md`.
-  `--stub` additionally writes a curated stub (local-first footer)
-  to a path the user names — never a default repo write.
+  `--stub <PATH>` (takes an explicit path argument — roundtable
+  amendment resolving the boolean-vs-path ambiguity) additionally
+  writes a curated stub with the local-first footer: path
+  validated via the standard helper, atomic write, no silent
+  overwrite (`--force` required if the file exists). Never a
+  default repo write.
 
 ## Testing strategy
 
