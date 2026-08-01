@@ -585,6 +585,73 @@ class TestParseScoutFindings:
         assert len(items) == 1
         assert items[0].severity == "high"
 
+    def test_parse_scout_findings_filters_missing_when_disabled(self, tmp_path):
+        """Test parsing drops missing_docstring/no_documentation when include_missing=False."""
+        orchestrator = DocumentationOrchestrator(
+            project_root=str(tmp_path),
+            include_missing=False,
+        )
+
+        mock_result = MagicMock()
+        mock_result.findings = [
+            {
+                "agent": "Analyst",
+                "response": """
+                "file_path": "missing.py"
+                "issue_type": "missing_docstring"
+                "severity": "high"
+                """,
+            },
+            {
+                "agent": "Analyst",
+                "response": """
+                "file_path": "undocumented.py"
+                "issue_type": "no_documentation"
+                "severity": "high"
+                """,
+            },
+            {
+                "agent": "Analyst",
+                "response": """
+                "file_path": "stale.py"
+                "issue_type": "stale_doc"
+                "severity": "high"
+                """,
+            },
+        ]
+
+        items = orchestrator._parse_scout_findings(mock_result)
+        # Both missing-docs kinds are dropped; the stale_doc item survives
+        assert len(items) == 1
+        assert items[0].issue_type == "stale_doc"
+
+    def test_parse_scout_findings_excludes_filtered_files(self, orchestrator):
+        """Test parsing skips findings whose file_path matches an exclude pattern."""
+        mock_result = MagicMock()
+        mock_result.findings = [
+            {
+                "agent": "Analyst",
+                "response": """
+                "file_path": "requirements.txt"
+                "issue_type": "missing_docstring"
+                "severity": "high"
+                """,
+            },
+            {
+                "agent": "Analyst",
+                "response": """
+                "file_path": "src/main.py"
+                "issue_type": "missing_docstring"
+                "severity": "high"
+                """,
+            },
+        ]
+
+        items = orchestrator._parse_scout_findings(mock_result)
+        # requirements.txt matches DEFAULT_EXCLUDE_PATTERNS ("requirements*.txt")
+        assert len(items) == 1
+        assert items[0].file_path == "src/main.py"
+
 
 class TestItemsFromIndex:
     """Test suite for extracting items from ProjectIndex."""
@@ -689,6 +756,43 @@ class TestItemsFromIndex:
         # Should only have main.py, not requirements.txt
         assert len(items) == 1
         assert items[0].file_path == "src/main.py"
+
+    @patch("attune.workflows.documentation_orchestrator.HAS_PROJECT_INDEX", True)
+    def test_items_from_index_excludes_filtered_stale_doc(self, orchestrator):
+        """Test stale-doc extraction excludes doc_file paths matching an exclude pattern."""
+        mock_index = MagicMock()
+        mock_index.get_context_for_workflow.return_value = {
+            "files_without_docstrings": [],
+            "docs_needing_review": [
+                {
+                    "doc_file": "requirements.txt",  # matches "requirements*.txt"
+                    "source_modified_after_doc": True,
+                    "related_source_files": [],
+                    "days_since_doc_update": 5,
+                },
+                {
+                    "doc_file": "docs/api.md",
+                    "source_modified_after_doc": True,
+                    "related_source_files": [],
+                    "days_since_doc_update": 5,
+                },
+            ],
+        }
+        orchestrator._project_index = mock_index
+
+        items = orchestrator._items_from_index()
+        # Only docs/api.md should survive - requirements.txt is excluded
+        assert len(items) == 1
+        assert items[0].file_path == "docs/api.md"
+
+    def test_items_from_index_handles_context_exception(self, orchestrator):
+        """Test extraction degrades gracefully when get_context_for_workflow raises."""
+        mock_index = MagicMock()
+        mock_index.get_context_for_workflow.side_effect = RuntimeError("index unavailable")
+        orchestrator._project_index = mock_index
+
+        items = orchestrator._items_from_index()
+        assert items == []
 
 
 class TestGenerateSummary:
@@ -842,6 +946,46 @@ class TestScoutPhase:
         items, cost = await orchestrator._run_scout_phase()
         assert items == []
         assert cost == 0.1
+
+    async def test_run_scout_phase_merges_unique_index_items(self, orchestrator):
+        """Test scout phase appends ProjectIndex items whose path scout didn't find.
+
+        Items with a file_path scout already found are NOT duplicated; items
+        with a distinct file_path are appended.
+        """
+        mock_scout = MagicMock()
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.cost = 0.5
+        mock_result.findings = [
+            {
+                "agent": "Analyst",
+                "response": """
+                "file_path": "src/handler.py"
+                "issue_type": "missing_docstring"
+                "severity": "high"
+                """,
+            },
+        ]
+        mock_scout.execute = AsyncMock(return_value=mock_result)
+        orchestrator._scout = mock_scout
+
+        mock_index = MagicMock()
+        mock_index.get_context_for_workflow.return_value = {
+            "files_without_docstrings": [
+                {"path": "src/handler.py", "loc": 10},  # duplicate - skipped
+                {"path": "src/index_extra.py", "loc": 42},  # unique - merged in
+            ],
+            "docs_needing_review": [],
+        }
+        orchestrator._project_index = mock_index
+
+        items, cost = await orchestrator._run_scout_phase()
+        paths = [item.file_path for item in items]
+        assert paths.count("src/handler.py") == 1
+        assert "src/index_extra.py" in paths
+        assert len(items) == 2
+        assert cost == 0.5
 
 
 @pytest.mark.asyncio
