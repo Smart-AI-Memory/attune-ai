@@ -207,6 +207,127 @@ class TestRunPostSimplification:
             )
             assert returned is mock_result
 
+    @pytest.mark.asyncio
+    async def test_empty_path_string_returns_early(self) -> None:
+        """Test an empty-string path (falsy but present) skips scanning.
+
+        ``kwargs.get("path", ".")`` only falls back to the default when
+        the key is absent; an explicit empty string is falsy and should
+        hit the early return distinct from the "no path in kwargs" case.
+        """
+        mixin = PostSimplificationMixin()
+        mixin._enable_post_simplification = True
+
+        mock_result = MagicMock()
+        mock_result.success = True
+
+        returned = await mixin._run_post_simplification(
+            mock_result,
+            {"path": ""},
+        )
+
+        assert returned is mock_result
+        assert mixin._simplification_result is None
+
+    @pytest.mark.asyncio
+    async def test_skips_file_with_syntax_error(self, tmp_path: Path) -> None:
+        """Test a file that fails ast.parse is skipped, not fatal."""
+        (tmp_path / "broken.py").write_text("def bad(:\n    pass\n")
+        (tmp_path / "ok.py").write_text("def f():\n    return 1\n")
+
+        mixin = PostSimplificationMixin()
+        mixin._enable_post_simplification = True
+        mixin._simplification_min_complexity = 3
+
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.final_output = {}
+
+        returned = await mixin._run_post_simplification(
+            mock_result,
+            {"path": str(tmp_path)},
+        )
+
+        assert returned is mock_result
+        assert mixin._simplification_result is not None
+        # Only the syntactically-valid file counts toward files_scanned.
+        assert mixin._simplification_result["files_scanned"] == 1
+
+    @pytest.mark.asyncio
+    async def test_real_import_error_is_caught(self, tmp_path: Path) -> None:
+        """Test an ImportError raised by the module's own ``import ast``
+        (not an unrelated import) is caught and swallowed.
+        """
+        import builtins
+
+        mixin = PostSimplificationMixin()
+        mixin._enable_post_simplification = True
+
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.final_output = {}
+
+        original_import = builtins.__import__
+
+        def mock_import(name: str, *args: object, **kwargs: object) -> object:
+            if name == "ast":
+                raise ImportError("ast unavailable")
+            return original_import(name, *args, **kwargs)
+
+        with patch.object(builtins, "__import__", side_effect=mock_import):
+            returned = await mixin._run_post_simplification(
+                mock_result,
+                {"path": str(tmp_path)},
+            )
+
+        assert returned is mock_result
+        # Scan never happened; result stays unset.
+        assert mixin._simplification_result is None
+
+    @pytest.mark.asyncio
+    async def test_type_error_from_bad_path_type_is_caught(self) -> None:
+        """Test a non-str/PathLike path (TypeError from Path()) is
+        caught by the data-error branch, not raised.
+        """
+        mixin = PostSimplificationMixin()
+        mixin._enable_post_simplification = True
+
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.final_output = {}
+
+        returned = await mixin._run_post_simplification(
+            mock_result,
+            {"path": 123},
+        )
+
+        assert returned is mock_result
+        assert mixin._simplification_result is None
+
+    @pytest.mark.asyncio
+    async def test_generic_exception_during_scan_is_caught(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Test an unexpected exception during the scan (not ImportError
+        or a data-shape error) is caught by the catch-all branch.
+        """
+        mixin = PostSimplificationMixin()
+        mixin._enable_post_simplification = True
+
+        mock_result = MagicMock()
+        mock_result.success = True
+        mock_result.final_output = {}
+
+        with patch("pathlib.Path.rglob", side_effect=RuntimeError("boom")):
+            returned = await mixin._run_post_simplification(
+                mock_result,
+                {"path": str(tmp_path)},
+            )
+
+        assert returned is mock_result
+        assert mixin._simplification_result is None
+
 
 class TestRefactorPlanOptIn:
     """Test that RefactorPlanWorkflow opts in to simplification."""
