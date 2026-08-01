@@ -20667,3 +20667,49 @@ def ", start_idx + 1)` for module-
   transitioned yet. Rule: a flow-control predicate over a LAGGING
   counter must either wait out the lag (lead-in) or count the
   in-flight work directly.
+- **A `# type: ignore[attr-defined]` on an IMPORT is a tripwire,
+  not an annotation — grep-verify the symbol exists; three
+  type-ignore-masked production defects surfaced in ONE night's
+  coverage fleet**: 2026-08-01. (1) `numeric_refs._count_kinds`
+  imports `KINDS` from source_introspection — the symbol exists
+  NOWHERE in the tree, the import always raises, and the broad
+  `except Exception` made a fact-checker whose check never ran.
+  (2)/(3) `short_term/facade.py`'s DataSanitizer bool-position
+  wiring and enable_cross_session signature misbind — both behind
+  type ignores. The comment class literally marks "the type
+  checker says this is wrong and I overrode it" — which is
+  sometimes right (typeshed gaps) and sometimes a live defect
+  wearing a permission slip. Audit rule: `grep -rn "type: ignore"
+  src/` is a bug-hunting sweep, not lint noise; every
+  `attr-defined`/`arg-type` ignore on a REAL call path deserves a
+  one-line existence/signature check. All three finds were
+  Sonnet-lane coverage work — the sweep is cheap.
+
+- **Real-sleep timeout tests are flaky UNDER COVERAGE TRACING —
+  instrumentation overhead can make `asyncio.wait_for`'s cancel
+  cleanup surface `CancelledError` (a BaseException, escaping
+  `except Exception`) instead of `TimeoutError`**: found by the
+  hooks/executor lane (#1864). A `timeout=1` hook racing an
+  `asyncio.sleep(5)` passed bare but failed under `coverage run` —
+  the traced loop is slow enough that cancellation lands during
+  cleanup and the executor's `except Exception` never sees it
+  (CancelledError stopped being an Exception subclass in 3.8).
+  Fix pattern: patch `wait_for` at the module seam to raise
+  `TimeoutError` deterministically instead of racing wall-clock.
+  Sweep-worthy: any timeout-branch test using real sleeps will
+  intermittently fail exactly and only in coverage-instrumented CI
+  lanes — the confusing signature is "passes in test lane, fails
+  in coverage lane".
+
+- **`cd /tmp && <metric run> && gh pr create ...` fails "not a git
+  repository" — the cd persists for the REST of the compound
+  command; split metric runs and repo commands into separate
+  calls**: hit three times in one night's lane processing (the
+  worktree-coverage recipe legitimately starts `cd /tmp`, and the
+  natural efficiency instinct chains the PR-open after it). The
+  harness resets cwd BETWEEN Bash calls, not within one — so the
+  gh/git tail of a chained command runs from /tmp. The receipts
+  before the failure are all valid (the error is late); just
+  reissue the repo command separately. Rule: one compound command
+  never mixes a cd-to-scratch metric recipe with repo-cwd
+  operations.
