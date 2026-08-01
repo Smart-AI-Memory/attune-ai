@@ -1,6 +1,8 @@
 """Tests for compaction state management."""
 
+import os
 import tempfile
+import time
 from pathlib import Path
 
 from attune.context.compaction import (
@@ -275,6 +277,21 @@ class TestCompactState:
         assert "### Current Work" in prompt
         assert "### Pending Handoff" in prompt
 
+    def test_format_restoration_prompt_with_preferences(self):
+        """Test that preferences render in the restoration prompt."""
+        state = CompactState(
+            user_id="pref_user",
+            trust_level=0.5,
+            empathy_level=2,
+            preferences={"tone": "concise", "language": "python"},
+        )
+
+        prompt = state.format_restoration_prompt()
+
+        assert "### User Preferences" in prompt
+        assert "**tone**: concise" in prompt
+        assert "**language**: python" in prompt
+
 
 class TestCompactionStateManager:
     """Tests for CompactionStateManager."""
@@ -432,3 +449,134 @@ class TestCompactionStateManager:
             # Should be able to load
             loaded = manager.load_latest_state("user/with\\special:chars*")
             assert loaded is not None
+
+    def test_load_latest_state_empty_user_dir(self):
+        """User directory exists but has no state files yet."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CompactionStateManager(storage_dir=tmpdir)
+            user_dir = manager._get_user_dir("empty_user")
+            user_dir.mkdir(parents=True)
+
+            result = manager.load_latest_state("empty_user")
+
+            assert result is None
+
+    def test_load_latest_state_handles_corrupt_file(self):
+        """A corrupt state file is reported as no state, not raised."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CompactionStateManager(storage_dir=tmpdir)
+            user_dir = manager._get_user_dir("corrupt_latest_user")
+            user_dir.mkdir(parents=True)
+            bad_file = user_dir / "compact_bad.json"
+            bad_file.write_text("{not valid json")
+
+            result = manager.load_latest_state("corrupt_latest_user")
+
+            assert result is None
+
+    def test_load_state_by_session_skips_non_directory_entries(self):
+        """Stray non-directory entries under storage_dir are skipped."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CompactionStateManager(storage_dir=tmpdir)
+            manager._ensure_storage()
+            stray_file = Path(tmpdir) / "not_a_user_dir.txt"
+            stray_file.write_text("stray")
+
+            result = manager.load_state_by_session("no-such-session")
+
+            assert result is None
+
+    def test_load_state_by_session_skips_corrupt_file(self):
+        """A corrupt state file is skipped when searching by session."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CompactionStateManager(storage_dir=tmpdir)
+            user_dir = manager._get_user_dir("corrupt_session_user")
+            user_dir.mkdir(parents=True)
+            bad_file = user_dir / "compact_bad.json"
+            bad_file.write_text("{not valid json")
+
+            result = manager.load_state_by_session("some-session")
+
+            assert result is None
+
+    def test_cleanup_old_states_missing_user_dir(self):
+        """Cleanup on a user with no directory removes nothing."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CompactionStateManager(storage_dir=tmpdir)
+
+            removed = manager._cleanup_old_states("never_saved_user")
+
+            assert removed == 0
+
+    def test_cleanup_old_states_handles_unlink_failure(self):
+        """A state file that can't be unlinked is skipped, not raised."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CompactionStateManager(storage_dir=tmpdir, max_states_per_user=1)
+            user_dir = manager._get_user_dir("cleanup_fail_user")
+            user_dir.mkdir(parents=True)
+
+            keep = user_dir / "compact_20250101_000003_aaaaaaaa.json"
+            keep.write_text("{}")
+            prune_file = user_dir / "compact_20250101_000002_bbbbbbbb.json"
+            prune_file.write_text("{}")
+            # A directory matching the glob can't be unlink()'d -> OSError,
+            # exercising the cleanup failure branch without mocking.
+            prune_dir = user_dir / "compact_20250101_000001_cccccccc.json"
+            prune_dir.mkdir()
+
+            now = time.time()
+            os.utime(keep, (now, now))
+            os.utime(prune_file, (now - 10, now - 10))
+            os.utime(prune_dir, (now - 20, now - 20))
+
+            removed = manager._cleanup_old_states("cleanup_fail_user")
+
+            assert removed == 1
+            assert keep.exists()
+            assert not prune_file.exists()
+            assert prune_dir.exists()
+
+    def test_get_all_states_skips_corrupt_file(self):
+        """A corrupt file among valid states is skipped, not raised."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CompactionStateManager(storage_dir=tmpdir)
+            state = CompactState(user_id="mixed_user", trust_level=0.5, empathy_level=1)
+            manager.save_state(state)
+
+            user_dir = manager._get_user_dir("mixed_user")
+            bad_file = user_dir / "compact_bad.json"
+            bad_file.write_text("not json")
+
+            states = manager.get_all_states("mixed_user")
+
+            assert len(states) == 1
+
+    def test_clear_user_states_missing_user_dir(self):
+        """Clearing a user with no directory removes nothing."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CompactionStateManager(storage_dir=tmpdir)
+
+            removed = manager.clear_user_states("never_saved_user")
+
+            assert removed == 0
+
+    def test_clear_user_states_handles_unlink_and_rmdir_failure(self):
+        """An unremovable entry is skipped, and rmdir failure is swallowed."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = CompactionStateManager(storage_dir=tmpdir)
+            user_dir = manager._get_user_dir("clear_fail_user")
+            user_dir.mkdir(parents=True)
+
+            removable = user_dir / "compact_removable.json"
+            removable.write_text("{}")
+            # A directory matching the glob can't be unlink()'d, so it
+            # survives and leaves user_dir non-empty -> rmdir() also fails.
+            stuck = user_dir / "compact_stuck.json"
+            stuck.mkdir()
+
+            removed = manager.clear_user_states("clear_fail_user")
+
+            assert removed == 1
+            assert not removable.exists()
+            assert stuck.exists()
+            assert user_dir.exists()
