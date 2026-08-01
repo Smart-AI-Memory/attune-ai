@@ -729,3 +729,94 @@ class TestFileSessionMemoryCoverageGaps:
     def test_subscribe_returns_false(self, memory):
         """subscribe() is unsupported in file mode and returns False."""
         assert memory.subscribe("some_channel", lambda msg: None) is False
+
+
+class TestPatternStagingCoverageGaps:
+    """Targeted tests for pattern-staging branches not exercised elsewhere.
+
+    Covers: get_staged_patterns() type filtering, promote_pattern() for a
+    missing pattern id and for an already-expired pattern, and
+    _cleanup_expired_patterns() actually removing an expired pattern from
+    state, disk, and marking the session dirty.
+    """
+
+    @pytest.fixture
+    def temp_storage(self, tmp_path):
+        """Create temporary storage directory."""
+        return str(tmp_path / "pattern_coverage_test")
+
+    @pytest.fixture
+    def memory(self, temp_storage):
+        """Create FileSessionMemory instance."""
+        config = FileSessionConfig(base_dir=temp_storage)
+        mem = FileSessionMemory(user_id="test_user", config=config)
+        yield mem
+        mem.close()
+
+    def test_get_staged_patterns_filtered_by_type(self, memory):
+        """get_staged_patterns(pattern_type=...) returns only matching patterns."""
+        memory.stage_pattern(
+            pattern_id="sec_1",
+            pattern_type="security",
+            name="Security Pattern",
+            description="desc",
+        )
+        memory.stage_pattern(
+            pattern_id="perf_1",
+            pattern_type="performance",
+            name="Performance Pattern",
+            description="desc",
+        )
+
+        security_only = memory.get_staged_patterns(pattern_type="security")
+
+        assert len(security_only) == 1
+        assert security_only[0].pattern_id == "sec_1"
+
+    def test_promote_pattern_not_found(self, memory):
+        """Promoting an unknown pattern id fails with 'Pattern not found'."""
+        success, pattern, message = memory.promote_pattern("does_not_exist")
+
+        assert success is False
+        assert pattern is None
+        assert message == "Pattern not found"
+
+    def test_promote_pattern_expired_removes_it(self, memory):
+        """Promoting an expired staged pattern removes it and reports expiry."""
+        memory.stage_pattern(
+            pattern_id="expired_pat",
+            pattern_type="general",
+            name="Expired Pattern",
+            description="desc",
+            confidence=0.9,
+        )
+        # Force expiry directly on the in-memory state.
+        memory._state.staged_patterns["expired_pat"].expires_at = time.time() - 1
+
+        success, pattern, message = memory.promote_pattern("expired_pat")
+
+        assert success is False
+        assert pattern is None
+        assert message == "Pattern expired"
+        assert "expired_pat" not in memory._state.staged_patterns
+
+    def test_cleanup_expired_patterns_removes_state_and_file(self, memory):
+        """An expired staged pattern is dropped from state, disk, and dirtied."""
+        memory.stage_pattern(
+            pattern_id="stale_pat",
+            pattern_type="general",
+            name="Stale Pattern",
+            description="desc",
+        )
+        staged_file = memory.config.patterns_dir / "staged" / "stale_pat.json"
+        assert staged_file.exists()
+
+        memory._state.staged_patterns["stale_pat"].expires_at = time.time() - 1
+        memory._dirty = False
+
+        remaining = memory.get_staged_patterns()
+
+        assert remaining == []
+        assert "stale_pat" not in memory._state.staged_patterns
+        assert not staged_file.exists()
+        assert memory._dirty is True
