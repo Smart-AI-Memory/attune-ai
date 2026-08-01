@@ -52,3 +52,41 @@ hand construction), 347 elicitation tests green, existing 20
 behavioral pins untouched. The drill-down question dissolved on
 inspection: `--list-dirs` is a skill-side loop between renders,
 not an in-form dependency — recorded in design.md.
+
+## D3 — Third consumer by chair fiat: 17 workflow templates registered (chair, 2026-08-01 morning)
+
+The chair ordered the expansion directly ("create the shared
+template for the standard analysis workflows and templates for the
+rich form candidates don't create for Poor fits") after the
+registry sweep showed the suitability tiers. This IS the third
+consumer moment D2 deferred to — arrived by fiat rather than
+demand telemetry, hours after the marker shipped.
+
+**Registered:** ONE shared standard-analysis template
+(path + depth ± budget) bound per-workflow across 13 workflows —
+the sweep's prediction that the family is one form held, so it is
+one factory, not 13 hand modules (exactly the copy-paste hazard
+the shared shape implied); plus 4 individual rich templates:
+deep-review (focus multi-select from the workflow's literal valid
+set), discovery-sweep (source names derived LIVE from
+default_sources(); the schema's `sources` field takes adapter
+OBJECTS and is deliberately not asked — the `source` name filter
+is), secure-release (changed-files provider), test-audit
+(dual path pickers). **Deliberately absent:** the five
+dict-context poor fits — they keep the free-text fallback + the
+demand marker.
+
+**Codex's D2 warning, answered early:** the API generalized to 17
+consumers with zero shape changes — no new FieldSlot fields, no
+generator edits; the only friction found was registration-by-
+import (fixed in #1845, lazy loading). The bound-validation path
+(tighten-only, list-needs-provider) now runs against 17 real
+registry schemas on every suite run.
+
+**Option provenance rule applied:** every static option value is
+verified against the tree and pinned by test (depth vocabulary,
+focus set, output formats); registry-derived options (sweep
+sources, path candidates) come from providers so they cannot
+drift. Live-fire receipt: discovery-sweep's generated form
+rendered with real working-tree path candidates and all seven
+adapter names.

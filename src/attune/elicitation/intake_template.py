@@ -226,6 +226,7 @@ def _ensure_builtin_templates() -> None:
     """
     import attune.elicitation.fix_intake  # noqa: F401
     import attune.elicitation.spec_intake  # noqa: F401
+    import attune.elicitation.workflow_templates  # noqa: F401
 
 
 def intake_form(
