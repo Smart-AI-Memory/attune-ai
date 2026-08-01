@@ -1,3 +1,28 @@
+## 2026-08-01 — waves 2–6 of the coverage fleet (Sonnet lanes, Fable 5 lead)
+
+Twelve more tests-only lanes (waves 2–6, PRs #1855–#1870; hybrid
+routing — Sonnet seats, all receipts re-run centrally by the
+lead). One production bug:
+
+- **`authoring/fact_check/numeric_refs.py:75` — Class 2-adjacent
+  (permanently dead check behind a broad except).** `_count_kinds`
+  does `from attune.authoring.source_introspection import KINDS` —
+  the symbol exists NOWHERE in the tree (repo-wide grep; the
+  line's own `# type: ignore[attr-defined]` was the mask). The
+  import always raises, the function always returns None via
+  `except Exception`, and every "N kinds" numeric claim in prose
+  has been silently unverifiable since authoring — a fact-checker
+  whose check never ran. Found by the wave-6 Sonnet lane (#1869);
+  fix is small (import the real registry or delete the check) and
+  pickable post-demo. Third instance tonight of the
+  `type: ignore`-masks-a-real-defect pattern (facade.py's two).
+
+Notable non-bug findings: parser.py PyYAML-fallback and loader.py
+default-path branches covered with real degraded-env triggers; the
+executor lane's CancelledError-under-coverage-tracing authoring
+hazard (lessons-queued); numeric_refs' Unicode-digit ValueError
+guard proven unreachable through the public API.
+
 ## 2026-08-01 — six-lane coverage fleet (delegated lanes, Fable 5 lead)
 
 Six parallel tests-only lanes (memory/short_term/facade,
@@ -1533,4 +1558,4 @@ describes the 18 classes-1–4 coverage-push finds. (The class 5 row was
 missing from this table until 2026-07-24 — it was recorded in the
 session-49f snapshot above but never propagated here.)
 
-Modules at 100%: 89 (cumulative across all sessions; +4 from the 2026-08-01 fleet — facade and fix_intake closed at 99% with their remainders classified: one dead-code region, one unreachable-without-mocking guard).
+Modules at 100%: 99 (cumulative across all sessions; +4 from the 2026-08-01 fleet — facade and fix_intake closed at 99% with their remainders classified: one dead-code region, one unreachable-without-mocking guard).
