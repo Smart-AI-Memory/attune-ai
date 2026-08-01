@@ -13,6 +13,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import json
+import sys
 import textwrap
 from pathlib import Path
 from typing import Any
@@ -2135,27 +2136,30 @@ class TestParsePoetryLock(TestDependencyParserMixin):
         assert all(d["pinned"] is True for d in deps)
         assert deps[0]["version"].startswith("==")
 
-    def test_poetry_lock_no_tomllib(self, tmp_path: Path) -> None:
+    def test_poetry_lock_no_tomllib(self, tmp_path: Path, monkeypatch) -> None:
         """Test poetry.lock parsing when tomllib is not available."""
         self._make_parser()
         lock_file = tmp_path / "poetry.lock"
         lock_file.write_text("[[package]]\nname = 'x'\nversion = '1.0'\n")
 
-        with patch.dict("sys.modules", {"tomllib": None, "tomli": None}):
-            # Re-import to get fresh behavior
-            import importlib
+        # monkeypatch.setitem, not patch.dict("sys.modules", ...) — the
+        # latter's clear+rebuild teardown races under xdist (guard test).
+        monkeypatch.setitem(sys.modules, "tomllib", None)
+        monkeypatch.setitem(sys.modules, "tomli", None)
+        # Re-import to get fresh behavior
+        import importlib
 
-            import attune.workflows.dependency_check_parsers as mod
+        import attune.workflows.dependency_check_parsers as mod
 
-            importlib.reload(mod)
+        importlib.reload(mod)
 
-            class TestParser(mod.DependencyParserMixin):
-                """Test parser."""
+        class TestParser(mod.DependencyParserMixin):
+            """Test parser."""
 
-            p = TestParser()
-            deps = p._parse_poetry_lock(lock_file)
-            # Should return empty since tomllib is not available
-            assert deps == []
+        p = TestParser()
+        deps = p._parse_poetry_lock(lock_file)
+        # Should return empty since tomllib is not available
+        assert deps == []
 
 
 class TestParsePackageLockJson(TestDependencyParserMixin):
@@ -2232,5 +2236,181 @@ class TestParsePackageLockJson(TestDependencyParserMixin):
 
         parser = self._make_parser()
         deps = parser._parse_package_lock_json(lock_file)
+
+        assert deps == []
+
+
+class TestParseRequirementsPackagingUnavailable(TestDependencyParserMixin):
+    """Tests for _parse_requirements when the packaging library import fails."""
+
+    def test_packaging_import_error_uses_fallback(self, tmp_path: Path, monkeypatch) -> None:
+        """When `packaging.requirements` can't be imported, fall back to regex parsing."""
+        req_file = tmp_path / "requirements.txt"
+        req_file.write_text("requests>=2.28.0\nflask\n")
+
+        parser = self._make_parser()
+        monkeypatch.setitem(sys.modules, "packaging.requirements", None)
+        deps = parser._parse_requirements(req_file)
+
+        assert len(deps) == 2
+        names = [d["name"] for d in deps]
+        assert "requests" in names
+        assert "flask" in names
+
+    def test_unparseable_requirement_line_skipped(self, tmp_path: Path) -> None:
+        """A line that survives the pre-filters but fails Requirement() parsing is skipped."""
+        req_file = tmp_path / "requirements.txt"
+        # ">=1.0" isn't blank/comment/option/URL/path, so it reaches Requirement()
+        # parsing, where it fails (no package name) and must be skipped, not raised.
+        req_file.write_text(">=1.0\nrequests>=2.28.0\n")
+
+        parser = self._make_parser()
+        deps = parser._parse_requirements(req_file)
+
+        assert len(deps) == 1
+        assert deps[0]["name"] == "requests"
+
+
+class TestParseRequirementsFallbackSkipping(TestDependencyParserMixin):
+    """Tests for comment/blank/option skipping in the fallback requirements parser."""
+
+    def test_fallback_skips_comments_blanks_and_options(self, tmp_path: Path) -> None:
+        """Comments, blank lines, and `-e`/`-r` options are skipped without producing deps."""
+        req_file = tmp_path / "requirements.txt"
+        req_file.write_text(
+            "# a comment\n\n-e .\n-r base.txt\nrequests>=2.28.0\n",
+        )
+
+        parser = self._make_parser()
+        deps = parser._parse_requirements_fallback(req_file)
+
+        assert len(deps) == 1
+        assert deps[0]["name"] == "requests"
+
+
+class TestParsePyprojectNoTomlLibrary(TestDependencyParserMixin):
+    """Tests for _parse_pyproject when neither tomllib nor tomli is importable."""
+
+    def test_tomllib_and_tomli_unavailable_uses_fallback(self, tmp_path: Path, monkeypatch) -> None:
+        """Missing both TOML libraries falls back to the regex-based parser."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            textwrap.dedent(
+                """\
+            [project]
+            dependencies = [
+                "requests>=2.28.0",
+            ]
+        """,
+            ),
+        )
+
+        parser = self._make_parser()
+        monkeypatch.setitem(sys.modules, "tomllib", None)
+        monkeypatch.setitem(sys.modules, "tomli", None)
+        deps = parser._parse_pyproject(pyproject)
+
+        names = [d["name"] for d in deps]
+        assert "requests" in names
+
+
+class TestParsePyprojectPackagingUnavailable(TestDependencyParserMixin):
+    """Tests for _parse_pyproject when the packaging library is unavailable."""
+
+    def test_packaging_unavailable_uses_regex_extraction(self, tmp_path: Path, monkeypatch) -> None:
+        """Without packaging, PEP 621 deps are extracted via a bare-name regex."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            textwrap.dedent(
+                """\
+            [project]
+            dependencies = [
+                "requests>=2.28.0",
+                "flask==2.3.0",
+            ]
+        """,
+            ),
+        )
+
+        parser = self._make_parser()
+        monkeypatch.setitem(sys.modules, "packaging.requirements", None)
+        deps = parser._parse_pyproject(pyproject)
+
+        names = [d["name"] for d in deps]
+        assert "requests" in names
+        assert "flask" in names
+        assert all(d["version"] == "any" for d in deps)
+
+
+class TestParsePyprojectUnparseableDependency(TestDependencyParserMixin):
+    """Tests for the except branch when a PEP 621 dependency string is unparseable."""
+
+    def test_unparseable_dependency_skipped(self, tmp_path: Path) -> None:
+        """A malformed PEP 621 dependency string is skipped, not raised."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            textwrap.dedent(
+                """\
+            [project]
+            dependencies = [
+                ">=bad spec",
+            ]
+        """,
+            ),
+        )
+
+        parser = self._make_parser()
+        deps = parser._parse_pyproject(pyproject)
+
+        assert deps == []
+
+
+class TestParsePyprojectPoetryDepSpecOtherType(TestDependencyParserMixin):
+    """Tests for the else branch when a Poetry dependency spec is neither str nor dict."""
+
+    def test_non_str_non_dict_spec_defaults_to_any(self, tmp_path: Path) -> None:
+        """A Poetry dependency spec that's a list (or other type) defaults to version 'any'."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            textwrap.dedent(
+                """\
+            [tool.poetry.dependencies]
+            python = "^3.10"
+            weird-dep = [1, 2, 3]
+        """,
+            ),
+        )
+
+        parser = self._make_parser()
+        deps = parser._parse_pyproject(pyproject)
+
+        weird = [d for d in deps if d["name"] == "weird-dep"][0]
+        assert weird["version"] == "any"
+
+
+class TestParsePyprojectMalformedToml(TestDependencyParserMixin):
+    """Tests for the broad except branch when pyproject.toml itself fails to parse."""
+
+    def test_malformed_toml_caught_and_returns_empty(self, tmp_path: Path) -> None:
+        """Invalid TOML syntax is caught by the broad exception handler, not raised."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text("not valid toml [[[")
+
+        parser = self._make_parser()
+        deps = parser._parse_pyproject(pyproject)
+
+        assert deps == []
+
+
+class TestParsePoetryLockMalformedToml(TestDependencyParserMixin):
+    """Tests for the broad except branch when poetry.lock itself fails to parse."""
+
+    def test_malformed_toml_caught_and_returns_empty(self, tmp_path: Path) -> None:
+        """Invalid TOML syntax in poetry.lock is caught, not raised."""
+        lock_file = tmp_path / "poetry.lock"
+        lock_file.write_text("not valid toml [[[")
+
+        parser = self._make_parser()
+        deps = parser._parse_poetry_lock(lock_file)
 
         assert deps == []
