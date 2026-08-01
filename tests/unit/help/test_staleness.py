@@ -11,6 +11,8 @@ from attune.help.staleness import (
     FeatureStaleness,
     StalenessReport,
     _is_excluded,
+    _read_frontmatter_value,
+    _read_stored_hash,
     check_staleness,
     compute_source_hash,
 )
@@ -253,3 +255,83 @@ class TestComputeSourceHashErrors:
         finally:
             # Restore permissions so tmp_path cleanup works
             bad.chmod(0o644)
+
+
+class TestReadFrontmatterValue:
+    """Tests for _read_frontmatter_value() edge cases."""
+
+    def test_no_frontmatter_delimiter(self) -> None:
+        """Text that doesn't start with '---' has no frontmatter."""
+        assert _read_frontmatter_value("just plain content\n", "source_hash") is None
+
+    def test_unterminated_frontmatter(self) -> None:
+        """An opening '---' with no closing '---' returns None."""
+        text = "---\nsource_hash: abc123\nno closing delimiter here\n"
+        assert _read_frontmatter_value(text, "source_hash") is None
+
+    def test_key_not_present(self) -> None:
+        """Well-formed frontmatter without the requested key returns None."""
+        text = "---\nother_key: value\n---\nbody text\n"
+        assert _read_frontmatter_value(text, "source_hash") is None
+
+    def test_key_present(self) -> None:
+        """Sanity check the happy path still works alongside the edge cases."""
+        text = "---\nsource_hash: abc123\n---\nbody text\n"
+        assert _read_frontmatter_value(text, "source_hash") == "abc123"
+
+
+class TestReadStoredHash:
+    """Tests for _read_stored_hash() validation and error paths."""
+
+    @pytest.mark.parametrize(
+        "bad_name",
+        ["", "a/b", "a\\b", "a..b", "a\x00b"],
+    )
+    def test_rejects_unsafe_feature_names(self, tmp_path: Path, bad_name: str) -> None:
+        """Feature names with path-traversal-shaped characters are rejected."""
+        help_dir = tmp_path / ".help"
+        help_dir.mkdir()
+        assert _read_stored_hash(bad_name, help_dir) is None
+
+    def test_missing_concept_file_returns_none(self, tmp_path: Path) -> None:
+        """No concept.md on disk for the feature returns None."""
+        help_dir = tmp_path / ".help"
+        help_dir.mkdir()
+        assert _read_stored_hash("auth", help_dir) is None
+
+    def test_unreadable_concept_file_returns_none(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """An OSError while reading concept.md degrades to None."""
+        help_dir = tmp_path / ".help"
+        concept_dir = help_dir / "templates" / "auth"
+        concept_dir.mkdir(parents=True)
+        concept = concept_dir / "concept.md"
+        concept.write_text("---\nsource_hash: abc123\n---\nbody\n", encoding="utf-8")
+
+        # chmod(0o000) can't make a file unreadable on Windows; force the
+        # OSError branch portably instead.
+        def _deny_read(self: Path, *args: object, **kwargs: object) -> str:
+            raise OSError("permission denied")
+
+        monkeypatch.setattr(Path, "read_text", _deny_read)
+        assert _read_stored_hash("auth", help_dir) is None
+
+
+class TestCheckStalenessUnknownFeature:
+    """Tests for check_staleness() with a feature name absent from the manifest."""
+
+    def test_unknown_feature_name_skipped(self, tmp_path: Path) -> None:
+        """A requested feature name not in the manifest is logged and skipped."""
+        manifest = FeatureManifest(
+            version=1,
+            features={
+                "auth": Feature(name="auth", description="", files=["src/auth/**"]),
+            },
+        )
+        help_dir = tmp_path / ".help"
+
+        report = check_staleness(manifest, help_dir, tmp_path, features=["nonexistent-feature"])
+
+        assert report.entries == []
+        assert report.stale_count == 0

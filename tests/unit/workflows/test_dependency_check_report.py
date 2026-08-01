@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
-from attune.workflows.dependency_check_report import format_dependency_check_report
+from datetime import datetime, timezone
+from unittest.mock import AsyncMock, patch
+
+from attune.workflows.data_classes import CostReport, WorkflowResult
+from attune.workflows.dependency_check_report import (
+    _get_risk_display,
+    format_dependency_check_report,
+    main,
+)
 
 
 def _base_result(**overrides):
@@ -56,6 +64,16 @@ class TestRiskLevelClassification:
     def test_low_risk_score_0(self):
         report = format_dependency_check_report(_base_result(risk_score=0), _base_input())
         assert "LOW RISK" in report
+
+    def test_negative_risk_score_falls_through_to_low_risk_default(self):
+        """No threshold in _RISK_LEVELS matches a negative score — the loop
+        exhausts and _get_risk_display falls through to its explicit
+        default return (line 28), distinct from the risk_score=0 case
+        which matches the (0, ...) threshold inside the loop.
+        """
+        icon, text = _get_risk_display(-5)
+        assert icon == "🟢"
+        assert text == "LOW RISK"
 
 
 # ---------------------------------------------------------------------------
@@ -243,3 +261,102 @@ class TestFooter:
         )
         assert "premium" in report
         assert "10 dependencies" in report
+
+
+# ---------------------------------------------------------------------------
+# CLI entry point (main())
+# ---------------------------------------------------------------------------
+
+
+def _make_workflow_result(**overrides) -> WorkflowResult:
+    """Build a minimal WorkflowResult with sensible defaults for main()."""
+    now = datetime.now(timezone.utc)
+    defaults = {
+        "success": True,
+        "stages": [],
+        "final_output": {
+            "report": {
+                "risk_level": "LOW RISK",
+                "risk_score": 10,
+                "total_dependencies": 5,
+                "vulnerability_count": 1,
+                "outdated_count": 2,
+            }
+        },
+        "cost_report": CostReport(
+            total_cost=0.05,
+            baseline_cost=0.10,
+            savings=0.05,
+            savings_percent=50.0,
+        ),
+        "started_at": now,
+        "completed_at": now,
+        "total_duration_ms": 100,
+        "provider": "anthropic",
+    }
+    defaults.update(overrides)
+    return WorkflowResult(**defaults)
+
+
+class TestMainEntryPoint:
+    """CLI entry point — main() drives DependencyCheckWorkflow and prints a
+    summary. These exercise the full async run()/print path (lines 150-177),
+    which the format-only tests above never reach.
+    """
+
+    def test_main_prints_full_summary(self, capsys):
+        result = _make_workflow_result()
+        mock_workflow = AsyncMock()
+        mock_workflow.execute.return_value = result
+
+        with patch(
+            "attune.workflows.dependency_check.DependencyCheckWorkflow",
+            return_value=mock_workflow,
+        ):
+            main()
+
+        captured = capsys.readouterr().out
+        assert "Dependency Check Results" in captured
+        assert "Provider: anthropic" in captured
+        assert "Success: True" in captured
+        assert "Risk Level: LOW RISK" in captured
+        assert "Risk Score: 10/100" in captured
+        assert "Total Dependencies: 5" in captured
+        assert "Vulnerabilities: 1" in captured
+        assert "Outdated: 2" in captured
+        assert "Total Cost: $0.0500" in captured
+        assert "Savings: $0.0500 (50.0%)" in captured
+
+    def test_main_calls_execute_with_current_path(self):
+        result = _make_workflow_result()
+        mock_workflow = AsyncMock()
+        mock_workflow.execute.return_value = result
+
+        with patch(
+            "attune.workflows.dependency_check.DependencyCheckWorkflow",
+            return_value=mock_workflow,
+        ):
+            main()
+
+        mock_workflow.execute.assert_awaited_once_with(path=".")
+
+    def test_main_handles_missing_report_fields_with_defaults(self, capsys):
+        """final_output.report absent entirely — main() falls back to N/A
+        and zero defaults rather than raising."""
+        result = _make_workflow_result(final_output={}, success=False)
+        mock_workflow = AsyncMock()
+        mock_workflow.execute.return_value = result
+
+        with patch(
+            "attune.workflows.dependency_check.DependencyCheckWorkflow",
+            return_value=mock_workflow,
+        ):
+            main()
+
+        captured = capsys.readouterr().out
+        assert "Success: False" in captured
+        assert "Risk Level: N/A" in captured
+        assert "Risk Score: 0/100" in captured
+        assert "Total Dependencies: 0" in captured
+        assert "Vulnerabilities: 0" in captured
+        assert "Outdated: 0" in captured

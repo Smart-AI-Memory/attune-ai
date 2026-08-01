@@ -3,15 +3,39 @@
 Tests for CommandLoader that discovers and loads command files.
 """
 
+import sys
 from pathlib import Path
 
 import pytest
 
 from attune.commands.loader import (
+    DEFAULT_COMMANDS_DIR,
     CommandLoader,
     get_default_commands_directory,
     load_commands_from_paths,
 )
+from attune.commands.parser import CommandParser
+
+
+class _StubParser(CommandParser):
+    """Parser stub that raises a chosen exception for named files.
+
+    Delegates to the real ``CommandParser`` for any file not in the
+    map, so ``discover()``'s exception-handling branches (ValueError /
+    FileNotFoundError / OSError from ``parser.parse_file``) can be
+    exercised deterministically without relying on filesystem races.
+    """
+
+    def __init__(self, exceptions_by_filename: dict[str, Exception]):
+        super().__init__()
+        self._exceptions_by_filename = exceptions_by_filename
+
+    def parse_file(self, file_path):
+        name = Path(file_path).name
+        exc = self._exceptions_by_filename.get(name)
+        if exc is not None:
+            raise exc
+        return super().parse_file(file_path)
 
 
 class TestCommandLoader:
@@ -216,6 +240,100 @@ Body.
         path = loader.find_command_file("nonexistent", commands_dir)
         assert path is None
 
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="dangling symlinks require elevated privileges on Windows",
+    )
+    def test_find_command_file_matches_via_glob_fallback(self, loader, tmp_path):
+        """A dangling symlink named ``<name>.md`` fails the direct exact-path
+        ``.exists()`` stat check (the symlink target is missing) but is still
+        enumerated by ``directory.glob('*.md')`` -- exercising the glob
+        fallback that returns a match found only by iterating the directory.
+        """
+        symlink_path = tmp_path / "ghost.md"
+        symlink_path.symlink_to(tmp_path / "does-not-exist-target.md")
+
+        result = loader.find_command_file("ghost", tmp_path)
+
+        assert result == symlink_path
+
+    def test_discover_skips_directory_matching_pattern(self, loader, tmp_path):
+        """A directory named ``*.md`` matches the glob pattern by name but
+        is not a file; discover() must skip it rather than try to parse it.
+        """
+        (tmp_path / "not-a-file.md").mkdir()
+        (tmp_path / "real.md").write_text("Real - A real command.")
+
+        configs = list(loader.discover(tmp_path))
+
+        assert [c.name for c in configs] == ["real"]
+
+    def test_discover_skips_files_raising_known_exceptions(self, loader, tmp_path):
+        """discover() catches ValueError, FileNotFoundError, and OSError
+        from the parser per-file and continues to the next file instead of
+        propagating -- one bad file must not abort the whole scan.
+        """
+        (tmp_path / "bad_value.md").write_text("triggers ValueError")
+        (tmp_path / "bad_notfound.md").write_text("triggers FileNotFoundError")
+        (tmp_path / "bad_os.md").write_text("triggers OSError")
+        (tmp_path / "good.md").write_text("Good - A valid command.")
+
+        stub_parser = _StubParser(
+            {
+                "bad_value.md": ValueError("bad value"),
+                "bad_notfound.md": FileNotFoundError("missing"),
+                "bad_os.md": OSError("io error"),
+            },
+        )
+        stub_loader = CommandLoader(parser=stub_parser)
+
+        configs = list(stub_loader.discover(tmp_path))
+
+        assert [c.name for c in configs] == ["good"]
+
+    def test_discover_skips_invalid_frontmatter_via_real_parser(self, loader, tmp_path):
+        """End-to-end: malformed YAML frontmatter raises ValueError from the
+        real CommandParser, and discover() skips the file rather than
+        raising, leaving other valid files intact.
+        """
+        (tmp_path / "malformed.md").write_text(
+            """---
+name: [unclosed
+---
+
+Body.
+""",
+        )
+        (tmp_path / "good.md").write_text("Good - A valid command.")
+
+        configs = list(loader.discover(tmp_path))
+
+        assert [c.name for c in configs] == ["good"]
+
+    def test_validate_directory_skips_non_command_entries(self, loader, tmp_path):
+        """validate_directory() has its own skip logic (separate from
+        discover()'s) -- exercise its is-file / SKIP_FILES / leading-
+        underscore branches directly.
+        """
+        (tmp_path / "README.md").write_text("# Not a command")
+        (tmp_path / "_private.md").write_text("Not a command either")
+        (tmp_path / "not-a-file.md").mkdir()
+        (tmp_path / "valid.md").write_text(
+            """---
+name: valid
+---
+
+Body.
+""",
+        )
+
+        results = loader.validate_directory(tmp_path)
+
+        assert str(tmp_path / "README.md") not in results
+        assert str(tmp_path / "_private.md") not in results
+        assert str(tmp_path / "not-a-file.md") not in results
+        assert str(tmp_path / "valid.md") not in results
+
     def test_duplicate_names_keeps_first(self, loader, tmp_path):
         """Test that duplicate command names keep first occurrence."""
         # Create two files with same command name
@@ -345,3 +463,18 @@ class TestGetDefaultCommandsDirectory:
 
         result = get_default_commands_directory()
         assert result == commands_dir
+
+    def test_falls_back_to_cwd_when_no_claude_dir_found(self, tmp_path, monkeypatch):
+        """When no ancestor has a ``.claude`` directory at all, walking up
+        exhausts every parent and the function falls back to
+        ``cwd / DEFAULT_COMMANDS_DIR`` rather than raising or returning a
+        parent-relative guess.
+        """
+        isolated = tmp_path / "isolated" / "cwd"
+        isolated.mkdir(parents=True)
+
+        monkeypatch.chdir(isolated)
+
+        result = get_default_commands_directory()
+
+        assert result == isolated / DEFAULT_COMMANDS_DIR

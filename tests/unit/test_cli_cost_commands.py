@@ -259,6 +259,19 @@ class TestCmdCosts:
         assert parsed["workflow"] == "code-review"
         assert parsed["requests"] == 1
 
+    @patch(_COST_TRACKER)
+    def test_oserror_returns_1(self, MockTracker, capsys) -> None:
+        """cmd_costs returns 1 and prints an error when CostTracker raises OSError."""
+        MockTracker.side_effect = OSError("disk read error")
+
+        args = Namespace(days=7, json=False, workflow=None)
+        result = cmd_costs(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "Error reading cost data" in captured.out
+        assert "disk read error" in captured.out
+
 
 # ---------------------------------------------------------------------------
 # Handler tests - cmd_costs_today
@@ -310,6 +323,21 @@ class TestCmdCostsToday:
         captured = capsys.readouterr()
         assert "0 requests" in captured.out
         assert "0.0%" in captured.out
+
+    @patch(_COST_TRACKER)
+    def test_oserror_returns_1(self, MockTracker, capsys) -> None:
+        """cmd_costs_today returns 1 and prints an error when CostTracker raises OSError."""
+        MockTracker.side_effect = OSError("cannot read costs.json")
+
+        from attune.cli_commands.cost_commands import cmd_costs_today
+
+        args = Namespace()
+        result = cmd_costs_today(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "Error reading cost data" in captured.out
+        assert "cannot read costs.json" in captured.out
 
 
 # ---------------------------------------------------------------------------
@@ -399,6 +427,39 @@ class TestCmdCostsExport:
         captured = capsys.readouterr()
         assert "Error" in captured.out
 
+    @patch(_COST_TRACKER)
+    def test_export_permission_error(self, MockTracker, tmp_path, capsys) -> None:
+        """cmd_costs_export returns 1 and reports permission errors distinctly."""
+        MockTracker.side_effect = PermissionError("Operation not permitted")
+
+        from attune.cli_commands.cost_commands import cmd_costs_export
+
+        out_file = tmp_path / "costs.json"
+        args = Namespace(output=str(out_file), format="json", days=30)
+        result = cmd_costs_export(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "Permission denied" in captured.out
+        assert "Operation not permitted" in captured.out
+        assert not out_file.exists()
+
+    @patch(_COST_TRACKER)
+    def test_export_oserror(self, MockTracker, tmp_path, capsys) -> None:
+        """cmd_costs_export returns 1 and reports generic OSErrors during export."""
+        MockTracker.side_effect = OSError("disk full")
+
+        from attune.cli_commands.cost_commands import cmd_costs_export
+
+        out_file = tmp_path / "costs.json"
+        args = Namespace(output=str(out_file), format="json", days=30)
+        result = cmd_costs_export(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "Error exporting cost data" in captured.out
+        assert "disk full" in captured.out
+
 
 # ---------------------------------------------------------------------------
 # Handler tests - cmd_costs_reset
@@ -468,3 +529,32 @@ class TestCmdCostsReset:
         assert result == 0
         captured = capsys.readouterr()
         assert "0 file(s)" in captured.out
+
+    def test_reset_delete_oserror(self, tmp_path, capsys, monkeypatch) -> None:
+        """cmd_costs_reset returns 1 and reports the error when unlink() fails.
+
+        Uses a real filesystem round trip rather than mocking unlink: making
+        "costs.json" a directory means Path.exists() is True but
+        Path.unlink() raises IsADirectoryError (a real OSError subclass),
+        exercising the except OSError branch without any mocking.
+        """
+        (tmp_path / "costs.json").mkdir()
+
+        from attune.cli_commands import cost_commands
+
+        original_path = Path
+
+        def patched_path(p: str) -> Path:
+            if p == ".attune":
+                return tmp_path
+            return original_path(p)
+
+        monkeypatch.setattr(cost_commands, "Path", patched_path, raising=False)
+
+        args = Namespace(confirm=True)
+        result = cost_commands.cmd_costs_reset(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "Error deleting" in captured.out
+        assert str(tmp_path / "costs.json") in captured.out

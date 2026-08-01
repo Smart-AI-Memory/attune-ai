@@ -7,8 +7,10 @@ run real. No network, no Redis, no LLM.
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -410,6 +412,17 @@ class TestUsageFreshness:
         usage = tmp_path / "telemetry" / "usage.jsonl"
         usage.parent.mkdir(parents=True)
         usage.write_text("{}\n", encoding="utf-8")
+        line = ta._usage_freshness_evidence()
+        assert line == "local spend: usage.jsonl last write 0h ago"
+
+    def test_mtime_ahead_of_clock_clamps_to_zero(self, tmp_path, monkeypatch):
+        """A file mtime slightly ahead of the clock must not render '-0h'."""
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path))
+        usage = tmp_path / "telemetry" / "usage.jsonl"
+        usage.parent.mkdir(parents=True)
+        usage.write_text("{}\n", encoding="utf-8")
+        future = time.time() + 30
+        os.utime(usage, (future, future))
         line = ta._usage_freshness_evidence()
         assert line == "local spend: usage.jsonl last write 0h ago"
 
