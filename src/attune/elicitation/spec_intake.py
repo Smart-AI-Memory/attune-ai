@@ -23,7 +23,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from attune.elicitation.bridge import form_from_dict
+from attune.elicitation.intake_template import (
+    PROVIDERS,
+    TEMPLATES,
+    FieldSlot,
+    FormTemplate,
+    ProviderContext,
+    build_form,
+)
 from attune.meta_workflows.models import FormSchema
 
 #: Free-text sentinel offered alongside derived options.
@@ -58,58 +65,68 @@ def area_candidates(repo_root: Path, limit: int = 6) -> list[str]:
     return areas[:limit]
 
 
+def _provider_spec_areas(ctx: ProviderContext) -> list[str]:
+    """Registered provider: package-dir area candidates."""
+    return area_candidates(ctx.repo_root)
+
+
+PROVIDERS["spec_areas"] = _provider_spec_areas
+
+#: The new-spec intake, declaratively (Phase 2a). A standalone
+#: (unbound) template: /spec is a skill intake, not a registry
+#: workflow — the optional binding exists for exactly this case.
+SPEC_TEMPLATE = FormTemplate(
+    title="New spec intake",
+    description="Frame the spec before brainstorming: outcome, acceptance, area.",
+    fields=[
+        FieldSlot(
+            key="outcome",
+            text="What should exist when this spec is done?",
+            control="textarea",
+            required=True,
+            help_text="One or two sentences — becomes the spec's outcome statement.",
+        ),
+        FieldSlot(
+            key="done_when",
+            text="Done when? (acceptance criteria)",
+            control="textarea",
+            required=True,
+            help_text=(
+                "Cheap to write, expensive to skip — e.g. "
+                "'PR merged green, regression test landed'."
+            ),
+        ),
+        FieldSlot(
+            key="area",
+            text="Primary code area?",
+            provider="spec_areas",
+            other=OTHER,
+            fallback_text="Primary code area? (path or name)",
+            help_text="Where most of the change lands — bounds the design conversation.",
+        ),
+        FieldSlot(
+            key="slug",
+            text="Spec slug (optional — leave blank to derive one)",
+            required=False,
+            help_text="kebab-case directory name under docs/specs/.",
+        ),
+    ],
+)
+
+TEMPLATES["spec-intake"] = SPEC_TEMPLATE
+
+
 def build_spec_intake_form(areas: list[str]) -> FormSchema:
-    """The one new-spec intake form (D21: widget-first, batched)."""
-    fields: list[dict[str, Any]] = [
-        {
-            "id": "outcome",
-            "text": "What should exist when this spec is done?",
-            "type": "textarea",
-            "required": True,
-            "help_text": "One or two sentences — becomes the spec's outcome statement.",
-        },
-        {
-            "id": "done_when",
-            "text": "Done when? (acceptance criteria)",
-            "type": "textarea",
-            "required": True,
-            "help_text": "Cheap to write, expensive to skip — e.g. 'PR merged green, regression test landed'.",
-        },
-    ]
-    if areas:
-        fields.append(
-            {
-                "id": "area",
-                "text": "Primary code area?",
-                "type": "single_select",
-                "options": [*areas, OTHER],
-                "help_text": "Where most of the change lands — bounds the design conversation.",
-            }
-        )
-    else:
-        fields.append(
-            {
-                "id": "area",
-                "text": "Primary code area? (path or name)",
-                "type": "text_input",
-                "required": True,
-            }
-        )
-    fields.append(
-        {
-            "id": "slug",
-            "text": "Spec slug (optional — leave blank to derive one)",
-            "type": "text_input",
-            "required": False,
-            "help_text": "kebab-case directory name under docs/specs/.",
-        }
-    )
-    return form_from_dict(
-        {
-            "title": "New spec intake",
-            "description": "Frame the spec before brainstorming: outcome, acceptance, area.",
-            "fields": fields,
-        }
+    """The one new-spec intake form (D21: widget-first, batched).
+
+    Phase 2a: built from :data:`SPEC_TEMPLATE` with the pre-derived
+    areas as overrides — hand construction deleted (same-PR rule,
+    spec D2); the structural-equality gate pins the shipped shape.
+    """
+    return build_form(
+        SPEC_TEMPLATE,
+        ProviderContext(repo_root=Path.cwd()),
+        candidates_override={"area": areas},
     )
 
 

@@ -81,9 +81,27 @@ class FieldSlot:
 - A field whose value is already present in the invocation text
   or context is PREFILLED, rendered as inferred (the existing
   `inferred_from` path) — never re-asked blind.
-- Proof obligation: the fix and spec intakes re-expressed as
-  templates render byte-identical `FormSchema`s to the shipped
-  hand modules, pinned by test, before any third consumer ships.
+- Proof obligation (AMENDED by roundtable D2, 2026-07-31): the fix
+  and spec intakes re-expressed as templates render STRUCTURALLY
+  EQUAL `FormSchema`s to the shipped hand shapes — equality on the
+  built object with providers stubbed to fixtures (fix reads live
+  git state, so byte-comparing against a real tree is flaky by
+  construction; claude seat, codex concurring). The gate ends in
+  same-PR deletion of the hand FORM-BUILDING (no hand-edited
+  twins); derivation functions become the registered providers and
+  CLI seams stay.
+- Binding is OPTIONAL (`workflow: str | None`): a bound template
+  is cross-checked against the registry `input_schema`
+  (tighten-only, list-needs-provider); an unbound template is a
+  standalone skill intake — /spec's is one, and fix's slot keys
+  are CLI-composition keys rather than schema keys, so both ship
+  unbound (execution note, 2026-07-31).
+- The `--list-dirs` folder drill-down is a SKILL-side loop over
+  the CLI seam BETWEEN renders, not an in-form dependency — so
+  single-pass provider execution suffices in v1, and the
+  drill-down survives migration untouched (answers the
+  antigravity/claude follow-up; `ProviderContext.answered` is the
+  seam if in-form dependency ever becomes real).
 
 ## Generation flow
 
@@ -91,8 +109,10 @@ class FieldSlot:
 intake_form(workflow_name, invocation_text) ->
   1. registry lookup -> workflow_cls.input_schema  (fail: no form,
      fall back to free-text ask — never block)
-  2. template lookup (in-tree dict; missing -> derive a minimal
-     template from the schema alone)
+  2. template lookup (in-tree dict; missing -> NO generated form:
+     free-text fallback + a demand-telemetry marker — the chair's
+     D2 merge ruling of the table's 2-1 split; schema-only
+     derivation is a debug tool, never a production surface)
   3. run providers (bounded; see latency)
   4. build FormSchema via form_from_dict  (validation unchanged)
   5. surface via select_form_surface      (unchanged)
