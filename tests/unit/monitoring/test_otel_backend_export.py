@@ -13,6 +13,7 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import gc
+import importlib.util
 import sys
 from unittest.mock import MagicMock, patch
 
@@ -280,12 +281,33 @@ class TestCheckOtelInstalled:
     # actually *raises* ModuleNotFoundError (missing parent package) rather
     # than returning None, which crashes OTELBackend.__init__ — logged as a
     # bug in docs/COVERAGE_BUG_LOG.md. These tests cover the intended logic.
+    #
+    # The mock is SELECTIVE (otel names only, real find_spec otherwise):
+    # a blanket patch hands a MagicMock to ANY find_spec call in the
+    # process during the with-window — under xdist, a GC-triggered
+    # unraisable landing in that window makes pytest's unraisable handler
+    # itself crash ("RuntimeError: Failed to process unraisable
+    # exception"), sniping unrelated CI lanes.
     def test_all_present_returns_true(self):
-        with patch("importlib.util.find_spec", return_value=MagicMock()):
+        real_find_spec = importlib.util.find_spec
+
+        def fake(name, *args, **kwargs):
+            if name.startswith("opentelemetry"):
+                return MagicMock()
+            return real_find_spec(name, *args, **kwargs)
+
+        with patch("importlib.util.find_spec", side_effect=fake):
             assert _bare()._check_otel_installed() is True
 
     def test_any_missing_returns_false(self):
-        with patch("importlib.util.find_spec", return_value=None):
+        real_find_spec = importlib.util.find_spec
+
+        def fake(name, *args, **kwargs):
+            if name.startswith("opentelemetry"):
+                return None
+            return real_find_spec(name, *args, **kwargs)
+
+        with patch("importlib.util.find_spec", side_effect=fake):
             assert _bare()._check_otel_installed() is False
 
 
