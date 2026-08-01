@@ -130,12 +130,17 @@ family of intake forms should read as ONE surface.
 
 - Zero added round trips anywhere: widgets were already inline;
   the dashboard file is cached after first load.
-- Byte budget: `FORM_THEME_CSS` ≤ 4 KB raw, enforced by a
-  residency-style drift test (`test_form_theme_budget`) so the
-  theme cannot quietly grow into a framework. At ≤4 KB the
-  render-time cost is sub-millisecond against the ~100–145 ms
-  derivation baseline — styling is not on the latency path, and
-  the budget test keeps it that way.
+- Byte budget: `FORM_THEME_CSS` ≤ 6 KB raw (AMENDED from 4 KB,
+  chair ruling 2026-07-31, execution-time measurement: the full
+  family sheet with the mandated `var()` fallback literals is
+  5,574 B — the 4 KB figure predated the fallbacks; see the spec's
+  decisions.md), enforced by a residency-style drift test
+  (`test_form_theme_budget`) so the theme cannot quietly grow into
+  a framework. At ≤6 KB the render-time cost is still
+  sub-millisecond against the ~100–145 ms derivation baseline —
+  styling is not on the latency path, and the budget test keeps it
+  that way. Widgets ship per-form family SUBSETS of the sheet, so
+  per-widget payloads stay in the ~2.5–3 KB class regardless.
 - No external fonts, no icon fonts, no images: system font stack
   and host tokens only. (An @import or webfont would be the first
   real latency regression this section exists to forbid.)
