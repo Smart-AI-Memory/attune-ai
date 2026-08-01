@@ -20634,3 +20634,82 @@ def ", start_idx + 1)` for module-
   (`isinstance(entry.get("tokens"), dict)`). Pinned by a test
   asserting the current crashing behavior as the finding's
   receipt.
+- **A wall-clock timing assertion standing in for a REGIME check
+  flakes on loaded runners — size the bound to separate regimes
+  (~10x apart), not speeds, record the measured CI datapoint at
+  the assertion site, and release parked async tasks after
+  measurement**: 2026-08-01, #1846's only red lane.
+  `test_slow_sink_does_not_block_sources` asserted `elapsed < 1.0`
+  as the proxy for "fire-and-forget delivery doesn't block";
+  windows-latest 3.12 under xdist measured 1.578s with ZERO actual
+  blocking (the diff under test was lessons-only). The property
+  distinguishes inline-awaited (~10s, the sink's wait) from
+  fire-and-forget (<2s even loaded) — a 5.0s bound separates the
+  regimes with ≥2x margin both ways where 1.0s had none. Fixed in
+  `566c1e289` with the CI datapoint in the assertion comment so
+  the next reader doesn't re-tighten it; also `sink_event.set()`
+  after measurement so parked tasks don't linger into the session.
+
+- **A threshold poll armed WHILE the work it gates is still in
+  flight fires on the stale side of the transition — arm it with a
+  lead-in past the state change, or fold the in-flight work into
+  the predicate**: 2026-08-01, the coverage-fleet flow control.
+  The gate was "launch the next wave when open lane PRs ≤ 6"; the
+  poll was re-armed the moment wave 3 LAUNCHED, so its first check
+  read the pre-wave count (5 — wave 3's PRs didn't exist yet) and
+  signaled "gate open" instantly, inviting a double-launch. The
+  count only rises AFTER lanes report and the lead opens their
+  PRs, so the poll's predicate was measuring the wrong side of a
+  lagging indicator. Caught by the judgment seat before a wave 4
+  launched over wave 3; re-armed with a 15-minute lead-in sleep.
+  Sibling of "workflow_run fires only when the WHOLE workflow
+  completes" — both are gates evaluated against state that hasn't
+  transitioned yet. Rule: a flow-control predicate over a LAGGING
+  counter must either wait out the lag (lead-in) or count the
+  in-flight work directly.
+- **A `# type: ignore[attr-defined]` on an IMPORT is a tripwire,
+  not an annotation — grep-verify the symbol exists; three
+  type-ignore-masked production defects surfaced in ONE night's
+  coverage fleet**: 2026-08-01. (1) `numeric_refs._count_kinds`
+  imports `KINDS` from source_introspection — the symbol exists
+  NOWHERE in the tree, the import always raises, and the broad
+  `except Exception` made a fact-checker whose check never ran.
+  (2)/(3) `short_term/facade.py`'s DataSanitizer bool-position
+  wiring and enable_cross_session signature misbind — both behind
+  type ignores. The comment class literally marks "the type
+  checker says this is wrong and I overrode it" — which is
+  sometimes right (typeshed gaps) and sometimes a live defect
+  wearing a permission slip. Audit rule: `grep -rn "type: ignore"
+  src/` is a bug-hunting sweep, not lint noise; every
+  `attr-defined`/`arg-type` ignore on a REAL call path deserves a
+  one-line existence/signature check. All three finds were
+  Sonnet-lane coverage work — the sweep is cheap.
+
+- **Real-sleep timeout tests are flaky UNDER COVERAGE TRACING —
+  instrumentation overhead can make `asyncio.wait_for`'s cancel
+  cleanup surface `CancelledError` (a BaseException, escaping
+  `except Exception`) instead of `TimeoutError`**: found by the
+  hooks/executor lane (#1864). A `timeout=1` hook racing an
+  `asyncio.sleep(5)` passed bare but failed under `coverage run` —
+  the traced loop is slow enough that cancellation lands during
+  cleanup and the executor's `except Exception` never sees it
+  (CancelledError stopped being an Exception subclass in 3.8).
+  Fix pattern: patch `wait_for` at the module seam to raise
+  `TimeoutError` deterministically instead of racing wall-clock.
+  Sweep-worthy: any timeout-branch test using real sleeps will
+  intermittently fail exactly and only in coverage-instrumented CI
+  lanes — the confusing signature is "passes in test lane, fails
+  in coverage lane".
+
+- **`cd /tmp && <metric run> && gh pr create ...` fails "not a git
+  repository" — the cd persists for the REST of the compound
+  command; split metric runs and repo commands into separate
+  calls**: hit three times in one night's lane processing (the
+  worktree-coverage recipe legitimately starts `cd /tmp`, and the
+  natural efficiency instinct chains the PR-open after it). The
+  harness resets cwd BETWEEN Bash calls, not within one — so the
+  gh/git tail of a chained command runs from /tmp. The receipts
+  before the failure are all valid (the error is late); just
+  reissue the repo command separately. Rule: one compound command
+  never mixes a cd-to-scratch metric recipe with repo-cwd
+  operations.
