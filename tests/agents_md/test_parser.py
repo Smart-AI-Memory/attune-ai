@@ -287,3 +287,116 @@ Test.
         assert config.extra["source_file"] == "test.md"
         assert "raw_frontmatter" in config.extra
         assert config.extra["raw_frontmatter"]["custom_field"] == "custom_value"
+
+    def test_parse_capabilities_as_string(self, parser):
+        """Test parsing capabilities as a comma-separated string (line 169)."""
+        content = """---
+name: test
+capabilities: code_review, testing, docs
+---
+Test.
+"""
+        config = parser.parse_content(content)
+        assert config.capabilities == ["code_review", "testing", "docs"]
+
+    def test_parse_capabilities_as_list(self, parser):
+        """Test parsing capabilities as a YAML list (default codepath)."""
+        content = """---
+name: test
+capabilities:
+  - code_review
+  - testing
+---
+Test.
+"""
+        config = parser.parse_content(content)
+        assert config.capabilities == ["code_review", "testing"]
+
+    def test_validate_file_invalid_path(self, parser):
+        """Test validation catches an invalid file path (null byte, lines 219-220)."""
+        errors = parser.validate_file("bad\x00path.md")
+
+        assert len(errors) == 1
+        assert "Invalid file path" in errors[0]
+
+    def test_validate_file_not_found(self, parser, tmp_path):
+        """Test validation catches a nonexistent file (line 223)."""
+        missing = tmp_path / "does_not_exist.md"
+
+        errors = parser.validate_file(str(missing))
+
+        assert len(errors) == 1
+        assert "File not found" in errors[0]
+
+    def test_validate_file_read_error(self, parser, tmp_path):
+        """Test validation catches an OSError while reading (lines 228-229).
+
+        A directory that exists but cannot be opened as a file (via
+        ``open()``) reaches the file-exists check and then raises
+        ``IsADirectoryError``, a subclass of ``OSError``.
+        """
+        directory = tmp_path / "a_directory.md"
+        directory.mkdir()
+
+        errors = parser.validate_file(str(directory))
+
+        assert len(errors) == 1
+        assert "Cannot read file" in errors[0]
+
+    def test_validate_file_missing_frontmatter(self, parser, tmp_path):
+        """Test validation catches a file with no YAML frontmatter (lines 234-235)."""
+        agent_file = tmp_path / "no_frontmatter.md"
+        agent_file.write_text("Just markdown, no frontmatter at all.")
+
+        errors = parser.validate_file(str(agent_file))
+
+        assert errors == ["Missing YAML frontmatter (must start with ---)"]
+
+    def test_validate_file_invalid_yaml(self, parser, tmp_path):
+        """Test validation catches malformed YAML frontmatter (lines 242-244)."""
+        agent_file = tmp_path / "bad_yaml.md"
+        agent_file.write_text(
+            """---
+name: test
+invalid: yaml: syntax:
+---
+Test.
+"""
+        )
+
+        errors = parser.validate_file(str(agent_file))
+
+        assert len(errors) == 1
+        assert "Invalid YAML" in errors[0]
+
+    def test_validate_file_invalid_provider(self, parser, tmp_path):
+        """Test validation catches an invalid provider (line 260)."""
+        agent_file = tmp_path / "bad_provider.md"
+        agent_file.write_text(
+            """---
+name: test
+provider: not_a_real_provider
+---
+Test.
+"""
+        )
+
+        errors = parser.validate_file(str(agent_file))
+
+        assert any("provider" in e.lower() for e in errors)
+
+    def test_validate_file_empathy_level_not_an_integer(self, parser, tmp_path):
+        """Test validation catches a non-integer empathy_level (lines 272-273)."""
+        agent_file = tmp_path / "bad_empathy.md"
+        agent_file.write_text(
+            """---
+name: test
+empathy_level: not_a_number
+---
+Test.
+"""
+        )
+
+        errors = parser.validate_file(str(agent_file))
+
+        assert any("empathy_level must be an integer" in e for e in errors)

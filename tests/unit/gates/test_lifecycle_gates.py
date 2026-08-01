@@ -275,3 +275,81 @@ class TestRunner:
         assert exit_code([ok, chair, blocked]) == 2
         assert exit_code([ok, chair]) == 1
         assert exit_code([ok]) == 0
+
+    def test_missing_artifact_file_yields_empty_document(self, tmp_path):
+        """No requirements.md at all — _document_for's final fallthrough
+        (empty string) rather than any candidate file. The baseline
+        gates still run cleanly over an empty document."""
+        spec_dir = tmp_path / "docs" / "specs" / "my-spec"
+        spec_dir.mkdir(parents=True)  # no files written inside
+        receipts = run_boundary(
+            "requirements",
+            "my-spec",
+            project_root=tmp_path,
+            tier="sub-spec",
+            changed_paths=["docs/x.md"],
+            ledger_file=tmp_path / "ledger.jsonl",
+        )
+        assert {r.gate_id: r.state for r in receipts} == {
+            "symbol-reality": "PASS",
+            "falsifiability": "PASS",
+        }
+        sym = next(r for r in receipts if r.gate_id == "symbol-reality")
+        assert sym.evidence_refs == [f"checked 0 cited tokens against {tmp_path}"]
+
+    def test_spec_tier_isolated_radius_runs_format_lint_not_chair_review(self, tmp_path):
+        """Spec-tier work at requirements, isolated radius: the ladder
+        gains format-lint but not chair-review."""
+        root = self._spec_dir(tmp_path, CONFABULATED)
+        receipts = run_boundary(
+            "requirements",
+            "my-spec",
+            project_root=root,
+            tier="spec",
+            changed_paths=["src/attune/gates/lifecycle/protocol.py", "tests/unit/x.py"],
+            ledger_file=tmp_path / "ledger.jsonl",
+        )
+        gate_ids = {r.gate_id for r in receipts}
+        assert gate_ids == {"symbol-reality", "falsifiability", "format-lint"}
+        fmt = next(r for r in receipts if r.gate_id == "format-lint")
+        assert fmt.state == "REVISE"  # CONFABULATED has no draft items / dissent register
+        assert fmt.phase == "requirements" and fmt.target == "my-spec"
+
+    def test_spec_tier_chair_radius_adds_chair_review(self, tmp_path):
+        """Chair blast radius appends the never-autonomous chair-review
+        gate, which is never selected by symbol-reality/falsifiability/
+        format-lint's elif chain — it needs its own branch."""
+        root = self._spec_dir(tmp_path, CONFABULATED)
+        receipts = run_boundary(
+            "requirements",
+            "my-spec",
+            project_root=root,
+            tier="spec",
+            changed_paths=[],  # unclassifiable -> chair (conservative default)
+            ledger_file=tmp_path / "ledger.jsonl",
+        )
+        gate_ids = {r.gate_id for r in receipts}
+        assert gate_ids == {"symbol-reality", "falsifiability", "format-lint", "chair-review"}
+        chair = next(r for r in receipts if r.gate_id == "chair-review")
+        assert chair.state == "CHAIR_REQUIRED"
+        assert chair.phase == "requirements" and chair.target == "my-spec"
+        assert chair.findings == ["blast radius 'chair' (radius='chair')"]
+        assert chair.proposed_disposition == "chair rules before this boundary advances"
+
+    def test_format_lint_inapplicable_outside_requirements_falls_through(self, tmp_path):
+        """format-lint is only wired for the requirements boundary
+        (RR-4's kind='final' choice); at any other phase it's a
+        boundary-inapplicable gate that hits the runner's else/continue,
+        never producing a receipt."""
+        spec_dir = tmp_path / "docs" / "specs" / "my-spec"
+        spec_dir.mkdir(parents=True)
+        (spec_dir / "design.md").write_text(CONFABULATED, encoding="utf-8")
+        receipts = run_boundary(
+            "design",
+            "my-spec",
+            project_root=tmp_path,
+            tier="spec",
+            changed_paths=["src/attune/gates/lifecycle/protocol.py", "tests/unit/x.py"],
+            ledger_file=tmp_path / "ledger.jsonl",
+        )
+        assert {r.gate_id for r in receipts} == {"symbol-reality", "falsifiability"}

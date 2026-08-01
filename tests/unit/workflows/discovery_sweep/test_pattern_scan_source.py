@@ -6,12 +6,24 @@ adapter can be exercised without depending on src/ layout.
 
 from __future__ import annotations
 
+import ast
 import asyncio
+import os
+import re
+import sys
 from pathlib import Path
 
+import pytest
+
 from attune.workflows.discovery_sweep import Finding, FindingSource
+from attune.workflows.discovery_sweep.sources import pattern_scan as _pattern_scan_mod
 from attune.workflows.discovery_sweep.sources.pattern_scan import (
     PatternScanSource,
+)
+
+_POSIX_NON_ROOT = pytest.mark.skipif(
+    sys.platform == "win32" or (hasattr(os, "geteuid") and os.geteuid() == 0),
+    reason="permission-bit semantics need non-root POSIX",
 )
 
 
@@ -346,3 +358,193 @@ class TestPathRendering:
         assert len(findings) == 1
         # Path is relative to the input root.
         assert findings[0].file in ("pkg/beta.py", "pkg\\beta.py")
+
+
+class TestStringSpanBoundaryLines:
+    """``_is_inside_string_span`` on the string's own start/end line.
+
+    The interior-line case (``start_line < line < end_line``) is
+    already covered by ``TestMultiLineDocstringFilter``. These two
+    exercise the boundary branches: a match on the same line the
+    multi-line string OPENS (after the opening quote), and a match on
+    the line it CLOSES (before the closing quote).
+    """
+
+    def test_match_on_string_open_line_after_quote_skipped(self, tmp_path: Path) -> None:
+        keyword = "ev" + "al"
+        (tmp_path / "a.py").write_text(
+            f'x = """also mentions {keyword}( here\n' "continues on the next line\n" '"""\n',
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        assert findings == [], findings
+
+    def test_match_on_string_close_line_before_quote_skipped(self, tmp_path: Path) -> None:
+        keyword = "ev" + "al"
+        (tmp_path / "a.py").write_text(
+            'x = """\nfirst line\n' f'{keyword}( at end"""\n',
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        assert findings == [], findings
+
+
+class TestQuoteWalkStateToggle:
+    """``_is_inside_quoted_region`` closes a quote pair before the match.
+
+    A single-quote-toggle open (``test_eval_inside_single_quoted_string_
+    skipped``) is already covered. This closes the pair (open then
+    close) BEFORE the match on the same line, so the walk's state ends
+    back at ``None`` — proving the match is correctly treated as
+    outside any string once the earlier pair has closed.
+    """
+
+    def test_quote_pair_closed_before_match_not_treated_as_quoted(self, tmp_path: Path) -> None:
+        keyword = "ev" + "al"
+        (tmp_path / "a.py").write_text(
+            f"s = 'hi' if {keyword}(cond) else 'bye'\n",
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        hits = [f for f in findings if "dangerous_eval" in f.tags]
+        assert len(hits) == 1, findings
+
+
+class TestSpecialFilePaths:
+    """Filesystem entries that are neither a regular file nor a directory."""
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="mkfifo is POSIX-only")
+    def test_fifo_path_neither_file_nor_dir_returns_empty(self, tmp_path: Path) -> None:
+        fifo_path = tmp_path / "myfifo"
+        os.mkfifo(fifo_path)
+        findings = asyncio.run(PatternScanSource().discover([str(fifo_path)], 0.0))
+        assert findings == []
+
+
+class TestUnreadableFileTolerance:
+    """A file the scanner cannot read is skipped, not fatal to the run."""
+
+    def test_invalid_utf8_file_skipped_other_files_still_scanned(self, tmp_path: Path) -> None:
+        bad = tmp_path / "bad.py"
+        bad.write_bytes(b"\xff\xfe\x00 not valid utf-8\n")
+        good = tmp_path / "good.py"
+        good.write_text(
+            "def f():\n    try:\n        pass\n    except:\n        pass\n",
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        files = {f.file for f in findings}
+        assert "good.py" in files
+        assert "bad.py" not in files
+
+    @_POSIX_NON_ROOT
+    def test_permission_denied_file_skipped(self, tmp_path: Path) -> None:
+        unreadable = tmp_path / "secret.py"
+        unreadable.write_text("eval(x)\n", encoding="utf-8")
+        unreadable.chmod(0o000)
+        try:
+            findings = _scan(tmp_path)
+        finally:
+            unreadable.chmod(0o644)
+        assert findings == []
+
+
+class TestPathRenderingFallback:
+    """``relative_to`` failure falls back to the raw path string.
+
+    Not reachable through a real ``rglob`` walk (every yielded path is
+    constructed under ``root``), so this simulates the failure via a
+    scoped monkeypatch — the fallback exists as a defensive guard, and
+    this proves it does the right thing if ever exercised.
+    """
+
+    def test_relative_to_value_error_falls_back_to_str_path(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        sub = tmp_path / "pkg"
+        sub.mkdir()
+        target = sub / "beta.py"
+        target.write_text(
+            "def f():\n    try:\n        pass\n    except:\n        pass\n",
+            encoding="utf-8",
+        )
+        real_relative_to = Path.relative_to
+
+        def broken_relative_to(self: Path, other: object, *a: object, **kw: object) -> Path:
+            if self == target:
+                raise ValueError("simulated: not relative to root")
+            return real_relative_to(self, other, *a, **kw)  # type: ignore[arg-type]
+
+        monkeypatch.setattr(Path, "relative_to", broken_relative_to)
+        findings = _scan(tmp_path)
+        assert len(findings) == 1
+        assert findings[0].file == str(target)
+
+
+class TestDefensiveGuards:
+    """Belt-and-suspenders branches not reachable via normal inputs.
+
+    Both guards exist for robustness against AST/regex edge cases the
+    module's own comments flag as atypical. Simulating them via a
+    scoped monkeypatch proves the fallback behavior is correct without
+    weakening the production code.
+    """
+
+    def test_constant_node_missing_end_position_excludes_its_span(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A ``Constant`` node with ``end_lineno is None`` is skipped
+        when building string spans (``_collect_string_spans``), so its
+        contents fall through to the line-local quote-walk fallback."""
+        keyword = "ev" + "al"
+        content = (
+            '"""Module docstring marker HERE.\n'
+            "\n"
+            f"Mentions {keyword}( in prose.\n"
+            '"""\n'
+            "\n"
+            "def safe(): return 1\n"
+        )
+        (tmp_path / "a.py").write_text(content, encoding="utf-8")
+
+        real_parse = ast.parse
+
+        def broken_parse(src: str, *a: object, **kw: object) -> ast.AST:
+            tree = real_parse(src, *a, **kw)  # type: ignore[arg-type]
+            for node in ast.walk(tree):
+                if (
+                    isinstance(node, ast.Constant)
+                    and isinstance(node.value, str)
+                    and "docstring marker HERE" in node.value
+                ):
+                    node.end_lineno = None
+            return tree
+
+        monkeypatch.setattr(_pattern_scan_mod.ast, "parse", broken_parse)
+        findings = _scan(tmp_path)
+        hits = [f for f in findings if "dangerous_eval" in f.tags]
+        assert len(hits) == 1, findings
+
+    def test_match_starting_exactly_on_quote_char_treated_as_quoted(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """None of the shipped ``_PATTERNS`` regexes can start a match
+        on a quote character (they all open on a keyword/``#``), so
+        ``_is_inside_quoted_region``'s "match lands inside the quote
+        run itself" branch is untestable through the real pattern set.
+        A synthetic pattern exercises the guard directly."""
+        synthetic = _pattern_scan_mod._PatternSpec(
+            pattern_name="synthetic_quote_probe",
+            severity="low",
+            regex=re.compile(r'"'),
+            title="synthetic quote-char probe",
+        )
+        monkeypatch.setattr(_pattern_scan_mod, "_PATTERNS", (synthetic,))
+        # Syntactically invalid so ast.parse fails -> spans is None ->
+        # the AST filter never short-circuits the quote-walk fallback.
+        (tmp_path / "a.py").write_text(
+            'TITLE = "hello"\ndef broken(:\n    pass\n',
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        assert findings == [], findings

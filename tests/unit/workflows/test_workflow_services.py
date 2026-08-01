@@ -111,6 +111,63 @@ class TestParsingService:
             result = svc.extract_findings(response, ["file.py"])
             assert isinstance(result, list)
 
+    def test_extract_findings_xml_success_enriches_from_real_parser(self):
+        """A well-formed <findings> block is parsed by the REAL XmlResponseParser
+        (no mock) and routed through _enrich_finding, covering the parsed.success
+        branch plus location/category enrichment.
+        """
+        svc = self._make_service()
+        response = (
+            "<response>"
+            "<summary>Reviewed the diff</summary>"
+            "<findings>"
+            '<item severity="high">'
+            "<title>SQL Injection</title>"
+            "<location>src/auth.py:42:5</location>"
+            "<details>User input reaches the query unescaped</details>"
+            "<fix>Use parameterized queries</fix>"
+            "</item>"
+            "</findings>"
+            "</response>"
+        )
+        findings = svc.extract_findings(response, ["src/auth.py"])
+        assert len(findings) == 1
+        finding = findings[0]
+        assert finding["file"] == "src/auth.py"
+        assert finding["line"] == 42
+        assert finding["column"] == 5
+        assert finding["severity"] == "high"
+        assert finding["category"] == "security"
+        assert finding["message"] == "SQL Injection"
+        assert finding["details"] == "User input reaches the query unescaped"
+        assert finding["recommendation"] == "Use parameterized queries"
+
+    def test_extract_findings_paren_line_with_column(self):
+        """'(line N, column M)' regex branch: match has 3 groups and the
+        column group is present + digits -> column parsed, message empty.
+        """
+        svc = self._make_service()
+        response = "See file.py (line 42, column 5) for the issue"
+        findings = svc.extract_findings(response, ["file.py"])
+        assert len(findings) == 1
+        assert findings[0]["file"] == "file.py"
+        assert findings[0]["line"] == 42
+        assert findings[0]["column"] == 5
+        assert findings[0]["message"] == ""
+
+    def test_extract_findings_paren_line_without_column(self):
+        """'(line N)' regex branch: match has 3 groups but the optional column
+        group did not participate -> falls to the else branch (column=1, no message).
+        """
+        svc = self._make_service()
+        response = "See file.py (line 42) for the issue"
+        findings = svc.extract_findings(response, ["file.py"])
+        assert len(findings) == 1
+        assert findings[0]["file"] == "file.py"
+        assert findings[0]["line"] == 42
+        assert findings[0]["column"] == 1
+        assert findings[0]["message"] == ""
+
     def test_parse_location_empty(self):
         svc = self._make_service()
         file, line, col = svc.parse_location("", ["fallback.py"])

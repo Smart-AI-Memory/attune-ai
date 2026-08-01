@@ -1,13 +1,19 @@
 """Tests for notification delivery channels.
 
-Covers: deliver_notification, deliver_email, deliver_stdout.
-(deliver_webhook already tested in test_alerts.py)
+Covers: deliver_notification, deliver_email, deliver_stdout, and the
+deliver_webhook edge cases (missing URL, invalid URL, non-200 status,
+redirect blocking, URLError) not already exercised by
+TestWebhookDelivery in test_alerts.py (which covers the happy path).
 """
 
 from __future__ import annotations
 
+import urllib.error
 from datetime import datetime
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from attune.monitoring.models import (
     AlertChannel,
@@ -20,6 +26,7 @@ from attune.monitoring.notifications import (
     deliver_email,
     deliver_notification,
     deliver_stdout,
+    deliver_webhook,
 )
 
 # ------------------------------------------------------------------
@@ -118,6 +125,102 @@ class TestDeliverNotification:
             side_effect=RuntimeError("boom"),
         ):
             result = deliver_notification(alert, event)
+
+        assert result is False
+
+    def test_unknown_channel_returns_false(self):
+        """An unrecognized channel value falls through to the default branch.
+
+        Every real AlertChannel member is handled explicitly, so this
+        exercises the defensive else-branch by substituting a fake
+        channel object after construction (AlertConfig is a plain,
+        unvalidated dataclass, so this is a legal runtime shape — e.g.
+        a value read back from a stale/foreign serialized config).
+        """
+        alert = _make_alert(AlertChannel.STDOUT)
+        alert.channel = SimpleNamespace(value="carrier_pigeon")
+        event = _make_event()
+
+        result = deliver_notification(alert, event)
+
+        assert result is False
+
+
+# ------------------------------------------------------------------
+# deliver_webhook
+# ------------------------------------------------------------------
+
+
+class TestDeliverWebhook:
+    """Edge cases for deliver_webhook beyond the happy path.
+
+    The success path (200 response) is covered by
+    TestWebhookDelivery.test_deliver_webhook_success in test_alerts.py.
+    """
+
+    def test_no_webhook_url_returns_false(self):
+        """Returns False immediately when alert has no webhook_url."""
+        alert = _make_alert(AlertChannel.WEBHOOK, webhook_url=None)
+        event = _make_event()
+
+        result = deliver_webhook(alert, event)
+
+        assert result is False
+
+    def test_invalid_webhook_url_returns_false(self):
+        """A URL blocked by SSRF validation (e.g. localhost) returns False."""
+        alert = _make_alert(AlertChannel.WEBHOOK, webhook_url="http://localhost/hook")
+        event = _make_event()
+
+        result = deliver_webhook(alert, event)
+
+        assert result is False
+
+    @patch("attune.monitoring.notifications.build_opener")
+    def test_non_200_status_returns_false(self, mock_build_opener):
+        """A non-200 response status is treated as delivery failure."""
+        # Public IP literal avoids needing a DNS mock for validation.
+        alert = _make_alert(AlertChannel.WEBHOOK, webhook_url="http://8.8.8.8/hook")
+        event = _make_event()
+
+        mock_response = MagicMock()
+        mock_response.status = 500
+        mock_response.__enter__ = MagicMock(return_value=mock_response)
+        mock_response.__exit__ = MagicMock(return_value=False)
+        mock_opener = MagicMock()
+        mock_opener.open.return_value = mock_response
+
+        captured: dict[str, type] = {}
+
+        def _capture_handler(handler_cls):
+            captured["handler_cls"] = handler_cls
+            return mock_opener
+
+        mock_build_opener.side_effect = _capture_handler
+
+        result = deliver_webhook(alert, event)
+
+        assert result is False
+        mock_opener.open.assert_called_once()
+
+        # The redirect-blocking handler only runs its body when urllib
+        # actually encounters a 3xx response, which doesn't happen with
+        # a mocked opener. Exercise it directly to cover the SSRF guard.
+        handler = captured["handler_cls"]()
+        with pytest.raises(urllib.error.HTTPError):
+            handler.redirect_request(None, None, 302, "Found", {}, "http://evil.example/")
+
+    @patch("attune.monitoring.notifications.build_opener")
+    def test_url_error_returns_false(self, mock_build_opener):
+        """A urllib.error.URLError (e.g. connection refused) returns False."""
+        alert = _make_alert(AlertChannel.WEBHOOK, webhook_url="http://8.8.8.8/hook")
+        event = _make_event()
+
+        mock_opener = MagicMock()
+        mock_opener.open.side_effect = urllib.error.URLError("connection refused")
+        mock_build_opener.return_value = mock_opener
+
+        result = deliver_webhook(alert, event)
 
         assert result is False
 

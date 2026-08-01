@@ -133,3 +133,86 @@ class TestAnswer:
         _inject(monkeypatch, _result(_items()))
         resp = client.post("/curator/answer", json={"item_id": "i2"})
         assert resp.status_code == 400
+
+    def test_answer_write_failure_is_best_effort(self, client, monkeypatch):
+        """A journal-write failure is logged, not surfaced — the response
+        still reports ``ok: True`` (lines 159, 161: the except branch)."""
+        _inject(monkeypatch, _result(_items()))
+        monkeypatch.setattr(
+            "attune.ops.routes.curator._validate_file_path",
+            lambda *a, **kw: (_ for _ in ()).throw(ValueError("boom")),
+        )
+        resp = client.post("/curator/answer", json={"item_id": "i2", "choice": "Yes"})
+        assert resp.status_code == 200
+        assert resp.json() == {"ok": True, "item_id": "i2", "choice": "Yes"}
+
+
+class TestDismissWriteFailure:
+    def test_dismiss_write_failure_returns_500(self, client, monkeypatch):
+        """A dismissals-write failure surfaces as a 500 (lines 121-123)."""
+        _inject(monkeypatch, _result(_items()))
+        monkeypatch.setattr(
+            "attune.ops.routes.curator._validate_file_path",
+            lambda *a, **kw: (_ for _ in ()).throw(OSError("disk full")),
+        )
+        resp = client.post("/curator/dismiss", json={"item_id": "i1"})
+        assert resp.status_code == 500
+        assert resp.json() == {"ok": False, "error": "write failed"}
+
+
+class TestActiveDismissedIdsEdgeCases:
+    """Direct coverage of the malformed/edge-case branches in
+    ``_load_dismissals`` and ``_active_dismissed_ids`` (lines 56-57, 68,
+    71-72, 74) — exercised through the ``/curator`` GET route, which is
+    the only caller of both helpers."""
+
+    def test_malformed_json_file_degrades_to_no_dismissals(self, client, monkeypatch, attune_home):
+        _inject(monkeypatch, _result(_items()))
+        dismissals_path = attune_home / "curator" / "dismissals.json"
+        dismissals_path.parent.mkdir(parents=True, exist_ok=True)
+        dismissals_path.write_text("{not valid json", encoding="utf-8")
+
+        resp = client.get("/curator")
+        assert resp.status_code == 200
+        # Malformed file -> treated as empty dismissals -> both items show.
+        assert "Spec alpha looks ready to close" in resp.text
+        assert "Security finding unreviewed" in resp.text
+
+    def test_record_missing_snoozed_until_is_skipped(self, client, monkeypatch, attune_home):
+        _inject(monkeypatch, _result(_items()))
+        dismissals_path = attune_home / "curator" / "dismissals.json"
+        dismissals_path.parent.mkdir(parents=True, exist_ok=True)
+        dismissals_path.write_text(json.dumps({"i1": {}}), encoding="utf-8")
+
+        resp = client.get("/curator")
+        assert resp.status_code == 200
+        # No snoozed_until -> not treated as actively dismissed -> still shown.
+        assert "Spec alpha looks ready to close" in resp.text
+
+    def test_record_with_unparseable_date_is_skipped(self, client, monkeypatch, attune_home):
+        _inject(monkeypatch, _result(_items()))
+        dismissals_path = attune_home / "curator" / "dismissals.json"
+        dismissals_path.parent.mkdir(parents=True, exist_ok=True)
+        dismissals_path.write_text(
+            json.dumps({"i1": {"snoozed_until": "not-a-date"}}), encoding="utf-8"
+        )
+
+        resp = client.get("/curator")
+        assert resp.status_code == 200
+        # Bad date string -> caught, skipped -> item still shown.
+        assert "Spec alpha looks ready to close" in resp.text
+
+    def test_naive_snoozed_until_treated_as_utc(self, client, monkeypatch, attune_home):
+        _inject(monkeypatch, _result(_items()))
+        dismissals_path = attune_home / "curator" / "dismissals.json"
+        dismissals_path.parent.mkdir(parents=True, exist_ok=True)
+        # No timezone offset -> exercises the naive-datetime UTC-replace path.
+        dismissals_path.write_text(
+            json.dumps({"i1": {"snoozed_until": "2099-01-01T00:00:00"}}), encoding="utf-8"
+        )
+
+        resp = client.get("/curator")
+        assert resp.status_code == 200
+        # Future naive date, treated as UTC -> still active -> item filtered out.
+        assert "Spec alpha looks ready to close" not in resp.text
+        assert "Security finding unreviewed" in resp.text
