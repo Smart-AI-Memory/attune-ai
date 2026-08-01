@@ -1,3 +1,36 @@
+## 2026-08-01 — six-lane coverage fleet (delegated lanes, Fable 5 lead)
+
+Six parallel tests-only lanes (memory/short_term/facade,
+memory/cross_session/coordinator, telemetry/approval_gates,
+roundtable/triage_appendix, elicitation/fix_intake,
+learning/storage — PRs #1848–#1853; all receipts re-run centrally
+by the lead). Coverage: 80.5→99, 79.2→100, 78.8→100, 81.8→100,
+83→99 (measured-first, stale Codecov refs), 80.7→100. Three
+production bugs surfaced, all in `memory/short_term/facade.py`,
+all currently masked by `# type: ignore`:
+
+- **facade.py:187 — Class 1 (silent wrong behavior).**
+  `DataSanitizer(self._base)` passes a `BaseOperations` instance
+  into the `pii_scrub_enabled: bool` parameter — truthy, so PII
+  scrubbing is silently ALWAYS enabled via the facade,
+  `secrets_detection_enabled` is never wired, and the sanitizer's
+  metrics land in a fresh `RedisMetrics` instead of the shared one.
+- **facade.py:697 — Class 1 (misbind on the real path).**
+  `enable_cross_session(session_id, credentials)` delegates to
+  `enable(access_tier, auto_announce)` — arguments bind to the
+  wrong parameters on the real-Redis path (mock mode raises first,
+  which is why tests only ever saw the degradation branch).
+- **facade.py:239–242 — Class 2 (dead code).** The first
+  `_client` property is shadowed by a second definition at :728 at
+  class-creation time; the first body can never execute. This is
+  the facade's only sub-100 remainder (99%).
+
+Design observation (not a bug): `learning/storage.py`
+`clear_user_data` intentionally leaves corrupt `.json` files
+behind (`continue` before `unlink`), so a corrupt file makes the
+user dir unremovable — tolerated by the `rmdir` except and now
+pinned by test.
+
 ## 2026-07-30 — Tier 3 shim corrections (coverage push, Fable 5)
 
 `src/attune/coordination.py` 0% → 100% (shim contract test),
@@ -1500,4 +1533,4 @@ describes the 18 classes-1–4 coverage-push finds. (The class 5 row was
 missing from this table until 2026-07-24 — it was recorded in the
 session-49f snapshot above but never propagated here.)
 
-Modules at 100%: 85 (cumulative across all sessions).
+Modules at 100%: 89 (cumulative across all sessions; +4 from the 2026-08-01 fleet — facade and fix_intake closed at 99% with their remainders classified: one dead-code region, one unreachable-without-mocking guard).
