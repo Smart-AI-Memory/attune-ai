@@ -23,7 +23,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from attune.elicitation.bridge import form_from_dict
+from attune.elicitation.intake_template import (
+    PROVIDERS,
+    TEMPLATES,
+    FieldSlot,
+    FormTemplate,
+    ProviderContext,
+    build_form,
+)
 from attune.meta_workflows.models import FormSchema
 
 #: Free-text sentinel offered alongside derived options.
@@ -192,78 +199,79 @@ def probe_candidates(repo_root: Path, scopes: list[str], limit: int = 4) -> list
     return [f"pytest {path}" for path in list(found)[:limit]]
 
 
+def _provider_fix_scopes(ctx: ProviderContext) -> list[str]:
+    """Registered provider: scope candidates for the fix intake."""
+    return scope_candidates(ctx.repo_root)
+
+
+def _provider_fix_probes(ctx: ProviderContext) -> list[str]:
+    """Registered provider: probe candidates for the fix intake."""
+    return probe_candidates(ctx.repo_root, scope_candidates(ctx.repo_root))
+
+
+PROVIDERS["fix_scopes"] = _provider_fix_scopes
+PROVIDERS["fix_probes"] = _provider_fix_probes
+
+#: The fix intake, declaratively (Phase 2a). Slot keys are CLI
+#: composition keys (request/scope/probes/mode), not the fix
+#: workflow's input_schema keys, so the template is standalone
+#: (unbound) by design — recorded in the Phase 2 execution notes.
+FIX_TEMPLATE = FormTemplate(
+    title="Fix intake",
+    description="Compose an outcome-first fix: goal, scope, verification.",
+    fields=[
+        FieldSlot(
+            key="request",
+            text="What should be fixed, in your words?",
+            control="textarea",
+            required=True,
+            help_text="Passed verbatim as the fix goal — no inference.",
+        ),
+        FieldSlot(
+            key="scope",
+            text="Where must the diff stay confined (--scope)?",
+            provider="fix_scopes",
+            other=OTHER,
+            fallback_text="Where must the diff stay confined (--scope)? (path)",
+            help_text="Changed paths first — a fix usually lands where the change is.",
+        ),
+        FieldSlot(
+            key="probes",
+            text="How do we verify the fix (--probe)?",
+            provider="fix_probes",
+            control="multi_select",
+            fallback_text="How do we verify the fix? (one command, e.g. pytest tests/x.py)",
+            help_text="Each probe is verified independently in the receipt.",
+        ),
+        FieldSlot(
+            key="mode",
+            text="Run it, or preview only?",
+            options=["preview only", "preview then run"],
+            default="preview only",
+            help_text="Preview renders the contract and executes nothing.",
+        ),
+    ],
+)
+
+TEMPLATES["fix"] = FIX_TEMPLATE
+
+
 def build_fix_intake_form(
     scopes: list[str],
     probes: list[str],
 ) -> FormSchema:
     """The one intake form: request + scope + probes + mode (D21).
 
-    Scope and probe fields render as pickers when candidates exist and
-    as free text otherwise — the form is always buildable.
+    Phase 2a: built from :data:`FIX_TEMPLATE` with the pre-derived
+    candidates as overrides — the hand-written construction this
+    function used to contain is deleted (same-PR rule, spec D2).
+    The structural-equality gate pins the output against the
+    shipped hand shape.
     """
-    fields: list[dict[str, Any]] = [
-        {
-            "id": "request",
-            "text": "What should be fixed, in your words?",
-            "type": "textarea",
-            "required": True,
-            "help_text": "Passed verbatim as the fix goal — no inference.",
-        }
-    ]
-    if scopes:
-        fields.append(
-            {
-                "id": "scope",
-                "text": "Where must the diff stay confined (--scope)?",
-                "type": "single_select",
-                "options": [*scopes, OTHER],
-                "help_text": "Changed paths first — a fix usually lands where the change is.",
-            }
-        )
-    else:
-        fields.append(
-            {
-                "id": "scope",
-                "text": "Where must the diff stay confined (--scope)? (path)",
-                "type": "text_input",
-                "required": True,
-            }
-        )
-    if probes:
-        fields.append(
-            {
-                "id": "probes",
-                "text": "How do we verify the fix (--probe)?",
-                "type": "multi_select",
-                "options": probes,
-                "help_text": "Each probe is verified independently in the receipt.",
-            }
-        )
-    else:
-        fields.append(
-            {
-                "id": "probes",
-                "text": "How do we verify the fix? (one command, e.g. pytest tests/x.py)",
-                "type": "text_input",
-                "required": True,
-            }
-        )
-    fields.append(
-        {
-            "id": "mode",
-            "text": "Run it, or preview only?",
-            "type": "single_select",
-            "options": ["preview only", "preview then run"],
-            "default": "preview only",
-            "help_text": "Preview renders the contract and executes nothing.",
-        }
-    )
-    return form_from_dict(
-        {
-            "title": "Fix intake",
-            "description": "Compose an outcome-first fix: goal, scope, verification.",
-            "fields": fields,
-        }
+    return build_form(
+        FIX_TEMPLATE,
+        ProviderContext(repo_root=Path.cwd()),
+        candidates_override={"scope": scopes, "probes": probes},
     )
 
 

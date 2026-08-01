@@ -67,19 +67,34 @@ authorization exists).
 </task>
 ```
 
-## Task 2 — Phase 2: FormTemplate + providers (GATED)
+## Task 2 — Phase 2a: FormTemplate + providers (EXECUTED 2026-07-31, chair gate-override)
 
-Authored only when the rule-of-three fires (a third intake is
-requested). Must include the byte-identical re-expression pins
-for the fix and spec intakes (design.md proof obligation).
+The rule-of-three had NOT fired (two consumers); the chair
+overrode his own gate, convened the table
+(`q-intake-forms-phase2-design-001`, 3 seats, ruling in
+decisions.md D2), and ordered same-night implementation. Shipped
+as the thin two-consumer extraction all three seats converged on:
+`attune/elicitation/intake_template.py` (FieldSlot / FormTemplate /
+ProviderContext / plain PROVIDERS dict / ruled build-time
+rejections), fix + spec intakes re-expressed as templates with
+their derivations registered as providers, hand FORM-BUILDING
+deleted in the same PR (CLI seams and public APIs unchanged — the
+20 existing behavioral tests pass untouched), structural-equality
+gate pinning the shipped hand shapes (goldens verbatim, providers
+stubbed), template-less → free-text + demand-telemetry marker
+(the chair's merge ruling), cache-free v1. Deferred to the third
+consumer: auto-derivation (debug tool only), caching, provider
+enrichment.
 
-## Task 3 — Phase 2/theme: shared form theme (GATED)
+## Task 3 — Phase 2/theme: shared form theme (EXECUTED 2026-07-31, PR #1843)
 
 `attune/elicitation/theme.py` (`FORM_THEME_CSS`, host-token
-fallbacks), widget injection swap, dashboard static projection,
-budget + byte-equality drift tests, rendered screenshots on both
-surfaces. May be authored alongside Task 2 or independently —
-chair's call; it has no dependency on the template layer.
+fallbacks), widget swap shared-by-source (family subsets kept),
+dashboard static projection byte-equality-tested, budget test at
+the chair-amended 6 KB (decisions.md D1), standalone rendered
+receipt delivered in-session (fallbacks painting). Executed
+independently of Task 2 on the chair's `/spec execute` go — it has
+no dependency on the template layer.
 
 ## Task 4 — Phase 3: latency instrumentation + cache (GATED)
 
