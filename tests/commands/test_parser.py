@@ -3,6 +3,7 @@
 Tests for CommandParser that parses markdown files with optional YAML frontmatter.
 """
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -364,3 +365,148 @@ Body.
 
         with pytest.raises(ValueError, match="Cannot determine command name"):
             parser.parse_content(content, source=None)
+
+
+class TestCommandParserCoverageGaps:
+    """Tests targeting specific uncovered branches in CommandParser."""
+
+    @pytest.fixture
+    def parser(self):
+        """Create parser instance."""
+        return CommandParser()
+
+    def test_frontmatter_missing_name_falls_back_to_source_stem(self, parser):
+        """Frontmatter without a 'name' key falls back to the source file stem."""
+        content = """---
+description: no name provided in frontmatter
+---
+
+Body content.
+"""
+        config = parser.parse_content(content, source=Path("some-command.md"))
+
+        assert config.name == "some-command"
+        assert config.description == "no name provided in frontmatter"
+
+    def test_parse_frontmatter_yaml_import_error_falls_back(self, parser, monkeypatch):
+        """When PyYAML is unavailable, frontmatter parsing falls back to basic parsing."""
+        monkeypatch.setitem(sys.modules, "yaml", None)
+
+        content = """---
+name: fallback-test
+description: works without pyyaml
+---
+
+Body.
+"""
+        config = parser.parse_content(content, source="test.md")
+
+        assert config.name == "fallback-test"
+        assert config.description == "works without pyyaml"
+
+    def test_parse_frontmatter_invalid_yaml_raises_value_error(self, parser):
+        """Malformed YAML frontmatter raises ValueError with context."""
+        content = """---
+name: test
+  bad: [1, 2
+---
+
+Body.
+"""
+        with pytest.raises(ValueError, match="Invalid YAML frontmatter"):
+            parser.parse_content(content, source="test.md")
+
+    def test_basic_yaml_parse_skips_blank_and_comment_lines(self, parser):
+        """_basic_yaml_parse skips blank lines and comment lines."""
+        yaml_content = "# a comment\n\nname: test\n"
+
+        result = parser._basic_yaml_parse(yaml_content)
+
+        assert result == {"name": "test"}
+
+    def test_basic_yaml_parse_false_boolean(self, parser):
+        """_basic_yaml_parse recognizes 'false' and 'no' as False."""
+        yaml_content = "flag: false\nother: no\n"
+
+        result = parser._basic_yaml_parse(yaml_content)
+
+        assert result["flag"] is False
+        assert result["other"] is False
+
+    def test_extract_description_empty_body_returns_empty_string(self, parser):
+        """A frontmatter-only file with no body content yields an empty description."""
+        content = """---
+name: no-body-desc
+---
+"""
+        config = parser.parse_content(content)
+
+        assert config.description == ""
+
+    def test_extract_description_dash_format_via_frontmatter_path(self, parser):
+        """_extract_description splits 'Title - Description' when reached via frontmatter."""
+        content = """---
+name: quick-start
+---
+
+Quick Start - Get up and running fast.
+"""
+        config = parser.parse_content(content)
+
+        assert config.description == "Get up and running fast."
+
+    def test_extract_description_code_fence_first_line_returns_empty(self, parser):
+        """A body whose first line is a code fence yields an empty description."""
+        content = """---
+name: fenced
+---
+
+```python
+print("hi")
+```
+"""
+        config = parser.parse_content(content)
+
+        assert config.description == ""
+
+    def test_validate_file_read_error(self, parser, tmp_path):
+        """validate_file reports OSError raised while reading (e.g. path is a directory)."""
+        dir_path = tmp_path / "not-a-file"
+        dir_path.mkdir()
+
+        errors = parser.validate_file(dir_path)
+
+        assert any("cannot read file" in e.lower() for e in errors)
+
+    def test_validate_file_yaml_import_error_skips_validation(self, parser, tmp_path, monkeypatch):
+        """validate_file silently skips YAML validation when PyYAML is unavailable."""
+        monkeypatch.setitem(sys.modules, "yaml", None)
+
+        content = """---
+name: Invalid Name Should Not Be Checked!
+---
+
+Body.
+"""
+        file_path = tmp_path / "test.md"
+        file_path.write_text(content)
+
+        errors = parser.validate_file(file_path)
+
+        assert errors == []
+
+    def test_validate_file_invalid_yaml_syntax(self, parser, tmp_path):
+        """validate_file reports malformed YAML frontmatter as an error."""
+        content = """---
+name: test
+  bad: [1, 2
+---
+
+Body.
+"""
+        file_path = tmp_path / "badyaml.md"
+        file_path.write_text(content)
+
+        errors = parser.validate_file(file_path)
+
+        assert any("invalid yaml" in e.lower() for e in errors)

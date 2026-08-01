@@ -653,3 +653,279 @@ class TestApprovalGateNoBranchCoverage:
             # times out immediately since poll loop never gets response
             response = gate.request_approval("deploy", timeout=0.01)
         assert response.approved is False
+
+
+class TestApprovalGateInitMemoryResolution:
+    """Cover __init__ memory resolution via UsageTracker (lines 190-194)."""
+
+    def test_init_adopts_usage_tracker_memory(self):
+        """When no memory is given, the gate adopts UsageTracker's backend."""
+        sentinel = object()
+        fake_tracker = Mock()
+        fake_tracker._memory = sentinel
+
+        with patch("attune.telemetry.UsageTracker") as mock_tracker_cls:
+            mock_tracker_cls.get_instance.return_value = fake_tracker
+            gate = ApprovalGate()
+
+        assert gate.memory is sentinel
+
+    def test_init_tracker_without_memory_attr_leaves_memory_none(self):
+        """A tracker without a _memory attribute leaves the gate memoryless."""
+        fake_tracker = Mock(spec=[])  # no _memory attribute
+
+        with patch("attune.telemetry.UsageTracker") as mock_tracker_cls:
+            mock_tracker_cls.get_instance.return_value = fake_tracker
+            gate = ApprovalGate()
+
+        assert gate.memory is None
+
+    def test_init_tracker_lookup_failure_degrades_to_no_memory(self):
+        """AttributeError from the tracker lookup degrades to no memory backend."""
+        with patch("attune.telemetry.UsageTracker") as mock_tracker_cls:
+            mock_tracker_cls.get_instance.side_effect = AttributeError("no instance")
+            gate = ApprovalGate()
+
+        assert gate.memory is None
+
+
+class TestRequestApprovalErrorBranches:
+    """Cover request_approval storage/signal/timeout error branches."""
+
+    def test_storage_error_returns_rejected_with_reason(self):
+        """A Redis write failure auto-rejects with a Storage error reason (269-271)."""
+        mock_client = Mock()
+        mock_client.setex.side_effect = RuntimeError("redis down")
+        mock_memory = Mock(spec=["_client"])
+        mock_memory._client = mock_client
+
+        gate = ApprovalGate(memory=mock_memory, agent_id="wf")
+        response = gate.request_approval("deploy", context={}, timeout=0.1)
+
+        assert response.approved is False
+        assert response.responder == "system"
+        assert "Storage error" in response.reason
+        assert response.request_id.startswith("approval_")
+
+    def test_signal_failure_does_not_break_approval_flow(self):
+        """A CoordinationSignals failure is non-fatal — approval still returns (290-291)."""
+        mock_client = Mock()
+        mock_memory = Mock(spec=["_client"])
+        mock_memory._client = mock_client
+
+        gate = ApprovalGate(memory=mock_memory, agent_id="wf")
+        approved = ApprovalResponse(
+            request_id="r1",
+            approved=True,
+            responder="user@example.com",
+        )
+
+        with patch(
+            "attune.telemetry.CoordinationSignals",
+            side_effect=RuntimeError("signals unavailable"),
+        ):
+            with patch.object(gate, "_check_for_response", return_value=approved):
+                response = gate.request_approval("deploy", timeout=5.0)
+
+        assert response.approved is True
+        assert response.responder == "user@example.com"
+
+    def test_timeout_status_update_failure_still_returns_timeout(self):
+        """A Redis failure while marking timeout is swallowed (322-323)."""
+        mock_client = Mock()
+        # First setex stores the request; second (timeout status update) fails.
+        mock_client.setex.side_effect = [True, RuntimeError("redis gone")]
+        mock_memory = Mock(spec=["_client"])
+        mock_memory._client = mock_client
+
+        gate = ApprovalGate(memory=mock_memory, agent_id="wf")
+
+        with patch("attune.telemetry.CoordinationSignals"):
+            with patch.object(gate, "_check_for_response", return_value=None):
+                with patch("time.sleep"):
+                    response = gate.request_approval("deploy", timeout=0.05)
+
+        assert response.approved is False
+        assert "timeout" in response.reason.lower()
+        assert mock_client.setex.call_count == 2
+
+
+class TestCheckForResponseFallback:
+    """Cover the no-retrieve/no-client fallback in _check_for_response (355)."""
+
+    def test_memory_without_retrieve_or_client_returns_none(self):
+        mock_memory = Mock(spec=[])  # neither retrieve nor _client
+        gate = ApprovalGate(memory=mock_memory, agent_id="wf")
+
+        assert gate._check_for_response("r1") is None
+
+
+class TestRespondToApprovalBranches:
+    """Cover respond_to_approval retrieve-path, pipeline failure, signal failure."""
+
+    @staticmethod
+    def _request_data(status="pending"):
+        return {
+            "request_id": "r1",
+            "approval_type": "deploy",
+            "agent_id": "wf",
+            "context": {},
+            "timestamp": "2026-01-27T12:00:00",
+            "timeout_seconds": 300,
+            "status": status,
+        }
+
+    def test_reads_request_via_retrieve_and_updates_status(self):
+        """Memory exposing retrieve() is used to read the request (418)."""
+        import json
+
+        mock_client = Mock()
+        mock_pipe = Mock()
+        mock_client.pipeline.return_value = mock_pipe
+
+        mock_memory = Mock(spec=["_client", "retrieve"])
+        mock_memory._client = mock_client
+        mock_memory.retrieve.return_value = self._request_data()
+
+        gate = ApprovalGate(memory=mock_memory)
+        ok = gate.respond_to_approval(
+            request_id="r1",
+            approved=False,
+            responder="admin@example.com",
+            reason="Too risky",
+        )
+
+        assert ok is True
+        mock_memory.retrieve.assert_called_once_with("approval_request:r1", credentials=None)
+        # Two writes pipelined: the response, then the status-updated request.
+        assert mock_pipe.setex.call_count == 2
+        updated_request = json.loads(mock_pipe.setex.call_args_list[1][0][2])
+        assert updated_request["status"] == "rejected"
+
+    def test_pipeline_failure_returns_false(self):
+        """A pipeline execution error returns False (436-438)."""
+        mock_client = Mock()
+        mock_client.get.return_value = None
+        mock_pipe = Mock()
+        mock_pipe.execute.side_effect = RuntimeError("pipeline failed")
+        mock_client.pipeline.return_value = mock_pipe
+
+        mock_memory = Mock(spec=["_client"])
+        mock_memory._client = mock_client
+
+        gate = ApprovalGate(memory=mock_memory)
+        ok = gate.respond_to_approval(
+            request_id="r1",
+            approved=True,
+            responder="user@example.com",
+        )
+
+        assert ok is False
+
+    def test_signal_failure_does_not_fail_response(self):
+        """A CoordinationSignals failure is non-fatal — response still True (452-453)."""
+        mock_client = Mock()
+        mock_client.get.return_value = None
+        mock_pipe = Mock()
+        mock_client.pipeline.return_value = mock_pipe
+
+        mock_memory = Mock(spec=["_client"])
+        mock_memory._client = mock_client
+
+        gate = ApprovalGate(memory=mock_memory)
+        with patch(
+            "attune.telemetry.CoordinationSignals",
+            side_effect=RuntimeError("signals unavailable"),
+        ):
+            ok = gate.respond_to_approval(
+                request_id="r1",
+                approved=True,
+                responder="user@example.com",
+            )
+
+        assert ok is True
+
+
+class TestGetPendingApprovalsBranches:
+    """Cover get_pending_approvals degradation branches."""
+
+    def test_no_memory_returns_empty_list(self):
+        """No memory backend degrades to an empty list (480)."""
+        gate = ApprovalGate(memory=None)
+        gate.memory = None
+
+        assert gate.get_pending_approvals() == []
+
+    def test_memory_without_client_returns_empty_list(self):
+        mock_memory = Mock(spec=[])  # no _client
+        gate = ApprovalGate(memory=mock_memory)
+
+        assert gate.get_pending_approvals() == []
+
+    def test_key_with_no_data_is_skipped(self):
+        """A scanned key whose value expired is skipped, not an error (500, 503)."""
+        mock_client = Mock()
+        mock_client.scan_iter.return_value = [b"approval_request:r_gone"]
+        mock_client.get.return_value = None
+
+        mock_memory = Mock(spec=["_client"])
+        mock_memory._client = mock_client
+
+        gate = ApprovalGate(memory=mock_memory)
+
+        assert gate.get_pending_approvals() == []
+
+    def test_scan_error_returns_empty_list(self):
+        """A Redis scan failure degrades to an empty list (521-523)."""
+        mock_client = Mock()
+        mock_client.scan_iter.side_effect = RuntimeError("scan failed")
+
+        mock_memory = Mock(spec=["_client"])
+        mock_memory._client = mock_client
+
+        gate = ApprovalGate(memory=mock_memory)
+
+        assert gate.get_pending_approvals() == []
+
+
+class TestClearExpiredRequestsBranches:
+    """Cover clear_expired_requests degradation branches."""
+
+    def test_no_memory_returns_zero(self):
+        """No memory backend degrades to zero cleared (533)."""
+        gate = ApprovalGate(memory=None)
+        gate.memory = None
+
+        assert gate.clear_expired_requests() == 0
+
+    def test_memory_without_client_returns_zero(self):
+        mock_memory = Mock(spec=[])  # no _client
+        gate = ApprovalGate(memory=mock_memory)
+
+        assert gate.clear_expired_requests() == 0
+
+    def test_key_with_no_data_is_skipped(self):
+        """A scanned key whose value expired is skipped, not counted (553, 556)."""
+        mock_client = Mock()
+        mock_client.scan_iter.return_value = [b"approval_request:r_gone"]
+        mock_client.get.return_value = None
+
+        mock_memory = Mock(spec=["_client"])
+        mock_memory._client = mock_client
+
+        gate = ApprovalGate(memory=mock_memory)
+
+        assert gate.clear_expired_requests() == 0
+        assert not mock_client.setex.called
+
+    def test_scan_error_returns_zero(self):
+        """A Redis scan failure degrades to zero cleared (574-576)."""
+        mock_client = Mock()
+        mock_client.scan_iter.side_effect = RuntimeError("scan failed")
+
+        mock_memory = Mock(spec=["_client"])
+        mock_memory._client = mock_client
+
+        gate = ApprovalGate(memory=mock_memory)
+
+        assert gate.clear_expired_requests() == 0

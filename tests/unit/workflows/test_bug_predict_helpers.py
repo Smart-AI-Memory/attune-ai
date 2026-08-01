@@ -34,6 +34,15 @@ from attune.workflows.bug_predict import (
     _should_exclude_file,
 )
 
+# Internal helpers that bug_predict.py does not re-export; import directly
+# from the source module (bug_predict_patterns.py).
+from attune.workflows.bug_predict_patterns import (
+    _all_eval_in_fixtures,
+    _check_logging_context,
+    _is_detection_code_line,
+    _is_security_policy_line,
+)
+
 # =============================================================================
 # LESSON 1: Testing Configuration Loading with File I/O Mocking
 # =============================================================================
@@ -644,6 +653,146 @@ def custom_handler():
             )
             is True
         )
+
+
+# =============================================================================
+# LESSON 6: Direct Tests for Internal Helpers Not Re-Exported by bug_predict.py
+#
+# These helpers back the false-positive filtering behavior documented on
+# _is_dangerous_eval_usage and _is_acceptable_broad_exception. They are
+# tested directly here (imported from bug_predict_patterns, the source
+# module) because a few of their branches are only reachable through
+# specific combinations of surrounding text that aren't exercised by the
+# integration-style tests above.
+# =============================================================================
+
+
+@pytest.mark.unit
+class TestCheckLoggingContext:
+    """Direct tests for the 'logging' acceptable-exception-context checker."""
+
+    def test_logging_context_accepted_via_broad_exception(self, bug_predict_workflow):
+        """A handler that logs then re-raises/returns is an acceptable pattern."""
+        line = "except Exception:"
+        context_before = ["try:", "    do_something()"]
+        context_after = ["    logger.error('operation failed')", "    raise"]
+
+        result = _is_acceptable_broad_exception(
+            line,
+            context_before,
+            context_after,
+            acceptable_contexts=["logging"],
+        )
+        assert result is True
+
+    def test_check_logging_context_true_when_log_and_raise_present(self):
+        """Direct call: 'log' + 'raise' in the handler body is a match."""
+        assert _check_logging_context("", "logger.warning('x')\nraise") is True
+
+    def test_check_logging_context_true_when_log_and_return_present(self):
+        """Direct call: 'log' + 'return' in the handler body is also a match."""
+        assert _check_logging_context("", "log.info('done')\nreturn None") is True
+
+    def test_check_logging_context_false_without_log_keyword(self):
+        """No 'log' keyword in the handler body means no match."""
+        assert _check_logging_context("", "print('done')\nraise") is False
+
+
+@pytest.mark.unit
+class TestAllEvalInFixtures:
+    """Direct tests for the write_text() fixture-stripping helper."""
+
+    def test_true_when_eval_only_inside_write_text_call(self):
+        """eval( that appears solely inside a write_text(...) argument is a fixture."""
+        content = 'path.write_text("value = eval(x)")'
+        assert _all_eval_in_fixtures(content) is True
+
+    def test_false_when_eval_appears_outside_write_text_call(self):
+        """eval( outside any write_text(...) call is NOT purely fixture data."""
+        content = 'result = eval(x)\npath.write_text("safe")'
+        assert _all_eval_in_fixtures(content) is False
+
+    def test_dangerous_eval_usage_treats_fixture_only_content_as_safe(self):
+        """Integration path: a non-scanner-test file whose only eval( is inside
+        a write_text(...) fixture argument is reported as NOT dangerous.
+        """
+        content = 'def test_creates_fixture():\n    path.write_text("value = eval(x)")\n'
+        result = _is_dangerous_eval_usage(content, "tests/test_other_module.py")
+        assert result is False
+
+
+@pytest.mark.unit
+class TestIsDetectionCodeLine:
+    """Direct tests for the eval/exec detection-context line classifier."""
+
+    def test_quoted_eval_call_is_detection_code(self):
+        """eval( wrapped in a string literal (a pattern, not a call) is detection code."""
+        assert _is_detection_code_line('pattern = "eval(x)"') is True
+
+    def test_quoted_exec_call_is_detection_code(self):
+        """exec( wrapped in a string literal is also detection code."""
+        assert _is_detection_code_line('pattern = "exec(x)"') is True
+
+    def test_raw_string_mentioning_eval_is_detection_code(self):
+        """A raw-string regex pattern mentioning eval/exec is detection code."""
+        assert _is_detection_code_line('regex = r"detect eval here"') is True
+
+    def test_real_eval_call_is_not_detection_code(self):
+        """An actual eval( call (no surrounding quotes) is not detection code."""
+        assert _is_detection_code_line("result = eval(x)") is False
+
+
+@pytest.mark.unit
+class TestIsSecurityPolicyLineDirect:
+    """Direct tests for the security-policy-documentation line classifier."""
+
+    def test_avoid_eval_sentence_is_policy_documentation(self):
+        """A plain-English 'avoid eval' sentence matches the policy patterns."""
+        assert _is_security_policy_line("avoid eval() in production code") is True
+
+    def test_list_item_mentioning_prohibited_eval_is_policy_documentation(self):
+        """A markdown list item mentioning eval + 'prohibited' (in that order)
+        does not match any single regex pattern directly, but IS caught by
+        the list-item fallback check.
+        """
+        assert _is_security_policy_line("- eval() usage prohibited") is True
+
+    def test_unrelated_bullet_is_not_policy_documentation(self):
+        """A list item with no eval/exec mention is not policy documentation."""
+        assert _is_security_policy_line("- totally unrelated bullet point") is False
+
+    def test_dangerous_eval_usage_skips_noncomment_policy_line(self):
+        """A non-comment line documenting security policy is skipped by the
+        scanner, but a genuinely dangerous eval( call elsewhere in the same
+        file is still detected.
+        """
+        content = (
+            "SECURITY_NOTE = "
+            '"Security policy: eval() usage forbidden here"\n'
+            "def run(cmd):\n"
+            "    eval(cmd)\n"
+        )
+        result = _is_dangerous_eval_usage(content, "src/module.py")
+        assert result is True
+
+
+@pytest.mark.unit
+class TestIsDangerousEvalUsageObjectExecSkip:
+    """Direct test for the non-JS 'obj.exec(...)' false-positive filter."""
+
+    def test_object_exec_call_in_python_file_is_not_flagged(self):
+        """A `.exec(` method call (e.g. a compiled-pattern-style API) on a
+        non-JS/TS file is filtered out, mirroring the JavaScript regex.exec()
+        exclusion but reached via the line-level filter instead of the
+        file-extension filter.
+        """
+        content = (
+            "def check(source_text):\n"
+            "    result = regex_pattern.exec(source_text)\n"
+            "    return result\n"
+        )
+        result = _is_dangerous_eval_usage(content, "src/checker.py")
+        assert result is False
 
 
 # =============================================================================
