@@ -214,6 +214,20 @@ def build_form(
 TEMPLATES: dict[str, FormTemplate] = {}
 
 
+def _ensure_builtin_templates() -> None:
+    """Import the modules that register the built-in templates.
+
+    Registration is an import-time side effect of the intake
+    modules; a cold caller importing only THIS module would
+    otherwise see an empty registry and log a FALSE demand marker
+    for "fix" (caught live 2026-08-01, first cold sweep after
+    #1843). Lazy import here breaks the would-be cycle
+    (fix_intake imports this module for delegation).
+    """
+    import attune.elicitation.fix_intake  # noqa: F401
+    import attune.elicitation.spec_intake  # noqa: F401
+
+
 def intake_form(
     name: str,
     invocation_text: str = "",
@@ -227,6 +241,7 @@ def intake_form(
     — and the demand marker below is the telemetry that makes slot
     authoring demand-driven.
     """
+    _ensure_builtin_templates()
     template = TEMPLATES.get(name)
     if template is None:
         logger.info(
