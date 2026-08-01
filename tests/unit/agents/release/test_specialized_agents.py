@@ -128,6 +128,82 @@ class TestTestCoverageAgent:
         assert findings["estimated"] is True
         assert findings["coverage_percent"] >= 80.0  # heuristic for >200 tests
 
+    def test_execute_tier_heuristic_over_500_tests(self):
+        """Heuristic yields 85.0 when test_count > 500."""
+        from attune.agents.release.release_models import Tier
+
+        agent = self._make_agent()
+        big_collect = "\n".join(f"test_foo::test_{i}" for i in range(600))
+
+        def fake_run(cmd, cwd="."):
+            if "--co" in cmd:
+                return (0, big_collect, "")
+            return (0, "no coverage info here", "")
+
+        with patch("attune.agents.release.coverage_agent._run_command", side_effect=fake_run):
+            success, findings = agent._execute_tier(".", Tier.CHEAP)
+
+        assert success is True
+        assert findings["estimated"] is True
+        assert findings["coverage_percent"] == pytest.approx(85.0)
+
+    def test_execute_tier_heuristic_over_100_tests(self):
+        """Heuristic yields 75.0 when 100 < test_count <= 200."""
+        from attune.agents.release.release_models import Tier
+
+        agent = self._make_agent()
+        collect_output = "\n".join(f"test_foo::test_{i}" for i in range(150))
+
+        def fake_run(cmd, cwd="."):
+            if "--co" in cmd:
+                return (0, collect_output, "")
+            return (0, "no coverage info here", "")
+
+        with patch("attune.agents.release.coverage_agent._run_command", side_effect=fake_run):
+            success, findings = agent._execute_tier(".", Tier.CHEAP)
+
+        assert success is True
+        assert findings["estimated"] is True
+        assert findings["coverage_percent"] == pytest.approx(75.0)
+
+    def test_execute_tier_heuristic_over_50_tests(self):
+        """Heuristic yields 60.0 when 50 < test_count <= 100."""
+        from attune.agents.release.release_models import Tier
+
+        agent = self._make_agent()
+        collect_output = "\n".join(f"test_foo::test_{i}" for i in range(75))
+
+        def fake_run(cmd, cwd="."):
+            if "--co" in cmd:
+                return (0, collect_output, "")
+            return (0, "no coverage info here", "")
+
+        with patch("attune.agents.release.coverage_agent._run_command", side_effect=fake_run):
+            success, findings = agent._execute_tier(".", Tier.CHEAP)
+
+        assert success is True
+        assert findings["estimated"] is True
+        assert findings["coverage_percent"] == pytest.approx(60.0)
+
+    def test_execute_tier_heuristic_over_10_tests(self):
+        """Heuristic yields 40.0 when 10 < test_count <= 50."""
+        from attune.agents.release.release_models import Tier
+
+        agent = self._make_agent()
+        collect_output = "\n".join(f"test_foo::test_{i}" for i in range(25))
+
+        def fake_run(cmd, cwd="."):
+            if "--co" in cmd:
+                return (0, collect_output, "")
+            return (0, "no coverage info here", "")
+
+        with patch("attune.agents.release.coverage_agent._run_command", side_effect=fake_run):
+            success, findings = agent._execute_tier(".", Tier.CHEAP)
+
+        assert success is True
+        assert findings["estimated"] is True
+        assert findings["coverage_percent"] == pytest.approx(40.0)
+
     def test_execute_tier_always_returns_true_on_estimated(self):
         """_execute_tier always returns True (quality gate handles threshold)."""
         from attune.agents.release.release_models import Tier
