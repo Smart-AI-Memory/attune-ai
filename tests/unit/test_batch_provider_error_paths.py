@@ -16,7 +16,7 @@ explicit api_key= string.
 """
 
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -41,17 +41,19 @@ class TestSDKExceptionWrapping:
     """SDK-level exceptions are wrapped into RuntimeError with context."""
 
     @pytest.fixture
-    def provider(self):
+    def provider(self, monkeypatch):
         mock_anthropic = MagicMock()
         mock_client = MagicMock()
         mock_anthropic.Anthropic.return_value = mock_client
 
-        with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
-            from attune.llm.providers.anthropic_batch import AnthropicBatchProvider
+        # monkeypatch.setitem restores only this key on teardown — no
+        # patch.dict sys.modules clear+rebuild race under xdist.
+        monkeypatch.setitem(sys.modules, "anthropic", mock_anthropic)
+        from attune.llm.providers.anthropic_batch import AnthropicBatchProvider
 
-            provider = AnthropicBatchProvider(api_key="test_key")
-            provider.client = mock_client
-            return provider
+        provider = AnthropicBatchProvider(api_key="test_key")
+        provider.client = mock_client
+        return provider
 
     def test_create_batch_sdk_failure_raises_runtimeerror(self, provider):
         provider.client.messages.batches.create = MagicMock(
@@ -96,17 +98,17 @@ class TestWaitForBatchProgressLogging:
     """wait_for_batch tolerates a request_counts shape missing 'processing'."""
 
     @pytest.fixture
-    def provider(self):
+    def provider(self, monkeypatch):
         mock_anthropic = MagicMock()
         mock_client = MagicMock()
         mock_anthropic.Anthropic.return_value = mock_client
 
-        with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
-            from attune.llm.providers.anthropic_batch import AnthropicBatchProvider
+        monkeypatch.setitem(sys.modules, "anthropic", mock_anthropic)
+        from attune.llm.providers.anthropic_batch import AnthropicBatchProvider
 
-            provider = AnthropicBatchProvider(api_key="test_key")
-            provider.client = mock_client
-            return provider
+        provider = AnthropicBatchProvider(api_key="test_key")
+        provider.client = mock_client
+        return provider
 
     @pytest.mark.asyncio
     async def test_wait_for_batch_falls_back_when_processing_count_missing(
