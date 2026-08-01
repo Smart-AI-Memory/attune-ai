@@ -20537,3 +20537,41 @@ def ", start_idx + 1)` for module-
   command, run it the way the reader will (installed entry point,
   their PATH), or annotate the version/entry-point precondition —
   the report now carries a pre-11.2.0 caveat block.
+
+- **A spec's numeric budget authored BEFORE implementation may
+  measure a different artifact than the one implementation
+  produces — measure at execution time and re-present the number
+  to the chair; never contort code to honor a stale figure**:
+  2026-07-31, intake-forms Task 3. The design's 4 KB theme-CSS cap
+  was written before the design's OWN mandated var() fallbacks
+  existed and implicitly measured the per-widget subset; the full
+  family sheet with fallbacks measured 5,574 B raw / 5,192 B
+  minified, and even nesting-restructuring only reached ~4.3 K —
+  hitting 4,096 would have cut REAL rules. Presented the fork
+  (amend vs restructure) with the measurements; chair amended to
+  6 KB in a decisions.md entry that preserves what the number was
+  FOR (the anti-framework ratchet moved into a banned-constructs
+  test: no @import/fonts/images — the discipline the byte figure
+  was standing in for). Sibling of "re-validate a spec's premise":
+  numeric budgets go stale the same way named scopes do, and the
+  measurement + chair re-ruling is one decisions entry, not a
+  design failure.
+
+- **Roundtable seats are CLOSED-BOOK — before promoting a seat
+  concern into spec requirements, the moderator (who holds the
+  tree) grounds it against where the mechanism actually runs; a
+  2-seat convergent concern can still dissolve on inspection**:
+  2026-07-31, intake-forms Phase 2 table. Antigravity and claude
+  independently converged on "the --list-dirs folder drill-down
+  may not survive migration — flat providers can't express the
+  interactive loop; is re-entrant intake_form the mechanism?" and
+  the claude seat rated it its own top deletion risk. Inspection
+  of the real mechanism: the drill-down is a SKILL-side loop over
+  a CLI seam BETWEEN form renders — it never lived inside form
+  generation, so template migration couldn't touch it. The
+  concern became one design.md clarification instead of a
+  re-entrancy subsystem. Rule: seat convergence measures how the
+  design TEXT reads to a cold reader (a real documentation
+  finding), not how the system behaves — verify against the tree
+  before writing machinery, and record the dissolved concern as
+  design text so the next cold reader doesn't re-raise it.
