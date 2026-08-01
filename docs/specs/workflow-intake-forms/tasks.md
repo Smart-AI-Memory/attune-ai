@@ -73,13 +73,15 @@ Authored only when the rule-of-three fires (a third intake is
 requested). Must include the byte-identical re-expression pins
 for the fix and spec intakes (design.md proof obligation).
 
-## Task 3 — Phase 2/theme: shared form theme (GATED)
+## Task 3 — Phase 2/theme: shared form theme (EXECUTED 2026-07-31, PR #1843)
 
 `attune/elicitation/theme.py` (`FORM_THEME_CSS`, host-token
-fallbacks), widget injection swap, dashboard static projection,
-budget + byte-equality drift tests, rendered screenshots on both
-surfaces. May be authored alongside Task 2 or independently —
-chair's call; it has no dependency on the template layer.
+fallbacks), widget swap shared-by-source (family subsets kept),
+dashboard static projection byte-equality-tested, budget test at
+the chair-amended 6 KB (decisions.md D1), standalone rendered
+receipt delivered in-session (fallbacks painting). Executed
+independently of Task 2 on the chair's `/spec execute` go — it has
+no dependency on the template layer.
 
 ## Task 4 — Phase 3: latency instrumentation + cache (GATED)
 
