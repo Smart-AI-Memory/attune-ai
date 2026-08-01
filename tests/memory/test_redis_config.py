@@ -398,3 +398,203 @@ class TestRedisMode:
         with patch.dict(os.environ, env, clear=False):
             config = get_redis_config()
             assert config.use_mock is True
+
+
+class TestCloudModeMissingCredentials:
+    """Cover the cloud-mode warning branches (missing host / password)."""
+
+    def test_cloud_mode_missing_host_warns(self, monkeypatch, caplog):
+        """REDIS_MODE=cloud with no REDIS_HOST logs a warning and falls
+        back to the loopback host."""
+        import logging
+
+        monkeypatch.setenv("REDIS_MODE", "cloud")
+        monkeypatch.delenv("REDIS_HOST", raising=False)
+        monkeypatch.setenv("REDIS_PASSWORD", "some-pass")
+        monkeypatch.delenv("REDIS_URL", raising=False)
+        monkeypatch.delenv("REDIS_PRIVATE_URL", raising=False)
+        monkeypatch.delenv("EMPATHY_REDIS_MOCK", raising=False)
+        monkeypatch.delenv("ATTUNE_REDIS_MOCK", raising=False)
+
+        with caplog.at_level(logging.WARNING, logger="attune.redis_config"):
+            config = get_redis_config()
+
+        assert config.host == "127.0.0.1"
+        assert any("REDIS_HOST not set" in r.message for r in caplog.records)
+
+    def test_cloud_mode_missing_password_warns(self, monkeypatch, caplog):
+        """REDIS_MODE=cloud with a host but no REDIS_PASSWORD logs a
+        warning and proceeds with password=None."""
+        import logging
+
+        monkeypatch.setenv("REDIS_MODE", "cloud")
+        monkeypatch.setenv("REDIS_HOST", "my-cloud-host.example.com")
+        monkeypatch.delenv("REDIS_PASSWORD", raising=False)
+        monkeypatch.delenv("REDIS_URL", raising=False)
+        monkeypatch.delenv("REDIS_PRIVATE_URL", raising=False)
+        monkeypatch.delenv("EMPATHY_REDIS_MOCK", raising=False)
+        monkeypatch.delenv("ATTUNE_REDIS_MOCK", raising=False)
+
+        with caplog.at_level(logging.WARNING, logger="attune.redis_config"):
+            config = get_redis_config()
+
+        assert config.host == "my-cloud-host.example.com"
+        assert config.password is None
+        assert any("REDIS_PASSWORD not set" in r.message for r in caplog.records)
+
+
+class TestGetRedisMemoryWithUrl:
+    """Cover get_redis_memory(url=...) building an explicit RedisConfig
+    and handing it to RedisShortTermMemory (never touching a real
+    connection — RedisShortTermMemory itself is stubbed out)."""
+
+    def test_url_builds_config_and_constructs_memory(self, monkeypatch):
+        from unittest.mock import MagicMock
+
+        sentinel_memory = MagicMock(name="sentinel_memory")
+        ctor = MagicMock(return_value=sentinel_memory)
+        monkeypatch.setattr("attune.redis_config.RedisShortTermMemory", ctor)
+
+        from attune.redis_config import get_redis_memory
+
+        result = get_redis_memory(url="rediss://user:secret@explicit-host:6390/4")
+
+        assert result is sentinel_memory
+        ctor.assert_called_once()
+        passed_config = ctor.call_args.kwargs["config"]
+        assert passed_config.host == "explicit-host"
+        assert passed_config.port == 6390
+        assert passed_config.password == "secret"
+        assert passed_config.db == 4
+        assert passed_config.ssl is True
+        assert passed_config.use_mock is False
+
+
+class TestCheckRedisConnectionSourceAndReachability:
+    """Cover the config_source branches (REDIS_URL / REDIS_PRIVATE_URL /
+    REDIS_MODE) and the non-mock connected/exception paths of
+    check_redis_connection — always with get_redis_memory stubbed so no
+    real Redis connection is attempted."""
+
+    def _fake_memory(self, *, ping_result=True, ping_error=None, stats=None):
+        from unittest.mock import MagicMock
+
+        memory = MagicMock(name="fake_memory")
+        if ping_error is not None:
+            memory.ping.side_effect = ping_error
+        else:
+            memory.ping.return_value = ping_result
+        memory.get_stats.return_value = stats or {
+            "used_memory": "1.2M",
+            "total_keys": 7,
+        }
+        return memory
+
+    def test_redis_url_source_and_successful_ping(self, monkeypatch):
+        monkeypatch.setenv("REDIS_URL", "redis://source-host:6379/0")
+        monkeypatch.delenv("REDIS_PRIVATE_URL", raising=False)
+        monkeypatch.delenv("REDIS_MODE", raising=False)
+        monkeypatch.delenv("EMPATHY_REDIS_MOCK", raising=False)
+        monkeypatch.delenv("ATTUNE_REDIS_MOCK", raising=False)
+
+        fake_memory = self._fake_memory(ping_result=True)
+        monkeypatch.setattr(
+            "attune.redis_config.get_redis_memory",
+            lambda: fake_memory,
+        )
+
+        from attune.redis_config import check_redis_connection
+
+        result = check_redis_connection()
+
+        assert result["config_source"] == "REDIS_URL"
+        assert result["connected"] is True
+        assert result["memory_used"] == "1.2M"
+        assert result["total_keys"] == 7
+        assert result["error"] is None
+
+    def test_redis_private_url_source(self, monkeypatch):
+        monkeypatch.delenv("REDIS_URL", raising=False)
+        monkeypatch.setenv("REDIS_PRIVATE_URL", "redis://internal-host:6379/0")
+        monkeypatch.delenv("REDIS_MODE", raising=False)
+        monkeypatch.delenv("EMPATHY_REDIS_MOCK", raising=False)
+        monkeypatch.delenv("ATTUNE_REDIS_MOCK", raising=False)
+
+        fake_memory = self._fake_memory(ping_result=True)
+        monkeypatch.setattr(
+            "attune.redis_config.get_redis_memory",
+            lambda: fake_memory,
+        )
+
+        from attune.redis_config import check_redis_connection
+
+        result = check_redis_connection()
+
+        assert result["config_source"] == "REDIS_PRIVATE_URL"
+        assert result["connected"] is True
+
+    def test_redis_mode_source_and_ping_exception(self, monkeypatch):
+        monkeypatch.delenv("REDIS_URL", raising=False)
+        monkeypatch.delenv("REDIS_PRIVATE_URL", raising=False)
+        monkeypatch.setenv("REDIS_MODE", "local")
+        monkeypatch.delenv("EMPATHY_REDIS_MOCK", raising=False)
+        monkeypatch.delenv("ATTUNE_REDIS_MOCK", raising=False)
+
+        fake_memory = self._fake_memory(ping_error=ConnectionError("refused"))
+        monkeypatch.setattr(
+            "attune.redis_config.get_redis_memory",
+            lambda: fake_memory,
+        )
+
+        from attune.redis_config import check_redis_connection
+
+        result = check_redis_connection()
+
+        assert result["config_source"] == "REDIS_MODE=local"
+        assert result["connected"] is False
+        assert "refused" in result["error"]
+
+    def test_resolve_mode_reporting_failure_yields_unknown(self, monkeypatch):
+        """REDIS_URL bypasses mode resolution inside get_redis_config(),
+        but check_redis_connection() separately resolves the mode purely
+        for reporting — an invalid REDIS_MODE there is caught and
+        reported as 'unknown' rather than propagating."""
+        monkeypatch.setenv("REDIS_URL", "redis://source-host:6379/0")
+        monkeypatch.setenv("REDIS_MODE", "not-a-real-mode")
+        monkeypatch.delenv("REDIS_PRIVATE_URL", raising=False)
+        monkeypatch.delenv("EMPATHY_REDIS_MOCK", raising=False)
+        monkeypatch.delenv("ATTUNE_REDIS_MOCK", raising=False)
+
+        fake_memory = self._fake_memory(ping_result=True)
+        monkeypatch.setattr(
+            "attune.redis_config.get_redis_memory",
+            lambda: fake_memory,
+        )
+
+        from attune.redis_config import check_redis_connection
+
+        result = check_redis_connection()
+
+        assert result["redis_mode"] == "unknown"
+        assert result["connected"] is True
+
+
+class TestGetManagedRedisSuccess:
+    """Cover the get_managed_redis() success path (REDIS_URL present)."""
+
+    def test_returns_memory_from_url(self, monkeypatch):
+        from unittest.mock import MagicMock
+
+        monkeypatch.setenv("REDIS_URL", "redis://managed-host:6379/0")
+        monkeypatch.delenv("REDIS_PRIVATE_URL", raising=False)
+
+        sentinel_memory = MagicMock(name="sentinel_memory")
+        get_memory_mock = MagicMock(return_value=sentinel_memory)
+        monkeypatch.setattr("attune.redis_config.get_redis_memory", get_memory_mock)
+
+        from attune.redis_config import get_managed_redis
+
+        result = get_managed_redis()
+
+        assert result is sentinel_memory
+        get_memory_mock.assert_called_once_with(url="redis://managed-host:6379/0")
