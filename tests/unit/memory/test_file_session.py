@@ -252,6 +252,10 @@ class TestFileSessionMemory:
 
         assert memory.retrieve("to_delete") is None
 
+    def test_delete_nonexistent_key_returns_false(self, memory):
+        """Test deleting a key that was never stashed returns False."""
+        assert memory.delete("never_stashed") is False
+
     def test_keys_pattern_matching(self, memory):
         """Test keys() with pattern matching."""
         memory.stash("prefix_one", 1)
@@ -564,3 +568,164 @@ class TestFileFirstIntegration:
         assert "Compact State" in content
 
         memory.close()
+
+
+class TestFileSessionMemoryCoverageGaps:
+    """Targeted tests for branches not exercised elsewhere in this file.
+
+    Covers: resuming a session by explicit id through the facade
+    constructor, the defensive re-check inside retrieve() for an
+    entry that expires between cleanup and use, get_recent_sessions()
+    (gzip archive, plain-json archive, corrupt-file tolerance, limit
+    truncation), and the Redis-compatibility no-ops (use_mock,
+    publish, subscribe).
+    """
+
+    @pytest.fixture
+    def temp_storage(self, tmp_path):
+        """Create temporary storage directory."""
+        return str(tmp_path / "coverage_test")
+
+    @pytest.fixture
+    def memory(self, temp_storage):
+        """Create FileSessionMemory instance."""
+        config = FileSessionConfig(base_dir=temp_storage)
+        mem = FileSessionMemory(user_id="test_user", config=config)
+        yield mem
+        mem.close()
+
+    # =========================================================================
+    # __init__ session_id resume path
+    # =========================================================================
+
+    def test_resume_specific_session_via_constructor(self, temp_storage):
+        """Passing session_id to the constructor resumes that session."""
+        config = FileSessionConfig(base_dir=temp_storage)
+
+        first = FileSessionMemory(user_id="test_user", config=config)
+        first.stash("resumed_key", "resumed_value")
+        session_id = first._state.session_id
+        first.close()
+
+        resumed = FileSessionMemory(
+            user_id="test_user",
+            config=config,
+            session_id=session_id,
+        )
+
+        assert resumed._state.session_id == session_id
+        assert resumed.retrieve("resumed_key") == "resumed_value"
+
+        resumed.close()
+
+    # =========================================================================
+    # retrieve() defensive expiry branch
+    # =========================================================================
+
+    def test_retrieve_removes_entry_that_expires_after_cleanup(self, memory):
+        """An entry found expired at the post-cleanup check is deleted.
+
+        _cleanup_expired() normally removes every expired entry before
+        retrieve() re-checks the target key, so this branch only fires
+        when an entry becomes stale between those two steps (e.g. a
+        race). Simulate it by disabling cleanup and inserting an
+        already-expired entry directly.
+        """
+        memory._cleanup_expired = lambda: None  # neutralize the earlier sweep
+        memory._state.working_memory["stale"] = WorkingEntry(
+            key="stale",
+            value="ghost",
+            agent_id="test_user",
+            stashed_at=time.time() - 100,
+            expires_at=time.time() - 50,
+        )
+        memory._dirty = False
+
+        result = memory.retrieve("stale")
+
+        assert result is None
+        assert "stale" not in memory._state.working_memory
+        assert memory._dirty is True
+
+    # =========================================================================
+    # get_recent_sessions()
+    # =========================================================================
+
+    def test_get_recent_sessions_empty_when_no_archives(self, memory):
+        """No archived sessions yields an empty list."""
+        assert memory.get_recent_sessions() == []
+
+    def test_get_recent_sessions_reads_gzip_archive(self, memory):
+        """A gzip-compressed archive is decoded and summarized."""
+        state = SessionState.new("test_user")
+        state.context["topic"] = "coverage"
+        memory._archive_session(state)  # compression on by default
+
+        sessions = memory.get_recent_sessions()
+
+        assert len(sessions) == 1
+        summary = sessions[0]
+        assert summary["session_id"] == state.session_id
+        assert summary["user_id"] == "test_user"
+        assert "topic" in summary["context_keys"]
+        assert summary["pattern_count"] == 0
+
+    def test_get_recent_sessions_reads_plain_json_archive(self, memory):
+        """An uncompressed archive (.json) is read via the plain-text path."""
+        memory.config.archive_compression = False
+        state = SessionState.new("test_user")
+        memory._archive_session(state)
+
+        sessions = memory.get_recent_sessions()
+
+        assert len(sessions) == 1
+        assert sessions[0]["session_id"] == state.session_id
+
+    def test_get_recent_sessions_skips_corrupt_files(self, memory):
+        """A corrupt archive file is logged and skipped, not raised."""
+        good_state = SessionState.new("test_user")
+        memory._archive_session(good_state)
+
+        corrupt_file = memory.config.archive_dir / "session_corrupt.json"
+        corrupt_file.write_text("{not valid json", encoding="utf-8")
+
+        sessions = memory.get_recent_sessions()
+
+        session_ids = [s["session_id"] for s in sessions]
+        assert good_state.session_id in session_ids
+        assert len(sessions) == 1
+
+    def test_get_recent_sessions_respects_limit(self, memory):
+        """Only `limit` most-recent sessions are returned."""
+        import os
+
+        for i in range(3):
+            state = SessionState.new("test_user")
+            state.session_id = f"session_ordered_{i}"
+            path = memory._archive_session(state)
+            # Force distinct mtimes so ordering is deterministic
+            # regardless of filesystem timestamp resolution.
+            os.utime(path, (time.time() + i, time.time() + i))
+
+        sessions = memory.get_recent_sessions(limit=2)
+
+        assert len(sessions) == 2
+        # Most recent archive (highest mtime) first.
+        assert sessions[0]["session_id"] == "session_ordered_2"
+        assert sessions[1]["session_id"] == "session_ordered_1"
+
+    # =========================================================================
+    # Redis-compatibility no-ops
+    # =========================================================================
+
+    def test_use_mock_is_false(self, memory):
+        """File-based memory reports use_mock is False."""
+        assert memory.use_mock is False
+
+    def test_publish_returns_zero(self, memory):
+        """publish() is unsupported in file mode and returns 0."""
+        assert memory.publish("some_channel", {"event": "test"}) == 0
+
+    def test_subscribe_returns_false(self, memory):
+        """subscribe() is unsupported in file mode and returns False."""
+        assert memory.subscribe("some_channel", lambda msg: None) is False
