@@ -6,11 +6,13 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+import sys
 import tempfile
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
+import attune.monitoring.otel_backend as otel_backend_module
 from attune.models.telemetry import (
     LLMCallRecord,
     TelemetryStore,
@@ -18,6 +20,40 @@ from attune.models.telemetry import (
     WorkflowStageRecord,
 )
 from attune.monitoring.multi_backend import MultiBackend, get_multi_backend, reset_multi_backend
+from attune.monitoring.otel_backend import OTELBackend
+
+
+def _make_workflow_record() -> WorkflowRunRecord:
+    """Build a minimal WorkflowRunRecord for logging tests."""
+    return WorkflowRunRecord(
+        run_id="test_run",
+        workflow_name="test",
+        started_at="2026-01-05T10:00:00Z",
+        completed_at="2026-01-05T10:01:00Z",
+        stages=[
+            WorkflowStageRecord(
+                stage_name="test",
+                tier="capable",
+                model_id="claude-sonnet-4",
+                input_tokens=100,
+                output_tokens=50,
+                cost=0.01,
+                latency_ms=1000,
+                success=True,
+                skipped=False,
+            ),
+        ],
+        total_input_tokens=100,
+        total_output_tokens=50,
+        total_cost=0.01,
+        baseline_cost=0.05,
+        savings=0.04,
+        savings_percent=80.0,
+        total_duration_ms=60000,
+        success=True,
+        providers_used=["anthropic"],
+        tiers_used=["capable"],
+    )
 
 
 @pytest.mark.unit
@@ -360,6 +396,32 @@ class TestMultiBackendStatus:
             assert "MultiBackend" in repr_str
             assert "active=" in repr_str
 
+    def test_repr_includes_failed_backends(self):
+        """repr() must also surface failed backends, not just active ones."""
+        mock_backend = MagicMock()
+        mock_backend.log_call.side_effect = Exception("Failed")
+
+        backend = MultiBackend(backends=[mock_backend])
+        call_record = LLMCallRecord(
+            call_id="test_001",
+            timestamp="2026-01-05T10:00:00Z",
+            provider="anthropic",
+            model_id="claude-sonnet-4",
+            tier="capable",
+            task_type="test",
+            input_tokens=100,
+            output_tokens=50,
+            estimated_cost=0.01,
+            latency_ms=1000,
+            success=True,
+        )
+        backend.log_call(call_record)
+
+        repr_str = repr(backend)
+
+        assert "failed=" in repr_str
+        assert "MagicMock" in repr_str
+
 
 @pytest.mark.unit
 class TestMultiBackendFlush:
@@ -430,3 +492,108 @@ class TestGlobalMultiBackend:
             reset_multi_backend()
 
             backend.flush.assert_called_once()
+
+
+@pytest.mark.unit
+class TestFromConfigBackendIsolation:
+    """A failure initializing one backend must not break from_config().
+
+    Covers the JSONL-init except branch and every OTEL-detection branch
+    (available, ImportError, and a generic init failure) that the happy-path
+    tests above never trigger.
+    """
+
+    def test_jsonl_init_failure_is_isolated(self):
+        """TelemetryStore() raising during from_config must not raise or
+        prevent the OTEL branch from still being evaluated."""
+        with (
+            tempfile.TemporaryDirectory() as tmpdir,
+            patch(
+                "attune.monitoring.multi_backend.TelemetryStore",
+                side_effect=OSError("disk full"),
+            ),
+        ):
+            backend = MultiBackend.from_config(tmpdir)
+
+        # JSONL backend failed to construct, so it's simply absent - no crash.
+        assert "TelemetryStore" not in backend.get_active_backends()
+
+    def test_otel_backend_appended_when_available(self):
+        """When OTELBackend.is_available() is True, it's added to backends."""
+        with (
+            tempfile.TemporaryDirectory() as tmpdir,
+            patch.object(OTELBackend, "is_available", return_value=True),
+        ):
+            backend = MultiBackend.from_config(tmpdir)
+
+        assert "OTELBackend" in backend.get_active_backends()
+
+    def test_otel_import_error_is_isolated(self):
+        """A missing attune.monitoring.otel_backend module (the shape of a
+        missing optional dependency) must not break from_config()."""
+        with (
+            tempfile.TemporaryDirectory() as tmpdir,
+            patch.dict(sys.modules, {"attune.monitoring.otel_backend": None}),
+        ):
+            backend = MultiBackend.from_config(tmpdir)
+
+        assert "OTELBackend" not in backend.get_active_backends()
+        # JSONL backend still constructed fine.
+        assert "TelemetryStore" in backend.get_active_backends()
+
+    def test_otel_generic_init_failure_is_isolated(self):
+        """A non-ImportError raised while constructing OTELBackend() must be
+        caught and logged, not propagated."""
+
+        class _BrokenOTELBackend:
+            def __init__(self, *args, **kwargs):
+                raise RuntimeError("collector handshake failed")
+
+        with (
+            tempfile.TemporaryDirectory() as tmpdir,
+            patch.object(otel_backend_module, "OTELBackend", _BrokenOTELBackend),
+        ):
+            backend = MultiBackend.from_config(tmpdir)
+
+        assert "OTELBackend" not in backend.get_active_backends()
+        assert "TelemetryStore" in backend.get_active_backends()
+
+
+@pytest.mark.unit
+class TestLogWorkflowErrorHandling:
+    """log_workflow() must isolate per-backend failures the same way
+    log_call() does - the happy-path tests above never fail a backend or
+    skip a previously-failed one on a second call."""
+
+    def test_log_workflow_continues_on_backend_failure(self):
+        """A backend raising during log_workflow doesn't stop the others,
+        and gets marked failed."""
+        mock_backend1 = MagicMock()
+        mock_backend1.log_workflow.side_effect = Exception("Workflow log failed")
+        mock_backend2 = MagicMock()
+
+        backend = MultiBackend(backends=[mock_backend1, mock_backend2])
+        workflow_record = _make_workflow_record()
+
+        backend.log_workflow(workflow_record)
+
+        mock_backend2.log_workflow.assert_called_once_with(workflow_record)
+        assert 0 in backend._failed_backends
+        assert "MagicMock" in backend.get_failed_backends()
+
+    def test_log_workflow_skips_previously_failed_backend(self):
+        """A backend already marked failed is skipped on a later
+        log_workflow() call without being invoked again."""
+        mock_backend = MagicMock()
+        mock_backend.log_workflow.side_effect = Exception("Failed")
+
+        backend = MultiBackend(backends=[mock_backend])
+        workflow_record = _make_workflow_record()
+
+        # First call fails and marks the backend as failed.
+        backend.log_workflow(workflow_record)
+        assert mock_backend.log_workflow.call_count == 1
+
+        # Second call must skip the failed backend entirely.
+        backend.log_workflow(workflow_record)
+        assert mock_backend.log_workflow.call_count == 1
