@@ -13,6 +13,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import json
+import sys
 import textwrap
 from pathlib import Path
 from typing import Any
@@ -2135,27 +2136,30 @@ class TestParsePoetryLock(TestDependencyParserMixin):
         assert all(d["pinned"] is True for d in deps)
         assert deps[0]["version"].startswith("==")
 
-    def test_poetry_lock_no_tomllib(self, tmp_path: Path) -> None:
+    def test_poetry_lock_no_tomllib(self, tmp_path: Path, monkeypatch) -> None:
         """Test poetry.lock parsing when tomllib is not available."""
         self._make_parser()
         lock_file = tmp_path / "poetry.lock"
         lock_file.write_text("[[package]]\nname = 'x'\nversion = '1.0'\n")
 
-        with patch.dict("sys.modules", {"tomllib": None, "tomli": None}):
-            # Re-import to get fresh behavior
-            import importlib
+        # monkeypatch.setitem, not patch.dict("sys.modules", ...) — the
+        # latter's clear+rebuild teardown races under xdist (guard test).
+        monkeypatch.setitem(sys.modules, "tomllib", None)
+        monkeypatch.setitem(sys.modules, "tomli", None)
+        # Re-import to get fresh behavior
+        import importlib
 
-            import attune.workflows.dependency_check_parsers as mod
+        import attune.workflows.dependency_check_parsers as mod
 
-            importlib.reload(mod)
+        importlib.reload(mod)
 
-            class TestParser(mod.DependencyParserMixin):
-                """Test parser."""
+        class TestParser(mod.DependencyParserMixin):
+            """Test parser."""
 
-            p = TestParser()
-            deps = p._parse_poetry_lock(lock_file)
-            # Should return empty since tomllib is not available
-            assert deps == []
+        p = TestParser()
+        deps = p._parse_poetry_lock(lock_file)
+        # Should return empty since tomllib is not available
+        assert deps == []
 
 
 class TestParsePackageLockJson(TestDependencyParserMixin):
@@ -2239,14 +2243,14 @@ class TestParsePackageLockJson(TestDependencyParserMixin):
 class TestParseRequirementsPackagingUnavailable(TestDependencyParserMixin):
     """Tests for _parse_requirements when the packaging library import fails."""
 
-    def test_packaging_import_error_uses_fallback(self, tmp_path: Path) -> None:
+    def test_packaging_import_error_uses_fallback(self, tmp_path: Path, monkeypatch) -> None:
         """When `packaging.requirements` can't be imported, fall back to regex parsing."""
         req_file = tmp_path / "requirements.txt"
         req_file.write_text("requests>=2.28.0\nflask\n")
 
         parser = self._make_parser()
-        with patch.dict("sys.modules", {"packaging.requirements": None}):
-            deps = parser._parse_requirements(req_file)
+        monkeypatch.setitem(sys.modules, "packaging.requirements", None)
+        deps = parser._parse_requirements(req_file)
 
         assert len(deps) == 2
         names = [d["name"] for d in deps]
@@ -2287,7 +2291,7 @@ class TestParseRequirementsFallbackSkipping(TestDependencyParserMixin):
 class TestParsePyprojectNoTomlLibrary(TestDependencyParserMixin):
     """Tests for _parse_pyproject when neither tomllib nor tomli is importable."""
 
-    def test_tomllib_and_tomli_unavailable_uses_fallback(self, tmp_path: Path) -> None:
+    def test_tomllib_and_tomli_unavailable_uses_fallback(self, tmp_path: Path, monkeypatch) -> None:
         """Missing both TOML libraries falls back to the regex-based parser."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
@@ -2302,8 +2306,9 @@ class TestParsePyprojectNoTomlLibrary(TestDependencyParserMixin):
         )
 
         parser = self._make_parser()
-        with patch.dict("sys.modules", {"tomllib": None, "tomli": None}):
-            deps = parser._parse_pyproject(pyproject)
+        monkeypatch.setitem(sys.modules, "tomllib", None)
+        monkeypatch.setitem(sys.modules, "tomli", None)
+        deps = parser._parse_pyproject(pyproject)
 
         names = [d["name"] for d in deps]
         assert "requests" in names
@@ -2312,7 +2317,7 @@ class TestParsePyprojectNoTomlLibrary(TestDependencyParserMixin):
 class TestParsePyprojectPackagingUnavailable(TestDependencyParserMixin):
     """Tests for _parse_pyproject when the packaging library is unavailable."""
 
-    def test_packaging_unavailable_uses_regex_extraction(self, tmp_path: Path) -> None:
+    def test_packaging_unavailable_uses_regex_extraction(self, tmp_path: Path, monkeypatch) -> None:
         """Without packaging, PEP 621 deps are extracted via a bare-name regex."""
         pyproject = tmp_path / "pyproject.toml"
         pyproject.write_text(
@@ -2328,8 +2333,8 @@ class TestParsePyprojectPackagingUnavailable(TestDependencyParserMixin):
         )
 
         parser = self._make_parser()
-        with patch.dict("sys.modules", {"packaging.requirements": None}):
-            deps = parser._parse_pyproject(pyproject)
+        monkeypatch.setitem(sys.modules, "packaging.requirements", None)
+        deps = parser._parse_pyproject(pyproject)
 
         names = [d["name"] for d in deps]
         assert "requests" in names
