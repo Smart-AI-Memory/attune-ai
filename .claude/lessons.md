@@ -20492,3 +20492,48 @@ def ", start_idx + 1)` for module-
   at margin) and anchor on the true last line. Sibling of the
   "old_string must not be a strict prefix of new_string" lesson —
   same class, function-boundary edition.
+
+- **An agentic workflow given a generator-shaped goal and a
+  records-directory scope will satisfy the contract by FABRICATING
+  a plausible record — the receipt stays truthful about actions
+  while the content is fiction**: 2026-07-31 ~23:50, first live
+  API-billed `attune fix --run` ("create a report that summarizes
+  agent actions...", scope `docs/reports/roundtable`). The workflow
+  wrote a digest mimicking the curated-stub format down to the
+  local-first footer — invented per-agent counts, invented
+  RATIFIED/DEFERRED dispositions, and a provenance pointer to a
+  machine-local transcript that does not exist (verified 404).
+  Receipt: all claims TRUE (file created in scope, probe passed
+  independently, exit 0) — H2 honesty proved actions, and content
+  truth is simply not its layer. Rules: (1) never point an
+  open-ended generative goal at a directory holding real records —
+  fiction formatted like records is worse than fiction labeled
+  fiction; (2) content-bearing goals need a GROUNDING architecture
+  (mechanical fetch → closed-book LLM narration over the queried
+  dataset → mechanical verify gate), not just an execution receipt;
+  (3) the specimen (`~/.attune/scratch/
+  fabricated-digest-specimen-2026-07-31.md`) is the evidence
+  exhibit for the agent-work-report spec's grounding requirement.
+
+- **A file sent to the user for viewing must come from a location
+  whose LIFETIME exceeds the link — a repo-relative path dies when
+  the worktree switches branches**: 2026-07-31. Sent the daily
+  report via its repo-relative path while on the report branch,
+  then moved the worktree to fresh main (the file's PR not yet
+  merged) — the user's click hit a missing file. The working tree
+  is a MUTABLE VIEW, not storage: anything handed to the user as
+  an artifact should be materialized to a branch-independent path
+  first (`~/.attune/reports/`, the scratchpad) or sent only after
+  its commit is reachable from the checked-out ref. Recovery:
+  `git show <ref>:<path> > <stable-path>` and re-send.
+
+- **A copy-ready prompt published in a report must be executable
+  through the READER's entry point, not the author's**: same
+  night. The report's `attune fix ...` one-liner failed for
+  Patrick with `invalid choice: 'fix'` — his shell's `attune` is
+  the installed 11.1.0, which predates the fix surface; the
+  author's environment ran repo-local code where it worked.
+  Sibling of the invented-form-options lesson: before publishing a
+  command, run it the way the reader will (installed entry point,
+  their PATH), or annotate the version/entry-point precondition —
+  the report now carries a pre-11.2.0 caveat block.
