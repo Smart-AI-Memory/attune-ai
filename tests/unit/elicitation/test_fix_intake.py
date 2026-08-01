@@ -3,12 +3,15 @@ validity, and command composition — real tmp git repos, no mocks."""
 
 from __future__ import annotations
 
+import io
+import json
 import shlex
 import subprocess
 from pathlib import Path
 
 from attune.elicitation.fix_intake import (
     OTHER,
+    _main,
     build_fix_intake_form,
     compose_fix_command,
     list_subdirectories,
@@ -225,3 +228,102 @@ def test_composed_command_round_trips_through_real_preview(tmp_path: Path) -> No
         assert main(argv) == 0
     finally:
         os.chdir(cwd)
+
+
+def test_candidates_degrade_when_git_binary_is_unavailable(tmp_path, monkeypatch) -> None:
+    """Both git seams degrade (changed-files AND history fallback) when
+    the git binary cannot be found — no exception escapes."""
+    repo = _git_repo(tmp_path)
+    (repo / "mod.py").write_text("X = 1\n")
+    _commit_all(repo)
+    empty_bin = tmp_path / "empty-bin"
+    empty_bin.mkdir()
+    monkeypatch.setenv("PATH", str(empty_bin))
+    assert scope_candidates(repo) == []
+
+
+def test_scope_candidates_include_rename_target_not_source(tmp_path) -> None:
+    repo = _git_repo(tmp_path)
+    (repo / "old_name.py").write_text("X = 1\n")
+    _commit_all(repo)
+    subprocess.run(["git", "mv", "old_name.py", "new_name.py"], cwd=repo, check=True)
+    scopes = scope_candidates(repo)
+    assert "new_name.py" in scopes
+    assert "old_name.py" not in scopes
+
+
+def test_scope_candidates_modified_tracked_file_leads(tmp_path) -> None:
+    repo = _git_repo(tmp_path)
+    pkg = repo / "src" / "pkg"
+    pkg.mkdir(parents=True)
+    (pkg / "mod.py").write_text("X = 1\n")
+    _commit_all(repo)
+    (pkg / "mod.py").write_text("X = 2\n")
+    scopes = scope_candidates(repo)
+    assert scopes[0] == "src/pkg/mod.py"
+    assert "src/pkg" in scopes
+
+
+def test_modified_tracked_file_in_skip_dir_is_excluded(tmp_path) -> None:
+    repo = _git_repo(tmp_path)
+    junk = repo / "node_modules"
+    junk.mkdir()
+    (junk / "x.js").write_text("var x = 1\n")
+    _commit_all(repo)
+    (junk / "x.js").write_text("var x = 2\n")
+    assert scope_candidates(repo) == []
+
+
+def test_fallback_skips_root_level_parents(tmp_path) -> None:
+    """Clean tree: files whose parent is the repo root contribute no
+    directory candidate; nested directories still rank."""
+    repo = _git_repo(tmp_path)
+    (repo / "root.py").write_text("X = 1\n")
+    pkg = repo / "src" / "pkg"
+    pkg.mkdir(parents=True)
+    (pkg / "mod.py").write_text("X = 1\n")
+    _commit_all(repo)
+    scopes = scope_candidates(repo)
+    assert scopes == ["src/pkg"]
+    assert "." not in scopes
+
+
+def test_main_default_prints_form_payload(tmp_path, monkeypatch, capsys) -> None:
+    repo = _git_repo(tmp_path)
+    (repo / "mod.py").write_text("X = 1\n")
+    monkeypatch.chdir(repo)
+    assert _main([]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["scopes"] == ["mod.py"]
+    assert payload["probes"] == []
+    field_ids = [f["id"] for f in payload["form"]["fields"]]
+    assert field_ids == ["request", "scope", "probes", "mode"]
+    assert payload["form"]["title"] == "Fix intake"
+    request_field = payload["form"]["fields"][0]
+    assert request_field["required"] is True
+    assert request_field["type"] == "textarea"
+
+
+def test_main_compose_reads_answers_from_stdin(monkeypatch, capsys) -> None:
+    answers = {
+        "request": "make it work",
+        "scope": "src/pkg",
+        "probes": ["pytest tests/test_x.py"],
+        "mode": "preview then run",
+    }
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(answers)))
+    assert _main(["--compose"]) == 0
+    assert capsys.readouterr().out.strip() == compose_fix_command(answers)
+
+
+def test_main_list_dirs_with_and_without_path(tmp_path, monkeypatch, capsys) -> None:
+    repo = _git_repo(tmp_path)
+    (repo / "src").mkdir()
+    (repo / "docs").mkdir()
+    monkeypatch.chdir(repo)
+    assert _main(["--list-dirs"]) == 0
+    top = json.loads(capsys.readouterr().out)
+    assert top == {"path": ".", "dirs": ["docs", "src"]}
+    assert _main(["--list-dirs", "src"]) == 0
+    sub = json.loads(capsys.readouterr().out)
+    assert sub == {"path": "src", "dirs": []}
