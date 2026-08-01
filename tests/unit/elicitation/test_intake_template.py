@@ -264,6 +264,31 @@ def test_template_less_intake_returns_none_and_marks_demand() -> None:
     assert intake_form("no-such-intake", invocation_text="do a thing") is None
 
 
+def test_cold_import_resolves_builtin_templates(tmp_path: Path) -> None:
+    """Regression (2026-08-01): a process importing ONLY
+    intake_template must still resolve 'fix' — registration is an
+    import side effect of the intake modules, lazily ensured."""
+    import subprocess
+    import sys
+
+    code = (
+        "from attune.elicitation.intake_template import intake_form\n"
+        "from pathlib import Path\n"
+        "form = intake_form('fix', repo_root=Path('.'))\n"
+        "assert form is not None, 'cold import lost builtin templates'\n"
+        "print('cold-ok')\n"
+    )
+    proc = subprocess.run(
+        [sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        cwd=tmp_path,
+        timeout=60,
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert "cold-ok" in proc.stdout
+
+
 def test_registered_intakes_resolve_via_intake_form(tmp_path: Path) -> None:
     form = intake_form("fix", repo_root=tmp_path)
     assert form is not None
