@@ -2,7 +2,7 @@
 
 **Status:** active (decision log; grows as the spec advances)
 
-## D1 — Grounding stance: mechanical + closed-book LLM narrative (CHAIR OVERRULE, 2026-08-01 ~00:20 ET)
+## D1 — Grounding stance: mechanical + closed-book LLM narrative (CHAIR OVERRULE, 2026-07-31 ~20:10 ET)
 
 The lead recommended **mechanical-only** for v1: no LLM in the
 render path, fabrication impossible by construction, zero cost —
@@ -57,3 +57,15 @@ an explicit `--stub` flag.
 Authored the night before the first-real-user demo (2026-08-01
 evening). No implementation before Saturday's cut; fresh branch off
 main when picked.
+
+## D6 — Requirements APPROVED; design + tasks authored same evening (chair, 2026-07-31 ~20:18 ET)
+
+Chair: "approved - go ahead with design and tasks." design.md
+(three-layer architecture, dataset schema, verify-gate token
+classes, testing strategy) and tasks.md (four-task gated ladder,
+receipts declared per task) authored on that go. Execution of any
+task still requires its own chair gate, and implementation waits
+for the post-cut fresh branch (D5). This entry also records the
+timestamp correction: the draft's "authored ~00:30 ET 08-01" was a
+UTC conversion error — actual authoring ~20:15 ET 07-31, caught by
+the chair in-session.

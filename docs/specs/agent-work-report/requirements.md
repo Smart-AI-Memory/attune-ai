@@ -1,8 +1,10 @@
 # Agent Work Report — Requirements
 
-**Status:** draft (2026-08-01, authored ~00:30 ET) — awaiting chair
-approval; implementation additionally waits for a fresh branch
-after the 11.2.0 cut (Sat 08-01 ~09:00 ET).
+**Status:** approved (2026-07-31 ~20:18 ET — chair: "approved - go
+ahead with design and tasks"). Implementation waits for a fresh
+branch after the 11.2.0 cut. (Timestamp correction: first authored
+~20:15 ET 07-31, not "00:30 ET 08-01" as the draft said — a
+UTC-to-ET conversion error the chair caught live.)
 **Slug:** `agent-work-report`
 **Provenance:** chair ask 2026-07-31 late evening, verbatim: "create
 a report that summarize actions taken by agents or llms during a
