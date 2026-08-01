@@ -351,3 +351,43 @@ class TestScaffold:
         from attune.workflows import _DEFAULT_WORKFLOW_NAMES
 
         assert "review-then-audit" not in _DEFAULT_WORKFLOW_NAMES
+
+    def test_containment_escape_detected(self, tmp_path, monkeypatch):
+        # _NAME_RE already blocks path metacharacters, so the containment
+        # check (RR-7 defense-in-depth) can't be triggered through a
+        # regex-valid name alone. Force Path.resolve() to disagree for the
+        # yaml destination only, to exercise the belt-and-suspenders guard.
+        pipelines_dir = tmp_path / "pipelines"
+        expected_yaml = pipelines_dir / "escape-test.yaml"
+        original_resolve = Path.resolve
+
+        def fake_resolve(self, *args, **kwargs):
+            if self == expected_yaml:
+                return Path("/outside/escape-test.yaml")
+            return original_resolve(self, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "resolve", fake_resolve)
+        with pytest.raises(ScaffoldError, match="escapes the pipelines directory"):
+            scaffold_acceptance(self._candidate(), "escape-test", pipelines_dir)
+
+    def test_partial_write_failure_rolls_back_both_or_neither(self, tmp_path, monkeypatch):
+        # Simulate an OSError landing the yaml half but failing the
+        # evidence half — the rollback must remove BOTH tmp files and the
+        # already-replaced yaml destination (RR-7 both-or-neither).
+        pipelines_dir = tmp_path / "pipelines"
+        evidence_dest = pipelines_dir / "rollback-test.evidence.json"
+        original_replace = Path.replace
+
+        def fake_replace(self, target):
+            if self.name == evidence_dest.name + ".tmp":
+                raise OSError("simulated disk failure")
+            return original_replace(self, target)
+
+        monkeypatch.setattr(Path, "replace", fake_replace)
+        with pytest.raises(OSError, match="simulated disk failure"):
+            scaffold_acceptance(self._candidate(), "rollback-test", pipelines_dir)
+
+        assert not (pipelines_dir / "rollback-test.yaml").exists()
+        assert not evidence_dest.exists()
+        assert not (pipelines_dir / "rollback-test.yaml.tmp").exists()
+        assert not (pipelines_dir / "rollback-test.evidence.json.tmp").exists()
