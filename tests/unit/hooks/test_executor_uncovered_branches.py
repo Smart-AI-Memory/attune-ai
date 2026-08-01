@@ -17,6 +17,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import asyncio
+import importlib.util
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -28,6 +29,14 @@ from attune.hooks.executor import HookExecutor, HookExecutorSync
 
 def _make_hook(cmd: str, htype: HookType = HookType.COMMAND, **kwargs) -> HookDefinition:
     return HookDefinition(command=cmd, type=htype, **kwargs)
+
+
+# The hooks CI matrix runs a minimal env without aiohttp; tests that
+# patch("aiohttp.ClientSession", ...) import it and need the real package.
+requires_aiohttp = pytest.mark.skipif(
+    importlib.util.find_spec("aiohttp") is None,
+    reason="aiohttp not installed",
+)
 
 
 # ---------------------------------------------------------------------------
@@ -89,6 +98,7 @@ class TestExecuteDispatchBranches:
         assert "timed out" in result["error"].lower()
         assert "duration_ms" in result
 
+    @requires_aiohttp
     @pytest.mark.asyncio
     async def test_webhook_type_dispatches_to_execute_webhook(self):
         """HookType.WEBHOOK is routed through execute() to _execute_webhook."""
@@ -238,6 +248,7 @@ class TestExecuteWebhookBranches:
         ):
             await executor._execute_webhook("https://hooks.example.com/notify", {})
 
+    @requires_aiohttp
     @pytest.mark.asyncio
     async def test_non_2xx_status_raises_runtime_error(self):
         mock_response = AsyncMock()
@@ -263,6 +274,7 @@ class TestExecuteWebhookBranches:
         ):
             await executor._execute_webhook("https://hooks.example.com/notify", {})
 
+    @requires_aiohttp
     @pytest.mark.asyncio
     async def test_non_json_response_falls_back_to_text(self):
         mock_response = AsyncMock()
