@@ -268,6 +268,46 @@ class TestHandleMemoryRetrieve:
         assert result["success"] is False
         assert "error" in result
 
+    @pytest.mark.asyncio
+    async def test_retrieve_long_term_owned_pattern_returns_data(self):
+        """Pattern with created_by matching the current user is returned."""
+        mem = _make_unified_memory()
+        mem.retrieve.return_value = None
+        server = _make_server(memory=mem)
+        mem.recall_pattern.return_value = {"content": "mine", "created_by": server._user_id}
+
+        result = await server._handle_memory_retrieve({"key": "k"})
+
+        assert result["success"] is True
+        assert result["source"] == "long_term"
+        assert result["data"]["created_by"] == server._user_id
+
+    @pytest.mark.asyncio
+    async def test_retrieve_long_term_unowned_pattern_denied(self):
+        """Pattern owned by a different user is reported as not found."""
+        mem = _make_unified_memory()
+        mem.retrieve.return_value = None
+        mem.recall_pattern.return_value = {"content": "theirs", "created_by": "someone-else"}
+        server = _make_server(memory=mem)
+
+        result = await server._handle_memory_retrieve({"key": "k"})
+
+        assert result["success"] is True
+        assert result["data"] is None
+        assert result["message"] == "Key not found"
+
+    @pytest.mark.asyncio
+    async def test_retrieve_generic_exception_returns_error_dict(self):
+        """Unexpected exception from retrieve() returns success=False."""
+        mem = _make_unified_memory()
+        mem.retrieve.side_effect = RuntimeError("retrieve boom")
+        server = _make_server(memory=mem)
+
+        result = await server._handle_memory_retrieve({"key": "k"})
+
+        assert result["success"] is False
+        assert "retrieve boom" in result["error"]
+
 
 # ---------------------------------------------------------------------------
 # _handle_memory_search
@@ -460,6 +500,30 @@ class TestHandleMemoryForget:
         assert "error" in result
 
     @pytest.mark.asyncio
+    async def test_forget_persistent_denied_when_not_owner(self):
+        """Deletion is refused when the existing pattern belongs to another user."""
+        mem = _make_unified_memory()
+        mem.recall_pattern.return_value = {"content": "theirs", "created_by": "someone-else"}
+        server = _make_server(memory=mem)
+
+        result = await server._handle_memory_forget({"key": "k", "scope": "persistent"})
+
+        assert result["success"] is False
+        assert result["error"] == "Not authorized to delete this key"
+        mem.delete_pattern.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_forget_generic_exception_returns_error_dict(self):
+        """A KeyError before either scope branch is caught by the outer handler."""
+        mem = _make_unified_memory()
+        server = _make_server(memory=mem)
+
+        result = await server._handle_memory_forget({})
+
+        assert result["success"] is False
+        assert "redis_memory_forget" in result["error"]
+
+    @pytest.mark.asyncio
     async def test_forget_returns_key_in_result(self):
         """Result always includes the key that was targeted for removal."""
         mem = _make_unified_memory()
@@ -468,6 +532,88 @@ class TestHandleMemoryForget:
         result = await server._handle_memory_forget({"key": "target_key"})
 
         assert result["key"] == "target_key"
+
+
+# ---------------------------------------------------------------------------
+# Personal cross-session memory handlers
+# ---------------------------------------------------------------------------
+
+
+class TestPersonalMemoryHandlers:
+    """Tests for the generic-exception and project_local branches of the
+    personal_memory_* handlers (ImportError/ValueError paths are already
+    covered in tests/unit/test_mcp_memory_tools.py).
+    """
+
+    @pytest.mark.asyncio
+    async def test_capture_project_local_uses_workspace_root(self, tmp_path):
+        """project_local=True roots the PersonalMemory instance under the workspace."""
+        mock_pm = MagicMock()
+        mock_pm.capture.return_value = tmp_path / ".attune" / "memory" / "topic" / "decision.md"
+        server = _make_server()
+        server._workspace_root = str(tmp_path)
+
+        with patch("attune.memory.personal.PersonalMemory", return_value=mock_pm) as cls:
+            result = await server._handle_personal_memory_capture(
+                {"topic": "topic", "content": "c", "project_local": True},
+            )
+
+        assert result["success"] is True
+        cls.assert_called_once_with(project_root=tmp_path / ".attune" / "memory")
+
+    @pytest.mark.asyncio
+    async def test_capture_generic_exception_returns_error_dict(self):
+        """Unexpected exception from pm.capture() returns success=False."""
+        mock_pm = MagicMock()
+        mock_pm.capture.side_effect = RuntimeError("capture boom")
+        server = _make_server()
+
+        with patch("attune.memory.personal.PersonalMemory", return_value=mock_pm):
+            result = await server._handle_personal_memory_capture(
+                {"topic": "topic", "content": "c"},
+            )
+
+        assert result["success"] is False
+        assert "capture boom" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_recall_generic_exception_returns_error_dict(self):
+        """Unexpected exception from pm.query() returns success=False."""
+        mock_pm = MagicMock()
+        mock_pm.query.side_effect = RuntimeError("recall boom")
+        server = _make_server()
+
+        with patch("attune.memory.personal.PersonalMemory", return_value=mock_pm):
+            result = await server._handle_personal_memory_recall({"query": "q"})
+
+        assert result["success"] is False
+        assert "recall boom" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_topics_generic_exception_returns_error_dict(self):
+        """Unexpected exception from pm.list_topics() returns success=False."""
+        mock_pm = MagicMock()
+        mock_pm.list_topics.side_effect = RuntimeError("topics boom")
+        server = _make_server()
+
+        with patch("attune.memory.personal.PersonalMemory", return_value=mock_pm):
+            result = await server._handle_personal_memory_topics({})
+
+        assert result["success"] is False
+        assert "topics boom" in result["error"]
+
+    @pytest.mark.asyncio
+    async def test_forget_generic_exception_returns_error_dict(self):
+        """Unexpected (non-ValueError) exception from pm.forget_topic() propagates."""
+        mock_pm = MagicMock()
+        mock_pm.forget_topic.side_effect = RuntimeError("forget boom")
+        server = _make_server()
+
+        with patch("attune.memory.personal.PersonalMemory", return_value=mock_pm):
+            result = await server._handle_personal_memory_forget({"topic": "topic"})
+
+        assert result["success"] is False
+        assert "forget boom" in result["error"]
 
 
 # ---------------------------------------------------------------------------
