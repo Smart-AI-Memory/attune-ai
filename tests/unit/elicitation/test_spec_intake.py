@@ -3,10 +3,13 @@ composition — real tmp trees, no mocks (mirrors test_fix_intake)."""
 
 from __future__ import annotations
 
+import io
+import json
 from pathlib import Path
 
 from attune.elicitation.spec_intake import (
     OTHER,
+    _main,
     area_candidates,
     build_spec_intake_form,
     compose_spec_contract,
@@ -89,3 +92,54 @@ def test_compose_contract_omits_other_area_and_blank_slug() -> None:
     )
     assert "Scope" not in block
     assert "docs/specs/" not in block
+
+
+def test_main_default_prints_form_and_areas_payload(tmp_path: Path, monkeypatch, capsys) -> None:
+    repo = _repo(tmp_path)
+    monkeypatch.chdir(repo)
+    assert _main([]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["areas"] == ["src/attune/elicitation", "src/attune/workflows"]
+    assert payload["taken_slugs"] == ["local-first-reports", "outcome-first-fix"]
+    field_ids = [f["id"] for f in payload["form"]["fields"]]
+    assert field_ids == ["outcome", "done_when", "area", "slug"]
+    assert payload["form"]["title"] == "New spec intake"
+    outcome_field = payload["form"]["fields"][0]
+    assert outcome_field["required"] is True
+    assert outcome_field["type"] == "textarea"
+
+
+def test_main_default_degrades_without_areas(tmp_path: Path, monkeypatch, capsys) -> None:
+    monkeypatch.chdir(tmp_path)
+    assert _main([]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["areas"] == []
+    assert payload["taken_slugs"] == []
+    area_field = payload["form"]["fields"][2]
+    assert area_field["type"] == "text_input"
+
+
+def test_main_compose_reads_answers_from_stdin(tmp_path: Path, monkeypatch, capsys) -> None:
+    repo = _repo(tmp_path)
+    monkeypatch.chdir(repo)
+    answers = {
+        "outcome": "a spec intake form ships",
+        "done_when": "PR merged green",
+        "area": "src/attune/elicitation",
+        "slug": "spec-intake",
+    }
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(answers)))
+    assert _main(["--compose"]) == 0
+    expected = compose_spec_contract(answers, existing_spec_slugs(repo))
+    assert capsys.readouterr().out.strip() == expected.strip()
+
+
+def test_main_compose_warns_on_slug_collision(tmp_path: Path, monkeypatch, capsys) -> None:
+    repo = _repo(tmp_path)
+    monkeypatch.chdir(repo)
+    answers = {"outcome": "x", "done_when": "y", "slug": "outcome-first-fix"}
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(answers)))
+    assert _main(["--compose"]) == 0
+    out = capsys.readouterr().out
+    assert "WARNING" in out
+    assert "amend that spec or pick a new slug" in out
