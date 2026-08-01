@@ -14,6 +14,7 @@ from unittest.mock import MagicMock
 
 from attune.memory.cross_session.coordinator import CrossSessionCoordinator
 from attune.memory.cross_session.models import (
+    CHANNEL_SESSIONS,
     KEY_ACTIVE_AGENTS,
     STALE_THRESHOLD_SECONDS,
     ConflictStrategy,
@@ -564,3 +565,210 @@ class TestCrossSessionCoordinatorAnnounceDepart:
 
         memory._base._client.hdel.assert_called_with(KEY_ACTIVE_AGENTS, coord.agent_id)
         memory._base._client.publish.assert_called()
+
+
+# ---------------------------------------------------------------------------
+# get_session with malformed stored data
+# ---------------------------------------------------------------------------
+
+
+class TestCrossSessionCoordinatorGetSessionInvalidData:
+    """get_session() degrades to None on malformed stored session data."""
+
+    def test_get_session_returns_none_for_invalid_json(self):
+        """get_session returns None instead of raising on unparseable data."""
+        memory = _mock_memory()
+        memory._base._client.hget.return_value = b"not { valid } json"
+
+        coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
+        assert coord.get_session("corrupt_agent") is None
+
+    def test_get_session_returns_none_for_missing_fields(self):
+        """get_session returns None when stored JSON lacks required keys."""
+        memory = _mock_memory()
+        memory._base._client.hget.return_value = json.dumps({"unexpected": "shape"}).encode()
+
+        coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
+        assert coord.get_session("partial_agent") is None
+
+
+# ---------------------------------------------------------------------------
+# Heartbeat internals (_send_heartbeat / _heartbeat_loop)
+# ---------------------------------------------------------------------------
+
+
+class TestCrossSessionCoordinatorHeartbeatInternals:
+    """Direct exercise of the heartbeat send path and loop body."""
+
+    def test_send_heartbeat_degraded_no_op(self):
+        """_send_heartbeat() is a no-op when the Redis client is None."""
+        memory = RedisShortTermMemory(use_mock=True)
+        coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
+        coord._send_heartbeat()  # Should not raise
+
+    def test_send_heartbeat_updates_timestamp_and_stores(self):
+        """_send_heartbeat() refreshes last_heartbeat and writes to Redis."""
+        memory = _mock_memory()
+        coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
+        before = coord.session_info.last_heartbeat
+
+        coord._send_heartbeat()
+
+        assert coord.session_info.last_heartbeat >= before
+        args, _kwargs = memory._base._client.hset.call_args
+        assert args[0] == KEY_ACTIVE_AGENTS
+        assert args[1] == coord.agent_id
+        stored = json.loads(args[2])
+        assert stored["agent_id"] == coord.agent_id
+
+    def test_heartbeat_loop_sends_until_stop_event_fires(self):
+        """_heartbeat_loop() sends heartbeats until the stop event is set."""
+        memory = _mock_memory()
+        coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
+        # First wait returns False (keep running), second returns True (stop).
+        coord._heartbeat_stop = MagicMock()
+        coord._heartbeat_stop.wait.side_effect = [False, True]
+
+        coord._heartbeat_loop()
+
+        assert memory._base._client.hset.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# check_lock with a non-bytes owner value
+# ---------------------------------------------------------------------------
+
+
+class TestCrossSessionCoordinatorCheckLockStrOwner:
+    """check_lock() when the client returns an already-decoded string."""
+
+    def test_check_lock_returns_str_owner_unchanged(self):
+        """check_lock returns the owner when Redis yields str, not bytes."""
+        memory = _mock_memory()
+        memory._base._client.get.return_value = "str_lock_holder"
+
+        coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
+        assert coord.check_lock("resource_x") == "str_lock_holder"
+
+
+# ---------------------------------------------------------------------------
+# subscribe_to_sessions event dispatch
+# ---------------------------------------------------------------------------
+
+
+def _pubsub_with_messages(memory: RedisShortTermMemory, messages: list[dict]) -> MagicMock:
+    """Wire a mock pubsub whose listen() yields the given finite messages."""
+    pubsub = MagicMock()
+    pubsub.listen.return_value = messages
+    memory._base._client.pubsub.return_value = pubsub
+    return pubsub
+
+
+class TestCrossSessionCoordinatorSubscribe:
+    """subscribe_to_sessions() event loop with a mocked pubsub."""
+
+    def test_subscribe_degraded_returns_without_subscribing(self):
+        """subscribe_to_sessions() returns immediately when client is None."""
+        memory = RedisShortTermMemory(use_mock=True)
+        coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
+        coord.subscribe_to_sessions()  # Should not raise, no client to use
+
+    def test_subscribe_subscribes_to_sessions_channel(self):
+        """subscribe_to_sessions() subscribes the pubsub to CHANNEL_SESSIONS."""
+        memory = _mock_memory()
+        pubsub = _pubsub_with_messages(memory, [])
+
+        coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
+        coord.subscribe_to_sessions()
+
+        pubsub.subscribe.assert_called_once_with(CHANNEL_SESSIONS)
+
+    def test_subscribe_dispatches_session_joined_to_handlers(self):
+        """A session_joined event invokes registered joined-handlers."""
+        memory = _mock_memory()
+        info = _make_session_info("joining_peer")
+        event = {"event": "session_joined", "session": info.to_dict()}
+        _pubsub_with_messages(
+            memory,
+            [{"type": "message", "data": json.dumps(event).encode()}],
+        )
+
+        coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
+        handler = MagicMock()
+        coord.on_session_joined(handler)
+        coord.subscribe_to_sessions()
+
+        handler.assert_called_once()
+        received = handler.call_args[0][0]
+        assert isinstance(received, SessionInfo)
+        assert received.agent_id == "joining_peer"
+
+    def test_subscribe_dispatches_session_left_to_handlers(self):
+        """A session_left event invokes left-handlers with the agent_id."""
+        memory = _mock_memory()
+        event = {"event": "session_left", "agent_id": "departing_peer"}
+        _pubsub_with_messages(
+            memory,
+            [{"type": "message", "data": json.dumps(event)}],
+        )
+
+        coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
+        handler = MagicMock()
+        coord.on_session_left(handler)
+        coord.subscribe_to_sessions()
+
+        handler.assert_called_once_with("departing_peer")
+
+    def test_subscribe_skips_non_message_types(self):
+        """Subscription-confirmation messages are ignored, not dispatched."""
+        memory = _mock_memory()
+        _pubsub_with_messages(memory, [{"type": "subscribe", "data": 1}])
+
+        coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
+        joined = MagicMock()
+        left = MagicMock()
+        coord.on_session_joined(joined)
+        coord.on_session_left(left)
+        coord.subscribe_to_sessions()
+
+        joined.assert_not_called()
+        left.assert_not_called()
+
+    def test_subscribe_tolerates_malformed_event_payloads(self):
+        """Malformed payloads are logged and skipped; later events still fire."""
+        memory = _mock_memory()
+        good = {"event": "session_left", "agent_id": "still_works"}
+        _pubsub_with_messages(
+            memory,
+            [
+                {"type": "message", "data": b"not { valid } json"},
+                # Valid JSON but missing the "session" key -> KeyError path
+                {"type": "message", "data": json.dumps({"event": "session_joined"})},
+                {"type": "message", "data": json.dumps(good)},
+            ],
+        )
+
+        coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
+        left = MagicMock()
+        coord.on_session_left(left)
+        coord.subscribe_to_sessions()  # Should not raise
+
+        left.assert_called_once_with("still_works")
+
+    def test_subscribe_ignores_unknown_event_names(self):
+        """Events with unrecognized names dispatch to no handlers."""
+        memory = _mock_memory()
+        _pubsub_with_messages(
+            memory,
+            [{"type": "message", "data": json.dumps({"event": "mystery"})}],
+        )
+
+        coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
+        joined = MagicMock()
+        left = MagicMock()
+        coord.on_session_joined(joined)
+        coord.on_session_left(left)
+        coord.subscribe_to_sessions()
+
+        joined.assert_not_called()
+        left.assert_not_called()
