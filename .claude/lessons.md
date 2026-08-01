@@ -20598,3 +20598,39 @@ def ", start_idx + 1)` for module-
   audit what the MISS path emits — a miss that produces data
   (telemetry, defaults, empty-but-valid results) turns a loading
   bug into corrupted signal.
+
+- **An exception-branch test whose MOCK TRIGGER never fires is
+  green forever while testing nothing — the tell is the branch's
+  lines still showing as MISSED despite a test named for them**:
+  2026-08-01, post_simplification_mixin lane (#1885). The
+  pre-existing `test_handles_import_error_gracefully` patched
+  `builtins.__import__` to raise on names containing
+  "simplify_code" — a name the module never imports (its try block
+  imports only `ast` and `pathlib`). The mock never fired, the
+  test exercised the SUCCESS path under an error-handling name,
+  and the `except ImportError` lines stayed missed with the test
+  present. Detection rule: when coverage shows an error branch
+  missed but a test exists claiming to cover it, the test's
+  trigger is theater — verify the mock's target is something the
+  code actually calls/imports (same family as "the seam is the
+  imported callable, not the source module"). Fix shape: patch the
+  REAL import name; keep or rename the old test honestly.
+
+- **A malformed-input filter written as `except (A, B): continue`
+  skips only the malformations that raise A or B — enumerate
+  malformation SHAPES, not exception types, or one new shape
+  crashes the whole loop**: 2026-08-01, monitoring/metrics lane
+  (#1888, production bug #7 of the fleet). `collect_metrics()`
+  tolerates blank lines, bad JSON, and missing keys via
+  `except (JSONDecodeError, KeyError): continue` — but a non-dict
+  `tokens` field raises AttributeError from `.get()`, escaping the
+  filter and killing the entire collection instead of skipping the
+  row. The loop's CONTRACT is "malformed rows are skipped"; the
+  except list encodes only the malformations the author imagined.
+  Rule: for tolerate-and-continue loops over untrusted rows,
+  either catch the contract (`except Exception: continue` with a
+  log — acceptable here precisely because the contract IS
+  skip-anything-bad) or shape-check before access
+  (`isinstance(entry.get("tokens"), dict)`). Pinned by a test
+  asserting the current crashing behavior as the finding's
+  receipt.
