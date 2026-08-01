@@ -215,9 +215,16 @@ class TestSinkFaultTolerance:
         t0 = asyncio.get_event_loop().time()
         await wf.execute(path="src/", sources=[src], event_sink=slow_sink, sweep_id="r")
         elapsed = asyncio.get_event_loop().time() - t0
+        sink_event.set()  # release parked sink tasks promptly
 
-        # Sweep must finish promptly even though sinks are still waiting.
-        assert elapsed < 1.0, f"sweep took {elapsed:.3f}s, expected <1s"
+        # Sweep must finish while sinks are still waiting. The bound
+        # distinguishes REGIMES, not speed: inline-awaited delivery
+        # would take ~10s (the sink's wait), fire-and-forget takes
+        # well under a second on a quiet machine — but a loaded CI
+        # runner was measured at 1.578s (windows-latest under xdist,
+        # 2026-08-01), so a 1.0s bound flaked without any blocking.
+        # 5.0s keeps ≥2x margin against both regimes.
+        assert elapsed < 5.0, f"sweep took {elapsed:.3f}s, expected well under the sink's 10s wait"
 
         # Release the still-pending sink tasks so the test loop exits
         # cleanly without a "Task was destroyed but it is pending"

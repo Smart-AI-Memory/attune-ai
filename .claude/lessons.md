@@ -20575,3 +20575,26 @@ def ", start_idx + 1)` for module-
   finding), not how the system behaves — verify against the tree
   before writing machinery, and record the dissolved concern as
   design text so the next cold reader doesn't re-raise it.
+
+- **A registry populated by IMPORT SIDE EFFECT is invisible to any
+  caller who imports only the registry module — and when the miss
+  path emits telemetry, the bug ships FALSE SIGNAL, not just a
+  miss**: 2026-08-01, first cold sweep after #1843. `TEMPLATES`
+  lived in `intake_template.py` but was populated when
+  `fix_intake`/`spec_intake` were imported; a process importing
+  only the registry module got `intake_form("fix") -> None` AND a
+  false `template_missing` demand marker — the very telemetry
+  meant to rank real demand would have logged phantom asks for a
+  template that exists. All prior tests passed because the test
+  FILE imported the registering modules (the registration was an
+  accident of test-module imports, invisible to the suite). Fix
+  (#1845): `_ensure_builtin_templates()` lazily imports the
+  registering modules at the read seam; regression test runs a
+  SUBPROCESS importing only the registry module. Rules: (1) a
+  side-effect-populated registry needs an ensure-loaded call at
+  its READ seam, or explicit registration — never "someone will
+  have imported it"; (2) test cold paths in a subprocess, since
+  in-process tests inherit the test module's own imports; (3)
+  audit what the MISS path emits — a miss that produces data
+  (telemetry, defaults, empty-but-valid results) turns a loading
+  bug into corrupted signal.
