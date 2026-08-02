@@ -4,8 +4,11 @@ description: "LinkedIn Article — Attune AI Memory Suite (measured): we put har
 
 # LinkedIn Article — Attune AI Memory Suite (measured)
 
-*Format: LinkedIn Article (long-form, supports headers). ~450 words.
-ASCII markers only — LinkedIn mangles Unicode arrows on paste.*
+*Format: LinkedIn Article (long-form, supports headers). ~550 words.
+ASCII markers only — LinkedIn mangles Unicode arrows on paste.
+Revised 2026-08-02: style pass (honest-mistake paragraph, re-run
+note) + metrics converted to a proper list so LinkedIn stops
+running them together; published article updated in place same day.*
 
 ---
 
@@ -17,15 +20,15 @@ against our own live memory store, on our own codebase.
 
 Here's what persistent memory actually bought us:
 
--> 302,949 tokens of durable memory — 751 findings, lessons, and rules
-   distilled from our own sessions
--> A session recalls only the relevant slice: lessons injected at the
-   trap moment are capped at 3,000 tokens = **67x fewer tokens** than
-   loading the full corpus into context
--> Recall is one warm Redis call: **0.6 ms**, versus 4.4 ms to read the
-   files from disk — roughly **7x faster**
--> Retrieval quality: **P@3 96%** (100% on the high-severity subset) on
-   a frozen trap-moment benchmark
+- 302,949 tokens of durable memory — 751 findings, lessons, and rules
+  distilled from our own sessions
+- A session recalls only the relevant slice: lessons injected at the
+  trap moment are capped at 3,000 tokens = **67x fewer tokens** than
+  loading the full corpus into context
+- Recall is one warm Redis call: **0.6 ms**, versus 4.4 ms to read the
+  files from disk — roughly **7x faster**
+- Retrieval quality: **P@3 96%** (100% on the high-severity subset) on
+  a frozen trap-moment benchmark
 
 And both wins widen as the corpus grows — the budget cap stays constant,
 the recall call stays flat.
@@ -48,6 +51,17 @@ The loop:
 - Lessons at the trap moment — the right lesson shows up exactly when a
   prompt hits a known trap
 
+**The honest part: we shipped it broken once.**
+
+One release went out with recall broken — capture worked, recall
+returned nothing — and every unit test was green, because the tests
+mocked the exact layer that failed. What caught it was a dogfood probe
+of the shipped package: clean environment, fresh home directory,
+install what a user installs, run what a user runs. The fix became the
+next release's headline, and that probe is now part of the release
+ceremony. "The tests pass" and "it remembers" are different claims. We
+only trust the second one measured — which is why this article exists.
+
 As of the latest release it ships with a plain `pip install attune-ai` —
 no infrastructure required. Without Redis it degrades to files with
 clear guidance instead of failing silently.
@@ -61,7 +75,10 @@ memory suite is that idea, shipped and now measured.
 
 Everything above is reproducible — the numbers come straight out of
 `benchmarks/memory_savings.py`, run against the live store. No
-hand-picked figures.
+hand-picked figures. We re-ran the benchmark the day after publishing:
+the claims didn't just hold, they read slightly better, because the
+corpus had already grown. That's the shape you want — wins that widen
+on their own.
 
 What would your AI do differently if it remembered last month?
 
