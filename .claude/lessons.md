@@ -20713,3 +20713,116 @@ def ", start_idx + 1)` for module-
   reissue the repo command separately. Rule: one compound command
   never mixes a cd-to-scratch metric recipe with repo-cwd
   operations.
+
+- **N same-day lessons PRs form a DIRTY conflict chain — each merge
+  re-conflicts every sibling at the lessons.md tail; the fix is
+  rebase-keep-both + STACK the next batch onto the rebased prior,
+  and the prevention is the standing one-batched-EOD-PR rule** —
+  08-01: three overnight batches (b8/b9/b10) all appended at the
+  same tail; b10 merged first and turned b8 AND b9 DIRTY. Recovery
+  recipe: (1) rebase b8 onto main, resolve by deleting ONLY the
+  three conflict markers (append-append conflicts keep both blocks
+  verbatim); (2) rebase b9 onto the REBASED b8 tip — not main —
+  so b8's merge doesn't re-dirty it (squash-merge resolves the
+  shared commit as identical-change, clean); (3) rebase replays
+  commits UNSIGNED — `git commit --amend -S --no-edit` and verify
+  `%G?` = G before force-pushing; (4) sanity-grep one distinctive
+  phrase per batch afterward to prove no block was lost or doubled.
+  This chain is the mechanical WHY behind the batch-lessons-EOD
+  rule: one PR per day has no siblings to conflict with.
+  COROLLARY (same morning): stacking b9-on-b8 means whichever PR
+  the label workflow merges FIRST ships BOTH batches — the other
+  PR's diff collapses to a stale REVERT of newer main and must be
+  CLOSED (verify content on main by distinctive-phrase grep
+  first), never merged. An auto-merge label on a
+  stacked-and-now-redundant PR is a revert waiting to fire —
+  closing it promptly is part of the recipe.
+
+- **pypistats rate-limit budget is ~3 fetches per penalty window —
+
+- **Env-gated structured-stdout emitters (ATTUNE_RUN_META, DS_EMIT
+  class) writing LARGE single lines to a daemon pipe must handle
+  non-blocking partial writes — and post-success plumbing must
+  never own the exit code** — 08-02, dashboard run 87d8438e3e8c:
+  code-review SUCCEEDED with a full report, then died
+  `BlockingIOError [Errno 35]` emitting the >64 KiB report_b64
+  line to the runner's non-blocking pipe → run stamped failed
+  (exit 1); the Jul 15 "failed" chip was the same bug. Fix shape
+  (#1904): (a) fd-level write loop with select()-wait retry on
+  BlockingIOError (POSIX only — select on pipes doesn't exist on
+  Windows; skip the regression test there); (b) wrap the whole
+  emission in except-OSError → stderr warning, because emission
+  is plumbing ON TOP of an already-produced result — the exit
+  code answers "did the workflow's checks pass", never "did the
+  pipe cooperate". Detection tell: a run view showing a COMPLETE
+  report followed by a traceback in the same log = post-success
+  crash, not a workflow failure. Polling corollary: the ops
+  `/api/runs/{workflow}` history is NOT newest-first — a watcher
+  reading `runs[0]` returns a STALE run's verdict (produced a
+  false "failed" mid-verification); always select by run id.
+
+- **The import-stripped-by-formatter trap fires even when import
+  and usage are in the SAME MESSAGE's edits — the PostToolUse
+  formatter runs after EACH Edit call, not after the batch** —
+  08-02, hit within hours of the lesson firing as a warning: edit
+  1 added `import io/select`, edit 2 (same message) added the
+  `_write` body using them; the formatter ran between the two and
+  stripped both imports; the NameError surfaced as a test HANG
+  (the select-retry path died mid-write, reader never got EOF),
+  two layers from the cause. Sharpened rule: import + first usage
+  in the SAME Edit call's diff, period. Diagnostic that cut
+  through: bare-python repro with
+  `faulthandler.dump_traceback_later(N, exit=True)` — pytest
+  wrappers and `| tail` piping both masked the actual exception.
+
+- **RATIFIED (chair, 2026-08-02): seam round-trip test class —
+  every env-gated stdout/IPC channel ships one NON-MOCKED
+  end-to-end test at realistic payload size** (emit → real
+  subprocess → consumer parse → run record). Born from the
+  run-meta channel shipping BOTH halves independently bugged —
+  write side crashed on non-blocking pipes, read side raised past
+  asyncio's 64 KiB readline limit — each half with green unit
+  tests, because no test ever crossed the seam at real size.
+  Worked precedent: #1904's TestNonBlockingPipeWrite (write half)
+  + test_line_over_64k_does_not_fail_run (read half, real
+  subprocess lifecycle). When adding any new ATTUNE_*_EMIT-style
+  channel, the seam test is part of the definition of done.
+  Companion adoption: release-execute Phase D step 16 —
+  post-release code-review + bug-predict self-runs from the
+  dashboard, findings triaged into P1 with verify-the-claim notes.
+
+- **Blanket-patching `importlib.util.find_spec` (or any core import
+  machinery) makes pytest's unraisable handler itself crash when a
+  GC-triggered unraisable lands in the patch window — the signature
+  is `RuntimeError: Failed to process unraisable exception`
+  attributed repeatedly to the SAME innocent-looking test** —
+  08-01, test_otel_backend_export.py sniped two different lanes in
+  two hours (#1896 clock-tz, #1902 ubuntu), both blamed on
+  test_all_present_returns_true, whose `patch("importlib.util.
+  find_spec", return_value=MagicMock())` intercepts EVERY find_spec
+  in the process. Fix shape: selective side_effect — mock only the
+  names under test, delegate the rest to the saved real function
+  (#1903). Family: patch.dict-sys.modules xdist race, CancelledError
+  -under-coverage — all "global mutation of import machinery +
+  concurrent runner" bugs. Detection rule: a recurring
+  unraisable-handler crash pinned to one test = look for a
+  process-global patch in that test, not for the unraisable's
+  producer.
+
+- **A same-day 5/5 reach snapshot satisfies the PREVIOUS release's
+  AFTER-window but NOT the next release's BEFORE-window — the legs
+  are different receipts and conflating them reads as "snapshot
+  done" when US-4 still warns** — 08-02: the 9:15 capture closed
+  11.1.0's AFTER obligation, yet `--verify-before` for the same-day
+  11.2.0 tag still warned (BEFORE leg needs 24-72h pre-tag; <24h
+  doesn't count, and substitutes must not be captured at tag time).
+  Rule: when a release date slips to "today", re-run
+  `--verify-before` rather than assuming the morning snapshot
+  covers it; the release proceeds with the warning attached
+  verbatim (US-4), and the report must say WHICH leg is satisfied.
+
+- **A docs-only PR failing an OS test lane is the cheapest tree-breakage
+
+- **Windows: fresh-file mtime can land AHEAD of the clock → negative
+
+- **`chmod(0o000)` cannot make a file unreadable on Windows — never
