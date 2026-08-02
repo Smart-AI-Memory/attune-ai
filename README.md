@@ -36,7 +36,7 @@ store, retrieved at P@3 96% on a frozen trap-moment benchmark
 below).
 
 Around that memory core, the same package also ships **Fix
-Receipts** — state the outcome you want and how to verify it,
+Receipts** (`attune fix`) — state the outcome you want and how to verify it,
 preview the contract (nothing executes), then `--run` for an
 attributed diff whose probes are re-run independently of the
 workflow; exit 0 means the probes passed, not that the agent felt
@@ -110,7 +110,7 @@ attune fix "imports resolve after the rename" \
   changes attributed against a pre-run snapshot, probes re-run
   independently of the workflow, exit 0 only when the probes pass.
   The workflow saying "done" is not trusted — the probe result is.
-- **Spec Ladders — goal-driven specs you approve rung by rung.**
+- **Spec Ladders** (`/spec`) — **goal-driven specs you approve rung by rung.**
   `/spec` interviews you until "build X" becomes requirements,
   design, and a gated task ladder: every task behind your explicit
   go, every quality gate scored, every ruling recorded in a

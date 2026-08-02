@@ -3,8 +3,8 @@ type: reference
 name: spec-engine-reference
 feature: spec-engine
 depth: reference
-generated_at: 2026-08-02T18:06:04.708343+00:00
-source_hash: ff80de2977562e5449b3d6a205f8f4f41d9c25948b7dc1477e103a101ac092bb
+generated_at: 2026-08-02T18:41:59.170606+00:00
+source_hash: 0a9f094d0c1cb1edca272a7412ba50c3a59e4336596eb0a901aff5e6fc3b2d4b
 status: generated
 ---
 

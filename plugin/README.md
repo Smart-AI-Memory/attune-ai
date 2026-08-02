@@ -6,7 +6,8 @@ commands: say what you need and Claude picks the right skill.
 
 **Version:** 11.2.1 | **License:** Apache 2.0
 
-> **Fix Receipts — new in 11.2.0.** Say `fix this and prove it`.
+> **Fix Receipts** (`/fix`) — new in 11.2.0. Say `fix this and
+> prove it`.
 > Attune previews the contract first — done conditions, scope,
 > probes, *nothing executes* — then `--run` returns a **receipt**:
 > the diff attributed against a pre-run snapshot, your probes re-run
@@ -14,8 +15,8 @@ commands: say what you need and Claude picks the right skill.
 > passed — not that the agent felt good about it. The agent doesn't
 > grade its own homework.
 
-> **Spec Ladders — goal-driven development you approve rung by
-> rung.** Say `build X`. Attune interviews you until the goal
+> **Spec Ladders** (`/spec`) — goal-driven development you
+> approve rung by rung. Say `build X`. Attune interviews you until the goal
 > becomes requirements, design, and a gated task ladder — then
 > climbs it only as fast as you approve: every task behind your
 > explicit go, every quality gate scored, every ruling recorded in
