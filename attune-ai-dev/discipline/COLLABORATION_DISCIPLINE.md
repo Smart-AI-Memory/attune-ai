@@ -13,14 +13,12 @@ an approach that delegates the actual coding to the AI as part of
 a collaborative team. The good news: it's a learnable one.
 
 A word about who's writing, because the voice matters for a piece
-like this. I'm a retired developer on a fixed budget, working with
-an AI agent daily — partly because the work is interesting, and
-honestly, partly because it keeps my brain in shape. None of the
+like this. I'm a solo developer — one person plus an AI agent,
+shipping a six-package ecosystem in the open. None of the
 disciplines below were designed up front. They accumulated one
-post-mortem at a time, over a year-plus of shipping a six-package
-ecosystem this way. Where a section names a failure mode, it's
-because I hit it. Where it names a date, that's the day it
-happened.
+post-mortem at a time, over a year-plus of working this way. Where
+a section names a failure mode, it's because I hit it. Where it
+names a date, that's the day it happened.
 
 ---
 
