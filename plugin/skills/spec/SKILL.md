@@ -1,6 +1,6 @@
 ---
 name: spec
-description: "Spec-driven development — brainstorm, plan, review, and execute with quality gates. Triggers on: spec, brainstorm and build, plan and execute, idea to code, build from scratch."
+description: "Spec Ladders — goal-driven spec development: brainstorm, plan, review, and execute a gated task ladder with recorded approvals. Triggers on: spec, spec ladders, brainstorm and build, plan and execute, idea to code, build from scratch."
 argument-hint: "<what to build, or 'resume'>"
 ---
 

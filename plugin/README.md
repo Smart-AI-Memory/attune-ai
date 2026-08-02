@@ -14,6 +14,14 @@ commands: say what you need and Claude picks the right skill.
 > passed — not that the agent felt good about it. The agent doesn't
 > grade its own homework.
 
+> **Spec Ladders — goal-driven development you approve rung by
+> rung.** Say `build X`. Attune interviews you until the goal
+> becomes requirements, design, and a gated task ladder — then
+> climbs it only as fast as you approve: every task behind your
+> explicit go, every quality gate scored, every ruling recorded in
+> a decision file that outlives the session. The spec isn't a plan
+> you wrote once; it's a contract that stays true.
+
 ## Install
 
 ```bash
@@ -48,7 +56,7 @@ Just describe what you need in Claude Code:
 | Skill | Triggers On |
 | ----- | ----------- |
 | `attune-hub` | what can attune do, help, capabilities |
-| `spec` | build from scratch, brainstorm and execute |
+| `spec` | spec ladders, build from scratch, brainstorm and execute |
 | `security-audit` | security, vulnerability, scan |
 | `code-quality` | review, quality, bugs, code smell |
 | `bug-predict` | predict bugs, risky code, what might break |

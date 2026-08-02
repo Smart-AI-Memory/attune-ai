@@ -110,6 +110,11 @@ attune fix "imports resolve after the rename" \
   changes attributed against a pre-run snapshot, probes re-run
   independently of the workflow, exit 0 only when the probes pass.
   The workflow saying "done" is not trusted — the probe result is.
+- **Spec Ladders — goal-driven specs you approve rung by rung.**
+  `/spec` interviews you until "build X" becomes requirements,
+  design, and a gated task ladder: every task behind your explicit
+  go, every quality gate scored, every ruling recorded in a
+  decision file that outlives the session.
 - **Guided intakes in Claude Code.** `/fix` and `/spec` compose
   their contracts through a form: goal pre-filled, a scope picker
   built from paths you've touched, probe suggestions from matching

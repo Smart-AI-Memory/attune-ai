@@ -7,7 +7,7 @@ tags:
 type: tip
 ---
 
-# Spec-driven development with approval loops
+# Spec Ladders — goal-driven spec development with approval loops
 
 ## Notes & tips
 
