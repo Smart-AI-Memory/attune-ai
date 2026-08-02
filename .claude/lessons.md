@@ -20826,3 +20826,78 @@ def ", start_idx + 1)` for module-
 - **Windows: fresh-file mtime can land AHEAD of the clock → negative
 
 - **`chmod(0o000)` cannot make a file unreadable on Windows — never
+
+- **A "the script owns all N sites" lesson can itself be stale — the
+   bump_version.py site list REGRESSED from the corpus's claimed 11
+   files to 9, and the claim-drift gate was the only thing standing**:
+   2026-08-02, release prep #1906. The corpus lesson (from 10.6.0)
+   said bump_version.py owns plugin/README.md; the live script bumped
+   9 files and missed it; test_claim_matches_live_value failed 4 CI
+   lanes. Diagnosed in 40s locally with `pytest -k version` while CI
+   logs were still sealed. Fixed permanently in #1908 (10th site +
+   skill text). Rule: enforcer-adjacent lessons ("tool X owns list
+   Y") decay like spec text — the GATE is the truth, and when a gate
+   fires on something a lesson claims is handled, believe the gate
+   and re-verify the tool's live behavior.
+
+- **Spec status lines have a closed vocabulary — the leading token
+   must be in STATUS_VOCABULARY (src/attune/ops/spec_lifecycle.py:
+   draft/approved/active/living/complete/completed/done/shipped/
+   superseded/parked/paused); 'drafted' is NOT in it**: 2026-08-02,
+   #1905's two gate-spec drafts failed
+   test_corpus_sweep_every_spec_dir_is_legible on every lane. The
+   required shape is `**Status:** <token> (<date>) — <annotation>`;
+   free-text annotation (e.g. "AWAITING CHAIR REVIEW") goes AFTER
+   the dash, never as the token. When authoring a new spec dir, run
+   tests/unit/gates/test_status_line_gate.py locally before pushing.
+
+- **Skill frontmatter descriptions carry a 250-char cap
+   (test_descriptions_under_250_chars) — branding/naming passes that
+   expand descriptions must budget it**: 2026-08-02, the Fix
+   Receipts naming PR (#1911) grew the fix skill description to 253
+   chars and failed CI. Reproduced locally in 90s with
+   `pytest -k "skill or readme"`. When landing a ratified name into
+   a skill description, count first (the name + trigger additions
+   eat the budget fast) and trim connective prose, not triggers.
+
+- **`attune fix --run` with a broad/vague goal ("marketing text is out
+  of date", scope=whole website) hits the SDK agent's 20-turn ceiling
+  and crashes with an honest zero-change partial receipt** (2026-08-02,
+  first live /fix intake dogfood). The contract surface worked exactly
+  as designed — preview, probes validated, crash produced "changed no
+  files / probes not run" instead of a false success — but the fix
+  agent needs a narrow goal + tight scope to converge. Recovery that
+  worked: execute the same contract in-session (subscription, $0 API)
+  and re-run the contract's probes verbatim as the receipt. Also
+  learned: probes are argv lists — `cd website && npx vitest run` is
+  rejected (shell metacharacters); `npm --prefix website test` is the
+  argv-safe equivalent.
+
+- **Website capability counts drifted stale a SECOND time (20/21
+  workflows, 49 MCP tools, 26 skills, 15 template kinds vs live
+  23/60/27/11), fixed in PR #1913** — first was the D4 blog
+  workflows=20 fix. The claim-drift gate covers version claims but NOT
+  capability counts in website/ copy. If it recurs a third time, the
+  rule-of-three says build the enforcer: cap-annotation for website
+  copy like plugin/README.md's `<!-- cap:... -->` blocks, checked by
+  the existing claim-drift machinery.
+
+- **The /fix intake fired as batched AskUserQuestion instead of the
+  enhanced widget form — the D21 drift, caught live by Patrick
+  (2026-08-02) and corrected in-flow**: the fix SKILL.md Step 2 names
+  `AskUserQuestion` concretely ("fallback (batch the questions)")
+  while gesturing at "widget surface when available" abstractly, so
+  under execution pressure the concretely-named tool won. The correct
+  path existed the whole time: `build_fix_intake_form` (or
+  `form_from_dict`) → `select_form_surface` (returns "widget" when
+  widget-capable) → `form_to_widget_html` → render via the widget
+  surface; answers post back through sendPrompt as an
+  `__elicitation_response__` payload. The corrected flow ran
+  end-to-end the same session — intake widget, real submission,
+  PUSHBACK-construct cards for two contract defects (projector-owned
+  scope dir; probes that couldn't fail), corrected contract — and
+  Patrick rated it "much better". Durable fix shipping: rewrite fix
+  SKILL Step 2 to name the widget render path concretely + one
+  sentence in the resident Socratic rule. Pattern: steering text that
+  names the fallback tool concretely and the default abstractly gets
+  the fallback executed — name the DEFAULT concretely.
