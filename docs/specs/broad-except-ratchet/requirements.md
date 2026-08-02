@@ -1,6 +1,6 @@
 # Broad-Except Ratchet — Requirements
 
-**Status:** drafted (2026-08-02) — AWAITING CHAIR REVIEW. No
+**Status:** draft (2026-08-02) — AWAITING CHAIR REVIEW. No
 implementation authority until the chair approves; this draft
 exists so the review has a concrete object.
 **Slug:** `broad-except-ratchet`
