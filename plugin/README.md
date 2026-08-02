@@ -16,7 +16,7 @@ claude plugin install attune-ai@attune-ai
 Update an existing install:
 
 ```bash
-claude plugin update attune-ai
+claude plugin update attune-ai@attune-ai
 ```
 
 ## Usage
