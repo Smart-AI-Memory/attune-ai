@@ -211,6 +211,13 @@ persist across sessions, coordinate across packages, and not break
 under multi-month load. Work that isn't vibing in that sense. It's
 an approach that delegates the actual coding to the AI as part of
 a collaborative team. The good news: it's a learnable one.</p>
+<p>A word about who's writing, because the voice matters for a piece
+like this. I'm a solo developer — one person plus an AI agent,
+shipping a six-package ecosystem in the open. None of the
+disciplines below were designed up front. They accumulated one
+post-mortem at a time, over a year-plus of working this way. Where
+a section names a failure mode, it's because I hit it. Where it
+names a date, that's the day it happened.</p>
 <hr />
 <h2>§1 — The Premise: Why Discipline, Why Now</h2>
 <p>Most &quot;AI-assisted development&quot; stops at suggestion and accept. The
@@ -237,7 +244,8 @@ applied to a teammate who happens to be an agent: an explicit
 contract, clear handoffs, named boundaries. Practiced together,
 the disciplines reinforce each other; the compounding is the
 point, not a bonus.</p>
-<p>Here is what that looks like on a real morning. The ops dashboard
+<p>Here is what that looks like on a real morning — 2026-05-25, the
+same day §8 walks end to end. The ops dashboard
 is up in a browser tab. The family snapshot shows five PyPI
 packages tracked. Telemetry shows yesterday's spend and today's.
 The workflow runner lists twenty workflows with their recent green
@@ -298,8 +306,8 @@ result. The human approves on evidence, not on the agent's
 confidence. §7 gives this its own section because it is the
 discipline the others lean on. None of these is clever in
 isolation. The compounding is the discipline.</p>
-<p>The rest of this piece names the six disciplines that produce
-mornings like that — each its own section, each adoptable
+<p>The rest of this piece names the ten disciplines (plus the §8
+case study) that produce mornings like that — each its own section, each adoptable
 incrementally, on its own or together:</p>
 <ul>
 <li><strong>§2 — The mutual contract.</strong> What each side owes the other; the
@@ -321,9 +329,12 @@ stranded live-state writes) and the patterns that prevent them.</li>
 <li><strong>§7 — Verification.</strong> Quality is not optional: tests catch zero
 hallucinations, dogfooding works at the meaning layer where they
 live, and the receipt beats the promise.</li>
+<li><strong>§8 — Case study.</strong> What this looks like when it goes right: a twenty-four-hour arc.</li>
+<li><strong>§9 — Context budgeting.</strong> Managing the reasoning window by keeping files small and single-purpose to avoid context dilution.</li>
+<li><strong>§10 — Draft-first review.</strong> Separating high-level architectural design from syntax and integration before modifying source files.</li>
+<li><strong>§11 — Diagnostic instrumentation.</strong> Embedding structured logging, error handling, and testable telemetry alongside features.</li>
+<li><strong>§12 — Sandbox hygiene.</strong> Enforcing clean builds and test runs in isolated work environments to avoid local environment drift.</li>
 </ul>
-<p>§8 closes with a longer case study expanding the morning above into
-a full twenty-four-hour arc.</p>
 <hr />
 <h2>§2 — The Mutual Contract</h2>
 <p>A working contract between collaborators is not a new idea.
@@ -538,7 +549,8 @@ sustainability commitment the human has not made to themselves. The
 form of the naming varies. It can be &quot;I'm a morning person and
 afternoons get sloppy,&quot; or &quot;my polyphasic schedule means I'm
 sharpest in the first ninety minutes after a nap,&quot; or &quot;after 8pm my
-best is reviewing, not writing.&quot; What matters is that it is
+best is reviewing, not writing.&quot; (The middle one is mine.) What
+matters is that it is
 <em>named</em>, in writing, in the agent's memory or the project's
 top-of-tree instructions, where future sessions inherit it. The
 agent can't honor a commitment it doesn't know you made.</p>
@@ -939,6 +951,16 @@ session writes to a shared filesystem, can push to the same PR
 branches, can write to the same memory files, can flip status on
 the same specs. Coordination is not an edge case — it is the
 baseline.</p>
+<p>Full disclosure: I did not get this section right the first time,
+and it is the one I'd push back on hardest if someone sold it to
+me as easy. I shipped two orchestration engines for coordinating
+agents — and later deleted both, because dogfooding showed the
+handoffs cost more than they saved. What finally worked was
+refusing to hand off context at all: the git tree is the only
+shared memory, a handoff is a branch plus passing tests plus a
+receipts file, and the receiving agent is required to verify it
+rather than believe it. Everything below is what survived that
+deletion.</p>
 <p>The collision shapes that recur:</p>
 <p><strong>Parallel push to the same PR.</strong> Two sessions push to the same
 branch. The slower one runs <code>git push</code> and sees &quot;Everything
@@ -1167,6 +1189,19 @@ dataclass field is required because forgetting it shipped wrong
 telemetry for ten days. Each is mechanical, narrow, durable; the
 collection compounds into a wall that past failures do not recur
 through.</p>
+<p>A confession here, because verification discipline includes the
+unglamorous surfaces: the most expensive bug of this project's
+life was not in the code. On 2026-06-10 a dead API key in CI got
+replaced with a live one, and a test workflow that had been
+&quot;passing&quot; for weeks — passing keyless, by design — started making
+real API calls on every push, across a twelve-lane matrix. About
+six hours and roughly $1,200 later I noticed. Every discipline in
+this piece existed at the time. What didn't exist was a check
+that the keyless workflows <em>stayed</em> keyless. It does now — a
+drift-guard test fails CI if a per-push workflow ever references
+the real secret. The lesson generalizes: if a property matters,
+something must fail when it stops being true. Hoping is not a
+mechanism.</p>
 <h3>Verifying decisions — &quot;did measurement route the call?&quot;</h3>
 <p>Decision matrices are verification by structure. Commit the &quot;if A
 then X, if B then Y&quot; matrix <em>before</em> measurement and the
@@ -1366,23 +1401,126 @@ recorded as a durable memory node, governed by the rule it states.
 The form that renders the agent's disagreement was used to fix the
 infrastructure that loads the memory the forms render from.
 Drafting an earlier revision of this piece surfaced a friction
-none of the six disciplines quite covered; naming it produced a
+none of the ten disciplines quite covered; naming it produced a
 new spec by the end of that session. The discipline doesn't only
 describe the work. It constrains and improves its own
 construction. That is the compounding — tied to the discipline
 itself, not to any one tool.</p>
-<p>That is the discipline of agent collaboration. We are still
-learning it. We hope this is useful.</p>
+<hr />
+<h2>§9 — Context Budgeting: Keeping Files Agent-Sized</h2>
+<p>An agent's working memory is defined by its context window, but its
+reasoning capacity is constrained by <em>context noise</em>. When a single
+source file grows to contain multiple unrelated helper functions, class
+definitions, or utility routines, it becomes a liability. The agent must
+read the entire file to edit a small part of it, which wastes tokens and
+dilutes the model's focus. Large files lead to vague edits, missed edge
+cases, and high-overhead rewrites.</p>
+<p>The discipline of context budgeting has two components:</p>
+<ul>
+<li><strong>The Line Budget</strong>: Treat a few hundred lines as a soft ceiling for
+any single file — 300 is a sensible greenfield default, and an
+established repo calibrates its own number and applies it to new
+growth rather than indicting every legacy module at once. If a file
+grows past the budget, the agent's first recommendation should not be
+&quot;let's add a new function,&quot; but rather a concrete decomposition plan
+to split the file into smaller, single-responsibility modules.</li>
+<li><strong>Proactive Complexity Flags</strong>: When asked to edit a file that exceeds
+the budget, the agent must flag the risk before proposing code
+changes: <em>&quot;This file is 450 lines; we should extract the parser class
+before implementing this feature to prevent context dilution.&quot;</em></li>
+</ul>
+<p>The benefit is mechanical. By keeping files small and highly cohesive,
+you ensure that every file read by the agent is 100% relevant to the
+task, minimizing the cost and error rate of edits.</p>
+<hr />
+<h2>§10 — The &quot;Draft-First&quot; Code Review</h2>
+<p>Writing code directly into the active source tree mixes two distinct
+concerns: architectural design (what we are building) and syntax
+execution (how we format, import, and hook it up). When these are
+combined, the human is forced to review a massive multi-file diff where
+architectural flaws are easily obscured by lines of formatting and
+import statements.</p>
+<p>The draft-first discipline enforces a two-pass implementation:</p>
+<ul>
+<li><strong>Pass 1: The Draft</strong>: For any task at the XML-task or spec tier, the
+agent first writes the core logic, algorithm, or data structures in a
+separate scratchpad, markdown file, or inline block. The draft
+excludes packaging, imports, and scaffolding. The developer reviews
+and approves the logic in this isolated state.</li>
+<li><strong>Pass 2: The Inline</strong>: Once the draft logic is approved, the agent
+executes the actual file edits, wire-ins, and import updates in the
+codebase.</li>
+</ul>
+<p>This approach treats code changes exactly like design specs. Unwinding a
+bad architectural decision in a markdown draft costs nothing; unwinding
+it from a five-file diff after it has been wired into the build system
+is painful and error-prone.</p>
+<hr />
+<h2>§11 — Diagnostic Instrumentation First</h2>
+<p>An agent debugging a system is entirely dependent on what it can
+observe. Unlike a human, it cannot easily attach a debugger, step
+through execution manually, or rely on visual cues. If a system fails
+silently or outputs vague errors, the agent is blind and will resort to
+speculative guesses.</p>
+<p>Diagnostic instrumentation must be written first:</p>
+<ul>
+<li><strong>The Telemetry Minimum</strong>: No feature is complete without structured
+log points at key state transitions, error boundaries with context-
+rich catches, and debug hooks that dump state when requested.</li>
+<li><strong>Testable Telemetry</strong>: Write unit tests that assert logs are
+generated under error conditions, verifying that the diagnostic path
+actually fires.</li>
+</ul>
+<p>By instrumenting the codebase as you build, you ensure that when the
+system fails—whether in local CI or production—the agent can diagnose
+the root cause in a single turn by reading the log file, rather than
+running multiple speculative trial-and-error cycles.</p>
+<hr />
+<h2>§12 — Sandbox &amp; Setup Hygiene</h2>
+<p>A codebase accumulates silent environmental debt. Global python
+packages, local configuration files, and cached state make the project
+run locally for the human, while the same project fails to build or test
+on a clean machine. For agent collaboration, this is fatal; if an agent
+cannot spin up a clean worktree or run a subagent in a sandbox without
+encountering environment rot, productivity stops.</p>
+<p>Setup hygiene requires a routine check:</p>
+<ul>
+<li><strong>The Three-Minute Rule</strong>: A fresh checkout of the repository in an
+isolated sandbox must be able to install dependencies from the
+lockfile, configure its environment, and run the test suite to green
+inside a fixed, published budget — three minutes is right for a young
+repo; a mature suite earns a larger number, but the budget is a
+commitment the repo keeps, not a wish.</li>
+<li><strong>The Clean Run Check</strong>: Once a week, or at the start of a major
+release cycle, the agent is tasked to run a clean checkout test. It
+clones the repo into a clean temp directory, runs the lockfile
+install, and runs the tests. Any failure is treated as a
+blocker and must be resolved before other features are written.</li>
+</ul>
+<p>Hygiene ensures that the environment is deterministic, enabling
+subagents to spawn reliably and work in parallel without getting bogged
+down by configuration drift.</p>
+<p>That is the discipline of agent collaboration. I'm still learning
+it. This piece gets revised as the practice does — the confession
+now in §6 is there because two readers independently
+pushed back on multi-agent coordination, and they were right that
+the section undersold the cost.</p>
+<p>If you work with a coding agent day to day, I'd genuinely like to
+know: which of these disciplines do you already practice, and
+which would you push back on? The pushback is the more useful
+reply.</p>
 <hr />
 <h2>A note on the authorship</h2>
-<p>This piece was written collaboratively. Patrick Roebuck (founder,
-Smart AI Memory) drafting, directing, and making every irreversible
-call; an AI agent helping to author under the discipline this
-article describes. Patrick brings two decades of developing online
+<p>This piece was written collaboratively, and the way it was
+written is the way it says to work. I — Patrick Roebuck, founder
+of Smart AI Memory — drafted, directed, and made every
+irreversible call; an AI agent helped author under the discipline
+the article describes. I bring two decades of developing online
 solutions plus earlier years in coordination-heavy roles outside
-engineering — patterns that shape his approach to contracts,
-pacing, and multi-party work. The past year-plus has been spent
-building the <a href="https://github.com/Smart-AI-Memory">attune-* ecosystem</a>
+engineering — the contract, pacing, and multi-party patterns
+above owe as much to that history as to anything AI-specific. The
+past year-plus has gone into the
+<a href="https://github.com/Smart-AI-Memory">attune-* ecosystem</a>
 — six PyPI packages (attune-ai, attune-rag, attune-author,
 attune-help, attune-gui, attune-verify) that together ship the
 workflow patterns described above. The evidence base for the
