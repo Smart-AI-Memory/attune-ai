@@ -99,3 +99,29 @@ You're being redirected to [New Location](../new-location/).
 - Renaming or moving documentation files
 - Consolidating scattered content
 - Reorganizing navigation structure
+
+---
+
+## Feature naming — two names, one binding
+
+**Ratified with the Fix Receipts / Spec Ladders rulings
+(2026-08-02; outcome-first-fix D9, spec-lifecycle-gates
+decisions).**
+
+Features are named by their **artifact** (Fix Receipts, Spec
+Ladders); commands stay **verbs** (`attune fix`, `/spec`). Both
+names are correct — they are different parts of speech doing
+different jobs, and neither replaces the other.
+
+**The binding rule:** in any document, the FIRST mention binds
+name to command — "**Fix Receipts** (`attune fix`)" — and later
+mentions use the command alone. Never alternate freely between
+them; never rename a command to match a brand noun (breaks the
+verb grammar and shipped CLIs); never introduce a feature name
+without its command anchor.
+
+New feature names are chair-ratified and logged in the owning
+spec's decisions.md BEFORE landing (see outcome-first-fix D9 for
+the worked pattern: candidates considered, artifact-over-process
+principle, scope of the ruling). Skill-description edits that
+carry a new name must stay under the 250-char frontmatter cap.
