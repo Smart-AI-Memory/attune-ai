@@ -246,4 +246,4 @@ final summary:
 Pipeline complete: 4/5 tasks executed  total_cost: $0.016  duration: 18402ms
 ```
 
-<!-- attune-generated: source_hash=657458c4d06bb198d067760775b69a5c87288113feaddb9cdaf3df631c188617 feature=spec-engine kind=how-to generated_at=2026-07-14 -->
+<!-- attune-generated: source_hash=ff80de2977562e5449b3d6a205f8f4f41d9c25948b7dc1477e103a101ac092bb feature=spec-engine kind=how-to generated_at=2026-08-02 -->

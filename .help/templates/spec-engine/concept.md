@@ -3,16 +3,17 @@ type: concept
 name: spec-engine-concept
 feature: spec-engine
 depth: concept
-generated_at: 2026-07-14T15:59:02.694082+00:00
-source_hash: 657458c4d06bb198d067760775b69a5c87288113feaddb9cdaf3df631c188617
+generated_at: 2026-08-02T18:06:04.708343+00:00
+source_hash: ff80de2977562e5449b3d6a205f8f4f41d9c25948b7dc1477e103a101ac092bb
 status: generated
 ---
 
-# Spec-driven development with approval loops
+# Spec Ladders — goal-driven spec development with approval loops
 
 ## Overview
 
-The spec engine turns a plan file — an XML task list stored in
+The spec engine powers **Spec Ladders** — goal-driven development
+you approve rung by rung. It turns a plan file — an XML task list stored in
 `.claude/plans/` — into executed, gate-checked code. It owns two
 distinct concerns: running the pipeline (`pipeline.*`) and managing
 interactive, approval-gated execution with persistent state

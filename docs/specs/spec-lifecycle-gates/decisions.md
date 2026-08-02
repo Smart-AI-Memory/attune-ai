@@ -181,3 +181,23 @@ Never alters gate state; RR-4 risk tiers govern eligibility from
 day one. P3 skeptic dissents route into this digest (one chair
 inbox). Failure mode on record: inbox ceremony — a meeting queue
 noisier than the raw ledger.
+
+## 2026-08-02 — Feature name RATIFIED: "Spec Ladders" (chair)
+
+The chair ratified **"Spec Ladders"** as the public name for the
+goal-driven spec-development surface (`/spec` + the spec engine):
+state a goal, be interviewed into requirements and design, then
+climb a **gated task ladder** — every rung behind an explicit go,
+every quality gate scored, every ruling recorded. "Goal-driven"
+is the describing adjective, mirroring outcome-first-fix D9's
+artifact-over-process pattern (Fix Receipts). Homed here because
+the spec engine has no owning spec directory and this spec governs
+the ladder's gate machinery; "gated ladder" was already internal
+vocabulary (agent-work-report tasks.md).
+
+Candidates considered: Living Specs (vague), Governed Specs
+(bureaucratic), Guided Specs (undersells post-intake). Scope:
+prose surfaces only (READMEs, spec-engine feature master + full
+projection, spec skill description); slugs, CLI, and code
+identifiers unchanged. Family framing with Fix Receipts: "State
+an outcome, get a receipt. State a goal, climb a ladder."
