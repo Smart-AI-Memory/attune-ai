@@ -12,6 +12,16 @@ under multi-month load. Work that isn't vibing in that sense. It's
 an approach that delegates the actual coding to the AI as part of
 a collaborative team. The good news: it's a learnable one.
 
+A word about who's writing, because the voice matters for a piece
+like this. I'm a retired developer on a fixed budget, working with
+an AI agent daily — partly because the work is interesting, and
+honestly, partly because it keeps my brain in shape. None of the
+disciplines below were designed up front. They accumulated one
+post-mortem at a time, over a year-plus of shipping a six-package
+ecosystem this way. Where a section names a failure mode, it's
+because I hit it. Where it names a date, that's the day it
+happened.
+
 ---
 
 ## §1 — The Premise: Why Discipline, Why Now
@@ -43,7 +53,8 @@ contract, clear handoffs, named boundaries. Practiced together,
 the disciplines reinforce each other; the compounding is the
 point, not a bonus.
 
-Here is what that looks like on a real morning. The ops dashboard
+Here is what that looks like on a real morning — 2026-05-25, the
+same day §8 walks end to end. The ops dashboard
 is up in a browser tab. The family snapshot shows five PyPI
 packages tracked. Telemetry shows yesterday's spend and today's.
 The workflow runner lists twenty workflows with their recent green
@@ -371,7 +382,8 @@ sustainability commitment the human has not made to themselves. The
 form of the naming varies. It can be "I'm a morning person and
 afternoons get sloppy," or "my polyphasic schedule means I'm
 sharpest in the first ninety minutes after a nap," or "after 8pm my
-best is reviewing, not writing." What matters is that it is
+best is reviewing, not writing." (The middle one is mine.) What
+matters is that it is
 *named*, in writing, in the agent's memory or the project's
 top-of-tree instructions, where future sessions inherit it. The
 agent can't honor a commitment it doesn't know you made.
@@ -776,6 +788,17 @@ branches, can write to the same memory files, can flip status on
 the same specs. Coordination is not an edge case — it is the
 baseline.
 
+Full disclosure: I did not get this section right the first time,
+and it is the one I'd push back on hardest if someone sold it to
+me as easy. I shipped two orchestration engines for coordinating
+agents — and later deleted both, because dogfooding showed the
+handoffs cost more than they saved. What finally worked was
+refusing to hand off context at all: the git tree is the only
+shared memory, a handoff is a branch plus passing tests plus a
+receipts file, and the receiving agent is required to verify it
+rather than believe it. Everything below is what survived that
+deletion.
+
 The collision shapes that recur:
 
 **Parallel push to the same PR.** Two sessions push to the same
@@ -1026,6 +1049,20 @@ dataclass field is required because forgetting it shipped wrong
 telemetry for ten days. Each is mechanical, narrow, durable; the
 collection compounds into a wall that past failures do not recur
 through.
+
+A confession here, because verification discipline includes the
+unglamorous surfaces: the most expensive bug of this project's
+life was not in the code. On 2026-06-10 a dead API key in CI got
+replaced with a live one, and a test workflow that had been
+"passing" for weeks — passing keyless, by design — started making
+real API calls on every push, across a twelve-lane matrix. About
+six hours and roughly $1,200 later I noticed. Every discipline in
+this piece existed at the time. What didn't exist was a check
+that the keyless workflows *stayed* keyless. It does now — a
+drift-guard test fails CI if a per-push workflow ever references
+the real secret. The lesson generalizes: if a property matters,
+something must fail when it stops being true. Hoping is not a
+mechanism.
 
 ### Verifying decisions — "did measurement route the call?"
 
@@ -1365,21 +1402,31 @@ Hygiene ensures that the environment is deterministic, enabling
 subagents to spawn reliably and work in parallel without getting bogged
 down by configuration drift.
 
-That is the discipline of agent collaboration. We are still learning it.
-We hope this is useful.
+That is the discipline of agent collaboration. I'm still learning
+it. This piece gets revised as the practice does — the confession
+now in §6 is there because two readers independently
+pushed back on multi-agent coordination, and they were right that
+the section undersold the cost.
+
+If you work with a coding agent day to day, I'd genuinely like to
+know: which of these disciplines do you already practice, and
+which would you push back on? The pushback is the more useful
+reply.
 
 ---
 
 ## A note on the authorship
 
-This piece was written collaboratively. Patrick Roebuck (founder,
-Smart AI Memory) drafting, directing, and making every irreversible
-call; an AI agent helping to author under the discipline this
-article describes. Patrick brings two decades of developing online
+This piece was written collaboratively, and the way it was
+written is the way it says to work. I — Patrick Roebuck, founder
+of Smart AI Memory — drafted, directed, and made every
+irreversible call; an AI agent helped author under the discipline
+the article describes. I bring two decades of developing online
 solutions plus earlier years in coordination-heavy roles outside
-engineering — patterns that shape his approach to contracts,
-pacing, and multi-party work. The past year-plus has been spent
-building the [attune-\* ecosystem](https://github.com/Smart-AI-Memory)
+engineering — the contract, pacing, and multi-party patterns
+above owe as much to that history as to anything AI-specific. The
+past year-plus has gone into the
+[attune-\* ecosystem](https://github.com/Smart-AI-Memory)
 — six PyPI packages (attune-ai, attune-rag, attune-author,
 attune-help, attune-gui, attune-verify) that together ship the
 workflow patterns described above. The evidence base for the
