@@ -198,3 +198,29 @@ commit." Metric relevance: this was an evidence-valid receipt
 completeness failure (D3 set) found only by running the surface
 cold — the receipt rendered every section yet the attribution
 evidence inside it was false.
+
+## D9 — Feature name RATIFIED: "Fix Receipts" (chair, 2026-08-02)
+
+The chair ratified **"Fix Receipts"** as the feature's public name,
+choosing to name the ARTIFACT rather than the process. "Outcome-first"
+remains the descriptive adjective (and this spec's slug — unchanged).
+
+Provenance: post-11.2.0 README review. Candidates considered with the
+chair: Outcome-First Fix (status quo — describes input, doesn't
+brand), Fix Contracts ("contract" overloaded), Verified/Proof-Carrying
+Fixes (REJECTED — overclaims: probes are evidence, not proofs). "Fix
+Receipts" won on concreteness, extensibility (run receipts, lane
+receipts, release receipts already exist in governance vocabulary),
+and alignment with the published thesis ("the receipt beats the
+promise"). The term "outcome-first" itself was confirmed as this
+project's own coinage (born in roundtable
+`q-agent-work-report-spec-001`'s sibling thread
+`q-outcome-first-attune-ux-001`, chair-promoted 2026-07-30), not an
+imported industry term.
+
+Scope of the ruling: prose surfaces (READMEs, feature page, skill
+description) land the name in one PR; CLI --help text and code
+identifiers are NOT renamed (the surface stays `attune fix`;
+`fix_receipt.py` already carries the artifact name). Future receipt
+kinds may adopt the family framing ("Attune gives you receipts") but
+each needs its own ruling.

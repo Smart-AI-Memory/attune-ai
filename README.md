@@ -35,7 +35,12 @@ store, retrieved at P@3 96% on a frozen trap-moment benchmark
 (details in [the memory suite](#the-memory-suite--out-of-the-box-measured)
 below).
 
-Around that memory core, the same package also ships a spec-driven,
+Around that memory core, the same package also ships **Fix
+Receipts** — state the outcome you want and how to verify it,
+preview the contract (nothing executes), then `--run` for an
+attributed diff whose probes are re-run independently of the
+workflow; exit 0 means the probes passed, not that the agent felt
+good about it — plus a spec-driven,
 multi-agent toolkit: 21 workflows and <!-- cap:mcp_registered_tool_count -->60 MCP tools<!-- /cap --> dispatching 2–6
 domain-specific subagents behind Socratic quality gates, RAG
 grounding with a citation-per-claim contract (mean per-claim

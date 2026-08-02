@@ -8,7 +8,7 @@ tags:
 type: tip
 ---
 
-# Outcome-first fixes — state the goal and its probes, get a verified receipt
+# Fix Receipts — state the goal and its probes, get a verified receipt
 
 ## Notes & tips
 

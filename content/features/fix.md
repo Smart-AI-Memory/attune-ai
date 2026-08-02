@@ -1,6 +1,6 @@
 ---
 feature: fix
-summary: Outcome-first fixes — state the goal and its probes, get a verified receipt
+summary: Fix Receipts — state the goal and its probes, get a verified receipt
 tags: [fixes, verification, cli]
 source_globs:
   - src/attune/cli_commands/fix_commands.py
@@ -16,10 +16,10 @@ nav:
 
 ## Overview
 
-`attune fix` is the outcome-first entry point: you state **what should
-be true** and **how to check it**, and Attune reports what it actually
-did with evidence. You do not pick a workflow tier, write a prompt, or
-read an internal report format.
+`attune fix` is **Fix Receipts** — the outcome-first entry point: you
+state **what should be true** and **how to check it**, and Attune
+reports what it actually did with evidence. You do not pick a workflow
+tier, write a prompt, or read an internal report format.
 
 Two artifacts carry the whole surface:
 

@@ -3,19 +3,19 @@ type: note
 name: fix-note
 feature: fix
 depth: note
-generated_at: 2026-07-31T16:03:37.162068+00:00
-source_hash: cf3ef4afc553319fc03470fe0a2f92a4bc77eda8b02354d75be6c4141752859d
+generated_at: 2026-08-02T16:17:23.326205+00:00
+source_hash: 02c4fd57871efde0e308241968a30e45d0a63f6ba866385c62a363e28a5f4b4b
 status: generated
 ---
 
-# Outcome-first fixes — state the goal and its probes, get a verified receipt
+# Fix Receipts — state the goal and its probes, get a verified receipt
 
 ## Overview
 
-`attune fix` is the outcome-first entry point: you state **what should
-be true** and **how to check it**, and Attune reports what it actually
-did with evidence. You do not pick a workflow tier, write a prompt, or
-read an internal report format.
+`attune fix` is **Fix Receipts** — the outcome-first entry point: you
+state **what should be true** and **how to check it**, and Attune
+reports what it actually did with evidence. You do not pick a workflow
+tier, write a prompt, or read an internal report format.
 
 Two artifacts carry the whole surface:
 
