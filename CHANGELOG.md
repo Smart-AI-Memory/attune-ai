@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.2.1] — 2026-08-02
+
+Docs/metadata patch — no code changes. Ships the refreshed README
+(the 11.2.0 "Goal-Driven Development: receipts, not promises"
+framing) to PyPI's project page, which still rendered the pre-11.2.0
+description.
+
+### Changed
+
+- **README refresh** (#1907): leads with Fix Receipts and the
+  Goal-Driven Development framing; "New in 11.2.0" section replaces
+  the 11.0.0 one.
+
+### Fixed
+
+- **`scripts/bump_version.py` covers `plugin/README.md`** (#1908):
+  the version claim the claim-drift gate checks is now the script's
+  10th site, so it can no longer go stale on a release PR (as it
+  did on #1906).
+
 ## [11.2.0] — 2026-08-02
 
 The outcome-first release: `attune fix` ships — state the outcome
