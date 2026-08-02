@@ -209,6 +209,11 @@ class TestNonBlockingPipeWrite:
         import sys
         import threading
 
+        if sys.platform == "win32":
+            import pytest
+
+            pytest.skip("non-blocking pipes + select() are POSIX semantics")
+
         read_fd, write_fd = os.pipe()
         os.set_blocking(write_fd, False)
         received: list[bytes] = []
