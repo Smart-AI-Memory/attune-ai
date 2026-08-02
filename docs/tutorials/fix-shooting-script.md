@@ -1,4 +1,4 @@
-# Shooting Script: Outcome-First Fix (video tutorial)
+# Shooting Script: Fix Receipts (video tutorial)
 
 Target length: ~3.5 minutes. One terminal window (large font, dark
 theme) plus one Claude Code panel for the final scene. Every
@@ -22,12 +22,12 @@ pytest scratch_pricing/pricing_suite.py
 ```
 
 **Narration:** "Every AI coding tool tells you it fixed your bug.
-Almost none of them can prove it. This is `attune fix` — you state
-the outcome you want and how to verify it, and you get a receipt,
-not a promise. Here's a real bug: orders of exactly 100 units
+Almost none of them can prove it. This is **Fix Receipts** —
+`attune fix`: you state the outcome you want and how to verify it,
+and you get a receipt, not a promise. Here's a real bug: orders of exactly 100 units
 should be bulk-priced, and this test says they aren't."
 
-**Beat:** let the red `1 failed, 2 passed` sit on screen a moment.
+**Beat:** let the red `1 failed, 5 passed` sit on screen a moment.
 
 ## Scene 2 — State the outcome, preview the contract (0:25–1:10)
 
@@ -100,11 +100,11 @@ composed command line before confirming.
 **Screen:** the receipt from scene 4, then a title card.
 
 **Narration:** "State the outcome. Bound the scope. Name the
-verification. And keep the receipt. `attune fix` ships in
+verification. And keep the receipt. Fix Receipts ships in
 attune-ai 11.2.0 — pip install attune-ai, and the written tutorial
 is linked below."
 
-**Title card:** `attune fix — the receipt beats the promise` +
+**Title card:** `Fix Receipts — the receipt beats the promise` +
 install command + docs URL.
 
 ---
