@@ -311,7 +311,7 @@ export const RELIABILITY_LOOP: LoopStage[] = [
     n: "03",
     name: "Build",
     description:
-      "21 workflows: review, tests, bug prediction, refactor.",
+      "23 workflows: review, tests, bug prediction, refactor.",
   },
   {
     n: "04",
@@ -407,7 +407,7 @@ export const PILLARS: Pillar[] = [
     tag: "AI workflows",
     title: "Specialist teams, not one prompt",
     description:
-      "20 workflows run teams of 2–6 Claude subagents to " +
+      "23 workflows run teams of 2–6 Claude subagents to " +
       "review code, surface vulnerabilities, generate tests, and plan " +
       "refactors — with cost-tiered model routing.",
     points: [
