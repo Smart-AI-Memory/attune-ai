@@ -1,6 +1,6 @@
 {
   "name": "attune-help",
-  "version": "0.11.1",
+  "version": "0.13.0",
   "description": "Read and explore .help/ documentation with progressive depth. Lightweight runtime companion to attune-author — no AI keys required.",
   "author": {
     "name": "Smart AI Memory",
