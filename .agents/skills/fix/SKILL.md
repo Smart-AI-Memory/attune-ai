@@ -41,12 +41,23 @@ default rather than asking again.
 
 ## Step 2 — Render the form (communication grammar)
 
-Render ONE form — request, scope, probes, mode — per the Socratic
-rule: widget surface when available, `AskUserQuestion` fallback
-(batch the questions; `metadata.source` containing "form" opts into
-the batch). Never ask these as sequential single questions. When a
-field came back with no derived options it is free text — accept a
-path or command, do not invent options.
+Render ONE form — request, scope, probes, mode. The enhanced
+widget is the DEFAULT surface: build the `FormSchema` from the
+Step 1 payload, route it through `select_form_surface`, and when
+it returns "widget" render `form_to_widget_html(form)` on the
+widget surface — answers post back as an
+`__elicitation_response__` payload; parse them with
+`collect_form_response`. Carry an already-stated goal into the
+request field as its default.
+
+Fall back to `AskUserQuestion` ONLY when no widget surface exists
+(batch the questions; `metadata.source` containing "form" opts
+into the batch). Never ask these as sequential single questions —
+and never hand-write the ask turn without consulting
+`select_form_surface` first: steering that names the fallback
+concretely gets the fallback executed. When a field came back with
+no derived options it is free text — accept a path or command, do
+not invent options.
 
 When the user picks the "other (type a path)" scope option, offer a
 folder drill-down instead of bare free text:

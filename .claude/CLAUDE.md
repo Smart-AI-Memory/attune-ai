@@ -454,6 +454,10 @@ that tool, so the communication grammar almost never fired.) Construct
 a `FormSchema` via `attune.elicitation.form_from_dict` and let
 `select_form_surface` pick the surface. The widget is the default;
 `AskUserQuestion` is one of its fallbacks, not the starting point.
+When the session is widget-capable, render `form_to_widget_html(form)`
+on the widget surface — hand-writing an `AskUserQuestion` turn without
+consulting `select_form_surface` IS the D21 failure mode (re-hit live
+2026-08-02 on the /fix intake; caught by Patrick).
 
 ### Two grammars, two directions — not a ranking
 
