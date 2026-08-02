@@ -157,3 +157,25 @@ class TestHappyPath:
                     decoded_stderr = run_meta_stdout.decode_stderr(parsed["value"])
         assert decoded_kind == "schema_rejected"
         assert decoded_stderr == stderr
+
+
+class TestEmissionFailureIsNonFatal:
+    """Regression: a pipe error during meta emission (EPIPE, non-blocking
+    EAGAIN edge) must not turn a succeeded run into exit 1 — the report
+    already exists; emission is daemon-side plumbing."""
+
+    def test_oserror_during_emission_is_swallowed(self, monkeypatch, capsys):
+        monkeypatch.setenv("ATTUNE_RUN_META_EMIT", "1")
+
+        from attune.ops import run_meta_stdout
+
+        def boom() -> None:
+            raise BlockingIOError(35, "write could not complete without blocking")
+
+        monkeypatch.setattr(run_meta_stdout, "emit_version_line", boom)
+        result = _FakeResult(metadata={"sdk_error_kind": "auth"})
+
+        _emit_run_meta_for_daemon(result)  # must not raise
+
+        err = capsys.readouterr().err
+        assert "run-meta emission failed" in err

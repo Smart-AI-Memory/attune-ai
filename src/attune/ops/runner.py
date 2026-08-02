@@ -44,6 +44,13 @@ _BULLETIN_HEARTBEAT_INTERVAL_SEC = 30.0
 # the cap is a defense against runaway loops filling the disk.
 _PERSIST_LOG_BUDGET_BYTES = 200_000
 
+# Per-line ceiling for the child's stdout stream. asyncio's default
+# StreamReader limit is 64 KiB and readline() RAISES past it — a
+# run-meta ``report_b64`` line (base64 of a full WorkflowReport) can
+# exceed that, which would stamp a succeeded run failed. 8 MiB is far
+# above any real report while still bounding a runaway line.
+_STDOUT_LINE_LIMIT = 8 * 1024 * 1024
+
 # Workflow name shape — matches PATH_ARG_REGISTRY keys. Used to validate
 # the directory segment in the persistence path so a malformed workflow
 # name can't escape ``<runs_dir>``.
@@ -834,6 +841,12 @@ class RunnerService:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,
                 env=proc_env,
+                # asyncio's default StreamReader limit is 64 KiB and
+                # readline() RAISES on a longer line — run-meta
+                # report_b64 lines routinely approach/exceed that, and
+                # the except below would stamp a succeeded run failed.
+                # Match the emitter's worst case with generous headroom.
+                limit=_STDOUT_LINE_LIMIT,
             )
         except FileNotFoundError as exc:
             run.append_line(f"[runner error] command not found: {exc}")

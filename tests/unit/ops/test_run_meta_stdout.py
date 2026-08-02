@@ -195,3 +195,145 @@ class TestStderrCodec:
         # Should contain replacement characters, not raise.
         assert isinstance(result, str)
         assert len(result) > 0
+
+
+class TestNonBlockingPipeWrite:
+    """Regression: ``report_b64`` lines routinely exceed the 64 KiB pipe
+    buffer, and the daemon's pipe can be in non-blocking mode — a plain
+    ``sys.stdout.write`` raised ``BlockingIOError`` mid-line and turned
+    an otherwise-succeeded run into exit 1 (dashboard run 87d8438e3e8c,
+    2026-08-02)."""
+
+    def test_large_line_on_nonblocking_pipe_completes(self, monkeypatch):
+        import os
+        import sys
+        import threading
+
+        if sys.platform == "win32":
+            import pytest
+
+            pytest.skip("non-blocking pipes + select() are POSIX semantics")
+
+        read_fd, write_fd = os.pipe()
+        os.set_blocking(write_fd, False)
+        received: list[bytes] = []
+
+        def drain() -> None:
+            while True:
+                try:
+                    chunk = os.read(read_fd, 65536)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                received.append(chunk)
+
+        reader = threading.Thread(target=drain)
+        reader.start()
+        writer = os.fdopen(write_fd, "w", encoding="utf-8")
+        monkeypatch.setattr(sys, "stdout", writer)
+        big_value = "A" * 300_000  # ~5x the default pipe buffer
+        try:
+            run_meta_stdout.emit_field_line("report_b64", big_value)
+        finally:
+            monkeypatch.undo()
+        writer.close()
+        reader.join(timeout=10)
+        os.close(read_fd)
+        assert not reader.is_alive()
+        payload = b"".join(received).decode("utf-8")
+        assert payload == f"ATTUNE_RUN_META report_b64={big_value}\n"
+
+
+class TestFlushRetryAndDeadline:
+    """The review of #1904's own fix demanded these: the flush-retry
+    BlockingIOError branch was untested (the first regression test
+    writes to an empty pipe, so flush succeeds first try), and the
+    retry loop needed an elapsed ceiling so a dead-but-unclosed
+    reader hangs nothing."""
+
+    @staticmethod
+    def _full_nonblocking_pipe():
+        import os
+
+        read_fd, write_fd = os.pipe()
+        os.set_blocking(write_fd, False)
+        try:
+            while True:
+                os.write(write_fd, b"X" * 65536)
+        except BlockingIOError:
+            pass
+        return read_fd, write_fd
+
+    def test_flush_retry_branch_completes_when_reader_drains(self, monkeypatch):
+        import os
+        import sys
+        import threading
+        import time as _time
+
+        if sys.platform == "win32":
+            import pytest
+
+            pytest.skip("non-blocking pipes + select() are POSIX semantics")
+
+        read_fd, write_fd = self._full_nonblocking_pipe()
+        writer = os.fdopen(write_fd, "w", encoding="utf-8")
+        # Park text in the wrapper's buffer so _write's flush hits the
+        # full pipe and takes the BlockingIOError retry branch.
+        writer.write("BUFFERED|")
+        received: list[bytes] = []
+
+        def drain_later() -> None:
+            _time.sleep(0.3)
+            while True:
+                try:
+                    chunk = os.read(read_fd, 65536)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                received.append(chunk)
+
+        reader = threading.Thread(target=drain_later)
+        reader.start()
+        monkeypatch.setattr(sys, "stdout", writer)
+        try:
+            run_meta_stdout.emit_field_line("sdk_error_kind", "auth")
+        finally:
+            monkeypatch.undo()
+        writer.close()
+        reader.join(timeout=10)
+        os.close(read_fd)
+        assert not reader.is_alive()
+        payload = b"".join(received).decode("utf-8")
+        assert payload.endswith("BUFFERED|ATTUNE_RUN_META sdk_error_kind=auth\n")
+
+    def test_dead_reader_hits_deadline_not_hang(self, monkeypatch):
+        import os
+        import sys
+
+        if sys.platform == "win32":
+            import pytest
+
+            pytest.skip("non-blocking pipes + select() are POSIX semantics")
+
+        read_fd, write_fd = self._full_nonblocking_pipe()
+        writer = os.fdopen(write_fd, "w", encoding="utf-8")
+        monkeypatch.setattr(sys, "stdout", writer)
+        monkeypatch.setattr(run_meta_stdout, "_WRITE_DEADLINE_S", 0.3)
+        monkeypatch.setattr(run_meta_stdout, "_WRITE_WAIT_S", 0.05)
+        import pytest
+
+        try:
+            with pytest.raises(TimeoutError, match="run-meta write stalled"):
+                run_meta_stdout.emit_field_line("sdk_error_kind", "auth")
+        finally:
+            monkeypatch.undo()
+            os.close(read_fd)
+            os.close(write_fd)
+            # fdopen wrapper's fd is closed above; detach to avoid a
+            # double-close in its destructor.
+            try:
+                writer.detach()
+            except (ValueError, OSError):
+                pass

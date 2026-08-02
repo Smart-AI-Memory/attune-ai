@@ -561,3 +561,34 @@ async def test_executor_task_is_pinned_while_running_and_popped_on_completion(
             "executor task entry was not popped on completion — "
             "done_callback wiring is broken (dict will grow unbounded)"
         )
+
+
+def _long_line_cmd(workflow: str) -> tuple[str, ...]:
+    """One >64 KiB single line then exit 0 — exceeds asyncio's default
+    StreamReader limit, which readline() answers with ValueError."""
+    script = (
+        f"import sys; print('start {workflow}'); "
+        "print('L' * 200_000); "
+        "print('end-long'); sys.exit(0)"
+    )
+    return (sys.executable, "-c", script)
+
+
+@pytest.mark.asyncio
+async def test_line_over_64k_does_not_fail_run(tmp_path, monkeypatch):
+    """Regression (bug-predict 2026-08-02, run b67fca241221): the read
+    side of the run-meta channel — asyncio's default 64 KiB limit makes
+    readline() raise on a long report_b64 line and the runner's except
+    stamped a SUCCEEDED run failed. The subprocess limit is raised to
+    _STDOUT_LINE_LIMIT."""
+    app, runner = _make_app(tmp_path, monkeypatch, allow_run=True, command_builder=_long_line_cmd)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/workflows/code-review/run")
+        assert resp.status_code == 201
+        run = await _wait_terminal(runner, resp.json()["run_id"])
+        assert run.status == "completed"
+        assert run.exit_code == 0
+        assert not any("[runner error]" in ln for ln in run.lines)
+        assert any(len(ln) >= 200_000 for ln in run.lines)
+        assert any("end-long" in ln for ln in run.lines)
