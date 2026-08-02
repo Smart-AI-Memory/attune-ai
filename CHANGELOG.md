@@ -7,6 +7,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.2.0] — 2026-08-02
+
+The outcome-first release: `attune fix` ships — state the outcome
+you want and how to verify it, and get a receipt, not a promise.
+Around it: guided intakes in Claude Code, declared input schemas for
+every workflow, and a run-record pipeline hardened by its own
+review workflows.
+
+### Added
+
+- **`attune fix` — outcome-first fixing with verified receipts**
+  (#1805–#1819). `attune fix "<goal>" --scope <path> --probe <cmd>`
+  previews the contract (done conditions, constraints, probes —
+  nothing executes); adding `--run` executes it and returns a
+  receipt: changes attributed against a pre-run snapshot, probes
+  re-run independently of the workflow ("workflow exit was not
+  trusted"), exit 0 only when probes pass. A D7 endpoint guard
+  keeps free-text out of the ops run-start surface.
+- **Guided intakes in Claude Code** — `/fix` (#1824) and `/spec`
+  (#1826) compose their contracts through a form: goal pre-filled,
+  scope picker from paths you've touched, probes from matching test
+  files, with the composed command shown before anything runs.
+- **Every workflow declares its inputs** (#1831, #1832) — all 21
+  workflows carry an `input_schema`; unknown or malformed CLI
+  inputs now fail with named-field errors instead of silent drops.
+- **Shared form machinery** — `FormTemplate` + providers with a
+  shared theme (#1843) re-express the fix/spec intakes; 17 workflow
+  templates registered (#1847).
+- **Local-first reports, phase 1** (#1823) — roundtable transcripts
+  live under `~/.attune/reports/`; the repo keeps curated stubs.
+
+### Fixed
+
+- **Succeeded dashboard runs no longer exit 1** (#1904) — the
+  run-meta stdout channel survives non-blocking pipes on the write
+  side (fd-level retry with a bounded deadline), the runner accepts
+  report lines past asyncio's 64 KiB default on the read side, and
+  post-success emission failures warn instead of overwriting the
+  workflow's honest exit code. Found by dogfooding: the dashboard's
+  own code-review and bug-predict runs surfaced both halves.
+- **Windows test-lane blockers** (#1898) — file-age rendering
+  clamped (mtime can land ahead of the clock, printing "-0h ago")
+  and an unreadable-file test rewritten portably (chmod cannot
+  block reads on Windows).
+- **Production bugs from the coverage fleet** — dead `KINDS` check
+  in numeric refs, type-ignore-masked defects in the short-term
+  memory facade (sanitizer arg position, cross-session misbind,
+  dead `_client` property), doc-orchestrator scout and monitoring
+  metrics defects — logged in `docs/COVERAGE_BUG_LOG.md`, with
+  crashing behaviors pinned by tests pending their rulings.
+- **Test-suite reliability** — otel `find_spec` tests mock
+  selectively instead of globally (#1903, was sniping unrelated CI
+  lanes), `patch.dict("sys.modules")` conversions, and an
+  aiohttp-less hooks matrix guard.
+- **Bulletin file backend: concurrent Windows writers no longer lose
+  entries** — the CRT's `O_APPEND` is seek-to-end + write (not
+  atomic), so two processes could overwrite each other's records; up
+  to 15% loss was tolerated and a CI run still rolled 19%. Appends on
+  Windows now serialize on a cross-process `msvcrt.locking`
+  sentinel-byte mutex (stdlib, no new dependency), degrading to the
+  old unlocked append on lock timeout since the bulletin is advisory.
+  The concurrency test now asserts exact zero loss on every platform.
+
+### Internal
+
+- **Coverage fleet** — 30+ modules raised to ~100% line coverage by
+  delegated Sonnet lanes with centrally re-run receipts
+  (#1848–#1901); hybrid model routing ratified (mechanical lanes on
+  Sonnet, judgment on the lead).
+- **Release ritual grows a self-review step** — post-release
+  code-review + bug-predict runs from the ops dashboard, findings
+  triaged with verify-the-claim notes (chair-adopted 2026-08-02).
+
 ### Removed
 
 - **attune-gui parked** — the `attune-gui` marketplace plugin is
@@ -17,17 +90,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `attune ops`. Usage signal at the ruling: zero jobs in 7 days.
   The repo stays archived (not deleted) as the GUI seed if the
   living-docs product direction ever needs one.
-
-### Fixed
-
-- **Bulletin file backend: concurrent Windows writers no longer lose
-  entries** — the CRT's `O_APPEND` is seek-to-end + write (not
-  atomic), so two processes could overwrite each other's records; up
-  to 15% loss was tolerated and a CI run still rolled 19%. Appends on
-  Windows now serialize on a cross-process `msvcrt.locking`
-  sentinel-byte mutex (stdlib, no new dependency), degrading to the
-  old unlocked append on lock timeout since the bulletin is advisory.
-  The concurrency test now asserts exact zero loss on every platform.
 
 ## [11.1.0] — 2026-07-30
 
