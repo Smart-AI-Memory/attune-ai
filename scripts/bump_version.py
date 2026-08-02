@@ -15,10 +15,13 @@ surface). Writes, in one validated pass:
    footer (``**Version:** X``)
 7. ``docs/reference/API_REFERENCE.md`` — header and footer
    (``**Version:** X``)
-8. ``website/lib/features.ts`` — the two attune-ai product entries
+8. ``plugin/README.md`` — version claim (``**Version:** X``; the
+   claim-drift gate ``tests/unit/gates/test_claim_drift.py`` fails
+   CI when this lags pyproject)
+9. ``website/lib/features.ts`` — the two attune-ai product entries
    (``pypiName: "attune-ai"`` + ``version: "X"``; other products'
    versions are independent and never touched)
-9. ``website/app/page.tsx`` — homepage badge (``<span>vX</span>``)
+10. ``website/app/page.tsx`` — homepage badge (``<span>vX</span>``)
 
 Every replacement is count-checked against the expected number of
 occurrences BEFORE any file is written; a mismatch aborts with no
@@ -101,6 +104,13 @@ def _sites(root: Path) -> list[Site]:
             "**Version:** {v}",
             2,
             min_count=True,
+        ),
+        # Version claim checked by the claim-drift gate — a stale
+        # value here fails CI on the release PR (hit on 11.2.0).
+        Site(
+            root / "plugin" / "README.md",
+            "**Version:** {v}",
+            1,
         ),
         # Website sites — enforced by tests/unit/
         # test_website_version_accuracy.py in the required CI lanes.

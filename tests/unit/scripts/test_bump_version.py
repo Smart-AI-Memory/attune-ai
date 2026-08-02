@@ -1,7 +1,7 @@
 """Tests for scripts/bump_version.py (drift-guards-to-generators R4).
 
 Covers:
-- happy path: all 9 files rewritten (14 occurrences), old version
+- happy path: all 10 files rewritten (15 occurrences), old version
   returned;
 - dry-run: validation runs, nothing written;
 - semver / same-version rejection;
@@ -66,6 +66,10 @@ def fixture_root(tmp_path: Path) -> Path:
     core = tmp_path / "plugin" / "core"
     core.mkdir()
     (core / "__init__.py").write_text(f'__version__ = "{OLD}"\n', encoding="utf-8")
+    (tmp_path / "plugin" / "README.md").write_text(
+        f"# x\n\n**Version:** {OLD} | **License:** Apache 2.0\n",
+        encoding="utf-8",
+    )
     claude_dir = tmp_path / ".claude"
     claude_dir.mkdir()
     (claude_dir / "CLAUDE.md").write_text(
@@ -120,6 +124,7 @@ def _all_texts(root: Path) -> str:
             root / "plugin" / ".claude-plugin" / "marketplace.json",
             root / ".claude-plugin" / "marketplace.json",
             root / "plugin" / "core" / "__init__.py",
+            root / "plugin" / "README.md",
             root / ".claude" / "CLAUDE.md",
             root / "docs" / "reference" / "API_REFERENCE.md",
             root / "website" / "lib" / "features.ts",
@@ -135,9 +140,9 @@ class TestBump:
         combined = _all_texts(fixture_root)
         assert OLD not in combined
         # 1 pyproject + 1 plugin.json + 2+2 marketplace + 1 __init__
-        # + 2 CLAUDE.md + 2 API_REFERENCE + 2 features.ts
-        # + 1 page.tsx = 14 occurrences
-        assert combined.count(NEW) == 14
+        # + 1 plugin README + 2 CLAUDE.md + 2 API_REFERENCE
+        # + 2 features.ts + 1 page.tsx = 15 occurrences
+        assert combined.count(NEW) == 15
         # The sibling product's independent version is untouched.
         features = fixture_root / "website" / "lib" / "features.ts"
         assert 'version: "0.1.0"' in features.read_text(encoding="utf-8")
