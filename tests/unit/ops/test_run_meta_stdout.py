@@ -195,3 +195,46 @@ class TestStderrCodec:
         # Should contain replacement characters, not raise.
         assert isinstance(result, str)
         assert len(result) > 0
+
+
+class TestNonBlockingPipeWrite:
+    """Regression: ``report_b64`` lines routinely exceed the 64 KiB pipe
+    buffer, and the daemon's pipe can be in non-blocking mode — a plain
+    ``sys.stdout.write`` raised ``BlockingIOError`` mid-line and turned
+    an otherwise-succeeded run into exit 1 (dashboard run 87d8438e3e8c,
+    2026-08-02)."""
+
+    def test_large_line_on_nonblocking_pipe_completes(self, monkeypatch):
+        import os
+        import sys
+        import threading
+
+        read_fd, write_fd = os.pipe()
+        os.set_blocking(write_fd, False)
+        received: list[bytes] = []
+
+        def drain() -> None:
+            while True:
+                try:
+                    chunk = os.read(read_fd, 65536)
+                except OSError:
+                    break
+                if not chunk:
+                    break
+                received.append(chunk)
+
+        reader = threading.Thread(target=drain)
+        reader.start()
+        writer = os.fdopen(write_fd, "w", encoding="utf-8")
+        monkeypatch.setattr(sys, "stdout", writer)
+        big_value = "A" * 300_000  # ~5x the default pipe buffer
+        try:
+            run_meta_stdout.emit_field_line("report_b64", big_value)
+        finally:
+            monkeypatch.undo()
+        writer.close()
+        reader.join(timeout=10)
+        os.close(read_fd)
+        assert not reader.is_alive()
+        payload = b"".join(received).decode("utf-8")
+        assert payload == f"ATTUNE_RUN_META report_b64={big_value}\n"

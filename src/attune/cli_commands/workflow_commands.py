@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -465,12 +466,19 @@ def _emit_run_meta_for_daemon(result: object) -> None:
     # Emit version line first so the parser knows what grammar it's
     # reading. Cheap; downstream consumer ignores it after the version
     # check.
-    run_meta_stdout.emit_version_line()
-    if kind:
-        run_meta_stdout.emit_field_line("sdk_error_kind", str(kind))
-    if stderr_text:
-        encoded = run_meta_stdout.encode_stderr(str(stderr_text))
-        if encoded:
-            run_meta_stdout.emit_field_line("sdk_stderr_b64", encoded)
-    if report_encoded:
-        run_meta_stdout.emit_field_line("report_b64", report_encoded)
+    #
+    # Emission is daemon-side plumbing on top of an already-produced
+    # result — a pipe failure here (EPIPE, non-blocking EAGAIN edge)
+    # must not turn a succeeded run into exit 1.
+    try:
+        run_meta_stdout.emit_version_line()
+        if kind:
+            run_meta_stdout.emit_field_line("sdk_error_kind", str(kind))
+        if stderr_text:
+            encoded = run_meta_stdout.encode_stderr(str(stderr_text))
+            if encoded:
+                run_meta_stdout.emit_field_line("sdk_stderr_b64", encoded)
+        if report_encoded:
+            run_meta_stdout.emit_field_line("report_b64", report_encoded)
+    except OSError as exc:
+        print(f"warning: run-meta emission failed ({exc!r})", file=sys.stderr)
