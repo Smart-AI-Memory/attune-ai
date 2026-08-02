@@ -2,10 +2,10 @@
 
 ## Overview
 
-`attune fix` is the outcome-first entry point: you state **what should
-be true** and **how to check it**, and Attune reports what it actually
-did with evidence. You do not pick a workflow tier, write a prompt, or
-read an internal report format.
+`attune fix` is **Fix Receipts** — the outcome-first entry point: you
+state **what should be true** and **how to check it**, and Attune
+reports what it actually did with evidence. You do not pick a workflow
+tier, write a prompt, or read an internal report format.
 
 Two artifacts carry the whole surface:
 
@@ -91,4 +91,4 @@ adapter is the honest design rather than a forced universal model.
 
 Full design record: `docs/specs/outcome-first-fix/`.
 
-<!-- attune-generated: source_hash=cf3ef4afc553319fc03470fe0a2f92a4bc77eda8b02354d75be6c4141752859d feature=fix kind=architecture generated_at=2026-07-31 -->
+<!-- attune-generated: source_hash=02c4fd57871efde0e308241968a30e45d0a63f6ba866385c62a363e28a5f4b4b feature=fix kind=architecture generated_at=2026-08-02 -->

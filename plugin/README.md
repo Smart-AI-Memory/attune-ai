@@ -6,6 +6,14 @@ commands: say what you need and Claude picks the right skill.
 
 **Version:** 11.2.0 | **License:** Apache 2.0
 
+> **Fix Receipts — new in 11.2.0.** Say `fix this and prove it`.
+> Attune previews the contract first — done conditions, scope,
+> probes, *nothing executes* — then `--run` returns a **receipt**:
+> the diff attributed against a pre-run snapshot, your probes re-run
+> independently of the agent, and an exit code that means the probes
+> passed — not that the agent felt good about it. The agent doesn't
+> grade its own homework.
+
 ## Install
 
 ```bash
