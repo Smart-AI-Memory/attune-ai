@@ -54,15 +54,22 @@ import os
 import re
 import select
 import sys
+import time
 from typing import Any
 
 EMIT_ENV = "ATTUNE_RUN_META_EMIT"
 VERSION = 1
 
 #: Max seconds to wait per select() round for a non-blocking stdout to
-#: drain. The loop re-selects until the write completes, so this bounds
-#: one wait, not the total.
+#: drain. The loop re-selects until the write completes or the
+#: deadline below expires.
 _WRITE_WAIT_S = 1.0
+
+#: Total elapsed ceiling for one _write() call. A reader that dies
+#: without closing its pipe end would otherwise stall the retry loop
+#: forever. Generous by design: the daemon drains continuously, so a
+#: healthy pipe never gets near this.
+_WRITE_DEADLINE_S = 30.0
 
 # Allowed key names. Restricting to a known set keeps the grammar tight;
 # extending this requires updating both ``emit_field_line`` and
@@ -96,6 +103,12 @@ def _write(line: str) -> None:
     ``BlockingIOError`` mid-line and crashes an otherwise-succeeded
     run. Write at the fd level with a ``select()``-wait retry so
     partial writes complete instead.
+
+    The retry is bounded by ``_WRITE_DEADLINE_S``: a reader that dies
+    without closing its end would otherwise park this loop forever —
+    trading the original crash for a silent hang. On deadline the
+    raised ``TimeoutError`` (an ``OSError``) reaches the caller's
+    emission guard, which warns and moves on.
     """
     try:
         fd = sys.stdout.fileno()
@@ -106,13 +119,22 @@ def _write(line: str) -> None:
         sys.stdout.flush()
         return
 
+    deadline = time.monotonic() + _WRITE_DEADLINE_S
+
+    def _wait_writable() -> None:
+        if time.monotonic() >= deadline:
+            raise TimeoutError(
+                f"run-meta write stalled >{_WRITE_DEADLINE_S:.0f}s on a non-draining pipe"
+            )
+        select.select([], [fd], [], _WRITE_WAIT_S)
+
     # Drain any buffered text output first so line ordering holds.
     while True:
         try:
             sys.stdout.flush()
             break
         except BlockingIOError:
-            select.select([], [fd], [], _WRITE_WAIT_S)
+            _wait_writable()
 
     data = (line + "\n").encode("utf-8")
     view = memoryview(data)
@@ -121,7 +143,7 @@ def _write(line: str) -> None:
         try:
             offset += os.write(fd, view[offset:])
         except BlockingIOError:
-            select.select([], [fd], [], _WRITE_WAIT_S)
+            _wait_writable()
 
 
 def emit_version_line() -> None:
