@@ -2,8 +2,8 @@
 
 ## Overview
 
-The spec engine powers **Spec Ladders** — goal-driven development
-you approve rung by rung. It turns a plan file — an XML task list stored in
+The spec engine powers **Spec Ladders** (`/spec`) — goal-driven
+development you approve rung by rung. It turns a plan file — an XML task list stored in
 `.claude/plans/` — into executed, gate-checked code. It owns two
 distinct concerns: running the pipeline (`pipeline.*`) and managing
 interactive, approval-gated execution with persistent state
@@ -129,4 +129,4 @@ a list of interrupted runs you can pick back up.
   incomplete plans, then pass `plan_path` to `execute_with_approval()`
   to resume.
 
-<!-- attune-generated: source_hash=ff80de2977562e5449b3d6a205f8f4f41d9c25948b7dc1477e103a101ac092bb feature=spec-engine kind=architecture generated_at=2026-08-02 -->
+<!-- attune-generated: source_hash=0a9f094d0c1cb1edca272a7412ba50c3a59e4336596eb0a901aff5e6fc3b2d4b feature=spec-engine kind=architecture generated_at=2026-08-02 -->
