@@ -37,7 +37,7 @@
       "name": "attune-help",
       "source": "./plugins/attune-help",
       "description": "Lightweight runtime reader for .help/ templates. Progressive depth (concept -> task -> reference). No AI keys required. Install alone to consume help content, or pair with attune-author to build it.",
-      "version": "0.11.1",
+      "version": "0.13.0",
       "author": {
         "name": "Smart AI Memory",
         "email": "patrick.roebuck@smartaimemory.com"
@@ -52,7 +52,7 @@
       "name": "attune-author",
       "source": "./plugins/attune-author",
       "description": "AI-powered authoring companion for attune-help. Generates, maintains, and validates .help/ templates through a 3-stage pipeline with staleness detection. Pairs with attune-help to build and ship context-sensitive help content.",
-      "version": "0.22.0",
+      "version": "0.25.0",
       "author": {
         "name": "Smart AI Memory",
         "email": "patrick.roebuck@smartaimemory.com"

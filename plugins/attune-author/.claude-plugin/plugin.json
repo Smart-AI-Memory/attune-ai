@@ -1,6 +1,6 @@
 {
   "name": "attune-author",
-  "version": "0.21.0",
+  "version": "0.25.0",
   "description": "Documentation authoring for Claude Code — generate, maintain, and validate help content with the attune-author library",
   "author": {
     "name": "Smart AI Memory",

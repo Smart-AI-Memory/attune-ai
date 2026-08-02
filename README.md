@@ -84,28 +84,44 @@ routing, and [Installation Options](#installation-options) for extras.
      a permanent section below (see "Dynamic forms" for the pattern).
      Don't stack a second "New in" section here. -->
 
-## New in 11.0.0 — attune-author invocation paths retired
+## New in 11.2.0 — Goal-Driven Development: receipts, not promises
 
-Major version, one breaking change: the **`[author]` install extra is
-removed**, along with the ops dashboard's help-regeneration surface
-(`/api/help/regen*` and the Admin-page regen UI). `/help/admin` is now
-report-only and points at `/coach maintain`, which is where
-documentation regeneration lives.
+The last two releases (11.1.0 + 11.2.0) build out one idea: **state
+the goal and how to verify it before anything runs, and get back a
+receipt — not a promise.** If you know acceptance-test-driven
+development, this is that discipline rebuilt for agent workflows:
+acceptance probes are declared up front, and the agent's own word is
+never the evidence.
 
-**Are you affected?** Only if you install with
-`pip install 'attune-ai[author]'` — that extra no longer resolves, so
-drop it from your requirements. Plain `pip install attune-ai` is
-unchanged, and no runtime API was removed. The extra existed to pull in
-`attune-author`, which was archived after its capability was absorbed
-here; keeping an extra that points at an archived package would have been
-the dishonest option.
+```bash
+attune fix "imports resolve after the rename" \
+  --scope src/attune/cli_minimal.py \
+  --probe "pytest tests/unit/test_cli_minimal.py"
+```
 
-Also in this release: handoff packets now carry memory linkage and
-report a real memory outcome instead of silence; the Health tab shows
-which surface rendered each Python-routed form; `session_memory_*` tools
-answer with per-verb summaries rather than a generic line; and the
-release model tier resolves at call time, so a changed override is
-observed without a restart.
+- **`attune fix` — outcome-first fixing.** The command above previews
+  a contract (done conditions, constraints, probes) and executes
+  nothing. Add `--run` and it executes, then returns a receipt:
+  changes attributed against a pre-run snapshot, probes re-run
+  independently of the workflow, exit 0 only when the probes pass.
+  The workflow saying "done" is not trusted — the probe result is.
+- **Guided intakes in Claude Code.** `/fix` and `/spec` compose
+  their contracts through a form: goal pre-filled, a scope picker
+  built from paths you've touched, probe suggestions from matching
+  test files — with the composed command shown before anything runs.
+- **Every workflow declares its inputs.** All 21 workflows carry an
+  `input_schema`; unknown or malformed inputs fail with named-field
+  errors instead of being silently dropped.
+- **Local-first reports.** Roundtable transcripts write to
+  `~/.attune/reports/`; the repo keeps curated stubs.
+
+From 11.1.0, the layer that keeps receipts honest: a failed or
+absent security auditor now **fails** the Security gate (absence is
+not a pass), spec-closure claims draw a rotating skeptic seat that
+must countersign executor-produced receipt artifacts, risk-class
+diffs authored by the lead model are reviewed by a *different*
+model before promotion, and editing/polish passes moved to a
+dedicated editing model at roughly half the previous cost.
 
 ## The memory suite — out of the box, measured
 
@@ -559,9 +575,10 @@ for the surfaces you use:
 | Everything most users need, incl. Redis memory | `pip install attune-ai` |
 | Claude API mode + optional LangChain/LangGraph interop adapters | `pip install 'attune-ai[developer]'` |
 | The ops dashboard (`attune ops`) | `pip install 'attune-ai[ops]'` |
-| Help authoring (generate / maintain `.help/` templates) | `pip install 'attune-ai[author]'` |
 
-(`[redis]` remains as an empty backward-compat alias.) Extras
+(`[redis]` remains as an empty backward-compat alias. The `[author]`
+extra was **removed in 11.0.0** — drop it from requirements;
+documentation regeneration lives in `/coach maintain`.) Extras
 combine — for example
 `pip install 'attune-ai[developer,ops]'`. Keep the quotes:
 zsh and bash treat square brackets as glob characters.
