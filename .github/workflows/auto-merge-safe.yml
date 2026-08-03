@@ -75,7 +75,7 @@ jobs:
       # so we always run the trusted base copy of the guard, never
       # the PR's version.
       - name: Checkout base repo (trusted guard)
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Compute path class and (un)label
         env:
@@ -113,7 +113,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout base repo (trusted guard)
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Evaluate gates and admin-merge
         env:
@@ -304,7 +304,7 @@ jobs:
       # Default ref on pull_request_target is the BASE branch, so we
       # always run the trusted base copy of the guard.
       - name: Checkout base repo (trusted guard)
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Arm, keep, or disarm native auto-merge
         env:
