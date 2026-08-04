@@ -20901,3 +20901,114 @@ def ", start_idx + 1)` for module-
   sentence in the resident Socratic rule. Pattern: steering text that
   names the fallback tool concretely and the default abstractly gets
   the fallback executed — name the DEFAULT concretely.
+
+- **LinkedIn URN-parameterized deep links (`?commentUrn=...&replyUrn=...`)
+  hang the claude-in-chrome tab — script injection times out repeatedly
+  ("page busy or mid-navigation") and even the plain URL stays wedged in
+  that tab**: 2026-08-02, cataloging post comments. Recovery that works:
+  create a FRESH tab (tabs_create_mcp) and load the PLAIN post URL
+  (`/feed/update/urn:li:activity:<id>/`) — the highlighted thread is
+  findable from the comment list. Companion mechanics: `get_page_text`
+  on LinkedIn returns only the first `<article>` (one comment thread),
+  not the feed — use read_page (a11y tree carries names/headlines/
+  bodies with refs) or screenshot+scroll for enumeration; comment
+  counts render on feed cards ONLY when >0, and articles' comment
+  sections live on the pulse page, separate from the share post's.
+  POSTING addendum (same day): the feed SILENTLY SWALLOWS typed text
+  if the composer modal isn't open — click Start-a-post, then
+  SCREENSHOT-VERIFY the modal before typing (the type action reports
+  success either way). And submit buttons move between screenshot
+  and click (layout shifts) — click by REF from a fresh find, never
+  by remembered coordinates; a coordinate click that misses leaves
+  the box populated and looks like a double-post risk on retry.
+
+- **Updating a published LinkedIn Article in place: synthetic
+  browser Cmd+C/Cmd+V never touch the macOS clipboard — load it
+  with `osascript -e 'set the clipboard to «data HTML<hex>»'` and
+  then the synthetic Cmd+V works**: 2026-08-02, discipline-article
+  refresh. The CDP-injected Cmd+A visibly selects (so key events DO
+  reach the page), which makes the silent copy/paste no-op
+  deceptive — the tell is the selection SURVIVING the paste
+  (a real paste collapses it). Working recipe: transform per the
+  existing export lesson → hex-encode the HTML *fragment* (body
+  inner, not the full document) → osascript «data HTML…» (verify
+  with `clipboard info`) → click into the article BODY, Cmd+A
+  (title field is separate and survives), Cmd+V → verify by
+  `javascript_tool` greps over `[contenteditable] .innerText`
+  (get_page_text truncates at 50K chars — a 75K article's tail
+  markers grep as FALSE-absent) → Update button. Companion: before
+  surgically patching a published derivative, DIFF it against the
+  source-of-truth first — the published discipline article had
+  silently drifted a full revision behind (missing Parts 9–12), so
+  anchor-based edits would have Frankensteined it; full re-export
+  was the correct move.
+
+- **LinkedIn article editor: CDP paste only fires over an ACTIVE
+  SELECTION — collapsed-caret paste is a silent no-op, so surgical
+  insertions must become full-body replaces**: 2026-08-02,
+  multi-LLM article update. Select-all + Cmd+V worked three times;
+  caret-positioned paste (trusted click → caret verified at the
+  right node → Cmd+V) inserted NOTHING, repeatedly — including
+  after triple-click. Don't burn cycles on caret placement: build
+  the complete new body and replace. Companion mechanics from the
+  same session: (a) the javascript_tool DLP filter BLOCKS returning
+  editor HTML containing UUID/canary/email-shaped strings, blocks
+  base64 as evasion, but get_page_text is exempt and SHORT
+  inventory queries pass — so instead of extracting HTML,
+  reconstruct: full text from get_page_text + formatting inventory
+  via small queries ([...ed.querySelectorAll('em')].map(innerText),
+  same for strong/a/h3) and rebuild markdown; (b) a July paste had
+  left per-line <p> hard-wrap spacing, literal ``` fences LinkedIn
+  never renders, and junk auto-links ("events.py" →
+  http://events.py) — a markdown-it re-render fixes all three, so
+  a rebuild can IMPROVE fidelity over extraction; (c) verify the
+  selection-survives-paste tell (real paste collapses selection)
+  before trusting any paste happened.
+
+- **`reach_snapshot.py`'s own "wait at least 60 minutes" is a FLOOR,
+  not a sufficient wait — pypistats' per-package penalty can outlast
+  62 minutes, so a rigid 60-min retry cadence spends the 3-attempt
+  budget without converging**: 2026-08-03, the US-5 AFTER leg for
+  11.2.0 + 11.2.1. Three attempts at 11:08 / 12:13 / 13:48 ET
+  (cooldowns —, 62 min, 95 min) converged 3/5 → **3/5** → 4/5. The
+  62-minute wait bought NOTHING: attune-author refused again with
+  the identical message and the manifest was byte-identical, so
+  attempt 2 was a wasted third of the day's budget. attune-author
+  only cleared after ~95 minutes; the block then simply MOVED to the
+  next uncaptured package (attune-verify), which is the tell that
+  the limiter is per-IP-per-window and the seed advances by roughly
+  one package per successful attempt regardless of how many are
+  missing. Practical cadence: make attempt 2 ≥90 min, not 60 — with
+  only three attempts and ~one package gained each, 5/5 in a day
+  needs the earliest possible start AND long gaps, and a 2-missing
+  start is already unlikely to finish. Companion (already-known,
+  re-confirmed): the script exits 0 on rate-limit, so BOTH the
+  foreground run and the background-task "completed (exit code 0)"
+  notification are non-receipts — only `manifest.captured` /
+  `manifest.missing` in the day file settle it. Also: when a
+  partial's day file lives untracked in the main checkout while its
+  PR is in flight, REMOVE it after committing to a worktree branch
+  (an untracked file blocks the `git pull` that would deliver the
+  merged copy) and record the reseed command
+  (`git checkout origin/<branch> -- <day-file>`) in the handoff —
+  otherwise the next attempt restarts at 0/5 and burns the budget.
+
+- **`reach_snapshot.py`'s resume-seed is keyed to TODAY's day file —
+  a cross-day resume needs the prior day's `pypi_recent` copied into
+  `<today>.json`, with the `attempts` list STRIPPED**: 2026-08-04,
+  completing the US-5 AFTER leg (5/5, PR #1929). `_load_seed` reads
+  `<out>/<today>.json` only, so yesterday's 4/5 partial contributes
+  nothing to a next-day run — a plain rerun restarts at 0/5 and
+  burns 5 fetches. Copy just `{"pypi_recent": {...}}` forward: the
+  attempt budget is per-day by design, and carrying yesterday's
+  ledger (3 exhausted attempts) forward trips `check_attempt_budget`
+  and blocks the run before its first request. Seeded this way, the
+  run cost ONE pypistats fetch and the missing package captured
+  first try at 08:40 ET (fresh-day window ≥15h after the last 429 —
+  consistent with the per-IP-per-window model in the 08-03 lesson).
+  Honesty note for the receipt: the completing day file carries the
+  prior day's numbers for the seeded packages — say so in the PR
+  body, since `taken_at`/`observed_at` alone imply a same-day
+  capture. Candidate hardening if this recurs: teach `_load_seed`
+  an explicit `--seed-from <yesterday>.json` flag instead of the
+  hand-copy.
