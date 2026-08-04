@@ -768,3 +768,21 @@ pair side for the captured set. The 11.1.0 window stays open to
 2026-08-02 08:00 ET; a Saturday-morning run re-fetches ONLY the
 missing two (reruns reuse captured results) and is the last
 practical shot at a 5/5 pair for 11.1.0.
+
+**US-5 11.2.0+11.2.1 leg — SPLIT-CAPTURE (08-03 + 08-04) AFTER
+snapshot RULED SATISFIED (chair, 2026-08-04).** The AFTER leg for
+the 11.2.0/11.2.1 pair completed 5/5 across two day files:
+2026-08-03 captured 4/5 in three budgeted attempts (15:08Z 3/5,
+16:13Z 3/5, 17:48Z 4/5, all rate-limited on the tail — PR #1928),
+and 2026-08-04 completed `attune-verify` (13/595/24075
+day/week/month, fetched 12:40Z inside the window) with the four
+08-03 captures carried forward via the day-file seed, one
+pypistats request total, `manifest.complete: true` (PR #1929,
+merge SHA 2a3c7b4105d0, content-verified in the SHA). The chair
+ruled the split capture SATISFIES the US-5 AFTER leg: every
+package has an in-window observation, and the seeded packages'
+numbers are honest 08-03 observations recorded as such in the PR
+bodies — the split is a capture-mechanics artifact of the
+pypistats budget, not a data gap. Companion precedent: the
+11.0.0 3/5 partial-acceptance ruling (2026-07-31, above); this
+entry extends it to the split-day full-capture case.
