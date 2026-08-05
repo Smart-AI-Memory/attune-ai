@@ -39,8 +39,8 @@
     "rehype-highlight": "^7.0.2",
     "remark": "^15.0.1",
     "remark-gfm": "^4.0.1",
-    "resend": "^6.5.2",
-    "uuid": "^13.0.0"
+    "resend": "^6.18.1",
+    "uuid": "^14.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
