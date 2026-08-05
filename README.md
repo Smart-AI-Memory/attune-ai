@@ -41,7 +41,7 @@ preview the contract (nothing executes), then `--run` for an
 attributed diff whose probes are re-run independently of the
 workflow; exit 0 means the probes passed, not that the agent felt
 good about it — plus a spec-driven,
-multi-agent toolkit: 21 workflows and <!-- cap:mcp_registered_tool_count -->60 MCP tools<!-- /cap --> dispatching 2–6
+multi-agent toolkit: 21 workflows and <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap --> dispatching 2–6
 domain-specific subagents behind Socratic quality gates, RAG
 grounding with a citation-per-claim contract (mean per-claim
 faithfulness CI-gated at ≥ 0.97; 0.98 currently measured, N=20 runs
@@ -414,7 +414,7 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 | <!-- cap:skill_count -->27 auto-triggering skills<!-- /cap --> | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
-| <!-- cap:mcp_registered_tool_count -->60 MCP tools<!-- /cap --> | -- | Yes |
+| <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap --> | -- | Yes |
 | `attune` CLI | -- | Yes |
 | Multi-agent workflows | -- | Yes |
 | Help system maintenance | -- | Yes |

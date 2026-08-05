@@ -1,0 +1,14 @@
+{
+  "name": "@attune/chartkit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sealed chart kernel - declarative JSON spec in, SVG out. No attune imports in either direction.",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/kernel.js --bundle --minify --format=iife --global-name=ChartKit --banner:js=\"/* chartkit v0.1.0 sealed */\" --outfile=dist/kernel.min.js",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0"
+  }
+}

@@ -270,7 +270,7 @@ export const DIFFERENTIATORS: Differentiator[] = [
 export const CAPABILITIES = {
   workflows: 21,
   skills: 27,
-  mcpTools: 49,
+  mcpTools: 50,
   templateKinds: 15,
   wizards: 5,
 } as const;

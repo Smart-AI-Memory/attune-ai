@@ -585,6 +585,51 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                 "required": ["form"],
             },
         },
+        "chart_render_widget": {
+            "description": (
+                "Create or update a chart widget from a declarative JSON "
+                "spec — the model writes ~50-200 tokens of spec, a sealed "
+                "6.7KB kernel renders SVG (bar, line, scatter, area, "
+                "heatmap). Pass the returned 'html' straight to "
+                "mcp__visualize__show_widget. To UPDATE an existing chart, "
+                "send chart_id + 'patch' (RFC 7386 merge patch: null "
+                "deletes, objects merge, arrays/scalars replace) instead "
+                "of re-sending the widget — the current spec is stored "
+                "per chart_id in session memory. When persistence is "
+                "unavailable the result says so and a full 'spec' is "
+                "required. Validation errors come back field-level "
+                "(e.g. 'encodings.x.field: Field required') — fix and "
+                "retry."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "chart_id": {
+                        "type": "string",
+                        "description": (
+                            "Stable chart identifier ([A-Za-z0-9_-], max "
+                            "64) — reuse it to patch the same chart later"
+                        ),
+                    },
+                    "spec": {
+                        "type": "object",
+                        "description": (
+                            "Full chart spec v1: {v: 1, type, data, "
+                            "encodings: {x, y, color?}, options?} — see "
+                            "spec.schema.json shipped with the kernel"
+                        ),
+                    },
+                    "patch": {
+                        "type": "object",
+                        "description": (
+                            "RFC 7386 merge patch against the stored spec "
+                            "(alternative to 'spec')"
+                        ),
+                    },
+                },
+                "required": ["chart_id"],
+            },
+        },
         "elicitation_render_widget": {
             "description": (
                 "Render a declarative form as an inline HTML form for "
