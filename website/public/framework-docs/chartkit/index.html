@@ -12,27 +12,31 @@
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/how-to/fix/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/chartkit/">
       
       
+        <link rel="prev" href="../how-to/security-architecture/">
+      
+      
+        <link rel="next" href="../how-to/practical-patterns/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/empathy-brain-logo.png">
+      <link rel="icon" href="../assets/images/empathy-brain-logo.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Fix - Attune AI</title>
+        <title>Chart Widgets (chartkit) - Attune AI</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -51,9 +55,9 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -81,7 +85,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#fix" class="md-skip">
+        <a href="#chartkit-charts-the-model-specs-a-sealed-kernel-renders" class="md-skip">
           Skip to content
         </a>
       
@@ -95,9 +99,9 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Attune AI" class="md-header__button md-logo" aria-label="Attune AI" data-md-component="logo">
+    <a href=".." title="Attune AI" class="md-header__button md-logo" aria-label="Attune AI" data-md-component="logo">
       
-  <img src="../../assets/images/empathy-brain-logo.png" alt="logo">
+  <img src="../assets/images/empathy-brain-logo.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -114,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Fix
+              Chart Widgets (chartkit)
             
           </span>
         </div>
@@ -227,7 +231,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href=".." class="md-tabs__link">
         
   
   
@@ -248,7 +252,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../getting-started/" class="md-tabs__link">
+        <a href="../getting-started/" class="md-tabs__link">
           
   
   
@@ -268,7 +272,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../tutorials/" class="md-tabs__link">
+        <a href="../tutorials/" class="md-tabs__link">
           
   
   
@@ -284,11 +288,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../how-to/" class="md-tabs__link">
           
   
   
@@ -308,7 +314,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../rag/" class="md-tabs__link">
+        <a href="../rag/" class="md-tabs__link">
           
   
   
@@ -328,7 +334,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../SECURITY_REVIEW/" class="md-tabs__link">
+        <a href="../SECURITY_REVIEW/" class="md-tabs__link">
           
   
   
@@ -348,7 +354,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../reference/" class="md-tabs__link">
+        <a href="../reference/" class="md-tabs__link">
           
   
   
@@ -368,7 +374,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../contributing/" class="md-tabs__link">
+        <a href="../contributing/" class="md-tabs__link">
           
   
   
@@ -388,7 +394,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../book-cover/" class="md-tabs__link">
+        <a href="../book-cover/" class="md-tabs__link">
           
   
   
@@ -408,7 +414,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../features/" class="md-tabs__link">
+        <a href="../features/" class="md-tabs__link">
           
   
   
@@ -442,9 +448,9 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Attune AI" class="md-nav__button md-logo" aria-label="Attune AI" data-md-component="logo">
+    <a href=".." title="Attune AI" class="md-nav__button md-logo" aria-label="Attune AI" data-md-component="logo">
       
-  <img src="../../assets/images/empathy-brain-logo.png" alt="logo">
+  <img src="../assets/images/empathy-brain-logo.png" alt="logo">
 
     </a>
     Attune AI
@@ -471,7 +477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -552,7 +558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
@@ -580,7 +586,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/installation/" class="md-nav__link">
+      <a href="../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -608,7 +614,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/first-steps/" class="md-nav__link">
+      <a href="../getting-started/first-steps/" class="md-nav__link">
         
   
   
@@ -636,7 +642,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/quickstart-plugin/" class="md-nav__link">
+      <a href="../getting-started/quickstart-plugin/" class="md-nav__link">
         
   
   
@@ -664,7 +670,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/choose-your-path/" class="md-nav__link">
+      <a href="../getting-started/choose-your-path/" class="md-nav__link">
         
   
   
@@ -692,7 +698,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/redis-setup/" class="md-nav__link">
+      <a href="../getting-started/redis-setup/" class="md-nav__link">
         
   
   
@@ -720,7 +726,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/mcp-integration/" class="md-nav__link">
+      <a href="../getting-started/mcp-integration/" class="md-nav__link">
         
   
   
@@ -809,7 +815,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/" class="md-nav__link">
+      <a href="../tutorials/" class="md-nav__link">
         
   
   
@@ -837,7 +843,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/build-a-workflow/" class="md-nav__link">
+      <a href="../tutorials/build-a-workflow/" class="md-nav__link">
         
   
   
@@ -865,7 +871,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/fix-test/" class="md-nav__link">
+      <a href="../tutorials/fix-test/" class="md-nav__link">
         
   
   
@@ -893,7 +899,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/fix/" class="md-nav__link">
+      <a href="../tutorials/fix/" class="md-nav__link">
         
   
   
@@ -921,7 +927,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/ops-dashboard/" class="md-nav__link">
+      <a href="../tutorials/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -1003,7 +1009,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/examples/simple-chatbot/" class="md-nav__link">
+      <a href="../tutorials/examples/simple-chatbot/" class="md-nav__link">
         
   
   
@@ -1031,7 +1037,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/examples/multi-agent-team-coordination/" class="md-nav__link">
+      <a href="../tutorials/examples/multi-agent-team-coordination/" class="md-nav__link">
         
   
   
@@ -1071,28 +1077,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -1110,7 +1119,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1128,7 +1137,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../how-to/" class="md-nav__link">
         
   
   
@@ -1162,10 +1171,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -1174,7 +1186,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
         
           
-          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="">
             
   
   
@@ -1210,7 +1222,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../which-memory-is-which/" class="md-nav__link">
+      <a href="../how-to/which-memory-is-which/" class="md-nav__link">
         
   
   
@@ -1238,7 +1250,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../unified-memory-system/" class="md-nav__link">
+      <a href="../how-to/unified-memory-system/" class="md-nav__link">
         
   
   
@@ -1266,7 +1278,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../lessons-workflow/" class="md-nav__link">
+      <a href="../how-to/lessons-workflow/" class="md-nav__link">
         
   
   
@@ -1308,10 +1320,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -1320,7 +1335,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_3" >
         
           
-          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="">
             
   
   
@@ -1356,7 +1371,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agent-factory/" class="md-nav__link">
+      <a href="../how-to/agent-factory/" class="md-nav__link">
         
   
   
@@ -1384,7 +1399,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../smart-router/" class="md-nav__link">
+      <a href="../how-to/smart-router/" class="md-nav__link">
         
   
   
@@ -1412,7 +1427,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../auto-chaining/" class="md-nav__link">
+      <a href="../how-to/auto-chaining/" class="md-nav__link">
         
   
   
@@ -1445,28 +1460,31 @@
                 
   
   
+    
   
   
+  
     
     
     
     
       
       
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
         
           
+          
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_4" >
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="">
             
   
   
@@ -1484,7 +1502,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1502,7 +1520,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../hooks/" class="md-nav__link">
+      <a href="../hooks/" class="md-nav__link">
         
   
   
@@ -1530,7 +1548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../security-architecture/" class="md-nav__link">
+      <a href="../how-to/security-architecture/" class="md-nav__link">
         
   
   
@@ -1555,10 +1573,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../chartkit/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chart Widgets (chartkit)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1574,6 +1619,70 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create a chart
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#update-a-chart-send-a-patch-not-a-widget" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Update a chart — send a patch, not a widget
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#named-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Named components
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-seal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The seal
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1600,10 +1709,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -1612,7 +1724,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_5" >
         
           
-          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="">
             
   
   
@@ -1648,7 +1760,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../practical-patterns/" class="md-nav__link">
+      <a href="../how-to/practical-patterns/" class="md-nav__link">
         
   
   
@@ -1676,7 +1788,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../resilience-patterns/" class="md-nav__link">
+      <a href="../how-to/resilience-patterns/" class="md-nav__link">
         
   
   
@@ -1718,10 +1830,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -1730,7 +1845,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_6" >
         
           
-          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="">
             
   
   
@@ -1766,7 +1881,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../project-analysis-and-metrics/" class="md-nav__link">
+      <a href="../how-to/project-analysis-and-metrics/" class="md-nav__link">
         
   
   
@@ -1794,7 +1909,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../context-management/" class="md-nav__link">
+      <a href="../how-to/context-management/" class="md-nav__link">
         
   
   
@@ -1822,7 +1937,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../learning-and-patterns/" class="md-nav__link">
+      <a href="../how-to/learning-and-patterns/" class="md-nav__link">
         
   
   
@@ -1850,7 +1965,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../triage-code-quality/" class="md-nav__link">
+      <a href="../how-to/triage-code-quality/" class="md-nav__link">
         
   
   
@@ -1892,10 +2007,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -1904,7 +2022,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_7" >
         
           
-          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="">
             
   
   
@@ -1940,7 +2058,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../telemetry-and-signals/" class="md-nav__link">
+      <a href="../how-to/telemetry-and-signals/" class="md-nav__link">
         
   
   
@@ -1982,10 +2100,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -1994,7 +2115,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_8" >
         
           
-          <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="">
             
   
   
@@ -2030,7 +2151,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ops-dashboard/" class="md-nav__link">
+      <a href="../how-to/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -2072,10 +2193,13 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
@@ -2084,7 +2208,7 @@
         <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_9" >
         
           
-          <label class="md-nav__link" for="__nav_4_9" id="__nav_4_9_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_9" id="__nav_4_9_label" tabindex="">
             
   
   
@@ -2120,7 +2244,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../help-system-maintenance/" class="md-nav__link">
+      <a href="../how-to/help-system-maintenance/" class="md-nav__link">
         
   
   
@@ -2156,7 +2280,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../prerequisites/" class="md-nav__link">
+      <a href="../how-to/prerequisites/" class="md-nav__link">
         
   
   
@@ -2245,7 +2369,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../rag/" class="md-nav__link">
+      <a href="../rag/" class="md-nav__link">
         
   
   
@@ -2273,7 +2397,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../rag/embeddings-decision-2026-04-17/" class="md-nav__link">
+      <a href="../rag/embeddings-decision-2026-04-17/" class="md-nav__link">
         
   
   
@@ -2301,7 +2425,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../rag/faithfulness-decision-2026-04-19/" class="md-nav__link">
+      <a href="../rag/faithfulness-decision-2026-04-19/" class="md-nav__link">
         
   
   
@@ -2390,7 +2514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../SECURITY_REVIEW/" class="md-nav__link">
+      <a href="../SECURITY_REVIEW/" class="md-nav__link">
         
   
   
@@ -2472,7 +2596,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../CODING_STANDARDS/" class="md-nav__link">
+      <a href="../CODING_STANDARDS/" class="md-nav__link">
         
   
   
@@ -2500,7 +2624,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../EXCEPTION_HANDLING_GUIDE/" class="md-nav__link">
+      <a href="../EXCEPTION_HANDLING_GUIDE/" class="md-nav__link">
         
   
   
@@ -2597,7 +2721,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
+      <a href="../reference/" class="md-nav__link">
         
   
   
@@ -2679,7 +2803,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../migration/9.0.0/" class="md-nav__link">
+      <a href="../migration/9.0.0/" class="md-nav__link">
         
   
   
@@ -2769,7 +2893,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/API_REFERENCE/" class="md-nav__link">
+      <a href="../reference/API_REFERENCE/" class="md-nav__link">
         
   
   
@@ -2797,7 +2921,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/configuration/" class="md-nav__link">
+      <a href="../reference/configuration/" class="md-nav__link">
         
   
   
@@ -2825,7 +2949,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/config/" class="md-nav__link">
+      <a href="../reference/config/" class="md-nav__link">
         
   
   
@@ -2853,7 +2977,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/pattern-library/" class="md-nav__link">
+      <a href="../reference/pattern-library/" class="md-nav__link">
         
   
   
@@ -2881,7 +3005,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/multi-agent/" class="md-nav__link">
+      <a href="../reference/multi-agent/" class="md-nav__link">
         
   
   
@@ -2909,7 +3033,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/persistence/" class="md-nav__link">
+      <a href="../reference/persistence/" class="md-nav__link">
         
   
   
@@ -2937,7 +3061,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/llm-toolkit/" class="md-nav__link">
+      <a href="../reference/llm-toolkit/" class="md-nav__link">
         
   
   
@@ -2965,7 +3089,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/ops-dashboard/" class="md-nav__link">
+      <a href="../reference/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -3055,7 +3179,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/wizards-getting-started/" class="md-nav__link">
+      <a href="../guides/wizards-getting-started/" class="md-nav__link">
         
   
   
@@ -3083,7 +3207,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/wizard-architecture/" class="md-nav__link">
+      <a href="../guides/wizard-architecture/" class="md-nav__link">
         
   
   
@@ -3119,7 +3243,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli-reference/" class="md-nav__link">
+      <a href="../reference/cli-reference/" class="md-nav__link">
         
   
   
@@ -3201,7 +3325,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/FAQ/" class="md-nav__link">
+      <a href="../reference/FAQ/" class="md-nav__link">
         
   
   
@@ -3229,7 +3353,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/TROUBLESHOOTING/" class="md-nav__link">
+      <a href="../reference/TROUBLESHOOTING/" class="md-nav__link">
         
   
   
@@ -3257,7 +3381,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/glossary/" class="md-nav__link">
+      <a href="../reference/glossary/" class="md-nav__link">
         
   
   
@@ -3347,7 +3471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ARCHITECTURE/" class="md-nav__link">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3375,7 +3499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ops-dashboard/" class="md-nav__link">
+      <a href="../architecture/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -3472,7 +3596,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributing/" class="md-nav__link">
+      <a href="../contributing/" class="md-nav__link">
         
   
   
@@ -3500,7 +3624,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../DEVELOPER_GUIDE/" class="md-nav__link">
+      <a href="../DEVELOPER_GUIDE/" class="md-nav__link">
         
   
   
@@ -3589,7 +3713,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../book-cover/" class="md-nav__link">
+      <a href="../book-cover/" class="md-nav__link">
         
   
   
@@ -3617,7 +3741,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/preface/" class="md-nav__link">
+      <a href="../guides/preface/" class="md-nav__link">
         
   
   
@@ -3645,7 +3769,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/foreword/" class="md-nav__link">
+      <a href="../guides/foreword/" class="md-nav__link">
         
   
   
@@ -3734,7 +3858,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/" class="md-nav__link">
+      <a href="../features/" class="md-nav__link">
         
   
   
@@ -3762,7 +3886,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/agents/" class="md-nav__link">
+      <a href="../features/agents/" class="md-nav__link">
         
   
   
@@ -3790,7 +3914,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/bug-predict/" class="md-nav__link">
+      <a href="../features/bug-predict/" class="md-nav__link">
         
   
   
@@ -3818,7 +3942,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/cli/" class="md-nav__link">
+      <a href="../features/cli/" class="md-nav__link">
         
   
   
@@ -3846,7 +3970,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/code-quality/" class="md-nav__link">
+      <a href="../features/code-quality/" class="md-nav__link">
         
   
   
@@ -3874,7 +3998,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/configuration/" class="md-nav__link">
+      <a href="../features/configuration/" class="md-nav__link">
         
   
   
@@ -3902,7 +4026,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/cross-review/" class="md-nav__link">
+      <a href="../features/cross-review/" class="md-nav__link">
         
   
   
@@ -3930,7 +4054,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/deep-review/" class="md-nav__link">
+      <a href="../features/deep-review/" class="md-nav__link">
         
   
   
@@ -3958,7 +4082,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/doc-gen/" class="md-nav__link">
+      <a href="../features/doc-gen/" class="md-nav__link">
         
   
   
@@ -3986,7 +4110,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/elicitation-forms/" class="md-nav__link">
+      <a href="../features/elicitation-forms/" class="md-nav__link">
         
   
   
@@ -4014,7 +4138,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/fix-test/" class="md-nav__link">
+      <a href="../features/fix-test/" class="md-nav__link">
         
   
   
@@ -4042,7 +4166,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/fix/" class="md-nav__link">
+      <a href="../features/fix/" class="md-nav__link">
         
   
   
@@ -4070,7 +4194,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/help-system/" class="md-nav__link">
+      <a href="../features/help-system/" class="md-nav__link">
         
   
   
@@ -4098,7 +4222,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/hooks/" class="md-nav__link">
+      <a href="../features/hooks/" class="md-nav__link">
         
   
   
@@ -4126,7 +4250,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/mcp-server/" class="md-nav__link">
+      <a href="../features/mcp-server/" class="md-nav__link">
         
   
   
@@ -4154,7 +4278,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/memory/" class="md-nav__link">
+      <a href="../features/memory/" class="md-nav__link">
         
   
   
@@ -4182,7 +4306,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/models/" class="md-nav__link">
+      <a href="../features/models/" class="md-nav__link">
         
   
   
@@ -4210,7 +4334,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/ops-dashboard/" class="md-nav__link">
+      <a href="../features/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -4238,7 +4362,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/orchestration/" class="md-nav__link">
+      <a href="../features/orchestration/" class="md-nav__link">
         
   
   
@@ -4266,7 +4390,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/plugin/" class="md-nav__link">
+      <a href="../features/plugin/" class="md-nav__link">
         
   
   
@@ -4294,7 +4418,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/rag-grounding/" class="md-nav__link">
+      <a href="../features/rag-grounding/" class="md-nav__link">
         
   
   
@@ -4322,7 +4446,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/refactor-plan/" class="md-nav__link">
+      <a href="../features/refactor-plan/" class="md-nav__link">
         
   
   
@@ -4350,7 +4474,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/release-notes/" class="md-nav__link">
+      <a href="../features/release-notes/" class="md-nav__link">
         
   
   
@@ -4378,7 +4502,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/release-prep/" class="md-nav__link">
+      <a href="../features/release-prep/" class="md-nav__link">
         
   
   
@@ -4406,7 +4530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/resilience/" class="md-nav__link">
+      <a href="../features/resilience/" class="md-nav__link">
         
   
   
@@ -4434,7 +4558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/security-audit/" class="md-nav__link">
+      <a href="../features/security-audit/" class="md-nav__link">
         
   
   
@@ -4462,7 +4586,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/session-handoff/" class="md-nav__link">
+      <a href="../features/session-handoff/" class="md-nav__link">
         
   
   
@@ -4490,7 +4614,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/smart-test/" class="md-nav__link">
+      <a href="../features/smart-test/" class="md-nav__link">
         
   
   
@@ -4518,7 +4642,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/spec-engine/" class="md-nav__link">
+      <a href="../features/spec-engine/" class="md-nav__link">
         
   
   
@@ -4546,7 +4670,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/telemetry/" class="md-nav__link">
+      <a href="../features/telemetry/" class="md-nav__link">
         
   
   
@@ -4574,7 +4698,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/wizards/" class="md-nav__link">
+      <a href="../features/wizards/" class="md-nav__link">
         
   
   
@@ -4629,10 +4753,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quickstart" class="md-nav__link">
+  <a href="#create-a-chart" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quickstart
+        Create a chart
       
     </span>
   </a>
@@ -4640,135 +4764,35 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tasks" class="md-nav__link">
+  <a href="#update-a-chart-send-a-patch-not-a-widget" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tasks
+        Update a chart — send a patch, not a widget
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Tasks">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#compose-a-fix-interactively-guided-intake" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Compose a fix interactively (guided intake)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#preview-before-you-commit-to-a-run" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Preview before you commit to a run
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scope-a-fix-to-one-file-or-directory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Scope a fix to one file or directory
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#verify-with-more-than-one-probe" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Verify with more than one probe
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#read-a-failed-run" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Read a failed run
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#recover-from-a-scope-violation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Recover from a scope violation
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#reference" class="md-nav__link">
+  <a href="#named-components" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reference
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Reference">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CLI
+        Named components
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#python" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#the-seal" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Python
+        The seal
       
     </span>
   </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#receipt-sections" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Receipt sections
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -4792,129 +4816,71 @@
   
 
 
-<h1 id="fix">Fix<a class="headerlink" href="#fix" title="Permanent link">&para;</a></h1>
-<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
-<p>Preview a fix without executing anything (the default — nothing runs,
-nothing is written):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>attune<span class="w"> </span>fix<span class="w"> </span><span class="s2">&quot;boundary order must price as bulk&quot;</span><span class="w"> </span>--probe<span class="w"> </span><span class="s2">&quot;python -m pytest tests/test_pricing.py -q&quot;</span>
+<h1 id="chartkit-charts-the-model-specs-a-sealed-kernel-renders">chartkit — charts the model specs, a sealed kernel renders<a class="headerlink" href="#chartkit-charts-the-model-specs-a-sealed-kernel-renders" title="Permanent link">&para;</a></h1>
+<p>chartkit gives an LLM a cheap way to create and update charts: emit a
+small declarative JSON spec (or a patch against one), and a sealed
+~6.7KB JS kernel renders it as themable SVG. The model never writes
+renderer code. Updates are JSON Merge Patch (RFC 7386), so changing a
+title or swapping data costs tens of tokens, not a re-emitted widget.</p>
+<h2 id="create-a-chart">Create a chart<a class="headerlink" href="#create-a-chart" title="Permanent link">&para;</a></h2>
+<p>Call the <code>chart_render_widget</code> MCP tool with a <code>chart_id</code> and a full
+<code>spec</code>, then pass the returned <code>html</code> to the widget surface
+(<code>mcp__visualize__show_widget</code>).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">&quot;v&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;bar&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;month&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Jan&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sales&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">},</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;month&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Feb&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sales&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">19</span><span class="p">}</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="p">],</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nt">&quot;encodings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="nt">&quot;x&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;field&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;month&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;nominal&quot;</span><span class="p">},</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="nt">&quot;y&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;field&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;sales&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;quantitative&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="nt">&quot;options&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Monthly sales&quot;</span><span class="p">}</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">}</span>
 </code></pre></div>
-<p>Execute it, scoped to one file:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>attune<span class="w"> </span>fix<span class="w"> </span><span class="s2">&quot;boundary order must price as bulk&quot;</span><span class="w"> </span>--workflow<span class="w"> </span>fix<span class="w"> </span>--scope<span class="w"> </span>src/pricing.py<span class="w"> </span>--probe<span class="w"> </span><span class="s2">&quot;python -m pytest tests/test_pricing.py -q&quot;</span><span class="w"> </span>--run
+<p>Chart types: <code>bar</code>, <code>line</code>, <code>scatter</code>, <code>area</code>, <code>heatmap</code>. Encoding
+field types: <code>quantitative</code>, <code>nominal</code>, <code>temporal</code>. A <code>color</code> encoding
+splits series (bar/line/scatter/area) or carries cell values (heatmap,
+where it is required). <code>options</code>: <code>title</code>, <code>legend</code> (default true),
+<code>stacked</code> (bar).</p>
+<h2 id="update-a-chart-send-a-patch-not-a-widget">Update a chart — send a patch, not a widget<a class="headerlink" href="#update-a-chart-send-a-patch-not-a-widget" title="Permanent link">&para;</a></h2>
+<p>The current spec persists per <code>chart_id</code> in session memory. To update,
+send the same <code>chart_id</code> with a <code>patch</code> (RFC 7386: objects merge,
+<code>null</code> deletes a key, arrays and scalars replace wholesale):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>// patch — swap the data, keep everything else
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>{&quot;data&quot;: [{&quot;month&quot;: &quot;Mar&quot;, &quot;sales&quot;: 25}, {&quot;month&quot;: &quot;Apr&quot;, &quot;sales&quot;: 31}]}
 </code></pre></div>
-<p>Read the exit code:</p>
-<table>
-<thead>
-<tr>
-<th>Exit</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>0</td>
-<td>every probe passed, scope held, and scope was verifiable</td>
-</tr>
-<tr>
-<td>1</td>
-<td>the run completed but a done condition failed or could not be verified</td>
-</tr>
-<tr>
-<td>2</td>
-<td>the workflow crashed (a partial receipt is still printed)</td>
-</tr>
-<tr>
-<td>3</td>
-<td>CLI error or abstention — nothing ran</td>
-</tr>
-</tbody>
-</table>
-<h2 id="tasks">Tasks<a class="headerlink" href="#tasks" title="Permanent link">&para;</a></h2>
-<h3 id="compose-a-fix-interactively-guided-intake">Compose a fix interactively (guided intake)<a class="headerlink" href="#compose-a-fix-interactively-guided-intake" title="Permanent link">&para;</a></h3>
-<p>In a Claude Code session, the <code>/fix</code> skill gathers the whole
-contract as ONE form — goal, <code>--scope</code>, <code>--probe</code>s, and
-preview-vs-run — with scope and probe options derived from your
-working tree (changed paths and matching test files) instead of
-typed from memory. The composed CLI command is previewed before
-anything executes. Under the hood:
-<code>python -m attune.elicitation.fix_intake</code> emits the form and
-candidates; <code>--compose</code> turns answers into the exact <code>attune fix</code>
-command line. The CLI itself is unchanged — the form is ergonomics
-on top of the same contract.</p>
-<h3 id="preview-before-you-commit-to-a-run">Preview before you commit to a run<a class="headerlink" href="#preview-before-you-commit-to-a-run" title="Permanent link">&para;</a></h3>
-<p>Run without <code>--run</code>. The preview prints the goal, the derived done
-conditions, the constraints, and the validated probes, then states that
-nothing was executed. Use it to check that your probes say what you
-meant before spending a run.</p>
-<h3 id="scope-a-fix-to-one-file-or-directory">Scope a fix to one file or directory<a class="headerlink" href="#scope-a-fix-to-one-file-or-directory" title="Permanent link">&para;</a></h3>
-<p>Pass <code>--scope &lt;path&gt;</code>. The path is validated against the enclosing
-repository root, so any spelling — relative, absolute, or <code>./</code>-prefixed
-— resolves to the same place. A directory scope permits edits to its
-descendants. <code>--run</code> requires <code>--scope</code>: an unbounded fix is not
-runnable.</p>
-<h3 id="verify-with-more-than-one-probe">Verify with more than one probe<a class="headerlink" href="#verify-with-more-than-one-probe" title="Permanent link">&para;</a></h3>
-<p>Repeat <code>--probe</code>. Each probe becomes its own done condition, and the
-receipt reports each independently. Plural probes are the point — one
-probe that is also the fix target proves very little, whereas a target
-probe plus a full-suite probe plus a scope constraint tells you the fix
-worked <em>and</em> broke nothing.</p>
-<h3 id="read-a-failed-run">Read a failed run<a class="headerlink" href="#read-a-failed-run" title="Permanent link">&para;</a></h3>
-<p>When probes fail, the receipt names <strong>every</strong> failing probe with its
-exact command, so re-running verification is a copy-paste. If the run
-changed no files at all, the receipt says that plainly rather than
-advising you to inspect a diff that does not exist.</p>
-<h3 id="recover-from-a-scope-violation">Recover from a scope violation<a class="headerlink" href="#recover-from-a-scope-violation" title="Permanent link">&para;</a></h3>
-<p>The receipt lists the out-of-scope paths by name and the next action is
-a targeted revert. Pre-existing dirty paths are excluded from that
-advice by construction.</p>
-<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
-<h3 id="cli">CLI<a class="headerlink" href="#cli" title="Permanent link">&para;</a></h3>
-<p><code>attune fix "&lt;request&gt;" [--probe CMD]... [--workflow NAME] [--scope PATH] [--explain] [--run]</code></p>
-<table>
-<thead>
-<tr>
-<th>Flag</th>
-<th>Effect</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--probe CMD</code></td>
-<td>A verification command as an argv string. Repeatable. At least one is required.</td>
-</tr>
-<tr>
-<td><code>--workflow NAME</code></td>
-<td>Which registered workflow performs the fix. Without it, selection <strong>abstains</strong> and lists candidates rather than guessing. <code>--run</code> accepts only <code>fix</code>.</td>
-</tr>
-<tr>
-<td><code>--scope PATH</code></td>
-<td>Bound the edit surface. Required with <code>--run</code>.</td>
-</tr>
-<tr>
-<td><code>--explain</code></td>
-<td>Preview only, suppressing the "pass --run" notice.</td>
-</tr>
-<tr>
-<td><code>--run</code></td>
-<td>Execute the contract, then verify it independently.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="python">Python<a class="headerlink" href="#python" title="Permanent link">&para;</a></h3>
-<p><code>attune.cli_commands.fix_commands</code> — <code>FixContract</code>,
-<code>VerificationProbe</code>, <code>build_contract(args)</code>, <code>cmd_fix(args)</code>.</p>
-<p><code>attune.cli_commands.fix_receipt</code> — <code>capture_baseline(repo_root,
-scope_paths)</code>, <code>run_probes(probes, cwd)</code>, <code>assemble_receipt(contract,
-baseline, scope_paths, probe_outcomes)</code>, and the <code>ProbeOutcome</code> /
-<code>FixReceipt</code> dataclasses. <code>FixReceipt.exit_code()</code> returns 0 only when
-every probe passed, no scope violation was found, <strong>and</strong> scope was
-verifiable.</p>
-<p><code>attune.workflows.fix_workflow</code> — <code>FixWorkflow</code> (registered as <code>fix</code>)
-and <code>make_edit_scope_guard(scope_paths)</code>.</p>
-<h3 id="receipt-sections">Receipt sections<a class="headerlink" href="#receipt-sections" title="Permanent link">&para;</a></h3>
-<p><code>Changes made</code> · <code>Pre-existing changes</code> (when present) · <code>SCOPE
-VIOLATIONS</code> (when present) · <code>Probes (evaluated independently)</code> ·
-<code>Remaining uncertainty</code> (when present) · <code>Safest next action</code>.</p>
-<!-- attune-generated: source_hash=02c4fd57871efde0e308241968a30e45d0a63f6ba866385c62a363e28a5f4b4b feature=fix kind=how-to generated_at=2026-08-02 -->
+<p>When persistence is unavailable the tool says so explicitly and asks
+for a full <code>spec</code> — degradation is always legible, never silent.</p>
+<h2 id="named-components">Named components<a class="headerlink" href="#named-components" title="Permanent link">&para;</a></h2>
+<p>Semantic-role presets in <code>attune.widgets.chart_components</code> expand to
+full specs server-side (<code>expand_component(name, args)</code>):</p>
+<ul>
+<li><code>time_series</code> — line over temporal x; optional <code>series_field</code>.</li>
+<li><code>comparison_bars</code> — nominal categories; optional <code>series_field</code>,
+  <code>stacked</code>.</li>
+<li><code>kpi_tile</code> — a metric as a current-vs-prior comparison bar (a
+  dedicated numeric-tile mark is a kernel v2 candidate).</li>
+<li><code>spec_progress</code> — spec task state as a status strip: one full-height
+  stacked bar per task, colored by status (<code>done</code> / <code>in_flight</code> /
+  <code>blocked</code> / anything else), legend as the key. Pass
+  <code>tasks=[{"task": "T1", "status": "done"}, ...]</code>.</li>
+</ul>
+<h2 id="the-seal">The seal<a class="headerlink" href="#the-seal" title="Permanent link">&para;</a></h2>
+<p>The kernel lives in <code>src/attune/widgets/chartkit/</code> and is sealed:
+kernel source imports nothing outside itself, nothing in attune
+imports kernel internals, and the built artifact stays ≤ 20,480 bytes
+— all three enforced in CI by <code>scripts/check_chartkit_boundary.py</code>.
+Renderers build SVG via <code>createElementNS</code> and <code>textContent</code> only, so
+spec strings can never execute. Colors and text use host CSS
+variables (<code>--chartkit-c1..c6</code>, <code>--text-primary</code>, <code>--border</code>) and
+adapt to light/dark automatically.</p>
+<p>The spec contract is <code>spec.schema.json</code> (JS side) mirrored by
+<code>attune.widgets.chart_spec</code> (server side); sync tests keep them
+aligned. Extraction to a standalone package is deliberately a copy,
+not surgery.</p>
 
 
 
@@ -5001,10 +4967,10 @@ VIOLATIONS</code> (when present) · <code>Probes (evaluated independently)</code
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
