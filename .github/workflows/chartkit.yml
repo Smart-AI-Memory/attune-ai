@@ -1,0 +1,41 @@
+name: chartkit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/attune/widgets/chartkit/**"
+      - "scripts/check_chartkit_boundary.py"
+      - ".github/workflows/chartkit.yml"
+  pull_request:
+    paths:
+      - "src/attune/widgets/chartkit/**"
+      - "scripts/check_chartkit_boundary.py"
+      - ".github/workflows/chartkit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  seal:
+    name: build, test, and enforce the seal
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/attune/widgets/chartkit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: src/attune/widgets/chartkit/package-lock.json
+      - name: Install (esbuild only)
+        run: npm ci
+      - name: Build kernel
+        run: npm run build
+      - name: Unit tests
+        run: npm test
+      - name: Size + boundary gates
+        working-directory: ${{ github.workspace }}
+        run: python scripts/check_chartkit_boundary.py --require-dist
