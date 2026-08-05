@@ -883,10 +883,16 @@ D20-ratified `v7-requirements.md` unchanged.
 `tests/unit/elicitation/test_template_store.py` (suite: 405 passed
 serially). AC-1 live round-trip: session-contract loaded via
 `form_from_template`, routed `widget` by `select_form_surface`,
-rendered via `form_to_widget_html` on the live widget surface —
-response id recorded below on submit. AC-2 first leg: this
-session's `FormResponse` (template_id `session-contract`); second
+rendered via `form_to_widget_html` on the live widget surface,
+answered by Patrick, validated through `collect_form_response` —
+**receipt `resp-20260805-130002`** (2026-08-05T13:00:02, template_id
+`session-contract`). AC-2 first leg: that response record; second
 leg owed by a future session asking the same template.
+
+**Dogfood yield (same submission):** the answered contract declared
+the next scope — chart, form, and infographic widget types working
+with low latency, effort cap "a new spec" — i.e. the first live use
+of the template also produced the session's actual routing decision.
 
 ## Open
 
