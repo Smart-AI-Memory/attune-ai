@@ -138,3 +138,61 @@ def test_no_stored_spec_type_confusion_is_handled() -> None:
 def test_chart_id_edge_formats_accepted(chart_id: str) -> None:
     out = render_chart_widget(chart_id, spec=_spec(), backend=DictBackend())
     assert out["success"] is True
+
+
+class RaisingBackend:
+    """Backend whose every operation fails — the degradation worst case."""
+
+    def stash(self, key: str, value: dict, ttl: int | None = None) -> bool:
+        raise RuntimeError("redis gone")
+
+    def retrieve(self, key: str) -> dict | None:
+        raise RuntimeError("redis gone")
+
+
+def test_retrieve_failure_degrades_to_resend_full_spec(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="attune.widgets.chart_widget_tool"):
+        out = render_chart_widget("flaky", patch={"options": {}}, backend=RaisingBackend())
+    assert out["success"] is False
+    assert "FULL chart spec" in out["error"]
+    assert any("retrieve failed" in r.message for r in caplog.records)
+
+
+def test_stash_failure_is_logged_and_marked_unavailable(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="attune.widgets.chart_widget_tool"):
+        out = render_chart_widget("lossy", spec=_spec(), backend=RaisingBackend())
+    assert out["success"] is True
+    assert out["persistence"].startswith("unavailable")
+    assert any("stash failed" in r.message for r in caplog.records)
+
+
+def test_backend_resolve_failure_is_logged_not_raised(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import attune.memory.session_stash as session_stash
+    from attune.widgets import chart_widget_tool
+
+    def boom() -> None:
+        raise RuntimeError("no backend configured")
+
+    monkeypatch.setattr(session_stash, "resolve_backend", boom)
+    assert chart_widget_tool._resolve_backend() is None
+
+
+def test_missing_kernel_artifact_is_a_legible_error(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    from attune.widgets import chart_widget_tool
+
+    monkeypatch.setattr(chart_widget_tool, "_KERNEL_PATH", tmp_path / "absent.js")
+    out = render_chart_widget("nokernel", spec=_spec(), backend=DictBackend())
+    assert out["success"] is False
+    assert "npm run build" in out["error"]
