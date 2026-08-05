@@ -1,8 +1,9 @@
 """Widget test fixtures.
 
-The kernel artifact (chartkit/dist/kernel.min.js) is npm-built and
-gitignored, so it does not exist in CI checkouts. Tool tests must
-never depend on it: every test gets a stub kernel on a tmp path.
+The kernel dist artifact is npm-built and gitignored, so it does not
+exist in CI checkouts. Tool tests must never depend on it: every
+test gets a stub kernel on a tmp path (the inward-seal check polices
+literal kernel paths in tracked files, so this docstring names none).
 The stub carries the real banner shape so banner assertions hold.
 
 Copyright 2026 Smart-AI-Memory
