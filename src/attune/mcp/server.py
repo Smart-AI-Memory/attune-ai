@@ -313,6 +313,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandle
             "elicitation_collect_response": self._handle_elicitation_collect_response,
             "elicitation_ask": self._handle_elicitation_ask,
             "elicitation_render_widget": self._handle_elicitation_render_widget,
+            "chart_render_widget": self._handle_chart_render_widget,
             "help_lookup": self._handle_help_lookup,
             "help_maintain": self._handle_help_maintain,
             "help_init": self._handle_help_init,
@@ -772,6 +773,31 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandle
                 "render widgets or the user is in keyboard mode."
             )
         return result
+
+    async def _handle_chart_render_widget(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Create or update a chart widget from a declarative spec (D4).
+
+        Thin delegate to :func:`attune.widgets.chart_widget_tool.render_chart_widget`
+        — full spec creates/replaces, RFC 7386 patch updates the stored spec
+        (D5 persistence with legible degradation). Pass the returned ``html``
+        straight to ``mcp__visualize__show_widget``.
+
+        Args:
+            args: ``chart_id`` (required), and ``spec`` (full chart spec)
+                or ``patch`` (merge patch against the stored spec).
+
+        Returns:
+            ``{"success": True, "html", "chart_id", "persistence"}`` or
+            ``{"success": False, "error" | "problems"}``.
+
+        """
+        from attune.widgets.chart_widget_tool import render_chart_widget
+
+        return render_chart_widget(
+            args.get("chart_id", ""),
+            spec=args.get("spec"),
+            patch=args.get("patch"),
+        )
 
     async def _handle_elicitation_render_widget(self, args: dict[str, Any]) -> dict[str, Any]:
         """Render a declarative form as inline HTML for ``show_widget`` (S1).
