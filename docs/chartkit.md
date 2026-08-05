@@ -58,6 +58,10 @@ full specs server-side (`expand_component(name, args)`):
   `stacked`.
 - `kpi_tile` — a metric as a current-vs-prior comparison bar (a
   dedicated numeric-tile mark is a kernel v2 candidate).
+- `spec_progress` — spec task state as a status strip: one full-height
+  stacked bar per task, colored by status (`done` / `in_flight` /
+  `blocked` / anything else), legend as the key. Pass
+  `tasks=[{"task": "T1", "status": "done"}, ...]`.
 
 ## The seal
 

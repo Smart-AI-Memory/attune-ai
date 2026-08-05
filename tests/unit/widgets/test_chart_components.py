@@ -39,6 +39,16 @@ SAMPLE_ARGS: dict[str, dict] = {
         "title": "Revenue by region",
     },
     "kpi_tile": {"label": "MRR", "value": 4200.0, "previous": 3900.0},
+    "spec_progress": {
+        "tasks": [
+            {"task": "T1", "status": "done"},
+            {"task": "T2", "status": "done"},
+            {"task": "T3", "status": "in_flight"},
+            {"task": "T4", "status": "blocked"},
+            {"task": "T5", "status": "pending"},
+        ],
+        "title": "chart-widget-kernel",
+    },
 }
 
 
@@ -57,6 +67,21 @@ def test_kpi_tile_without_previous_is_a_single_bar() -> None:
     validated = expand_component("kpi_tile", {"label": "Users", "value": 87})
     assert len(validated.data) == 1
     assert validated.options.title == "Users"
+
+
+def test_spec_progress_one_stacked_bar_per_task() -> None:
+    validated = expand_component("spec_progress", SAMPLE_ARGS["spec_progress"])
+    assert validated.type == "bar"
+    assert validated.options.stacked is True
+    assert len(validated.data) == 5
+    assert validated.encodings.color is not None
+    statuses = {row["status"] for row in validated.data}
+    assert statuses == {"done", "in_flight", "blocked", "pending"}
+
+
+def test_spec_progress_defaults_title() -> None:
+    validated = expand_component("spec_progress", {"tasks": [{"task": "T1", "status": "done"}]})
+    assert validated.options.title == "Spec progress"
 
 
 def test_unknown_component_lists_the_valid_names() -> None:

@@ -95,10 +95,39 @@ def kpi_tile(
     }
 
 
+def spec_progress(
+    tasks: list[dict[str, Any]],
+    id_field: str = "task",
+    status_field: str = "status",
+    title: str | None = None,
+) -> dict[str, Any]:
+    """Spec task state as a status strip — one full-height bar per task.
+
+    Statuses follow the elicit progress vocabulary (``done``,
+    ``in_flight``, ``blocked``, plus anything else e.g. ``pending``);
+    each status gets a series color and the legend doubles as the key.
+    Rendered as stacked bars so every task shows one full segment in
+    its status color, with the task id on the x axis.
+    """
+    data = [{"task": str(t[id_field]), "status": str(t[status_field]), "n": 1} for t in tasks]
+    return {
+        "v": 1,
+        "type": "bar",
+        "data": data,
+        "encodings": {
+            "x": {"field": "task", "type": "nominal"},
+            "y": {"field": "n", "type": "quantitative"},
+            "color": {"field": "status", "type": "nominal"},
+        },
+        "options": {"title": title or "Spec progress", "stacked": True},
+    }
+
+
 COMPONENTS: dict[str, Callable[..., dict[str, Any]]] = {
     "time_series": time_series,
     "comparison_bars": comparison_bars,
     "kpi_tile": kpi_tile,
+    "spec_progress": spec_progress,
 }
 
 
