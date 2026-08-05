@@ -31,6 +31,10 @@ ALLOWED_OUTSIDE = {
     "scripts/check_chartkit_boundary.py",
     "src/attune/widgets/chart_widget_tool.py",
     ".github/workflows/chartkit.yml",
+    # Sync test reads spec.schema.json as data (contract check, not an import).
+    "tests/unit/widgets/test_chart_spec.py",
+    # Package docstring names the sealed dir; it imports nothing from it.
+    "src/attune/widgets/__init__.py",
 }
 
 IMPORT_RE = re.compile(r"""(?:from\s+|import\s+|require\s*\(\s*)["']([^"']+)["']""")
