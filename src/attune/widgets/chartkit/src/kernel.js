@@ -355,8 +355,18 @@ function render(root, spec) {
   return svg;
 }
 
-function applyPatch() {
-  throw new Error("chartkit: applyPatch lands in T5");
+function applyPatch(target, patch) {
+  if (patch === null || typeof patch !== "object" || Array.isArray(patch)) {
+    return patch;
+  }
+  const out =
+    target && typeof target === "object" && !Array.isArray(target) ? { ...target } : {};
+  for (const k in patch) {
+    const v = patch[k];
+    if (v === null) delete out[k];
+    else out[k] = applyPatch(out[k], v);
+  }
+  return out;
 }
 
 export { VERSION, CHART_TYPES, render, applyPatch };

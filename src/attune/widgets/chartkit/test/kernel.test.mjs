@@ -220,6 +220,37 @@ test("every declared chart type renders from a fixture", () => {
   }
 });
 
-test("applyPatch names the task it lands in", () => {
-  assert.throws(() => applyPatch(), /T5/);
+test("applyPatch follows RFC 7386 merge-patch semantics", () => {
+  const spec = { a: 1, nest: { keep: true, drop: 2 }, arr: [1, 2, 3] };
+  const out = applyPatch(spec, {
+    a: 9,
+    added: "new",
+    nest: { drop: null, deep: { x: 1 } },
+    arr: [4],
+  });
+  assert.deepEqual(out, {
+    a: 9,
+    added: "new",
+    nest: { keep: true, deep: { x: 1 } },
+    arr: [4],
+  });
+  assert.deepEqual(spec.nest, { keep: true, drop: 2 }, "input spec is not mutated");
+  assert.equal(applyPatch({ a: 1 }, null), null, "non-object patch replaces wholesale");
+});
+
+test("a data-only patch re-renders with rescaled axes", () => {
+  const el = host();
+  render(el, lineSpec);
+  const before = collect(el, "text").map((t) => t.textContent);
+  const patched = applyPatch(lineSpec, {
+    data: [
+      { t: 0, v: 100 },
+      { t: 1, v: 900 },
+    ],
+  });
+  render(el, patched);
+  const after = collect(el, "text").map((t) => t.textContent);
+  assert.equal(el.children.length, 1, "replaced in place");
+  assert.notDeepEqual(after, before, "axis ticks rescaled to the new domain");
+  assert.ok(after.some((s) => s.includes("k") || Number(s) >= 100), "ticks reflect new magnitude");
 });
