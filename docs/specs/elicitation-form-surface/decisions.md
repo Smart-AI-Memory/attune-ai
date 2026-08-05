@@ -842,6 +842,52 @@ thread on the board (TTL 7 days) and in the ruling, message 10.
 **Not done.** Wiring `surface_mix()` onto the ops Health tab — the
 counter and its reader ship here, the dashboard panel does not.
 
+## D22 — V7 built: template store, loader, catalog (R1–R4)
+
+**Date:** 2026-08-05 · **Status:** built (this PR) · executes the
+D20-ratified `v7-requirements.md` unchanged.
+
+- **R1 store:** `src/attune/elicitation/templates/` — JSON files in
+  the exact `form_from_dict` dict shape plus a top-level `"slots"`
+  declaration. Ships in the wheel via the existing `*.json`
+  package-data rule.
+- **R2 loader:** `template_store.form_from_template(name, slots)` —
+  name-validated (kebab-case only, no path separators), delegates
+  every definition problem to the one `form_from_dict` seam.
+  `list_templates()` enumerates the store.
+- **R3 slots:** `{slot}` placeholders in string fields, recursive
+  substitution; missing, extra, non-string, and undeclared-in-body
+  slot problems are all listed in one `FormValidationError` (AC-3
+  parity asserted by test: templated problems ==
+  hand-built-dict problems, byte-equal).
+- **R4 catalog:** `elicit` skill Step 0 documents the library and
+  the `template_id` join recipe; `.agents/` mirror re-projected.
+- **R5 seeding — ONE template, not two.** `session-contract`
+  (recurrence confirmed: the session-start protocol asks
+  mode/outcome/done-when every session; D20's worked sketch).
+  Release-gate sign-off was a draft-time *candidate* but no
+  recurring sign-off form artifact exists in the tree — recurrence
+  unconfirmed, NOT seeded. First template to recur twice gets
+  promoted per R5.
+- **Scope holds:** zero new QuestionTypes, zero validator/render
+  changes, no response-persistence store added (AC-2's join is
+  demonstrated through recorded response receipts, the D15/D16
+  pattern — a durable response log is a separate proposal if the
+  time-series claim earns it).
+- **Stale-claim fix in passing:** `reference_form.py`'s docstring
+  claimed it "becomes V7's first stored template verbatim" — that
+  pre-dated R5's promote-on-repeat rule; corrected to say the
+  reference stays a constant (documentation, not a recurring ask).
+
+**Receipts:** 20 new tests in
+`tests/unit/elicitation/test_template_store.py` (suite: 405 passed
+serially). AC-1 live round-trip: session-contract loaded via
+`form_from_template`, routed `widget` by `select_form_surface`,
+rendered via `form_to_widget_html` on the live widget surface —
+response id recorded below on submit. AC-2 first leg: this
+session's `FormResponse` (template_id `session-contract`); second
+leg owed by a future session asking the same template.
+
 ## Open
 
 - **Confirm CC elicitation support** — low priority (elicitation is
