@@ -229,6 +229,43 @@ function renderScatter(doc, g, spec, x, y, series) {
   });
 }
 
+function renderHeatmap(doc, g, spec) {
+  const data = spec.data || [];
+  const xEnc = spec.encodings.x;
+  const yEnc = spec.encodings.y;
+  const vEnc = spec.encodings.color;
+  if (!vEnc) throw new Error("chartkit: heatmap needs encodings.color for cell values");
+  const xCats = categoriesOf(data, xEnc);
+  const yCats = categoriesOf(data, yEnc);
+  const x = bandScale(xCats, [M.l, W - M.r], 0.05);
+  const y = bandScale(yCats, [M.t, H - M.b], 0.05);
+  const vals = data.map((r) => fieldValue(r, vEnc));
+  const [lo, hi] = extent(vals);
+  const span = hi - lo || 1;
+  xCats.forEach((c) => drawXTick(doc, g, x(c) + x.bandwidth / 2, c));
+  yCats.forEach((c) =>
+    label(doc, g, c, { x: M.l - 6, y: y(c) + y.bandwidth / 2 + 4, "text-anchor": "end" })
+  );
+  for (const row of data) {
+    const cx = fieldValue(row, xEnc);
+    const cy = fieldValue(row, yEnc);
+    const v = fieldValue(row, vEnc);
+    const cell = el(doc, "rect", {
+      x: x(cx),
+      y: y(cy),
+      width: x.bandwidth,
+      height: y.bandwidth,
+      rx: 2,
+      fill: seriesColor(0),
+      "fill-opacity": isFinite(v) ? 0.12 + 0.88 * ((v - lo) / span) : 0,
+      stroke: "var(--border, #ddd)",
+      "stroke-width": 0.5,
+    });
+    tooltip(doc, cell, `${cx} · ${cy}: ${fmt(v)}`);
+    g.appendChild(cell);
+  }
+}
+
 function render(root, spec) {
   if (!root || typeof root.appendChild !== "function") {
     throw new Error("chartkit: render(el, spec) needs a DOM element");
@@ -240,9 +277,6 @@ function render(root, spec) {
     throw new Error(
       `chartkit: unknown chart type "${spec.type}" (expected one of ${CHART_TYPES.join(", ")})`
     );
-  }
-  if (spec.type === "heatmap") {
-    throw new Error("chartkit: heatmap renderer lands in T4");
   }
   const doc = root.ownerDocument;
   while (root.firstChild) root.removeChild(root.firstChild);
@@ -256,6 +290,21 @@ function render(root, spec) {
   svg.appendChild(g);
 
   const data = spec.data || [];
+  if (spec.type === "heatmap") {
+    renderHeatmap(doc, g, spec);
+    if (spec.options && spec.options.title) {
+      label(doc, g, spec.options.title, {
+        x: M.l,
+        y: 16,
+        "font-size": 13,
+        "font-weight": 500,
+        fill: "var(--text-primary, #222)",
+        "text-anchor": "start",
+      });
+    }
+    root.appendChild(svg);
+    return svg;
+  }
   const colorEnc = spec.encodings.color;
   const series = splitSeries(data, colorEnc);
   const yVals = data.map((r) => fieldValue(r, spec.encodings.y));

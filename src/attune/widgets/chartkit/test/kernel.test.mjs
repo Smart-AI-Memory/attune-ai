@@ -165,10 +165,61 @@ test("unknown type and missing encodings are rejected", () => {
   assert.throws(() => render(null, barSpec), /DOM element/);
 });
 
-test("heatmap and applyPatch name the tasks they land in", () => {
-  assert.throws(
-    () => render(host(), { ...barSpec, type: "heatmap" }),
-    /T4/
-  );
+test("heatmap renders one cell per row with value tooltips", () => {
+  const spec = {
+    v: 1,
+    type: "heatmap",
+    data: [
+      { day: "Mon", hour: "am", n: 2 },
+      { day: "Mon", hour: "pm", n: 8 },
+      { day: "Tue", hour: "am", n: 5 },
+      { day: "Tue", hour: "pm", n: 1 },
+    ],
+    encodings: {
+      x: { field: "day", type: "nominal" },
+      y: { field: "hour", type: "nominal" },
+      color: { field: "n", type: "quantitative" },
+    },
+  };
+  const svg = render(host(), spec);
+  const cells = collect(svg, "rect");
+  assert.equal(cells.length, spec.data.length);
+  const opacities = cells.map((c) => Number(c.attrs["fill-opacity"]));
+  assert.ok(Math.max(...opacities) > Math.min(...opacities), "value maps to opacity ramp");
+  assert.equal(collect(svg, "title").length, spec.data.length);
+});
+
+test("heatmap without a color channel is rejected", () => {
+  const spec = {
+    type: "heatmap",
+    data: [{ a: "x", b: "y" }],
+    encodings: {
+      x: { field: "a", type: "nominal" },
+      y: { field: "b", type: "nominal" },
+    },
+  };
+  assert.throws(() => render(host(), spec), /encodings\.color/);
+});
+
+test("every declared chart type renders from a fixture", () => {
+  for (const type of CHART_TYPES) {
+    const spec =
+      type === "heatmap"
+        ? {
+            type,
+            data: [{ a: "x", b: "y", n: 1 }],
+            encodings: {
+              x: { field: "a", type: "nominal" },
+              y: { field: "b", type: "nominal" },
+              color: { field: "n", type: "quantitative" },
+            },
+          }
+        : { ...(type === "bar" ? barSpec : lineSpec), type };
+    const svg = render(host(), spec);
+    assert.equal(svg.attrs["data-chartkit"], VERSION, `${type} should render`);
+  }
+});
+
+test("applyPatch names the task it lands in", () => {
   assert.throws(() => applyPatch(), /T5/);
 });
