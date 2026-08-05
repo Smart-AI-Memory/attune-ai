@@ -226,6 +226,7 @@ nav:
       - Integration:
           - Hooks: hooks.md
           - Security: how-to/security-architecture.md
+          - Chart Widgets (chartkit): chartkit.md
       - Patterns:
           - Practical Patterns: how-to/practical-patterns.md
           - Resilience Patterns: how-to/resilience-patterns.md
