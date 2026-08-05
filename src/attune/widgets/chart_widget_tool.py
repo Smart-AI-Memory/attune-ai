@@ -16,11 +16,14 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import json
+import logging
 import re
 from pathlib import Path
 from typing import Any
 
 from attune.widgets.chart_spec import ChartSpecError, validate_chart_spec
+
+logger = logging.getLogger(__name__)
 
 _KERNEL_PATH = Path(__file__).resolve().parent / "chartkit" / "dist" / "kernel.min.js"
 _CHART_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
@@ -47,7 +50,8 @@ def _resolve_backend() -> Any | None:
         from attune.memory.session_stash import resolve_backend
 
         return resolve_backend()
-    except Exception:  # noqa: BLE001 — no backend is a legible, handled state
+    except Exception as exc:  # noqa: BLE001 — no backend is a handled state
+        logger.info("chart persistence backend unavailable: %s", exc)
         return None
 
 
@@ -122,7 +126,8 @@ def render_chart_widget(
             return {"success": False, "error": BACKEND_DOWN_MSG}
         try:
             stored = target.retrieve(key)
-        except Exception:  # noqa: BLE001 — backend failure = legible degradation
+        except Exception as exc:  # noqa: BLE001 — degrade legibly, but on the record
+            logger.warning("chart spec retrieve failed for %s: %s", key, exc)
             stored = None
         if not isinstance(stored, dict):
             return {
@@ -143,8 +148,8 @@ def render_chart_widget(
         try:
             if target.stash(key, spec_dict, ttl=_TTL_SECONDS):
                 persistence = "stored — next update may send a patch"
-        except Exception:  # noqa: BLE001 — persistence is best-effort, but LOUD
-            pass
+        except Exception as exc:  # noqa: BLE001 — best-effort, but on the record
+            logger.warning("chart spec stash failed for %s: %s", key, exc)
 
     try:
         html = _build_html(chart_id, spec_dict)
