@@ -65,8 +65,12 @@ def check_inward(violations: list[str]) -> None:
         if not path.is_file():
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
-        if "chartkit" in text:
-            violations.append(f"{rel}: references chartkit but is not in the loader allowlist")
+        # Police paths and imports, not vocabulary: prose may say "chartkit",
+        # but "chartkit/" or "widgets.chartkit" is coupling to internals.
+        if "chartkit/" in text or "widgets.chartkit" in text:
+            violations.append(
+                f"{rel}: references chartkit internals but is not in the loader allowlist"
+            )
 
 
 def check_size(violations: list[str], require_dist: bool) -> None:

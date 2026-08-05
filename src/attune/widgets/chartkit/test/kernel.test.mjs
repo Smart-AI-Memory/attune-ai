@@ -2,28 +2,173 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { VERSION, CHART_TYPES, render, applyPatch } from "../src/kernel.js";
 
-function fakeEl() {
-  return { textContent: "", appendChild() {} };
+class FakeNode {
+  constructor(doc, name) {
+    this.ownerDocument = doc;
+    this.nodeName = name;
+    this.children = [];
+    this.attrs = {};
+    this._text = "";
+  }
+  setAttribute(k, v) {
+    this.attrs[k] = v;
+  }
+  appendChild(c) {
+    this.children.push(c);
+    return c;
+  }
+  removeChild(c) {
+    this.children = this.children.filter((x) => x !== c);
+  }
+  get firstChild() {
+    return this.children[0] || null;
+  }
+  set textContent(s) {
+    this._text = String(s);
+    this.children = [];
+  }
+  get textContent() {
+    return this._text;
+  }
 }
 
-test("exports a version and the five chart types", () => {
+class FakeDoc {
+  createElementNS(_ns, name) {
+    return new FakeNode(this, name);
+  }
+}
+
+function host() {
+  return new FakeNode(new FakeDoc(), "div");
+}
+
+function walk(node, fn) {
+  fn(node);
+  for (const c of node.children) walk(c, fn);
+}
+
+function collect(root, name) {
+  const out = [];
+  walk(root, (n) => {
+    if (n.nodeName === name) out.push(n);
+  });
+  return out;
+}
+
+const barSpec = {
+  v: 1,
+  type: "bar",
+  data: [
+    { month: "Jan", sales: 12 },
+    { month: "Feb", sales: 19 },
+    { month: "Mar", sales: 7 },
+  ],
+  encodings: {
+    x: { field: "month", type: "nominal" },
+    y: { field: "sales", type: "quantitative" },
+  },
+};
+
+const lineSpec = {
+  v: 1,
+  type: "line",
+  data: [
+    { t: 0, v: 1 },
+    { t: 1, v: 3 },
+    { t: 2, v: 2 },
+  ],
+  encodings: {
+    x: { field: "t", type: "quantitative" },
+    y: { field: "v", type: "quantitative" },
+  },
+};
+
+test("exports version and the five chart types", () => {
   assert.match(VERSION, /^\d+\.\d+\.\d+$/);
   assert.deepEqual(CHART_TYPES, ["bar", "line", "scatter", "area", "heatmap"]);
 });
 
-test("render rejects a missing element and unknown types", () => {
-  assert.throws(() => render(null, { type: "bar" }), /DOM element/);
-  assert.throws(() => render(fakeEl(), { type: "pie" }), /unknown chart type/);
+test("bar fixture renders one rect per row with tooltips", () => {
+  const el = host();
+  const svg = render(el, barSpec);
+  assert.equal(svg.attrs["data-chartkit"], VERSION);
+  const rects = collect(svg, "rect");
+  assert.equal(rects.length, barSpec.data.length);
+  assert.equal(collect(svg, "title").length, barSpec.data.length);
 });
 
-test("render accepts every declared chart type (stub)", () => {
-  for (const type of CHART_TYPES) {
-    const el = fakeEl();
-    render(el, { type });
-    assert.ok(el.textContent.includes(type));
-  }
+test("line fixture renders a path through the points", () => {
+  const svg = render(host(), lineSpec);
+  const paths = collect(svg, "path");
+  assert.equal(paths.length, 1);
+  assert.match(paths[0].attrs.d, /^M[\d.]+,[\d.]+L/);
 });
 
-test("applyPatch is explicitly not yet implemented", () => {
+test("area adds a fill path under the line", () => {
+  const svg = render(host(), { ...lineSpec, type: "area" });
+  assert.equal(collect(svg, "path").length, 2);
+});
+
+test("scatter renders one circle per finite point", () => {
+  const svg = render(host(), { ...lineSpec, type: "scatter" });
+  assert.equal(collect(svg, "circle").length, lineSpec.data.length);
+});
+
+test("color channel splits series and draws a legend", () => {
+  const spec = {
+    ...barSpec,
+    data: [
+      { month: "Jan", sales: 5, region: "east" },
+      { month: "Jan", sales: 7, region: "west" },
+      { month: "Feb", sales: 6, region: "east" },
+      { month: "Feb", sales: 4, region: "west" },
+    ],
+    encodings: { ...barSpec.encodings, color: { field: "region", type: "nominal" } },
+  };
+  const svg = render(host(), spec);
+  const rects = collect(svg, "rect");
+  assert.equal(rects.length, 4 + 2);
+  const fills = new Set(rects.map((r) => r.attrs.fill));
+  assert.ok(fills.size >= 2);
+});
+
+test("hostile spec strings never become elements — text nodes only", () => {
+  const hostile = '<script>alert(1)</script><img src=x onerror=alert(1)>';
+  const spec = {
+    ...barSpec,
+    data: [{ month: hostile, sales: 3 }],
+    options: { title: hostile },
+  };
+  const svg = render(host(), spec);
+  assert.equal(collect(svg, "script").length, 0);
+  assert.equal(collect(svg, "img").length, 0);
+  let seenAsText = 0;
+  walk(svg, (n) => {
+    if (n.textContent.includes(hostile)) seenAsText += 1;
+    for (const v of Object.values(n.attrs)) {
+      assert.ok(!String(v).includes("<script"), "hostile string leaked into an attribute");
+    }
+  });
+  assert.ok(seenAsText >= 2, "hostile string should surface only as inert text");
+});
+
+test("re-render clears previous chart from the host element", () => {
+  const el = host();
+  render(el, barSpec);
+  render(el, barSpec);
+  assert.equal(el.children.length, 1);
+});
+
+test("unknown type and missing encodings are rejected", () => {
+  assert.throws(() => render(host(), { type: "pie", encodings: {} }), /unknown chart type/);
+  assert.throws(() => render(host(), { type: "bar" }), /encodings/);
+  assert.throws(() => render(null, barSpec), /DOM element/);
+});
+
+test("heatmap and applyPatch name the tasks they land in", () => {
+  assert.throws(
+    () => render(host(), { ...barSpec, type: "heatmap" }),
+    /T4/
+  );
   assert.throws(() => applyPatch(), /T5/);
 });
