@@ -192,8 +192,10 @@ class TestDeliverWebhook:
 
         captured: dict[str, type] = {}
 
-        def _capture_handler(handler_cls):
-            captured["handler_cls"] = handler_cls
+        def _capture_handler(*handler_classes):
+            # First handler is the redirect blocker; the pinned
+            # http/https handlers follow (DNS-rebinding guard).
+            captured["handler_cls"] = handler_classes[0]
             return mock_opener
 
         mock_build_opener.side_effect = _capture_handler
@@ -330,3 +332,51 @@ class TestDeliverStdout:
         result = deliver_stdout(event)
 
         assert result is True
+
+
+# ------------------------------------------------------------------
+# DNS-rebinding pin (code-review Low security finding)
+# ------------------------------------------------------------------
+
+
+class TestPinnedDelivery:
+    """The request-time connection must target the VETTED IP, not a
+    fresh DNS resolution (rebinding TOCTOU)."""
+
+    def test_resolve_pinned_ip_passes_through_ip_literal(self):
+        from attune.monitoring.validators import resolve_pinned_ip
+
+        assert resolve_pinned_ip("8.8.8.8") == "8.8.8.8"
+
+    def test_resolve_pinned_ip_rejects_private_resolution(self, monkeypatch):
+        import socket as socket_mod
+
+        from attune.monitoring import validators
+
+        def fake_getaddrinfo(host, *args, **kwargs):
+            return [(socket_mod.AF_INET, socket_mod.SOCK_STREAM, 6, "", ("10.0.0.5", 0))]
+
+        monkeypatch.setattr(validators.socket, "getaddrinfo", fake_getaddrinfo)
+        with pytest.raises(ValueError, match="unsafe IP"):
+            validators.resolve_pinned_ip("rebind.example")
+
+    def test_http_connection_targets_pinned_ip(self, monkeypatch):
+        """The socket connects to the pinned IP even though the URL
+        names a hostname — proven by capturing the connect target."""
+        import socket as socket_mod
+        import urllib.request as urlreq
+
+        from attune.monitoring.notifications import _PinnedHTTPHandler
+
+        connected: list[tuple] = []
+
+        def fake_create_connection(addr, *args, **kwargs):
+            connected.append(addr)
+            raise OSError("stop before real network I/O")
+
+        monkeypatch.setattr(socket_mod, "create_connection", fake_create_connection)
+        opener = urlreq.build_opener(_PinnedHTTPHandler("8.8.8.8"))
+        with pytest.raises(urllib.error.URLError):
+            opener.open("http://webhook.example/hook", timeout=1)
+
+        assert connected == [("8.8.8.8", 80)]
