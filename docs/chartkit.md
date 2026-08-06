@@ -68,7 +68,7 @@ full specs server-side (`expand_component(name, args)`):
 The kernel lives in `src/attune/widgets/chartkit/` and is sealed:
 kernel source imports nothing outside itself, nothing in attune
 imports kernel internals, and the built artifact stays ≤ 20,480 bytes
-— all three enforced in CI by `scripts/check_chartkit_boundary.py`.
+— all three enforced in CI by `scripts/check_widget_kernel_boundaries.py`.
 Renderers build SVG via `createElementNS` and `textContent` only, so
 spec strings can never execute. Colors and text use host CSS
 variables (`--chartkit-c1..c6`, `--text-primary`, `--border`) and
