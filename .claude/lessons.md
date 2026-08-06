@@ -21087,3 +21087,60 @@ def ", start_idx + 1)` for module-
   regression. Real code findings in the same batch (CodeQL
   `py/incomplete-url-substring-sanitization` on a bare-domain test
   assertion; assert the full URL instead) get normal code-fix PRs.
+
+- **zsh: an unquoted `$files` variable does NOT word-split — a
+  pre-commit pre-flight run with `--files $files` reports "(no files
+  to check) Skipped", which reads as a PASS**: 2026-08-06,
+  pre-flighting black/ruff before the code-review-triage commit.
+  `files="a.py b.py"` then `pre-commit run black --files $files`
+  passed the whole string as ONE filename — every hook skipped with
+  "(no files to check)"; `ruff check` treated it as one nonexistent
+  path and errored. The trap: the skip output looks like success, so
+  a "pre-flighted" claim can be hollow. In zsh use explicit file
+  arguments, `${=files}`, or an array (`files=(a.py b.py)`). Same
+  family as the `gh pr checks` awk field-splitting lesson —
+  zsh/awk defaults differ from bash intuitions exactly where
+  watchers and pre-flights live.
+
+- **attune workflow run records persist ONLY the summary —
+  `report.suggestions` and `report.sections` are EMPTY in
+  `~/.attune/ops/runs/<wf>/<id>.json`, so post-hoc triage must
+  re-derive findings from code**: 2026-08-06, triaging deep-review
+  run 7958f413858a ($3.45). Only the prose summary survived
+  (severity counts, no locations); the dashboard's
+  `/runs/<id>/report` serves the same truncated object. So (a)
+  capture per-finding detail from the live stream/page BEFORE
+  abandoning the run view, or work from the report the user
+  pastes; (b) triage = grep the code for the claimed property (the
+  "spec text is a hypothesis" discipline applies to LLM review
+  reports too — every verified claim in both tonight's reports was
+  checkable straight from source). Product-fix candidate: persist
+  structured findings in the run record (the fields exist but
+  arrive empty).
+
+- **Cross-reviewing an ALREADY-MERGED artifact needs a synthetic
+  branch — cherry-pick the artifact's commit onto its parent so
+  `run_review`'s branch-vs-merge-base diff IS the artifact**:
+  2026-08-06, the widget-kernel-family D11 lane. The spec had
+  merged via #1946, so no live branch carried it as a diff.
+  Recipe: `git log --grep=<spec> -1 --format=%H` for the commit,
+  `git checkout -b review/<slug> <commit>^`, `git cherry-pick
+  <commit>` — the review branch's diff vs merge-base is exactly
+  the files under review, and the truncation manifest confirms
+  full coverage (`2 sent / 0 omitted`). Also reproduced: spec-text
+  review stays the highest-yield cross-review class (3/3 real on
+  163 lines; see the receipts ledger row).
+
+- **Driving the live elicitation grammar from an agent session —
+  the three API shapes that cost a retry each**: 2026-08-06,
+  building the priority decision form. (1) `FormQuestion` is a
+  DATACLASS, not pydantic — introspect with
+  `dataclasses.fields()`, not `.model_fields`. (2) The question
+  text field is `text` (or `label`), NOT `prompt` —
+  `form_from_dict` fails with "field[0] 'text' (or 'label') is
+  required". (3) `select_form_surface(form)` takes the form as a
+  positional arg. Worked end-to-end recipe: `form_from_dict` →
+  `select_form_surface(form)` → `form_to_widget_html(form)` →
+  paste into `show_widget` (widget CSS vars work as-is); the
+  sendPrompt postback arrives as an
+  `__elicitation_response__` JSON block to validate.
