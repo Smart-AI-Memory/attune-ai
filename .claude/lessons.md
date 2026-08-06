@@ -21218,3 +21218,27 @@ def ", start_idx + 1)` for module-
   Material pages; navigate, scroll the diagram into view, and
   screenshot. (Same receipts-over-probes discipline as the widget
   kernel: the receipt is a drawing, not a selector hit.)
+
+- **The Browser pane's `file://` static snapshot renders BLANK even
+  for pure-SVG files — HTTP-serving via a launch.json entry is the
+  only reliable render path for local artifacts**: 2026-08-06,
+  verifying diagramkit probe SVGs. The known lesson covers JS being
+  blocked (script-src 'none') for widget HTML; the new data point is
+  that a plain `.svg` navigated via `file://` also screenshots blank
+  (no scripts involved), and the pane may show a stale prior tab
+  title. Recipe that works every time: copy artifacts into a
+  worktree-local dir, serve with a `python3 -m http.server
+  --directory` launch.json entry via preview_start, navigate to
+  `http://localhost:<port>/<file>`. Patrick's Chrome renders the
+  same files fine — when the user reports "white page", ask which
+  surface before diagnosing the artifact.
+
+- **`list.sort(key=fn)` where `fn` reads the list being sorted
+  raises `ValueError: x is not in list` — CPython empties the list
+  during sort**: hit 2026-08-06 in the diagramkit layout probe's
+  barycenter pass (`layers[d].sort(key=bary)` with `bary` calling
+  `layers[layer[n]].index(n)` — fine for OTHER layers, fatal when
+  n's own layer is the one being sorted). Fix: snapshot ranks into
+  a dict BEFORE sorting and close over the snapshot (bind via
+  default args to dodge ruff B023). General rule: a sort key must
+  never index into the list under sort.
