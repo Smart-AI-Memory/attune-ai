@@ -2,7 +2,7 @@
 
 chartkit gives an LLM a cheap way to create and update charts: emit a
 small declarative JSON spec (or a patch against one), and a sealed
-~6.7KB JS kernel renders it as themable SVG. The model never writes
+~10KB JS kernel renders it as themable SVG. The model never writes
 renderer code. Updates are JSON Merge Patch (RFC 7386), so changing a
 title or swapping data costs tens of tokens, not a re-emitted widget.
 
@@ -28,11 +28,37 @@ Call the `chart_render_widget` MCP tool with a `chart_id` and a full
 }
 ```
 
-Chart types: `bar`, `line`, `scatter`, `area`, `heatmap`. Encoding
-field types: `quantitative`, `nominal`, `temporal`. A `color` encoding
-splits series (bar/line/scatter/area) or carries cell values (heatmap,
-where it is required). `options`: `title`, `legend` (default true),
-`stacked` (bar).
+Chart types: `bar`, `line`, `scatter`, `area`, `heatmap`, `donut`,
+`box`, `waterfall`, `treemap`. Encoding field types: `quantitative`,
+`nominal`, `temporal`. A `color` encoding splits series
+(bar/line/scatter/area) or carries cell values (heatmap, where it is
+required). `options`: `title`, `legend` (default true), `stacked`
+(bar), `horizontal` (bar), `total` (waterfall — adds a computed
+total bar with the given label).
+
+Type-specific row shapes:
+
+- `box` — each row carries pre-computed numeric `min`, `q1`,
+  `median`, `q3`, `max` (the kernel never aggregates);
+  `encodings.x` names the label field.
+- `donut` / `treemap` — `encodings.y` is the positive slice/tile
+  value; non-positive rows are dropped (all-non-positive is an
+  error).
+- `waterfall` — `encodings.y` is a signed delta; bars run at a
+  cumulative offset, colored by sign.
+
+### Type-expansion ruling (2026-08-06)
+
+The four new types plus the `horizontal` option were selected by
+Patrick via the chartkit type-selection form (all six candidates
+adopted; stacked/grouped bar already shipped and is now documented).
+Recorded here per widget-kernel-family R5 — chartkit rules its own
+behavior. Excluded by the same ruling's rationale: gauges/bullet
+(infokit's stat-tiles territory), radar, histogram-with-binning
+(author bins in the spec), and combo/layered charts (a composition
+mechanism, not a type). The README's admission rule stands: types
+earn their way in under the 20,480-byte ceiling; the ceiling does
+not move (post-expansion build: 10,381 bytes minified).
 
 ## Update a chart — send a patch, not a widget
 

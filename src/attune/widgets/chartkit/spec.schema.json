@@ -7,7 +7,19 @@
   "required": ["v", "type", "data", "encodings"],
   "properties": {
     "v": { "const": 1 },
-    "type": { "enum": ["bar", "line", "scatter", "area", "heatmap"] },
+    "type": {
+      "enum": [
+        "bar",
+        "line",
+        "scatter",
+        "area",
+        "heatmap",
+        "donut",
+        "box",
+        "waterfall",
+        "treemap"
+      ]
+    },
     "data": {
       "type": "array",
       "minItems": 1,
@@ -29,7 +41,9 @@
       "properties": {
         "title": { "type": "string" },
         "legend": { "type": "boolean", "default": true },
-        "stacked": { "type": "boolean", "default": false }
+        "stacked": { "type": "boolean", "default": false },
+        "horizontal": { "type": "boolean", "default": false },
+        "total": { "type": "string" }
       }
     }
   },

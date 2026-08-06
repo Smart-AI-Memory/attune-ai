@@ -589,8 +589,9 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
             "description": (
                 "Create or update a chart widget from a declarative JSON "
                 "spec — the model writes ~50-200 tokens of spec, a sealed "
-                "6.7KB kernel renders SVG (bar, line, scatter, area, "
-                "heatmap). Pass the returned 'html' straight to "
+                "~10KB kernel renders SVG (bar incl. stacked/grouped/"
+                "horizontal, line, scatter, area, heatmap, donut, box, "
+                "waterfall, treemap). Pass the returned 'html' straight to "
                 "mcp__visualize__show_widget. To UPDATE an existing chart, "
                 "send chart_id + 'patch' (RFC 7386 merge patch: null "
                 "deletes, objects merge, arrays/scalars replace) instead "

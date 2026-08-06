@@ -16,9 +16,33 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
-CHART_TYPES = ("bar", "line", "scatter", "area", "heatmap")
+CHART_TYPES = (
+    "bar",
+    "line",
+    "scatter",
+    "area",
+    "heatmap",
+    "donut",
+    "box",
+    "waterfall",
+    "treemap",
+)
 
-ChartType = Literal["bar", "line", "scatter", "area", "heatmap"]
+ChartType = Literal[
+    "bar",
+    "line",
+    "scatter",
+    "area",
+    "heatmap",
+    "donut",
+    "box",
+    "waterfall",
+    "treemap",
+]
+
+#: Per-row summary stats a box chart requires (pre-computed by the
+#: author — the kernel never bins or aggregates).
+BOX_STAT_KEYS = ("min", "q1", "median", "q3", "max")
 FieldType = Literal["quantitative", "nominal", "temporal"]
 
 
@@ -62,6 +86,8 @@ class Options(BaseModel):
     title: str | None = None
     legend: bool = True
     stacked: bool = False
+    horizontal: bool = False
+    total: str | None = None
 
 
 class ChartSpec(BaseModel):
@@ -82,6 +108,40 @@ class ChartSpec(BaseModel):
                 "encodings.color: required for heatmap "
                 "(the color channel carries the cell value)"
             )
+        return self
+
+    @model_validator(mode="after")
+    def _box_rows_carry_summary_stats(self) -> ChartSpec:
+        if self.type != "box":
+            return self
+        for i, row in enumerate(self.data):
+            for key in BOX_STAT_KEYS:
+                value = row.get(key)
+                if not isinstance(value, int | float) or isinstance(value, bool):
+                    raise ValueError(
+                        f"data.{i}.{key}: box rows need numeric "
+                        f"{', '.join(BOX_STAT_KEYS)} (pre-computed summary "
+                        "stats — the kernel never aggregates)"
+                    )
+        return self
+
+    @model_validator(mode="after")
+    def _value_charts_need_quantitative_y(self) -> ChartSpec:
+        if self.type in ("donut", "waterfall", "treemap") and self.encodings.y.type != (
+            "quantitative"
+        ):
+            raise ValueError(
+                f"encodings.y.type: must be quantitative for {self.type} "
+                "(the y channel carries the slice/delta/tile value)"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _options_match_type(self) -> ChartSpec:
+        if self.options.horizontal and self.type != "bar":
+            raise ValueError("options.horizontal: only valid for type 'bar'")
+        if self.options.total is not None and self.type != "waterfall":
+            raise ValueError("options.total: only valid for type 'waterfall'")
         return self
 
 
