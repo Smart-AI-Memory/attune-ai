@@ -247,6 +247,108 @@ form.title  # "Session contract — acme-api"
 
 The cast form has four fields (mode, outcome, done-when, effort cap)
 and renders on the same widget surface as any hand-built form.
+Below is that exact cast, embedded live — this is the real renderer's
+output, not a screenshot (on this static page the submit button will
+tell you it needs a widget-capable session; that legible degradation
+is itself part of the design):
+
+<div style="border: 1px solid #d8b89a; border-radius: 8px; padding: 0 1rem; margin: 1rem 0;">
+<h2 class="sr-only">Session contract — acme-api — interactive form</h2>
+<form id="attune-elicit-form-d852a71d" data-form-title="Session contract — acme-api">
+<style>
+#attune-elicit-form-d852a71d { display:block; width:100%; padding:1rem 0;
+  color:var(--text-primary,#2c2c2a); line-height:1.5; }
+#attune-elicit-form-d852a71d .sr-only { position:absolute; width:1px; height:1px;
+  overflow:hidden; clip:rect(0 0 0 0); }
+#attune-elicit-form-d852a71d h3 { font-size:18px; font-weight:500; margin:0 0 .25rem; }
+#attune-elicit-form-d852a71d .ae-msg { margin:0 0 .5rem; color:var(--text-secondary,#5f5e59); }
+#attune-elicit-form-d852a71d .ae-desc { margin:0 0 1rem; color:var(--text-muted,#8a887f);
+  font-size:15px; }
+#attune-elicit-form-d852a71d .ae-field { margin:0 0 1rem; }
+#attune-elicit-form-d852a71d .ae-label { display:block; font-weight:500;
+  margin:0 0 .35rem; }
+#attune-elicit-form-d852a71d .ae-req { color:var(--text-accent,#a1571c); margin-left:2px; }
+#attune-elicit-form-d852a71d .ae-confirm { font-size:14px; color:var(--text-secondary,#5f5e59);
+  border-left:3px solid var(--border-accent,#d8b89a); border-radius:0;
+  padding:.35rem .6rem; margin:0 0 1rem; }
+#attune-elicit-form-d852a71d .ae-inferred { font-size:13px; color:var(--text-muted,#8a887f);
+  margin:0 0 .35rem; }
+#attune-elicit-form-d852a71d .ae-inferred-b { display:inline-block; font-size:11px;
+  font-weight:500; text-transform:uppercase; letter-spacing:.04em;
+  color:var(--text-accent,#a1571c); background:var(--bg-accent,#f3ece4);
+  border:1px solid var(--border-accent,#d8b89a); border-radius:var(--radius,8px);
+  padding:0 .35rem; margin-right:.4rem; }
+#attune-elicit-form-d852a71d .ae-help { font-size:13px; color:var(--text-muted,#8a887f);
+  margin:0 0 .35rem; }
+#attune-elicit-form-d852a71d .ae-submit { margin-top:.5rem; padding:.55rem 1.1rem;
+  font-size:15px; font-weight:500; cursor:pointer; color:var(--text-primary,#2c2c2a);
+  background:var(--bg-accent,#f3ece4); border:1px solid var(--border-accent,#d8b89a);
+  border-radius:var(--radius,8px); }
+#attune-elicit-form-d852a71d .ae-submit:disabled { opacity:.6; cursor:default; }
+#attune-elicit-form-d852a71d .ae-error { margin-top:.5rem; font-size:14px;
+  color:var(--text-accent,#a1571c); }
+#attune-elicit-form-d852a71d .ae-input { width:100%; box-sizing:border-box;
+  padding:.5rem .6rem; font-size:15px; color:var(--text-primary,#2c2c2a);
+  background:var(--surface-1,#f7f6f3); border:1px solid var(--border,#e3e1dc);
+  border-radius:var(--radius,8px); }
+#attune-elicit-form-d852a71d .ae-textarea { resize:vertical; min-height:3.5rem; }
+</style>
+<h3>Session contract — acme-api</h3>
+<p class="ae-desc">The session-start protocol&#x27;s fields. Fill before non-trivial work.</p>
+<div class="ae-field" data-fid="mode" data-ftype="single_select"><label class="ae-label">Which mode is this session in?<span class="ae-req" title="required">*</span></label><select data-control class="ae-input"><option value="">— choose —</option><option value="Advancing a defined scope">Advancing a defined scope</option><option value="Executing a planned spec">Executing a planned spec</option><option value="Firefighting a CI/release issue">Firefighting a CI/release issue</option><option value="Meta-reflection / planning">Meta-reflection / planning</option></select></div><div class="ae-field" data-fid="outcome" data-ftype="text_input"><label class="ae-label">Outcome — what should be true after this session that isn&#x27;t true now?<span class="ae-req" title="required">*</span></label><div class="ae-help">One sentence.</div><input type="text" data-control class="ae-input"></div><div class="ae-field" data-fid="done_when" data-ftype="textarea"><label class="ae-label">Done when — the acceptance criteria.<span class="ae-req" title="required">*</span></label><div class="ae-help">Cheap to write, expensive to skip.</div><textarea data-control class="ae-input ae-textarea" rows="3" maxlength="500"></textarea></div><div class="ae-field" data-fid="effort_cap" data-ftype="text_input"><label class="ae-label">Effort cap — time or scope ceiling.</label><div class="ae-help">e.g. &#x27;30 min&#x27;, &#x27;one PR&#x27;, &#x27;no scope expansion past Phase 1&#x27;.</div><input type="text" data-control class="ae-input"></div>
+<button type="button" id="ae-submit-d852a71d" class="ae-submit">Submit</button>
+<div id="ae-error-d852a71d" class="ae-error" role="alert"></div>
+<script>
+(function() {
+  var form = document.getElementById('attune-elicit-form-d852a71d');
+  var btn = document.getElementById('ae-submit-d852a71d');
+  var err = document.getElementById('ae-error-d852a71d');
+  if (!form || !btn) return;
+  btn.addEventListener('click', function() {
+    var answers = {};
+    form.querySelectorAll('.ae-field').forEach(function(f) {
+      var fid = f.getAttribute('data-fid');
+      var ftype = f.getAttribute('data-ftype');
+      if (ftype === 'multi_select') {
+        var vals = [];
+        f.querySelectorAll('[data-control]:checked').forEach(function(c) {
+          vals.push(c.value);
+        });
+        answers[fid] = vals;
+      } else if (ftype === 'decision' || ftype === 'pushback' || ftype === 'progress') {
+        // progress: the answer is the selected blocked item; when nothing
+        // is blocked there is no radio and no answer is posted (display-only).
+        var picked = f.querySelector('[data-control]:checked');
+        if (picked) answers[fid] = picked.value;
+      } else {
+        var el = f.querySelector('[data-control]');
+        if (!el) return;
+        if (el.type === 'radio') {
+          // single_select rendered as a list (list_style) — read the
+          // checked radio, not the first control.
+          var picked = f.querySelector('[data-control]:checked');
+          if (picked) answers[fid] = picked.value;
+        } else if (el.value !== '') {
+          answers[fid] = (ftype === 'number') ? Number(el.value) : el.value;
+        }
+      }
+    });
+    var payload = { '__elicitation_response__': true,
+      title: form.getAttribute('data-form-title'), answers: answers };
+    if (typeof sendPrompt === 'function') {
+      sendPrompt('Elicitation form submitted — parse and validate this '
+        + 'response:\n```json\n' + JSON.stringify(payload) + '\n```');
+      btn.disabled = true; btn.textContent = 'Submitted \u2713';
+    } else {
+      err.textContent = 'This surface cannot post back (sendPrompt '
+        + 'unavailable). Use the AskUserQuestion fallback.';
+    }
+  });
+})();
+</script>
+</form>
+</div>
+
 Validation is shared with hand-built forms — every problem listed,
 none silently accepted:
 

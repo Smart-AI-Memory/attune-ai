@@ -559,27 +559,22 @@ The hook configuration (`.pre-commit-config.yaml`):
 
 ## Quick Decision Tree
 
+```mermaid
+flowchart TD
+    Q1{"Optional feature?<br/>(wizard, plugin, tip)"}
+    Q2{"Security-related<br/>operation?"}
+    G["Graceful degradation (Example 2)<br/>specific catches first, broad last resort<br/>with logger.exception, return a default"]
+    FS["Fail-secure (Example 3)<br/>log all errors, create findings<br/>for scan failures, never silently skip"]
+    SP["Specific handlers<br/>catch expected exceptions, log at level,<br/>re-raise critical errors"]
+    Q1 -->|yes| G
+    Q1 -->|no| Q2
+    Q2 -->|yes| FS
+    Q2 -->|no| SP
 ```
-Is this an optional feature (wizard, plugin, tip)?
-├─ YES → Use graceful degradation pattern (Example 2)
-│         - Catch specific exceptions first
-│         - Broad Exception as last resort with logger.exception()
-│         - Document with comment
-│         - Return False/default value
-└─ NO → Is this a security-related operation?
-    ├─ YES → Use fail-secure pattern (Example 3)
-    │         - Log all errors
-    │         - Create findings for scan failures
-    │         - Never silently skip
-    └─ NO → Use specific exception handlers
-              - Catch expected exceptions
-              - Log at appropriate level
-              - Re-raise critical errors
-              - Add broad Exception ONLY if:
-                  * You log with logger.exception()
-                  * You document why
-                  * You use # noqa: BLE001
-```
+
+A broad `except Exception` is allowed on the specific-handlers path
+ONLY when all three hold: you log with `logger.exception()`, you
+document why, and you mark the line `# noqa: BLE001`.
 
 ---
 
