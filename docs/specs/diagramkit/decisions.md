@@ -31,3 +31,16 @@ across all three families" (layout won't seal; three vocabularies
 inverts earn-your-way-in; jumps the ruled queue) and "no kernel —
 mermaid only" (loses patch updates, persistence, and the seal
 without testing whether those matter — that test IS Phase-0).
+
+## D2 — Phase-0 requirements and decisions APPROVED as drafted
+
+**Date:** 2026-08-06 · **Status:** APPROVED (chair: Patrick, in
+session, after reviewing both documents)
+
+The chair approved `requirements.md` (Phase-0 premise probes P1–P3,
+candidate requirements R1–R6, out-of-scope list, AC-0–AC-3, the
+Phase-0 task list) and this decision log unchanged from the draft.
+Effect: the premise probes are authorized to run; kernel code stays
+gated behind AC-0's probe ruling and the formkit/infokit queue
+(family R1/R2) shipping first. The requirements header now carries
+the approved status.
