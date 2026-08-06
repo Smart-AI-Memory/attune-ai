@@ -43,9 +43,10 @@ They do NOT fire when only WRITING a new file — pull manually then:
 - **Website/feature-page counts or capability claims** →
   `website-content-accuracy.md` — verify against live registries;
   `website/lib/features.ts` is canonical.
-- **Elicitation constructs (decision/pushback/progress forms)** →
-  `communication-grammar.md` — the construct family + how to add
-  the next member.
+- **Elicitation constructs (decision/pushback/progress forms) or a
+  display widget (chart/kernel-rendered)** →
+  `communication-grammar.md` — both member classes (interactive
+  forms, display kernels) + how to add the next member.
 - **Writing/editing any `.md` file** → `markdown-formatting.md` —
   heading/list/table formatting rules; migrated 2026-07-15 from
   the always-loaded CLAUDE.md.
