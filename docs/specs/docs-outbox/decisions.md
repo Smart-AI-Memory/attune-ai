@@ -110,3 +110,54 @@ Build interpretations worth naming:
   and chip spawned; completes when Patrick clicks it and the
   spawned session lands the swept PR (then recallable after the
   next hydration). Record the close-out here when it lands.
+
+## D4 — Review lane found 3 data-loss defects; all fixed before merge
+
+**Date:** 2026-08-06 · **Status:** fixed (lead: Claude; adversarial
+review lane per D11 — persistence is a named risk class)
+
+The Phase-1 build was reviewed adversarially before the chair read
+the recommendation. The lane found **nine real defects**, three of
+them capable of silently losing or corrupting data. Every one is
+fixed with a named regression test in
+`tests/unit/docs_outbox/test_sweep.py::TestReviewRegressions`.
+Recording them because the first three all shared one root cause:
+**the sweep parses `kind` and `target` off DISK, so nothing that
+`write_artifact` validates is guaranteed at apply time** — a
+hand-authored or post-edited artifact bypasses the routing gate
+entirely.
+
+| # | Defect | Was | Now |
+|---|---|---|---|
+| 1 | Unknown `kind` (e.g. the typo `lessons`) fell through to the file-REPLACING branch | Replaced the entire 380-lesson corpus with a one-line body | `_lint` rejects any kind not in `OUTBOX_TARGETS` |
+| 2 | Mid-loop failure skipped archiving for the WHOLE batch | Already-applied artifacts stayed pending and re-applied (duplicate lessons) next run | Archive per artifact inside the loop; failures recorded in `apply_failures` and left pending |
+| 3 | Two artifacts claiming one new target both linted clean | Second silently overwrote the first; both archived as applied | Intra-sweep `claimed` set collides the second at lint |
+| 4 | Repo writes were truncate-then-write | A crash mid-write could empty `lessons.md` | `_atomic_write` (temp + `os.replace`) |
+| 5 | Dedupe keyed on body alone | Identical prose bound for DIFFERENT files silently dropped one | Key is `(kind, target, body)` |
+| 6 | `while path.exists()` check-then-act | Same-minute collision could overwrite a sibling session's artifact | `os.open(O_CREAT\|O_EXCL)` with a zero-padded serial |
+| 7 | Lesson `target` unconstrained | A lesson could append prose into `src/app.py` | Target must be `.md` AND equal the kind's default |
+| 8 | `--repo-root` defaulted to `.` unchecked | `apply` from the wrong cwd created `~/.claude/lessons.md` and swept the outbox | Refuses a root without `.git` |
+| 9 | `digest.md` lingered after a drain | The chip could render an already-applied batch | Removed once the outbox drains |
+
+Plus: serial-collision files sorted BEFORE their base name
+(`-002.md` < `.md`), so `list_artifacts` now sorts by
+`(created, serial)` rather than filename; an unparseable name gets
+`datetime.min` rather than "now", so a hand-dropped file ages into
+the stale warning instead of looking forever fresh; and `|` in a
+target is escaped so it cannot break the digest table.
+
+**Correction to D3 — the memory-lint claim was false.** D3 said the
+sweep runs the home memory linter "best-effort". It could never
+have fired: `~/.claude/hooks/memory_lint.py` takes
+`--check-all DIR` or stdin-JSON hook input, so a per-artifact file
+argument falls through to `run_hook()`, which blocks on stdin (30s
+timeout, then a swallowed `TimeoutExpired`) or reads EOF and exits
+0. It reported PASS unconditionally — false coverage. The call is
+REMOVED rather than repaired: no ratified Phase-1 kind targets a
+memory directory, and the linter would have been checking the
+outbox wrapper's frontmatter rather than the payload that lands at
+the target. Wire it when a memory-targeting kind lands. R3's
+"run the memory lint" is therefore **not satisfied in Phase 1** and
+is carried as known-open, not quietly claimed.
+
+Coverage after fixes: **95%** on `attune.docs_outbox` (was 92%).

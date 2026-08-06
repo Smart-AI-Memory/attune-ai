@@ -52,8 +52,25 @@ def _cmd_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def _repo_root(raw: str) -> Path | None:
+    """Resolve --repo-root, refusing anything that isn't a git repo.
+
+    Guards the biggest foot-gun: ``apply`` run from the wrong cwd would
+    happily create ``~/.claude/lessons.md`` and archive every artifact
+    as swept, leaving the real repo empty-handed.
+    """
+    root = Path(raw).resolve()
+    if not (root / ".git").exists():
+        print(f"error: {root} is not a git repository — pass --repo-root", file=sys.stderr)
+        return None
+    return root
+
+
 def _cmd_sweep(args: argparse.Namespace) -> int:
-    result = run_sweep(Path(args.repo_root).resolve())
+    root = _repo_root(args.repo_root)
+    if root is None:
+        return 1
+    result = run_sweep(root)
     if not args.quiet:
         print(result.digest)
     if result.status and result.status.stale:
@@ -62,13 +79,19 @@ def _cmd_sweep(args: argparse.Namespace) -> int:
 
 
 def _cmd_apply(args: argparse.Namespace) -> int:
-    repo_root = Path(args.repo_root).resolve()
+    repo_root = _repo_root(args.repo_root)
+    if repo_root is None:
+        return 1
     result = run_sweep(repo_root)
     changed = apply_sweep(repo_root, result=result)
     for path in changed:
         print(path)
     for name, issues in result.lint_issues.items():
         print(f"skipped {name}: {'; '.join(issues)}", file=sys.stderr)
+    for name, reason in result.apply_failures.items():
+        print(f"FAILED {name}: {reason} (left pending)", file=sys.stderr)
+    if result.apply_failures:
+        return 1
     if not changed and not result.lint_issues:
         print("outbox empty — nothing applied")
     return 0

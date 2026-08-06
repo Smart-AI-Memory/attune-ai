@@ -25,6 +25,7 @@ def _home(tmp_path, monkeypatch):
 def repo(tmp_path):
     root = tmp_path / "repo"
     (root / ".claude").mkdir(parents=True)
+    (root / ".git").mkdir()
     (root / ".claude" / "lessons.md").write_text("# Lessons\n", encoding="utf-8")
     return root
 
@@ -67,3 +68,18 @@ def test_sweep_and_apply_round_trip(tmp_path, repo, capsys):
 def test_apply_empty_outbox(repo, capsys):
     assert main(["apply", "--repo-root", str(repo)]) == 0
     assert "nothing applied" in capsys.readouterr().out
+
+
+def test_apply_refuses_non_git_repo_root(tmp_path, capsys):
+    """Guard: apply from the wrong cwd would create ~/.claude/lessons.md
+    and archive every artifact as swept, silently emptying the outbox."""
+    body = tmp_path / "body.md"
+    body.write_text("- Lesson.\n", encoding="utf-8")
+    main(["write", "--kind", "lesson", "--slug", "guard", "--file", str(body)])
+    not_a_repo = tmp_path / "elsewhere"
+    not_a_repo.mkdir()
+    assert main(["apply", "--repo-root", str(not_a_repo)]) == 1
+    assert "not a git repository" in capsys.readouterr().err
+    assert not (not_a_repo / ".claude" / "lessons.md").exists()
+    assert main(["status"]) == 0
+    assert "1 pending" in capsys.readouterr().out  # still there, not swept

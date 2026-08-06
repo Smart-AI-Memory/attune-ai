@@ -29,7 +29,9 @@ STALE_AGE_DAYS = 2.0
 _SLUG_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 #: Timestamped artifact files only — digest.md and swept/ never match.
 _ARTIFACT_GLOB = "[0-9]*.md"
-_NAME_RE = re.compile(r"^(?P<ts>\d{8}-\d{4})-(?P<kind>[a-z]+)-(?P<slug>[a-z0-9-]+?)(?:-\d+)?\.md$")
+_NAME_RE = re.compile(
+    r"^(?P<ts>\d{8}-\d{4})-(?P<kind>[a-z]+)-(?P<slug>[a-z0-9-]+?)(?:-(?P<serial>\d{3}))?\.md$"
+)
 
 
 @dataclass
@@ -42,6 +44,7 @@ class Artifact:
     target: str
     created: datetime
     body: str
+    serial: int = 1
     issues: list[str] = field(default_factory=list)
 
 
@@ -108,18 +111,25 @@ def write_artifact(
 
     out_dir = outbox_dir(attune_home)
     stamp = (now or datetime.now()).strftime("%Y%m%d-%H%M")
-    path = out_dir / f"{stamp}-{kind}-{slug}.md"
-    serial = 1
-    while path.exists():
-        serial += 1
-        path = out_dir / f"{stamp}-{kind}-{slug}-{serial}.md"
-    _validate_file_path(str(path), allowed_dir=str(out_dir))
-
     if not body.endswith("\n"):
         body += "\n"
     text = f"---\nkind: {kind}\nslug: {slug}\ntarget: {resolved_target}\n---\n\n{body}"
-    _atomic_write(path, text)
-    return path
+
+    # Exclusive create, not check-then-act: two processes computing the
+    # same name in the same minute must not have one silently overwrite
+    # the other (the conflict-free-by-construction promise).
+    for serial in range(1, 1000):
+        suffix = "" if serial == 1 else f"-{serial:03d}"
+        path = out_dir / f"{stamp}-{kind}-{slug}{suffix}.md"
+        _validate_file_path(str(path), allowed_dir=str(out_dir))
+        try:
+            fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
+        except FileExistsError:
+            continue
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(text)
+        return path
+    raise ValueError(f"more than 999 artifacts named {stamp}-{kind}-{slug} in one minute")
 
 
 def _parse(path: Path) -> Artifact:
@@ -127,7 +137,10 @@ def _parse(path: Path) -> Artifact:
     match = _NAME_RE.match(path.name)
     kind = match.group("kind") if match else ""
     slug = match.group("slug") if match else path.stem
-    created = datetime.now()
+    serial = int(match.group("serial") or 1) if match else 1
+    # An unparseable name gets the epoch, not "now": a hand-dropped file
+    # must still age into the stale warning rather than look forever fresh.
+    created = datetime.min
     if match:
         try:
             created = datetime.strptime(match.group("ts"), "%Y%m%d-%H%M")
@@ -139,7 +152,7 @@ def _parse(path: Path) -> Artifact:
     try:
         lines = path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
     except OSError as exc:
-        return Artifact(path, kind, slug, "", created, "", [f"unreadable: {exc}"])
+        return Artifact(path, kind, slug, "", created, "", serial, [f"unreadable: {exc}"])
     if lines and lines[0].strip() == "---":
         end = next((i for i, ln in enumerate(lines[1:], 1) if ln.strip() == "---"), None)
         if end is not None:
@@ -158,14 +171,22 @@ def _parse(path: Path) -> Artifact:
         target=front.get("target", ""),
         created=created,
         body=body,
+        serial=serial,
         issues=issues,
     )
 
 
 def list_artifacts(attune_home: Path | None = None) -> list[Artifact]:
-    """All pending artifacts, oldest first (timestamp-name order)."""
+    """All pending artifacts, oldest first.
+
+    Sorted by (timestamp, serial), NOT by filename: a same-minute
+    collision writes ``…-slug-002.md``, which sorts BEFORE ``…-slug.md``
+    lexicographically and would apply the two out of order.
+    """
     out_dir = outbox_dir(attune_home)
-    return [_parse(p) for p in sorted(out_dir.glob(_ARTIFACT_GLOB))]
+    artifacts = [_parse(p) for p in out_dir.glob(_ARTIFACT_GLOB)]
+    artifacts.sort(key=lambda a: (a.created, a.serial, a.path.name))
+    return artifacts
 
 
 def outbox_status(attune_home: Path | None = None) -> OutboxStatus:

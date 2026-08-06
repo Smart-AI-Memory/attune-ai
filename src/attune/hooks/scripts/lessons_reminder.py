@@ -47,6 +47,10 @@ def has_session_work() -> bool:
             errors="replace",
             timeout=5,
         )
+        if result.returncode != 0:
+            # Not a git repo, or git failed — same "can't check" case as
+            # the exception below, so remind rather than silently skip.
+            return True
         return bool(result.stdout.strip())
     except Exception:  # noqa: BLE001
         # INTENTIONAL: Fallback — always remind if we can't check

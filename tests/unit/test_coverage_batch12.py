@@ -65,6 +65,7 @@ class TestLessonsReminder:
         from attune.hooks.scripts.lessons_reminder import has_session_work
 
         mock_result = MagicMock()
+        mock_result.returncode = 0
         mock_result.stdout = ""
         with patch("subprocess.run", return_value=mock_result):
             assert has_session_work() is False
