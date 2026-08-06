@@ -7,16 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.3.0] — 2026-08-06
+
+Chart widgets: a sealed chart kernel joins the plugin — the model
+authors ~50–200-token JSON specs, never renderer code — plus the
+elicitation grammar's first display member, a form-template
+library, and a security sweep that cleared every open dependabot
+and code-scanning alert.
+
 ### Added
 
+- **chartkit — sealed chart kernel with declarative specs and
+  patch updates** (#1941): the `chart_render_widget` MCP tool
+  renders charts from a small JSON spec via a sealed, size-budgeted
+  JS kernel (no outward imports, nothing imports its internals,
+  ≤ 20,480 bytes — all CI-enforced). Updates are RFC 7386 merge
+  patches against the spec stored per `chart_id`, so a change costs
+  tens of tokens. Semantic presets in `chart_components`
+  (`time_series`, `comparison_bars`, `kpi_tile`, `spec_progress`).
+  Documented as the communication grammar's first display member
+  (chart, v6).
 - **chartkit: four new chart types + two bar options** — `donut`,
   `box` (pre-computed five-stat rows), `waterfall` (signed deltas,
   optional computed total bar), and `treemap` join `bar`, `line`,
   `scatter`, `area`, `heatmap`; `options.horizontal` lands for bar,
   and the already-shipped `options.stacked` is now documented. All
   types ruled in via the chartkit type-selection form (2026-08-06);
-  the sealed kernel stays under its 20,480-byte ceiling (10,381
-  minified post-expansion).
+  the sealed kernel stays under its 20,480-byte ceiling (10,549
+  minified post-expansion), and the legend now starts after the
+  title and wraps on overflow instead of colliding.
+- **V7 form-template library — sculpt once, cast per fork**
+  (#1945): reusable elicitation form templates so recurring
+  decision shapes are authored once and instantiated per fork,
+  with the D22 AC-1 live round-trip receipt.
+- **Widget-kernel boundary gate generalized** (#1958):
+  `check_widget_kernel_boundaries.py` drives outward-seal,
+  inward-seal, and size checks for every registered kernel from
+  one policy registry (widget-kernel-family task 1); seeded
+  violation tests prove the gate can fail.
+
+### Security
+
+- **All 16 Python dependabot alerts resolved** (#1948): gitpython
+  3.1.50 → 3.1.58 (12 alerts), aiohttp 3.14.1 → 3.14.3 (3),
+  cryptography 49.0.0 → 50.0.0 (1, major). pyproject floors raised
+  (`cryptography>=50.0.0`, `aiohttp>=3.14.3`) so resolutions can't
+  slide back. The 13 npm alerts on the website lockfile were
+  cleared in the same sweep (#1947), and all 4 code-scanning
+  alerts closed (1 code fix in #1953, 3 dismissed with recorded
+  reasons) — both security dashboards read zero.
 
 ### Fixed
 

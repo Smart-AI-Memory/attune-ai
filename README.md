@@ -54,9 +54,12 @@ are authored, grounded, and maintained entirely by Attune's own
 stack.
 
 **Managing and creating help-content, docs, or knowledge-bases?**
-That's `attune-help` (progressive-depth runtime) plus `attune-author`
-(AI authoring and staleness detection) — both installable from this
-marketplace and driven from the CLI or Claude Code.
+AI authoring and staleness detection are **built into attune-ai**
+(the `attune.authoring` package — the former standalone
+`attune-author` was absorbed in 11.0.0), paired with `attune-help`
+(progressive-depth runtime). The `attune-author` Claude Code
+plugin remains available from this marketplace as the authoring
+companion.
 
 ---
 
@@ -89,14 +92,40 @@ routing, and [Installation Options](#installation-options) for extras.
      a permanent section below (see "Dynamic forms" for the pattern).
      Don't stack a second "New in" section here. -->
 
-## New in 11.2.0 — Goal-Driven Development: receipts, not promises
+## New in 11.3.0 — Chart widgets: specs in, SVG out
 
-The last two releases (11.1.0 + 11.2.0) build out one idea: **state
-the goal and how to verify it before anything runs, and get back a
-receipt — not a promise.** If you know acceptance-test-driven
-development, this is that discipline rebuilt for agent workflows:
-acceptance probes are declared up front, and the agent's own word is
-never the evidence.
+Your agent can now draw. The `chart_render_widget` MCP tool takes a
+**~50–200-token declarative JSON spec** and renders themable SVG
+through a sealed ~10KB kernel — the model never writes renderer
+code. Nine chart types (`bar` with stacked/grouped/horizontal,
+`line`, `scatter`, `area`, `heatmap`, `donut`, `box`, `waterfall`,
+`treemap`), and updates are RFC 7386 merge patches against the
+stored spec, so changing a title or swapping data costs tens of
+tokens instead of a re-emitted widget.
+
+```json
+{"v": 1, "type": "donut",
+ "data": [{"kind": "passed", "n": 96}, {"kind": "failed", "n": 4}],
+ "encodings": {"x": {"field": "kind", "type": "nominal"},
+               "y": {"field": "n", "type": "quantitative"}}}
+```
+
+The kernel is sealed and CI-enforced: no outward imports, nothing
+imports its internals, and the built artifact stays under a
+20,480-byte ceiling — chart types earn their way in; the ceiling
+does not move. Also in 11.3.0: the V7 elicitation form-template
+library (author a decision shape once, cast it per fork), and a
+security sweep that cleared **every** open dependabot and
+code-scanning alert (gitpython, aiohttp, and a cryptography major
+among them). Details: `docs/chartkit.md`.
+
+## Goal-driven development — receipts, not promises
+
+From 11.1.0 + 11.2.0, the discipline underneath: **state the goal
+and how to verify it before anything runs, and get back a receipt —
+not a promise.** If you know acceptance-test-driven development,
+this is that rebuilt for agent workflows: acceptance probes are
+declared up front, and the agent's own word is never the evidence.
 
 ```bash
 attune fix "imports resolve after the rename" \
@@ -232,7 +261,7 @@ protocol bug the primary client silently tolerated.
 | **`attune-ai`** | Developer workflow hub (this package) | `pip install attune-ai` |
 | **`attune-rag`** | RAG pipeline (core dep of attune-ai, v0.7+) | bundled |
 | **`attune-verify`** | Generation fact-checker — backs the `/verify` skill (core dep) | bundled |
-| **`attune-author`** | Help content authoring, staleness detection | `pip install 'attune-ai[author]'` |
+| **`attune.authoring`** | Help content authoring, staleness detection (formerly the `attune-author` package) | bundled; plugin: `/plugin install attune-author@attune-ai` |
 | **`attune-help`** | Progressive-depth template runtime | `pip install attune-help` |
 
 `attune-rag` and `attune-verify` both ship as **core dependencies** of
