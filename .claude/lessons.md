@@ -21012,3 +21012,57 @@ def ", start_idx + 1)` for module-
   capture. Candidate hardening if this recurs: teach `_load_seed`
   an explicit `--seed-from <yesterday>.json` flag instead of the
   hand-copy.
+
+- **Next 16 on Vercel: `output: 'standalone'` fails the deploy AFTER
+  a fully-successful compile — and the local build can't reproduce
+  it**: 2026-08-05, the #1939/#1947 migration. Two stacked failures:
+  (1) Next 16 removed the `eslint` key from `NextConfig`, so the
+  type check fails `next build` (this one reproduces locally); (2)
+  after fixing that, the VERCEL deploy still failed — build log
+  showed 108/108 pages generated, then `Running onBuildComplete
+  from Vercel` → `ENOENT: .next/next-server.js.nft.json`. Next 16
+  builds with Turbopack by default and routes trace output into the
+  standalone bundle, so the .nft.json files Vercel's builder reads
+  never land at the expected path. `output: 'standalone'` was
+  tolerated-and-ignored on Vercel under Next 15/webpack; under 16 it
+  is fatal. Fix: gate it — `...(process.env.VERCEL ? {} : { output:
+  'standalone' as const })` (standalone stays for Railway/self-host).
+  Related discoveries: Vercel runs framework-default `next build`,
+  NOT package.json's `build:vercel` script, so local repro must use
+  plain `next build`; and a `turbopackIgnore` comment on dynamic
+  `fs.readFile` paths silences whole-project tracing (real, but was
+  not the deploy killer). Migration also needs `middleware.ts` →
+  `proxy.ts` (deprecated convention) and vitest `exclude:
+  '**/.next/**'` (the standalone output traces COPIES of test files
+  into `.next/standalone`, which vitest then runs from the wrong
+  root and fails).
+
+- **Vercel build logs without the (still-pending) API token: Claude
+  in Chrome against the dashboard is the working read-only path**:
+  2026-08-05. The scoped `VERCEL_TOKEN` setup from the
+  `feedback_agent_owns_vercel` memory was never completed
+  (`~/.attune/vercel.env` doesn't exist), `vercel` CLI has no
+  credentials, the Vercel MCP needs interactive OAuth, and the
+  GitHub commit-status/deployment API only carries the generic
+  "Deployment has failed". What worked: open the deployment
+  inspector URL (from the failed check's target_url) in Claude in
+  Chrome — Patrick's browser session is logged in — expand Build
+  Logs, click the error-filter chip. Read-only log triage is
+  squarely inside the delegated Vercel ownership. The durable fix
+  is still the token setup; until then this is the route.
+
+- **Fixing dependabot alerts manually races dependabot's own PRs —
+  and a mid-flight auto-merge of its competing bump conflicts your
+  lockfile PR**: 2026-08-05, #1948 vs #1949. While my
+  uv.lock security PR sat in CI, dependabot opened AND auto-merged
+  its own gitpython bump for a subset of the same alerts; my merge
+  then failed "cannot be cleanly created" and needed a rebase +
+  re-run of `uv lock --upgrade-package ...` on main's lockfile.
+  Same class as the rebase-drops-commit parallel-pickup lesson, but
+  the parallel agent is dependabot. Rule: before opening a manual
+  alert-fix PR, `gh pr list --author app/dependabot` for competing
+  bumps of the same packages — close/supersede them explicitly or
+  expect the race. Also: after resolving a lockfile conflict by
+  taking main's side, RE-RUN the fix tool (`npm audit fix` / `uv
+  lock --upgrade-package`) — the taken side silently reverts your
+  transitive fixes, and `npm install` alone does not restore them.
