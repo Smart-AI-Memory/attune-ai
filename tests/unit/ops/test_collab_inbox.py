@@ -249,3 +249,66 @@ class TestRoutes:
         _board(monkeypatch, FakeBoardRedis({}))
         resp = client.get("/collab")
         assert 'href="/collab"' in resp.text
+
+
+class TestOutboxRow:
+    """Docs-outbox monitoring row (docs-outbox R3/AC-4)."""
+
+    def test_no_home_skips_row(self, project: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        _board(monkeypatch, FakeBoardRedis({}))
+        assert read_inbox(project).docs_outbox is None
+
+    def test_empty_outbox_no_row(
+        self, project: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _board(monkeypatch, FakeBoardRedis({}))
+        inbox = read_inbox(project, attune_home=tmp_path / "home")
+        assert inbox.docs_outbox is None
+        assert inbox.action_count == 0
+
+    def test_pending_row_is_monitoring_only(
+        self, project: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from attune.docs_outbox.store import write_artifact
+
+        _board(monkeypatch, FakeBoardRedis({}))
+        home = tmp_path / "home"
+        write_artifact("lesson", "fresh", "Body.", attune_home=home)
+        inbox = read_inbox(project, attune_home=home)
+        assert inbox.docs_outbox is not None
+        assert inbox.docs_outbox.count == 1
+        assert inbox.docs_outbox.stale is False
+        # Monitoring only: a fresh outbox never inflates the badge.
+        assert inbox.action_count == 0
+
+    def test_stale_outbox_counts_as_action(
+        self, project: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from datetime import datetime, timedelta
+
+        from attune.docs_outbox.store import write_artifact
+
+        _board(monkeypatch, FakeBoardRedis({}))
+        home = tmp_path / "home"
+        write_artifact(
+            "lesson", "old", "Body.", attune_home=home, now=datetime.now() - timedelta(days=3)
+        )
+        inbox = read_inbox(project, attune_home=home)
+        assert inbox.docs_outbox is not None
+        assert inbox.docs_outbox.stale is True
+        assert inbox.action_count == 1
+
+    def test_route_renders_pending_row(
+        self, project: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from attune.docs_outbox.store import write_artifact
+
+        _board(monkeypatch, FakeBoardRedis({}))
+        cfg = Config(project_root=project, attune_home=tmp_path / "attune-home")
+        write_artifact("lesson", "pending", "Body.", attune_home=cfg.attune_home)
+        client = TestClient(create_app(cfg))
+        client.headers["Host"] = f"{cfg.host}:{cfg.port}"
+        resp = client.get("/collab")
+        assert resp.status_code == 200
+        assert 'data-testid="collab-outbox"' in resp.text
+        assert "1 doc(s) pending" in resp.text

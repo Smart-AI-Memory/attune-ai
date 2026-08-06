@@ -104,6 +104,25 @@ class TestLessonsReminder:
                     result = main()
         assert result == 2
 
+    def test_reminder_routes_lessons_through_outbox(self, tmp_path, capsys):
+        """Drift guard for docs-outbox R2: the Stop reminder points at
+        the outbox writer, never at direct lessons.md appends."""
+        from attune.hooks.scripts.lessons_reminder import main
+
+        sentinel = tmp_path / "lessons_reminded"
+        with patch("attune.hooks.scripts.lessons_reminder.SENTINEL", sentinel):
+            with patch(
+                "attune.hooks.scripts.lessons_reminder.already_reminded", return_value=False
+            ):
+                with patch(
+                    "attune.hooks.scripts.lessons_reminder.has_session_work", return_value=True
+                ):
+                    main()
+        err = capsys.readouterr().err
+        assert "attune.docs_outbox write" in err
+        assert "do NOT append .claude/lessons.md directly" in err
+        assert "merge now" in err  # decisions.md rulings keep the old flow
+
 
 # === Module: hooks/scripts/format_on_save.py ===
 

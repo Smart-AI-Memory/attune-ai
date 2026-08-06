@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Docs outbox — conflict-free batching for small docs artifacts**
+  (docs-outbox Phase 1, R1–R4): lessons, reports, drafts, and plans
+  land as per-artifact timestamped files in `~/.attune/docs-outbox/`
+  (`python -m attune.docs_outbox write`) instead of shipping as their
+  own PRs — concurrent writers never conflict by construction.
+  A curating sweep (`/docs-outbox` skill, EOD launchd template in
+  `scripts/launchd/`) dedupes, lints, flags core-worthy candidates,
+  and composes ONE chair-approved digest before a single batched PR
+  opens. `decisions.md` rulings and spec status flips keep merging
+  now; the Stop-hook lessons reminder routes through the outbox, and
+  the ops Collaboration inbox gains a pending row with a 2-day stale
+  warning. The pending-recall layer is deferred (R5).
+
 ## [11.3.0] — 2026-08-06
 
 Chart widgets: a sealed chart kernel joins the plugin — the model

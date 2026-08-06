@@ -49,3 +49,64 @@ the four-question interview form; validated receipt
 `requirements.md` rewritten from candidate (C1–C4 hypotheses) to
 Phase-1 ratified form (R1–R5, AC-1–AC-4, build tasks). Build may
 proceed from the ratified requirements in a fresh session.
+
+## D3 — Phase 1 BUILT; receipts AC-1/AC-3/AC-4 recorded, AC-2 pending chip
+
+**Date:** 2026-08-06 · **Status:** built (lead: Claude; dogfooded
+live against the real `~/.attune/docs-outbox/`)
+
+Shipped (one PR): `attune.docs_outbox` package (store R1, routing
+R2, sweep+digest R3, CLI), Stop-hook lessons reminder rerouted to
+the outbox writer (drift-guarded in
+`tests/unit/test_coverage_batch12.py`), `/docs-outbox` plugin
+skill (+ `.agents/` sync), launchd TEMPLATE at
+`scripts/launchd/com.smartaimemory.attune.docs-outbox-sweep.plist`
+(daily 17:30, digest-compose only — NOT installed; chair's
+machine, chair installs), ops Collaboration inbox "N docs pending,
+oldest Nd" row (monitoring-only; stale is the only state that
+counts toward the action badge). 56 new tests; package coverage
+92% (worktree-coverage workaround). R5 not built (deferred, D2).
+
+Build interpretations worth naming:
+
+- **Memory lint** runs best-effort via
+  `~/.claude/hooks/memory_lint.py` ONLY for artifacts targeting a
+  `/memory/` directory (no Phase-1 kind does by default); absence
+  or failure of the home linter degrades silently. In-repo there is
+  no memory linter to call (verified).
+- **Chip mechanics:** the sweep composes the digest; the chip is
+  spawned by the in-session skill flow via `spawn_task` (a launchd
+  run composes the digest and the next session's skill run spawns
+  the chip). Surfaces without `spawn_task` fall back to asking
+  directly — same approval contract.
+- **Dedupe** is mechanical: exact-body duplicates dropped (keep
+  earliest), same-slug kin flagged `related-slug` for the chair;
+  no LLM judgment in the sweep.
+
+**Receipts:**
+
+- **AC-4 (no-rot) — PASS, live:** backdated artifact
+  (`20260803-0900-lesson-ac4-stale-probe.md`, 3.0d) →
+  `status` printed `1 pending, oldest 3.0d  STALE — sweep overdue`
+  and the live collab provider returned
+  `OutboxRow(count=1, oldest_days=3.0, stale=True)`. Probe removed
+  after the receipt (synthetic backdate — a real 2-day wait is not
+  dogfoodable same-day; the trigger math is also unit-tested).
+- **AC-1 (conflict-class) — conflict-free half PASS, live:** two
+  real lessons from this session written by two separate CLI
+  processes in the same minute
+  (`20260806-0958-lesson-website-skill-count-guard.md`,
+  `20260806-0958-lesson-hermetic-home-reads.md`) — two distinct
+  files, zero conflict by construction (no branch, no armed PR
+  exists to go DIRTY), one digest listing both. The
+  lands-in-one-PR half completes when the chip-spawned session
+  applies and opens the swept PR (bundled with AC-2 by design —
+  one approval, one PR).
+- **AC-3 (routing) — PASS, live:** THIS D3 ruling was written the
+  same day and ships merge-now in the feature PR, not via the
+  outbox — R2's split exercised for real; the outbox CLI also
+  refuses `--kind decision` outright (unit-tested).
+- **AC-2 (sweep round-trip) — PENDING the chair:** digest composed
+  and chip spawned; completes when Patrick clicks it and the
+  spawned session lands the swept PR (then recallable after the
+  next hydration). Record the close-out here when it lands.

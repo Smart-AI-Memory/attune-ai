@@ -11,6 +11,19 @@
   </p>
 </section>
 
+{% if inbox.docs_outbox %}
+<section>
+  <h2>Docs outbox</h2>
+  <p data-testid="collab-outbox">
+    {{ inbox.docs_outbox.count }} doc(s) pending, oldest
+    {{ inbox.docs_outbox.oldest_days }}d{% if inbox.docs_outbox.stale %}
+    — <strong>stale (2+ days), sweep overdue</strong>{% endif %}.
+    Sweep in-session (<code>/docs-outbox</code>) or
+    <code>python -m attune.docs_outbox sweep</code>.
+  </p>
+</section>
+{% endif %}
+
 {% if inbox.action_count == 0 %}
   <div class="specs-empty-state" role="status">
     <div class="empty-state-title">Nothing needs your attention</div>
