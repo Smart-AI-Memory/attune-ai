@@ -1,8 +1,9 @@
 # Broad-Except Ratchet — Requirements
 
-**Status:** draft (2026-08-02) — AWAITING CHAIR REVIEW. No
-implementation authority until the chair approves; this draft
-exists so the review has a concrete object.
+**Status:** approved (2026-08-06 — chair ruled Q1–Q3 via the
+approval form; D1 in [decisions.md](decisions.md)). Implementation
+authority granted; the fires-on-violation receipt is owed by the
+build PR.
 **Slug:** `broad-except-ratchet`
 **Provenance:** chair directive 2026-08-02 ("spec 3 and 4 for chair
 review") from the post-dry-run feedback exchange. Evidence base:
@@ -41,16 +42,18 @@ A shrink-only per-file baseline ratchet, modeled on
   counted (keeping the scan mechanical); the baseline is the escape
   hatch, not pattern-matching cleverness.
 
-## Open questions for the chair
+## Ratified clauses (from the Q1–Q3 rulings, D1 2026-08-06)
 
-- Q1. Count `# noqa: BLE001`-annotated sites too, or treat the
-  annotation as the documented-contract marker and exclude them?
-  (Excluding makes the ratchet weaker but aligns with the existing
-  lint vocabulary.)
-- Q2. Scope: `src/attune` only, or also `attune_redis/` and
-  `backend/`?
-- Q3. Is a fires-on-violation test (per the principles-impact
-  candidate) required at approval, or part of implementation?
+- R5. **`# noqa: BLE001`-annotated sites are COUNTED.** The
+  annotation is not an exemption: 580 of 586 `src/attune` sites
+  carry it, so excluding them would police 6 sites. The baseline is
+  the only escape hatch (R2/R3).
+- R6. **Scope is `src/attune` + `attune_redis` + `backend`.**
+  `attune_redis` ships bundled in the wheel; `backend` is 7 sites
+  and holds auth/subscription code where a swallow costs most.
+- R7. **The fires-on-violation receipt lands with the build**, not
+  with approval: the build PR seeds the baseline AND demonstrates
+  that one added `except Exception` fails the guard in CI.
 
 ## Acceptance criteria (when approved)
 
