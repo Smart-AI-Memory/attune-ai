@@ -10,6 +10,15 @@ New here? The hands-on walk-through — ask Claude for a chart, patch
 it, tour the 11.3.0 types, export SVG — is
 [Tutorial: Chart Widgets with Claude](tutorials/chart-widgets.md).
 
+```mermaid
+flowchart LR
+    M["model authors a<br/>~100-token JSON spec"] -->|chart_render_widget| V["validate<br/>(field-level errors)"]
+    V --> K["sealed ~10KB kernel<br/>renders themable SVG"]
+    V --> S[("session memory<br/>spec stored per chart_id")]
+    P["tens-of-bytes<br/>RFC 7386 patch"] -->|same chart_id| S
+    S -->|merged spec| V
+```
+
 ## Create a chart
 
 Call the `chart_render_widget` MCP tool with a `chart_id` and a full
