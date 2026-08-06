@@ -278,6 +278,9 @@ response = collect_form_response(
 
 - [chartkit reference](../chartkit.md) — all nine types, row shapes,
   options, named components, and the kernel seal.
+- [Diagrams](../diagrams.md) — when you need *structure* (modules,
+  flows, schemas, states) instead of quantity, ask for a mermaid
+  diagram; that page shows the types with live examples.
 - [Elicitation forms](../reference/elicitation-forms.md) — the
   interactive grammar the template library builds on.
 - The `elicit` skill's Step 0 catalogs available templates; a form
