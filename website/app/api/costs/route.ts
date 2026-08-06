@@ -55,7 +55,10 @@ export async function GET(request: Request): Promise<Response> {
 
     for (const filePath of possiblePaths) {
       try {
-        const content = await fs.readFile(filePath, 'utf-8');
+        // turbopackIgnore: the paths are outside the app (repo root /
+        // $HOME); without it Turbopack traces the whole project into
+        // the serverless bundle and the Vercel deploy fails on size.
+        const content = await fs.readFile(/* turbopackIgnore: true */ filePath, 'utf-8');
         costsData = JSON.parse(content);
         loadedPath = filePath;
         break;
