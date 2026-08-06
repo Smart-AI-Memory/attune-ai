@@ -27,3 +27,25 @@ EOD-batch rule, and the day ALSO had a parallel chip session
 remains the input hypothesis, not the contract. Build follows
 ratified requirements, per the spec lifecycle. Until the outbox
 ships, the EOD-batch rule stays binding for lessons appends.
+
+## D2 — Interview answered; Phase-1 requirements RATIFIED
+
+**Date:** 2026-08-06 · **Status:** approved (chair: Patrick, via
+the four-question interview form; validated receipt
+`resp-20260806-073859` — all four lead recommendations accepted)
+
+- **Sweep cadence:** end-of-workday launchd + on-demand skill;
+  stale-outbox warning at 2 days.
+- **Pending-recall layer (C3): DEFERRED to Phase 2** — earns in on
+  demonstrated need (reopen trigger: a session demonstrably missing
+  a same-day lesson). The phasing concern was raised by the lead at
+  activation (D1 discussion) and adopted by the chair here.
+- **Write discipline:** per-artifact files, flat directory,
+  timestamped names — concurrent writers conflict-free by
+  construction.
+- **Digest approval:** chip — one click spawns the
+  approve-and-PR session; the ops inbox row is monitoring only.
+
+`requirements.md` rewritten from candidate (C1–C4 hypotheses) to
+Phase-1 ratified form (R1–R5, AC-1–AC-4, build tasks). Build may
+proceed from the ratified requirements in a fresh session.
