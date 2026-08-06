@@ -2,7 +2,11 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
+  // standalone is for self-hosted deploys (Railway). On Vercel it must
+  // be off: Next 16's Turbopack build routes trace output into the
+  // standalone bundle, and Vercel's onBuildComplete then fails with
+  // ENOENT on .next/next-server.js.nft.json.
+  ...(process.env.VERCEL ? {} : { output: 'standalone' as const }),
   outputFileTracingRoot: path.join(__dirname, './'),
   trailingSlash: true,  // Force trailing slashes for MkDocs compatibility
   async headers() {
