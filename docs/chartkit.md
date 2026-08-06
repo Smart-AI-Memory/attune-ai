@@ -6,6 +6,10 @@ small declarative JSON spec (or a patch against one), and a sealed
 renderer code. Updates are JSON Merge Patch (RFC 7386), so changing a
 title or swapping data costs tens of tokens, not a re-emitted widget.
 
+New here? The hands-on walk-through — ask Claude for a chart, patch
+it, tour the 11.3.0 types, export SVG — is
+[Tutorial: Chart Widgets with Claude](tutorials/chart-widgets.md).
+
 ## Create a chart
 
 Call the `chart_render_widget` MCP tool with a `chart_id` and a full
