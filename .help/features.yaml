@@ -65,6 +65,18 @@ features:
     tags: [elicitation, forms, communication, ux, widget]
     status: manual
 
+  # chart-widgets is single-sourced (status: manual) from
+  # content/features/chart-widgets.md via attune_author.projector
+  # (scripts/project_features.py), which owns
+  # .help/templates/chart-widgets/*.md. Entry retained WITHOUT
+  # `files:` and marked `status: manual` so topic resolution routes
+  # here while maintenance never overwrites the projected content
+  # with LLM output. See docs/specs/widget-kernel-family/.
+  chart-widgets:
+    description: Declarative chart widgets — a ~100-token JSON spec in, sealed-kernel SVG out; nine types, RFC 7386 patch updates
+    tags: [charts, widgets, visualization, communication, widget]
+    status: manual
+
   # code-quality is single-sourced (status: manual) from
   # content/features/code-quality.md via
   # attune_author.projector (scripts/project_features.py), which owns

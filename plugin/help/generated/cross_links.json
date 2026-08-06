@@ -1,9 +1,9 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 1230,
-    "linked_templates": 893,
-    "total_tags": 118
+    "total_templates": 1241,
+    "linked_templates": 897,
+    "total_tags": 121
   },
   "links": {
     "com-agents": {
@@ -24,6 +24,15 @@
         "prediction",
         "scanning",
         "race-condition"
+      ]
+    },
+    "com-chart-widgets": {
+      "tags": [
+        "charts",
+        "widgets",
+        "visualization",
+        "communication",
+        "widget"
       ]
     },
     "com-cli": {
@@ -268,6 +277,15 @@
         "prediction",
         "scanning",
         "race-condition"
+      ]
+    },
+    "con-chart-widgets": {
+      "tags": [
+        "charts",
+        "widgets",
+        "visualization",
+        "communication",
+        "widget"
       ]
     },
     "con-cli": {
@@ -1048,6 +1066,30 @@
       ],
       "tags": [
         "testing"
+      ]
+    },
+    "err-chart-widgets": {
+      "related_warning": [
+        "war-chart-widgets"
+      ],
+      "prevented_by": [
+        "tip-chart-widgets"
+      ],
+      "related_faq": [
+        "faq-chart-widgets"
+      ],
+      "tags": [
+        "charts",
+        "widgets",
+        "visualization",
+        "communication",
+        "widget"
+      ],
+      "embeds": [
+        {
+          "id": "tip-chart-widgets",
+          "position": "after_resolution"
+        }
       ]
     },
     "err-chicken-and-egg-for-optional-extras-in-dev": {
@@ -4913,6 +4955,18 @@
         "testing"
       ]
     },
+    "faq-chart-widgets": {
+      "related_error": [
+        "err-chart-widgets"
+      ],
+      "tags": [
+        "charts",
+        "widgets",
+        "visualization",
+        "communication",
+        "widget"
+      ]
+    },
     "faq-chicken-and-egg-for-optional-extras-in-dev": {
       "related_error": [
         "err-chicken-and-egg-for-optional-extras-in-dev"
@@ -7298,6 +7352,18 @@
         "race-condition"
       ]
     },
+    "not-chart-widgets": {
+      "related_reference": [
+        "ref-chart-widgets"
+      ],
+      "tags": [
+        "charts",
+        "widgets",
+        "visualization",
+        "communication",
+        "widget"
+      ]
+    },
     "not-cli": {
       "related_reference": [
         "ref-cli"
@@ -7764,6 +7830,15 @@
         "race-condition"
       ]
     },
+    "qui-chart-widgets": {
+      "tags": [
+        "charts",
+        "widgets",
+        "visualization",
+        "communication",
+        "widget"
+      ]
+    },
     "qui-check-costs": {
       "tags": [
         "cli",
@@ -8113,6 +8188,15 @@
         "prediction",
         "scanning",
         "race-condition"
+      ]
+    },
+    "ref-chart-widgets": {
+      "tags": [
+        "charts",
+        "widgets",
+        "visualization",
+        "communication",
+        "widget"
       ]
     },
     "ref-cli": {
@@ -8854,6 +8938,15 @@
         "race-condition"
       ]
     },
+    "tas-chart-widgets": {
+      "tags": [
+        "charts",
+        "widgets",
+        "visualization",
+        "communication",
+        "widget"
+      ]
+    },
     "tas-check-auth-status": {
       "tags": [
         "cli",
@@ -9306,6 +9399,15 @@
         "race-condition"
       ]
     },
+    "tip-chart-widgets": {
+      "tags": [
+        "charts",
+        "widgets",
+        "visualization",
+        "communication",
+        "widget"
+      ]
+    },
     "tip-cli": {
       "tags": [
         "cli",
@@ -9544,6 +9646,15 @@
         "prediction",
         "scanning",
         "race-condition"
+      ]
+    },
+    "tro-chart-widgets": {
+      "tags": [
+        "charts",
+        "widgets",
+        "visualization",
+        "communication",
+        "widget"
       ]
     },
     "tro-ci-tests-timeout": {
@@ -9992,6 +10103,18 @@
       ],
       "tags": [
         "testing"
+      ]
+    },
+    "war-chart-widgets": {
+      "related_error": [
+        "err-chart-widgets"
+      ],
+      "tags": [
+        "charts",
+        "widgets",
+        "visualization",
+        "communication",
+        "widget"
       ]
     },
     "war-chicken-and-egg-for-optional-extras-in-dev": {
@@ -11999,6 +12122,19 @@
       "tro-release-notes",
       "war-release-notes"
     ],
+    "charts": [
+      "com-chart-widgets",
+      "con-chart-widgets",
+      "err-chart-widgets",
+      "faq-chart-widgets",
+      "not-chart-widgets",
+      "qui-chart-widgets",
+      "ref-chart-widgets",
+      "tas-chart-widgets",
+      "tip-chart-widgets",
+      "tro-chart-widgets",
+      "war-chart-widgets"
+    ],
     "ci": [
       "con-tool-release-prep",
       "err-attune-author-check-staleness-load-manifest-is-the-python-api",
@@ -12411,16 +12547,27 @@
       "war-cli"
     ],
     "communication": [
+      "com-chart-widgets",
       "com-elicitation-forms",
+      "con-chart-widgets",
       "con-elicitation-forms",
+      "err-chart-widgets",
       "err-elicitation-forms",
+      "faq-chart-widgets",
       "faq-elicitation-forms",
+      "not-chart-widgets",
       "not-elicitation-forms",
+      "qui-chart-widgets",
       "qui-elicitation-forms",
+      "ref-chart-widgets",
       "ref-elicitation-forms",
+      "tas-chart-widgets",
       "tas-elicitation-forms",
+      "tip-chart-widgets",
       "tip-elicitation-forms",
+      "tro-chart-widgets",
       "tro-elicitation-forms",
+      "war-chart-widgets",
       "war-elicitation-forms"
     ],
     "complexity": [
@@ -14770,6 +14917,19 @@
       "tro-fix",
       "war-fix"
     ],
+    "visualization": [
+      "com-chart-widgets",
+      "con-chart-widgets",
+      "err-chart-widgets",
+      "faq-chart-widgets",
+      "not-chart-widgets",
+      "qui-chart-widgets",
+      "ref-chart-widgets",
+      "tas-chart-widgets",
+      "tip-chart-widgets",
+      "tro-chart-widgets",
+      "war-chart-widgets"
+    ],
     "webhooks": [
       "com-hooks",
       "con-hooks",
@@ -14784,17 +14944,41 @@
       "war-hooks"
     ],
     "widget": [
+      "com-chart-widgets",
       "com-elicitation-forms",
+      "con-chart-widgets",
       "con-elicitation-forms",
+      "err-chart-widgets",
       "err-elicitation-forms",
+      "faq-chart-widgets",
       "faq-elicitation-forms",
+      "not-chart-widgets",
       "not-elicitation-forms",
+      "qui-chart-widgets",
       "qui-elicitation-forms",
+      "ref-chart-widgets",
       "ref-elicitation-forms",
+      "tas-chart-widgets",
       "tas-elicitation-forms",
+      "tip-chart-widgets",
       "tip-elicitation-forms",
+      "tro-chart-widgets",
       "tro-elicitation-forms",
+      "war-chart-widgets",
       "war-elicitation-forms"
+    ],
+    "widgets": [
+      "com-chart-widgets",
+      "con-chart-widgets",
+      "err-chart-widgets",
+      "faq-chart-widgets",
+      "not-chart-widgets",
+      "qui-chart-widgets",
+      "ref-chart-widgets",
+      "tas-chart-widgets",
+      "tip-chart-widgets",
+      "tro-chart-widgets",
+      "war-chart-widgets"
     ],
     "windows": [
       "err-bare-manifest-in-gitignore-silently-excludes-any-manifest",

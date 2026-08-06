@@ -207,6 +207,7 @@ nav:
       - Build a Workflow: tutorials/build-a-workflow.md
       - Fix a Failing Test (and Automate It): tutorials/fix-test.md
       - Outcome-First Fix (with Receipts): tutorials/fix.md
+      - Chart Widgets with Claude: tutorials/chart-widgets.md
       - Ops Dashboard: tutorials/ops-dashboard.md
       - Examples:
           - Code Review Assistant: tutorials/examples/simple-chatbot.md

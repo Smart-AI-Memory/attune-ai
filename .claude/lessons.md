@@ -21171,3 +21171,22 @@ def ", start_idx + 1)` for module-
   post-release. The skill's step 7 text was updated the same day;
   when a checklist step names a tool, re-read it against the tree
   being cut, not the tree that wrote the checklist.
+
+- **author-feature masters cannot hyperlink to docs pages from
+  projected sections — the projector's `check_md_links` validates
+  targets relative to the MASTER (`content/features/`), while the
+  link text is copied VERBATIM into projections that live elsewhere
+  (`docs/how-to/`, `.help/templates/`)**: hit 2026-08-06 authoring
+  `content/features/chart-widgets.md` — a
+  `../../docs/tutorials/chart-widgets.md` link passed the master
+  check but landed broken in `docs/how-to/chart-widgets.md`, and
+  the how-to-relative form `../tutorials/...` failed the master
+  check ("target does not exist"). No rewriting happens in either
+  direction, so no relative path can satisfy both locations. Rule:
+  in a projected section, reference other docs pages by TITLE +
+  backticked path in prose (`docs/tutorials/chart-widgets.md`),
+  never a markdown link; put real hyperlinks in the hand-authored
+  pages pointing INTO the projections instead (the tutorial →
+  reference direction). Existing masters' `../../docs/specs/...`
+  links survive only because they sit in FAQ-seed blockquotes the
+  docs projections drop.
