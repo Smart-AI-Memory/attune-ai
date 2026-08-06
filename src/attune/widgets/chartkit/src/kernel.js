@@ -149,14 +149,30 @@ function drawXTick(doc, g, x, str) {
   label(doc, g, str, { x, y: H - M.b + 16, "text-anchor": "middle" });
 }
 
-function drawLegend(doc, g, names) {
-  let x = M.l;
+function drawLegend(doc, g, names, startX) {
+  // Starts after the title (startX) so the two never collide, and
+  // wraps to a second 14px row on overflow — both rows fit inside
+  // the top margin. Beyond two rows entries keep flowing on the
+  // second row and clip at the right edge (tooltips still carry
+  // the full labels).
+  let x = startX == null ? M.l : startX;
+  let row = 0;
   names.forEach((name, i) => {
-    g.appendChild(el(doc, "rect", { x, y: 6, width: 9, height: 9, rx: 2, fill: seriesColor(i) }));
-    const t = label(doc, g, name, { x: x + 13, y: 14, "text-anchor": "start" });
-    x += 13 + 7 * String(name).length + 18;
-    void t;
+    const w = 13 + 7 * String(name).length + 18;
+    if (x + w > W - M.r && row < 1) {
+      row += 1;
+      x = M.l;
+    }
+    const y = 6 + row * 14;
+    g.appendChild(el(doc, "rect", { x, y, width: 9, height: 9, rx: 2, fill: seriesColor(i) }));
+    label(doc, g, name, { x: x + 13, y: y + 8, "text-anchor": "start" });
+    x += w;
   });
+}
+
+function legendStart(spec) {
+  const title = spec.options && spec.options.title;
+  return title ? M.l + Math.round(7.8 * String(title).length) + 16 : M.l;
 }
 
 function splitSeries(data, colorEnc) {
@@ -341,7 +357,7 @@ function renderDonut(doc, g, spec) {
     a = a1;
   });
   if (!spec.options || spec.options.legend !== false) {
-    drawLegend(doc, g, rows.filter((r) => r[1] > 0).map((r) => String(r[0])));
+    drawLegend(doc, g, rows.filter((r) => r[1] > 0).map((r) => String(r[0])), legendStart(spec));
   }
 }
 
@@ -567,7 +583,7 @@ function render(root, spec) {
   }
 
   if (colorEnc && (!spec.options || spec.options.legend !== false)) {
-    drawLegend(doc, g, series.map((s) => String(s.name)));
+    drawLegend(doc, g, series.map((s) => String(s.name)), legendStart(spec));
   }
   drawTitle();
   root.appendChild(svg);
