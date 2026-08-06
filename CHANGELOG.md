@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **chartkit: four new chart types + two bar options** — `donut`,
+  `box` (pre-computed five-stat rows), `waterfall` (signed deltas,
+  optional computed total bar), and `treemap` join `bar`, `line`,
+  `scatter`, `area`, `heatmap`; `options.horizontal` lands for bar,
+  and the already-shipped `options.stacked` is now documented. All
+  types ruled in via the chartkit type-selection form (2026-08-06);
+  the sealed kernel stays under its 20,480-byte ceiling (10,381
+  minified post-expansion).
+
 ### Fixed
 
 - **Pending-writes API: one `git status` per project root** — the

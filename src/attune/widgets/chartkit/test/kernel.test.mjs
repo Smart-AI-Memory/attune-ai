@@ -83,9 +83,19 @@ const lineSpec = {
   },
 };
 
-test("exports version and the five chart types", () => {
+test("exports version and the nine chart types", () => {
   assert.match(VERSION, /^\d+\.\d+\.\d+$/);
-  assert.deepEqual(CHART_TYPES, ["bar", "line", "scatter", "area", "heatmap"]);
+  assert.deepEqual(CHART_TYPES, [
+    "bar",
+    "line",
+    "scatter",
+    "area",
+    "heatmap",
+    "donut",
+    "box",
+    "waterfall",
+    "treemap",
+  ]);
 });
 
 test("bar fixture renders one rect per row with tooltips", () => {
@@ -214,7 +224,18 @@ test("every declared chart type renders from a fixture", () => {
               color: { field: "n", type: "quantitative" },
             },
           }
-        : { ...(type === "bar" ? barSpec : lineSpec), type };
+        : type === "box"
+          ? {
+              type,
+              data: [{ lane: "a", min: 1, q1: 2, median: 3, q3: 4, max: 5 }],
+              encodings: {
+                x: { field: "lane", type: "nominal" },
+                y: { field: "median", type: "quantitative" },
+              },
+            }
+          : ["donut", "waterfall", "treemap"].includes(type)
+            ? { ...barSpec, type }
+            : { ...(type === "bar" ? barSpec : lineSpec), type };
     const svg = render(host(), spec);
     assert.equal(svg.attrs["data-chartkit"], VERSION, `${type} should render`);
   }
@@ -253,4 +274,88 @@ test("a data-only patch re-renders with rescaled axes", () => {
   assert.equal(el.children.length, 1, "replaced in place");
   assert.notDeepEqual(after, before, "axis ticks rescaled to the new domain");
   assert.ok(after.some((s) => s.includes("k") || Number(s) >= 100), "ticks reflect new magnitude");
+});
+
+test("horizontal bar renders one rect per row with category labels", () => {
+  const spec = { ...barSpec, options: { horizontal: true } };
+  const svg = render(host(), spec);
+  assert.equal(collect(svg, "rect").length, barSpec.data.length);
+  const texts = collect(svg, "text").map((t) => t.textContent);
+  for (const row of barSpec.data) assert.ok(texts.includes(row.month));
+});
+
+test("donut renders one arc path per positive slice plus legend", () => {
+  const svg = render(host(), { ...barSpec, type: "donut" });
+  const paths = collect(svg, "path");
+  assert.equal(paths.length, barSpec.data.length);
+  for (const p of paths) assert.match(p.attrs.d, /A/);
+});
+
+test("donut with no positive values throws", () => {
+  const spec = {
+    ...barSpec,
+    type: "donut",
+    data: [{ month: "Jan", sales: 0 }],
+  };
+  assert.throws(() => render(host(), spec), /positive value/);
+});
+
+test("box renders whisker, box, and median per row", () => {
+  const spec = {
+    type: "box",
+    data: [
+      { lane: "ubuntu", min: 1, q1: 2, median: 3, q3: 4, max: 6 },
+      { lane: "windows", min: 4, q1: 6, median: 8, q3: 11, max: 13 },
+    ],
+    encodings: {
+      x: { field: "lane", type: "nominal" },
+      y: { field: "median", type: "quantitative" },
+    },
+  };
+  const svg = render(host(), spec);
+  assert.equal(collect(svg, "rect").length, 2);
+  const tips = collect(svg, "title").map((t) => t.textContent);
+  assert.ok(tips.some((t) => t.includes("med 8")));
+});
+
+test("box with non-numeric stats throws a field-naming error", () => {
+  const spec = {
+    type: "box",
+    data: [{ lane: "a", min: 1, q1: 2, median: "oops", q3: 4, max: 5 }],
+    encodings: {
+      x: { field: "lane", type: "nominal" },
+      y: { field: "median", type: "quantitative" },
+    },
+  };
+  assert.throws(() => render(host(), spec), /min, q1, median, q3, max/);
+});
+
+test("waterfall renders running-offset bars and a total when asked", () => {
+  const spec = {
+    type: "waterfall",
+    data: [
+      { step: "start", delta: 10 },
+      { step: "refund", delta: -4 },
+      { step: "growth", delta: 6 },
+    ],
+    encodings: {
+      x: { field: "step", type: "nominal" },
+      y: { field: "delta", type: "quantitative" },
+    },
+    options: { total: "net" },
+  };
+  const svg = render(host(), spec);
+  assert.equal(collect(svg, "rect").length, 4);
+  const tips = collect(svg, "title").map((t) => t.textContent);
+  assert.ok(tips.some((t) => t.includes("net: 12 (total)")));
+});
+
+test("treemap renders one tile per positive row, largest first", () => {
+  const svg = render(host(), { ...barSpec, type: "treemap" });
+  assert.equal(collect(svg, "rect").length, barSpec.data.length);
+});
+
+test("treemap with no positive values throws", () => {
+  const spec = { ...barSpec, type: "treemap", data: [{ month: "Jan", sales: -1 }] };
+  assert.throws(() => render(host(), spec), /positive value/);
 });

@@ -33,6 +33,11 @@ def _spec(chart_type: str) -> dict:
     }
     if chart_type == "heatmap":
         spec["encodings"]["color"] = {"field": "y", "type": "quantitative"}
+    if chart_type == "box":
+        spec["data"] = [
+            {"x": "a", "y": 3, "min": 1, "q1": 2, "median": 3, "q3": 4, "max": 5},
+            {"x": "b", "y": 8, "min": 4, "q1": 6, "median": 8, "q3": 10, "max": 12},
+        ]
     return spec
 
 
@@ -81,6 +86,45 @@ def test_heatmap_requires_color_channel() -> None:
     with pytest.raises(ChartSpecError) as exc:
         validate_chart_spec(spec)
     assert any("color" in p for p in exc.value.problems)
+
+
+def test_box_rows_require_numeric_summary_stats() -> None:
+    spec = _spec("box")
+    spec["data"][1]["median"] = "oops"
+    with pytest.raises(ChartSpecError) as exc:
+        validate_chart_spec(spec)
+    assert any("data.1.median" in p for p in exc.value.problems)
+
+
+def test_value_charts_require_quantitative_y() -> None:
+    for chart_type in ("donut", "waterfall", "treemap"):
+        spec = _spec(chart_type)
+        spec["encodings"]["y"]["type"] = "nominal"
+        with pytest.raises(ChartSpecError) as exc:
+            validate_chart_spec(spec)
+        assert any("encodings.y.type" in p for p in exc.value.problems)
+
+
+def test_horizontal_only_valid_for_bar() -> None:
+    spec = _spec("line")
+    spec["options"] = {"horizontal": True}
+    with pytest.raises(ChartSpecError) as exc:
+        validate_chart_spec(spec)
+    assert any("options.horizontal" in p for p in exc.value.problems)
+    ok = _spec("bar")
+    ok["options"] = {"horizontal": True}
+    assert validate_chart_spec(ok).options.horizontal is True
+
+
+def test_total_only_valid_for_waterfall() -> None:
+    spec = _spec("donut")
+    spec["options"] = {"total": "net"}
+    with pytest.raises(ChartSpecError) as exc:
+        validate_chart_spec(spec)
+    assert any("options.total" in p for p in exc.value.problems)
+    ok = _spec("waterfall")
+    ok["options"] = {"total": "net"}
+    assert validate_chart_spec(ok).options.total == "net"
 
 
 class TestSchemaSync:

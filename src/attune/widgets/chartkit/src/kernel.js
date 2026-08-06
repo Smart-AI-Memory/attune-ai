@@ -1,6 +1,16 @@
 const VERSION = "0.1.0";
 
-const CHART_TYPES = ["bar", "line", "scatter", "area", "heatmap"];
+const CHART_TYPES = [
+  "bar",
+  "line",
+  "scatter",
+  "area",
+  "heatmap",
+  "donut",
+  "box",
+  "waterfall",
+  "treemap",
+];
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -266,6 +276,211 @@ function renderHeatmap(doc, g, spec) {
   }
 }
 
+function renderBarH(doc, g, spec) {
+  const data = spec.data || [];
+  const cats = categoriesOf(data, spec.encodings.x);
+  const yb = bandScale(cats, [M.t, H - M.b], 0.25);
+  const vals = data.map((r) => fieldValue(r, spec.encodings.y));
+  const lx = M.l + 72;
+  const x = linearScale(extent(vals), [lx, W - M.r]);
+  for (const t of niceTicks(x.domain, 6)) {
+    g.appendChild(
+      el(doc, "line", {
+        x1: x(t),
+        x2: x(t),
+        y1: M.t,
+        y2: H - M.b,
+        stroke: "var(--border, #ddd)",
+        "stroke-width": 1,
+      })
+    );
+    label(doc, g, fmt(t), { x: x(t), y: H - M.b + 16, "text-anchor": "middle" });
+  }
+  for (const row of data) {
+    const c = fieldValue(row, spec.encodings.x);
+    const v = fieldValue(row, spec.encodings.y);
+    label(doc, g, c, { x: lx - 6, y: yb(c) + yb.bandwidth / 2 + 4, "text-anchor": "end" });
+    const rect = el(doc, "rect", {
+      x: Math.min(x(0), x(v)),
+      y: yb(c),
+      width: Math.max(1, Math.abs(x(v) - x(0))),
+      height: yb.bandwidth,
+      fill: seriesColor(0),
+    });
+    tooltip(doc, rect, `${c}: ${fmt(v)}`);
+    g.appendChild(rect);
+  }
+}
+
+function renderDonut(doc, g, spec) {
+  const data = spec.data || [];
+  const cx = W / 2;
+  const cy = (H + M.t - M.b) / 2 + 8;
+  const R = (H - M.t - M.b) / 2 - 10;
+  const r0 = R * 0.55;
+  const rows = data.map((row) => {
+    const v = fieldValue(row, spec.encodings.y);
+    return [fieldValue(row, spec.encodings.x), isFinite(v) && v > 0 ? v : 0];
+  });
+  const total = rows.reduce((a, p) => a + p[1], 0);
+  if (!total) throw new Error("chartkit: donut needs at least one positive value");
+  let a = -Math.PI / 2;
+  rows.forEach(([name, v], i) => {
+    if (!v) return;
+    const a1 = a + Math.min((v / total) * 2 * Math.PI, 2 * Math.PI - 1e-4);
+    const big = a1 - a > Math.PI ? 1 : 0;
+    const p = (ang, rad) => `${cx + rad * Math.cos(ang)},${cy + rad * Math.sin(ang)}`;
+    const arc = el(doc, "path", {
+      d:
+        `M${p(a, R)}A${R},${R} 0 ${big} 1 ${p(a1, R)}` +
+        `L${p(a1, r0)}A${r0},${r0} 0 ${big} 0 ${p(a, r0)}Z`,
+      fill: seriesColor(i),
+    });
+    tooltip(doc, arc, `${name}: ${fmt(v)} (${fmt((100 * v) / total)}%)`);
+    g.appendChild(arc);
+    a = a1;
+  });
+  if (!spec.options || spec.options.legend !== false) {
+    drawLegend(doc, g, rows.filter((r) => r[1] > 0).map((r) => String(r[0])));
+  }
+}
+
+function renderBox(doc, g, spec) {
+  const data = spec.data || [];
+  const keys = ["min", "q1", "median", "q3", "max"];
+  const cats = categoriesOf(data, spec.encodings.x);
+  const x = bandScale(cats, [M.l, W - M.r], 0.4);
+  const vals = [];
+  for (const r of data) vals.push(Number(r.min), Number(r.max));
+  const y = linearScale(extent(vals), [H - M.b, M.t]);
+  drawYAxis(doc, g, y, M.l, W - M.r);
+  cats.forEach((c) => drawXTick(doc, g, x(c) + x.bandwidth / 2, c));
+  data.forEach((row, i) => {
+    const c = fieldValue(row, spec.encodings.x);
+    const [mn, q1, md, q3, mx] = keys.map((k) => Number(row[k]));
+    if (![mn, q1, md, q3, mx].every(isFinite)) {
+      throw new Error("chartkit: box rows need numeric min, q1, median, q3, max");
+    }
+    const bx = x(c);
+    const bw = x.bandwidth;
+    const mid = bx + bw / 2;
+    g.appendChild(
+      el(doc, "line", {
+        x1: mid,
+        x2: mid,
+        y1: y(mn),
+        y2: y(mx),
+        stroke: seriesColor(i),
+        "stroke-width": 1.5,
+      })
+    );
+    const boxEl = el(doc, "rect", {
+      x: bx,
+      y: y(q3),
+      width: bw,
+      height: Math.max(1, y(q1) - y(q3)),
+      fill: seriesColor(i),
+      "fill-opacity": 0.35,
+      stroke: seriesColor(i),
+    });
+    tooltip(
+      doc,
+      boxEl,
+      `${c}: min ${fmt(mn)} · q1 ${fmt(q1)} · med ${fmt(md)} · q3 ${fmt(q3)} · max ${fmt(mx)}`
+    );
+    g.appendChild(boxEl);
+    g.appendChild(
+      el(doc, "line", {
+        x1: bx,
+        x2: bx + bw,
+        y1: y(md),
+        y2: y(md),
+        stroke: seriesColor(i),
+        "stroke-width": 2,
+      })
+    );
+  });
+}
+
+function renderWaterfall(doc, g, spec) {
+  const data = spec.data || [];
+  let run = 0;
+  const steps = data.map((r) => {
+    const v = fieldValue(r, spec.encodings.y);
+    const s = { name: String(fieldValue(r, spec.encodings.x)), v, y0: run, y1: run + v };
+    run += v;
+    return s;
+  });
+  const totalLabel = spec.options && spec.options.total;
+  if (totalLabel) steps.push({ name: String(totalLabel), v: run, y0: 0, y1: run, total: true });
+  const x = bandScale(steps.map((s) => s.name), [M.l, W - M.r], 0.25);
+  const y = linearScale(extent(steps.flatMap((s) => [s.y0, s.y1])), [H - M.b, M.t]);
+  drawYAxis(doc, g, y, M.l, W - M.r);
+  steps.forEach((s) => {
+    drawXTick(doc, g, x(s.name) + x.bandwidth / 2, s.name);
+    const rect = el(doc, "rect", {
+      x: x(s.name),
+      y: Math.min(y(s.y0), y(s.y1)),
+      width: x.bandwidth,
+      height: Math.max(1, Math.abs(y(s.y0) - y(s.y1))),
+      fill: s.total ? seriesColor(0) : s.v >= 0 ? seriesColor(3) : seriesColor(2),
+    });
+    tooltip(
+      doc,
+      rect,
+      s.total
+        ? `${s.name}: ${fmt(s.v)} (total)`
+        : `${s.name}: ${s.v >= 0 ? "+" : ""}${fmt(s.v)} → ${fmt(s.y1)}`
+    );
+    g.appendChild(rect);
+  });
+}
+
+function renderTreemap(doc, g, spec) {
+  const data = spec.data || [];
+  const rows = data
+    .map((r) => [String(fieldValue(r, spec.encodings.x)), fieldValue(r, spec.encodings.y)])
+    .filter((p) => isFinite(p[1]) && p[1] > 0)
+    .sort((a, b) => b[1] - a[1]);
+  if (!rows.length) throw new Error("chartkit: treemap needs at least one positive value");
+  let total = rows.reduce((a, p) => a + p[1], 0);
+  let x0 = M.l;
+  let y0 = M.t;
+  let x1 = W - M.r;
+  let y1 = H - M.b;
+  rows.forEach(([name, v], i) => {
+    const frac = total > 0 ? v / total : 1;
+    let rx = x0;
+    let ry = y0;
+    let rw;
+    let rh;
+    if (x1 - x0 > y1 - y0) {
+      rw = (x1 - x0) * frac;
+      rh = y1 - y0;
+      x0 += rw;
+    } else {
+      rw = x1 - x0;
+      rh = (y1 - y0) * frac;
+      y0 += rh;
+    }
+    total -= v;
+    const rect = el(doc, "rect", {
+      x: rx + 1,
+      y: ry + 1,
+      width: Math.max(1, rw - 2),
+      height: Math.max(1, rh - 2),
+      rx: 2,
+      fill: seriesColor(i),
+      "fill-opacity": 0.85,
+    });
+    tooltip(doc, rect, `${name}: ${fmt(v)} (${fmt((100 * v) / (total + v))}% of remaining)`);
+    g.appendChild(rect);
+    if (rw > 46 && rh > 20) {
+      label(doc, g, name, { x: rx + 6, y: ry + 15, fill: "#fff", "text-anchor": "start" });
+    }
+  });
+}
+
 function render(root, spec) {
   if (!root || typeof root.appendChild !== "function") {
     throw new Error("chartkit: render(el, spec) needs a DOM element");
@@ -290,8 +505,7 @@ function render(root, spec) {
   svg.appendChild(g);
 
   const data = spec.data || [];
-  if (spec.type === "heatmap") {
-    renderHeatmap(doc, g, spec);
+  const drawTitle = () => {
     if (spec.options && spec.options.title) {
       label(doc, g, spec.options.title, {
         x: M.l,
@@ -302,6 +516,20 @@ function render(root, spec) {
         "text-anchor": "start",
       });
     }
+  };
+  const OWN_AXES = {
+    heatmap: renderHeatmap,
+    donut: renderDonut,
+    box: renderBox,
+    waterfall: renderWaterfall,
+    treemap: renderTreemap,
+  };
+  const special =
+    OWN_AXES[spec.type] ||
+    (spec.type === "bar" && spec.options && spec.options.horizontal ? renderBarH : null);
+  if (special) {
+    special(doc, g, spec);
+    drawTitle();
     root.appendChild(svg);
     return svg;
   }
@@ -341,16 +569,7 @@ function render(root, spec) {
   if (colorEnc && (!spec.options || spec.options.legend !== false)) {
     drawLegend(doc, g, series.map((s) => String(s.name)));
   }
-  if (spec.options && spec.options.title) {
-    label(doc, g, spec.options.title, {
-      x: M.l,
-      y: 16,
-      "font-size": 13,
-      "font-weight": 500,
-      fill: "var(--text-primary, #222)",
-      "text-anchor": "start",
-    });
-  }
+  drawTitle();
   root.appendChild(svg);
   return svg;
 }
