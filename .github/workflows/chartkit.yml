@@ -5,12 +5,12 @@ on:
     branches: [main]
     paths:
       - "src/attune/widgets/chartkit/**"
-      - "scripts/check_chartkit_boundary.py"
+      - "scripts/check_widget_kernel_boundaries.py"
       - ".github/workflows/chartkit.yml"
   pull_request:
     paths:
       - "src/attune/widgets/chartkit/**"
-      - "scripts/check_chartkit_boundary.py"
+      - "scripts/check_widget_kernel_boundaries.py"
       - ".github/workflows/chartkit.yml"
 
 permissions:
@@ -39,4 +39,4 @@ jobs:
         run: npm test
       - name: Size + boundary gates
         working-directory: ${{ github.workspace }}
-        run: python scripts/check_chartkit_boundary.py --require-dist
+        run: python scripts/check_widget_kernel_boundaries.py --kernel chartkit --require-dist

@@ -12,7 +12,7 @@ it writes specs and spec patches (JSON Merge Patch, RFC 7386).
   The only sanctioned consumer is the injection loader, which reads the
   built artifact `dist/kernel.min.js` as bytes.
 - **Size ceiling.** `dist/kernel.min.js` ≤ 20,480 bytes, enforced by
-  `scripts/check_chartkit_boundary.py` in CI. Chart types earn their
+  `scripts/check_widget_kernel_boundaries.py` in CI. Chart types earn their
   way in under the ceiling; the ceiling does not move.
 
 Extraction to a standalone package must always be a copy, not surgery.
