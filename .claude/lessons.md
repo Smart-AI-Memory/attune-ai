@@ -21144,3 +21144,30 @@ def ", start_idx + 1)` for module-
   paste into `show_widget` (widget CSS vars work as-is); the
   sendPrompt postback arrives as an
   `__elicitation_response__` JSON block to validate.
+
+- **The deterministic release-gate's coverage agent reports FICTION
+  (30.0 from a worktree, 40.0 from the main checkout) while the
+  CI-enforced Codecov figure was 96.16% — treat its coverage number
+  as untrusted until the fix lands; verify via the Codecov API
+  instead of chasing the fake blocker**: 2026-08-06, 11.3.0 prep.
+  Both runs exited 0 with a BLOCKED verdict on numbers that
+  contradict the enforced gate AND each other (environment-
+  dependent measurement). Cross-check that settles it:
+  `curl -s "https://api.codecov.io/api/v2/github/Smart-AI-Memory/repos/attune-ai/report/?branch=main"`.
+  Chip task_bc331bf3 filed: measure truly or report
+  "cannot measure" — a gate that reports fiction confidently is
+  worse than one that admits ignorance. The release proceeded on
+  the Codecov receipt, recorded in PR #1961.
+
+- **release-execute step 7's own command was retired by an earlier
+  release (`attune-author regenerate` — absorbed into
+  attune.authoring at 11.0.0), and the check-docs-freshness stale
+  count spikes to ~everything after a version bump**: 2026-08-06,
+  the second live instance of "a release procedure's step
+  invalidated by a release it shipped". The 773-templates-stale
+  warning after `bump_version.py` is version-hash noise, not real
+  staleness — `SKIP=check-docs-freshness` on the release-prep
+  commit is the sanctioned move, with `/coach maintain` queued
+  post-release. The skill's step 7 text was updated the same day;
+  when a checklist step names a tool, re-read it against the tree
+  being cut, not the tree that wrote the checklist.
