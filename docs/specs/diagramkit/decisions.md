@@ -113,3 +113,38 @@ pipeline state), where the 10× patch advantage, session
 persistence, and host theming apply. Recommend: proceed per plan
 (build stays queued behind formkit/infokit), with R2 amended to
 require id-keyed node maps and long-edge routing.
+
+*(Superseded by D4 — the chair weighed the same data plus the
+recurrence test and closed instead.)*
+
+## D4 — AC-0 RULED: CLOSED, mermaid wins; reopen on recurrence
+
+**Date:** 2026-08-06 · **Status:** CLOSED (chair: Patrick, via
+decision form; validated receipt `resp-20260806-061742`)
+
+Reviewing the D3 numbers and the live probe renders, the chair
+found the mermaid outputs "attractive and quick" — and the lead,
+asked for pushback, had none to offer: P1 measured mermaid 1.2–2.1×
+cheaper to author, and the kernel's one winning axis (in-place
+patching of living diagrams) has ZERO demonstrated recurrence in
+real sessions. The family's promote-on-repeat discipline therefore
+rules against building. This is the AC-0 "mermaid wins" outcome the
+spec explicitly anticipated as valid — the Phase-0 probe did its
+job for the cost of a few local scripts, not a kernel.
+
+**Standing effects:**
+
+- No diagramkit kernel is built. Sessions needing one-shot diagrams
+  use mermaid (or direct SVG on widget surfaces).
+- **Reopen trigger:** a second real session needing to UPDATE a
+  rendered diagram in place (status flips on a living DAG). On
+  recurrence, Phase-0 does not re-run — build resumes from this
+  spec with D3's findings binding: id-keyed node maps (34 B vs
+  343 B patches), mandatory long-edge routing, server-side layout.
+- The widget-kernel-family queue is unchanged: formkit (R1) and
+  infokit (R2) proceed as ratified; they lose no priority to this
+  closure.
+
+Superseded: D3's "proceed per plan" recommendation. D1's direction
+ruling stands as the record of how the scope narrowed; D2's
+approval stands as the authorization under which the probes ran.

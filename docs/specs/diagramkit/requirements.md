@@ -1,9 +1,11 @@
 # diagramkit — Phase-0 requirements: node-and-edge diagrams as a display member
 
-**Status:** Phase-0 APPROVED (chair: Patrick, 2026-08-06 — D2 in
-[decisions.md](decisions.md)). Probes P1–P3 may run; no kernel code
-before the probe results are ruled on (AC-0) and the formkit/infokit
-queue ahead has shipped.
+**Status:** CLOSED — mermaid wins (chair: Patrick, 2026-08-06 — D4
+in [decisions.md](decisions.md), ruling on the D3 probe results).
+No kernel will be built from this spec as it stands. Reopen trigger:
+a SECOND real session needing in-place diagram updates
+(promote-on-repeat); any future build inherits D3's binding
+findings (id-keyed node maps, mandatory long-edge routing).
 **Direction ruled:** 2026-08-06, Patrick, via pushback form (receipt
 `resp-20260806-054445`): one diagram kernel, one vocabulary first,
 layout server-side — over "expand now across classic + software +
