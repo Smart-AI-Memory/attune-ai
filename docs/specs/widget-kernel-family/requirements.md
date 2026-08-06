@@ -59,6 +59,16 @@ D21 collapse-on-submit.
   definition, `collect_form_response` validates answers. The
   existing `form_to_widget_html` string-builder becomes the
   fallback; the kernel path is the default widget renderer.
+
+  **Identity + patch lifecycle (D2/F2 — normative by reference):**
+  formkit implements the mechanism `chart_widget_tool` already
+  ships, not a new design — a stable `form_id`
+  (`[A-Za-z0-9_-]`, max 64) keys the canonical stored spec in
+  session memory; updates are RFC 7386 merge patches against the
+  stored spec; when persistence is unreachable the result SAYS so
+  and requires a full spec (legible degradation, chartkit D5). The
+  stored spec is canonical — the rendered widget is a projection,
+  never the source of truth for a patch.
 - **R2 — infokit, tiles preset only (pushback ruling).** One
   infographic kernel whose v1 ships a single preset: **stat tiles /
   metric cards** (counts, scores, deltas — live consumers today:
@@ -73,6 +83,14 @@ D21 collapse-on-submit.
   budget. Generalize `scripts/check_chartkit_boundary.py` rather
   than copying it per kernel; chartkit's ≤20,480-byte budget is the
   default, per-kernel overrides recorded here when ruled.
+
+  **formkit override (D2/F4 — ruled up front, not at gate time):**
+  formkit's built budget is **≤ 40,960 bytes minified** (2× the
+  default) — it carries the full construct family plus the postback
+  script, and chartkit's kernel is already 11.3KB *unminified* for
+  charts alone. chartkit and infokit stay at the 20,480 default.
+  If formkit lands comfortably under 20,480 the override is
+  retired in decisions.md rather than kept as slack.
 - **R4 — latency receipts (intake fork 2).** The gate is
   **model-authored tokens per render and per update**, measured per
   kernel (chartkit's numbers are the baseline). Wall-clock time to
@@ -80,6 +98,21 @@ D21 collapse-on-submit.
   receipt must count what the model AUTHORS (spec/patch), stated
   separately from the L1 re-emission residual so the numbers cannot
   be read as an L2 claim.
+
+  **Counting method (D2/F1 — the gate must be reproducible):**
+  authored size is the byte length of the canonical compact JSON
+  of the spec or patch (`json.dumps(x, separators=(",", ":"),
+  sort_keys=True)`, UTF-8), with tokens *estimated* at bytes / 4.
+  Deterministic and tokenizer-free; the task-4 harness measures it
+  and records per-kernel baselines in decisions.md. Budgets
+  (lead-proposed under the D2 adoption; standing unless the chair
+  adjusts, re-ruled once the harness records real baselines):
+
+  | Kernel | Render spec (bytes) | Update patch (bytes) |
+  |---|---|---|
+  | chartkit | ≤ 1,600 | ≤ 400 |
+  | formkit | ≤ 4,096 | ≤ 512 |
+  | infokit (tiles) | ≤ 1,024 | ≤ 256 |
 - **R5 — ownership (intake fork 4).** This umbrella spec owns the
   pattern, the seal rules, and the latency budgets. The owning
   feature specs — chartkit's plan, `elicitation-form-surface`,
@@ -110,7 +143,12 @@ D21 collapse-on-submit.
   spec.
 - **AC-3 — infokit tiles live.** The tiles preset rendered from a
   spec by a real consumer flow (not a demo fixture), with the same
-  authored-token receipt.
+  authored-token receipt. **The consumer is bound (D2/F3):** first
+  consumer is the ops **Health tab metric cards** (live today, no
+  new flow needed); `spec_progress`-class summaries are the named
+  second. Before wiring either, the behavior change is ruled in the
+  OWNING feature's decisions.md (R5) — the wiring PR links that
+  ruling, and AC-3 is not satisfiable without it.
 - **AC-4 — the seal holds in CI.** The generalized boundary gate
   passes for all kernels and FAILS on a seeded violation (import
   leak or size breach) — the gate is proven able to fail.
