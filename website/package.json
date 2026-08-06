@@ -14,8 +14,12 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
+  "engines": {
+    "node": "22.x"
+  },
   "overrides": {
-    "tar": "^7.5.22"
+    "tar": "^7.5.22",
+    "esbuild": "^0.28.1"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",
@@ -27,7 +31,7 @@
     "bcryptjs": "^3.0.2",
     "gray-matter": "^4.0.3",
     "ioredis": "^5.8.2",
-    "next": "15.5.22",
+    "next": "^16.3.0",
     "nodemailer": "^9.0.1",
     "pg": "^8.16.3",
     "react": "19.1.4",
@@ -52,7 +56,7 @@
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
     "eslint": "^9",
-    "eslint-config-next": "15.5.9",
+    "eslint-config-next": "^16.3.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.7",
     "typescript": "5.9.3",
