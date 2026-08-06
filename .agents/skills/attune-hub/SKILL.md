@@ -117,6 +117,7 @@ rule (a single turn can't bundle multiple ambiguous decisions). See
 | author-feature | author a feature page, single-source doc, new feature master, draft docs without an api |
 | roundtable | roundtable, convene the table, ask the table, what do the other models think |
 | cross-review | cross review, second opinion, ask another model to review, pre-merge check from codex |
+| docs-outbox | docs outbox, outbox sweep, pending docs, approve digest |
 
 ## MCP Server Not Running
 

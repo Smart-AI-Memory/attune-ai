@@ -440,7 +440,7 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 | Capability | Plugin only | Plugin + pip |
 | ---------- | ----------- | ------------ |
-| <!-- cap:skill_count -->27 auto-triggering skills<!-- /cap --> | Yes | Yes |
+| <!-- cap:skill_count -->28 auto-triggering skills<!-- /cap --> | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
 | <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap --> | -- | Yes |
@@ -596,7 +596,7 @@ from retrieval. Full methodology:
 | **Ready-to-use workflows** | 21 built-in | None | Build from scratch | None |
 | **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
 | **MCP integration** | 50 native tools | None | No | No |
-| **Auto-triggering skills** | 27 skills, natural language | None | None | None |
+| **Auto-triggering skills** | 28 skills, natural language | None | None | None |
 | **Socratic discovery** | Questions before execution | None | None | None |
 | **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
 

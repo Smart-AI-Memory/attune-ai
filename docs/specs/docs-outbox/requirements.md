@@ -1,9 +1,9 @@
 # Docs Outbox — Requirements (Phase 1 ratified)
 
-**Status:** Phase 1 built (2026-08-06 — D3 in
+**Status:** active (2026-08-06 — Phase 1 built, D3 in
 [decisions.md](decisions.md); receipts AC-1/AC-3/AC-4 recorded,
-AC-2 pending the chair's chip click; launchd job NOT installed —
-chair's call). Requirements ratified 2026-08-06 (D2, receipt
+AC-2 pending the chair's chip click; launchd install handed to the
+chair). Requirements ratified 2026-08-06 (D2, receipt
 `resp-20260806-073859`). Phase 1 = R1–R4 below; the pending-recall
 layer is DEFERRED (R5).
 **Slug:** `docs-outbox`
