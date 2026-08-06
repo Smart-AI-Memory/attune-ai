@@ -8,27 +8,16 @@ How the wizard system works internally: components, step lifecycle, session stat
 
 The wizard system provides guided, multi-step AI workflows. Users interact with wizards through questions, and the system orchestrates LLM calls, task decomposition, and previews behind a consistent interface.
 
-```text
-┌─────────────────────────────────────────────────────┐
-│                    BaseWizard                        │
-│  ┌──────────┐  ┌──────────┐  ┌───────────────────┐  │
-│  │ WizardStep│  │ WizardStep│  │    WizardStep    │  │
-│  │ QUESTION  │→ │ LLM_CALL │→ │ TASK_DECOMPOSE   │→ ...
-│  └──────────┘  └────┬─────┘  └────────┬──────────┘  │
-│                     │                  │             │
-│              ┌──────▼──────┐   ┌───────▼──────────┐  │
-│              │ Internal    │   │  TaskDecomposer  │  │
-│              │ Workflow    │   │  (XML parsing)   │  │
-│              │ (LLM bridge)│   └──────────────────┘  │
-│              └─────────────┘                         │
-│                                                      │
-│  ┌──────────────────────┐                            │
-│  │    WizardSession     │  ← state shared across     │
-│  │  (collected_data,    │    all steps                │
-│  │   step_results,      │                            │
-│  │   tasks, cost)       │                            │
-│  └──────────────────────┘                            │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph BaseWizard
+        Q["WizardStep<br/>QUESTION"] --> L["WizardStep<br/>LLM_CALL"]
+        L --> T["WizardStep<br/>TASK_DECOMPOSE"]
+        T --> More["..."]
+        L --> W["internal workflow<br/>(LLM bridge)"]
+        T --> D["TaskDecomposer<br/>(XML parsing)"]
+        S[("WizardSession<br/>collected_data, step_results,<br/>tasks, cost — shared across steps")]
+    end
 ```
 
 ---
@@ -202,27 +191,17 @@ Built-in wizards can delegate LLM steps to specialized workflow engines for deep
 
 ### How It Works
 
-```text
-BaseWizard._run_llm_step(step)
-         │
-         ▼
-BuiltinWizard._run_llm_step(step)    ← Override
-         │
-    ┌────┴─────────────────────┐
-    │ step.id == "analyze"?     │
-    │                           │
-    │ YES → _run_analysis_via_  │
-    │       workflow()          │
-    │   ┌──────────────────┐    │
-    │   │ WorkflowEngine   │    │
-    │   │ stage1 → stage2  │    │
-    │   │ → stage3 → ...   │    │
-    │   └──────────────────┘    │
-    │                           │
-    │ NO or EXCEPTION →         │
-    │   super()._run_llm_step() │
-    │   (fallback to basic LLM) │
-    └──────────────────────────┘
+```mermaid
+flowchart TD
+    B["BaseWizard._run_llm_step(step)"]
+    O["BuiltinWizard._run_llm_step(step)<br/>(override)"]
+    Q{"step.id ==<br/>&quot;analyze&quot;?"}
+    W["_run_analysis_via_workflow()<br/>WorkflowEngine: stage1 → stage2 → stage3"]
+    F["super()._run_llm_step()<br/>(fallback to basic LLM)"]
+    B --> O --> Q
+    Q -->|yes| W
+    Q -->|no, or exception| F
+    W -.exception.-> F
 ```
 
 ### Example: SecurityWizard

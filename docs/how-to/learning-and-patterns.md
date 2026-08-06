@@ -14,30 +14,15 @@ how to access what Attune has learned.
 
 The learning pipeline has three stages:
 
-```
-Session ends
-     │
-     ▼
-┌──────────────────────────────┐
-│  SessionEvaluator             │
-│  Is this session worth        │
-│  learning from?               │
-└──────────────────┬───────────┘
-                   │ EXCELLENT / GOOD
-                   ▼
-┌──────────────────────────────┐
-│  PatternExtractor             │
-│  What patterns occurred?      │
-│  (corrections, workarounds,   │
-│   preferences, techniques)    │
-└──────────────────┬───────────┘
-                   │
-                   ▼
-┌──────────────────────────────┐
-│  LearnedSkillsStorage         │
-│  Persist patterns as skills   │
-│  for future sessions          │
-└──────────────────────────────┘
+```mermaid
+flowchart TD
+    E(["session ends"])
+    SE["SessionEvaluator<br/>is this session worth learning from?"]
+    PE["PatternExtractor<br/>what patterns occurred? corrections,<br/>workarounds, preferences, techniques"]
+    LS["LearnedSkillsStorage<br/>persist patterns as skills<br/>for future sessions"]
+    E --> SE
+    SE -->|EXCELLENT / GOOD| PE
+    PE --> LS
 ```
 
 The session end hook at `src/attune/hooks/scripts/evaluate_session.py`

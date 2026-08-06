@@ -10,31 +10,17 @@ resilience patterns, and cross-agent learning.
 
 ## Architecture
 
-```text
-┌───────────────────────────────────────────────┐
-│            AgentFactory (entry point)          │
-│  create_agent() / create_workflow()            │
-└──────────────────┬────────────────────────────┘
-                   │ delegates to
-                   ▼
-┌──────────────────────────────────────────────┐
-│          Framework Adapters                   │
-│  Native │ LangChain │ LangGraph │ AutoGen │  │
-│                                  Haystack │  │
-└──────────────────┬───────────────────────────┘
-                   │ creates
-                   ▼
-┌──────────────────────────────────────────────┐
-│            BaseAgent instance                 │
-└─────┬────────────────────┬───────────────────┘
-      │ optional wrap       │ optional wrap
-      ▼                     ▼
-┌─────────────┐  ┌──────────────────────┐
-│ MemoryAware │  │   ResilientAgent     │
-│   Agent     │  │  circuit breaker     │
-│  (inner)    │  │  retry + timeout     │
-└─────────────┘  │  fallback (outer)    │
-                 └──────────────────────┘
+```mermaid
+flowchart TD
+    F["AgentFactory (entry point)<br/>create_agent() / create_workflow()"]
+    A["Framework adapters<br/>Native · LangChain · LangGraph ·<br/>AutoGen · Haystack"]
+    B["BaseAgent instance"]
+    M["MemoryAwareAgent<br/>(inner wrap)"]
+    R["ResilientAgent (outer wrap)<br/>circuit breaker, retry + timeout, fallback"]
+    F -->|delegates to| A
+    A -->|creates| B
+    B -->|optional wrap| M
+    B -->|optional wrap| R
 ```
 
 When `resilience_enabled` is set, the framework adapter

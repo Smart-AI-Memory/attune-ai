@@ -39,18 +39,14 @@ Three agents, three perspectives, no synthesis. Who resolves conflicts? Who prio
 
 Think of these as the verbs of agent orchestration—they describe *how* agents collaborate:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     COMPOSITION PATTERNS                         │
-├─────────────────────────────────────────────────────────────────┤
-│  Sequential  │  A → B → C        │  Pipeline, dependencies     │
-│  Parallel    │  A ‖ B ‖ C        │  Independent, speed         │
-│  Debate      │  A ⇄ B → Synth    │  Multiple perspectives      │
-│  Teaching    │  Junior → Expert  │  Cost + quality             │
-│  Refinement  │  Draft → Polish   │  Iterative improvement      │
-│  Adaptive    │  Route → Spec     │  Right-size by complexity   │
-└─────────────────────────────────────────────────────────────────┘
-```
+| Pattern | Shape | Good for |
+|---|---|---|
+| Sequential | A → B → C | Pipeline, dependencies |
+| Parallel | A ‖ B ‖ C | Independent, speed |
+| Debate | A ⇄ B → Synth | Multiple perspectives |
+| Teaching | Junior → Expert | Cost + quality |
+| Refinement | Draft → Polish | Iterative improvement |
+| Adaptive | Route → Spec | Right-size by complexity |
 
 Let's explore each one.
 
@@ -131,23 +127,14 @@ result = await team.execute({
 
 **When to use:** Independent checks that can run simultaneously.
 
-```
-┌─────────────────────────────────────────┐
-│           START                          │
-└─────────────┬───────────────────────────┘
-              │
-    ┌─────────┼─────────┐
-    ↓         ↓         ↓
-┌───────┐ ┌───────┐ ┌───────┐
-│ Sec   │ │ Perf  │ │ Docs  │
-│ Audit │ │ Check │ │ Check │
-└───┬───┘ └───┬───┘ └───┬───┘
-    │         │         │
-    └─────────┼─────────┘
-              ↓
-    ┌─────────────────┐
-    │   AGGREGATOR    │
-    └─────────────────┘
+```mermaid
+flowchart TD
+    S([start]) --> A["security audit"]
+    S --> P["perf check"]
+    S --> D["docs check"]
+    A --> AG[aggregator]
+    P --> AG
+    D --> AG
 ```
 
 ### Implementation
@@ -232,18 +219,11 @@ result = await team.execute({"release_candidate": "v4.4.0"})
 
 **When to use:** Complex decisions needing multiple expert perspectives.
 
-```
-┌──────────────┐          ┌──────────────┐
-│  Architect   │ ⇄ ⇄ ⇄ ⇄  │  Architect   │
-│  (Scale)     │          │  (Cost)      │
-└──────┬───────┘          └──────┬───────┘
-       │                         │
-       └───────────┬─────────────┘
-                   ↓
-           ┌──────────────┐
-           │  Synthesizer │
-           │  (Decision)  │
-           └──────────────┘
+```mermaid
+flowchart TD
+    A1["architect (scale)"] <-->|debate rounds| A2["architect (cost)"]
+    A1 --> SY["synthesizer (decision)"]
+    A2 --> SY
 ```
 
 ### Implementation
@@ -349,15 +329,12 @@ result = await team.execute({
 
 **When to use:** Cost optimization with quality assurance.
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Junior Writer  │  →  │  Quality Gate   │  →  │  Expert Review  │
-│    (CHEAP)      │     │    (check)      │     │   (CAPABLE)     │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-                              ↓ pass                    ↓
-                         ┌─────────┐              ┌─────────┐
-                         │  DONE   │              │ REFINED │
-                         └─────────┘              └─────────┘
+```mermaid
+flowchart LR
+    J["junior writer<br/>(CHEAP)"] --> G{"quality<br/>gate"}
+    G -->|pass| DONE([done])
+    G -->|fail| E["expert review<br/>(CAPABLE)"]
+    E --> R([refined])
 ```
 
 ### Implementation
@@ -449,13 +426,10 @@ result = await strategy.execute([], {
 
 **When to use:** Iterative improvement for high-quality output.
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   Drafter    │  →  │   Reviewer   │  →  │   Polisher   │
-│   (CHEAP)    │     │  (CAPABLE)   │     │  (PREMIUM)   │
-└──────────────┘     └──────────────┘     └──────────────┘
-       ↓                    ↓                    ↓
-   "Raw draft"      "Improved + notes"    "Publication-ready"
+```mermaid
+flowchart LR
+    D["drafter (CHEAP)<br/>raw draft"] --> RV["reviewer (CAPABLE)<br/>improved + notes"]
+    RV --> P["polisher (PREMIUM)<br/>publication-ready"]
 ```
 
 ### Implementation
@@ -530,18 +504,11 @@ result = await strategy.execute([], {
 
 **When to use:** Variable complexity tasks that need right-sizing.
 
-```
-           ┌─────────────────┐
-           │   Classifier    │
-           │    (CHEAP)      │
-           └────────┬────────┘
-                    │
-        ┌───────────┼───────────┐
-        ↓           ↓           ↓
-   ┌─────────┐ ┌─────────┐ ┌─────────┐
-   │ Simple  │ │ Medium  │ │ Complex │
-   │ (CHEAP) │ │(CAPABLE)│ │(PREMIUM)│
-   └─────────┘ └─────────┘ └─────────┘
+```mermaid
+flowchart TD
+    C["classifier (CHEAP)"] --> S1["simple (CHEAP)"]
+    C --> S2["medium (CAPABLE)"]
+    C --> S3["complex (PREMIUM)"]
 ```
 
 ### Implementation
