@@ -98,7 +98,9 @@ class TestTelemetryFeatures:
             assert "Event streaming" in error_message
             assert "requires the redis package" in error_message
             assert "pip install" in error_message
-            assert "redis.io" in error_message.lower()
+            # Assert the exact URL rather than a bare-domain substring
+            # (CodeQL py/incomplete-url-substring-sanitization, alert #179).
+            assert "https://redis.io/docs/install/" in error_message
             # The fix offered must be able to work: `attune-ai[redis]` was
             # an empty alias, so suggesting it could never resolve a
             # missing import (the #758 trap).
