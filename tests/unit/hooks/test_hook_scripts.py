@@ -315,7 +315,7 @@ class TestLessonsReminderMain:
             main()
 
         captured = capsys.readouterr()
-        assert "Lessons Learned" in captured.err
+        assert "attune.docs_outbox write" in captured.err
         assert captured.out == ""
 
     def test_returns_0_when_already_reminded_short_circuits_work_check(self) -> None:
