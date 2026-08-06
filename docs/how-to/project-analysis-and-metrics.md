@@ -14,30 +14,13 @@ one-off analysis, `attune workflow run health-check` is simpler.
 
 ## What the Project Index Does
 
-```
-attune workflow run health-check
-         │
-         ▼
-┌──────────────────────────────┐
-│  ProjectScanner               │
-│  Walks the file tree          │
-│  Categorizes every .py file   │
-│  Computes per-file metrics    │
-└──────────────┬───────────────┘
-               │
-               ▼
-┌──────────────────────────────┐
-│  ProjectIndex                 │
-│  Builds searchable index      │
-│  Caches to .attune/           │
-└──────────────┬───────────────┘
-               │
-               ▼
-┌──────────────────────────────┐
-│  ReportGenerator              │
-│  Health score, risk files,    │
-│  dependency graph             │
-└──────────────────────────────┘
+```mermaid
+flowchart TD
+    CMD(["attune workflow run health-check"])
+    PS["ProjectScanner<br/>walks the file tree, categorizes every<br/>.py file, computes per-file metrics"]
+    PI["ProjectIndex<br/>builds searchable index,<br/>caches to .attune/"]
+    RG["ReportGenerator<br/>health score, risk files,<br/>dependency graph"]
+    CMD --> PS --> PI --> RG
 ```
 
 ---

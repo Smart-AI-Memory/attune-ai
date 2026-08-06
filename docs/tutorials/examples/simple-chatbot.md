@@ -35,27 +35,13 @@ tiers that make Attune AI's memory powerful:
 
 ## Why Two Tiers of Memory?
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                    CODE REVIEW SESSION                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  SESSION MEMORY (Redis)             PERSISTENT MEMORY       │
-│  ─────────────────────────          ────────────────        │
-│  • Files reviewed this session      • Historical bugs       │
-│  • Issues found so far              • Developer patterns    │
-│  • Current PR context               • Codebase weak spots   │
-│                                                             │
-│  Expires: End of session            Persists: Forever       │
-│                                                             │
-│          ↓                                   ↓              │
-│          └─────────────┬─────────────────────┘              │
-│                        ▼                                    │
-│              ANTICIPATORY INSIGHT                           │
-│         "This auth change looks similar to the              │
-│          bug we found in PR #98. Check line 42."            │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    SM["Session memory (Redis) — expires with session<br/>files reviewed, issues found so far, current PR context"]
+    PM["Persistent memory — persists forever<br/>historical bugs, developer patterns, codebase weak spots"]
+    AI["Anticipatory insight<br/>&quot;This auth change looks similar to the<br/>bug we found in PR #98. Check line 42.&quot;"]
+    SM --> AI
+    PM --> AI
 ```
 
 ---

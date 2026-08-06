@@ -22,18 +22,11 @@ print(f"Confidence: {decision.confidence}")        # → 0.85
 
 ## How It Works
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                      SMART ROUTER                                │
-│   Developer: "Fix performance in auth.py"                        │
-│   → Routes to: PerformanceWizard + SecurityWizard               │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     WIZARD REGISTRY                              │
-│   17+ wizards with keywords, descriptions, and capabilities     │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    R["Smart router<br/>&quot;Fix performance in auth.py&quot;<br/>routes to PerformanceWizard + SecurityWizard"]
+    W["Wizard registry<br/>17+ wizards with keywords,<br/>descriptions, and capabilities"]
+    R --> W
 ```
 
 The router uses a keyword-based classifier to match requests to wizards. Each wizard is registered with:

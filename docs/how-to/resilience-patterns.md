@@ -87,27 +87,16 @@ async def call_external_api():
 
 ### Circuit States
 
-```
-     ┌─────────┐
-     │ CLOSED  │ ◄─── Normal operation
-     └────┬────┘
-          │ failures >= threshold
-          ▼
-     ┌─────────┐
-     │  OPEN   │ ◄─── Fail immediately
-     └────┬────┘
-          │ after reset_timeout
-          ▼
-   ┌───────────────┐
-   │  HALF_OPEN    │ ◄─── Testing recovery
-   └───────┬───────┘
-           │
-     ┌─────┴─────┐
-     │           │
-   success    failure
-     │           │
-     ▼           ▼
-  CLOSED       OPEN
+```mermaid
+stateDiagram-v2
+    [*] --> CLOSED
+    CLOSED --> OPEN: failures >= threshold
+    OPEN --> HALF_OPEN: after reset_timeout
+    HALF_OPEN --> CLOSED: test call succeeds
+    HALF_OPEN --> OPEN: test call fails
+    note right of CLOSED: normal operation
+    note right of OPEN: fail immediately
+    note right of HALF_OPEN: testing recovery
 ```
 
 ### With Fallback

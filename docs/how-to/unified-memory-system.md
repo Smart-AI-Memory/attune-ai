@@ -244,16 +244,12 @@ result = memory.persist_pattern(
 
 The pattern promotion workflow moves validated patterns from short-term to long-term memory:
 
-```
-  ┌─────────────┐         ┌──────────────┐         ┌─────────────┐
-  │  Discovery  │───────▶│   Staging    │───────▶│  Long-Term  │
-  │  (Agent)    │         │  (Review)    │         │  (Library)  │
-  └─────────────┘         └──────────────┘         └─────────────┘
-        │                       │                        │
-        │                       │                        │
-    Contributor            Validator                 Anyone
-    discovers              reviews &                can recall
-                           promotes
+```mermaid
+flowchart LR
+    D["Discovery (agent)<br/>contributor discovers"]
+    S["Staging (review)<br/>validator reviews and promotes"]
+    L["Long-term (library)<br/>anyone can recall"]
+    D --> S --> L
 ```
 
 ### Example Workflow
