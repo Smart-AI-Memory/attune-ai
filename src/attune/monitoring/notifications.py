@@ -11,19 +11,73 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
+import http.client
 import json
 import logging
 import smtplib
+import socket
+import ssl
 import urllib.error
+import urllib.parse
 import urllib.request
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from urllib.request import HTTPRedirectHandler, build_opener
 
 from attune.monitoring.models import AlertChannel, AlertConfig, AlertEvent
-from attune.monitoring.validators import _validate_webhook_url
+from attune.monitoring.validators import _validate_webhook_url, resolve_pinned_ip
 
 logger = logging.getLogger(__name__)
+
+
+class _PinnedHTTPHandler(urllib.request.HTTPHandler):
+    """Open HTTP connections to a pre-vetted IP (DNS-rebinding guard).
+
+    The socket connects to the pinned IP while the request keeps the
+    original Host header, so the server routes normally. Webhook
+    delivery deliberately ignores system proxies — a proxy would
+    re-resolve the hostname and reopen the rebinding window.
+    """
+
+    def __init__(self, pinned_ip: str) -> None:
+        super().__init__()
+        self._pinned_ip = pinned_ip
+
+    def http_open(self, req):  # noqa: ANN001, ANN201 — urllib handler protocol
+        pinned_ip = self._pinned_ip
+
+        class _Conn(http.client.HTTPConnection):
+            def connect(self) -> None:
+                self.sock = socket.create_connection(
+                    (pinned_ip, self.port), self.timeout, self.source_address
+                )
+
+        return self.do_open(_Conn, req)
+
+
+class _PinnedHTTPSHandler(urllib.request.HTTPSHandler):
+    """HTTPS variant of :class:`_PinnedHTTPHandler`.
+
+    TLS still verifies against the original hostname (SNI +
+    certificate check use ``self.host``); only the TCP connect target
+    is pinned.
+    """
+
+    def __init__(self, pinned_ip: str) -> None:
+        super().__init__(context=ssl.create_default_context())
+        self._pinned_ip = pinned_ip
+
+    def https_open(self, req):  # noqa: ANN001, ANN201 — urllib handler protocol
+        pinned_ip = self._pinned_ip
+
+        class _Conn(http.client.HTTPSConnection):
+            def connect(self) -> None:
+                sock = socket.create_connection(
+                    (pinned_ip, self.port), self.timeout, self.source_address
+                )
+                self.sock = self._context.wrap_socket(sock, server_hostname=self.host)
+
+        return self.do_open(_Conn, req, context=self._context)
 
 
 def deliver_notification(alert: AlertConfig, event: AlertEvent) -> bool:
@@ -66,9 +120,13 @@ def deliver_webhook(alert: AlertConfig, event: AlertEvent) -> bool:
     if not alert.webhook_url:
         return False
 
-    # Validate webhook URL to prevent SSRF (CWE-918)
+    # Validate webhook URL to prevent SSRF (CWE-918), then pin the
+    # vetted IP so the request-time connection can't be swapped to a
+    # private address by a second DNS resolution (rebinding TOCTOU).
     try:
         validated_url = _validate_webhook_url(alert.webhook_url)
+        hostname = urllib.parse.urlparse(validated_url).hostname or ""
+        pinned_ip = resolve_pinned_ip(hostname)
     except ValueError as e:
         logger.warning(
             "invalid_webhook_url: url=%s error=%s",
@@ -132,7 +190,14 @@ def deliver_webhook(alert: AlertConfig, event: AlertEvent) -> bool:
                 fp,
             )
 
-    opener = build_opener(_NoRedirect)
+    # build_opener would normally add ProxyHandler from the
+    # environment; the pinned handlers take precedence for http/https
+    # so delivery always connects to the vetted IP.
+    opener = build_opener(
+        _NoRedirect,
+        _PinnedHTTPHandler(pinned_ip),
+        _PinnedHTTPSHandler(pinned_ip),
+    )
 
     try:
         with opener.open(

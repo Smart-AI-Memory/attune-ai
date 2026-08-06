@@ -15,11 +15,14 @@ import socket
 import urllib.parse
 
 
-def _resolve_and_check_ip(hostname: str) -> None:
+def _resolve_and_check_ip(hostname: str) -> list[str]:
     """Resolve hostname via DNS and reject unsafe IPs.
 
     Args:
         hostname: The hostname to resolve
+
+    Returns:
+        The vetted resolved IPs, in resolver order.
 
     Raises:
         ValueError: If any resolved IP is private, loopback,
@@ -31,6 +34,7 @@ def _resolve_and_check_ip(hostname: str) -> None:
     except socket.gaierror as e:
         raise ValueError(f"Cannot resolve hostname '{hostname}': {e}") from e
 
+    vetted: list[str] = []
     for _family, _type, _proto, _canonname, sockaddr in addrinfo:
         ip_str = sockaddr[0]
         ip = ipaddress.ip_address(ip_str)
@@ -44,6 +48,40 @@ def _resolve_and_check_ip(hostname: str) -> None:
         ):
             if getattr(ip, attr):
                 raise ValueError(f"Webhook URL resolves to unsafe IP {ip_str} ({attr})")
+        vetted.append(ip_str)
+    return vetted
+
+
+def resolve_pinned_ip(hostname: str) -> str:
+    """Resolve a hostname once and return a vetted IP to pin.
+
+    Closes the DNS-rebinding TOCTOU: callers must CONNECT to the
+    returned IP rather than re-resolving the hostname at request
+    time (a second resolution could return a private address after
+    validation passed).
+
+    Args:
+        hostname: Hostname or IP literal from an already-validated URL.
+
+    Returns:
+        The IP address to connect to.
+
+    Raises:
+        ValueError: If the name doesn't resolve or resolves to any
+            unsafe IP.
+
+    """
+    try:
+        ipaddress.ip_address(hostname)
+    except ValueError:
+        vetted = _resolve_and_check_ip(hostname)
+        if not vetted:
+            # `from None`: the outer ValueError only signalled
+            # "not an IP literal" — unrelated to this failure.
+            raise ValueError(f"Cannot resolve hostname '{hostname}'") from None
+        return vetted[0]
+    # IP literal — already vetted by _validate_webhook_url.
+    return hostname
 
 
 def _validate_webhook_url(url: str) -> str:

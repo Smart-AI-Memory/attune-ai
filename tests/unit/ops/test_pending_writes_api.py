@@ -603,3 +603,52 @@ def test_journal_failure_does_not_block_put_status(
 
     # Journal failure was logged for separate investigation.
     assert any("journal append failed" in record.message for record in caplog.records)
+
+
+def test_git_status_runs_once_per_project_root(
+    tmp_project: Path,
+    client_factory,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Regression: N entries under one root spawn ONE git status.
+
+    The pre-batch implementation ran `git status -- <file>` per entry
+    (N+1 subprocess spawns on the event loop — the code-review High
+    perf finding). Enrichment must batch to one call per distinct
+    project root.
+    """
+    from attune.ops.routes import pending_writes as pw_routes
+
+    names = ["a.md", "b.md", "c.md"]
+    entries = []
+    for name in names:
+        target = tmp_project / name
+        target.write_text("x\n", encoding="utf-8")
+        entries.append(
+            _make_journal_dict(
+                project_root=tmp_project,
+                file_path=name,
+                after_sha256=pending_writes.compute_file_sha256(target),
+            )
+        )
+    journal_path = tmp_path / "journal.jsonl"
+    _write_journal(journal_path, entries)
+
+    git_status_calls: list[list[str]] = []
+    real_run = subprocess.run
+
+    def counting_run(cmd, *args, **kwargs):
+        if isinstance(cmd, list) and "status" in cmd:
+            git_status_calls.append(cmd)
+        return real_run(cmd, *args, **kwargs)
+
+    monkeypatch.setattr(pw_routes.subprocess, "run", counting_run)
+
+    client = client_factory(journal_path=journal_path)
+    body = client.get("/api/pending-writes").json()
+
+    assert len(body["pending"]) == len(names)
+    # All three files are untracked -> uncommitted.
+    assert body["summary"]["uncommitted_count"] == len(names)
+    assert len(git_status_calls) == 1

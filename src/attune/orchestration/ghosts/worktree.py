@@ -17,6 +17,11 @@ logger = logging.getLogger(__name__)
 
 _GHOST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
+# Commit refs are passed as a positional argument to `git worktree add`.
+# First char must be alphanumeric — a leading '-' would be parsed as a
+# git flag (argument injection). Covers HEAD~2, v1.0.0, feature/x, a@{u}.
+_COMMIT_REF_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/@^~{}-]*$")
+
 
 class GhostWorktreeError(RuntimeError):
     """Raised when a ghost worktree cannot be created or removed."""
@@ -57,6 +62,8 @@ class GhostWorktreeManager:
         """
         if not _GHOST_ID_PATTERN.match(ghost_id):
             raise GhostWorktreeError(f"invalid ghost id: {ghost_id!r}")
+        if not _COMMIT_REF_PATTERN.match(commit_ref):
+            raise GhostWorktreeError(f"invalid commit ref: {commit_ref!r}")
 
         target_path = os.path.join(self.base_dir, ghost_id)
         os.makedirs(self.base_dir, exist_ok=True)

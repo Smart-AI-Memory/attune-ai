@@ -200,15 +200,9 @@ class TestIsDashboardRunning:
         assert pw._is_dashboard_running(12345) is True
 
 
-class TestIsFileCommitted:
+class TestCollectDirtyPaths:
     def test_missing_project_root(self, tmp_path: Path) -> None:
-        assert pw._is_file_committed(tmp_path / "f.py", tmp_path / "absent") is None
-
-    def test_file_outside_root(self, tmp_path: Path) -> None:
-        root = tmp_path / "root"
-        root.mkdir()
-        outside = tmp_path / "elsewhere.py"
-        assert pw._is_file_committed(outside, root) is None
+        assert pw._collect_dirty_paths(tmp_path / "absent") is None
 
     def test_git_failure_returns_none(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -217,7 +211,7 @@ class TestIsFileCommitted:
             raise subprocess.TimeoutExpired(cmd="git", timeout=5)
 
         monkeypatch.setattr(pw.subprocess, "run", _boom)
-        assert pw._is_file_committed(tmp_path / "f.py", tmp_path) is None
+        assert pw._collect_dirty_paths(tmp_path) is None
 
     def test_nonzero_exit_returns_none(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -227,21 +221,39 @@ class TestIsFileCommitted:
             "run",
             lambda *a, **k: SimpleNamespace(returncode=128, stdout=""),
         )
-        assert pw._is_file_committed(tmp_path / "f.py", tmp_path) is None
+        assert pw._collect_dirty_paths(tmp_path) is None
 
-    def test_clean_and_dirty_outputs(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_parses_statuses_renames_and_quotes(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        stdout = ' M f.py\n?? new.txt\nR  old.py -> new.py\n?? "sp ace.md"\n'
         monkeypatch.setattr(
             pw.subprocess,
             "run",
-            lambda *a, **k: SimpleNamespace(returncode=0, stdout="\n"),
+            lambda *a, **k: SimpleNamespace(returncode=0, stdout=stdout),
         )
-        assert pw._is_file_committed(tmp_path / "f.py", tmp_path) is True
-        monkeypatch.setattr(
-            pw.subprocess,
-            "run",
-            lambda *a, **k: SimpleNamespace(returncode=0, stdout=" M f.py\n"),
-        )
-        assert pw._is_file_committed(tmp_path / "f.py", tmp_path) is False
+        assert pw._collect_dirty_paths(tmp_path) == {
+            "f.py",
+            "new.txt",
+            "old.py",
+            "new.py",
+            "sp ace.md",
+        }
+
+
+class TestIsFileCommitted:
+    def test_unknown_dirty_set_returns_none(self, tmp_path: Path) -> None:
+        assert pw._is_file_committed(tmp_path / "f.py", tmp_path, None) is None
+
+    def test_file_outside_root(self, tmp_path: Path) -> None:
+        root = tmp_path / "root"
+        root.mkdir()
+        outside = tmp_path / "elsewhere.py"
+        assert pw._is_file_committed(outside, root, set()) is None
+
+    def test_clean_and_dirty_membership(self, tmp_path: Path) -> None:
+        assert pw._is_file_committed(tmp_path / "f.py", tmp_path, set()) is True
+        assert pw._is_file_committed(tmp_path / "f.py", tmp_path, {"f.py"}) is False
 
 
 class TestIsRealEntry:
@@ -278,6 +290,7 @@ class TestEnrichEdges:
         enriched = pw._enrich(
             {"ts": "not-a-date", "dashboard_pid": "not-an-int"},
             now=datetime.now(timezone.utc),
+            dirty_by_root={},
         )
         assert enriched["age_seconds"] is None
         assert enriched["dashboard_still_running"] is False

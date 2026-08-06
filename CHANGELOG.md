@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Pending-writes API: one `git status` per project root** — the
+  dashboard's `/api/pending-writes` spawned a git subprocess and a
+  full file read per journal entry inside an async handler,
+  serializing the event loop (code-review High). Enrichment now
+  batches to a single `git status --porcelain -uall` per distinct
+  root and runs in FastAPI's threadpool (sync handler).
+- **Webhook delivery pins the vetted IP** — SSRF validation resolved
+  and checked the webhook hostname, but urllib re-resolved at
+  request time, leaving a DNS-rebinding TOCTOU (public→private
+  swap). Delivery now connects to the IP vetted at validation time;
+  TLS still verifies against the original hostname.
+- **Ghost-worktree commit refs validated** — `commit_ref` was passed
+  as a trailing positional to `git worktree add`; a leading `-`
+  could be parsed as a git flag (argument injection). Refs must now
+  start alphanumeric and match a conservative pattern.
+
 ## [11.2.1] — 2026-08-02
 
 Docs/metadata patch — no code changes. Ships the refreshed README

@@ -225,3 +225,25 @@ class TestTrajectoryPromoter:
         # Regression: the original deleted the worktree on failure,
         # destroying the winning trajectory's work.
         assert ghost.exists()
+
+
+class TestCommitRefValidation:
+    """Regression: commit_ref is a trailing positional to `git worktree
+    add` — a leading '-' would be parsed as a git flag (argument
+    injection, code-review Low security finding)."""
+
+    def test_leading_dash_ref_rejected_before_git_runs(self, temp_repo: Path) -> None:
+        manager = GhostWorktreeManager(repo_root=str(temp_repo))
+        with pytest.raises(GhostWorktreeError, match="invalid commit ref"):
+            manager.create_ghost_worktree("t9", commit_ref="--upload-pack=/bin/sh")
+
+    def test_whitespace_and_empty_refs_rejected(self, temp_repo: Path) -> None:
+        manager = GhostWorktreeManager(repo_root=str(temp_repo))
+        for bad in ("", "HEAD; rm -rf x", "a b"):
+            with pytest.raises(GhostWorktreeError, match="invalid commit ref"):
+                manager.create_ghost_worktree("t9", commit_ref=bad)
+
+    def test_normal_refs_still_work(self, temp_repo: Path) -> None:
+        manager = GhostWorktreeManager(repo_root=str(temp_repo))
+        path = Path(manager.create_ghost_worktree("refok", commit_ref="HEAD"))
+        assert path.exists()
