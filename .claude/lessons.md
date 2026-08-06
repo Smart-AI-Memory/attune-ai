@@ -21190,3 +21190,31 @@ def ", start_idx + 1)` for module-
   reference direction). Existing masters' `../../docs/specs/...`
   links survive only because they sit in FAQ-seed blockquotes the
   docs projections drop.
+
+- **Verifying a built mkdocs site on macOS: case-insensitive APFS
+  merges `site/ARCHITECTURE/` with `site/architecture/`, and
+  `--strict` exits 0 even when a nav-referenced page is silently
+  excluded**: 2026-08-06, placing a mermaid diagram on
+  docs/ARCHITECTURE.md. Two stacked traps: (a) an `exclude_docs`
+  glob (`ARCH*.md`, aimed at caps-name junk) swallowed the
+  nav-referenced page — the ONLY tell is an INFO line in the build
+  log ("...is included in the 'nav' configuration, but this file is
+  excluded from the built site"); strict mode still passes. (b)
+  Hunting the output path misleads because the case-insensitive
+  filesystem merges the would-be `ARCHITECTURE/` dir with the
+  `architecture/` hub dir. Recipe: verify placement via
+  `site/search/search_index.json` content lookup (or grep the built
+  page you EXPECT), and grep the build log for "excluded from the
+  built site" before trusting any nav edit.
+
+- **Material for MkDocs renders mermaid into markup that DOM probes
+  miss — `querySelector("svg")` and `shadowRoot` checks both come
+  back empty while the diagram IS drawn; the screenshot is the only
+  honest receipt**: 2026-08-06, spot-checking converted diagrams.
+  Probing the served page showed `<div class="mermaid"></div>` with
+  no svg child and no shadow root, which reads as "render failed" —
+  but the visual screenshot showed a fully drawn state machine.
+  Don't diagnose mermaid non-rendering from DOM queries on
+  Material pages; navigate, scroll the diagram into view, and
+  screenshot. (Same receipts-over-probes discipline as the widget
+  kernel: the receipt is a drawing, not a selector hit.)
