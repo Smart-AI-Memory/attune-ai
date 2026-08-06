@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>attune help</title>
-  <meta name="description" content="Browse and search the attune help corpus — tasks, concepts, reference, and troubleshooting for every feature." />
-  <meta property="og:title" content="attune help" />
-  <meta property="og:description" content="Browse and search the attune help corpus — tasks, concepts, reference, and troubleshooting for every feature." />
+  <title>Declarative chart widgets — a ~100-token JSON spec in, sealed-kernel SVG out — reference</title>
+  <meta name="description" content="| Symbol | Purpose | |--------|---------| | `attune.widgets.chart_widget_tool.render_chart_widget(chart_id, spec=None, patch=None, backend=None)` | Create or update a chart; returns `{success, html, c" />
+  <meta property="og:title" content="Declarative chart widgets — a ~100-token JSON spec in, sealed-kernel SVG out — reference" />
+  <meta property="og:description" content="| Symbol | Purpose | |--------|---------| | `attune.widgets.chart_widget_tool.render_chart_widget(chart_id, spec=None, patch=None, backend=None)` | Create or update a chart; returns `{success, html, c" />
   <meta property="og:type" content="website" />
-  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <link rel="canonical" href="https://attune-ai.dev/help/chart-widgets/reference" />
   <style>
     :root {
       --primary: #004ac6;
@@ -267,23 +267,103 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><span>Help</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/chart-widgets">Chart Widgets</a><span class="sep">&rsaquo;</span><span>reference</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
-  <main class="help-home">
-    <h1>attune help</h1>
-    <p class="lede">Learn, do, solve, and look things up — generated from the live attune codebase.</p>
-    <div class="search-wrap">
-      <input id="help-search" type="search" placeholder="Search help…" autocomplete="off" />
-      <ul id="search-results"></ul>
-    </div>
-    <div class="section-h">Browse by what you need</div>
-    <div class="intent-row"><a class="intent-card" href="/help/agents/task"><span class="it-title">Do something</span><span class="it-sub">tasks &amp; quickstarts</span></a><a class="intent-card" href="/help/agents/troubleshooting"><span class="it-title">Solve a problem</span><span class="it-sub">troubleshooting, errors, FAQ</span></a><a class="intent-card" href="/help/agents/concept"><span class="it-title">Understand a concept</span><span class="it-sub">how it works</span></a><a class="intent-card" href="/help/agents/reference"><span class="it-title">Look something up</span><span class="it-sub">reference</span></a></div>
-    <div class="section-h">All features</div>
-    <div class="feature-grid"><a class="feature-card" href="/help/agents"><span class="fc-name">Agents</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/bug-predict"><span class="fc-name">Bug Predict</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/chart-widgets"><span class="fc-name">Chart Widgets</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/cli"><span class="fc-name">Cli</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/code-quality"><span class="fc-name">Code Quality</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/configuration"><span class="fc-name">Configuration</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/cross-review"><span class="fc-name">Cross Review</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/deep-review"><span class="fc-name">Deep Review</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/doc-gen"><span class="fc-name">Doc Gen</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/elicitation-forms"><span class="fc-name">Elicitation Forms</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/fix"><span class="fc-name">Fix</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/fix-test"><span class="fc-name">Fix Test</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/help-system"><span class="fc-name">Help System</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/hooks"><span class="fc-name">Hooks</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/mcp-server"><span class="fc-name">Mcp Server</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/memory"><span class="fc-name">Memory</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/models"><span class="fc-name">Models</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/ops-dashboard"><span class="fc-name">Ops Dashboard</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/orchestration"><span class="fc-name">Orchestration</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/plugin"><span class="fc-name">Plugin</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/rag-grounding"><span class="fc-name">Rag Grounding</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/refactor-plan"><span class="fc-name">Refactor Plan</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/release-notes"><span class="fc-name">Release Notes</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/release-prep"><span class="fc-name">Release Prep</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/resilience"><span class="fc-name">Resilience</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/security-audit"><span class="fc-name">Security Audit</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/session-handoff"><span class="fc-name">Session Handoff</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/smart-test"><span class="fc-name">Smart Test</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/spec-engine"><span class="fc-name">Spec Engine</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/telemetry"><span class="fc-name">Telemetry</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/wizards"><span class="fc-name">Wizards</span><span class="fc-meta">11 kinds</span></a></div>
-    <script src="/help/search.js" defer></script>
-  </main>
+  <article class="markdown-body">
+<h1>Declarative chart widgets — a ~100-token JSON spec in, sealed-kernel SVG out</h1>
+<h2>Reference</h2>
+<h3>Public API</h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>attune.widgets.chart_widget_tool.render_chart_widget(chart_id, spec=None, patch=None, backend=None)</code></td>
+<td>Create or update a chart; returns <code>{success, html, chart_id, persistence}</code> or <code>{success: False, error | problems}</code>.</td>
+</tr>
+<tr>
+<td><code>attune.widgets.chart_widget_tool.merge_patch(target, patch)</code></td>
+<td>RFC 7386 JSON Merge Patch; mirrors the kernel's <code>applyPatch</code>.</td>
+</tr>
+<tr>
+<td><code>attune.widgets.chart_spec.validate_chart_spec(payload)</code></td>
+<td>Validate a raw spec dict into a <code>ChartSpec</code>; raises <code>ChartSpecError</code> with field-level problems.</td>
+</tr>
+<tr>
+<td><code>attune.widgets.chart_spec.ChartSpec</code></td>
+<td>The pydantic spec model (<code>v</code>, <code>type</code>, <code>data</code>, <code>encodings</code>, <code>options</code>).</td>
+</tr>
+<tr>
+<td><code>attune.widgets.chart_spec.ChartSpecError</code></td>
+<td>Carries <code>problems</code> — one message per field-level issue.</td>
+</tr>
+<tr>
+<td><code>attune.widgets.chart_components.expand_component(name, args)</code></td>
+<td>Expand a named component into a validated <code>ChartSpec</code>; <code>KeyError</code> lists valid names.</td>
+</tr>
+<tr>
+<td><code>attune.widgets.chart_components.COMPONENTS</code></td>
+<td>The component registry: <code>time_series</code>, <code>comparison_bars</code>, <code>kpi_tile</code>, <code>spec_progress</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3>Chart types and options</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Row shape</th>
+<th>Type-specific rules</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bar</code></td>
+<td>label + value</td>
+<td><code>options.stacked</code>, <code>options.horizontal</code>; <code>color</code> splits series</td>
+</tr>
+<tr>
+<td><code>line</code> / <code>scatter</code> / <code>area</code></td>
+<td>x + value</td>
+<td><code>color</code> splits series</td>
+</tr>
+<tr>
+<td><code>heatmap</code></td>
+<td>x + y + cell value</td>
+<td><code>encodings.color</code> required</td>
+</tr>
+<tr>
+<td><code>donut</code> / <code>treemap</code></td>
+<td>label + positive value</td>
+<td>non-positive rows dropped</td>
+</tr>
+<tr>
+<td><code>box</code></td>
+<td>label + <code>min</code>, <code>q1</code>, <code>median</code>, <code>q3</code>, <code>max</code></td>
+<td>stats pre-computed</td>
+</tr>
+<tr>
+<td><code>waterfall</code></td>
+<td>label + signed delta</td>
+<td><code>options.total</code> adds a computed total bar</td>
+</tr>
+</tbody>
+</table>
+<p><code>options</code>: <code>title</code> (str), <code>legend</code> (bool, default true), <code>stacked</code>
+(bar only), <code>horizontal</code> (bar only), <code>total</code> (waterfall only —
+enforced). <code>chart_id</code> must match <code>[A-Za-z0-9_-]{1,64}</code>.</p>
+<h3>MCP tool</h3>
+<p><code>chart_render_widget</code> — <code>chart_id</code> + <code>spec</code> to create or replace,
+<code>chart_id</code> + <code>patch</code> to update; pass the returned <code>html</code> straight to
+the widget surface (<code>mcp__visualize__show_widget</code>).</p>
+
+  </article>
   <footer>
     <span>Smart AI Memory</span>
     <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
