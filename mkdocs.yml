@@ -228,6 +228,7 @@ nav:
           - Hooks: hooks.md
           - Security: how-to/security-architecture.md
           - Chart Widgets (chartkit): chartkit.md
+          - Diagrams (mermaid): diagrams.md
       - Patterns:
           - Practical Patterns: how-to/practical-patterns.md
           - Resilience Patterns: how-to/resilience-patterns.md
@@ -362,7 +363,11 @@ plugins:
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.details
