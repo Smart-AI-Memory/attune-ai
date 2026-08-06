@@ -6,37 +6,37 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Practical patterns for sharing memory across agents using the surviving Attune primitives.">
+        <meta name="description" content="AI-powered developer workflows with cost optimization and multi-agent orchestration. Built exclusively for Anthropic Claude.">
       
       
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/how-to/practical-patterns/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/diagrams/">
       
       
-        <link rel="prev" href="../../diagrams/">
+        <link rel="prev" href="../chartkit/">
       
       
-        <link rel="next" href="../resilience-patterns/">
+        <link rel="next" href="../how-to/practical-patterns/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/empathy-brain-logo.png">
+      <link rel="icon" href="../assets/images/empathy-brain-logo.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Practical Patterns - Attune AI</title>
+        <title>Diagrams (mermaid) - Attune AI</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,9 +55,9 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -85,7 +85,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#practical-patterns-for-multi-agent-systems" class="md-skip">
+        <a href="#diagrams-structure-is-mermaids-job" class="md-skip">
           Skip to content
         </a>
       
@@ -99,9 +99,9 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Attune AI" class="md-header__button md-logo" aria-label="Attune AI" data-md-component="logo">
+    <a href=".." title="Attune AI" class="md-header__button md-logo" aria-label="Attune AI" data-md-component="logo">
       
-  <img src="../../assets/images/empathy-brain-logo.png" alt="logo">
+  <img src="../assets/images/empathy-brain-logo.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Practical Patterns
+              Diagrams (mermaid)
             
           </span>
         </div>
@@ -231,7 +231,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href=".." class="md-tabs__link">
         
   
   
@@ -252,7 +252,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../getting-started/" class="md-tabs__link">
+        <a href="../getting-started/" class="md-tabs__link">
           
   
   
@@ -272,7 +272,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../tutorials/" class="md-tabs__link">
+        <a href="../tutorials/" class="md-tabs__link">
           
   
   
@@ -294,7 +294,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
+        <a href="../how-to/" class="md-tabs__link">
           
   
   
@@ -314,7 +314,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../rag/" class="md-tabs__link">
+        <a href="../rag/" class="md-tabs__link">
           
   
   
@@ -334,7 +334,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../SECURITY_REVIEW/" class="md-tabs__link">
+        <a href="../SECURITY_REVIEW/" class="md-tabs__link">
           
   
   
@@ -354,7 +354,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../reference/" class="md-tabs__link">
+        <a href="../reference/" class="md-tabs__link">
           
   
   
@@ -374,7 +374,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../contributing/" class="md-tabs__link">
+        <a href="../contributing/" class="md-tabs__link">
           
   
   
@@ -394,7 +394,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../book-cover/" class="md-tabs__link">
+        <a href="../book-cover/" class="md-tabs__link">
           
   
   
@@ -414,7 +414,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../features/" class="md-tabs__link">
+        <a href="../features/" class="md-tabs__link">
           
   
   
@@ -448,9 +448,9 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Attune AI" class="md-nav__button md-logo" aria-label="Attune AI" data-md-component="logo">
+    <a href=".." title="Attune AI" class="md-nav__button md-logo" aria-label="Attune AI" data-md-component="logo">
       
-  <img src="../../assets/images/empathy-brain-logo.png" alt="logo">
+  <img src="../assets/images/empathy-brain-logo.png" alt="logo">
 
     </a>
     Attune AI
@@ -477,7 +477,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -558,7 +558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
@@ -586,7 +586,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/installation/" class="md-nav__link">
+      <a href="../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -614,7 +614,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/first-steps/" class="md-nav__link">
+      <a href="../getting-started/first-steps/" class="md-nav__link">
         
   
   
@@ -642,7 +642,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/quickstart-plugin/" class="md-nav__link">
+      <a href="../getting-started/quickstart-plugin/" class="md-nav__link">
         
   
   
@@ -670,7 +670,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/choose-your-path/" class="md-nav__link">
+      <a href="../getting-started/choose-your-path/" class="md-nav__link">
         
   
   
@@ -698,7 +698,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/redis-setup/" class="md-nav__link">
+      <a href="../getting-started/redis-setup/" class="md-nav__link">
         
   
   
@@ -726,7 +726,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/mcp-integration/" class="md-nav__link">
+      <a href="../getting-started/mcp-integration/" class="md-nav__link">
         
   
   
@@ -815,7 +815,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/" class="md-nav__link">
+      <a href="../tutorials/" class="md-nav__link">
         
   
   
@@ -843,7 +843,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/build-a-workflow/" class="md-nav__link">
+      <a href="../tutorials/build-a-workflow/" class="md-nav__link">
         
   
   
@@ -871,7 +871,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/fix-test/" class="md-nav__link">
+      <a href="../tutorials/fix-test/" class="md-nav__link">
         
   
   
@@ -899,7 +899,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/fix/" class="md-nav__link">
+      <a href="../tutorials/fix/" class="md-nav__link">
         
   
   
@@ -927,7 +927,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/chart-widgets/" class="md-nav__link">
+      <a href="../tutorials/chart-widgets/" class="md-nav__link">
         
   
   
@@ -955,7 +955,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/ops-dashboard/" class="md-nav__link">
+      <a href="../tutorials/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -1037,7 +1037,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/examples/simple-chatbot/" class="md-nav__link">
+      <a href="../tutorials/examples/simple-chatbot/" class="md-nav__link">
         
   
   
@@ -1065,7 +1065,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../tutorials/examples/multi-agent-team-coordination/" class="md-nav__link">
+      <a href="../tutorials/examples/multi-agent-team-coordination/" class="md-nav__link">
         
   
   
@@ -1165,7 +1165,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../how-to/" class="md-nav__link">
         
   
   
@@ -1250,7 +1250,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../which-memory-is-which/" class="md-nav__link">
+      <a href="../how-to/which-memory-is-which/" class="md-nav__link">
         
   
   
@@ -1278,7 +1278,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../unified-memory-system/" class="md-nav__link">
+      <a href="../how-to/unified-memory-system/" class="md-nav__link">
         
   
   
@@ -1306,7 +1306,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../lessons-workflow/" class="md-nav__link">
+      <a href="../how-to/lessons-workflow/" class="md-nav__link">
         
   
   
@@ -1399,7 +1399,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agent-factory/" class="md-nav__link">
+      <a href="../how-to/agent-factory/" class="md-nav__link">
         
   
   
@@ -1427,7 +1427,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../smart-router/" class="md-nav__link">
+      <a href="../how-to/smart-router/" class="md-nav__link">
         
   
   
@@ -1455,7 +1455,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../auto-chaining/" class="md-nav__link">
+      <a href="../how-to/auto-chaining/" class="md-nav__link">
         
   
   
@@ -1463,183 +1463,6 @@
     
   
     Auto-Chaining
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-          
-          
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Integration
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Integration
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../hooks/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Hooks
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../security-architecture/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Security
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../chartkit/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Chart Widgets (chartkit)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../diagrams/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Diagrams (mermaid)
   
 
     
@@ -1686,17 +1509,17 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="">
             
   
   
   <span class="md-ellipsis">
     
   
-    Patterns
+    Integration
   
 
     
@@ -1707,16 +1530,100 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_4_5">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4_4">
             <span class="md-nav__icon md-icon"></span>
             
   
-    Patterns
+    Integration
   
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/security-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../chartkit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chart Widgets (chartkit)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1741,7 +1648,7 @@
   <span class="md-ellipsis">
     
   
-    Practical Patterns
+    Diagrams (mermaid)
   
 
     
@@ -1759,7 +1666,7 @@
   <span class="md-ellipsis">
     
   
-    Practical Patterns
+    Diagrams (mermaid)
   
 
     
@@ -1785,10 +1692,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#software-structure-flowchart" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Software structure — flowchart
       
     </span>
   </a>
@@ -1796,10 +1703,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pattern-the-knowledge-accumulator" class="md-nav__link">
+  <a href="#interactions-sequencediagram" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pattern: The Knowledge Accumulator
+        Interactions — sequenceDiagram
       
     </span>
   </a>
@@ -1807,10 +1714,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
+  <a href="#databases-erdiagram" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Next Steps
+        Databases — erDiagram
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lifecycles-statediagram-v2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lifecycles — stateDiagram-v2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#more-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        More types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-not-mermaid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When NOT mermaid
       
     </span>
   </a>
@@ -1826,6 +1766,71 @@
 
               
             
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Patterns
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Patterns
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
               
                 
   
@@ -1833,7 +1838,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../resilience-patterns/" class="md-nav__link">
+      <a href="../how-to/practical-patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Practical Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/resilience-patterns/" class="md-nav__link">
         
   
   
@@ -1926,7 +1959,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../project-analysis-and-metrics/" class="md-nav__link">
+      <a href="../how-to/project-analysis-and-metrics/" class="md-nav__link">
         
   
   
@@ -1954,7 +1987,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../context-management/" class="md-nav__link">
+      <a href="../how-to/context-management/" class="md-nav__link">
         
   
   
@@ -1982,7 +2015,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../learning-and-patterns/" class="md-nav__link">
+      <a href="../how-to/learning-and-patterns/" class="md-nav__link">
         
   
   
@@ -2010,7 +2043,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../triage-code-quality/" class="md-nav__link">
+      <a href="../how-to/triage-code-quality/" class="md-nav__link">
         
   
   
@@ -2103,7 +2136,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../telemetry-and-signals/" class="md-nav__link">
+      <a href="../how-to/telemetry-and-signals/" class="md-nav__link">
         
   
   
@@ -2196,7 +2229,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ops-dashboard/" class="md-nav__link">
+      <a href="../how-to/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -2289,7 +2322,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../help-system-maintenance/" class="md-nav__link">
+      <a href="../how-to/help-system-maintenance/" class="md-nav__link">
         
   
   
@@ -2325,7 +2358,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../prerequisites/" class="md-nav__link">
+      <a href="../how-to/prerequisites/" class="md-nav__link">
         
   
   
@@ -2414,7 +2447,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../rag/" class="md-nav__link">
+      <a href="../rag/" class="md-nav__link">
         
   
   
@@ -2442,7 +2475,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../rag/embeddings-decision-2026-04-17/" class="md-nav__link">
+      <a href="../rag/embeddings-decision-2026-04-17/" class="md-nav__link">
         
   
   
@@ -2470,7 +2503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../rag/faithfulness-decision-2026-04-19/" class="md-nav__link">
+      <a href="../rag/faithfulness-decision-2026-04-19/" class="md-nav__link">
         
   
   
@@ -2559,7 +2592,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../SECURITY_REVIEW/" class="md-nav__link">
+      <a href="../SECURITY_REVIEW/" class="md-nav__link">
         
   
   
@@ -2641,7 +2674,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../CODING_STANDARDS/" class="md-nav__link">
+      <a href="../CODING_STANDARDS/" class="md-nav__link">
         
   
   
@@ -2669,7 +2702,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../EXCEPTION_HANDLING_GUIDE/" class="md-nav__link">
+      <a href="../EXCEPTION_HANDLING_GUIDE/" class="md-nav__link">
         
   
   
@@ -2766,7 +2799,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/" class="md-nav__link">
+      <a href="../reference/" class="md-nav__link">
         
   
   
@@ -2848,7 +2881,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../migration/9.0.0/" class="md-nav__link">
+      <a href="../migration/9.0.0/" class="md-nav__link">
         
   
   
@@ -2938,7 +2971,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/API_REFERENCE/" class="md-nav__link">
+      <a href="../reference/API_REFERENCE/" class="md-nav__link">
         
   
   
@@ -2966,7 +2999,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/configuration/" class="md-nav__link">
+      <a href="../reference/configuration/" class="md-nav__link">
         
   
   
@@ -2994,7 +3027,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/config/" class="md-nav__link">
+      <a href="../reference/config/" class="md-nav__link">
         
   
   
@@ -3022,7 +3055,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/pattern-library/" class="md-nav__link">
+      <a href="../reference/pattern-library/" class="md-nav__link">
         
   
   
@@ -3050,7 +3083,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/multi-agent/" class="md-nav__link">
+      <a href="../reference/multi-agent/" class="md-nav__link">
         
   
   
@@ -3078,7 +3111,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/persistence/" class="md-nav__link">
+      <a href="../reference/persistence/" class="md-nav__link">
         
   
   
@@ -3106,7 +3139,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/llm-toolkit/" class="md-nav__link">
+      <a href="../reference/llm-toolkit/" class="md-nav__link">
         
   
   
@@ -3134,7 +3167,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/ops-dashboard/" class="md-nav__link">
+      <a href="../reference/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -3224,7 +3257,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/wizards-getting-started/" class="md-nav__link">
+      <a href="../guides/wizards-getting-started/" class="md-nav__link">
         
   
   
@@ -3252,7 +3285,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/wizard-architecture/" class="md-nav__link">
+      <a href="../guides/wizard-architecture/" class="md-nav__link">
         
   
   
@@ -3288,7 +3321,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/cli-reference/" class="md-nav__link">
+      <a href="../reference/cli-reference/" class="md-nav__link">
         
   
   
@@ -3370,7 +3403,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/FAQ/" class="md-nav__link">
+      <a href="../reference/FAQ/" class="md-nav__link">
         
   
   
@@ -3398,7 +3431,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/TROUBLESHOOTING/" class="md-nav__link">
+      <a href="../reference/TROUBLESHOOTING/" class="md-nav__link">
         
   
   
@@ -3426,7 +3459,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/glossary/" class="md-nav__link">
+      <a href="../reference/glossary/" class="md-nav__link">
         
   
   
@@ -3516,7 +3549,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ARCHITECTURE/" class="md-nav__link">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
         
   
   
@@ -3544,7 +3577,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/ops-dashboard/" class="md-nav__link">
+      <a href="../architecture/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -3641,7 +3674,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributing/" class="md-nav__link">
+      <a href="../contributing/" class="md-nav__link">
         
   
   
@@ -3669,7 +3702,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../DEVELOPER_GUIDE/" class="md-nav__link">
+      <a href="../DEVELOPER_GUIDE/" class="md-nav__link">
         
   
   
@@ -3758,7 +3791,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../book-cover/" class="md-nav__link">
+      <a href="../book-cover/" class="md-nav__link">
         
   
   
@@ -3786,7 +3819,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/preface/" class="md-nav__link">
+      <a href="../guides/preface/" class="md-nav__link">
         
   
   
@@ -3814,7 +3847,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/foreword/" class="md-nav__link">
+      <a href="../guides/foreword/" class="md-nav__link">
         
   
   
@@ -3903,7 +3936,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/" class="md-nav__link">
+      <a href="../features/" class="md-nav__link">
         
   
   
@@ -3931,7 +3964,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/agents/" class="md-nav__link">
+      <a href="../features/agents/" class="md-nav__link">
         
   
   
@@ -3959,7 +3992,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/bug-predict/" class="md-nav__link">
+      <a href="../features/bug-predict/" class="md-nav__link">
         
   
   
@@ -3987,7 +4020,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/chart-widgets/" class="md-nav__link">
+      <a href="../features/chart-widgets/" class="md-nav__link">
         
   
   
@@ -4015,7 +4048,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/cli/" class="md-nav__link">
+      <a href="../features/cli/" class="md-nav__link">
         
   
   
@@ -4043,7 +4076,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/code-quality/" class="md-nav__link">
+      <a href="../features/code-quality/" class="md-nav__link">
         
   
   
@@ -4071,7 +4104,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/configuration/" class="md-nav__link">
+      <a href="../features/configuration/" class="md-nav__link">
         
   
   
@@ -4099,7 +4132,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/cross-review/" class="md-nav__link">
+      <a href="../features/cross-review/" class="md-nav__link">
         
   
   
@@ -4127,7 +4160,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/deep-review/" class="md-nav__link">
+      <a href="../features/deep-review/" class="md-nav__link">
         
   
   
@@ -4155,7 +4188,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/doc-gen/" class="md-nav__link">
+      <a href="../features/doc-gen/" class="md-nav__link">
         
   
   
@@ -4183,7 +4216,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/elicitation-forms/" class="md-nav__link">
+      <a href="../features/elicitation-forms/" class="md-nav__link">
         
   
   
@@ -4211,7 +4244,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/fix-test/" class="md-nav__link">
+      <a href="../features/fix-test/" class="md-nav__link">
         
   
   
@@ -4239,7 +4272,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/fix/" class="md-nav__link">
+      <a href="../features/fix/" class="md-nav__link">
         
   
   
@@ -4267,7 +4300,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/help-system/" class="md-nav__link">
+      <a href="../features/help-system/" class="md-nav__link">
         
   
   
@@ -4295,7 +4328,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/hooks/" class="md-nav__link">
+      <a href="../features/hooks/" class="md-nav__link">
         
   
   
@@ -4323,7 +4356,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/mcp-server/" class="md-nav__link">
+      <a href="../features/mcp-server/" class="md-nav__link">
         
   
   
@@ -4351,7 +4384,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/memory/" class="md-nav__link">
+      <a href="../features/memory/" class="md-nav__link">
         
   
   
@@ -4379,7 +4412,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/models/" class="md-nav__link">
+      <a href="../features/models/" class="md-nav__link">
         
   
   
@@ -4407,7 +4440,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/ops-dashboard/" class="md-nav__link">
+      <a href="../features/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -4435,7 +4468,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/orchestration/" class="md-nav__link">
+      <a href="../features/orchestration/" class="md-nav__link">
         
   
   
@@ -4463,7 +4496,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/plugin/" class="md-nav__link">
+      <a href="../features/plugin/" class="md-nav__link">
         
   
   
@@ -4491,7 +4524,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/rag-grounding/" class="md-nav__link">
+      <a href="../features/rag-grounding/" class="md-nav__link">
         
   
   
@@ -4519,7 +4552,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/refactor-plan/" class="md-nav__link">
+      <a href="../features/refactor-plan/" class="md-nav__link">
         
   
   
@@ -4547,7 +4580,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/release-notes/" class="md-nav__link">
+      <a href="../features/release-notes/" class="md-nav__link">
         
   
   
@@ -4575,7 +4608,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/release-prep/" class="md-nav__link">
+      <a href="../features/release-prep/" class="md-nav__link">
         
   
   
@@ -4603,7 +4636,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/resilience/" class="md-nav__link">
+      <a href="../features/resilience/" class="md-nav__link">
         
   
   
@@ -4631,7 +4664,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/security-audit/" class="md-nav__link">
+      <a href="../features/security-audit/" class="md-nav__link">
         
   
   
@@ -4659,7 +4692,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/session-handoff/" class="md-nav__link">
+      <a href="../features/session-handoff/" class="md-nav__link">
         
   
   
@@ -4687,7 +4720,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/smart-test/" class="md-nav__link">
+      <a href="../features/smart-test/" class="md-nav__link">
         
   
   
@@ -4715,7 +4748,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/spec-engine/" class="md-nav__link">
+      <a href="../features/spec-engine/" class="md-nav__link">
         
   
   
@@ -4743,7 +4776,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/telemetry/" class="md-nav__link">
+      <a href="../features/telemetry/" class="md-nav__link">
         
   
   
@@ -4771,7 +4804,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/wizards/" class="md-nav__link">
+      <a href="../features/wizards/" class="md-nav__link">
         
   
   
@@ -4826,10 +4859,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#software-structure-flowchart" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Software structure — flowchart
       
     </span>
   </a>
@@ -4837,10 +4870,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#pattern-the-knowledge-accumulator" class="md-nav__link">
+  <a href="#interactions-sequencediagram" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pattern: The Knowledge Accumulator
+        Interactions — sequenceDiagram
       
     </span>
   </a>
@@ -4848,10 +4881,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
+  <a href="#databases-erdiagram" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Next Steps
+        Databases — erDiagram
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lifecycles-statediagram-v2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lifecycles — stateDiagram-v2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#more-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        More types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-not-mermaid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When NOT mermaid
       
     </span>
   </a>
@@ -4878,86 +4944,77 @@
   
 
 
-<h1 id="practical-patterns-for-multi-agent-systems">Practical Patterns for Multi-Agent Systems<a class="headerlink" href="#practical-patterns-for-multi-agent-systems" title="Permanent link">&para;</a></h1>
-<p><em>Ready-to-use building blocks for agents that share memory.</em></p>
-<hr />
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>This chapter covers the memory primitives Attune ships today for
-coordinating work across agents:</p>
+<h1 id="diagrams-structure-is-mermaids-job">Diagrams — structure is mermaid's job<a class="headerlink" href="#diagrams-structure-is-mermaids-job" title="Permanent link">&para;</a></h1>
+<p>chartkit draws <em>quantity</em> (nine chart types from a JSON spec — see
+<a href="../chartkit/">Chart Widgets</a>). For <em>structure</em> — modules, flows,
+schemas, states — the ruled answer is <strong>mermaid</strong>: measured 1.2–2.1×
+cheaper to author than a widget spec, and it renders natively on
+GitHub (READMEs, PRs, issues), on this docs site, and in Claude
+artifacts. No build, no supplement. (The ruling and the measured
+probes live in <code>docs/specs/diagramkit/decisions.md</code>.)</p>
+<p>Every example below is a live render — view this page's source to
+copy the fence.</p>
+<h2 id="software-structure-flowchart">Software structure — <code>flowchart</code><a class="headerlink" href="#software-structure-flowchart" title="Permanent link">&para;</a></h2>
+<p>Modules and their dependencies:</p>
+<pre class="mermaid"><code>flowchart LR
+    tool[chart_widget_tool] --&gt; spec[chart_spec]
+    comp[chart_components] --&gt; spec
+    server[mcp.server] --&gt; tool
+    kernel["chartkit kernel (sealed JS)"] -.reads dist.- tool</code></pre>
+<h2 id="interactions-sequencediagram">Interactions — <code>sequenceDiagram</code><a class="headerlink" href="#interactions-sequencediagram" title="Permanent link">&para;</a></h2>
+<p>Who calls whom, in order — protocols, API flows:</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant C as Claude
+    participant T as chart_render_widget
+    participant K as kernel
+    C-&gt;&gt;T: chart_id + spec (~100 tokens)
+    T-&gt;&gt;T: validate (field-level errors)
+    T--&gt;&gt;C: {success, html}
+    C-&gt;&gt;K: html on the widget surface
+    K--&gt;&gt;C: rendered SVG
+    C-&gt;&gt;T: chart_id + patch (tens of bytes)</code></pre>
+<h2 id="databases-erdiagram">Databases — <code>erDiagram</code><a class="headerlink" href="#databases-erdiagram" title="Permanent link">&para;</a></h2>
+<p>Entities, relationships, cardinality:</p>
+<pre class="mermaid"><code>erDiagram
+    FORM_TEMPLATE ||--o{ FORM_RESPONSE : "cast as"
+    SESSION ||--o{ FORM_RESPONSE : collects
+    FORM_TEMPLATE {
+        string name PK
+        json slots
+    }
+    FORM_RESPONSE {
+        string response_id PK
+        string template_id FK
+    }</code></pre>
+<h2 id="lifecycles-statediagram-v2">Lifecycles — <code>stateDiagram-v2</code><a class="headerlink" href="#lifecycles-statediagram-v2" title="Permanent link">&para;</a></h2>
+<p>State machines — a spec's life, a job's phases:</p>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; Draft
+    Draft --&gt; Approved: chair review
+    Approved --&gt; Probing: Phase-0 authorized
+    Probing --&gt; Building: premise holds
+    Probing --&gt; Closed: premise fails
+    Building --&gt; Shipped
+    Closed --&gt; Probing: reopen trigger fires</code></pre>
+<h2 id="more-types">More types<a class="headerlink" href="#more-types" title="Permanent link">&para;</a></h2>
+<p><code>classDiagram</code> (UML), <code>gantt</code> (schedules), <code>gitGraph</code> (branch
+topology), <code>timeline</code>, C4 context diagrams, and network/cloud
+<code>architecture</code> diagrams — see the
+<a href="https://mermaid.js.org/intro/">mermaid documentation</a> for the full
+set. All render anywhere the four above do.</p>
+<h2 id="when-not-mermaid">When NOT mermaid<a class="headerlink" href="#when-not-mermaid" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>get_redis_memory()</code> — shared short-term memory backend</li>
-<li><code>AccessTier</code> — permission tiers controlling what an agent may
-  read, write, or validate</li>
-<li><code>StagedPattern</code> — a discovered pattern awaiting validation before
-  it enters the shared library</li>
-<li><code>Pattern</code> / <code>PatternLibrary</code> — the validated pattern store</li>
-</ul>
-<p>These primitives let independent agents accumulate and reuse
-knowledge through a common memory layer.</p>
-<hr />
-<h2 id="pattern-the-knowledge-accumulator">Pattern: The Knowledge Accumulator<a class="headerlink" href="#pattern-the-knowledge-accumulator" title="Permanent link">&para;</a></h2>
-<p><strong>Problem</strong>: Agents discover patterns during work. You want to
-accumulate that knowledge in a shared store without duplicates.</p>
-<p><strong>Solution</strong>: Stage each discovery as a <code>StagedPattern</code>, keyed by a
-fingerprint, so repeated discoveries deduplicate instead of piling
-up.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">get_redis_memory</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">AccessTier</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">StagedPattern</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">Pattern</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">PatternLibrary</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="k">def</span><span class="w"> </span><span class="nf">fingerprint</span><span class="p">(</span><span class="n">pattern_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate a stable fingerprint for deduplication.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">content</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pattern_type</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">12</span><span class="p">]</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="k">def</span><span class="w"> </span><span class="nf">stage_discovery</span><span class="p">(</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    <span class="n">pattern_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedPattern</span><span class="p">:</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a staged pattern from a discovery.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>    <span class="n">fp</span> <span class="o">=</span> <span class="n">fingerprint</span><span class="p">(</span><span class="n">pattern_type</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    <span class="k">return</span> <span class="n">StagedPattern</span><span class="p">(</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>        <span class="n">pattern_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;pat_</span><span class="si">{</span><span class="n">fp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>        <span class="n">agent_id</span><span class="o">=</span><span class="s2">&quot;learning_agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>        <span class="n">pattern_type</span><span class="o">=</span><span class="n">pattern_type</span><span class="p">,</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
-<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>        <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>        <span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>        <span class="n">code</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>        <span class="n">context</span><span class="o">=</span><span class="p">{},</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>    <span class="p">)</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>
-<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>
-<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="c1"># Usage</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="n">memory</span> <span class="o">=</span> <span class="n">get_redis_memory</span><span class="p">()</span>
-<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="n">tier</span> <span class="o">=</span> <span class="n">AccessTier</span><span class="o">.</span><span class="n">CONTRIBUTOR</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>
-<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="n">staged</span> <span class="o">=</span> <span class="n">stage_discovery</span><span class="p">(</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>    <span class="n">pattern_type</span><span class="o">=</span><span class="s2">&quot;security&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Input Sanitization&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Sanitize user input before database queries&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>    <span class="n">confidence</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span>
-<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a><span class="p">)</span>
-<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Staged pattern: </span><span class="si">{</span><span class="n">staged</span><span class="o">.</span><span class="n">pattern_id</span><span class="si">}</span><span class="s2"> (tier: </span><span class="si">{</span><span class="n">tier</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-</code></pre></div>
-<p><strong>Benefit</strong>: Fingerprint keys make repeated discoveries idempotent,
-so the shared store stays free of near-duplicate noise.</p>
-<hr />
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong><a href="../../reference/multi-agent/">API Reference</a></strong>: Full class
-  documentation</li>
-<li><strong><a href="../../tutorials/examples/multi-agent-team-coordination/">Examples</a></strong>:
-  Complete working examples</li>
+<li><strong>Quantitative shape</strong> — trends, distributions, comparisons:
+  that's <a href="../chartkit/">chartkit</a>; mermaid's chart types are
+  rudimentary.</li>
+<li><strong>Diagrams a session updates in place</strong> — a status DAG patched
+  turn by turn. That niche was probed and closed 2026-08-06
+  ("mermaid wins" — reopen on a second real occurrence; see the
+  diagramkit spec).</li>
+<li><strong>Notation-exact standards</strong> — symbol-true BPMN, vendor network
+  stencils. Mermaid approximates; if exactness is ever required,
+  that is an embed-a-specialized-renderer decision, not a mermaid
+  fence.</li>
 </ul>
 
 
@@ -4965,9 +5022,6 @@ so the shared store stays free of near-duplicate noise.</p>
 
 
 
-
-  
-  
 
 
 
@@ -5048,10 +5102,10 @@ so the shared store stays free of near-duplicate noise.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

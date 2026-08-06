@@ -18,7 +18,7 @@
         <link rel="prev" href="../how-to/security-architecture/">
       
       
-        <link rel="next" href="../how-to/practical-patterns/">
+        <link rel="next" href="../diagrams/">
       
       
         
@@ -1728,6 +1728,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../diagrams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Diagrams (mermaid)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -4915,6 +4943,12 @@ title or swapping data costs tens of tokens, not a re-emitted widget.</p>
 <p>New here? The hands-on walk-through — ask Claude for a chart, patch
 it, tour the 11.3.0 types, export SVG — is
 <a href="../tutorials/chart-widgets/">Tutorial: Chart Widgets with Claude</a>.</p>
+<pre class="mermaid"><code>flowchart LR
+    M["model authors a&lt;br/&gt;~100-token JSON spec"] --&gt;|chart_render_widget| V["validate&lt;br/&gt;(field-level errors)"]
+    V --&gt; K["sealed ~10KB kernel&lt;br/&gt;renders themable SVG"]
+    V --&gt; S[("session memory&lt;br/&gt;spec stored per chart_id")]
+    P["tens-of-bytes&lt;br/&gt;RFC 7386 patch"] --&gt;|same chart_id| S
+    S --&gt;|merged spec| V</code></pre>
 <h2 id="create-a-chart">Create a chart<a class="headerlink" href="#create-a-chart" title="Permanent link">&para;</a></h2>
 <p>Call the <code>chart_render_widget</code> MCP tool with a <code>chart_id</code> and a full
 <code>spec</code>, then pass the returned <code>html</code> to the widget surface
