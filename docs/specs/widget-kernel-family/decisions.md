@@ -35,3 +35,41 @@ tokens), not L2 (zero widget bytes through context) — the
 `show_widget` re-emission residual is named in requirements with
 its eliminator (elicitation V6 MCP Apps adapter) left sequenced in
 that spec.
+
+## D2 — D11 review-lane amendments (form-adopted, 2026-08-06)
+
+**Date:** 2026-08-06 · **Status:** decided (Patrick, via the D11
+disposition form — all four amendments selected) · **Provenance:**
+Codex cross-review lane, thread
+`review-review-wkf-d11-lane-20260806-0715`, ledger row in
+`docs/specs/cross-review/receipts.md`. The lead verified each
+Codex finding against the code before presenting (two confirmed,
+one narrowed), and added a fourth Codex missed.
+
+1. **F1 (Codex, high — confirmed):** R4 gained a reproducible
+   counting method (canonical compact JSON bytes, tokens ≈
+   bytes/4) and per-kernel numeric budgets. The numbers are
+   lead-proposed and standing unless the chair adjusts; the
+   task-4 harness re-baselines them with measured values.
+2. **F2 (Codex, high — confirmed, narrowed):** the spec text
+   defined no identity/persistence for formkit patching, but the
+   mechanism already ships in `chart_widget_tool`; R1 now binds it
+   normatively (`form_id`, canonical stored spec in session
+   memory, RFC 7386 patch, legible degradation).
+3. **F3 (Codex, medium — narrowed):** AC-3 now binds its first
+   consumer (ops Health tab metric cards; `spec_progress`
+   summaries named second) and is unsatisfiable without the R5
+   ruling recorded in the owning feature's decisions.md.
+4. **F4 (lead addition — Codex missed):** formkit's size budget
+   ruled up front at ≤ 40,960 bytes minified (2× default; the
+   construct family + postback won't fit chartkit's budget —
+   chartkit is 11.3KB unminified for charts alone). Retired
+   rather than kept as slack if formkit lands under the default.
+
+**Counter-case recorded:** amending a lead-authored spec in
+response to a lead-commissioned review, before the chair's full
+read, risks laundering the review. Mitigation: every amendment is
+traceable to a named finding with the lead's verification verdict
+stated, the numeric values are marked lead-proposed (not
+chair-ratified), and the chair's review of THIS amendment PR is
+the ratification step.
