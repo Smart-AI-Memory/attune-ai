@@ -6041,26 +6041,19 @@
 </code></pre></div></p>
 <hr />
 <h2 id="quick-decision-tree">Quick Decision Tree<a class="headerlink" href="#quick-decision-tree" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>Is this an optional feature (wizard, plugin, tip)?
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>├─ YES → Use graceful degradation pattern (Example 2)
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>│         - Catch specific exceptions first
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>│         - Broad Exception as last resort with logger.exception()
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>│         - Document with comment
-<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>│         - Return False/default value
-<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>└─ NO → Is this a security-related operation?
-<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>    ├─ YES → Use fail-secure pattern (Example 3)
-<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>    │         - Log all errors
-<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>    │         - Create findings for scan failures
-<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>    │         - Never silently skip
-<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a>    └─ NO → Use specific exception handlers
-<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a>              - Catch expected exceptions
-<a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>              - Log at appropriate level
-<a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>              - Re-raise critical errors
-<a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a>              - Add broad Exception ONLY if:
-<a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>                  * You log with logger.exception()
-<a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a>                  * You document why
-<a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a>                  * You use # noqa: BLE001
-</code></pre></div>
+<pre class="mermaid"><code>flowchart TD
+    Q1{"Optional feature?&lt;br/&gt;(wizard, plugin, tip)"}
+    Q2{"Security-related&lt;br/&gt;operation?"}
+    G["Graceful degradation (Example 2)&lt;br/&gt;specific catches first, broad last resort&lt;br/&gt;with logger.exception, return a default"]
+    FS["Fail-secure (Example 3)&lt;br/&gt;log all errors, create findings&lt;br/&gt;for scan failures, never silently skip"]
+    SP["Specific handlers&lt;br/&gt;catch expected exceptions, log at level,&lt;br/&gt;re-raise critical errors"]
+    Q1 --&gt;|yes| G
+    Q1 --&gt;|no| Q2
+    Q2 --&gt;|yes| FS
+    Q2 --&gt;|no| SP</code></pre>
+<p>A broad <code>except Exception</code> is allowed on the specific-handlers path
+ONLY when all three hold: you log with <code>logger.exception()</code>, you
+document why, and you mark the line <code># noqa: BLE001</code>.</p>
 <hr />
 <h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
 <ul>

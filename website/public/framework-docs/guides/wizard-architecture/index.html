@@ -5528,27 +5528,15 @@
 <hr />
 <h2 id="system-overview">System Overview<a class="headerlink" href="#system-overview" title="Permanent link">&para;</a></h2>
 <p>The wizard system provides guided, multi-step AI workflows. Users interact with wizards through questions, and the system orchestrates LLM calls, task decomposition, and previews behind a consistent interface.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────────┐
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                    BaseWizard                        │
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│  ┌──────────┐  ┌──────────┐  ┌───────────────────┐  │
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│  │ WizardStep│  │ WizardStep│  │    WizardStep    │  │
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│  │ QUESTION  │→ │ LLM_CALL │→ │ TASK_DECOMPOSE   │→ ...
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│  └──────────┘  └────┬─────┘  └────────┬──────────┘  │
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│                     │                  │             │
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│              ┌──────▼──────┐   ┌───────▼──────────┐  │
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│              │ Internal    │   │  TaskDecomposer  │  │
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│              │ Workflow    │   │  (XML parsing)   │  │
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│              │ (LLM bridge)│   └──────────────────┘  │
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│              └─────────────┘                         │
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│                                                      │
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│  ┌──────────────────────┐                            │
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│  │    WizardSession     │  ← state shared across     │
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│  │  (collected_data,    │    all steps                │
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│  │   step_results,      │                            │
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│  │   tasks, cost)       │                            │
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│  └──────────────────────┘                            │
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>└─────────────────────────────────────────────────────┘
-</code></pre></div>
+<pre class="mermaid"><code>flowchart LR
+    subgraph BaseWizard
+        Q["WizardStep&lt;br/&gt;QUESTION"] --&gt; L["WizardStep&lt;br/&gt;LLM_CALL"]
+        L --&gt; T["WizardStep&lt;br/&gt;TASK_DECOMPOSE"]
+        T --&gt; More["..."]
+        L --&gt; W["internal workflow&lt;br/&gt;(LLM bridge)"]
+        T --&gt; D["TaskDecomposer&lt;br/&gt;(XML parsing)"]
+        S[("WizardSession&lt;br/&gt;collected_data, step_results,&lt;br/&gt;tasks, cost — shared across steps")]
+    end</code></pre>
 <hr />
 <h2 id="core-components">Core Components<a class="headerlink" href="#core-components" title="Permanent link">&para;</a></h2>
 <h3 id="basewizard-basepy">BaseWizard (<code>base.py</code>)<a class="headerlink" href="#basewizard-basepy" title="Permanent link">&para;</a></h3>
@@ -5614,25 +5602,25 @@
 </tbody>
 </table>
 <h3 id="steptype-enum">StepType Enum<a class="headerlink" href="#steptype-enum" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>QUESTION       → Collect user input via AskUserQuestion
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>LLM_CALL       → Call an LLM with XML-enhanced prompt
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>TASK_DECOMPOSE → Break work into structured XML &lt;task&gt; specs
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>PREVIEW        → Show results for review
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>CONFIRM        → Final yes/no gate
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>QUESTION       → Collect user input via AskUserQuestion
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>LLM_CALL       → Call an LLM with XML-enhanced prompt
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>TASK_DECOMPOSE → Break work into structured XML &lt;task&gt; specs
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>PREVIEW        → Show results for review
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>CONFIRM        → Final yes/no gate
 </code></pre></div>
 <h3 id="wizardsession-sessionpy">WizardSession (<code>session.py</code>)<a class="headerlink" href="#wizardsession-sessionpy" title="Permanent link">&para;</a></h3>
 <p>Mutable state container shared across all steps in a single run.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>WizardSession
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>├── wizard_id          # Which wizard owns this session
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>├── run_id             # Unique run ID (UUID)
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>├── initial_context    # Read-only context from run() caller
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>├── collected_data     # User answers from QUESTION steps
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>├── step_results       # LLM/decompose outputs keyed by step ID
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>├── tasks              # Decomposed XML tasks
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>├── steps_completed    # Ordered list of completed step IDs
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>├── steps_skipped      # Steps skipped due to conditions
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>├── generated_output   # Final preview text
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>└── total_cost         # Accumulated LLM cost (USD)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>WizardSession
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── wizard_id          # Which wizard owns this session
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>├── run_id             # Unique run ID (UUID)
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>├── initial_context    # Read-only context from run() caller
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>├── collected_data     # User answers from QUESTION steps
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>├── step_results       # LLM/decompose outputs keyed by step ID
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>├── tasks              # Decomposed XML tasks
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>├── steps_completed    # Ordered list of completed step IDs
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>├── steps_skipped      # Steps skipped due to conditions
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>├── generated_output   # Final preview text
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>└── total_cost         # Accumulated LLM cost (USD)
 </code></pre></div>
 <p><strong>Layered lookup:</strong> <code>session.get(key)</code> checks <code>collected_data</code> first, then falls back to <code>initial_context</code>. This lets QUESTION steps override initial values.</p>
 <h3 id="wizardresult-basepy">WizardResult (<code>base.py</code>)<a class="headerlink" href="#wizardresult-basepy" title="Permanent link">&para;</a></h3>
@@ -5655,7 +5643,7 @@
 <li>Call <code>_dispatch_step()</code>, which routes to the handler by <code>step_type</code>.</li>
 </ol>
 <h3 id="2-question-steps">2. QUESTION Steps<a class="headerlink" href="#2-question-steps" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>User ──AskUserQuestion──→ FormEngine ──responses──→ Session.set()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>User ──AskUserQuestion──→ FormEngine ──responses──→ Session.set()
 </code></pre></div>
 <ul>
 <li>Creates a <code>FormSchema</code> from the step's <code>questions</code> list</li>
@@ -5664,17 +5652,17 @@
 <li>When no callback is provided, uses question defaults</li>
 </ul>
 <h3 id="3-llm_call-steps">3. LLM_CALL Steps<a class="headerlink" href="#3-llm_call-steps" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Session ──build_prompt_context()──→ PromptContext
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>                                      │
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>         WizardInternalWorkflow._render_xml_prompt()
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>                                      │
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>         WizardInternalWorkflow._call_llm(prompt, tier)
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>                                      │
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>         WizardInternalWorkflow._parse_xml_response()
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>                                      │
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>                                 process_step_result()
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>                                      │
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>                              Session.complete_step()
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Session ──build_prompt_context()──→ PromptContext
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>                                      │
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>         WizardInternalWorkflow._render_xml_prompt()
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>                                      │
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>         WizardInternalWorkflow._call_llm(prompt, tier)
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>                                      │
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>         WizardInternalWorkflow._parse_xml_response()
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>                                      │
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>                                 process_step_result()
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>                                      │
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>                              Session.complete_step()
 </code></pre></div>
 <ul>
 <li>Subclass provides <code>PromptContext</code> via <code>build_prompt_context()</code></li>
@@ -5703,16 +5691,16 @@
 </ul>
 <h3 id="conditional-steps">Conditional Steps<a class="headerlink" href="#conditional-steps" title="Permanent link">&para;</a></h3>
 <p>Steps can have a <code>condition</code> function:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_has_findings</span><span class="p">(</span><span class="n">session</span><span class="p">:</span> <span class="n">WizardSession</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">scan_result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">step_results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;scan&quot;</span><span class="p">,</span> <span class="p">{})</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">findings</span> <span class="o">=</span> <span class="n">scan_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;findings&quot;</span><span class="p">,</span> <span class="p">[])</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;severity&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span> <span class="s2">&quot;high&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">findings</span><span class="p">)</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">WizardStep</span><span class="p">(</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;generate_fixes&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">step_type</span><span class="o">=</span><span class="n">StepType</span><span class="o">.</span><span class="n">LLM_CALL</span><span class="p">,</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">condition</span><span class="o">=</span><span class="n">_has_findings</span><span class="p">,</span>  <span class="c1"># Only runs if high/critical findings exist</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_has_findings</span><span class="p">(</span><span class="n">session</span><span class="p">:</span> <span class="n">WizardSession</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">scan_result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">step_results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;scan&quot;</span><span class="p">,</span> <span class="p">{})</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">findings</span> <span class="o">=</span> <span class="n">scan_result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;findings&quot;</span><span class="p">,</span> <span class="p">[])</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;severity&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span> <span class="s2">&quot;high&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">findings</span><span class="p">)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">WizardStep</span><span class="p">(</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;generate_fixes&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">step_type</span><span class="o">=</span><span class="n">StepType</span><span class="o">.</span><span class="n">LLM_CALL</span><span class="p">,</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">condition</span><span class="o">=</span><span class="n">_has_findings</span><span class="p">,</span>  <span class="c1"># Only runs if high/critical findings exist</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="p">)</span>
 </code></pre></div>
 <hr />
 <h2 id="wizardinternalworkflow">WizardInternalWorkflow<a class="headerlink" href="#wizardinternalworkflow" title="Permanent link">&para;</a></h2>
@@ -5728,36 +5716,25 @@
 <h2 id="workflow-delegation-pattern">Workflow Delegation Pattern<a class="headerlink" href="#workflow-delegation-pattern" title="Permanent link">&para;</a></h2>
 <p>Built-in wizards can delegate LLM steps to specialized workflow engines for deeper analysis. This is the key architectural pattern for production wizards.</p>
 <h3 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>BaseWizard._run_llm_step(step)
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>         │
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>         ▼
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>BuiltinWizard._run_llm_step(step)    ← Override
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>         │
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    ┌────┴─────────────────────┐
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    │ step.id == &quot;analyze&quot;?     │
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    │                           │
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    │ YES → _run_analysis_via_  │
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    │       workflow()          │
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    │   ┌──────────────────┐    │
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>    │   │ WorkflowEngine   │    │
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    │   │ stage1 → stage2  │    │
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>    │   │ → stage3 → ...   │    │
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>    │   └──────────────────┘    │
-<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    │                           │
-<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>    │ NO or EXCEPTION →         │
-<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>    │   super()._run_llm_step() │
-<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>    │   (fallback to basic LLM) │
-<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>    └──────────────────────────┘
-</code></pre></div>
+<pre class="mermaid"><code>flowchart TD
+    B["BaseWizard._run_llm_step(step)"]
+    O["BuiltinWizard._run_llm_step(step)&lt;br/&gt;(override)"]
+    Q{"step.id ==&lt;br/&gt;&amp;quot;analyze&amp;quot;?"}
+    W["_run_analysis_via_workflow()&lt;br/&gt;WorkflowEngine: stage1 → stage2 → stage3"]
+    F["super()._run_llm_step()&lt;br/&gt;(fallback to basic LLM)"]
+    B --&gt; O --&gt; Q
+    Q --&gt;|yes| W
+    Q --&gt;|no, or exception| F
+    W -.exception.-&gt; F</code></pre>
 <h3 id="example-securitywizard">Example: SecurityWizard<a class="headerlink" href="#example-securitywizard" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_run_llm_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="n">WizardStep</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="k">if</span> <span class="n">step</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">&quot;scan&quot;</span><span class="p">:</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>        <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_scan_via_workflow</span><span class="p">()</span>  <span class="c1"># 3-stage pipeline</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>            <span class="k">return</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Workflow scan failed, falling back to LLM&quot;</span><span class="p">)</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_run_llm_step</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>  <span class="c1"># Graceful fallback</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_run_llm_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="n">WizardStep</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="k">if</span> <span class="n">step</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="s2">&quot;scan&quot;</span><span class="p">:</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>        <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_scan_via_workflow</span><span class="p">()</span>  <span class="c1"># 3-stage pipeline</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>            <span class="k">return</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Workflow scan failed, falling back to LLM&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_run_llm_step</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>  <span class="c1"># Graceful fallback</span>
 </code></pre></div>
 <p>The <code>_run_scan_via_workflow()</code> method chains multiple workflow stages:</p>
 <ol>
@@ -5768,52 +5745,52 @@
 <p>Each stage's output feeds into the next. The combined result is stored in the session.</p>
 <h3 id="lazy-instantiation">Lazy Instantiation<a class="headerlink" href="#lazy-instantiation" title="Permanent link">&para;</a></h3>
 <p>Workflows are created lazily and cached:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_get_or_create_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_security_workflow</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_security_workflow</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>        <span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.security_audit</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecurityAuditWorkflow</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_security_workflow</span> <span class="o">=</span> <span class="n">SecurityAuditWorkflow</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_security_workflow</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>        <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># Graceful degradation</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">_get_or_create_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_security_workflow</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_security_workflow</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>        <span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows.security_audit</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecurityAuditWorkflow</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_security_workflow</span> <span class="o">=</span> <span class="n">SecurityAuditWorkflow</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_security_workflow</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>        <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># Graceful degradation</span>
 </code></pre></div>
 <p>This ensures wizards work even when optional workflow dependencies aren't installed.</p>
 <hr />
 <h2 id="two-ways-to-create-wizards">Two Ways to Create Wizards<a class="headerlink" href="#two-ways-to-create-wizards" title="Permanent link">&para;</a></h2>
 <h3 id="1-python-based-basewizard-subclass">1. Python-Based (BaseWizard subclass)<a class="headerlink" href="#1-python-based-basewizard-subclass" title="Permanent link">&para;</a></h3>
 <p>For complex wizards with custom logic, workflow delegation, or conditional steps.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>class MyWizard(BaseWizard):
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    config = WizardConfig(...)
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    steps = [WizardStep(...), ...]
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    def build_prompt_context(self, step) → PromptContext
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    def process_step_result(self, step, result) → None
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>class MyWizard(BaseWizard):
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    config = WizardConfig(...)
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    steps = [WizardStep(...), ...]
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    def build_prompt_context(self, step) → PromptContext
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    def process_step_result(self, step, result) → None
 </code></pre></div>
 <p>All 5 built-in wizards use this approach. See Custom Wizard Development.</p>
 <h3 id="2-yaml-based-configdrivenwizard">2. YAML-Based (ConfigDrivenWizard)<a class="headerlink" href="#2-yaml-based-configdrivenwizard" title="Permanent link">&para;</a></h3>
 <p>For simpler wizards that don't need Python. Loaded from <code>.attune/wizards/*.yaml</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>schema_version: &quot;1.0&quot;
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>wizard_id: &quot;my-wizard&quot;
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>name: &quot;My Wizard&quot;
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>steps:
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>  - id: &quot;gather&quot;
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    step_type: &quot;question&quot;
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    questions: [...]
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>  - id: &quot;analyze&quot;
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    step_type: &quot;llm_call&quot;
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>    prompt_context:
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>      role: &quot;specialist&quot;
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>      goal: &quot;Analyze {session.target}&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>schema_version: &quot;1.0&quot;
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>wizard_id: &quot;my-wizard&quot;
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>name: &quot;My Wizard&quot;
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>steps:
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>  - id: &quot;gather&quot;
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    step_type: &quot;question&quot;
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    questions: [...]
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>  - id: &quot;analyze&quot;
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    step_type: &quot;llm_call&quot;
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    prompt_context:
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>      role: &quot;specialist&quot;
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>      goal: &quot;Analyze {session.target}&quot;
 </code></pre></div>
 <p>Session variable interpolation (<code>{session.xxx}</code>) replaces placeholders with values from earlier question steps. See <a href="../wizards-getting-started/">Getting Started</a>.</p>
 <hr />
 <h2 id="registry-and-discovery">Registry and Discovery<a class="headerlink" href="#registry-and-discovery" title="Permanent link">&para;</a></h2>
 <p>The wizard registry (<code>registry.py</code>) finds wizards through a 4-tier search:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>1. In-memory registry     ← Programmatic registration
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>2. Entry points           ← pip-installed packages (attune.wizards group)
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>3. Built-in loading       ← src/attune/wizards/builtin/
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>4. Custom YAML loading    ← .attune/wizards/*.yaml
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>1. In-memory registry     ← Programmatic registration
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>2. Entry points           ← pip-installed packages (attune.wizards group)
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>3. Built-in loading       ← src/attune/wizards/builtin/
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>4. Custom YAML loading    ← .attune/wizards/*.yaml
 </code></pre></div>
 <p>The legacy entry-point group <code>empathy.wizards</code> is still loaded for
 backward compatibility but emits a <code>DeprecationWarning</code> and will be
@@ -5834,37 +5811,37 @@ wizards under <code>[project.entry-points."attune.wizards"]</code>.</p>
 <p>Problem description + codebase context + constraints from <code>build_prompt_context()</code>.</p>
 <h3 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h3>
 <p>List of <code>DecomposedTask</code> objects:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>DecomposedTask
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>├── task_id           # &quot;1&quot;, &quot;2&quot;, etc.
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>├── name              # &quot;fix-type-coercion&quot;
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>├── objective          # What this task accomplishes
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>├── files_to_create    # [{path, description}]
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>├── files_to_modify    # [{path, description}]
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>├── validation_checks  # How to verify correctness
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>├── risks              # [{severity, description}]
-<a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>└── dependencies       # Task IDs that must complete first
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>DecomposedTask
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>├── task_id           # &quot;1&quot;, &quot;2&quot;, etc.
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>├── name              # &quot;fix-type-coercion&quot;
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>├── objective          # What this task accomplishes
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>├── files_to_create    # [{path, description}]
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>├── files_to_modify    # [{path, description}]
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>├── validation_checks  # How to verify correctness
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>├── risks              # [{severity, description}]
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>└── dependencies       # Task IDs that must complete first
 </code></pre></div>
 <h3 id="xml-schema">XML Schema<a class="headerlink" href="#xml-schema" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nt">&lt;tasks&gt;</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">  </span><span class="nt">&lt;task</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;1&quot;</span><span class="w"> </span><span class="na">name=</span><span class="s">&quot;short-name&quot;</span><span class="nt">&gt;</span>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="nt">&lt;objective&gt;</span>What<span class="w"> </span>this<span class="w"> </span>task<span class="w"> </span>accomplishes<span class="nt">&lt;/objective&gt;</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="nt">&lt;files-to-create&gt;</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">      </span><span class="nt">&lt;file</span><span class="w"> </span><span class="na">path=</span><span class="s">&quot;path/to/new.py&quot;</span><span class="nt">&gt;</span>Description<span class="nt">&lt;/file&gt;</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="nt">&lt;/files-to-create&gt;</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="nt">&lt;files-to-modify&gt;</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="w">      </span><span class="nt">&lt;file</span><span class="w"> </span><span class="na">path=</span><span class="s">&quot;path/to/existing.py&quot;</span><span class="nt">&gt;</span>What<span class="w"> </span>changes<span class="nt">&lt;/file&gt;</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="w">    </span><span class="nt">&lt;/files-to-modify&gt;</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">    </span><span class="nt">&lt;validation&gt;</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">      </span><span class="nt">&lt;check&gt;</span>How<span class="w"> </span>to<span class="w"> </span>verify<span class="w"> </span>correctness<span class="nt">&lt;/check&gt;</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">    </span><span class="nt">&lt;/validation&gt;</span>
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">    </span><span class="nt">&lt;risks&gt;</span>
-<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">      </span><span class="nt">&lt;risk</span><span class="w"> </span><span class="na">severity=</span><span class="s">&quot;medium&quot;</span><span class="nt">&gt;</span>Description<span class="w"> </span>and<span class="w"> </span>mitigation<span class="nt">&lt;/risk&gt;</span>
-<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="w">    </span><span class="nt">&lt;/risks&gt;</span>
-<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="w">    </span><span class="nt">&lt;dependencies&gt;</span>
-<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="w">      </span><span class="nt">&lt;dep&gt;</span>task-id<span class="nt">&lt;/dep&gt;</span>
-<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="w">    </span><span class="nt">&lt;/dependencies&gt;</span>
-<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="w">  </span><span class="nt">&lt;/task&gt;</span>
-<a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="nt">&lt;/tasks&gt;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">&lt;tasks&gt;</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">&lt;task</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;1&quot;</span><span class="w"> </span><span class="na">name=</span><span class="s">&quot;short-name&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="nt">&lt;objective&gt;</span>What<span class="w"> </span>this<span class="w"> </span>task<span class="w"> </span>accomplishes<span class="nt">&lt;/objective&gt;</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="nt">&lt;files-to-create&gt;</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">      </span><span class="nt">&lt;file</span><span class="w"> </span><span class="na">path=</span><span class="s">&quot;path/to/new.py&quot;</span><span class="nt">&gt;</span>Description<span class="nt">&lt;/file&gt;</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="nt">&lt;/files-to-create&gt;</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="w">    </span><span class="nt">&lt;files-to-modify&gt;</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="w">      </span><span class="nt">&lt;file</span><span class="w"> </span><span class="na">path=</span><span class="s">&quot;path/to/existing.py&quot;</span><span class="nt">&gt;</span>What<span class="w"> </span>changes<span class="nt">&lt;/file&gt;</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="w">    </span><span class="nt">&lt;/files-to-modify&gt;</span>
+<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="w">    </span><span class="nt">&lt;validation&gt;</span>
+<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="w">      </span><span class="nt">&lt;check&gt;</span>How<span class="w"> </span>to<span class="w"> </span>verify<span class="w"> </span>correctness<span class="nt">&lt;/check&gt;</span>
+<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="w">    </span><span class="nt">&lt;/validation&gt;</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="w">    </span><span class="nt">&lt;risks&gt;</span>
+<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="w">      </span><span class="nt">&lt;risk</span><span class="w"> </span><span class="na">severity=</span><span class="s">&quot;medium&quot;</span><span class="nt">&gt;</span>Description<span class="w"> </span>and<span class="w"> </span>mitigation<span class="nt">&lt;/risk&gt;</span>
+<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="w">    </span><span class="nt">&lt;/risks&gt;</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="w">    </span><span class="nt">&lt;dependencies&gt;</span>
+<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="w">      </span><span class="nt">&lt;dep&gt;</span>task-id<span class="nt">&lt;/dep&gt;</span>
+<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="w">    </span><span class="nt">&lt;/dependencies&gt;</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="w">  </span><span class="nt">&lt;/task&gt;</span>
+<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a><span class="nt">&lt;/tasks&gt;</span>
 </code></pre></div>
 <p>The parser uses regex extraction for robustness — LLM responses may include markdown fences or extra text around the XML.</p>
 <hr />
