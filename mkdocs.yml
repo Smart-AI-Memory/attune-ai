@@ -119,7 +119,6 @@ exclude_docs: |
   ADAPTIVE_ROUTING_*.md
   AGENT_*.md
   ANTHROPIC_*.md
-  ARCH*.md
   AUTH_*.md
   BATCH_*.md
   BLOG_*.md
