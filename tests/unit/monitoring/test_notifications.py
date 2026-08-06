@@ -8,6 +8,7 @@ TestWebhookDelivery in test_alerts.py (which covers the happy path).
 
 from __future__ import annotations
 
+import ssl
 import urllib.error
 from datetime import datetime
 from types import SimpleNamespace
@@ -380,3 +381,60 @@ class TestPinnedDelivery:
             opener.open("http://webhook.example/hook", timeout=1)
 
         assert connected == [("8.8.8.8", 80)]
+
+    def test_https_connection_targets_pinned_ip_with_original_sni(self, monkeypatch):
+        """HTTPS variant: TCP connects to the pinned IP, but TLS still
+        verifies against the ORIGINAL hostname (SNI unchanged) — the
+        property that keeps pinning from weakening cert validation."""
+        import socket as socket_mod
+        import urllib.request as urlreq
+
+        from attune.monitoring.notifications import _PinnedHTTPSHandler
+
+        connected: list[tuple] = []
+        wrapped: dict[str, str] = {}
+
+        class _FakeSock:
+            def close(self):
+                pass
+
+        def fake_create_connection(addr, *args, **kwargs):
+            connected.append(addr)
+            return _FakeSock()
+
+        def fake_wrap_socket(self, sock, server_hostname=None, **kwargs):
+            wrapped["server_hostname"] = server_hostname
+            raise OSError("stop before real TLS I/O")
+
+        monkeypatch.setattr(socket_mod, "create_connection", fake_create_connection)
+        monkeypatch.setattr(ssl.SSLContext, "wrap_socket", fake_wrap_socket)
+
+        opener = urlreq.build_opener(_PinnedHTTPSHandler("8.8.8.8"))
+        with pytest.raises(urllib.error.URLError):
+            opener.open("https://webhook.example/hook", timeout=1)
+
+        assert connected == [("8.8.8.8", 443)]
+        # SNI/cert verification target is the hostname, NOT the pinned IP.
+        assert wrapped["server_hostname"] == "webhook.example"
+
+    def test_resolve_pinned_ip_raises_when_resolution_is_empty(self, monkeypatch):
+        """Defensive branch: getaddrinfo returning no records."""
+        from attune.monitoring import validators
+
+        monkeypatch.setattr(validators, "_resolve_and_check_ip", lambda host: [])
+        with pytest.raises(ValueError, match="Cannot resolve hostname"):
+            validators.resolve_pinned_ip("empty.example")
+
+    def test_resolve_pinned_ip_returns_first_vetted_ip(self, monkeypatch):
+        import socket as socket_mod
+
+        from attune.monitoring import validators
+
+        def fake_getaddrinfo(host, *args, **kwargs):
+            return [
+                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 6, "", ("93.184.216.34", 0)),
+                (socket_mod.AF_INET, socket_mod.SOCK_STREAM, 6, "", ("8.8.8.8", 0)),
+            ]
+
+        monkeypatch.setattr(validators.socket, "getaddrinfo", fake_getaddrinfo)
+        assert validators.resolve_pinned_ip("public.example") == "93.184.216.34"
