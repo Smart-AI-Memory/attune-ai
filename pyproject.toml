@@ -71,7 +71,7 @@ dependencies = [
     "claude-agent-sdk>=0.2.101,<0.3.0",  # Agents SDK for workflow execution. Floor >=0.2.101 admits list_subagents/get_subagent_messages (transcript recovery) + TaskBudget (token-aware pacing). 0.2.x adopted deliberately 2026-06-16 (docs/specs/claude-agent-sdk-0-2-migration): the 0.1->0.2 behavioral breaks (MCP background-connection default, TodoWrite->Task tools, system-prompt default) do NOT affect attune — workflows pass no mcp_servers, never use TodoWrite, and set setting_sources=[] everywhere (sdk-subprocess-isolation) which already suppresses the Claude Code system prompt. Full keyless unit suite green (17857 passed) against 0.2.102. Ceiling <0.3.0 holds back the next major's breaking changes from a routine `uv lock --upgrade`; lockfile is at 0.2.105 (0.2.102's bundled CLI 2.1.178 emitted is_error-on-success, breaking integration-auth; 0.2.105 bundles CLI 2.1.183 which returns is_error:false on success — verified 2026-06-20). Remove the cap deliberately when adopting 0.3.x.
     "mcp>=1.23.0",  # MCP runtime — imported directly by attune.mcp.server (Server/stdio/types). Declared explicitly (was transitive via claude-agent-sdk) to pin the >=1.23.0 security floor; lockfile is at 1.27.0.
     "python-multipart>=0.0.26",  # Pin above GHSA-59g5-xgcq-4qw3 / GHSA-wp53-j4wj-2cfg / CVE-2026-40347 (transitive via mcp)
-    "cryptography>=46.0.7",  # CVE-2026-39892 (transitive via PyJWT[crypto])
+    "cryptography>=50.0.0",  # GHSA floor: >=44,<50 vulnerable (2026-08 advisory); was CVE-2026-39892
     "langsmith>=0.7.31,<2.0.0",  # GHSA-rr7j-v2q5-chgv (transitive via langchain-core)
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
     "python-frontmatter>=1.0.0,<2.0.0",  # YAML frontmatter parsing for help templates — required by attune.help.engine which backs the help_lookup MCP tool (progressive/workflow_help/precursor/search_tag modes all parse template files). Vanilla pip install attune-ai without this breaks every help_lookup mode except `preamble`.
@@ -355,7 +355,7 @@ all = [
     "httpx>=0.27.0,<1.0.0",  # For API testing
     # Security constraint overrides for transitive dependencies
     "urllib3>=2.3.0,<3.0.0",  # CVE fix: GHSA-gm62, GHSA-2xpw
-    "aiohttp>=3.14.1,<4.0.0",  # CVE fix: clears all GHSA advisories through 3.14.1
+    "aiohttp>=3.14.3,<4.0.0",  # CVE fix: clears all GHSA advisories through 3.14.3
     "filelock>=3.16.0,<4.0.0",  # CVE fix: GHSA-w853
 ]
 
