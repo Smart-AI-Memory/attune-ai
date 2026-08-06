@@ -1644,6 +1644,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Create a chart">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type-expansion-ruling-2026-08-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type-expansion ruling (2026-08-06)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -4761,6 +4778,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Create a chart">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#type-expansion-ruling-2026-08-06" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type-expansion ruling (2026-08-06)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -4819,7 +4853,7 @@
 <h1 id="chartkit-charts-the-model-specs-a-sealed-kernel-renders">chartkit — charts the model specs, a sealed kernel renders<a class="headerlink" href="#chartkit-charts-the-model-specs-a-sealed-kernel-renders" title="Permanent link">&para;</a></h1>
 <p>chartkit gives an LLM a cheap way to create and update charts: emit a
 small declarative JSON spec (or a patch against one), and a sealed
-~6.7KB JS kernel renders it as themable SVG. The model never writes
+~10KB JS kernel renders it as themable SVG. The model never writes
 renderer code. Updates are JSON Merge Patch (RFC 7386), so changing a
 title or swapping data costs tens of tokens, not a re-emitted widget.</p>
 <h2 id="create-a-chart">Create a chart<a class="headerlink" href="#create-a-chart" title="Permanent link">&para;</a></h2>
@@ -4840,11 +4874,35 @@ title or swapping data costs tens of tokens, not a re-emitted widget.</p>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="nt">&quot;options&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Monthly sales&quot;</span><span class="p">}</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">}</span>
 </code></pre></div>
-<p>Chart types: <code>bar</code>, <code>line</code>, <code>scatter</code>, <code>area</code>, <code>heatmap</code>. Encoding
-field types: <code>quantitative</code>, <code>nominal</code>, <code>temporal</code>. A <code>color</code> encoding
-splits series (bar/line/scatter/area) or carries cell values (heatmap,
-where it is required). <code>options</code>: <code>title</code>, <code>legend</code> (default true),
-<code>stacked</code> (bar).</p>
+<p>Chart types: <code>bar</code>, <code>line</code>, <code>scatter</code>, <code>area</code>, <code>heatmap</code>, <code>donut</code>,
+<code>box</code>, <code>waterfall</code>, <code>treemap</code>. Encoding field types: <code>quantitative</code>,
+<code>nominal</code>, <code>temporal</code>. A <code>color</code> encoding splits series
+(bar/line/scatter/area) or carries cell values (heatmap, where it is
+required). <code>options</code>: <code>title</code>, <code>legend</code> (default true), <code>stacked</code>
+(bar), <code>horizontal</code> (bar), <code>total</code> (waterfall — adds a computed
+total bar with the given label).</p>
+<p>Type-specific row shapes:</p>
+<ul>
+<li><code>box</code> — each row carries pre-computed numeric <code>min</code>, <code>q1</code>,
+  <code>median</code>, <code>q3</code>, <code>max</code> (the kernel never aggregates);
+  <code>encodings.x</code> names the label field.</li>
+<li><code>donut</code> / <code>treemap</code> — <code>encodings.y</code> is the positive slice/tile
+  value; non-positive rows are dropped (all-non-positive is an
+  error).</li>
+<li><code>waterfall</code> — <code>encodings.y</code> is a signed delta; bars run at a
+  cumulative offset, colored by sign.</li>
+</ul>
+<h3 id="type-expansion-ruling-2026-08-06">Type-expansion ruling (2026-08-06)<a class="headerlink" href="#type-expansion-ruling-2026-08-06" title="Permanent link">&para;</a></h3>
+<p>The four new types plus the <code>horizontal</code> option were selected by
+Patrick via the chartkit type-selection form (all six candidates
+adopted; stacked/grouped bar already shipped and is now documented).
+Recorded here per widget-kernel-family R5 — chartkit rules its own
+behavior. Excluded by the same ruling's rationale: gauges/bullet
+(infokit's stat-tiles territory), radar, histogram-with-binning
+(author bins in the spec), and combo/layered charts (a composition
+mechanism, not a type). The README's admission rule stands: types
+earn their way in under the 20,480-byte ceiling; the ceiling does
+not move (post-expansion build: 10,381 bytes minified).</p>
 <h2 id="update-a-chart-send-a-patch-not-a-widget">Update a chart — send a patch, not a widget<a class="headerlink" href="#update-a-chart-send-a-patch-not-a-widget" title="Permanent link">&para;</a></h2>
 <p>The current spec persists per <code>chart_id</code> in session memory. To update,
 send the same <code>chart_id</code> with a <code>patch</code> (RFC 7386: objects merge,
