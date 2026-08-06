@@ -297,3 +297,32 @@ class TestEnrichEdges:
         assert enriched["current_disk_sha256"] is None
         assert enriched["matches_journal"] is False
         assert enriched["is_committed"] is None
+
+
+class TestCollectDirtyPathsParsing:
+    """Line-level parsing branches in the batched git-status reader."""
+
+    def _run(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, stdout: str):
+        monkeypatch.setattr(
+            pw.subprocess,
+            "run",
+            lambda *a, **k: SimpleNamespace(returncode=0, stdout=stdout),
+        )
+        return pw._collect_dirty_paths(tmp_path)
+
+    def test_short_and_blank_lines_skipped(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Lines under 4 chars can't carry "XY <path>" — ignore them
+        # rather than emitting a bogus dirty entry.
+        assert self._run(monkeypatch, tmp_path, "\n M\nab\n") == set()
+
+    def test_whitespace_only_path_not_recorded(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        assert self._run(monkeypatch, tmp_path, " M    \n") == set()
+
+    def test_empty_output_means_clean_tree(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        assert self._run(monkeypatch, tmp_path, "") == set()

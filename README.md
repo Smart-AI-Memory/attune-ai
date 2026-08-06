@@ -473,12 +473,13 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 | **discovery-sweep** | pattern-scanner, verifier | Repo-wide bug-pattern sweep with verification, dashboard chips, and run drill-in |
 | **rag-code-gen** | retriever, generator | Citation-forced code generation grounded in the local attune-help corpus |
 | **orchestrated-health-check** | dynamic team via meta-orchestration | Same intent as `health-check` with explicit meta-orchestration of the sub-team |
+| **fix** | agent-fix | Applies a minimal in-place fix within the contract's scope, verified by a receipt (see `/fix`) |
 
 ---
 
 ## MCP Tools
 
-49 tools organized into 7 categories:
+50 tools organized into 7 categories:
 
 ### Workflow (22)
 
@@ -511,10 +512,11 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 `context_get` `context_set` `attune_get_level`
 `attune_set_level` `list_capabilities`
 
-### Elicitation (4)
+### Elicitation (5)
 
 `elicitation_ask` `elicitation_render_form`
 `elicitation_collect_response` `elicitation_render_widget`
+`chart_render_widget`
 
 ### Handoff (2)
 
@@ -562,10 +564,10 @@ from retrieval. Full methodology:
 
 | | Attune AI | Static Docs | Agent Frameworks | Coding CLIs |
 | --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 20 built-in | None | Build from scratch | None |
+| **Ready-to-use workflows** | 21 built-in | None | Build from scratch | None |
 | **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
-| **MCP integration** | 49 native tools | None | No | No |
-| **Auto-triggering skills** | 26 skills, natural language | None | None | None |
+| **MCP integration** | 50 native tools | None | No | No |
+| **Auto-triggering skills** | 27 skills, natural language | None | None | None |
 | **Socratic discovery** | Questions before execution | None | None | None |
 | **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
 
