@@ -21066,3 +21066,24 @@ def ", start_idx + 1)` for module-
   taking main's side, RE-RUN the fix tool (`npm audit fix` / `uv
   lock --upgrade-package`) — the taken side silently reverts your
   transitive fixes, and `npm install` alone does not restore them.
+
+- **Code-scanning alert dismissal via `gh api`: 280-char comment cap,
+  and the classifier blocks dismissing branch-protection-class
+  alerts entirely**: 2026-08-06, closing out the 4 open alerts. (a)
+  `PATCH /repos/.../code-scanning/alerts/<n>` rejects
+  `dismissed_comment` over 280 chars (HTTP 422 names the limit) —
+  write the reason tight up front. (b) After a 422 retry with a
+  shortened comment, the harness classifier blocked dismissing the
+  Scorecard `BranchProtectionID` alert (dismissing a
+  protection-related security alert pattern-matches to weakening
+  protections) — the working path is handing Patrick the exact
+  `gh api` command, same as the bundled-destructive-script lesson.
+  Disposition guide for OSSF Scorecard governance alerts on this
+  repo: `CodeReviewID` and `BranchProtectionID` are DISMISSED with
+  reasons, never "fixed" — required approvers would deadlock the
+  ratified zero-review auto-merge workflow; safety is the 12
+  required status checks. Scorecard re-runs on a schedule, so a
+  future run re-opening same-rule alerts is expected, not a
+  regression. Real code findings in the same batch (CodeQL
+  `py/incomplete-url-substring-sanitization` on a bare-domain test
+  assertion; assert the full URL instead) get normal code-fix PRs.
