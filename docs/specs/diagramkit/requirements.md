@@ -1,7 +1,8 @@
 # diagramkit — Phase-0 requirements: node-and-edge diagrams as a display member
 
-**Status:** CLOSED — mermaid wins (chair: Patrick, 2026-08-06 — D4
-in [decisions.md](decisions.md), ruling on the D3 probe results).
+**Status:** complete (2026-08-06) — CLOSED, mermaid wins (chair:
+Patrick — D4 in [decisions.md](decisions.md), ruling on the D3
+probe results).
 No kernel will be built from this spec as it stands. Reopen trigger:
 a SECOND real session needing in-place diagram updates
 (promote-on-repeat); any future build inherits D3's binding
