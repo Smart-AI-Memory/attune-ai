@@ -70,7 +70,10 @@ def _atomic_write(target: Path, text: str) -> None:
         prefix=f".{target.stem}.", suffix=".tmp", dir=str(target.parent)
     )
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+        # newline="\n" keeps LF on every platform — Windows text-mode
+        # translation would otherwise stamp CRLF into tracked LF markdown
+        # (the #1488 class; the repo also runs a mixed-line-ending hook).
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
             handle.write(text)
         os.replace(tmp_name, target)
     except OSError:
@@ -126,7 +129,7 @@ def write_artifact(
             fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
         except FileExistsError:
             continue
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as handle:
             handle.write(text)
         return path
     raise ValueError(f"more than 999 artifacts named {stamp}-{kind}-{slug} in one minute")

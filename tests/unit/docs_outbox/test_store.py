@@ -111,3 +111,33 @@ def test_archive_swept_moves_files(tmp_path):
     dest = archive_swept(artifacts, tmp_path)
     assert not list_artifacts(tmp_path)
     assert (dest / "20260806-1432-lesson-one.md").exists()
+
+
+class TestLineEndings:
+    """LF on every platform (#1488 class).
+
+    Text-mode writes translate LF->CRLF on Windows, which would stamp
+    CRLF into tracked LF markdown and trip the mixed-line-ending hook.
+    Asserted on RAW BYTES — read_text() would hide it via universal
+    newlines, which is exactly why the original bug shipped.
+    """
+
+    def test_artifact_bytes_use_lf(self, tmp_path):
+        path = write_artifact(
+            "lesson", "crlf", "line one\nline two\n", attune_home=tmp_path, now=NOW
+        )
+        raw = path.read_bytes()
+        assert b"\r\n" not in raw
+        assert b"line one\nline two\n" in raw
+
+    def test_applied_lesson_append_keeps_lf(self, tmp_path):
+        from attune.docs_outbox.sweep import apply_sweep
+
+        repo = tmp_path / "repo"
+        (repo / ".claude").mkdir(parents=True)
+        (repo / ".git").mkdir()
+        corpus = repo / ".claude" / "lessons.md"
+        corpus.write_bytes(b"# Lessons\n")
+        write_artifact("lesson", "appended", "- A\n- B\n", attune_home=tmp_path, now=NOW)
+        apply_sweep(repo, attune_home=tmp_path)
+        assert b"\r\n" not in corpus.read_bytes()
