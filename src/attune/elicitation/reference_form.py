@@ -4,11 +4,11 @@ This module is the single, code-verified example of a *complete*
 declarative form: one field per :class:`~attune.meta_workflows.models.QuestionType`
 member, each with realistic example values, plus a matching set of valid
 answers. It is deliberately a plain data constant — importable and
-copy-from-able today — not a template-store entry or a
-``form_from_template`` invocation. Those belong to the V7 template
-library, which is design-frozen until 2026-07-28; this reference is the
-freeze-safe precursor that becomes V7's first stored template verbatim
-once the freeze lifts.
+copy-from-able — not a template-store entry or a ``form_from_template``
+invocation. The V7 template library (:mod:`.template_store`) exists, but
+per its promote-on-repeat rule (R5) only *recurring* fork classes earn a
+stored template; this reference is documentation, not a recurring ask,
+so it stays a constant.
 
 The paired :data:`REFERENCE_FORM` / :data:`EXAMPLE_ANSWERS` round-trip
 through the existing seams with no changes:

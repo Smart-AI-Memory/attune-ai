@@ -58,6 +58,7 @@ from attune.elicitation.bridge import (
 )
 from attune.elicitation.elicitation_schema import form_to_elicitation_schema
 from attune.elicitation.reference_form import EXAMPLE_ANSWERS, REFERENCE_FORM
+from attune.elicitation.template_store import form_from_template, list_templates
 from attune.elicitation.widget import WIDGET_RESPONSE_MARKER, form_to_widget_html
 
 __all__ = [
@@ -67,6 +68,7 @@ __all__ = [
     "FormValidationError",
     "collect_form_response",
     "form_from_dict",
+    "form_from_template",
     "form_response_summary",
     "form_to_askuserquestion",
     "form_to_elicitation_schema",
@@ -75,6 +77,7 @@ __all__ = [
     "is_fully_inferred",
     "is_trivial_form",
     "keyboard_mode_enabled",
+    "list_templates",
     "needs_widget",
     "select_form_surface",
     "set_keyboard_mode",

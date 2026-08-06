@@ -35,6 +35,32 @@ question depends on an earlier answer, or batching would feel like a
 bureaucratic intake for a simple ask. The form never adds fields the
 ordinary Socratic-ambiguity judgement wouldn't already ask.
 
+## Step 0 — check the template library first (V7)
+
+Recurring fork classes are stored as named JSON templates
+(`src/attune/elicitation/templates/`). **Reach for a template before
+hand-building**: a reused template makes answers comparable across
+sessions (joinable on `FormResponse.template_id`).
+
+```python
+from attune.elicitation import form_from_template, list_templates
+
+form = form_from_template("session-contract", {"project": "attune-ai"})
+# ... render, then collect with the join key:
+response = collect_form_response(form, answers, template_id="session-contract")
+```
+
+Available templates:
+
+| Name | Construct | Purpose | Slots |
+|---|---|---|---|
+| `session-contract` | intake-form | Session-start protocol: mode, outcome, done-when, effort cap | `project` |
+
+Missing/extra slot values and malformed templates fail through the
+same every-problem-listed `FormValidationError` a hand-built dict
+gets. **Promote-on-repeat (R5):** a form earns templatehood on its
+SECOND recurrence — no speculative templates.
+
 ## Step 1 — build the declarative form (D3)
 
 A form is plain serializable data:
