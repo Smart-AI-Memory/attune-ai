@@ -278,7 +278,11 @@ class PersonalMemory:
         would violate D1 (label, never suppress by age).
 
         Failures are swallowed: a missing file or unreadable stat must not
-        cost the caller their recall results.
+        cost the caller their recall results. The handler is narrow on
+        purpose — ``load_memory`` already absorbs its own I/O errors, so the
+        only escapes left here are a malformed hit dict or a path the OS
+        refuses. Catching broadly would add a site to the shrink-only
+        broad-except ratchet for no coverage gain.
         """
         for hit in hits:
             try:
@@ -289,7 +293,7 @@ class PersonalMemory:
                 days = unverified_age_days(mem)
                 hit["unverified_days"] = days
                 hit["staleness"] = format_age_annotation(days)
-            except Exception:  # noqa: BLE001
+            except (KeyError, OSError, ValueError):
                 logger.debug("staleness_annotation_failed path=%s", hit.get("path"))
 
     def _resolve_hit_path(self, path_str: str) -> Path | None:

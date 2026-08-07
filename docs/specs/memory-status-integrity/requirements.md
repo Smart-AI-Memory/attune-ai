@@ -1,7 +1,7 @@
 # memory-status-integrity
 
-**Status:** draft (2026-08-07 — requirements; corpus measured, awaiting
-chair ruling on OQ4)
+**Status:** approved (2026-08-07) — chair approved advancing past
+requirements; OQ2/OQ4 resolved, R5 retired
 **Owner:** Patrick (chair)
 **Origin:** Banked 2026-07-10 as a named future spec in
 `project_memory_layer_audit_todo`, gated on `spec-status-integrity`

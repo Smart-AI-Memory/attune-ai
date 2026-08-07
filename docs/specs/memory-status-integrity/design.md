@@ -1,6 +1,7 @@
 # memory-status-integrity — design
 
-**Status:** draft (2026-08-07)
+**Status:** draft (2026-08-07) — P1 implemented; not yet reviewed by the
+chair
 **Requirements:** [requirements.md](requirements.md) — R1–R6
 **Decisions:** [decisions.md](decisions.md) — D1 (label, never suppress),
 D2, D3

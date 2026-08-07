@@ -1,6 +1,7 @@
 # memory-status-integrity — tasks
 
-**Status:** in-progress (2026-08-07)
+**Status:** active (2026-08-07) — P1 shipped; P2/P3 tasks unwritten until
+their phase is approved
 **Design:** [design.md](design.md) · **Decisions:** [decisions.md](decisions.md)
 
 P1 only. P2/P3 tasks are written when their phase is approved.
