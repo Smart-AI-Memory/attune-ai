@@ -63,6 +63,15 @@ class HandoffRow:
 
 
 @dataclass
+class OutboxRow:
+    """Docs-outbox monitoring row (docs-outbox R3 — display only)."""
+
+    count: int
+    oldest_days: float
+    stale: bool
+
+
+@dataclass
 class CollabInbox:
     """Everything the inbox renders; sources degrade independently."""
 
@@ -70,10 +79,19 @@ class CollabInbox:
     threads: list[ThreadRow] = field(default_factory=list)
     stale_handoffs: list[HandoffRow] = field(default_factory=list)
     untriaged_reviews: int = 0
+    docs_outbox: OutboxRow | None = None
 
     @property
     def action_count(self) -> int:
-        return len(self.threads) + len(self.stale_handoffs) + (1 if self.untriaged_reviews else 0)
+        # The outbox row is monitoring-only; it becomes actionable
+        # (counts toward the badge) only once STALE (2+ days).
+        stale_outbox = 1 if self.docs_outbox and self.docs_outbox.stale else 0
+        return (
+            len(self.threads)
+            + len(self.stale_handoffs)
+            + (1 if self.untriaged_reviews else 0)
+            + stale_outbox
+        )
 
 
 def _connect(url: str | None = None) -> Any | None:
@@ -182,7 +200,31 @@ def _untriaged_reviews(project_root: Path) -> int:
     return text.count(_NOT_TRIAGED)
 
 
-def read_inbox(project_root: Any, url: str | None = None) -> CollabInbox:
+def _outbox_row(attune_home: Path | None) -> OutboxRow | None:
+    """Docs-outbox pending row; None when empty or unreadable.
+
+    ``attune_home`` is required — ``None`` skips the row rather than
+    implicitly reading the real home directory (keeps callers and
+    tests hermetic; the ops route always passes ``config.attune_home``).
+    """
+    if attune_home is None:
+        return None
+    try:
+        from attune.docs_outbox.store import outbox_status
+
+        status = outbox_status(attune_home)
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: monitoring row degrades, never errors.
+        logger.warning("collab inbox: outbox status failed", exc_info=True)
+        return None
+    if status.count == 0:
+        return None
+    return OutboxRow(count=status.count, oldest_days=status.oldest_days, stale=status.stale)
+
+
+def read_inbox(
+    project_root: Any, url: str | None = None, attune_home: Path | None = None
+) -> CollabInbox:
     """The whole inbox; each source degrades independently."""
     root = Path(project_root)
     inbox = CollabInbox()
@@ -196,6 +238,7 @@ def read_inbox(project_root: Any, url: str | None = None) -> CollabInbox:
             inbox.board_reachable = False
     inbox.stale_handoffs = _stale_handoffs(root)
     inbox.untriaged_reviews = _untriaged_reviews(root)
+    inbox.docs_outbox = _outbox_row(attune_home)
     return inbox
 
 

@@ -1,8 +1,9 @@
 """Lessons Learned Reminder Hook
 
-Runs on Stop to prompt Claude to append new lessons to the
-canonical corpus (.claude/lessons.md post-T5-cutover; CLAUDE.md
-on pre-cutover layouts) before ending the session.
+Runs on Stop to prompt Claude to route new lessons through the
+docs outbox (docs/specs/docs-outbox R2) instead of appending
+.claude/lessons.md directly — concurrent sessions never conflict,
+and the curating sweep batches everything into ONE PR.
 
 Exit code 2 blocks the stop and injects the message into the
 conversation so Claude acts on it automatically. A sentinel
@@ -46,6 +47,10 @@ def has_session_work() -> bool:
             errors="replace",
             timeout=5,
         )
+        if result.returncode != 0:
+            # Not a git repo, or git failed — same "can't check" case as
+            # the exception below, so remind rather than silently skip.
+            return True
         return bool(result.stdout.strip())
     except Exception:  # noqa: BLE001
         # INTENTIONAL: Fallback — always remind if we can't check
@@ -59,12 +64,14 @@ def main() -> int:
 
     mark_reminded()
     print(
-        "Before ending the session, review what was learned and append "
-        "any new patterns, fixes, or insights worth remembering to the "
-        "## Lessons Learned section in .claude/lessons.md (the canonical "
-        "corpus; use .claude/CLAUDE.md only on pre-cutover layouts where "
-        "lessons.md doesn't exist). Mirror into CLAUDE.md's 'Lessons — "
-        "core' ONLY if core-worthy — then keep both copies in sync. "
+        "Before ending the session, review what was learned and route "
+        "any new patterns, fixes, or insights through the docs outbox "
+        "— do NOT append .claude/lessons.md directly: "
+        "`python -m attune.docs_outbox write --kind lesson --slug "
+        "<kebab-slug> --file <body.md>` (one artifact per lesson; the "
+        "curating sweep dedupes and batches them into ONE PR). "
+        "decisions.md rulings and spec status flips still merge now. "
+        "Mirror into CLAUDE.md's 'Lessons — core' ONLY if core-worthy. "
         "If nothing new was learned, reply 'No new lessons' and stop.",
         file=sys.stderr,
     )

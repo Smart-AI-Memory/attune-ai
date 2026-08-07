@@ -193,6 +193,7 @@ class TestHasSessionWork:
 
     def test_returns_false_when_git_output_empty(self) -> None:
         mock_result = MagicMock()
+        mock_result.returncode = 0
         mock_result.stdout = ""
 
         with patch("subprocess.run", return_value=mock_result):
@@ -204,6 +205,7 @@ class TestHasSessionWork:
 
     def test_returns_false_when_output_whitespace_only(self) -> None:
         mock_result = MagicMock()
+        mock_result.returncode = 0
         mock_result.stdout = "   \n  "
 
         with patch("subprocess.run", return_value=mock_result):
@@ -315,7 +317,7 @@ class TestLessonsReminderMain:
             main()
 
         captured = capsys.readouterr()
-        assert "Lessons Learned" in captured.err
+        assert "attune.docs_outbox write" in captured.err
         assert captured.out == ""
 
     def test_returns_0_when_already_reminded_short_circuits_work_check(self) -> None:
@@ -768,3 +770,17 @@ class TestFormatOnSaveMain:
             main()
 
         mock_validate.assert_called_once_with(path_str)
+
+
+class TestHasSessionWorkGitFailure:
+    """Non-zero git exit is a 'can't check' case, not 'no work'."""
+
+    def test_returns_true_when_git_exits_nonzero(self) -> None:
+        mock_result = MagicMock()
+        mock_result.returncode = 128  # e.g. not a git repository
+        mock_result.stdout = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            from attune.hooks.scripts.lessons_reminder import has_session_work
+
+            assert has_session_work() is True

@@ -39,7 +39,8 @@ def _ctx(request: Request, **extra: object) -> dict[str, object]:
 @router.get("/collab", response_class=HTMLResponse)
 async def collab_page(request: Request) -> HTMLResponse:
     """Action-required-first inbox; sources degrade independently."""
-    inbox = collab_data.read_inbox(request.app.state.config.project_root)
+    cfg = request.app.state.config
+    inbox = collab_data.read_inbox(cfg.project_root, attune_home=cfg.attune_home)
     templates = request.app.state.templates
     return templates.TemplateResponse(request, "collab.html", _ctx(request, inbox=inbox))
 

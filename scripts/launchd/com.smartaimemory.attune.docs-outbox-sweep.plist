@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- docs-outbox EOD sweep (docs/specs/docs-outbox R3).
+       TEMPLATE — install manually after a proven manual run:
+         cp scripts/launchd/com.smartaimemory.attune.docs-outbox-sweep.plist \
+            ~/Library/LaunchAgents/
+         launchctl bootstrap gui/$UID \
+            ~/Library/LaunchAgents/com.smartaimemory.attune.docs-outbox-sweep.plist
+       Disarm:
+         launchctl bootout gui/$UID/com.smartaimemory.attune.docs-outbox-sweep
+       Composes the digest only; approval stays with the chair (R4).
+       No API key, no Redis — read-only over ~/.attune/docs-outbox/. -->
+  <key>Label</key>
+  <string>com.smartaimemory.attune.docs-outbox-sweep</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-c</string>
+    <string>export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"; cd "$HOME/attune-ai" &amp;&amp; .venv/bin/python -m attune.docs_outbox sweep --repo-root "$HOME/attune-ai"</string>
+  </array>
+  <key>StandardOutPath</key>
+  <string>/Users/patrickroebuck/.attune/logs/docs-outbox-sweep.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/patrickroebuck/.attune/logs/docs-outbox-sweep.log</string>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>17</integer>
+    <key>Minute</key>
+    <integer>30</integer>
+  </dict>
+</dict>
+</plist>
