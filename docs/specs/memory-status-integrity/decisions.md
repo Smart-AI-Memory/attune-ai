@@ -152,6 +152,32 @@ phase argument, and a later reader would otherwise inherit it.
 
 ---
 
+## D3 — The sweep is a library in attune-ai, not a personal script (recorded 2026-08-07)
+
+There are two curated corpora with different owners:
+
+| Corpus | Files | Owner |
+|---|---|---|
+| `~/.claude/**/memory/` | 266 | harness-native; linted by a personal hook outside every repo |
+| `~/.attune/memory/` | 16 | attune-shipped (`src/attune/memory/personal.py`) |
+
+Writing the sweep as a personal script would fix Patrick's corpus and
+ship nothing. Writing it only against `~/.attune/memory/` would ship a
+feature exercised by 16 files while the 266-file corpus keeps rotting.
+
+**Decision:** the mechanism lands in attune-ai as a **path-parameterized
+library** over "a directory of frontmattered markdown memories," with
+both corpora as callers. The personal hook calls into it; the product
+uses it for its own store.
+
+This also gives P1 an honest test surface: the logic is exercised by
+hermetic fixtures, and the 266-file corpus becomes a *receipt* run
+rather than a test dependency — real-corpus assertions in CI would
+violate the home-directory isolation guard
+(`project_test_isolation_home_dir_leaks`).
+
+---
+
 ## D4 — The enforcement code is the authority, not the prose (recorded 2026-08-07)
 
 Three claims in the requirements draft were derived from documentation
@@ -183,32 +209,6 @@ Two mitigations fall out of this and are already in the design:
 - Agreement between two independent implementations is a signal worth
   keeping. `curated_audit` and `memory_lint` now cross-check each
   other; on the first clean run they found the same single violation.
-
----
-
-## D3 — The sweep is a library in attune-ai, not a personal script (recorded 2026-08-07)
-
-There are two curated corpora with different owners:
-
-| Corpus | Files | Owner |
-|---|---|---|
-| `~/.claude/**/memory/` | 266 | harness-native; linted by a personal hook outside every repo |
-| `~/.attune/memory/` | 16 | attune-shipped (`src/attune/memory/personal.py`) |
-
-Writing the sweep as a personal script would fix Patrick's corpus and
-ship nothing. Writing it only against `~/.attune/memory/` would ship a
-feature exercised by 16 files while the 266-file corpus keeps rotting.
-
-**Decision:** the mechanism lands in attune-ai as a **path-parameterized
-library** over "a directory of frontmattered markdown memories," with
-both corpora as callers. The personal hook calls into it; the product
-uses it for its own store.
-
-This also gives P1 an honest test surface: the logic is exercised by
-hermetic fixtures, and the 266-file corpus becomes a *receipt* run
-rather than a test dependency — real-corpus assertions in CI would
-violate the home-directory isolation guard
-(`project_test_isolation_home_dir_leaks`).
 
 ---
 
@@ -248,3 +248,86 @@ Fixed in the review follow-up PR; recorded so the pattern is legible.
 Meta: the reviewer that caught these is the same class of reader the
 age labels serve — the D4 lesson generalizes to "re-derive claims from
 the artifact, not from the session that produced it."
+
+---
+
+## D6 — P2 scope, ratified from round-table `q-memory-system-deep-dive-001` (recorded 2026-08-07)
+
+A three-model round table (Claude + Codex + Antigravity, 2 rounds)
+deliberated the P2 design. Round 1 split three ways on the ranking
+signal; round 2 converged. The chair promoted the converged scope.
+Full transcript: `~/.attune/reports/roundtable/q-memory-system-deep-dive-001.md`.
+
+**The motivating evidence (decisive, all seats):** the memory that
+rotted *within hours* (`project_rag_gate_corpus_stale`) was project-type
+at age ~0 — age × volatility ranked it **last on its most dangerous
+day**. Project facts rot on *events* (commits, merges, closed issues,
+moved paths), not on the clock. Age is the wrong primary signal for the
+one type that rots fastest.
+
+### Ratified P2 scope (the union every seat endorsed)
+
+1. **Fix the frontmatter-parser divergence FIRST — promoted from
+   "deferred" (D5 item 3) to a P2 gate.** `verified:` lives in
+   frontmatter; if the audit parser and the canonical linter disagree on
+   folded multi-line YAML, the field the whole loop depends on is
+   unreliable on exactly the drifting files. Unanimous blocker.
+2. **`verified:` as strict ISO date, distinct from mtime, human-set
+   only**, plus **content-digest binding**: a substantive edit
+   invalidates verification; a formatting-only change (canonicalised)
+   preserves it. Keep an **append-only verdict history** (who / when /
+   what-digest), not a bare mutable date — the failure mode to design
+   against is a thoughtless "keep all" freshness button.
+3. **keep / wrong / sharper verdict loop.** `wrong` **tombstones**, does
+   not delete — deletion breaks `MEMORY.md` pointers and `[[links]]`,
+   and "we believed X, it was wrong because Y" is itself high-value
+   memory. `sharper` = edit + verify in one motion, name-stable.
+   **Verdicts propagate to Redis immediately** (invalidate/rewrite the
+   key), or a session recalls known-wrong memory for a full hydration
+   cycle — failing the spec's own goal.
+4. **Ref-triggered queue-jump for project-type memories.** Typed refs
+   (`file:` / `sha:` / `pr:` / `issue:`) resolved by an **existence
+   check** against local git (optionally `gh`) → flip to "review",
+   floated above the age-ranked queue, trigger reason exposed. Sits
+   inside D1 (only promotes into review, never demotes or hides) and D6
+   of `curated-memory-productionization` (routes to a human, never
+   auto-certifies).
+5. **Render epistemic STATUS, not just age.** "N days unverified" is a
+   number without calibration — the reading model has no base rate for
+   90 days on reference vs project. Render a discrete tier
+   (**settled / check-before-acting / suspect**) plus author-class and
+   verification-state, and for "suspect + project" an explicit "verify
+   against repo before acting" instruction on the card. **The raw tier
+   (least trustworthy) currently has the least labelling and needs the
+   strongest framing** — cross-links `memory-security-hardening` R1.
+
+### Unresolved sub-decision left to the chair at design time
+
+The one residual split, both sides inside D1/D6 — a one-line ranking
+choice, not a blocker:
+
+- **Ref-trigger as PRIMARY signal for project-type** (Codex,
+  Antigravity), age × volatility demoted to tiebreaker; **vs.**
+- **Ref-trigger as a cheap queue-jump BOOLEAN** layered on the
+  age × volatility baseline (Claude) — verdict loop ships first, the
+  boolean is an existence check only, fail-open, and is *cut entirely*
+  if its implementation creeps toward the sibling spec's diff engine.
+
+And the evidence source: **local-git-only** (Antigravity, keeps P2
+self-contained) vs **allow `gh` for `pr:`/`issue:`** (Codex/Claude,
+single existence check per ref, fail-open on unreachable).
+
+**Moderator note:** Claude's boolean-with-hard-cap is the lower-risk
+first cut — its hit-rate becomes the evidence that justifies building
+the full ref engine in `memory-claim-verification`. But this is the
+chair's call and both are ratifiable; recorded here unresolved rather
+than forced.
+
+### The binding constraint every seat named
+
+The system's scarce resource is **one human's attention**. A stale
+`verified:` date is **worse than none** (false endorsement), so
+verified-age must re-enter ranking, never exempt a file; cap the review
+queue (~3 per triage); one-keystroke verdicts. If P2 ceremony gets
+abandoned, the corpus fills with stale endorsements — a worse end-state
+than today's honest "unverified". Design for abandonment.
