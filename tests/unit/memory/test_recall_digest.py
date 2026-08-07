@@ -84,8 +84,28 @@ class TestDigestFormDict:
 
     def test_detail_truncated(self) -> None:
         items = digest_form_dict(NODES)["fields"][0]["progress_items"]
-        assert len(items[1]["detail"]) <= DETAIL_MAX
-        assert items[1]["detail"].endswith("…")
+        description_part = items[1]["detail"].split("  ⟨")[0]
+        assert len(description_part) <= DETAIL_MAX
+        assert description_part.endswith("…")
+
+    def test_age_label_appended_from_updated_at(self) -> None:
+        """R2 (memory-status-integrity): the digest is a recall surface and
+        must carry the unverified-age label. Label only — order untouched."""
+        items = digest_form_dict(NODES)["fields"][0]["progress_items"]
+        assert all("days unverified⟩" in item["detail"] for item in items)
+        # D1: labelling must not reorder — fixture order preserved.
+        assert [item["label"] for item in items] == ["Memory architecture", "Goal framing"]
+
+    def test_missing_updated_at_yields_no_label_and_no_crash(self) -> None:
+        form_dict = digest_form_dict([{"id": "n1", "type": "reference", "description": "d"}])
+        detail = form_dict["fields"][0]["progress_items"][0]["detail"]
+        assert "unverified" not in detail
+
+    def test_malformed_updated_at_yields_no_label(self) -> None:
+        form_dict = digest_form_dict(
+            [{"id": "n1", "type": "reference", "description": "d", "updated_at": "not-a-date"}]
+        )
+        assert "unverified" not in form_dict["fields"][0]["progress_items"][0]["detail"]
 
     def test_renders_and_round_trips(self) -> None:
         form = form_from_dict(digest_form_dict(NODES))

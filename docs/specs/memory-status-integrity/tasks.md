@@ -14,7 +14,9 @@ P1 only. P2/P3 tasks are written when their phase is approved.
 | 2 | `AuditReport` — violations, links, pointer integrity, ranking | attune-ai | done | matches the canonical linter's tolerances (D4) |
 | 3 | Hermetic tests, golden set pinning both directions | attune-ai | done | 30 tests, `tmp_path` only |
 | 4 | `scripts/audit_curated_memory.py` CLI | attune-ai | done | advisory, always exit 0 |
-| 5 | Wire unverified-age annotation into recall surfaces | attune-ai | done | `PersonalMemory.query()`; labels only, never reorders |
+| 5a | Age annotation: `PersonalMemory.query()` + sweep CLI | attune-ai | done | shipped in #1975; labels only, never reorders |
+| 5b | Age annotation: `recall_digest` cards (from `updated_at`) | attune-ai | done | review follow-up — #1975 marked row 5 done while this surface was unshipped |
+| 5c | Age annotation: SessionStart hydration line | external | documented | emitter is personal infra (attune-agent-memory repo); capability + one-liner documented in design.md § Surfaces |
 | 6 | ~~Sweep entry point in `memory_lint.py`~~ | personal | **void** | already implemented (`--check-all`); hook left untouched |
 | 7 | ~~Normalize 7 `node_type:` violations~~ | personal | **void** | not violations — provenance is tolerated (D4). Corpus untouched. |
 | 8 | Live-corpus receipt over 271 files | receipt | done | 1 violation, matching `memory_lint` exactly; corpus byte-identical |

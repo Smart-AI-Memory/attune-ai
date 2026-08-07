@@ -128,15 +128,27 @@ it.
 
 ### Surfaces (R2)
 
-| Surface | Change |
-|---|---|
-| `personal.py` recall | append annotation to each returned entry |
-| `recall_digest.py` | annotation in digest nodes |
-| SessionStart hydration line | count of memories above a risk floor |
-| sweep CLI | full ranked report |
+| Surface | Change | Delivered |
+|---|---|---|
+| `personal.py` recall | append annotation to each returned entry | #1975 |
+| `recall_digest.py` | age suffix on digest cards, from the node's `updated_at` (Redis nodes carry no file path) | review follow-up |
+| SessionStart hydration line | count of memories above a risk floor | **external** — see below |
+| sweep CLI | full ranked report | #1975 |
 
 Annotation is a pure function of `(days)`, so a surface that renders
 plain text and one that renders HTML share the same signal.
+
+**Hydration-line status (recorded at the 2026-08-07 review):** the
+`[memory-hydrate]` emitter is `~/.attune/memory/session_hydrate.py` in
+the attune-agent-memory checkout — personal infra, not tracked in this
+repo (its fail-open test, `tests/unit/memory/test_session_hydrate_fail_open.py`,
+documents exactly this split and runs the real script only where it
+exists). The repo therefore ships the capability, not the wiring: the
+hook's summary line can add staleness with
+`attune.memory.curated_audit.format_age_annotation` over each node's
+`updated_at`, the same way `recall_digest._age_suffix` does. Wiring it
+is a one-line change in the attune-agent-memory repo, deliberately not
+made from here — one layer per commit applies across repos.
 
 ### CLI: `scripts/audit_curated_memory.py`
 
