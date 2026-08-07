@@ -21242,3 +21242,292 @@ def ", start_idx + 1)` for module-
   a dict BEFORE sorting and close over the snapshot (bind via
   default args to dodge ruff B023). General rule: a sort key must
   never index into the list under sort.
+
+- **Dashboard data providers must not read `Path.home()` implicitly —
+  take the home dir as an explicit parameter and skip the source when
+  it is absent**: while adding the docs-outbox row to the ops
+  Collaboration inbox (2026-08-06), the first draft had
+  `read_inbox()` default to the real `~/.attune` when no home was
+  passed. Existing unit tests call `read_inbox(project)` bare, so a
+  real pending/stale outbox on the developer machine would have
+  flipped `test_all_sources_empty` — live home state leaking into a
+  hermetic suite. Fix: `attune_home=None` SKIPS the source entirely;
+  only the ops route passes `config.attune_home`. General rule: in
+  monitoring/data-provider code, implicit `Path.home()` reads are a
+  test-pollution vector — require the caller to name the directory.
+
+- **Adding a plugin skill trips the website capability-count guard —
+  bump `website/lib/features.ts` in the same commit**: a new
+  `plugin/skills/<name>/SKILL.md` raises the live dir count that
+  `tests/unit/test_website_version_accuracy.py::TestCapabilityCountsSync::
+  test_skills_count_matches_plugin_dir` compares against
+  `CAPABILITIES.skills` in `website/lib/features.ts`. Three spots to
+  bump together: `skills: N`, the "N Claude Code skills included"
+  string, and the "N auto-triggering skills (...)" string. Hit
+  2026-08-06 adding the docs-outbox skill (27 -> 28). Pairs with the
+  website-content-accuracy rule — features.ts is canonical, and the
+  guard reads the live registry, so the failure is immediate and local.
+
+- **`pre-commit run --files` has two silent-skip traps — zsh
+  no-word-split and untracked files**: (a) in zsh, an unquoted
+  `$FILES` variable does NOT word-split, so
+  `pre-commit run black --files $FILES` passes ONE giant
+  nonexistent path and every hook reports
+  "(no files to check) Skipped" — looks like a pass, checked
+  nothing. Use `${=FILES}` (or list files explicitly). The same
+  bug makes `ruff check $FILES` fail with a bogus-path error.
+  (b) pre-commit filters `--files` against git-known files, so
+  BRAND-NEW files pre-flighted before any `git add` are silently
+  skipped too — for new files, stage first, then pre-flight, then
+  re-stage if the hooks fixed anything. Hit both back-to-back
+  2026-08-06 pre-flighting the docs-outbox package. A hook run
+  that says "Skipped" is not a green pre-flight.
+
+- **The `auto-merge-when-green` label can silently FAIL to arm —
+  always verify `autoMergeRequest` is non-null, and arm natively as
+  the fallback**: 2026-08-06, labeling PR #1971 applied the label
+  successfully (`gh pr edit --add-label` returned the PR URL) but
+  auto-merge never armed. Root cause: in
+  `.github/workflows/auto-merge-safe.yml` the `when-green` job
+  DEPENDS on the `label` job, and during a GitHub Actions capacity
+  incident the `label` job was CANCELLED — so `when-green` was
+  SKIPPED, not failed, and nothing armed. `gh pr view <n> --json
+  labels` showed the label present, which reads as success; only
+  `--json autoMergeRequest` (null) revealed it. **Diagnostic**:
+  after labeling, `gh pr view <n> --json autoMergeRequest` — null
+  means NOT armed no matter what the label says. Confirm with
+  `gh run view <run-id> --json jobs` and look for
+  `label=cancelled` + `when-green=skipped`. **Fallback with
+  identical semantics**: `gh pr merge <n> --auto --squash` arms
+  GitHub NATIVE auto-merge, which is exactly what the `when-green`
+  job does — no `--admin`, branch protection stays fully enforced,
+  GitHub decides green-ness. Extends
+  `project_auto_merge_safe_class`: the label is a REQUEST to arm,
+  not the arming itself, and any dependency of the arming job that
+  gets cancelled turns the request into a silent no-op.
+
+- **A file-backed queue validates at WRITE time but acts at APPLY
+  time — anything parsed back off disk is untrusted input, and the
+  write-time gate guarantees nothing**: the docs-outbox Phase-1
+  build (2026-08-06) had `write_artifact` enforce a routing table
+  (`kind` must be a known outbox kind, slug kebab-case, target
+  defaulted per kind), then the sweep re-parsed `kind` and `target`
+  out of each file's frontmatter and acted on them. Three separate
+  data-loss defects all traced to that one seam, and an adversarial
+  review lane found all three: (1) a hand-authored artifact with a
+  typo'd kind (`lessons`, plural) missed the append branch, fell
+  through to the file-REPLACING branch, and would have overwritten
+  the whole 380-lesson corpus with a one-line body; (2) a `target:`
+  pointing anywhere writable appended prose into unrelated tracked
+  files; (3) two artifacts claiming the same new target both linted
+  clean, so the second silently overwrote the first and BOTH were
+  archived as applied. **Rule**: for any store where the producer
+  and the consumer are separate processes (outbox dirs, job queues,
+  spool files, `.jsonl` event logs), re-validate at the consumer
+  with the SAME table the producer used — a hand-edit, a partial
+  write, or a second writer bypasses the producer entirely. State
+  it in the consumer's docstring so the next reader doesn't assume
+  the producer's guarantees hold. Related failure shape: the
+  consumer's "is this safe?" check and its "how do I write it?"
+  branch keyed on DIFFERENT predicates (`kind in (report, draft,
+  plan)` for the overwrite guard vs `kind == "lesson"` for the
+  append branch), so an unrecognized kind escaped both — key both
+  off one predicate.
+
+- **"Failed to resolve action download info" in `Set up job` is a
+  GitHub INFRA failure — zero repo code ran, so never debug your
+  diff for it; and a wall of `cancel` buckets is usually
+  non-required noise**: 2026-08-06, PR #1970 showed 8 `fail` then
+  18 `cancel` checks across two runs. Both were GitHub Actions
+  capacity, not the diff. Two independent tells, each settling it
+  in one call:
+  - **Infra vs. real**: `gh run view --job <id> --log-failed` on
+    each red job showed every one dying in the `Set up job` step
+    with `Failed to resolve action download info. Error: Service
+    Unavailable` / `The HTTP request timed out`, retried twice,
+    then `##[error]`. That step runs BEFORE checkout — no repo
+    code, no test, nothing of yours executed. Corroborate with
+    `gh run list --limit 12` (repo-wide): runs queued 45-60+
+    minutes and a mix of unrelated workflows failing identically
+    means incident, not regression.
+  - **Cancelled ≠ blocking**: read
+    `gh api repos/<o>/<r>/branches/main/protection --jq
+    .required_status_checks.contexts` FIRST and intersect it with
+    the red set. On #1970, 18 cancellations reduced to exactly ONE
+    required casualty (`lint`); `hooks`, `label`,
+    `website-accuracy`, `pr-fuzzing`, `Run Security Scanner` are
+    all non-required and cannot block a merge. That turns "the PR
+    is a disaster, start over" into "rerun one job". Recovery is
+    `gh run rerun <run-id> --failed` (reruns ONLY failed jobs) —
+    but the run must be `completed` first; a rerun on an
+    `in_progress` run is refused. Extends the existing
+    verify-first-on-infra and `--fail-fast`/cancellation lessons:
+    the required-checks list is the denominator for every "how bad
+    is this?" judgment about CI.
+
+- **A subprocess "lint" invoked with an argument shape the tool
+  doesn't accept can FAIL OPEN and report PASS forever — verify the
+  callee's CLI contract, not just its exit code**: 2026-08-06, the
+  docs-outbox sweep shipped a `_memory_lint()` that ran
+  `python ~/.claude/hooks/memory_lint.py <file>` and treated
+  `returncode == 0` as clean. That linter accepts only
+  `--check-all [DIR]` / `--fix-all [DIR]`; ANY other argv falls
+  through to `run_hook()`, which does `json.load(sys.stdin)` — so
+  with stdin at EOF the child exits 0 (lint "passes"
+  unconditionally), and with stdin inherited and open it BLOCKS,
+  burning the full 30s timeout per artifact before a swallowed
+  `TimeoutExpired` also returns clean. Two failure modes, one
+  false-coverage result, and I had already written "runs the memory
+  lint, best effort" into the spec's decisions.md — a claim that
+  was never true. **Rules**: (1) when shelling out to a validator,
+  read its `main()`/argparse to confirm it accepts your argv shape
+  — a tool that treats unknown argv as "hook mode" will not error,
+  it will do something else; (2) always pass
+  `stdin=subprocess.DEVNULL` to a subprocess you don't intend to
+  feed, so a stdin-reading fallback fails fast instead of hanging;
+  (3) a check that cannot fail is worse than no check, because it
+  launders into a coverage claim — if the integration can't work
+  yet, DELETE it and record the gap as known-open rather than
+  keeping dead code that reads as coverage.
+
+- **"No pending checks" is NOT "required checks green", and a
+  BACKLOG is not a STALL — two wrong predicates that produced three
+  false all-clears and three futile reruns in one hour**: 2026-08-06,
+  waiting on PRs #1970/#1971 during a GitHub Actions outage. Both
+  errors are cheap to avoid and I made each repeatedly.
+  - **Waiter predicate.** I looped `until no check has bucket ==
+    "pending"` and called it "settled". Wrong three ways: a required
+    check can be `cancel` (needs a rerun, never becomes pending), and
+    — the one that really burned me — a required check can be
+    **ABSENT from the check list entirely**, which blocks the PR
+    INDEFINITELY while my predicate reports all-clear. On #1971, 8 of
+    12 required contexts were simply missing; `gh pr checks` showed
+    nothing pending and I twice told the user it was "just waiting."
+    Correct predicate: fetch
+    `gh api repos/<o>/<r>/branches/main/protection --jq
+    .required_status_checks.contexts`, then assert EVERY name in that
+    list is present AND in {pass, skipping}. Compute the missing set
+    explicitly (`[r for r in req if r not in have]`) — absence is
+    invisible unless you look for it by name.
+  - **Backlog vs stall.** I diagnosed "congestion" and reran four
+    times. The settling call is `gh run list --limit 60 --json status
+    --jq '[.[]|select(.status=="queued" or .status=="in_progress")]
+    | length'`. A real backlog shows MANY queued. It showed **1**,
+    created 2h+ earlier — one run stuck with no runner allocation.
+    Reruns cannot help that, and worse: `gh run rerun` REUSES the run
+    id and its original `createdAt`, so a successful rerun looks
+    identical to "nothing happened" in `gh run list` (verify via
+    `status` flipping back to `queued` + a fresh `updatedAt`, not by
+    the listing). Some runs also refuse entirely:
+    `This workflow run cannot be retried` — those need a NEW trigger
+    (empty commit / push), which you must NOT fire while other jobs
+    are mid-flight, since cancel-in-progress sends them to the back
+    of the queue.
+  - **Meta.** I had written the "read required_status_checks before
+    reacting to red CI" lesson EARLIER THE SAME SESSION and still
+    checked the wrong thing, because the required-checks list answers
+    "how bad is it?" while the waiter needed "am I done?" — the same
+    data, a different question. When a lesson lands, also ask which
+    PREDICATES in the code/loops it invalidates.
+
+- **A GitHub workflow can wedge so that NO new runs are created for
+  it while every other workflow spawns normally — the tell is a
+  "zombie" run that reports `status=queued` with ZERO jobs and that
+  `gh run cancel` refuses as "already completed"**: 2026-08-06,
+  ~16:57-23:24 UTC. `Tests` (the required-check-bearing workflow)
+  created no run for 6.5 hours across 3 branch names and 4 SHAs,
+  while `CodeQL`, `Code Quality`, and Copilot review spawned within
+  seconds on every push. Consequences: 8-11 of 12 required contexts
+  were ABSENT (not failed) on two PRs, so both were permanently
+  BLOCKED with nothing to rerun and no failure to debug.
+  **What does NOT work:** `gh run rerun <id>` (re-queues the zombie
+  forever); renaming the branch to change the
+  `concurrency` group key (I tried — the group was never the cause);
+  pushing new commits (no run is created for the new SHA either).
+  **What DOES work:** re-running an ALREADY-EXISTING run of that
+  workflow still executes (attempt 2 ran fine) — so a PR that
+  already has a Tests run can be salvaged, while a fresh branch
+  cannot. And `gh workflow run <wf> --ref <branch>` creates a run
+  when the PR-event path is wedged (but see the dispatch-race
+  lesson — only safe with no open PR / no competing run).
+  **Diagnostic sequence, cheapest first:** (1)
+  `gh api .../actions/workflows/<id>/runs?per_page=6` — if the
+  newest run is hours old while other workflows are current, run
+  CREATION is wedged, not the queue; (2) `gh workflow list --all`
+  to rule out a disabled workflow; (3) `gh api .../runs/<id> --jq
+  .status` vs `gh run cancel <id>` — a `queued` run that cannot be
+  cancelled because it is "completed" is a platform fault, and no
+  amount of local action will clear it.
+  **The judgment call it forces:** a docs-only PR whose required
+  checks are unproducible can be admin-merged on locally-verified
+  evidence (state the reasoning explicitly); a PR carrying code —
+  especially Windows-relevant path/IO code — should NOT be, because
+  the lanes that would catch the bug are exactly the ones missing.
+
+- **NEVER `gh workflow run` a workflow carrying
+  `concurrency: cancel-in-progress` on a branch with an open PR —
+  the dispatch races the PR-event run, one cancels the other, and
+  the cancelled run's check runs BLOCK THE MERGE PERMANENTLY
+  (they do NOT self-heal)**: 2026-08-06, PR #1970. GitHub had
+  stopped creating `Tests` runs for ~6h, so I dispatched manually
+  at 23:28:02. The wedge cleared 47s later and GitHub created the
+  normal `pull_request` run at 23:28:49. Both share
+  `group: ${{ github.workflow }}-${{ github.head_ref }}` with
+  `cancel-in-progress: true`, so the PR-event run was cancelled.
+  Cost: ~40 minutes, and a red `test-matrix-complete` that read
+  exactly like a real regression while the code was flawless (the
+  dispatch run passed all 5 Windows lanes, 0 failures).
+- **The supersession rule is by START time, not COMPLETION — this
+  is the counter-intuitive half and the reason "just wait, the
+  good run will win" is WRONG**: branch protection evaluates the
+  most recent check run per name, ordered by `started_at`. In the
+  race above, for `coverage`, `test (ubuntu-latest, 3.12)` and
+  `test (windows-latest, 3.12)` the CANCELLED check runs started
+  at 23:29 — one minute AFTER the successful ones at 23:28 —
+  even though the successful ones COMPLETED 4-12 minutes later.
+  So `cancelled` won on every one, `mergeStateStatus` stayed
+  BLOCKED, and the passing run could never rescue it. I predicted
+  self-healing out loud and was wrong.
+  **Verify with the API, never `gh pr checks`** (which showed a
+  stale `fail` row that did not reflect the gate):
+  `gh api repos/<o>/<r>/commits/<sha>/check-runs?per_page=100`,
+  group by `.name`, take `max_by(.started_at)`, and compare that
+  set against
+  `gh api .../branches/main/protection --jq
+  .required_status_checks.contexts`.
+  **Recovery:** rerun the CANCELLED run (`gh run rerun <id>`) once
+  nothing competes — its fresh check runs then carry the newest
+  `started_at` and take over. Do not push a new commit (new SHA
+  discards every green lane you already have).
+  **Prevention:** to force CI on a PR branch, push an empty commit
+  so exactly ONE run exists per SHA; reserve `workflow run` for
+  branches with no open PR.
+
+- **A launchd/cron job that runs the MAIN checkout's venv is broken
+  from the moment you arm it until the feature merges AND main is
+  pulled — arming during the build PR guarantees a failed first
+  fire, and the failure is invisible unless you read `last exit
+  code`**: 2026-08-06, the docs-outbox EOD sweep. The plist does
+  `cd "$HOME/attune-ai" && .venv/bin/python -m attune.docs_outbox
+  sweep`. It was installed mid-session (chair pre-authorized), fired
+  at 17:30, and died with `No module named attune.docs_outbox` —
+  the feature was still on an unmerged branch in a WORKTREE, so
+  main's checkout had never seen it. After the PR merged, main's
+  working tree was still 3 commits behind origin/main, so the next
+  fire would have failed identically. Nothing surfaced this: the job
+  is silent, and `launchctl print` shows `state = not running` for
+  any calendar job that is not mid-run, which reads like health.
+  **The receipt is `last exit code`, not `state`:**
+  `launchctl print gui/$UID/<label> | grep -E "state =|last exit"`.
+  `last exit code = 0` (or "never exited" before the first fire) is
+  healthy; any non-zero means it ran and failed. Then read the
+  plist's `StandardErrorPath` log — one line usually names it.
+  **Two durable rules.** (1) Arm a scheduled job only AFTER the code
+  it calls is on main AND main's checkout is pulled — or accept and
+  plan for a failed first fire. (2) After arming, live-fire the
+  EXACT command from the plist (same cwd, same interpreter, same
+  args) and confirm exit 0; "the plist parsed and loaded" is a
+  registration claim, not a working receipt. Standing hazard for any
+  job of this shape: it executes MAIN's code, so it silently breaks
+  whenever main lags the feature it depends on — worth a line in the
+  session starter so the next session pulls main before trusting it.
