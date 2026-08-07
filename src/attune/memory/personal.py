@@ -17,6 +17,12 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from attune.memory.curated_audit import (
+    format_age_annotation,
+    load_memory,
+    unverified_age_days,
+)
+
 logger = logging.getLogger(__name__)
 
 _GLOBAL_ROOT = Path.home() / ".attune" / "memory"
@@ -259,7 +265,46 @@ class PersonalMemory:
                 best[hit["path"]] = hit
 
         deduped = sorted(best.values(), key=lambda h: h["score"], reverse=True)
-        return deduped[:k]
+        results = deduped[:k]
+        self._annotate_staleness(results)
+        return results
+
+    def _annotate_staleness(self, hits: list[dict[str, Any]]) -> None:
+        """Add unverified-age to each hit, in place.
+
+        Per ``docs/specs/memory-status-integrity`` R2, a reader must see how
+        long it has been since a claim was confirmed without having to ask.
+        The annotation only labels — it never reorders or drops a hit, which
+        would violate D1 (label, never suppress by age).
+
+        Failures are swallowed: a missing file or unreadable stat must not
+        cost the caller their recall results. The handler is narrow on
+        purpose — ``load_memory`` already absorbs its own I/O errors, so the
+        only escapes left here are a malformed hit dict or a path the OS
+        refuses. Catching broadly would add a site to the shrink-only
+        broad-except ratchet for no coverage gain.
+        """
+        for hit in hits:
+            try:
+                path = self._resolve_hit_path(hit["path"])
+                if path is None:
+                    continue
+                mem = load_memory(path)
+                days = unverified_age_days(mem)
+                hit["unverified_days"] = days
+                hit["staleness"] = format_age_annotation(days)
+            except (KeyError, OSError, ValueError):
+                logger.debug("staleness_annotation_failed path=%s", hit.get("path"))
+
+    def _resolve_hit_path(self, path_str: str) -> Path | None:
+        """Resolve a corpus-relative hit path against the known roots."""
+        for root in (self._project_root, self._global_root):
+            if root is None:
+                continue
+            candidate = root / path_str
+            if candidate.is_file():
+                return candidate
+        return None
 
     def list_topics(self) -> list[str]:
         """Return sorted list of topic slugs across global and project memory."""
