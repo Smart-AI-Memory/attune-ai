@@ -152,6 +152,32 @@ phase argument, and a later reader would otherwise inherit it.
 
 ---
 
+## D3 — The sweep is a library in attune-ai, not a personal script (recorded 2026-08-07)
+
+There are two curated corpora with different owners:
+
+| Corpus | Files | Owner |
+|---|---|---|
+| `~/.claude/**/memory/` | 266 | harness-native; linted by a personal hook outside every repo |
+| `~/.attune/memory/` | 16 | attune-shipped (`src/attune/memory/personal.py`) |
+
+Writing the sweep as a personal script would fix Patrick's corpus and
+ship nothing. Writing it only against `~/.attune/memory/` would ship a
+feature exercised by 16 files while the 266-file corpus keeps rotting.
+
+**Decision:** the mechanism lands in attune-ai as a **path-parameterized
+library** over "a directory of frontmattered markdown memories," with
+both corpora as callers. The personal hook calls into it; the product
+uses it for its own store.
+
+This also gives P1 an honest test surface: the logic is exercised by
+hermetic fixtures, and the 266-file corpus becomes a *receipt* run
+rather than a test dependency — real-corpus assertions in CI would
+violate the home-directory isolation guard
+(`project_test_isolation_home_dir_leaks`).
+
+---
+
 ## D4 — The enforcement code is the authority, not the prose (recorded 2026-08-07)
 
 Three claims in the requirements draft were derived from documentation
@@ -183,32 +209,6 @@ Two mitigations fall out of this and are already in the design:
 - Agreement between two independent implementations is a signal worth
   keeping. `curated_audit` and `memory_lint` now cross-check each
   other; on the first clean run they found the same single violation.
-
----
-
-## D3 — The sweep is a library in attune-ai, not a personal script (recorded 2026-08-07)
-
-There are two curated corpora with different owners:
-
-| Corpus | Files | Owner |
-|---|---|---|
-| `~/.claude/**/memory/` | 266 | harness-native; linted by a personal hook outside every repo |
-| `~/.attune/memory/` | 16 | attune-shipped (`src/attune/memory/personal.py`) |
-
-Writing the sweep as a personal script would fix Patrick's corpus and
-ship nothing. Writing it only against `~/.attune/memory/` would ship a
-feature exercised by 16 files while the 266-file corpus keeps rotting.
-
-**Decision:** the mechanism lands in attune-ai as a **path-parameterized
-library** over "a directory of frontmattered markdown memories," with
-both corpora as callers. The personal hook calls into it; the product
-uses it for its own store.
-
-This also gives P1 an honest test surface: the logic is exercised by
-hermetic fixtures, and the 266-file corpus becomes a *receipt* run
-rather than a test dependency — real-corpus assertions in CI would
-violate the home-directory isolation guard
-(`project_test_isolation_home_dir_leaks`).
 
 ---
 
