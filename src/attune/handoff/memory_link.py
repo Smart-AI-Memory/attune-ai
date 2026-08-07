@@ -22,7 +22,7 @@ RECALL_TOP_K = 3
 #: Keys surfaced from backend-shaped recall records (bounded report).
 #: Matches the searchable backends' search() shape (file tier: id/text/
 #: topics/cwd/session_id/score); volatile keys are dropped.
-_RESULT_KEYS = ("id", "text", "content", "topics", "score")
+_RESULT_KEYS = ("id", "text", "content", "topics", "score", "provenance")
 
 
 def _skip_reason(session_stash: Any) -> str:

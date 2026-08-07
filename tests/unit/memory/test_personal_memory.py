@@ -195,7 +195,7 @@ class TestCapture:
         from attune.memory.types import SecurityError
 
         pm = self._make_pm(tmp_path)
-        content = "note to self: sk-ant-api03-" + "x" * 95
+        content = "note to self: sk-ant-api03-aB3xY7kLmN9pQ2rS5tU8vW1zA4bC6dE0fG3hJ5kL7nP9qR2sT4uV6wX8yZ0aB1cD3eF5gH7iJ9kL1mN3oP5qR7sT9uV1wX3"
         with patch("attune.memory.personal._load_author", return_value=_identity_polish):
             with patch("attune.memory.personal._load_rag", return_value=None):
                 with pytest.raises(SecurityError):

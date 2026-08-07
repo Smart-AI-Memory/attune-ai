@@ -94,14 +94,16 @@ class SecretsDetector:
         )
 
         # OpenAI API Keys (sk-..., sk-proj-...). Label prefix optional for the
-        # same reason as Anthropic. The token body is ALPHANUMERIC only — no
-        # '-'/'_' — because those are the delimiters of ordinary hyphenated
-        # slugs; allowing them made "sk-queued-as-resume-this-batch..." (a real
-        # telemetry slug) read as a key. Only the fixed 'sk-proj-' prefix
-        # carries dashes. The 40-char floor keeps a bare token unambiguous.
+        # same reason as Anthropic. The token body keeps the REAL key alphabet
+        # (``[a-zA-Z0-9_-]`` — modern sk-proj- keys contain '_' and '-');
+        # narrowing it to alphanumeric to kill a false positive would leak real
+        # keys (a review caught this). The bare-token false positive
+        # ("sk-queued-as-resume-this-batch...") is instead rejected by the
+        # key-shape gate in :meth:`detect` — a real random key carries digits
+        # and mixed case, an English hyphenated slug does not.
         self._patterns[SecretType.OPENAI_API_KEY] = (
             re.compile(
-                r"(?i)(?:(?:openai[_-]?api[_-]?key|OPENAI_API_KEY)\s*[=:]\s*[\"']?)?(sk-(?:proj-)?[a-zA-Z0-9]{40,})[\"']?",
+                r"(?i)(?:(?:openai[_-]?api[_-]?key|OPENAI_API_KEY)\s*[=:]\s*[\"']?)?(sk-(?:proj-)?[a-zA-Z0-9_-]{40,})[\"']?",
                 re.MULTILINE,
             ),
             Severity.HIGH,
@@ -239,6 +241,29 @@ class SecretsDetector:
             Severity.HIGH,
         )
 
+    #: API-key types whose patterns allow a BARE (unlabelled) token match.
+    _BARE_KEY_TYPES = (SecretType.ANTHROPIC_API_KEY, SecretType.OPENAI_API_KEY)
+
+    def _bare_api_key_is_plausible(self, secret_type, match) -> bool:
+        """Reject a bare API-key match that is really an English slug.
+
+        A random API key carries digits AND mixed case; a hyphenated
+        dictionary slug ("sk-queued-as-resume-...") carries neither. When the
+        match includes an explicit ``...API_KEY=`` label the author's intent is
+        clear, so the heuristic is skipped. Only the bare-token forms of the
+        two SDK key types are gated — every other pattern passes through
+        unchanged. This keeps the real key alphabet (incl. ``_``/``-``) while
+        killing the slug false positive a review found.
+        """
+        if secret_type not in self._BARE_KEY_TYPES:
+            return True
+        if "key" in match.group(0).lower():  # labelled: trust the author
+            return True
+        token = match.group(1)
+        has_digit = any(c.isdigit() for c in token)
+        has_mixed_case = any(c.isupper() for c in token) and any(c.islower() for c in token)
+        return has_digit and has_mixed_case
+
     def detect(self, content: str) -> list[SecretDetection]:
         """Detect secrets in content.
 
@@ -266,6 +291,8 @@ class SecretsDetector:
         # Scan with all patterns
         for secret_type, (pattern, severity) in self._patterns.items():
             for match in pattern.finditer(content):
+                if not self._bare_api_key_is_plausible(secret_type, match):
+                    continue
                 detection = self._create_detection(
                     secret_type=secret_type,
                     severity=severity,

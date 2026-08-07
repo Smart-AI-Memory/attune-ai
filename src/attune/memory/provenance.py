@@ -41,63 +41,85 @@ from collections.abc import Iterable
 AUTHOR_CURATED = "human-curated"
 AUTHOR_MACHINE = "machine-extracted"
 
-#: Instruction-shaped patterns worth surfacing to the reading model. Each is
-#: (label, compiled regex). These FLAG; they never block. The set is
-#: deliberately small and high-signal — broadening it risks flagging ordinary
-#: memories about workflows, which is the failure mode to avoid.
-_INSTRUCTION_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
-    # "ignore previous instructions", "disregard the above", etc.
+#: HIGH-SIGNAL patterns — applied to EVERY tier. These match injection
+#: machinery, not ordinary prose, so they stay rare enough to mean something.
+#: Each is (label, compiled regex) and FLAGS; it never blocks.
+_HIGH_SIGNAL_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     (
         "override-attempt",
         re.compile(
-            r"\b(ignore|disregard|forget)\b[^.\n]{0,40}\b(previous|prior|above|earlier|all)\b", re.I
-        ),
-    ),
-    # Chat/role delimiter tokens that only appear in prompt-injection payloads.
-    (
-        "role-delimiter",
-        re.compile(
-            r"<\|(im_start|im_end|system|assistant|user)\|>|^\s*(system|assistant)\s*:",
-            re.I | re.M,
-        ),
-    ),
-    # Direct commands aimed at the assistant.
-    (
-        "assistant-directive",
-        re.compile(
-            r"\byou\s+(must|should|will|are\s+to|need\s+to)\b|\b(always|never)\s+(run|execute|call|use|delete|send|reply)\b",
+            r"\b(ignore|disregard|forget)\b[^.\n]{0,40}\b(previous|prior|above|earlier|all)\b",
             re.I,
         ),
     ),
-    # Tool/command-invocation shapes.
+    # Role/chat delimiter tokens across the model families this codebase
+    # actually touches — a review noted the original set missed the
+    # Claude/Anthropic and Llama markers, the relevant vectors here.
+    (
+        "role-delimiter",
+        re.compile(
+            r"<\|(?:im_start|im_end|system|assistant|user)\|>"  # ChatML
+            r"|</?(?:system|human|assistant)>"  # Anthropic/Claude XML
+            r"|\[/?INST\]|<<SYS>>"  # Llama / Mistral
+            r"|^\s{0,3}\*{0,2}(?:system|assistant)\*{0,2}\s*:",  # (markdown) role header
+            re.I | re.M,
+        ),
+    ),
+    # Explicit tool/function-call machinery — NOT a bare "run `cmd`", which is
+    # ordinary dev prose (a review flagged that as false-positive noise).
     (
         "tool-invocation",
+        re.compile(r"</?(?:tool_call|function_call|invoke|antml:invoke)\b", re.I),
+    ),
+)
+
+#: DIRECTIVE patterns — imperatives aimed at the assistant. Applied ONLY to
+#: untrusted tiers (raw / machine-extracted). A curated CLAUDE.md-style corpus
+#: is wall-to-wall legitimate imperatives ("never commit across layers",
+#: "always run uv sync"); flagging those every recall would train the reader
+#: to ignore the flag, inverting R1 (a review named exactly this). On raw
+#: findings the same shape is a genuine signal.
+_DIRECTIVE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    (
+        "assistant-directive",
         re.compile(
-            r"</?(tool_call|function_call|invoke)\b|\brun\s+`[^`]+`|\bexecute\s+the\s+following\b",
+            r"\byou\s+(?:must|should|will|are\s+to|need\s+to)\b"
+            r"|\b(?:always|never)\s+(?:run|execute|call|use|delete|send|reply)\b",
             re.I,
         ),
     ),
 )
 
+#: Tiers treated as untrusted for directive scanning.
+UNTRUSTED_TIERS = frozenset({"raw", "machine", "machine-extracted"})
 
-def scan_instructions(text: str) -> tuple[str, ...]:
+
+def scan_instructions(text: str, *, tier: str | None = None) -> tuple[str, ...]:
     """Return labels for instruction-shaped content found in recalled text.
 
-    Flags, never blocks — the caller decides what to do with the labels
-    (surface them, downweight, route to review). An empty tuple means nothing
-    instruction-shaped was found; it is NOT a safety guarantee (see the module
-    caveat).
+    Flags, never blocks. An empty tuple means nothing matched; it is NOT a
+    safety guarantee (see the module caveat).
+
+    High-signal patterns (override attempts, role delimiters, tool-call
+    machinery) apply to every tier. The directive pattern (bare imperatives)
+    applies ONLY to untrusted tiers, because a curated corpus is legitimately
+    full of imperatives and flagging them all would make the signal noise.
 
     Args:
         text: Recalled memory content.
+        tier: Memory tier. When it names an untrusted tier (raw /
+            machine-extracted), directive patterns are included. Defaults to
+            high-signal only — the safe, quiet choice for curated recall.
 
     Returns:
         A tuple of distinct pattern labels, in a stable order.
     """
     if not text:
         return ()
-    found = [label for label, pattern in _INSTRUCTION_PATTERNS if pattern.search(text)]
-    # Distinct, stable order (order of _INSTRUCTION_PATTERNS).
+    patterns = list(_HIGH_SIGNAL_PATTERNS)
+    if tier is not None and tier.lower() in UNTRUSTED_TIERS:
+        patterns += _DIRECTIVE_PATTERNS
+    found = [label for label, pattern in patterns if pattern.search(text)]
     seen: set[str] = set()
     return tuple(label for label in found if not (label in seen or seen.add(label)))
 
@@ -122,13 +144,23 @@ def provenance_fields(
             caller with no body can still stamp tier/source/author.
 
     Returns:
-        A dict with ``tier``, ``source``, ``author_class``, ``instruction_flags``.
+        A dict with ``tier``, ``source``, ``author_class``, ``instruction_flags``,
+        and ``context_block`` — the ready-to-inject envelope text (the field a
+        context formatter should render instead of the raw body).
     """
+    flags = list(scan_instructions(text, tier=tier))
     return {
         "tier": tier,
         "source": source,
         "author_class": author_class,
-        "instruction_flags": list(scan_instructions(text)),
+        "instruction_flags": flags,
+        "context_block": wrap_recalled(
+            text,
+            tier=tier,
+            source=source,
+            author_class=author_class,
+            instruction_flags=flags,
+        ),
     }
 
 
@@ -176,3 +208,66 @@ def wrap_recalled(
         f"{body}\n"
         "</recalled_memory>"
     )
+
+
+def render_recall_for_context(
+    results: Iterable[dict],
+    *,
+    default_tier: str = "raw",
+    default_author: str = AUTHOR_MACHINE,
+) -> str:
+    """Render recalled dicts into the model-facing text a session should inject.
+
+    **This is the R1 boundary.** A context formatter must turn recall into
+    model input through THIS function (or ``wrap_recalled`` per item), never by
+    concatenating raw ``entry["text"]`` — otherwise the untrusted-evidence
+    framing never reaches the model and the control is inert (a review caught
+    exactly that: stamped metadata that no renderer consumed).
+
+    Each entry is wrapped in its own envelope. A ``context_block`` already
+    stamped by :func:`provenance_fields` is used verbatim; otherwise the
+    envelope is built here from the entry's fields, so a raw dict with no
+    provenance is still framed rather than leaking through unwrapped.
+
+    Args:
+        results: Recall dicts (from ``session_stash`` recall or
+            ``personal.query``). Non-dict items are skipped.
+        default_tier: Tier assumed when an entry carries no provenance.
+        default_author: Author class assumed when an entry carries no provenance.
+
+    Returns:
+        The concatenated, framed text — safe to place in model context. Empty
+        string when there is nothing to render.
+    """
+    blocks: list[str] = []
+    for entry in results:
+        if not isinstance(entry, dict):
+            continue
+        prov = entry.get("provenance")
+        if isinstance(prov, dict) and isinstance(prov.get("context_block"), str):
+            blocks.append(prov["context_block"])
+            continue
+        text = str(entry.get("text") or entry.get("content") or "")
+        tier = (
+            str(prov.get("tier")) if isinstance(prov, dict) and prov.get("tier") else default_tier
+        )
+        source = (
+            str(prov.get("source"))
+            if isinstance(prov, dict) and prov.get("source")
+            else str(entry.get("session_id") or entry.get("id") or "recall")
+        )
+        author = (
+            str(prov.get("author_class"))
+            if isinstance(prov, dict) and prov.get("author_class")
+            else default_author
+        )
+        blocks.append(
+            wrap_recalled(
+                text,
+                tier=tier,
+                source=source,
+                author_class=author,
+                instruction_flags=scan_instructions(text, tier=tier),
+            )
+        )
+    return "\n\n".join(blocks)
