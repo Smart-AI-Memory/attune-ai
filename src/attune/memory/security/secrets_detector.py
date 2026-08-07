@@ -79,19 +79,29 @@ class SecretsDetector:
 
     def _initialize_patterns(self):
         """Initialize compiled regex patterns for all secret types"""
-        # Anthropic API Keys (sk-ant-...)
+        # Anthropic API Keys (sk-ant-...). The label prefix is OPTIONAL: a bare
+        # value is how a real sk-ant key surfaced in a console (the
+        # memory-security-hardening R2 proof case), so the token itself must
+        # match with or without a "ANTHROPIC_API_KEY=" prefix. The strict
+        # length (the token carries ~95 chars) keeps prose mentions of
+        # "sk-ant" from false-positiving.
         self._patterns[SecretType.ANTHROPIC_API_KEY] = (
             re.compile(
-                r"(?i)(?:anthropic[_-]?api[_-]?key|ANTHROPIC_API_KEY)\s*[=:]\s*[\"']?(sk-ant-[a-zA-Z0-9_-]{95,})[\"']?",
+                r"(?i)(?:(?:anthropic[_-]?api[_-]?key|ANTHROPIC_API_KEY)\s*[=:]\s*[\"']?)?(sk-ant-[a-zA-Z0-9_-]{90,})[\"']?",
                 re.MULTILINE,
             ),
             Severity.HIGH,
         )
 
-        # OpenAI API Keys (sk-...)
+        # OpenAI API Keys (sk-..., sk-proj-...). Label prefix optional for the
+        # same reason as Anthropic. The token body is ALPHANUMERIC only — no
+        # '-'/'_' — because those are the delimiters of ordinary hyphenated
+        # slugs; allowing them made "sk-queued-as-resume-this-batch..." (a real
+        # telemetry slug) read as a key. Only the fixed 'sk-proj-' prefix
+        # carries dashes. The 40-char floor keeps a bare token unambiguous.
         self._patterns[SecretType.OPENAI_API_KEY] = (
             re.compile(
-                r"(?i)(?:openai[_-]?api[_-]?key|OPENAI_API_KEY)\s*[=:]\s*[\"']?(sk-[a-zA-Z0-9]{20,})[\"']?",
+                r"(?i)(?:(?:openai[_-]?api[_-]?key|OPENAI_API_KEY)\s*[=:]\s*[\"']?)?(sk-(?:proj-)?[a-zA-Z0-9]{40,})[\"']?",
                 re.MULTILINE,
             ),
             Severity.HIGH,

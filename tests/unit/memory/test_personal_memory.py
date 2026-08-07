@@ -176,6 +176,31 @@ class TestCapture:
         assert dest == tmp_path / "global" / "auth-arch" / "decision.md"
         assert dest.exists()
 
+    def test_capture_refuses_content_with_a_secret(self, tmp_path):
+        """R2: the curated write path fails closed on a secret — the file is
+        never written and the polish LLM is never called with it."""
+        from attune.memory.types import SecurityError
+
+        pm = self._make_pm(tmp_path)
+        secret = "The key is AKIAIOSFODNN7EXAMPLE, keep it safe."
+        with patch("attune.memory.personal._load_author", return_value=_identity_polish):
+            with patch("attune.memory.personal._load_rag", return_value=None):
+                with pytest.raises(SecurityError):
+                    pm.capture("leak", secret, kind="decision")
+
+        assert not (tmp_path / "global" / "leak" / "decision.md").exists()
+
+    def test_capture_refuses_bare_anthropic_key(self, tmp_path):
+        """The spec's proof case: a bare sk-ant value with no key= label."""
+        from attune.memory.types import SecurityError
+
+        pm = self._make_pm(tmp_path)
+        content = "note to self: sk-ant-api03-" + "x" * 95
+        with patch("attune.memory.personal._load_author", return_value=_identity_polish):
+            with patch("attune.memory.personal._load_rag", return_value=None):
+                with pytest.raises(SecurityError):
+                    pm.capture("leak2", content, kind="decision")
+
     def test_summaries_updated_after_capture(self, tmp_path):
         pm = self._make_pm(tmp_path)
         with patch("attune.memory.personal._load_author", return_value=_identity_polish):
