@@ -69,6 +69,10 @@ def _format_report(report, top: int) -> str:
         "Schema violations",
         [f"{path.name}: {', '.join(keys)}" for path, keys in report.schema_violations],
     )
+    section(
+        "Invalid metadata.type",
+        [f"{path.name}: type '{value}'" for path, value in report.invalid_types],
+    )
     section("name: does not match filename", [p.name for p in report.name_mismatches])
     section("Broken [[links]]", [f"{path.name} -> {link}" for path, link in report.broken_links])
     section("Memories with no MEMORY.md pointer", [p.name for p in report.orphans])
@@ -127,6 +131,7 @@ def main(argv: list[str] | None = None) -> int:
                     "schema_violations": [
                         {"path": str(p), "keys": list(k)} for p, k in report.schema_violations
                     ],
+                    "invalid_types": [{"path": str(p), "type": t} for p, t in report.invalid_types],
                     "name_mismatches": [str(p) for p in report.name_mismatches],
                     "broken_links": [
                         {"path": str(p), "link": link} for p, link in report.broken_links

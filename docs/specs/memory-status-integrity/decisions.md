@@ -209,3 +209,42 @@ hermetic fixtures, and the 266-file corpus becomes a *receipt* run
 rather than a test dependency — real-corpus assertions in CI would
 violate the home-directory isolation guard
 (`project_test_isolation_home_dir_leaks`).
+
+---
+
+## D5 — Post-merge review findings and their fixes (recorded 2026-08-07)
+
+A fresh-model review of the merged P1 (#1975) found three divergences,
+two of them instances of the failure classes this spec exists to catch.
+Fixed in the review follow-up PR; recorded so the pattern is legible.
+
+1. **The sweep violated D4 itself.** `KNOWN_TYPES` included `lesson`,
+   which the canonical linter's `ALLOWED_TYPES` rejects — so a
+   `type: lesson` file activated provenance tolerance and became
+   invisible to the sweep while the linter flagged it twice. Worse, the
+   sweep never validated `metadata.type` at all, and for
+   `~/.attune/memory` (no linter) the sweep is the only checker. Fix:
+   `LINTER_ALLOWED_TYPES` mirrors the linter exactly; present-but-invalid
+   types are reported (`invalid_types`); missing types deliberately are
+   not (sweep roots may include non-curated-schema corpora where the
+   linter claims no jurisdiction — value-drift is unambiguous, absence
+   is not). `lesson` stays in `VOLATILITY_BY_TYPE`: ranking tolerance
+   ≠ schema tolerance.
+
+2. **R2 was marked done while half-delivered** — tasks.md row 5 said
+   "done" with `recall_digest.py` and the hydration line unshipped:
+   spec-status drift inside the anti-drift spec. Fix: digest cards now
+   carry the age label (from `updated_at` — Redis nodes have no file
+   path), row 5 split into 5a/5b/5c with honest statuses, and the
+   hydration line recorded as external with its one-liner documented.
+
+3. **Latent parser divergence (not yet fixed, tracked):** indented
+   continuation lines outside `metadata:` (folded multi-line YAML
+   `description: >`) parse as top-level keys and would false-positive;
+   the canonical linter counts only non-indented keys. Zero live hits
+   across the 271-file receipt, so deferred — P2 touches the parser
+   anyway for `verified:` and should align this then.
+
+Meta: the reviewer that caught these is the same class of reader the
+age labels serve — the D4 lesson generalizes to "re-derive claims from
+the artifact, not from the session that produced it."
