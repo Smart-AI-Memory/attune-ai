@@ -106,6 +106,41 @@ class TestParsing:
         )
         assert "metadata.node_type" in load_memory(path).unknown_keys
 
+    def test_lesson_type_does_not_activate_provenance_tolerance(self, tmp_path: Path) -> None:
+        """Linter parity: ``lesson`` is NOT in memory_lint's ALLOWED_TYPES.
+
+        An earlier version of this module accepted ``type: lesson`` and let
+        it activate the provenance tolerance — so a file the canonical
+        linter flags twice (invalid type + stray node_type) was completely
+        invisible to the sweep. Per D4 the enforcement code is the
+        authority; this pins the parity.
+        """
+        path = write_memory(
+            tmp_path, "lesson_x", mem_type="lesson", extra_frontmatter="  node_type: memory\n"
+        )
+        assert "metadata.node_type" in load_memory(path).unknown_keys
+
+    def test_invalid_type_is_reported(self, tmp_path: Path) -> None:
+        """A present-but-unrecognised metadata.type is definite drift.
+
+        For corpora with no linter of their own (attune's ~/.attune store),
+        this sweep is the only checker — the linter's type rule must be
+        represented here or invalid types are undetectable there.
+        """
+        write_memory(tmp_path, "lesson_y", mem_type="lesson")
+        write_memory(tmp_path, "project_ok", mem_type="project")
+
+        report = audit(scan_corpus([tmp_path]))
+        assert [(p.stem, t) for p, t in report.invalid_types] == [("lesson_y", "lesson")]
+        assert not report.clean
+
+    def test_missing_type_is_not_reported_as_invalid(self, tmp_path: Path) -> None:
+        """Absence is not value-drift — sweep roots may include corpora with
+        a different file format where the linter claims no jurisdiction."""
+        (tmp_path / "kindfile.md").write_text("# just a heading\n\nprose\n", encoding="utf-8")
+        report = audit(scan_corpus([tmp_path]))
+        assert report.invalid_types == ()
+
     def test_flags_forbidden_top_level_key(self, tmp_path: Path) -> None:
         path = write_memory(tmp_path, "p_two", extra_frontmatter="type: project\n")
         assert "type" in load_memory(path).unknown_keys

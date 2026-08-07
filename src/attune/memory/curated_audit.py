@@ -54,8 +54,18 @@ ALLOWED_METADATA_KEYS = frozenset({"type"})
 #: readers to ignore it.
 TOLERATE_METADATA_PROVENANCE = True
 
-#: Recognised memory types.
-KNOWN_TYPES = frozenset({"user", "feedback", "project", "reference", "lesson"})
+#: The canonical linter's ALLOWED_TYPES (``~/.claude/hooks/memory_lint.py``),
+#: mirrored exactly. This deliberately does NOT include ``lesson`` — the
+#: linter maps ``lesson_*`` stems to ``feedback`` and flags ``type: lesson``
+#: as a violation, so the sweep must too (decision D4: the enforcement code
+#: is the authority; an earlier draft of this set included ``lesson`` and put
+#: the two implementations in disagreement).
+LINTER_ALLOWED_TYPES = frozenset({"user", "feedback", "project", "reference"})
+
+#: Backward-compatible alias for the previous name. The old set wrongly
+#: included ``lesson``; keep the alias pointing at the corrected set so any
+#: external caller inherits the fix rather than the bug.
+KNOWN_TYPES = LINTER_ALLOWED_TYPES
 
 #: How fast a claim of each type goes stale, per design.md § ranking model.
 #:
@@ -68,6 +78,9 @@ KNOWN_TYPES = frozenset({"user", "feedback", "project", "reference", "lesson"})
 VOLATILITY_BY_TYPE: dict[str, float] = {
     "project": 1.00,
     "reference": 0.60,
+    # ``lesson`` is NOT a valid metadata.type (see LINTER_ALLOWED_TYPES) but
+    # is kept here so a file carrying it still ranks sensibly while its
+    # invalid type is reported. Ranking tolerance ≠ schema tolerance.
     "lesson": 0.40,
     "feedback": 0.15,
     "user": 0.10,
@@ -111,6 +124,7 @@ class AuditReport:
 
     ranked: tuple[tuple[CuratedMemory, float], ...] = ()
     schema_violations: tuple[tuple[Path, tuple[str, ...]], ...] = ()
+    invalid_types: tuple[tuple[Path, str], ...] = ()
     name_mismatches: tuple[Path, ...] = ()
     broken_links: tuple[tuple[Path, str], ...] = ()
     orphans: tuple[Path, ...] = ()
@@ -124,6 +138,7 @@ class AuditReport:
         """True when no integrity problem was found (staleness aside)."""
         return not (
             self.schema_violations
+            or self.invalid_types
             or self.name_mismatches
             or self.broken_links
             or self.orphans
@@ -227,7 +242,7 @@ def load_memory(path: Path) -> CuratedMemory:
     # carries a valid type — see TOLERATE_METADATA_PROVENANCE. When the type
     # is missing or unrecognised they stay reported, because that is the
     # substitute-for-type drift the canonical linter exists to catch.
-    if TOLERATE_METADATA_PROVENANCE and fields.get("metadata.type") in KNOWN_TYPES:
+    if TOLERATE_METADATA_PROVENANCE and fields.get("metadata.type") in LINTER_ALLOWED_TYPES:
         unknown = [key for key in unknown if not key.startswith("metadata.")]
 
     all_links = _LINK_RE.findall(body)
@@ -407,6 +422,18 @@ def audit(
     known_stems = {mem.stem for mem in memories}
 
     schema_violations = tuple((mem.path, mem.unknown_keys) for mem in memories if mem.unknown_keys)
+    # A PRESENT-but-unrecognised metadata.type is definite drift and is
+    # exactly what the canonical linter flags. A MISSING type is deliberately
+    # not flagged here: the sweep's roots may include corpora that follow a
+    # different file format entirely (e.g. attune's personal topic/kind
+    # store), where the linter claims no jurisdiction — only its
+    # ``curated/`` subtree is linted. Value-drift is unambiguous; absence is
+    # not.
+    invalid_types = tuple(
+        (mem.path, mem.mem_type)
+        for mem in memories
+        if mem.mem_type is not None and mem.mem_type not in LINTER_ALLOWED_TYPES
+    )
     # ``name:`` must equal the filename stem — a mismatch breaks every
     # [[link]] that targets it, silently.
     name_mismatches = tuple(
@@ -446,6 +473,7 @@ def audit(
     return AuditReport(
         ranked=ranked,
         schema_violations=schema_violations,
+        invalid_types=invalid_types,
         name_mismatches=name_mismatches,
         broken_links=broken_links,
         orphans=orphans,
