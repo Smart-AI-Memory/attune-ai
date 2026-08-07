@@ -111,6 +111,19 @@ def _age_suffix(updated_at: Any) -> str:
     return f"  {format_age_annotation(days)}"
 
 
+def _instruction_suffix(*parts: str) -> str:
+    """Flag instruction-shaped content on a digest card (R1).
+
+    The digest is a recall surface; a curated node whose text reads like a
+    directive should be visible as such so the reader treats it as quoted
+    evidence, not an order. Flags, never blocks — the card still renders.
+    """
+    from attune.memory.provenance import scan_instructions
+
+    flags = scan_instructions(" ".join(p for p in parts if p))
+    return f"  [!] instruction-shaped: {', '.join(flags)}" if flags else ""
+
+
 def digest_form_dict(
     nodes: list[dict[str, Any]], question_id: str = "memory_digest"
 ) -> dict[str, Any]:
@@ -135,7 +148,8 @@ def digest_form_dict(
                 "label": name,
                 "status": str(node.get("type", "node")).replace("_", " "),
                 "detail": _detail(str(node.get("description", "")))
-                + _age_suffix(node.get("updated_at")),
+                + _age_suffix(node.get("updated_at"))
+                + _instruction_suffix(str(node.get("description", "")), str(node.get("name", ""))),
             }
         )
     labels = [it["label"] for it in items]
