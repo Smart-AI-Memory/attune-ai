@@ -399,6 +399,73 @@ def _is_pointed_at(stem: str, index_text: str) -> bool:
     return f"{stem}.md" in index_text
 
 
+def _pointer_integrity(
+    memories: Sequence[CuratedMemory],
+    known_stems: set[str],
+    roots: tuple[Path, ...],
+) -> tuple[tuple[Path, ...], tuple[tuple[Path, str], ...]]:
+    """Cross-check memories against their ``MEMORY.md`` indexes, both ways.
+
+    Returns ``(orphans, dangling)``: files with no index pointer, and index
+    pointers with no file. When no roots are given, pointer integrity is
+    skipped (both empty) rather than treated as failing.
+
+    A corpus with no ``MEMORY.md`` carries no pointer requirement — the
+    canonical linter self-skips it, and attune's own curated store is exactly
+    that shape — so its files are never reported as orphans.
+    """
+    if not roots:
+        return (), ()
+    index_texts = _index_texts(roots)
+    orphans = tuple(
+        mem.path
+        for mem in memories
+        if mem.path.parent in index_texts
+        and not _is_pointed_at(mem.stem, index_texts[mem.path.parent])
+    )
+    dangling = tuple(
+        (directory / INDEX_FILENAME, stem)
+        for directory, text in index_texts.items()
+        for stem in sorted({Path(t).stem for t in _INDEX_LINK_RE.findall(text)} - known_stems)
+    )
+    return orphans, dangling
+
+
+def _content_integrity(
+    memories: Sequence[CuratedMemory],
+    known_stems: set[str],
+) -> tuple[
+    tuple[tuple[Path, tuple[str, ...]], ...],
+    tuple[tuple[Path, str], ...],
+    tuple[Path, ...],
+    tuple[tuple[Path, str], ...],
+]:
+    """Per-file schema, type, name, and link checks (no cross-file indexes).
+
+    Returns ``(schema_violations, invalid_types, name_mismatches,
+    broken_links)``. A PRESENT-but-unrecognised ``metadata.type`` is definite
+    drift — exactly what the canonical linter flags. A MISSING type is
+    deliberately not flagged: sweep roots may include corpora with a different
+    file format (attune's personal topic/kind store) where the linter claims
+    no jurisdiction. Value-drift is unambiguous; absence is not.
+    """
+    schema_violations = tuple((mem.path, mem.unknown_keys) for mem in memories if mem.unknown_keys)
+    invalid_types = tuple(
+        (mem.path, mem.mem_type)
+        for mem in memories
+        if mem.mem_type is not None and mem.mem_type not in LINTER_ALLOWED_TYPES
+    )
+    # ``name:`` must equal the filename stem — a mismatch breaks every
+    # [[link]] that targets it, silently.
+    name_mismatches = tuple(
+        mem.path for mem in memories if mem.name is not None and mem.name != mem.stem
+    )
+    broken_links = tuple(
+        (mem.path, link) for mem in memories for link in mem.links if link not in known_stems
+    )
+    return schema_violations, invalid_types, name_mismatches, broken_links
+
+
 def audit(
     memories: Sequence[CuratedMemory],
     roots: Iterable[Path] = (),
@@ -421,46 +488,10 @@ def audit(
     roots = tuple(roots)
     known_stems = {mem.stem for mem in memories}
 
-    schema_violations = tuple((mem.path, mem.unknown_keys) for mem in memories if mem.unknown_keys)
-    # A PRESENT-but-unrecognised metadata.type is definite drift and is
-    # exactly what the canonical linter flags. A MISSING type is deliberately
-    # not flagged here: the sweep's roots may include corpora that follow a
-    # different file format entirely (e.g. attune's personal topic/kind
-    # store), where the linter claims no jurisdiction — only its
-    # ``curated/`` subtree is linted. Value-drift is unambiguous; absence is
-    # not.
-    invalid_types = tuple(
-        (mem.path, mem.mem_type)
-        for mem in memories
-        if mem.mem_type is not None and mem.mem_type not in LINTER_ALLOWED_TYPES
+    schema_violations, invalid_types, name_mismatches, broken_links = _content_integrity(
+        memories, known_stems
     )
-    # ``name:`` must equal the filename stem — a mismatch breaks every
-    # [[link]] that targets it, silently.
-    name_mismatches = tuple(
-        mem.path for mem in memories if mem.name is not None and mem.name != mem.stem
-    )
-    broken_links = tuple(
-        (mem.path, link) for mem in memories for link in mem.links if link not in known_stems
-    )
-
-    orphans: tuple[Path, ...] = ()
-    dangling: tuple[tuple[Path, str], ...] = ()
-    if roots:
-        index_texts = _index_texts(roots)
-        # A corpus with no MEMORY.md carries no pointer requirement — the
-        # canonical linter self-skips it, and attune's own curated store is
-        # exactly that shape. Reporting its files as orphans is noise.
-        orphans = tuple(
-            mem.path
-            for mem in memories
-            if mem.path.parent in index_texts
-            and not _is_pointed_at(mem.stem, index_texts[mem.path.parent])
-        )
-        dangling = tuple(
-            (directory / INDEX_FILENAME, stem)
-            for directory, text in index_texts.items()
-            for stem in sorted({Path(t).stem for t in _INDEX_LINK_RE.findall(text)} - known_stems)
-        )
+    orphans, dangling = _pointer_integrity(memories, known_stems, roots)
 
     ranked = tuple(
         sorted(
