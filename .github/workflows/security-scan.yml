@@ -1,4 +1,4 @@
-name: Security Scan
+name: Security Audit (blocking)
 
 on:
   pull_request:
@@ -12,7 +12,11 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  # Literal group id, deliberately NOT ${{ github.workflow }} — see the same
+  # comment in security.yml. This workflow blocks on critical findings, so a
+  # name collision silently cancelling it is a security hole, not a cosmetic
+  # CI annoyance. Keep these literals unique per file.
+  group: security-attune-audit-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 permissions:
