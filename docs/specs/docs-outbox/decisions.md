@@ -106,10 +106,35 @@ Build interpretations worth naming:
   same day and ships merge-now in the feature PR, not via the
   outbox — R2's split exercised for real; the outbox CLI also
   refuses `--kind decision` outright (unit-tested).
-- **AC-2 (sweep round-trip) — PENDING the chair:** digest composed
-  and chip spawned; completes when Patrick clicks it and the
-  spawned session lands the swept PR (then recallable after the
-  next hydration). Record the close-out here when it lands.
+- **AC-2 (sweep round-trip) — PASS, live (2026-08-07):** 11 real
+  lessons written across the session by three separate writers
+  (two CLI processes plus the Stop-hook-prompted route) swept in
+  one pass: all 11 lint-clean, zero duplicates dropped, applied to
+  `.claude/lessons.md` in timestamp order (+289 lines, one file),
+  outbox drained to empty, all 11 archived to
+  `~/.attune/docs-outbox/swept/`. Verified post-apply: zero CRLF in
+  the diff, trailing-whitespace / end-of-file / mixed-line-ending
+  hooks pass, `tests/unit/lessons` 26/26 green. Shipped as ONE PR.
+  **Approval path — recorded as it happened, not as designed:** the
+  chair approved by DIRECT INSTRUCTION in-session ("run the sweep
+  and apply the 11 lessons"), not by clicking the digest chip. The
+  chip had been spawned and started, but stood down on its
+  precondition (#1970 unmerged) and did nothing; it was checked for
+  concurrent work before this run (no open PR, no `swept/`, all 11
+  still pending) precisely because a duplicate sweep would
+  manufacture the lessons.md conflict this spec exists to prevent.
+  The R4 contract — *no auto-shipping; the chair approves the
+  digest before the PR opens* — was satisfied: a digest was composed
+  and shown, and the chair authorized the apply. The chip
+  specifically remains the untested surface; a future sweep should
+  exercise it to close that gap.
+
+## AC-1 completion note
+
+AC-1's second half ("the sweep lands both in one PR") is closed by
+the AC-2 run above: the two same-day writers' lessons from 09:58
+are in the same swept PR as the other nine, with zero DIRTY cycles
+at any point — no branch existed to conflict until apply time.
 
 ## D4 — Review lane found 3 data-loss defects; all fixed before merge
 
