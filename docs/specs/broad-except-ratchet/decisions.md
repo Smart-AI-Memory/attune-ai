@@ -75,3 +75,65 @@ ratified clauses (R5–R7). Implementation may proceed. Seeding
 baseline: **624 sites across 259 files** at approval time — the
 build PR re-measures from its own commit rather than trusting this
 number.
+
+## D2 — BUILT; guard seeded and fires-on-violation receipted (R7)
+
+**Date:** 2026-08-07 · **Status:** built (lead: Claude)
+
+Guard lives at `tests/unit/gates/test_broad_except_ratchet.py`,
+three tests: no-new-or-raised, baseline-not-stale (the half that
+makes it actually ratchet), and an R6 scope drift guard on the
+baseline keys themselves.
+
+**Detection is AST-based, not textual** — a deliberate departure
+from the sibling `test_no_new_sys_modules_patch.py` regex model.
+This repo's prose, `.claude/lessons.md`, and docstrings mention
+`except Exception` constantly; a regex would count them and the
+baseline would churn on every docs commit. One `ExceptHandler`
+counts once however many names its tuple carries, and the
+attribute form (`builtins.Exception`) is caught too.
+
+### Seeded baseline — RE-MEASURED, and it differs from D1
+
+| Tree | Sites | Note |
+|---|---|---|
+| `src/attune` | 577 | |
+| `attune_redis` | 30 | |
+| `backend` | 6 | |
+| **Total** | **613 across 253 files** | |
+
+D1 recorded 624/259 from a `grep -c` line count; the AST scan
+finds **613/253**. The delta is a measurement-instrument
+difference, not drift: grep counts LINES matching the pattern
+(including a handful in strings/comments), the gate counts
+`ExceptHandler` NODES. D1 anticipated exactly this and instructed
+the build to re-measure — the gate's own scanner seeded the
+baseline, so the number and the enforcement can never disagree.
+
+### R7 fires-on-violation receipt — three shapes, all live
+
+Each probe was applied to the real tree, the gate run, and the
+probe reverted (`git status` clean after each):
+
+| Probe | Result |
+|---|---|
+| Raise the count in an already-baselined file (`src/attune/discovery.py`, +1) | **FAILS**: `src/attune/discovery.py: 2 > baseline 1` |
+| Brand-new file with a broad except | **FAILS**: `New file(s) use except Exception…: src/attune/_ratchet_probe.py (1)` |
+| Convert a site (baseline goes stale) | **FAILS**: `src/attune/discovery.py: baseline 1 but now 0 — lower it` |
+
+**R5 confirmed live:** the Case-A probe carried
+`# noqa: BLE001` and was counted anyway — the annotation is not an
+exemption, as ruled.
+
+**Process note worth recording.** The first probe run used
+`-p no:xdist`, which collides with `-n auto` in `pytest.ini`;
+pytest exited on argument parsing and my filtered grep matched
+nothing, so all three probes reported *silence* that I briefly
+read as success. The receipt above is from the re-run with a valid
+invocation. Silence is not a receipt — the filter has to be able
+to show a failure before an empty result means anything.
+
+Seeding commit is green on the full `tests/unit/gates` suite
+(199 passed). AC bullets 1 and 3 (guard exists + seeded + green;
+shrink-only documented in the docstring) are satisfied by this
+commit; AC bullet 2 is the receipt table above.
