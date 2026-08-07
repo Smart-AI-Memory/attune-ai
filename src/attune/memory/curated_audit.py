@@ -31,7 +31,7 @@ import logging
 import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -232,7 +232,11 @@ def load_memory(path: Path) -> CuratedMemory:
 
     all_links = _LINK_RE.findall(body)
     try:
-        mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).date()
+        # Local date, deliberately — it is compared against ``date.today()``,
+        # which is also local. Reading mtime as UTC while comparing to a local
+        # today put every non-UTC user off by a day (caught by the clock-tz
+        # matrix in America/Anchorage: 60 where 61 was correct).
+        mtime = datetime.fromtimestamp(path.stat().st_mtime).date()
     except OSError:
         mtime = date.today()
 

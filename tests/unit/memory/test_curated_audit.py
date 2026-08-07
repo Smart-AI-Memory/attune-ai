@@ -13,8 +13,8 @@ from __future__ import annotations
 
 import hashlib
 import os
-import time
-from datetime import date
+from datetime import date, datetime, timedelta
+from datetime import time as clock_time
 from pathlib import Path
 
 import pytest
@@ -33,7 +33,6 @@ from attune.memory.curated_audit import (
 )
 
 TODAY = date(2026, 8, 7)
-_DAY_SECONDS = 86400
 
 
 def write_memory(
@@ -61,7 +60,12 @@ def write_memory(
         f"{body}\n",
         encoding="utf-8",
     )
-    stamp = time.time() - age_days * _DAY_SECONDS
+    # Anchor to local NOON of the target date rather than subtracting raw
+    # seconds from now. Second-arithmetic lands on an arbitrary wall-clock
+    # time, so a run near local midnight — or across a DST transition —
+    # backdates to the wrong calendar day and the age assertions drift by one.
+    target = date.today() - timedelta(days=age_days)
+    stamp = datetime.combine(target, clock_time(12, 0)).timestamp()
     os.utime(path, (stamp, stamp))
     return path
 
