@@ -1,4 +1,4 @@
-name: Security Scan
+name: Security Scan (Bandit + Safety)
 
 on:
   push:
@@ -11,7 +11,13 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  # Literal group id, deliberately NOT ${{ github.workflow }}: that expands to
+  # the workflow *name*, so two files sharing a name share a group. This file
+  # and security-scan.yml were both named "Security Scan" and so collided —
+  # with cancel-in-progress, whichever started second killed the other, and one
+  # of the two scans died at random on every PR (including, half the time, the
+  # blocking one). Keep these literals unique per file.
+  group: security-bandit-safety-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
