@@ -1,9 +1,10 @@
 # Broad-Except Ratchet — Requirements
 
-**Status:** approved (2026-08-06 — chair ruled Q1–Q3 via the
-approval form; D1 in [decisions.md](decisions.md)). Implementation
-authority granted; the fires-on-violation receipt is owed by the
-build PR.
+**Status:** complete (2026-08-07 — guard built, baseline seeded at
+613 sites / 253 files, fires-on-violation receipted in three shapes;
+D2 in [decisions.md](decisions.md)). Approved 2026-08-06 with Q1–Q3
+ruled (D1). Ongoing obligation: the baseline is SHRINK-ONLY — lower
+entries as sites are converted.
 **Slug:** `broad-except-ratchet`
 **Provenance:** chair directive 2026-08-02 ("spec 3 and 4 for chair
 review") from the post-dry-run feedback exchange. Evidence base:
