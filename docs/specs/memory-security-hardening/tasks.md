@@ -23,7 +23,7 @@ dependency order — in-repo, low-risk items first; machine-infra last (gated).
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | MCP `personal_memory_recall` returns framed text (emit `context_block`), structured fields as siblings | attune-ai | pending | `memory_handlers.py:344`; already stamped, just render |
+| 1 | MCP `personal_memory_recall` returns framed `context`; bare summary/excerpt stripped from results | attune-ai | done | `memory_handlers.py:344`; fails closed if provenance absent |
 | 2 | MCP `memory_retrieve` — stamp provenance + wrap; fail closed if unavailable | attune-ai | pending | `memory_handlers.py:127`; no provenance today |
 | 3 | `PersonalMemory.query` — `render_for_context()` helper (or documented consumer contract) so no caller re-stringifies | attune-ai | pending | `personal.py:239` |
 | 4 | Tests: each surface frames a payload, content preserved, fails closed | attune-ai | pending | hermetic |
@@ -34,7 +34,7 @@ dependency order — in-repo, low-risk items first; machine-infra last (gated).
 |---|------|-------|--------|-------|
 | 1 | Raw stash gate | attune-ai | done | `session_stash.py:326`, fail-closed |
 | 2 | Curated `/remember` gate | attune-ai | done | `personal.py:223`, raises "rotate" |
-| 3 | **Fix wiring bug**: short-term Redis tier scans secrets (currently silently OFF) | attune-ai | pending | `short_term/facade.py:187` — construct `DataSanitizer` with explicit kwargs; **live hole** |
+| 3 | **Fix wiring bug**: short-term Redis tier scans secrets (was silently OFF) | attune-ai | done | `short_term/facade.py:187` — explicit kwargs; regression test added |
 | 4 | Verify `long_term` pipelines actually invoke `SecretsDetector` on the write path; wire if not | attune-ai | pending | `long_term_integration.py:99` et al. |
 | 5 | Amend requirements.md R2 text: fail-closed block, drop "redacted previews" (D3) | docs | pending | |
 | 6 | Hydration-path secret scan before write to Redis / cards | external | pending | **machine-gated** — `~/.attune/memory/hydrate.py` |
@@ -61,7 +61,7 @@ security review doesn't mistake it for an attack vector.
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Discard-on-malformed in extraction/`_normalize`: reject content with control chars, `---`, role-override/tool-call tokens (drop, not truncate) | attune-ai | pending | `plugin/hooks/session_stash.py:311` |
+| 1 | Discard-on-malformed in extraction/`_normalize`: reject content with control chars, `---`, role-override/tool-call tokens (drop, not truncate) | attune-ai | done | `plugin/hooks/session_stash.py` `_is_malformed`; keeps injection prose for R1 recall-flagging |
 | 2 | Typed-schema parse with explicit `confidence` + optional `source_ref`; discard on mismatch; keep heuristic fallback | attune-ai | pending | `_extract_via_ollama:220` |
 | 3 | Raw findings stay TTL-bound + visibly machine-generated | attune-ai | done | already true |
 
