@@ -112,7 +112,7 @@ async def home(request: Request) -> HTMLResponse:
 
 
 @router.get("/workflows", response_class=HTMLResponse)
-async def workflows_page(request: Request) -> HTMLResponse:
+def workflows_page(request: Request) -> HTMLResponse:
     workflows = data.list_workflows()
     cfg = request.app.state.config
     features = data.list_features(cfg.project_root)
@@ -177,7 +177,7 @@ async def workflows_page(request: Request) -> HTMLResponse:
 
 
 @router.get("/telemetry", response_class=HTMLResponse)
-async def telemetry_page(request: Request) -> HTMLResponse:
+def telemetry_page(request: Request) -> HTMLResponse:
     cfg = request.app.state.config
     summary = data.read_telemetry_summary(cfg, recent_days=14)
     # Phase 6.1 of ops-runner-tier2 — surface in-memory UI interaction
@@ -277,14 +277,16 @@ def _count_articles_for_kinds(features, kinds: tuple[str, ...]) -> int:
 
 
 @router.get("/help", response_class=HTMLResponse)
-async def help_home_page(request: Request) -> HTMLResponse:
+def help_home_page(request: Request) -> HTMLResponse:
     """Help home — user-first browse + search entry point."""
     from attune.ops import help_data
 
     cfg = request.app.state.config
+    # ONE list_features pass per request — featured_topics and
+    # recently_regenerated reuse it (11.5.0 self-review N+1 fix).
     features = help_data.list_features(cfg)
-    featured = help_data.featured_topics(cfg)
-    recent = help_data.recently_regenerated(cfg, limit=5)
+    featured = help_data.featured_topics(cfg, features=features)
+    recent = help_data.recently_regenerated(cfg, limit=5, features=features)
     intents = [
         dict(intent, count=_count_articles_for_kinds(features, intent["kinds"]))
         for intent in _HELP_INTENTS
@@ -308,7 +310,7 @@ async def help_home_page(request: Request) -> HTMLResponse:
 
 
 @router.get("/help/search", response_class=HTMLResponse)
-async def help_search_page(request: Request, q: str = "") -> HTMLResponse:
+def help_search_page(request: Request, q: str = "") -> HTMLResponse:
     """Help search results page."""
     from attune.ops import help_data
 
@@ -318,7 +320,7 @@ async def help_search_page(request: Request, q: str = "") -> HTMLResponse:
 
 
 @router.get("/help/admin", response_class=HTMLResponse)
-async def help_admin_page(request: Request) -> HTMLResponse:
+def help_admin_page(request: Request) -> HTMLResponse:
     """Admin tools — coverage gaps + stale templates."""
     from attune.ops import help_data
 
@@ -328,7 +330,7 @@ async def help_admin_page(request: Request) -> HTMLResponse:
 
 
 @router.get("/help/{feature}/{kind}", response_class=HTMLResponse)
-async def help_template_page(request: Request, feature: str, kind: str) -> HTMLResponse:
+def help_template_page(request: Request, feature: str, kind: str) -> HTMLResponse:
     """One template — markdown-rendered."""
     from fastapi import HTTPException
 
@@ -356,7 +358,7 @@ async def help_template_page(request: Request, feature: str, kind: str) -> HTMLR
 
 
 @router.get("/help/{feature}", response_class=HTMLResponse)
-async def help_feature_page(request: Request, feature: str) -> HTMLResponse:
+def help_feature_page(request: Request, feature: str) -> HTMLResponse:
     """Feature index — list of available kinds, click to read."""
     from fastapi import HTTPException
 
@@ -373,7 +375,7 @@ async def help_feature_page(request: Request, feature: str) -> HTMLResponse:
 
 
 @router.get("/runs/{run_id}/view", response_class=HTMLResponse)
-async def run_view_page(run_id: str, request: Request) -> HTMLResponse:
+def run_view_page(run_id: str, request: Request) -> HTMLResponse:
     """Full-page view for one workflow run.
 
     URL-bound: refreshing the page re-attaches to the existing run's SSE
@@ -452,7 +454,7 @@ async def run_view_page(run_id: str, request: Request) -> HTMLResponse:
 
 
 @router.get("/specs", response_class=HTMLResponse)
-async def specs_page(request: Request) -> HTMLResponse:
+def specs_page(request: Request) -> HTMLResponse:
     """Specs tab — federated listing of all specs across configured roots.
 
     Reuses the same root resolution + scanning logic as the JSON API so the
@@ -607,7 +609,7 @@ def _render_markdown_safe(text: str) -> str:
 
 
 @router.get("/specs/{slug}", response_class=HTMLResponse)
-async def spec_detail_page(slug: str, request: Request) -> HTMLResponse:
+def spec_detail_page(slug: str, request: Request) -> HTMLResponse:
     """Drill-in for a single spec: show every phase file's content (read-only)."""
     from fastapi import HTTPException
 
