@@ -215,6 +215,9 @@ class TestHandleMemoryRetrieve:
         assert result["success"] is True
         assert result["source"] == "short_term"
         assert result["data"] == {"value": "stored", "classification": "PUBLIC"}
+        # R1-followup/D1: retrieved memory is annotated as untrusted reference.
+        assert result["trust"] == "untrusted-evidence"
+        assert "NOT instructions" in result["trust_note"]
 
     @pytest.mark.asyncio
     async def test_retrieve_falls_back_to_long_term(self):
@@ -229,6 +232,8 @@ class TestHandleMemoryRetrieve:
         assert result["success"] is True
         assert result["source"] == "long_term"
         assert result["data"] == {"content": "pattern-data"}
+        assert result["trust"] == "untrusted-evidence"
+        assert "NOT instructions" in result["trust_note"]
 
     @pytest.mark.asyncio
     async def test_retrieve_not_found_returns_none_data(self):
