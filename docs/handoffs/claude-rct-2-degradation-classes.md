@@ -19,9 +19,8 @@ ONCE per session, server-absent stays silent, P15 never-block holds.
 
 ## Scope and assumptions
 
-- Branch/worktree: `claude/rct-2-degradation-classes` (built atop
-  `claude/rct-1-canonical-resolver`; rebase onto origin/main once
-  PR #1984's squash lands, then open its own PR).
+- Branch/worktree: `claude/rct-2-degradation-classes`, rebased onto
+  origin/main after PR #1984's squash landed; shipped as PR #1985.
 - Provider/session: Claude lead, 2026-08-08 starter session.
 - Assumptions: resolver (`resolve_redis_connection`) is the only
   connection source for the seam; `ATTUNE_REDIS_MOCK=true` is the
@@ -29,8 +28,10 @@ ONCE per session, server-absent stays silent, P15 never-block holds.
 
 ## Current state
 
-- Status: implemented + tested; awaiting #1984 merge to rebase and
-  open the rct-2 PR.
+- Status: PR #1985 open; codex D11 lane run on the diff (4 findings,
+  all accepted and fixed in-branch: injected-env mock flag, loud-once
+  lock, ValueError credential scrub, this handoff refresh); awaiting
+  the chair's merge read.
 - Changed files: `src/attune/memory/features.py` (states, report,
   classifier, loud-once, check_redis rewire),
   `src/attune/memory/__init__.py` (exports),
@@ -56,6 +57,6 @@ ONCE per session, server-absent stays silent, P15 never-block holds.
 
 ## Next action
 
-After PR #1984 merges: `git rebase --onto origin/main
-claude/rct-1-canonical-resolver claude/rct-2-degradation-classes`,
-re-sign, push, open the rct-2 PR off main, flip tasks.md status.
+Chair merge read of PR #1985 (merge only on explicit go). After
+merge: delete this handoff file; next ladder task is rct-3 (doctor
+diagnostic derived from the resolver's source-map).

@@ -10,6 +10,8 @@ Licensed under the Apache License, Version 2.0
 import importlib
 import logging
 import os
+import re
+import threading
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
@@ -21,14 +23,27 @@ _LOUD_STATES = frozenset({"degraded_auth"})
 
 #: State values already warned about this process (loud-once scope).
 _warned_states: set[str] = set()
+_warned_lock = threading.Lock()
+
+#: Credential section of any URL embedded in free text (defensive
+#: scrub — R3: secrets stay redacted in every message).
+_CRED_RE = re.compile(r"://([^/@:\s]*):[^@\s]*@")
+
+
+def _scrub_secrets(text: str) -> str:
+    """Mask the password of any credentialed URL embedded in text."""
+    return _CRED_RE.sub(r"://\1:***@", text)
 
 
 def _warn_once(report: "RedisHealthReport") -> None:
     """Emit ONE structured warning per session for loud states (R3)."""
     state = report.state.value
-    if state not in _LOUD_STATES or state in _warned_states:
+    if state not in _LOUD_STATES:
         return
-    _warned_states.add(state)
+    with _warned_lock:
+        if state in _warned_states:
+            return
+        _warned_states.add(state)
     logger.warning(
         "Redis memory degraded (%s): %s — memory features fall back "
         "silently until this is fixed. Effective target: %s%s",
@@ -262,9 +277,13 @@ class MemoryFeatures:
             A :class:`RedisHealthReport` with the classified state.
 
         """
-        from attune.config.env_compat import get_attune_env
+        if env is None:
+            from attune.config.env_compat import get_attune_env
 
-        if (get_attune_env("REDIS_MOCK", "") or "").lower() == "true":
+            mock_flag = get_attune_env("REDIS_MOCK", "") or ""
+        else:
+            mock_flag = env.get("ATTUNE_REDIS_MOCK") or ""
+        if mock_flag.lower() == "true":
             return RedisHealthReport(
                 RedisHealthState.DISABLED,
                 "mock mode requested (ATTUNE_REDIS_MOCK=true)",
@@ -282,7 +301,7 @@ class MemoryFeatures:
             resolved = resolve_redis_connection(env)
         except ValueError as exc:
             # Malformed config never self-heals — same loud class as auth.
-            return RedisHealthReport(RedisHealthState.DEGRADED_AUTH, str(exc))
+            return RedisHealthReport(RedisHealthState.DEGRADED_AUTH, _scrub_secrets(str(exc)))
 
         import redis
 
@@ -292,7 +311,7 @@ class MemoryFeatures:
         except (redis.exceptions.AuthenticationError, redis.exceptions.NoPermissionError) as exc:
             return RedisHealthReport(
                 RedisHealthState.DEGRADED_AUTH,
-                f"authentication rejected: {exc}",
+                _scrub_secrets(f"authentication rejected: {exc}"),
                 redacted_url=resolved.redacted_url,
                 overrides=resolved.overrides,
             )

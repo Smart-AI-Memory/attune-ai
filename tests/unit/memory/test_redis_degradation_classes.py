@@ -79,8 +79,30 @@ class TestClassification:
 
     def test_mock_env_classifies_disabled(self, monkeypatch):
         monkeypatch.setenv("ATTUNE_REDIS_MOCK", "true")
-        r = MemoryFeatures.classify_redis_health(env={})
+        r = MemoryFeatures.classify_redis_health()
         assert r.state is RedisHealthState.DISABLED
+
+    def test_mock_flag_respected_from_injected_env(self, monkeypatch):
+        """The injected env mapping decides — not process state."""
+        monkeypatch.delenv("ATTUNE_REDIS_MOCK", raising=False)
+        r = MemoryFeatures.classify_redis_health(env={"ATTUNE_REDIS_MOCK": "true"})
+        assert r.state is RedisHealthState.DISABLED
+
+    def test_process_mock_flag_ignored_when_env_injected(self, monkeypatch):
+        monkeypatch.setenv("ATTUNE_REDIS_MOCK", "true")
+        r = MemoryFeatures.classify_redis_health(env={"REDIS_URL": "redis://127.0.0.1:1/0"})
+        assert r.state is RedisHealthState.DEGRADED_CONNECTIVITY
+
+    def test_malformed_config_detail_scrubs_embedded_credentials(self):
+        """Defensive: a resolver message carrying a credentialed URL is scrubbed."""
+        with patch(
+            "attune.memory.config.resolve_redis_connection",
+            side_effect=ValueError("bad URL redis://u:sekret@h:6379/0"),  # pragma: allowlist secret
+        ):
+            r = MemoryFeatures.classify_redis_health(env={"REDIS_URL": "redis://h:6379/0"})
+        assert r.state is RedisHealthState.DEGRADED_AUTH
+        assert "sekret" not in r.detail
+        assert "redis://u:***@h:6379/0" in r.detail
 
     def test_missing_package_classifies_degraded_connectivity(self):
         with patch.object(MemoryFeatures, "is_redis_available", return_value=False):
