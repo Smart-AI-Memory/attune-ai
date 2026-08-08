@@ -5,7 +5,15 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
 ## [11.4.0] — 2026-08-07
+
+Docs outbox: small docs artifacts (lessons, reports, drafts, plans)
+now batch through a conflict-free outbox into one curated PR instead
+of shipping as micro-PRs. Plus an advisory staleness sweep for
+curated memory corpora and a shrink-only broad-except ratchet
+seeded at 613 sites.
 
 ### Added
 
