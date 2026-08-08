@@ -35,7 +35,14 @@ Re-take before editing if the live files have changed since.
 
 ---
 
-## R2#6 — self-contained secret scan in `hydrate.py`
+## R2#6 — self-contained secret scan in `hydrate.py`  ✅ APPLIED 2026-08-07
+
+**Applied live** to `~/.attune/memory/hydrate.py` (scan + guards on all 4 hset
+writes) and the auth-prep to both hooks (below). Verified: a planted `sk-ant-`
+key is skipped and absent from Redis; a real corpus false positive — AWS's
+documented `AKIAIOSFODNN7EXAMPLE` in a rules doc — surfaced and drove the
+placeholder filter below (so legit files that *mention* an example key aren't
+dropped). Originals are in the backup dir for rollback.
 
 The hydrator copies each corpus record's `text`/`name`/`description` into Redis.
 Skip (fail closed) any record carrying a secret, and warn to ROTATE. Stdlib-only.
@@ -59,12 +66,26 @@ _SECRET_RES = tuple(_re.compile(p) for p in (
 ))
 
 
+# Documentation placeholders that structurally match but are not real (AWS's
+# AKIAIOSFODNN7EXAMPLE appears in docs ABOUT secret detection). Real creds never
+# contain these words. Without this, legit files get dropped from recall.
+_SECRET_PLACEHOLDER = _re.compile(r"EXAMPLE|XXXX|REDACTED|PLACEHOLDER|YOUR[-_]", _re.I)
+
+
 def _has_secret(*fields: str) -> bool:
     for f in fields:
-        if f and any(rx.search(f) for rx in _SECRET_RES):
-            return True
+        if not f:
+            continue
+        for rx in _SECRET_RES:
+            for m in rx.finditer(f):
+                if not _SECRET_PLACEHOLDER.search(m.group(0)):
+                    return True
     return False
 ```
+
+(Uses the already-imported `re` — `import os` is also needed for the auth-prep
+below, and both `import os` lines get stripped by the format-on-save hook if
+added before their first use; add import + usage together, or re-add after.)
 
 **Guard each `pipe.hset(...)` write** (files ~line 303, lessons ~324, rules
 ~344) — wrap the body/text you are about to store:
@@ -85,18 +106,16 @@ run the hydrator, confirm a `SKIPPED … ROTATE` line and that the key is absent
 
 ---
 
-## R3#5 — requirepass + loopback bind
+## R3#5 — requirepass + loopback bind  ← SOLE REMAINING STEP (gated on PR #1979 release)
 
-**a. Make the two hooks auth-aware first** (so they survive the flip). In both
-`hydrate.py:254` and `session_hydrate.py:89`:
+**a. Hooks are already auth-aware** ✅ — `hydrate.py` and `session_hydrate.py`
+now connect with `password=os.environ.get("REDIS_PASSWORD") or None` (applied
+2026-08-07). No-op until the secret is set. The `FUNCTION LOAD` / `FCALL` run on
+the same authed client, so no extra change.
 
-```python
-import os
-r = redis.Redis(decode_responses=True, password=os.environ.get("REDIS_PASSWORD") or None)
-```
-
-Also the `FUNCTION LOAD` / `FCALL` in `session_hydrate.py` runs on the same
-authed client `r`, so no extra change there.
+**Do NOT flip requirepass until PR #1979 is released and installed** — the
+installed MCP server's readers (attune-ai 11.1.0) don't yet read `REDIS_PASSWORD`
+and would break. After upgrade:
 
 **b. Provision the secret** where every process inherits it — your shell profile
 (`~/.zshrc`) and wherever the plugin MCP server is launched:

@@ -38,7 +38,7 @@ dependency order — in-repo, low-risk items first; machine-infra last (gated).
 | 3 | **Fix wiring bug**: short-term Redis tier scans secrets (was silently OFF) | attune-ai | done | `short_term/facade.py:187` — explicit kwargs; regression test added |
 | 4 | Verify `long_term` pipelines invoke `SecretsDetector` on the write path | attune-ai | done | verified — `_handle_secrets_found` always raises `SecurityError` before storage |
 | 5 | Amend requirements.md R2 text: fail-closed block, drop "redacted previews" (D3) | docs | done | |
-| 6 | Hydration-path secret scan before write to Redis / cards | external | pending | **machine-gated** — steps in [machine-infra-runbook.md](machine-infra-runbook.md) § R2#6 (self-contained; hydrator venv has no attune) |
+| 6 | Hydration-path secret scan before write to Redis / cards | external | done | **APPLIED 2026-08-07** + auth-prep on both hooks; verified. Runbook § R2#6 |
 | 7 | One-time sweep: curated `.md` + `findings.jsonl`; advisory | receipt | done | `scripts/scan_memory_secrets.py` (+9 tests); **rotation manual** — run it, then rotate any hit |
 
 ## R3 — disposable authenticated Redis + epoch-trusted recall (D4, D5)
