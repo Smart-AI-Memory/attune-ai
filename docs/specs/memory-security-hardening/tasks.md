@@ -25,7 +25,7 @@ dependency order — in-repo, low-risk items first; machine-infra last (gated).
 |---|------|-------|--------|-------|
 | 1 | MCP `personal_memory_recall` returns framed `context`; bare summary/excerpt stripped from results | attune-ai | done | `memory_handlers.py:344`; fails closed if provenance absent |
 | 2 | MCP `memory_retrieve` — stamp provenance + wrap; fail closed if unavailable | attune-ai | pending | `memory_handlers.py:127`; no provenance today |
-| 2b | MCP `memory_retrieve` framing | attune-ai | **decision** | returns keyed agent/human-authored structured data, not machine-extracted recall — recommend NARROW D1 (light trust annotation, not the prose envelope); awaiting chair nod |
+| 2b | MCP `memory_retrieve` trust annotation (D1 narrowed) | attune-ai | done | keyed structured data → light trust annotation, not the prose envelope; chair-ratified narrowing |
 | 3 | `PersonalMemory.query` — render at the consumer | attune-ai | done (by boundary) | rendered in the MCP handler (CONSUMER CONTRACT); no separate helper needed |
 | 4 | Tests: each surface frames a payload, content preserved, fails closed | attune-ai | pending | hermetic |
 
@@ -36,17 +36,17 @@ dependency order — in-repo, low-risk items first; machine-infra last (gated).
 | 1 | Raw stash gate | attune-ai | done | `session_stash.py:326`, fail-closed |
 | 2 | Curated `/remember` gate | attune-ai | done | `personal.py:223`, raises "rotate" |
 | 3 | **Fix wiring bug**: short-term Redis tier scans secrets (was silently OFF) | attune-ai | done | `short_term/facade.py:187` — explicit kwargs; regression test added |
-| 4 | Verify `long_term` pipelines actually invoke `SecretsDetector` on the write path; wire if not | attune-ai | pending | `long_term_integration.py:99` et al. |
-| 5 | Amend requirements.md R2 text: fail-closed block, drop "redacted previews" (D3) | docs | pending | |
+| 4 | Verify `long_term` pipelines invoke `SecretsDetector` on the write path | attune-ai | done | verified — `_handle_secrets_found` always raises `SecurityError` before storage |
+| 5 | Amend requirements.md R2 text: fail-closed block, drop "redacted previews" (D3) | docs | done | |
 | 6 | Hydration-path secret scan before write to Redis / cards | external | pending | **machine-gated** — `~/.attune/memory/hydrate.py` |
-| 7 | One-time sweep: ~271 curated `.md` + `findings.jsonl`; advisory, exit 0 | receipt | pending | in-repo script, hermetic-testable; **rotation manual** |
+| 7 | One-time sweep: curated `.md` + `findings.jsonl`; advisory | receipt | done | `scripts/scan_memory_secrets.py` (+9 tests); **rotation manual** — run it, then rotate any hit |
 
 ## R3 — disposable authenticated Redis + epoch-trusted recall (D4, D5)
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Central auth-aware Redis client; route ad-hoc `from_url` readers through it | attune-ai | pending | `recall_digest.py:64`, `priors.py:138`, `ops/memory_data.py:86`, `ops/collab_data.py:101` |
-| 2 | Read-side epoch/schema trust: recall serves a record only with current epoch + schema version + tier + canonical source path + content digest | attune-ai | pending | else ignore (not error); a raw key injected into the prefix fails the check |
+| 1 | Central auth-aware Redis client; route ad-hoc `from_url` readers through it | attune-ai | done | `memory/recall_redis.py` `connect_recall_redis`; 4 readers routed (+5 tests) |
+| 2 | Read-side epoch/schema trust: recall serves a record only with current epoch + schema version + tier + canonical source path + content digest | attune-ai | **deferred** | co-design with the writer (task 6) — the reader + hydrator must agree on the stamp format; building the reader in isolation is speculative and can't enforce until the writer stamps |
 | 3 | Delete dead `auto_promote_threshold` field; document human-gated promotion only (D5) | attune-ai | done | removed from `unified.py` + tests |
 | 4 | Disable AOF in both compose files (`--appendonly no`) | attune-ai | done | both compose files, D4 |
 | 5 | `requirepass` (random local secret) + loopback/socket bind + `rename-command` dangerous verbs | infra | pending | **machine-gated** — hook + MCP server must learn the secret |

@@ -22,6 +22,15 @@ Non-model-context surfaces (the `recall_digest` widget/elicitation form) keep
 flag-annotation, not the full envelope — they are not injection into a chat
 channel.
 
+**D1 narrowing (ratified during implementation).** The MCP `memory_retrieve`
+tool returns keyed, agent/human-authored **structured** data (short-term
+working memory, staged patterns) — not machine-extracted recall. Wrapping
+structured data in the "untrusted-evidence, do not obey" prose envelope is the
+wrong shape, so `memory_retrieve` carries a **light trust annotation**
+(`trust: "untrusted-evidence"` + a reference-not-instructions note) rather than
+the envelope. The envelope proper stays on the recall surfaces that emit
+machine-extracted/curated prose (`session_recall.py`, `personal_memory_recall`).
+
 ## D2 — Secret engine is the existing in-repo `SecretsDetector`, not Yelp detect-secrets
 
 **Finding.** `src/attune/memory/security/` already ships `SecretsDetector`
