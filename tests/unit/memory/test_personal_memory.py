@@ -565,3 +565,56 @@ class TestForgetTopic:
 
         data = json.loads(sidecar.read_text(encoding="utf-8"))
         assert "x/reference.md" not in data
+
+
+class TestSecretGateCoverage:
+    """Cover the R2 curated secret-gate branches in _secret_gate."""
+
+    def test_gate_unavailable_raises_runtime_error(self, monkeypatch):
+        # Make the in-function DataSanitizer import fail -> fail closed.
+        import sys
+
+        monkeypatch.setitem(sys.modules, "attune.memory.short_term.security", None)
+        pm = PersonalMemory(global_root=None)
+        with pytest.raises(RuntimeError, match="secret gate unavailable"):
+            pm.capture("t", "some content", kind="decision")
+
+    def test_pii_redaction_is_logged_and_content_returned(self, tmp_path, monkeypatch):
+        import attune.memory.short_term.security as security_mod
+
+        class _RedactingGate:
+            def __init__(self, **kwargs):
+                pass
+
+            def sanitize(self, content):
+                return ("<redacted> body", 2)  # 2 PII items redacted, no secret
+
+        monkeypatch.setattr(security_mod, "DataSanitizer", _RedactingGate)
+        pm = PersonalMemory(global_root=tmp_path / "g")
+        with patch("attune.memory.personal._load_author", return_value=_identity_polish):
+            with patch("attune.memory.personal._load_rag", return_value=None):
+                dest = pm.capture("topic", "email me at a@b.com", kind="decision")
+        assert dest.exists()
+        assert "<redacted>" in dest.read_text(encoding="utf-8")
+
+    def test_query_provenance_stamp_swallows_error(self, tmp_path, monkeypatch):
+        # Force provenance_fields to raise inside _stamp_provenance; query must
+        # still return its hits (framing is additive).
+        import attune.memory.personal as personal_mod
+
+        root = tmp_path / "g"
+        (root / "auth").mkdir(parents=True)
+        (root / "auth" / "decision.md").write_text("# x\n\nJWT auth.", encoding="utf-8")
+
+        def _boom(**kwargs):
+            raise ValueError("boom")
+
+        monkeypatch.setattr(personal_mod, "_load_rag", lambda: None)
+        pm = PersonalMemory(global_root=root)
+        # No RAG -> query returns []; assert the stamping helper itself is safe:
+        hits = [{"path": "auth/decision.md", "excerpt": "x", "summary": "", "score": 1.0}]
+        import attune.memory.provenance as prov
+
+        monkeypatch.setattr(prov, "provenance_fields", _boom)
+        pm._stamp_provenance(hits)  # must not raise
+        assert "provenance" not in hits[0]

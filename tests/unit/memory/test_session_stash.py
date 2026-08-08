@@ -830,3 +830,34 @@ def test_forget_by_prefix_swallows_recent_error():
     fb = _RecentBoom()
     assert forget_by_prefix(["abc"], backend=fb) == 0
     assert fb.forgotten == []
+
+
+class TestProvenanceStampingCoverage:
+    """Cover the defensive branches of _stamp_provenance (R1)."""
+
+    def test_non_dict_entries_are_skipped_not_crashed(self):
+        # A backend that returns a mixed list: a dict and a stray non-dict.
+        fb = _FakeBackend(results=[{"text": "ok", "cwd": "/p"}, "not-a-dict", 42])
+        out = recall_entries("q", backend=fb)
+        # dict got stamped; non-dicts passed through untouched, no crash.
+        assert out[0]["provenance"]["tier"] == "raw"
+        assert out[1] == "not-a-dict" and out[2] == 42
+
+    def test_stamp_swallows_provenance_error(self, monkeypatch):
+        # Force provenance_fields to raise; the except branch must swallow it
+        # and leave recall working (framing is additive, never fatal).
+        import attune.memory.session_stash as ss
+
+        def _boom(**kwargs):
+            raise ValueError("boom")
+
+        monkeypatch.setattr(ss, "provenance_fields", _boom, raising=False)
+        # provenance_fields is imported inside _stamp_provenance, so patch the
+        # source module too.
+        import attune.memory.provenance as prov
+
+        monkeypatch.setattr(prov, "provenance_fields", _boom)
+        fb = _FakeBackend(results=[{"text": "ok", "cwd": "/p"}])
+        out = recall_entries("q", backend=fb)
+        assert out[0]["text"] == "ok"  # recall still returns, unstamped
+        assert "provenance" not in out[0]
