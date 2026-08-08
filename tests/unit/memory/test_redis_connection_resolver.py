@@ -149,6 +149,71 @@ class TestMalformed:
             resolve_redis_connection(env={"REDIS_HOST": "h", "REDIS_DB": "x"})
 
 
+class TestCrossReviewHardening:
+    """Regressions from the 2026-08-08 codex cross-review lane (PR #1984)."""
+
+    def test_credentialed_variant_beats_passwordless_redis_url(self):
+        """R1 tier 1: a URL already carrying credentials outranks var order."""
+        r = resolve_redis_connection(
+            env={
+                "REDIS_URL": "redis://plain:6379/0",
+                "REDIS_PRIVATE_URL": "redis://:pw@private:6379/0",  # pragma: allowlist secret
+            }
+        )
+        assert "private" in r.url
+        assert r.source_map["url"] == "REDIS_PRIVATE_URL"
+        assert any("REDIS_URL ignored" in o for o in r.overrides)
+
+    def test_url_username_preserved_when_password_merges(self):
+        r = resolve_redis_connection(
+            env={
+                "REDIS_URL": "redis://svc@h:6379/0",
+                "REDIS_PASSWORD": "pw",  # pragma: allowlist secret
+            }
+        )
+        assert r.url == "redis://svc:pw@h:6379/0"  # pragma: allowlist secret
+        assert r.source_map["user"] == "REDIS_URL"
+
+    def test_redis_user_still_beats_url_username(self):
+        r = resolve_redis_connection(
+            env={
+                "REDIS_URL": "redis://svc@h:6379/0",
+                "REDIS_PASSWORD": "pw",  # pragma: allowlist secret
+                "REDIS_USER": "envuser",
+            }
+        )
+        assert r.url == "redis://envuser:pw@h:6379/0"  # pragma: allowlist secret
+        assert r.source_map["user"] == "REDIS_USER"
+
+    def test_ipv6_host_rebracketed_on_merge(self):
+        r = resolve_redis_connection(
+            env={
+                "REDIS_URL": "redis://[::1]:6379/0",
+                "REDIS_PASSWORD": "pw",  # pragma: allowlist secret
+            }
+        )
+        assert r.url == "redis://:pw@[::1]:6379/0"  # pragma: allowlist secret
+        assert "[::1]" in r.redacted_url
+
+    def test_unix_socket_merge_keeps_socket_path(self):
+        r = resolve_redis_connection(
+            env={
+                "REDIS_URL": "unix:///tmp/redis.sock",
+                "REDIS_PASSWORD": "pw",  # pragma: allowlist secret
+            }
+        )
+        assert r.url == "unix://:pw@/tmp/redis.sock"  # pragma: allowlist secret
+        assert r.redacted_url == "unix://:***@/tmp/redis.sock"
+
+    def test_unix_socket_path_is_not_db_checked(self):
+        r = resolve_redis_connection(env={"REDIS_URL": "unix:///tmp/redis.sock"})
+        assert r.url == "unix:///tmp/redis.sock"
+
+    def test_non_numeric_url_db_raises(self):
+        with pytest.raises(ValueError, match="non-numeric db"):
+            resolve_redis_connection(env={"REDIS_URL": "redis://h:6379/abc"})
+
+
 class TestRedaction:
     CASES = [
         {"REDIS_URL": "redis://:sekret@h:6379/0"},  # pragma: allowlist secret

@@ -64,18 +64,29 @@ def _parse_url_or_raise(url: str, var: str) -> object:
         _ = parsed.port
     except ValueError as exc:
         raise ValueError(f"{var} has a non-numeric port — fix the URL's host:port section") from exc
+    if parsed.scheme != "unix":
+        db = (parsed.path or "").lstrip("/")
+        if db and not db.isdigit():
+            raise ValueError(f"{var} has a non-numeric db path {db!r} — use /<int> (e.g. /0)")
     return parsed
+
+
+def _bracket_ipv6(host: str) -> str:
+    """Re-bracket an IPv6 literal (urlparse strips the brackets)."""
+    return f"[{host}]" if ":" in host else host
 
 
 def _rebuild_with_credentials(parsed: object, user: str | None, password: str) -> str:
     """Rebuild a URL embedding the given credentials (password quoted)."""
-    host = parsed.hostname or "127.0.0.1"
-    port = f":{parsed.port}" if parsed.port else ""
     userpart = quote(user, safe="") if user else ""
-    netloc = f"{userpart}:{quote(password, safe='')}@{host}{port}"
+    cred = f"{userpart}:{quote(password, safe='')}@"
     path = parsed.path or ""
     query = f"?{parsed.query}" if parsed.query else ""
-    return f"{parsed.scheme}://{netloc}{path}{query}"
+    if parsed.scheme == "unix":
+        return f"unix://{cred}{path}{query}"
+    host = _bracket_ipv6(parsed.hostname or "127.0.0.1")
+    port = f":{parsed.port}" if parsed.port else ""
+    return f"{parsed.scheme}://{cred}{host}{port}{path}{query}"
 
 
 def _redact(url: str) -> str:
@@ -83,11 +94,13 @@ def _redact(url: str) -> str:
     parsed = urlparse(url)
     if not parsed.password:
         return url
-    host = parsed.hostname or ""
-    port = f":{parsed.port}" if parsed.port else ""
     userpart = quote(parsed.username, safe="") if parsed.username else ""
     path = parsed.path or ""
     query = f"?{parsed.query}" if parsed.query else ""
+    if parsed.scheme == "unix":
+        return f"unix://{userpart}:***@{path}{query}"
+    host = _bracket_ipv6(parsed.hostname or "")
+    port = f":{parsed.port}" if parsed.port else ""
     return f"{parsed.scheme}://{userpart}:***@{host}{port}{path}{query}"
 
 
@@ -130,12 +143,26 @@ def resolve_redis_connection(
     password = env.get("REDIS_PASSWORD") or None
     user = env.get("REDIS_USER") or None
 
-    chosen_var = next((v for v in _URL_VARS if env.get(v)), None)
+    chosen_var = _choose_url_var(env)
     if chosen_var:
         return _resolve_from_url_var(env, chosen_var, password, user)
     if env.get("REDIS_HOST"):
         return _resolve_from_components(env, password, user)
     return _resolve_default(password, user)
+
+
+def _choose_url_var(env: Mapping[str, str]) -> str | None:
+    """Pick the winning URL variable.
+
+    A URL already carrying credentials outranks a passwordless one
+    (R1 tier 1); otherwise the first set variable wins in
+    ``_URL_VARS`` order.
+    """
+    set_vars = [v for v in _URL_VARS if env.get(v)]
+    for var in set_vars:
+        if urlparse(env[var]).password:
+            return var
+    return set_vars[0] if set_vars else None
 
 
 def _resolve_from_url_var(
@@ -164,9 +191,13 @@ def _resolve_from_url_var(
             )
         url = chosen_url
     elif password:
-        url = _rebuild_with_credentials(parsed, user, password)
+        merge_user = user or parsed.username or None
+        url = _rebuild_with_credentials(parsed, merge_user, password)
         source_map["password"] = "REDIS_PASSWORD"
-        source_map["user"] = "REDIS_USER" if user else "none"
+        if user:
+            source_map["user"] = "REDIS_USER"
+        elif parsed.username:
+            source_map["user"] = chosen_var
     else:
         url = chosen_url
     return ResolvedRedisConnection(url, _redact(url), source_map, tuple(overrides))
