@@ -40,6 +40,14 @@ seeded at 613 sites.
   fail CI; the seeded count can only go down, and the gate ships
   with a proof-it-fires test.
 
+- **Mermaid diagrams across the docs site** (#1965, #1967): mermaid
+  rendering enabled in mkdocs, with 15 diagrams converted across 10
+  pages. A deliberate existing-tool choice: the diagramkit Phase-0
+  probe measured mermaid 1.2–2.1× cheaper to author than a custom
+  diagram kernel, so no kernel was built ("mermaid wins",
+  docs/specs/diagramkit D4) — data charts keep the sealed chart
+  kernel; diagrams ride an existing tool.
+
 ### Fixed
 
 - Memory P1 review follow-ups: staleness-sweep linter brought to

@@ -111,8 +111,10 @@ batched PR opens — N writers, one review, one merge.
 Also in 11.4.0: an **advisory staleness sweep** for curated
 memory corpora — it reads each memory's claims against the
 current tree and flags the ones reality has moved past, advisory
-by design — and a **broad-except ratchet** seeded at 613 sites:
-the count only shrinks, and CI proves the gate fires.
+by design — a **broad-except ratchet** seeded at 613 sites (the
+count only shrinks, and CI proves the gate fires), and **mermaid
+diagrams across the docs site**: 15 diagrams converted on 10
+pages, riding an existing tool instead of a custom kernel.
 
 ## Goal-driven development — receipts, not promises
 
@@ -414,6 +416,11 @@ changing a title costs tens of tokens instead of a re-emitted
 widget. The kernel is sealed and CI-enforced: no outward imports,
 and the built artifact stays under a 20,480-byte ceiling that
 does not move. Details: `docs/chartkit.md`.
+
+Diagrams took the practical path: a measured probe found mermaid —
+an existing tool — 1.2–2.1× cheaper to author than a custom
+diagram kernel, so docs diagrams render via mermaid and no kernel
+was built. Charts earn a kernel; diagrams don't need one.
 
 ---
 
