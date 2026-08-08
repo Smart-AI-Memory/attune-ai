@@ -241,3 +241,21 @@ class TestRedaction:
         )
         assert "p%40ss%2Fw%3Ard" in r.url
         assert "p%40ss" not in r.redacted_url
+
+
+class TestPasswordProperty:
+    """rct-4 codex lane: the property must return the DECODED credential."""
+
+    def test_special_char_password_round_trips_unquoted(self):
+        r = resolve_redis_connection(
+            env={
+                "REDIS_URL": "redis://h:6379/0",
+                "REDIS_PASSWORD": "p@ss/w:rd",  # pragma: allowlist secret
+            }
+        )
+        assert "p%40ss%2Fw%3Ard" in r.url
+        assert r.password == "p@ss/w:rd"  # pragma: allowlist secret
+
+    def test_bare_url_password_is_none(self):
+        r = resolve_redis_connection(env={"REDIS_URL": "redis://h:6379/0"})
+        assert r.password is None

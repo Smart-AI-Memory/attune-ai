@@ -20,7 +20,7 @@ Licensed under the Apache License, Version 2.0
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from urllib.parse import ParseResult, quote, urlparse
+from urllib.parse import ParseResult, quote, unquote, urlparse
 
 from .short_term import RedisShortTermMemory
 
@@ -56,8 +56,15 @@ class ResolvedRedisConnection:
 
     @property
     def password(self) -> str | None:
-        """The effective password, parsed from ``url`` (None when bare)."""
-        return urlparse(self.url).password
+        """The effective password, parsed from ``url`` (None when bare).
+
+        UNQUOTED: userinfo in the URL is percent-encoded, and
+        ``urlparse`` does not decode it. Direct clients passing
+        ``password=`` need the original credential (redis-py's
+        ``from_url`` unquotes on its own — this property must match).
+        """
+        raw = urlparse(self.url).password
+        return unquote(raw) if raw is not None else None
 
 
 def _parse_url_or_raise(url: str, var: str) -> ParseResult:

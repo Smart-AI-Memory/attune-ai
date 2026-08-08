@@ -20,6 +20,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import urlparse
 
 #: The canonical local default — loopback, matching the disposable-cache posture.
 DEFAULT_RECALL_URL = "redis://127.0.0.1:6379/0"
@@ -57,9 +58,11 @@ def connect_recall_redis(url: str | None = None, **kwargs: Any) -> Any:
     from attune.memory.config import resolve_redis_connection
 
     resolved = resolve_url(url)
-    # A password already embedded in the URL (``@``) wins; only inject the
-    # resolver's effective secret into an otherwise-bare explicit URL.
-    if url and "@" not in resolved:
+    # A password already embedded in the URL wins; inject the resolver's
+    # effective secret into an explicit URL that lacks one. Parsed, not
+    # an "@" substring test — ``redis://user@host`` carries a username
+    # but NO password and still needs the injection (codex D11 lane).
+    if url and urlparse(resolved).password is None:
         password = resolve_redis_connection().password
         if password:
             kwargs.setdefault("password", password)

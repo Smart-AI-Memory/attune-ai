@@ -53,10 +53,16 @@ ALLOWLIST: frozenset[str] = frozenset()
 #: Directories scanned (production code only — tests set env freely).
 SCAN_ROOTS = ("src/attune", "attune_redis", "plugin")
 
-#: Call names that read the environment when their first argument is
-#: a guarded constant.
-_ENV_CALL_ATTRS = frozenset({"get", "getenv"})
+#: Bare call names that read the environment when their first
+#: argument is a guarded constant.
 _ENV_CALL_NAMES = frozenset({"getenv", "get_attune_env"})
+
+
+def _is_environ_ref(node: ast.AST) -> bool:
+    """True for ``environ`` / ``os.environ`` references."""
+    return (isinstance(node, ast.Attribute) and node.attr == "environ") or (
+        isinstance(node, ast.Name) and node.id == "environ"
+    )
 
 
 def _violations_in_source(source: str, rel_path: str) -> list[tuple[str, int, str]]:
@@ -66,9 +72,19 @@ def _violations_in_source(source: str, rel_path: str) -> list[tuple[str, int, st
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
             func = node.func
-            is_env_call = (isinstance(func, ast.Attribute) and func.attr in _ENV_CALL_ATTRS) or (
-                isinstance(func, ast.Name) and func.id in _ENV_CALL_NAMES
-            )
+            # Receiver-aware (codex D11 lane): ``.get`` counts only on
+            # an ``environ`` receiver, so ordinary dict/config lookups
+            # like ``parsed.get("REDIS_URL")`` never false-fire.
+            # ``.getenv`` counts on any receiver (os.getenv, aliased
+            # module); bare ``getenv`` / ``get_attune_env`` count too.
+            if isinstance(func, ast.Attribute):
+                is_env_call = (func.attr == "get" and _is_environ_ref(func.value)) or (
+                    func.attr == "getenv"
+                )
+            elif isinstance(func, ast.Name):
+                is_env_call = func.id in _ENV_CALL_NAMES
+            else:
+                is_env_call = False
             if not is_env_call or not node.args:
                 continue
             first = node.args[0]
@@ -145,14 +161,28 @@ def test_planted_violation_is_caught(form: str):
     assert hits, f"planted {form} violation was NOT caught by the scanner"
 
 
-def test_resolver_module_itself_reads_env():
-    """Sanity: the scanner sees the resolver's own reads (scope, not
-    blindness, is why the corpus test passes)."""
-    resolver_src = (REPO_ROOT / RESOLVER_MODULE).read_text(encoding="utf-8")
-    assert _violations_in_source(resolver_src, RESOLVER_MODULE), (
-        "scanner found no env reads in the resolver module — the "
-        "scanner is broken or the resolver moved; update RESOLVER_MODULE"
-    )
+def test_resolver_module_exists_and_holds_the_resolver():
+    """Sanity: the scope exclusion points at a real module that still
+    defines the canonical resolver (non-blindness is proven by the
+    planted-violation params above)."""
+    resolver_path = REPO_ROOT / RESOLVER_MODULE
+    assert resolver_path.is_file(), f"{RESOLVER_MODULE} moved — update RESOLVER_MODULE"
+    assert "def resolve_redis_connection(" in resolver_path.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "snippet",
+    [
+        # Ordinary mapping lookups must NOT fire (codex D11 lane —
+        # receiver-aware matching).
+        'parsed = {}\nurl = parsed.get("REDIS_URL")\n',
+        'cfg = {}\npw = cfg.get("REDIS_PASSWORD", "")\n',
+        'row = {}\nhost = row["x"] if "REDIS_HOST" in row else None\n',
+    ],
+    ids=["dict_get", "dict_get_default", "membership"],
+)
+def test_non_env_lookups_do_not_fire(snippet: str):
+    assert _violations_in_source(snippet, "planted/negative.py") == []
 
 
 def test_allowlist_is_empty():
