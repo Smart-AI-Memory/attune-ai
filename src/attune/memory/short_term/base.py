@@ -341,6 +341,11 @@ class BaseOperations:
     def _mget(self, keys: list[str]) -> list[str | None]:
         """Get many values in one round-trip (Redis MGET).
 
+        Standalone-client only: on a Redis Cluster deployment,
+        multi-key commands need same-slot keys (hash tags) or
+        per-slot chunking. This class constructs ``redis.Redis``
+        exclusively, so cluster mode is out of scope today.
+
         Args:
             keys: Keys to retrieve, in order.
 
@@ -413,6 +418,8 @@ class BaseOperations:
 
     def _delete_many(self, keys: list[str]) -> int:
         """Delete many keys in one round-trip (variadic Redis DEL).
+
+        Standalone-client only — same cluster caveat as ``_mget``.
 
         Args:
             keys: Keys to delete.
