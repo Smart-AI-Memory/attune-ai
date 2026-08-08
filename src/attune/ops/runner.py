@@ -638,6 +638,10 @@ class RunnerService:
         run = self._runs.get(run_id)
         if run is not None:
             return run
+        # Validate BEFORE the filesystem walk, like the sibling
+        # loaders — run_id becomes part of a path below.
+        if not _RUN_ID_RE.match(run_id):
+            return None
         if self._persistence_dir is None:
             return None
         if not self._persistence_dir.is_dir():

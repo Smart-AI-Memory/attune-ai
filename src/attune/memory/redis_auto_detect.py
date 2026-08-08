@@ -14,6 +14,7 @@ import platform
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,10 +29,13 @@ logger = logging.getLogger(__name__)
 IS_MACOS = platform.system() == "Darwin"
 IS_LINUX = platform.system() == "Linux"
 
-# Module-level cache for fast repeated calls within a process
+# Module-level cache for fast repeated calls within a process.
+# Guarded by _cache_lock: concurrent threads otherwise race the
+# check-then-set (same shape as features.py's locked warn-once set).
 _cached_result: "RedisDetectionResult | None" = None
 _cached_at: float = 0.0
 _CACHE_TTL: float = 30.0  # seconds
+_cache_lock = threading.Lock()
 
 
 @dataclass
@@ -110,9 +114,10 @@ class RedisAutoDetector:
         global _cached_result, _cached_at
 
         # Return cached result if fresh
-        now = time.monotonic()
-        if _cached_result is not None and (now - _cached_at) < _CACHE_TTL:
-            return _cached_result
+        with _cache_lock:
+            now = time.monotonic()
+            if _cached_result is not None and (now - _cached_at) < _CACHE_TTL:
+                return _cached_result
 
         has_package = self._check_python_package()
         if not has_package:
@@ -122,8 +127,9 @@ class RedisAutoDetector:
                 server_reachable=False,
                 reason="redis Python package not installed",
             )
-            _cached_result = result
-            _cached_at = now
+            with _cache_lock:
+                _cached_result = result
+                _cached_at = now
             return result
 
         server_up = self._check_server_reachable()
@@ -134,8 +140,9 @@ class RedisAutoDetector:
                 server_reachable=True,
                 reason="Redis server is running",
             )
-            _cached_result = result
-            _cached_at = now
+            with _cache_lock:
+                _cached_result = result
+                _cached_at = now
             return result
 
         # Server not reachable — don't cache this so
@@ -458,8 +465,9 @@ class RedisAutoDetector:
     def _invalidate_cache(self) -> None:
         """Invalidate the module-level detection cache."""
         global _cached_result, _cached_at
-        _cached_result = None
-        _cached_at = 0.0
+        with _cache_lock:
+            _cached_result = None
+            _cached_at = 0.0
 
 
 def auto_detect_redis() -> RedisDetectionResult:

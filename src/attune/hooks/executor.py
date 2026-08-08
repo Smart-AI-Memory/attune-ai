@@ -145,16 +145,17 @@ class HookExecutor:
             Command output
 
         """
-        # Substitute context variables
+        # Tokenize the TEMPLATE first, then substitute per token — a
+        # context value containing spaces or quotes stays ONE argv
+        # token instead of injecting extra arguments/flags.
         try:
-            formatted_command = command.format(**context)
+            cmd_args = [token.format(**context) for token in shlex.split(command)]
         except KeyError as e:
             raise ValueError(f"Missing context variable for command: {e}") from e
 
-        logger.debug("Executing command: %s", formatted_command)
+        logger.debug("Executing command: %s", cmd_args)
 
         # Run command asynchronously (use exec to prevent shell injection)
-        cmd_args = shlex.split(formatted_command)
         process = await asyncio.create_subprocess_exec(
             *cmd_args,
             stdout=asyncio.subprocess.PIPE,
@@ -250,9 +251,17 @@ class HookExecutor:
             Response data
 
         """
-        from attune.monitoring.validators import _validate_webhook_url
+        import socket
+        import urllib.parse
+
+        from attune.monitoring.validators import _validate_webhook_url, resolve_pinned_ip
 
         url = _validate_webhook_url(url)
+        # Pin the vetted IP so the request-time connection can't be
+        # swapped to a private address by a second DNS resolution
+        # (rebinding TOCTOU) — same guard as monitoring/notifications.
+        hostname = urllib.parse.urlparse(url).hostname or ""
+        pinned_ip = resolve_pinned_ip(hostname)
 
         try:
             import aiohttp
@@ -261,8 +270,36 @@ class HookExecutor:
 
         logger.debug("Calling webhook: %s", url)
 
+        pinned_family = socket.AF_INET6 if ":" in pinned_ip else socket.AF_INET
+
+        class _PinnedResolver(aiohttp.abc.AbstractResolver):
+            """Resolve every lookup to the pre-vetted IP.
+
+            TLS still verifies against the original hostname (aiohttp
+            passes it as server_hostname); only the connect target is
+            pinned.
+            """
+
+            async def resolve(
+                self, host: str, port: int = 0, family: int = socket.AF_INET
+            ) -> list[dict[str, Any]]:
+                return [
+                    {
+                        "hostname": host,
+                        "host": pinned_ip,
+                        "port": port,
+                        "family": pinned_family,
+                        "proto": 0,
+                        "flags": 0,
+                    }
+                ]
+
+            async def close(self) -> None:
+                return None
+
+        connector = aiohttp.TCPConnector(resolver=_PinnedResolver(), use_dns_cache=False)
         async with (
-            aiohttp.ClientSession() as session,
+            aiohttp.ClientSession(connector=connector) as session,
             session.post(
                 url,
                 json=context,
