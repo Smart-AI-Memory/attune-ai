@@ -1,11 +1,11 @@
 # redis-config-truth — tasks
 
-**Status:** active (2026-08-08) — rct-1..3 MERGED (#1984 #1985
-#1987, all in 11.5.0); rct-4 in review (consumer migration +
-drift guard; execution scope re-grepped from the CURRENT tree per
-D3's own rule: 10 files / 45 hits — five of D3's named files no
-longer read env, short_term/base.py joined as a toggle-only
-reader). Next: rct-5 requirepass lane. Grounding: decisions.md D3.
+**Status:** active (2026-08-08) — rct-1..4 MERGED (#1984 #1985
+#1987 #1993; rct-4's codex lane 3/3 fixed, drift guard live with
+empty allowlist); rct-5 in review (self-provisioning requirepass
+lane — the ladder's final rung; ladder COMPLETE on its merge).
+Grounding: decisions.md D3 (execution scopes re-grepped from the
+current tree per D3's own rule).
 
 Sequencing follows the roundtable's ratified order: resolver →
 visibility → tests → migrations. T1 contains a chair checkpoint
