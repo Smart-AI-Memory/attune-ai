@@ -129,53 +129,75 @@ def resolve_redis_connection(
     env = os.environ if env is None else env
     password = env.get("REDIS_PASSWORD") or None
     user = env.get("REDIS_USER") or None
-    overrides: list[str] = []
 
     chosen_var = next((v for v in _URL_VARS if env.get(v)), None)
-
     if chosen_var:
-        chosen_url = env[chosen_var]
-        parsed = _parse_url_or_raise(chosen_url, chosen_var)
-        for other in _URL_VARS:
-            if other != chosen_var and env.get(other) and env[other] != chosen_url:
-                overrides.append(f"{other} ignored: {chosen_var} takes precedence")
-        source_map = {"url": chosen_var, "password": "none", "user": "none"}
-        if parsed.password:
-            source_map["password"] = chosen_var
-            if parsed.username:
-                source_map["user"] = chosen_var
-            if password and password != parsed.password:
-                overrides.append(
-                    f"REDIS_PASSWORD ignored: {chosen_var} already carries "
-                    "credentials (values differ)"
-                )
-            url = chosen_url
-        elif password:
-            url = _rebuild_with_credentials(parsed, user, password)
-            source_map["password"] = "REDIS_PASSWORD"
-            source_map["user"] = "REDIS_USER" if user else "none"
-        else:
-            url = chosen_url
-        return ResolvedRedisConnection(url, _redact(url), source_map, tuple(overrides))
-
+        return _resolve_from_url_var(env, chosen_var, password, user)
     if env.get("REDIS_HOST"):
-        host = env["REDIS_HOST"]
-        port_raw = env.get("REDIS_PORT", "6379")
-        db_raw = env.get("REDIS_DB", "0")
-        if not port_raw.isdigit():
-            raise ValueError(f"REDIS_PORT must be numeric, got {port_raw!r}")
-        if not db_raw.isdigit():
-            raise ValueError(f"REDIS_DB must be numeric, got {db_raw!r}")
-        cred = ""
-        source_map = {"url": "REDIS_HOST", "password": "none", "user": "none"}
-        if password:
-            userpart = quote(user, safe="") if user else ""
-            cred = f"{userpart}:{quote(password, safe='')}@"
-            source_map["password"] = "REDIS_PASSWORD"
-            source_map["user"] = "REDIS_USER" if user else "none"
-        url = f"redis://{cred}{host}:{port_raw}/{db_raw}"
-        return ResolvedRedisConnection(url, _redact(url), source_map, tuple(overrides))
+        return _resolve_from_components(env, password, user)
+    return _resolve_default(password, user)
 
+
+def _resolve_from_url_var(
+    env: Mapping[str, str],
+    chosen_var: str,
+    password: str | None,
+    user: str | None,
+) -> ResolvedRedisConnection:
+    """Resolve from the winning URL variable (precedence tiers 1-3)."""
+    chosen_url = env[chosen_var]
+    parsed = _parse_url_or_raise(chosen_url, chosen_var)
+    overrides = [
+        f"{other} ignored: {chosen_var} takes precedence"
+        for other in _URL_VARS
+        if other != chosen_var and env.get(other) and env[other] != chosen_url
+    ]
+    source_map = {"url": chosen_var, "password": "none", "user": "none"}
+    if parsed.password:
+        source_map["password"] = chosen_var
+        if parsed.username:
+            source_map["user"] = chosen_var
+        if password and password != parsed.password:
+            overrides.append(
+                f"REDIS_PASSWORD ignored: {chosen_var} already carries "
+                "credentials (values differ)"
+            )
+        url = chosen_url
+    elif password:
+        url = _rebuild_with_credentials(parsed, user, password)
+        source_map["password"] = "REDIS_PASSWORD"
+        source_map["user"] = "REDIS_USER" if user else "none"
+    else:
+        url = chosen_url
+    return ResolvedRedisConnection(url, _redact(url), source_map, tuple(overrides))
+
+
+def _resolve_from_components(
+    env: Mapping[str, str],
+    password: str | None,
+    user: str | None,
+) -> ResolvedRedisConnection:
+    """Resolve from REDIS_HOST / REDIS_PORT / REDIS_DB (tier 4)."""
+    host = env["REDIS_HOST"]
+    port_raw = env.get("REDIS_PORT", "6379")
+    db_raw = env.get("REDIS_DB", "0")
+    if not port_raw.isdigit():
+        raise ValueError(f"REDIS_PORT must be numeric, got {port_raw!r}")
+    if not db_raw.isdigit():
+        raise ValueError(f"REDIS_DB must be numeric, got {db_raw!r}")
+    cred = ""
+    source_map = {"url": "REDIS_HOST", "password": "none", "user": "none"}
+    if password:
+        userpart = quote(user, safe="") if user else ""
+        cred = f"{userpart}:{quote(password, safe='')}@"
+        source_map["password"] = "REDIS_PASSWORD"
+        source_map["user"] = "REDIS_USER" if user else "none"
+    url = f"redis://{cred}{host}:{port_raw}/{db_raw}"
+    return ResolvedRedisConnection(url, _redact(url), source_map, ())
+
+
+def _resolve_default(password: str | None, user: str | None) -> ResolvedRedisConnection:
+    """Resolve the localhost default, merging REDIS_PASSWORD (tier 5)."""
     source_map = {"url": "default", "password": "none", "user": "none"}
     if password:
         parsed = _parse_url_or_raise(_DEFAULT_URL, "default")
@@ -184,7 +206,7 @@ def resolve_redis_connection(
         source_map["user"] = "REDIS_USER" if user else "none"
     else:
         url = _DEFAULT_URL
-    return ResolvedRedisConnection(url, _redact(url), source_map, tuple(overrides))
+    return ResolvedRedisConnection(url, _redact(url), source_map, ())
 
 
 def parse_redis_url(url: str) -> dict:
