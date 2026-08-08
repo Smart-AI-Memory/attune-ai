@@ -5,7 +5,7 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [11.4.0] — 2026-08-07
 
 ### Added
 
@@ -21,6 +21,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now; the Stop-hook lessons reminder routes through the outbox, and
   the ops Collaboration inbox gains a pending row with a 2-day stale
   warning. The pending-recall layer is deferred (R5).
+
+- **Advisory staleness sweep for curated memory corpora**
+  (memory-status-integrity P1, #1975): reads each curated memory's
+  claims against the current tree and flags the ones reality has
+  moved past — advisory by design, it never blocks or rewrites.
+
+- **Broad-except ratchet** (#1974): a shrink-only gate seeded with
+  613 existing broad `except Exception` sites. New broad excepts
+  fail CI; the seeded count can only go down, and the gate ships
+  with a proof-it-fires test.
+
+### Fixed
+
+- Memory P1 review follow-ups: staleness-sweep linter brought to
+  parity with the memory-lint rules, and R2 delivery claims
+  corrected to match what actually shipped (#1977).
+
+- CI: the two security workflows no longer cancel each other's
+  runs via a shared concurrency group (#1976).
 
 ## [11.3.0] — 2026-08-06
 

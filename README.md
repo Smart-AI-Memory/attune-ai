@@ -92,32 +92,27 @@ routing, and [Installation Options](#installation-options) for extras.
      a permanent section below (see "Dynamic forms" for the pattern).
      Don't stack a second "New in" section here. -->
 
-## New in 11.3.0 — Chart widgets: specs in, SVG out
+## New in 11.4.0 — Docs outbox: many writers, one PR
 
-Your agent can now draw. The `chart_render_widget` MCP tool takes a
-**~50–200-token declarative JSON spec** and renders themable SVG
-through a sealed ~10KB kernel — the model never writes renderer
-code. Nine chart types (`bar` with stacked/grouped/horizontal,
-`line`, `scatter`, `area`, `heatmap`, `donut`, `box`, `waterfall`,
-`treemap`), and updates are RFC 7386 merge patches against the
-stored spec, so changing a title or swapping data costs tens of
-tokens instead of a re-emitted widget.
+Small docs artifacts — lessons, run reports, drafts, plans — no
+longer ship as their own micro-PRs. Writers drop per-artifact
+timestamped files into `~/.attune/docs-outbox/`:
 
-```json
-{"v": 1, "type": "donut",
- "data": [{"kind": "passed", "n": 96}, {"kind": "failed", "n": 4}],
- "encodings": {"x": {"field": "kind", "type": "nominal"},
-               "y": {"field": "n", "type": "quantitative"}}}
+```bash
+python -m attune.docs_outbox write --kind lesson \
+  --slug my-finding --file body.md
 ```
 
-The kernel is sealed and CI-enforced: no outward imports, nothing
-imports its internals, and the built artifact stays under a
-20,480-byte ceiling — chart types earn their way in; the ceiling
-does not move. Also in 11.3.0: the V7 elicitation form-template
-library (author a decision shape once, cast it per fork), and a
-security sweep that cleared **every** open dependabot and
-code-scanning alert (gitpython, aiohttp, and a cryptography major
-among them). Details: `docs/chartkit.md`.
+Concurrent sessions never conflict by construction. A curating
+sweep (`/docs-outbox`) dedupes, lints, flags core-worthy
+candidates, and composes ONE approved digest before a single
+batched PR opens — N writers, one review, one merge.
+
+Also in 11.4.0: an **advisory staleness sweep** for curated
+memory corpora — it reads each memory's claims against the
+current tree and flags the ones reality has moved past, advisory
+by design — and a **broad-except ratchet** seeded at 613 sites:
+the count only shrinks, and CI proves the gate fires.
 
 ## Goal-driven development — receipts, not promises
 
@@ -406,6 +401,19 @@ All constructs share one declarative form model and validator, render
 richly on widget-capable surfaces (e.g. claude.ai / Cowork) and degrade
 gracefully to a recommendation-first menu elsewhere. The terse reply
 vocab (`y` / `go` / `1`) answers any of them.
+
+## Chart widgets — specs in, SVG out
+
+The `chart_render_widget` MCP tool takes a **~50–200-token
+declarative JSON spec** and renders themable SVG through a sealed
+~10KB kernel — the model never writes renderer code. Nine chart
+types (`bar` with stacked/grouped/horizontal, `line`, `scatter`,
+`area`, `heatmap`, `donut`, `box`, `waterfall`, `treemap`), and
+updates are RFC 7386 merge patches against the stored spec, so
+changing a title costs tens of tokens instead of a re-emitted
+widget. The kernel is sealed and CI-enforced: no outward imports,
+and the built artifact stays under a 20,480-byte ceiling that
+does not move. Details: `docs/chartkit.md`.
 
 ---
 
