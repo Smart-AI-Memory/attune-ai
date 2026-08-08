@@ -183,8 +183,15 @@ class RedisShortTermMemory:
             max_size=local_cache_max_size,
         )
 
-        # Initialize security sanitizer
-        self._security = DataSanitizer(self._base)  # type: ignore[arg-type]
+        # Initialize security sanitizer. Both gates ON: PII is scrubbed in
+        # place, secrets fail closed (SecurityError). memory-security-hardening
+        # R2/D3 — a prior bug passed self._base as the first positional
+        # (pii_scrub_enabled), leaving secrets_detection_enabled at its False
+        # default, so this tier silently stored secrets.
+        self._security = DataSanitizer(
+            pii_scrub_enabled=True,
+            secrets_detection_enabled=True,
+        )
 
         # Initialize working memory (stash/retrieve)
         self._working = WorkingMemory(self._base, self._security)

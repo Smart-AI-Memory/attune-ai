@@ -230,11 +230,25 @@ class TestTestingAccessors:
         assert memory._security._pii_scrubber is sentinel
 
     def test_secrets_detector_getter_and_setter_round_trip(self, memory):
-        assert memory._secrets_detector is None
+        # memory-security-hardening R2/D3: secrets detection is ON by default
+        # (a prior wiring bug left it None — see facade.py). Round-trip still holds.
+        from attune.memory.security.secrets_detector import SecretsDetector
+
+        assert isinstance(memory._secrets_detector, SecretsDetector)
         sentinel = object()
         memory._secrets_detector = sentinel
         assert memory._secrets_detector is sentinel
         assert memory._security._secrets_detector is sentinel
+
+    def test_stash_fails_closed_on_secret(self, memory):
+        # memory-security-hardening R2/D3 regression: before the wiring fix the
+        # short-term tier silently stored secrets. It must now fail closed.
+        from attune.memory.types import SecurityError
+
+        creds = _creds("agent_secret")
+        secret = "sk-ant-api03-" + "aA1bB2cC3dD4eE5fF6" * 6
+        with pytest.raises(SecurityError):
+            memory.stash("leak", {"token": secret}, creds)
 
     def test_keys_lists_stashed_working_memory(self, memory):
         creds = _creds("agent_k")
