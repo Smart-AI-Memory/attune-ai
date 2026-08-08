@@ -1,4 +1,4 @@
-"""Tests for attune/config.py (AttuneConfig, load_config).
+"""Tests for attune/config/legacy.py (AttuneConfig, load_config).
 
 This module was at 0% coverage. Tests cover all factory methods,
 serialization, validation, merge logic, and the load_config helper.

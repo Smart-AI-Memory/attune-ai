@@ -777,7 +777,6 @@ omit = [
     # Models main entry
     "*/models/__main__.py",  # Models CLI entry point
     "*/hooks/scripts/help_freshness_nudge.py",  # Standalone hook script (not importable via pytest)
-    "*/attune/config.py",  # Shadowed by attune/config/ package — unreachable import
 ]
 branch = true
 # parallel + concurrency: ensure xdist workers flush coverage data

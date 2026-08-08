@@ -110,7 +110,7 @@ _BASELINE: dict[str, int] = {
     "src/attune/cli_router.py": 1,
     "src/attune/commands/context.py": 2,
     "src/attune/commands/parser.py": 2,
-    "src/attune/config.py": 1,
+    "src/attune/config/legacy.py": 1,
     "src/attune/config/xml_config.py": 1,
     "src/attune/cost_tracker.py": 1,
     "src/attune/curator/core.py": 3,

@@ -176,7 +176,7 @@ In January 2026, we conducted a comprehensive security audit and applied Pattern
 
 **Sprint 2 (2026-01-07):**
 
-- [config.py](src/attune/config.py) - Configuration exports (YAML, JSON)
+- [config/legacy.py](src/attune/config/legacy.py) - Configuration exports (YAML, JSON)
 - [workflows/config.py](src/attune/workflows/config.py) - Workflow configuration saves
 - [config/xml_config.py](src/attune/config/xml_config.py) - XML configuration writes
 
