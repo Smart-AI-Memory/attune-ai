@@ -91,9 +91,6 @@ class MemoryConfig:
     load_project_memory: bool = True
     load_user_memory: bool = True
 
-    # Pattern promotion settings
-    auto_promote_threshold: float = 0.8  # Confidence threshold for auto-promotion
-
     # Compact state auto-generation
     auto_generate_compact_state: bool = True
     compact_state_path: str = ".claude/compact-state.md"

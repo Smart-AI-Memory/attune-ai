@@ -23,7 +23,10 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes --maxmemory 100mb --maxmemory-policy allkeys-lru
+    # Disposable cache posture (memory-security-hardening R3/D4): AOF OFF so the
+    # hydrated corpus never persists to disk. The file-of-record (curated .md +
+    # the TTL JSONL) is the source of truth; a wiped cache re-hydrates.
+    command: redis-server --appendonly no --maxmemory 100mb --maxmemory-policy allkeys-lru
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
