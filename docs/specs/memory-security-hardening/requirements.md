@@ -1,6 +1,7 @@
 # memory-security-hardening
 
-**Status:** draft (2026-08-07 — requirements; from round-table deliberation)
+**Status:** draft (2026-08-07 — requirements; from round-table deliberation).
+R1 shipped (PR #1979); R2/R3/R5 ladders drafted — see [tasks.md](tasks.md).
 **Owner:** Patrick (chair)
 **Origin:** Round table `q-memory-system-deep-dive-001` (2026-08-07,
 Claude + Codex + Antigravity, 2 rounds). The security lens produced a
