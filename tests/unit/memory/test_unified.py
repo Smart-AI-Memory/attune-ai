@@ -131,9 +131,12 @@ class TestMemoryConfig:
 
     def test_from_environment_custom_redis_host_port(self):
         """Test from_environment with custom Redis host and port."""
+        # rct-4: connection components come from the canonical resolver,
+        # which reads canonical REDIS_* names only — the EMPATHY_ prefix
+        # compat for CONNECTION vars is retired (toggles keep compat).
         env_vars = {
-            "EMPATHY_REDIS_HOST": "redis-server",
-            "EMPATHY_REDIS_PORT": "6380",
+            "REDIS_HOST": "redis-server",
+            "REDIS_PORT": "6380",
         }
 
         with patch.dict(os.environ, env_vars, clear=True):

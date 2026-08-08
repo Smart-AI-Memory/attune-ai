@@ -45,10 +45,23 @@ class RedisPluginConfig:
         Returns:
             Configured RedisPluginConfig instance.
         """
+        # rct-4: the connection URL comes from the canonical resolver
+        # (credentials merged). It stays None unless a URL var supplied
+        # it — ``redis_url is not None`` gates pub/sub availability.
+        try:
+            from attune.memory.config import URL_VARS, resolve_redis_connection
+
+            resolved = resolve_redis_connection()
+            redis_url = resolved.url if resolved.source_map.get("url") in URL_VARS else None
+        except (ImportError, ValueError):
+            # attune core absent or malformed config — preserve the
+            # legacy None default rather than failing plugin config.
+            redis_url = None
+
         return cls(
             ams_base_url=os.environ.get("AMS_BASE_URL", cls.ams_base_url),
             ams_namespace=os.environ.get("AMS_NAMESPACE", cls.ams_namespace),
-            redis_url=os.environ.get("REDIS_URL"),
+            redis_url=redis_url,
         )
 
 

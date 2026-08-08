@@ -9,7 +9,6 @@ Licensed under the Apache License, Version 2.0
 
 import importlib
 import logging
-import os
 import re
 import threading
 from collections.abc import Mapping
@@ -33,6 +32,13 @@ _CRED_RE = re.compile(r"://([^/@:\s]*):[^@\s]*@")
 def _scrub_secrets(text: str) -> str:
     """Mask the password of any credentialed URL embedded in text."""
     return _CRED_RE.sub(r"://\1:***@", text)
+
+
+def _resolved_password() -> "str | None":
+    """The canonical resolver's effective password (rct-4)."""
+    from attune.memory.config import resolve_redis_connection
+
+    return resolve_redis_connection().password
 
 
 def _warn_once(report: "RedisHealthReport") -> None:
@@ -176,8 +182,9 @@ class MemoryFeatures:
                 host=host,
                 port=port,
                 socket_connect_timeout=1,
-                # R3: authenticate so `requirepass` isn't misread as "Redis down".
-                password=os.environ.get("REDIS_PASSWORD") or None,
+                # R3: authenticate so `requirepass` isn't misread as "Redis
+                # down". rct-4: the effective password comes from the resolver.
+                password=_resolved_password(),
             )
             return bool(client.ping())
         except ImportError:

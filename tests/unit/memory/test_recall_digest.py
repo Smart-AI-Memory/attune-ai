@@ -162,6 +162,10 @@ class TestFetchWithFakeClient:
             return FakeRedisClient([json.dumps(NODES[0])])
 
         monkeypatch.setenv("REDIS_URL", "redis://example.invalid:6390/2")
+        # Hermetic against ambient dotenv REDIS_PASSWORD — the resolver
+        # (rct-4) would merge it into the URL.
+        for var in ("REDIS_PRIVATE_URL", "REDIS_PUBLIC_URL", "REDIS_PASSWORD", "REDIS_USER"):
+            monkeypatch.delenv(var, raising=False)
         monkeypatch.setattr(redis.Redis, "from_url", fake_from_url)
         nodes = fetch_digest_nodes(count=1)
         assert captured["url"] == "redis://example.invalid:6390/2"

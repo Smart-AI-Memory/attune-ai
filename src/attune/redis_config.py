@@ -81,14 +81,16 @@ _VALID_REDIS_MODES = {REDIS_MODE_CLOUD, REDIS_MODE_LOCAL}
 _LOCAL_HOSTS = {"localhost", "127.0.0.1", ""}
 
 
-def _resolve_redis_mode() -> str:
-    """Resolve the effective Redis mode from environment.
+def _resolve_redis_mode(inferred_host: str = "") -> str:
+    """Resolve the effective Redis mode.
 
     Priority:
-    1. Explicit REDIS_MODE env var ("cloud" or "local")
-    2. Inference from REDIS_HOST:
+    1. Explicit REDIS_MODE env var ("cloud" or "local") — a mode
+       toggle, not a connection component, so the env read stays.
+    2. Inference from ``inferred_host`` — the resolver-derived host
+       (rct-4: this helper no longer reads REDIS_HOST itself):
        - Non-localhost host -> "cloud"
-       - localhost/127.0.0.1 or missing -> "local"
+       - localhost/127.0.0.1 or empty -> "local"
 
     Returns:
         "cloud" or "local"
@@ -107,9 +109,7 @@ def _resolve_redis_mode() -> str:
             )
         return explicit_mode
 
-    # Infer from REDIS_HOST
-    redis_host = os.getenv("REDIS_HOST", "").strip()
-    if redis_host and redis_host not in _LOCAL_HOSTS:
+    if inferred_host.strip() and inferred_host.strip() not in _LOCAL_HOSTS:
         return REDIS_MODE_CLOUD
 
     return REDIS_MODE_LOCAL
@@ -190,23 +190,32 @@ def get_redis_config() -> RedisConfig:
     if (get_attune_env("REDIS_MOCK", "") or "").lower() == "true":
         return RedisConfig(use_mock=True)
 
-    # Check for full URL (managed Redis — Upstash/Vercel, Heroku, Railway, ...)
-    redis_url = os.getenv("REDIS_URL") or os.getenv("REDIS_PRIVATE_URL")
-    if redis_url:
-        url_config = parse_redis_url(redis_url)
+    # rct-4: connection components come from THE canonical resolver —
+    # this module keeps only mode/SSL/timeout semantics on top. The
+    # resolver merges REDIS_PASSWORD into password-less URLs (the
+    # 2026-08-08 incident fix), which this module's old URL path did
+    # not do — release-noted behavior change.
+    from attune.memory.config import URL_VARS, resolve_redis_connection
+
+    resolved = resolve_redis_connection()
+    parts = parse_redis_url(resolved.url)
+    common = _get_common_connection_kwargs()
+    url_source = resolved.source_map.get("url", "default")
+
+    # A URL var wins outright — overrides REDIS_MODE (legacy rule).
+    if url_source in URL_VARS:
         return RedisConfig(
-            host=url_config["host"],
-            port=url_config["port"],
-            password=url_config["password"],
-            db=url_config["db"],
-            ssl=url_config.get("ssl", False),
+            host=parts["host"],
+            port=parts["port"],
+            password=parts["password"],
+            db=parts["db"],
+            ssl=parts.get("ssl", False),
             use_mock=False,
-            **_get_common_connection_kwargs(),
+            **common,
         )
 
-    # Resolve mode (explicit REDIS_MODE or inferred from REDIS_HOST)
-    mode = _resolve_redis_mode()
-    common = _get_common_connection_kwargs()
+    component_host = parts["host"] if url_source == "REDIS_HOST" else ""
+    mode = _resolve_redis_mode(component_host)
 
     if mode == REDIS_MODE_LOCAL:
         # Local mode: loopback. Literal 127.0.0.1, NOT "localhost": hostname
@@ -214,23 +223,22 @@ def get_redis_config() -> RedisConfig:
         # has wedged Windows CI workers for 20 minutes
         # (docs/specs/windows-exit139-segfault/).
         #
-        # Honor REDIS_PASSWORD when set (memory-security-hardening R3): a
-        # hardened local Redis with `requirepass` authenticates via one env var,
-        # the same opt-in signal `connect_recall_redis` uses. Unset ⇒ None ⇒ the
-        # prior no-auth behavior, so a bare local Redis stays password-free.
+        # The resolver merges REDIS_PASSWORD (memory-security-hardening R3):
+        # a hardened local Redis with `requirepass` authenticates via one env
+        # var. Unset ⇒ None ⇒ the prior no-auth behavior.
         return RedisConfig(
             host="127.0.0.1",
-            port=int(os.getenv("REDIS_PORT", "6379")),
-            password=os.getenv("REDIS_PASSWORD") or None,
-            db=int(os.getenv("REDIS_DB", "0")),
+            port=parts["port"],
+            password=parts["password"],
+            db=parts["db"],
             use_mock=False,
             ssl=False,
             **common,
         )
 
-    # Cloud mode: use REDIS_HOST, REDIS_PORT, REDIS_PASSWORD from env
-    host = os.getenv("REDIS_HOST", "")
-    password = os.getenv("REDIS_PASSWORD")
+    # Cloud mode: components from the resolver, SSL from its own vars.
+    host = component_host
+    password = parts["password"]
 
     if not host:
         logger.warning(
@@ -246,11 +254,11 @@ def get_redis_config() -> RedisConfig:
 
     return RedisConfig(
         host=host or "127.0.0.1",
-        port=int(os.getenv("REDIS_PORT", "6379")),
+        port=parts["port"],
         password=password,
-        db=int(os.getenv("REDIS_DB", "0")),
+        db=parts["db"],
         use_mock=False,
-        # SSL settings
+        # SSL settings (not connection components — env reads stay)
         ssl=os.getenv("REDIS_SSL", "").lower() == "true",
         ssl_cert_reqs=os.getenv("REDIS_SSL_CERT_REQS"),
         ssl_ca_certs=os.getenv("REDIS_SSL_CA_CERTS"),
@@ -358,9 +366,17 @@ def check_redis_connection() -> dict:
     """
     config = get_redis_config()
 
-    # Resolve mode for reporting
+    # rct-4: source attribution comes from the resolver's source-map,
+    # not from independent env reads (REDIS_MODE is a toggle and stays).
+    from attune.memory.config import URL_VARS, resolve_redis_connection
+
     try:
-        redis_mode = _resolve_redis_mode()
+        url_source = resolve_redis_connection().source_map.get("url", "default")
+    except ValueError:
+        url_source = "default"
+
+    try:
+        redis_mode = _resolve_redis_mode(config.host if url_source == "REDIS_HOST" else "")
     except ValueError:
         redis_mode = "unknown"
 
@@ -376,14 +392,11 @@ def check_redis_connection() -> dict:
         "error": None,
     }
 
-    # Determine config source
-    if os.getenv("REDIS_URL"):
-        result["config_source"] = "REDIS_URL"
-    elif os.getenv("REDIS_PRIVATE_URL"):
-        result["config_source"] = "REDIS_PRIVATE_URL"
+    if url_source in URL_VARS:
+        result["config_source"] = url_source
     elif os.getenv("REDIS_MODE"):
         result["config_source"] = f"REDIS_MODE={os.getenv('REDIS_MODE')}"
-    elif os.getenv("REDIS_HOST"):
+    elif url_source == "REDIS_HOST":
         result["config_source"] = "REDIS_HOST"
 
     if result["use_mock"]:
@@ -418,15 +431,16 @@ def get_managed_redis() -> RedisShortTermMemory:
         EnvironmentError: If REDIS_URL is not set
 
     """
-    redis_url = os.getenv("REDIS_URL") or os.getenv("REDIS_PRIVATE_URL")
+    from attune.memory.config import URL_VARS, resolve_redis_connection
 
-    if not redis_url:
+    resolved = resolve_redis_connection()
+    if resolved.source_map.get("url") not in URL_VARS:
         raise OSError(
             "REDIS_URL not found. Set REDIS_URL (or REDIS_PRIVATE_URL) to your "
             "managed Redis URL (Upstash/Vercel, Heroku, Railway, ...).",
         )
 
-    return get_redis_memory(url=redis_url)
+    return get_redis_memory(url=resolved.url)
 
 
 def get_railway_redis() -> RedisShortTermMemory:

@@ -24,7 +24,6 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -240,7 +239,12 @@ class Board:
         if client is None:
             import redis  # noqa: PLC0415 — optional dependency, import at use
 
-            url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
+            from attune.memory.config import resolve_redis_connection
+
+            # rct-4: the resolver merges REDIS_PASSWORD into the URL, so
+            # a requirepass instance authenticates (the board's
+            # unauthenticated-HELLO failure class).
+            url = resolve_redis_connection().url
             # Bounded connect/ops: a stale REDIS_URL pointing at a dead
             # remote host must fail in seconds, not hang for minutes in
             # DNS/connect (live receipt 2026-07-19 — the fail-fast
