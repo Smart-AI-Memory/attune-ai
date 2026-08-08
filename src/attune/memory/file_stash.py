@@ -350,6 +350,15 @@ class FileStashBackend:
         """Retrieve a key/value pair."""
         return self._load_kv().get(key)
 
+    def retrieve_many(self, keys: list[str], agent_id: str | None = None) -> dict[str, Any]:
+        """Retrieve several key/value pairs in one KV-file read.
+
+        Batch counterpart of :meth:`retrieve`, which re-reads the KV file
+        on every call. Missing keys map to ``None``.
+        """
+        data = self._load_kv()
+        return {k: data.get(k) for k in keys}
+
     def delete(self, key: str) -> bool:
         """Delete a key/value pair. Returns False if absent."""
         data = self._load_kv()

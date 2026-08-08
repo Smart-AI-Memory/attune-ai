@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 import os
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from attune.memory.types import StagedPattern
 from attune.pattern_library import Pattern, PatternLibrary
@@ -42,6 +42,20 @@ GRAPH_KEY = "pattern_graph"
 REVIEW_ENABLED_ENV = "ATTUNE_PATTERN_REVIEW"
 #: Truthy spellings that turn review routing on.
 _TRUTHY = frozenset({"1", "true", "yes", "on"})
+
+
+def _retrieve_all(backend: MemoryBackend, keys: list[str]) -> dict[str, Any]:
+    """Fetch many keys from the backend, batched when it supports it.
+
+    Uses the optional ``retrieve_many`` batch extension when the backend
+    provides one (a single backend round-trip — see
+    :class:`~attune.memory.backend.MemoryBackend`); falls back to per-key
+    ``retrieve`` otherwise. Missing keys map to ``None`` either way.
+    """
+    retrieve_many = getattr(backend, "retrieve_many", None)
+    if callable(retrieve_many):
+        return retrieve_many(keys)
+    return {key: backend.retrieve(key) for key in keys}
 
 
 def _default_backend() -> MemoryBackend:
@@ -100,8 +114,8 @@ class PatternReviewQueue:
         ``min_confidence``. Unparseable entries are skipped, not fatal.
         """
         out: list[StagedPattern] = []
-        for key in self._backend.keys(STAGED_PREFIX + "*"):
-            raw = self._backend.retrieve(key)
+        staged_keys = self._backend.keys(STAGED_PREFIX + "*")
+        for key, raw in _retrieve_all(self._backend, staged_keys).items():
             if not raw:
                 continue
             staged = _parse(raw, key)
@@ -285,9 +299,15 @@ class PersistentPatternLibrary(PatternLibrary):
         self._load()
 
     def _load(self) -> None:
-        """Reconstruct the in-memory library from the backend (no re-persist)."""
-        for key in self._backend.keys(ACTIVE_PREFIX + "*"):
-            pattern = _pattern_from_dict(self._backend.retrieve(key))
+        """Reconstruct the in-memory library from the backend (no re-persist).
+
+        Values are fetched through :func:`_retrieve_all`, so a backend with
+        the ``retrieve_many`` batch extension serves the whole library in
+        one round-trip instead of one ``retrieve`` per stored pattern.
+        """
+        active_keys = self._backend.keys(ACTIVE_PREFIX + "*")
+        for value in _retrieve_all(self._backend, active_keys).values():
+            pattern = _pattern_from_dict(value)
             if pattern is None:
                 continue
             try:

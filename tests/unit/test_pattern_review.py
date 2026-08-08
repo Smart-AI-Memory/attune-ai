@@ -257,3 +257,97 @@ class TestInternals:
         be.stash(ACTIVE_PREFIX + "k2", d)  # same id under a second key
         lib = PersistentPatternLibrary(backend=be)
         assert "dup" in lib.patterns  # loaded once, dup skipped without error
+
+
+class _NoBatchBackend:
+    """Delegates to a real backend but HIDES ``retrieve_many``.
+
+    Models a backend predating the batch extension, forcing
+    ``_retrieve_all``'s per-key fallback; counts calls so tests can prove
+    which path actually ran.
+    """
+
+    def __init__(self, inner):
+        self._inner = inner
+        self.retrieve_calls = 0
+
+    def stash(self, key, value, ttl=None, agent_id=None):
+        return self._inner.stash(key, value, ttl, agent_id)
+
+    def retrieve(self, key, agent_id=None):
+        self.retrieve_calls += 1
+        return self._inner.retrieve(key, agent_id)
+
+    def keys(self, pattern="*"):
+        return self._inner.keys(pattern)
+
+    def delete(self, key):
+        return self._inner.delete(key)
+
+
+class _CountingBatchBackend(_NoBatchBackend):
+    """Delegating wrapper that also counts ``retrieve_many`` calls."""
+
+    def __init__(self, inner):
+        super().__init__(inner)
+        self.retrieve_many_calls = 0
+
+    def retrieve_many(self, keys, agent_id=None):
+        self.retrieve_many_calls += 1
+        return self._inner.retrieve_many(keys, agent_id)
+
+
+class TestBatchRetrieve:
+    """The batch (retrieve_many) and fallback (per-key) paths are equivalent."""
+
+    def _seed(self, tmp_path, n=3):
+        """Persist n patterns plus a graph edge into a tmp_path-backed store."""
+        lib = PersistentPatternLibrary(backend=FileStashBackend(base_dir=str(tmp_path)))
+        for i in range(n):
+            lib.contribute_pattern(
+                "a1",
+                Pattern(
+                    id=f"p{i}",
+                    agent_id="a1",
+                    pattern_type="behavioral",
+                    name=f"n{i}",
+                    description="d",
+                ),
+            )
+        lib.link_patterns("p0", "p1")
+
+    def test_batch_and_fallback_load_identical_libraries(self, tmp_path):
+        import attune.pattern_review as pr
+
+        self._seed(tmp_path)
+        batch_lib = PersistentPatternLibrary(backend=FileStashBackend(base_dir=str(tmp_path)))
+        fallback_be = _NoBatchBackend(FileStashBackend(base_dir=str(tmp_path)))
+        loop_lib = PersistentPatternLibrary(backend=fallback_be)
+        assert fallback_be.retrieve_calls > 0  # the per-key path really ran
+        assert set(batch_lib.patterns) == set(loop_lib.patterns) == {"p0", "p1", "p2"}
+        for pid, pat in batch_lib.patterns.items():
+            assert pr._pattern_to_dict(pat) == pr._pattern_to_dict(loop_lib.patterns[pid])
+        assert batch_lib.pattern_graph == loop_lib.pattern_graph
+
+    def test_load_uses_one_batch_call_not_per_key_retrieves(self, tmp_path):
+        self._seed(tmp_path)
+        be = _CountingBatchBackend(FileStashBackend(base_dir=str(tmp_path)))
+        PersistentPatternLibrary(backend=be)
+        assert be.retrieve_many_calls == 1  # all patterns in one round-trip
+        assert be.retrieve_calls == 1  # only the single GRAPH_KEY read remains
+
+    def test_queue_list_batch_and_fallback_agree(self, tmp_path):
+        batch_q = PatternReviewQueue(
+            backend=_CountingBatchBackend(FileStashBackend(base_dir=str(tmp_path)))
+        )
+        for i in range(3):
+            batch_q.stage(_staged(f"s{i}", confidence=0.5 + i / 10))
+        loop_q = PatternReviewQueue(
+            backend=_NoBatchBackend(FileStashBackend(base_dir=str(tmp_path)))
+        )
+        batch_ids = [p.pattern_id for p in batch_q.list()]
+        loop_ids = [p.pattern_id for p in loop_q.list()]
+        assert batch_ids == loop_ids == ["s2", "s1", "s0"]  # confidence desc
+        assert batch_q._backend.retrieve_many_calls == 1
+        assert batch_q._backend.retrieve_calls == 0
+        assert loop_q._backend.retrieve_calls == 3
