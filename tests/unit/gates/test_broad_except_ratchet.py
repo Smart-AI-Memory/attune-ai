@@ -60,7 +60,11 @@ _BASELINE: dict[str, int] = {
     # diagnostic's classifier guard — the effective-config section must
     # never flip an otherwise-healthy health-tool response to failure.
     "attune_redis/mcp_tools.py": 13,
-    "attune_redis/memory.py": 13,
+    # memory.py raised 13 -> 14 for the retrieve_many batch extension
+    # (PR #1991): the batched working-memory read degrades AMS errors to
+    # all-None instead of raising, matching retrieve()'s must-not-crash
+    # memory-layer contract (collaboration principle 15).
+    "attune_redis/memory.py": 14,
     "attune_redis/plugin.py": 1,
     "attune_redis/signals.py": 2,
     "attune_redis/tests/test_integration.py": 1,
