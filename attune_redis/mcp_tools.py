@@ -486,8 +486,54 @@ async def handle_redis_memory_forget(server: Any, args: dict[str, Any]) -> dict[
         return {"success": False, "error": str(e)}
 
 
+def _effective_config_report() -> dict[str, Any]:
+    """Redacted effective-config diagnostic (redis-config-truth R2, rct-3).
+
+    Derived from the canonical resolver's ``source_map`` and the R3
+    health classifier — never re-reads ``REDIS_*`` env vars
+    independently, so this diagnostic cannot drift from what the
+    resolver actually does. Passwords never appear: the resolver
+    supplies ``redacted_url`` and the classifier scrubs detail text.
+    """
+    try:
+        from attune.memory.config import resolve_redis_connection
+        from attune.memory.features import MemoryFeatures
+    except ImportError:
+        return {"available": False, "reason": "attune core not importable"}
+
+    try:
+        health = MemoryFeatures.classify_redis_health()
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL broad catch: the diagnostic must never flip an
+        # otherwise-healthy tool response to failure (fail-open posture).
+        # Type name only — exception text could carry config values.
+        logger.exception("classify_redis_health failed")
+        return {"available": False, "reason": f"classifier error: {type(exc).__name__}"}
+
+    report: dict[str, Any] = {
+        "available": True,
+        "health": health.state.value,
+        "health_detail": health.detail,
+    }
+    try:
+        resolved = resolve_redis_connection()
+    except ValueError:
+        # Malformed config: health_detail above already carries the
+        # scrubbed, actionable resolver error (degraded_auth class).
+        return report
+    report["redacted_url"] = resolved.redacted_url
+    report["source_map"] = dict(resolved.source_map)
+    report["overrides"] = list(resolved.overrides)
+    return report
+
+
 async def handle_redis_health_check(server: Any, args: dict[str, Any]) -> dict[str, Any]:
-    """Check AMS health and connection status.
+    """Check AMS health, connection status, and effective Redis config.
+
+    The ``effective_config`` section is the rct-3 doctor diagnostic:
+    which env var supplied each connection component (resolver
+    source-map), the redacted URL shape, recorded overrides, and the
+    classified health state (R3) — with secrets redacted throughout.
 
     Args:
         server: MCP server instance.
@@ -505,6 +551,8 @@ async def handle_redis_health_check(server: Any, args: dict[str, Any]) -> dict[s
             "connected": connected,
             "stats": stats,
             "source": "redis-ams",
+            "backend_selected": type(backend).__name__,
+            "effective_config": _effective_config_report(),
         }
     except ImportError:
         return {

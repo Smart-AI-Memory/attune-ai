@@ -1,10 +1,10 @@
 # redis-config-truth — tasks
 
 **Status:** active (2026-08-08) — rct-1 MERGED (#1984, incl.
-codex-lane hardening); rct-2 MERGED (#1985: classified loud-once
-degradation, codex-lane 4/4 fixed). Next: rct-3 doctor
-diagnostic. Grounding: decisions.md D3 (15 files / 42 env reads;
-two existing resolver candidates).
+codex-lane hardening); rct-2 MERGED (#1985); rct-3 in review
+(#1987: doctor diagnostic, codex-lane 1/1 fixed). Next: rct-4
+consumer migration. Grounding: decisions.md D3 (15 files / 42 env
+reads; two existing resolver candidates).
 
 Sequencing follows the roundtable's ratified order: resolver →
 visibility → tests → migrations. T1 contains a chair checkpoint
