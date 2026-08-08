@@ -221,14 +221,15 @@ def render_recall_for_context(
     **This is the R1 boundary — the CONSUMER CONTRACT.** Any code that turns
     recall into model input MUST render it through this function (or emit
     ``entry["provenance"]["context_block"]`` verbatim), and MUST NOT
-    ``str()``/concatenate a raw recall dict. There is no in-repo consumer that
-    injects recall into model context today — the live injection is the
-    out-of-repo SessionStart hook — so this contract is enforced by review at
-    that boundary, not by an in-repo call site. The ``context_block`` stamped
-    on every recall dict is the belt to this function's suspenders: even a
-    naive consumer that emits ``entry["context_block"]`` is safe; only one
-    that re-stringifies the raw body bypasses the control. A review named this
-    residual precisely, and it lives at the hook, not in this diff.
+    ``str()``/concatenate a raw recall dict. The live consumer is the in-repo
+    SessionStart hook ``plugin/hooks/session_recall.py``, whose ``_format``
+    renders every recalled finding through this function — the residual the
+    #1979 round-table named (it had misattributed the injection to an
+    out-of-repo personal hook, which in fact injects no recall text). The
+    ``context_block`` stamped on every recall dict is the belt to this
+    function's suspenders: even a naive consumer that emits
+    ``entry["context_block"]`` is safe; only one that re-stringifies the raw
+    body bypasses the control.
 
     Each entry is wrapped in its own envelope. A ``context_block`` already
     stamped by :func:`provenance_fields` is used verbatim; otherwise the
