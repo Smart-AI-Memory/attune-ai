@@ -73,6 +73,20 @@ must be paired with **raw-tier quarantine** (R3): raw findings never
 auto-promote into always-loaded or curated surfaces without human
 promotion.
 
+**Implementation status — DONE (PR #1979, branch `feat/memory-security-r1r2`).**
+`attune.memory.provenance` renders the untrusted-evidence envelope +
+instruction-flag lint; `session_stash` stamps every recall dict with
+`provenance.context_block`; and the **live injection point** — the in-repo
+SessionStart hook `plugin/hooks/session_recall.py::_format` — now renders
+through `render_recall_for_context` (fails closed if the module is absent).
+This closes the round-table's **BLOCK-1 residual**: the review had
+misattributed the injection to an out-of-repo personal hook
+(`~/.attune/memory/session_hydrate.py`), which in fact injects no recall
+text. Verified end-to-end — an `"ignore all previous instructions…"` finding
+reaches context wrapped + flagged, content preserved. Per the ratified caveat
+above, this is necessary-not-sufficient and still depends on raw-tier
+quarantine (R3, open).
+
 ### R2 — Secret accumulation (accidental, high blast radius)
 
 **Mechanism.** The extractor eats full transcripts as free prose;
