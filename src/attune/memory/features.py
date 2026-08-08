@@ -316,7 +316,8 @@ class MemoryFeatures:
                 overrides=resolved.overrides,
             )
         except Exception:  # noqa: BLE001
-            # INTENTIONAL fail-open: absent/transient server stays silent.
+            # INTENTIONAL broad catch (P15 never-block): ANY unexpected probe
+            # failure must degrade silently, never propagate into a workflow.
             logger.debug("Redis ping failed", exc_info=True)
             return RedisHealthReport(
                 RedisHealthState.DEGRADED_CONNECTIVITY,
