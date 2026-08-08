@@ -38,7 +38,7 @@ dependency order — in-repo, low-risk items first; machine-infra last (gated).
 | 3 | **Fix wiring bug**: short-term Redis tier scans secrets (was silently OFF) | attune-ai | done | `short_term/facade.py:187` — explicit kwargs; regression test added |
 | 4 | Verify `long_term` pipelines invoke `SecretsDetector` on the write path | attune-ai | done | verified — `_handle_secrets_found` always raises `SecurityError` before storage |
 | 5 | Amend requirements.md R2 text: fail-closed block, drop "redacted previews" (D3) | docs | done | |
-| 6 | Hydration-path secret scan before write to Redis / cards | external | pending | **machine-gated** — `~/.attune/memory/hydrate.py` |
+| 6 | Hydration-path secret scan before write to Redis / cards | external | pending | **machine-gated** — steps in [machine-infra-runbook.md](machine-infra-runbook.md) § R2#6 (self-contained; hydrator venv has no attune) |
 | 7 | One-time sweep: curated `.md` + `findings.jsonl`; advisory | receipt | done | `scripts/scan_memory_secrets.py` (+9 tests); **rotation manual** — run it, then rotate any hit |
 
 ## R3 — disposable authenticated Redis + epoch-trusted recall (D4, D5)
@@ -49,8 +49,8 @@ dependency order — in-repo, low-risk items first; machine-infra last (gated).
 | 2 | Read-side epoch/schema trust: recall serves a record only with current epoch + schema version + tier + canonical source path + content digest | attune-ai | **deferred** | co-design with the writer (task 6) — the reader + hydrator must agree on the stamp format; building the reader in isolation is speculative and can't enforce until the writer stamps |
 | 3 | Delete dead `auto_promote_threshold` field; document human-gated promotion only (D5) | attune-ai | done | removed from `unified.py` + tests |
 | 4 | Disable AOF in both compose files (`--appendonly no`) | attune-ai | done | both compose files, D4 |
-| 5 | `requirepass` (random local secret) + loopback/socket bind + `rename-command` dangerous verbs | infra | pending | **machine-gated** — hook + MCP server must learn the secret |
-| 6 | Epoch-stamp on hydration (writer half) | external | pending | **machine-gated** — out-of-repo hydrator |
+| 5 | `requirepass` (random local secret) + loopback bind (Redis is live on `*:6379`, no auth) | infra | pending | **machine-gated** — runbook § R3#5; ORDER: ship PR #1979 first, then hooks + env, then flip |
+| 6 | Epoch-stamp on hydration (writer half) | external | pending | **machine-gated** — runbook § R3#6, co-designed with #2 |
 | 7 | Tests: recall rejects a record missing epoch/schema/digest; accepts a valid one | attune-ai | pending | hermetic, fakeredis or stubbed reader |
 
 ## R4 — forgeable mtime — NOT owned here
