@@ -113,6 +113,10 @@ now connect with `password=os.environ.get("REDIS_PASSWORD") or None` (applied
 2026-08-07). No-op until the secret is set. The `FUNCTION LOAD` / `FCALL` run on
 the same authed client, so no extra change.
 
+**Loopback bind already applied** ✅ 2026-08-07 — `bind 127.0.0.1 -::1` set +
+`CONFIG REWRITE`d (Redis was on `*:6379`). Verified `PING`/recall intact. So the
+`bind` line below is done; only `requirepass` remains.
+
 **Do NOT flip requirepass until PR #1979 is released and installed** — the
 installed MCP server's readers (attune-ai 11.1.0) don't yet read `REDIS_PASSWORD`
 and would break. After upgrade:
