@@ -358,7 +358,30 @@ class MemoryHandlersMixin:
                 k=args.get("k", 3),
                 kind_filter=args.get("kind_filter"),
             )
-            return {"success": True, "results": hits, "count": len(hits)}
+            # R1/D1 (memory-security-hardening): recalled prose reaches a model
+            # only inside the untrusted-evidence envelope. Return the framed
+            # rendering as the model-facing `context`, and strip the bare
+            # summary/excerpt from each structured result so no unframed body is
+            # echoed. Fail closed — if the provenance module is unavailable,
+            # withhold the prose entirely rather than leak it unframed.
+            context = ""
+            try:
+                from attune.memory.provenance import render_recall_for_context
+
+                context = render_recall_for_context(hits)
+            except Exception:  # noqa: BLE001 — no provenance module → withhold prose
+                logger.warning(
+                    "personal_memory_recall: provenance unavailable; withholding raw prose"
+                )
+            results = [
+                {k: v for k, v in hit.items() if k not in ("summary", "excerpt")} for hit in hits
+            ]
+            return {
+                "success": True,
+                "results": results,
+                "context": context,
+                "count": len(results),
+            }
         except ImportError as e:
             logger.error("personal memory not available: %s", e)
             return {"success": False, "error": str(e)}
