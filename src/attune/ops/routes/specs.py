@@ -181,7 +181,7 @@ async def get_spec(slug: str, request: Request) -> dict:
     for root in roots:
         spec_dir = root / slug
         if spec_dir.is_dir():
-            phases = _scan_spec_dir(spec_dir)
+            phases, _decisions_text = _scan_spec_dir(spec_dir)
             contents: dict[str, str | None] = {}
             for phase in phases:
                 if not phase.exists:

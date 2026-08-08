@@ -180,8 +180,7 @@ class PatternStaging:
         keys = self._base._keys(pattern)
         patterns = []
 
-        for key in keys:
-            raw = self._base._get(key)
+        for raw in self._base._mget(keys):
             if raw:
                 patterns.append(StagedPattern.from_dict(json.loads(raw)))
 

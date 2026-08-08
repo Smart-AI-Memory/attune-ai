@@ -214,11 +214,7 @@ class WorkingMemory:
         """
         pattern = f"{self.PREFIX_WORKING}{credentials.agent_id}:*"
         keys = self._base._keys(pattern)
-        count = 0
-        for key in keys:
-            if self._base._delete(key):
-                count += 1
-        return count
+        return self._base._delete_many(keys)
 
     def exists(
         self,

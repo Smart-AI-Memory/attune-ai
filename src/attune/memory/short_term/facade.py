@@ -414,8 +414,7 @@ class RedisShortTermMemory:
         broadcast_pattern = f"{self.PREFIX_COORDINATION}*:*:broadcast"
         keys = set(self._base._keys(pattern)) | set(self._base._keys(broadcast_pattern))
         signals = []
-        for key in keys:
-            raw = self._base._get(key)
+        for raw in self._base._mget(sorted(keys)):
             if raw:
                 signals.append(json.loads(raw))
         return signals

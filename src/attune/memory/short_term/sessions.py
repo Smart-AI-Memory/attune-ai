@@ -250,8 +250,7 @@ class SessionManager:
         keys = self._base._keys(pattern)
         sessions = []
 
-        for key in keys:
-            raw = self._base._get(key)
+        for raw in self._base._mget(keys):
             if raw:
                 sessions.append(json.loads(raw))
 

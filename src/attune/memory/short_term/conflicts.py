@@ -262,8 +262,7 @@ class ConflictNegotiation:
         keys = self._base._keys(pattern)
         conflicts = []
 
-        for key in keys:
-            raw = self._base._get(key)
+        for raw in self._base._mget(keys):
             if raw:
                 context = ConflictContext.from_dict(json.loads(raw))
                 if not context.resolved:

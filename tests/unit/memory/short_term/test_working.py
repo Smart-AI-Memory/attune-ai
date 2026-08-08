@@ -42,6 +42,12 @@ class FakeBase:
     def _delete(self, key: str) -> bool:
         return self.store.pop(key, None) is not None
 
+    def _mget(self, keys: list[str]) -> list[str | None]:
+        return [self.store.get(key) for key in keys]
+
+    def _delete_many(self, keys: list[str]) -> int:
+        return sum(1 for key in keys if self._delete(key))
+
 
 class FakeSanitizer:
     """Returns a fixed sanitized payload + pii_count, recording calls."""

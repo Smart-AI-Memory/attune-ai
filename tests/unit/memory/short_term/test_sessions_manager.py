@@ -20,7 +20,7 @@ from attune.memory.types import AccessTier, AgentCredentials
 
 
 class FakeBase:
-    """In-memory stand-in for BaseOperations (_set/_get/_keys only)."""
+    """In-memory stand-in for BaseOperations (_set/_get/_mget/_keys)."""
 
     def __init__(self, set_returns: bool = True):
         self.store: dict[str, str] = {}
@@ -35,6 +35,9 @@ class FakeBase:
 
     def _get(self, key: str) -> str | None:
         return self.store.get(key)
+
+    def _mget(self, keys: list[str]) -> list[str | None]:
+        return [self.store.get(key) for key in keys]
 
     def _keys(self, pattern: str) -> list[str]:
         prefix = pattern.rstrip("*")
