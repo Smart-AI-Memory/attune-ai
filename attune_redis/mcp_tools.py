@@ -501,7 +501,15 @@ def _effective_config_report() -> dict[str, Any]:
     except ImportError:
         return {"available": False, "reason": "attune core not importable"}
 
-    health = MemoryFeatures.classify_redis_health()
+    try:
+        health = MemoryFeatures.classify_redis_health()
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL broad catch: the diagnostic must never flip an
+        # otherwise-healthy tool response to failure (fail-open posture).
+        # Type name only — exception text could carry config values.
+        logger.exception("classify_redis_health failed")
+        return {"available": False, "reason": f"classifier error: {type(exc).__name__}"}
+
     report: dict[str, Any] = {
         "available": True,
         "health": health.state.value,

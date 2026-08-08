@@ -106,6 +106,18 @@ class TestEffectiveConfigReport:
             report = _effective_config_report()
         assert report == {"available": False, "reason": "attune core not importable"}
 
+    def test_classifier_crash_degrades_without_leaking(self):
+        """Codex D11 finding: a classifier bug must not flip the tool to
+        failure, and the reason must not carry exception text."""
+        from attune.memory.features import MemoryFeatures
+
+        exc = RuntimeError("boom redis://u:sekret@h:6379/0")  # pragma: allowlist secret
+        with patch.object(MemoryFeatures, "classify_redis_health", side_effect=exc):
+            report = _effective_config_report()
+        assert report["available"] is False
+        assert report["reason"] == "classifier error: RuntimeError"
+        assert "sekret" not in json.dumps(report)
+
 
 class TestHandlerIntegration:
     def test_handler_includes_effective_config_and_backend(self):

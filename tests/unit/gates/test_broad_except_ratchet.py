@@ -56,7 +56,10 @@ _HINT = (
 #: DOWN as sites are converted; never raise an entry without a stated
 #: reason. Seeded 2026-08-07 from the tree at the seeding commit.
 _BASELINE: dict[str, int] = {
-    "attune_redis/mcp_tools.py": 12,
+    # mcp_tools.py raised 12 -> 13 for rct-3 (PR #1987): the doctor
+    # diagnostic's classifier guard — the effective-config section must
+    # never flip an otherwise-healthy health-tool response to failure.
+    "attune_redis/mcp_tools.py": 13,
     "attune_redis/memory.py": 13,
     "attune_redis/plugin.py": 1,
     "attune_redis/signals.py": 2,
