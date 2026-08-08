@@ -9,6 +9,7 @@ Licensed under the Apache License, Version 2.0
 
 import importlib
 import logging
+import os
 from dataclasses import dataclass
 from enum import Enum
 
@@ -95,7 +96,13 @@ class MemoryFeatures:
         try:
             import redis
 
-            client = redis.Redis(host=host, port=port, socket_connect_timeout=1)
+            client = redis.Redis(
+                host=host,
+                port=port,
+                socket_connect_timeout=1,
+                # R3: authenticate so `requirepass` isn't misread as "Redis down".
+                password=os.environ.get("REDIS_PASSWORD") or None,
+            )
             return bool(client.ping())
         except ImportError:
             logger.debug("redis module not installed")

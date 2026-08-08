@@ -209,15 +209,19 @@ def get_redis_config() -> RedisConfig:
     common = _get_common_connection_kwargs()
 
     if mode == REDIS_MODE_LOCAL:
-        # Local mode: loopback, no password, ignore REDIS_PASSWORD.
-        # Literal 127.0.0.1, NOT "localhost": hostname resolution
-        # (getaddrinfo) runs before any socket timeout applies and has
-        # wedged Windows CI workers for 20 minutes
+        # Local mode: loopback. Literal 127.0.0.1, NOT "localhost": hostname
+        # resolution (getaddrinfo) runs before any socket timeout applies and
+        # has wedged Windows CI workers for 20 minutes
         # (docs/specs/windows-exit139-segfault/).
+        #
+        # Honor REDIS_PASSWORD when set (memory-security-hardening R3): a
+        # hardened local Redis with `requirepass` authenticates via one env var,
+        # the same opt-in signal `connect_recall_redis` uses. Unset ⇒ None ⇒ the
+        # prior no-auth behavior, so a bare local Redis stays password-free.
         return RedisConfig(
             host="127.0.0.1",
             port=int(os.getenv("REDIS_PORT", "6379")),
-            password=None,
+            password=os.getenv("REDIS_PASSWORD") or None,
             db=int(os.getenv("REDIS_DB", "0")),
             use_mock=False,
             ssl=False,

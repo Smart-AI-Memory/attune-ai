@@ -69,7 +69,13 @@ def _check_redis_running(host: str = "127.0.0.1", port: int = 6379) -> bool:
     try:
         import redis
 
-        client = redis.Redis(host=host, port=port, socket_connect_timeout=1)
+        client = redis.Redis(
+            host=host,
+            port=port,
+            socket_connect_timeout=1,
+            # R3: authenticate so `requirepass` isn't misread as "Redis down".
+            password=os.environ.get("REDIS_PASSWORD") or None,
+        )
         return bool(client.ping())
     except Exception:  # noqa: BLE001
         # INTENTIONAL: Redis connectivity check — any failure means not available

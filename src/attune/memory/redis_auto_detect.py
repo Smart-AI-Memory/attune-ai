@@ -9,6 +9,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 import logging
+import os
 import platform
 import shutil
 import subprocess
@@ -176,7 +177,13 @@ class RedisAutoDetector:
         try:
             import redis
 
-            client = redis.Redis(host=host, port=port, socket_connect_timeout=0.5)
+            client = redis.Redis(
+                host=host,
+                port=port,
+                socket_connect_timeout=0.5,
+                # R3: authenticate so `requirepass` isn't misread as "Redis down".
+                password=os.environ.get("REDIS_PASSWORD") or None,
+            )
             return bool(client.ping())
         except Exception:  # noqa: BLE001
             # INTENTIONAL: Any failure means server is not reachable
