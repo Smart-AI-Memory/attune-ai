@@ -1,8 +1,9 @@
 # redis-config-truth — tasks
 
-**Status:** ladder drafted (2026-08-08) — awaiting chair review;
-execution starts on a fresh chair go. Grounding: decisions.md D3
-(15 files / 42 env reads; two existing resolver candidates).
+**Status:** active (2026-08-08) — ladder drafted and in
+execution (rct-1 shipped as PR #1984, chair-armed). Grounding:
+decisions.md D3 (15 files / 42 env reads; two existing resolver
+candidates).
 
 Sequencing follows the roundtable's ratified order: resolver →
 visibility → tests → migrations. T1 contains a chair checkpoint
