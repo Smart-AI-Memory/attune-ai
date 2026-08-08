@@ -62,3 +62,24 @@ home (chair checkpoint inside T1), and implements
 `resolve_redis_connection()` there. R1's intent (ONE resolver,
 documented precedence) is unchanged; only the assumed location
 (`attune.memory.config`) is demoted from requirement to T1 input.
+
+## D4 — D11 cross-review lane: 4/4 findings real, accepted, amended
+
+**Date:** 2026-08-08 · **Status:** recorded (lead disposition;
+thread `review-claude-redis-config-truth-spec-20260808-0640`)
+
+Codex reviewed the spec-text diff (4 files sent, 0 omitted) and
+returned 4 findings — all verified real and amended in-branch:
+(1) R1 still hard-coded `attune.memory.config` after D3 demoted it
+— R1 now defers to the rct-1 ruling; (2) the drift guard covered
+only `os.environ.get("REDIS_URL")`-form reads — broadened to all
+access forms and all REDIS_* component names, with per-form
+planted-violation proof; (3) rct-5's skip-when-unconfigured lane
+could leave the incident AC perpetually unverified — the lane now
+PROVISIONS an ephemeral requirepass server and a meta-test fails
+if it skips while the binary exists; (4) "conflicting settings"
+was undefined — R1 now carries an explicit conflict rule
+(precedence always decides; overrides recorded in the source-map
+and surfaced; only malformed values raise). The spec-text-highest-
+yield pattern holds: third consecutive spec-text lane with a 100%
+real-finding rate.

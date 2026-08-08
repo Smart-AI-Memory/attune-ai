@@ -43,8 +43,12 @@ visibility → tests → migrations. T1 contains a chair checkpoint
   <validation>
     <check>Unit tests pin all five precedence steps, including the
       incident shape (password-less URL + REDIS_PASSWORD set).</check>
-    <check>Conflicting settings raise an actionable diagnostic,
-      not a silent pick.</check>
+    <check>Conflict matrix pinned by tests (R1's conflict rule):
+      credentialed URL + differing REDIS_PASSWORD -> URL wins,
+      override recorded in source-map; PUBLIC and PRIVATE URLs
+      coexisting -> documented order applies, recorded; malformed
+      URL / non-numeric port -> raises actionable message. The
+      resolver never raises on merely redundant settings.</check>
     <check>Redacted rendering never contains the password.</check>
   </validation>
   <risks>
@@ -124,13 +128,16 @@ visibility → tests → migrations. T1 contains a chair checkpoint
     recall_digest.py, unified.py, backend_init_mixin.py,
     cross_session.py, diagnosis/priors.py, attune_redis/config.py,
     attune_redis/signals.py, redis_config.py) — and add the AC
-    drift-guard: a test failing on any direct
-    os.environ.get("REDIS_URL")-family read outside the resolver
-    module (allowlist seeded empty).
+    drift-guard: a test failing on ANY access to the REDIS_*
+    connection env names outside the resolver module —
+    os.environ.get, os.environ[...], os.getenv, and component
+    reads (REDIS_PASSWORD, REDIS_HOST, ...) all covered
+    (AST- or pattern-based; allowlist seeded empty).
   </objective>
   <validation>
-    <check>Drift-guard test proves it fires: a planted violation in
-      a tmp module is caught.</check>
+    <check>Drift-guard test proves it fires: planted violations in
+      EACH access form (environ.get, environ[...], os.getenv,
+      component-var read) are all caught.</check>
     <check>The R4 incident shape connects through EVERY migrated
       consumer (parametrized where practical).</check>
     <check>Full unit suite green; keyless CI semantics unchanged.</check>
@@ -148,20 +155,30 @@ visibility → tests → migrations. T1 contains a chair checkpoint
 
 <task id="rct-5" name="requirepass-regression-lane">
   <objective>
-    R4: a non-mocked round trip against a requirepass server —
-    password-less REDIS_URL + REDIS_PASSWORD set resolves to an
-    authenticated connection (skip cleanly when no local Redis or
-    no auth configured).
+    R4: a non-mocked round trip proving the password-merge path.
+    The lane PROVISIONS its own server: spawn an ephemeral
+    redis-server --requirepass (random password, scratch port,
+    auto-teardown) whenever the redis-server binary is on PATH —
+    it must NOT depend on a pre-configured requirepass instance,
+    or the core incident AC stays perpetually unverified on most
+    machines. Skip ONLY when the binary is absent.
   </objective>
   <validation>
-    <check>Lane passes against the local requirepass server.</check>
-    <check>Lane skips (not fails) on keyless CI and on hosts
-      without Redis.</check>
+    <check>Lane RUNS (not skips) on any host with redis-server on
+      PATH — asserted by a companion meta-test that fails if the
+      lane skipped while the binary exists.</check>
+    <check>Incident shape (password-less REDIS_URL + REDIS_PASSWORD
+      env) authenticates against the provisioned server.</check>
+    <check>Ephemeral server is torn down on pass, fail, and
+      exception paths; scratch port never collides (bind to port 0
+      or retry).</check>
+    <check>Lane skips cleanly only where redis-server is absent
+      (e.g. bare CI images without the binary).</check>
   </validation>
   <risks>
-    <risk severity="low">Machine-local test class — follow the
-      session_hydrate_fail_open precedent (run where real, skip
-      elsewhere).</risk>
+    <risk severity="low">Provisioned-server flakiness (port races,
+      slow startup) — bound startup with a ping-poll timeout and
+      fail with the server log tail as the receipt.</risk>
   </risks>
 </task>
 ```

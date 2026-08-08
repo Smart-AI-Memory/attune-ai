@@ -27,9 +27,10 @@ capability.
 
 ### R1 — one canonical resolver
 
-A single `resolve_redis_connection()` (location:
-`attune.memory.config`) is the ONLY way any component derives a
-Redis connection spec. Documented precedence:
+A single `resolve_redis_connection()` (home ruled in rct-1 — see
+decisions.md D3; two partial resolvers already exist) is the ONLY
+way any component derives a Redis connection spec. Documented
+precedence:
 
 1. Explicit URL already carrying credentials.
 2. `REDIS_URL` merged with `REDIS_PASSWORD` / `REDIS_USER` when the
@@ -38,10 +39,19 @@ Redis connection spec. Documented precedence:
 4. Host / port / db / password components.
 5. Default `redis://127.0.0.1:6379/0`.
 
-Consumers migrated in this spec: `roundtable.Board`,
-`memory/config.py` internals, `BaseOperations`, session hooks, the
-entry-point backend probe. Conflicting settings produce an
-actionable diagnostic, never a silent pick.
+Consumers migrated in this spec: the full grep-derived reader set
+(15 files, decisions.md D3), including `roundtable.Board`,
+`memory/config.py` internals, `BaseOperations`, session hooks, and
+the entry-point backend probe.
+
+**Conflict rule (defined, not vibes):** precedence always decides —
+the resolver never raises on redundant or disagreeing settings.
+When a lower-precedence variable is overridden with a DIFFERENT
+value (e.g. a credentialed URL disagrees with `REDIS_PASSWORD`, or
+public and private URLs coexist), the override is recorded in the
+resolver's source-map and surfaced by R2's doctor and R3's
+loud-once path. Only malformed values (unparseable URL, non-numeric
+port) raise, with an actionable message.
 
 ### R2 — redacted effective-config diagnostic
 
@@ -81,8 +91,12 @@ modules, no speculative performance work.
 
 ## Acceptance criteria
 
-- One resolver; grep shows zero direct `os.environ.get("REDIS_URL")`
-  outside it (allowlist: the resolver module itself).
+- One resolver; a drift-guard test proves zero access to the
+  `REDIS_*` connection env names in ANY form — `os.environ.get`,
+  `os.environ[...]`, `os.getenv`, including `REDIS_PASSWORD` /
+  `REDIS_HOST` component reads — outside the resolver module
+  (allowlist seeded empty; AST- or pattern-based, and it must
+  catch a planted violation in each access form).
 - The 2026-08-08 incident shape (password-less URL + requirepass +
   `REDIS_PASSWORD` set) connects successfully.
 - An auth failure surfaces a visible once-per-session notice; a
