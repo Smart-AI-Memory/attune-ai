@@ -64,7 +64,6 @@ class TestMemoryConfig:
         assert config.storage_dir == "./memdocs_storage"
         assert config.encryption_enabled is True
         assert config.claude_memory_enabled is True
-        assert config.auto_promote_threshold == 0.8
         # File-first architecture fields
         assert config.file_session_enabled is True
         assert config.file_session_dir == ".attune"
@@ -81,7 +80,6 @@ class TestMemoryConfig:
             default_ttl_seconds=7200,
             storage_dir="/custom/storage",
             encryption_enabled=False,
-            auto_promote_threshold=0.9,
         )
 
         assert config.environment == Environment.PRODUCTION
@@ -92,7 +90,6 @@ class TestMemoryConfig:
         assert config.default_ttl_seconds == 7200
         assert config.storage_dir == "/custom/storage"
         assert config.encryption_enabled is False
-        assert config.auto_promote_threshold == 0.9
 
     def test_from_environment_default(self):
         """Test from_environment with no env vars set."""

@@ -96,9 +96,10 @@ class CollabInbox:
 
 def _connect(url: str | None = None) -> Any | None:
     try:
-        import redis
+        # R3: auth-aware factory so `requirepass` reaches this reader too.
+        from attune.memory.recall_redis import connect_recall_redis
 
-        client = redis.Redis.from_url(url or "redis://127.0.0.1:6379/0", decode_responses=True)
+        client = connect_recall_redis(url)
         client.ping()
         return client
     except Exception:  # noqa: BLE001

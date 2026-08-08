@@ -1,6 +1,7 @@
 # memory-security-hardening
 
-**Status:** draft (2026-08-07 — requirements; from round-table deliberation)
+**Status:** draft (2026-08-07 — requirements; from round-table deliberation).
+R1 shipped (PR #1979); R2/R3/R5 ladders drafted — see [tasks.md](tasks.md).
 **Owner:** Patrick (chair)
 **Origin:** Round table `q-memory-system-deep-dive-001` (2026-08-07,
 Claude + Codex + Antigravity, 2 rounds). The security lens produced a
@@ -73,6 +74,20 @@ must be paired with **raw-tier quarantine** (R3): raw findings never
 auto-promote into always-loaded or curated surfaces without human
 promotion.
 
+**Implementation status — DONE (PR #1979, branch `feat/memory-security-r1r2`).**
+`attune.memory.provenance` renders the untrusted-evidence envelope +
+instruction-flag lint; `session_stash` stamps every recall dict with
+`provenance.context_block`; and the **live injection point** — the in-repo
+SessionStart hook `plugin/hooks/session_recall.py::_format` — now renders
+through `render_recall_for_context` (fails closed if the module is absent).
+This closes the round-table's **BLOCK-1 residual**: the review had
+misattributed the injection to an out-of-repo personal hook
+(`~/.attune/memory/session_hydrate.py`), which in fact injects no recall
+text. Verified end-to-end — an `"ignore all previous instructions…"` finding
+reaches context wrapped + flagged, content preserved. Per the ratified caveat
+above, this is necessary-not-sufficient and still depends on raw-tier
+quarantine (R3, open).
+
 ### R2 — Secret accumulation (accidental, high blast radius)
 
 **Mechanism.** The extractor eats full transcripts as free prose;
@@ -83,13 +98,21 @@ corpus's own history records the exposure class (a real `sk-ant` value
 surfaced in a console during earlier work). Retention multiplies the
 exposure across every copy.
 
-**Mitigation.** Secret detection + redaction **before every write** —
-the `session_stash` pipeline, `memory_lint.py`, **and** the hydration
-path — not merely at git commit (the one place it is checked today).
-Store redacted previews + source references where possible. A one-time
-corpus-wide sweep of the ~271 curated files + the JSONL. **Rotate
-anything found — deletion is insufficient.** Consider making Redis
-non-persistent (or encrypted) if persistence buys nothing here.
+**Mitigation.** Secret detection **before every write** — the
+`session_stash` pipeline, the curated `/remember` path, the short-term
+Redis tier, **and** the hydration path — not merely at git commit (the
+one place it was checked before this spec). On detection, **fail closed:
+refuse the write** (raw path drops the finding; curated path raises so
+the user rotates). Redacted-preview storage is **rejected** (design D3) —
+imperfect redaction would persist partial secret material into a
+recallable store. A one-time corpus-wide sweep of the ~271 curated files
++ the JSONL. **Rotate anything found — deletion is insufficient.** Redis
+is made non-persistent (design D4), so the hydrated corpus no longer sits
+in an AOF on disk.
+
+_Status: engine + raw/curated gates shipped; short-term wiring + hydration
+scan + sweep pending — see [tasks.md](tasks.md) R2. Secret engine is the
+in-repo `SecretsDetector` (D2)._
 
 ### R3 — Unauthenticated localhost Redis + hydration path
 

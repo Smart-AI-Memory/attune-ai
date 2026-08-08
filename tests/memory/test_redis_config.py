@@ -206,6 +206,27 @@ class TestGetRedisConfig:
                     if val is not None:
                         os.environ[key] = val
 
+    def test_local_mode_honors_redis_password_when_set(self):
+        """R3: local mode authenticates via REDIS_PASSWORD when set (requirepass)."""
+        with patch.dict(
+            os.environ,
+            {"REDIS_MODE": "local", "REDIS_PASSWORD": "s3cret"},
+            clear=False,
+        ):
+            for key in ("REDIS_URL", "REDIS_PRIVATE_URL", "REDIS_HOST"):
+                os.environ.pop(key, None)
+            config = get_redis_config()
+            assert config.host == "127.0.0.1"
+            assert config.password == "s3cret"
+
+    def test_local_mode_password_none_when_unset(self):
+        """R3: unset REDIS_PASSWORD keeps the prior no-auth local behavior."""
+        with patch.dict(os.environ, {"REDIS_MODE": "local"}, clear=False):
+            for key in ("REDIS_URL", "REDIS_PRIVATE_URL", "REDIS_HOST", "REDIS_PASSWORD"):
+                os.environ.pop(key, None)
+            config = get_redis_config()
+            assert config.password is None
+
 
 class TestGetRedisConfigDict:
     """Test legacy dict-based config"""
@@ -357,20 +378,25 @@ class TestRedisMode:
             assert config.db == 2
             assert config.use_mock is False
 
-    def test_local_mode_ignores_password(self):
-        """Test local mode uses literal loopback and ignores REDIS_PASSWORD."""
+    def test_local_mode_forces_loopback_but_honors_password(self):
+        """Local mode forces loopback (ignores REDIS_HOST) but HONORS REDIS_PASSWORD.
+
+        R3 (memory-security-hardening): the password is honored so a hardened
+        local Redis with `requirepass` authenticates; the host is still forced
+        to literal 127.0.0.1 regardless of REDIS_HOST.
+        """
         env = {
             "REDIS_MODE": "local",
             "REDIS_HOST": "should-be-ignored.com",
-            "REDIS_PASSWORD": "should-be-ignored",
+            "REDIS_PASSWORD": "local-requirepass",
             "REDIS_URL": "",
             "REDIS_PRIVATE_URL": "",
             "EMPATHY_REDIS_MOCK": "",
         }
         with patch.dict(os.environ, env, clear=False):
             config = get_redis_config()
-            assert config.host == "127.0.0.1"
-            assert config.password is None
+            assert config.host == "127.0.0.1"  # REDIS_HOST still ignored
+            assert config.password == "local-requirepass"  # REDIS_PASSWORD now honored
             assert config.use_mock is False
 
     def test_url_takes_precedence_over_mode(self):

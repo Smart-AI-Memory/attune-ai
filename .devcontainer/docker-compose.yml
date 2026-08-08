@@ -21,7 +21,8 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
-    command: redis-server --appendonly yes
+    # Disposable cache posture (memory-security-hardening R3/D4): AOF OFF.
+    command: redis-server --appendonly no
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s

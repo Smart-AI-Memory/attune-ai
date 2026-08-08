@@ -99,6 +99,42 @@ def _build_skeleton(topic: str, kind: str, content: str) -> str:
     )
 
 
+def _secret_gate(content: str) -> str:
+    """Refuse to capture curated content carrying a secret (R2). Fail closed.
+
+    The curated write path polishes content through an LLM before writing, so a
+    secret here would leak to the polish provider *and* land in plaintext
+    markdown + Redis. This gates the raw input up front — before any network
+    call — mirroring the raw tier's ``session_stash._sanitize``.
+
+    Unlike the raw hook path (which returns None to skip a best-effort write),
+    ``capture`` is a deliberate action, so a detected secret RAISES: the caller
+    must know their content was refused and rotate the exposed value (deletion
+    is insufficient — see the spec). PII is redacted in place, not blocked.
+
+    Args:
+        content: Raw content passed to :meth:`PersonalMemory.capture`.
+
+    Returns:
+        The content with PII redacted.
+
+    Raises:
+        SecurityError: If a critical/high-severity secret is detected, or if
+            the gate itself is unavailable (fail closed — never write
+            unscanned).
+    """
+    try:
+        from attune.memory.short_term.security import DataSanitizer
+    except ImportError as exc:
+        raise RuntimeError(f"secret gate unavailable; refusing capture: {exc}") from exc
+
+    sanitizer = DataSanitizer(pii_scrub_enabled=True, secrets_detection_enabled=True)
+    sanitized, redactions = sanitizer.sanitize(content)  # raises SecurityError on secrets
+    if redactions:
+        logger.info("personal_memory: %d PII value(s) redacted before capture", redactions)
+    return sanitized if isinstance(sanitized, str) else str(sanitized)
+
+
 def _extract_summary(text: str) -> str:
     """Return first non-heading, non-blank, non-frontmatter line ≤ 120 chars."""
     in_frontmatter = False
@@ -184,6 +220,8 @@ class PersonalMemory:
         if kind not in self.VALID_KINDS:
             raise ValueError(f"Unknown kind {kind!r}. Valid kinds: {sorted(self.VALID_KINDS)}")
 
+        content = _secret_gate(content)
+
         root = self._project_root if project_local else self._global_root
 
         skeleton = _build_skeleton(topic, kind, content)
@@ -267,7 +305,33 @@ class PersonalMemory:
         deduped = sorted(best.values(), key=lambda h: h["score"], reverse=True)
         results = deduped[:k]
         self._annotate_staleness(results)
+        self._stamp_provenance(results)
         return results
+
+    def _stamp_provenance(self, hits: list[dict[str, Any]]) -> None:
+        """Attach R1 provenance + instruction flags to each hit, in place.
+
+        Curated memories are human-authored, so they carry more standing than
+        raw findings — but the linter checks format, not content, so
+        attacker-shaped prose can still reach recall (memory-security-hardening
+        R1). Stamping tier/source/author and flagging instruction-shaped text
+        lets a reading session weigh a recalled item without re-deriving its
+        origin. Labels only — never reorders or drops (D1 of
+        memory-status-integrity holds here too).
+        """
+        from attune.memory.provenance import AUTHOR_CURATED, provenance_fields
+
+        for hit in hits:
+            try:
+                text = str(hit.get("excerpt") or hit.get("summary") or "")
+                hit["provenance"] = provenance_fields(
+                    tier="curated",
+                    source=str(hit.get("path", "curated")),
+                    author_class=AUTHOR_CURATED,
+                    text=text,
+                )
+            except (KeyError, TypeError, ValueError):
+                logger.debug("provenance stamp failed path=%s", hit.get("path"))
 
     def _annotate_staleness(self, hits: list[dict[str, Any]]) -> None:
         """Add unverified-age to each hit, in place.

@@ -384,6 +384,37 @@ def recall_entries(
         return []
     if cwd:
         results.sort(key=lambda r: 0 if (isinstance(r, dict) and r.get("cwd") == cwd) else 1)
+    return _stamp_provenance(results)
+
+
+def _stamp_provenance(results: list[Any]) -> list[Any]:
+    """Attach R1 provenance + instruction flags to raw-tier recall dicts.
+
+    Raw findings are machine-extracted by an 8B model from untrusted
+    transcripts — the top injection vector in memory-security-hardening R1.
+    Stamping each recalled dict lets any consumer render the untrusted-evidence
+    envelope and lets a reading session see instruction-shaped content flagged.
+    Flags, never blocks (a flagged finding is still returned). Best-effort: a
+    malformed entry is left untouched rather than dropped.
+    """
+    from attune.memory.provenance import AUTHOR_MACHINE, provenance_fields
+
+    for entry in results:
+        if not isinstance(entry, dict):
+            continue
+        try:
+            entry["provenance"] = provenance_fields(
+                tier="raw",
+                source=str(entry.get("session_id") or entry.get("id") or "raw-stash"),
+                author_class=AUTHOR_MACHINE,
+                # Backend recall dicts carry the body under ``text``; ``content``
+                # is the write-side key. Read both so the flag scan sees the
+                # actual finding regardless of which backend answered.
+                text=str(entry.get("text") or entry.get("content") or ""),
+            )
+        except (KeyError, TypeError, ValueError, AttributeError):
+            # Framing is additive; a malformed entry must never break recall.
+            logger.debug("provenance stamp failed for a recalled entry")
     return results
 
 
@@ -553,4 +584,4 @@ def recent_entries(
         # INTENTIONAL: recall is best-effort; never break the host session.
         logger.warning("session recent-recall failed: %s", exc)
         return []
-    return results if isinstance(results, list) else []
+    return _stamp_provenance(results) if isinstance(results, list) else []
