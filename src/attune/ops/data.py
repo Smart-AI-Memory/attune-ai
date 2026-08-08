@@ -859,6 +859,19 @@ def _parse_usage_event(line: str) -> tuple[float, float, str, str] | None:
     return cost, savings, workflow, ts
 
 
+#: Cache for the full usage.jsonl aggregation, keyed by file identity
+#: (mtime_ns, size) + the aggregation parameters. The file is
+#: append-only and unbounded, and every dashboard/telemetry request
+#: re-parsed it in full (11.5.0 self-review Medium). One entry per
+#: telemetry path; a new append changes mtime/size and invalidates.
+_telemetry_summary_cache: dict[str, tuple[tuple[int, int, int, str], TelemetrySummary]] = {}
+
+
+def _clear_telemetry_summary_cache() -> None:
+    """Test hook — flushes the per-process telemetry summary cache."""
+    _telemetry_summary_cache.clear()
+
+
 def read_telemetry_summary(
     config: Config,
     *,
@@ -878,6 +891,21 @@ def read_telemetry_summary(
     path = config.telemetry_path
     if not path.exists():
         return TelemetrySummary(0, 0.0, 0.0, [], [], None)
+
+    if today is None:
+        # UTC, not local — must match ``_to_day``'s clock authority.
+        today = datetime.now(timezone.utc).date()
+
+    cache_key: tuple[int, int, int, str] | None = None
+    try:
+        st = path.stat()
+        cache_key = (st.st_mtime_ns, st.st_size, recent_days, today.isoformat())
+    except OSError:
+        cache_key = None
+    if cache_key is not None:
+        cached = _telemetry_summary_cache.get(str(path))
+        if cached is not None and cached[0] == cache_key:
+            return cached[1]
 
     total_requests = 0
     total_cost = 0.0
@@ -941,10 +969,6 @@ def read_telemetry_summary(
     # Same output ordering since both sort by cost descending.
     by_workflow = heapq.nlargest(20, filtered, key=lambda row: row[2])
 
-    if today is None:
-        # UTC, not local: ``by_day_count`` keys are UTC dates (``_to_day``),
-        # so the rolling-window cutoff must use the same clock authority.
-        today = datetime.now(timezone.utc).date()
     cutoff = today.toordinal() - recent_days
     recent_days_data = sorted(
         (
@@ -955,7 +979,7 @@ def read_telemetry_summary(
         key=lambda row: row[0],
     )
 
-    return TelemetrySummary(
+    summary = TelemetrySummary(
         total_requests=total_requests,
         total_cost=round(total_cost, 4),
         total_savings=round(total_savings, 4),
@@ -963,6 +987,9 @@ def read_telemetry_summary(
         by_day=recent_days_data,
         last_event_at=last_event_at,
     )
+    if cache_key is not None:
+        _telemetry_summary_cache[str(path)] = (cache_key, summary)
+    return summary
 
 
 def read_memory_summary(path: Path | None = None) -> dict[str, Any]:

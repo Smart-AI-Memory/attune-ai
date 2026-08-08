@@ -325,6 +325,40 @@ def _first_paragraph(body: str, *, max_chars: int = 400) -> str:
     return text
 
 
+#: TTL for the full-corpus template-record walk. Matches the
+#: staleness cache: the dashboard hits coverage_gaps +
+#: recently_regenerated back-to-back per page load, and each walk is
+#: one file read per template (the N+1 the 11.5.0 self-review
+#: flagged).
+_RECORDS_CACHE_TTL_SECONDS = 5.0
+_records_cache: dict[str, tuple[float, list[TemplateRecord]]] = {}
+
+
+def _all_template_records(
+    config: Config, features: list[FeatureSummary] | None = None
+) -> list[TemplateRecord]:
+    """Every parseable template record — ONE corpus walk, TTL-cached."""
+    key = str(corpus_root(config))
+    now = time.monotonic()
+    cached = _records_cache.get(key)
+    if cached is not None and (now - cached[0]) < _RECORDS_CACHE_TTL_SECONDS:
+        return cached[1]
+    feats = features if features is not None else list_features(config)
+    records: list[TemplateRecord] = []
+    for feat in feats:
+        for kind in feat.kinds:
+            rec = get_template(config, feat.name, kind)
+            if rec is not None:
+                records.append(rec)
+    _records_cache[key] = (now, records)
+    return records
+
+
+def _clear_records_cache() -> None:
+    """Test hook — flushes the per-process record-walk cache."""
+    _records_cache.clear()
+
+
 def coverage_gaps(config: Config) -> GapsReport:
     """Compute incomplete sets + stale templates across the corpus."""
     features = list_features(config)
@@ -336,13 +370,7 @@ def coverage_gaps(config: Config) -> GapsReport:
     total_features = len(features)
     total_templates = sum(len(f.kinds) for f in features)
 
-    stale: list[TemplateRecord] = []
-    for feat in features:
-        for kind in feat.kinds:
-            rec = get_template(config, feat.name, kind)
-            if rec is None or not rec.is_stale:
-                continue
-            stale.append(rec)
+    stale = [r for r in _all_template_records(config, features) if r.is_stale]
     # Sort stale by oldest first (most-stale at top).
     stale.sort(key=lambda r: r.generated_at or "")
 
@@ -355,25 +383,31 @@ def coverage_gaps(config: Config) -> GapsReport:
     )
 
 
-def recently_regenerated(config: Config, *, limit: int = 5) -> list[TemplateRecord]:
-    """N most-recently-generated templates across the corpus."""
-    records: list[TemplateRecord] = []
-    for feat in list_features(config):
-        for kind in feat.kinds:
-            rec = get_template(config, feat.name, kind)
-            if rec is None or rec.generated_at is None:
-                continue
-            records.append(rec)
+def recently_regenerated(
+    config: Config,
+    *,
+    limit: int = 5,
+    features: list[FeatureSummary] | None = None,
+) -> list[TemplateRecord]:
+    """N most-recently-generated templates across the corpus.
+
+    Pass ``features`` when the caller already holds
+    :func:`list_features` output to avoid recomputing it.
+    """
+    records = [r for r in _all_template_records(config, features) if r.generated_at is not None]
     records.sort(key=lambda r: r.generated_at or "", reverse=True)
     return records[:limit]
 
 
-def featured_topics(config: Config) -> list[FeatureSummary]:
+def featured_topics(
+    config: Config, features: list[FeatureSummary] | None = None
+) -> list[FeatureSummary]:
     """Curated list of high-leverage features for the home page.
 
     v1: hard-coded shortlist of features the dashboard wants to
     nudge users toward. Falls back to "first N features" if any of
-    the curated picks aren't in the corpus.
+    the curated picks aren't in the corpus. Pass ``features`` when
+    the caller already holds :func:`list_features` output.
     """
     curated = (
         "security-audit",
@@ -382,11 +416,13 @@ def featured_topics(config: Config) -> list[FeatureSummary]:
         "deep-review",
         "release-prep",
     )
-    features = {f.name: f for f in list_features(config)}
-    out = [features[name] for name in curated if name in features]
+    if features is None:
+        features = list_features(config)
+    by_name = {f.name: f for f in features}
+    out = [by_name[name] for name in curated if name in by_name]
     if len(out) < 3:
         # Fallback — first few features alphabetically.
-        out = list(features.values())[:5]
+        out = list(by_name.values())[:5]
     return out
 
 
