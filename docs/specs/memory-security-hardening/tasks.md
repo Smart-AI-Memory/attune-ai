@@ -25,7 +25,8 @@ dependency order — in-repo, low-risk items first; machine-infra last (gated).
 |---|------|-------|--------|-------|
 | 1 | MCP `personal_memory_recall` returns framed `context`; bare summary/excerpt stripped from results | attune-ai | done | `memory_handlers.py:344`; fails closed if provenance absent |
 | 2 | MCP `memory_retrieve` — stamp provenance + wrap; fail closed if unavailable | attune-ai | pending | `memory_handlers.py:127`; no provenance today |
-| 3 | `PersonalMemory.query` — `render_for_context()` helper (or documented consumer contract) so no caller re-stringifies | attune-ai | pending | `personal.py:239` |
+| 2b | MCP `memory_retrieve` framing | attune-ai | **decision** | returns keyed agent/human-authored structured data, not machine-extracted recall — recommend NARROW D1 (light trust annotation, not the prose envelope); awaiting chair nod |
+| 3 | `PersonalMemory.query` — render at the consumer | attune-ai | done (by boundary) | rendered in the MCP handler (CONSUMER CONTRACT); no separate helper needed |
 | 4 | Tests: each surface frames a payload, content preserved, fails closed | attune-ai | pending | hermetic |
 
 ## R2 — secret-scan at every write path (D2, D3) — ~2/3 SHIPPED
@@ -46,8 +47,8 @@ dependency order — in-repo, low-risk items first; machine-infra last (gated).
 |---|------|-------|--------|-------|
 | 1 | Central auth-aware Redis client; route ad-hoc `from_url` readers through it | attune-ai | pending | `recall_digest.py:64`, `priors.py:138`, `ops/memory_data.py:86`, `ops/collab_data.py:101` |
 | 2 | Read-side epoch/schema trust: recall serves a record only with current epoch + schema version + tier + canonical source path + content digest | attune-ai | pending | else ignore (not error); a raw key injected into the prefix fails the check |
-| 3 | Delete dead `auto_promote_threshold` field; document human-gated promotion only (D5) | attune-ai | pending | `unified.py:95` — defined, never referenced |
-| 4 | Disable AOF in both compose files (`--appendonly no`) | attune-ai | pending | `docker-compose.yml:26`, `.devcontainer/docker-compose.yml:24` |
+| 3 | Delete dead `auto_promote_threshold` field; document human-gated promotion only (D5) | attune-ai | done | removed from `unified.py` + tests |
+| 4 | Disable AOF in both compose files (`--appendonly no`) | attune-ai | done | both compose files, D4 |
 | 5 | `requirepass` (random local secret) + loopback/socket bind + `rename-command` dangerous verbs | infra | pending | **machine-gated** — hook + MCP server must learn the secret |
 | 6 | Epoch-stamp on hydration (writer half) | external | pending | **machine-gated** — out-of-repo hydrator |
 | 7 | Tests: recall rejects a record missing epoch/schema/digest; accepts a valid one | attune-ai | pending | hermetic, fakeredis or stubbed reader |
