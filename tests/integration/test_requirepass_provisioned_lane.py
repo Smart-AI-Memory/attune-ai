@@ -27,19 +27,48 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("redis", reason="redis client library required")
-import redis as redis_lib  # noqa: E402
+# Plain import, NOT importorskip (codex D11 lane): redis is a CORE
+# attune-ai dependency, so its absence is a broken environment that
+# must FAIL loudly — an importorskip here would be a second skip
+# condition evading the lane's skip-only-on-binary-absence contract.
+import redis as redis_lib
 
 #: The lane's ONLY skip condition (meta-test pins this).
 REDIS_SERVER_BIN = shutil.which("redis-server")
 
 pytestmark = pytest.mark.xdist_group("requirepass-lane")
 
+#: Env vars scrubbed for hermeticity in every live test.
+_CONNECTION_AND_TOGGLE_VARS = (
+    "REDIS_URL",
+    "REDIS_PRIVATE_URL",
+    "REDIS_PUBLIC_URL",
+    "REDIS_HOST",
+    "REDIS_PORT",
+    "REDIS_DB",
+    "REDIS_USER",
+    "REDIS_PASSWORD",
+    "REDIS_MODE",
+    "ATTUNE_REDIS_MOCK",
+    "EMPATHY_REDIS_MOCK",
+)
+
+
+def _scrub_env(monkeypatch) -> None:
+    for var in _CONNECTION_AND_TOGGLE_VARS:
+        monkeypatch.delenv(var, raising=False)
+
 
 def _free_port() -> int:
-    with socket.socket() as s:
-        s.bind(("127.0.0.1", 0))
-        return int(s.getsockname()[1])
+    while True:
+        with socket.socket() as s:
+            s.bind(("127.0.0.1", 0))
+            port = int(s.getsockname()[1])
+        # Never provision on the default port — the non-default-port
+        # independence proof must hold structurally, not by luck of
+        # the kernel's ephemeral range (codex D11 lane).
+        if port != 6379:
+            return port
 
 
 @pytest.fixture(scope="module")
@@ -91,18 +120,7 @@ def provisioned_server():
 @pytest.fixture()
 def incident_env(provisioned_server, monkeypatch):
     """The R4 incident shape pointed at the provisioned server."""
-    for var in (
-        "REDIS_PRIVATE_URL",
-        "REDIS_PUBLIC_URL",
-        "REDIS_HOST",
-        "REDIS_PORT",
-        "REDIS_DB",
-        "REDIS_USER",
-        "REDIS_MODE",
-        "ATTUNE_REDIS_MOCK",
-        "EMPATHY_REDIS_MOCK",
-    ):
-        monkeypatch.delenv(var, raising=False)
+    _scrub_env(monkeypatch)
     monkeypatch.setenv("REDIS_URL", f"redis://127.0.0.1:{provisioned_server['port']}/0")
     monkeypatch.setenv("REDIS_PASSWORD", provisioned_server["password"])
     yield provisioned_server
@@ -135,8 +153,7 @@ class TestIncidentShapeLive:
         """A real NOAUTH/WRONGPASS from a real server → degraded_auth."""
         from attune.memory.features import MemoryFeatures, RedisHealthState
 
-        for var in ("REDIS_PRIVATE_URL", "REDIS_PUBLIC_URL", "REDIS_HOST", "REDIS_USER"):
-            monkeypatch.delenv(var, raising=False)
+        _scrub_env(monkeypatch)
         monkeypatch.setenv("REDIS_URL", f"redis://127.0.0.1:{provisioned_server['port']}/0")
         monkeypatch.setenv("REDIS_PASSWORD", "definitely-wrong")
         report = MemoryFeatures.classify_redis_health()
@@ -145,14 +162,7 @@ class TestIncidentShapeLive:
 
     def test_missing_password_fails_auth_live(self, provisioned_server, monkeypatch):
         """The pre-fix incident: bare URL, no password → auth rejected."""
-        for var in (
-            "REDIS_PRIVATE_URL",
-            "REDIS_PUBLIC_URL",
-            "REDIS_HOST",
-            "REDIS_USER",
-            "REDIS_PASSWORD",
-        ):
-            monkeypatch.delenv(var, raising=False)
+        _scrub_env(monkeypatch)
         monkeypatch.setenv("REDIS_URL", f"redis://127.0.0.1:{provisioned_server['port']}/0")
         from attune.memory.config import resolve_redis_connection
 
@@ -181,7 +191,14 @@ class TestLaneContract:
         """Pin the ONLY skip: this module contains exactly one
         ``pytest.skip`` call, guarded by ``REDIS_SERVER_BIN is None``."""
         source = Path(__file__).read_text(encoding="utf-8")
-        # Literal split so this counting line doesn't count itself.
+        # Literal splits so these counting lines don't count themselves.
+        # The importorskip CALL form is ALSO forbidden (codex D11
+        # lane): it would be a second skip condition evading this very
+        # count — redis is a core dependency, absence must FAIL.
+        assert source.count("pytest.importor" + "skip(") == 0, (
+            "pytest.importorskip call found — it adds a skip condition "
+            "the rct-5 contract forbids"
+        )
         skip_count = source.count("pytest." + "skip(")
         assert skip_count == 1, (
             f"{skip_count} pytest.skip calls — the lane may skip ONLY on "
