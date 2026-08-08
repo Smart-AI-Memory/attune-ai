@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse
 
 from attune.ops import anthropic_cost, data, memory_data, workflow_concern
@@ -71,7 +72,11 @@ async def home(request: Request) -> HTMLResponse:
     # the right CTA / notice / fallback per-kind.
     refresh = request.query_params.get("refresh") == "1"
     try:
-        cost_summary, cost_error = anthropic_cost.fetch_summary(refresh=refresh)
+        # Billing fetch hits the network on cache-miss; keep it off the
+        # event loop so concurrent dashboard requests don't freeze.
+        cost_summary, cost_error = await run_in_threadpool(
+            anthropic_cost.fetch_summary, refresh=refresh
+        )
     except Exception:  # noqa: BLE001
         # INTENTIONAL: defensive degradation; surface in DEBUG logs but
         # never block the home page render on a billing-fetch surprise.
@@ -618,7 +623,7 @@ async def spec_detail_page(slug: str, request: Request) -> HTMLResponse:
         spec_dir = root / slug
         if not spec_dir.is_dir():
             continue
-        phases = _scan_spec_dir(spec_dir)
+        phases, _decisions_text = _scan_spec_dir(spec_dir)
         # ``rendered`` holds the HTML-rendered phase bodies (markdown
         # → CommonMark HTML, raw HTML disabled). Template uses these
         # with ``|safe`` so headings, lists, tables, and code fences

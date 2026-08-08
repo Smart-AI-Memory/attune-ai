@@ -338,6 +338,28 @@ class BaseOperations:
         result = self._client.get(key)
         return str(result) if result else None
 
+    def _mget(self, keys: list[str]) -> list[str | None]:
+        """Get many values in one round-trip (Redis MGET).
+
+        Standalone-client only: on a Redis Cluster deployment,
+        multi-key commands need same-slot keys (hash tags) or
+        per-slot chunking. This class constructs ``redis.Redis``
+        exclusively, so cluster mode is out of scope today.
+
+        Args:
+            keys: Keys to retrieve, in order.
+
+        Returns:
+            Values aligned with ``keys``; None where a key is missing.
+
+        """
+        if not keys:
+            return []
+        if self.use_mock or self._client is None:
+            return [self._get(key) for key in keys]
+        values = self._client.mget(keys)
+        return [str(v) if v else None for v in values]
+
     # Default TTL for keys without an explicit TTL (24 hours).
     # Prevents unbounded key growth in Redis when callers omit TTL.
     DEFAULT_TTL: int = 86400
@@ -393,6 +415,24 @@ class BaseOperations:
             return False
 
         return bool(self._client.delete(key) > 0)
+
+    def _delete_many(self, keys: list[str]) -> int:
+        """Delete many keys in one round-trip (variadic Redis DEL).
+
+        Standalone-client only — same cluster caveat as ``_mget``.
+
+        Args:
+            keys: Keys to delete.
+
+        Returns:
+            Number of keys actually deleted.
+
+        """
+        if not keys:
+            return 0
+        if self.use_mock or self._client is None:
+            return sum(1 for key in keys if self._delete(key))
+        return int(self._client.delete(*keys))
 
     def _keys(self, pattern: str) -> list[str]:
         """Get keys matching pattern.

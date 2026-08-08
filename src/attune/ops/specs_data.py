@@ -152,22 +152,22 @@ def _extract_status(text: str) -> str | None:
 _PHASE_WAIVED_RE = re.compile(r"^PHASE-WAIVED:\s*([a-z]+)", re.MULTILINE)
 
 
-def _scan_waived_phases(spec_dir: Path) -> tuple[str, ...]:
-    """Return phases waived by chair lines in this spec's decisions.md."""
-    decisions = spec_dir / "decisions.md"
-    if not decisions.is_file():
-        return ()
-    try:
-        text = decisions.read_text(encoding="utf-8")
-    except OSError:
+def _scan_waived_phases(decisions_text: str | None) -> tuple[str, ...]:
+    """Return phases waived by chair lines in a spec's decisions.md text."""
+    if not decisions_text:
         return ()
     valid = {p.removesuffix(".md") for p in _PHASE_FILES}
-    return tuple(m for m in _PHASE_WAIVED_RE.findall(text) if m in valid)
+    return tuple(m for m in _PHASE_WAIVED_RE.findall(decisions_text) if m in valid)
 
 
-def _scan_spec_dir(spec_dir: Path) -> list[SpecPhase]:
-    """List the phase files in one spec directory with their statuses."""
+def _scan_spec_dir(spec_dir: Path) -> tuple[list[SpecPhase], str | None]:
+    """List the phase files in one spec directory with their statuses.
+
+    Returns the phases plus the decisions.md text (None if absent or
+    unreadable) so callers can derive waivers without a second read.
+    """
     phases: list[SpecPhase] = []
+    decisions_text: str | None = None
     for phase_file in _PHASE_FILES:
         file_path = spec_dir / phase_file
         name = phase_file.removesuffix(".md")
@@ -181,10 +181,12 @@ def _scan_spec_dir(spec_dir: Path) -> list[SpecPhase]:
             # existing-but-statusless rather than failing the whole listing.
             phases.append(SpecPhase(name=name, file=phase_file, exists=True, status=None))
             continue
+        if phase_file == "decisions.md":
+            decisions_text = text
         phases.append(
             SpecPhase(name=name, file=phase_file, exists=True, status=_extract_status(text))
         )
-    return phases
+    return phases, decisions_text
 
 
 def _newest_md_mtime(spec_dir: Path) -> str | None:
@@ -222,14 +224,15 @@ def _list_specs_in_root(root: Path) -> list[SpecRecord]:
         has_phase = any((child / phase).is_file() for phase in _PHASE_FILES)
         if not has_phase:
             continue
+        phases, decisions_text = _scan_spec_dir(child)
         records.append(
             SpecRecord(
                 slug=child.name,
                 root=str(root),
                 path=str(child),
-                phases=_scan_spec_dir(child),
+                phases=phases,
                 last_modified=_newest_md_mtime(child),
-                waived_phases=_scan_waived_phases(child),
+                waived_phases=_scan_waived_phases(decisions_text),
             )
         )
     return records

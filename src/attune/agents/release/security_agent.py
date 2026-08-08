@@ -174,6 +174,10 @@ class SecurityAuditorAgent(ReleaseAgent):
             )
 
         return {
+            # INTENTIONAL: counts CRITICAL+HIGH because the release gate
+            # (max_critical_issues: 0) must block on HIGH findings too.
+            # The name is historical — renaming would break gate configs
+            # and downstream consumers of this payload.
             "critical_issues": (severity_counts["CRITICAL"] + severity_counts["HIGH"]),
             "high_issues": severity_counts["HIGH"],
             "medium_issues": severity_counts["MEDIUM"],

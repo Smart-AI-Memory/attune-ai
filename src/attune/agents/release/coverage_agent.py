@@ -27,7 +27,8 @@ class TestCoverageAgent(ReleaseAgent):
     """Runs pytest --cov and parses coverage report.
 
     Rule-based: Runs pytest, extracts line coverage percentage.
-    LLM-enhanced: Sends coverage gaps to LLM for gap analysis.
+    Fully deterministic — every tier runs the same pytest probe and no
+    LLM call is made (unlike the sibling release agents).
     """
 
     def __init__(

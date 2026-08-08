@@ -54,10 +54,12 @@ def test_extract_status(text: str, expected: str | None) -> None:
 
 def test_scan_spec_dir_reports_existing_and_missing(tmp_path: Path) -> None:
     (tmp_path / "decisions.md").write_text("**Status:** draft\n", encoding="utf-8")
-    phases = {p.name: p for p in _scan_spec_dir(tmp_path)}
+    scanned, decisions_text = _scan_spec_dir(tmp_path)
+    phases = {p.name: p for p in scanned}
     assert phases["decisions"].exists and phases["decisions"].status == "draft"
     assert phases["requirements"].exists is False
     assert phases["requirements"].status is None
+    assert decisions_text == "**Status:** draft\n"
 
 
 def test_scan_spec_dir_unreadable_file_is_statusless(
@@ -70,9 +72,11 @@ def test_scan_spec_dir_unreadable_file_is_statusless(
         raise OSError("simulated unreadable file")
 
     monkeypatch.setattr(Path, "read_text", boom)
-    decisions = next(p for p in _scan_spec_dir(tmp_path) if p.name == "decisions")
+    scanned, decisions_text = _scan_spec_dir(tmp_path)
+    decisions = next(p for p in scanned if p.name == "decisions")
     assert decisions.exists is True
     assert decisions.status is None
+    assert decisions_text is None
 
 
 # --- _newest_md_mtime ------------------------------------------------------

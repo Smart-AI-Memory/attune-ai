@@ -776,26 +776,21 @@ class TestStageWaiverSignal:
     def test_scan_waived_phases_reads_chair_line(self, tmp_path):
         from attune.ops.specs_data import _scan_waived_phases
 
-        d = tmp_path / "some-spec"
-        d.mkdir()
-        (d / "decisions.md").write_text(
+        text = (
             "# Decisions\n\nbody text\n\n"
             "PHASE-WAIVED: design (2026-07-20 — thread q-x-001)\n"
-            "PHASE-WAIVED: nonsense (not a phase)\n",
-            encoding="utf-8",
+            "PHASE-WAIVED: nonsense (not a phase)\n"
         )
-        assert _scan_waived_phases(d) == ("design",)
+        assert _scan_waived_phases(text) == ("design",)
 
-    def test_scan_waived_phases_missing_decisions(self, tmp_path):
+    def test_scan_waived_phases_missing_decisions(self):
         from attune.ops.specs_data import _scan_waived_phases
 
-        d = tmp_path / "bare-spec"
-        d.mkdir()
-        assert _scan_waived_phases(d) == ()
+        assert _scan_waived_phases(None) == ()
 
     def test_scan_waived_phases_unreadable_decisions(self, tmp_path, monkeypatch):
-        """OSError on read degrades to no waivers, same as a missing file."""
-        from attune.ops.specs_data import _scan_waived_phases
+        """OSError on read yields decisions_text=None → no waivers."""
+        from attune.ops.specs_data import _scan_spec_dir, _scan_waived_phases
 
         d = tmp_path / "locked-spec"
         d.mkdir()
@@ -806,4 +801,6 @@ class TestStageWaiverSignal:
             raise OSError("permission denied")
 
         monkeypatch.setattr(type(decisions), "read_text", _boom)
-        assert _scan_waived_phases(d) == ()
+        _phases, decisions_text = _scan_spec_dir(d)
+        assert decisions_text is None
+        assert _scan_waived_phases(decisions_text) == ()
