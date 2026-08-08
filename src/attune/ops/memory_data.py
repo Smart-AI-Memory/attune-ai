@@ -77,19 +77,15 @@ def connect(url: str | None = None) -> Any | None:
     Import and connection failures both degrade to ``None`` — the
     caller renders the unreachable empty state.
     """
+    # R3: one auth-aware factory so `requirepass` reaches every reader.
+    from attune.memory.recall_redis import connect_recall_redis  # noqa: PLC0415
+
     try:
-        import redis  # noqa: PLC0415
+        client = connect_recall_redis(url, socket_connect_timeout=0.5, socket_timeout=1.0)
+        client.ping()
     except ImportError:
         logger.debug("redis package not importable; /memory degrades")
         return None
-    try:
-        client = redis.Redis.from_url(
-            url or "redis://localhost:6379/0",
-            decode_responses=True,
-            socket_connect_timeout=0.5,
-            socket_timeout=1.0,
-        )
-        client.ping()
     except Exception:  # noqa: BLE001
         # INTENTIONAL: any connection-layer surprise (refused, auth,
         # timeout) is the same user-facing fact — index unreachable.

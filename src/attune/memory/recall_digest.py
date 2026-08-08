@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -58,10 +57,9 @@ def fetch_digest_nodes(count: int = 9, client: Any = None) -> list[dict[str, Any
             not loaded.
     """
     if client is None:
-        import redis  # noqa: PLC0415 — optional dependency, import at use
+        from attune.memory.recall_redis import connect_recall_redis  # noqa: PLC0415
 
-        url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
-        client = redis.Redis.from_url(url, decode_responses=True)
+        client = connect_recall_redis()
 
     raw = client.fcall(DIGEST_FUNCTION, 0, str(count))
     nodes: list[dict[str, Any]] = []

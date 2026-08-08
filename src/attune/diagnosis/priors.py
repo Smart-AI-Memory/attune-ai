@@ -12,7 +12,6 @@ why priors are missing).
 from __future__ import annotations
 
 import logging
-import os
 import re
 from dataclasses import dataclass, field
 from typing import Any
@@ -131,11 +130,12 @@ def recall_priors(
         return PriorsResult(degraded="no-terms-extracted")
     if client is None:
         try:
-            import redis  # noqa: PLC0415 — optional dependency
+            # R3: auth-aware factory so `requirepass` reaches this reader.
+            from attune.memory.recall_redis import connect_recall_redis  # noqa: PLC0415
+
+            client = connect_recall_redis(socket_connect_timeout=2)
         except ImportError:
             return PriorsResult(degraded="redis-package-not-installed")
-        url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
-        client = redis.Redis.from_url(url, decode_responses=True, socket_connect_timeout=2)
     # OR-join (plain multi-word queries AND-join and miss paraphrases).
     query = "|".join(t.replace("|", " ") for t in terms)
     try:
