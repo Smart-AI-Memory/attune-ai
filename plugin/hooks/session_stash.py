@@ -81,6 +81,37 @@ except Exception:  # noqa: BLE001 — telemetry is optional, never load-bearing
 
 _VALID_TYPES = {"decision", "pattern", "bug", "reference", "note"}
 _MAX_FINDINGS = 5
+
+# memory-security-hardening R5 — discard-on-malformed. A raw finding becomes
+# durable, re-injectable text, so extractor output carrying STRUCTURAL injection
+# machinery is dropped at extraction (not truncated-and-kept): control
+# characters, frontmatter delimiter lines (`---`, the break-out-into-YAML
+# vector if a finding is ever promoted into a curated `.md`), and role/tool-call
+# delimiter tokens. This mirrors provenance's high-signal patterns without
+# importing it — the Stop hook stays self-contained and resilient. Note: prose
+# like "ignore previous instructions" is deliberately NOT dropped here — R1
+# flags it at recall, and dropping it would lose legitimate findings ABOUT
+# injection.
+_MALFORMED_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+_MALFORMED_FRONTMATTER_RE = re.compile(r"(?m)^\s*---+\s*$")
+_MALFORMED_ROLE_TOOL_RE = re.compile(
+    r"<\|(?:im_start|im_end|system|assistant|user)\|>"  # ChatML
+    r"|</?(?:system|human|assistant)>"  # Anthropic/Claude XML
+    r"|\[/?INST\]|<<SYS>>"  # Llama / Mistral
+    r"|</?(?:tool_call|function_call|invoke|antml:invoke)\b",  # tool machinery
+    re.I,
+)
+
+
+def _is_malformed(content: str) -> bool:
+    """True if a finding carries structural injection machinery (R5)."""
+    return bool(
+        _MALFORMED_CONTROL_RE.search(content)
+        or _MALFORMED_FRONTMATTER_RE.search(content)
+        or _MALFORMED_ROLE_TOOL_RE.search(content)
+    )
+
+
 _TAIL_CHARS = 8_000  # transcript tail handed to the extractor (smaller = faster LLM)
 # Calibrated 2026-06-11: the estimator counts only user/assistant message-body
 # chars (tool results excluded), so a substantive tool-heavy session plateaus
@@ -317,9 +348,12 @@ def _normalize(findings: list[dict]) -> list[dict]:
         content = f.get("content")
         if not isinstance(content, str) or not content.strip():
             continue
+        content = content.strip()
+        if _is_malformed(content):  # R5: drop structural injection machinery
+            continue
         ftype = f.get("type")
         ftype = ftype if ftype in _VALID_TYPES else "note"
-        clean.append({"type": ftype, "content": content.strip()[:500]})
+        clean.append({"type": ftype, "content": content[:500]})
         if len(clean) >= _MAX_FINDINGS:
             break
     return clean
