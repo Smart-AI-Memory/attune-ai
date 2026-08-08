@@ -80,7 +80,14 @@ if TYPE_CHECKING:
         check_redis_cross_session_support,
         generate_agent_id,
     )
-    from .features import FeatureInfo, FeatureStatus, MemoryFeatures
+    from .features import (
+        FeatureInfo,
+        FeatureStatus,
+        MemoryFeatures,
+        RedisHealthReport,
+        RedisHealthState,
+        reset_redis_health_warnings,
+    )
     from .file_session import FileSessionConfig, FileSessionMemory, get_file_session_memory
     from .long_term import (
         Classification,
@@ -160,6 +167,9 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "FeatureInfo": (".features", "FeatureInfo"),
     "FeatureStatus": (".features", "FeatureStatus"),
     "MemoryFeatures": (".features", "MemoryFeatures"),
+    "RedisHealthReport": (".features", "RedisHealthReport"),
+    "RedisHealthState": (".features", "RedisHealthState"),
+    "reset_redis_health_warnings": (".features", "reset_redis_health_warnings"),
     # file_session
     "FileSessionConfig": (".file_session", "FileSessionConfig"),
     "FileSessionMemory": (".file_session", "FileSessionMemory"),
@@ -309,6 +319,8 @@ __all__ = [
     "MemoryConfig",
     "MemoryControlPanel",
     "MemoryFeatures",
+    "RedisHealthReport",
+    "RedisHealthState",
     "MemoryPermissionError",
     "MemoryStats",
     "PIIDetection",
@@ -350,5 +362,6 @@ __all__ = [
     "get_redis_or_mock",
     "is_redis_available",
     "make_memory_tool",
+    "reset_redis_health_warnings",
     "stop_redis",
 ]
