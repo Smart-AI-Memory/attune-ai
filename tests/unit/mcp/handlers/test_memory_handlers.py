@@ -627,6 +627,35 @@ class TestPersonalMemoryHandlers:
         assert result["count"] == 1
 
     @pytest.mark.asyncio
+    async def test_recall_withholds_prose_when_provenance_unavailable(self):
+        """R1/D1 fail-closed: no provenance module -> prose withheld, not leaked.
+
+        When `attune.memory.provenance` cannot import, the handler must
+        return an EMPTY context (never unframed prose) while still
+        stripping the bare summary/excerpt from structured results.
+        """
+        import sys
+        from unittest.mock import patch as mock_patch
+
+        payload = "recalled prose that must not leak unframed"
+        hit = {"path": "notes/y.md", "summary": payload, "excerpt": payload, "score": 0.5}
+        mock_pm = MagicMock()
+        mock_pm.query.return_value = [hit]
+        server = _make_server()
+
+        with (
+            mock_patch("attune.memory.personal.PersonalMemory", return_value=mock_pm),
+            mock_patch.dict(sys.modules, {"attune.memory.provenance": None}),
+        ):
+            result = await server._handle_personal_memory_recall({"query": "q"})
+
+        assert result["success"] is True
+        assert result["context"] == ""
+        assert payload not in str(result)
+        assert all("summary" not in r and "excerpt" not in r for r in result["results"])
+        assert result["count"] == 1
+
+    @pytest.mark.asyncio
     async def test_topics_generic_exception_returns_error_dict(self):
         """Unexpected exception from pm.list_topics() returns success=False."""
         mock_pm = MagicMock()
