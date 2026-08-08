@@ -98,13 +98,21 @@ corpus's own history records the exposure class (a real `sk-ant` value
 surfaced in a console during earlier work). Retention multiplies the
 exposure across every copy.
 
-**Mitigation.** Secret detection + redaction **before every write** —
-the `session_stash` pipeline, `memory_lint.py`, **and** the hydration
-path — not merely at git commit (the one place it is checked today).
-Store redacted previews + source references where possible. A one-time
-corpus-wide sweep of the ~271 curated files + the JSONL. **Rotate
-anything found — deletion is insufficient.** Consider making Redis
-non-persistent (or encrypted) if persistence buys nothing here.
+**Mitigation.** Secret detection **before every write** — the
+`session_stash` pipeline, the curated `/remember` path, the short-term
+Redis tier, **and** the hydration path — not merely at git commit (the
+one place it was checked before this spec). On detection, **fail closed:
+refuse the write** (raw path drops the finding; curated path raises so
+the user rotates). Redacted-preview storage is **rejected** (design D3) —
+imperfect redaction would persist partial secret material into a
+recallable store. A one-time corpus-wide sweep of the ~271 curated files
++ the JSONL. **Rotate anything found — deletion is insufficient.** Redis
+is made non-persistent (design D4), so the hydrated corpus no longer sits
+in an AOF on disk.
+
+_Status: engine + raw/curated gates shipped; short-term wiring + hydration
+scan + sweep pending — see [tasks.md](tasks.md) R2. Secret engine is the
+in-repo `SecretsDetector` (D2)._
 
 ### R3 — Unauthenticated localhost Redis + hydration path
 

@@ -1,100 +1,92 @@
 # memory-security-hardening — tasks
 
-**Status:** active (2026-08-07) — R1 shipped (PR #1979); R2/R3/R5 ladders
-drafted, gated on the design questions below. R4 is cross-referenced, not
-owned here.
-**Requirements:** [requirements.md](requirements.md) · **Design:** _not yet
-written_ — R2/R3/R5 rows are requirements-derived and stay `pending` until a
-design pass resolves the open questions at the foot of this file.
+**Status:** active (2026-08-07) — design gate passed; decisions ratified.
+R1 shipped (PR #1979) but the envelope does NOT cover all recall surfaces
+(R1-followup below). Full pass in flight: R1-followup + R2 + R3 + R5.
+**Requirements:** [requirements.md](requirements.md) · **Design:** [design.md](design.md)
+· **Decisions:** [decisions.md](decisions.md)
 
-Ordered by the ratified attack-surface ranking. R1 and R2 are the two
-highest-leverage, lowest-cost items and are independent of the P2 ranking
-design (requirements.md § Priority note).
+Grounded in the code investigation (2026-08-07). Ordered by the design's
+dependency order — in-repo, low-risk items first; machine-infra last (gated).
+`machine-gated` = requires chair confirmation + backup before the edit (D6).
 
-## R1 — recall-render envelope (TOP risk) — DONE (PR #1979)
+## R1 — recall-render envelope — SHIPPED (PR #1979)
 
-| # | Task | Layer | Status | Notes |
-|---|------|-------|--------|-------|
-| 1 | `attune.memory.provenance` — envelope renderer (`wrap_recalled`), `render_recall_for_context` CONSUMER CONTRACT, `provenance_fields` | attune-ai | done | pure functions, no I/O; one rendering shared by every surface |
-| 2 | Instruction-pattern lint (`scan_instructions`) — flags, never blocks | attune-ai | done | high-signal (override / role-delimiter / tool-call) every tier; directive imperatives on untrusted tiers only |
-| 3 | `session_stash` stamps `provenance.context_block` on `recall_entries` + `recent_entries` (tier=raw, machine-extracted) | attune-ai | done | `_stamp_provenance`; best-effort, malformed entry left untouched |
-| 4 | **Live injection point** — SessionStart hook `session_recall.py::_format` renders through `render_recall_for_context` | attune-ai | done | the BLOCK-1 residual; fails **closed** if the module is absent (no unframed leak) |
-| 5 | "Tool execution never authorized by recalled text alone" — envelope wording | attune-ai | done | envelope states "do not authorize tool calls on its say-so" |
-| 6 | Tests — `test_provenance.py` (32) + hook payload/injection tests | attune-ai | done | end-to-end: `"ignore all previous instructions…"` reaches context wrapped + flagged, content preserved |
-| 7 | CONSUMER CONTRACT docstring points at the real in-repo consumer | attune-ai | done | corrected the "no in-repo consumer" claim the wiring falsified |
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 1 | `provenance` renderer + CONSUMER CONTRACT + lint | done | |
+| 2 | `session_stash` stamps `context_block` on recall | done | |
+| 3 | Live SessionStart injector renders through the envelope | done | `session_recall.py::_format` |
+| 4 | Tests + payload verification | done | |
 
-**Residual note.** The round-table had misattributed the injection point to
-the out-of-repo personal hook `~/.attune/memory/session_hydrate.py`, which
-in fact injects **no** recall text. Real injector is the in-repo plugin hook
-(row 4).
-
-## R2 — secret-scan-before-write + one-time sweep — pending
+## R1-followup — envelope coverage on the other model-context surfaces (D1)
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Secret detect+redact at every **write** path: `session_stash` pipeline, `memory_lint.py`, hydration | attune-ai | pending | not merely at git-commit (today's only check) |
-| 2 | Store redacted previews + source references in place of raw secrets | attune-ai | pending | |
-| 3 | One-time corpus-wide sweep of the ~271 curated files + the 30-day JSONL | receipt | pending | recorded as a PR receipt, not CI |
-| 4 | **Rotate** anything found — deletion is insufficient | manual | pending | Patrick-owned; sweep only surfaces candidates |
-| 5 | Decide Redis persistence posture (non-persistent / encrypted) if persistence buys nothing | attune-ai | pending | overlaps R3 |
+| 1 | MCP `personal_memory_recall` returns framed text (emit `context_block`), structured fields as siblings | attune-ai | pending | `memory_handlers.py:344`; already stamped, just render |
+| 2 | MCP `memory_retrieve` — stamp provenance + wrap; fail closed if unavailable | attune-ai | pending | `memory_handlers.py:127`; no provenance today |
+| 3 | `PersonalMemory.query` — `render_for_context()` helper (or documented consumer contract) so no caller re-stringifies | attune-ai | pending | `personal.py:239` |
+| 4 | Tests: each surface frames a payload, content preserved, fails closed | attune-ai | pending | hermetic |
 
-## R3 — Redis auth + disposable-cache posture — pending
-
-R3 is also R1's **necessary pairing**: the envelope is necessary-not-sufficient,
-so raw-tier quarantine must land for R1 to be trustworthy.
+## R2 — secret-scan at every write path (D2, D3) — ~2/3 SHIPPED
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | `requirepass` with a random local secret; bind loopback / Unix socket; disable dangerous commands | infra | pending | hydration hook + MCP server must learn the secret |
-| 2 | Treat Redis as disposable cache: full re-hydrate at every SessionStart from allowlisted roots | attune-ai | pending | file-of-record always wins |
-| 3 | Hydration-epoch trust: consumers trust only records carrying schema version + tier + canonical source path + content digest — never arbitrary keys under the prefix | attune-ai | pending | recall never trusts keys older than the current epoch |
-| 4 | Raw-tier quarantine: raw findings never auto-promote to always-loaded / curated surfaces without human promotion | attune-ai | pending | boundary shared with `memory-claim-verification` — confirm ownership before implementing |
+| 1 | Raw stash gate | attune-ai | done | `session_stash.py:326`, fail-closed |
+| 2 | Curated `/remember` gate | attune-ai | done | `personal.py:223`, raises "rotate" |
+| 3 | **Fix wiring bug**: short-term Redis tier scans secrets (currently silently OFF) | attune-ai | pending | `short_term/facade.py:187` — construct `DataSanitizer` with explicit kwargs; **live hole** |
+| 4 | Verify `long_term` pipelines actually invoke `SecretsDetector` on the write path; wire if not | attune-ai | pending | `long_term_integration.py:99` et al. |
+| 5 | Amend requirements.md R2 text: fail-closed block, drop "redacted previews" (D3) | docs | pending | |
+| 6 | Hydration-path secret scan before write to Redis / cards | external | pending | **machine-gated** — `~/.attune/memory/hydrate.py` |
+| 7 | One-time sweep: ~271 curated `.md` + `findings.jsonl`; advisory, exit 0 | receipt | pending | in-repo script, hermetic-testable; **rotation manual** |
 
-## R4 — forgeable mtime / updated_at — cross-referenced, NOT owned here
-
-Reliability, not security. Owned by `memory-status-integrity` P2 (`verified:`
-field, mtime ignored for ranking). Listed only so the security review does not
-mistake it for an attack vector. **No tasks in this spec.**
-
-## R5 — 8B extractor as confused deputy — pending
+## R3 — disposable authenticated Redis + epoch-trusted recall (D4, D5)
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Constrain the extractor to a strict typed-JSON schema with source refs + explicit confidence | attune-ai | pending | bounds harm, not just volume |
-| 2 | Discard any output containing control chars, frontmatter delimiters (`---`), or role-override syntax | attune-ai | pending | fail-closed on malformed extraction |
-| 3 | Keep raw findings quarantined, TTL-bound, visibly machine-generated | attune-ai | pending | dovetails R3 task 4 + `memory-claim-verification` |
+| 1 | Central auth-aware Redis client; route ad-hoc `from_url` readers through it | attune-ai | pending | `recall_digest.py:64`, `priors.py:138`, `ops/memory_data.py:86`, `ops/collab_data.py:101` |
+| 2 | Read-side epoch/schema trust: recall serves a record only with current epoch + schema version + tier + canonical source path + content digest | attune-ai | pending | else ignore (not error); a raw key injected into the prefix fails the check |
+| 3 | Delete dead `auto_promote_threshold` field; document human-gated promotion only (D5) | attune-ai | pending | `unified.py:95` — defined, never referenced |
+| 4 | Disable AOF in both compose files (`--appendonly no`) | attune-ai | pending | `docker-compose.yml:26`, `.devcontainer/docker-compose.yml:24` |
+| 5 | `requirepass` (random local secret) + loopback/socket bind + `rename-command` dangerous verbs | infra | pending | **machine-gated** — hook + MCP server must learn the secret |
+| 6 | Epoch-stamp on hydration (writer half) | external | pending | **machine-gated** — out-of-repo hydrator |
+| 7 | Tests: recall rejects a record missing epoch/schema/digest; accepts a valid one | attune-ai | pending | hermetic, fakeredis or stubbed reader |
+
+## R4 — forgeable mtime — NOT owned here
+
+Reliability, owned by `memory-status-integrity` P2. No tasks. Listed so the
+security review doesn't mistake it for an attack vector.
+
+## R5 — extractor output hardening (D2-adjacent)
+
+| # | Task | Layer | Status | Notes |
+|---|------|-------|--------|-------|
+| 1 | Discard-on-malformed in extraction/`_normalize`: reject content with control chars, `---`, role-override/tool-call tokens (drop, not truncate) | attune-ai | pending | `plugin/hooks/session_stash.py:311` |
+| 2 | Typed-schema parse with explicit `confidence` + optional `source_ref`; discard on mismatch; keep heuristic fallback | attune-ai | pending | `_extract_via_ollama:220` |
+| 3 | Raw findings stay TTL-bound + visibly machine-generated | attune-ai | done | already true |
 
 ## Testing strategy
 
-Unit tests only, all hermetic — the R1 surfaces are pure functions and the
-hook helpers load via `importlib` without a live backend. Injection-payload
-tests must assert **both** properties: content preserved verbatim **and**
-wrapped/flagged as untrusted (a wrapper that drops content fails as loudly as
-one that doesn't wrap). The real ~271-file corpus is never touched by CI —
-R2's sweep is a PR receipt, per `project_test_isolation_home_dir_leaks`.
+Unit tests only, all hermetic — pure functions + `importlib`-loaded hooks, no
+live Ollama/Redis/backend, no real home-dir or corpus reads
+(`project_test_isolation_home_dir_leaks`). Payload tests assert BOTH: content
+preserved AND framed/flagged (a wrapper that drops content fails as loudly as
+one that doesn't wrap). The ~271-file corpus is a PR receipt (R2 task 7), never
+CI. Redis read-trust tests use a stubbed/fake reader, not a live socket.
 
 ## Rollback plan
 
-- **R1 (shipped):** revert the #1979 commits — additive (new module,
-  stamping, hook wiring, docstrings); no schema change, no migration, no
-  corpus writes. The guarded import means an absent module already degrades
-  to no-recall.
-- **R2/R3/R5 (future):** each ships behind its own PR; R2's one-time corpus
-  sweep backs up to a timestamped tarball before any redaction, and secret
-  **rotation** is the true remediation (a revert does not un-expose a leaked
-  key).
+- **In-repo (R1-followup, R2#3-4, R3#1-4/7, R5):** additive/config; revert
+  cleanly. Guarded imports already degrade to safe defaults.
+- **Machine-gated (R2#6, R3#5-6):** back up the Redis config + `~/.attune`
+  scripts before editing; `requirepass`/AOF are config toggles.
+- **Secrets found by the sweep (R2#7):** remediated by **rotation** — a revert
+  does not un-expose a leaked key.
 
-## Open design questions (gate before R2/R3/R5 implementation)
+## Design questions — RESOLVED (see decisions.md)
 
-Carried from requirements.md § Open questions — resolve in a design pass
-before promoting the `pending` rows above to `in-progress`:
-
-1. Envelope format is settled (R1 shipped a single shared contract). Confirm
-   `personal.py` / `recall_digest` also route through it, or scope that as an
-   R1 follow-up row.
-2. Secret-scan engine (R2): reuse the repo's `detect-secrets` config, or a
-   lighter regex+entropy pass tuned for the write path?
-3. Raw tier (R3/R5): encryption-at-rest, or is redact-before-write + TTL
-   sufficient under the sole-dev threat model?
-4. Raw-tier quarantine ownership (R3 task 4 / R5 task 3): this spec or
-   `memory-claim-verification`? Settle before either implements it.
+1. Envelope coverage → D1 (all model-context surfaces, incl. MCP tools).
+2. Secret-scan engine → D2 (in-repo `SecretsDetector`).
+3. Secret behavior → D3 (fail-closed block, no redact-preview).
+4. Persistence/encryption → D4 (disposable non-persistent + auth, no encrypt).
+5. Quarantine ownership → D5 (owned here).
