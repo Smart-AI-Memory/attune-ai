@@ -394,7 +394,7 @@ class MemoryHandlersMixin:
                 from attune.memory.provenance import render_recall_for_context
 
                 context = render_recall_for_context(hits)
-            except Exception:  # noqa: BLE001 — no provenance module → withhold prose
+            except ImportError:  # no provenance module → withhold prose, fail closed
                 logger.warning(
                     "personal_memory_recall: provenance unavailable; withholding raw prose"
                 )
