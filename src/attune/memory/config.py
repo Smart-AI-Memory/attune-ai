@@ -1,19 +1,243 @@
-"""Redis Configuration for Attune AI (deprecated).
+"""Redis Configuration for Attune AI.
+
+Canonical home of :func:`resolve_redis_connection` — THE single
+resolver for Redis connection settings (redis-config-truth R1,
+rct-1 chair ruling 2026-08-08). Every component that needs a Redis
+connection derives it from here; direct ``REDIS_*`` env reads
+elsewhere are being retired (rct-4 drift guard).
 
 .. deprecated::
-    Use ``attune_redis.config.RedisPluginConfig`` for new code.
-    This module will be removed in v4.0.0.
+    Only the legacy dict helpers below (``get_redis_config`` and
+    friends) are deprecated — use
+    ``attune_redis.config.RedisPluginConfig`` for plugin-level
+    config objects. The resolver above this note is CANONICAL, not
+    deprecated.
 
 Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-# Superseded by attune_redis.AMSMemoryBackend (the Redis Agent Memory Server integration). Retained — attune is aligning on Redis + Anthropic Claude, so there is no planned removal. Migration path: docs/migration/redis-plugin-migration.md
-
 import os
-from urllib.parse import urlparse
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+from urllib.parse import quote, urlparse
 
 from .short_term import RedisShortTermMemory
+
+_URL_VARS = ("REDIS_URL", "REDIS_PRIVATE_URL", "REDIS_PUBLIC_URL")
+_DEFAULT_URL = "redis://127.0.0.1:6379/0"
+_VALID_SCHEMES = ("redis", "rediss", "unix")
+
+
+@dataclass(frozen=True)
+class ResolvedRedisConnection:
+    """Result of :func:`resolve_redis_connection`.
+
+    Attributes:
+        url: The connection URL, credentials included when known.
+        redacted_url: Same URL with any password replaced by ``***``
+            — safe for logs, doctor output, and transcripts.
+        source_map: Which env var supplied each component
+            (``url``, ``password``, ``user``) — ``"default"`` when
+            nothing did.
+        overrides: Human-readable records of set-but-overridden
+            variables whose values DISAGREED with the winner
+            (redis-config-truth R1 conflict rule: precedence always
+            decides, disagreements are recorded, never raised).
+    """
+
+    url: str
+    redacted_url: str
+    source_map: dict[str, str] = field(default_factory=dict)
+    overrides: tuple[str, ...] = ()
+
+
+def _parse_url_or_raise(url: str, var: str) -> object:
+    """Parse a Redis URL, raising an actionable ValueError if malformed."""
+    parsed = urlparse(url)
+    if parsed.scheme not in _VALID_SCHEMES:
+        raise ValueError(
+            f"{var} is not a Redis URL (scheme {parsed.scheme!r}); "
+            f"expected one of: {', '.join(s + '://' for s in _VALID_SCHEMES)}"
+        )
+    try:
+        _ = parsed.port
+    except ValueError as exc:
+        raise ValueError(f"{var} has a non-numeric port — fix the URL's host:port section") from exc
+    if parsed.scheme != "unix":
+        db = (parsed.path or "").lstrip("/")
+        if db and not db.isdigit():
+            raise ValueError(f"{var} has a non-numeric db path {db!r} — use /<int> (e.g. /0)")
+    return parsed
+
+
+def _bracket_ipv6(host: str) -> str:
+    """Re-bracket an IPv6 literal (urlparse strips the brackets)."""
+    return f"[{host}]" if ":" in host else host
+
+
+def _rebuild_with_credentials(parsed: object, user: str | None, password: str) -> str:
+    """Rebuild a URL embedding the given credentials (password quoted)."""
+    userpart = quote(user, safe="") if user else ""
+    cred = f"{userpart}:{quote(password, safe='')}@"
+    path = parsed.path or ""
+    query = f"?{parsed.query}" if parsed.query else ""
+    if parsed.scheme == "unix":
+        return f"unix://{cred}{path}{query}"
+    host = _bracket_ipv6(parsed.hostname or "127.0.0.1")
+    port = f":{parsed.port}" if parsed.port else ""
+    return f"{parsed.scheme}://{cred}{host}{port}{path}{query}"
+
+
+def _redact(url: str) -> str:
+    """Replace any embedded password with *** for safe display."""
+    parsed = urlparse(url)
+    if not parsed.password:
+        return url
+    userpart = quote(parsed.username, safe="") if parsed.username else ""
+    path = parsed.path or ""
+    query = f"?{parsed.query}" if parsed.query else ""
+    if parsed.scheme == "unix":
+        return f"unix://{userpart}:***@{path}{query}"
+    host = _bracket_ipv6(parsed.hostname or "")
+    port = f":{parsed.port}" if parsed.port else ""
+    return f"{parsed.scheme}://{userpart}:***@{host}{port}{path}{query}"
+
+
+def resolve_redis_connection(
+    env: Mapping[str, str] | None = None,
+) -> ResolvedRedisConnection:
+    """Resolve THE Redis connection spec from environment variables.
+
+    Precedence (redis-config-truth R1):
+
+    1. A URL variable already carrying credentials.
+    2. A URL variable merged with ``REDIS_PASSWORD`` / ``REDIS_USER``.
+    3. URL variables are considered in order ``REDIS_URL``,
+       ``REDIS_PRIVATE_URL``, ``REDIS_PUBLIC_URL``.
+    4. Component variables ``REDIS_HOST`` / ``REDIS_PORT`` /
+       ``REDIS_DB`` / ``REDIS_PASSWORD`` / ``REDIS_USER``.
+    5. Default ``redis://127.0.0.1:6379/0`` (still merging
+       ``REDIS_PASSWORD`` when set — the requirepass-localhost case).
+
+    Conflict rule: precedence always decides. A set-but-overridden
+    variable whose value disagrees with the winner is recorded in
+    ``overrides`` (surfaced by the doctor diagnostic and the
+    loud-once degradation path), never raised. Only malformed
+    values raise ``ValueError`` with an actionable message.
+
+    Args:
+        env: Environment mapping (defaults to ``os.environ``;
+            injectable for tests).
+
+    Returns:
+        A :class:`ResolvedRedisConnection` with the URL, its
+        redacted twin, the per-component source map, and any
+        recorded overrides.
+
+    Raises:
+        ValueError: On an unparseable URL, invalid scheme, or
+            non-numeric port/db — never on redundant settings.
+    """
+    env = os.environ if env is None else env
+    password = env.get("REDIS_PASSWORD") or None
+    user = env.get("REDIS_USER") or None
+
+    chosen_var = _choose_url_var(env)
+    if chosen_var:
+        return _resolve_from_url_var(env, chosen_var, password, user)
+    if env.get("REDIS_HOST"):
+        return _resolve_from_components(env, password, user)
+    return _resolve_default(password, user)
+
+
+def _choose_url_var(env: Mapping[str, str]) -> str | None:
+    """Pick the winning URL variable.
+
+    A URL already carrying credentials outranks a passwordless one
+    (R1 tier 1); otherwise the first set variable wins in
+    ``_URL_VARS`` order.
+    """
+    set_vars = [v for v in _URL_VARS if env.get(v)]
+    for var in set_vars:
+        if urlparse(env[var]).password:
+            return var
+    return set_vars[0] if set_vars else None
+
+
+def _resolve_from_url_var(
+    env: Mapping[str, str],
+    chosen_var: str,
+    password: str | None,
+    user: str | None,
+) -> ResolvedRedisConnection:
+    """Resolve from the winning URL variable (precedence tiers 1-3)."""
+    chosen_url = env[chosen_var]
+    parsed = _parse_url_or_raise(chosen_url, chosen_var)
+    overrides = [
+        f"{other} ignored: {chosen_var} takes precedence"
+        for other in _URL_VARS
+        if other != chosen_var and env.get(other) and env[other] != chosen_url
+    ]
+    source_map = {"url": chosen_var, "password": "none", "user": "none"}
+    if parsed.password:
+        source_map["password"] = chosen_var
+        if parsed.username:
+            source_map["user"] = chosen_var
+        if password and password != parsed.password:
+            overrides.append(
+                f"REDIS_PASSWORD ignored: {chosen_var} already carries "
+                "credentials (values differ)"
+            )
+        url = chosen_url
+    elif password:
+        merge_user = user or parsed.username or None
+        url = _rebuild_with_credentials(parsed, merge_user, password)
+        source_map["password"] = "REDIS_PASSWORD"
+        if user:
+            source_map["user"] = "REDIS_USER"
+        elif parsed.username:
+            source_map["user"] = chosen_var
+    else:
+        url = chosen_url
+    return ResolvedRedisConnection(url, _redact(url), source_map, tuple(overrides))
+
+
+def _resolve_from_components(
+    env: Mapping[str, str],
+    password: str | None,
+    user: str | None,
+) -> ResolvedRedisConnection:
+    """Resolve from REDIS_HOST / REDIS_PORT / REDIS_DB (tier 4)."""
+    host = env["REDIS_HOST"]
+    port_raw = env.get("REDIS_PORT", "6379")
+    db_raw = env.get("REDIS_DB", "0")
+    if not port_raw.isdigit():
+        raise ValueError(f"REDIS_PORT must be numeric, got {port_raw!r}")
+    if not db_raw.isdigit():
+        raise ValueError(f"REDIS_DB must be numeric, got {db_raw!r}")
+    cred = ""
+    source_map = {"url": "REDIS_HOST", "password": "none", "user": "none"}
+    if password:
+        userpart = quote(user, safe="") if user else ""
+        cred = f"{userpart}:{quote(password, safe='')}@"
+        source_map["password"] = "REDIS_PASSWORD"
+        source_map["user"] = "REDIS_USER" if user else "none"
+    url = f"redis://{cred}{host}:{port_raw}/{db_raw}"
+    return ResolvedRedisConnection(url, _redact(url), source_map, ())
+
+
+def _resolve_default(password: str | None, user: str | None) -> ResolvedRedisConnection:
+    """Resolve the localhost default, merging REDIS_PASSWORD (tier 5)."""
+    source_map = {"url": "default", "password": "none", "user": "none"}
+    if password:
+        parsed = _parse_url_or_raise(_DEFAULT_URL, "default")
+        url = _rebuild_with_credentials(parsed, user, password)
+        source_map["password"] = "REDIS_PASSWORD"
+        source_map["user"] = "REDIS_USER" if user else "none"
+    else:
+        url = _DEFAULT_URL
+    return ResolvedRedisConnection(url, _redact(url), source_map, ())
 
 
 def parse_redis_url(url: str) -> dict:
