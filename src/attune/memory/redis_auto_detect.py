@@ -113,46 +113,48 @@ class RedisAutoDetector:
         """
         global _cached_result, _cached_at
 
-        # Return cached result if fresh
+        # Hold the lock across the WHOLE check-and-set: releasing it
+        # between the cache read and the probe lets concurrent callers
+        # run duplicate probes and lets a slower, staler probe
+        # overwrite a fresher cached result. The probes are
+        # short-timeout, so serializing threads here is cheap.
         with _cache_lock:
             now = time.monotonic()
             if _cached_result is not None and (now - _cached_at) < _CACHE_TTL:
                 return _cached_result
 
-        has_package = self._check_python_package()
-        if not has_package:
-            result = RedisDetectionResult(
+            has_package = self._check_python_package()
+            if not has_package:
+                result = RedisDetectionResult(
+                    available=False,
+                    has_python_package=False,
+                    server_reachable=False,
+                    reason="redis Python package not installed",
+                )
+                _cached_result = result
+                _cached_at = now
+                return result
+
+            server_up = self._check_server_reachable()
+            if server_up:
+                result = RedisDetectionResult(
+                    available=True,
+                    has_python_package=True,
+                    server_reachable=True,
+                    reason="Redis server is running",
+                )
+                _cached_result = result
+                _cached_at = now
+                return result
+
+            # Server not reachable — don't cache this so
+            # ensure_redis() retries can update the result
+            return RedisDetectionResult(
                 available=False,
-                has_python_package=False,
-                server_reachable=False,
-                reason="redis Python package not installed",
-            )
-            with _cache_lock:
-                _cached_result = result
-                _cached_at = now
-            return result
-
-        server_up = self._check_server_reachable()
-        if server_up:
-            result = RedisDetectionResult(
-                available=True,
                 has_python_package=True,
-                server_reachable=True,
-                reason="Redis server is running",
+                server_reachable=False,
+                reason="Redis server not reachable",
             )
-            with _cache_lock:
-                _cached_result = result
-                _cached_at = now
-            return result
-
-        # Server not reachable — don't cache this so
-        # ensure_redis() retries can update the result
-        return RedisDetectionResult(
-            available=False,
-            has_python_package=True,
-            server_reachable=False,
-            reason="Redis server not reachable",
-        )
 
     def _check_python_package(self) -> bool:
         """Check if the redis Python package is importable.
