@@ -83,8 +83,9 @@ class TestCheckRedisRunning:
     """Test _check_redis_running function"""
 
     @patch("redis.Redis")
-    def test_redis_running(self, mock_redis_class):
+    def test_redis_running(self, mock_redis_class, monkeypatch):
         """Test when Redis is running and responding"""
+        monkeypatch.delenv("REDIS_PASSWORD", raising=False)  # R3: unset ⇒ password=None
         mock_client = Mock()
         mock_client.ping.return_value = True
         mock_redis_class.return_value = mock_client
@@ -95,6 +96,7 @@ class TestCheckRedisRunning:
             host="localhost",
             port=6379,
             socket_connect_timeout=1,
+            password=None,
         )
 
     @patch("redis.Redis")
@@ -116,8 +118,9 @@ class TestCheckRedisRunning:
         assert result is False
 
     @patch("redis.Redis")
-    def test_redis_custom_host_port(self, mock_redis_class):
+    def test_redis_custom_host_port(self, mock_redis_class, monkeypatch):
         """Test with custom host and port"""
+        monkeypatch.delenv("REDIS_PASSWORD", raising=False)  # R3: unset ⇒ password=None
         mock_client = Mock()
         mock_client.ping.return_value = True
         mock_redis_class.return_value = mock_client
@@ -128,6 +131,7 @@ class TestCheckRedisRunning:
             host="192.168.1.100",
             port=6380,
             socket_connect_timeout=1,
+            password=None,
         )
 
 
