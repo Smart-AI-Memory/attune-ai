@@ -1,7 +1,9 @@
 # redis-config-truth — requirements
 
-**Status:** draft (2026-08-08 — promoted from roundtable
-`q-short-term-memory-enhancements-001`; awaiting chair review)
+**Status:** approved (2026-08-08 — chair, in-session review; see
+decisions.md D2. Execution grounding in D3: the real reader set is
+15 files / 42 direct env reads, and two partial resolvers already
+exist — T1 rules the canonical home.)
 
 ## Problem
 
