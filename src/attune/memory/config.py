@@ -20,7 +20,7 @@ Licensed under the Apache License, Version 2.0
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from urllib.parse import quote, urlparse
+from urllib.parse import ParseResult, quote, urlparse
 
 from .short_term import RedisShortTermMemory
 
@@ -52,7 +52,7 @@ class ResolvedRedisConnection:
     overrides: tuple[str, ...] = ()
 
 
-def _parse_url_or_raise(url: str, var: str) -> object:
+def _parse_url_or_raise(url: str, var: str) -> ParseResult:
     """Parse a Redis URL, raising an actionable ValueError if malformed."""
     parsed = urlparse(url)
     if parsed.scheme not in _VALID_SCHEMES:
@@ -76,7 +76,7 @@ def _bracket_ipv6(host: str) -> str:
     return f"[{host}]" if ":" in host else host
 
 
-def _rebuild_with_credentials(parsed: object, user: str | None, password: str) -> str:
+def _rebuild_with_credentials(parsed: ParseResult, user: str | None, password: str) -> str:
     """Rebuild a URL embedding the given credentials (password quoted)."""
     userpart = quote(user, safe="") if user else ""
     cred = f"{userpart}:{quote(password, safe='')}@"

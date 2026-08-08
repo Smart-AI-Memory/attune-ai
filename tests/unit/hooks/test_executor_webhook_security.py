@@ -102,3 +102,70 @@ class TestWebhookSSRFPrevention:
             )
 
         assert result == {"ok": True}
+
+
+class TestWebhookDNSPinning:
+    """The request must connect to the pre-vetted IP (rebinding TOCTOU)."""
+
+    @pytest.mark.asyncio
+    async def test_webhook_pins_resolved_ip(self, executor):
+        mock_response = AsyncMock()
+        mock_response.status = 200
+        mock_response.json = AsyncMock(return_value={"ok": True})
+
+        mock_session = MagicMock()
+        mock_post_cm = AsyncMock()
+        mock_post_cm.__aenter__ = AsyncMock(return_value=mock_response)
+        mock_post_cm.__aexit__ = AsyncMock(return_value=False)
+        mock_session.post = MagicMock(return_value=mock_post_cm)
+
+        mock_session_cm = MagicMock()
+        mock_session_cm.__aenter__ = AsyncMock(return_value=mock_session)
+        mock_session_cm.__aexit__ = AsyncMock(return_value=False)
+
+        session_cls = MagicMock(return_value=mock_session_cm)
+        with (
+            patch("attune.monitoring.validators._resolve_and_check_ip"),
+            patch(
+                "attune.monitoring.validators.resolve_pinned_ip",
+                return_value="93.184.216.34",
+            ) as pin,
+            patch("aiohttp.ClientSession", session_cls),
+        ):
+            await executor._execute_webhook(
+                "https://hooks.example.com/notify",
+                {"event": "test"},
+            )
+
+        pin.assert_called_once_with("hooks.example.com")
+        connector = session_cls.call_args.kwargs["connector"]
+        assert connector is not None
+        resolved = await connector._resolver.resolve("hooks.example.com", 443)
+        assert resolved[0]["host"] == "93.184.216.34"
+        assert resolved[0]["hostname"] == "hooks.example.com"
+        await connector.close()
+
+
+class TestCommandArgvInjection:
+    """Context values must stay single argv tokens (flag-injection guard)."""
+
+    @pytest.mark.asyncio
+    async def test_context_value_with_spaces_stays_one_token(self, executor):
+        process = AsyncMock()
+        process.communicate = AsyncMock(return_value=(b"ok", b""))
+        process.returncode = 0
+        with patch("asyncio.create_subprocess_exec", return_value=process) as spawn:
+            out = await executor._execute_command(
+                "notify-send {msg}",
+                {"msg": "hello world --urgency=critical"},
+            )
+        assert out == "ok"
+        argv = spawn.call_args.args
+        assert argv[0] == "notify-send"
+        assert argv[1] == "hello world --urgency=critical"
+        assert len(argv) == 2, "value with spaces must NOT split into extra argv tokens"
+
+    @pytest.mark.asyncio
+    async def test_missing_context_variable_still_raises_value_error(self, executor):
+        with pytest.raises(ValueError, match="Missing context variable"):
+            await executor._execute_command("echo {absent}", {})

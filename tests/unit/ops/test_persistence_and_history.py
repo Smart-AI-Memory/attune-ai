@@ -297,12 +297,12 @@ def test_get_or_load_tolerates_malformed_json(tmp_path, caplog):
     runs_dir = tmp_path / "runs"
     workflow_dir = runs_dir / "security-audit"
     workflow_dir.mkdir(parents=True)
-    bad = workflow_dir / "corrupt12345.json"
+    bad = workflow_dir / "c0bb12345678.json"
     bad.write_text("{not valid json", encoding="utf-8")
 
     svc = RunnerService(command_builder=_echo_cmd, persistence_dir=runs_dir)
     with caplog.at_level(logging.WARNING, logger="attune.ops.runner"):
-        assert svc.get_or_load("corrupt12345") is None
+        assert svc.get_or_load("c0bb12345678") is None
     # WARN was logged so the operator can investigate the corrupt record
     assert any(
         "failed to read" in record.message.lower() or "malformed" in record.message.lower()
@@ -315,13 +315,13 @@ def test_get_or_load_walks_multiple_workflow_subdirs(tmp_path):
     workflow folder it lives in, so we scan."""
     runs_dir = tmp_path / "runs"
     # Distractor workflows
-    _write_disk_record(runs_dir, "code-review", "other000001", status="completed")
-    _write_disk_record(runs_dir, "deep-review", "other000002", status="completed")
+    _write_disk_record(runs_dir, "code-review", "aaa000000001", status="completed")
+    _write_disk_record(runs_dir, "deep-review", "aaa000000002", status="completed")
     # Target — should still be found
-    _write_disk_record(runs_dir, "security-audit", "target000003", status="failed")
+    _write_disk_record(runs_dir, "security-audit", "beef00000003", status="failed")
 
     svc = RunnerService(command_builder=_echo_cmd, persistence_dir=runs_dir)
-    result = svc.get_or_load("target000003")
+    result = svc.get_or_load("beef00000003")
     assert result is not None
     assert result.workflow == "security-audit"
     assert result.status == "failed"
@@ -674,7 +674,7 @@ def test_run_view_renders_disk_only_run(tmp_path, monkeypatch):
     _write_disk_record(
         config.runs_dir,
         "security-audit",
-        "evicted00001",
+        "e51c7ed00001",
         exit_code=0,
         started_at="2026-05-14T18:00:00+00:00",
         completed_at="2026-05-14T18:02:30+00:00",
@@ -682,13 +682,13 @@ def test_run_view_renders_disk_only_run(tmp_path, monkeypatch):
     )
 
     with TestClient(app) as client:
-        resp = client.get("/runs/evicted00001/view")
+        resp = client.get("/runs/e51c7ed00001/view")
 
     assert resp.status_code == 200, resp.text
     body = resp.text
     # Run metadata shows up
     assert "security-audit" in body
-    assert "evicted00001"[:12] in body  # template slices id[:12]
+    assert "e51c7ed00001"[:12] in body  # template slices id[:12]
     # Log lines were rendered server-side (NOT just left blank for SSE)
     assert "line one" in body
     assert "line two" in body
@@ -704,13 +704,13 @@ def test_run_view_disk_run_emits_empty_stream_url(tmp_path, monkeypatch):
     _write_disk_record(
         config.runs_dir,
         "code-review",
-        "evicted00002",
+        "e51c7ed00002",
         exit_code=0,
         lines=["one"],
     )
 
     with TestClient(app) as client:
-        resp = client.get("/runs/evicted00002/view")
+        resp = client.get("/runs/e51c7ed00002/view")
 
     assert resp.status_code == 200
     body = resp.text
@@ -862,3 +862,20 @@ def test_run_view_omits_stderr_block_when_absent(tmp_path, monkeypatch):
     body = resp.text
     assert "sdk-error-detail" not in body
     assert "Raw stderr from claude CLI" not in body
+
+
+def test_get_or_load_rejects_invalid_run_id_before_disk_walk(tmp_path):
+    """Traversal-shaped run_id → None with NO filesystem access.
+
+    run_id becomes part of a filename below the persistence dir; the
+    guard mirrors the sibling loaders' _RUN_ID_RE validation
+    (post-release self-review 11.5.0, code-review Low).
+    """
+    runs_dir = tmp_path / "runs"
+    runs_dir.mkdir()
+    # A file the traversal shape would otherwise reach.
+    outside = tmp_path / "secret.json"
+    outside.write_text("{}", encoding="utf-8")
+    svc = RunnerService(command_builder=_echo_cmd, persistence_dir=runs_dir)
+    for bad in ("../secret", "a/../b", "UPPER", "run id", "x" * 65):
+        assert svc.get_or_load(bad) is None
