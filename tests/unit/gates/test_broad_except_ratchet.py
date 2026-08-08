@@ -141,7 +141,10 @@ _BASELINE: dict[str, int] = {
     "src/attune/memory/config.py": 1,
     "src/attune/memory/control_panel.py": 4,
     "src/attune/memory/cross_session/service.py": 1,
-    "src/attune/memory/features.py": 1,
+    # features.py raised 1 -> 2 for rct-2 (PR #1985): classify_redis_health's
+    # probe is a P15 never-block path — ANY unexpected exception must degrade
+    # to degraded_connectivity, pinned by TestNeverBlock's RuntimeError case.
+    "src/attune/memory/features.py": 2,
     "src/attune/memory/file_stash.py": 1,
     "src/attune/memory/lessons.py": 2,
     "src/attune/memory/long_term_integration.py": 2,
