@@ -235,6 +235,22 @@ class TestCheckRedisConnection:
 
 
 @pytest.mark.unit
+def _managed_env() -> dict:
+    """REDIS_URL set, every other connection var explicitly EMPTY.
+
+    Hermetic against the ambient REDIS_PASSWORD that dotenv injects
+    into attune processes — the resolver (rct-4) would merge it into
+    the URL and change the expected call.
+    """
+    return {
+        "REDIS_URL": "redis://localhost:6379",
+        "REDIS_PRIVATE_URL": "",
+        "REDIS_PUBLIC_URL": "",
+        "REDIS_PASSWORD": "",
+        "REDIS_USER": "",
+    }
+
+
 class TestGetManagedRedis:
     def test_no_url_raises_os_error(self):
         with patch.dict(
@@ -253,7 +269,7 @@ class TestGetManagedRedis:
 
     def test_redis_url_returns_memory(self):
         with (
-            patch.dict("os.environ", {"REDIS_URL": "redis://localhost:6379"}, clear=False),
+            patch.dict("os.environ", _managed_env(), clear=False),
             patch("attune.memory.config.get_redis_memory") as mock_mem,
         ):
             mock_mem.return_value = MagicMock()
@@ -262,7 +278,7 @@ class TestGetManagedRedis:
 
     def test_railway_alias_warns_and_delegates(self):
         with (
-            patch.dict("os.environ", {"REDIS_URL": "redis://localhost:6379"}, clear=False),
+            patch.dict("os.environ", _managed_env(), clear=False),
             patch("attune.memory.config.get_redis_memory") as mock_mem,
             pytest.warns(DeprecationWarning, match="get_managed_redis"),
         ):

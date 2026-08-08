@@ -234,7 +234,10 @@ def run_routine(
         try:
             board.ensure_functions()
         except redis.RedisError as exc:
-            url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
+            from attune.memory.config import resolve_redis_connection
+
+            # Redacted for display — this string goes to the console.
+            url = resolve_redis_connection().redacted_url
             print(
                 f"cannot reach the round-table board ({url}): {exc}\n"
                 "A stale REDIS_URL export is the usual cause. Point it at a "

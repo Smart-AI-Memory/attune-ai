@@ -20,11 +20,14 @@ Licensed under the Apache License, Version 2.0
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from urllib.parse import ParseResult, quote, urlparse
+from urllib.parse import ParseResult, quote, unquote, urlparse
 
 from .short_term import RedisShortTermMemory
 
 _URL_VARS = ("REDIS_URL", "REDIS_PRIVATE_URL", "REDIS_PUBLIC_URL")
+#: Public alias for consumers that gate on "did a URL var supply the
+#: connection" via ``source_map["url"] in URL_VARS`` (rct-4).
+URL_VARS = _URL_VARS
 _DEFAULT_URL = "redis://127.0.0.1:6379/0"
 _VALID_SCHEMES = ("redis", "rediss", "unix")
 
@@ -50,6 +53,18 @@ class ResolvedRedisConnection:
     redacted_url: str
     source_map: dict[str, str] = field(default_factory=dict)
     overrides: tuple[str, ...] = ()
+
+    @property
+    def password(self) -> str | None:
+        """The effective password, parsed from ``url`` (None when bare).
+
+        UNQUOTED: userinfo in the URL is percent-encoded, and
+        ``urlparse`` does not decode it. Direct clients passing
+        ``password=`` need the original credential (redis-py's
+        ``from_url`` unquotes on its own — this property must match).
+        """
+        raw = urlparse(self.url).password
+        return unquote(raw) if raw is not None else None
 
 
 def _parse_url_or_raise(url: str, var: str) -> ParseResult:
@@ -365,15 +380,11 @@ def check_redis_connection() -> dict:
         "error": None,
     }
 
-    # Determine config source
-    if os.getenv("REDIS_URL"):
-        result["config_source"] = "REDIS_URL"
-    elif os.getenv("REDIS_PUBLIC_URL"):
-        result["config_source"] = "REDIS_PUBLIC_URL"
-    elif os.getenv("REDIS_PRIVATE_URL"):
-        result["config_source"] = "REDIS_PRIVATE_URL"
-    elif os.getenv("REDIS_HOST"):
-        result["config_source"] = "REDIS_HOST"
+    # Determine config source from the resolver's source-map (rct-4:
+    # no direct connection-env reads outside the resolver).
+    url_source = resolve_redis_connection().source_map.get("url", "default")
+    if url_source != "default":
+        result["config_source"] = url_source
 
     if result["use_mock"]:
         result["connected"] = True
@@ -408,18 +419,15 @@ def get_managed_redis() -> RedisShortTermMemory:
         EnvironmentError: If no Redis URL is set
 
     """
-    redis_url = (
-        os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL") or os.getenv("REDIS_PRIVATE_URL")
-    )
-
-    if not redis_url:
+    resolved = resolve_redis_connection()
+    if resolved.source_map.get("url") not in URL_VARS:
         raise OSError(
             "REDIS_URL not found. Set REDIS_URL (or REDIS_PUBLIC_URL / "
             "REDIS_PRIVATE_URL) to your managed Redis URL "
             "(Upstash/Vercel, Heroku, Railway, ...).",
         )
 
-    return get_redis_memory(url=redis_url)
+    return get_redis_memory(url=resolved.url)
 
 
 def get_railway_redis() -> RedisShortTermMemory:

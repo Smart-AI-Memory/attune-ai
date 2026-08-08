@@ -73,8 +73,13 @@ class TestMemoryConfig:
         {
             "EMPATHY_ENV": "production",
             "REDIS_URL": "redis://example.com:6379",
-            "EMPATHY_REDIS_HOST": "custom-host",
-            "EMPATHY_REDIS_PORT": "6380",
+            # Hermetic: empty out the other connection vars so the
+            # ambient dotenv REDIS_PASSWORD can't merge into the URL
+            # (rct-4 resolver behavior).
+            "REDIS_PRIVATE_URL": "",
+            "REDIS_PUBLIC_URL": "",
+            "REDIS_PASSWORD": "",
+            "REDIS_USER": "",
             "EMPATHY_REDIS_MOCK": "true",
             "EMPATHY_STORAGE_DIR": "/tmp/storage",
             "EMPATHY_ENCRYPTION": "false",
@@ -87,8 +92,11 @@ class TestMemoryConfig:
 
         assert config.environment == Environment.PRODUCTION
         assert config.redis_url == "redis://example.com:6379"
-        assert config.redis_host == "custom-host"
-        assert config.redis_port == 6380
+        # rct-4: host/port derive from the RESOLVED connection — the
+        # URL var outranks components, and the EMPATHY_ prefix for
+        # connection vars is retired (canonical names only).
+        assert config.redis_host == "example.com"
+        assert config.redis_port == 6379
         assert config.redis_mock is True
         assert config.storage_dir == "/tmp/storage"
         assert config.encryption_enabled is False

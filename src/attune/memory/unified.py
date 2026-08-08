@@ -26,7 +26,6 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-import os
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -110,7 +109,10 @@ class MemoryConfig:
             ATTUNE_STORAGE_DIR: Long-term storage directory
             ATTUNE_ENCRYPTION: Enable encryption (true/false)
         """
+        from urllib.parse import urlparse
+
         from attune.config.env_compat import get_attune_env
+        from attune.memory.config import URL_VARS, resolve_redis_connection
 
         env_str = (get_attune_env("ENV", "development") or "development").lower()
         environment = (
@@ -118,6 +120,7 @@ class MemoryConfig:
             if env_str in [e.value for e in Environment]
             else Environment.DEVELOPMENT
         )
+        _resolved = resolve_redis_connection()
 
         return cls(
             environment=environment,
@@ -125,10 +128,13 @@ class MemoryConfig:
             file_session_enabled=(get_attune_env("FILE_SESSION", "true") or "true").lower()
             == "true",
             file_session_dir=get_attune_env("FILE_SESSION_DIR", ".attune") or ".attune",
-            # Redis settings (optional)
-            redis_url=os.getenv("REDIS_URL"),
-            redis_host=get_attune_env("REDIS_HOST", "127.0.0.1") or "127.0.0.1",
-            redis_port=int(get_attune_env("REDIS_PORT", "6379") or "6379"),
+            # Redis settings (optional) — connection components from the
+            # canonical resolver (rct-4). redis_url stays None unless a
+            # URL var supplied it, preserving the explicit-URL gate in
+            # backend_init_mixin; when set it carries merged credentials.
+            redis_url=(_resolved.url if _resolved.source_map.get("url") in URL_VARS else None),
+            redis_host=urlparse(_resolved.url).hostname or "127.0.0.1",
+            redis_port=urlparse(_resolved.url).port or 6379,
             redis_mock=(get_attune_env("REDIS_MOCK", "") or "").lower() == "true",
             redis_auto_start=(get_attune_env("REDIS_AUTO_START", "false") or "false").lower()
             == "true",

@@ -28,23 +28,51 @@ def _fake_redis():
     return mod, calls
 
 
-def test_resolve_url_prefers_arg_then_env_then_default(monkeypatch):
-    monkeypatch.delenv("REDIS_URL", raising=False)
+def _scrub_connection_env(monkeypatch):
+    """Hermetic: dotenv injects ambient REDIS_* into attune processes."""
+    for var in (
+        "REDIS_URL",
+        "REDIS_PRIVATE_URL",
+        "REDIS_PUBLIC_URL",
+        "REDIS_HOST",
+        "REDIS_PORT",
+        "REDIS_DB",
+        "REDIS_PASSWORD",
+        "REDIS_USER",
+    ):
+        monkeypatch.delenv(var, raising=False)
+
+
+def test_resolve_url_prefers_arg_then_resolver_then_default(monkeypatch):
+    _scrub_connection_env(monkeypatch)
     assert recall_redis.resolve_url() == recall_redis.DEFAULT_RECALL_URL
     monkeypatch.setenv("REDIS_URL", "redis://envhost:6379/1")
     assert recall_redis.resolve_url() == "redis://envhost:6379/1"
     assert recall_redis.resolve_url("redis://arg:6379/2") == "redis://arg:6379/2"
 
 
-def test_injects_password_into_bare_url(monkeypatch):
-    monkeypatch.delenv("REDIS_URL", raising=False)
-    monkeypatch.setenv("REDIS_PASSWORD", "s3cret")
+def test_resolver_embeds_password_when_no_explicit_url(monkeypatch):
+    """rct-4: no separate kwarg injection — the resolver URL carries it."""
+    _scrub_connection_env(monkeypatch)
+    monkeypatch.setenv("REDIS_PASSWORD", "s3cret")  # pragma: allowlist secret
     fake, calls = _fake_redis()
     with patch.dict(sys.modules, {"redis": fake}):
         recall_redis.connect_recall_redis()
     url, kw = calls[0]
-    assert url == recall_redis.DEFAULT_RECALL_URL
-    assert kw["password"] == "s3cret"
+    assert url == "redis://:s3cret@127.0.0.1:6379/0"  # pragma: allowlist secret
+    assert "password" not in kw
+    assert kw["decode_responses"] is True
+
+
+def test_injects_resolver_password_into_bare_explicit_url(monkeypatch):
+    _scrub_connection_env(monkeypatch)
+    monkeypatch.setenv("REDIS_PASSWORD", "s3cret")  # pragma: allowlist secret
+    fake, calls = _fake_redis()
+    with patch.dict(sys.modules, {"redis": fake}):
+        recall_redis.connect_recall_redis("redis://127.0.0.1:6390/2")
+    url, kw = calls[0]
+    assert url == "redis://127.0.0.1:6390/2"
+    assert kw["password"] == "s3cret"  # pragma: allowlist secret
     assert kw["decode_responses"] is True
 
 

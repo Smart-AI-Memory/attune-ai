@@ -9,7 +9,6 @@ Licensed under the Apache License, Version 2.0
 """
 
 import logging
-import os
 import platform
 import shutil
 import subprocess
@@ -24,6 +23,14 @@ import yaml  # type: ignore[import-untyped]
 from attune.security.path_validation import _validate_file_path
 
 logger = logging.getLogger(__name__)
+
+
+def _resolved_password() -> "str | None":
+    """The canonical resolver's effective password (rct-4)."""
+    from attune.memory.config import resolve_redis_connection
+
+    return resolve_redis_connection().password
+
 
 # Platform detection (reuse redis_bootstrap constants when imported there)
 IS_MACOS = platform.system() == "Darwin"
@@ -190,8 +197,9 @@ class RedisAutoDetector:
                 host=host,
                 port=port,
                 socket_connect_timeout=0.5,
-                # R3: authenticate so `requirepass` isn't misread as "Redis down".
-                password=os.environ.get("REDIS_PASSWORD") or None,
+                # R3: authenticate so `requirepass` isn't misread as "Redis
+                # down". rct-4: the effective password comes from the resolver.
+                password=_resolved_password(),
             )
             return bool(client.ping())
         except Exception:  # noqa: BLE001

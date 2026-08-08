@@ -19,24 +19,34 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
-import os
 from typing import Any
+from urllib.parse import urlparse
 
 #: The canonical local default — loopback, matching the disposable-cache posture.
 DEFAULT_RECALL_URL = "redis://127.0.0.1:6379/0"
 
 
 def resolve_url(url: str | None = None) -> str:
-    """Return the recall Redis URL: explicit arg, else ``REDIS_URL``, else default."""
-    return url or os.environ.get("REDIS_URL") or DEFAULT_RECALL_URL
+    """Return the recall Redis URL: explicit arg, else the canonical resolver.
+
+    rct-4: the resolver's URL already carries merged credentials, so
+    ``requirepass`` works without a separate password injection.
+    """
+    if url:
+        return url
+    from attune.memory.config import resolve_redis_connection
+
+    return resolve_redis_connection().url
 
 
 def connect_recall_redis(url: str | None = None, **kwargs: Any) -> Any:
     """Construct an auth-aware ``redis.Redis`` for a recall/ops reader.
 
-    Injects ``REDIS_PASSWORD`` when it is set and the URL does not already carry
-    credentials, so ``requirepass`` (R3/D4) works via one env var. ``decode_responses``
-    defaults to True (the readers expect ``str``). Extra ``kwargs`` (e.g.
+    With no explicit ``url``, the canonical resolver supplies the URL —
+    credentials already merged (R3/D4). An explicit bare ``url`` still
+    gets the resolver's effective password injected, and never overrides
+    an explicit kwarg. ``decode_responses`` defaults to True (the
+    readers expect ``str``). Extra ``kwargs`` (e.g.
     ``socket_connect_timeout``) pass straight through to ``from_url``.
 
     Raises:
@@ -45,11 +55,16 @@ def connect_recall_redis(url: str | None = None, **kwargs: Any) -> Any:
     """
     import redis  # noqa: PLC0415 — optional dependency, import at use
 
+    from attune.memory.config import resolve_redis_connection
+
     resolved = resolve_url(url)
-    password = os.environ.get("REDIS_PASSWORD")
-    # A password already embedded in the URL (``@``) wins; only inject the env
-    # secret into an otherwise-bare URL, and never override an explicit kwarg.
-    if password and "@" not in resolved:
-        kwargs.setdefault("password", password)
+    # A password already embedded in the URL wins; inject the resolver's
+    # effective secret into an explicit URL that lacks one. Parsed, not
+    # an "@" substring test — ``redis://user@host`` carries a username
+    # but NO password and still needs the injection (codex D11 lane).
+    if url and urlparse(resolved).password is None:
+        password = resolve_redis_connection().password
+        if password:
+            kwargs.setdefault("password", password)
     kwargs.setdefault("decode_responses", True)
     return redis.Redis.from_url(resolved, **kwargs)

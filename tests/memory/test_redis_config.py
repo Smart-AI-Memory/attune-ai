@@ -339,22 +339,26 @@ class TestRedisMode:
                 _resolve_redis_mode()
 
     def test_infer_cloud_from_nonlocal_host(self):
-        """Test mode inferred as cloud from non-localhost REDIS_HOST."""
-        env = {"REDIS_MODE": "", "REDIS_HOST": "redis-cloud.example.com"}
+        """Mode inferred as cloud from a non-localhost resolver host.
+
+        rct-4: the helper no longer reads REDIS_HOST itself — callers
+        pass the resolver-derived host.
+        """
+        env = {"REDIS_MODE": ""}
         with patch.dict(os.environ, env, clear=False):
-            assert _resolve_redis_mode() == "cloud"
+            assert _resolve_redis_mode("redis-cloud.example.com") == "cloud"
 
     def test_infer_local_from_localhost(self):
-        """Test mode inferred as local when REDIS_HOST is localhost."""
-        env = {"REDIS_MODE": "", "REDIS_HOST": "localhost"}
+        """Mode inferred as local when the resolved host is localhost."""
+        env = {"REDIS_MODE": ""}
         with patch.dict(os.environ, env, clear=False):
-            assert _resolve_redis_mode() == "local"
+            assert _resolve_redis_mode("localhost") == "local"
 
     def test_infer_local_when_no_host(self):
-        """Test mode inferred as local when REDIS_HOST not set."""
-        env = {"REDIS_MODE": "", "REDIS_HOST": ""}
+        """Mode inferred as local when no host resolved."""
+        env = {"REDIS_MODE": ""}
         with patch.dict(os.environ, env, clear=False):
-            assert _resolve_redis_mode() == "local"
+            assert _resolve_redis_mode("") == "local"
 
     # --- get_redis_config() with REDIS_MODE ---
 
@@ -612,7 +616,10 @@ class TestGetManagedRedisSuccess:
         from unittest.mock import MagicMock
 
         monkeypatch.setenv("REDIS_URL", "redis://managed-host:6379/0")
-        monkeypatch.delenv("REDIS_PRIVATE_URL", raising=False)
+        # Hermetic: dotenv injects REDIS_PASSWORD ambient in attune
+        # processes; the resolver would merge it into the URL (rct-4).
+        for var in ("REDIS_PRIVATE_URL", "REDIS_PUBLIC_URL", "REDIS_PASSWORD", "REDIS_USER"):
+            monkeypatch.delenv(var, raising=False)
 
         sentinel_memory = MagicMock(name="sentinel_memory")
         get_memory_mock = MagicMock(return_value=sentinel_memory)

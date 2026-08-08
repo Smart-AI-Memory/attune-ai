@@ -362,20 +362,14 @@ class TestRedisConfig:
                 _resolve_redis_mode()
 
     def test_resolve_redis_mode_infers_cloud_from_host(self):
+        """rct-4: the helper no longer reads REDIS_HOST — callers pass
+        the resolver-derived host for inference."""
         from attune.redis_config import _resolve_redis_mode
 
-        with patch.dict(
-            os.environ,
-            {"REDIS_HOST": "redis.example.com"},
-            clear=False,
-        ):
-            with patch.dict(os.environ, {}, clear=False):
-                # Remove REDIS_MODE if set
-                env = dict(os.environ)
-                env.pop("REDIS_MODE", None)
-                env["REDIS_HOST"] = "redis.example.com"
-                with patch.dict(os.environ, env, clear=True):
-                    assert _resolve_redis_mode() == "cloud"
+        env = dict(os.environ)
+        env.pop("REDIS_MODE", None)
+        with patch.dict(os.environ, env, clear=True):
+            assert _resolve_redis_mode("redis.example.com") == "cloud"
 
     def test_parse_redis_url_standard(self):
         from attune.redis_config import parse_redis_url
