@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.4.0] — 2026-08-07
+
+Docs outbox: small docs artifacts (lessons, reports, drafts, plans)
+now batch through a conflict-free outbox into one curated PR instead
+of shipping as micro-PRs. Plus an advisory staleness sweep for
+curated memory corpora and a shrink-only broad-except ratchet
+seeded at 613 sites.
+
 ### Added
 
 - **Docs outbox — conflict-free batching for small docs artifacts**
@@ -21,6 +29,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now; the Stop-hook lessons reminder routes through the outbox, and
   the ops Collaboration inbox gains a pending row with a 2-day stale
   warning. The pending-recall layer is deferred (R5).
+
+- **Advisory staleness sweep for curated memory corpora**
+  (memory-status-integrity P1, #1975): reads each curated memory's
+  claims against the current tree and flags the ones reality has
+  moved past — advisory by design, it never blocks or rewrites.
+
+- **Broad-except ratchet** (#1974): a shrink-only gate seeded with
+  613 existing broad `except Exception` sites. New broad excepts
+  fail CI; the seeded count can only go down, and the gate ships
+  with a proof-it-fires test.
+
+- **Mermaid diagrams across the docs site** (#1965, #1967): mermaid
+  rendering enabled in mkdocs, with 15 diagrams converted across 10
+  pages. A deliberate existing-tool choice: the diagramkit Phase-0
+  probe measured mermaid 1.2–2.1× cheaper to author than a custom
+  diagram kernel, so no kernel was built ("mermaid wins",
+  docs/specs/diagramkit D4) — data charts keep the sealed chart
+  kernel; diagrams ride an existing tool.
+
+### Fixed
+
+- Memory P1 review follow-ups: staleness-sweep linter brought to
+  parity with the memory-lint rules, and R2 delivery claims
+  corrected to match what actually shipped (#1977).
+
+- CI: the two security workflows no longer cancel each other's
+  runs via a shared concurrency group (#1976).
 
 ## [11.3.0] — 2026-08-06
 
