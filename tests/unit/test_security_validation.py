@@ -14,27 +14,11 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-import importlib.util
-import sys
 from pathlib import Path
 
 import pytest
 
-# Import _validate_file_path from config.py (not config/ package)
-# The function is in empathy_os/config.py, but there's also a config/ package
-parent_dir = Path(__file__).parent.parent.parent / "src"
-sys.path.insert(0, str(parent_dir))
-
-# Import the config.py module directly
-
-config_path = parent_dir / "attune" / "config.py"
-spec = importlib.util.spec_from_file_location("empathy_config", config_path)
-if spec and spec.loader:
-    config_module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(config_module)
-    _validate_file_path = config_module._validate_file_path
-else:
-    raise ImportError("Could not load config.py module")
+from attune.security.path_validation import _validate_file_path
 
 
 class TestPathTraversalPrevention:

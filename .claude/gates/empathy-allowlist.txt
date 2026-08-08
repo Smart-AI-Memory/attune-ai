@@ -50,10 +50,10 @@ src/attune/agents_md/parser.py
 src/attune/agents_md/registry.py
 src/attune/cli_commands/utility_commands.py
 src/attune/commands/agents/security-reviewer.md
-src/attune/config.py
 src/attune/config/__init__.py
 src/attune/config/agent_config.py
 src/attune/config/env_compat.py
+src/attune/config/legacy.py
 src/attune/config/xml_config.py
 src/attune/context/compaction.py
 src/attune/context/manager.py

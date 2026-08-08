@@ -8,43 +8,8 @@ Copyright 2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-# Import original config from parent module's config.py for backward compatibility
-import importlib.util
-import sys
-from pathlib import Path
-from typing import Any
-
-# Check if PyYAML is available
-try:
-    import yaml  # type: ignore[import-untyped]
-
-    YAML_AVAILABLE = True
-except ImportError:
-    YAML_AVAILABLE = False
-
-# Import security utility from canonical location
-from attune.security.path_validation import _validate_file_path
-
-# Load the original config.py module directly
-config_py_path = Path(__file__).parent.parent / "config.py"
-spec = importlib.util.spec_from_file_location("attune_config_legacy", config_py_path)
-if spec and spec.loader:
-    legacy_config = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(legacy_config)
-    AttuneConfig: Any = legacy_config.AttuneConfig
-    EmpathyConfig: Any = legacy_config.EmpathyConfig  # backward-compat alias
-    load_config: Any = legacy_config.load_config
-    resolve_show_cost: Any = legacy_config.resolve_show_cost
-else:
-    # Fallback if import fails
-    AttuneConfig = None
-    EmpathyConfig = None
-    load_config = None
-    resolve_show_cost = None
-
-# Import XML enhancement configs
-# Import agent configuration models
-from attune.config.agent_config import (  # noqa: E402
+# Agent configuration models
+from attune.config.agent_config import (
     AgentOperationError,
     BookProductionConfig,
     MemDocsConfig,
@@ -54,10 +19,23 @@ from attune.config.agent_config import (  # noqa: E402
     UnifiedAgentConfig,
     WorkflowMode,
 )
-from attune.config.agent_config import (  # noqa: E402
+from attune.config.agent_config import (
     WorkflowConfig as AgentWorkflowConfig,
 )
-from attune.config.xml_config import (  # noqa: E402
+
+# Original config module (formerly the sibling config.py, loaded via
+# spec_from_file_location under a synthetic name; now a real submodule
+# so AttuneConfig keeps a stable __module__ for isinstance and pickling)
+from attune.config.legacy import (
+    YAML_AVAILABLE,
+    AttuneConfig,
+    EmpathyConfig,
+    load_config,
+    resolve_show_cost,
+)
+
+# XML enhancement configs
+from attune.config.xml_config import (
     AdaptiveConfig,
     EmpathyXMLConfig,
     I18nConfig,
@@ -67,6 +45,7 @@ from attune.config.xml_config import (  # noqa: E402
     get_config,
     set_config,
 )
+from attune.security.path_validation import _validate_file_path
 
 __all__ = [
     # Original config

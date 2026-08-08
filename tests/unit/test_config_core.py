@@ -1,4 +1,4 @@
-"""Comprehensive unit tests for src/attune/config.py.
+"""Comprehensive unit tests for src/attune/config/legacy.py.
 
 Tests _validate_file_path, EmpathyConfig (defaults, serialization, env loading,
 validation, merge, update), and load_config.
