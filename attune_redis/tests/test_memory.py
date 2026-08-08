@@ -97,6 +97,36 @@ class TestStashRetrieve:
 # =================================================================
 
 
+class TestRetrieveMany:
+    """Batched working-memory reads — one fetch serves every key."""
+
+    def test_round_trip_many(self, backend):
+        """Present keys map to values, missing keys to None."""
+        backend.stash("a", 1)
+        backend.stash("b", {"v": 2})
+        got = backend.retrieve_many(["a", "b", "missing"])
+        assert got == {"a": 1, "b": {"v": 2}, "missing": None}
+
+    def test_single_fetch_for_many_keys(self, backend, mock_ams_client):
+        """N keys cost exactly one working-memory fetch, not N."""
+        backend.stash("a", 1)
+        backend.stash("b", 2)
+        mock_ams_client.get_or_create_working_memory.reset_mock()
+        backend.retrieve_many(["a", "b"])
+        assert mock_ams_client.get_or_create_working_memory.call_count == 1
+
+    def test_empty_keys_skip_the_client(self, backend, mock_ams_client):
+        """No keys, no round-trip."""
+        mock_ams_client.get_or_create_working_memory.reset_mock()
+        assert backend.retrieve_many([]) == {}
+        mock_ams_client.get_or_create_working_memory.assert_not_called()
+
+    def test_error_degrades_to_all_none(self, backend, mock_ams_client):
+        """AMS errors map every key to None, matching retrieve()."""
+        mock_ams_client.get_or_create_working_memory.side_effect = ConnectionError("down")
+        assert backend.retrieve_many(["a", "b"]) == {"a": None, "b": None}
+
+
 class TestDelete:
     """Test key deletion."""
 

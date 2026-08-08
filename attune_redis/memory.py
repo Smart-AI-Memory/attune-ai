@@ -231,6 +231,39 @@ class AMSMemoryBackend:
             logger.error("retrieve_failed: key=%s error=%s", key, e)
             return None
 
+    def retrieve_many(self, keys: list[str], agent_id: str | None = None) -> dict[str, Any]:
+        """Retrieve several working-memory keys in one AMS round-trip.
+
+        :meth:`retrieve` fetches the session's whole working-memory
+        ``data`` dict per call, so N lookups cost N HTTP round-trips —
+        one fetch serves them all. Missing keys map to ``None``; on an
+        AMS error every key maps to ``None`` (graceful degradation,
+        matching :meth:`retrieve`).
+
+        Args:
+            keys: Storage keys to retrieve.
+            agent_id: Session ID override.
+
+        Returns:
+            Mapping of each requested key to its stored value or None.
+        """
+        if not keys:
+            return {}
+        session_id = agent_id or self._session_id
+        try:
+            _, response = _run_sync(
+                self._client.get_or_create_working_memory(
+                    session_id=session_id,
+                    namespace=self._namespace,
+                )
+            )
+            data = response.data or {}
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Graceful degradation for AMS HTTP errors
+            logger.error("retrieve_many_failed: keys=%d error=%s", len(keys), e)
+            return dict.fromkeys(keys)
+        return {k: data.get(k) for k in keys}
+
     def delete(self, key: str) -> bool:
         """Delete a key from AMS working memory.
 

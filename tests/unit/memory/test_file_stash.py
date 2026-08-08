@@ -163,6 +163,18 @@ def test_kv_delete_and_keys(backend):
     assert backend.keys() == ["b"]
 
 
+def test_retrieve_many_matches_per_key_retrieve(backend):
+    backend.stash("a", 1)
+    backend.stash("b", {"v": 2})
+    got = backend.retrieve_many(["a", "b", "missing"])
+    assert got == {"a": 1, "b": {"v": 2}, "missing": None}
+    assert got == {k: backend.retrieve(k) for k in ["a", "b", "missing"]}
+
+
+def test_retrieve_many_empty_keys(backend):
+    assert backend.retrieve_many([]) == {}
+
+
 def test_is_fallback_and_protocol_surface(backend):
     assert FileStashBackend.is_fallback is True
     assert backend.is_connected() is True

@@ -33,6 +33,15 @@ class MemoryBackend(Protocol):
             def retrieve(self, key, agent_id=None):
                 ...
             # ... remaining methods
+
+    Optional batch extension: backends MAY additionally provide
+    ``retrieve_many(keys, agent_id=None) -> dict[str, Any]``, returning
+    each requested key's stored value (missing keys map to ``None``) in
+    a single backend round-trip. Callers probe for it with ``getattr``
+    and fall back to per-key ``retrieve``. It is deliberately NOT a
+    protocol member: this protocol is ``@runtime_checkable``, so adding
+    a member would fail ``isinstance`` checks for existing backends
+    that predate the extension.
     """
 
     def stash(
