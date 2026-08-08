@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.5.0] — 2026-08-08
+
+Redis config truth: Redis connection settings now flow through one
+canonical resolver with honest, classified degradation and a doctor
+diagnostic — the "requirepass read as Redis-down" incident class is
+closed at the seam. Plus memory-security hardening (provenance
+framing + secret gates) and post-release performance/honesty fixes.
+
+### Added
+
+- **Canonical Redis connection resolver** (redis-config-truth rct-1,
+  #1984): `resolve_redis_connection()` in `attune.memory.config` —
+  five-step precedence (credentialed URL > URL + `REDIS_PASSWORD` /
+  `REDIS_USER` merge > `REDIS_PRIVATE_URL`/`REDIS_PUBLIC_URL` >
+  host/port/db components > localhost default), a source-map
+  recording which env var supplied each component, and recorded
+  overrides instead of silent conflicts. Hardened via a codex
+  cross-review lane: credentialed URL vars outrank passwordless
+  earlier ones, URL-carried usernames survive password merges,
+  IPv6 hosts stay bracketed, `unix://` socket paths survive
+  credential merges, and non-numeric URL db paths raise actionable
+  errors.
+- **Classified loud-once degradation** (rct-2, #1985):
+  `MemoryFeatures.classify_redis_health()` returns a typed report —
+  `healthy` / `degraded_auth` / `degraded_connectivity` /
+  `disabled`. Auth rejection and malformed config (never
+  self-healing) warn exactly once per session with a redacted URL;
+  an absent server stays silent; `check_redis()` remains a
+  fail-open bool gate (never blocks work).
+- **Doctor diagnostic** (rct-3, #1987): `redis_health_check` now
+  reports the redacted effective config — which env vars resolved,
+  the URL shape, recorded overrides, and the classified health
+  state — derived from the resolver's source-map, with secrets
+  redacted throughout.
+- **Memory-security hardening** (#1979): provenance framing for
+  recalled content (R1) and secret gates on memory writes (R2).
+
+### Fixed
+
+- Post-release self-review act-now items (#1982): memory batch
+  primitives (MGET / variadic DEL), dashboard threadpool, specs
+  single-read, release-agent honesty fixes.
+
 ## [11.4.0] — 2026-08-07
 
 Docs outbox: small docs artifacts (lessons, reports, drafts, plans)

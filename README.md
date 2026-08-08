@@ -92,29 +92,26 @@ routing, and [Installation Options](#installation-options) for extras.
      a permanent section below (see "Dynamic forms" for the pattern).
      Don't stack a second "New in" section here. -->
 
-## New in 11.4.0 — Docs outbox: many writers, one PR
+## New in 11.5.0 — Redis config truth: one resolver, honest degradation
 
-Small docs artifacts — lessons, run reports, drafts, plans — no
-longer ship as their own micro-PRs. Writers drop per-artifact
-timestamped files into `~/.attune/docs-outbox/`:
+Redis connection settings now flow through ONE canonical resolver,
+`resolve_redis_connection()`: five-step precedence across the
+`REDIS_URL` variants, credential merging (`REDIS_PASSWORD` merges
+into a password-less URL — the misconfiguration that used to read
+as "Redis down"), a source-map recording which env var supplied
+each component, and recorded overrides instead of silent conflicts.
 
-```bash
-python -m attune.docs_outbox write --kind lesson \
-  --slug my-finding --file body.md
-```
+On top of it sit **classified degradation** — auth failures and
+malformed config warn ONCE per session with a redacted URL, while
+an absent server stays quiet as before — and a **doctor
+diagnostic**: `redis_health_check` now reports the redacted
+effective config (which vars resolved, URL shape, overrides, and
+the classified health state), so "why isn't memory connecting?"
+is answerable at a glance without exposing a secret.
 
-Concurrent sessions never conflict by construction. A curating
-sweep (`/docs-outbox`) dedupes, lints, flags core-worthy
-candidates, and composes ONE approved digest before a single
-batched PR opens — N writers, one review, one merge.
-
-Also in 11.4.0: an **advisory staleness sweep** for curated
-memory corpora — it reads each memory's claims against the
-current tree and flags the ones reality has moved past, advisory
-by design — a **broad-except ratchet** seeded at 613 sites (the
-count only shrinks, and CI proves the gate fires), and **mermaid
-diagrams across the docs site**: 15 diagrams converted on 10
-pages, riding an existing tool instead of a custom kernel.
+Also in 11.5.0: **memory-security hardening** (provenance framing
+for recalled content + secret gates on memory writes) and
+post-release performance/honesty fixes.
 
 ## Goal-driven development — receipts, not promises
 
@@ -421,6 +418,25 @@ Diagrams took the practical path: a measured probe found mermaid —
 an existing tool — 1.2–2.1× cheaper to author than a custom
 diagram kernel, so docs diagrams render via mermaid and no kernel
 was built. Charts earn a kernel; diagrams don't need one.
+
+## Docs outbox — many writers, one PR
+
+Small docs artifacts — lessons, run reports, drafts, plans — don't
+ship as their own micro-PRs. Writers drop per-artifact timestamped
+files into `~/.attune/docs-outbox/`:
+
+```bash
+python -m attune.docs_outbox write --kind lesson \
+  --slug my-finding --file body.md
+```
+
+Concurrent sessions never conflict by construction. A curating
+sweep (`/docs-outbox`) dedupes, lints, flags core-worthy
+candidates, and composes ONE approved digest before a single
+batched PR opens — N writers, one review, one merge. Alongside it:
+an advisory staleness sweep for curated memory corpora and a
+broad-except ratchet (seeded at 613 sites; the count only
+shrinks, and CI proves the gate fires).
 
 ---
 
