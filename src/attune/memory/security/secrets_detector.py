@@ -244,20 +244,33 @@ class SecretsDetector:
     #: API-key types whose patterns allow a BARE (unlabelled) token match.
     _BARE_KEY_TYPES = (SecretType.ANTHROPIC_API_KEY, SecretType.OPENAI_API_KEY)
 
+    #: An explicit ``...api_key = `` / ``...api_key:`` assignment inside the
+    #: matched text. Anchored to a real key= label, not a bare substring, so
+    #: "monkey"/"keyboard" don't count as labels (a review nit).
+    _KEY_LABEL_RE = re.compile(r"(?i)api[_-]?key\s*[=:]")
+
     def _bare_api_key_is_plausible(self, secret_type, match) -> bool:
         """Reject a bare API-key match that is really an English slug.
 
         A random API key carries digits AND mixed case; a hyphenated
         dictionary slug ("sk-queued-as-resume-...") carries neither. When the
-        match includes an explicit ``...API_KEY=`` label the author's intent is
-        clear, so the heuristic is skipped. Only the bare-token forms of the
-        two SDK key types are gated — every other pattern passes through
-        unchanged. This keeps the real key alphabet (incl. ``_``/``-``) while
-        killing the slug false positive a review found.
+        match includes an explicit ``...api_key=`` assignment the author's
+        intent is unambiguous, so the heuristic is skipped. Only the
+        bare-token forms of the two SDK key types are gated — every other
+        pattern passes through unchanged. This keeps the real key alphabet
+        (incl. ``_``/``-``) while killing the slug false positive a review
+        found.
+
+        Known limitation (accepted for a lint-grade sweep): a *bare*
+        (unlabelled) 40+ char key that happens to carry no digit OR only one
+        letter case evades this gate. For a random base62 key that is ~1 in
+        1250 (no digit) and far rarer for case; a labelled key is never
+        gated. The alternative — narrowing the charset — leaked real
+        ``sk-proj-`` keys, which is strictly worse.
         """
         if secret_type not in self._BARE_KEY_TYPES:
             return True
-        if "key" in match.group(0).lower():  # labelled: trust the author
+        if self._KEY_LABEL_RE.search(match.group(0)):  # labelled: trust the author
             return True
         token = match.group(1)
         has_digit = any(c.isdigit() for c in token)

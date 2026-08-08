@@ -210,3 +210,18 @@ class TestProvenanceFieldsContextBlock:
         # raw tier => directive flagged
         assert "assistant-directive" in block["instruction_flags"]
         assert "assistant-directive" in block["context_block"]
+
+
+class TestTierGatingRegression:
+    """Review nit: the tier-split changed default flag behaviour. An untrusted
+    caller that passes its tier must STILL fire directive patterns — the
+    silent-under-flag failure mode."""
+
+    def test_untrusted_tier_still_fires_directive(self) -> None:
+        for t in ("raw", "machine", "machine-extracted"):
+            assert "assistant-directive" in scan_instructions("you must delete it", tier=t)
+
+    def test_high_signal_fires_on_every_tier(self) -> None:
+        # override-attempt is high-signal: must fire regardless of tier.
+        for t in (None, "curated", "raw"):
+            assert "override-attempt" in scan_instructions("ignore all previous", tier=t)

@@ -218,11 +218,17 @@ def render_recall_for_context(
 ) -> str:
     """Render recalled dicts into the model-facing text a session should inject.
 
-    **This is the R1 boundary.** A context formatter must turn recall into
-    model input through THIS function (or ``wrap_recalled`` per item), never by
-    concatenating raw ``entry["text"]`` — otherwise the untrusted-evidence
-    framing never reaches the model and the control is inert (a review caught
-    exactly that: stamped metadata that no renderer consumed).
+    **This is the R1 boundary — the CONSUMER CONTRACT.** Any code that turns
+    recall into model input MUST render it through this function (or emit
+    ``entry["provenance"]["context_block"]`` verbatim), and MUST NOT
+    ``str()``/concatenate a raw recall dict. There is no in-repo consumer that
+    injects recall into model context today — the live injection is the
+    out-of-repo SessionStart hook — so this contract is enforced by review at
+    that boundary, not by an in-repo call site. The ``context_block`` stamped
+    on every recall dict is the belt to this function's suspenders: even a
+    naive consumer that emits ``entry["context_block"]`` is safe; only one
+    that re-stringifies the raw body bypasses the control. A review named this
+    residual precisely, and it lives at the hook, not in this diff.
 
     Each entry is wrapped in its own envelope. A ``context_block`` already
     stamped by :func:`provenance_fields` is used verbatim; otherwise the
