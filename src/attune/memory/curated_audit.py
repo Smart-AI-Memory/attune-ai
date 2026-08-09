@@ -29,10 +29,12 @@ from __future__ import annotations
 
 import logging
 import re
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
+
+from attune.memory.verdict_log import VerdictRecord, canonical_digest, latest_verdicts
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +113,10 @@ class CuratedMemory:
     unknown_keys: tuple[str, ...]
     links: tuple[str, ...]
     deferred_links: tuple[str, ...]
+    #: Canonical content digest (description + body, formatting-normalised).
+    #: Compared against the digest recorded at verdict time to decide
+    #: whether a ``verified:`` date is still bound to what it verified.
+    digest: str = ""
 
     @property
     def stem(self) -> str:
@@ -130,6 +136,9 @@ class AuditReport:
     orphans: tuple[Path, ...] = ()
     dangling_pointers: tuple[tuple[Path, str], ...] = ()
     age_basis: str = "mtime"
+    #: Per-file basis labels ``(stem, label)`` — see
+    #: :func:`resolve_age_basis` for the label vocabulary (P2 task 2).
+    age_bases: tuple[tuple[str, str], ...] = ()
     scanned: int = 0
     roots: tuple[Path, ...] = field(default=())
 
@@ -312,6 +321,7 @@ def load_memory(path: Path) -> CuratedMemory:
         unknown_keys=tuple(unknown),
         links=tuple(link for link in all_links if not link.startswith("?")),
         deferred_links=tuple(link[1:] for link in all_links if link.startswith("?")),
+        digest=canonical_digest(fields.get("description"), body),
     )
 
 
@@ -338,11 +348,54 @@ def scan_corpus(roots: Iterable[Path]) -> list[CuratedMemory]:
     return memories
 
 
-def unverified_age_days(mem: CuratedMemory, today: date | None = None) -> int:
+def resolve_age_basis(
+    mem: CuratedMemory, latest_verdict: VerdictRecord | None = None
+) -> tuple[date, str]:
+    """Decide which date ages this memory, and label the decision.
+
+    The basis labels, in decreasing trust (P2 task 2 + task 4):
+
+    - ``verified`` — ``verified:`` present AND the verdict log's digest
+      matches the current content: the date is bound to what it verified.
+    - ``verified-unbound`` — ``verified:`` present but no verdict record
+      exists to bind it. The date stands (backward compatible with a
+      hand-set field), but nothing proves what content it endorsed.
+    - ``invalidated`` — a verdict record exists and its digest does NOT
+      match: the content changed substantively since verification, so the
+      ``verified:`` date is void and mtime (the edit) ages it (D6 #2).
+    - ``tombstoned`` — the latest verdict is ``wrong``: the memory is
+      known-bad and kept only for its pointer/link integrity and its
+      "we believed X" value (D6 #3).
+    - ``mtime`` — no ``verified:`` at all; the known-bad-proxy fallback.
+
+    Args:
+        mem: The memory to age.
+        latest_verdict: The stem's most recent verdict record, if any.
+
+    Returns:
+        ``(basis_date, basis_label)``.
+    """
+    if mem.verified is None:
+        return mem.mtime_date, "mtime"
+    if latest_verdict is None:
+        return mem.verified, "verified-unbound"
+    if latest_verdict.verdict == "wrong":
+        return mem.mtime_date, "tombstoned"
+    if latest_verdict.digest == mem.digest:
+        return mem.verified, "verified"
+    return mem.mtime_date, "invalidated"
+
+
+def unverified_age_days(
+    mem: CuratedMemory,
+    today: date | None = None,
+    latest_verdict: VerdictRecord | None = None,
+) -> int:
     """Days since a human last confirmed this memory is still true.
 
-    P2 will supply a real ``verified:`` date. Until then this falls back to
-    file mtime, which is a **known-bad proxy**: it records the last edit, so a
+    ``verified:`` is preferred when present; :func:`resolve_age_basis`
+    decides whether it still binds. Without it this falls back to file
+    mtime, which is a **known-bad proxy**: it records the last edit, so a
     bulk reformat reads as a fresh confirmation. The fallback ships anyway
     because it errs in the safe direction — mtime makes memories look
     *fresher* than they are, so the signal under-warns rather than
@@ -352,13 +405,14 @@ def unverified_age_days(mem: CuratedMemory, today: date | None = None) -> int:
         mem: The memory to age.
         today: Reference date; defaults to the current date. Injectable so
             tests need no clock control.
+        latest_verdict: The stem's most recent verdict record, if any —
+            supplies the digest binding (P2 task 4).
 
     Returns:
         Whole days, floored at zero.
     """
     reference = today or date.today()
-    # P2: prefer mem.verified once the schema carries it.
-    basis = mem.verified or mem.mtime_date
+    basis, _ = resolve_age_basis(mem, latest_verdict)
     return max(0, (reference - basis).days)
 
 
@@ -369,7 +423,11 @@ def volatility(mem_type: str | None) -> float:
     return VOLATILITY_BY_TYPE.get(mem_type, DEFAULT_VOLATILITY)
 
 
-def risk_score(mem: CuratedMemory, today: date | None = None) -> float:
+def risk_score(
+    mem: CuratedMemory,
+    today: date | None = None,
+    latest_verdict: VerdictRecord | None = None,
+) -> float:
     """Rank a memory's need for human review: age scaled by type volatility.
 
     This orders *review attention* only. Per D1 it must never be used to drop
@@ -379,11 +437,12 @@ def risk_score(mem: CuratedMemory, today: date | None = None) -> float:
     Args:
         mem: The memory to score.
         today: Reference date; defaults to the current date.
+        latest_verdict: The stem's most recent verdict record, if any.
 
     Returns:
         A non-negative score. Higher means review sooner.
     """
-    return unverified_age_days(mem, today) * volatility(mem.mem_type)
+    return unverified_age_days(mem, today, latest_verdict) * volatility(mem.mem_type)
 
 
 def format_age_annotation(days: int) -> str:
@@ -517,6 +576,7 @@ def audit(
     memories: Sequence[CuratedMemory],
     roots: Iterable[Path] = (),
     today: date | None = None,
+    verdicts: Mapping[str, VerdictRecord] | None = None,
 ) -> AuditReport:
     """Produce an advisory report over already-scanned memories.
 
@@ -528,11 +588,15 @@ def audit(
         roots: Corpus roots, used to locate ``MEMORY.md`` index files. When
             omitted, pointer integrity is skipped rather than failed.
         today: Reference date; defaults to the current date.
+        verdicts: Latest verdict per stem (from
+            :func:`attune.memory.verdict_log.latest_verdicts`); supplies the
+            digest binding. Omitted means every ``verified:`` reads unbound.
 
     Returns:
         The report. ``ranked`` is ordered by descending risk.
     """
     roots = tuple(roots)
+    verdicts = verdicts or {}
     known_stems = {mem.stem for mem in memories}
 
     schema_violations, invalid_types, name_mismatches, broken_links = _content_integrity(
@@ -542,9 +606,12 @@ def audit(
 
     ranked = tuple(
         sorted(
-            ((mem, risk_score(mem, today)) for mem in memories),
+            ((mem, risk_score(mem, today, verdicts.get(mem.stem))) for mem in memories),
             key=lambda pair: (-pair[1], str(pair[0].path)),
         )
+    )
+    age_bases = tuple(
+        (mem.stem, resolve_age_basis(mem, verdicts.get(mem.stem))[1]) for mem, _ in ranked
     )
     uses_verified = any(mem.verified is not None for mem in memories)
 
@@ -557,6 +624,7 @@ def audit(
         orphans=orphans,
         dangling_pointers=dangling,
         age_basis="verified" if uses_verified else "mtime",
+        age_bases=age_bases,
         scanned=len(memories),
         roots=roots,
     )
@@ -564,6 +632,9 @@ def audit(
 
 def sweep(roots: Iterable[Path], today: date | None = None) -> AuditReport:
     """Scan and audit in one call — the entry point callers usually want.
+
+    Reads each root's verdict log (append-only, task 4) so ``verified:``
+    dates are digest-checked; a root without a log degrades to unbound.
 
     Args:
         roots: Corpus roots to scan recursively.
@@ -573,4 +644,7 @@ def sweep(roots: Iterable[Path], today: date | None = None) -> AuditReport:
         The advisory report.
     """
     roots = tuple(roots)
-    return audit(scan_corpus(roots), roots=roots, today=today)
+    verdicts: dict[str, VerdictRecord] = {}
+    for root in roots:
+        verdicts.update(latest_verdicts(root))
+    return audit(scan_corpus(roots), roots=roots, today=today, verdicts=verdicts)

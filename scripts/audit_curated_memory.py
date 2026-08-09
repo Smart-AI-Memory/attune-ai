@@ -50,11 +50,19 @@ def _format_report(report, top: int) -> str:
     lines.append("")
 
     lines.append(f"── Review priority (age x type volatility), top {top} ──")
+    basis_by_stem = dict(report.age_bases)
     for mem, score in report.ranked[:top]:
         mem_type = mem.mem_type or "?"
-        lines.append(f"  {score:8.1f}  [{mem_type:9}] {mem.stem}")
+        basis = basis_by_stem.get(mem.stem, "mtime")
+        lines.append(f"  {score:8.1f}  [{mem_type:9}] {mem.stem}  ({basis})")
     if not report.ranked:
         lines.append("  (none)")
+    flagged = sorted(s for s, b in report.age_bases if b in {"invalidated", "tombstoned"})
+    if flagged:
+        lines.append(
+            "  note: invalidated = edited substantively since verification "
+            "(verified: is void); tombstoned = latest verdict was 'wrong'."
+        )
     lines.append("")
 
     def section(title: str, rows: list[str]) -> None:
@@ -124,6 +132,7 @@ def main(argv: list[str] | None = None) -> int:
                             "type": mem.mem_type,
                             "unverified_days": unverified_age_days(mem),
                             "risk": round(score, 2),
+                            "basis": dict(report.age_bases).get(mem.stem, "mtime"),
                             "path": str(mem.path),
                         }
                         for mem, score in report.ranked[: args.top]

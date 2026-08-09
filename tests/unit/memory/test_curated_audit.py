@@ -25,12 +25,14 @@ from attune.memory.curated_audit import (
     audit,
     format_age_annotation,
     load_memory,
+    resolve_age_basis,
     risk_score,
     scan_corpus,
     sweep,
     unverified_age_days,
     volatility,
 )
+from attune.memory.verdict_log import VERDICTS_FILENAME, VerdictRecord, append_verdict
 
 TODAY = date(2026, 8, 7)
 
@@ -287,6 +289,73 @@ class TestAge:
     def test_age_never_negative(self, tmp_path: Path) -> None:
         path = write_memory(tmp_path, "p_future", extra_frontmatter="verified: 2099-01-01\n")
         assert unverified_age_days(load_memory(path), TODAY) == 0
+
+
+class TestVerdictBinding:
+    """P2 tasks 2+4: digest binding decides whether ``verified:`` stands."""
+
+    def _verified(self, root: Path, stem: str = "project_v", body: str = "The claim.\n"):
+        path = write_memory(
+            root, stem, "project", body=body, extra_frontmatter="verified: 2026-07-01\n"
+        )
+        return load_memory(path)
+
+    def _verdict_for(self, mem, verdict: str = "keep") -> VerdictRecord:
+        return VerdictRecord.create(mem.stem, verdict, mem.digest, who="patrick")
+
+    def test_basis_label_matrix(self, tmp_path: Path) -> None:
+        plain = load_memory(write_memory(tmp_path, "project_plain"))
+        assert resolve_age_basis(plain) == (plain.mtime_date, "mtime")
+
+        mem = self._verified(tmp_path)
+        assert resolve_age_basis(mem) == (date(2026, 7, 1), "verified-unbound")
+
+        bound = self._verdict_for(mem)
+        assert resolve_age_basis(mem, bound) == (date(2026, 7, 1), "verified")
+
+        stale = VerdictRecord.create(mem.stem, "keep", "some-other-digest", who="patrick")
+        assert resolve_age_basis(mem, stale) == (mem.mtime_date, "invalidated")
+
+        wrong = self._verdict_for(mem, "wrong")
+        assert resolve_age_basis(mem, wrong) == (mem.mtime_date, "tombstoned")
+
+    def test_invalidation_reroutes_age_to_mtime(self, tmp_path: Path) -> None:
+        """A substantive edit voids the verified date (D6 #2)."""
+        mem = self._verified(tmp_path)
+        stale = VerdictRecord.create(mem.stem, "keep", "different", who="patrick")
+        assert unverified_age_days(mem, TODAY, stale) == max(0, (TODAY - mem.mtime_date).days)
+        assert unverified_age_days(mem, TODAY, self._verdict_for(mem)) == 37
+
+    def test_formatting_only_edit_preserves_the_binding(self, tmp_path: Path) -> None:
+        mem = self._verified(tmp_path, body="line one\nline two\n")
+        verdict = self._verdict_for(mem)
+
+        reformatted = self._verified(tmp_path, body="line one   \n\n\nline two\n")
+        assert resolve_age_basis(reformatted, verdict)[1] == "verified"
+
+        reworded = self._verified(tmp_path, body="line one\nline three\n")
+        assert resolve_age_basis(reworded, verdict)[1] == "invalidated"
+
+    def test_sweep_reads_the_log_and_reports_per_file_basis(self, tmp_path: Path) -> None:
+        mem = self._verified(tmp_path)
+        write_memory(tmp_path, "project_bare")
+        append_verdict(tmp_path, self._verdict_for(mem))
+
+        report = sweep([tmp_path], today=TODAY)
+        bases = dict(report.age_bases)
+        assert bases == {"project_v": "verified", "project_bare": "mtime"}
+        scores = {m.stem: s for m, s in report.ranked}
+        assert scores["project_v"] == pytest.approx(37.0)
+
+    def test_sweep_leaves_log_and_corpus_byte_identical(self, tmp_path: Path) -> None:
+        """The advisory posture extends to the verdict log: sweep only reads."""
+        mem = self._verified(tmp_path)
+        append_verdict(tmp_path, self._verdict_for(mem))
+        log = tmp_path / VERDICTS_FILENAME
+        before = log.read_bytes()
+
+        sweep([tmp_path], today=TODAY)
+        assert log.read_bytes() == before
 
 
 class TestAnnotation:
