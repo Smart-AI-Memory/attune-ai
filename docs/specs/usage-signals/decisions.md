@@ -1,10 +1,11 @@
 # Usage Signals — Decisions
 
-**Status:** active (2026-08-08 triage refresh) — US-5 legs ruled
-satisfied for 11.0.0 (2026-07-31) and 11.2.0/11.2.1 (2026-08-04);
-US-4/US-6/US-7 shipped (D15/D16); US-3 outreach open past its
-timebox · R6 spend alarm shipped · Phase 2b live (D8) · Phase 2
-scoped (2026-06-15) · Phase 0 complete (2026-06-11)
+**Status:** active (2026-08-09) — US-3 CLOSED UNRESOLVED (D17);
+D18 daily-cadence amendment for the US-4 BEFORE leg (install
+chair-gated); US-5 legs ruled satisfied for 11.0.0 and
+11.2.0/11.2.1; US-4/US-6/US-7 shipped (D15/D16); remaining: US-7
+done-when closure · R6 spend alarm shipped · Phase 2b live (D8) ·
+Phase 0 complete (2026-06-11)
 
 ## D1 — Phase 0 baseline snapshot (2026-06-11)
 
@@ -789,3 +790,51 @@ bodies — the split is a capture-mechanics artifact of the
 pypistats budget, not a data gap. Companion precedent: the
 11.0.0 3/5 partial-acceptance ruling (2026-07-31, above); this
 entry extends it to the split-day full-capture case.
+
+## D17 — US-3 outreach round CLOSED: external usage UNRESOLVED (2026-08-09)
+
+Per US-3's own closure rule (five substantive responses OR ten
+delivered contacts with fourteen days, whichever first — and if
+the timebox ends without enough evidence, record the question
+UNRESOLVED rather than inferring adoption or non-adoption):
+
+- **Delivered:** 1 (US3-C01, github channel, 2026-07-20).
+  **Responses: 0.** Non-responses: 1 (the full roster: US3-C01).
+- **Drafted, never sent:** US3-C02 (send was chair-only; no send
+  occurred). The public candidate sweep was exhausted 2026-07-21
+  with no further qualifying candidates.
+- The 14-day clock on the sole delivered contact expired
+  ~2026-08-03 with no response.
+
+**Record:** the external-usage question is **UNRESOLVED**. No
+adoption or non-adoption inference is licensed by this round.
+US-3 is CLOSED as executed-to-timebox; any future outreach is new
+scope requiring a new chair-approved decision. (Closure authored
+by the lead under the feedback-close-out-2026-08-09 spec; the
+chair selected "US-3 closure" on the 2026-08-09 feedback form.)
+
+## D18 — BEFORE-leg satisfied by scheduled daily snapshot (cadence amendment, 2026-08-09)
+
+**Problem.** US-4's before-window (24-72h pre-tag) assumes tags
+planned days ahead. Releases here are decided same-day, so the
+window is structurally unsatisfiable: 11.5.0 and 11.6.0 both
+shipped carrying the incomplete-receipt warning, and every future
+same-day ship would too. This is a process defect, not a
+discipline failure.
+
+**Amendment (chair-reviewed at the feedback-close-out PR merge).**
+The BEFORE receipt for a release is the latest COMPLETE scheduled
+snapshot whose capture time falls in the 24-72h pre-tag window.
+Capture moves from per-planned-tag to a DAILY cadence: launchd
+template `scripts/launchd/com.smartaimemory.attune.reach-snapshot.plist`
+(07:30 local, mirroring the docs-outbox template pattern —
+template ships in-repo, machine install is chair-gated and
+follows a proven manual run). With a daily capture, the window
+contains a snapshot by construction; `--verify-before` and the
+US-4 completeness contract are unchanged — the amendment changes
+WHEN capture happens, never what counts as complete. Days the
+job rate-limits to partial are surfaced by the existing WARN
+path; the manifest/attempt-budget semantics (D15/D16) stay
+authoritative. (Authored by the lead under
+feedback-close-out-2026-08-09 R3; the chair selected "US-4
+cadence amendment" on the 2026-08-09 feedback form.)

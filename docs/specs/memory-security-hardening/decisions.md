@@ -87,3 +87,20 @@ server + hydration hook the new secret — require explicit confirmation and a
 backup before the edit (the same gate applied to the R1 `~/.attune` work).
 In-repo code (the sanitizer wiring fix, extractor hardening, MCP-tool wrapping,
 compose-file config, epoch-trust read validation) proceeds without that gate.
+
+## D7 — R1-followup task 2 VOID ratified (chair, 2026-08-09)
+
+**Context.** PR #1997 flipped task 2 ("MCP `memory_retrieve` —
+stamp provenance + wrap; fail closed if unavailable") to **void**
+on the lead's reading of the D1 narrowing: task 2b's chair-ratified
+trust annotation replaced the prose envelope for keyed structured
+data, and no fail-closed dimension exists for inline constants.
+That flip was a lead interpretation, flagged in the 2026-08-09
+feedback pass as unratified.
+
+**Ruling.** RATIFIED. The chair selected "Confirm task-2 void" on
+the 2026-08-09 session feedback form (multi-select response, all
+four items selected; recorded in
+`docs/specs/feedback-close-out-2026-08-09/`). Task 2 stays void;
+2b is its executed replacement. R1-followup remains COMPLETE as
+recorded in tasks.md.
