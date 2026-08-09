@@ -478,6 +478,20 @@ def test_format_respects_budget(recall_mod, monkeypatch):
     assert rendered_ids == ["kept"]  # over-budget entries yield no id either
 
 
+def test_format_fails_closed_when_renderer_unavailable(recall_mod, monkeypatch):
+    # R1-followup task 4: when attune.memory.provenance cannot import
+    # (older attune during rollout), the injector surfaces NOTHING — an
+    # empty block and no rendered ids — rather than leaking unframed text.
+    payload = "must never reach context unframed"
+    monkeypatch.setattr(recall_mod, "render_recall_for_context", None)
+    block, rendered_ids = recall_mod._format(
+        [{"id": "abc", "text": payload, "topics": ["type:note"]}]
+    )
+    assert block == ""
+    assert rendered_ids == []
+    assert payload not in block
+
+
 def test_format_wraps_injection_payload_as_flagged_untrusted(recall_mod):
     # R1 verification: a recalled finding carrying an injection payload must
     # reach context wrapped as untrusted evidence, flagged, content preserved.
