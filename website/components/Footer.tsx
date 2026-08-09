@@ -128,16 +128,6 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://pypi.org/project/attune-gui/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
-                >
-                  attune-gui on PyPI
-                </a>
-              </li>
-              <li>
-                <a
                   href="https://github.com/Smart-AI-Memory/attune-ai"
                   target="_blank"
                   rel="noopener noreferrer"

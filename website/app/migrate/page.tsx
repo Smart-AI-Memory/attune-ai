@@ -3,14 +3,13 @@ import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { generateMetadata } from '@/lib/metadata';
-import { CANONICAL_INSTALL, POST_FOLD_INSTALL } from '@/lib/install-command';
 
 export const metadata: Metadata = generateMetadata({
-  title: 'Migrating from attune-gui — Attune AI',
+  title: 'attune-gui is archived — Attune AI',
   description:
-    'Heads-up for current attune-gui users: the dashboard is folding into the attune-ai spec-driven development platform as an install extra. What changes, what doesn’t, and when.',
+    'The standalone attune-gui dashboard is parked: the repository is archived and no further releases are planned. Released versions stay installable from PyPI. The previously announced fold into attune-ai was cancelled.',
   url: 'https://smartaimemory.com/migrate',
-  keywords: ['attune-gui migration', 'attune-ai dashboard', 'pip install attune-ai[gui]'],
+  keywords: ['attune-gui', 'attune-gui archived', 'attune-ai dashboard'],
 });
 
 export default function MigratePage() {
@@ -22,12 +21,12 @@ export default function MigratePage() {
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-5xl font-bold mb-6 !text-white">
-                Heads up: <code className="font-mono">attune-gui</code> is folding into <code className="font-mono">attune-ai</code>
+                <code className="font-mono">attune-gui</code> is archived
               </h1>
               <p className="text-xl !text-white opacity-90">
-                The dashboard is moving inside the platform that turns
-                requirements into reliable software. Pre-fold notice &mdash;
-                nothing breaks today.
+                The standalone dashboard is parked. Released versions stay
+                installable, but no further releases are planned &mdash; and
+                the previously announced fold into attune-ai was cancelled.
               </p>
             </div>
           </div>
@@ -36,68 +35,37 @@ export default function MigratePage() {
         <section className="py-16">
           <div className="container">
             <div className="max-w-3xl mx-auto prose prose-lg">
-              <h2>What&rsquo;s changing</h2>
+              <h2>What happened</h2>
               <p>
-                Attune AI is one platform for spec-driven development &mdash;
-                AI workflows, project memory, retrieval grounding, and
-                verification, working together. The dashboard belongs with it,
-                so it&rsquo;s moving in. Today it ships as a standalone PyPI
-                package:
-              </p>
-              <pre><code>{CANONICAL_INSTALL}</code></pre>
-              <p>
-                In an upcoming release, it becomes an install extra on{' '}
-                <code className="font-mono">attune-ai</code> itself:
-              </p>
-              <pre><code>{POST_FOLD_INSTALL}</code></pre>
-              <p>
-                Same dashboard, same surfaces (Living Docs, RAG search,
-                Commands, Summaries). One package to install instead of two.
+                This page used to be a heads-up that the dashboard would fold
+                into <code className="font-mono">attune-ai</code> as an
+                install extra. That fold was cancelled: in July 2026 the
+                project was parked instead &mdash; the{' '}
+                <code className="font-mono">attune-gui</code> repository is
+                archived and no further releases are planned. There is no{' '}
+                <code className="font-mono">pip install attune-ai[gui]</code>.
               </p>
 
-              <h2>What stays the same</h2>
+              <h2>What this means for you</h2>
               <ul>
-                <li>The dashboard URL, layout, and feature set.</li>
-                <li>Your project directory and any{' '}
-                  <code className="font-mono">.help/</code>{' '}
-                  templates / corpus state.
+                <li>
+                  Already-released versions stay installable from PyPI
+                  (<code className="font-mono">pip install attune-gui</code>),
+                  and an existing install keeps running &mdash; it just
+                  won&rsquo;t receive updates.
                 </li>
-                <li>The CLI. <code className="font-mono">attune</code>{' '}
-                  workflows continue to work unchanged.</li>
-                <li>Your existing{' '}
-                  <code className="font-mono">attune-gui</code>{' '}
-                  install keeps running until you choose to migrate.
+                <li>
+                  The <code className="font-mono">attune</code> CLI and the
+                  attune-ai platform are unaffected: workflows, the spec
+                  engine, memory, and the Claude Code plugin all continue
+                  unchanged.
+                </li>
+                <li>
+                  Nothing in your project directory or{' '}
+                  <code className="font-mono">.help/</code> state depends on
+                  the dashboard.
                 </li>
               </ul>
-
-              <h2>When does this happen</h2>
-              <p>
-                On the v7.0 release. We&rsquo;ll publish a banner here,
-                on the homepage, and on the <code className="font-mono">attune-gui</code>{' '}
-                PyPI page about 4&ndash;6 weeks before release day so you
-                aren&rsquo;t blindsided. The banner phrasing is
-                deliberately non-version-specific until the v7.0 RC cuts.
-              </p>
-
-              <h2>Do I need to do anything now?</h2>
-              <p>
-                No. This page is a heads-up. When v7.0 ships, the steps
-                will be:
-              </p>
-              <ol>
-                <li>
-                  <code className="font-mono">pip uninstall attune-gui</code>
-                </li>
-                <li>
-                  <code className="font-mono">{POST_FOLD_INSTALL}</code>
-                </li>
-              </ol>
-              <p>
-                The standalone <code className="font-mono">attune-gui</code>{' '}
-                package will continue to publish as a deprecation shim that
-                points at the new install path, so a stale install command
-                in a CI script won&rsquo;t break overnight.
-              </p>
 
               <h2>Where to follow along</h2>
               <ul>
@@ -105,15 +73,7 @@ export default function MigratePage() {
                   <Link href="/changelog" className="text-[var(--primary)] hover:underline">
                     Changelog
                   </Link>{' '}
-                  &mdash; v7.0 release notes will land here with the
-                  exact migration steps.
-                </li>
-                <li>
-                  <Link href="/faq" className="text-[var(--primary)] hover:underline">
-                    FAQ
-                  </Link>{' '}
-                  &mdash; &ldquo;What&rsquo;s the difference between attune-ai
-                  and attune-gui?&rdquo; updates on fold day.
+                  &mdash; attune-ai release notes land here.
                 </li>
                 <li>
                   <Link
@@ -124,8 +84,7 @@ export default function MigratePage() {
                   >
                     GitHub issues
                   </Link>{' '}
-                  &mdash; raise anything that surprises you in the
-                  migration.
+                  &mdash; questions about the archive are welcome there.
                 </li>
               </ul>
             </div>
