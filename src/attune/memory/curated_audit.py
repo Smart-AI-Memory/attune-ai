@@ -231,7 +231,11 @@ def _record_metadata_key(key: str, value: str, fields: dict[str, str], unknown: 
         unknown.append(f"metadata.{key}")
 
 
-_BLOCK_SCALAR_INDICATORS = frozenset({">", "|", ">-", "|-", ">+", "|+"})
+# A YAML block-scalar header: ``>`` or ``|``, optionally an indentation
+# indicator digit and/or chomping ``+``/``-`` (either order), optionally a
+# trailing comment. Codex D11 finding: the earlier fixed set missed ``>2`` /
+# ``|2-`` / ``> # comment`` forms, silently discarding their continuation.
+_BLOCK_SCALAR_RE = re.compile(r"^[>|](?:[0-9][+-]?|[+-][0-9]?)?(?:\s+#.*)?$")
 
 
 def _record_top_level_key(key: str, value: str, fields: dict[str, str], unknown: list[str]) -> bool:
@@ -247,7 +251,7 @@ def _record_top_level_key(key: str, value: str, fields: dict[str, str], unknown:
     else:
         unknown.append(key)
         return False
-    return value in _BLOCK_SCALAR_INDICATORS
+    return bool(_BLOCK_SCALAR_RE.match(value))
 
 
 def _parse_date(value: str | None) -> date | None:

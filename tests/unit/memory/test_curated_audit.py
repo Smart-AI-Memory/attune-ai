@@ -214,6 +214,30 @@ class TestParsing:
         assert mem.unknown_keys == ()
         assert mem.description == "tail folded: value"
 
+    def test_block_scalar_headers_with_indent_digit_or_comment(self, tmp_path: Path) -> None:
+        """Codex D11 finding: ``>2`` / ``|2-`` / ``> # comment`` headers are
+        valid YAML block scalars too — their continuation must be collected,
+        not discarded with the indicator retained as the value."""
+        for stem, header in [
+            ("p_fold_digit", ">2"),
+            ("p_lit_digit_chomp", "|2-"),
+            ("p_fold_comment", "> # folded on purpose"),
+        ]:
+            path = tmp_path / f"{stem}.md"
+            path.write_text(
+                "---\n"
+                f"name: {stem}\n"
+                f"description: {header}\n"
+                "  the real: text\n"
+                "metadata:\n"
+                "  type: project\n"
+                "---\n\nBody.\n",
+                encoding="utf-8",
+            )
+            mem = load_memory(path)
+            assert mem.unknown_keys == (), stem
+            assert mem.description == "the real: text", stem
+
     def test_unknown_key_with_block_scalar_flags_only_the_key(self, tmp_path: Path) -> None:
         """Both directions: the forbidden key is still flagged exactly once,
         and its continuation lines are not flagged as further keys."""
