@@ -30,8 +30,9 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from attune.security.path_validation import _validate_file_path
@@ -174,6 +175,81 @@ def load_verdicts(root: Path) -> list[VerdictRecord]:
         except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
             logger.warning("skipping malformed verdict line %s:%d: %s", log_path, lineno, exc)
     return records
+
+
+_FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---", re.DOTALL)
+_VERIFIED_LINE_RE = re.compile(r"(?m)^verified:.*$")
+
+
+def set_verified(path: Path, when: date) -> None:
+    """Set or replace ``verified:`` in a memory's frontmatter.
+
+    The ONE frontmatter field the verdict loop owns (D6 #2 — human-set,
+    via the loop's one-keystroke verdicts). Everything else in the file
+    is preserved byte-for-byte, and ``verified:`` is outside the
+    canonical digest, so setting it never invalidates the verification
+    being recorded.
+
+    Args:
+        path: The memory file.
+        when: The verification date to record.
+
+    Raises:
+        ValueError: If the path fails validation or the file carries no
+            frontmatter block to amend.
+    """
+    validated = _validate_file_path(str(path))
+    text = validated.read_text(encoding="utf-8")
+    match = _FRONTMATTER_RE.match(text)
+    if not match:
+        raise ValueError(f"no frontmatter block to amend in {validated}")
+    block = match.group(1)
+    line = f"verified: {when.isoformat()}"
+    if _VERIFIED_LINE_RE.search(block):
+        new_block = _VERIFIED_LINE_RE.sub(line, block, count=1)
+    else:
+        new_block = f"{block}\n{line}"
+    validated.write_text(
+        text[: match.start(1)] + new_block + text[match.end(1) :], encoding="utf-8"
+    )
+
+
+def propagate_verdict(stem: str, client: object | None = None) -> bool:
+    """Invalidate a memory's DERIVED Redis node immediately (D6 #3).
+
+    Deletes ``attune:memory:node:<stem>`` so the serving layer stops
+    recalling a just-judged memory THIS session instead of after the
+    next hydration cycle. Deletion-only on purpose: the index is derived
+    and must never be authored here — the next hydration rebuilds
+    ``keep``/``sharper`` nodes from the corpus, and durable tombstone
+    respect for ``wrong`` belongs to the (external) hydrator, which
+    re-reads the verdict log.
+
+    Best-effort by contract: Redis missing, unreachable, or erroring
+    degrades to ``False`` — the verdict loop is never blocked on the
+    memory layer.
+
+    Args:
+        stem: The memory's filename stem.
+        client: An optional connected ``redis.Redis`` client; when None
+            one is created via ``connect_recall_redis()``.
+
+    Returns:
+        True when the node key was deleted; False when it did not exist
+        or Redis was unavailable.
+    """
+    try:
+        if client is None:
+            from attune.memory.recall_redis import connect_recall_redis  # noqa: PLC0415
+
+            client = connect_recall_redis()
+        return bool(client.delete(f"attune:memory:node:{stem}"))
+    except Exception as exc:  # noqa: BLE001 — P15: never block the loop
+        # WARNING (not debug) with the exception type, so a propagation
+        # regression (e.g. an AttributeError from a client-interface change)
+        # stays visible instead of masquerading as Redis-down silence.
+        logger.warning("verdict propagation skipped for %s: %s: %s", stem, type(exc).__name__, exc)
+        return False
 
 
 def latest_verdicts(root: Path) -> dict[str, VerdictRecord]:
