@@ -8,12 +8,12 @@ import { installCommand } from '@/lib/install-command';
 import { CAPABILITIES, PILLARS, RELIABILITY_LOOP } from '@/lib/features';
 
 // Doc-toolchain code sample. attune-ai is the parent
-// framework (headlined in the hero); the four packages
-// below are the standalone documentation toolchain we
-// built with it.
-const codeExample = `# 1. attune-author — generate polished, source-grounded
+// framework (headlined in the hero); authoring ships
+// inside it, and the three standalone packages below
+// complete the documentation toolchain we built with it.
+const codeExample = `# 1. attune-ai authoring — generate polished, source-grounded
 #    templates from your codebase (CI or dev time)
-from attune_author.generator import generate_feature_templates
+from attune.authoring.generator import generate_feature_templates
 generate_feature_templates(feature, help_dir=".help", project_root=".")
 
 # 2. attune-rag — keyword + semantic retrieval keeps
@@ -362,18 +362,20 @@ export default function Home() {
                   AI, then grew into an engineering toolkit focused on
                   Claude &mdash; and later Redis. The documentation
                   toolchain came after, built with the same development
-                  discipline, and split off as four standalone packages
-                  forming an end-to-end author &rarr; reader loop. Use
-                  the full stack, or drop in just the piece you need.
+                  discipline: authoring ships inside attune-ai, and
+                  three standalone packages complete the end-to-end
+                  author &rarr; reader loop. Use the full stack, or
+                  drop in just the piece you need.
                 </p>
                 <ul className="space-y-5">
                   <li className="flex items-start gap-3">
                     <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[var(--accent)]/15 text-[var(--accent)] font-bold text-xs shrink-0 mt-0.5">1</span>
                     <div>
-                      <div className="font-semibold text-sm"><code className="font-mono">attune-author</code></div>
+                      <div className="font-semibold text-sm"><code className="font-mono">attune.authoring</code></div>
                       <p className="text-xs text-[var(--text-secondary)] leading-relaxed mt-1">
-                        Generates 15 kinds of source-grounded templates with
-                        per-type LLM polish. Runs at dev time or in CI.
+                        Ships with attune-ai &mdash; generates 15 kinds of
+                        source-grounded templates with per-type LLM polish.
+                        Runs at dev time or in CI.
                       </p>
                     </div>
                   </li>
@@ -410,7 +412,7 @@ export default function Home() {
                 </ul>
                 <div className="mt-8 pt-6 border-t border-[var(--border)]/40">
                   <p className="text-xs text-[var(--text-muted)]">
-                    All four are open source &mdash; Apache 2.0.
+                    Everything is open source &mdash; Apache 2.0.
                   </p>
                 </div>
               </div>
@@ -436,10 +438,10 @@ export default function Home() {
         <section className="py-32 px-6 max-w-7xl mx-auto" aria-label="Products">
           <div className="text-center mb-20">
             <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">Core Capabilities</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold">Six Ways to Use It</h2>
+            <h2 className="text-4xl md:text-5xl font-extrabold">Five Ways to Use It</h2>
             <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
               The attune-ai framework, its Claude Code plugin, and the
-              four-package documentation toolchain we built with it.
+              three-package documentation toolchain we built with it.
               Pick the piece that fits the job.
             </p>
           </div>
@@ -463,17 +465,6 @@ export default function Home() {
               <h3 className="text-xl font-bold mb-3">attune-help</h3>
               <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
                 Lightweight reader. 1 dependency, 6 files. Embed progressive help in any CLI tool, notebook, or internal app.
-              </p>
-            </div>
-
-            {/* attune-author */}
-            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
-              <div className="w-14 h-14 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--accent)] transition-colors">
-                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#9999;&#65039;</span>
-              </div>
-              <h3 className="text-xl font-bold mb-3">attune-author</h3>
-              <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                AI authoring companion. Generates 15 kinds of source-grounded templates with per-type polish prompts.
               </p>
             </div>
 
