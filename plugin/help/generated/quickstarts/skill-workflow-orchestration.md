@@ -7,7 +7,7 @@ source: plugin/skills/workflow-orchestration/SKILL.md
 
 # Quickstart: Use /workflow-orchestration
 
-Run analysis workflows — security, code review, tests, perf, bugs, docs, release.
+Run several analysis workflows together in one sweep.
 
 ```
 /workflow-orchestration <workflow: security, review, tests, perf, release, bugs, docs>

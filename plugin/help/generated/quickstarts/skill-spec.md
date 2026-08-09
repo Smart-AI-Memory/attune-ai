@@ -7,7 +7,7 @@ source: plugin/skills/spec/SKILL.md
 
 # Quickstart: Use /spec
 
-Spec-driven development — brainstorm, plan, review, and execute with quality gates.
+Spec Ladders — goal-driven spec development: brainstorm, plan, review, and execute a gated task ladder with recorded approvals.
 
 ```
 /spec <what to build, or 'resume'>

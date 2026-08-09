@@ -9,7 +9,7 @@ source: plugin/skills/refactor-plan/SKILL.md
 
 # Reference: Skill: refactor-plan
 
-Code-level refactoring analysis and roadmap. Detects smells, duplication, complexity. Triggers on: refactor, tech debt, simplify, code smell, clean up, modularize, DRY.
+Code-level refactoring analysis and roadmap. Detects duplication and complexity. Triggers on: refactor, tech debt, simplify, clean up, modularize, DRY, restructure.
 
 **Usage:** `/refactor-plan <path to analyze>`
 
@@ -73,6 +73,13 @@ simplify_code(path="<target file>")
 - **Naming**: Unclear or inconsistent naming
 
 ## Output
+
+**Prefer the rich panel.** If the tool response includes `panel_html`,
+pass it to `mcp__visualize__show_widget` — the universal report panel
+(title, score, findings/category sections; from
+`attune.workflows.report_panel`). It shows an explicit "did not
+complete" state on failure, never a false "clean". Fall back to the
+markdown below when the widget surface is unavailable.
 
 - Prioritized issue list
 - Refactoring steps (ordered)

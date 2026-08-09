@@ -7,7 +7,7 @@ source: plugin/skills/attune-hub/SKILL.md
 
 # Task: Use the attune-hub skill
 
-Developer workflow hub — routes to the right skill based on what you need. Triggers on: attune, help me, what can you do, workflows, setup, configure, capabilities.
+Developer workflow hub — routes to the right skill based on what you need. Triggers on: attune, what can attune do, what can you do, capabilities, where do I start, get started.
 
 Invoke with: `/attune-hub <what you need help with>`
 

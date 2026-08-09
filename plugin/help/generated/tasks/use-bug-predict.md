@@ -7,7 +7,7 @@ source: plugin/skills/bug-predict/SKILL.md
 
 # Task: Use the bug-predict skill
 
-Predict likely bug locations from code patterns and complexity. Triggers on: predict bugs, find bugs, risky code, code risk, what might break, likely bugs.
+Predict likely bug locations from code patterns and complexity. Triggers on: predict bugs, find bugs, risky code, code risk, what might break, likely bugs, bug hotspots.
 
 Invoke with: `/bug-predict <path or directory to scan>`
 

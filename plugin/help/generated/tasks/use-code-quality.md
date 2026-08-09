@@ -7,7 +7,7 @@ source: plugin/skills/code-quality/SKILL.md
 
 # Task: Use the code-quality skill
 
-Code review and bug prediction to find quality issues, style violations, and likely bugs. Triggers on: review, quality, code review, analyze, lint, bugs, predict, code smell.
+Code review to find quality issues, style violations, and code smells. Triggers on: review, code review, quality, lint, code smell, analyze code.
 
 Invoke with: `/code-quality <path or directory to review>`
 

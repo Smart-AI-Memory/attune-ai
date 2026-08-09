@@ -7,7 +7,7 @@ source: plugin/skills/workflow-orchestration/SKILL.md
 
 # Task: Use the workflow-orchestration skill
 
-Run analysis workflows — security, code review, tests, perf, bugs, docs, release. Triggers on: workflow, run, execute, analyze, security, review, test, perf, release, bugs, docs, audit.
+Run several analysis workflows together in one sweep. Triggers on: run all workflows, run multiple workflows, full analysis sweep, workflow orchestration.
 
 Invoke with: `/workflow-orchestration <workflow: security, review, tests, perf, release, bugs, docs>`
 

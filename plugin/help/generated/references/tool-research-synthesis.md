@@ -9,7 +9,7 @@ source: src/attune/mcp/tool_schemas.py
 
 # Reference: Tool: Research Synthesis
 
-Synthesize insights from multiple documents. Summarizes, analyzes patterns, and produces a unified answer.
+Synthesize insights from local source documents at a path. A 3-agent pipeline summarizes, analyzes patterns across, and produces a unified answer from the documents found at the given directory or file.
 
 **Group:** workflow
 
@@ -17,14 +17,14 @@ Synthesize insights from multiple documents. Summarizes, analyzes patterns, and 
 
 | Parameter | Type | Description | Constraints | Default |
 | --------- | ---- | ----------- | ----------- | ------- |
-| `sources` | array | List of document texts to synthesize (minimum 2) |  | required |
-| `question` | string | Research question to answer |  | required |
+| `path` | string | Directory or file of source documents to analyze |  | . |
+| `depth` | string | Synthesis depth / agent budget (default: standard) | enum: quick|standard|deep | standard |
 
 ## Usage
 
-`research_synthesis(sources="...", question="...")`
+`research_synthesis()`
 
 ## Related Topics
 - **Reference**: Tool: Security Audit — Run security audit workflow on codebase. Detects vulnerabili...
 - **Reference**: Tool: Bug Predict — Run bug prediction workflow. Analyzes code patterns and pred...
-- **Reference**: Tool: Code Review — Run code review workflow. Provides comprehensive code qualit...
+- **Reference**: Tool: Discovery Sweep — Run the discovery-sweep meta-workflow: fans out across all a...

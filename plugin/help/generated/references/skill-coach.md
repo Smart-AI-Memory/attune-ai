@@ -9,7 +9,7 @@ source: plugin/skills/coach/SKILL.md
 
 # Reference: Skill: coach
 
-Progressive help for any topic. Repeat to go deeper: concept -> procedural -> reference. Triggers on: coach, learn, explain, help, tell me more, how does, what is, help with, deeper.
+Progressive help for any topic. Repeat to go deeper: concept -> procedural -> reference. Triggers on: coach, learn, explain, teach me, tell me more, how does, what is, go deeper.
 
 **Usage:** `/coach <topic | init | status | maintain | update>`
 

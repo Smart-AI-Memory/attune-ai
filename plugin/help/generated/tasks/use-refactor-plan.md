@@ -7,7 +7,7 @@ source: plugin/skills/refactor-plan/SKILL.md
 
 # Task: Use the refactor-plan skill
 
-Code-level refactoring analysis and roadmap. Detects smells, duplication, complexity. Triggers on: refactor, tech debt, simplify, code smell, clean up, modularize, DRY.
+Code-level refactoring analysis and roadmap. Detects duplication and complexity. Triggers on: refactor, tech debt, simplify, clean up, modularize, DRY, restructure.
 
 Invoke with: `/refactor-plan <path to analyze>`
 

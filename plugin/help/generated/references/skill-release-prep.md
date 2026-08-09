@@ -19,26 +19,32 @@ Before running, ask:
 
 1. **Version**: "What version are you releasing? Or
    should I check the current version and suggest?"
-2. **Scope**: "Full release prep or a specific check?"
-   - Full: All 4 agents (security, testing, docs,
-     versioning)
+2. **Scope**: "Full advisory or a specific check?"
+   - Full: advisory across security, testing, docs,
+     versioning
    - Specific: Single check (e.g., just changelog)
 
 ## MCP Tools
 
 | Tool | What It Does |
 | ---- | ------------ |
-| `release_prep` | Full release readiness (4-agent team) |
+| `release_notes` | Changelog draft + go/no-go advisory (single-agent SDK) |
 | `health_check` | Project health score (tests + lint + coverage) |
 | `dependency_check` | Dependency audit and vulnerability scan |
 | `secure_release` | Full release pipeline with security gates |
 
+> **Advisory vs gate.** `release_notes` is *advisory* — it drafts a
+> changelog and gives a recommendation, it does not block. The
+> deterministic 4-agent gate (real bandit/ruff/pytest + hard
+> thresholds) is CLI-only: `attune workflow run release-gate`.
+
 ## Execution
 
-Call the `release_prep` MCP tool for a full assessment:
+Call the `release_notes` MCP tool for a changelog draft and
+go/no-go recommendation:
 
 ```
-release_prep(path="<project root>")
+release_notes(path="<project root>")
 ```
 
 For targeted checks, use individual tools:
@@ -118,7 +124,7 @@ After presenting results, offer:
 - "Ready to tag and publish?"
 
 ## Related Topics
-- **Reference**: Tool: Release Prep (`release_prep`)
+- **Reference**: Tool: Release Notes (`release_notes`)
 - **Reference**: Tool: Health Check (`health_check`)
 - **Reference**: Tool: Dependency Check (`dependency_check`)
 - **Reference**: Tool: Secure Release (`secure_release`)

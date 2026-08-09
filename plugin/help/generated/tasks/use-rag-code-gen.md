@@ -7,7 +7,7 @@ source: plugin/skills/rag-code-gen/SKILL.md
 
 # Task: Use the rag-code-gen skill
 
-RAG-grounded code generation with source citations. Triggers on: grounded code, ground this, cite sources, show me with sources, how do I with attune, reference attune docs, verify against attune.
+RAG-grounded code generation with source citations. Triggers on: grounded code, ground this, cite sources, show me with sources, how do I with attune, reference attune docs, grounded against attune docs.
 
 Invoke with: `/rag-code-gen <what you want generated + any specifics>`
 
