@@ -1,9 +1,13 @@
 # Usage Signals (table-refreshed) — Requirements
 
-**Status:** approved (2026-07-21 refresh — US-4/US-6/US-7 SHIPPED
-#1476/D15; US-3 outreach in flight, public candidate sweep
-exhausted 2026-07-21; US-5 event-bound: before-window
-2026-07-24→26 for the 07-27 tag. Originally approved 2026-07-19,
+**Status:** approved (2026-08-08 triage refresh —
+US-1/US-2/US-4/US-6/US-7 SHIPPED (#1476/D15, #1510/D16); US-5
+satisfied per two chair rulings: 11.0.0 3/5 partial-acceptance
+2026-07-31 (#1836) and 11.2.0+11.2.1 split-capture AFTER
+2026-08-04 (#1930). REMAINING: US-3 outreach round — 1 delivered
+contact, 14-day clock expired ~2026-08-03; close it and record
+external usage UNRESOLVED per the requirement — and US-7's
+refreshed done-when closure entry. Originally approved 2026-07-19,
 chair-ruled per item). Authored by the
 round table (thread `us-refresh-001`); compiled deterministically by
 `attune.roundtable.compiler` (V2-P2). Approved items only;

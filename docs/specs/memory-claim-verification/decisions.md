@@ -1,5 +1,10 @@
 # memory-claim-verification — decisions
 
+**Status:** parked (2026-07-26; file-level line added at the
+2026-08-08 triage) — D1–D5 ruled; D6 sends the ref-binding fork to
+the round table. Resume-Trigger: the ref-binding table sitting
+(precondition cleared 2026-07-28).
+
 ## D1 (2026-07-26): the extraction prompt is NOT the control
 
 **Ruled.** The prompt already carries a PROVENANCE rule instructing the

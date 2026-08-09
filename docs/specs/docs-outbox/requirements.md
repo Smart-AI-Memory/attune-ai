@@ -1,11 +1,15 @@
 # Docs Outbox — Requirements (Phase 1 ratified)
 
-**Status:** active (2026-08-06 — Phase 1 built, D3 in
-[decisions.md](decisions.md); receipts AC-1/AC-3/AC-4 recorded,
-AC-2 pending the chair's chip click; launchd install handed to the
-chair). Requirements ratified 2026-08-06 (D2, receipt
-`resp-20260806-073859`). Phase 1 = R1–R4 below; the pending-recall
-layer is DEFERRED (R5).
+**Status:** active (2026-08-07 — Phase 1 built and dogfooded; ALL
+FOUR acceptance receipts recorded: AC-1/AC-3/AC-4 on 2026-08-06
+(D3), AC-2 on 2026-08-07 — 11 real lessons swept in one PR,
+#1973). Requirements ratified 2026-08-06 (D2, receipt
+`resp-20260806-073859`). OPEN: R3's memory lint is NOT satisfied
+in Phase 1 (call removed per D4 — wire it when a memory-targeting
+kind lands); the R4 digest CHIP remains the untested surface (AC-2
+passed by chair direct instruction, not chip click); the launchd
+job ships as a template and is not installed; R5 pending-recall
+DEFERRED to Phase 2 with its reopen trigger recorded.
 **Slug:** `docs-outbox`
 **Provenance:** 2026-07-22 candidate (chair-captured, PR #1624);
 ACTIVATED 2026-08-06 as the ruled fix for the lessons.md

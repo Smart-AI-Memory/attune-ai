@@ -5,14 +5,19 @@
 > Execution plan for Claude Code:
 > [.claude/plans/fable-premium-tier.md](../../../.claude/plans/fable-premium-tier.md).
 
-**Status**: parked (2026-07-19, chair ruling T1 of
-`q-briefing-triage-001`) — Resume-Trigger: 2026-07-28 (after the
-DEC-7 mid-window read on 07-27 and fable task 9's ≥07-28 window).
-Previously: in-progress (2026-07-13) — approved 2026-07-10 (Patrick:
-"GO"); tasks 1–8 done on feat/fable-premium-tier (PR #1361); task 9
-(release) parked ≥07-28. Amendment ratified during task 1:
-`BASELINE_MODEL` moves to `claude-fable-5` — see task 7 note and
-design.md §3 amendment.
+**Status:** active (2026-08-08 triage — the 2026-07-28 resume
+trigger ELAPSED; releases 11.0.0–11.5.0 shipped since). Tasks 1–8
+done and live in the merged tree (#1361, 2026-07-13: model_tiers
+premium=claude-fable-5, registry entry,
+BASELINE_MODEL=claude-fable-5). Task 9 OUTSTANDING and overdue:
+the premium-price callout never reached CHANGELOG.md (no
+`claude-fable-5` entry) and generated tier docs still say premium
+= Opus (`plugin/help/generated/concepts/tier-routing.md`) —
+user-visible doc drift on a 2× price change already in released
+builds. Amended 2026-07-29: editing passes split to
+`ATTUNE_MODEL_EDITING` (claude-opus-5, #1770); PREMIUM stays
+claude-fable-5. Phase-1/Phase-2 approvals in requirements.md and
+design.md remain accurate as recorded.
 
 ## Implementation order
 

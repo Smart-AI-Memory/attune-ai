@@ -1,8 +1,11 @@
 # Local-First Reports — Requirements
 
-**Status:** active (2026-07-31) — Phase 1 executed in the
-originating session (chair go, in-session); Phase 2 is a design
-question set, NOT authorized.
+**Status:** parked (2026-08-08 triage — Phase 1 shipped in #1823:
+roundtable transcripts machine-local, curated stubs in-repo;
+Phase 2 is a design question set with no authority granted.)
+Resume-Trigger: a chair gate on a named Phase 2 item
+(lessons-corpus localization, cross-review ledger trim, or an
+`attune reports` surface).
 **Slug:** `local-first-reports`
 **Provenance:** chair-initiated 2026-07-31 ("some of the reports
 should be only on my machine and not distributed as part of

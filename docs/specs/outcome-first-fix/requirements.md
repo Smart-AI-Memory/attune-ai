@@ -1,12 +1,14 @@
 # Outcome-First Fix — Requirements
 
-**Status:** active (2026-07-30) — deliberately narrow spec
-authorized by the roundtable ruling. Tasks 0–1 EXECUTED (chair
-gos; PRs #1806, #1808); Task 2 authored and awaiting its own
-chair go + spend gate. Beyond the current task in
-[tasks.md](tasks.md), this spec grants NO Build/Fix/Ship
-implementation authority — each phase's task is authored and
-executed only behind chair gates.
+**Status:** shipped (2026-08-02; flipped at 2026-08-08 triage) —
+deliberately narrow spec authorized by the roundtable ruling.
+Tasks 0–4 all EXECUTED behind their own chair gos (#1806, #1808,
+#1811, #1818, #1824 + hardening #1837/#1839/#1919); name ratified
+"Fix Receipts" (D9, 2026-08-02). Phase 4 routing metrics stay
+gated on a labeled corpus; Phases 5–6 are a named non-goal. This
+spec grants NO further Build/Fix/Ship implementation authority —
+any new phase's task is authored and executed only behind chair
+gates.
 **Slug:** `outcome-first-fix`
 **Provenance:** roundtable thread `q-outcome-first-attune-ux-001`
 ([docs/reports/roundtable/q-outcome-first-attune-ux-001.md](../../reports/roundtable/q-outcome-first-attune-ux-001.md)),

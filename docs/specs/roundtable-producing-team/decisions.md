@@ -1,8 +1,8 @@
 # Round Table v2 — Producing Team: Decisions
 
-**Status:** active (2026-07-20) — design phase waived
-(entry below); bounded flip condition written; reviewed each
-Monday sitting
+**Status:** shipped (2026-07-29; flipped at 2026-08-08 triage) —
+design phase waived 2026-07-20 (entry below); P1–P4 landed and the
+re-run queue is closed.
 
 ## Thread table-v2-001 — promoted (2026-07-18, chair: Patrick)
 

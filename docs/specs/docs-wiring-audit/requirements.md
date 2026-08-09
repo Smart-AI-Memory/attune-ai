@@ -140,22 +140,17 @@ approval.
 
 ## Phase 2: Design
 
-**Status:** not started
-
-_To be authored after Phase 1 approval. Will cover: audit script
-architecture, allowlist file format, CI workflow shape, report format,
-mkdocstrings resolution strategy._
+**Status:** shipped (2026-05-31 authored — see design.md)
 
 ---
 
 ## Phase 3: Tasks
 
-**Status:** not started
-
-_To be authored after Phase 2 approval._
+**Status:** shipped (2026-05-31 authored — see tasks.md)
 
 ---
 
 ## Phase 4: Implementation
 
-**Status:** not started
+**Status:** shipped (v1 #518/#523/#540; v1.1 2026-07-15 #1394;
+Task 10 See-Also advisory deferred)

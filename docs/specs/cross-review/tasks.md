@@ -1,8 +1,12 @@
 # Cross Review — Tasks
 
-**Status:** APPROVED (chair, 2026-07-22); execution SECOND after
-cross-provider-session-handoff (chair sequencing), post-07-27.
-OPEN-1..3 rulings land before T3 dogfooding begins.
+**Status:** complete (2026-07-28/29; flipped at 2026-08-08 triage)
+— T1–T4 shipped (T1+T2 in 10.6.1, `/cross-review` in 11.0.0 #1607;
+T3 ledger executed; T4 closed OPEN-1..3 on T3 evidence — see
+decisions.md). Spec is LIVING in one respect: the R5 dogfood ledger
+(`receipts.md`) stays open and accrues per run — chair 2026-07-29
+made it the standing evidence source for what's next. Binding
+posture unchanged: board-only advisory.
 
 Pre-execution rule: re-grep every named scope against the current
 tree (spec text goes stale; code is the contract).

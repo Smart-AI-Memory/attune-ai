@@ -1,7 +1,15 @@
 # memory-claim-verification
 
-**Status:** draft (2026-07-26 — requirements; OQ1 measured, R3 retired
-pending the chair ruling in D6)
+**Status:** parked (2026-08-08 triage — requirements authored
+2026-07-26; OQ1 measured at n=18: 28.1% of model-authored refs
+grounded, 10.1% heuristic-backfillable — R3-as-written retired by
+D6. No implementation starts before the round table rules the
+ref-binding fork; three candidates in decisions.md D6.)
+Resume-Trigger: convene the ref-binding round table — the blocking
+precondition (the 2026-07-27 roundtable fire) CLEARED on
+2026-07-28 (agent-round-table decisions.md, thread
+`routine-clean-run-20260728-1020`), so the sitting is convenable
+now and is this spec's only gate.
 **Owner:** Patrick (chair)
 **Origin:** 2026-07-25 session — 2 of 4 auto-stashed findings were wrong
 enough that Patrick had to ask for them to be deleted.

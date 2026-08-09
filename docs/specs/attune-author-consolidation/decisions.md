@@ -246,6 +246,6 @@ serial-green.
 
 ## Open
 
-- **T4 execution** (post-T3, per D12): drop `[author]` extra,
-  retire CLI invocation paths, archive GitHub repo, set PyPI
-  archived status. No new decision needed — D12 is the ruling.
+- (none — T4 executed 2026-07-27 per D12: `[author]` extra dropped
+  from pyproject.toml, CLI invocation paths retired, repo archived
+  without yank. Closed at the 2026-08-08 triage.)

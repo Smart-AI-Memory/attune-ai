@@ -1,5 +1,10 @@
 # docs-outbox — decisions
 
+**Status:** active (2026-08-07) — Phase 1 built, reviewed, and
+dogfooded; R3 memory lint and the R4 chip carried open; R5
+deferred to Phase 2. (File-level line added at the 2026-08-08
+triage so the lifecycle detector stops reading D1's inline status.)
+
 ## D1 — ACTIVATED: the outbox is the ruled fix for lessons-append conflicts
 
 **Date:** 2026-08-06 · **Status:** ACTIVATED (chair: Patrick, via

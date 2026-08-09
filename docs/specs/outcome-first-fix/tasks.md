@@ -1,10 +1,13 @@
 # Outcome-First Fix — Tasks
 
-**Status:** active (2026-07-31) — Tasks 0–2 executed, each
-behind its own explicit chair go (spend gate honored on Task 2;
-live-fire receipt in decisions.md D6). Task 3 (Phase 3) is
-AUTHORED and awaiting its own chair go; Phase 4+ tasks are
-authored per-phase behind chair gates (decisions.md D2).
+**Status:** shipped (2026-08-02; flipped at 2026-08-08 triage) —
+Tasks 0–4 all executed, each behind its own explicit chair go
+(spend gate honored on Task 2; live-fire receipt in decisions.md
+D6). Task 3 shipped in #1818, Task 4 (guided intake form) in #1824
+with hardening in #1837/#1839/#1919; feature name ratified as
+"Fix Receipts" in D9. No further tasks authored — Phase 4 routing
+metrics stay gated on a labeled corpus (decisions.md D2), Phases
+5–6 are a named non-goal.
 
 ## Executed log
 
@@ -50,6 +53,12 @@ authored per-phase behind chair gates (decisions.md D2).
   plus a truthful FAIL row) is untouched. Also corrected: the
   `fix` subparser's help still claimed "dry — no execution yet"
   after `--run` shipped.
+- **Task 4 — guided intake form** (chair go in-session; PR #1824,
+  hardened in #1837/#1839/#1919; bullet backfilled at the
+  2026-08-08 triage): `src/attune/elicitation/fix_intake.py` +
+  `plugin/skills/fix/SKILL.md` + `tests/unit/elicitation/
+  test_fix_intake.py` — the `/fix` intake picks scope and probes,
+  previews the contract, runs with a verified receipt.
 
 ## Task 2 — Phase 2: executable Fix proof
 

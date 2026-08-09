@@ -1,8 +1,9 @@
 # Agent Work Report — Requirements
 
 **Status:** approved (2026-07-31 ~20:18 ET — chair: "approved - go
-ahead with design and tasks"). Implementation waits for a fresh
-branch after the 11.2.0 cut. (Timestamp correction: first authored
+ahead with design and tasks"). Implementation gate discharged
+(11.2.0 shipped; main at 11.5.0); no task executed yet — see
+tasks.md (parked, chair-go trigger). (Timestamp correction: first authored
 ~20:15 ET 07-31, not "00:30 ET 08-01" as the draft said — a
 UTC-to-ET conversion error the chair caught live.)
 **Slug:** `agent-work-report`
