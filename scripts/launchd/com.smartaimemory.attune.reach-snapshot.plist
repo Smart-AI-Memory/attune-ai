@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Daily reach snapshot (usage-signals D18 cadence amendment,
+       feedback-close-out-2026-08-09 R3).
+       TEMPLATE — install manually after a proven manual run:
+         cp scripts/launchd/com.smartaimemory.attune.reach-snapshot.plist \
+            ~/Library/LaunchAgents/
+         launchctl bootstrap gui/$UID \
+            ~/Library/LaunchAgents/com.smartaimemory.attune.reach-snapshot.plist
+       Disarm:
+         launchctl bootout gui/$UID/com.smartaimemory.attune.reach-snapshot
+       Rationale: US-4's 24-72h BEFORE-window is unsatisfiable
+       under same-day release decisions; a daily capture makes the
+       BEFORE receipt exist by construction. The script is
+       rate-limit-aware (resume-seeded, attempt-budgeted) and
+       exits 0 on rate-limit — READ THE LOG, don't trust exit 0.
+       No API key, no Redis — public pypistats + GitHub reads. -->
+  <key>Label</key>
+  <string>com.smartaimemory.attune.reach-snapshot</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-c</string>
+    <string>export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"; cd "$HOME/attune-ai" &amp;&amp; .venv/bin/python scripts/reach_snapshot.py</string>
+  </array>
+  <key>StandardOutPath</key>
+  <string>/Users/patrickroebuck/.attune/logs/reach-snapshot.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/patrickroebuck/.attune/logs/reach-snapshot.log</string>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>7</integer>
+    <key>Minute</key>
+    <integer>30</integer>
+  </dict>
+</dict>
+</plist>

@@ -4,11 +4,13 @@
 US-1/US-2/US-4/US-6/US-7 SHIPPED (#1476/D15, #1510/D16); US-5
 satisfied per two chair rulings: 11.0.0 3/5 partial-acceptance
 2026-07-31 (#1836) and 11.2.0+11.2.1 split-capture AFTER
-2026-08-04 (#1930). REMAINING: US-3 outreach round — 1 delivered
-contact, 14-day clock expired ~2026-08-03; close it and record
-external usage UNRESOLVED per the requirement — and US-7's
-refreshed done-when closure entry. Originally approved 2026-07-19,
-chair-ruled per item). Authored by the
+2026-08-04 (#1930). US-3 CLOSED 2026-08-09: external usage
+UNRESOLVED (D17 — 1 delivered contact, 0 responses, timebox
+expired). D18 cadence amendment 2026-08-09: BEFORE leg satisfied
+by a daily scheduled snapshot (launchd template ships in-repo;
+install chair-gated). REMAINING: US-7's refreshed done-when
+closure entry. Originally approved 2026-07-19, chair-ruled per
+item). Authored by the
 round table (thread `us-refresh-001`); compiled deterministically by
 `attune.roundtable.compiler` (V2-P2). Approved items only;
 declined: none;
