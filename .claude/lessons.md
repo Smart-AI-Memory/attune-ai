@@ -21569,4 +21569,15 @@ conf — modules also must not be listed in both places, duplicate
 registration aborts redisearch). The service only worked for 15
 days because it never restarted into the bug — treat any
 long-uptime service as "restart untested" before depending on a
-restart mid-change.
+restart mid-change. **Handling rule: never render the secret —
+`echo $REDIS_PASSWORD` is how it leaks.** It reached an agent
+transcript TWICE in the 2026-08-08 session: once from an agent's
+own `${VAR:+SET}${VAR:-UNSET}` probe (the `:-` branch prints the
+VALUE when the var IS set — use `${VAR:+SET}` alone), once
+hand-pasted from a terminal after an `echo`. Move it
+clipboard-direct so the plaintext never reaches a screen or a
+scrollback: `grep '^export REDIS_PASSWORD=' ~/.zshenv | sed
+'s/.*="\(.*\)"/\1/' | tr -d '\n' | pbcopy`. There is no lookup
+path back — the conf stores only the sha256 — so a value lost
+before it reaches the password manager costs a full five-surface
+rotation, exactly what a leaked one costs.
