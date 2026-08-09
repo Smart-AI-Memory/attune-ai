@@ -5,11 +5,13 @@
  * Update counts and descriptions here when features change.
  *
  * Marketplace mapping (consolidated 2026-06-22, retiring the
- * 2026-04-10 attune-docs split): all three plugins now live in the
- * single Smart-AI-Memory/attune-ai marketplace.
- *   attune-ai     → Smart-AI-Memory/attune-ai marketplace
- *   attune-help   → Smart-AI-Memory/attune-ai marketplace
- *   attune-author → Smart-AI-Memory/attune-ai marketplace
+ * 2026-04-10 attune-docs split): both plugins live in the single
+ * Smart-AI-Memory/attune-ai marketplace.
+ *   attune-ai   → Smart-AI-Memory/attune-ai marketplace
+ *   attune-help → Smart-AI-Memory/attune-ai marketplace
+ * (attune-author retired 2026-07: its authoring capabilities were
+ * consolidated into attune-ai, the PyPI package is archived, and
+ * the marketplace plugin was removed — see the docs page FAQ.)
  */
 
 // --- Products ---
@@ -70,31 +72,6 @@ export const PRODUCTS: Product[] = [
       "Renderers: plain, CLI, Claude Code, marketplace",
       "Precursor warnings for files being edited",
       "Embeddable in any Python tool",
-    ],
-  },
-  {
-    id: "attune-author",
-    name: "Attune Author",
-    pypiName: "attune-author",
-    version: "0.25.0",
-    tagline: "Author and polish help content with AI",
-    installCommand: "pip install 'attune-author[plugin]'",
-    marketplaceInstall:
-      "claude plugin install attune-author@attune-ai",
-    description:
-      "The AI authoring companion for attune-help. Generates 15 kinds " +
-      "of source-grounded templates — concept, task, reference, " +
-      "how-to, tutorial, architecture, cli-reference, error, warning, " +
-      "troubleshooting, faq, quickstart, tip, note, and comparison — " +
-      "with per-type LLM polish prompts and typed source summaries so " +
-      "the output stays accurate.",
-    features: [
-      "15 meta-template kinds (up from 3 in v0.1.0)",
-      "Per-type LLM polish prompts with anti-pattern lists",
-      "Signature-aware source summaries (typed args + return)",
-      "Strict polish mode for CI (ATTUNE_AUTHOR_STRICT_POLISH)",
-      "Staleness detection via source file hashing",
-      "Works with attune-help for the full author → reader loop",
     ],
   },
   {
@@ -260,7 +237,7 @@ export const DIFFERENTIATORS: Differentiator[] = [
  *     release-prep/release-gate count once — deliberate alias pair.)
  *   skills: plugin/skills/ directory count (test_skill_count)
  *   mcpTools: attune.mcp.tool_schemas get_*_tools() total
- *   templateKinds: attune_author.generator._ALL_TEMPLATE_NAMES length
+ *   templateKinds: attune.authoring.generator._ALL_TEMPLATE_NAMES length
  *   wizards: attune.wizards.list_wizards() length
  *
  * (agentTemplates / compositionPatterns were dropped 2026-06-11:
@@ -462,7 +439,6 @@ export function getPricingSummary(): string {
 const PRODUCT_ICONS: Record<string, string> = {
   "attune-ai": "🛠️",
   "attune-help": "📖",
-  "attune-author": "✍️",
   "claude-code-plugin": "⚡",
 };
 

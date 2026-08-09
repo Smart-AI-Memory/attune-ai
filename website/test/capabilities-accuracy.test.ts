@@ -60,7 +60,7 @@ const INTROSPECT = [
   'from attune.mcp import tool_schemas as ts',
   "d['mcpTools'] = sum(len(getattr(ts, n)()) for n in dir(ts) if n.startswith('get_') and n.endswith('_tools'))",
   'try:',
-  '    from attune_author.generator import _ALL_TEMPLATE_NAMES',
+  '    from attune.authoring.generator import _ALL_TEMPLATE_NAMES',
   "    d['templateKinds'] = len(_ALL_TEMPLATE_NAMES)",
   'except Exception:',
   '    pass',
@@ -96,7 +96,7 @@ describe('website CAPABILITIES accuracy', () => {
       expect(CAPABILITIES.wizards).toBe(real.wizards);
       expect(CAPABILITIES.mcpTools).toBe(real.mcpTools);
 
-      // attune_author is a separate package; only assert when present.
+      // authoring needs the full attune install; only assert when present.
       if (typeof real.templateKinds === 'number') {
         expect(CAPABILITIES.templateKinds).toBe(real.templateKinds);
       }

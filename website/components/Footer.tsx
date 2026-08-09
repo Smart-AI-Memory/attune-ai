@@ -118,16 +118,6 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://pypi.org/project/attune-author/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
-                >
-                  attune-author on PyPI
-                </a>
-              </li>
-              <li>
-                <a
                   href="https://pypi.org/project/attune-rag/"
                   target="_blank"
                   rel="noopener noreferrer"
