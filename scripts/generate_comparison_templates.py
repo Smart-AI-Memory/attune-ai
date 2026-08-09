@@ -70,7 +70,7 @@ _COMPARISONS: list[dict] = [
             ComparisonRow("Agent templates", ["0", "14"]),
             ComparisonRow("MCP tools", ["0", "31"]),
             ComparisonRow("CLI", ["No", "Yes (attune command)"]),
-            ComparisonRow("Tier routing", ["No", "Yes (80-96% savings)"]),
+            ComparisonRow("Tier routing", ["No", "Yes (up to 90% savings)"]),
             ComparisonRow("Telemetry", ["No", "Yes (cost tracking)"]),
         ],
         "recommendation": "Start with **Attune Lite** if you just want Claude Code skills with zero setup. Upgrade to **Attune AI** when you need CLI workflows, cost optimization, or the full MCP toolset.",

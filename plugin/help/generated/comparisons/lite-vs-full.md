@@ -19,7 +19,7 @@ Choosing between the lightweight plugin (no dependencies) and the full framework
 | Agent templates | 0 | 14 |
 | MCP tools | 0 | 31 |
 | CLI | No | Yes (attune command) |
-| Tier routing | No | Yes (80-96% savings) |
+| Tier routing | No | Yes (up to 90% savings) |
 | Telemetry | No | Yes (cost tracking) |
 
 ## Recommendation

@@ -9,6 +9,8 @@ published: true
 
 # Attune AI vs CrewAI vs LangChain: Which AI Agent Framework Should You Choose in 2026?
 
+*Updated 2026-08-09: tier prices and savings figures revised for the premium tier's switch to Claude Fable 5 at 2× the former Opus pricing (Attune AI v10.5.0).*
+
 If you're building AI agents or multi-step workflows, you've probably heard of CrewAI, LangChain, and possibly Attune AI. But which one is actually right for your project? This post breaks down the honest trade-offs between these three frameworks.
 
 I'm biased (I built Attune AI), but I'll try to be fair about where each framework excels and where it falls short.
@@ -92,11 +94,11 @@ This is where Attune AI's design philosophy really shows.
 
 Attune AI's progressive tier system is designed to minimize cost:
 
-- **Tier 1 (Haiku)**: $0.80 per 1M input tokens. Use for fast, simple tasks
+- **Tier 1 (Haiku)**: $1 per 1M input tokens. Use for fast, simple tasks
 - **Tier 2 (Sonnet)**: $3 per 1M input tokens. Use when Haiku hits complexity limits
-- **Tier 3 (Opus)**: $15 per 1M input tokens. Use only when Sonnet isn't smart enough
+- **Tier 3 (Claude Fable 5)**: $10 per 1M input tokens (2× the former Opus premium rate). Use only when Sonnet isn't smart enough
 
-A typical workflow starts with Haiku, and escalates only on demand. In practice, this cuts costs by 80-96% compared to always using Opus.
+A typical workflow starts with Haiku, and escalates only on demand. In practice, this cuts costs by up to 90% compared to always using the premium tier.
 
 On top of that, Attune AI integrates Anthropic's **prompt caching**:
 
@@ -190,7 +192,7 @@ Smaller community, but extremely focused. We're not trying to integrate with eve
 | Feature | Attune AI | CrewAI | LangChain |
 |---------|-----------|--------|-----------|
 | **Pre-built Workflows** | 17 ready-to-use | 0 (build from scratch) | 0 (build from scratch) |
-| **Cost Optimization** | 80-96% savings via tier escalation + caching | No built-in optimization | No built-in optimization |
+| **Cost Optimization** | Up to 90% savings via tier escalation (more with caching) | No built-in optimization | No built-in optimization |
 | **Model Coverage** | Claude only | Any LLM | Any LLM |
 | **Claude Code Integration** | Native CLI | Requires server | Requires server |
 | **Agent Templates** | 14 templates | 0 | 0 |

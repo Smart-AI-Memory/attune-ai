@@ -9,6 +9,8 @@ published: true
 
 # Claude Code Workflows: The Complete Guide (2026)
 
+*Updated 2026-08-09: savings figures revised for the premium tier's switch to Claude Fable 5 at 2× the former Opus pricing (Attune AI v10.5.0).*
+
 Claude Code workflows represent a paradigm shift in how developers approach repetitive code tasks. Instead of manually reviewing, testing, and documenting code, teams can now invoke intelligent workflows that automatically escalate from cost-effective models to premium reasoning engines only when needed. This complete guide covers all 17 available Claude Code workflows in Attune AI, how they work, and how to master them for maximum productivity and cost savings.
 
 ## What Are Claude Code Workflows?
@@ -17,8 +19,8 @@ Claude Code workflows are multi-stage automation pipelines that combine natural 
 
 - Starts with **Haiku** (fast, cheap) for triage and analysis
 - Escalates to **Sonnet** (capable) for implementation and complex reasoning
-- Escalates to **Opus** (premium) for architectural decisions and synthesis
-- Delivers **80-96% cost savings** compared to using premium models exclusively
+- Escalates to **Claude Fable 5** (premium, priced at 2× the former Opus rate) for architectural decisions and synthesis
+- Delivers **up to 90% cost savings** compared to using premium models exclusively
 
 This intelligent tier escalation is the core innovation of Attune AI. Instead of paying for Opus on every task, you pay for what you actually need.
 
@@ -650,7 +652,7 @@ Attune AI combines the best of all: accuracy of manual review, speed of automati
 
 ### Q: How much can I save?
 
-**A:** Typical savings are 80-96% compared to using premium models for everything. On an enterprise project running 100 code reviews/week, that's $1,000/week in savings.
+**A:** Savings of up to 90% compared to using premium models for everything, depending on how much of your workload stays on the cheap tier. On an enterprise project running 100 code reviews/week, that can be $1,000/week in savings.
 
 ### Q: Will workflows replace code reviewers?
 

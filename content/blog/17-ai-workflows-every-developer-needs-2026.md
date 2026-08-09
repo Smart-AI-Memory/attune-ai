@@ -9,11 +9,13 @@ published: true
 
 # 17 AI Workflows Every Developer Needs in 2026
 
+*Updated 2026-08-09: savings figures revised for the premium tier's switch to Claude Fable 5 at 2× the former Opus pricing (Attune AI v10.5.0).*
+
 If you're still spending hours on code reviews, test writing, and security audits, you're doing it wrong. Modern developers should delegate these tedious tasks to AI. The problem? Most AI tools are expensive, closed-source, or buried behind subscriptions.
 
 Not anymore.
 
-[Attune AI](https://github.com/Smart-AI-Memory/attune-ai) is an open-source framework that brings production-ready AI workflows directly to your CLI. These aren't toy demos—they're multi-stage pipelines built for real teams, with intelligent cost optimization that saves 80-96% on API costs.
+[Attune AI](https://github.com/Smart-AI-Memory/attune-ai) is an open-source framework that brings production-ready AI workflows directly to your CLI. These aren't toy demos—they're multi-stage pipelines built for real teams, with intelligent cost optimization that saves up to 90% on API costs.
 
 This guide walks you through all 17 workflows available today, with CLI commands and practical examples for each.
 
@@ -37,9 +39,9 @@ They're perfect for:
 
 Not feeling ready to configure? Try [Wizards](/wizards/) instead—they're interactive, guided experiences that ask you questions before executing.
 
-### Cost Optimization: 80-96% Savings
+### Cost Optimization: Up to 90% Savings
 
-All Attune workflows use **progressive tier escalation**. They start with Haiku (cheap, fast), perform the analysis, then only escalate to Sonnet or Opus when deeper thinking is truly needed. Result: enterprise-grade analysis at a fraction of the cost.
+All Attune workflows use **progressive tier escalation**. They start with Haiku (cheap, fast), perform the analysis, then only escalate to Sonnet or Claude Fable 5 (the premium tier, priced at 2× the former Opus rate) when deeper thinking is truly needed. Result: enterprise-grade analysis at a fraction of the cost — and the pricier the premium tier gets, the more that discipline matters.
 
 All workflows are completely free and open source under Apache 2.0. Self-host them or run with your own API keys.
 
@@ -483,7 +485,7 @@ Want to use your own API keys instead of the default? See [Framework Getting Sta
 ## What Makes These Workflows Different
 
 1. **Open Source.** Inspect every line. Fork and customize. Run anywhere.
-2. **Cost-Optimized.** Smart tier escalation saves 80-96% vs. running everything on Opus.
+2. **Cost-Optimized.** Smart tier escalation saves up to 90% vs. running everything on the premium tier.
 3. **Production-Ready.** These workflows power real teams. Not toys or demos.
 4. **No Lock-in.** All output is standard formats (JSON, Markdown, pytest-compatible Python). Use the results anywhere.
 5. **Collaborative.** Designed for team workflows. Save results, share reports, integrate with CI/CD.
