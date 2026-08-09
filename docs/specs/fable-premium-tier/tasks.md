@@ -5,19 +5,20 @@
 > Execution plan for Claude Code:
 > [.claude/plans/fable-premium-tier.md](../../../.claude/plans/fable-premium-tier.md).
 
-**Status:** active (2026-08-08 triage — the 2026-07-28 resume
-trigger ELAPSED; releases 11.0.0–11.5.0 shipped since). Tasks 1–8
-done and live in the merged tree (#1361, 2026-07-13: model_tiers
-premium=claude-fable-5, registry entry,
-BASELINE_MODEL=claude-fable-5). Task 9 OUTSTANDING and overdue:
-the premium-price callout never reached CHANGELOG.md (no
-`claude-fable-5` entry) and generated tier docs still say premium
-= Opus (`plugin/help/generated/concepts/tier-routing.md`) —
-user-visible doc drift on a 2× price change already in released
-builds. Amended 2026-07-29: editing passes split to
-`ATTUNE_MODEL_EDITING` (claude-opus-5, #1770); PREMIUM stays
-claude-fable-5. Phase-1/Phase-2 approvals in requirements.md and
-design.md remain accurate as recorded.
+**Status:** complete (2026-08-09 — task 9 closed, all 9 tasks
+done). Tasks 1–8 live in the merged tree (#1361, 2026-07-13:
+model_tiers premium=claude-fable-5, registry entry,
+BASELINE_MODEL=claude-fable-5). Task 9's docs half landed
+2026-08-09: retroactive 2× premium-price callout in CHANGELOG's
+[10.5.0] entry (+ [Unreleased] note), and the tier-routing help
+concept corrected at its source
+(`scripts/generate_concept_templates.py`) and regenerated —
+premium = claude-fable-5, no longer Opus. The version-bump/release
+half was satisfied by the standard release train (10.5.0–11.6.0
+all shipped with the fable tier live). Amended 2026-07-29: editing
+passes split to `ATTUNE_MODEL_EDITING` (claude-opus-5, #1770);
+PREMIUM stays claude-fable-5. Phase-1/Phase-2 approvals in
+requirements.md and design.md remain accurate as recorded.
 
 ## Implementation order
 
@@ -31,7 +32,7 @@ design.md remain accurate as recorded.
 | 6 | Route all premium literals through `resolve_model("premium")` — the 12-surface table in design §3 (incl. `RoutingConfig` `default_factory`, template_defs literals → `claude-fable-5`) | attune-ai | done | All 12 surfaces routed: curator `_CURATOR_MODEL` → `_curator_model()` (per-call), escalation ladder built per instance (class attr removed), release `MODEL_CONFIG` resolves at import (comment notes it), YAML-in-string surfaces → literal `claude-fable-5`. Deviations: `model_router.py` has NO live literal (tier map is registry-sourced — task 7); docstring example updated. `test_agent_factory.py:393` left asserting opus — it exercises the registry-backed router path, which flips in task 7. 6 test files updated. Suite: 17,613 passed, 1 pre-existing live-Ollama failure. |
 | 7 | Registry + pricing: `claude-fable-5` entries in `models/registry.py`, provider pricing table, `cost_tracker` ($10/$50 per MTok; cache write $12.50 / read $1) + tests. **AMENDED 2026-07-10 (Patrick):** `BASELINE_MODEL` moves to `claude-fable-5` — with fable premium at 2× opus pricing, an opus baseline yields negative savings on every premium call ("routing lost money" when the user deliberately upgraded). Safe because `baseline_cost` is computed at log time and stored per record (`cost_tracker.py:383-394`) — history stays frozen at opus math; only new records use fable. Also make the report label at `cost_tracker.py:521` (`"Baseline (Opus)"`) dynamic. | attune-ai | done | Supersedes design §3 "BASELINE_MODEL stays opus-4-8"; design.md carries the matching amendment note. Done: premium tier entry → fable-5 ($10/$50, 128K out); opus-4-8 kept by-id via ADDITIONAL_MODELS (batch target + history); TIER_PRICING/provider table/analytics baseline all consistent (analytics now registry-sourced); BASELINE_MODEL → fable-5 with dynamic report label; `_get_tier` knows fable; drift-guard suite `tests/unit/models/test_fable_pricing_consistency.py`. |
 | 8 | Scattered premium call sites adopt the `fable_call` helper: `curator/core.py`, `workflows/escalation/chain.py`, `agents/release/base_agent.py`, `meta_workflows/llm_execution.py`; add `fable_refusal` telemetry event in workflow error handling | attune-ai | done | curator/base_agent/llm_execution swap `messages.create` → `(a)create_with_fable` (escalation chain already rides the fable-wired provider — no own client; it now RE-RAISES `ModelRefusalError` instead of retrying). base_agent + llm_execution fixed to read the first TEXT block, not `content[0]`. New `log_fable_refusal` helper (models/telemetry) emits the event wherever the refusal stops propagating: execution_mixin, curator degrade, agent fallback, meta_workflow failure dict. LangChain/LangGraph adapters out of scope v1 (design §4c). Mock-only tests via `fake_module`. |
-| 9 | Docs + release: regenerate `plugin/help/generated/` tier docs, CHANGELOG entry with prominent premium price callout, version bump (pyproject.toml + plugin.json + uv.lock together), release | attune-ai | pending | Release via the standard publish flow (approval-gated). |
+| 9 | Docs + release: regenerate `plugin/help/generated/` tier docs, CHANGELOG entry with prominent premium price callout, version bump (pyproject.toml + plugin.json + uv.lock together), release | attune-ai | done | Docs landed 2026-08-09: retroactive ⚠️ 2× price callout in CHANGELOG [10.5.0] + [Unreleased] note; tier-routing concept corrected at its `_CONCEPTS` source and regenerated via `scripts/generate_concept_templates.py` (premium = claude-fable-5; editing split `ATTUNE_MODEL_EDITING` → claude-opus-5 noted, #1770). Version-bump/release element satisfied by the standard release train — 10.5.0 through 11.6.0 shipped with the fable tier live; no dedicated release needed. |
 
 ## Testing strategy
 
