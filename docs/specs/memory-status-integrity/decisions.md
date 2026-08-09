@@ -331,3 +331,33 @@ verified-age must re-enter ranking, never exempt a file; cap the review
 queue (~3 per triage); one-keystroke verdicts. If P2 ceremony gets
 abandoned, the corpus fills with stale endorsements — a worse end-state
 than today's honest "unverified". Design for abandonment.
+
+---
+
+## D7 — P2 opened; the two D6 residual sub-decisions ruled (recorded 2026-08-09)
+
+Chair directed "pick up memory-status-integrity P2 next" and ruled both
+residual sub-decisions via elicitation form (recommendations presented
+with counter-cases per D11d):
+
+1. **Ref-trigger = queue-jump BOOLEAN** (form pick: "queue-jump
+   boolean"). A typed-ref existence check only PROMOTES a project-type
+   memory into the review queue, layered on the age × volatility
+   baseline; it never demotes, never hides, and is CUT ENTIRELY if the
+   implementation creeps toward `memory-claim-verification`'s diff
+   engine. Its logged hit-rate is the evidence that would justify the
+   full ref engine later. Counter-case presented at rule time: the
+   Codex/Antigravity position that refs should be the PRIMARY signal
+   because the motivating incident age-ranked last on its most
+   dangerous day — mitigated because the queue-jump FLOATS flagged
+   memories above the age queue, so that incident class surfaces at
+   top regardless of the baseline.
+2. **Evidence source = local git + `gh` for `pr:`/`issue:`, fail-open**
+   (form pick: "local git + gh fail-open"). One existence check per
+   ref; `gh` absent/unreachable or the check erroring means NO flag —
+   the triage loop never blocks on the network. Counter-case presented:
+   local-git-only keeps P2 hermetic; rejected because a single
+   fail-open existence probe adds no blocking seam.
+
+Phase gate: **P2 approved** this session. Gate task (D6#1, parser
+alignment) executed in the same PR that records this ruling.

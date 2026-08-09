@@ -1,10 +1,9 @@
 # memory-status-integrity — tasks
 
-**Status:** active (2026-08-07) — P1 shipped; P2/P3 tasks unwritten until
-their phase is approved
+**Status:** active (2026-08-09) — P1 shipped; **P2 OPENED** (chair phase
+gate + both residual rulings, D7); P3 tasks unwritten until its phase is
+approved
 **Design:** [design.md](design.md) · **Decisions:** [decisions.md](decisions.md)
-
-P1 only. P2/P3 tasks are written when their phase is approved.
 
 ## P1 implementation order
 
@@ -20,6 +19,20 @@ P1 only. P2/P3 tasks are written when their phase is approved.
 | 6 | ~~Sweep entry point in `memory_lint.py`~~ | personal | **void** | already implemented (`--check-all`); hook left untouched |
 | 7 | ~~Normalize 7 `node_type:` violations~~ | personal | **void** | not violations — provenance is tolerated (D4). Corpus untouched. |
 | 8 | Live-corpus receipt over 271 files | receipt | done | 1 violation, matching `memory_lint` exactly; corpus byte-identical |
+
+## P2 implementation order (opened 2026-08-09, D6 scope + D7 rulings)
+
+| # | Task | Layer | Status | Notes |
+|---|------|-------|--------|-------|
+| 1 | **GATE** — parser alignment with the canonical linter: indented continuation lines (folded/literal block scalars) never parse as top-level keys (D5#3, D6#1) | attune-ai | done | `_parse_frontmatter` collects block-scalar continuations as VALUE content; 4 fixtures pin both directions (false-positive gone, forbidden key still flagged once) |
+| 2 | `verified:` preferred over mtime in ranking + the report/CLI states the basis per file | attune-ai | partial | `unverified_age_days` already prefers `mem.verified` (P1 pre-wiring); remaining: per-file basis in the sweep report |
+| 3 | Canonical linter accepts optional `verified:` (schema amendment + co-located test) | personal | pending | one file, one test (D2); reader/writer co-design — `~/.claude/hooks/memory_lint.py` |
+| 4 | Content-digest binding + append-only verdict history (who / when / what-digest); canonicalised formatting-only change preserves verification | attune-ai | pending | design against abandonment (D6): stale `verified:` is worse than none |
+| 5 | keep / wrong / sharper verdict loop — queue capped (~3/triage), one-keystroke; `wrong` TOMBSTONES (never deletes), `sharper` = edit + verify in one motion | attune-ai | pending | CLI first; pointer/link integrity preserved by tombstoning |
+| 6 | Verdict propagation to Redis immediately (invalidate/rewrite the key) | attune-ai | pending | else a full hydration cycle recalls known-wrong memory |
+| 7 | Ref-triggered queue-jump boolean for project-type: `file:`/`sha:` via local git, `pr:`/`issue:` via `gh`, fail-open (D7 ruling) | attune-ai | pending | promotes into review only; log hit-rate; CUT if it creeps toward a diff engine |
+| 8 | Epistemic status tiers (settled / check-before-acting / suspect) + author-class on render surfaces; strongest framing on the raw tier | attune-ai | pending | cross-links memory-security-hardening R1 |
+| 9 | Live-corpus receipt with verified-basis reporting | receipt | pending | PR receipt, never CI |
 
 ## Testing strategy
 
