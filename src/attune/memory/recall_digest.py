@@ -82,31 +82,35 @@ def _detail(description: str) -> str:
     return text[: DETAIL_MAX - 1].rstrip() + "…"
 
 
-def _age_suffix(updated_at: Any) -> str:
-    """Staleness label for a digest card, from the node's ``updated_at``.
+def _age_suffix(updated_at: Any, mem_type: Any = None) -> str:
+    """Epistemic status label for a digest card, from the node's ``updated_at``.
 
     Redis digest nodes carry no file path, so the age basis is the graph's
-    ``updated_at`` — the same last-EDIT stopgap the file sweep uses until
-    ``verified:`` ships (memory-status-integrity P2). Label only, never used
-    to reorder or drop a node (decision D1), and a missing or malformed
-    timestamp yields no label rather than costing the caller the digest.
+    ``updated_at`` — the last-EDIT stopgap, rendered as ``mtime``-basis
+    status (memory-status-integrity P2 task 8: a calibrated tier, not a
+    bare day-count). Label only, never used to reorder or drop a node
+    (decision D1), and a missing or malformed timestamp yields no label
+    rather than costing the caller the digest.
 
     Args:
         updated_at: ISO-8601 date or datetime string from the node dict.
+        mem_type: The node's memory type, when known — calibrates the tier.
 
     Returns:
-        ``"  ⟨N days unverified⟩"`` or ``""`` when the timestamp is unusable.
+        ``"  ⟨settled · project · 3d unverified⟩"`` or ``""`` when the
+        timestamp is unusable.
     """
     from datetime import date
 
-    from attune.memory.curated_audit import format_age_annotation
+    from attune.memory.curated_audit import format_status_annotation
 
     try:
         basis = date.fromisoformat(str(updated_at)[:10])
     except (TypeError, ValueError):
         return ""
     days = max(0, (date.today() - basis).days)
-    return f"  {format_age_annotation(days)}"
+    mem_type_str = str(mem_type) if mem_type else None
+    return f"  {format_status_annotation(mem_type_str, 'mtime', days)}"
 
 
 def _instruction_suffix(*parts: str) -> str:
@@ -146,7 +150,7 @@ def digest_form_dict(
                 "label": name,
                 "status": str(node.get("type", "node")).replace("_", " "),
                 "detail": _detail(str(node.get("description", "")))
-                + _age_suffix(node.get("updated_at"))
+                + _age_suffix(node.get("updated_at"), node.get("type"))
                 + _instruction_suffix(str(node.get("description", "")), str(node.get("name", ""))),
             }
         )

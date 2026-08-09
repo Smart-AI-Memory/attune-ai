@@ -52,21 +52,41 @@ def default_roots() -> list[Path]:
     return [path for path in candidates if path.is_dir()]
 
 
-def build_queue(report, limit: int) -> list[tuple[object, str, int]]:
-    """Top-``limit`` reviewable rows: ``(memory, basis, age_days)``.
+def build_queue(report, limit: int, ref_reasons=None) -> list[tuple[object, str, int, list[str]]]:
+    """Top-``limit`` reviewable rows: ``(memory, basis, age_days, reasons)``.
 
     Tombstoned memories are excluded — they already carry a verdict, and
     re-queueing them would spend the capped attention budget on files
     the loop has nothing left to ask about.
+
+    P2 task 7 (ruling D7): when ``ref_reasons`` is supplied, project-type
+    memories whose explicit typed refs trigger (``pr:`` closed, ``file:``
+    gone, …) FLOAT to the queue front — promote-only atop the age
+    baseline, checked for at most ``MAX_CHECKED_MEMORIES`` candidates.
+    Rows are ``(memory, basis, age_days, reasons)``.
     """
-    rows = []
+    candidates = []
     for (mem, _score), (_stem, basis, days) in zip(report.ranked, report.age_bases, strict=False):
         if basis == "tombstoned":
             continue
-        rows.append((mem, basis, days))
-        if len(rows) >= limit:
-            break
-    return rows
+        candidates.append((mem, basis, days))
+
+    jumped, aged = [], []
+    if ref_reasons is not None:
+        from attune.memory.ref_triggers import MAX_CHECKED_MEMORIES
+
+        checked = 0
+        for row in candidates:
+            mem = row[0]
+            reasons: list[str] = []
+            if mem.mem_type == "project" and checked < MAX_CHECKED_MEMORIES:
+                checked += 1
+                reasons = ref_reasons(mem)
+            (jumped if reasons else aged).append((*row, reasons))
+    else:
+        aged = [(*row, []) for row in candidates]
+
+    return (jumped + aged)[:limit]
 
 
 def _resolve_who(explicit: str | None) -> str:
@@ -91,7 +111,9 @@ def _corpus_root_for(mem, roots: list[Path]) -> Path:
     return mem.path.parent
 
 
-def _review_one(mem, basis: str, days: int, root: Path, who: str) -> str:
+def _review_one(
+    mem, basis: str, days: int, root: Path, who: str, reasons: list[str] | None = None
+) -> str:
     """Prompt for and apply one verdict. Returns the action taken."""
     from attune.memory.curated_audit import load_memory
     from attune.memory.verdict_log import (
@@ -102,6 +124,8 @@ def _review_one(mem, basis: str, days: int, root: Path, who: str) -> str:
     )
 
     print(f"\n[{mem.mem_type or '?'}] {mem.stem}  ({basis}, {days}d)")
+    for reason in reasons or []:
+        print(f"  ⚑ ref trigger: {reason}")
     print(f"  {mem.description or '(no description)'}")
     print(f"  {mem.path}")
     answer = input("  [k]eep / [w]rong / [s]harper / Enter=skip / [q]uit > ").strip().lower()
@@ -166,25 +190,34 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     report = sweep(roots)
-    queue = build_queue(report, args.limit)
+    from functools import partial
+
+    from attune.memory.ref_triggers import queue_jump_reasons
+
+    queue = build_queue(
+        report, args.limit, ref_reasons=partial(queue_jump_reasons, repo_root=Path.cwd())
+    )
     if not queue:
         print("Nothing to review — queue is empty.")
         return 0
 
     if args.dry_run or not sys.stdin.isatty():
         print(f"Review queue (top {args.limit}, tombstoned excluded):")
-        for mem, basis, days in queue:
-            print(f"  [{mem.mem_type or '?'}] {mem.stem}  ({basis}, {days}d)")
+        for mem, basis, days, reasons in queue:
+            jump = f"  ⚑ {'; '.join(reasons)}" if reasons else ""
+            print(f"  [{mem.mem_type or '?'}] {mem.stem}  ({basis}, {days}d){jump}")
         if not args.dry_run:
             print("stdin is not a TTY — run interactively to record verdicts.")
         return 0
 
     who = _resolve_who(args.who)
     counts: dict[str, int] = {}
-    for mem, basis, days in queue:
+    for mem, basis, days, reasons in queue:
         root = _corpus_root_for(mem, [Path(r) for r in report.roots])
+        if reasons:
+            counts["queue-jumped"] = counts.get("queue-jumped", 0) + 1
         try:
-            action = _review_one(mem, basis, days, root, who)
+            action = _review_one(mem, basis, days, root, who, reasons=reasons)
         except (OSError, ValueError) as exc:
             # One unwritable file/log must not abort the triage or break
             # the always-exit-zero contract; the item simply records no

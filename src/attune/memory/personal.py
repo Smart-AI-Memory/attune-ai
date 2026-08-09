@@ -19,7 +19,9 @@ from typing import Any
 
 from attune.memory.curated_audit import (
     format_age_annotation,
+    format_status_annotation,
     load_memory,
+    resolve_age_basis,
     unverified_age_days,
 )
 
@@ -354,11 +356,30 @@ class PersonalMemory:
                 if path is None:
                     continue
                 mem = load_memory(path)
-                days = unverified_age_days(mem)
+                latest = self._latest_verdict_for(mem)
+                days = unverified_age_days(mem, latest_verdict=latest)
+                _, basis = resolve_age_basis(mem, latest)
                 hit["unverified_days"] = days
                 hit["staleness"] = format_age_annotation(days)
+                # P2 task 8: the calibrated tier label (settled /
+                # check-before-acting / suspect) — a number without a base
+                # rate is not a signal a reading model can act on.
+                hit["status"] = format_status_annotation(mem.mem_type, basis, days)
             except (KeyError, OSError, ValueError):
                 logger.debug("staleness_annotation_failed path=%s", hit.get("path"))
+
+    def _latest_verdict_for(self, mem: Any) -> Any:
+        """The memory's latest verdict from its corpus root's log, if any.
+
+        Best-effort — a missing or unreadable log reads as unbound, which
+        is the honest default the audit side already uses.
+        """
+        from attune.memory.verdict_log import latest_verdicts
+
+        for root in (self._project_root, self._global_root):
+            if root is not None and root in mem.path.parents:
+                return latest_verdicts(root).get(mem.stem)
+        return None
 
     def _resolve_hit_path(self, path_str: str) -> Path | None:
         """Resolve a corpus-relative hit path against the known roots."""

@@ -107,6 +107,19 @@ class TestAppendAndLoad:
     def test_latest_verdicts_empty_without_log(self, tmp_path: Path) -> None:
         assert latest_verdicts(tmp_path) == {}
 
+    def test_unreadable_log_fails_open_to_empty(self, tmp_path: Path) -> None:
+        """An unreadable (present but undecodable) log degrades to [] with a
+        warning — distinct from the missing-log path."""
+        (tmp_path / VERDICTS_FILENAME).write_bytes(b"\xff\xfe not utf-8 \xff")
+        assert load_verdicts(tmp_path) == []
+
+    def test_blank_lines_between_records_are_skipped(self, tmp_path: Path) -> None:
+        append_verdict(tmp_path, _record(digest="d1"))
+        with (tmp_path / VERDICTS_FILENAME).open("a", encoding="utf-8") as handle:
+            handle.write("\n\n")
+        append_verdict(tmp_path, _record(digest="d2"))
+        assert [r.digest for r in load_verdicts(tmp_path)] == ["d1", "d2"]
+
 
 def _write_mem(tmp_path: Path, extra: str = "") -> Path:
     path = tmp_path / "project_x.md"
@@ -184,6 +197,37 @@ class TestPropagateVerdict:
                 raise ConnectionError("redis down")
 
         assert propagate_verdict("project_x", client=_Client()) is False
+
+    def test_default_client_path_connects_and_deletes(self, monkeypatch) -> None:
+        """client=None resolves through connect_recall_redis (the live path
+        codecov flagged uncovered on PR #2017)."""
+        import sys
+        import types
+
+        deleted = []
+
+        class _Client:
+            def delete(self, key):
+                deleted.append(key)
+                return 1
+
+        fake = types.ModuleType("attune.memory.recall_redis")
+        fake.connect_recall_redis = lambda: _Client()
+        monkeypatch.setitem(sys.modules, "attune.memory.recall_redis", fake)
+        assert propagate_verdict("project_x") is True
+        assert deleted == ["attune:memory:node:project_x"]
+
+    def test_default_client_connect_failure_degrades(self, monkeypatch) -> None:
+        import sys
+        import types
+
+        def _refuse():
+            raise ConnectionError("redis down")
+
+        fake = types.ModuleType("attune.memory.recall_redis")
+        fake.connect_recall_redis = _refuse
+        monkeypatch.setitem(sys.modules, "attune.memory.recall_redis", fake)
+        assert propagate_verdict("project_x") is False
 
     def test_interface_defect_degrades_but_warns(self, caplog) -> None:
         """Deliberate P15 pin (codex narrowing REJECTED with reason): even a

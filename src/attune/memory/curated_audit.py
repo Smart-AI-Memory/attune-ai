@@ -449,6 +449,77 @@ def risk_score(
     return unverified_age_days(mem, today, latest_verdict) * volatility(mem.mem_type)
 
 
+#: Tier thresholds over the age × volatility risk score (P2 task 8).
+#: Calibrated against the live corpus: a settled feedback rule stays
+#: "settled" for years (volatility 0.15 → ~66 days per risk point), while
+#: a project claim crosses "suspect" in ~6 weeks untouched.
+TIER_SETTLED_MAX = 10.0
+TIER_CHECK_MAX = 45.0
+
+#: The three epistemic tiers, least to most concerning (D6 #5).
+EPISTEMIC_TIERS = ("settled", "check-before-acting", "suspect")
+
+
+def epistemic_tier(mem_type: str | None, basis: str, days: int) -> str:
+    """Discrete trust tier for a memory: settled / check-before-acting / suspect.
+
+    D6 #5: "N days unverified" is a number without calibration — the reading
+    model has no base rate for 90 days on ``reference`` vs ``project``. The
+    tier folds age, type volatility, and verification state into one word.
+
+    ``tombstoned`` and ``invalidated`` are suspect regardless of age — a
+    judged-wrong or verification-voided memory cannot out-rank its basis.
+
+    Args:
+        mem_type: The memory's ``metadata.type`` (None tolerated).
+        basis: The age-basis label from :func:`resolve_age_basis`.
+        days: Basis-aware unverified age in days.
+
+    Returns:
+        One of :data:`EPISTEMIC_TIERS`.
+    """
+    if basis in {"tombstoned", "invalidated"}:
+        return "suspect"
+    risk = days * volatility(mem_type)
+    if risk <= TIER_SETTLED_MAX:
+        return "settled"
+    if risk <= TIER_CHECK_MAX:
+        return "check-before-acting"
+    return "suspect"
+
+
+def format_status_annotation(mem_type: str | None, basis: str, days: int) -> str:
+    """Render the full epistemic STATUS label for a recall surface (task 8).
+
+    Carries tier + author-class stand-in (the ``metadata.type``) +
+    verification state, and for the most dangerous combination —
+    ``suspect`` + ``project`` — an explicit instruction, because that is
+    the exact shape of both proof-case failures.
+
+    Args:
+        mem_type: The memory's ``metadata.type``.
+        basis: The age-basis label from :func:`resolve_age_basis`.
+        days: Basis-aware unverified age in days.
+
+    Returns:
+        e.g. ``⟨suspect · project · 61d unverified⟩ — verify against the
+        repo before acting``.
+    """
+    tier = epistemic_tier(mem_type, basis, days)
+    state_by_basis = {
+        "verified": f"verified {days}d ago",
+        "verified-unbound": f"verified {days}d ago, unbound",
+        "invalidated": "verification voided by edit",
+        "tombstoned": "judged WRONG — kept as tombstone",
+        "mtime": f"{days}d unverified",
+    }
+    state = state_by_basis.get(basis, f"{days}d unverified")
+    label = f"⟨{tier} · {mem_type or 'untyped'} · {state}⟩"
+    if tier == "suspect" and mem_type == "project":
+        label += " — verify against the repo before acting"
+    return label
+
+
 def format_age_annotation(days: int) -> str:
     """Render the reader-facing staleness label.
 

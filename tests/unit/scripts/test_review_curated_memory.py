@@ -54,12 +54,44 @@ class TestBuildQueue:
         report = sweep([tmp_path])
         queue = mod.build_queue(report, limit=3)
         assert len(queue) == 3
-        assert all(mem.stem != "project_dead" for mem, _, _ in queue)
+        assert all(mem.stem != "project_dead" for mem, _, _, _ in queue)
+        assert all(reasons == [] for _, _, _, reasons in queue)
 
     def test_empty_report_yields_empty_queue(self, tmp_path: Path) -> None:
         mod = _load_script()
         report = sweep([tmp_path])
         assert mod.build_queue(report, limit=3) == []
+
+    def test_ref_triggered_memory_floats_to_front(self, tmp_path: Path) -> None:
+        """P2 task 7 (D7): a triggered project memory queue-jumps ABOVE the
+        age-ranked rows — promote-only, and reasons ride with the row."""
+        mod = _load_script()
+        for i in range(3):
+            _write_mem(tmp_path, f"project_old_{i}")
+        _write_mem(tmp_path, "project_fresh")
+
+        def _stub_reasons(mem):
+            return ["pr:99 is MERGED"] if mem.stem == "project_fresh" else []
+
+        report = sweep([tmp_path])
+        queue = mod.build_queue(report, limit=2, ref_reasons=_stub_reasons)
+        assert queue[0][0].stem == "project_fresh"
+        assert queue[0][3] == ["pr:99 is MERGED"]
+        assert all(r == [] for _, _, _, r in queue[1:])
+
+    def test_ref_checks_only_project_type(self, tmp_path: Path) -> None:
+        """Non-project memories never spend ref probes (D6#4 scope)."""
+        mod = _load_script()
+        _write_mem(tmp_path, "feedback_rule", mem_type="feedback")
+        asked = []
+
+        def _recorder(mem):
+            asked.append(mem.stem)
+            return []
+
+        report = sweep([tmp_path])
+        mod.build_queue(report, limit=3, ref_reasons=_recorder)
+        assert asked == []
 
 
 class TestVerdictActions:
