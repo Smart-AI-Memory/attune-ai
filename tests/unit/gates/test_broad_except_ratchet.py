@@ -166,6 +166,10 @@ _BASELINE: dict[str, int] = {
     "src/attune/memory/security/audit_logger.py": 4,
     "src/attune/memory/security/query.py": 1,
     "src/attune/memory/session_stash.py": 14,
+    # verdict_log.propagate_verdict is a P15 never-block path: redis
+    # import/connect/delete failures of ANY shape must degrade to False —
+    # the verdict loop is never blocked on the memory layer (P2 task 6).
+    "src/attune/memory/verdict_log.py": 1,
     "src/attune/memory/short_term/base.py": 1,
     "src/attune/memory/short_term/pubsub.py": 6,
     "src/attune/memory/short_term/transactions.py": 1,

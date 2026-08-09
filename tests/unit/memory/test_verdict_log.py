@@ -9,6 +9,7 @@ with last-record-wins resolution, and every reader fails open.
 from __future__ import annotations
 
 import json
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,8 @@ from attune.memory.verdict_log import (
     canonical_digest,
     latest_verdicts,
     load_verdicts,
+    propagate_verdict,
+    set_verified,
 )
 
 
@@ -103,3 +106,81 @@ class TestAppendAndLoad:
 
     def test_latest_verdicts_empty_without_log(self, tmp_path: Path) -> None:
         assert latest_verdicts(tmp_path) == {}
+
+
+def _write_mem(tmp_path: Path, extra: str = "") -> Path:
+    path = tmp_path / "project_x.md"
+    path.write_text(
+        "---\n"
+        "name: project_x\n"
+        "description: a claim\n"
+        "metadata:\n"
+        "  type: project\n"
+        f"{extra}"
+        "---\n\nThe body.\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+class TestSetVerified:
+    def test_inserts_when_absent_and_preserves_everything_else(self, tmp_path: Path) -> None:
+        path = _write_mem(tmp_path)
+        before = path.read_text(encoding="utf-8")
+        set_verified(path, date(2026, 8, 9))
+        after = path.read_text(encoding="utf-8")
+        assert "verified: 2026-08-09\n---" in after
+        assert after.replace("\nverified: 2026-08-09", "") == before
+        assert after.endswith("---\n\nThe body.\n")
+
+    def test_replaces_when_present(self, tmp_path: Path) -> None:
+        path = _write_mem(tmp_path, extra="verified: 2026-01-01\n")
+        set_verified(path, date(2026, 8, 9))
+        text = path.read_text(encoding="utf-8")
+        assert text.count("verified:") == 1
+        assert "verified: 2026-08-09" in text
+
+    def test_setting_verified_does_not_change_the_digest(self, tmp_path: Path) -> None:
+        """``verified:`` is outside the canonical digest by design — recording
+        a verification must never invalidate the verification it records."""
+        from attune.memory.curated_audit import load_memory
+
+        path = _write_mem(tmp_path)
+        before = load_memory(path).digest
+        set_verified(path, date(2026, 8, 9))
+        assert load_memory(path).digest == before
+
+    def test_file_without_frontmatter_raises(self, tmp_path: Path) -> None:
+        path = tmp_path / "plain.md"
+        path.write_text("# just a heading\n", encoding="utf-8")
+        with pytest.raises(ValueError, match="no frontmatter"):
+            set_verified(path, date(2026, 8, 9))
+
+
+class TestPropagateVerdict:
+    def test_deletes_the_derived_node_key(self) -> None:
+        deleted = []
+
+        class _Client:
+            def delete(self, key):
+                deleted.append(key)
+                return 1
+
+        assert propagate_verdict("project_x", client=_Client()) is True
+        assert deleted == ["attune:memory:node:project_x"]
+
+    def test_missing_key_reports_false(self) -> None:
+        class _Client:
+            def delete(self, key):
+                return 0
+
+        assert propagate_verdict("project_x", client=_Client()) is False
+
+    def test_client_error_degrades_to_false(self) -> None:
+        """The loop must never block on the memory layer."""
+
+        class _Client:
+            def delete(self, key):
+                raise ConnectionError("redis down")
+
+        assert propagate_verdict("project_x", client=_Client()) is False
