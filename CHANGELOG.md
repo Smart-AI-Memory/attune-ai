@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.6.0] — 2026-08-09
+
+Redis config truth-telling completes: every Redis connection-env
+reader now derives from one resolver, consumers authenticate
+consistently, and an AST drift guard keeps it that way. Plus the
+11.5.0 post-release self-review's security and performance fixes.
+
+### Changed — Redis connection behavior (redis-config-truth rct-4, #1993)
+
+- **Consumers that previously ignored `REDIS_PASSWORD` now
+  authenticate.** Every direct Redis connection-env reader derives
+  from `resolve_redis_connection()`. Stale passwords in staging/CI
+  surface loudly via the `degraded_auth` loud-once notice instead
+  of failing silently.
+- **`EMPATHY_REDIS_HOST`/`EMPATHY_REDIS_PORT` compatibility retired
+  for connection variables** — canonical `REDIS_*` names only
+  (feature toggles keep their compat aliases).
+- **`REDIS_PORT`/`REDIS_DB` without `REDIS_HOST` are no longer
+  honored** — connection resolution is host-anchored.
+- `redis_config.py` is now a delegator over the resolver;
+  `REDIS_MODE`, SSL, and timeout semantics are preserved.
+
+### Security (11.5.0 self-review act-now items, #1989)
+
+- Hook executor: command templates tokenize before substitution —
+  context values can no longer inject extra argv tokens.
+- Hook executor webhooks: connections pin the validated IP
+  (DNS-rebinding TOCTOU closed); TLS still verifies the hostname.
+- Ops runner: `run_id` validated before any filesystem walk
+  (traversal-shaped ids return None without disk access).
+
+### Fixed
+
+- `AttuneConfig` regains a real module identity
+  (`attune.config.legacy`) — isinstance checks across import
+  paths, pickling, and registry lookups work again (#1992).
+- Memory URL helpers are `ParseResult`-typed at the credential
+  seam; the Redis auto-detect module cache is lock-guarded (#1989).
+
+### Performance
+
+- Help home renders with one `list_features` pass and one shared
+  5s-TTL corpus walk (was per-template file reads); telemetry
+  summary parses `usage.jsonl` once per file change; dashboard
+  handlers moved off the event loop into the threadpool (#1990).
+- Pattern library loads batch via `retrieve_many` instead of
+  per-key round-trips (#1991).
+
+### Testing
+
+- AST-based Redis env-access drift guard: any new direct read of
+  the eight connection names outside the resolver fails CI, with
+  eight planted access forms proven caught (#1993).
+- Self-provisioning requirepass regression lane exercises the
+  authenticated-Redis path end-to-end (#1994).
+- memory-security-hardening R1-followup closed: the SessionStart
+  recall injector's fail-closed path is pinned by test (#1997).
+
 ## [11.5.0] — 2026-08-08
 
 Redis config truth: Redis connection settings now flow through one
