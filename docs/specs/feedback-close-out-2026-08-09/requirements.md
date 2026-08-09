@@ -1,11 +1,13 @@
 # Feedback Close-Out 2026-08-09 — Requirements
 
-**Status:** approved (2026-08-09 — chair selected all four feedback
-items via the session form and assigned the lead to order and
-manage them as a spec; receipt: the in-session AskUserQuestion
-response "I think all of the items have positive elements... step
-up as a lead programmer and order the feedback items as part of a
-spec you will manage/optimize")
+**Status:** complete (2026-08-09, same-day — R1-R3 in #2007, R4
+resolved per tasks.md: chip #2001 missed the 11.6.0 placement, so
+#2009 direct-wrote the callout. Approved earlier same day: chair
+selected all four feedback items via the session form and
+assigned the lead to order and manage them as a spec; receipt:
+the in-session AskUserQuestion response "I think all of the items
+have positive elements... step up as a lead programmer and order
+the feedback items as part of a spec you will manage/optimize")
 **Slug:** `feedback-close-out-2026-08-09`
 **Owner:** lead (Claude), chair Patrick
 **Provenance:** post-11.6.0-ship feedback review in the
