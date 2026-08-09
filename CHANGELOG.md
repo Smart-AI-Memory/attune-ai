@@ -41,6 +41,20 @@ reader now derives from one resolver, consumers authenticate
 consistently, and an AST drift guard keeps it that way. Plus the
 11.5.0 post-release self-review's security and performance fixes.
 
+### Pricing — ⚠️ Premium tier runs Claude Fable 5 at 2× Opus pricing
+
+> Callout added retroactively 2026-08-09 (feedback-close-out R4):
+> 11.6.0 shipped without it. The switch itself landed in 10.5.0
+> (#1361) — the full entry lives there.
+
+- Premium-tier workflow stages run `claude-fable-5` at $10 input /
+  $50 output per MTok — **2× the former Opus premium pricing**. Pin
+  the tier back with `ATTUNE_MODEL_PREMIUM` (e.g. `claude-opus-4-8`)
+  if the old price point matters more than Fable-class output.
+- Editing/polish passes run the dedicated editing model
+  (`ATTUNE_MODEL_EDITING`, default `claude-opus-5`, since 11.1.0)
+  at Opus-tier pricing; PREMIUM stays `claude-fable-5`.
+
 ### Changed — Redis connection behavior (redis-config-truth rct-4, #1993)
 
 - **Consumers that previously ignored `REDIS_PASSWORD` now
