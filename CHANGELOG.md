@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- **Retroactive premium-price callout** (fable-premium-tier task 9):
+  the [10.5.0] entry below now carries the prominent callout for the
+  premium tier's switch to `claude-fable-5` at 2× the former Opus
+  pricing (#1361), omitted at release time. The generated
+  tier-routing help concept no longer claims premium means Opus
+  (regenerated via `scripts/generate_concept_templates.py`). Also
+  records the 2026-07-29 amendment: editing/polish passes run a
+  dedicated editing model (`ATTUNE_MODEL_EDITING`, default
+  `claude-opus-5`, #1770, shipped in 11.1.0); PREMIUM stays
+  `claude-fable-5`.
+
 ## [11.6.0] — 2026-08-09
 
 Redis config truth-telling completes: every Redis connection-env
@@ -739,6 +752,27 @@ elicitation form surface gained its canonical reference form and
 cheaper rendering paths, and the packaging surface was made honest —
 empty placeholder extras deleted and every install remediation now
 names a command that can actually fix the stated problem.
+
+### Changed — ⚠️ Premium tier now runs Claude Fable 5 at 2× Opus pricing (#1361)
+
+> Callout added retroactively 2026-08-09 (fable-premium-tier task
+> 9): this change shipped in 10.5.0 but was omitted from the
+> changelog at release time.
+
+- **The PREMIUM tier resolves to `claude-fable-5`** — $10 input /
+  $50 output per MTok (prompt-cache write $12.50/MTok, read
+  $1/MTok): **2× the former Opus premium pricing**. Premium-tier
+  workflow stages therefore cost twice what they did on Opus. Pin
+  the tier back with `ATTUNE_MODEL_PREMIUM` (e.g.
+  `claude-opus-4-8`) if the old price point matters more than
+  Fable-class output.
+- **`BASELINE_MODEL` moved to `claude-fable-5`** so savings math
+  stays truthful on premium calls; historical telemetry records
+  keep the opus baseline frozen at log time.
+- Amendment (2026-07-29, #1770, shipped in 11.1.0): editing/polish
+  passes later split to a dedicated editing model
+  (`ATTUNE_MODEL_EDITING`, default `claude-opus-5`); PREMIUM stays
+  `claude-fable-5`.
 
 ### Added
 
