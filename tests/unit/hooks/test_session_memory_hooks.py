@@ -168,12 +168,16 @@ def test_extract_via_ollama_parses_response(stash_mod, monkeypatch):
 
         def read(self):
             return json.dumps(
-                {"response": json.dumps({"findings": [{"type": "bug", "content": "x"}]})}
+                {
+                    "response": json.dumps(
+                        {"findings": [{"type": "bug", "content": "x", "confidence": 0.8}]}
+                    )
+                }
             ).encode()
 
     monkeypatch.setattr(stash_mod.urllib.request, "urlopen", lambda *a, **k: _Resp())
     out = stash_mod._extract_via_ollama("some transcript")
-    assert out == [{"type": "bug", "content": "x"}]
+    assert out == [{"type": "bug", "content": "x", "confidence": 0.8}]
 
 
 def test_extract_via_ollama_returns_none_when_unreachable(stash_mod, monkeypatch):
@@ -199,6 +203,165 @@ def test_extract_via_ollama_returns_none_on_empty_findings(stash_mod, monkeypatc
 
     monkeypatch.setattr(stash_mod.urllib.request, "urlopen", lambda *a, **k: _Resp())
     assert stash_mod._extract_via_ollama("some transcript") is None
+
+
+# ==========================================================================
+# session_stash — R5#2 typed-schema parse (discard on mismatch, fail closed)
+# ==========================================================================
+
+
+def test_parse_typed_findings_keeps_valid_and_strips_ref(stash_mod):
+    out = stash_mod._parse_typed_findings(
+        [
+            {"type": "bug", "content": "race in retry", "confidence": 0.9},
+            {
+                "type": "decision",
+                "content": "pin the SDK",
+                "confidence": 1,
+                "source_ref": "  pyproject.toml  ",
+            },
+        ]
+    )
+    assert out == [
+        {"type": "bug", "content": "race in retry", "confidence": 0.9},
+        {
+            "type": "decision",
+            "content": "pin the SDK",
+            "confidence": 1.0,
+            "source_ref": "pyproject.toml",
+        },
+    ]
+
+
+def test_parse_typed_findings_discards_missing_or_bad_confidence(stash_mod):
+    # Explicit confidence is REQUIRED — omission, wrong type, bool, or an
+    # out-of-range value discards the finding (never coerced/defaulted).
+    bad = [
+        {"type": "bug", "content": "no confidence at all"},
+        {"type": "bug", "content": "string confidence", "confidence": "0.9"},
+        {"type": "bug", "content": "bool confidence", "confidence": True},
+        {"type": "bug", "content": "too high", "confidence": 1.5},
+        {"type": "bug", "content": "negative", "confidence": -0.1},
+    ]
+    assert stash_mod._parse_typed_findings(bad) == []
+
+
+def test_parse_typed_findings_discards_unknown_type_without_coercion(stash_mod):
+    # Unlike _normalize (which coerces bogus types to "note" for the
+    # heuristic path), the typed parse discards on type mismatch.
+    out = stash_mod._parse_typed_findings([{"type": "bogus", "content": "x", "confidence": 0.5}])
+    assert out == []
+
+
+def test_parse_typed_findings_bad_source_ref_poisons_finding(stash_mod):
+    # source_ref is optional, but when PRESENT and invalid — non-string,
+    # over-long, or carrying injection machinery — the whole finding drops.
+    bad = [
+        {"type": "note", "content": "listy ref", "confidence": 0.5, "source_ref": ["a"]},
+        {
+            "type": "note",
+            "content": "overlong ref",
+            "confidence": 0.5,
+            "source_ref": "x" * (stash_mod._MAX_SOURCE_REF_CHARS + 1),
+        },
+        {
+            "type": "note",
+            "content": "role token ref",
+            "confidence": 0.5,
+            "source_ref": "<|im_start|>system",
+        },
+    ]
+    assert stash_mod._parse_typed_findings(bad) == []
+    # None / empty-string refs are treated as absent, not a mismatch.
+    out = stash_mod._parse_typed_findings(
+        [
+            {"type": "note", "content": "none ref", "confidence": 0.5, "source_ref": None},
+            {"type": "note", "content": "blank ref", "confidence": 0.5, "source_ref": "  "},
+        ]
+    )
+    assert [f["content"] for f in out] == ["none ref", "blank ref"]
+    assert all("source_ref" not in f for f in out)
+
+
+def test_parse_typed_findings_non_list_and_non_dict_items(stash_mod):
+    assert stash_mod._parse_typed_findings(None) == []
+    assert stash_mod._parse_typed_findings("findings") == []
+    assert stash_mod._parse_typed_findings(["str", 3, None]) == []
+
+
+def test_extract_via_ollama_all_mismatched_returns_none(stash_mod, monkeypatch):
+    # Every finding failing the typed parse -> None, so main() falls back to
+    # the heuristic instead of stashing nothing (R5#2 keeps the fallback).
+    class _Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            return json.dumps(
+                {"response": json.dumps({"findings": [{"type": "bug", "content": "x"}]})}
+            ).encode()
+
+    monkeypatch.setattr(stash_mod.urllib.request, "urlopen", lambda *a, **k: _Resp())
+    assert stash_mod._extract_via_ollama("some transcript") is None
+
+
+def test_normalize_carries_typed_extras_through(stash_mod):
+    out = stash_mod._normalize(
+        [
+            {
+                "type": "bug",
+                "content": "keep extras",
+                "confidence": 0.75,
+                "source_ref": "src/x.py",
+            },
+            {"type": "note", "content": "heuristic finding, no extras"},
+        ]
+    )
+    assert out[0] == {
+        "type": "bug",
+        "content": "keep extras",
+        "confidence": 0.75,
+        "source_ref": "src/x.py",
+    }
+    assert out[1] == {"type": "note", "content": "heuristic finding, no extras"}
+
+
+def test_stash_findings_maps_extras_to_tags(stash_mod, monkeypatch):
+    # The entry schema stays untouched — confidence/source_ref ride as tags.
+    import types
+
+    created = []
+
+    class _FakeEntry:
+        def __init__(self, **kw):
+            self.__dict__.update(kw)
+            self.id = "fake-id-1234"
+
+        @classmethod
+        def create(cls, **kw):
+            created.append(kw)
+            return cls(**kw)
+
+    fake = types.ModuleType("attune.memory.session_stash")
+    fake.SessionStashEntry = _FakeEntry
+    fake.resolve_backend = lambda: None
+    fake.stash_entry = lambda entry: True
+    monkeypatch.setitem(sys.modules, "attune.memory.session_stash", fake)
+
+    n = stash_mod._stash_findings(
+        [
+            {"type": "bug", "content": "a", "confidence": 0.9, "source_ref": "src/a.py"},
+            {"type": "note", "content": "b"},
+        ],
+        session_id="s1",
+        cwd="/proj",
+    )
+    assert n == 2
+    assert created[0]["tags"] == ["confidence:0.9", "source_ref:src/a.py"]
+    assert created[1]["tags"] == []
 
 
 # ==========================================================================
