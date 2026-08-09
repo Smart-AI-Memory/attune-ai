@@ -20,6 +20,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `claude-opus-5`, #1770, shipped in 11.1.0); PREMIUM stays
   `claude-fable-5`.
 
+### Removed — attune-author plugin vestige (attune-author-consolidation D13)
+
+- **`plugins/attune-author/` deleted and its marketplace entry
+  removed.** The plugin only wrapped the `attune-author` package,
+  which was archived 2026-07-27 (D12) after its machinery was
+  absorbed into `attune.authoring`. Its post-commit hook still
+  imported `attune_author.maintenance.run_hook` — a permanent
+  silent no-op under its ImportError guard — closing the spec's
+  last residual: no attune-ai code path imports `attune_author`.
+  Existing installs keep working (archive without yank); the entry
+  stops resolving for new installs. The live post-commit staleness
+  hook (`plugin/hooks/help_post_commit.py` →
+  `attune.help.maintenance.run_hook`) is unaffected.
+
 ## [11.6.0] — 2026-08-09
 
 Redis config truth-telling completes: every Redis connection-env

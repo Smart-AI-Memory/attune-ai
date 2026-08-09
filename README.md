@@ -255,7 +255,7 @@ protocol bug the primary client silently tolerated.
 | **`attune-ai`** | Developer workflow hub (this package) | `pip install attune-ai` |
 | **`attune-rag`** | RAG pipeline (core dep of attune-ai, v0.7+) | bundled |
 | **`attune-verify`** | Generation fact-checker — backs the `/verify` skill (core dep) | bundled |
-| **`attune.authoring`** | Help content authoring, staleness detection (formerly the `attune-author` package) | bundled; plugin: `/plugin install attune-author@attune-ai` |
+| **`attune.authoring`** | Help content authoring, staleness detection (formerly the `attune-author` package, retired 2026-07-27) | bundled |
 | **`attune-help`** | Progressive-depth template runtime | `pip install attune-help` |
 
 `attune-rag` and `attune-verify` both ship as **core dependencies** of
@@ -852,29 +852,32 @@ or raise it to `0.75`.
 
 ## Migration
 
-`attune-help` and `attune-author` now ship from the
-`Smart-AI-Memory/attune-ai` marketplace alongside `attune-ai` itself.
-The separate `Smart-AI-Memory/attune-docs` marketplace is retired.
+`attune-help` ships from the `Smart-AI-Memory/attune-ai` marketplace
+alongside `attune-ai` itself. The separate
+`Smart-AI-Memory/attune-docs` marketplace is retired, and the
+`attune-author` plugin was retired 2026-07-27 — its authoring
+machinery now ships inside `attune-ai` as `attune.authoring`
+(see `docs/specs/attune-author-consolidation/`).
 
 New users:
 
 ```text
 /plugin marketplace add Smart-AI-Memory/attune-ai
 /plugin install attune-help@attune-ai
-/plugin install attune-author@attune-ai
 ```
 
-If you previously installed either from `attune-docs`:
+If you previously installed from `attune-docs` or had the retired
+`attune-author` plugin:
 
 1. ```text
    /plugin uninstall attune-help@attune-docs
    /plugin uninstall attune-author@attune-docs
+   /plugin uninstall attune-author@attune-ai
    ```
 
 2. ```text
    /plugin marketplace add Smart-AI-Memory/attune-ai
    /plugin install attune-help@attune-ai
-   /plugin install attune-author@attune-ai
    ```
 
 ---

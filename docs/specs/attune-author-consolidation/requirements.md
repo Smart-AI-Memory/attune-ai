@@ -52,7 +52,7 @@ consolidation simplifies, it doesn't grow attune-ai.
 | Consumer in attune-ai | Imports from attune_author |
 |---|---|
 | `scripts/project_features.py` | `projector.project_feature`, `validate_master_file` |
-| `plugins/attune-author/hooks/help_post_commit.py` | `maintenance.run_hook` |
+| `plugins/attune-author/hooks/help_post_commit.py` | `maintenance.run_hook` (plugin deleted 2026-08-09, D13 — never repointed; the live hook is `plugin/hooks/help_post_commit.py` → `attune.help.maintenance.run_hook`) |
 | `scripts/help_aggregator_prototype.py`, `scripts/list_stale_help_features.py` | `check_staleness`, `load_manifest` |
 | `scripts/regenerate_help_templates.py` | `load_manifest` |
 | `src/attune/memory/personal.py` | `polish.polish_template` (lazy, optional) |

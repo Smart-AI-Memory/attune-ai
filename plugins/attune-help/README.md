@@ -4,9 +4,9 @@ Lightweight help runtime for Claude Code. Reads `.help/`
 templates with progressive depth, audience adaptation, and
 renderer choices. No AI API keys required.
 
-Pairs with [attune-author](../attune-author/plugin/) to give
-you a complete author-and-read workflow without the full
-[attune-ai](../../../plugin/) plugin.
+Pairs with [attune-ai](../../../plugin/) — whose bundled
+`attune.authoring` module owns the authoring side — or stands
+alone as a read-only help runtime.
 
 ## Install
 
@@ -65,19 +65,22 @@ The plugin's MCP server exposes six tools prefixed with
 
 ## Ecosystem
 
-Three plugins, one monorepo:
+Two plugins, one monorepo:
 
 | Plugin | Role | Requires |
 | ------ | ---- | -------- |
-| `attune-ai` | Full AI Workflow-harness — 14 skills, security, tests, release prep | — |
-| `attune-author` | Author .help/ templates — scan, generate, maintain, AI doc gen | Anthropic API key for `author_docs` |
+| `attune-ai` | Full AI Workflow-harness — auto-triggering skills, security, tests, release prep; authoring ships built in (`attune.authoring`) | — |
 | `attune-help` | Read .help/ templates with progressive depth | — |
 
-You can install any combination. Common pairings:
+You can install either or both. Common pairings:
 
-- `attune-author` + `attune-help` — author-and-read without the workflow layer
+- `attune-help` only — read-only help runtime, no AI keys
 - `attune-ai` only — the full experience including `/coach`, which plays a similar role to `/lookup`
-- All three — `/lookup` and `/coach` coexist, each matches different natural-language triggers
+- Both — `/lookup` and `/coach` coexist, each matches different natural-language triggers
+
+(The former `attune-author` plugin was retired 2026-07-27; its
+authoring machinery was absorbed into attune-ai as
+`attune.authoring` — see the attune-author-consolidation spec.)
 
 ## How it Works
 
@@ -123,5 +126,4 @@ attune_help.mcp.server` runs cleanly from a real shell.
 ## Related
 
 - [attune-help library docs](../README.md)
-- [attune-author plugin](../../attune-author/plugin/) — the authoring side
-- [attune-ai plugin](../../../plugin/) — the full workflow suite
+- [attune-ai plugin](../../../plugin/) — the full workflow suite, including the authoring side (`attune.authoring`)

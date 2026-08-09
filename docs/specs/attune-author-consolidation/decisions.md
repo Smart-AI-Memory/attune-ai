@@ -244,8 +244,51 @@ it must run before any attune import). Regression test:
 no-repo-layout negative control. 127 fact_check + audit-gate tests
 serial-green.
 
+## D13 — Residual ruled: delete the plugin vestige, don't repoint the hook
+
+**Decided (2026-08-09).** The 2026-08-08 triage residual —
+`plugins/attune-author/hooks/help_post_commit.py` still importing
+`attune_author.maintenance.run_hook` — is resolved by deleting the
+whole `plugins/attune-author/` marketplace-plugin vestige, not by
+repointing the hook. Evidence (all live-fired, not assumed):
+
+- **Repoint has no target.** `run_hook` was never absorbed:
+  `attune.authoring` exposes no `run_hook` (checked `hasattr` +
+  `maintenance_contract.py` names). The live post-commit surface is
+  `plugin/hooks/help_post_commit.py` →
+  `attune.help.maintenance.run_hook` (`help/maintenance.py:152`),
+  which already ships in the main attune-ai plugin — a repointed
+  attune-author hook would be a duplicate that additionally breaks
+  the plugin's standalone premise (its users need not have attune-ai
+  installed, so `attune.help` wouldn't import).
+- **The hook was a permanent silent no-op.** Live-fired with a
+  `git commit` payload in the repo venv: `attune_author`
+  ImportError → exit 0, no output.
+- **The plugin's only function wraps the archived package.** Its
+  MCP server is `uvx --from attune-author[plugin] python -m
+  attune_author.mcp.server`; its skills/README instruct
+  `pip install 'attune-author[plugin]'`. D12 archived that package;
+  D1/D3/D10 moved authoring into the session + `attune.authoring`.
+  Keeping a marketplace entry that advertises the retired product is
+  claim drift.
+- **Nothing in-repo executes it.** Only references were the root
+  `.claude-plugin/marketplace.json` entry, this spec's docs, and an
+  archived 2026-04 plan. No test enumerates the plugin dir; the
+  `.agents/skills` mirror doesn't source from `plugins/`;
+  `plugin/.claude-plugin/marketplace.json` never listed it.
+
+Executed in the same PR: `plugins/attune-author/` deleted (14
+files), marketplace entry removed, attune-help plugin cross-refs and
+README install/migration text updated, design.md residual note
+flipped to resolved. Existing installs keep their local copy;
+archive-without-yank (D12) means nothing breaks for them — the entry
+simply stops resolving for new installs. Website product-catalog
+cleanup (features.ts entry, product cards, footer PyPI link) is
+tracked as a follow-up, per the website-only-change policy.
+
 ## Open
 
 - (none — T4 executed 2026-07-27 per D12: `[author]` extra dropped
   from pyproject.toml, CLI invocation paths retired, repo archived
-  without yank. Closed at the 2026-08-08 triage.)
+  without yank. Closed at the 2026-08-08 triage. D13 closed the
+  last residual 2026-08-09.)
