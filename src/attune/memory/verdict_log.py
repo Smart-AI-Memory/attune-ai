@@ -244,8 +244,11 @@ def propagate_verdict(stem: str, client: object | None = None) -> bool:
 
             client = connect_recall_redis()
         return bool(client.delete(f"attune:memory:node:{stem}"))
-    except Exception as exc:  # noqa: BLE001 — degrade silently, never block the loop
-        logger.debug("verdict propagation skipped for %s: %s", stem, exc)
+    except Exception as exc:  # noqa: BLE001 — P15: never block the loop
+        # WARNING (not debug) with the exception type, so a propagation
+        # regression (e.g. an AttributeError from a client-interface change)
+        # stays visible instead of masquerading as Redis-down silence.
+        logger.warning("verdict propagation skipped for %s: %s: %s", stem, type(exc).__name__, exc)
         return False
 
 

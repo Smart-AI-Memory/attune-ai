@@ -109,8 +109,11 @@ def _review_one(mem, basis: str, days: int, root: Path, who: str) -> str:
     if answer == "q":
         return "quit"
     if answer == "k":
-        set_verified(mem.path, date.today())
+        # Log record FIRST, stamp second (codex D11 finding): if the append
+        # fails, the safe leftover is a record-less UNSTAMPED file, never a
+        # `verified:` stamp with no audit record behind it.
         append_verdict(root, VerdictRecord.create(mem.stem, "keep", mem.digest, who))
+        set_verified(mem.path, date.today())
         propagate_verdict(mem.stem)
         return "keep"
     if answer == "w":
@@ -119,11 +122,21 @@ def _review_one(mem, basis: str, days: int, root: Path, who: str) -> str:
         print(f"  tombstoned (redis node {'invalidated' if invalidated else 'not present'})")
         return "wrong"
     if answer == "s":
+        # A failed or missing editor means NO edit happened — recording a
+        # `sharper` verdict anyway would verify content the reviewer never
+        # sharpened (codex D11 finding). Degrade to skip.
         editor = os.environ.get("EDITOR", "vi")
-        subprocess.run([editor, str(mem.path)], check=False)  # noqa: S603 — user's own editor
+        try:
+            result = subprocess.run([editor, str(mem.path)], check=False)  # noqa: S603
+        except (OSError, subprocess.SubprocessError) as exc:
+            print(f"  editor failed to launch ({exc}) — skipped, no verdict recorded")
+            return "skip"
+        if result.returncode != 0:
+            print(f"  editor exited {result.returncode} — skipped, no verdict recorded")
+            return "skip"
         edited = load_memory(mem.path)
-        set_verified(mem.path, date.today())
         append_verdict(root, VerdictRecord.create(mem.stem, "sharper", edited.digest, who))
+        set_verified(mem.path, date.today())
         propagate_verdict(mem.stem)
         return "sharper"
     return "skip"
@@ -170,7 +183,15 @@ def main(argv: list[str] | None = None) -> int:
     counts: dict[str, int] = {}
     for mem, basis, days in queue:
         root = _corpus_root_for(mem, [Path(r) for r in report.roots])
-        action = _review_one(mem, basis, days, root, who)
+        try:
+            action = _review_one(mem, basis, days, root, who)
+        except (OSError, ValueError) as exc:
+            # One unwritable file/log must not abort the triage or break
+            # the always-exit-zero contract; the item simply records no
+            # verdict this round.
+            print(f"  ERROR on {mem.stem}: {exc} — no verdict recorded")
+            counts["error"] = counts.get("error", 0) + 1
+            continue
         if action == "quit":
             break
         counts[action] = counts.get(action, 0) + 1

@@ -110,12 +110,16 @@ class TestVerdictActions:
         path = _write_mem(tmp_path, "project_s")
         mem = load_memory(path)
 
+        class _Done:
+            returncode = 0
+
         def _fake_editor(argv, check=False):
             edit_path = Path(argv[-1])
             edit_path.write_text(
                 edit_path.read_text(encoding="utf-8").replace("The body.", "The SHARPER body."),
                 encoding="utf-8",
             )
+            return _Done()
 
         import attune.memory.verdict_log as vlog
 
@@ -130,6 +134,75 @@ class TestVerdictActions:
         post_edit = load_memory(path)
         assert records[0].digest == post_edit.digest != mem.digest
         assert "verified: " in path.read_text(encoding="utf-8")
+
+
+class TestD11Regressions:
+    """Pins for the codex D11 lane findings on this diff."""
+
+    def test_keep_append_failure_leaves_file_unstamped(self, tmp_path, monkeypatch) -> None:
+        """Record-first ordering: an append failure must never leave a
+        `verified:` stamp with no audit record behind it."""
+        import pytest
+
+        mod = _load_script()
+        path = _write_mem(tmp_path, "project_k")
+        mem = load_memory(path)
+        import attune.memory.verdict_log as vlog
+
+        def _boom(*a, **k):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(vlog, "append_verdict", _boom)
+        monkeypatch.setattr("builtins.input", lambda *_: "k")
+        with pytest.raises(OSError, match="disk full"):
+            mod._review_one(mem, "mtime", 5, tmp_path, who="tester")
+        assert "verified:" not in path.read_text(encoding="utf-8")
+
+    def test_sharper_editor_launch_failure_skips(self, tmp_path, monkeypatch) -> None:
+        mod = _load_script()
+        path = _write_mem(tmp_path, "project_e1")
+        mem = load_memory(path)
+
+        def _missing_editor(argv, check=False):
+            raise OSError("no such editor")
+
+        monkeypatch.setattr(mod.subprocess, "run", _missing_editor)
+        monkeypatch.setattr("builtins.input", lambda *_: "s")
+        assert mod._review_one(mem, "mtime", 5, tmp_path, who="t") == "skip"
+        assert "verified:" not in path.read_text(encoding="utf-8")
+        assert load_verdicts(tmp_path) == []
+
+    def test_sharper_editor_nonzero_exit_skips(self, tmp_path, monkeypatch) -> None:
+        """An aborted edit (editor rc != 0) must not verify anything."""
+        mod = _load_script()
+        path = _write_mem(tmp_path, "project_e2")
+        mem = load_memory(path)
+
+        class _Aborted:
+            returncode = 1
+
+        monkeypatch.setattr(mod.subprocess, "run", lambda *a, **k: _Aborted())
+        monkeypatch.setattr("builtins.input", lambda *_: "s")
+        assert mod._review_one(mem, "mtime", 5, tmp_path, who="t") == "skip"
+        assert "verified:" not in path.read_text(encoding="utf-8")
+        assert load_verdicts(tmp_path) == []
+
+    def test_main_survives_per_item_write_failure(self, tmp_path, monkeypatch, capsys) -> None:
+        """One unwritable item records an error and the triage continues
+        to exit 0 (the always-exit-zero contract)."""
+        mod = _load_script()
+        _write_mem(tmp_path, "project_a")
+        import attune.memory.verdict_log as vlog
+
+        def _boom(*a, **k):
+            raise OSError("read-only corpus")
+
+        monkeypatch.setattr(vlog, "append_verdict", _boom)
+        monkeypatch.setattr(mod.sys.stdin, "isatty", lambda: True)
+        monkeypatch.setattr("builtins.input", lambda *_: "w")
+        rc = mod.main(["--root", str(tmp_path), "--limit", "1", "--who", "t"])
+        assert rc == 0
+        assert "ERROR on project_a" in capsys.readouterr().out
 
 
 class TestMainNonInteractive:

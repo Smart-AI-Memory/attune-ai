@@ -184,3 +184,17 @@ class TestPropagateVerdict:
                 raise ConnectionError("redis down")
 
         assert propagate_verdict("project_x", client=_Client()) is False
+
+    def test_interface_defect_degrades_but_warns(self, caplog) -> None:
+        """Deliberate P15 pin (codex narrowing REJECTED with reason): even a
+        client-interface defect (AttributeError) degrades to False rather
+        than blocking the loop — but it logs at WARNING with the exception
+        type so the regression stays visible."""
+        import logging
+
+        class _NoDelete:
+            pass
+
+        with caplog.at_level(logging.WARNING, logger="attune.memory.verdict_log"):
+            assert propagate_verdict("project_x", client=_NoDelete()) is False
+        assert any("AttributeError" in rec.getMessage() for rec in caplog.records)
