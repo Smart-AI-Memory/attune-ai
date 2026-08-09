@@ -1,6 +1,6 @@
 ---
 name: lookup
-description: "Look up help topics with progressive depth. Pair with attune-author for full author-and-read workflow. Triggers on: lookup, look up, depth, topic, help topic, tell me more."
+description: "Look up help topics with progressive depth. Pair with attune-ai for the full author-and-read workflow. Triggers on: lookup, look up, depth, topic, help topic, tell me more."
 argument-hint: "[topic or intent]"
 ---
 
@@ -69,11 +69,12 @@ pip install 'attune-help[plugin]'
 python -m attune_help.mcp.server  # should start without errors
 ```
 
-## Relationship to attune-ai and attune-author
+## Relationship to attune-ai
 
 - `/coach` (attune-ai) — full workflow coach with team memory
 - `/lookup` (attune-help) — lightweight read-only topic lookup
-- `/author` (attune-author) — writes templates that `/lookup` reads
+- Authoring lives in attune-ai's `attune.authoring` module
+  (author-feature skill) — it writes templates that `/lookup` reads
 
 `/lookup` is designed to coexist with `/coach`. Both can be
 installed; Claude picks the right one based on trigger phrases.
