@@ -1,7 +1,8 @@
 # memory-status-integrity
 
-**Status:** approved (2026-08-07) — chair approved advancing past
-requirements; OQ2/OQ4 resolved, R5 retired
+**Status:** approved (2026-08-09) — chair approved advancing past
+requirements; OQ2/OQ4 resolved, R5 retired; P1 shipped; P2 opened
+with both residual rulings (decisions D7)
 **Owner:** Patrick (chair)
 **Origin:** Banked 2026-07-10 as a named future spec in
 `project_memory_layer_audit_todo`, gated on `spec-status-integrity`

@@ -172,6 +172,11 @@ def _parse_frontmatter(text: str) -> tuple[dict[str, str], list[str], str]:
     fields: dict[str, str] = {}
     unknown: list[str] = []
     in_metadata = False
+    # Top-level key whose value was a YAML block-scalar indicator (``>``,
+    # ``|`` and their chomping variants) — its indented continuation lines
+    # are VALUE content, not keys.
+    block_key: str | None = None
+    block_parts: list[str] = []
 
     for raw_line in block.splitlines():
         if not raw_line.strip() or raw_line.lstrip().startswith("#"):
@@ -179,32 +184,74 @@ def _parse_frontmatter(text: str) -> tuple[dict[str, str], list[str], str]:
 
         indented = raw_line[:1].isspace()
         line = raw_line.strip()
+
+        if indented and not in_metadata:
+            # P2 gate (D6#1): indented continuation lines outside
+            # ``metadata:`` — folded/literal scalars, wrapped values — must
+            # never parse as top-level keys. The canonical linter counts
+            # only non-indented keys; before this alignment a continuation
+            # line containing ``:`` false-positived as an unknown key on
+            # exactly the multi-line files the loop depends on.
+            if block_key is not None:
+                block_parts.append(line)
+            continue
+
+        if block_key is not None:  # a non-indented line ends the scalar
+            if block_parts:
+                fields[block_key] = " ".join(block_parts)
+            block_key, block_parts = None, []
+
         if ":" not in line:
             continue
         key, _, value = line.partition(":")
         key = key.strip()
         value = value.strip().strip("\"'")
 
-        if indented and in_metadata:
-            if key in ALLOWED_METADATA_KEYS:
-                fields[f"metadata.{key}"] = value
-            else:
-                unknown.append(f"metadata.{key}")
+        if indented:  # only reachable inside ``metadata:``
+            _record_metadata_key(key, value, fields, unknown)
             continue
 
         in_metadata = key == "metadata"
         if key == "metadata":
             continue
-        # ``verified:`` is the P2 field. Tolerated (never flagged) before P2
-        # ships so an early adopter's file does not read as a violation.
-        if key == "verified":
-            fields["verified"] = value
-        elif key in ALLOWED_TOP_LEVEL_KEYS:
-            fields[key] = value
-        else:
-            unknown.append(key)
+        if _record_top_level_key(key, value, fields, unknown):
+            block_key, block_parts = key, []
+
+    if block_key is not None and block_parts:
+        fields[block_key] = " ".join(block_parts)
 
     return fields, unknown, body
+
+
+def _record_metadata_key(key: str, value: str, fields: dict[str, str], unknown: list[str]) -> None:
+    """Record one ``metadata:`` child, flagging keys the schema forbids."""
+    if key in ALLOWED_METADATA_KEYS:
+        fields[f"metadata.{key}"] = value
+    else:
+        unknown.append(f"metadata.{key}")
+
+
+# A YAML block-scalar header: ``>`` or ``|``, optionally an indentation
+# indicator digit and/or chomping ``+``/``-`` (either order), optionally a
+# trailing comment. Codex D11 finding: the earlier fixed set missed ``>2`` /
+# ``|2-`` / ``> # comment`` forms, silently discarding their continuation.
+_BLOCK_SCALAR_RE = re.compile(r"^[>|](?:[0-9][+-]?|[+-][0-9]?)?(?:\s+#.*)?$")
+
+
+def _record_top_level_key(key: str, value: str, fields: dict[str, str], unknown: list[str]) -> bool:
+    """Record one top-level key. True when its value opens a block scalar.
+
+    ``verified:`` is the P2 field. Tolerated (never flagged) before P2
+    ships so an early adopter's file does not read as a violation.
+    """
+    if key == "verified":
+        fields["verified"] = value
+    elif key in ALLOWED_TOP_LEVEL_KEYS:
+        fields[key] = value
+    else:
+        unknown.append(key)
+        return False
+    return bool(_BLOCK_SCALAR_RE.match(value))
 
 
 def _parse_date(value: str | None) -> date | None:

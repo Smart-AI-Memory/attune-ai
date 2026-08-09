@@ -152,6 +152,111 @@ class TestParsing:
         assert mem.verified == date(2026, 8, 1)
         assert mem.unknown_keys == ()
 
+    def test_folded_description_continuation_is_not_a_key(self, tmp_path: Path) -> None:
+        """P2 gate (D6#1): parser alignment with the canonical linter.
+
+        A folded multi-line ``description: >`` whose continuation lines
+        contain ``:`` used to parse those lines as unknown top-level keys —
+        a false positive on exactly the drifting files the ``verified:``
+        loop depends on. The canonical linter counts only non-indented keys.
+        """
+        path = tmp_path / "p_folded.md"
+        path.write_text(
+            "---\n"
+            "name: p_folded\n"
+            "description: >\n"
+            "  recall 6/6 vs grep-baseline: 5/6;\n"
+            "  OR-mode required: always\n"
+            "metadata:\n"
+            "  type: project\n"
+            "verified: 2026-08-01\n"
+            "---\n\nThe claim.\n",
+            encoding="utf-8",
+        )
+        mem = load_memory(path)
+        assert mem.unknown_keys == ()
+        assert mem.description == "recall 6/6 vs grep-baseline: 5/6; OR-mode required: always"
+        assert mem.verified == date(2026, 8, 1)
+
+    def test_literal_block_description_joins_and_terminates(self, tmp_path: Path) -> None:
+        """``|`` literal blocks behave like folded ones, and the first
+        non-indented key after the block ends continuation collection."""
+        path = tmp_path / "p_literal.md"
+        path.write_text(
+            "---\n"
+            "name: p_literal\n"
+            "description: |\n"
+            "  line one: a\n"
+            "  line two: b\n"
+            "metadata:\n"
+            "  type: reference\n"
+            "---\n\nBody.\n",
+            encoding="utf-8",
+        )
+        mem = load_memory(path)
+        assert mem.unknown_keys == ()
+        assert mem.description == "line one: a line two: b"
+        assert mem.mem_type == "reference"
+
+    def test_folded_block_as_last_frontmatter_key_flushes(self, tmp_path: Path) -> None:
+        path = tmp_path / "p_tail_fold.md"
+        path.write_text(
+            "---\n"
+            "name: p_tail_fold\n"
+            "metadata:\n"
+            "  type: user\n"
+            "description: >\n"
+            "  tail folded: value\n"
+            "---\n\nBody.\n",
+            encoding="utf-8",
+        )
+        mem = load_memory(path)
+        assert mem.unknown_keys == ()
+        assert mem.description == "tail folded: value"
+
+    def test_block_scalar_headers_with_indent_digit_or_comment(self, tmp_path: Path) -> None:
+        """Codex D11 finding: ``>2`` / ``|2-`` / ``> # comment`` headers are
+        valid YAML block scalars too — their continuation must be collected,
+        not discarded with the indicator retained as the value."""
+        for stem, header in [
+            ("p_fold_digit", ">2"),
+            ("p_lit_digit_chomp", "|2-"),
+            ("p_fold_comment", "> # folded on purpose"),
+        ]:
+            path = tmp_path / f"{stem}.md"
+            path.write_text(
+                "---\n"
+                f"name: {stem}\n"
+                f"description: {header}\n"
+                "  the real: text\n"
+                "metadata:\n"
+                "  type: project\n"
+                "---\n\nBody.\n",
+                encoding="utf-8",
+            )
+            mem = load_memory(path)
+            assert mem.unknown_keys == (), stem
+            assert mem.description == "the real: text", stem
+
+    def test_unknown_key_with_block_scalar_flags_only_the_key(self, tmp_path: Path) -> None:
+        """Both directions: the forbidden key is still flagged exactly once,
+        and its continuation lines are not flagged as further keys."""
+        path = tmp_path / "p_unknown_fold.md"
+        path.write_text(
+            "---\n"
+            "name: p_unknown_fold\n"
+            "description: fine\n"
+            "notes: >\n"
+            "  stray: content\n"
+            "  more: content\n"
+            "metadata:\n"
+            "  type: project\n"
+            "---\n\nBody.\n",
+            encoding="utf-8",
+        )
+        mem = load_memory(path)
+        assert mem.unknown_keys == ("notes",)
+
     def test_deferred_link_is_not_a_link(self, tmp_path: Path) -> None:
         path = write_memory(tmp_path, "p_four", body="See [[?not_yet]] and [[real]].")
         mem = load_memory(path)
