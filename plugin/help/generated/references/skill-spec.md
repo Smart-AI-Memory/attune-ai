@@ -9,7 +9,7 @@ source: plugin/skills/spec/SKILL.md
 
 # Reference: Skill: spec
 
-Spec-driven development — brainstorm, plan, review, and execute with quality gates. Triggers on: spec, brainstorm and build, plan and execute, idea to code, build from scratch.
+Spec Ladders — goal-driven spec development: brainstorm, plan, review, and execute a gated task ladder with recorded approvals. Triggers on: spec, spec ladders, brainstorm and build, plan and execute, idea to code, build from scratch.
 
 **Usage:** `/spec <what to build, or 'resume'>`
 
@@ -33,6 +33,35 @@ options:
 
 If the user provides arguments (e.g., "resume" or a file
 path), skip the picker and route directly.
+
+### New-spec intake (one form, not N questions)
+
+When the route is "Start a new spec", gather the framing as ONE
+form per the Socratic rule — never as sequential question turns:
+
+```bash
+python -m attune.elicitation.spec_intake
+```
+
+The JSON payload carries a validated form definition
+(`attune.elicitation.spec_intake.build_spec_intake_form`) —
+outcome, done-when acceptance, primary code area (options derived
+from the tree's packages), and an optional slug — plus
+`taken_slugs` for collision awareness. Render it widget-first with
+the `AskUserQuestion` fallback (batching opts in via
+`metadata.source` containing "form"). If the user's invocation
+already stated what to build, carry it into the outcome field
+instead of asking again.
+
+Compose the answers into the session-contract block that seeds
+Stage 1:
+
+```bash
+echo '<answers JSON>' | python -m attune.elicitation.spec_intake --compose
+```
+
+A slug collision renders as a WARNING, not an error — offer to
+amend the existing spec before forking a new one.
 
 ## How It Works
 
@@ -71,14 +100,74 @@ When the user chooses "Import a spec file":
 
 When the user chooses "Start a new spec":
 
-1. Run the brainstorm conversation flow (same phases
-   as brainstorm: Context, Problem, Goals, End State)
-2. When the end state is clear, auto-decompose the
+1. **Kickoff form (one batched turn).** Gather the
+   *independent* dimensions of the kickoff as a single
+   form via the `elicit` skill, instead of asking them
+   one button at a time. The dimensions:
+
+   - `outcome` — what should be true when done (one line)
+   - `scope` — where it focuses (area / files / subsystem)
+   - `concerns` — which quality dimensions matter
+     (multi-select: correctness, security, performance,
+     tests, docs)
+
+   Build the declarative form, then **prefer the rich
+   widget surface** so the kickoff renders as one form
+   with the controls each dimension deserves —
+   `outcome`/`scope` as multi-line textareas and
+   `concerns` as a multi-select checkbox group, instead
+   of three flat button turns. Render it with
+   `elicitation_render_widget` and pass the returned
+   `html` to `mcp__visualize__show_widget`; when the
+   user submits, parse the `__elicitation_response__`
+   postback and validate with
+   `elicitation_collect_response`.
+
+   **Fall back to the portable AskUserQuestion mapping**
+   — `elicitation_render_form` → one `AskUserQuestion`
+   call with `metadata: {"source": "elicit-form"}` (the
+   opt-in the one-question-per-turn guard requires) →
+   `elicitation_collect_response` — when the widget
+   surface is unavailable. Per decisions D10, treat an
+   elicitation `decline` you did **not** see the user
+   make as "surface unavailable" and fall back; never
+   read it as the user saying no. The `elicit` skill
+   owns both round-trips (its "Widget surface" section
+   and steps 2–4); this stage just supplies the three
+   fields.
+
+   **Omit any dimension the user already stated** — the
+   `<what to build>` argument usually answers `outcome`,
+   so drop that field rather than re-ask. If only one
+   dimension is left open, ask it as a single question —
+   never force a one-field form (the §4 batching rule:
+   batch only genuinely-open, independent dimensions).
+
+2. Run the brainstorm conversation flow for the parts a
+   form can't batch — Problem → Goals → End State build on
+   each other, so they stay **sequential** — seeded by the
+   kickoff answers.
+3. When the end state is clear, auto-decompose the
    approach into XML `<task>` blocks
-3. Save to `.claude/plans/{topic-slug}.md` with both
+4. Save to `.claude/plans/{topic-slug}.md` with both
    prose summary and XML task blocks
-4. Use `AskUserQuestion`: "Spec saved with N tasks.
+5. Use `AskUserQuestion`: "Spec saved with N tasks.
    Ready to review?"
+
+### Boundary gate (spec-lifecycle-gates, G5)
+
+When the plan belongs to a spec under `docs/specs/<slug>/`, run the
+lifecycle gates before presenting the review:
+
+```bash
+attune gates check tasks --spec <slug> --changed <paths the plan touches>
+```
+
+Render every receipt to the user. G5 semantics are binding: exit 2
+(`BLOCKED`) — do NOT proceed to review; the findings must be fixed
+first. Exit 1 (`CHAIR_REQUIRED`) — present the receipts and proceed
+only after the user explicitly acknowledges them (record the
+acknowledgment in the session). Exit 0 — proceed.
 
 ## Stage 2: Review
 
@@ -109,6 +198,23 @@ When the user chooses "Start a new spec":
    - "I want to edit the plan file"
    - "Start over"
 
+5. **Pushback gate — a `pushback` construct.** If the user's
+   edit/rejection makes the plan *weaker* than what you drafted
+   AND you can render the concrete alternative (the
+   decision-routine "pushback discipline"), do not silently
+   comply — surface the disagreement as a `pushback` construct
+   (the user's approach tagged "your approach", your alternative
+   badged "I'd suggest instead", a "Why I'd push back"
+   rationale) via the `elicit` skill's widget surface
+   (`elicitation_render_widget` → `show_widget`), falling back to
+   its `AskUserQuestion` mapping (alternative first, rationale as
+   the lead-in) when the widget surface is unavailable. The
+   `elicit` skill owns the round-trip and validation — see its
+   "pushback construct" section. The user overrules (keeps their
+   edit) or switches with one pick. Skip this gate when you
+   genuinely agree with the edit, or when you cannot render a
+   concrete alternative — pushback without an artifact is hedging.
+
 ## Stage 3: Approve
 
 Show final summary: task count, scope, risks. Then:
@@ -119,6 +225,12 @@ Use `AskUserQuestion`: "Ready to start executing?"
 - "Go back to review"
 
 ## Stage 4: Execute
+
+Before the first task, when the plan belongs to a
+`docs/specs/<slug>/` spec, run the execution-boundary gates
+(`attune gates check execution --spec <slug> --changed <paths>`)
+with the same G5 semantics as the Stage 2 gate — hard-stop on
+`BLOCKED`, explicit user acknowledgment on `CHAIR_REQUIRED`.
 
 For each pending task:
 
@@ -141,18 +253,45 @@ For each pending task:
    ```
 
 5. Show result with `present_task_result(task, result)`
-6. **Severity-gated approval:**
+6. **Severity-gated approval — a `decision` gate.** You have
+   just run the quality gates, so you hold a *recommendation*,
+   not a neutral menu. Render this as a `decision` construct
+   (recommended option + rationale + per-option tradeoffs) via
+   the `elicit` skill's widget surface
+   (`elicitation_render_widget` → `show_widget`), and fall back
+   to its `AskUserQuestion` mapping (recommended option first
+   with `" (Recommended)"`, each tradeoff folded into that
+   option's description, `rationale` as the lead-in) when the
+   widget surface is unavailable. The `elicit` skill owns the
+   round-trip and validation — see its "decision construct"
+   section. It stays ONE question: the cards are presentation,
+   not extra fields.
 
-   If `"high"` severity (score < 50):
-   Use `AskUserQuestion` with 2 options:
-   - "Fix and retry"
-   - "Acknowledge risk and continue"
+   If `"high"` severity (score < 50) — recommend **Fix and
+   retry**:
 
-   If `"medium"` or `"low"` severity:
-   Use `AskUserQuestion` with 3 options:
-   - "Approve and continue"
-   - "Redo with new instructions"
-   - "Auto-run remaining tasks"
+   - options: "Fix and retry", "Acknowledge risk and continue"
+   - `recommended`: "Fix and retry"
+   - `rationale`: name the gate(s) that failed and the score —
+     a high-severity task shipped forward compounds risk.
+   - `option_notes`:
+     - "Fix and retry": "Address the finding now, before it lands"
+     - "Acknowledge risk and continue": "Ship as-is — risk moves
+       downstream"
+
+   If `"medium"` or `"low"` severity — recommend **Approve and
+   continue**:
+
+   - options: "Approve and continue", "Redo with new
+     instructions", "Auto-run remaining tasks"
+   - `recommended`: "Approve and continue"
+   - `rationale`: gates passed at acceptable severity — the task
+     is ready to land.
+   - `option_notes`:
+     - "Approve and continue": "Accept this task, move to the next"
+     - "Redo with new instructions": "Re-run the task with changes"
+     - "Auto-run remaining tasks": "Stop gating; run the rest
+       unattended"
 
 7. Save state after each decision:
 
@@ -161,6 +300,36 @@ For each pending task:
    state.completed.append(task.task_id)
    save_state(state)
    ```
+
+### Execution status report — a `progress` construct
+
+At a multi-task checkpoint — **on resume** (Stage 5), and **after an
+"Auto-run remaining tasks" batch finishes** — report where the run
+stands as a `progress` construct rather than prose. This is the
+multi-task overview; it complements the per-task `decision` gate above
+(that gates ONE task; this summarizes ALL of them).
+
+Build one `progress` field and render it via the `elicit` skill's widget
+surface (`elicitation_render_widget` → `show_widget`), falling back to
+its `AskUserQuestion` mapping — see the `elicit` skill's "progress
+construct" section:
+
+- `progress_items`: one `{label, status, detail?}` per task — `done`
+  for completed tasks, `in_flight` for the current task, `blocked` for
+  any task that failed a high-severity gate and was deferred
+  ("Acknowledge risk and continue"). Use the task name as `label` and
+  the failing gate + score as `detail`.
+- `options`: the labels of the `blocked` tasks (must equal the blocked
+  subset). The picker asks **"which blocked task to fix/retry?"** —
+  selecting one re-enters the per-task implement + gate flow for it.
+- `recommended`: the blocked task to tackle first (e.g. highest
+  severity); badged "suggested next".
+- `rationale`: a one-line run summary (e.g. "6/8 done, 2 deferred on
+  gate failures").
+
+When **no task is blocked**, build it display-only (`options: []`,
+`required: false`) — it renders as a clean done/in_flight status board
+with no picker.
 
 ## Stage 5: Resume
 
@@ -179,6 +348,17 @@ If resumable plans exist, show them with
 
 ## Critical Rules
 
+- **Batch the kickoff, not the gates.** Stage 1's kickoff
+  (outcome + scope + concerns) is the ONE place to batch
+  fields into a single form (via `elicit`). Every other
+  prompt — the mode picker and the review / approve /
+  execute gates — stays a **single** question: they're
+  sequential decisions that branch on the prior answer, so
+  the §4 rule keeps them one at a time. A single question
+  may still be a `decision` construct (Stage 4's approval
+  gate) — that enriches one choice with a recommendation
+  and tradeoffs; it does **not** batch multiple fields, so
+  it honours the one-question rule.
 - **ALWAYS use AskUserQuestion** between stages
 - **ALWAYS save_state()** after each task approval
 - **Show progress bar** before each task

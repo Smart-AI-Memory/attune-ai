@@ -17,10 +17,11 @@ Invoke with: `/release-prep <version or 'check'>`
    "What version are you releasing? Or should I check the current version and suggest?"
 
 2. **Define scope**
-   "Full release prep or a specific check?" - Full: All 4 agents (security, testing, docs, versioning) - Specific: Single check (e.g., just changelog)
+   "Full advisory or a specific check?" - Full: advisory across security, testing, docs, versioning - Specific: Single check (e.g., just changelog)
 
 3. **Run the tool**
-   Call the `release_prep` MCP tool for a full assessment: For targeted checks, use individual tools: The full release prep covers four areas: - **Security** — scans for vulnerabilities that block
+   Call the `release_notes` MCP tool for a changelog draft and
+go/no-go recommendation: For targeted checks, use individual tools: The full release prep covers four areas: - **Security** — scans for vulnerabilities that block
   release
 - **Testing** — checks test coverage, identifies gaps
 - **Documentation** — validates changelog, README, and
@@ -29,7 +30,7 @@ Invoke with: `/release-prep <version or 'check'>`
   compatibility, semver compliance
 
    ```
-   release_prep(path="<project root>")
+   release_notes(path="<project root>")
    ```
 
 4. **Run tool (option 2)**

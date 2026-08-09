@@ -9,7 +9,7 @@ source: plugin/skills/workflow-orchestration/SKILL.md
 
 # Reference: Skill: workflow-orchestration
 
-Run analysis workflows — security, code review, tests, perf, bugs, docs, release. Triggers on: workflow, run, execute, analyze, security, review, test, perf, release, bugs, docs, audit.
+Run several analysis workflows together in one sweep. Triggers on: run all workflows, run multiple workflows, full analysis sweep, workflow orchestration.
 
 **Usage:** `/workflow-orchestration <workflow: security, review, tests, perf, release, bugs, docs>`
 
@@ -56,7 +56,7 @@ Based on the answer, route to the appropriate workflow.
 
 | Workflow | MCP Tool | What It Does |
 | -------- | -------- | ------------ |
-| Release Prep | `release_prep` | Health checks, changelog, dependency audits |
+| Release Notes | `release_notes` | Changelog draft + go/no-go advisory |
 
 ## Execution
 
@@ -108,4 +108,4 @@ After presenting results, offer:
 - **Reference**: Tool: Doc Audit (`doc_audit`)
 - **Reference**: Tool: Doc Gen (`doc_gen`)
 - **Reference**: Tool: Doc Orchestrator (`doc_orchestrator`)
-- **Reference**: Tool: Release Prep (`release_prep`)
+- **Reference**: Tool: Release Notes (`release_notes`)

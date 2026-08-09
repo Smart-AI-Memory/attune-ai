@@ -9,7 +9,7 @@ source: plugin/skills/attune-hub/SKILL.md
 
 # Reference: Skill: attune-hub
 
-Developer workflow hub — routes to the right skill based on what you need. Triggers on: attune, help me, what can you do, workflows, setup, configure, capabilities.
+Developer workflow hub — routes to the right skill based on what you need. Triggers on: attune, what can attune do, what can you do, capabilities, where do I start, get started.
 
 **Usage:** `/attune-hub <what you need help with>`
 
@@ -58,11 +58,39 @@ intent so Claude matches the right skill:
 | "performance", "bottleneck", "optimize" | workflow-orchestration skill |
 | "release", "publish", "ship" | release-prep skill |
 | "bug", "predict", "risk" | bug-predict skill |
+| "run all audits", "full sweep", "what should I fix" | discovery-sweep skill |
 | "memory", "store", "remember" | memory-and-context skill |
 | "docs", "documentation" | doc-gen skill |
 | "plan", "feature", "architecture" | planning skill |
 | "refactor", "tech debt", "simplify" | refactor-plan skill |
 | "spec", "brainstorm", "plan and execute" | spec skill |
+| "scope this", "ask me everything at once", "discovery form" | elicit skill |
+
+When the scoping turn has **2–4 independent, non-branching, genuinely
+open dimensions** (e.g. goal + scope + focus), gather them as one form
+via the `elicit` skill instead of sequential buttons — **preferring the
+rich widget surface** (`elicitation_render_widget` → `show_widget`, so
+free-text dimensions are textareas and concerns are multi-select
+checkboxes), with the AskUserQuestion mapping as the fallback (see the
+`elicit` skill's "Choosing a surface"). Stay single-question when only
+one dimension is unknown or answers branch.
+
+## Single-referent resolution
+
+Before acting on a terse confirmation (`go`, `do it`, `y`, `1`),
+make sure exactly **one** referent is obvious from the prior turn —
+that you can fill in "go [doing **X**]" with a single, unambiguous X.
+
+- If the prior turn left **multiple** proposals on the table, the
+  referent is unresolved — ask which one before executing, don't
+  guess the most likely.
+- **Restate the referent as you act** ("Running the security audit
+  on `src/` —") so the user can catch a mismatch immediately.
+
+This is advisory guidance for the broader conversation; the one
+*enforceable* foothold is the `AskUserQuestion` one-question-per-turn
+rule (a single turn can't bundle multiple ambiguous decisions). See
+`docs/specs/collaboration-gates/` (R9/R10).
 
 ## Skills Reference
 
@@ -71,8 +99,10 @@ intent so Claude matches the right skill:
 | security-audit | security, vulnerability, audit, scan |
 | code-quality | review, quality, bugs, code smell |
 | bug-predict | predict bugs, risky code, what might break |
+| discovery-sweep | run all audits, full sweep, what should I fix, triage findings |
 | doc-gen | generate docs, documentation, README |
 | smart-test | generate tests, test gaps, coverage |
+| fix | attune fix, scoped fix, fix with receipt |
 | fix-test | fix test, broken test, debug test |
 | planning | plan, feature, architecture, TDD |
 | refactor-plan | refactor, tech debt, simplify |
@@ -82,6 +112,17 @@ intent so Claude matches the right skill:
 | spec | spec-driven dev, brainstorm and execute |
 | rag-code-gen | grounded code, cite sources, verify against attune (needs `[rag]` extra) |
 | coach | coach, learn, explain, tell me more, deeper |
+| recall | recall, remember, what did I learn, prior session, past findings |
+| verify | verify docs, fact-check, did the model hallucinate, check generated content |
+| bulk | batch, bulk process, 50% savings, overnight analysis |
+| catalog | catalog, list capabilities, browse, what can attune do |
+| personal-memory | remember this for me, capture this decision, save to personal memory, my saved topics, forget topic |
+| image-analysis | analyze this image, look at this screenshot, what's in this diagram, read this mockup |
+| elicit | scope this, discovery form, ask me everything at once, multi-select question |
+| author-feature | author a feature page, single-source doc, new feature master, draft docs without an api |
+| roundtable | roundtable, convene the table, ask the table, what do the other models think |
+| cross-review | cross review, second opinion, ask another model to review, pre-merge check from codex |
+| docs-outbox | docs outbox, outbox sweep, pending docs, approve digest |
 
 ## MCP Server Not Running
 

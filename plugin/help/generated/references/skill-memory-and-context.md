@@ -9,7 +9,7 @@ source: plugin/skills/memory-and-context/SKILL.md
 
 # Reference: Skill: memory-and-context
 
-Store, retrieve, search, and manage persistent memory across sessions. Triggers on: memory, store, remember, retrieve, forget, pattern, context.
+Store, retrieve, search, and manage persistent memory across sessions. Triggers on: store memory, save this, retrieve, forget, manage memory, context, pattern.
 
 **Usage:** `/memory-and-context <operation: store|retrieve|search|forget|empathy>`
 

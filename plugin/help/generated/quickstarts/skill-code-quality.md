@@ -7,7 +7,7 @@ source: plugin/skills/code-quality/SKILL.md
 
 # Quickstart: Use /code-quality
 
-Code review and bug prediction to find quality issues, style violations, and likely bugs.
+Code review to find quality issues, style violations, and code smells.
 
 ```
 /code-quality <path or directory to review>
