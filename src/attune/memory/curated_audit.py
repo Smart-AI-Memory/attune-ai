@@ -136,9 +136,11 @@ class AuditReport:
     orphans: tuple[Path, ...] = ()
     dangling_pointers: tuple[tuple[Path, str], ...] = ()
     age_basis: str = "mtime"
-    #: Per-file basis labels ``(stem, label)`` — see
-    #: :func:`resolve_age_basis` for the label vocabulary (P2 task 2).
-    age_bases: tuple[tuple[str, str], ...] = ()
+    #: Per-file ``(stem, basis_label, age_days)``, aligned row-for-row with
+    #: ``ranked`` — see :func:`resolve_age_basis` for the label vocabulary
+    #: (P2 task 2). Days are basis-aware so a report can never show an age
+    #: that contradicts the basis it states (codex D11 finding).
+    age_bases: tuple[tuple[str, str, int], ...] = ()
     scanned: int = 0
     roots: tuple[Path, ...] = field(default=())
 
@@ -365,22 +367,24 @@ def resolve_age_basis(
       ``verified:`` date is void and mtime (the edit) ages it (D6 #2).
     - ``tombstoned`` — the latest verdict is ``wrong``: the memory is
       known-bad and kept only for its pointer/link integrity and its
-      "we believed X" value (D6 #3).
+      "we believed X" value (D6 #3). Checked FIRST — a tombstone applies
+      whether or not the file carries ``verified:`` (codex D11 finding:
+      the earlier ordering hid tombstones on unverified files).
     - ``mtime`` — no ``verified:`` at all; the known-bad-proxy fallback.
 
     Args:
         mem: The memory to age.
-        latest_verdict: The stem's most recent verdict record, if any.
+        latest_verdict: The memory's most recent verdict record, if any.
 
     Returns:
         ``(basis_date, basis_label)``.
     """
+    if latest_verdict is not None and latest_verdict.verdict == "wrong":
+        return mem.mtime_date, "tombstoned"
     if mem.verified is None:
         return mem.mtime_date, "mtime"
     if latest_verdict is None:
         return mem.verified, "verified-unbound"
-    if latest_verdict.verdict == "wrong":
-        return mem.mtime_date, "tombstoned"
     if latest_verdict.digest == mem.digest:
         return mem.verified, "verified"
     return mem.mtime_date, "invalidated"
@@ -576,7 +580,7 @@ def audit(
     memories: Sequence[CuratedMemory],
     roots: Iterable[Path] = (),
     today: date | None = None,
-    verdicts: Mapping[str, VerdictRecord] | None = None,
+    verdicts: Mapping[Path, VerdictRecord] | None = None,
 ) -> AuditReport:
     """Produce an advisory report over already-scanned memories.
 
@@ -588,12 +592,14 @@ def audit(
         roots: Corpus roots, used to locate ``MEMORY.md`` index files. When
             omitted, pointer integrity is skipped rather than failed.
         today: Reference date; defaults to the current date.
-        verdicts: Latest verdict per stem (from
-            :func:`attune.memory.verdict_log.latest_verdicts`); supplies the
-            digest binding. Omitted means every ``verified:`` reads unbound.
+        verdicts: Latest verdict per memory PATH — path-keyed so a verdict
+            in one corpus can never bind or tombstone a same-named memory
+            in another (codex D11 finding). :func:`sweep` builds this map;
+            omitted means every ``verified:`` reads unbound.
 
     Returns:
-        The report. ``ranked`` is ordered by descending risk.
+        The report. ``ranked`` is ordered by descending risk;
+        ``age_bases`` is aligned with it row-for-row.
     """
     roots = tuple(roots)
     verdicts = verdicts or {}
@@ -606,12 +612,17 @@ def audit(
 
     ranked = tuple(
         sorted(
-            ((mem, risk_score(mem, today, verdicts.get(mem.stem))) for mem in memories),
+            ((mem, risk_score(mem, today, verdicts.get(mem.path))) for mem in memories),
             key=lambda pair: (-pair[1], str(pair[0].path)),
         )
     )
     age_bases = tuple(
-        (mem.stem, resolve_age_basis(mem, verdicts.get(mem.stem))[1]) for mem, _ in ranked
+        (
+            mem.stem,
+            resolve_age_basis(mem, verdicts.get(mem.path))[1],
+            unverified_age_days(mem, today, verdicts.get(mem.path)),
+        )
+        for mem, _ in ranked
     )
     uses_verified = any(mem.verified is not None for mem in memories)
 
@@ -635,6 +646,8 @@ def sweep(roots: Iterable[Path], today: date | None = None) -> AuditReport:
 
     Reads each root's verdict log (append-only, task 4) so ``verified:``
     dates are digest-checked; a root without a log degrades to unbound.
+    Verdicts are scoped to their OWN root: a record in one corpus's log
+    binds only files under that root, never a same-named memory elsewhere.
 
     Args:
         roots: Corpus roots to scan recursively.
@@ -644,7 +657,13 @@ def sweep(roots: Iterable[Path], today: date | None = None) -> AuditReport:
         The advisory report.
     """
     roots = tuple(roots)
-    verdicts: dict[str, VerdictRecord] = {}
+    memories = scan_corpus(roots)
+    verdicts: dict[Path, VerdictRecord] = {}
     for root in roots:
-        verdicts.update(latest_verdicts(root))
-    return audit(scan_corpus(roots), roots=roots, today=today, verdicts=verdicts)
+        latest = latest_verdicts(root)
+        if not latest:
+            continue
+        for mem in memories:
+            if mem.stem in latest and root in mem.path.parents:
+                verdicts[mem.path] = latest[mem.stem]
+    return audit(memories, roots=roots, today=today, verdicts=verdicts)

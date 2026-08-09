@@ -319,6 +319,30 @@ class TestVerdictBinding:
         wrong = self._verdict_for(mem, "wrong")
         assert resolve_age_basis(mem, wrong) == (mem.mtime_date, "tombstoned")
 
+    def test_tombstone_applies_without_a_verified_field(self, tmp_path: Path) -> None:
+        """Codex D11 finding: a `wrong` verdict on an UNVERIFIED memory must
+        still read tombstoned — the earlier ordering returned plain mtime."""
+        mem = load_memory(write_memory(tmp_path, "project_unverified"))
+        wrong = VerdictRecord.create(mem.stem, "wrong", mem.digest, who="patrick")
+        assert resolve_age_basis(mem, wrong) == (mem.mtime_date, "tombstoned")
+
+    def test_verdicts_scope_to_their_own_corpus(self, tmp_path: Path) -> None:
+        """Codex D11 finding: a verdict in corpus A must never bind or
+        tombstone a same-named memory in corpus B."""
+        root_a = tmp_path / "corpus_a"
+        root_b = tmp_path / "corpus_b"
+        mem_a = self._verified(root_a, stem="project_shared")
+        self._verified(root_b, stem="project_shared")
+        append_verdict(root_a, self._verdict_for(mem_a, "wrong"))
+
+        report = sweep([root_a, root_b], today=TODAY)
+        bases = {
+            (mem.path.parent.name, stem): basis
+            for (mem, _), (stem, basis, _) in zip(report.ranked, report.age_bases, strict=False)
+        }
+        assert bases[("corpus_a", "project_shared")] == "tombstoned"
+        assert bases[("corpus_b", "project_shared")] == "verified-unbound"
+
     def test_invalidation_reroutes_age_to_mtime(self, tmp_path: Path) -> None:
         """A substantive edit voids the verified date (D6 #2)."""
         mem = self._verified(tmp_path)
@@ -342,8 +366,10 @@ class TestVerdictBinding:
         append_verdict(tmp_path, self._verdict_for(mem))
 
         report = sweep([tmp_path], today=TODAY)
-        bases = dict(report.age_bases)
-        assert bases == {"project_v": "verified", "project_bare": "mtime"}
+        bases = {(stem, basis) for stem, basis, _ in report.age_bases}
+        assert bases == {("project_v", "verified"), ("project_bare", "mtime")}
+        days = {stem: d for stem, _, d in report.age_bases}
+        assert days["project_v"] == 37, "JSON/report days must be basis-aware"
         scores = {m.stem: s for m, s in report.ranked}
         assert scores["project_v"] == pytest.approx(37.0)
 

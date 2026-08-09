@@ -55,6 +55,12 @@ class TestCanonicalDigest:
         assert canonical_digest(None, "body") == canonical_digest(None, "body")
         assert canonical_digest(None, "body") != canonical_digest("desc", "body")
 
+    def test_moving_words_between_description_and_body_breaks_digest(self) -> None:
+        """Codex D11 finding: without a field boundary, `("a b", "c")` and
+        `("a", "b c")` shared a token stream and wrongly preserved
+        verification across a served-metadata change."""
+        assert canonical_digest("a b", "c") != canonical_digest("a", "b c")
+
 
 class TestAppendAndLoad:
     def test_round_trip_preserves_order(self, tmp_path: Path) -> None:

@@ -50,15 +50,14 @@ def _format_report(report, top: int) -> str:
     lines.append("")
 
     lines.append(f"── Review priority (age x type volatility), top {top} ──")
-    basis_by_stem = dict(report.age_bases)
-    for mem, score in report.ranked[:top]:
+    for (mem, score), (_, basis, _days) in zip(
+        report.ranked[:top], report.age_bases[:top], strict=False
+    ):
         mem_type = mem.mem_type or "?"
-        basis = basis_by_stem.get(mem.stem, "mtime")
         lines.append(f"  {score:8.1f}  [{mem_type:9}] {mem.stem}  ({basis})")
     if not report.ranked:
         lines.append("  (none)")
-    flagged = sorted(s for s, b in report.age_bases if b in {"invalidated", "tombstoned"})
-    if flagged:
+    if any(basis in {"invalidated", "tombstoned"} for _, basis, _ in report.age_bases):
         lines.append(
             "  note: invalidated = edited substantively since verification "
             "(verified: is void); tombstoned = latest verdict was 'wrong'."
@@ -110,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
     if src.is_dir() and str(src) not in sys.path:
         sys.path.insert(0, str(src))
 
-    from attune.memory.curated_audit import sweep, unverified_age_days
+    from attune.memory.curated_audit import sweep
 
     roots = args.roots or default_roots()
     if not roots:
@@ -130,12 +129,14 @@ def main(argv: list[str] | None = None) -> int:
                         {
                             "stem": mem.stem,
                             "type": mem.mem_type,
-                            "unverified_days": unverified_age_days(mem),
+                            "unverified_days": days,
                             "risk": round(score, 2),
-                            "basis": dict(report.age_bases).get(mem.stem, "mtime"),
+                            "basis": basis,
                             "path": str(mem.path),
                         }
-                        for mem, score in report.ranked[: args.top]
+                        for (mem, score), (_, basis, days) in zip(
+                            report.ranked[: args.top], report.age_bases[: args.top], strict=False
+                        )
                     ],
                     "schema_violations": [
                         {"path": str(p), "keys": list(k)} for p, k in report.schema_violations

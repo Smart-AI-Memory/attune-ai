@@ -102,8 +102,12 @@ def canonical_digest(description: str | None, body: str) -> str:
     Returns:
         A sha256 hex digest.
     """
-    tokens = " ".join(f"{description or ''}\n{body}".split())
-    return hashlib.sha256(tokens.encode("utf-8")).hexdigest()
+    # Unit-separator between the fields (codex D11 finding): without a
+    # boundary, moving words between description and body would keep the
+    # same token stream and wrongly preserve verification.
+    desc_tokens = " ".join((description or "").split())
+    body_tokens = " ".join(body.split())
+    return hashlib.sha256(f"{desc_tokens}\x1f{body_tokens}".encode()).hexdigest()
 
 
 def append_verdict(root: Path, record: VerdictRecord) -> Path:
