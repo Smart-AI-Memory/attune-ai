@@ -1,10 +1,14 @@
 # Roundtable Triage — Requirements
 
-**Status:** approved (2026-07-20) — codifies the chair-ruled contract
-(charter + T3/T4, q-briefing-triage-001; n=2 validation + "T4 y"
-arming, q-briefing-triage-002). New scope beyond those rulings needs
-new approval. Implementation: `attune.roundtable.triage_appendix`
-(landed with this document).
+**Status:** shipped (2026-07-29; flipped at 2026-08-08 triage) —
+TA-1..TA-8 all landed (#1511 appendix, #1515 TA-5 CI verdicts,
+#1517 TA-8a evidence tiers, #1734 P2 gate-triage + P4 role
+telemetry); live receipt = agent-round-table decisions.md
+2026-07-28 fire, "appendix complete: 4 item(s), 4 invocation(s)".
+Codifies the chair-ruled contract (charter + T3/T4,
+q-briefing-triage-001; n=2 validation + "T4 y" arming,
+q-briefing-triage-002). New scope beyond those rulings needs new
+approval.
 
 ## Purpose
 

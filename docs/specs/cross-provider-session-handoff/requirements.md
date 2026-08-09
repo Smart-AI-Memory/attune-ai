@@ -1,7 +1,8 @@
 # Cross-Provider Session Handoff — Requirements
 
-**Status:** APPROVED (chair, 2026-07-22) — authored pre-07-27 per
-chair scheduling amendment; implementation staged post-lift.
+**Status:** complete (2026-07-28; approved by chair 2026-07-22) —
+implementation finished 2026-07-28; R1–R6 all satisfied, R6 closed
+live (receipts.md).
 **Slug:** `cross-provider-session-handoff`
 **Provenance:** roundtable `q-multi-llm-obvious-win-001` (chair
 ruling + same-day amendment, 2026-07-22) — see

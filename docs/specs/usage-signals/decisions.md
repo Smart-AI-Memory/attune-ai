@@ -1,7 +1,10 @@
 # Usage Signals — Decisions
 
-**Status:** active (2026-06-20) — R6 spend alarm shipped · Phase 2b live (D8) ·
-Phase 2 scoped (2026-06-15) · Phase 0 complete (2026-06-11)
+**Status:** active (2026-08-08 triage refresh) — US-5 legs ruled
+satisfied for 11.0.0 (2026-07-31) and 11.2.0/11.2.1 (2026-08-04);
+US-4/US-6/US-7 shipped (D15/D16); US-3 outreach open past its
+timebox · R6 spend alarm shipped · Phase 2b live (D8) · Phase 2
+scoped (2026-06-15) · Phase 0 complete (2026-06-11)
 
 ## D1 — Phase 0 baseline snapshot (2026-06-11)
 

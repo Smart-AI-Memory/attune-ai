@@ -1,8 +1,9 @@
 # Cross-Provider Session Handoff — Tasks
 
-**Status:** APPROVED (chair, 2026-07-22) — execution staged
-post-07-27 (see decisions.md scheduling amendment); T1/T2 may build
-early as held drafts.
+**Status:** complete (2026-07-28; flipped at 2026-08-08 triage) —
+T1+T2 merged #1605, T3 merged #1694, T4 merged #1700; R6 live
+cross-provider receipt CLOSED PASS 2026-07-28 (Antigravity leg,
+receipts.md). The post-07-27 staging note is discharged.
 
 Execution note: T1 and T2 have NO code dependency on the held
 transport stack (pure new module + MCP wiring) — they may be built

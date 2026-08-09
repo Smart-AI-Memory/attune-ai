@@ -3,7 +3,8 @@
 **Phase:** 3 — Tasks
 **Predecessor:** [design.md](./design.md) (Phase 2 authored
 2026-05-31)
-**Successor:** Phase 4 implementation (not started)
+**Successor:** Phase 4 implementation (shipped — v1 #518/#523/#540;
+v1.1 #1394)
 
 ---
 

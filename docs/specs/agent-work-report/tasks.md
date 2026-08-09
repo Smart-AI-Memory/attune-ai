@@ -1,8 +1,11 @@
 # Agent Work Report — Tasks
 
-**Status:** active (gated ladder — each task executes only behind
-its own chair go; implementation additionally waits for the
-post-cut fresh branch per D5)
+**Status:** parked (2026-08-08 triage — ladder authored 2026-07-31,
+unexecuted: no task artifact exists in the tree as of 2026-08-08 —
+no `src/attune/reports/`, no `report_commands.py`, no
+`attune report agents`. The D5 wait is DISCHARGED: the 11.2.0 cut
+shipped and main is at 11.5.0.) Resume-Trigger: chair go on Task 1;
+each subsequent task keeps its own gate.
 
 Receipt discipline: every task names its receipt types at
 execution time and the receipts are re-run centrally before the

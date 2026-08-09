@@ -1,10 +1,14 @@
 # Round Table v2 — Producing Team: Requirements
 
-**Status:** active (2026-07-18) — requirements drafted from
-thread `table-v2-001`; architecture converged by the table itself in one
-round; initial settings chair-ratified same day (phase-1-minimal +
-fixed-roles-first, moderator pushback accepted — see
-[decisions.md](decisions.md)).
+**Status:** shipped (2026-07-29; flipped at 2026-08-08 triage) —
+V2-P1 through V2-P4 all landed (#1462 compiler + proposal ledger,
+#1464 solution materializer, #1466 rotation + routines; live
+headless producing runs recorded in decisions.md). Design phase
+chair-waived 2026-07-20 (#1544). The 07-19 re-run queue is fully
+dispositioned — all three killed, issue #1621 closed. History:
+requirements drafted 2026-07-18 from thread `table-v2-001`;
+architecture converged by the table itself in one round; initial
+settings chair-ratified same day (see [decisions.md](decisions.md)).
 
 ## Vision
 

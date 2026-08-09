@@ -1,6 +1,10 @@
 # Roundtable Triage — Decisions
 
-**Status:** active (2026-07-20) — chartered 2026-07-19 (n=1); n=2 validated 2026-07-20; requirements authored + headless appendix implemented (see below)
+**Status:** living (2026-08-08 triage refresh) — standing carrier
+for roundtable triage work per the agent-round-table 2026-07-28
+shipped ruling; chartered 2026-07-19 (n=1), n=2 validated + appendix
+implemented 2026-07-20, P2 gate-triage inbox + P4 role telemetry
+built 2026-07-29 (#1734).
 
 ## 2026-07-19 — Charter (chair, "as synthesized"; thread q-briefing-triage-001)
 

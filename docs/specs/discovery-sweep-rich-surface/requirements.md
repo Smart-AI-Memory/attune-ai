@@ -1,6 +1,13 @@
 # Discovery-Sweep Rich Surface — requirements
 
-**Status:** draft (2026-06-28) · **Owner:** Patrick + agent
+**Status:** parked (2026-08-08 triage — Phase 1 SHIPPED 2026-06-28,
+#1148 + #1151: FR-1 `board_html` via `sweep_to_board_html`, wired at
+`mcp/server.py`; FR-4 docstrings corrected; D4 next-step buttons
+added 2026-07-16. Phase 2 — FR-3 `sources` param, FR-2 input form —
+NOT built and unscheduled; the engine-vs-tool-layer question in
+decisions.md "Open" is undecided.) Resume-Trigger: chair ruling on
+the FR-3 engine-vs-tool-layer question, or a user ask for
+per-source sweep scoping · **Owner:** Patrick + agent
 **Absorbs:** analysis-workflow-output-widgets (merged 2026-07-14 at
 triage — its D4 re-scope concluded only discovery-sweep has
 structured output; archived copy retains the design-v2 material)

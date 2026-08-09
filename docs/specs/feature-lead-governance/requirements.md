@@ -1,10 +1,13 @@
 # Feature Lead Governance — Requirements
 
-**Status:** active (2026-07-30) — P1 FULL ACTIVATION ruled by the
-chair at the D8 bar (11 fully-triaged R5 runs); execution
-un-gated. History: approved 2026-07-27 with the revision pass per
-decisions.md D1–D7 (thread `q-feature-lead-governance-001`);
-originally execution-gated by P1.
+**Status:** active (2026-08-08 triage refresh) — P1 FULL
+ACTIVATION ruled 2026-07-30 at the D8 bar; lead/delegation is the
+standing operating mode. Open: D14 review-debt register (unbuilt),
+D13c conversation-opener one-pager (unbuilt). Tasks T1–T4 remain
+draft in tasks.md — un-gated but unapproved, and no governance
+module exists in-tree. History: approved 2026-07-27 with the
+revision pass per decisions.md D1–D7 (thread
+`q-feature-lead-governance-001`); originally execution-gated by P1.
 **Slug:** `feature-lead-governance`
 **Artifact tier:** Spec — cross-provider authority is a durable,
 multi-session design choice.

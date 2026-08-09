@@ -1,7 +1,14 @@
 # attune-author Consolidation — Design
 
-**Status:** approved (2026-07-21 status-truth; was parked 2026-07-13, now
-executing) — T1 (#1193) + T2a (#1203/#1205) shipped: projector/staleness/fact_check absorbed into attune.authoring, help_data in-process; remaining: scripts' attune_author consumer repoints (T1 acceptance), resolver fold-in (T2/#1191), T3 polish-upstream (D10), T4 package fate, T5 docs repoints · Resume-Trigger: evergreen (no external clock) · pairs with
+**Status:** complete (2026-07-27; flipped at 2026-08-08 triage) —
+T1–T5 all executed: absorb + repoint (#1193/#1203/#1205), T5 docs +
+script repoints (#1562/#1563), T3 polish machinery absorbed (#1574),
+T2 resolver fold-in (#1586/#1699), T4 archive-without-yank executed
+2026-07-27 (`[author]` extra removed from pyproject.toml;
+help-freshness regen path retired). Residual, tracked separately:
+`plugins/attune-author/hooks/help_post_commit.py` still imports
+`attune_author.maintenance.run_hook` — never absorbed, now a
+permanent no-op under its ImportError guard · pairs with
 [requirements.md](requirements.md).
 
 ## The new home

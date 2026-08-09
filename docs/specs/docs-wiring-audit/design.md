@@ -3,7 +3,8 @@
 **Phase:** 2 — Design
 **Predecessor:** [requirements.md](./requirements.md) (Phase 1
 approved 2026-05-31, see [decisions.md](./decisions.md))
-**Successor:** tasks.md (Phase 3, not started)
+**Successor:** [tasks.md](./tasks.md) (Phase 3, authored; Phase 4
+shipped)
 
 ---
 
@@ -410,20 +411,14 @@ sessions; minimum viable is steps 1-7 in one session.
 
 ## Phase 3: Tasks
 
-**Status:** not started
-
-_To be authored after Phase 2 approval. Will decompose the
-Implementation order above into per-step task entries with
-acceptance criteria, file paths, and any necessary XML-enhanced
-prompts._
+**Status:** shipped (authored — see tasks.md)
 
 ---
 
 ## Phase 4: Implementation
 
-**Status:** not started
-
-_To be executed after Phase 3 approval._
+**Status:** shipped (v1 #518/#523/#540; v1.1 2026-07-15 #1394;
+Task 10 See-Also advisory deferred)
 
 ---
 
