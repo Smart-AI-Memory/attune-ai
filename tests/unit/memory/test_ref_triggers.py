@@ -46,6 +46,20 @@ class TestExtractRefs:
         assert len(refs) == MAX_REFS_PER_MEMORY
         assert len(set(refs)) == len(refs)
 
+    def test_cap_respects_global_first_appearance_order(self) -> None:
+        """Codex D11 finding: kind-grouped extraction let the cap discard an
+        EARLIER dependency in favour of later refs of another kind."""
+        text = "sha:abc1234 file:a.py pr:1 pr:2 pr:3 pr:4 pr:5"
+        refs = extract_refs(text)
+        assert refs[0] == ("sha", "abc1234")
+        assert refs[1] == ("file", "a.py")
+        assert len(refs) == MAX_REFS_PER_MEMORY
+
+    def test_tilde_paths_are_not_recognized_as_file_refs(self) -> None:
+        """file: refs are repo-relative by definition — a home-relative ref
+        would falsely report missing when resolved under repo_root."""
+        assert extract_refs("see file:~/notes/x.md") == []
+
 
 class TestCheckRef:
     def test_file_missing_triggers(self, tmp_path: Path) -> None:
@@ -57,6 +71,16 @@ class TestCheckRef:
 
     def test_file_escaping_root_is_unverifiable_not_a_trigger(self, tmp_path: Path) -> None:
         assert check_ref("file", "../../etc/passwd", repo_root=tmp_path) is None
+
+    def test_sibling_dir_with_root_prefix_does_not_bypass_containment(self, tmp_path: Path) -> None:
+        """Codex D11 finding: string-prefix containment let `/repo-evil`
+        pass for root `/repo`. Path-based containment must refuse it."""
+        root = tmp_path / "repo"
+        root.mkdir()
+        sibling = tmp_path / "repo-evil"
+        sibling.mkdir()
+        (sibling / "x.py").write_text("x = 1\n", encoding="utf-8")
+        assert check_ref("file", "../repo-evil/x.py", repo_root=root) is None
 
     def test_sha_unknown_triggers(self, tmp_path: Path) -> None:
         runner = lambda *a, **k: _completed(returncode=1)  # noqa: E731

@@ -54,8 +54,12 @@ MAX_CHECKED_MEMORIES = 10
 #: Seconds per external probe. A hung gh call must not stall the loop.
 PROBE_TIMEOUT = 5
 
+# file: refs are REPO-relative by definition (the check is "does the repo
+# still have it") — no ``~`` home-relative form; codex D11: the regex
+# accepting ``~`` while check_ref resolved under repo_root falsely
+# reported valid home paths missing.
 _REF_RES: dict[str, re.Pattern[str]] = {
-    "file": re.compile(r"\bfile:([\w~][\w./-]*)"),
+    "file": re.compile(r"\bfile:(\w[\w./-]*)"),
     "sha": re.compile(r"\bsha:([0-9a-fA-F]{7,40})\b"),
     "pr": re.compile(r"\bpr:#?(\d{1,6})\b"),
     "issue": re.compile(r"\bissue:#?(\d{1,6})\b"),
@@ -65,6 +69,10 @@ _REF_RES: dict[str, re.Pattern[str]] = {
 def extract_refs(text: str) -> list[tuple[str, str]]:
     """Pull explicit typed refs from memory text, capped and deduped.
 
+    Global first-appearance order across ALL kinds (codex D11 finding:
+    grouping by kind let the cap discard an early dependency in favour
+    of later refs of an earlier-iterated kind).
+
     Args:
         text: The memory's description + body.
 
@@ -72,12 +80,15 @@ def extract_refs(text: str) -> list[tuple[str, str]]:
         Up to :data:`MAX_REFS_PER_MEMORY` ``(kind, value)`` pairs in
         first-appearance order.
     """
-    seen: list[tuple[str, str]] = []
+    found: list[tuple[int, str, str]] = []
     for kind, pattern in _REF_RES.items():
         for match in pattern.finditer(text):
-            ref = (kind, match.group(1))
-            if ref not in seen:
-                seen.append(ref)
+            found.append((match.start(), kind, match.group(1)))
+    seen: list[tuple[str, str]] = []
+    for _pos, kind, value in sorted(found):
+        ref = (kind, value)
+        if ref not in seen:
+            seen.append(ref)
     return seen[:MAX_REFS_PER_MEMORY]
 
 
@@ -109,7 +120,11 @@ def check_ref(
     if kind == "file":
         candidate = (root / value).resolve()
         # A ref escaping the repo root is unverifiable, not a trigger.
-        if not str(candidate).startswith(str(root.resolve())):
+        # Path-based containment (codex D11 finding: string-prefix let
+        # ``/repo-sibling`` pass for root ``/repo``).
+        try:
+            candidate.relative_to(root.resolve())
+        except ValueError:
             return None
         return None if candidate.exists() else f"file:{value} no longer exists"
     if kind == "sha":
