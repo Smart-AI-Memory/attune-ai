@@ -1,8 +1,9 @@
 # memory-security-hardening — tasks
 
-**Status:** active (2026-08-07) — design gate passed; decisions ratified.
-R1 shipped (PR #1979) but the envelope does NOT cover all recall surfaces
-(R1-followup below). Full pass in flight: R1-followup + R2 + R3 + R5.
+**Status:** active (2026-08-08) — design gate passed; decisions ratified.
+R1 shipped (PR #1979); R1-followup COMPLETE 2026-08-08 (task 2 void by
+the D1 narrowing, task 4 receipted — see rows). Remaining: R3 #2/#5/#6/#7
+(machine-gated + reader/writer co-design) and R5 #2.
 **Requirements:** [requirements.md](requirements.md) · **Design:** [design.md](design.md)
 · **Decisions:** [decisions.md](decisions.md)
 
@@ -19,15 +20,15 @@ dependency order — in-repo, low-risk items first; machine-infra last (gated).
 | 3 | Live SessionStart injector renders through the envelope | done | `session_recall.py::_format` |
 | 4 | Tests + payload verification | done | |
 
-## R1-followup — envelope coverage on the other model-context surfaces (D1)
+## R1-followup — envelope coverage on the other model-context surfaces (D1) — COMPLETE (2026-08-08)
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
 | 1 | MCP `personal_memory_recall` returns framed `context`; bare summary/excerpt stripped from results | attune-ai | done | `memory_handlers.py:344`; fails closed if provenance absent |
-| 2 | MCP `memory_retrieve` — stamp provenance + wrap; fail closed if unavailable | attune-ai | pending | `memory_handlers.py:127`; no provenance today |
+| 2 | ~~MCP `memory_retrieve` — stamp provenance + wrap; fail closed if unavailable~~ | attune-ai | **void** | superseded by 2b — the D1 narrowing (chair-ratified) replaced the prose envelope with the trust annotation for keyed structured data; a fail-closed dimension does not exist for inline constants |
 | 2b | MCP `memory_retrieve` trust annotation (D1 narrowed) | attune-ai | done | keyed structured data → light trust annotation, not the prose envelope; chair-ratified narrowing |
 | 3 | `PersonalMemory.query` — render at the consumer | attune-ai | done (by boundary) | rendered in the MCP handler (CONSUMER CONTRACT); no separate helper needed |
-| 4 | Tests: each surface frames a payload, content preserved, fails closed | attune-ai | pending | hermetic |
+| 4 | Tests: each surface frames a payload, content preserved, fails closed | attune-ai | done | receipted 2026-08-08: `test_memory_handlers.py` (retrieve both paths content+trust; recall frames/preserves/withholds), `test_session_memory_hooks.py` (frames+preserves+flags, budget, stamped context_block verbatim; fail-closed added — `test_format_fails_closed_when_renderer_unavailable`) |
 
 ## R2 — secret-scan at every write path (D2, D3) — ~2/3 SHIPPED
 
