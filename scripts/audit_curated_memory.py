@@ -50,11 +50,18 @@ def _format_report(report, top: int) -> str:
     lines.append("")
 
     lines.append(f"── Review priority (age x type volatility), top {top} ──")
-    for mem, score in report.ranked[:top]:
+    for (mem, score), (_, basis, _days) in zip(
+        report.ranked[:top], report.age_bases[:top], strict=False
+    ):
         mem_type = mem.mem_type or "?"
-        lines.append(f"  {score:8.1f}  [{mem_type:9}] {mem.stem}")
+        lines.append(f"  {score:8.1f}  [{mem_type:9}] {mem.stem}  ({basis})")
     if not report.ranked:
         lines.append("  (none)")
+    if any(basis in {"invalidated", "tombstoned"} for _, basis, _ in report.age_bases):
+        lines.append(
+            "  note: invalidated = edited substantively since verification "
+            "(verified: is void); tombstoned = latest verdict was 'wrong'."
+        )
     lines.append("")
 
     def section(title: str, rows: list[str]) -> None:
@@ -102,7 +109,7 @@ def main(argv: list[str] | None = None) -> int:
     if src.is_dir() and str(src) not in sys.path:
         sys.path.insert(0, str(src))
 
-    from attune.memory.curated_audit import sweep, unverified_age_days
+    from attune.memory.curated_audit import sweep
 
     roots = args.roots or default_roots()
     if not roots:
@@ -122,11 +129,14 @@ def main(argv: list[str] | None = None) -> int:
                         {
                             "stem": mem.stem,
                             "type": mem.mem_type,
-                            "unverified_days": unverified_age_days(mem),
+                            "unverified_days": days,
                             "risk": round(score, 2),
+                            "basis": basis,
                             "path": str(mem.path),
                         }
-                        for mem, score in report.ranked[: args.top]
+                        for (mem, score), (_, basis, days) in zip(
+                            report.ranked[: args.top], report.age_bases[: args.top], strict=False
+                        )
                     ],
                     "schema_violations": [
                         {"path": str(p), "keys": list(k)} for p, k in report.schema_violations
