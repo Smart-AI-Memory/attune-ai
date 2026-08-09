@@ -2,8 +2,9 @@
 
 **Status:** active (2026-08-08) — design gate passed; decisions ratified.
 R1 shipped (PR #1979); R1-followup COMPLETE 2026-08-08 (task 2 void by
-the D1 narrowing, task 4 receipted — see rows). Remaining: R3 #2/#5/#6/#7
-(machine-gated + reader/writer co-design) and R5 #2.
+the D1 narrowing, task 4 receipted — see rows). R5 COMPLETE 2026-08-09
+(#2 typed-schema parse shipped). Remaining: R3 #2/#5/#6/#7
+(machine-gated + reader/writer co-design).
 **Requirements:** [requirements.md](requirements.md) · **Design:** [design.md](design.md)
 · **Decisions:** [decisions.md](decisions.md)
 
@@ -64,7 +65,7 @@ security review doesn't mistake it for an attack vector.
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
 | 1 | Discard-on-malformed in extraction/`_normalize`: reject content with control chars, `---`, role-override/tool-call tokens (drop, not truncate) | attune-ai | done | `plugin/hooks/session_stash.py` `_is_malformed`; keeps injection prose for R1 recall-flagging |
-| 2 | Typed-schema parse with explicit `confidence` + optional `source_ref`; discard on mismatch; keep heuristic fallback | attune-ai | pending | `_extract_via_ollama:220` |
+| 2 | Typed-schema parse with explicit `confidence` + optional `source_ref`; discard on mismatch; keep heuristic fallback | attune-ai | done | `_parse_typed_findings` in `plugin/hooks/session_stash.py`; extras ride as entry tags; live Ollama round-trip re-receipted under the confidence-requiring prompt |
 | 3 | Raw findings stay TTL-bound + visibly machine-generated | attune-ai | done | already true |
 
 ## Testing strategy
