@@ -1,11 +1,13 @@
 # redis-config-truth — tasks
 
-**Status:** active (2026-08-08) — rct-1..4 MERGED (#1984 #1985
-#1987 #1993; rct-4's codex lane 3/3 fixed, drift guard live with
-empty allowlist); rct-5 in review (self-provisioning requirepass
-lane — the ladder's final rung; ladder COMPLETE on its merge).
-Grounding: decisions.md D3 (execution scopes re-grepped from the
-current tree per D3's own rule).
+**Status:** shipped (2026-08-08) — the full ladder rct-1..5 MERGED
+in one day (#1984 #1985 #1987 #1993 #1994; rct-1..3 released in
+11.5.0, rct-4/5 land in 11.6.0 with the consumers-start-
+authenticating release note). Every rung ran a codex D11 lane
+(13 findings total, 12 fixed + 1 rejected with reason, all
+ledgered). The drift guard is live with an empty allowlist; the
+requirepass lane self-provisions. Grounding: decisions.md D3
+(execution scopes re-grepped from the current tree per its rule).
 
 Sequencing follows the roundtable's ratified order: resolver →
 visibility → tests → migrations. T1 contains a chair checkpoint
