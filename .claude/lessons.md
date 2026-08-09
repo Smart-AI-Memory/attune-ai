@@ -21531,3 +21531,42 @@ def ", start_idx + 1)` for module-
   job of this shape: it executes MAIN's code, so it silently breaks
   whenever main lags the feature it depends on — worth a line in the
   session starter so the next session pulls main before trusting it.
+
+**Rotating this machine's Redis password touches FIVE surfaces, and
+two of them silently override the obvious one — an ACL `user
+default` hash beats `requirepass`, and a second server can be
+answering the port.** Learned end-to-end 2026-08-08. The surfaces:
+(1) `~/.zshenv` export — **NOT `~/.zshrc`**: zsh sources `.zshrc`
+for INTERACTIVE shells only, so the SessionStart hydrate hook and
+the uvx-spawned MCP server never see it. Provisioning it in
+`.zshrc` is what broke `memory-hydrate` with NOAUTH on 2026-08-08
+while `redis-cli` kept working by hand — a split that reads like a
+Redis fault and is really a shell-init one (`env -u REDIS_PASSWORD
+zsh -c` vs `sh -c` is the arbiter; only zsh reads `.zshenv`);
+(2) `~/attune-ai/.env` (the dotenv ambient — NOTE its
+REDIS_HOST/PORT point at the Redis CLOUD instance, so its
+REDIS_PASSWORD is the CLOUD credential — don't blindly sync it to
+the local password); (3) `redis-stack.conf` `requirepass`; (4) the
+SAME conf's `user default on ... #<sha256>` ACL line — **ACL
+overrides requirepass for the default user**, so rotating only
+requirepass changes nothing. `CONFIG SET requirepass <new>` +
+`CONFIG REWRITE` was observed — once, during the 2026-08-08
+rotation — to rewrite BOTH the requirepass line and the ACL hash
+consistently, so no hand-edit was needed; but VERIFY rather than
+assume, by comparing `hashlib.sha256(new).hexdigest()` against the
+conf's `#<sha256>`. A live PING proves only the RUNTIME — the conf
+is what a restart loads, so a stale ACL line there silently
+resurrects the OLD password; (5) the Redis Cloud console
+(manual). Diagnostic sequence that cracked it: WRONGPASS despite
+conf==env ⇒ suspect an override ⇒ `grep -n "^user " <conf>`.
+Topology traps found on the way: TWO servers shared 6379 (the
+15-day `redis-stack` bound 127.0.0.1 + a stray plain redis bound
+`*:6379` answering loopback — `lsof -nP -iTCP:6379 -sTCP:LISTEN`
+is the arbiter, `ps` etime tells which is stale); and restarting
+redis-stack exposed a crash-loop: `rediscompat.so` aborts on init
+(fix: remove its loadmodule from BOTH the wrapper script and the
+conf — modules also must not be listed in both places, duplicate
+registration aborts redisearch). The service only worked for 15
+days because it never restarted into the bug — treat any
+long-uptime service as "restart untested" before depending on a
+restart mid-change.
