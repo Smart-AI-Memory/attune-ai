@@ -26,8 +26,9 @@ from __future__ import annotations
 import json
 import logging
 import os
+from collections import Counter
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from attune.security.path_validation import _validate_file_path
@@ -104,3 +105,72 @@ def log_curated_recall(stems: Sequence[str], surface: str, session_id: str | Non
     except Exception as exc:  # noqa: BLE001 — telemetry never costs the recall
         logger.debug("curated_recall telemetry skipped: %s: %s", type(exc).__name__, exc)
         return False
+
+
+def serve_counts(
+    window_days: int = 30,
+    events_path: Path | None = None,
+    today: date | None = None,
+) -> dict[str, int]:
+    """Per-stem curated serve counts over a trailing window (P3 task 4).
+
+    The read half of the R6 frequency term: parses ``curated_recall``
+    events from the shared sink — including rotated siblings
+    (``memory_events.<date>.jsonl``), since a 30-day window can span the
+    writer's size-rotation — and counts one serve per stem occurrence.
+
+    Fail-open everywhere: a missing sink, unreadable file, malformed
+    line, or unparseable timestamp contributes nothing rather than
+    raising — an empty result means "no evidence", which ranking treats
+    as never-served, the same honest floor the age side uses for
+    ``mtime``.
+
+    Args:
+        window_days: Trailing window size; events older than this are
+            excluded.
+        events_path: Sink override for tests; defaults to the shared
+            live sink under ``ATTUNE_HOME``.
+        today: Reference date; defaults to the current date.
+
+    Returns:
+        ``{stem: serve_count}`` for every stem seen in the window.
+    """
+    path = events_path or _events_path()
+    cutoff = (today or date.today()) - timedelta(days=window_days)
+    counts: Counter[str] = Counter()
+    candidates = [path]
+    try:
+        candidates.extend(
+            sibling
+            for sibling in sorted(path.parent.glob(f"{path.stem}.*{path.suffix}"))
+            if sibling != path
+        )
+    except OSError:
+        pass  # a missing parent dir just means no rotated siblings
+    for candidate in candidates:
+        try:
+            raw = candidate.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            continue
+        except (OSError, UnicodeDecodeError) as exc:
+            logger.warning("unreadable events file %s: %s", candidate, exc)
+            continue
+        for line in raw.splitlines():
+            if not line.strip():
+                continue
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if record.get("event") != CURATED_RECALL_EVENT:
+                continue
+            try:
+                when = date.fromisoformat(str(record.get("ts", ""))[:10])
+            except ValueError:
+                continue
+            if when < cutoff:
+                continue
+            for stem in record.get("stems") or []:
+                if isinstance(stem, str) and stem:
+                    counts[stem] += 1
+    return dict(counts)

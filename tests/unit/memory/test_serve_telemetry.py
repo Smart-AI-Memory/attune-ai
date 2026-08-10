@@ -13,6 +13,7 @@ from attune.memory.serve_telemetry import (
     CURATED_RECALL_EVENT,
     MAX_STEMS_PER_EVENT,
     log_curated_recall,
+    serve_counts,
 )
 
 
@@ -96,6 +97,132 @@ class TestLogCuratedRecall:
         blocker.write_text("x", encoding="utf-8")
         monkeypatch.setenv("ATTUNE_HOME", str(blocker))
         assert log_curated_recall(["a"], "personal_query") is False
+
+
+class TestServeCounts:
+    """P3 task 4: the windowed per-stem reader (the R6 frequency source)."""
+
+    def _write_events(self, path: Path, records: list[dict]) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as handle:
+            for rec in records:
+                handle.write(json.dumps(rec) + "\n")
+
+    def _event(self, ts: str, stems: list, event: str = CURATED_RECALL_EVENT) -> dict:
+        return {"v": "1.0", "ts": ts, "event": event, "surface": "personal_query", "stems": stems}
+
+    def test_counts_per_stem_occurrence_within_window(self, tmp_path) -> None:
+        from datetime import date
+
+        sink = tmp_path / "memory_events.jsonl"
+        self._write_events(
+            sink,
+            [
+                self._event("2026-08-01T10:00:00.000000Z", ["a", "b"]),
+                self._event("2026-08-05T10:00:00.000000Z", ["a"]),
+            ],
+        )
+        counts = serve_counts(window_days=30, events_path=sink, today=date(2026, 8, 9))
+        assert counts == {"a": 2, "b": 1}
+
+    def test_window_excludes_old_events(self, tmp_path) -> None:
+        from datetime import date
+
+        sink = tmp_path / "memory_events.jsonl"
+        self._write_events(
+            sink,
+            [
+                self._event("2026-06-01T10:00:00.000000Z", ["old"]),
+                self._event("2026-08-05T10:00:00.000000Z", ["fresh"]),
+            ],
+        )
+        counts = serve_counts(window_days=30, events_path=sink, today=date(2026, 8, 9))
+        assert counts == {"fresh": 1}
+
+    def test_non_curated_events_are_ignored(self, tmp_path) -> None:
+        from datetime import date
+
+        sink = tmp_path / "memory_events.jsonl"
+        self._write_events(
+            sink,
+            [
+                self._event("2026-08-05T10:00:00.000000Z", ["raw"], event="session_recall"),
+                self._event("2026-08-05T10:00:00.000000Z", ["curated"]),
+            ],
+        )
+        counts = serve_counts(window_days=30, events_path=sink, today=date(2026, 8, 9))
+        assert counts == {"curated": 1}
+
+    def test_malformed_lines_and_timestamps_are_skipped(self, tmp_path) -> None:
+        from datetime import date
+
+        sink = tmp_path / "memory_events.jsonl"
+        sink.parent.mkdir(parents=True, exist_ok=True)
+        sink.write_text(
+            "not json\n"
+            + json.dumps(self._event("garbage-ts", ["x"]))
+            + "\n"
+            + json.dumps(self._event("2026-08-05T10:00:00.000000Z", ["ok", 42, ""]))
+            + "\n",
+            encoding="utf-8",
+        )
+        counts = serve_counts(window_days=30, events_path=sink, today=date(2026, 8, 9))
+        assert counts == {"ok": 1}
+
+    def test_missing_sink_is_all_zero(self, tmp_path) -> None:
+        assert serve_counts(events_path=tmp_path / "absent.jsonl") == {}
+
+    def test_blank_lines_are_skipped(self, tmp_path) -> None:
+        from datetime import date
+
+        sink = tmp_path / "memory_events.jsonl"
+        sink.write_text(
+            "\n" + json.dumps(self._event("2026-08-05T10:00:00.000000Z", ["a"])) + "\n\n",
+            encoding="utf-8",
+        )
+        assert serve_counts(window_days=30, events_path=sink, today=date(2026, 8, 9)) == {"a": 1}
+
+    def test_unreadable_sibling_warns_and_skips_but_live_still_counts(self, tmp_path) -> None:
+        from datetime import date
+
+        live = tmp_path / "memory_events.jsonl"
+        self._write_events(live, [self._event("2026-08-05T10:00:00.000000Z", ["live"])])
+        (tmp_path / "memory_events.2026-08-01.jsonl").mkdir()  # a directory, unreadable
+        counts = serve_counts(window_days=30, events_path=live, today=date(2026, 8, 9))
+        assert counts == {"live": 1}
+
+    def test_parent_that_is_a_file_fails_open(self, tmp_path) -> None:
+        blocker = tmp_path / "not_a_dir"
+        blocker.write_text("x", encoding="utf-8")
+        assert serve_counts(events_path=blocker / "memory_events.jsonl") == {}
+
+    def test_sibling_glob_oserror_fails_open(self, tmp_path, monkeypatch) -> None:
+        """Platform-defensive branch: a glob that errors (permissions,
+        odd filesystems) must cost only the rotated siblings, not the
+        live sink's counts."""
+        from datetime import date
+        from pathlib import Path
+
+        live = tmp_path / "memory_events.jsonl"
+        self._write_events(live, [self._event("2026-08-05T10:00:00.000000Z", ["live"])])
+
+        def _boom(self, pattern):
+            raise OSError("glob refused")
+
+        monkeypatch.setattr(Path, "glob", _boom)
+        counts = serve_counts(window_days=30, events_path=live, today=date(2026, 8, 9))
+        assert counts == {"live": 1}
+
+    def test_rotated_siblings_are_included(self, tmp_path) -> None:
+        """A 30-day window can span the writer's size-rotation."""
+        from datetime import date
+
+        live = tmp_path / "memory_events.jsonl"
+        rotated = tmp_path / "memory_events.2026-08-02.jsonl"
+        self._write_events(live, [self._event("2026-08-05T10:00:00.000000Z", ["live"])])
+        self._write_events(rotated, [self._event("2026-08-01T10:00:00.000000Z", ["rotated"])])
+        counts = serve_counts(window_days=30, events_path=live, today=date(2026, 8, 9))
+        assert counts == {"live": 1, "rotated": 1}
 
 
 class TestSurfaceWiring:
