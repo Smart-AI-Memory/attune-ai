@@ -71,6 +71,16 @@ def fetch_digest_nodes(count: int = 9, client: Any = None) -> list[dict[str, Any
         except (TypeError, json.JSONDecodeError) as e:
             logger.exception("recall_digest returned a malformed entry")
             raise ValueError(f"recall_digest returned malformed JSON: {e}") from e
+    # P3 task 2: per-stem serve telemetry — the digest is a curated
+    # serving surface, so each fetch counts toward the R6 frequency term.
+    try:
+        from attune.memory.serve_telemetry import log_curated_recall  # noqa: PLC0415
+
+        log_curated_recall([str(node.get("name", "")) for node in nodes], surface="recall_digest")
+    except ImportError:
+        # The emitter never raises (fail-open by contract); only a broken
+        # import can escape, and telemetry must never cost the digest.
+        logger.debug("curated serve telemetry unavailable")
     return nodes
 
 

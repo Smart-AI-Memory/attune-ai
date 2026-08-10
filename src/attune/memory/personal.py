@@ -308,6 +308,20 @@ class PersonalMemory:
         results = deduped[:k]
         self._annotate_staleness(results)
         self._stamp_provenance(results)
+        # P3 task 2: per-stem serve telemetry — the R6 frequency term's
+        # data source. Best-effort; stems only, never content.
+        try:
+            from attune.memory.serve_telemetry import log_curated_recall  # noqa: PLC0415
+
+            log_curated_recall(
+                [Path(str(hit.get("path", ""))).stem for hit in results],
+                surface="personal_query",
+            )
+        except ImportError:
+            # The emitter itself never raises (fail-open by contract);
+            # only a broken import can escape, and telemetry must never
+            # cost the caller their recall results.
+            logger.debug("curated serve telemetry unavailable")
         return results
 
     def _stamp_provenance(self, hits: list[dict[str, Any]]) -> None:

@@ -170,6 +170,11 @@ _BASELINE: dict[str, int] = {
     # import/connect/delete failures of ANY shape must degrade to False —
     # the verdict loop is never blocked on the memory layer (P2 task 6).
     "src/attune/memory/verdict_log.py": 1,
+    # serve_telemetry.log_curated_recall mirrors the hook-side writer's
+    # posture (same sink, same contract): telemetry about a recall must
+    # never cost the caller the recall — ANY failure degrades to False
+    # (memory-status-integrity P3 task 2).
+    "src/attune/memory/serve_telemetry.py": 1,
     "src/attune/memory/short_term/base.py": 1,
     "src/attune/memory/short_term/pubsub.py": 6,
     "src/attune/memory/short_term/transactions.py": 1,
