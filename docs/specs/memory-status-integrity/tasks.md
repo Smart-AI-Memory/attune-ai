@@ -4,8 +4,9 @@
 COMPLETE** (tasks 1/2/4-9 done across #2013/#2014/#2017/#2018 + the
 task-9 receipt, every code PR through a codex D11 lane). P2 stays open
 on **task 3 only** (canonical `memory_lint.py` accepts `verified:` —
-chair's machine, one file one test; gates `keep` on `~/.claude`
-corpora). P3 tasks unwritten until its phase is approved.
+in flight as chip session task_47bd4a3b). **P3 OPENED** (chair
+2026-08-09; the phase's measure-first gate executed at authoring —
+findings in decisions D8).
 **Design:** [design.md](design.md) · **Decisions:** [decisions.md](decisions.md)
 
 ## P1 implementation order
@@ -36,6 +37,25 @@ corpora). P3 tasks unwritten until its phase is approved.
 | 7 | Ref-triggered queue-jump boolean for project-type: `file:`/`sha:` via local git, `pr:`/`issue:` via `gh`, fail-open (D7 ruling) | attune-ai | done | `attune.memory.ref_triggers` — EXPLICIT typed refs only (`pr:123` etc.; bare `#N` deliberately untreated — no state-at-write, would false-fire on shipped-PR provenance); bounded 5 refs/memory, 10 memories/triage, 5s probes; review CLI floats triggered rows with ⚑ reasons + `queue-jumped` count (the hit-rate signal); CUT-line documented in the module |
 | 8 | Epistemic status tiers (settled / check-before-acting / suspect) + author-class on render surfaces; strongest framing on the raw tier | attune-ai | done | `epistemic_tier` + `format_status_annotation` (thresholds 10/45 over age × volatility; tombstoned/invalidated always suspect); wired: `PersonalMemory.query` hits gain `status` (verdict-aware basis), digest cards render tier, sweep CLI shows tier column; suspect+project carries the explicit verify-first instruction; raw-tier framing stays memory-security-hardening R1's provenance envelope (cross-linked) |
 | 9 | Live-corpus receipt with verified-basis reporting | receipt | done | 2026-08-09, post-#2018 machinery: **273 files / 13 roots**; bases all `mtime` (zero `verified:` in the wild — honest pre-adoption baseline); tiers 134 settled / 138 check-before-acting / 1 suspect (`project_attune_ai_dev_consolidation`, 66d — matches its known-parked status); integrity 0 schema / 0 type / 0 broken links / 0 dangling; the ONE orphan found (`feedback_model_routing_hybrid.md`, missing MEMORY.md pointer) was fixed in the same session — the sweep caught a real atomic-write violation on its first receipt run |
+
+## P3 implementation order (opened 2026-08-09, D8 — full R6: recall-frequency ranking)
+
+Grounded in the D8 measurement: the telemetry PIPE exists
+(`~/.attune/telemetry/memory_events.jsonl`, 4,217 events) but no event
+names a curated stem — so P3 instruments first, accrues, then ranks.
+Ordering is strict: 2/3 before 4, 4 before 5, 5 before 6; 7-8 ride on
+accrued data.
+
+| # | Task | Layer | Status | Notes |
+|---|------|-------|--------|-------|
+| 1 | **GATE** — measure existing recall telemetry before building | receipt | done | executed at authoring (D8): raw tier has per-item identity; curated tier has NO per-stem serve records |
+| 2 | Instrument curated serve events: `PersonalMemory.query` hits and `recall_digest` fetches emit a `curated_recall` event naming served stems | attune-ai | done | `attune.memory.serve_telemetry.log_curated_recall` — same sink/envelope as the hook writer (one stream for the task-4 reader), `ATTUNE_MEMORY_TELEMETRY`/`DO_NOT_TRACK` respected, stems-only (pinned by test: envelope fields + stems and nothing else), fail-open, 100% measured |
+| 3 | Hydration serve records: the SessionStart `[memory-hydrate]` emitter names hydrated stems | external | pending | personal infra (`~/.attune/memory/session_hydrate.py`) — capability documented, same pattern as P1 task 5c; the highest-volume curated surface, so the frequency term under-counts until this lands |
+| 4 | `serve_counts` reader: per-stem serve frequency over a window (default 30d) from `memory_events.jsonl` | attune-ai | done | `serve_telemetry.serve_counts` — includes rotated siblings (a 30d window can span the size-rotation); malformed lines/timestamps skipped, missing sink → all-zero, unreadable sibling warns-and-skips without costing the live counts; window/path/today injectable; 100% measured |
+| 5 | R6 ranking term: fold serve frequency into `risk_score` — age × volatility × frequency factor | attune-ai | pending | REVIEW-RANKING only, D1 untouched (D8 boundary): recall surfaces never filter; design the fold in the build PR (log-scaled multiplier, never-served floor > 0 so an unserved memory still ages into review eventually); report/CLI state the serve-basis per row like the age basis |
+| 6 | Acceptance regression — the two proof cases pinned in OPPOSITE directions | attune-ai | pending | requirements § Acceptance: pip-audit-class fixture (8 weeks stale, HIGH serve) ranks top; rag-gate-class fixture (hours old) NOT flagged; a change catching both fails as loudly as one catching neither |
+| 7 | Review cadence wiring (resolves OQ3): the capped top-3 queue surfaces on an existing weekly surface | attune-ai | pending | ride the Daily/weekly report surface, no new mechanism (D8 of the sibling: hook-driven layers demonstrably empower) |
+| 8 | Live receipt with the frequency term active, after an accrual window | receipt | pending | gated on ≥2 weeks of curated serve data post-task-2; record basis distribution + the top-ranked shift vs the task-9 age-only baseline |
 
 ## Testing strategy
 
