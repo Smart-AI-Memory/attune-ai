@@ -156,7 +156,7 @@ def test_derive_universe_from_tool_use(stash_mod, tmp_path):
     )
     u = stash_mod._derive_session_refs(path)
     assert "/abs/src/attune/x.py" in u["file"]
-    assert "1234" not in u["pr"]  # bare number: not a pr ref pattern
+    assert "1234" in u["pr"]  # gh pr view <n> operates on that PR (lane fix)
     assert "tests/unit/test_y.py" in u["file"]
     assert "memory-claim-verification" in u["spec"]
 
@@ -308,3 +308,44 @@ def test_main_flag_off_never_calls_binder(stash_mod, monkeypatch, tmp_path):
     monkeypatch.setattr(stash_mod, "_stash_findings", lambda f, session_id, cwd: 0)
     monkeypatch.setattr(stash_mod.sys, "stdin", io.StringIO(json.dumps({"session_id": "s"})))
     assert stash_mod.main() == 0
+
+
+# ------------------------------------------------- codex lane adoptions
+
+
+def test_universe_ignores_non_command_string_inputs(stash_mod, tmp_path):
+    # Write payloads / prompts / descriptions merely MENTION artifacts —
+    # they must not become session evidence (lane finding, high).
+    path = _transcript(
+        tmp_path,
+        [
+            {"content": "see src/attune/fake.py and #999 in docs/specs/ghost/"},
+            {"prompt": "read tests/unit/test_phantom.py"},
+            {"command": "pytest tests/unit/test_real.py"},
+        ],
+    )
+    u = stash_mod._derive_session_refs(path)
+    assert "tests/unit/test_real.py" in u["file"]
+    assert "src/attune/fake.py" not in u["file"]
+    assert "tests/unit/test_phantom.py" not in u["file"]
+    assert "999" not in u["pr"]
+    assert "ghost" not in u["spec"]
+
+
+def test_universe_gh_pr_bare_number_forms(stash_mod, tmp_path):
+    path = _transcript(
+        tmp_path,
+        [{"command": "gh pr view 1234 --json state && gh pr merge 567"}],
+    )
+    u = stash_mod._derive_session_refs(path)
+    assert {"1234", "567"} <= u["pr"]
+
+
+def test_universe_root_and_dotted_paths(stash_mod, tmp_path):
+    path = _transcript(
+        tmp_path,
+        [{"command": "cat pyproject.toml .github/workflows/ci.yml"}],
+    )
+    u = stash_mod._derive_session_refs(path)
+    assert "pyproject.toml" in u["file"]
+    assert ".github/workflows/ci.yml" in u["file"]

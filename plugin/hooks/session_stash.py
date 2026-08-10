@@ -344,9 +344,28 @@ _REFS_PROMPT_VERSION = "refs-v1"
 
 #: Universe-derivation patterns over tool_use command strings (design D-3;
 #: seeded from scripts/probe_ref_binding.py — the probe now imports these).
-_UNIVERSE_PR_RE = re.compile(r"(?:#|pull/)(\d{2,6})\b")
-_UNIVERSE_FILE_RE = re.compile(r"\b((?:src|tests|scripts|docs|plugin|content)/[\w./-]+\.\w+)")
+_UNIVERSE_PR_RE = re.compile(
+    r"(?:#|pull/)(\d{2,6})\b"
+    # `gh pr <subcommand> 1234` operates directly on that PR (codex lane).
+    r"|\bgh pr (?:view|merge|edit|checks|diff|review|close|reopen|comment|ready)"
+    r"\s+(?:--\S+\s+)*(\d{2,6})\b"
+)
+#: Slashed paths at any depth (incl. dot-prefixed segments like .github/),
+#: plus well-known root-level files — command text only (codex lane).
+_UNIVERSE_FILE_RE = re.compile(
+    r"(?<![\w./-])((?:[\w.-]+/)+[\w.-]+\.\w+)"
+    r"|(?:^|[\s'\"])((?:pyproject\.toml|README\.md|CHANGELOG\.md|uv\.lock|"
+    r"pytest\.ini|codecov\.yml|Makefile|\.pre-commit-config\.yaml|"
+    r"\.secrets\.baseline))\b"
+)
 _UNIVERSE_SPEC_RE = re.compile(r"docs/specs/([\w-]+)")
+
+
+def _first_group(groups: str | tuple[str, ...]) -> str:
+    """First non-empty capture from a multi-alternative pattern match."""
+    if isinstance(groups, str):
+        return groups
+    return next((g for g in groups if g), "")
 
 
 def _refs_v2_enabled() -> bool:
@@ -550,10 +569,18 @@ def _derive_session_refs(transcript_path: str | None) -> dict[str, set[str]] | N
                         if key in ("file_path", "path", "notebook_path"):
                             universe["file"].add(value)
                             continue
-                        for match in _UNIVERSE_PR_RE.findall(value):
-                            universe["pr"].add(match)
-                        for match in _UNIVERSE_FILE_RE.findall(value):
-                            universe["file"].add(match)
+                        if key != "command":
+                            # Codex lane (high): prompts, Write payloads,
+                            # descriptions, and queries merely MENTION
+                            # artifacts — only executed commands count as
+                            # session evidence (design D-3).
+                            continue
+                        for groups in _UNIVERSE_PR_RE.findall(value):
+                            if _first_group(groups):
+                                universe["pr"].add(_first_group(groups))
+                        for groups in _UNIVERSE_FILE_RE.findall(value):
+                            if _first_group(groups):
+                                universe["file"].add(_first_group(groups))
                         for match in _UNIVERSE_SPEC_RE.findall(value):
                             universe["spec"].add(match.lower())
     except OSError:
