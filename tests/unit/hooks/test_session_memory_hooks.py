@@ -1183,6 +1183,9 @@ def _isolated_reminder_env(monkeypatch, tmp_path, age_days: int = 60):
     old = _time.time() - age_days * 86400
     os.utime(path, (old, old))
     monkeypatch.setenv("HOME", str(home))
+    # Windows: Path.home() reads USERPROFILE, not HOME — without this the
+    # reminder scans the real CI profile and the tests go silent there.
+    monkeypatch.setenv("USERPROFILE", str(home))
     monkeypatch.setenv("ATTUNE_HOME", str(home / ".attune"))
     return home
 
@@ -1240,6 +1243,7 @@ class TestReviewReminder:
         home = tmp_path / "home"
         home.mkdir()
         monkeypatch.setenv("HOME", str(home))
+        monkeypatch.setenv("USERPROFILE", str(home))  # Windows Path.home()
         monkeypatch.setenv("ATTUNE_HOME", str(home / ".attune"))
         mod = _load_module("session_recall")
         assert mod._review_reminder() == ""
