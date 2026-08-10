@@ -1,9 +1,10 @@
 # memory-claim-verification — Design (post-D9)
 
-**Status:** draft (2026-08-10) — awaiting chair review. Authored
-under D9's authorization ("design phase — extractor refs field +
-binder + re-probe"); implementation authority begins at this gate,
-and P1 implementation is additionally gated on the D-5 re-probe.
+**Status:** approved (2026-08-10 — chair, "approve task for
+2043"). Authored under D9's authorization ("design phase —
+extractor refs field + binder + re-probe"); implementation
+authority granted at this gate (T1+T2 shipped in PR #2045), and
+P1 implementation is additionally gated on the D-5 re-probe.
 **Rulings this design executes:** D7 (per-finding matching, riders
 a–c), D8 (22.9% measured — fuzzy matching retired), D9 (C-hardened:
 propose-at-extraction, validate-at-binding; settled core mandated;

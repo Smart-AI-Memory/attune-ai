@@ -305,3 +305,25 @@ review cannot mechanically prove aboutness (codex);
 anchor-locality over-rejection creating pressure to loosen — fuzzy
 matching's back door (claude); prompt-compliance variance across
 model families (antigravity).
+
+## D10 (2026-08-10): design + tasks APPROVED — the read #2043's merge outran
+
+Chair message: "approve task for 2043". Context: PR #2043 carried
+design.md + tasks.md chair-read, but the Class-1 auto-merge lane
+took it ~1.7h before the read (the lane had no mechanical notion
+of chair-read; fixed same day in PR #2044 — "(chair-read)" title
+or `chair-read` label now skips Class 1, drift-guarded). This
+ruling completes the read after the fact: design.md and tasks.md
+statuses flip to approved, T1–T2 implementation authority is
+granted (T1+T2 had already shipped in PR #2045 under the chair's
+explicit merge authorization, so no unauthorized code landed), and
+T4+ (P1) stays gated on T3's re-probe numbers plus the chair's
+threshold ruling, per the tasks doc.
+
+Scope confirmed by the chair via pushback form (2026-08-10,
+D11d COUNTER-CASE raised by the lead): "approve task for 2043"
+covers BOTH design.md and tasks.md — not tasks-only. The chair
+also confirmed the standing policy that recordings of explicit
+in-session chair rulings merge unmarked (transcription, not new
+governance text); interpretive doubt is handled by draft-holds,
+as was done with this PR.
