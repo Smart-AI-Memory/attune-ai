@@ -98,6 +98,20 @@ RECALL_MAP: dict[str, list[dict[str, str]]] = {
                 "retrying; a retry 404s because it is already merged."
             ),
         },
+        # Checks-settled gate (added 2026-08-10): merging attune-rag
+        # #203 with 17 checks pending put a broken generated file on
+        # main and turned the next PR red. The admin bypass skips
+        # REVIEW on sole-dev repos, never CI.
+        {
+            "rule_id": "admin-merge-checks-settled",
+            "match_substring": "pr merge",
+            "text": (
+                "`--admin` merge ONLY after checks have SETTLED (zero "
+                "pending in `gh pr checks`) — a green-so-far PR is not a "
+                "green PR; the bypass is for skipping review, never CI. "
+                "Arm a Monitor on the checks instead of merging early."
+            ),
+        },
         # Rebase drops GPG signatures (T2.1, added 2026-06-20): replayed
         # commits come back unsigned; pushing them loses the signature.
         {
