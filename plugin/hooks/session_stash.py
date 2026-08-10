@@ -595,7 +595,10 @@ def _normalize_ref_value(kind: str, value: str, cwd: str) -> str:
     if kind == "file":
         if not os.path.isabs(value):
             value = os.path.join(cwd, value)
-        return os.path.normpath(value)
+        # POSIX-normalize so the tag is platform-stable: on Windows,
+        # normpath emits backslashes, which would make the memory tag
+        # (and recall queries against it) OS-dependent.
+        return Path(os.path.normpath(value)).as_posix()
     if kind == "pr":
         return value.lstrip("#")
     return value.lower()  # spec slug
