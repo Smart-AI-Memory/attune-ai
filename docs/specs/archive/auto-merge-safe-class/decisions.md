@@ -281,3 +281,42 @@ workflow invariants (`tests/unit/ci/test_workflow_yaml.py`:
 owner+label gate, `--auto` never `--admin`, guard re-verification,
 disarm on unlabeled) landed red first; the implementation commits
 in the same PR turned them green.
+
+## D11 — chair-read gate: read-gated PRs are out of the Class-1 lane
+
+**Date:** 2026-08-10
+**Status:** implemented (incident-driven)
+
+(D9 — standing docs-only authorization — and D10 — chair's
+"merge N" message as label authorization — are chair rulings from
+2026-08-09, recorded in session memory/governance notes; numbered
+here to keep one sequence for this class.)
+
+**Incident.** PR #2043 (spec design/tasks text) was deliberately
+opened chair-read — "(chair-read)" in the title, no
+`auto-merge-when-green` label — but its diff was docs-only, so the
+Class-1 auto-labeler applied `auto-merge-safe` and the merge job
+squashed it ~1.7h before the chair's authorization. The read gate
+held only socially; nothing mechanical knew "chair-read" existed.
+
+**Decision.** A PR whose title contains `(chair-read)` OR which
+carries a `chair-read` label is skipped by BOTH Class-1 jobs:
+
+- the `label` job never applies `auto-merge-safe` to it (and
+  removes the label if present);
+- the `merge` job re-verifies the marker independently, from a
+  fresh API read (label = necessary, not sufficient — same
+  philosophy as the path-class re-check), fail-closed: anything
+  but a clean `false` skips.
+
+Class 2 (`when-green`) is deliberately NOT gated on the marker:
+per D10 the chair's "merge N" is executed by applying
+`auto-merge-when-green` to a PR that still carries "(chair-read)"
+in its title — gating that lane would break the authorized merge
+path.
+
+**Receipt.** Drift guard
+`tests/unit/ci/test_workflow_yaml.py::TestAutoMergeChairReadGate`
+pins: title-marker check in the label job, `chair-read` label
+honored, independent fail-closed re-check in the merge job, and
+when-green left ungated.

@@ -8,7 +8,10 @@ name: Auto-merge safe (tests/docs only)
 # root-level *.md, the author is the repo owner, and the `coverage`
 # required check is green. Admin-bypasses only the REDUNDANT hung
 # lane (e.g. `test (ubuntu-latest, 3.12)`) — never the `coverage`
-# gate, which re-runs the full suite.
+# gate, which re-runs the full suite. Chair-read carve-out
+# (2026-08-10, #2043): a PR titled "(chair-read)" or labeled
+# `chair-read` is never auto-labeled or auto-merged by this lane —
+# it merges only on the chair's own authorization (D10 flow).
 #
 # Class 2 (opt-in, HUMAN-labeled `auto-merge-when-green`, D8):
 # labeling means "this PR is final; merge when fully green." The
@@ -82,8 +85,25 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
+          # Title/labels via env (never inline interpolation) so PR
+          # text cannot inject into the script.
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          CHAIR_LABELED: >-
+            ${{ contains(github.event.pull_request.labels.*.name,
+            'chair-read') }}
         run: |
           set -euo pipefail
+          # Chair-read gate: a PR marked for a chair read is NEVER
+          # auto-labeled — the read gate must hold mechanically, not
+          # socially (2026-08-10: #2043 was chair-read by title only
+          # and auto-merged ~1.7h before authorization). Marker =
+          # "(chair-read)" in the title OR a `chair-read` label.
+          if [[ "$PR_TITLE" == *"(chair-read)"* || \
+                "$CHAIR_LABELED" == "true" ]]; then
+            echo "chair-read marker -> never auto-labeling; removing label if present"
+            gh pr edit "$PR" --remove-label auto-merge-safe || true
+            exit 0
+          fi
           mapfile -t paths < <(
             gh api --paginate "repos/$REPO/pulls/$PR/files" \
               --jq '.[] | .filename, (.previous_filename // empty)'
@@ -200,7 +220,9 @@ jobs:
               head_repo: .head.repo.full_name,
               base_repo: .base.repo.full_name,
               head_sha: .head.sha,
-              has_label: ([.labels[].name] | index("auto-merge-safe") != null)
+              has_label: ([.labels[].name] | index("auto-merge-safe") != null),
+              chair_read: ((.title | contains("(chair-read)")) or
+                           ([.labels[].name] | index("chair-read") != null))
             }')
             state=$(echo "$meta" | jq -r .state)
             base_ref=$(echo "$meta" | jq -r .base_ref)
@@ -210,6 +232,7 @@ jobs:
             base_repo=$(echo "$meta" | jq -r .base_repo)
             head_sha=$(echo "$meta" | jq -r .head_sha)
             has_label=$(echo "$meta" | jq -r .has_label)
+            chair_read=$(echo "$meta" | jq -r .chair_read)
 
             if [ "$state" != "open" ]; then
               echo "skip: PR state=$state (not open)"; echo "::endgroup::"; continue
@@ -228,6 +251,15 @@ jobs:
             fi
             if [ "$has_label" != "true" ]; then
               echo "skip: no auto-merge-safe label"; echo "::endgroup::"; continue
+            fi
+            # Chair-read gate, re-verified INDEPENDENT of the label job
+            # (fail-closed: anything but a clean "false" skips). A PR
+            # titled "(chair-read)" or labeled `chair-read` merges only
+            # by chair authorization, never by this lane (2026-08-10,
+            # #2043 incident).
+            if [ "$chair_read" != "false" ]; then
+              echo "skip: chair-read marker (title/label) — read gate holds"
+              echo "::endgroup::"; continue
             fi
 
             # Re-verify the path class INDEPENDENT of the label, so a

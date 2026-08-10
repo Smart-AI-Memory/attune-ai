@@ -582,3 +582,77 @@ class TestAutoMergeWhenGreen:
         # Regression guard: adding Class 2 must not remove Class 1's jobs.
         jobs = self._workflow()["jobs"]
         assert "label" in jobs and "merge" in jobs
+
+
+# ---------------------------------------------------------------------------
+# auto-merge-safe.yml — chair-read gate (incident 2026-08-10, PR #2043)
+#
+# A PR deliberately opened for a chair read (marked by "(chair-read)"
+# in the title or a `chair-read` label) must NEVER be auto-labeled or
+# auto-merged by the Class-1 lane. #2043 carried the title marker only
+# socially — the auto-labeler applied `auto-merge-safe` and the lane
+# merged it ~1.7h before the chair's authorization. These tests pin the
+# mechanical skip in BOTH jobs (label = necessary, not sufficient — the
+# merge job re-verifies independently, matching the path-class design).
+#
+# Class 2 (`when-green`) is deliberately NOT gated: per D10 the chair's
+# "merge N" authorization is executed by applying the
+# `auto-merge-when-green` label to a still-chair-read-titled PR, so the
+# marker must not block that lane.
+# ---------------------------------------------------------------------------
+
+
+class TestAutoMergeChairReadGate:
+    """Drift guard: chair-read PRs are out of the Class-1 auto-merge lane."""
+
+    TITLE_MARKER = "(chair-read)"
+    LABEL_NAME = "chair-read"
+
+    @staticmethod
+    def _job(job_id: str) -> dict:
+        return ALL_WORKFLOWS["auto-merge-safe.yml"]["jobs"][job_id]
+
+    @classmethod
+    def _run_text(cls, job_id: str) -> str:
+        return "\n".join(step.get("run", "") or "" for step in cls._job(job_id).get("steps", []))
+
+    def test_label_job_checks_title_marker(self):
+        assert self.TITLE_MARKER in self._run_text("label"), (
+            "the label job must skip PRs whose title contains "
+            f"{self.TITLE_MARKER!r} — without this the auto-labeler puts "
+            "chair-read PRs into the Class-1 merge lane (#2043 incident)."
+        )
+
+    def test_label_job_checks_chair_read_label(self):
+        # The label check rides in via the CHAIR_LABELED env expression.
+        step_envs = "\n".join(
+            str(step.get("env", "")) for step in self._job("label").get("steps", [])
+        )
+        assert self.LABEL_NAME in step_envs or self.LABEL_NAME in self._run_text("label"), (
+            "the label job must also honor a `chair-read` LABEL, so the "
+            "gate works even when a title omits the marker."
+        )
+
+    def test_merge_job_reverifies_chair_read_independently(self):
+        run_text = self._run_text("merge")
+        assert self.TITLE_MARKER in run_text and self.LABEL_NAME in run_text, (
+            "the merge job must re-verify the chair-read marker (title AND "
+            "label) independent of the label job — label is necessary, not "
+            "sufficient, same as the path-class re-check."
+        )
+
+    def test_merge_job_chair_read_skip_is_fail_closed(self):
+        assert '"$chair_read" != "false"' in self._run_text("merge"), (
+            "the merge job's chair-read skip must be fail-closed: anything "
+            'but a clean "false" (including a jq error) skips the merge.'
+        )
+
+    def test_when_green_job_not_gated_on_chair_read(self):
+        # D10: the chair's "merge N" is executed by labeling a PR that
+        # still carries "(chair-read)" in its title. Gating Class 2 on
+        # the marker would break the authorized merge path.
+        assert self.TITLE_MARKER not in self._run_text("when-green"), (
+            "when-green must NOT skip chair-read PRs — applying "
+            "`auto-merge-when-green` after the read IS the chair's "
+            "authorized merge mechanism (D10)."
+        )
