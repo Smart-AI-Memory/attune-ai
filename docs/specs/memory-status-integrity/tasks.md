@@ -55,7 +55,7 @@ accrued data.
 | 5 | R6 ranking term: fold serve frequency into `risk_score` — age × volatility × frequency factor | attune-ai | done | `frequency_factor` (log-scaled, floor 0.25) × age × volatility; serves=None stays NEUTRAL age-only; `AuditReport.rank_basis` + `serves_by_stem`; CLIs opt into the live sink explicitly (library/tests stay home-dir-clean) and render basis + per-row serves |
 | 6 | Acceptance regression — the two proof cases pinned in OPPOSITE directions | attune-ai | done | `TestAcceptanceProofCases`: pip-audit shape (8w stale, served every session) ranks TOP with visible unverified-age; rag-gate shape (hours old) scores ZERO and reads settled — the sweep never claims a detection the mechanism cannot make |
 | 7 | Review cadence wiring (resolves OQ3): the capped top-3 queue surfaces on an existing weekly surface | attune-ai | done | rides `session_recall.py` (no new hook/registration — decisions D9: corpora are machine-local, CI can never see them); weekly sentinel throttle marked seen before printing; every failure silent |
-| 8 | Live receipt with the frequency term active, after an accrual window | receipt | pending | gated on ≥2 weeks of curated serve data post-task-2; record basis distribution + the top-ranked shift vs the task-9 age-only baseline |
+| 8 | Live receipt with the frequency term active, after an accrual window | receipt | leg 1 done | ACCRUAL STARTED 2026-08-10 01:12Z — live-fire receipt: a real `PersonalMemory.query` appended a real `curated_recall` event (3 stems, surface personal_query) to the live sink; baseline = task 9's age-only run. **Leg 2 OWED ≥2026-08-23**: re-run the sweep with the frequency term active, record basis distribution + top-ranked shift vs baseline |
 
 ## Testing strategy
 
