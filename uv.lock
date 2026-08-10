@@ -528,8 +528,8 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
     { name = "attune-help", marker = "extra == 'dev'", specifier = ">=0.10.0" },
-    { name = "attune-rag", specifier = ">=0.1.5,<0.10" },
-    { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<0.10" },
+    { name = "attune-rag", specifier = ">=0.1.5,<2.0" },
+    { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<2.0" },
     { name = "attune-verify", specifier = ">=0.1.0,<0.3" },
     { name = "bandit", marker = "extra == 'all'", specifier = ">=1.7,<2.0" },
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.7,<2.0" },
@@ -675,7 +675,7 @@ provides-extras = ["anthropic", "llm", "memdocs", "agents", "backend", "lsp", "w
 [package.metadata.requires-dev]
 dev = [
     { name = "attune-help", specifier = ">=0.10.0" },
-    { name = "attune-rag", specifier = ">=0.1.5,<0.10" },
+    { name = "attune-rag", specifier = ">=0.1.5,<2.0" },
     { name = "bandit", specifier = ">=1.7,<2.0" },
     { name = "black", specifier = ">=24.3.0,<27.0" },
     { name = "coverage", specifier = ">=7.0,<8.0" },
