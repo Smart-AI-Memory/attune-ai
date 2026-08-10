@@ -1,8 +1,12 @@
 # memory-claim-verification — decisions
 
-**Status:** active (2026-08-10) — D1–D7 ruled; the ref-binding
-table sat 2026-08-10 (thread `q-ref-binding-001`) and D7 resolves
-the fork. Next: the D7 rider-(c) measurement probe, then P1.
+**Status:** active (2026-08-10) — D1–D9 ruled. The ref-binding
+table ran all three rounds (thread `q-ref-binding-001`): D7
+per-finding matching, D8 probe FAILED the gate (22.9%), D9 adopts
+C-hardened (propose-at-extraction, validate-at-binding). Next:
+design phase — extractor refs field + binder + re-probe (with the
+chair-adopted adversarial salted subset); the inventory-vs-anchor
+fork settles empirically.
 
 ## D1 (2026-07-26): the extraction prompt is NOT the control
 
@@ -206,3 +210,98 @@ gate biasing recall toward easily-named entities (codex); matcher
 recall on prose findings + over-matching on short/common tokens
 (claude); abstract findings staying ungrounded and going stale
 undetected (antigravity).
+## D8 (2026-08-10): rider-(c) probe MEASURED — 22.9% bind rate, design conversation REOPENED
+
+**Measured, same day as D7** (`scripts/probe_ref_binding.py
+--samples 40`; full data machine-local at
+`~/.attune/reports/memory-claim-verification/rider-c-probe.md`).
+Real shipped extractor (session_stash._extract_via_ollama,
+llama3.1:8b), ref-sets derived from each session's tool_use
+records, matching purely deterministic (exact path / basename /
+pr-number / sha-prefix / spec-slug, stoplist + min-basename
+guards).
+
+| Metric | Value |
+|---|---|
+| transcripts scored | 40 |
+| findings extracted | 192 |
+| findings bound (>=1 derived ref) | 44 (**22.9%**) |
+| by kind | pr=21, sha=0, file=43, spec=4 |
+| D7 gate (50%) | **FAILED — reopen design** |
+
+The over-match spot-check LOWERS true precision further: among
+the 44 are a generic security-posture finding bound to
+`ops/security.py` by the word "security", a bare repo-directory
+ref, and a 2-char `spec:v1` slug bind. The number is consistent
+with OQ1's 28.1% grounded — prose findings summarize decisions,
+they do not name artifacts. The vacuity risk all three D7 seats
+flagged is measured fact, not speculation.
+
+**Consequence (mechanical, per D7 rider c):** the P1 matcher
+build does NOT proceed. The reopened fork — candidate
+2-with-fallback (findings mostly consumed through rider-(b)'s
+weaker session-view lens) vs candidate 3 (session as the grounded
+unit, redefining R4) — awaits a chair ruling; re-convening the
+table with these numbers is the moderator-recommended path, since
+the seats deliberated without them.
+
+Honest limits recorded in the local report: basename multi-bind
+(SKILL.md class), symbol-kind underivation (unmeasured), spec-slug
+min-length gap, Ollama run-to-run nondeterminism (noise dwarfed by
+the 22.9-vs-50 margin), zero sha binds.
+
+## D9 (2026-08-10): C-hardened ADOPTED — propose-at-extraction, validate-at-binding; rounds 2-3 of the table
+
+**Ruled (chair, final-ruling form: "Adopt; design phase settles
+inventory-vs-anchor via re-probe"; follow-up triage delivered in
+chat after a widget multi-select fault).** After D8 failed the
+gate, the chair directed rounds 2 and 3 on thread
+`q-ref-binding-001` (D3 ceiling reached; transcript
+machine-local). Round 2: all three seats independently converged
+on option C. Round 3 (attack-then-harden, chair-directed before
+ruling): C SURVIVED 3/3 under adversarial pressure, each seat
+emitting a build-ready hardened design.
+
+**The settled core (mandated verbatim, all three seats agree):**
+
+- Refs are PROPOSED at extraction (structured field, chosen from
+  the session's artifacts) and VALIDATED at binding —
+  deterministic set-membership/exact only; fuzzy prose matching
+  stays retired (D8 showed it caused both failure modes).
+- Empty refs is a PREFERRED, first-class success state; "a
+  convenience reference is a defect"; prompts instruct
+  refs-last-finding-first so the field cannot displace finding
+  quality.
+- Corpus is versioned: legacy v1 "not collected" is DISTINCT from
+  v2 "explicitly unbound"; no backfill, no mutation, no blended
+  metrics across versions.
+- The re-probe (same 40 transcripts as D8) reports bind rate ONLY
+  alongside (i) an extraction-quality regression guard
+  (findings-per-transcript, length, dedup; blind paired
+  comparison) and (ii) a MANUAL aboutness-precision audit
+  (stratified sample, independent judges). Thresholds stay the
+  chair's, set AFTER numbers (ruled on the round-2 form: "Decide
+  after re-probe numbers").
+- **Adversarial subset (chair-adopted, codex follow-up):** the
+  re-probe includes a salted subset — transcripts carrying highly
+  salient but unrelated artifacts (incl. cross-repo) — reported
+  separately.
+- Refs are forever described as "extractor-proposed,
+  inventory-validated" — never fully-verified evidence.
+
+**The one open fork, sent to the design phase with the re-probe as
+the deciding instrument (cheapest shape first):** codex's opaque
+inventory-ID selection vs claude's anchored refs (verbatim
+transcript anchor, locality-checked, demotion-rate observable) vs
+antigravity's plain strict-prompting + exact membership. The
+designs compose; each addition costs tokens and failure surface.
+
+**Not adopted now (design-phase options, unmandated):**
+demoted-ref visibility handling in session view; `ref_rejected`
+events into UsageTracker telemetry.
+
+**Risk register (round 3, per seat, preserved):** human precision
+review cannot mechanically prove aboutness (codex);
+anchor-locality over-rejection creating pressure to loosen — fuzzy
+matching's back door (claude); prompt-compliance variance across
+model families (antigravity).
