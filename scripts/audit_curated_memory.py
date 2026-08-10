@@ -49,12 +49,15 @@ def _format_report(report, top: int) -> str:
         )
     lines.append("")
 
+    from attune.memory.curated_audit import epistemic_tier
+
     lines.append(f"── Review priority (age x type volatility), top {top} ──")
-    for (mem, score), (_, basis, _days) in zip(
+    for (mem, score), (_, basis, days) in zip(
         report.ranked[:top], report.age_bases[:top], strict=False
     ):
         mem_type = mem.mem_type or "?"
-        lines.append(f"  {score:8.1f}  [{mem_type:9}] {mem.stem}  ({basis})")
+        tier = epistemic_tier(mem.mem_type, basis, days)
+        lines.append(f"  {score:8.1f}  [{mem_type:9}] {mem.stem}  ({basis}, {tier})")
     if not report.ranked:
         lines.append("  (none)")
     if any(basis in {"invalidated", "tombstoned"} for _, basis, _ in report.age_bases):

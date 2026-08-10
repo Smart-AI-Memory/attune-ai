@@ -90,9 +90,14 @@ class TestDigestFormDict:
 
     def test_age_label_appended_from_updated_at(self) -> None:
         """R2 (memory-status-integrity): the digest is a recall surface and
-        must carry the unverified-age label. Label only — order untouched."""
+        must carry the epistemic STATUS label (P2 task 8: a calibrated tier,
+        not a bare day-count). Label only — order untouched."""
         items = digest_form_dict(NODES)["fields"][0]["progress_items"]
-        assert all("days unverified⟩" in item["detail"] for item in items)
+        assert all("unverified⟩" in item["detail"] for item in items)
+        assert all(
+            any(tier in item["detail"] for tier in ("settled", "check-before-acting", "suspect"))
+            for item in items
+        )
         # D1: labelling must not reorder — fixture order preserved.
         assert [item["label"] for item in items] == ["Memory architecture", "Goal framing"]
 

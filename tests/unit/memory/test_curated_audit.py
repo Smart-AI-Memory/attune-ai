@@ -23,7 +23,9 @@ from attune.memory.curated_audit import (
     DEFAULT_VOLATILITY,
     annotate,
     audit,
+    epistemic_tier,
     format_age_annotation,
+    format_status_annotation,
     load_memory,
     resolve_age_basis,
     risk_score,
@@ -382,6 +384,38 @@ class TestVerdictBinding:
 
         sweep([tmp_path], today=TODAY)
         assert log.read_bytes() == before
+
+
+class TestEpistemicTiers:
+    """P2 task 8: calibrated tiers, not bare day-counts (D6 #5)."""
+
+    def test_tier_calibrates_by_type_volatility(self) -> None:
+        # 61 days: suspect for project (61 x 1.0 > 45), settled for
+        # feedback (61 x 0.15 = 9.15 <= 10) — the base-rate gap D6#5 names.
+        assert epistemic_tier("project", "mtime", 61) == "suspect"
+        assert epistemic_tier("feedback", "mtime", 61) == "settled"
+        assert epistemic_tier("project", "mtime", 39) == "check-before-acting"
+        assert epistemic_tier("reference", "mtime", 3) == "settled"
+
+    def test_tombstoned_and_invalidated_are_suspect_regardless_of_age(self) -> None:
+        assert epistemic_tier("feedback", "tombstoned", 0) == "suspect"
+        assert epistemic_tier("user", "invalidated", 1) == "suspect"
+
+    def test_suspect_project_carries_the_explicit_instruction(self) -> None:
+        label = format_status_annotation("project", "mtime", 61)
+        assert label.startswith("⟨suspect · project · 61d unverified⟩")
+        assert "verify against the repo before acting" in label
+
+    def test_non_project_suspect_has_no_repo_instruction(self) -> None:
+        label = format_status_annotation("reference", "mtime", 200)
+        assert "suspect" in label
+        assert "verify against the repo" not in label
+
+    def test_verification_states_render_distinctly(self) -> None:
+        assert "verified 3d ago" in format_status_annotation("project", "verified", 3)
+        assert "unbound" in format_status_annotation("project", "verified-unbound", 3)
+        assert "voided by edit" in format_status_annotation("project", "invalidated", 3)
+        assert "judged WRONG" in format_status_annotation("project", "tombstoned", 3)
 
 
 class TestAnnotation:
