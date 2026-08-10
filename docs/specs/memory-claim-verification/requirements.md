@@ -1,15 +1,13 @@
 # memory-claim-verification
 
-**Status:** parked (2026-08-08 triage — requirements authored
+**Status:** active (2026-08-10) — the ref-binding fork is RULED:
+the table sat 2026-08-10 and D7 adopts per-finding matching with
+three riders (unbound first-class; session provenance as a
+derivable weaker view; measure-first probe). Requirements authored
 2026-07-26; OQ1 measured at n=18: 28.1% of model-authored refs
 grounded, 10.1% heuristic-backfillable — R3-as-written retired by
-D6. No implementation starts before the round table rules the
-ref-binding fork; three candidates in decisions.md D6.)
-Resume-Trigger: convene the ref-binding round table — the blocking
-precondition (the 2026-07-27 roundtable fire) CLEARED on
-2026-07-28 (agent-round-table decisions.md, thread
-`routine-clean-run-20260728-1020`), so the sitting is convenable
-now and is this spec's only gate.
+D6. Next gate: the D7 rider-(c) probe runs before the P1 matcher
+build.
 **Owner:** Patrick (chair)
 **Origin:** 2026-07-25 session — 2 of 4 auto-stashed findings were wrong
 enough that Patrick had to ask for them to be deleted.

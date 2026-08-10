@@ -1,9 +1,8 @@
 # memory-claim-verification — decisions
 
-**Status:** parked (2026-07-26; file-level line added at the
-2026-08-08 triage) — D1–D5 ruled; D6 sends the ref-binding fork to
-the round table. Resume-Trigger: the ref-binding table sitting
-(precondition cleared 2026-07-28).
+**Status:** active (2026-08-10) — D1–D7 ruled; the ref-binding
+table sat 2026-08-10 (thread `q-ref-binding-001`) and D7 resolves
+the fork. Next: the D7 rider-(c) measurement probe, then P1.
 
 ## D1 (2026-07-26): the extraction prompt is NOT the control
 
@@ -167,3 +166,43 @@ The three candidate bindings to put to the table:
    binding entirely; changes what `grounding` in R4 means.
 
 No implementation starts before that ruling.
+
+## D7 (2026-08-10): ref-binding = per-finding matching, with three riders (table unanimous, chair adopted)
+
+**Ruled (chair, via the promotion form + "go with the
+recommendations of the roundtable").** The D6 table sat 2026-08-10
+(thread `q-ref-binding-001`, halted after round 1 of 3 on
+unanimous convergence; full transcript machine-local at
+`~/.attune/reports/roundtable/q-ref-binding-001.md`). All three
+seats (claude, antigravity, codex) independently picked candidate
+2 and rejected 1 (inherited refs produce false verification
+outcomes) and 3 (verification consumes findings, not sessions).
+
+The binding model: a finding binds only to refs deterministically
+matched between its own text/payload and the session-derived ref
+set — closed-set exact/basename/symbol matching, no LLM in the
+raw-tier binding path. Riders, adopted with the ruling:
+
+- **(a) Unbound is first-class.** A finding matching nothing is
+  stored ungrounded/unbound — honest state, never presented as
+  grounded, never papered over. Verification distinguishes
+  `bound` / `unbound` / `stale-missing-ref`.
+- **(b) Session provenance, not session binding.** Every finding
+  carries its session-id; the session ref-set stays derivable as
+  an explicitly-labeled WEAKER view (candidate 1 as a lens, never
+  a stored binding). Later deterministic evidence may promote
+  `unbound` → `bound` with the original finding unchanged and
+  binding provenance recorded (codex follow-up, admitted).
+- **(c) Measure before building.** An OQ1-style probe on the
+  existing stashed corpus runs BEFORE the P1 matcher build: what
+  fraction of real raw-tier findings textually name at least one
+  ref derivable from their session's tool_use records? A low hit
+  rate (<50%) reopens the design conversation (2-with-fallback vs
+  3) before the build cost is paid — the vacuous-verification-layer
+  risk all three seats flagged.
+
+Seat risk register, preserved: matchability as a hidden quality
+gate biasing recall toward easily-named entities (codex); matcher
+recall on prose findings + over-matching on short/common tokens
+(claude); abstract findings staying ungrounded and going stale
+undetected (antigravity).
