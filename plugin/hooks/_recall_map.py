@@ -131,6 +131,20 @@ RECALL_MAP: dict[str, list[dict[str, str]]] = {
                 "('===' separators, `=value` args)."
             ),
         },
+        # zsh no-word-split (added 2026-08-10): a `SAFE="a b c"; for w
+        # in $SAFE` loop in the 2026-08-09 worktree-prune session ran
+        # ONCE over the whole string and printed a bogus ABSENT — the
+        # bash idiom silently produces garbage rather than erroring.
+        {
+            "rule_id": "zsh-no-word-split",
+            "match_regex": r"for\s+\w+\s+in\s+\$\{?[A-Za-z_]\w*\}?\s*[;\n]",
+            "text": (
+                "zsh does NOT word-split unquoted `$var` — `for w in "
+                "$LIST` loops ONCE over the whole string (bash idiom, "
+                "silent garbage). Use `${(z)LIST}`, `${=LIST}`, or an "
+                "explicit word list. (`$(...)` output still splits.)"
+            ),
+        },
         {
             "rule_id": "zsh-status-readonly",
             "match_substring": "status=",
