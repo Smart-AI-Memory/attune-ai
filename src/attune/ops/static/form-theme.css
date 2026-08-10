@@ -29,6 +29,8 @@
 #attune-elicit-form .ae-submit:disabled { opacity:.6; cursor:default; }
 #attune-elicit-form .ae-error { margin-top:.5rem; font-size:14px;
   color:var(--text-accent,#a1571c); }
+#attune-elicit-form .ae-field-missing { border-left:3px solid
+  var(--text-accent,#a1571c); padding-left:.6rem; }
 #attune-elicit-form .ae-input { width:100%; box-sizing:border-box;
   padding:.5rem .6rem; font-size:15px; color:var(--text-primary,#2c2c2a);
   background:var(--surface-1,#f7f6f3); border:1px solid var(--border,#e3e1dc);

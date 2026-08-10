@@ -188,6 +188,66 @@ class TestPostback:
         assert "Number(el.value)" in html
 
 
+class TestRequiredGate:
+    """Regression guard for the 2026-08-10 live failure: a required
+    multi_select with nothing checked posted ``[]``, the submit script
+    disabled the button and showed "Submitted", and the server-side
+    reject then landed on a dead widget — the user had to answer in
+    chat. The submit script must gate on required fields BEFORE
+    posting: visible error, button stays alive.
+    """
+
+    _FIELDS = [
+        {
+            "id": "scope",
+            "text": "Scope?",
+            "type": "single_select",
+            "options": ["narrow", "broad"],
+        },
+        {
+            "id": "probes",
+            "text": "Probes?",
+            "type": "multi_select",
+            "options": ["unit", "behavioral"],
+        },
+        {
+            "id": "notes",
+            "text": "Notes?",
+            "type": "text_input",
+            "required": False,
+        },
+    ]
+
+    def test_required_fields_carry_data_required(self):
+        html = _render(self._FIELDS)
+        # scope + probes are required (the default); notes is not.
+        assert html.count('data-required="1"') == 2
+        assert 'data-fid="notes" data-ftype="text_input">' in html
+
+    def test_multi_select_checked_boxes_post_as_array(self):
+        html = _render(self._FIELDS)
+        script = html[html.index("<script>") :]
+        # The multi_select branch collects every checked control into an
+        # array and posts it under the field id.
+        assert "ftype === 'multi_select'" in script
+        assert "[data-control]:checked" in script
+        assert "answers[fid] = vals" in script
+
+    def test_missing_required_blocks_send_with_visible_error(self):
+        html = _render(self._FIELDS)
+        script = html[html.index("<script>") :]
+        # The gate reads data-required fields, treats undefined / '' /
+        # empty-array as unanswered, and shows the error in the alert div.
+        assert ".ae-field[data-required]" in script
+        assert "Array.isArray(v) && v.length === 0" in script
+        assert "'Required: '" in script
+        assert "ae-field-missing" in script
+        # Ordering: the gate fires BEFORE sendPrompt, and the button is
+        # only disabled after a successful send — never on a rejection.
+        assert script.index("'Required: '") < script.index("sendPrompt(")
+        assert script.index("sendPrompt(") < script.index("btn.disabled = true")
+
+
 class TestEscaping:
     def test_malicious_label_is_escaped(self):
         html = _render([{"id": "a", "text": "<script>alert(1)</script>", "type": "text_input"}])

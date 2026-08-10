@@ -384,9 +384,10 @@ def _field_html(q: FormQuestion) -> str:
         else ""
     )
     inferred_attr = ' data-inferred="1"' if q.inferred_from else ""
+    required_attr = ' data-required="1"' if q.required else ""
     return (
         f'<div class="ae-field" data-fid="{_esc(q.id)}" '
-        f'data-ftype="{_esc(q.type.value)}"{inferred_attr}>'
+        f'data-ftype="{_esc(q.type.value)}"{inferred_attr}{required_attr}>'
         f'<label class="ae-label">{_esc(q.text)}{req}</label>'
         f"{help_html}{inferred_html}{_control_html(q)}{rationale_html}</div>"
     )
@@ -525,6 +526,26 @@ def form_to_widget_html(
         }}
       }}
     }});
+    // Required-field gate: an unanswered required field must surface a
+    // visible error and leave the button alive — never post a payload
+    // the server-side validator will reject after the widget is dead.
+    var missing = [];
+    form.querySelectorAll('.ae-field[data-required]').forEach(function(f) {{
+      var v = answers[f.getAttribute('data-fid')];
+      var empty = v === undefined || v === '' ||
+        (Array.isArray(v) && v.length === 0);
+      f.classList.toggle('ae-field-missing', empty);
+      if (empty) {{
+        var lbl = f.querySelector('.ae-label');
+        missing.push(lbl ? lbl.textContent.replace(/\\*$/, '')
+          : f.getAttribute('data-fid'));
+      }}
+    }});
+    if (missing.length) {{
+      err.textContent = 'Required: ' + missing.join(', ');
+      return;
+    }}
+    err.textContent = '';
     var payload = {{ {WIDGET_RESPONSE_MARKER!r}: true,
       title: form.getAttribute('data-form-title'), answers: answers }};
     if (typeof sendPrompt === 'function') {{
