@@ -10,6 +10,10 @@ the one-liner here is the trip-wire, not the rule.
 - **Deleting, surfacing, or "fixing access to" a registered
   capability** → `removing-dead-code.md` — the should-this-exist
   gate; never surface before dogfooding the real run path.
+- **Pushing a lead-authored src/tests diff (esp. into a D11b
+  review lane)** → `d11-preflight-checklist.md` — six repeat-class
+  probes (fail-open, windows, record-before-stamp, path prefix,
+  key collisions, USERPROFILE) run BEFORE the lane.
 - **Writing/reviewing Python style, exceptions, path validation,
   security patterns** → `coding-standards-index.md` — expanded
   quick-ref; the binding rules are already in CLAUDE.md Critical
