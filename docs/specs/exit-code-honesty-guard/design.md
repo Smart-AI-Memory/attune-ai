@@ -35,16 +35,29 @@ def _post_result_step(label: str, step: Callable[[], None]) -> None:
     except Exception:  # noqa: BLE001
         # INTENTIONAL (exit-code-honesty-guard): post-result
         # plumbing must never overwrite the result-derived exit
-        # code.
-        logger.exception(
-            "post-result step %r failed; exit code preserved", label
-        )
-        print(
-            f"⚠️  post-result step '{label}' failed; "
-            "exit code unchanged",
-            file=sys.stderr,
-        )
+        # code. The visibility actions below are themselves
+        # post-result plumbing (a failing log handler, a closed
+        # stderr pipe — the #1904 vector — or a Windows cp1252
+        # encoding error can raise here too), so each is
+        # individually suppressed. ASCII-only message by design.
+        with contextlib.suppress(Exception):
+            logger.exception(
+                "post-result step %r failed; exit code preserved",
+                label,
+            )
+        with contextlib.suppress(Exception):
+            print(
+                f"warning: post-result step '{label}' failed; "
+                "exit code unchanged",
+                file=sys.stderr,
+            )
 ```
+
+The handler hardening (nested `suppress`, ASCII-only stderr text)
+is a cross-review lane adoption — codex flagged that an unguarded
+`logger.exception` / emoji-bearing `print` inside the guard could
+itself raise and re-corrupt the exit code, which is the exact
+class this spec exists to contain (R5 ledger row, 2026-08-10).
 
 `exit_code` is computed BEFORE any of the three steps (already
 true today, line 196) and returned unconditionally after them.
@@ -104,7 +117,11 @@ raising `on_result`, json mode with emission forced to raise):
 - the guard holds even with `_emit_run_meta_for_daemon`'s internal
   OSError catch removed from the picture (R1's refactor-away
   clause): the injected `print_result` raises unconditionally, so
-  the test never depends on the callback's own defenses.
+  the test never depends on the callback's own defenses;
+- the HANDLER itself is failure-proof (codex lane finding): with a
+  raising step AND `sys.stderr` replaced by a raising writer AND a
+  logging handler that raises, the function still returns the
+  result-derived code — nothing escapes.
 
 Red-before/green-after is recorded in decisions.md at
 implementation time (acceptance criterion), alongside a serial run

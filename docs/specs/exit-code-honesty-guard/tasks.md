@@ -23,8 +23,10 @@ exact tail recorded.
 
 New `tests/unit/cli_commands/test_exit_code_honesty_guard.py` per
 the design's test matrix: three injected-raiser hook points ×
-{success→0, planned-failure→1}, stderr warning asserted, and the
-execute()-raises case still returning 2.
+{success→0, planned-failure→1}, stderr warning asserted, the
+execute()-raises case still returning 2, and the handler-itself-
+fails case (raising stderr writer + raising log handler) still
+returning the result-derived code (codex lane adoption).
 
 **Receipt (behavioral):** red-before/green-after — run the new
 test against the pre-T1 module (expect failures on the unguarded
