@@ -236,6 +236,94 @@ def _format(entries: list[dict]) -> tuple[str, list[str]]:
     return "\n".join(lines), rendered_ids
 
 
+#: Weekly cadence for the curated-review nudge (memory-status-integrity
+#: P3 task 7, resolving OQ3). The corpora are MACHINE-LOCAL, so a CI
+#: weekly issue can never see them — this existing SessionStart surface
+#: is the one place with both the data and the reader, and the sibling
+#: spec's D8 found hook-driven layers demonstrably empower.
+_REVIEW_REMINDER_DAYS = 7
+_REVIEW_QUEUE_CAP = 3
+
+
+def _review_command_hint() -> str:
+    """A prescribed action that actually works where the reader is.
+
+    Codex D11 finding: a bare repo-relative ``python scripts/…`` fails
+    for plugin consumers whose cwd is not the attune-ai repo — a
+    recurring reminder whose command errors trains readers to ignore
+    it. Prescribe the runnable relative form only when it resolves from
+    the current directory; otherwise name where the loop lives.
+    """
+    script = Path.cwd() / "scripts" / "review_curated_memory.py"
+    if script.is_file():
+        return "Run `python scripts/review_curated_memory.py` (~2 min, capped queue)."
+    return (
+        "Run the review loop (~2 min, capped queue): "
+        "`scripts/review_curated_memory.py` in the attune-ai repo."
+    )
+
+
+def _review_reminder() -> str:
+    """One weekly-throttled review-due line, or ``""``.
+
+    Throttled by a sentinel file's mtime under ``ATTUNE_HOME`` so the
+    nudge fires at most once per :data:`_REVIEW_REMINDER_DAYS` across
+    ALL sessions. Every failure — attune unimportable, no corpora, an
+    unreadable sink — returns ``""``: the reminder must never cost the
+    session its recall.
+    """
+    try:
+        import time  # noqa: PLC0415
+
+        home = os.environ.get("ATTUNE_HOME")
+        base = Path(home).expanduser() if home else Path.home() / ".attune"
+        sentinel = base / "memory" / ".review_reminder_last"
+        try:
+            if time.time() - sentinel.stat().st_mtime < _REVIEW_REMINDER_DAYS * 86400:
+                return ""
+        except FileNotFoundError:
+            pass
+
+        from attune.memory.curated_audit import epistemic_tier, sweep  # noqa: PLC0415
+        from attune.memory.serve_telemetry import serve_counts  # noqa: PLC0415
+
+        home_dir = Path.home()
+        roots = [home_dir / ".attune" / "memory", home_dir / ".claude" / "memory"]
+        projects = home_dir / ".claude" / "projects"
+        if projects.is_dir():
+            roots.extend(sorted(projects.glob("*/memory")))
+        roots = [root for root in roots if root.is_dir()]
+        if not roots:
+            return ""
+
+        report = sweep(roots, serves=serve_counts() or None)
+        # Only memories that genuinely WARRANT review nudge (codex D11
+        # finding: filtering only tombstones meant ANY nonempty corpus —
+        # even all-settled or freshly-verified — claimed verdicts were
+        # due every week). Settled rows never count toward the queue.
+        rows = [
+            (mem, basis, days)
+            for (mem, _), (_, basis, days) in zip(report.ranked, report.age_bases, strict=False)
+            if basis != "tombstoned" and epistemic_tier(mem.mem_type, basis, days) != "settled"
+        ][:_REVIEW_QUEUE_CAP]
+        if not rows:
+            return ""
+
+        # Mark seen BEFORE printing: a reminder that fires every session
+        # because its sentinel write failed is worse than one missed week.
+        sentinel.parent.mkdir(parents=True, exist_ok=True)
+        sentinel.write_text("seen\n", encoding="utf-8")
+
+        top, basis, days = rows[0]
+        tier = epistemic_tier(top.mem_type, basis, days)
+        return (
+            f"🗂 Weekly memory review due — {len(rows)} memories await verdicts "
+            f"(top: {top.stem}, {tier}, {days}d {basis}). {_review_command_hint()}"
+        )
+    except Exception:  # noqa: BLE001 — the nudge must never cost the session
+        return ""
+
+
 def main() -> int:
     try:
         if not _enabled():
@@ -307,6 +395,9 @@ def main() -> int:
                 )
             if health:
                 print(health)
+            reminder = _review_reminder()
+            if reminder:
+                print(reminder)
             return 0
         block, rendered_ids = _format(entries)
         # Only print if we actually rendered at least one finding line.
@@ -330,6 +421,9 @@ def main() -> int:
             )
         if health:
             print(health)
+        reminder = _review_reminder()
+        if reminder:
+            print(reminder)
         return 0
     except Exception:  # noqa: BLE001 — SessionStart hook must never crash a session
         traceback.print_exc(file=sys.stderr)

@@ -183,13 +183,14 @@ def main(argv: list[str] | None = None) -> int:
         sys.path.insert(0, str(src))
 
     from attune.memory.curated_audit import sweep
+    from attune.memory.serve_telemetry import serve_counts
 
     roots = args.roots or default_roots()
     if not roots:
         print("No curated memory corpora found.")
         return 0
 
-    report = sweep(roots)
+    report = sweep(roots, serves=serve_counts() or None)
     from functools import partial
 
     from attune.memory.ref_triggers import queue_jump_reasons
