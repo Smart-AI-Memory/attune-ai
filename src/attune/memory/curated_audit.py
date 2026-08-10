@@ -28,6 +28,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import logging
+import math
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -141,6 +142,13 @@ class AuditReport:
     #: (P2 task 2). Days are basis-aware so a report can never show an age
     #: that contradicts the basis it states (codex D11 finding).
     age_bases: tuple[tuple[str, str, int], ...] = ()
+    #: Which signal ordered ``ranked``: ``age-only`` (no frequency
+    #: evidence supplied) or ``age×frequency`` (P3 task 5). Stated so a
+    #: report can never imply a basis it didn't use.
+    rank_basis: str = "age-only"
+    #: Per-file ``(stem, serve_count)`` aligned with ``ranked`` — empty
+    #: under ``age-only``.
+    serves_by_stem: tuple[tuple[str, int], ...] = ()
     scanned: int = 0
     roots: tuple[Path, ...] = field(default=())
 
@@ -427,12 +435,40 @@ def volatility(mem_type: str | None) -> float:
     return VOLATILITY_BY_TYPE.get(mem_type, DEFAULT_VOLATILITY)
 
 
+#: Frequency-factor floor for never-served memories (P3 task 5, R6).
+#: Deliberately > 0: an unserved memory is DEPRIORITIZED, never exempt —
+#: a 200-day project claim at the floor still ages into review
+#: eventually, so nothing rots forever outside the queue (D8 boundary:
+#: this reorders REVIEW attention only; recall surfaces never filter).
+FREQUENCY_FLOOR = 0.25
+
+
+def frequency_factor(serves: int) -> float:
+    """Scale review rank by how often a memory is actually served (R6).
+
+    Log-scaled so the term rewards "served at all / served often"
+    without letting a hot memory drown everything: 0 serves → the
+    floor, 1 serve → ~0.94, 30 serves (every session for a month) →
+    ~3.7. The exact proof-case shape: an 8-week-stale memory injected
+    into every session must outrank a 9-week-stale one nobody recalls.
+
+    Args:
+        serves: Serve count over the reader's window
+            (:func:`attune.memory.serve_telemetry.serve_counts`).
+
+    Returns:
+        A positive multiplier for :func:`risk_score`.
+    """
+    return FREQUENCY_FLOOR + math.log1p(max(0, serves))
+
+
 def risk_score(
     mem: CuratedMemory,
     today: date | None = None,
     latest_verdict: VerdictRecord | None = None,
+    serves: int | None = None,
 ) -> float:
-    """Rank a memory's need for human review: age scaled by type volatility.
+    """Rank a memory's need for human review: age × volatility × frequency.
 
     This orders *review attention* only. Per D1 it must never be used to drop
     a memory from a recall result — a high score means "ask a human", not
@@ -442,11 +478,18 @@ def risk_score(
         mem: The memory to score.
         today: Reference date; defaults to the current date.
         latest_verdict: The stem's most recent verdict record, if any.
+        serves: Serve count over the telemetry window. ``None`` means "no
+            frequency evidence available" and applies a NEUTRAL factor —
+            the ranking stays age-only rather than pretending every
+            memory is unserved (P3 task 5).
 
     Returns:
         A non-negative score. Higher means review sooner.
     """
-    return unverified_age_days(mem, today, latest_verdict) * volatility(mem.mem_type)
+    base = unverified_age_days(mem, today, latest_verdict) * volatility(mem.mem_type)
+    if serves is None:
+        return base
+    return base * frequency_factor(serves)
 
 
 #: Tier thresholds over the age × volatility risk score (P2 task 8).
@@ -652,6 +695,7 @@ def audit(
     roots: Iterable[Path] = (),
     today: date | None = None,
     verdicts: Mapping[Path, VerdictRecord] | None = None,
+    serves: Mapping[str, int] | None = None,
 ) -> AuditReport:
     """Produce an advisory report over already-scanned memories.
 
@@ -667,6 +711,11 @@ def audit(
             in one corpus can never bind or tombstone a same-named memory
             in another (codex D11 finding). :func:`sweep` builds this map;
             omitted means every ``verified:`` reads unbound.
+        serves: Per-stem serve counts over the telemetry window (P3 task
+            5, from :func:`attune.memory.serve_telemetry.serve_counts`).
+            ``None`` keeps the ranking age-only (no frequency evidence);
+            a mapping — even an empty one — applies the frequency factor,
+            with missing stems at the never-served floor.
 
     Returns:
         The report. ``ranked`` is ordered by descending risk;
@@ -683,7 +732,18 @@ def audit(
 
     ranked = tuple(
         sorted(
-            ((mem, risk_score(mem, today, verdicts.get(mem.path))) for mem in memories),
+            (
+                (
+                    mem,
+                    risk_score(
+                        mem,
+                        today,
+                        verdicts.get(mem.path),
+                        None if serves is None else serves.get(mem.stem, 0),
+                    ),
+                )
+                for mem in memories
+            ),
             key=lambda pair: (-pair[1], str(pair[0].path)),
         )
     )
@@ -707,12 +767,22 @@ def audit(
         dangling_pointers=dangling,
         age_basis="verified" if uses_verified else "mtime",
         age_bases=age_bases,
+        rank_basis="age-only" if serves is None else "age×frequency",
+        serves_by_stem=(
+            ()
+            if serves is None
+            else tuple((mem.stem, serves.get(mem.stem, 0)) for mem, _ in ranked)
+        ),
         scanned=len(memories),
         roots=roots,
     )
 
 
-def sweep(roots: Iterable[Path], today: date | None = None) -> AuditReport:
+def sweep(
+    roots: Iterable[Path],
+    today: date | None = None,
+    serves: Mapping[str, int] | None = None,
+) -> AuditReport:
     """Scan and audit in one call — the entry point callers usually want.
 
     Reads each root's verdict log (append-only, task 4) so ``verified:``
@@ -720,9 +790,14 @@ def sweep(roots: Iterable[Path], today: date | None = None) -> AuditReport:
     Verdicts are scoped to their OWN root: a record in one corpus's log
     binds only files under that root, never a same-named memory elsewhere.
 
+    ``serves`` is caller-supplied, never auto-loaded: reading the live
+    telemetry sink is a side effect the CLIs opt into explicitly, so
+    library callers and hermetic tests stay home-dir-clean.
+
     Args:
         roots: Corpus roots to scan recursively.
         today: Reference date; defaults to the current date.
+        serves: Per-stem serve counts (see :func:`audit`).
 
     Returns:
         The advisory report.
@@ -737,4 +812,4 @@ def sweep(roots: Iterable[Path], today: date | None = None) -> AuditReport:
         for mem in memories:
             if mem.stem in latest and root in mem.path.parents:
                 verdicts[mem.path] = latest[mem.stem]
-    return audit(memories, roots=roots, today=today, verdicts=verdicts)
+    return audit(memories, roots=roots, today=today, verdicts=verdicts, serves=serves)

@@ -42,6 +42,7 @@ def _format_report(report, top: int) -> str:
     lines: list[str] = []
     lines.append(f"Scanned {report.scanned} curated memories in {len(report.roots)} root(s)")
     lines.append(f"Age basis: {report.age_basis}")
+    lines.append(f"Rank basis: {report.rank_basis}")
     if report.age_basis == "mtime":
         lines.append(
             "  note: mtime records the last EDIT, not the last verification — "
@@ -51,13 +52,17 @@ def _format_report(report, top: int) -> str:
 
     from attune.memory.curated_audit import epistemic_tier
 
-    lines.append(f"── Review priority (age x type volatility), top {top} ──")
+    serves_by_stem = dict(report.serves_by_stem)
+    lines.append(f"── Review priority ({report.rank_basis}), top {top} ──")
     for (mem, score), (_, basis, days) in zip(
         report.ranked[:top], report.age_bases[:top], strict=False
     ):
         mem_type = mem.mem_type or "?"
         tier = epistemic_tier(mem.mem_type, basis, days)
-        lines.append(f"  {score:8.1f}  [{mem_type:9}] {mem.stem}  ({basis}, {tier})")
+        serve_note = ""
+        if report.rank_basis != "age-only":
+            serve_note = f", serves={serves_by_stem.get(mem.stem, 0)}"
+        lines.append(f"  {score:8.1f}  [{mem_type:9}] {mem.stem}  ({basis}, {tier}{serve_note})")
     if not report.ranked:
         lines.append("  (none)")
     if any(basis in {"invalidated", "tombstoned"} for _, basis, _ in report.age_bases):
@@ -113,20 +118,27 @@ def main(argv: list[str] | None = None) -> int:
         sys.path.insert(0, str(src))
 
     from attune.memory.curated_audit import sweep
+    from attune.memory.serve_telemetry import serve_counts
 
     roots = args.roots or default_roots()
     if not roots:
         print("No curated memory corpora found.")
         return 0
 
-    report = sweep(roots)
+    # P3 task 5: the CLI opts into the live telemetry sink explicitly —
+    # the library never auto-reads it. None (vs {}) keeps the report
+    # honest when no frequency evidence exists at all.
+    served = serve_counts() or None
+    report = sweep(roots, serves=served)
 
     if args.json:
+        serves_by_stem = dict(report.serves_by_stem)
         print(
             json.dumps(
                 {
                     "scanned": report.scanned,
                     "age_basis": report.age_basis,
+                    "rank_basis": report.rank_basis,
                     "roots": [str(r) for r in report.roots],
                     "ranked": [
                         {
@@ -135,6 +147,7 @@ def main(argv: list[str] | None = None) -> int:
                             "unverified_days": days,
                             "risk": round(score, 2),
                             "basis": basis,
+                            "serves": serves_by_stem.get(mem.stem),
                             "path": str(mem.path),
                         }
                         for (mem, score), (_, basis, days) in zip(

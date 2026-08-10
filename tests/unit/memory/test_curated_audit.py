@@ -386,6 +386,94 @@ class TestVerdictBinding:
         assert log.read_bytes() == before
 
 
+class TestFrequencyRanking:
+    """P3 task 5: the R6 fold — age × volatility × serve frequency."""
+
+    def test_factor_floor_and_monotonic_growth(self) -> None:
+        from attune.memory.curated_audit import FREQUENCY_FLOOR, frequency_factor
+
+        assert frequency_factor(0) == FREQUENCY_FLOOR
+        assert frequency_factor(-5) == FREQUENCY_FLOOR, "negative counts clamp"
+        assert frequency_factor(1) > frequency_factor(0)
+        assert frequency_factor(30) > frequency_factor(5) > frequency_factor(1)
+
+    def test_none_serves_is_neutral_not_floor(self, tmp_path: Path) -> None:
+        """No frequency evidence must keep the score AGE-ONLY — pretending
+        every memory is unserved would silently scale real scores."""
+        mem = load_memory(write_memory(tmp_path, "project_x", age_days=40))
+        base = risk_score(mem, TODAY)
+        assert risk_score(mem, TODAY, None, None) == base
+        assert risk_score(mem, TODAY, None, 0) < base
+
+    def test_audit_rank_basis_states_what_ordered_it(self, tmp_path: Path) -> None:
+        write_memory(tmp_path, "project_a", age_days=10)
+        age_only = audit(scan_corpus([tmp_path]), today=TODAY)
+        assert age_only.rank_basis == "age-only"
+        assert age_only.serves_by_stem == ()
+
+        with_freq = audit(scan_corpus([tmp_path]), today=TODAY, serves={"project_a": 3})
+        assert with_freq.rank_basis == "age×frequency"
+        assert dict(with_freq.serves_by_stem) == {"project_a": 3}
+
+    def test_served_memory_outranks_equally_old_unserved(self, tmp_path: Path) -> None:
+        write_memory(tmp_path, "project_hot", age_days=40)
+        write_memory(tmp_path, "project_cold", age_days=40)
+        report = audit(scan_corpus([tmp_path]), today=TODAY, serves={"project_hot": 20})
+        order = [mem.stem for mem, _ in report.ranked]
+        assert order.index("project_hot") < order.index("project_cold")
+
+
+class TestAcceptanceProofCases:
+    """Requirements § Acceptance: the two 2026-07-10 proof cases MUST
+    produce OPPOSITE outcomes — a change catching both is as wrong as
+    one catching neither."""
+
+    def _corpus(self, tmp_path: Path):
+        # The pip-audit shape: 8 weeks stale, served in every session.
+        write_memory(tmp_path, "project_pip_audit_class", age_days=56)
+        # The rag-gate shape: wrong within HOURS — brand new by mtime.
+        write_memory(tmp_path, "project_rag_gate_class", age_days=0)
+        # Background noise: an older-but-never-served project memory and
+        # a settled feedback rule.
+        write_memory(tmp_path, "project_unserved_older", age_days=63)
+        write_memory(tmp_path, "feedback_settled", "feedback", age_days=120)
+        return scan_corpus([tmp_path])
+
+    def test_stale_high_serve_ranks_top(self, tmp_path: Path) -> None:
+        report = audit(
+            self._corpus(tmp_path),
+            today=TODAY,
+            serves={"project_pip_audit_class": 25, "project_rag_gate_class": 25},
+        )
+        top_stem = report.ranked[0][0].stem
+        assert top_stem == "project_pip_audit_class", (
+            "the 8-week-stale, served-every-session memory must surface "
+            f"TOP-ranked; got {top_stem}"
+        )
+        # And it carries a visible unverified-age at recall.
+        top_mem = report.ranked[0][0]
+        expected_days = unverified_age_days(top_mem, TODAY)
+        assert expected_days >= 50, "fixture must stay ~8 weeks stale"
+        assert f"{expected_days} days unverified" in annotate("x", top_mem, TODAY)
+
+    def test_hours_old_memory_is_not_claimed(self, tmp_path: Path) -> None:
+        """The rag-gate case rotted in HOURS — no age mechanism can catch
+        it, and this sweep must not pretend to."""
+        report = audit(
+            self._corpus(tmp_path),
+            today=TODAY,
+            serves={"project_pip_audit_class": 25, "project_rag_gate_class": 25},
+        )
+        scores = {mem.stem: score for mem, score in report.ranked}
+        assert scores["project_rag_gate_class"] == 0.0, (
+            "an hours-old memory must score zero — flagging it would claim "
+            "a detection this mechanism cannot make"
+        )
+        bases = {stem: basis for stem, basis, _ in report.age_bases}
+        tier = epistemic_tier("project", bases["project_rag_gate_class"], 0)
+        assert tier == "settled"
+
+
 class TestEpistemicTiers:
     """P2 task 8: calibrated tiers, not bare day-counts (D6 #5)."""
 
