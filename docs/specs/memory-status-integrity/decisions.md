@@ -397,3 +397,25 @@ outcomes) are the regression for this boundary.
 
 OQ3 (review cadence) is pulled into P3 as a task: the capped queue
 rides an existing weekly surface rather than growing a new mechanism.
+
+---
+
+## D9 — OQ3 resolved: the review cadence rides the SessionStart hook surface (recorded 2026-08-09, P3 task 7)
+
+OQ3 asked what drives the review cadence, with symmetry to
+`spec-status-integrity`'s weekly issue as the default candidate. Ruled
+at implementation by a constraint the earlier discussion missed: **the
+curated corpora are machine-local** (`~/.claude/**/memory/`,
+`~/.attune/memory/`) — a CI weekly issue can never read them, so the
+GitHub-side symmetry option was impossible, not merely inferior.
+
+The one surface with both the data and the reader is the existing
+SessionStart hook path — exactly where the sibling spec's D8 barbell
+verdict pointed ("hook-driven layers demonstrably empower"). So task 7
+extends `session_recall.py` (no new hook, no new registration) with a
+weekly-throttled nudge: at most one line per 7 days (sentinel-mtime
+throttle under `ATTUNE_HOME`, marked seen BEFORE printing so a failed
+write can never produce a per-session nag), naming the capped top-3
+queue's head with its tier and pointing at
+`scripts/review_curated_memory.py`. Every failure path returns silence
+— the nudge never costs a session its recall.

@@ -42,8 +42,14 @@ def stash_mod():
 
 
 @pytest.fixture
-def recall_mod():
-    return _load_module("session_recall")
+def recall_mod(monkeypatch):
+    module = _load_module("session_recall")
+    # The weekly review reminder (P3 task 7) sweeps the REAL home-dir
+    # corpora and writes a throttle sentinel — stubbed here so every
+    # main()-path test stays hermetic. TestReviewReminder loads its own
+    # fresh module with full HOME/ATTUNE_HOME isolation to test it.
+    monkeypatch.setattr(module, "_review_reminder", lambda: "")
+    return module
 
 
 def _stdin(monkeypatch, payload: dict) -> None:
@@ -1150,3 +1156,80 @@ def test_recall_main_emits_backend_fields(recall_mod, monkeypatch, capsys):
     assert fields["transport"] == "direct"
     assert fields["reason"] is None
     assert calls["n"] == 1, "health line and telemetry must share one status probe"
+
+
+# ==========================================================================
+# session_recall — weekly review reminder (memory-status-integrity P3 task 7)
+# ==========================================================================
+
+
+def _isolated_reminder_env(monkeypatch, tmp_path):
+    """Full isolation: HOME (corpus roots) + ATTUNE_HOME (sentinel/sink)."""
+    home = tmp_path / "home"
+    corpus = home / ".claude" / "memory"
+    corpus.mkdir(parents=True)
+    (corpus / "project_due.md").write_text(
+        "---\nname: project_due\ndescription: d\nmetadata:\n  type: project\n---\n\nBody.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("ATTUNE_HOME", str(home / ".attune"))
+    return home
+
+
+class TestReviewReminder:
+    def test_fires_once_then_throttles_for_a_week(self, monkeypatch, tmp_path):
+        home = _isolated_reminder_env(monkeypatch, tmp_path)
+        mod = _load_module("session_recall")
+
+        line = mod._review_reminder()
+        assert "memory review due" in line.lower()
+        assert "project_due" in line
+        assert "review_curated_memory" in line
+        sentinel = home / ".attune" / "memory" / ".review_reminder_last"
+        assert sentinel.exists(), "the throttle sentinel must be written on fire"
+
+        assert mod._review_reminder() == "", "second call within the week is silent"
+
+    def test_recent_sentinel_stays_silent(self, monkeypatch, tmp_path):
+        home = _isolated_reminder_env(monkeypatch, tmp_path)
+        sentinel = home / ".attune" / "memory" / ".review_reminder_last"
+        sentinel.parent.mkdir(parents=True, exist_ok=True)
+        sentinel.write_text("seen\n", encoding="utf-8")
+        mod = _load_module("session_recall")
+        assert mod._review_reminder() == ""
+
+    def test_stale_sentinel_fires_again(self, monkeypatch, tmp_path):
+        home = _isolated_reminder_env(monkeypatch, tmp_path)
+        sentinel = home / ".attune" / "memory" / ".review_reminder_last"
+        sentinel.parent.mkdir(parents=True, exist_ok=True)
+        sentinel.write_text("seen\n", encoding="utf-8")
+        stale = 8 * 24 * 60 * 60
+        old = sentinel.stat().st_mtime - stale
+        os.utime(sentinel, (old, old))
+        mod = _load_module("session_recall")
+        assert "memory review due" in mod._review_reminder().lower()
+
+    def test_no_corpora_is_silent(self, monkeypatch, tmp_path):
+        home = tmp_path / "home"
+        home.mkdir()
+        monkeypatch.setenv("HOME", str(home))
+        monkeypatch.setenv("ATTUNE_HOME", str(home / ".attune"))
+        mod = _load_module("session_recall")
+        assert mod._review_reminder() == ""
+
+    def test_main_emits_the_reminder_line(self, monkeypatch, tmp_path, capsys):
+        """Wiring proof: the reminder reaches SessionStart stdout."""
+        import attune.memory.session_stash as ss
+
+        _isolated_reminder_env(monkeypatch, tmp_path)
+        mod = _load_module("session_recall")
+        monkeypatch.setattr(ss, "recent_entries", lambda **k: [])
+        monkeypatch.setattr(
+            ss,
+            "backend_status",
+            lambda: {"backend": "b", "transport": "t", "reason": None},
+        )
+        _stdin(monkeypatch, {"source": "startup"})
+        assert mod.main() == 0
+        assert "memory review due" in capsys.readouterr().out.lower()
