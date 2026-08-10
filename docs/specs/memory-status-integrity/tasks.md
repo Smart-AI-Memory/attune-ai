@@ -1,8 +1,11 @@
 # memory-status-integrity — tasks
 
-**Status:** active (2026-08-09) — P1 shipped; **P2 OPENED** (chair phase
-gate + both residual rulings, D7); P3 tasks unwritten until its phase is
-approved
+**Status:** active (2026-08-09) — P1 shipped; **P2 attune-ai side
+COMPLETE** (tasks 1/2/4-9 done across #2013/#2014/#2017/#2018 + the
+task-9 receipt, every code PR through a codex D11 lane). P2 stays open
+on **task 3 only** (canonical `memory_lint.py` accepts `verified:` —
+chair's machine, one file one test; gates `keep` on `~/.claude`
+corpora). P3 tasks unwritten until its phase is approved.
 **Design:** [design.md](design.md) · **Decisions:** [decisions.md](decisions.md)
 
 ## P1 implementation order
@@ -32,7 +35,7 @@ approved
 | 6 | Verdict propagation to Redis immediately (invalidate/rewrite the key) | attune-ai | done | `verdict_log.propagate_verdict` — DELETE-only of the derived `attune:memory:node:<stem>` (index stays derived, never authored; next hydration rebuilds keep/sharper); fail-open (P15, ratchet-baselined); durable tombstone respect for `wrong` belongs to the external hydrator (reader/writer co-design) |
 | 7 | Ref-triggered queue-jump boolean for project-type: `file:`/`sha:` via local git, `pr:`/`issue:` via `gh`, fail-open (D7 ruling) | attune-ai | done | `attune.memory.ref_triggers` — EXPLICIT typed refs only (`pr:123` etc.; bare `#N` deliberately untreated — no state-at-write, would false-fire on shipped-PR provenance); bounded 5 refs/memory, 10 memories/triage, 5s probes; review CLI floats triggered rows with ⚑ reasons + `queue-jumped` count (the hit-rate signal); CUT-line documented in the module |
 | 8 | Epistemic status tiers (settled / check-before-acting / suspect) + author-class on render surfaces; strongest framing on the raw tier | attune-ai | done | `epistemic_tier` + `format_status_annotation` (thresholds 10/45 over age × volatility; tombstoned/invalidated always suspect); wired: `PersonalMemory.query` hits gain `status` (verdict-aware basis), digest cards render tier, sweep CLI shows tier column; suspect+project carries the explicit verify-first instruction; raw-tier framing stays memory-security-hardening R1's provenance envelope (cross-linked) |
-| 9 | Live-corpus receipt with verified-basis reporting | receipt | pending | PR receipt, never CI |
+| 9 | Live-corpus receipt with verified-basis reporting | receipt | done | 2026-08-09, post-#2018 machinery: **273 files / 13 roots**; bases all `mtime` (zero `verified:` in the wild — honest pre-adoption baseline); tiers 134 settled / 138 check-before-acting / 1 suspect (`project_attune_ai_dev_consolidation`, 66d — matches its known-parked status); integrity 0 schema / 0 type / 0 broken links / 0 dangling; the ONE orphan found (`feedback_model_routing_hybrid.md`, missing MEMORY.md pointer) was fixed in the same session — the sweep caught a real atomic-write violation on its first receipt run |
 
 ## Testing strategy
 
