@@ -256,11 +256,31 @@ def _extract_via_ollama(text: str) -> list[dict] | None:
         timeout = float(os.environ.get("ATTUNE_MEMORY_STASH_TIMEOUT", "40"))
     except ValueError:
         timeout = 40.0
+    if _refs_v2_enabled():
+        # Design D-2: v2 requests a refs list and STOPS requesting
+        # source_ref (deprecated in v2; v1 rows are never rewritten).
+        shape = '{"findings": [{"type": "...", "content": "...", "confidence": 0.9, "refs": []}]}'
+        ref_clause = (
+            '- refs: 0-3 entries "kind:value" (kinds: file:<path>, pr:<number>,\n'
+            "  spec:<slug>). Attach a ref ONLY if the finding is ABOUT that\n"
+            "  artifact — if removing the ref would make the finding\n"
+            "  unverifiable. Artifacts that merely appeared in the session do\n"
+            "  not qualify; a convenience reference is a defect. refs: [] is\n"
+            "  a correct and common answer. Write the finding first, refs\n"
+            "  second — never let refs shorten the finding.\n"
+        )
+    else:
+        shape = (
+            '{"findings": [{"type": "...", "content": "...", "confidence": 0.9,'
+            ' "source_ref": "optional"}]}'
+        )
+        ref_clause = (
+            "- source_ref is OPTIONAL: a short file path or locator the finding is\n"
+            "  about (omit when none applies; never invent one).\n"
+        )
     prompt = (
         "You are extracting durable memory from a coding session transcript.\n"
-        "Return ONLY JSON of the form "
-        '{"findings": [{"type": "...", "content": "...", "confidence": 0.9,'
-        ' "source_ref": "optional"}]}.\n'
+        f"Return ONLY JSON of the form {shape}.\n"
         "Rules:\n"
         "- At most 5 findings; fewer is better. Skip chit-chat and routine steps.\n"
         "- Each finding is a single reusable insight worth recalling next session.\n"
@@ -269,8 +289,7 @@ def _extract_via_ollama(text: str) -> list[dict] | None:
         "- confidence is REQUIRED: a number 0.0-1.0 — how certain you are this\n"
         "  was asserted in the session AND is worth recalling. Findings without\n"
         "  it are discarded.\n"
-        "- source_ref is OPTIONAL: a short file path or locator the finding is\n"
-        "  about (omit when none applies; never invent one).\n"
+        f"{ref_clause}"
         "- PROVENANCE: extract only what the ASSISTANT concluded or the USER\n"
         "  decided IN THIS SESSION. Never restate file contents, docs, or\n"
         "  tool output the session merely read — reading a claim is not\n"
@@ -305,6 +324,39 @@ def _extract_via_ollama(text: str) -> list[dict] | None:
 
 #: R5#2 — a source_ref is a short locator, not a payload channel.
 _MAX_SOURCE_REF_CHARS = 200
+
+# --- refs v2 (memory-claim-verification D9 / design.md, flag-gated) ------
+#
+# The ENTIRE v2 path — prompt delta AND binder — ships default-OFF behind
+# ATTUNE_MEMORY_REFS_V2; the spec's T4 gate flips it (design D-3). With the
+# flag off this hook behaves byte-for-byte as v1.
+
+#: D-2: at most three refs per finding — more must pick the strongest.
+_MAX_REFS = 3
+#: The BINDER's kind allowlist. Deliberately not enforced by the parser:
+#: an unknown kind must reach the binder to be stored rejected:bad_kind
+#: (design D-2/D-3 — a parser allowlist would eat that evaluation surface).
+_REF_KINDS = {"file", "pr", "spec"}
+#: Parser-side SYNTAX check only: word:value shape.
+_REF_SYNTAX_RE = re.compile(r"^[a-z][a-z0-9_-]*:.+$")
+#: Stamped on every v2 finding (design D-4 corpus versioning).
+_REFS_PROMPT_VERSION = "refs-v1"
+
+#: Universe-derivation patterns over tool_use command strings (design D-3;
+#: seeded from scripts/probe_ref_binding.py — the probe now imports these).
+_UNIVERSE_PR_RE = re.compile(r"(?:#|pull/)(\d{2,6})\b")
+_UNIVERSE_FILE_RE = re.compile(r"\b((?:src|tests|scripts|docs|plugin|content)/[\w./-]+\.\w+)")
+_UNIVERSE_SPEC_RE = re.compile(r"docs/specs/([\w-]+)")
+
+
+def _refs_v2_enabled() -> bool:
+    """True when the v2 refs path is switched on (default off — T4 gate)."""
+    return os.environ.get("ATTUNE_MEMORY_REFS_V2", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def _parse_typed_findings(items: object) -> list[dict]:
@@ -345,6 +397,26 @@ def _parse_typed_findings(items: object) -> list[dict]:
                 continue  # a malformed ref poisons the finding — drop it whole
             if ref.strip():
                 finding["source_ref"] = ref.strip()
+        refs = item.get("refs")
+        if isinstance(refs, list):
+            # Design D-2: SYNTAX + R5#2 string discipline only, ITEM-level
+            # drop — an over-eager ref must never cost a good finding. Kind
+            # validation is the BINDER's (rejected:bad_kind), not ours. A
+            # refs field whose every item drops yields [] (explicit-unbound);
+            # a NON-list refs is treated as absent so a malformed shape
+            # cannot masquerade as the explicit-unbound signal.
+            kept: list[str] = []
+            for r in refs:
+                if not isinstance(r, str):
+                    continue
+                r = r.strip()
+                if not r or len(r) > _MAX_SOURCE_REF_CHARS or _is_malformed(r):
+                    continue
+                if not _REF_SYNTAX_RE.match(r):
+                    continue
+                if r not in kept:
+                    kept.append(r)
+            finding["refs"] = kept[:_MAX_REFS]
         typed.append(finding)
     return typed
 
@@ -423,10 +495,136 @@ def _normalize(findings: list[dict]) -> list[dict]:
             and not _is_malformed(ref)
         ):
             entry["source_ref"] = ref.strip()
+        refs = f.get("refs")
+        if isinstance(refs, list):
+            # Same field-level floor as the annotations above: re-apply the
+            # parser's syntax discipline so a non-extractor producer can't
+            # smuggle arbitrary strings into the binder.
+            entry["refs"] = [
+                r
+                for r in refs
+                if isinstance(r, str)
+                and r.strip()
+                and len(r) <= _MAX_SOURCE_REF_CHARS
+                and not _is_malformed(r)
+                and _REF_SYNTAX_RE.match(r)
+            ][:_MAX_REFS]
         clean.append(entry)
         if len(clean) >= _MAX_FINDINGS:
             break
     return clean
+
+
+def _derive_session_refs(transcript_path: str | None) -> dict[str, set[str]] | None:
+    """Derive the session ref universe from tool_use records (design D-3).
+
+    Deterministic walk of the transcript JSONL: file-path input keys
+    directly; pr/file/spec patterns from command strings. Returns None when
+    the transcript is missing or unreadable — the caller degrades to the
+    ``no_ref_universe`` status rather than fabricating rejections.
+    """
+    if not transcript_path:
+        return None
+    universe: dict[str, set[str]] = {"file": set(), "pr": set(), "spec": set()}
+    try:
+        with open(transcript_path, encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                if '"tool_use"' not in line:
+                    continue
+                try:
+                    record = json.loads(line)
+                except (json.JSONDecodeError, ValueError):
+                    continue
+                content = record.get("message", {}).get("content")
+                if not isinstance(content, list):
+                    continue
+                for block in content:
+                    if not isinstance(block, dict) or block.get("type") != "tool_use":
+                        continue
+                    inputs = block.get("input")
+                    if not isinstance(inputs, dict):
+                        continue
+                    for key, value in inputs.items():
+                        if not isinstance(value, str):
+                            continue
+                        if key in ("file_path", "path", "notebook_path"):
+                            universe["file"].add(value)
+                            continue
+                        for match in _UNIVERSE_PR_RE.findall(value):
+                            universe["pr"].add(match)
+                        for match in _UNIVERSE_FILE_RE.findall(value):
+                            universe["file"].add(match)
+                        for match in _UNIVERSE_SPEC_RE.findall(value):
+                            universe["spec"].add(match.lower())
+    except OSError:
+        return None
+    return universe
+
+
+def _normalize_ref_value(kind: str, value: str, cwd: str) -> str:
+    """Lexical normalization only (design D-3 rule 2) — no filesystem
+    access, so binding is deterministic and side-effect free."""
+    value = value.strip().strip("\"'")
+    if kind == "file":
+        if not os.path.isabs(value):
+            value = os.path.join(cwd, value)
+        return os.path.normpath(value)
+    if kind == "pr":
+        return value.lstrip("#")
+    return value.lower()  # spec slug
+
+
+def _bind_findings(findings: list[dict], transcript_path: str | None, cwd: str) -> None:
+    """Design D-3: deterministic per-finding binding, reason-coded.
+
+    Mutates findings in place: sets ``ref_status`` and ``_ref_tags`` (the
+    tags ``_stash_findings`` persists). EXACT membership against the
+    tool_use-derived universe — no LLM, no fuzzy matching, ever. Statuses:
+    ``bound`` / ``unbound_explicit`` (refs ``[]`` or absent) /
+    ``unbound_all_rejected`` / ``no_ref_universe`` (transcript unreadable
+    or zero tool_use — refs kept as proposed, never claimed rejected).
+    """
+    universe = _derive_session_refs(transcript_path)
+    if universe is not None and not any(universe.values()):
+        universe = None  # zero-universe session — same honest degrade
+    file_universe: set[str] = set()
+    if universe is not None:
+        for path in universe["file"]:
+            file_universe.add(_normalize_ref_value("file", path, cwd))
+    for f in findings:
+        tags = ["schema_version:2", f"extractor_prompt_version:{_REFS_PROMPT_VERSION}"]
+        refs = f.get("refs") or []
+        bound: list[str] = []
+        rejected: list[tuple[str, str]] = []
+        proposed_unchecked = False
+        for ref in refs:
+            kind, _, value = ref.partition(":")
+            if kind not in _REF_KINDS:
+                rejected.append((ref, "bad_kind"))
+                continue
+            if universe is None:
+                proposed_unchecked = True
+                tags.append(f"ref_proposed:{ref}")
+                continue
+            norm = _normalize_ref_value(kind, value, cwd)
+            members = file_universe if kind == "file" else universe[kind]
+            if norm in members:
+                bound.append(f"{kind}:{norm}")
+            else:
+                rejected.append((ref, "not_in_session"))
+        if proposed_unchecked:
+            status = "no_ref_universe"
+        elif bound:
+            status = "bound"
+        elif refs:
+            status = "unbound_all_rejected"
+        else:
+            status = "unbound_explicit"
+        f["ref_status"] = status
+        tags.append(f"ref_status:{status}")
+        tags.extend(f"ref_bound:{b}" for b in bound)
+        tags.extend(f"ref_rejected:{reason}:{r}" for r, reason in rejected)
+        f["_ref_tags"] = tags
 
 
 def _stash_findings(findings: list[dict], session_id: str, cwd: str) -> int:
@@ -449,6 +647,9 @@ def _stash_findings(findings: list[dict], session_id: str, cwd: str) -> int:
                 tags.append(f"confidence:{f['confidence']}")
             if "source_ref" in f:
                 tags.append(f"source_ref:{f['source_ref']}")
+            # refs v2 (design D-3/D-4): binder output rides the same
+            # tag channel — entry schema stays untouched.
+            tags.extend(f.get("_ref_tags", []))
             entry = SessionStashEntry.create(
                 session_id=session_id, cwd=cwd, type=f["type"], content=f["content"], tags=tags
             )
@@ -604,6 +805,15 @@ def main() -> int:
         if not findings:
             _diag(f"skip session={session_id} extraction yielded no findings")
             return 0
+
+        # refs v2 (flag-gated, design D-3): bind ONLY typed extractor
+        # output — heuristic findings are v1-shaped by design. Isolated:
+        # a binder failure must never block the stash.
+        if extractor == "ollama" and _refs_v2_enabled():
+            try:
+                _bind_findings(findings, transcript_path, cwd)
+            except Exception:  # noqa: BLE001 — binding is best-effort
+                _diag(f"ref binding failed (isolated) session={session_id}")
 
         written = _stash_findings(findings, session_id=session_id, cwd=cwd)
         _diag(
