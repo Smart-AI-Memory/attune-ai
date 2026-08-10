@@ -29,13 +29,20 @@ Ship antigravity's round-3 shape: a plain `refs` list of
 binding. The two heavier shapes are NOT built now; each has a
 mechanical re-entry trigger measured by the D-5 re-probe:
 
-| Escalation | Trigger (from re-probe numbers) |
+| Escalation | Pre-registered trigger (evaluated on T3 numbers) |
 | --- | --- |
-| claude's anchored refs | aboutness-precision audit fails the chair's threshold while membership-rejection is LOW (selection-confabulation dominates — needs the demotion observable) |
-| codex's inventory-IDs | membership-rejection rate stays HIGH (invention persists despite negative prompting — the model must be denied value-authoring) |
+| codex's inventory-IDs | membership-rejection rate > 20% of proposed refs (invention persists despite negative prompting — deny value-authoring) |
+| claude's anchored refs | aboutness-precision point estimate < 80% while rejection <= 20% (selection-confabulation dominates — needs the demotion observable) |
 
-Both triggers firing → inventory first (it removes the failure at
-the source), anchors only if the audit still fails after it.
+The 20%/80% levels are PRE-REGISTERED here, before any T3 number
+exists, so the escalation decision cannot be gate-shopped after
+results (codex lane finding). They are escalation heuristics — the
+chair may override either way at T4, but an override is visible
+against the pre-registered levels. Both triggers firing →
+inventory first (it removes the failure at the source), anchors
+only if the audit still fails after it. These trigger levels are
+distinct from the P1 go/no-go thresholds, which remain the
+chair's, set at T4.
 
 ## D-2 — Refs schema v2
 
@@ -44,10 +51,13 @@ the source), anchors only if the audit still fails after it.
  "refs": ["file:src/attune/x.py", "pr:2041"]}
 ```
 
-- Kinds: `file | pr | spec | command`. **sha is dropped** —
-  deliberate, D8 measured ZERO sha binds across 192 findings;
-  re-entry trigger: a re-probe arm showing findings that quote
-  SHAs.
+- Kinds: `file | pr | spec`. **sha is dropped** — deliberate, D8
+  measured ZERO sha binds across 192 findings; re-entry trigger: a
+  re-probe arm showing findings that quote SHAs. **command is
+  dropped too** (codex lane): `derive_refs()` has no
+  command-universe derivation, so every `command:` ref would
+  reject as `not_in_session`; re-entry requires BOTH the universe
+  derivation (normalized command strings) and a measured need.
 - Cardinality 0–3 (codex); more than three → the three strongest.
 - `refs: []` is EXPLICITLY-UNBOUND — a first-class, preferred
   success state ("a convenience reference is a defect").
@@ -59,13 +69,18 @@ the source), anchors only if the audit still fails after it.
   items drop the ITEM; a refs field whose every item drops yields
   `refs: []`, not a dropped finding (an over-eager ref must not
   cost a good finding — mirrors codex's reject-the-entry rule).
+  The parser checks SYNTAX ONLY (`word:value` shape + the R5#2
+  string discipline) — kind validation belongs to the BINDER, so
+  an unknown kind reaches it and is stored `rejected:bad_kind`
+  (codex lane: a parser kind-allowlist would eat the evaluation
+  surface D-3 rule 1 exists to keep).
 
 **Prompt delta** (appended constraint language, shipped verbatim —
 synthesis of the three seats' round-3 texts):
 
 ```text
 - refs: 0-3 entries "kind:value" (kinds: file:<path>, pr:<number>,
-  spec:<slug>, command:<exact command>). Attach a ref ONLY if the
+  spec:<slug>). Attach a ref ONLY if the
   finding is ABOUT that artifact — if removing the ref would make
   the finding unverifiable. Artifacts that merely appeared in the
   session do not qualify; a convenience reference is a defect.
@@ -77,7 +92,13 @@ synthesis of the three seats' round-3 texts):
 
 Placement: inside the Stop-hook stash pipeline, after
 `_parse_typed_findings` — the `tool_use` universe is only reliably
-available while the transcript path is at hand. The universe
+available while the transcript path is at hand. **The entire v2
+path (prompt delta AND binder) ships behind
+`ATTUNE_MEMORY_REFS_V2`, default OFF** — production stash behavior
+is unchanged until T4's go flips it (codex lane: without the flag,
+T1/T2 would change live behavior before the gate they are gated
+by). The T3 re-probe exercises the v2 path directly through the
+shared module, not through the flag. The universe
 builder is `derive_refs()` promoted out of the probe script into
 the hook (or a shared module the hook and probe both import — one
 source, the probe becomes the binder's test harness).
