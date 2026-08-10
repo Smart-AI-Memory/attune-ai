@@ -838,3 +838,13 @@ path; the manifest/attempt-budget semantics (D15/D16) stay
 authoritative. (Authored by the lead under
 feedback-close-out-2026-08-09 R3; the chair selected "US-4
 cadence amendment" on the 2026-08-09 feedback form.)
+
+**Installed (2026-08-10).** D18's gate was satisfied by the
+2026-08-10 manual run (5/5 complete); the chair approved the
+install in-session and ran it: plist copied to
+`~/Library/LaunchAgents/`, `launchctl bootstrap` succeeded, and
+`launchctl print` shows the job loaded with its 07:30 calendar
+trigger (chair-verified). The manual-capture obligation is
+RETIRED. Standing reminder from the lessons corpus: the script
+exits 0 on rate-limit — the daily receipt is the LOG
+(`~/.attune/logs/reach-snapshot.log`), never the exit code.
