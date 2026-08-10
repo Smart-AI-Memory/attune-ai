@@ -361,3 +361,39 @@ with counter-cases per D11d):
 
 Phase gate: **P2 approved** this session. Gate task (D6#1, parser
 alignment) executed in the same PR that records this ruling.
+
+---
+
+## D8 — P3 opened; the measure-first gate executed at authoring (recorded 2026-08-09)
+
+Chair directed "open P3 and author its tasks". The phase text's own
+gate — "needs recall telemetry that may not exist yet; measure before
+building" — was executed BEFORE the ladder was written, against the
+live event stream (`~/.attune/telemetry/memory_events.jsonl`):
+
+- **Telemetry exists and is healthy**: 4,217 events — session_recall
+  1,314 · lesson_recall 1,189 · jit_recall 902 · memory_signal 614 ·
+  session_stash 159 · memory_feedback 39.
+- **Per-item identity exists ONLY for the raw tier**: session_recall
+  carries `finding_ids` and memory_signal carries `item_id` — both
+  raw-stash UUIDs (memory-feedback-signal STEP 1's surfacing→verdict
+  correlation). **No event names a CURATED memory stem.** The curated
+  serving surfaces (`PersonalMemory.query`, `recall_digest`, the
+  SessionStart hydration line) emit no per-stem serve records.
+
+Consequence, and the ladder's shape: P3 cannot start at the ranking
+term — it starts by instrumenting curated serve events, accrues a
+window of data, and only then folds frequency into rank. The 2026-08-07
+premise "may not exist yet" was half-right: the pipe exists, the
+curated signal does not.
+
+**Design boundary recorded (D1 interaction):** the frequency term may
+DEPRIORITIZE never-served memories in the REVIEW ranking (R6: "a
+200-day-unverified memory nothing ever recalls is near-zero risk") —
+this does not touch D1, which governs recall/serving surfaces. Nothing
+is ever dropped from recall by frequency or age; only the human review
+queue's ORDER moves. The acceptance pins (both proof cases, opposite
+outcomes) are the regression for this boundary.
+
+OQ3 (review cadence) is pulled into P3 as a task: the capped queue
+rides an existing weekly surface rather than growing a new mechanism.
