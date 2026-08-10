@@ -117,3 +117,17 @@ two of the three drift codes the launch article names.
 
 Cosmetic, already chipped: `voice_summary` returned the generic
 "Here's what I found." on this call too.
+
+## 2026-08-10 — R6 packet artifact archived
+
+The packet the R6-CLOSED run resumed lived only as an UNCOMMITTED
+file in the `attune-ai-github-issues-0aeac3` worktree
+(`docs/handoffs/claude-handoff-t4-docs.md` on `qa/memory-events`,
+whose upstream is gone). Per the 2026-08-09 at-risk-worktree
+triage, it is preserved verbatim as
+[r6-packet-claude-handoff-t4-docs.md](r6-packet-claude-handoff-t4-docs.md)
+— frontmatter (`head_sha 3fed725b7…`, `created_at
+2026-07-28T03:01:42Z`) and body unmodified, including the
+verification row's honest `result: "not run"` (the sending agent's
+claim; the resume receipts above hold the verified facts). The
+source worktree is now safe to remove.
