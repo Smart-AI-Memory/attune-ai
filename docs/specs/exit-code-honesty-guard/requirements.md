@@ -1,8 +1,9 @@
 # Exit-Code Honesty Guard — Requirements
 
-**Status:** draft (2026-08-02) — AWAITING CHAIR REVIEW. No
-implementation authority until the chair approves; this draft
-exists so the review has a concrete object.
+**Status:** approved (2026-08-09) — chair approved the requirements
+in-session ("approve exit-code-honesty-guard requirements", the
+2026-08-09 spec-backlog session). Design/tasks may now be authored;
+implementation authority begins at the next phase gate.
 **Slug:** `exit-code-honesty-guard`
 **Provenance:** chair directive 2026-08-02 ("spec 3 and 4 for chair
 review"). Evidence base: dashboard run `87d8438e3e8c` (2026-08-02)
