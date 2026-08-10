@@ -61,6 +61,8 @@ CSS_BASE = """#attune-elicit-form { display:block; width:100%; padding:1rem 0;
 #attune-elicit-form .ae-submit:disabled { opacity:.6; cursor:default; }
 #attune-elicit-form .ae-error { margin-top:.5rem; font-size:14px;
   color:var(--text-accent,#a1571c); }
+#attune-elicit-form .ae-field-missing { border-left:3px solid
+  var(--text-accent,#a1571c); padding-left:.6rem; }
 """
 
 #: INPUT — text_input, textarea, number, date, boolean, non-list single_select.
