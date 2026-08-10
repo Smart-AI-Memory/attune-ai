@@ -1,9 +1,9 @@
 # memory-claim-verification — Tasks (post-D9 design phase)
 
-**Status:** draft (2026-08-10) — awaiting chair approval of
-[design.md](design.md). T1–T2 implementation authority begins at
-that gate; T4+ (P1) is ADDITIONALLY gated on T3's numbers plus the
-chair's threshold ruling.
+**Status:** approved (2026-08-10 — chair, "approve task for
+2043"). T1–T2 implementation authority granted (T1+T2 shipped in
+PR #2045); T4+ (P1) remains ADDITIONALLY gated on T3's numbers
+plus the chair's threshold ruling.
 
 ## T1 — Extractor v2: refs field (impl)
 
