@@ -1163,15 +1163,25 @@ def test_recall_main_emits_backend_fields(recall_mod, monkeypatch, capsys):
 # ==========================================================================
 
 
-def _isolated_reminder_env(monkeypatch, tmp_path):
-    """Full isolation: HOME (corpus roots) + ATTUNE_HOME (sentinel/sink)."""
+def _isolated_reminder_env(monkeypatch, tmp_path, age_days: int = 60):
+    """Full isolation: HOME (corpus roots) + ATTUNE_HOME (sentinel/sink).
+
+    The fixture memory is BACKDATED (default 60d project → suspect):
+    only non-settled memories may trigger the nudge (codex D11 finding),
+    so a fresh file would silently make every test vacuous.
+    """
     home = tmp_path / "home"
     corpus = home / ".claude" / "memory"
     corpus.mkdir(parents=True)
-    (corpus / "project_due.md").write_text(
+    path = corpus / "project_due.md"
+    path.write_text(
         "---\nname: project_due\ndescription: d\nmetadata:\n  type: project\n---\n\nBody.\n",
         encoding="utf-8",
     )
+    import time as _time
+
+    old = _time.time() - age_days * 86400
+    os.utime(path, (old, old))
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("ATTUNE_HOME", str(home / ".attune"))
     return home
@@ -1209,6 +1219,22 @@ class TestReviewReminder:
         os.utime(sentinel, (old, old))
         mod = _load_module("session_recall")
         assert "memory review due" in mod._review_reminder().lower()
+
+    def test_all_settled_corpus_is_silent(self, monkeypatch, tmp_path):
+        """Codex D11 finding: a healthy corpus (everything settled) must
+        NOT claim verdicts are due every week."""
+        _isolated_reminder_env(monkeypatch, tmp_path, age_days=0)
+        mod = _load_module("session_recall")
+        assert mod._review_reminder() == ""
+
+    def test_command_hint_matches_where_the_reader_is(self, monkeypatch, tmp_path):
+        """Codex D11 finding: never prescribe a command that fails from
+        the reader's cwd."""
+        mod = _load_module("session_recall")
+        monkeypatch.chdir(tmp_path)
+        assert "in the attune-ai repo" in mod._review_command_hint()
+        monkeypatch.chdir(Path(__file__).resolve().parents[3])
+        assert mod._review_command_hint().startswith("Run `python scripts/")
 
     def test_no_corpora_is_silent(self, monkeypatch, tmp_path):
         home = tmp_path / "home"

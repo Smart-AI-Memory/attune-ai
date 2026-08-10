@@ -245,6 +245,24 @@ _REVIEW_REMINDER_DAYS = 7
 _REVIEW_QUEUE_CAP = 3
 
 
+def _review_command_hint() -> str:
+    """A prescribed action that actually works where the reader is.
+
+    Codex D11 finding: a bare repo-relative ``python scripts/…`` fails
+    for plugin consumers whose cwd is not the attune-ai repo — a
+    recurring reminder whose command errors trains readers to ignore
+    it. Prescribe the runnable relative form only when it resolves from
+    the current directory; otherwise name where the loop lives.
+    """
+    script = Path.cwd() / "scripts" / "review_curated_memory.py"
+    if script.is_file():
+        return "Run `python scripts/review_curated_memory.py` (~2 min, capped queue)."
+    return (
+        "Run the review loop (~2 min, capped queue): "
+        "`scripts/review_curated_memory.py` in the attune-ai repo."
+    )
+
+
 def _review_reminder() -> str:
     """One weekly-throttled review-due line, or ``""``.
 
@@ -279,10 +297,14 @@ def _review_reminder() -> str:
             return ""
 
         report = sweep(roots, serves=serve_counts() or None)
+        # Only memories that genuinely WARRANT review nudge (codex D11
+        # finding: filtering only tombstones meant ANY nonempty corpus —
+        # even all-settled or freshly-verified — claimed verdicts were
+        # due every week). Settled rows never count toward the queue.
         rows = [
             (mem, basis, days)
             for (mem, _), (_, basis, days) in zip(report.ranked, report.age_bases, strict=False)
-            if basis != "tombstoned"
+            if basis != "tombstoned" and epistemic_tier(mem.mem_type, basis, days) != "settled"
         ][:_REVIEW_QUEUE_CAP]
         if not rows:
             return ""
@@ -296,8 +318,7 @@ def _review_reminder() -> str:
         tier = epistemic_tier(top.mem_type, basis, days)
         return (
             f"🗂 Weekly memory review due — {len(rows)} memories await verdicts "
-            f"(top: {top.stem}, {tier}, {days}d {basis}). "
-            "Run `python scripts/review_curated_memory.py` (~2 min, capped queue)."
+            f"(top: {top.stem}, {tier}, {days}d {basis}). {_review_command_hint()}"
         )
     except Exception:  # noqa: BLE001 — the nudge must never cost the session
         return ""
