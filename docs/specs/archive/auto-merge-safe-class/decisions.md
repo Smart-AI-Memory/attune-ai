@@ -320,3 +320,10 @@ path.
 pins: title-marker check in the label job, `chair-read` label
 honored, independent fail-closed re-check in the merge job, and
 when-green left ungated.
+
+**Live-fire receipt (2026-08-10).** Probe PR: docs-only diff
+(this edit), title carrying "(chair-read)" — label job observed
+skipping ("chair-read marker -> never auto-labeling"), no
+`auto-merge-safe` label applied. Control: the same diff re-opened
+UNMARKED auto-labeled and auto-merged normally, proving the
+Class-1 lane is intact for everything without the marker.
