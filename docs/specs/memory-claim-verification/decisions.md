@@ -206,3 +206,42 @@ gate biasing recall toward easily-named entities (codex); matcher
 recall on prose findings + over-matching on short/common tokens
 (claude); abstract findings staying ungrounded and going stale
 undetected (antigravity).
+## D8 (2026-08-10): rider-(c) probe MEASURED — 22.9% bind rate, design conversation REOPENED
+
+**Measured, same day as D7** (`scripts/probe_ref_binding.py
+--samples 40`; full data machine-local at
+`~/.attune/reports/memory-claim-verification/rider-c-probe.md`).
+Real shipped extractor (session_stash._extract_via_ollama,
+llama3.1:8b), ref-sets derived from each session's tool_use
+records, matching purely deterministic (exact path / basename /
+pr-number / sha-prefix / spec-slug, stoplist + min-basename
+guards).
+
+| Metric | Value |
+|---|---|
+| transcripts scored | 40 |
+| findings extracted | 192 |
+| findings bound (>=1 derived ref) | 44 (**22.9%**) |
+| by kind | pr=21, sha=0, file=43, spec=4 |
+| D7 gate (50%) | **FAILED — reopen design** |
+
+The over-match spot-check LOWERS true precision further: among
+the 44 are a generic security-posture finding bound to
+`ops/security.py` by the word "security", a bare repo-directory
+ref, and a 2-char `spec:v1` slug bind. The number is consistent
+with OQ1's 28.1% grounded — prose findings summarize decisions,
+they do not name artifacts. The vacuity risk all three D7 seats
+flagged is measured fact, not speculation.
+
+**Consequence (mechanical, per D7 rider c):** the P1 matcher
+build does NOT proceed. The reopened fork — candidate
+2-with-fallback (findings mostly consumed through rider-(b)'s
+weaker session-view lens) vs candidate 3 (session as the grounded
+unit, redefining R4) — awaits a chair ruling; re-convening the
+table with these numbers is the moderator-recommended path, since
+the seats deliberated without them.
+
+Honest limits recorded in the local report: basename multi-bind
+(SKILL.md class), symbol-kind underivation (unmeasured), spec-slug
+min-length gap, Ollama run-to-run nondeterminism (noise dwarfed by
+the 22.9-vs-50 margin), zero sha binds.
