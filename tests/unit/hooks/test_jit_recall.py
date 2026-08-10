@@ -337,6 +337,21 @@ def test_admin_merge_rule_fires_on_pr_merge(jit_mod, monkeypatch, capsys):
     assert "already merged" in ctx
 
 
+def test_admin_merge_checks_settled_rule_fires(jit_mod, monkeypatch, capsys):
+    # Both pr-merge rules ride the same trigger: the settled-checks gate
+    # (rag #203 lesson) must arrive alongside the retry-404 warning.
+    rc, out = _run(
+        jit_mod,
+        monkeypatch,
+        capsys,
+        _bash_payload("gh pr merge 203 --squash --admin --delete-branch"),
+    )
+    assert rc == 0
+    ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+    assert "SETTLED" in ctx
+    assert "never CI" in ctx
+
+
 def test_rebase_rule_fires_on_rebase(jit_mod, monkeypatch, capsys):
     rc, out = _run(jit_mod, monkeypatch, capsys, _bash_payload("git rebase main"))
     assert rc == 0
