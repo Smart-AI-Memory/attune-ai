@@ -319,3 +319,11 @@ granted (T1+T2 had already shipped in PR #2045 under the chair's
 explicit merge authorization, so no unauthorized code landed), and
 T4+ (P1) stays gated on T3's re-probe numbers plus the chair's
 threshold ruling, per the tasks doc.
+
+Scope confirmed by the chair via pushback form (2026-08-10,
+D11d COUNTER-CASE raised by the lead): "approve task for 2043"
+covers BOTH design.md and tasks.md — not tasks-only. The chair
+also confirmed the standing policy that recordings of explicit
+in-session chair rulings merge unmarked (transcription, not new
+governance text); interpretive doubt is handled by draft-holds,
+as was done with this PR.
