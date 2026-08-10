@@ -136,7 +136,8 @@ def serve_counts(
         ``{stem: serve_count}`` for every stem seen in the window.
     """
     path = events_path or _events_path()
-    cutoff = (today or date.today()) - timedelta(days=window_days)
+    reference = today or date.today()
+    cutoff = reference - timedelta(days=window_days)
     counts: Counter[str] = Counter()
     candidates = [path]
     try:
@@ -156,21 +157,32 @@ def serve_counts(
             logger.warning("unreadable events file %s: %s", candidate, exc)
             continue
         for line in raw.splitlines():
-            if not line.strip():
-                continue
-            try:
-                record = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if record.get("event") != CURATED_RECALL_EVENT:
-                continue
-            try:
-                when = date.fromisoformat(str(record.get("ts", ""))[:10])
-            except ValueError:
-                continue
-            if when < cutoff:
-                continue
-            for stem in record.get("stems") or []:
-                if isinstance(stem, str) and stem:
-                    counts[stem] += 1
+            if line.strip():
+                counts.update(_stems_in_window(line, cutoff, reference))
     return dict(counts)
+
+
+def _stems_in_window(line: str, cutoff: date, reference: date) -> list[str]:
+    """Stems from one JSONL line, when it is an in-window curated event.
+
+    Every malformed shape fails open to ``[]``: undecodable JSON,
+    valid-but-non-object JSON (``[]``, ``"x"`` — codex D11 finding), a
+    non-curated event, or an unparseable timestamp. The window is
+    bounded BOTH ends — future-dated events (bad clocks, corrupt
+    timestamps) are excluded, and the lower bound is exclusive so
+    ``window_days=30`` covers exactly 30 calendar dates ending
+    ``reference`` (codex D11 findings).
+    """
+    try:
+        record = json.loads(line)
+    except json.JSONDecodeError:
+        return []
+    if not isinstance(record, dict) or record.get("event") != CURATED_RECALL_EVENT:
+        return []
+    try:
+        when = date.fromisoformat(str(record.get("ts", ""))[:10])
+    except ValueError:
+        return []
+    if when <= cutoff or when > reference:
+        return []
+    return [stem for stem in record.get("stems") or [] if isinstance(stem, str) and stem]

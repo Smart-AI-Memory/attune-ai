@@ -169,6 +169,37 @@ class TestServeCounts:
         counts = serve_counts(window_days=30, events_path=sink, today=date(2026, 8, 9))
         assert counts == {"ok": 1}
 
+    def test_non_object_json_lines_fail_open(self, tmp_path) -> None:
+        """Codex D11 finding: `[]` or `"x"` are valid JSON but not records —
+        they must be skipped, not crash the reader."""
+        from datetime import date
+
+        sink = tmp_path / "memory_events.jsonl"
+        sink.parent.mkdir(parents=True, exist_ok=True)
+        sink.write_text(
+            '[]\n"x"\n42\n' + json.dumps(self._event("2026-08-05T10:00:00.000000Z", ["ok"])) + "\n",
+            encoding="utf-8",
+        )
+        assert serve_counts(window_days=30, events_path=sink, today=date(2026, 8, 9)) == {"ok": 1}
+
+    def test_window_is_bounded_both_ends_and_exact(self, tmp_path) -> None:
+        """Codex D11 findings: future-dated events excluded, and window=3
+        covers exactly 3 calendar dates ending today."""
+        from datetime import date
+
+        sink = tmp_path / "memory_events.jsonl"
+        self._write_events(
+            sink,
+            [
+                self._event("2026-08-06T10:00:00.000000Z", ["too_old"]),  # today-3: out
+                self._event("2026-08-07T10:00:00.000000Z", ["edge"]),  # today-2: in
+                self._event("2026-08-09T10:00:00.000000Z", ["today"]),  # in
+                self._event("2026-08-10T10:00:00.000000Z", ["future"]),  # out
+            ],
+        )
+        counts = serve_counts(window_days=3, events_path=sink, today=date(2026, 8, 9))
+        assert counts == {"edge": 1, "today": 1}
+
     def test_missing_sink_is_all_zero(self, tmp_path) -> None:
         assert serve_counts(events_path=tmp_path / "absent.jsonl") == {}
 
