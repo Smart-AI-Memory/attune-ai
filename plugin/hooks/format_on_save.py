@@ -99,7 +99,12 @@ def main() -> None:
         return
 
     _run_formatter(["black", "--quiet", "--line-length=100"], str(validated))
-    _run_formatter(["ruff", "check", "--fix", "--quiet"], str(validated))
+    # `--ignore F401,F811`: never strip "unused" imports on save. An agent
+    # editing in two steps (import first, usage next) loses the import to
+    # this hook in the gap — hit 4x in one session (2026-08-09) despite a
+    # same-edit discipline rule. Genuinely dead imports are still caught
+    # at commit time by pre-commit ruff, where the file is complete.
+    _run_formatter(["ruff", "check", "--fix", "--quiet", "--ignore", "F401,F811"], str(validated))
 
 
 if __name__ == "__main__":

@@ -720,7 +720,15 @@ class TestFormatOnSaveMain:
             main()
 
         ruff_call = mock_run.call_args_list[1][0][0]
-        assert ruff_call == ["ruff", "check", "--fix", "--quiet", str(target)]
+        assert ruff_call == [
+            "ruff",
+            "check",
+            "--fix",
+            "--quiet",
+            "--ignore",
+            "F401,F811",
+            str(target),
+        ]
 
     def test_uses_path_key_when_file_path_absent(self, tmp_path: Path) -> None:
         from attune.hooks.scripts.format_on_save import main
@@ -784,3 +792,35 @@ class TestHasSessionWorkGitFailure:
             from attune.hooks.scripts.lessons_reminder import has_session_work
 
             assert has_session_work() is True
+
+
+class TestFormatOnSaveNeverStripsImports:
+    """The on-save ruff pass must never remove 'unused' imports (F401/F811).
+
+    An agent editing in two steps — import first, usage in the next edit —
+    loses the import to this hook in the gap between them (hit 4x in one
+    session, 2026-08-09). Dead imports are pre-commit's job, where the
+    file is complete. This pins the --ignore flags on the live invocation.
+    """
+
+    def test_ruff_invocation_ignores_unused_import_rules(self, tmp_path: Path) -> None:
+        import io
+        import sys
+
+        from attune.hooks.scripts import format_on_save
+
+        target = tmp_path / "sample.py"
+        target.write_text("import os\n", encoding="utf-8")
+        payload = {"tool_name": "Edit", "tool_input": {"file_path": str(target)}}
+
+        calls: list[list[str]] = []
+        with (
+            patch.object(format_on_save, "_run_formatter", lambda cmd, path: calls.append(cmd)),
+            patch.object(sys, "stdin", io.StringIO(json.dumps(payload))),
+        ):
+            format_on_save.main()
+
+        ruff_calls = [c for c in calls if c and c[0] == "ruff"]
+        assert ruff_calls, f"ruff was not invoked; calls={calls}"
+        joined = " ".join(ruff_calls[0])
+        assert "--ignore" in joined and "F401" in joined and "F811" in joined
