@@ -148,6 +148,43 @@ def test_zsh_eqword_silent_on_flag_assignment(jit_mod, monkeypatch, capsys):
     assert "PATH lookup" not in out
 
 
+def test_zsh_word_split_fires_on_scalar_for_loop(jit_mod, monkeypatch, capsys):
+    # `for w in $LIST` — bash idiom; zsh loops once over the whole string.
+    rc, out = _run(
+        jit_mod,
+        monkeypatch,
+        capsys,
+        _bash_payload('SAFE="a b c"; for w in $SAFE; do echo $w; done'),
+    )
+    assert rc == 0
+    assert "word-split" in out
+
+
+def test_zsh_word_split_fires_on_braced_var(jit_mod, monkeypatch, capsys):
+    rc, out = _run(
+        jit_mod, monkeypatch, capsys, _bash_payload("for f in ${FILES}; do wc -l $f; done")
+    )
+    assert rc == 0
+    assert "word-split" in out
+
+
+def test_zsh_word_split_silent_on_safe_shapes(jit_mod, monkeypatch, capsys):
+    # Command substitution DOES split in zsh; explicit word lists and
+    # array expansions are fine — none of these may trip the rule.
+    rc, out = _run(
+        jit_mod,
+        monkeypatch,
+        capsys,
+        _bash_payload(
+            "for f in $(ls); do echo $f; done; "
+            "for w in a b c; do echo $w; done; "
+            'for x in "${arr[@]}"; do echo $x; done'
+        ),
+    )
+    assert rc == 0
+    assert "word-split" not in out
+
+
 def test_zsh_status_readonly_fires_on_assignment(jit_mod, monkeypatch, capsys):
     rc, out = _run(jit_mod, monkeypatch, capsys, _bash_payload("status=$(gh pr checks 1)"))
     assert rc == 0
