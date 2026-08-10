@@ -369,3 +369,13 @@ construction — run
 locally before merging one. Whether to close it (e.g. always run the
 claim guards regardless of path filter) is a live question for this
 spec, not a ruled decision.
+
+## 2026-08-10 — G4(c) stays advisory; promotion check moved to 2026-09-07 (chair)
+
+**Ruled** via the Monday chair-rulings form ("Keep advisory, new
+check date"): `contributing-smoke.yml` keeps
+`continue-on-error: true` past the original ~2026-08-04 promotion
+check. New promotion check: **2026-09-07** (date lead-proposed at
+recording time — a four-week window matching the original cadence;
+chair may amend). At that check the same three-way fork applies:
+promote to required, extend advisory again, or retire the lane.

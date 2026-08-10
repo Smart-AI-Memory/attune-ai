@@ -1,6 +1,7 @@
 # Elicitation Form Surface — V6 Requirements: the MCP Apps adapter
 
-**Status:** draft (2026-07-16) — awaiting Patrick approval.
+**Status:** approved (2026-08-10, chair via the Monday rulings
+form) — build sequenced AFTER V7 per D20; see decisions.md D23.
 **Freeze:** design-only until 2026-07-28 (ratified with the
 standards-landscape sequence); no code before the freeze lifts.
 **Sequencing:** V7 (`v7-requirements.md`) was ratified 2026-07-17 and

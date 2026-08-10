@@ -902,3 +902,15 @@ of the template also produced the session's actual routing decision.
 - **Revisit the `socratic-ambiguity-calibration` "ask only when
   genuinely ambiguous" rule** — Patrick endorses it now but is open to
   changing it with more feedback. Future discussion, not a v1 change.
+
+## D23 — V6 (MCP Apps adapter) requirements APPROVED (chair, 2026-08-10)
+
+**Ruled** via the Monday chair-rulings form ("Approve (build after
+V7)"): the V6 requirements (`v6-requirements.md`, draft since
+2026-07-16) are approved as written. Build authority remains
+SEQUENCED — V6 starts after V7's templates exist to supply its
+round-trip payloads (D20's ordering, unchanged). The distribution
+premise stays named and falsifiable per the requirements' own
+terms: if MCP Apps host support regresses or directory access
+gates, the premise weakens and the spec re-enters review before
+build.

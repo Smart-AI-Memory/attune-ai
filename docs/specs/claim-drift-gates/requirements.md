@@ -7,8 +7,8 @@ decisions.md). G1 (#1497), G2 (#1501), G5 (#1502) and G4 a+b+c
 all on main. REMAINING: G3 only, still blocked on
 hook-timeout-budget Phase 0.2 values (no `hook-timeout-budgets`
 spec dir exists; no `WORST_CASE_MS` declared anywhere). Open
-follow-ups: G4(c) `contributing-smoke.yml` still
-`continue-on-error: true` past its ~2026-08-04 promotion check;
+follow-ups: G4(c) `contributing-smoke.yml` advisory by ruling
+(2026-08-10), promotion check 2026-09-07;
 website-only-PR guard gap (decisions.md 2026-07-28) unruled. D4
 ratified 2026-07-12 (option a, "20 workflows"); D7, D8 ruled
 2026-07-20 (CI-only test gates; report-only inverse).

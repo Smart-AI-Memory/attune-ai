@@ -6,7 +6,7 @@ tools); v2-1/v2-2 shipped 2026-06-27 (#1131/#1132:
 number/date/textarea + `form_to_elicitation_schema` +
 `elicitation_ask` — the 2026-07-14 "recommit" of v2 was already
 built); V4 (#1178), V5 (#1181), forms-by-default (#1652), V7
-template library (2026-08-06, #1945). OPEN: V6 (MCP Apps adapter)
+template library (2026-08-06, #1945). V6 (MCP Apps adapter) APPROVED 2026-08-10 (D23, builds after V7)
 still "awaiting Patrick approval" — its 2026-07-28 freeze lapsed
 and its V7 predecessor shipped; needs an approve-or-drop ruling.
 Deferred by design: `slider` / `color` controls.
