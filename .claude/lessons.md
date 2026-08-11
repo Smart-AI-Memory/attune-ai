@@ -22226,26 +22226,29 @@ the numbers.
 
 - **The locked `fix_scope` pushback specimen is a live exhibit,
   not just demo copy — rerun it through the installed plugin from
-  any repo, and an empty submit demonstrates the R4 reject arm
-  for free**: 2026-08-11, asked from an attune-verify session to
-  "show the form" behind the first pushback-form switch
-  (`resp-20260630-013130`). The specimen in
+  any repo, but remember the render server serves the INSTALLED
+  wheel's code, not the repo's**: 2026-08-11, asked from an
+  attune-verify session to "show the form" behind the first
+  pushback-form switch (`resp-20260630-013130`). The specimen in
   `docs/process/DEMO_DYNAMIC_FORMS_script.md` (~line 193, locked
   2026-07-24) rendered live via
   `mcp__attune-ai__elicitation_render_widget` → `show_widget`
   with dissent framing intact — no API credits, no staging, no
-  mockup. Two findings worth keeping: (1) the widget does NOT
-  gate submission client-side — Patrick clicked Submit with no
-  option picked and the payload posted `answers: {}`; the gate is
-  `elicitation_collect_response`, which returned
-  `{success: false, problems: ["'fix_scope' is required"]}` — so
-  an unstaged empty submit is a zero-cost demonstration of the R4
-  never-silently-accept rule, a third exhibit arm nobody scripted.
-  (2) The full receipt tour (dissent render → required-field
-  reject → validated switch, `resp-20260811-005510`) took three
-  tool calls from a different repo's worktree, which makes the
-  specimen the right default answer whenever someone asks to SEE
-  a pushback form: rerun the locked specimen live rather than
-  hand-drawing an example — receipts beat mockups and the
-  provenance chain (decisions.md D-records → demo script →
-  fresh response ID) comes along free.
+  mockup. Two findings worth keeping: (1) an empty submit posted
+  `answers: {}` and only `elicitation_collect_response` caught it
+  (`{success: false, problems: ["'fix_scope' is required"]}`) —
+  which read as a product gap but was VERSION DRIFT: the
+  client-side required-field gate already existed on main
+  (#2042), unreleased at the time (installed wheel 11.1.0; even
+  11.6.0 predates it), and the running MCP server keeps serving
+  the stale wheel until restarted — the D10/D11/D15 "registered ≠
+  working until the server reboots" pattern. Check source
+  (`git log -S`) before recording a behavior conclusion drawn
+  from a live widget. (2) The full receipt tour (dissent render →
+  required-field reject → validated switch,
+  `resp-20260811-005510`) took three tool calls from a different
+  repo's worktree, which makes the specimen the right default
+  answer whenever someone asks to SEE a pushback form: rerun the
+  locked specimen live rather than hand-drawing an example —
+  receipts beat mockups and the provenance chain (decisions.md
+  D-records → demo script → fresh response ID) comes along free.
