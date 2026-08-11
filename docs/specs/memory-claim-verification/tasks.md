@@ -2,8 +2,10 @@
 
 **Status:** approved (2026-08-10 — chair, "approve task for
 2043"). T1–T2 implementation authority granted (T1+T2 shipped in
-PR #2045); T4+ (P1) remains ADDITIONALLY gated on T3's numbers
-plus the chair's threshold ruling.
+PR #2045). T3 measured (D11); T4 ruled (D12): P1 AUTHORIZED under
+the inventory-IDs shape, `ATTUNE_MEMORY_REFS_V2` stays default-off
+until the post-escalation re-probe, accept bar deferred to that
+re-probe.
 
 ## T1 — Extractor v2: refs field (impl)
 
@@ -50,7 +52,7 @@ denominators, regression guard, Wilson interval — bind-rate
 movement never reported alone. Escalation triggers (D-1 table)
 evaluated explicitly in the entry.
 
-## T4 — Chair threshold ruling + P1 go/no-go (gate)
+## T4 — Chair threshold ruling + P1 go/no-go (gate) — DONE (2026-08-10, D12: inventory-IDs adopted, P1 authorized under it, flag stays off, bar deferred to the post-escalation re-probe)
 
 Present T3's numbers with a form: thresholds, escalation (none /
 inventory / anchors — evaluated against D-1's PRE-REGISTERED 20%/

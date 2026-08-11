@@ -404,3 +404,37 @@ a wide interval — flagged for the chair rather than smoothed either
 way. Thresholds for P1 go/no-go remain the chair's, set at T4
 against these numbers; an override of the fired trigger is visible
 against the pre-registered 20% level.
+
+## D12 (2026-08-10): T4 RULED — inventory-IDs adopted, P1 authorized under it, flag stays OFF, bar deferred
+
+**Ruled (chair, T4 widget form resp-20260810-225252 — all four
+dimensions in one pass, recommendation + D11d counter-case carried
+on the escalation field).** The chair's picks, verbatim:
+
+- **Escalation:** "Inventory-IDs (the fired trigger's indicated
+  path)" — the D-1 trigger fired at 32.8% vs the pre-registered
+  20% level and is honored, not overridden. The counter-case
+  (all aboutness failures were pr-kind convenience refs; a
+  pr-only prompt hardening was cheaper) was presented and not
+  taken.
+- **P1:** "Authorize P1 under the chosen escalation shape" — P1
+  implementation authority is GRANTED, scoped to the inventory-IDs
+  design: the extractor selects refs from an enumerated
+  session-artifact inventory (deny value-authoring at the
+  source); binder + statuses + corpus versioning carry over from
+  T1/T2 unchanged.
+- **Flag:** "Hold OFF until the escalation ships and re-probes" —
+  `ATTUNE_MEMORY_REFS_V2` stays default-off. The flip needs a
+  post-escalation re-probe showing the inventory shape's numbers,
+  then a chair go.
+- **Accept bar:** "Defer the numeric bar to the post-escalation
+  re-probe" — no standing numeric threshold is set today; the
+  chair sets it against the inventory-arm numbers when they
+  exist. The pre-registered 20%/80% trigger levels remain what
+  they were: escalation heuristics, now consumed by this ruling.
+
+**Consequences:** T4 closes. Next buildable work is P1 under the
+inventory shape, followed by a re-probe round (same protocol as
+D-5, inventory arm vs v2 arm) that feeds the deferred bar and the
+flag decision. T5 (phase record + CHANGELOG) fires when the
+extractor change ships to users — i.e., not before the flag flip.
