@@ -731,11 +731,11 @@ wheels = [
 
 [[package]]
 name = "attune-verify"
-version = "0.2.1"
+version = "0.2.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/de/83/c6df30632add2dfc0961081a49284cd02bd64e9037a58ddd8893d8e7d571/attune_verify-0.2.1.tar.gz", hash = "sha256:1f241743f13d05726ac3ccb821b65b393da01336cd01fdd16c075c951dbd4dfe", size = 19067, upload-time = "2026-06-23T01:27:37.546Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/05/69/96c1e219dd215443a317949ea9d3bee3ed608975bb36cb8b50660d9d595b/attune_verify-0.2.2.tar.gz", hash = "sha256:f1dee7d03de2854f417d251133456aec6972f6c420619ac9011f1841352e59c1", size = 22713, upload-time = "2026-07-18T00:33:09.742Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c1/56/8e0fae29093eb3730dbd7502e451b83c9991b9077cb1930cac5741ac4bcb/attune_verify-0.2.1-py3-none-any.whl", hash = "sha256:12053b653c6ffe501bcdf707145b2f6515330848b2ed33bec37443b9ee5b9710", size = 15848, upload-time = "2026-06-23T01:27:36.199Z" },
+    { url = "https://files.pythonhosted.org/packages/c7/27/484921eb1da4e4572c726dac9414ddc8c8ce5f1403c5cf04c76a99ee61d3/attune_verify-0.2.2-py3-none-any.whl", hash = "sha256:7e23786a37fa7011587d6f0c1592e5f675b49e35d346538122510f603d8d5fde", size = 17903, upload-time = "2026-07-18T00:33:08.447Z" },
 ]
 
 [[package]]
@@ -1512,7 +1512,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
