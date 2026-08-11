@@ -189,3 +189,30 @@ def test_allowlist_is_empty():
     """rct-4 AC: the allowlist ships empty. Additions are exceptional
     and need a justifying comment at the entry."""
     assert ALLOWLIST == frozenset()
+
+
+def test_suite_scrubs_every_guarded_connection_var():
+    """Drift guard for ``_scrub_redis_connection_env`` (tests/conftest.py).
+
+    A developer shell exporting any of the eight leaks into resolution:
+    the resolver MERGES what a test did not set, so a passwordless
+    ``REDIS_URL`` patched by a test silently becomes
+    ``redis://:<ambient secret>@host`` — the assertion fails and the real
+    password lands in pytest output. Asserted on ``os.environ`` because
+    the autouse fixture has already run for this test.
+    """
+    import os
+
+    from tests.conftest import _REDIS_CONNECTION_ENV
+
+    # REDIS_HOST is the one deliberate exclusion: the conftest loopback
+    # pin owns it (windows-exit139 hang class). Asserted as an exact set
+    # difference so ADDING a guarded name without scrubbing it fails here.
+    assert GUARDED_NAMES - _REDIS_CONNECTION_ENV == {"REDIS_HOST"}, (
+        "the conftest scrub list and this gate's GUARDED_NAMES have drifted "
+        "— a guarded name that is not scrubbed is an unscrubbed leak"
+    )
+    still_set = sorted(n for n in _REDIS_CONNECTION_ENV if n in os.environ)
+    assert still_set == [], f"suite isolation regressed — still set: {still_set}"
+    # The excluded one must still be pinned, not merely absent.
+    assert os.environ.get("REDIS_HOST") not in (None, "", "localhost")
