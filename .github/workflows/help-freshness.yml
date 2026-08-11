@@ -28,6 +28,9 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: |
+            pyproject.toml
+            uv.lock
 
       - name: Install dependencies
         run: |

@@ -38,6 +38,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
+          cache-dependency-path: |
+            pyproject.toml
+            uv.lock
 
       - name: Install dependencies
         run: |

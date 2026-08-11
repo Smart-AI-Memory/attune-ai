@@ -25,6 +25,9 @@ jobs:
       with:
         python-version: '3.11'
         cache: 'pip'
+        cache-dependency-path: |
+          pyproject.toml
+          uv.lock
 
     - name: Cache pre-commit hooks
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

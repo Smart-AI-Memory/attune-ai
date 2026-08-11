@@ -40,6 +40,9 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
+          cache-dependency-path: |
+            pyproject.toml
+            uv.lock
       - name: PyPI version audit (external packages)
         # Stdlib-only (urllib/json/re) — no pip install needed.
         run: python scripts/audit_website_versions.py
