@@ -22224,31 +22224,35 @@ the numbers.
   "pepy badge = vanity" finding (project_telemetry_local_only) —
   this is the mechanism behind it.
 
+- **A live-rendered widget shows the INSTALLED wheel's behavior,
+  not the repo's — restart the MCP server and check source
+  (`git log -S`) before recording a behavior conclusion from it**:
+  2026-08-11, the `fix_scope` pushback specimen rendered live from
+  an attune-verify session; an empty submit posted `answers: {}`
+  and only `elicitation_collect_response` caught it
+  (`{success: false, problems: ["'fix_scope' is required"]}`).
+  That read as a product gap ("the widget doesn't gate required
+  fields client-side") but was VERSION DRIFT: the gate already
+  existed on main (#2042), unreleased at the time (installed
+  wheel 11.1.0; even 11.6.0 predates it), and the running MCP
+  server keeps serving the stale wheel until restarted — the
+  D10/D11/D15 "registered ≠ working until the server reboots"
+  pattern, resurfacing on the consumer side. The near-miss: the
+  false "product gap" finding was minutes from entering this
+  corpus as fact.
+
 - **The locked `fix_scope` pushback specimen is a live exhibit,
-  not just demo copy — rerun it through the installed plugin from
-  any repo, but remember the render server serves the INSTALLED
-  wheel's code, not the repo's**: 2026-08-11, asked from an
-  attune-verify session to "show the form" behind the first
-  pushback-form switch (`resp-20260630-013130`). The specimen in
+  not just demo copy — when someone asks to SEE a pushback form,
+  rerun it through the installed plugin rather than hand-drawing
+  an example**: 2026-08-11, asked from an attune-verify session to
+  "show the form" behind the first pushback-form switch
+  (`resp-20260630-013130`). The specimen in
   `docs/process/DEMO_DYNAMIC_FORMS_script.md` (~line 193, locked
   2026-07-24) rendered live via
   `mcp__attune-ai__elicitation_render_widget` → `show_widget`
   with dissent framing intact — no API credits, no staging, no
-  mockup. Two findings worth keeping: (1) an empty submit posted
-  `answers: {}` and only `elicitation_collect_response` caught it
-  (`{success: false, problems: ["'fix_scope' is required"]}`) —
-  which read as a product gap but was VERSION DRIFT: the
-  client-side required-field gate already existed on main
-  (#2042), unreleased at the time (installed wheel 11.1.0; even
-  11.6.0 predates it), and the running MCP server keeps serving
-  the stale wheel until restarted — the D10/D11/D15 "registered ≠
-  working until the server reboots" pattern. Check source
-  (`git log -S`) before recording a behavior conclusion drawn
-  from a live widget. (2) The full receipt tour (dissent render →
-  required-field reject → validated switch,
-  `resp-20260811-005510`) took three tool calls from a different
-  repo's worktree, which makes the specimen the right default
-  answer whenever someone asks to SEE a pushback form: rerun the
-  locked specimen live rather than hand-drawing an example —
-  receipts beat mockups and the provenance chain (decisions.md
-  D-records → demo script → fresh response ID) comes along free.
+  mockup. The full receipt tour (dissent render → required-field
+  reject → validated switch, `resp-20260811-005510`) took three
+  tool calls from a different repo's worktree. Receipts beat
+  mockups, and the provenance chain (decisions.md D-records →
+  demo script → fresh response ID) comes along free.
