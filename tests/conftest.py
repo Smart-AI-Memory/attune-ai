@@ -33,6 +33,30 @@ import pytest
 #: must not touch these — see its docstring for the failure it caused.
 _SUITE_MANAGED_ENV = frozenset({"ATTUNE_HOME", "ATTUNE_HELP_TELEMETRY"})
 
+#: The eight Redis connection components (redis-config-truth R1) that
+#: ``resolve_redis_connection`` reads, minus ``REDIS_HOST``.
+#:
+#: ``REDIS_HOST`` is suite-managed: the loopback pin above sets it at
+#: conftest import time so no unit test can reach
+#: ``getaddrinfo("localhost")`` (the windows-exit139 hang class).
+#: Scrubbing it per-test would defeat that pin and fail its guard,
+#: ``test_unit_lane_pins_redis_host_to_loopback`` — the same
+#: owned-by-another-fixture hazard ``_SUITE_MANAGED_ENV`` documents.
+#: Dropping it costs nothing here: with the seven below cleared, an
+#: ambient ``REDIS_HOST`` only ever reaches the component branch, which
+#: the pin has already forced to loopback.
+_REDIS_CONNECTION_ENV = frozenset(
+    {
+        "REDIS_URL",
+        "REDIS_PRIVATE_URL",
+        "REDIS_PUBLIC_URL",
+        "REDIS_PORT",
+        "REDIS_DB",
+        "REDIS_PASSWORD",
+        "REDIS_USER",
+    }
+)
+
 
 # =============================================================================
 # Redis host guard — literal loopback, never a resolvable name
@@ -303,6 +327,28 @@ def _scrub_attune_env(monkeypatch):
     for name in [k for k in os.environ if k.startswith("ATTUNE_")]:
         if name not in _SUITE_MANAGED_ENV:
             monkeypatch.delenv(name, raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _scrub_redis_connection_env(monkeypatch):
+    """Clear the eight Redis connection components for the same reason.
+
+    Same class as ``_scrub_attune_env``, but the leak is subtler: the
+    resolver MERGES what the test did not set. A test that patches a
+    passwordless ``REDIS_URL`` and asserts the URL reaches ``from_url``
+    verbatim still fails on a developer shell exporting
+    ``REDIS_PASSWORD`` — tier 2 of the precedence merges the ambient
+    secret in, so the assertion sees
+    ``redis://:<secret>@host`` and the real password lands in pytest
+    output. Found 2026-08-11 on
+    ``test_client_built_from_redis_url_and_transport_error_degrades``;
+    CI exports none of these and stayed green throughout.
+
+    A test that wants any of them sets it itself via monkeypatch, which
+    still wins — this fixture only removes what the shell leaked.
+    """
+    for name in _REDIS_CONNECTION_ENV:
+        monkeypatch.delenv(name, raising=False)
 
 
 @pytest.fixture(autouse=True)
