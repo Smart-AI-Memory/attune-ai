@@ -273,7 +273,7 @@ class TestOutboxRow:
 
         _board(monkeypatch, FakeBoardRedis({}))
         home = tmp_path / "home"
-        write_artifact("lesson", "fresh", "Body.", attune_home=home)
+        write_artifact("lesson", "fresh", "- **Body.**", attune_home=home)
         inbox = read_inbox(project, attune_home=home)
         assert inbox.docs_outbox is not None
         assert inbox.docs_outbox.count == 1
@@ -291,7 +291,7 @@ class TestOutboxRow:
         _board(monkeypatch, FakeBoardRedis({}))
         home = tmp_path / "home"
         write_artifact(
-            "lesson", "old", "Body.", attune_home=home, now=datetime.now() - timedelta(days=3)
+            "lesson", "old", "- **Body.**", attune_home=home, now=datetime.now() - timedelta(days=3)
         )
         inbox = read_inbox(project, attune_home=home)
         assert inbox.docs_outbox is not None
@@ -305,7 +305,7 @@ class TestOutboxRow:
 
         _board(monkeypatch, FakeBoardRedis({}))
         cfg = Config(project_root=project, attune_home=tmp_path / "attune-home")
-        write_artifact("lesson", "pending", "Body.", attune_home=cfg.attune_home)
+        write_artifact("lesson", "pending", "- **Body.**", attune_home=cfg.attune_home)
         client = TestClient(create_app(cfg))
         client.headers["Host"] = f"{cfg.host}:{cfg.port}"
         resp = client.get("/collab")

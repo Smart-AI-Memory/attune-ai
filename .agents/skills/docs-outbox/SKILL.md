@@ -28,6 +28,12 @@ Invariants:
 
 ## Step 1 — status
 
+Version preflight first: if `python -m attune.docs_outbox status`
+fails with "No module named attune.docs_outbox", the installed
+`attune-ai` wheel predates this module — upgrade it
+(`pip install --upgrade attune-ai`) before continuing rather than
+working around it with PYTHONPATH.
+
 Run `python -m attune.docs_outbox status`. If the outbox is empty,
 say so and stop. If the status line says STALE (oldest 2+ days),
 surface the warning prominently.

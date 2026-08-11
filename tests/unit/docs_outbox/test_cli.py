@@ -32,7 +32,7 @@ def repo(tmp_path):
 
 def test_write_then_status_and_list(tmp_path, capsys):
     body = tmp_path / "body.md"
-    body.write_text("A lesson.\n", encoding="utf-8")
+    body.write_text("- **A lesson.**\n", encoding="utf-8")
     assert main(["write", "--kind", "lesson", "--slug", "cli-one", "--file", str(body)]) == 0
     assert main(["status", "--json"]) == 0
     out = capsys.readouterr().out.strip().splitlines()
@@ -57,7 +57,7 @@ def test_status_empty(capsys):
 
 def test_sweep_and_apply_round_trip(tmp_path, repo, capsys):
     body = tmp_path / "body.md"
-    body.write_text("- CLI lesson.\n", encoding="utf-8")
+    body.write_text("- **CLI**: CLI lesson.\n", encoding="utf-8")
     main(["write", "--kind", "lesson", "--slug", "cli-sweep", "--file", str(body)])
     assert main(["sweep", "--repo-root", str(repo)]) == 0
     assert "cli-sweep" in capsys.readouterr().out
@@ -74,7 +74,7 @@ def test_apply_refuses_non_git_repo_root(tmp_path, capsys):
     """Guard: apply from the wrong cwd would create ~/.claude/lessons.md
     and archive every artifact as swept, silently emptying the outbox."""
     body = tmp_path / "body.md"
-    body.write_text("- Lesson.\n", encoding="utf-8")
+    body.write_text("- **Lesson.**\n", encoding="utf-8")
     main(["write", "--kind", "lesson", "--slug", "guard", "--file", str(body)])
     not_a_repo = tmp_path / "elsewhere"
     not_a_repo.mkdir()
