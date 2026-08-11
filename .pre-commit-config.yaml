@@ -177,6 +177,19 @@ repos:
         files: ^(src/.*\.py|pyproject\.toml)$
         stages: [pre-commit]
 
+      # Lessons corpus entry-form gate.
+      # split_lessons() anchors on RAW "- **" lines; a bolded but
+      # unbulleted entry is swallowed into the PRECEDING lesson and can
+      # never be recalled on its own topic. The docs-outbox lint covers
+      # artifacts swept in; this covers hand edits.
+      - id: check-lessons-corpus
+        name: Check lessons corpus entries are bulleted
+        entry: python scripts/check_lessons_corpus.py
+        language: system
+        pass_filenames: false
+        files: ^\.claude/lessons\.md$
+        stages: [pre-commit]
+
       # Cross-provider collaboration contract drift gate (spec D3:
       # pre-commit here + CI via test_repo_projection_is_in_sync).
       # Edit content/collaboration/contract.md, then re-run
