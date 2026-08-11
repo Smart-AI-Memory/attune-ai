@@ -37,7 +37,7 @@ matching against prose).
 v1-bypass); a golden transcript fixture round-trip
 (extract → bind → stored statuses byte-compared).
 
-## T3 — Re-probe, both arms + salted subset (metric — gates P1)
+## T3 — Re-probe, both arms + salted subset (metric — gates P1) — DONE (2026-08-10, recorded as D11; "as D10" below predates the approval ruling that consumed D10)
 
 Extend the probe script per D-5; build the salted subset (≥5
 transcripts, cross-repo salience); run both arms on D8's 40

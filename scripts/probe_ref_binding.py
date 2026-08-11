@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
-"""Measure the D7 rider-(c) gate: can findings bind to derived refs?
+"""mcv D-5 re-probe: shipped prompt vs v2 prompt+binder, dual-arm.
 
-memory-claim-verification D7 adopted per-finding matching (candidate
-2) with rider (c): BEFORE the P1 matcher is built, measure what
-fraction of real raw-tier findings deterministically match at least
-one ref derivable from their session's tool_use records. A low hit
-rate (<50%) reopens the design conversation (2-with-fallback vs 3).
+memory-claim-verification design.md D-5 (gates P1): run BOTH extraction
+arms on the SAME transcripts — arm v1 (shipped prompt, extraction-quality
+baseline) and arm v2 (refs prompt delta + deterministic binder, behind
+ATTUNE_MEMORY_REFS_V2) — plus a salted adversarial subset, reported
+separately, never blended.
 
-This is a MEASUREMENT, not a test (same discipline as OQ1's
-measure_stash_refs.py). It replays real session transcripts through
-the REAL shipped extraction path (session_stash._extract_via_ollama),
-derives each session's ref-set from its tool_use records, and matches
-finding text against the derived set with deterministic rules only —
-no LLM anywhere in the binding path.
+This is a MEASUREMENT, not a test. It replays real session transcripts
+through the REAL shipped extraction path (session_stash._extract_via_ollama)
+and the REAL binder (session_stash._bind_findings) — the probe is the
+binder's test harness (design D-3); nothing is reimplemented here. The
+fuzzy prose matcher this script carried for the D7 rider-(c) probe is
+retired (D8/D9); its result (22.9%) is recorded in the spec's decisions.md.
 
-    python scripts/probe_ref_binding.py --samples 40
+    python scripts/probe_ref_binding.py --transcript-list d8.txt --arm both
+    python scripts/probe_ref_binding.py --salt-dir ~/.attune/tmp/salted \
+        --salt-manifest ~/.attune/tmp/salted/manifest.json
 
 Copyright 2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
@@ -25,48 +27,18 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
-import random
-import re
+import os
+import statistics
 import sys
+from collections import Counter
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HOOK = REPO_ROOT / "plugin" / "hooks" / "session_stash.py"
 
-#: Ref kinds derivable from tool_use records (mirrors the OQ1 probe's
-#: third-mechanism analysis; symbol-kind is deliberately NOT probed —
-#: honest limit, P1 may add it).
-COMMAND_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
-    ("pr", re.compile(r"(?:#|pull/)(\d{2,6})\b")),
-    ("sha", re.compile(r"\b([0-9a-f]{8,40})\b")),
-    ("file", re.compile(r"\b((?:src|tests|scripts|docs|plugin|content)/[\w./-]+\.\w+)")),
-    ("spec", re.compile(r"docs/specs/([\w-]+)")),
-]
-
-#: Basenames too generic to bind on — the claude-seat over-match guard.
-STOPLIST = {
-    "main",
-    "test",
-    "tests",
-    "src",
-    "docs",
-    "init",
-    "setup",
-    "index",
-    "utils",
-    "readme",
-    "claude",
-    "config",
-    "requirements",
-    "design",
-    "tasks",
-    "decisions",
-}
-MIN_BASENAME = 5
-
 
 def load_hook():
-    """Load the Stop-hook module so the REAL extraction path is used."""
+    """Load the Stop-hook module so the REAL extraction+binding path is used."""
     spec = importlib.util.spec_from_file_location("_stash_hook", HOOK)
     if spec is None or spec.loader is None:  # pragma: no cover - env guard
         raise RuntimeError(f"cannot load {HOOK}")
@@ -76,162 +48,299 @@ def load_hook():
     return module
 
 
-def derive_refs(transcript: Path) -> dict[str, set[str]]:
-    """Derive the session ref-set from tool_use records (deterministic).
-
-    Walks every JSONL line, collects tool_use inputs: file-path keys
-    directly, and pr/sha/file/spec patterns from command strings.
-    """
-    refs: dict[str, set[str]] = {"pr": set(), "sha": set(), "file": set(), "spec": set()}
-    with open(transcript, encoding="utf-8", errors="replace") as fh:
-        for line in fh:
-            if '"tool_use"' not in line:
-                continue
-            try:
-                record = json.loads(line)
-            except (json.JSONDecodeError, ValueError):
-                continue
-            content = record.get("message", {}).get("content")
-            if not isinstance(content, list):
-                continue
-            for block in content:
-                if not isinstance(block, dict) or block.get("type") != "tool_use":
+def session_cwd(transcript: Path) -> str:
+    """First recorded cwd in the transcript (binder path normalization)."""
+    try:
+        with open(transcript, encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                if '"cwd"' not in line:
                     continue
-                inputs = block.get("input")
-                if not isinstance(inputs, dict):
+                try:
+                    record = json.loads(line)
+                except (json.JSONDecodeError, ValueError):
                     continue
-                for key, value in inputs.items():
-                    if not isinstance(value, str):
-                        continue
-                    if key in ("file_path", "path", "notebook_path"):
-                        refs["file"].add(value)
-                        continue
-                    for kind, pattern in COMMAND_PATTERNS:
-                        for match in pattern.findall(value):
-                            refs[kind].add(match)
-    return refs
+                cwd = record.get("cwd")
+                if isinstance(cwd, str) and cwd:
+                    return cwd
+    except OSError:
+        pass
+    return str(Path.home())
 
 
-def match_finding(content: str, refs: dict[str, set[str]]) -> list[str]:
-    """Deterministic per-finding matching (the D7 matcher family).
+def run_arm(
+    hook,
+    arm: str,
+    transcripts: list[Path],
+    out_rows: list[dict],
+) -> dict:
+    """Extract (and for v2, bind) every transcript under the given arm."""
+    if arm == "v2":
+        os.environ["ATTUNE_MEMORY_REFS_V2"] = "1"
+    else:
+        os.environ.pop("ATTUNE_MEMORY_REFS_V2", None)
 
-    Exact path / basename / pr-number / sha-prefix / spec-slug only.
-    Returns the matched refs as "kind:value" strings.
-    """
-    matched: list[str] = []
-    lower = content.lower()
-    words = set(re.findall(r"[\w.-]+", lower))
+    stats: dict = {
+        "arm": arm,
+        "scored": 0,
+        "misses": 0,
+        "findings": 0,
+        "content_lengths": [],
+        "contents": [],
+        "per_transcript_findings": [],
+        "status_counts": Counter(),
+        "refs_per_finding": Counter(),
+        "ref_items_proposed": 0,
+        "ref_items_bound": 0,
+        "ref_items_rejected_membership": 0,
+        "ref_items_rejected_bad_kind": 0,
+        "ref_items_unchecked": 0,
+        "bound_kind_hits": Counter(),
+    }
+    for index, path in enumerate(transcripts, 1):
+        tail = hook._read_transcript_tail(str(path))
+        if not tail.strip():
+            stats["misses"] += 1
+            print(f"  [{arm} {index:2}] empty-tail  {path.name[:44]}")
+            continue
+        findings = hook._extract_via_ollama(tail)
+        if not findings:
+            stats["misses"] += 1
+            print(f"  [{arm} {index:2}] no-findings/ollama-miss  {path.name[:44]}")
+            continue
+        stats["scored"] += 1
+        stats["per_transcript_findings"].append(len(findings))
+        cwd = session_cwd(path)
+        if arm == "v2":
+            hook._bind_findings(findings, str(path), cwd)
+        bound_here = 0
+        for f in findings:
+            content = str(f.get("content", ""))
+            if not content:
+                continue
+            stats["findings"] += 1
+            stats["content_lengths"].append(len(content))
+            stats["contents"].append(content.strip().lower())
+            row = {
+                "arm": arm,
+                "transcript": path.name,
+                "cwd": cwd,
+                "type": f.get("type"),
+                "content": content,
+                "confidence": f.get("confidence"),
+            }
+            if arm == "v2":
+                refs = f.get("refs") or []
+                status = f.get("ref_status", "?")
+                tags = f.get("_ref_tags", [])
+                bound = [t[len("ref_bound:") :] for t in tags if t.startswith("ref_bound:")]
+                rejected = [
+                    t[len("ref_rejected:") :] for t in tags if t.startswith("ref_rejected:")
+                ]
+                unchecked = [
+                    t[len("ref_proposed:") :] for t in tags if t.startswith("ref_proposed:")
+                ]
+                stats["status_counts"][status] += 1
+                stats["refs_per_finding"][min(len(refs), 3)] += 1
+                stats["ref_items_proposed"] += len(refs)
+                stats["ref_items_bound"] += len(bound)
+                stats["ref_items_unchecked"] += len(unchecked)
+                for item in rejected:
+                    reason = item.split(":", 1)[0]
+                    if reason == "bad_kind":
+                        stats["ref_items_rejected_bad_kind"] += 1
+                    else:
+                        stats["ref_items_rejected_membership"] += 1
+                for b in bound:
+                    stats["bound_kind_hits"][b.split(":", 1)[0]] += 1
+                if status == "bound":
+                    bound_here += 1
+                row.update(
+                    {
+                        "refs": refs,
+                        "ref_status": status,
+                        "bound": bound,
+                        "rejected": rejected,
+                        "unchecked": unchecked,
+                    }
+                )
+            out_rows.append(row)
+        universe = hook._derive_session_refs(str(path)) or {}
+        sizes = " ".join(f"{k}={len(v)}" for k, v in universe.items())
+        print(
+            f"  [{arm} {index:2}] ok  findings={len(findings)}"
+            + (f" bound={bound_here}" if arm == "v2" else "")
+            + f"  universe({sizes})  {path.name[:36]}"
+        )
+    return stats
 
-    for number in refs["pr"]:
-        if re.search(rf"(?:#|\bpr[ #]?){number}\b", lower):
-            matched.append(f"pr:{number}")
 
-    hex_tokens = re.findall(r"\b[0-9a-f]{7,40}\b", lower)
-    for sha in refs["sha"]:
-        if any(sha.startswith(token) or token.startswith(sha) for token in hex_tokens):
-            matched.append(f"sha:{sha[:12]}")
+def pct(numerator: int, denominator: int) -> str:
+    return f"{100.0 * numerator / denominator:5.1f}%" if denominator else "  n/a"
 
-    for path in refs["file"]:
-        base = Path(path).name.lower()
-        stem = Path(path).stem.lower()
-        if path.lower() in lower:
-            matched.append(f"file:{path}")
-        elif (
-            len(stem) >= MIN_BASENAME and stem not in STOPLIST and (base in words or stem in words)
-        ):
-            matched.append(f"file:{path}")
 
-    for slug in refs["spec"]:
-        if slug.lower() in lower:
-            matched.append(f"spec:{slug}")
-    return matched
+def dedup_rate(contents: list[str]) -> float:
+    if not contents:
+        return 0.0
+    return 1.0 - len(set(contents)) / len(contents)
+
+
+def quality_block(stats: dict) -> str:
+    lengths = stats["content_lengths"]
+    per_t = stats["per_transcript_findings"]
+    lines = [
+        f"  transcripts scored      {stats['scored']}  (misses {stats['misses']})",
+        f"  findings extracted      {stats['findings']}",
+    ]
+    if per_t:
+        lines.append(f"  findings/transcript     {statistics.mean(per_t):.2f}")
+    if lengths:
+        lines.append(f"  mean content length     {statistics.mean(lengths):.1f}")
+        lines.append(f"  dedup rate              {100 * dedup_rate(stats['contents']):.1f}%")
+    return "\n".join(lines) + "\n"
+
+
+def v2_block(stats: dict) -> str:
+    sc = stats["status_counts"]
+    n_findings = stats["findings"]
+    bound = sc.get("bound", 0)
+    no_universe = sc.get("no_ref_universe", 0)
+    in_universe = n_findings - no_universe
+    proposed = stats["ref_items_proposed"]
+    checked = proposed - stats["ref_items_unchecked"]
+    rej_m = stats["ref_items_rejected_membership"]
+    dist = stats["refs_per_finding"]
+    kinds = stats["bound_kind_hits"]
+    return (
+        "  -- statuses --\n"
+        + "".join(f"    {status:22} {count}\n" for status, count in sorted(sc.items()))
+        + "  -- bind rate (finding-level) --\n"
+        f"    primary  (excl. no_ref_universe)  {bound}/{in_universe}  "
+        f"({pct(bound, in_universe)})\n"
+        f"    secondary (all-in, D8-comparable) {bound}/{n_findings}  "
+        f"({pct(bound, n_findings)})\n"
+        "  -- ref items --\n"
+        f"    proposed {proposed}  (checked {checked}, unchecked {stats['ref_items_unchecked']})\n"
+        f"    bound    {stats['ref_items_bound']}  "
+        f"by kind: {dict(kinds) or {}}\n"
+        f"    rejected not_in_session {rej_m}  "
+        f"(membership-rejection rate {pct(rej_m, checked)})\n"
+        f"    rejected bad_kind       {stats['ref_items_rejected_bad_kind']}\n"
+        "  -- refs per finding --\n"
+        + "".join(f"    {k} refs: {dist.get(k, 0)}\n" for k in range(4))
+    )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--samples", type=int, default=40)
+    parser.add_argument("--transcript-list", help="file of absolute transcript paths")
+    parser.add_argument("--samples", type=int, default=40, help="fallback: newest-N selection")
     parser.add_argument("--min-bytes", type=int, default=20_000)
     parser.add_argument(
         "--projects",
         default=str(Path.home() / ".claude" / "projects"),
         help="Claude Code projects dir holding transcript JSONL",
     )
+    parser.add_argument("--arm", choices=("v1", "v2", "both"), default="both")
+    parser.add_argument("--salt-dir", help="directory of salted transcript copies (v2 arm only)")
+    parser.add_argument("--salt-manifest", help="JSON manifest of salted refs per transcript")
+    parser.add_argument("--out-jsonl", help="raw per-finding dump (for the aboutness audit)")
     args = parser.parse_args()
 
     hook = load_hook()
-    root = Path(args.projects)
-    transcripts = sorted(
-        (p for p in root.rglob("*.jsonl") if p.stat().st_size > args.min_bytes),
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )[: args.samples]
-    if not transcripts:
-        print(f"no transcripts found under {root}", file=sys.stderr)
+    if args.transcript_list:
+        transcripts = [
+            Path(line.strip())
+            for line in Path(args.transcript_list).read_text().splitlines()
+            if line.strip()
+        ]
+        missing = [p for p in transcripts if not p.is_file()]
+        if missing:
+            print(f"missing transcripts: {missing}", file=sys.stderr)
+            return 1
+    else:
+        root = Path(args.projects)
+        transcripts = sorted(
+            (p for p in root.rglob("*.jsonl") if p.stat().st_size > args.min_bytes),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )[: args.samples]
+    if not transcripts and not args.salt_dir:
+        print("no transcripts selected", file=sys.stderr)
         return 1
 
-    n_scored = 0
-    n_findings = 0
-    n_bound = 0
-    kind_hits = {"pr": 0, "sha": 0, "file": 0, "spec": 0}
-    bound_samples: list[tuple[str, list[str]]] = []
-    unbound_samples: list[str] = []
+    # Codex-lane finding (2026-08-10, adopted): validate the salted
+    # subset BEFORE any extraction — a missing/empty salt dir or an
+    # absent/unmatched manifest must fail loudly, not exit 0 with a
+    # zero-scored subset that reads as "zero salt uptake".
+    salted: list[Path] = []
+    salt_refs: dict[str, list[str]] = {}
+    if args.salt_dir:
+        salted = sorted(Path(args.salt_dir).glob("*.jsonl"))
+        if not salted:
+            print(f"salt-dir has no *.jsonl transcripts: {args.salt_dir}", file=sys.stderr)
+            return 1
+        if not args.salt_manifest:
+            print("--salt-manifest is required with --salt-dir", file=sys.stderr)
+            return 1
+        salt_refs = json.loads(Path(args.salt_manifest).read_text())
+        unmatched = [p.name for p in salted if not salt_refs.get(p.name)]
+        if unmatched:
+            print(f"salted transcripts missing manifest entries: {unmatched}", file=sys.stderr)
+            return 1
 
-    print(f"samples={len(transcripts)}  (real extractor + deterministic matcher)\n")
-    for index, path in enumerate(transcripts, 1):
-        tail = hook._read_transcript_tail(str(path))
-        if not tail.strip():
-            continue
-        findings = hook._extract_via_ollama(tail)
-        if not findings:
-            print(f"  [{index:2}] no-findings/ollama-miss  {path.name[:44]}")
-            continue
-        n_scored += 1
-        refs = derive_refs(path)
-        bound_here = 0
-        for finding in findings:
-            content = str(finding.get("content", ""))
-            if not content:
-                continue
-            n_findings += 1
-            matches = match_finding(content, refs)
-            if matches:
-                n_bound += 1
-                bound_here += 1
-                for m in matches:
-                    kind_hits[m.split(":", 1)[0]] += 1
-                bound_samples.append((content, matches))
-            else:
-                unbound_samples.append(content)
-        print(
-            f"  [{index:2}] ok  findings={len(findings)} bound={bound_here}  "
-            f"refs(pr={len(refs['pr'])} sha={len(refs['sha'])} "
-            f"file={len(refs['file'])} spec={len(refs['spec'])})  {path.name[:36]}"
-        )
+    out_rows: list[dict] = []
+    print(f"transcripts={len(transcripts)}  (real extractor + real binder)\n")
 
-    def pct(numerator: int, denominator: int) -> str:
-        return f"{100.0 * numerator / denominator:5.1f}%" if denominator else "  n/a"
+    arm_stats: list[dict] = []
+    if transcripts:
+        if args.arm in ("v1", "both"):
+            arm_stats.append(run_arm(hook, "v1", transcripts, out_rows))
+        if args.arm in ("v2", "both"):
+            arm_stats.append(run_arm(hook, "v2", transcripts, out_rows))
+
+    salt_stats = None
+    if salted:
+        print(f"\nsalted subset: {len(salted)} transcripts (v2 arm, reported separately)\n")
+        salt_rows: list[dict] = []
+        salt_stats = run_arm(hook, "v2", salted, salt_rows)
+        for row in salt_rows:
+            row["arm"] = "v2-salted"
+            # Manifest maps transcript name -> distinctive salt VALUES
+            # (path tails, pr numbers, spec slugs); substring match keeps
+            # this robust to the binder's normalization (absolutized POSIX
+            # paths, stripped "#", lowered slugs).
+            salts = salt_refs.get(row["transcript"], [])
+            row["salt_proposed"] = [r for r in row.get("refs", []) if any(v in r for v in salts)]
+            row["salt_bound"] = [b for b in row.get("bound", []) if any(v in b for v in salts)]
+        out_rows.extend(salt_rows)
 
     print("\n" + "=" * 62)
-    print("D7 rider-(c) — per-finding deterministic bind rate")
+    print("mcv D-5 re-probe report")
     print("=" * 62)
-    print(f"transcripts scored      {n_scored}")
-    print(f"findings extracted      {n_findings}")
-    print(f"findings BOUND (>=1)    {n_bound}  ({pct(n_bound, n_findings)})   <-- the gate number")
-    print(
-        f"  by kind: pr={kind_hits['pr']} sha={kind_hits['sha']} file={kind_hits['file']} spec={kind_hits['spec']}"
-    )
-    print(
-        f"gate verdict            {'PROCEED to P1' if n_findings and n_bound / n_findings >= 0.5 else 'REOPEN design (<50%)'}"
-    )
+    for stats in arm_stats:
+        print(f"\narm {stats['arm']}:")
+        print(quality_block(stats), end="")
+        if stats["arm"] == "v2":
+            print(v2_block(stats), end="")
+    if salt_stats is not None:
+        print("\narm v2 SALTED (separate — never blended):")
+        print(quality_block(salt_stats), end="")
+        print(v2_block(salt_stats), end="")
+        salted_rows = [r for r in out_rows if r["arm"] == "v2-salted"]
+        n_prop = sum(1 for r in salted_rows if r.get("salt_proposed"))
+        n_bound = sum(1 for r in salted_rows if r.get("salt_bound"))
+        print("  -- salt uptake (aboutness failures by construction) --")
+        print(f"    findings proposing a salt ref  {n_prop}/{len(salted_rows)}")
+        print(f"    findings BINDING a salt ref    {n_bound}/{len(salted_rows)}")
+    print("=" * 62)
 
-    rng = random.Random(42)
-    print("\n--- over-match spot-check (10 random bound findings) ---")
-    for content, matches in rng.sample(bound_samples, min(10, len(bound_samples))):
-        print(f"  BOUND {matches}\n        {content[:160]}")
-    print("\n--- lossiness sample (5 random unbound findings) ---")
-    for content in rng.sample(unbound_samples, min(5, len(unbound_samples))):
-        print(f"  UNBOUND {content[:160]}")
-    print("=" * 62)
+    if args.out_jsonl:
+        out_path = Path(args.out_jsonl)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_path, "w", encoding="utf-8") as fh:
+            for row in out_rows:
+                fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+        print(f"raw rows -> {out_path}")
     return 0
 
 
