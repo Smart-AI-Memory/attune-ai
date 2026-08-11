@@ -327,3 +327,80 @@ also confirmed the standing policy that recordings of explicit
 in-session chair rulings merge unmarked (transcription, not new
 governance text); interpretive doubt is handled by draft-holds,
 as was done with this PR.
+
+## D11 (2026-08-10): T3 re-probe MEASURED — rejection trigger FIRES (32.8%), aboutness at the 80% boundary
+
+**Measured** (tasks.md said "record as D10"; that number was
+consumed by the approval ruling above — numbering drift noted, not
+re-litigated). Both arms on the SAME 40 transcripts as D8
+(recovered from the D8 raw log, all 40 resolved on disk), plus the
+chair-adopted salted adversarial subset (6 transcripts, cross-repo
+salience, both channels: prose in the extractor tail AND tool_use
+records in the binder universe). REAL shipped extractor + REAL T2
+binder via `ATTUNE_MEMORY_REFS_V2`; zero API spend (local
+llama3.1:8b). Full data machine-local per local-first-reports at
+`~/.attune/reports/memory-claim-verification/re-probe-v2.md`
+(+ `-raw.txt`, `-rows.jsonl`, `d8-transcripts.txt`).
+
+### Main arm (40 transcripts; both arms scored 40/40)
+
+| Metric | v1 (shipped) | v2 (refs+binder) |
+|---|---|---|
+| findings extracted | 195 | 179 |
+| findings/transcript | 4.88 | 4.47 (−8.4%) |
+| mean content length | 106.3 | 90.6 (−14.8%) |
+| dedup rate | 0.0% | 0.0% |
+
+| v2 metric | Value |
+|---|---|
+| statuses | bound 35 · unbound_explicit 115 · all_rejected 22 · no_ref_universe 7 |
+| bind rate PRIMARY (excl. no_ref_universe) | **35/172 = 20.3%** |
+| bind rate SECONDARY (all-in; D8 fuzzy was 22.9%) | 35/179 = 19.6% |
+| ref items proposed / checked | 76 / 67 |
+| bound items (pr/file/spec) | 39 (25 / 14 / 0) |
+| **membership-rejection rate** | **22/67 = 32.8%** |
+| rejected bad_kind | 6 |
+| refs-per-finding 0/1/2/3 | 115 / 53 / 10 / 1 |
+
+Comparability caveat: D8's 22.9% was FUZZY matching over v1
+findings; v2's 19.6% is validated exact-membership over proposed
+refs — same magnitude, different epistemics (every v2 bind is
+inventory-checked, every unbound is honest).
+
+### Salted subset (separate — never blended)
+
+30 findings: bound 8, rejection 2/10 = 20.0%. **Salt uptake: 1/30
+proposed AND bound a salt ref** — and the failure shape is
+upstream of aboutness: the extractor MANUFACTURED a finding about
+the salt ("The production-outage postmortem is being worked on as
+PR #5151") despite the prose framing it as unrelated. Provenance
+failure, not just a convenience ref.
+
+### Aboutness audit (30 bound stratified + 15 unbound; one judge)
+
+- **24/30 about-correct = 80.0%, Wilson 95% CI [62.7%, 90.5%]**.
+  file stratum 11/11; pr stratum 13/19 — all six failures are
+  session-context PR numbers attached to findings about something
+  else (incl. two cross-repo bare-number collisions).
+- False-unbound: **4/15 clear** — findings that NAME a PR verified
+  in-universe yet returned `refs: []` (#1725, #210, #1314, #2001).
+  Strict negative prompting under-attaches as well as
+  over-suppresses.
+- Judge is the authoring seat (no non-authoring seat available);
+  the design's second-judge overlap subset is owed if one becomes
+  available before T4.
+
+### D-1 pre-registered triggers (evaluated explicitly)
+
+| Trigger | Level | Measured | Verdict |
+|---|---|---|---|
+| codex inventory-IDs | rejection > 20% | 32.8% | **FIRES** |
+| claude anchored refs | aboutness < 80% AND rejection ≤ 20% | 80.0% / 32.8% | does not fire |
+
+Only the inventory trigger fires → per D-1, inventory-IDs first
+(deny value-authoring at the source) is the indicated escalation.
+The aboutness point estimate sits exactly AT the 80% boundary with
+a wide interval — flagged for the chair rather than smoothed either
+way. Thresholds for P1 go/no-go remain the chair's, set at T4
+against these numbers; an override of the fired trigger is visible
+against the pre-registered 20% level.
