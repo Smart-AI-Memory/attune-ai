@@ -27,6 +27,7 @@ from attune.docs_outbox.store import (
     OutboxStatus,
     _atomic_write,
     archive_swept,
+    lesson_body_problem,
     list_artifacts,
     outbox_dir,
     outbox_status,
@@ -132,11 +133,10 @@ def _lint(artifact: Artifact, repo_root: Path, claimed: set[str]) -> list[str]:
                 claimed.add(artifact.target)
     if not artifact.body.strip():
         issues.append("empty body")
-    elif artifact.kind == "lesson" and not artifact.body.lstrip().startswith("- **"):
-        # The lessons index (attune.lessons) anchors entry parsing on
-        # lines starting "- **"; an unbulleted entry appends cleanly
-        # but is invisible to recall.
-        issues.append("lesson body must start with '- **' (bulleted bold title)")
+    else:
+        problem = lesson_body_problem(artifact.kind, artifact.body)
+        if problem:
+            issues.append(problem)
     return issues
 
 

@@ -34,6 +34,23 @@ _NAME_RE = re.compile(
 )
 
 
+def lesson_body_problem(kind: str, body: str) -> str | None:
+    """The lint reason an outbox body can't enter the lessons corpus.
+
+    The lessons index (:mod:`attune.lessons`) anchors entry parsing on
+    RAW lines starting ``- **`` — an unbulleted or indented first line
+    appends cleanly but is invisible to recall. Shared by the
+    author-time gate (:func:`write_artifact`) and the sweep lint so the
+    two cannot drift.
+    """
+    if kind != "lesson":
+        return None
+    first = next((ln for ln in body.splitlines() if ln.strip()), "")
+    if not first.startswith("- **"):
+        return "lesson body must start with '- **' at column 0 (bulleted bold title)"
+    return None
+
+
 @dataclass
 class Artifact:
     """One parsed outbox artifact."""
@@ -111,6 +128,9 @@ def write_artifact(
         raise ValueError(f"kind {kind!r} has no default target — pass one explicitly")
     if not body.strip():
         raise ValueError("artifact body is empty")
+    problem = lesson_body_problem(kind, body)
+    if problem:
+        raise ValueError(problem)
 
     out_dir = outbox_dir(attune_home)
     stamp = (now or datetime.now()).strftime("%Y%m%d-%H%M")

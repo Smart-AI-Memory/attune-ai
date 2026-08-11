@@ -45,9 +45,13 @@ def test_empty_outbox_sweep(tmp_path):
 
 
 def test_exact_duplicates_dropped_keep_earliest(tmp_path):
-    write_artifact("lesson", "dup", "Same body.", attune_home=tmp_path, now=NOW)
+    write_artifact("lesson", "dup", "- **Same body.**", attune_home=tmp_path, now=NOW)
     write_artifact(
-        "lesson", "dup-again", "Same body.", attune_home=tmp_path, now=NOW + timedelta(minutes=1)
+        "lesson",
+        "dup-again",
+        "- **Same body.**",
+        attune_home=tmp_path,
+        now=NOW + timedelta(minutes=1),
     )
     result = run_sweep(_repo(tmp_path), attune_home=tmp_path)
     assert [a.slug for a in result.kept] == ["dup"]
@@ -56,9 +60,9 @@ def test_exact_duplicates_dropped_keep_earliest(tmp_path):
 
 
 def test_related_slugs_flagged(tmp_path):
-    write_artifact("lesson", "same", "Body one.", attune_home=tmp_path, now=NOW)
+    write_artifact("lesson", "same", "- **Body one.**", attune_home=tmp_path, now=NOW)
     write_artifact(
-        "lesson", "same", "Body two.", attune_home=tmp_path, now=NOW + timedelta(minutes=1)
+        "lesson", "same", "- **Body two.**", attune_home=tmp_path, now=NOW + timedelta(minutes=1)
     )
     result = run_sweep(_repo(tmp_path), attune_home=tmp_path)
     assert result.related_slugs == ["lesson/same"]
@@ -66,8 +70,10 @@ def test_related_slugs_flagged(tmp_path):
 
 
 def test_core_worthy_flagging(tmp_path):
-    write_artifact("lesson", "leaky", "A secret key leaked.", attune_home=tmp_path, now=NOW)
-    write_artifact("lesson", "benign", "Plain formatting note.", attune_home=tmp_path, now=NOW)
+    write_artifact("lesson", "leaky", "- **A secret key leaked.**", attune_home=tmp_path, now=NOW)
+    write_artifact(
+        "lesson", "benign", "- **Plain formatting note.**", attune_home=tmp_path, now=NOW
+    )
     result = run_sweep(_repo(tmp_path), attune_home=tmp_path)
     assert result.core_worthy == ["20260806-1432-lesson-leaky.md"]
     assert "core-worthy?" in result.digest
@@ -100,13 +106,25 @@ def test_lint_rejects_absolute_target_and_overwrite(tmp_path):
 
 
 def test_lint_rejects_unbulleted_lesson_body(tmp_path):
-    """The lessons index anchors on '- **'; a bare entry appends
-    cleanly but is invisible to recall (2026-08-11 retro, two swept
-    artifacts drifted in exactly this way)."""
+    """The lessons index anchors on RAW lines starting '- **'; a bare,
+    indented, or prose first line appends cleanly but is invisible to
+    recall (2026-08-11 retro, two swept artifacts drifted exactly this
+    way). Hand-authored files bypass write_artifact's gate, so the
+    sweep lint must catch them off disk."""
     repo = _repo(tmp_path)
-    write_artifact("lesson", "bare", "**Title**: no bullet.", attune_home=tmp_path, now=NOW)
-    write_artifact(
-        "lesson", "prose", "Plain prose.", attune_home=tmp_path, now=NOW + timedelta(minutes=1)
+    _raw(
+        tmp_path,
+        "20260806-1432-lesson-bare.md",
+        "lesson",
+        ".claude/lessons.md",
+        "**Title**: no bullet.\n",
+    )
+    _raw(
+        tmp_path,
+        "20260806-1433-lesson-indent.md",
+        "lesson",
+        ".claude/lessons.md",
+        "  - **Title**: indented, invisible to the raw-line anchor.\n",
     )
     write_artifact(
         "lesson",
@@ -116,7 +134,7 @@ def test_lint_rejects_unbulleted_lesson_body(tmp_path):
         now=NOW + timedelta(minutes=2),
     )
     result = run_sweep(repo, attune_home=tmp_path)
-    for name in ("20260806-1432-lesson-bare.md", "20260806-1433-lesson-prose.md"):
+    for name in ("20260806-1432-lesson-bare.md", "20260806-1433-lesson-indent.md"):
         assert any("must start with '- **'" in i for i in result.lint_issues[name])
     assert "20260806-1434-lesson-good.md" not in result.lint_issues
     changed = apply_sweep(repo, attune_home=tmp_path)
@@ -124,11 +142,24 @@ def test_lint_rejects_unbulleted_lesson_body(tmp_path):
     assert "bulleted." in text and "no bullet." not in text
     assert changed == [repo / ".claude" / "lessons.md"]
     # The linty pair stays pending rather than being archived as applied.
-    assert sorted(a.slug for a in list_artifacts(tmp_path)) == ["bare", "prose"]
+    assert sorted(a.slug for a in list_artifacts(tmp_path)) == ["raw", "raw"]
+
+
+def test_write_artifact_rejects_unbulleted_lesson_body(tmp_path):
+    """Author-time arm of the same gate: refuse at write, don't strand
+    a doomed artifact as forever-pending at sweep."""
+    import pytest
+
+    with pytest.raises(ValueError, match="must start with '- \\*\\*'"):
+        write_artifact("lesson", "bare", "Plain prose.", attune_home=tmp_path, now=NOW)
+    with pytest.raises(ValueError, match="must start with '- \\*\\*'"):
+        write_artifact("lesson", "indent", "  - **Indented.**", attune_home=tmp_path, now=NOW)
+    # Non-lesson kinds are exempt — reports keep free-form bodies.
+    write_artifact("report", "free", "Prose.", target="docs/r.md", attune_home=tmp_path, now=NOW)
 
 
 def test_sweep_writes_digest_file(tmp_path):
-    write_artifact("lesson", "one", "Body.", attune_home=tmp_path, now=NOW)
+    write_artifact("lesson", "one", "- **Body.**", attune_home=tmp_path, now=NOW)
     result = run_sweep(_repo(tmp_path), attune_home=tmp_path)
     digest_path = outbox_dir(tmp_path) / DIGEST_NAME
     assert digest_path.read_text(encoding="utf-8") == result.digest
@@ -137,7 +168,7 @@ def test_sweep_writes_digest_file(tmp_path):
 
 def test_stale_warning_in_digest(tmp_path):
     write_artifact(
-        "lesson", "old", "Body.", attune_home=tmp_path, now=datetime.now() - timedelta(days=3)
+        "lesson", "old", "- **Body.**", attune_home=tmp_path, now=datetime.now() - timedelta(days=3)
     )
     result = run_sweep(_repo(tmp_path), attune_home=tmp_path)
     assert "STALE" in result.digest
