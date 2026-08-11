@@ -268,6 +268,26 @@ def main() -> int:
         print("no transcripts selected", file=sys.stderr)
         return 1
 
+    # Codex-lane finding (2026-08-10, adopted): validate the salted
+    # subset BEFORE any extraction — a missing/empty salt dir or an
+    # absent/unmatched manifest must fail loudly, not exit 0 with a
+    # zero-scored subset that reads as "zero salt uptake".
+    salted: list[Path] = []
+    salt_refs: dict[str, list[str]] = {}
+    if args.salt_dir:
+        salted = sorted(Path(args.salt_dir).glob("*.jsonl"))
+        if not salted:
+            print(f"salt-dir has no *.jsonl transcripts: {args.salt_dir}", file=sys.stderr)
+            return 1
+        if not args.salt_manifest:
+            print("--salt-manifest is required with --salt-dir", file=sys.stderr)
+            return 1
+        salt_refs = json.loads(Path(args.salt_manifest).read_text())
+        unmatched = [p.name for p in salted if not salt_refs.get(p.name)]
+        if unmatched:
+            print(f"salted transcripts missing manifest entries: {unmatched}", file=sys.stderr)
+            return 1
+
     out_rows: list[dict] = []
     print(f"transcripts={len(transcripts)}  (real extractor + real binder)\n")
 
@@ -279,11 +299,7 @@ def main() -> int:
             arm_stats.append(run_arm(hook, "v2", transcripts, out_rows))
 
     salt_stats = None
-    salt_refs: dict[str, list[str]] = {}
-    if args.salt_dir:
-        salted = sorted(Path(args.salt_dir).glob("*.jsonl"))
-        if args.salt_manifest:
-            salt_refs = json.loads(Path(args.salt_manifest).read_text())
+    if salted:
         print(f"\nsalted subset: {len(salted)} transcripts (v2 arm, reported separately)\n")
         salt_rows: list[dict] = []
         salt_stats = run_arm(hook, "v2", salted, salt_rows)
