@@ -99,6 +99,34 @@ def test_lint_rejects_absolute_target_and_overwrite(tmp_path):
     )
 
 
+def test_lint_rejects_unbulleted_lesson_body(tmp_path):
+    """The lessons index anchors on '- **'; a bare entry appends
+    cleanly but is invisible to recall (2026-08-11 retro, two swept
+    artifacts drifted in exactly this way)."""
+    repo = _repo(tmp_path)
+    write_artifact("lesson", "bare", "**Title**: no bullet.", attune_home=tmp_path, now=NOW)
+    write_artifact(
+        "lesson", "prose", "Plain prose.", attune_home=tmp_path, now=NOW + timedelta(minutes=1)
+    )
+    write_artifact(
+        "lesson",
+        "good",
+        "- **Title**: bulleted.",
+        attune_home=tmp_path,
+        now=NOW + timedelta(minutes=2),
+    )
+    result = run_sweep(repo, attune_home=tmp_path)
+    for name in ("20260806-1432-lesson-bare.md", "20260806-1433-lesson-prose.md"):
+        assert any("must start with '- **'" in i for i in result.lint_issues[name])
+    assert "20260806-1434-lesson-good.md" not in result.lint_issues
+    changed = apply_sweep(repo, attune_home=tmp_path)
+    text = (repo / ".claude" / "lessons.md").read_text(encoding="utf-8")
+    assert "bulleted." in text and "no bullet." not in text
+    assert changed == [repo / ".claude" / "lessons.md"]
+    # The linty pair stays pending rather than being archived as applied.
+    assert sorted(a.slug for a in list_artifacts(tmp_path)) == ["bare", "prose"]
+
+
 def test_sweep_writes_digest_file(tmp_path):
     write_artifact("lesson", "one", "Body.", attune_home=tmp_path, now=NOW)
     result = run_sweep(_repo(tmp_path), attune_home=tmp_path)
@@ -118,9 +146,13 @@ def test_stale_warning_in_digest(tmp_path):
 def test_apply_appends_lessons_in_timestamp_order_and_archives(tmp_path):
     repo = _repo(tmp_path)
     write_artifact(
-        "lesson", "second", "- Lesson B.", attune_home=tmp_path, now=NOW + timedelta(minutes=1)
+        "lesson",
+        "second",
+        "- **B**: Lesson B.",
+        attune_home=tmp_path,
+        now=NOW + timedelta(minutes=1),
     )
-    write_artifact("lesson", "first", "- Lesson A.", attune_home=tmp_path, now=NOW)
+    write_artifact("lesson", "first", "- **A**: Lesson A.", attune_home=tmp_path, now=NOW)
     changed = apply_sweep(repo, attune_home=tmp_path)
     text = (repo / ".claude" / "lessons.md").read_text(encoding="utf-8")
     assert text.index("Lesson A.") < text.index("Lesson B.")
@@ -237,7 +269,7 @@ class TestReviewRegressions:
         so the successful ones re-applied (and duplicated) next run."""
         repo = _repo(tmp_path)
         (repo / "blocker").write_text("i am a file\n", encoding="utf-8")
-        write_artifact("lesson", "good", "- Good lesson.", attune_home=tmp_path, now=NOW)
+        write_artifact("lesson", "good", "- **Good lesson.**", attune_home=tmp_path, now=NOW)
         write_artifact(
             "report",
             "bad",
@@ -271,7 +303,7 @@ class TestReviewRegressions:
         """A stale digest.md used to linger, so the chip could render an
         already-applied batch."""
         repo = _repo(tmp_path)
-        write_artifact("lesson", "one", "- Body.", attune_home=tmp_path, now=NOW)
+        write_artifact("lesson", "one", "- **One**: body.", attune_home=tmp_path, now=NOW)
         run_sweep(repo, attune_home=tmp_path)
         assert (outbox_dir(tmp_path) / DIGEST_NAME).exists()
         apply_sweep(repo, attune_home=tmp_path)

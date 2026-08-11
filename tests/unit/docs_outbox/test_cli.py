@@ -57,7 +57,7 @@ def test_status_empty(capsys):
 
 def test_sweep_and_apply_round_trip(tmp_path, repo, capsys):
     body = tmp_path / "body.md"
-    body.write_text("- CLI lesson.\n", encoding="utf-8")
+    body.write_text("- **CLI**: CLI lesson.\n", encoding="utf-8")
     main(["write", "--kind", "lesson", "--slug", "cli-sweep", "--file", str(body)])
     assert main(["sweep", "--repo-root", str(repo)]) == 0
     assert "cli-sweep" in capsys.readouterr().out
