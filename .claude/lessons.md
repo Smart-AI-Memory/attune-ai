@@ -21532,7 +21532,7 @@ def ", start_idx + 1)` for module-
   whenever main lags the feature it depends on — worth a line in the
   session starter so the next session pulls main before trusting it.
 
-**Rotating this machine's Redis password touches FIVE surfaces, and
+- **Rotating this machine's Redis password touches FIVE surfaces, and
 two of them silently override the obvious one — an ACL `user
 default` hash beats `requirepass`, and a second server can be
 answering the port.** Learned end-to-end 2026-08-08. The surfaces:
@@ -21614,15 +21614,15 @@ rotation, exactly what a leaked one costs.
   and `reach_snapshot.py` exiting 0 on rate-limit — every one is
   "absence of a signal treated as a positive signal."
 
-**Driving the ops dashboard headlessly (curl) — client token + single-slot runner**: `POST /workflows/{name}/run` rejects with `{"code":"invalid_client","message":"Missing or invalid X-Attune-Client header."}` unless you pass `X-Attune-Client: <token>`, where the token is embedded in any dashboard page's HTML as `<meta name="attune-client-token" content="...">` — scrape it with `curl -s localhost:8765/workflows | grep -o 'attune-client-token" content="[^"]*'`. The status endpoint (`GET /runs/{run_id}`) wants the same header. The workflow runner is SINGLE-SLOT: a second launch while one runs returns `{"message":"runner busy","current_run_id":"..."}` — poll the current run to completion, then launch the next; don't retry-loop the POST. Discovered 2026-08-08 running the post-release self-review (release-execute step 16, dashboard-launched so the runs record) against the shipped 11.4.0 tree from a worktree session: server launched with main venv python + `PYTHONPATH=<worktree>/src -m attune.ops --project-root <worktree>` per the existing worktree-MAPPING lessons, and `/api/info` reporting the worktree's version (11.4.0) is the receipt that the override took.
+- **Driving the ops dashboard headlessly (curl) — client token + single-slot runner**: `POST /workflows/{name}/run` rejects with `{"code":"invalid_client","message":"Missing or invalid X-Attune-Client header."}` unless you pass `X-Attune-Client: <token>`, where the token is embedded in any dashboard page's HTML as `<meta name="attune-client-token" content="...">` — scrape it with `curl -s localhost:8765/workflows | grep -o 'attune-client-token" content="[^"]*'`. The status endpoint (`GET /runs/{run_id}`) wants the same header. The workflow runner is SINGLE-SLOT: a second launch while one runs returns `{"message":"runner busy","current_run_id":"..."}` — poll the current run to completion, then launch the next; don't retry-loop the POST. Discovered 2026-08-08 running the post-release self-review (release-execute step 16, dashboard-launched so the runs record) against the shipped 11.4.0 tree from a worktree session: server launched with main venv python + `PYTHONPATH=<worktree>/src -m attune.ops --project-root <worktree>` per the existing worktree-MAPPING lessons, and `/api/info` reporting the worktree's version (11.4.0) is the receipt that the override took.
 
-**CodeQL PR-alert triage mechanics — sinks in unchanged files, the 280-char dismissal limit, and the classifier boundary**: three coupled facts from clearing PR #1979's required-CodeQL block (2026-08-08). (1) A "new alert in code changed by this pull request" can anchor its SINK in a file the PR never touches — `py/clear-text-storage-sensitive-data` flagged `authoring/polish.py:152` on a PR with an EMPTY diff for that file, because the taint SOURCE (a new sanitizer flow in `memory/personal.py`) was in changed code. Triage step: `git diff origin/main...HEAD -- <flagged-file>` first; an empty diff means you're looking at one flow with two surfacings, not two findings. (2) Dismissal via `gh api -X PATCH .../code-scanning/alerts/<n>`: `dismissed_comment` is hard-capped at 280 chars (422 "Only 280 characters are allowed" otherwise) — draft the reason to fit BEFORE asking the chair to paste it. (3) The harness safety classifier blocks agent-side alert dismissal even with a documented reason — the working pattern is: agent verifies the flow (receipt: the gate raises fail-closed at personal.py:223, single write path), drafts the ≤280-char dismissal comment, hands the user the two alert URLs; after manual dismissal the required CodeQL check clears on its next evaluation without needing a new push. Sanitizer-gate false positives are a recognizable class: CodeQL taints a sanitizer's RETURN value as sensitive instead of treating a fail-closed gate (raise-on-detect) as a barrier.
+- **CodeQL PR-alert triage mechanics — sinks in unchanged files, the 280-char dismissal limit, and the classifier boundary**: three coupled facts from clearing PR #1979's required-CodeQL block (2026-08-08). (1) A "new alert in code changed by this pull request" can anchor its SINK in a file the PR never touches — `py/clear-text-storage-sensitive-data` flagged `authoring/polish.py:152` on a PR with an EMPTY diff for that file, because the taint SOURCE (a new sanitizer flow in `memory/personal.py`) was in changed code. Triage step: `git diff origin/main...HEAD -- <flagged-file>` first; an empty diff means you're looking at one flow with two surfacings, not two findings. (2) Dismissal via `gh api -X PATCH .../code-scanning/alerts/<n>`: `dismissed_comment` is hard-capped at 280 chars (422 "Only 280 characters are allowed" otherwise) — draft the reason to fit BEFORE asking the chair to paste it. (3) The harness safety classifier blocks agent-side alert dismissal even with a documented reason — the working pattern is: agent verifies the flow (receipt: the gate raises fail-closed at personal.py:223, single write path), drafts the ≤280-char dismissal comment, hands the user the two alert URLs; after manual dismissal the required CodeQL check clears on its next evaluation without needing a new push. Sanitizer-gate false positives are a recognizable class: CodeQL taints a sanitizer's RETURN value as sensitive instead of treating a fail-closed gate (raise-on-detect) as a barrier.
 
-**Cross-worktree fixes on another session's idle branch — the worktree_path_guard blocks Edit/Write, and the sanctioned path is precondition-check + `git -C` + `git apply`**: chair-directed fix on PR #1979 (2026-08-08) whose branch lived in a sibling worktree (`.claude/worktrees/memory-security-r1r2`). `git switch` in my own worktree fails (`already used by worktree at ...`), and the PreToolUse `worktree_path_guard.py` hook BLOCKS Edit/Write tools targeting the sibling tree (session worktree ≠ target worktree). Working pattern for the intentional, authorized case: (1) verify the sibling tree is safe to touch — `git -C <tree> status --short` empty AND `git -C <tree> rev-parse HEAD` == `git ls-remote origin <branch>` (idle at pushed head = no in-flight work to trample); (2) make edits as a patch file in scratchpad + `git -C <tree> apply <patch>` via Bash — deliberate and reviewable, unlike a raw Write to a foreign path; (3) commit/push with `git -C`, confirming `git -C <tree> branch --show-current` first. Alternative for recurring cases: the guard honors an `ATTUNE_WORKTREE_GUARD_ALLOW` env allowlist. Tests against the sibling tree run with `PYTHONPATH=<sibling>/src` + main-venv python (same worktree-MAPPING rules as always).
+- **Cross-worktree fixes on another session's idle branch — the worktree_path_guard blocks Edit/Write, and the sanctioned path is precondition-check + `git -C` + `git apply`**: chair-directed fix on PR #1979 (2026-08-08) whose branch lived in a sibling worktree (`.claude/worktrees/memory-security-r1r2`). `git switch` in my own worktree fails (`already used by worktree at ...`), and the PreToolUse `worktree_path_guard.py` hook BLOCKS Edit/Write tools targeting the sibling tree (session worktree ≠ target worktree). Working pattern for the intentional, authorized case: (1) verify the sibling tree is safe to touch — `git -C <tree> status --short` empty AND `git -C <tree> rev-parse HEAD` == `git ls-remote origin <branch>` (idle at pushed head = no in-flight work to trample); (2) make edits as a patch file in scratchpad + `git -C <tree> apply <patch>` via Bash — deliberate and reviewable, unlike a raw Write to a foreign path; (3) commit/push with `git -C`, confirming `git -C <tree> branch --show-current` first. Alternative for recurring cases: the guard honors an `ATTUNE_WORKTREE_GUARD_ALLOW` env allowlist. Tests against the sibling tree run with `PYTHONPATH=<sibling>/src` + main-venv python (same worktree-MAPPING rules as always).
 
-**Redis auth splits across REDIS_URL and REDIS_PASSWORD — a password-less URL beats a set password, and fail-open hooks hide the breakage**: live incident 2026-08-08. The local server had `requirepass` enabled; `~/.zshrc` exported both `REDIS_URL=redis://127.0.0.1:6379/0` (NO password embedded) and a correct `REDIS_PASSWORD` — but every consumer that reads only `REDIS_URL` (roundtable `Board`, hooks, entry-point backend probe) got `AuthenticationError: HELLO must be called with the client already authenticated`, and the ratified fail-open behavior (P15) meant hooks skipped recall silently for an unknown period. Diagnosis recipe that settles it in three calls: (1) `redis-cli ping` → `NOAUTH` proves the server wants auth; (2) parse `REDIS_URL` and check `has_password` (urlparse — never echo the value); (3) `redis-cli -h H -p P -a "$REDIS_PASSWORD" --no-auth-warning ping` → `PONG` proves the password is right and the URL is the problem. Session fix: `export REDIS_URL="redis://:${REDIS_PASSWORD}@127.0.0.1:6379/0"`. Durable fix: the `redis-config-truth` spec (one canonical resolver that merges `REDIS_PASSWORD` into password-less URLs + loud-once auth-failure classification). Handling note: source the exports with `eval "$(grep '^export REDIS_' ~/.zshrc)"` and print only redacted shapes — credentials never land in the transcript. Evidence: incident + PONG receipt, thread q-short-term-memory-enhancements-001.
+- **Redis auth splits across REDIS_URL and REDIS_PASSWORD — a password-less URL beats a set password, and fail-open hooks hide the breakage**: live incident 2026-08-08. The local server had `requirepass` enabled; `~/.zshrc` exported both `REDIS_URL=redis://127.0.0.1:6379/0` (NO password embedded) and a correct `REDIS_PASSWORD` — but every consumer that reads only `REDIS_URL` (roundtable `Board`, hooks, entry-point backend probe) got `AuthenticationError: HELLO must be called with the client already authenticated`, and the ratified fail-open behavior (P15) meant hooks skipped recall silently for an unknown period. Diagnosis recipe that settles it in three calls: (1) `redis-cli ping` → `NOAUTH` proves the server wants auth; (2) parse `REDIS_URL` and check `has_password` (urlparse — never echo the value); (3) `redis-cli -h H -p P -a "$REDIS_PASSWORD" --no-auth-warning ping` → `PONG` proves the password is right and the URL is the problem. Session fix: `export REDIS_URL="redis://:${REDIS_PASSWORD}@127.0.0.1:6379/0"`. Durable fix: the `redis-config-truth` spec (one canonical resolver that merges `REDIS_PASSWORD` into password-less URLs + loud-once auth-failure classification). Handling note: source the exports with `eval "$(grep '^export REDIS_' ~/.zshrc)"` and print only redacted shapes — credentials never land in the transcript. Evidence: incident + PONG receipt, thread q-short-term-memory-enhancements-001.
 
-**Spec status lines must LEAD with a `STATUS_VOCABULARY` token — a
+- **Spec status lines must LEAD with a `STATUS_VOCABULARY` token — a
 free-text opener like "ladder drafted" fails CI repo-wide, including
 on docs-only PRs.** Hit 2026-08-08: PR #1983 (pure spec-docs) failed
 `test_corpus_sweep_every_spec_dir_is_legible[redis-config-truth]`
@@ -21638,7 +21638,7 @@ drafted; rct-1 in flight`. When authoring or amending any
 token first, then annotate. The corpus sweep runs on every PR, so one
 illegible spec dir blocks unrelated work.
 
-**Editing another worktree's branch: the worktree-path guard blocks
+- **Editing another worktree's branch: the worktree-path guard blocks
 cross-worktree Writes — use a local branch in YOUR worktree + push to
 the remote branch instead.** Hit 2026-08-08 fixing PR #1984's CI: the
 PR branch (`claude/rct-1-canonical-resolver`) was checked out in a
@@ -21655,7 +21655,7 @@ is its owner's problem to fast-forward). Pairs with the existing
 branch-vs-worktree commit-tangle lessons — same family, this is the
 cross-session PR-fix surface.
 
-**Before pushing any src-touching PR, run the ratchet-gate sweep
+- **Before pushing any src-touching PR, run the ratchet-gate sweep
 locally — `pytest tests/unit/gates/ tests/unit/quality/` serially
 (~8s, 210 tests) — because each ratchet only surfaces when YOUR diff
 trips it, and running only the suites near your change misses them.**
@@ -21676,7 +21676,7 @@ legitimately fires on a must-keep construct, use its documented
 escape hatch (baseline raise + WHY comment at the call site, same
 commit) rather than restructuring correct code around the gate.
 
-**Port 8765 held by a stale `attune.ops` server from a FINISHED
+- **Port 8765 held by a stale `attune.ops` server from a FINISHED
 session — identify staleness by its `--project-root`, kill it, and
 set `autoPort: true` so the next collision self-resolves.** Hit
 2026-08-08: `preview_start` failed with "Port 8765 is in use by
@@ -21698,7 +21698,7 @@ localhost:<port>/api/info` — version + project_root in one read
 (the wrong-version trap's standard probe). Extends the existing
 autoPort/PORT-env lessons with the WHO-holds-the-port triage half.
 
-**When adding a validation guard that sibling code already enforces,
+- **When adding a validation guard that sibling code already enforces,
 expect existing test fixtures to use shapes only the unguarded path
 accepted — fix the fixtures to the REAL shape, don't loosen the
 guard.** Hit 2026-08-08 on PR #1989: adding `_RUN_ID_RE` validation
@@ -21718,7 +21718,7 @@ mnemonics. Generalizes to any shape-validation retrofit: grep the
 test fixtures for the field's existing values BEFORE landing the
 guard, and budget for hexifying/reshaping them in the same commit.
 
-**Format-on-save strips a TYPE_CHECKING import even when the import
+- **Format-on-save strips a TYPE_CHECKING import even when the import
 and its usage are batched in ONE message — the hook runs per-EDIT,
 not per-message**: refines the existing "put the import and its first
 usage in the SAME edit" rule. Hit 2026-08-08 on PR #1991: edit 1
@@ -21739,7 +21739,7 @@ import-then-use edit pair, re-grep the import line before running
 tests; the hook's system-reminder ("PostToolUse hook modified the
 file") is the tell that a re-verify is needed.
 
-**attune test processes carry AMBIENT `REDIS_*` secrets via dotenv —
+- **attune test processes carry AMBIENT `REDIS_*` secrets via dotenv —
 env-resolution tests using `patch.dict(clear=False)` are silently
 non-hermetic, and a behavior change that starts HONORING the ambient
 secret both breaks them AND leaks the live credential into failure
@@ -21763,7 +21763,7 @@ process; probe INSIDE the process. Pairs with the transcripts-are-
 permanent secret-leak family and the "keyless needs EMPTY not unset"
 lesson (same dotenv injection mechanism, different variable).
 
-**`urlparse(...).password` returns the PERCENT-ENCODED credential —
+- **`urlparse(...).password` returns the PERCENT-ENCODED credential —
 unquote it before passing to a `password=` kwarg, or special-char
 passwords authenticate wrong; `redis.Redis.from_url` decodes on its
 own, so URL-path consumers mask the bug.** Caught by the codex D11
@@ -21784,7 +21784,7 @@ works, kwarg path wrong" is the tell for this class — when two
 consumers of one credential source behave differently, suspect
 encoding at the extraction seam.
 
-**Delegated status-line drafts need lead normalization against the
+- **Delegated status-line drafts need lead normalization against the
 gate vocabulary AND per-citation verification before applying —
 two failure shapes from the 2026-08-08 backlog triage**: four
 parallel verification agents returned excellent evidence but their
@@ -21810,7 +21810,7 @@ verified ones. Pairs with the "verify the WHOLE claim" and
 spec-vocabulary lessons; this is the delegation-seam instance of
 both.
 
-**zsh does not word-split unquoted variables — `for f in $files`
+- **zsh does not word-split unquoted variables — `for f in $files`
 and `set -- $f` both treat a newline-joined list as ONE item
 (bit twice, 2026-08-08)**: bash-style iteration over a
 `$(command)` capture silently degrades in zsh — the loop runs once
@@ -21827,7 +21827,7 @@ suspecting the data. Same family as the existing zsh
 read-only-`status` lesson — the Bash tool here IS zsh, and
 bash-portable idioms are the recurring trap.
 
-**Publish-gate probes and approval typing — two concrete shapes
+- **Publish-gate probes and approval typing — two concrete shapes
 from the 11.6.0 ship (2026-08-09)**: (1) an empty
 `pending_deployments` on an `in_progress` publish run does NOT
 mean "no env gate" — the run only enters `waiting` when it
@@ -21894,7 +21894,7 @@ the success looks like a failure.
   with the "`--delete-branch` on a base PR orphans stacked PRs" and
   "rebase drops GPG signature" lessons.
 
-**A handoff's "uncommitted in the spec-backlog worktree" may name the
+- **A handoff's "uncommitted in the spec-backlog worktree" may name the
 PRIOR session's worktree, not yours — locate stranded files by
 scanning ALL worktrees before concluding they're lost**: 2026-08-09,
 the starter said the reach-snapshot day file was "UNCOMMITTED in the
@@ -21915,7 +21915,7 @@ lessons (PYTHONPATH, Write-absolute-path, "create a new worktree
 usually means reuse") — this is the cross-session file-recovery
 surface.
 
-**The chair's "merged #N" can precede the actual merge when
+- **The chair's "merged #N" can precede the actual merge when
 auto-merge CI is still running — verify `mergedAt`, arm the label per
 the stated intent, and stack follow-on work on the PR's head**: hit
 three times in one session (2026-08-09, PRs #2013/#2014/#2017). Each
@@ -21938,7 +21938,7 @@ authorized the merge. Distinguishing tell vs a genuinely-failed PR:
 all completed checks pass, zero fail, and the only absent context is
 the matrix sentinel.
 
-**`ruff check` in this repo AUTO-FIXES (fix is enabled in config) —
+- **`ruff check` in this repo AUTO-FIXES (fix is enabled in config) —
 a broad `ruff check scripts/ ...` preflight silently modified ~20
 legacy scripts, and a later `git add -A` staged them all into an
 unrelated commit**: 2026-08-09, during the P2 tasks-7+8 preflight. I
@@ -21961,7 +21961,7 @@ files, then add the intended set by name. Pairs with the
 trigger is OUTSIDE the commit path, so the pre-flight discipline
 alone doesn't catch it.
 
-**A green PR with auto-merge armed can sit unmerged indefinitely with
+- **A green PR with auto-merge armed can sit unmerged indefinitely with
 `mergeStateStatus: UNKNOWN` — poke the REST endpoint to force
 recomputation, then treat the revealed state normally**: 2026-08-09,
 PR #2022 (docs-only, `auto-merge-when-green` label + native auto-merge
@@ -21983,7 +21983,7 @@ still needs a computed-clean merge state; (3) extends the existing
 DIRTY/UNSTABLE/BEHIND/BLOCKED table with the fifth value UNKNOWN =
 recomputation never ran, cheap to clear, meaningless to retry against.
 
-**Windows `Path.home()` reads `USERPROFILE`, not `HOME` — a test
+- **Windows `Path.home()` reads `USERPROFILE`, not `HOME` — a test
 fixture that isolates the home directory with `monkeypatch.setenv("HOME",
 ...)` alone is silently unisolated on every Windows lane**: hit
 2026-08-10 on PR #2024. Three `TestReviewReminder` tests passed on
@@ -22004,7 +22004,7 @@ find fixtures with the same latent hole. Production code is unaffected
 test-isolation trap, and it only surfaces on the slow lanes — exactly
 the "Windows-relevant diff, wait for all OS lanes" class.
 
-**`reach_snapshot.py` keys its day file AND the 3/day attempt budget
+- **`reach_snapshot.py` keys its day file AND the 3/day attempt budget
 by UTC date — an evening-ET session gets a FRESH budget at 8 p.m.
 Eastern (00:00 UTC), so an "exhausted today, resume tomorrow" plan can
 often execute the same local evening**: 2026-08-09/10. The 08-09
@@ -22023,7 +22023,7 @@ has rolled over, run it now. Corollary for reading day files: a
 ET-stamped release events. Extends the US-4/US-5 lesson family
 (attempt budget, cross-day seed, penalty-outlasts-cooldown).
 
-**Cross-repo sessions vs the worktree-path guard — the working pattern**:
+- **Cross-repo sessions vs the worktree-path guard — the working pattern**:
 when a session anchored in one repo's worktree must legitimately work in
 ANOTHER repo (hit 2026-08-10: session started in an attune-ai worktree,
 but the requested spec — confidence-gated-retrieval — lives in
@@ -22043,7 +22043,7 @@ pre-created branch in the wrong repo was pure waste. Pairs with the
 (same guard, opposite case: there the cross-tree write was the BUG; here
 it was the work).
 
-**`uv lock -P <pkg>` can silently NO-OP minutes after that package
+- **`uv lock -P <pkg>` can silently NO-OP minutes after that package
 publishes — exit 0, no diff, no warning; verify the lock moved, then
 re-run**: hit 2026-08-10 doing the attune-ai lock-bump onto attune-rag
 1.1.0 ~15 minutes after the PyPI publish. First call
@@ -22059,7 +22059,7 @@ unchanged, re-run unquieted (or `--refresh-package <pkg>`) before
 suspecting anything else; (3) same class as "git commit -q can exit 0
 yet skip the commit" — quiet flags + registry caches hide no-ops.
 
-**`next_session_starter.md` is overwritten each session and has NO
+- **`next_session_starter.md` is overwritten each session and has NO
 version control — recover prior versions from session-transcript
 JSONLs, not from git**: hit 2026-08-10 when the current starter said
 "taxonomy recorded in the 2026-08-09 starter's item 4 — recover from
@@ -22079,7 +22079,7 @@ Prevention option if this recurs: timestamped copies in
 (weigh secret-file hazard — several `*.env` files live there; a
 `.gitignore`-first init would be mandatory).
 
-**The Class-1 `auto-merge-safe` auto-labeler merges docs-only PRs
+- **The Class-1 `auto-merge-safe` auto-labeler merges docs-only PRs
 at green with NO chair action — a "chair-read" docs PR can land
 BEFORE the chair reads it**: hit 2026-08-10 on attune-ai #2043
 (memory-claim-verification design+tasks, deliberately opened
@@ -22158,7 +22158,7 @@ mechanical fix (auto-labeler skips Class-1 when the title carries
   errors are precise and instant, and catching them there beats
   discovering them mid-conversation with the chair waiting.
 
-**Salting a transcript for an adversarial extraction probe needs
+- **Salting a transcript for an adversarial extraction probe needs
 BOTH channels — prose the extractor can see AND tool_use records
 for the universe — and a verify-armed check before the run.** The
 session-stash tail builder deliberately OMITS tool_use/tool_result
@@ -22176,7 +22176,7 @@ The one salt hit it caught was a manufactured finding about the
 salt itself, a failure class a one-channel salt could not have
 surfaced.
 
-**A measurement script must persist its input manifest at run time —
+- **A measurement script must persist its input manifest at run time —
 "same N inputs as last run" is only re-runnable if the set was
 pinned when it ran.** The mcv D8 probe selected "newest 40
 transcripts >20KB" dynamically and recorded only a truncated
