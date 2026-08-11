@@ -22117,3 +22117,142 @@ mechanical fix (auto-labeler skips Class-1 when the title carries
   chair-authorized merges. Pairs with the "label waits on REQUIRED
   checks only" lesson: the same Windows-relevance hold applies
   regardless of which arming mechanism is used.
+
+- **Close-and-reopen a PR on the SAME head SHA and the CI runs eat
+  each other — budget one `gh run rerun` cycle into any
+  probe-then-control PR design**: 2026-08-10, the chair-read gate
+  live-fire (#2046 marked probe → closed → #2047 unmarked control,
+  same branch/SHA). Two traps compose: (1) closing the probe
+  cancels its in-flight runs, and cancelled-but-required reads as
+  "fail" on whatever PR shares the SHA; (2) reopening as a new PR
+  spawns a fresh Tests run that lands in the same per-SHA
+  concurrency group as any rerun you started — one cancels the
+  other (which cancels WHICH is a webhook race), so a second
+  cancellation cascade can appear even after recovery started.
+  Diagnosis is one call: `gh api .../actions/runs/<id>` — every
+  "failing test" both times was `conclusion: cancelled`, with only
+  the matrix-sentinel showing real `failure` (it fails on a
+  cancelled matrix by design). Recovery: `gh run rerun <run-id>`
+  on the latest attempt, then a PENDING-TOLERANT watcher (only
+  treat fails as real when zero checks are pending — a strict
+  watcher fires on the transient fail rows mid-cascade). The
+  probe/control same-branch design is otherwise sound and cheap;
+  just expect the cancellation tax between the two halves.
+
+- **The elicitation `pushback` field validates `user_position`
+  against `options` — the user's position IS one of the options,
+  not a free-text description**: 2026-08-10, building the D11d
+  pushback form for the #2048 approval-recording question.
+  `form_from_dict` raised `FormValidationError: field[0]
+  'user_position' '<prose>' not in options` when I wrote
+  user_position as a sentence describing the chair's stance.
+  Correct shape: `options` lists the selectable positions
+  verbatim, `user_position` names which option is the user's
+  (rendered with the "your approach" tag), `alternative` names
+  mine, and the argument goes in `rationale`. Same
+  options-membership rule presumably applies to `alternative`.
+  The `decision` field has no such constraint (`recommended`
+  must match an option, but that one is intuitive). Cheap
+  pre-flight when authoring any new construct: build the form in
+  a throwaway `python -c` FIRST — `form_from_dict` validation
+  errors are precise and instant, and catching them there beats
+  discovering them mid-conversation with the chair waiting.
+
+**Salting a transcript for an adversarial extraction probe needs
+BOTH channels — prose the extractor can see AND tool_use records
+for the universe — and a verify-armed check before the run.** The
+session-stash tail builder deliberately OMITS tool_use/tool_result
+content (provenance R1: tool output is not speech), so salt
+injected only as tool_use records is invisible to the extractor
+and tests nothing; salt injected only as prose never enters the
+binder's universe, so a proposed salt ref rejects and the bind
+trap never arms. The mcv T3 salted subset injected an assistant
+prose aside ("unrelated to this session's work") within the 8k
+tail window PLUS Read/Bash tool_use records carrying the same
+artifacts, then verified per-copy that (a) the salt text appears
+in `_read_transcript_tail` output and (b) the salt values appear
+in `_derive_session_refs` — BEFORE spending the extraction run.
+The one salt hit it caught was a manufactured finding about the
+salt itself, a failure class a one-channel salt could not have
+surfaced.
+
+**A measurement script must persist its input manifest at run time —
+"same N inputs as last run" is only re-runnable if the set was
+pinned when it ran.** The mcv D8 probe selected "newest 40
+transcripts >20KB" dynamically and recorded only a truncated
+per-row log (`path.name[:36]`); when T3 needed the SAME 40 a day
+later, the set had to be reconstructed by parsing the old raw log
+and prefix-matching stems against disk — recoverable this time
+(all 40 resolved), pure luck that the truncation preserved enough
+of each name. The durable fix shipped with T3: the probe takes
+`--transcript-list` and the resolved list is pinned to
+`d8-transcripts.txt` beside the results. Rule: any probe whose
+protocol says "re-run on the same inputs" writes the exact input
+set (full paths) as a first-class artifact at run time, next to
+the numbers.
+
+- **attune-* pypistats download counts are dominated by our own CI
+  matrix, and the frozen-pip-cache regime makes them swing BOTH ways
+  — a "download plunge" can be a measurement artifact, not lost
+  users**: 2026-08-10, attune-verify "plunged" ~7/21 from
+  1,500–3,400/day to ~20–100/day. Investigation receipts: (1) the
+  lost traffic spanned 3 OSes × 5–6 Python minors (CI-matrix shape);
+  (2) attune-verify and attune-rag moved in lockstep through 7/19
+  (3,403 vs 3,404 no-mirror) — the shared installer was attune-ai's
+  CI, the only machine consumer of both; (3) attune-help jumped from
+  ~0 to 2,400–3,400/day on exactly 7/27, the day #1689 added it to
+  pyproject — dep-set membership alone puts a niche package at
+  thousands/day; (4) smoking gun in one install step of tests.yml run
+  31454637010: `Using cached attune_verify-0.2.2` (not counted by
+  PyPI) beside `Downloading attune_rag-1.1.0` and `Downloading
+  attune_help-0.13.0` (counted, every lane, every run). Mechanism:
+  `cache: 'pip'` with no `cache-dependency-path` gives a
+  never-rotating cache key — deps frozen in the snapshot are never
+  re-downloaded (counter collapses after their last release: verify
+  0.2.2 shipped 7/18, spike 7/18–19, cliff 7/21), deps newer than the
+  snapshot re-download per-lane per-run (counter inflates: rag, help).
+  Durable rules: (a) treat pypistats/pepy for attune-* as
+  CI-weather unless the CI contribution is subtracted — reach
+  snapshots (scripts/reach_snapshot.py, usage-signals spec) read this
+  exact source and are contaminated in both directions; (b) real
+  demand ≈ the post-cliff floor (attune-verify: ~20–100/day
+  no-mirror, some of it scanners); (c) fixed 2026-08-11 by keying
+  pip caches on pyproject.toml + uv.lock (28 setup-python steps) so
+  the cache rotates only when the dep set changes — expect ALL
+  attune-* counters to step down toward real-user truth after this
+  lands; do not read that step-down as churn. Pairs with the
+  "pepy badge = vanity" finding (project_telemetry_local_only) —
+  this is the mechanism behind it.
+
+- **A live-rendered widget shows the INSTALLED wheel's behavior,
+  not the repo's — restart the MCP server and check source
+  (`git log -S`) before recording a behavior conclusion from it**:
+  2026-08-11, the `fix_scope` pushback specimen rendered live from
+  an attune-verify session; an empty submit posted `answers: {}`
+  and only `elicitation_collect_response` caught it
+  (`{success: false, problems: ["'fix_scope' is required"]}`).
+  That read as a product gap ("the widget doesn't gate required
+  fields client-side") but was VERSION DRIFT: the gate already
+  existed on main (#2042), unreleased at the time (installed
+  wheel 11.1.0; even 11.6.0 predates it), and the running MCP
+  server keeps serving the stale wheel until restarted — the
+  D10/D11/D15 "registered ≠ working until the server reboots"
+  pattern, resurfacing on the consumer side. The near-miss: the
+  false "product gap" finding was minutes from entering this
+  corpus as fact.
+
+- **The locked `fix_scope` pushback specimen is a live exhibit,
+  not just demo copy — when someone asks to SEE a pushback form,
+  rerun it through the installed plugin rather than hand-drawing
+  an example**: 2026-08-11, asked from an attune-verify session to
+  "show the form" behind the first pushback-form switch
+  (`resp-20260630-013130`). The specimen in
+  `docs/process/DEMO_DYNAMIC_FORMS_script.md` (~line 193, locked
+  2026-07-24) rendered live via
+  `mcp__attune-ai__elicitation_render_widget` → `show_widget`
+  with dissent framing intact — no API credits, no staging, no
+  mockup. The full receipt tour (dissent render → required-field
+  reject → validated switch, `resp-20260811-005510`) took three
+  tool calls from a different repo's worktree. Receipts beat
+  mockups, and the provenance chain (decisions.md D-records →
+  demo script → fresh response ID) comes along free.
