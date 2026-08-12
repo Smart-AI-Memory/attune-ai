@@ -54,7 +54,24 @@ METRICS_LOG = Path.home() / ".attune" / "enforcement-metrics.jsonl"
 # Roots OUTSIDE any session worktree that are legitimate Write/Edit
 # targets. ~/.attune/memory is the curated-memory repo — a deliberate
 # second git tree (docs/specs/curated-memory-productionization/, D4).
-DEFAULT_ALLOWED_EXTERNAL_ROOTS: tuple[str, ...] = ("~/.attune/memory",)
+DEFAULT_ALLOWED_EXTERNAL_ROOTS: tuple[str, ...] = (
+    "~/.attune/memory",
+    # Sibling project repos (retro 2026-08-12: the attune-forms
+    # extraction had to script around the guard for every write into
+    # the new repo; attune-verify hit the same wall 2026-06-02).
+    # Writes into a DIFFERENT project repo from an attune-ai session
+    # are near-always deliberate cross-repo work. ~/attune-ai itself
+    # stays deliberately ABSENT: worktree-vs-main-checkout confusion
+    # is the accident class this guard exists to catch.
+    "~/attune-author",
+    "~/attune-docs",
+    "~/attune-forms",
+    "~/attune-help",
+    "~/attune-lite",
+    "~/attune-marketing",
+    "~/attune-rag",
+    "~/attune-verify",
+)
 
 # Extend the allowlist without editing code: an os.pathsep-separated
 # list of additional allowed root directories.
