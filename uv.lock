@@ -304,6 +304,7 @@ source = { editable = "." }
 dependencies = [
     { name = "agent-memory-client" },
     { name = "anthropic" },
+    { name = "attune-forms" },
     { name = "attune-rag" },
     { name = "attune-verify" },
     { name = "claude-agent-sdk" },
@@ -527,6 +528,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'enterprise'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
+    { name = "attune-forms", specifier = ">=0.1.0,<0.2.0" },
     { name = "attune-help", marker = "extra == 'dev'", specifier = ">=0.10.0" },
     { name = "attune-rag", specifier = ">=0.1.5,<2.0" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<2.0" },
@@ -699,6 +701,18 @@ dev = [
     { name = "tiktoken", specifier = ">=0.7.0,<1.0.0" },
     { name = "types-pyyaml", specifier = ">=6.0,<7.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.27.0,<1.0" },
+]
+
+[[package]]
+name = "attune-forms"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "structlog" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/45/a0/bdeca40bc7e626eb2ec499fcf58c97f287e1e02875ad03261e7cc8953062/attune_forms-0.1.0.tar.gz", hash = "sha256:dec2893503997c3d9bc7d1eebe1e94aed3bf262fff845f108a51345ac8fd746d", size = 82619, upload-time = "2026-08-12T11:09:19.729Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8c/a5/c0b3676179d397f8263e2ee5b88b9c28a5161de9b98f6f70b1d2718c5a5b/attune_forms-0.1.0-py3-none-any.whl", hash = "sha256:feada33981e9303701db33d905514a5d066784d8791a587eb2f27dd54f9f62f6", size = 51920, upload-time = "2026-08-12T11:09:18.155Z" },
 ]
 
 [[package]]
@@ -1512,7 +1526,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [

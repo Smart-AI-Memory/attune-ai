@@ -1,12 +1,9 @@
 """Gate: file-op modules must reference a path-validation helper.
-
 Enforces the contract's critical rule "ALWAYS validate file paths in
 file operations" (collaboration contract; feature-lead-governance
 principles draft, principle 4). Until 2026-07-29 this rule had no
 mechanical enforcer — it relied on review discipline.
-
 The scan (AST-based, so prose/comments can never false-positive):
-
 - A module "does file ops" when it calls ``open()`` with a
   write-capable mode, ``.write_text()`` / ``.write_bytes()``, a
   mutating ``shutil`` function, or a mutating ``os`` function.
@@ -16,16 +13,13 @@ The scan (AST-based, so prose/comments can never false-positive):
   ``attune.security.path_validation``, and equivalents).
 - A module with file ops and no validation must hold an entry in
   ``ALLOWLIST`` below.
-
 Fixing a failure, in preference order:
-
 1. Route the path through
    ``attune.security.path_validation._validate_file_path`` (or an
    equivalent named helper) before the file op.
 2. If every path the module writes is internal/derived (never
    user- or LLM-supplied), add the module to ``ALLOWLIST`` with the
    review that shipped it.
-
 The allowlist is SHRINK-ONLY in spirit: it was seeded 2026-07-29 with
 the 35 then-existing offenders so the gate lands green. A companion
 test fails when an entry goes stale (module gained validation or
@@ -39,14 +33,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SRC_ROOT = REPO_ROOT / "src" / "attune"
-
 #: Attribute calls that write through a path-like receiver.
 _WRITE_ATTRS = {"write_text", "write_bytes"}
 #: shutil.<fn> calls that create, move, or destroy filesystem entries.
 _SHUTIL_FUNCS = {"copy", "copy2", "copyfile", "copytree", "move", "rmtree"}
 #: os.<fn> calls that destroy or rename filesystem entries.
 _OS_FUNCS = {"remove", "unlink", "rename", "replace"}
-
 #: Modules with file ops and no path-validation reference, vetted at
 #: seeding (2026-07-29): each writes only internal/derived paths
 #: (state stores, telemetry sinks, generated docs). Remove entries as
@@ -61,7 +53,6 @@ ALLOWLIST = frozenset(
         "src/attune/authoring/projector.py",
         "src/attune/authoring/spec_workflow.py",
         "src/attune/curator/cache.py",
-        "src/attune/elicitation/bridge.py",
         "src/attune/gates/envelope.py",
         "src/attune/handoff/packet.py",
         "src/attune/help/feedback.py",
@@ -83,7 +74,6 @@ ALLOWLIST = frozenset(
         "src/attune/pipeline_learner/scaffold.py",
         "src/attune/roundtable/gate_triage.py",
         "src/attune/roundtable/triage_appendix.py",
-        "src/attune/telemetry/form_events.py",
         "src/attune/telemetry/usage_ping.py",
         "src/attune/telemetry/usage_tracker.py",
         "src/attune/workflows/progress_reporters.py",
@@ -186,8 +176,6 @@ def test_allowlist_entries_are_still_needed() -> None:
 
 
 # --- scanner self-tests: the true/false-positive pairs ---------------
-
-
 def test_scanner_detects_write_open() -> None:
     ops, _ = scan_source('f = open(p, "w")\n')
     assert ops == ["open-for-write at line 1"]

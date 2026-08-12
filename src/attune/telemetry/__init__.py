@@ -14,6 +14,10 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+import sys as _sys
+
+import attune_forms.form_events as _form_events
+
 from .agent_coordination import CoordinationSignal, CoordinationSignals
 from .agent_tracking import AgentHeartbeat, HeartbeatCoordinator
 from .approval_gates import ApprovalGate, ApprovalRequest, ApprovalResponse
@@ -21,6 +25,18 @@ from .event_streaming import EventStreamer, StreamEvent
 from .features import FeatureInfo, FeatureStatus, TelemetryFeatures
 from .feedback_loop import FeedbackEntry, FeedbackLoop, QualityStats, TierRecommendation
 from .usage_tracker import UsageTracker
+
+# ``attune.telemetry.form_events`` moved to the standalone attune-forms
+# package; alias the legacy path to the SAME module object (os.path
+# pattern) so imports and monkeypatching behave exactly as before. Any
+# ``import attune.telemetry.form_events`` runs this package __init__ to
+# completion first, so the alias is always in place by lookup time.
+# BOTH bindings are required — the sys.modules entry for import
+# statements AND the package attribute for ``attune.telemetry
+# .form_events`` access (a cached alias alone is never bound as a
+# parent attribute; caught live on the 3.10 CI lanes).
+_sys.modules[__name__ + ".form_events"] = _form_events
+form_events = _form_events
 
 __all__ = [
     "AgentHeartbeat",
