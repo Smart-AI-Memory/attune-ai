@@ -3,8 +3,8 @@ type: concept
 name: elicitation-forms-concept
 feature: elicitation-forms
 depth: concept
-generated_at: 2026-07-25T14:36:38.987608+00:00
-source_hash: 65dd2400b49b9d8a20605f411f62b72c1ae2d9d530b8730bb0db0acfef04fb59
+generated_at: 2026-08-12T13:06:18.469671+00:00
+source_hash: 1d0bd5af58687db6aab66d7cc8fc7057e34be8f79d6c76e2ef2e46758496302b
 status: generated
 ---
 
@@ -40,10 +40,19 @@ grammar** — a family of constructs, each a member of the one form model:
 - **progress** — report a set of items by status and surface the blocked
   ones as a picker.
 
-This feature owns the form model, the renderers, the validator, and the
-MCP tools that expose them. *When* a construct fires in a conversation is
-a judgment call governed by the agent's decision routine, not by this
-subsystem.
+The substrate itself — the `FormSchema` models, the bridge, the
+surface renderers, the theme, the intake template engine, and the
+`form_events` telemetry — lives in the standalone
+[attune-forms](https://github.com/Smart-AI-Memory/attune-forms)
+package (PyPI: `attune-forms`), which attune-ai depends on. The
+`attune.elicitation` import paths used throughout these docs remain
+fully supported: they alias the same module objects, so imports,
+monkeypatching, and class identity behave exactly as before the
+extraction. What lives in this repo is the attune-side integration —
+the host seams, the attune-specific intake templates, and the MCP
+tools that expose the forms. *When* a construct fires in a
+conversation is a judgment call governed by the agent's decision
+routine, not by this subsystem.
 
 ## Concepts
 
