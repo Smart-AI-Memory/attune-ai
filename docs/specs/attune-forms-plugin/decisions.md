@@ -29,3 +29,29 @@ ruling, not drift.
 
 Recorded same-day in memory (`project_attune_forms_plugin_roadmap`)
 and phased into requirements.md (this spec).
+
+## D2 — P1 naming ruled and executed (chair via decision form, 2026-08-12 evening)
+
+Chair picked all three recommended names (widget decision form,
+same session as D1): config `attune-forms.config.json`, env prefix
+`ATTUNE_FORMS_` (`_KEYBOARD_MODE` / `_TELEMETRY` / `_HOME`), data
+home = XDG state dir (`$XDG_STATE_HOME/attune-forms`, default
+`~/.local/state/attune-forms`) with an EXISTING `~/.attune` honored.
+Framing refinement accepted in-discussion: the phase is
+COLLISION-proofing, not de-branding — the package is named
+attune-forms, so package-branded names are the fix, not a leak.
+
+**Write-target nuance (lead call, recorded for the R1.3 receipt):**
+the fresh-write default in `set_keyboard_mode` stays the LEGACY
+filename so attune-ai needs zero changes at 0.2.0 (its CLI test pins
+`attune.config.json` creation); public surfaces (P2 MCP server, P3
+skill) pin `config_name="attune-forms.config.json"` explicitly.
+Flipping the library default is deferred until attune-ai pins its
+own name.
+
+**Executed same evening** (attune-forms #2, 0.2.0): read precedence
+new > legacy > default; env new-wins; home resolution
+`ATTUNE_FORMS_HOME` > `ATTUNE_HOME` > existing `~/.attune` > XDG;
+16 precedence tests. Receipts: 376 attune-forms tests green;
+attune-ai elicitation/mcp/telemetry/meta_workflows suites 1,962
+green against 0.2.0 editable, unchanged.
