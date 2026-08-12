@@ -16,6 +16,10 @@ type: reference
 
 ### Public API — `attune.elicitation`
 
+The implementation lives in the standalone `attune-forms` package;
+`attune.elicitation` re-exports it unchanged and remains the
+supported import path inside attune-ai.
+
 | Symbol | Purpose |
 |--------|---------|
 | `form_from_dict(data)` | Build and validate a `FormSchema` from plain data; raises `FormValidationError` on a malformed definition. |

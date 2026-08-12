@@ -1,8 +1,8 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 1241,
-    "linked_templates": 897,
+    "total_templates": 1288,
+    "linked_templates": 910,
     "total_tags": 121
   },
   "links": {
@@ -536,11 +536,29 @@
         "discovery"
       ]
     },
+    "con-tool-author-feature": {
+      "tags": [
+        "skill",
+        "auto-discovered"
+      ]
+    },
     "con-tool-bug-predict": {
       "tags": [
         "security",
         "bugs",
         "scanning"
+      ]
+    },
+    "con-tool-bulk": {
+      "tags": [
+        "skill",
+        "auto-discovered"
+      ]
+    },
+    "con-tool-catalog": {
+      "tags": [
+        "skill",
+        "auto-discovered"
       ]
     },
     "con-tool-coach": {
@@ -556,10 +574,40 @@
         "linting"
       ]
     },
+    "con-tool-cross-review": {
+      "tags": [
+        "skill",
+        "auto-discovered"
+      ]
+    },
+    "con-tool-discovery-sweep": {
+      "tags": [
+        "skill",
+        "auto-discovered"
+      ]
+    },
     "con-tool-doc-gen": {
       "tags": [
         "documentation",
         "docstrings"
+      ]
+    },
+    "con-tool-docs-outbox": {
+      "tags": [
+        "skill",
+        "auto-discovered"
+      ]
+    },
+    "con-tool-elicit": {
+      "tags": [
+        "skill",
+        "auto-discovered"
+      ]
+    },
+    "con-tool-fix": {
+      "tags": [
+        "skill",
+        "auto-discovered"
       ]
     },
     "con-tool-fix-test": {
@@ -569,11 +617,23 @@
         "fixes"
       ]
     },
+    "con-tool-image-analysis": {
+      "tags": [
+        "skill",
+        "auto-discovered"
+      ]
+    },
     "con-tool-memory-and-context": {
       "tags": [
         "memory",
         "context",
         "persistence"
+      ]
+    },
+    "con-tool-personal-memory": {
+      "tags": [
+        "skill",
+        "auto-discovered"
       ]
     },
     "con-tool-planning": {
@@ -584,6 +644,12 @@
       ]
     },
     "con-tool-rag-code-gen": {
+      "tags": [
+        "skill",
+        "auto-discovered"
+      ]
+    },
+    "con-tool-recall": {
       "tags": [
         "skill",
         "auto-discovered"
@@ -601,6 +667,12 @@
         "release",
         "publishing",
         "ci"
+      ]
+    },
+    "con-tool-roundtable": {
+      "tags": [
+        "skill",
+        "auto-discovered"
       ]
     },
     "con-tool-security-audit": {
@@ -622,6 +694,12 @@
         "spec",
         "planning",
         "workflow"
+      ]
+    },
+    "con-tool-verify": {
+      "tags": [
+        "skill",
+        "auto-discovered"
       ]
     },
     "con-tool-workflow-orchestration": {
@@ -7655,7 +7733,8 @@
       "related_reference": [
         "ref-bug-predict",
         "ref-release-notes",
-        "ref-security-audit"
+        "ref-security-audit",
+        "ref-tool-release-notes"
       ],
       "tags": [
         "release",
@@ -8067,7 +8146,25 @@
         "claude-code"
       ]
     },
+    "qui-skill-author-feature": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
     "qui-skill-bug-predict": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-bulk": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-catalog": {
       "tags": [
         "skill",
         "claude-code"
@@ -8085,7 +8182,37 @@
         "claude-code"
       ]
     },
+    "qui-skill-cross-review": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-discovery-sweep": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
     "qui-skill-doc-gen": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-docs-outbox": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-elicit": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-fix": {
       "tags": [
         "skill",
         "claude-code"
@@ -8097,7 +8224,19 @@
         "claude-code"
       ]
     },
+    "qui-skill-image-analysis": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
     "qui-skill-memory-and-context": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-personal-memory": {
       "tags": [
         "skill",
         "claude-code"
@@ -8115,6 +8254,12 @@
         "claude-code"
       ]
     },
+    "qui-skill-recall": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
     "qui-skill-refactor-plan": {
       "tags": [
         "skill",
@@ -8122,6 +8267,12 @@
       ]
     },
     "qui-skill-release-prep": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-roundtable": {
       "tags": [
         "skill",
         "claude-code"
@@ -8140,6 +8291,12 @@
       ]
     },
     "qui-skill-spec": {
+      "tags": [
+        "skill",
+        "claude-code"
+      ]
+    },
+    "qui-skill-verify": {
       "tags": [
         "skill",
         "claude-code"
@@ -8383,6 +8540,7 @@
     "ref-skill-attune-hub": {
       "references_tools": [
         "ref-tool-bug-predict",
+        "ref-tool-discovery-sweep",
         "ref-tool-doc-gen",
         "ref-tool-refactor-plan",
         "ref-tool-release-prep",
@@ -8401,6 +8559,10 @@
           "position": "after_execution"
         },
         {
+          "id": "ref-tool-discovery-sweep",
+          "position": "after_execution"
+        },
+        {
           "id": "ref-tool-doc-gen",
           "position": "after_execution"
         },
@@ -8410,6 +8572,26 @@
         },
         {
           "id": "ref-tool-release-prep",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-security-audit",
+          "position": "after_execution"
+        }
+      ]
+    },
+    "ref-skill-author-feature": {
+      "references_tools": [
+        "ref-tool-discovery-sweep",
+        "ref-tool-security-audit"
+      ],
+      "tags": [
+        "skill",
+        "plugin"
+      ],
+      "embeds": [
+        {
+          "id": "ref-tool-discovery-sweep",
           "position": "after_execution"
         },
         {
@@ -8432,6 +8614,47 @@
       "embeds": [
         {
           "id": "ref-tool-bug-predict",
+          "position": "after_execution"
+        }
+      ]
+    },
+    "ref-skill-bulk": {
+      "references_tools": [
+        "ref-tool-bug-predict",
+        "ref-tool-security-audit"
+      ],
+      "related_task": [
+        "tas-use-bulk"
+      ],
+      "tags": [
+        "skill",
+        "plugin"
+      ],
+      "embeds": [
+        {
+          "id": "ref-tool-bug-predict",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-security-audit",
+          "position": "after_execution"
+        }
+      ]
+    },
+    "ref-skill-catalog": {
+      "references_tools": [
+        "ref-tool-security-audit"
+      ],
+      "related_task": [
+        "tas-use-catalog"
+      ],
+      "tags": [
+        "skill",
+        "plugin"
+      ],
+      "embeds": [
+        {
+          "id": "ref-tool-security-audit",
           "position": "after_execution"
         }
       ]
@@ -8493,6 +8716,45 @@
         "plugin"
       ]
     },
+    "ref-skill-cross-review": {
+      "tags": [
+        "skill",
+        "plugin"
+      ]
+    },
+    "ref-skill-discovery-sweep": {
+      "references_tools": [
+        "ref-tool-bug-predict",
+        "ref-tool-deep-review",
+        "ref-tool-discovery-sweep",
+        "ref-tool-security-audit"
+      ],
+      "related_task": [
+        "tas-use-discovery-sweep"
+      ],
+      "tags": [
+        "skill",
+        "plugin"
+      ],
+      "embeds": [
+        {
+          "id": "ref-tool-bug-predict",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-deep-review",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-discovery-sweep",
+          "position": "after_execution"
+        },
+        {
+          "id": "ref-tool-security-audit",
+          "position": "after_execution"
+        }
+      ]
+    },
     "ref-skill-doc-gen": {
       "references_tools": [
         "ref-tool-doc-gen"
@@ -8511,6 +8773,24 @@
         }
       ]
     },
+    "ref-skill-docs-outbox": {
+      "tags": [
+        "skill",
+        "plugin"
+      ]
+    },
+    "ref-skill-elicit": {
+      "tags": [
+        "skill",
+        "plugin"
+      ]
+    },
+    "ref-skill-fix": {
+      "tags": [
+        "skill",
+        "plugin"
+      ]
+    },
     "ref-skill-fix-test": {
       "related_task": [
         "tas-use-fix-test"
@@ -8520,9 +8800,27 @@
         "plugin"
       ]
     },
+    "ref-skill-image-analysis": {
+      "related_task": [
+        "tas-use-image-analysis"
+      ],
+      "tags": [
+        "skill",
+        "plugin"
+      ]
+    },
     "ref-skill-memory-and-context": {
       "related_task": [
         "tas-use-memory-and-context"
+      ],
+      "tags": [
+        "skill",
+        "plugin"
+      ]
+    },
+    "ref-skill-personal-memory": {
+      "related_task": [
+        "tas-use-personal-memory"
       ],
       "tags": [
         "skill",
@@ -8554,6 +8852,12 @@
           "id": "ref-tool-security-audit",
           "position": "after_execution"
         }
+      ]
+    },
+    "ref-skill-recall": {
+      "tags": [
+        "skill",
+        "plugin"
       ]
     },
     "ref-skill-refactor-plan": {
@@ -8592,6 +8896,12 @@
         }
       ]
     },
+    "ref-skill-roundtable": {
+      "tags": [
+        "skill",
+        "plugin"
+      ]
+    },
     "ref-skill-security-audit": {
       "references_tools": [
         "ref-tool-security-audit"
@@ -8623,6 +8933,12 @@
       "related_task": [
         "tas-use-spec"
       ],
+      "tags": [
+        "skill",
+        "plugin"
+      ]
+    },
+    "ref-skill-verify": {
       "tags": [
         "skill",
         "plugin"
@@ -8702,7 +9018,9 @@
       "referenced_by_skills": [
         "ref-skill-attune-hub",
         "ref-skill-bug-predict",
-        "ref-skill-coach"
+        "ref-skill-bulk",
+        "ref-skill-coach",
+        "ref-skill-discovery-sweep"
       ],
       "tags": [
         "mcp",
@@ -8735,6 +9053,9 @@
       ]
     },
     "ref-tool-deep-review": {
+      "referenced_by_skills": [
+        "ref-skill-discovery-sweep"
+      ],
       "tags": [
         "mcp",
         "tool",
@@ -8742,6 +9063,18 @@
       ]
     },
     "ref-tool-dependency-check": {
+      "tags": [
+        "mcp",
+        "tool",
+        "workflow"
+      ]
+    },
+    "ref-tool-discovery-sweep": {
+      "referenced_by_skills": [
+        "ref-skill-attune-hub",
+        "ref-skill-author-feature",
+        "ref-skill-discovery-sweep"
+      ],
       "tags": [
         "mcp",
         "tool",
@@ -8779,6 +9112,13 @@
         "mcp",
         "tool",
         "workflow"
+      ]
+    },
+    "ref-tool-list-capabilities": {
+      "tags": [
+        "mcp",
+        "tool",
+        "utility"
       ]
     },
     "ref-tool-memory-forget": {
@@ -8835,6 +9175,13 @@
         "workflow"
       ]
     },
+    "ref-tool-release-notes": {
+      "tags": [
+        "mcp",
+        "tool",
+        "workflow"
+      ]
+    },
     "ref-tool-release-prep": {
       "referenced_by_skills": [
         "ref-skill-attune-hub",
@@ -8864,7 +9211,11 @@
     "ref-tool-security-audit": {
       "referenced_by_skills": [
         "ref-skill-attune-hub",
+        "ref-skill-author-feature",
+        "ref-skill-bulk",
+        "ref-skill-catalog",
         "ref-skill-coach",
+        "ref-skill-discovery-sweep",
         "ref-skill-rag-code-gen",
         "ref-skill-security-audit"
       ],
@@ -9202,6 +9553,24 @@
         "task"
       ]
     },
+    "tas-use-bulk": {
+      "related_reference": [
+        "ref-skill-bulk"
+      ],
+      "tags": [
+        "skill",
+        "task"
+      ]
+    },
+    "tas-use-catalog": {
+      "related_reference": [
+        "ref-skill-catalog"
+      ],
+      "tags": [
+        "skill",
+        "task"
+      ]
+    },
     "tas-use-coach": {
       "related_reference": [
         "ref-skill-coach"
@@ -9214,6 +9583,15 @@
     "tas-use-code-quality": {
       "related_reference": [
         "ref-skill-code-quality"
+      ],
+      "tags": [
+        "skill",
+        "task"
+      ]
+    },
+    "tas-use-discovery-sweep": {
+      "related_reference": [
+        "ref-skill-discovery-sweep"
       ],
       "tags": [
         "skill",
@@ -9238,9 +9616,27 @@
         "task"
       ]
     },
+    "tas-use-image-analysis": {
+      "related_reference": [
+        "ref-skill-image-analysis"
+      ],
+      "tags": [
+        "skill",
+        "task"
+      ]
+    },
     "tas-use-memory-and-context": {
       "related_reference": [
         "ref-skill-memory-and-context"
+      ],
+      "tags": [
+        "skill",
+        "task"
+      ]
+    },
+    "tas-use-personal-memory": {
+      "related_reference": [
+        "ref-skill-personal-memory"
       ],
       "tags": [
         "skill",
@@ -12068,8 +12464,21 @@
       "war-models"
     ],
     "auto-discovered": [
+      "con-tool-author-feature",
+      "con-tool-bulk",
+      "con-tool-catalog",
       "con-tool-coach",
-      "con-tool-rag-code-gen"
+      "con-tool-cross-review",
+      "con-tool-discovery-sweep",
+      "con-tool-docs-outbox",
+      "con-tool-elicit",
+      "con-tool-fix",
+      "con-tool-image-analysis",
+      "con-tool-personal-memory",
+      "con-tool-rag-code-gen",
+      "con-tool-recall",
+      "con-tool-roundtable",
+      "con-tool-verify"
     ],
     "automation": [
       "com-hooks",
@@ -12402,19 +12811,32 @@
       "qui-install-plugin",
       "qui-plugin",
       "qui-skill-attune-hub",
+      "qui-skill-author-feature",
       "qui-skill-bug-predict",
+      "qui-skill-bulk",
+      "qui-skill-catalog",
       "qui-skill-coach",
       "qui-skill-code-quality",
+      "qui-skill-cross-review",
+      "qui-skill-discovery-sweep",
       "qui-skill-doc-gen",
+      "qui-skill-docs-outbox",
+      "qui-skill-elicit",
+      "qui-skill-fix",
       "qui-skill-fix-test",
+      "qui-skill-image-analysis",
       "qui-skill-memory-and-context",
+      "qui-skill-personal-memory",
       "qui-skill-planning",
       "qui-skill-rag-code-gen",
+      "qui-skill-recall",
       "qui-skill-refactor-plan",
       "qui-skill-release-prep",
+      "qui-skill-roundtable",
       "qui-skill-security-audit",
       "qui-skill-smart-test",
       "qui-skill-spec",
+      "qui-skill-verify",
       "qui-skill-workflow-orchestration",
       "ref-plugin",
       "tas-install-plugin",
@@ -13413,10 +13835,12 @@
       "ref-tool-context-set",
       "ref-tool-deep-review",
       "ref-tool-dependency-check",
+      "ref-tool-discovery-sweep",
       "ref-tool-doc-audit",
       "ref-tool-doc-gen",
       "ref-tool-doc-orchestrator",
       "ref-tool-health-check",
+      "ref-tool-list-capabilities",
       "ref-tool-memory-forget",
       "ref-tool-memory-retrieve",
       "ref-tool-memory-search",
@@ -13424,6 +13848,7 @@
       "ref-tool-performance-audit",
       "ref-tool-rag-knowledge-query",
       "ref-tool-refactor-plan",
+      "ref-tool-release-notes",
       "ref-tool-release-prep",
       "ref-tool-research-synthesis",
       "ref-tool-secure-release",
@@ -13722,19 +14147,32 @@
       "qui-plugin",
       "ref-plugin",
       "ref-skill-attune-hub",
+      "ref-skill-author-feature",
       "ref-skill-bug-predict",
+      "ref-skill-bulk",
+      "ref-skill-catalog",
       "ref-skill-coach",
       "ref-skill-code-quality",
+      "ref-skill-cross-review",
+      "ref-skill-discovery-sweep",
       "ref-skill-doc-gen",
+      "ref-skill-docs-outbox",
+      "ref-skill-elicit",
+      "ref-skill-fix",
       "ref-skill-fix-test",
+      "ref-skill-image-analysis",
       "ref-skill-memory-and-context",
+      "ref-skill-personal-memory",
       "ref-skill-planning",
       "ref-skill-rag-code-gen",
+      "ref-skill-recall",
       "ref-skill-refactor-plan",
       "ref-skill-release-prep",
+      "ref-skill-roundtable",
       "ref-skill-security-audit",
       "ref-skill-smart-test",
       "ref-skill-spec",
+      "ref-skill-verify",
       "ref-skill-workflow-orchestration",
       "tas-install-plugin",
       "tas-plugin",
@@ -14334,46 +14772,90 @@
       "tro-workflow-not-running"
     ],
     "skill": [
+      "con-tool-author-feature",
+      "con-tool-bulk",
+      "con-tool-catalog",
       "con-tool-coach",
+      "con-tool-cross-review",
+      "con-tool-discovery-sweep",
+      "con-tool-docs-outbox",
+      "con-tool-elicit",
+      "con-tool-fix",
+      "con-tool-image-analysis",
+      "con-tool-personal-memory",
       "con-tool-rag-code-gen",
+      "con-tool-recall",
+      "con-tool-roundtable",
       "con-tool-security-audit",
+      "con-tool-verify",
       "qui-skill-attune-hub",
+      "qui-skill-author-feature",
       "qui-skill-bug-predict",
+      "qui-skill-bulk",
+      "qui-skill-catalog",
       "qui-skill-coach",
       "qui-skill-code-quality",
+      "qui-skill-cross-review",
+      "qui-skill-discovery-sweep",
       "qui-skill-doc-gen",
+      "qui-skill-docs-outbox",
+      "qui-skill-elicit",
+      "qui-skill-fix",
       "qui-skill-fix-test",
+      "qui-skill-image-analysis",
       "qui-skill-memory-and-context",
+      "qui-skill-personal-memory",
       "qui-skill-planning",
       "qui-skill-rag-code-gen",
+      "qui-skill-recall",
       "qui-skill-refactor-plan",
       "qui-skill-release-prep",
+      "qui-skill-roundtable",
       "qui-skill-security-audit",
       "qui-skill-smart-test",
       "qui-skill-spec",
+      "qui-skill-verify",
       "qui-skill-workflow-orchestration",
       "ref-skill-attune-hub",
+      "ref-skill-author-feature",
       "ref-skill-bug-predict",
+      "ref-skill-bulk",
+      "ref-skill-catalog",
       "ref-skill-coach",
       "ref-skill-code-quality",
+      "ref-skill-cross-review",
+      "ref-skill-discovery-sweep",
       "ref-skill-doc-gen",
+      "ref-skill-docs-outbox",
+      "ref-skill-elicit",
+      "ref-skill-fix",
       "ref-skill-fix-test",
+      "ref-skill-image-analysis",
       "ref-skill-memory-and-context",
+      "ref-skill-personal-memory",
       "ref-skill-planning",
       "ref-skill-rag-code-gen",
+      "ref-skill-recall",
       "ref-skill-refactor-plan",
       "ref-skill-release-prep",
+      "ref-skill-roundtable",
       "ref-skill-security-audit",
       "ref-skill-smart-test",
       "ref-skill-spec",
+      "ref-skill-verify",
       "ref-skill-workflow-orchestration",
       "tas-use-attune-hub",
       "tas-use-bug-predict",
+      "tas-use-bulk",
+      "tas-use-catalog",
       "tas-use-coach",
       "tas-use-code-quality",
+      "tas-use-discovery-sweep",
       "tas-use-doc-gen",
       "tas-use-fix-test",
+      "tas-use-image-analysis",
       "tas-use-memory-and-context",
+      "tas-use-personal-memory",
       "tas-use-planning",
       "tas-use-rag-code-gen",
       "tas-use-refactor-plan",
@@ -14429,11 +14911,16 @@
     "task": [
       "tas-use-attune-hub",
       "tas-use-bug-predict",
+      "tas-use-bulk",
+      "tas-use-catalog",
       "tas-use-coach",
       "tas-use-code-quality",
+      "tas-use-discovery-sweep",
       "tas-use-doc-gen",
       "tas-use-fix-test",
+      "tas-use-image-analysis",
       "tas-use-memory-and-context",
+      "tas-use-personal-memory",
       "tas-use-planning",
       "tas-use-rag-code-gen",
       "tas-use-refactor-plan",
@@ -14845,10 +15332,12 @@
       "ref-tool-context-set",
       "ref-tool-deep-review",
       "ref-tool-dependency-check",
+      "ref-tool-discovery-sweep",
       "ref-tool-doc-audit",
       "ref-tool-doc-gen",
       "ref-tool-doc-orchestrator",
       "ref-tool-health-check",
+      "ref-tool-list-capabilities",
       "ref-tool-memory-forget",
       "ref-tool-memory-retrieve",
       "ref-tool-memory-search",
@@ -14856,6 +15345,7 @@
       "ref-tool-performance-audit",
       "ref-tool-rag-knowledge-query",
       "ref-tool-refactor-plan",
+      "ref-tool-release-notes",
       "ref-tool-release-prep",
       "ref-tool-research-synthesis",
       "ref-tool-secure-release",
@@ -14886,6 +15376,7 @@
       "ref-tool-auth-status",
       "ref-tool-context-get",
       "ref-tool-context-set",
+      "ref-tool-list-capabilities",
       "ref-tool-telemetry-stats"
     ],
     "ux": [
@@ -15032,6 +15523,7 @@
       "ref-tool-code-review",
       "ref-tool-deep-review",
       "ref-tool-dependency-check",
+      "ref-tool-discovery-sweep",
       "ref-tool-doc-audit",
       "ref-tool-doc-gen",
       "ref-tool-doc-orchestrator",
@@ -15039,6 +15531,7 @@
       "ref-tool-performance-audit",
       "ref-tool-rag-knowledge-query",
       "ref-tool-refactor-plan",
+      "ref-tool-release-notes",
       "ref-tool-release-prep",
       "ref-tool-research-synthesis",
       "ref-tool-secure-release",
