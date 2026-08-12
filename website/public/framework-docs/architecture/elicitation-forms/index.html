@@ -4915,10 +4915,19 @@ grammar</strong> — a family of constructs, each a member of the one form model
 <li><strong>progress</strong> — report a set of items by status and surface the blocked
   ones as a picker.</li>
 </ul>
-<p>This feature owns the form model, the renderers, the validator, and the
-MCP tools that expose them. <em>When</em> a construct fires in a conversation is
-a judgment call governed by the agent's decision routine, not by this
-subsystem.</p>
+<p>The substrate itself — the <code>FormSchema</code> models, the bridge, the
+surface renderers, the theme, the intake template engine, and the
+<code>form_events</code> telemetry — lives in the standalone
+<a href="https://github.com/Smart-AI-Memory/attune-forms">attune-forms</a>
+package (PyPI: <code>attune-forms</code>), which attune-ai depends on. The
+<code>attune.elicitation</code> import paths used throughout these docs remain
+fully supported: they alias the same module objects, so imports,
+monkeypatching, and class identity behave exactly as before the
+extraction. What lives in this repo is the attune-side integration —
+the host seams, the attune-specific intake templates, and the MCP
+tools that expose the forms. <em>When</em> a construct fires in a
+conversation is a judgment call governed by the agent's decision
+routine, not by this subsystem.</p>
 <h2 id="concepts">Concepts<a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h2>
 <h3 id="one-substrate-many-constructs">One substrate, many constructs<a class="headerlink" href="#one-substrate-many-constructs" title="Permanent link">&para;</a></h3>
 <p>A construct is not a parallel system — it is meaning and presentation
@@ -5089,7 +5098,7 @@ MCP tool schema (and its count guard), and the driving skill's docs. A
 per-type "rejects out-of-option" test is the cheap guard that catches a
 missed validation site. Prove it with a non-mocked round-trip — render,
 submit, collect — not just unit tests.</p>
-<!-- attune-generated: source_hash=65dd2400b49b9d8a20605f411f62b72c1ae2d9d530b8730bb0db0acfef04fb59 feature=elicitation-forms kind=architecture generated_at=2026-07-25 -->
+<!-- attune-generated: source_hash=1d0bd5af58687db6aab66d7cc8fc7057e34be8f79d6c76e2ef2e46758496302b feature=elicitation-forms kind=architecture generated_at=2026-08-12 -->
 
 
 
