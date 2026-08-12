@@ -168,6 +168,19 @@ class TestAllowlist:
         roots = hook_module._allowed_external_roots()
         assert Path.home() / ".attune" / "memory" in roots
 
+    def test_default_allowlist_covers_sibling_project_repos(self, hook_module):
+        """Sibling project repos are allowlisted (retro 2026-08-12) —
+        cross-repo work from an attune-ai session is deliberate."""
+        roots = hook_module._allowed_external_roots()
+        for repo in ("attune-forms", "attune-author", "attune-help", "attune-verify"):
+            assert Path.home() / repo in roots
+
+    def test_main_checkout_stays_off_the_allowlist(self, hook_module):
+        """~/attune-ai must NEVER be allowlisted: worktree-vs-main
+        confusion is the accident class this guard exists to catch."""
+        roots = hook_module._allowed_external_roots()
+        assert Path.home() / "attune-ai" not in roots
+
     def test_default_attune_memory_write_passes(
         self, hook_module, isolated_metrics_log, two_git_trees, monkeypatch, tmp_path
     ):
