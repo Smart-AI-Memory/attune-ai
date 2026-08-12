@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Elicitation substrate extracted to the standalone `attune-forms`
+  package** — the dynamic forms library (the `FormSchema` /
+  `FormQuestion` models, `form_from_dict` validation, the widget /
+  AskUserQuestion / MCP-elicitation renderers, `select_form_surface`
+  routing, the shared form theme, the `FormTemplate` + providers intake
+  engine, and form-events telemetry) now lives in
+  [Smart-AI-Memory/attune-forms](https://github.com/Smart-AI-Memory/attune-forms)
+  and is consumed as a dependency (`attune-forms>=0.1.0`). Legacy
+  import paths (`attune.elicitation.*`, the form classes in
+  `attune.meta_workflows.models`, `attune.telemetry.form_events`)
+  remain working aliases bound to the same module objects, so existing
+  consumers and monkeypatching are unaffected. The attune-specific
+  intakes (fix, spec, the 17 workflow templates) stay in-repo,
+  registered through the library's host seams
+  (`WORKFLOW_SCHEMA_RESOLVER`, `TEMPLATE_LOADERS`).
+
 ### Documentation
 
 - **Retroactive premium-price callout** (fable-premium-tier task 9):

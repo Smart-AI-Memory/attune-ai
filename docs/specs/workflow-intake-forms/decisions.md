@@ -90,3 +90,29 @@ sources, path candidates) come from providers so they cannot
 drift. Live-fire receipt: discovery-sweep's generated form
 rendered with real working-tree path candidates and all seven
 adapter names.
+
+## D4 — Substrate extracted to the standalone `attune-forms` package (chair, 2026-08-12, decision form)
+
+The chair ruled via the decision construct (session
+`dynamic-forms-library`): the elicitation substrate becomes a
+**separate PyPI package in its own repo** —
+`Smart-AI-Memory/attune-forms`, import name `attune_forms` — with
+attune-ai as its first consumer; artifact tier "direct extraction
+PR this session" (over a gated spec; the coupling surface was
+measured thin: form dataclasses + `structlog` only).
+
+**What moved:** the form models (out of `meta_workflows/models.py`),
+`bridge`, `widget`, `theme`, `elicitation_schema`, `template_store`,
+`reference_form`, `intake_template`, and `telemetry/form_events`.
+**What stayed:** fix/spec intakes, the 17 workflow templates, MCP/CLI
+wiring, and the display kernels (different substrate). Two host
+seams replace the in-repo couplings: `WORKFLOW_SCHEMA_RESOLVER`
+(registry lookup) and `TEMPLATE_LOADERS` (registration-by-import).
+
+**Compatibility ruling:** legacy import paths are `sys.modules`
+aliases bound to the same module objects (the `os.path` pattern) —
+class identity and monkeypatching preserved, goldens untouched.
+Receipts: attune-forms 358 tests green standalone + wheel packs the
+template data; attune-ai full unit suite 20,625 green with the
+dependency swapped in. Sequencing: the attune-ai PR merges only
+after `attune-forms` 0.1.0 is live on PyPI.

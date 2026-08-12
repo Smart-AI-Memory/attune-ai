@@ -12,50 +12,22 @@ Purpose: Enable dynamic workflow creation via forms + agent teams
 import json
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
 from enum import Enum
 from typing import Any
 
 # =============================================================================
 # Enums
 # =============================================================================
-
-
-class QuestionType(str, Enum):
-    """Types of form questions supported.
-
-    The first four are v1 controls (rendered via AskUserQuestion). The
-    last three are v2.1 rich controls — natively expressible on the MCP
-    elicitation surface (D8): number (with min/max), date (ISO-8601
-    string), and textarea (multi-line string with max_length).
-    """
-
-    TEXT_INPUT = "text_input"
-    SINGLE_SELECT = "single_select"
-    MULTI_SELECT = "multi_select"
-    BOOLEAN = "boolean"
-    NUMBER = "number"
-    DATE = "date"
-    TEXTAREA = "textarea"
-    # v3 (communication grammar): a presentation-enriched single-select.
-    # The agent offers a recommended option with rationale + per-option
-    # tradeoffs; the answer is one selected option (validated exactly as a
-    # single-select). The rich card layout is widget-surface only.
-    DECISION = "decision"
-    # v4 (communication grammar member #3): a pushback — the agent
-    # disagrees with the user's stated approach (``user_position``) and
-    # offers a concrete alternative (``recommended``) + a disagreement
-    # ``rationale``. Same enriched-single-select answer path as DECISION;
-    # only the dissent framing (your-approach tag, "I'd suggest instead"
-    # badge, "Why I'd push back" callout) differs. Widget-surface only.
-    PUSHBACK = "pushback"
-    # v5 (communication grammar member #4): a progress report — the agent
-    # reports a set of items by status (done / in_flight / blocked) via
-    # ``progress_items`` and offers the blocked items as a single-select
-    # picker ("which blocker to tackle?"). The answer is one selected
-    # blocked option (validated exactly as a single-select); when nothing
-    # is blocked it degrades to a pure status display. Widget-surface only.
-    PROGRESS = "progress"
+# Form components — extracted to the standalone ``attune-forms``
+# package (2026-08-12). Re-imported here so the 17+ in-repo consumers
+# and any external ``attune.meta_workflows.models`` importer keep the
+# same import path AND the same class objects (isinstance-safe).
+from attune_forms.models import (  # noqa: F401
+    FormQuestion,
+    FormResponse,
+    FormSchema,
+    QuestionType,
+)
 
 
 class TierStrategy(str, Enum):
@@ -65,208 +37,6 @@ class TierStrategy(str, Enum):
     PROGRESSIVE = "progressive"  # Escalate cheap → capable → premium
     CAPABLE_FIRST = "capable_first"  # Start at capable, escalate to premium if needed
     PREMIUM_ONLY = "premium_only"  # Use only premium tier
-
-
-# =============================================================================
-# Form Components
-# =============================================================================
-
-
-@dataclass
-class FormQuestion:
-    """A single question in a Socratic form.
-
-    Attributes:
-        id: Unique identifier for this question
-        text: The question text shown to user
-        type: Question type (text_input, single_select, etc.)
-        options: Available options for select questions
-        default: Default value if user doesn't provide one
-        help_text: Additional help text shown to user
-        required: Whether this question must be answered
-        minimum: Lower bound for NUMBER answers (inclusive); None = none
-        maximum: Upper bound for NUMBER answers (inclusive); None = none
-        max_length: Max character length for TEXT_INPUT/TEXTAREA; None = none
-        rationale: DECISION only — the "why this recommendation" callout
-            rendered beneath the options; None = none
-        option_notes: DECISION only — {option: one-line tradeoff} shown
-            under each option card; None = none
-        recommended: DECISION/PUSHBACK — the option to badge (recommended,
-            or the agent's alternative for PUSHBACK) and order first; must
-            be one of options; None = none
-        user_position: PUSHBACK only — the option that is the user's stated
-            approach (tagged "your approach"); must be one of options;
-            None = none
-        progress_items: PROGRESS only — the reported items as a list of
-            {label, status, detail?} dicts, status ∈ {done, in_flight,
-            blocked}. The blocked subset must equal options (the picker);
-            done/in_flight items are reported but not answerable. None = none
-        progress_style: PROGRESS only — "report" renders a neutral digest
-            (item status is a free-form category tag, no task semantics or
-            strikethrough; options may be any subset of item labels, offered
-            as a "go deeper" picker). Pure presentation: the answer and its
-            validation are unchanged. None = the default task-status render.
-        list_style: SINGLE_SELECT/MULTI_SELECT only — render the options as
-            an "ordered" (numbered) or "unordered" (bulleted) selectable
-            list instead of the default dropdown/checkboxes. Pure
-            presentation: the answer and its validation are unchanged.
-            None = the default render.
-        inferred_from: Why this field's ``default`` was inferred from
-            context, e.g. "you've been editing src/attune/elicitation/".
-            Presence means the value is the agent's GUESS, not a static
-            suggestion, and the renderer marks it visibly as such so a
-            wrong guess is catchable. Requires ``default`` to be set.
-            None = not inferred.
-
-    """
-
-    id: str
-    text: str
-    type: QuestionType
-    options: list[str] = field(default_factory=list)
-    default: str | None = None
-    help_text: str | None = None
-    required: bool = True
-    minimum: float | None = None
-    maximum: float | None = None
-    max_length: int | None = None
-    rationale: str | None = None
-    option_notes: dict[str, str] | None = None
-    recommended: str | None = None
-    user_position: str | None = None
-    progress_items: list[dict[str, str]] | None = None
-    progress_style: str | None = None
-    list_style: str | None = None
-    inferred_from: str | None = None
-
-    def _fallback_help(self) -> str | None:
-        """Help text for AskUserQuestion, carrying any inference provenance.
-
-        ``AskUserQuestion`` has no slot for "this value is a guess", so the
-        provenance folds into help_text — otherwise the fallback surface
-        would present an inferred value as indistinguishable from a
-        settled one, which is the exact failure the widget badge exists
-        to prevent.
-        """
-        if not self.inferred_from:
-            return self.help_text
-        note = f"Guessed: {self.default} — {self.inferred_from}"
-        return f"{self.help_text} · {note}" if self.help_text else note
-
-    def to_ask_user_format(self) -> dict[str, Any]:
-        """Convert to format compatible with AskUserQuestion tool.
-
-        Returns:
-            Dictionary with question data for AskUserQuestion
-
-        """
-        # Decision (v3), pushback (v4), and progress (v5) all fall back to a
-        # single-select with the recommended option ordered first — the
-        # richer card layout is widget-only; the answer is one selected
-        # option either way. For progress the options are the blocked items
-        # (done/in_flight items are reported in the text, not pickable); when
-        # options is empty there is nothing to ask and the caller narrates
-        # the report instead.
-        if self.type in (
-            QuestionType.DECISION,
-            QuestionType.PUSHBACK,
-            QuestionType.PROGRESS,
-        ):
-            opts = list(self.options)
-            if self.recommended and self.recommended in opts:
-                opts = [self.recommended] + [o for o in opts if o != self.recommended]
-            return {
-                "question_id": self.id,
-                "question": self.text,
-                "type": "single_select",
-                "options": opts,
-                "default": self.default or self.recommended,
-                "help_text": self._fallback_help(),
-            }
-
-        # Boolean questions convert to Yes/No select
-        if self.type == QuestionType.BOOLEAN:
-            return {
-                "question_id": self.id,
-                "question": self.text,
-                "type": "single_select",
-                "options": ["Yes", "No"],
-                "default": self.default,  # Preserve default for boolean questions
-                "help_text": self._fallback_help(),
-            }
-
-        return {
-            "question_id": self.id,
-            "question": self.text,
-            "type": self.type.value,
-            "options": self.options,
-            "default": self.default,
-            "help_text": self._fallback_help(),
-        }
-
-
-@dataclass
-class FormSchema:
-    """Schema defining a collection of questions for a meta-workflow.
-
-    Attributes:
-        title: Form title
-        description: Form description
-        questions: List of questions to ask
-
-    """
-
-    title: str
-    description: str
-    questions: list[FormQuestion] = field(default_factory=list)
-
-    def get_question_batches(self, batch_size: int = 4) -> list[list[FormQuestion]]:
-        """Batch questions for asking (AskUserQuestion supports max 4 at once).
-
-        Args:
-            batch_size: Maximum questions per batch (default: 4)
-
-        Returns:
-            List of question batches
-
-        """
-        batches = []
-        for i in range(0, len(self.questions), batch_size):
-            batches.append(self.questions[i : i + batch_size])
-        return batches
-
-
-@dataclass
-class FormResponse:
-    """User's responses to a form.
-
-    Attributes:
-        template_id: ID of template this response is for
-        responses: Dictionary mapping question_id → user's answer
-        timestamp: When response was submitted
-        response_id: Unique ID for this response
-
-    """
-
-    template_id: str
-    responses: dict[str, Any] = field(default_factory=dict)
-    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
-    response_id: str = field(
-        default_factory=lambda: f"resp-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
-    )
-
-    def get(self, question_id: str, default: Any = None) -> Any:
-        """Get response for a question.
-
-        Args:
-            question_id: ID of question
-            default: Default value if not found
-
-        Returns:
-            User's response or default
-
-        """
-        return self.responses.get(question_id, default)
 
 
 # =============================================================================
