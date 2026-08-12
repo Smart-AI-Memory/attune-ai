@@ -111,6 +111,10 @@ form = form_from_dict({
 
 ### Public API — `attune.elicitation`
 
+The implementation lives in the standalone `attune-forms` package;
+`attune.elicitation` re-exports it unchanged and remains the
+supported import path inside attune-ai.
+
 | Symbol | Purpose |
 |--------|---------|
 | `form_from_dict(data)` | Build and validate a `FormSchema` from plain data; raises `FormValidationError` on a malformed definition. |
@@ -152,4 +156,4 @@ three construct types `decision`, `pushback`, `progress` — ten in all.
 `elicitation_collect_response`, and `elicitation_ask` — the same model,
 exposed for agents that drive forms through the MCP server.
 
-<!-- attune-generated: source_hash=65dd2400b49b9d8a20605f411f62b72c1ae2d9d530b8730bb0db0acfef04fb59 feature=elicitation-forms kind=how-to generated_at=2026-07-25 -->
+<!-- attune-generated: source_hash=1d0bd5af58687db6aab66d7cc8fc7057e34be8f79d6c76e2ef2e46758496302b feature=elicitation-forms kind=how-to generated_at=2026-08-12 -->

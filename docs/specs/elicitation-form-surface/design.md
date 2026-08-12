@@ -2,6 +2,15 @@
 
 **Status:** shipped (v1, verified 2026-07-14); v2+ status tracked in [requirements.md](requirements.md)
 
+> **Provenance (2026-08-12):** the substrate this spec designed —
+> the `FormSchema` models, bridge, renderers, theme, intake template
+> engine, and `form_events` — was extracted to the standalone
+> [attune-forms](https://github.com/Smart-AI-Memory/attune-forms)
+> package (PyPI `attune-forms`; attune-ai PR #2058). attune-ai is
+> its first consumer, and the `attune.elicitation` import paths
+> named throughout this spec remain supported as aliases. The design
+> text below is the historical record and is not rewritten.
+
 Design for the [requirements](requirements.md), post-Phase 0. Surface
 decision is [decisions.md](decisions.md) **D4**: AskUserQuestion-first,
 elicitation rejected, widget deferred. v1 = a declarative-form artifact

@@ -43,10 +43,19 @@ grammar** — a family of constructs, each a member of the one form model:
 - **progress** — report a set of items by status and surface the blocked
   ones as a picker.
 
-This feature owns the form model, the renderers, the validator, and the
-MCP tools that expose them. *When* a construct fires in a conversation is
-a judgment call governed by the agent's decision routine, not by this
-subsystem.
+The substrate itself — the `FormSchema` models, the bridge, the
+surface renderers, the theme, the intake template engine, and the
+`form_events` telemetry — lives in the standalone
+[attune-forms](https://github.com/Smart-AI-Memory/attune-forms)
+package (PyPI: `attune-forms`), which attune-ai depends on. The
+`attune.elicitation` import paths used throughout these docs remain
+fully supported: they alias the same module objects, so imports,
+monkeypatching, and class identity behave exactly as before the
+extraction. What lives in this repo is the attune-side integration —
+the host seams, the attune-specific intake templates, and the MCP
+tools that expose the forms. *When* a construct fires in a
+conversation is a judgment call governed by the agent's decision
+routine, not by this subsystem.
 
 ## Concepts
 
@@ -310,6 +319,10 @@ form = form_from_dict({
 ## Reference
 
 ### Public API — `attune.elicitation`
+
+The implementation lives in the standalone `attune-forms` package;
+`attune.elicitation` re-exports it unchanged and remains the
+supported import path inside attune-ai.
 
 | Symbol | Purpose |
 |--------|---------|
