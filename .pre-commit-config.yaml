@@ -147,7 +147,13 @@ repos:
       # (docs/specs/polish-cost-reduction/, lever 1).
       - id: regenerate-help-templates
         name: Regenerate .help/templates for changed source files
-        entry: uv run python scripts/regenerate_help_templates.py
+        # --frozen: use the existing lockfile without re-resolving —
+        # a plain `uv run` re-resolves against the registry on every
+        # commit (minutes of wall-clock) and HARD-FAILS the commit
+        # when pyproject names a dependency not yet on PyPI (the
+        # first-publish chicken-and-egg, hit live 2026-08-12 on the
+        # attune-forms extraction; retro item 6, chair-ruled).
+        entry: uv run --frozen python scripts/regenerate_help_templates.py
         language: system
         pass_filenames: true
         files: ^(src/.*\.py|\.help/features\.yaml)$
