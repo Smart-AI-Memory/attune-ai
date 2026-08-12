@@ -145,8 +145,13 @@ repos:
       # Never regenerates, never spends LLM budget, never blocks the
       # commit — polish-bearing regen runs at release-prep cadence
       # (docs/specs/polish-cost-reduction/, lever 1).
-      - id: regenerate-help-templates
-        name: Regenerate .help/templates for changed source files
+      # Renamed from regenerate-help-templates (chair ruling
+      # 2026-08-12, docs-regen-cadence pushback): the hook is
+      # CHECK-ONLY and the old name advertised regeneration it
+      # doesn't do. Regen runs only at release-prep (/coach
+      # maintain) — polish-cost-reduction lever 1.
+      - id: check-help-freshness
+        name: Check .help/templates freshness (check-only; regen at release-prep)
         # --frozen: use the existing lockfile without re-resolving —
         # a plain `uv run` re-resolves against the registry on every
         # commit (minutes of wall-clock) and HARD-FAILS the commit
