@@ -31,7 +31,12 @@ from .usage_tracker import UsageTracker
 # pattern) so imports and monkeypatching behave exactly as before. Any
 # ``import attune.telemetry.form_events`` runs this package __init__ to
 # completion first, so the alias is always in place by lookup time.
+# BOTH bindings are required — the sys.modules entry for import
+# statements AND the package attribute for ``attune.telemetry
+# .form_events`` access (a cached alias alone is never bound as a
+# parent attribute; caught live on the 3.10 CI lanes).
 _sys.modules[__name__ + ".form_events"] = _form_events
+form_events = _form_events
 
 __all__ = [
     "AgentHeartbeat",

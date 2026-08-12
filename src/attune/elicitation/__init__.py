@@ -71,6 +71,19 @@ for _name, _mod in {
 }.items():
     sys.modules[f"{__name__}.{_name}"] = _mod
 
+# The full os.path pattern needs BOTH bindings: the sys.modules entry
+# (for `import attune.elicitation.bridge`) and the package ATTRIBUTE
+# (for `attune.elicitation.bridge` access after `import
+# attune.elicitation`) — a cached sys.modules alias alone is never
+# bound as a parent attribute (caught live on the 3.10 CI lanes).
+bridge = _bridge
+elicitation_schema = _elicitation_schema
+intake_template = _intake_template
+reference_form = _reference_form
+template_store = _template_store
+theme = _theme
+widget = _widget
+
 
 def _workflow_schema_resolver(name: str):
     """Resolve a registry workflow's input schema for template binding."""
