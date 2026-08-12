@@ -55,3 +55,32 @@ new > legacy > default; env new-wins; home resolution
 16 precedence tests. Receipts: 376 attune-forms tests green;
 attune-ai elicitation/mcp/telemetry/meta_workflows suites 1,962
 green against 0.2.0 editable, unchanged.
+
+## D3 — P2 tool surface: mirror all four (chair via decision form, 2026-08-12 evening)
+
+Chair picked the recommendation: the standalone server ships
+attune-ai's four elicitation tools with identical names, schemas,
+and result shapes — convergence stays a pure swap. Executed as
+attune-forms #3 (0.3.0, published + endpoint-verified): `attune_forms
+.mcp_server` + `attune-forms-mcp` console script under `[mcp]`,
+pinned `mcp>=1.23,<2.0` (the 2.0 SDK removed the 1.x server API;
+matching attune-ai's generation is deliberate). Receipt (R2.4):
+non-mocked stdio round-trip — real subprocess, MCP handshake, all
+four tools exercised; `elicitation_ask` degrades to
+`action: "unsupported"` without an eliciting client.
+
+## D4 — P3 skill approved and plugin shipped (chair, 2026-08-12 night)
+
+Chair approved the generic `forms` skill text ("skill approved,
+finish P3"). Shipped as attune-forms #4: skill + marketplace/plugin
+manifests (attune-ai's proven `source: ./plugin` layout) +
+`.mcp.json` launching `uvx --from 'attune-forms[mcp]'
+attune-forms-mcp`. Receipts: trigger-phrase disjointness verified
+against every attune-ai skill (zero overlap — R3.2); uvx live-fire
+against PUBLISHED PyPI 0.3.0 (four tools listed, widget rendered
+over live stdio — the plugin's exact launch command). The plugin is
+installable now: `claude plugin marketplace add
+Smart-AI-Memory/attune-forms` → `claude plugin install
+attune-forms@attune-forms`. Remaining: Phase 4 (directory
+submissions — chair names targets) and the beta announcement,
+still gated on the grammar article (D1).
