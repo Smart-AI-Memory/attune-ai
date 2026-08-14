@@ -68,7 +68,11 @@ def write_memory(
     # seconds from now. Second-arithmetic lands on an arbitrary wall-clock
     # time, so a run near local midnight — or across a DST transition —
     # backdates to the wrong calendar day and the age assertions drift by one.
-    target = date.today() - timedelta(days=age_days)
+    # Anchor to the module's pinned TODAY, not the real clock: the audit
+    # assertions compare against TODAY, so a real-clock anchor makes every
+    # fixture age one day younger per real day (and timezone-dependent) —
+    # broke calendar-wide on 2026-08-14 when the 56-day fixture hit 49.
+    target = TODAY - timedelta(days=age_days)
     stamp = datetime.combine(target, clock_time(12, 0)).timestamp()
     os.utime(path, (stamp, stamp))
     return path
@@ -134,7 +138,7 @@ class TestParsing:
         write_memory(tmp_path, "lesson_y", mem_type="lesson")
         write_memory(tmp_path, "project_ok", mem_type="project")
 
-        report = audit(scan_corpus([tmp_path]))
+        report = audit(scan_corpus([tmp_path]), today=TODAY)
         assert [(p.stem, t) for p, t in report.invalid_types] == [("lesson_y", "lesson")]
         assert not report.clean
 
@@ -142,7 +146,7 @@ class TestParsing:
         """Absence is not value-drift — sweep roots may include corpora with
         a different file format where the linter claims no jurisdiction."""
         (tmp_path / "kindfile.md").write_text("# just a heading\n\nprose\n", encoding="utf-8")
-        report = audit(scan_corpus([tmp_path]))
+        report = audit(scan_corpus([tmp_path]), today=TODAY)
         assert report.invalid_types == ()
 
     def test_flags_forbidden_top_level_key(self, tmp_path: Path) -> None:
@@ -277,7 +281,7 @@ class TestParsing:
 class TestAge:
     def test_age_from_mtime_when_unverified(self, tmp_path: Path) -> None:
         path = write_memory(tmp_path, "p_age", age_days=61)
-        assert unverified_age_days(load_memory(path), date.today()) == 61
+        assert unverified_age_days(load_memory(path), TODAY) == 61
 
     def test_verified_date_wins_over_mtime(self, tmp_path: Path) -> None:
         path = write_memory(
@@ -516,7 +520,7 @@ class TestAnnotation:
 
     def test_annotate_appends_to_rendered_text(self, tmp_path: Path) -> None:
         path = write_memory(tmp_path, "p_ann", age_days=5)
-        out = annotate("the memory line", load_memory(path), date.today())
+        out = annotate("the memory line", load_memory(path), TODAY)
         assert out.startswith("the memory line")
         assert "5 days unverified" in out
 
@@ -534,7 +538,7 @@ class TestRankingPinsBothDirections:
         for i in range(3):
             write_memory(tmp_path, f"feedback_rule_{i}", "feedback", age_days=66)
 
-        report = audit(scan_corpus([tmp_path]), roots=[tmp_path])
+        report = audit(scan_corpus([tmp_path]), today=TODAY, roots=[tmp_path])
         top = report.ranked[0][0]
 
         assert top.stem == "project_pip_audit_broken", (
@@ -555,7 +559,7 @@ class TestRankingPinsBothDirections:
         write_memory(tmp_path, "project_rag_gate_corpus_stale", "project", age_days=0)
         write_memory(tmp_path, "project_old_thing", "project", age_days=40)
 
-        report = audit(scan_corpus([tmp_path]), roots=[tmp_path])
+        report = audit(scan_corpus([tmp_path]), today=TODAY, roots=[tmp_path])
         scores = {mem.stem: score for mem, score in report.ranked}
 
         assert scores["project_rag_gate_corpus_stale"] == 0.0
@@ -566,7 +570,7 @@ class TestRankingPinsBothDirections:
         write_memory(tmp_path, "feedback_b", "feedback", age_days=30)
         write_memory(tmp_path, "user_c", "user", age_days=30)
 
-        order = [mem.stem for mem, _ in audit(scan_corpus([tmp_path])).ranked]
+        order = [mem.stem for mem, _ in audit(scan_corpus([tmp_path]), today=TODAY).ranked]
         assert order == ["project_a", "feedback_b", "user_c"]
 
     def test_unknown_type_surfaces_rather_than_hides(self) -> None:
@@ -576,7 +580,7 @@ class TestRankingPinsBothDirections:
 
     def test_risk_is_age_times_volatility(self, tmp_path: Path) -> None:
         path = write_memory(tmp_path, "project_x", "project", age_days=10)
-        assert risk_score(load_memory(path), date.today()) == pytest.approx(10.0)
+        assert risk_score(load_memory(path), TODAY) == pytest.approx(10.0)
 
 
 class TestIntegrity:
@@ -584,12 +588,12 @@ class TestIntegrity:
         write_memory(tmp_path, "project_a", body="See [[project_gone]] and [[?later]].")
         write_index(tmp_path, ["project_a"])
 
-        report = audit(scan_corpus([tmp_path]), roots=[tmp_path])
+        report = audit(scan_corpus([tmp_path]), today=TODAY, roots=[tmp_path])
         assert [link for _, link in report.broken_links] == ["project_gone"]
 
     def test_name_must_equal_filename_stem(self, tmp_path: Path) -> None:
         write_memory(tmp_path, "project_a", name="something_else")
-        report = audit(scan_corpus([tmp_path]))
+        report = audit(scan_corpus([tmp_path]), today=TODAY)
         assert [p.stem for p in report.name_mismatches] == ["project_a"]
 
     def test_orphan_and_dangling_pointer_both_reported(self, tmp_path: Path) -> None:
@@ -597,7 +601,7 @@ class TestIntegrity:
         write_memory(tmp_path, "project_orphan")
         write_index(tmp_path, ["project_indexed", "project_never_written"])
 
-        report = audit(scan_corpus([tmp_path]), roots=[tmp_path])
+        report = audit(scan_corpus([tmp_path]), today=TODAY, roots=[tmp_path])
         assert [p.stem for p in report.orphans] == ["project_orphan"]
         assert [stem for _, stem in report.dangling_pointers] == ["project_never_written"]
 
@@ -617,18 +621,18 @@ class TestIntegrity:
             "| file | note |\n|---|---|\n| project_a.md | a thing |\n",
             encoding="utf-8",
         )
-        assert audit(scan_corpus([tmp_path]), roots=[tmp_path]).orphans == ()
+        assert audit(scan_corpus([tmp_path]), today=TODAY, roots=[tmp_path]).orphans == ()
 
     def test_corpus_without_an_index_has_no_orphans(self, tmp_path: Path) -> None:
         """No MEMORY.md means no pointer requirement — the linter self-skips."""
         write_memory(tmp_path, "project_a")
         write_memory(tmp_path, "project_b")
-        assert audit(scan_corpus([tmp_path]), roots=[tmp_path]).orphans == ()
+        assert audit(scan_corpus([tmp_path]), today=TODAY, roots=[tmp_path]).orphans == ()
 
     def test_clean_corpus_reports_clean(self, tmp_path: Path) -> None:
         write_memory(tmp_path, "project_a")
         write_index(tmp_path, ["project_a"])
-        assert audit(scan_corpus([tmp_path]), roots=[tmp_path]).clean
+        assert audit(scan_corpus([tmp_path]), today=TODAY, roots=[tmp_path]).clean
 
 
 class TestAdvisoryByConstruction:
