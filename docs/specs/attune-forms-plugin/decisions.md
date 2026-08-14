@@ -84,3 +84,27 @@ Smart-AI-Memory/attune-forms` → `claude plugin install
 attune-forms@attune-forms`. Remaining: Phase 4 (directory
 submissions — chair names targets) and the beta announcement,
 still gated on the grammar article (D1).
+
+## D5 — Phase 4 go; README rewrite; submission preconditioned on attune-ai status check (chair via decision form, 2026-08-14)
+
+Gate check: D1's both ships verified — article published 2026-08-13
+(canonical URL in `reference_linkedin_communication_grammar_article`),
+plugin shipped and cold-start-verified (D4). Chair ruled:
+
+1. **Phase 4 GO.**
+2. **R4.2 full rewrite:** README leads with the problem + grammar
+   (article framing), plugin install first, library API second;
+   attune-ai lineage demoted to a Provenance section. PyPI inherits.
+3. **Submission target:** before submitting attune-forms to the
+   Anthropic directory, check the stalled attune-ai submission.
+   **Check executed same day (2026-08-14):** live catalog
+   (claude-plugins-community, 2,281 plugins) contains attune-lite
+   ONLY (07ae2ae91) — attune-ai still unlisted 39 days after the
+   2026-07-06 Console submission. No public status surface exists;
+   next move (Console status check / resubmit at current version) is
+   the chair's. attune-forms submission decision follows that.
+4. **Announcement: draft after submission** — the announcement cites
+   the article + install path; it does NOT wait on directory approval.
+
+Premise corrections applied to requirements.md same day: test count
+358 → 384 (2026-08-14), CHANGELOG now exists (attune-forms #10).
