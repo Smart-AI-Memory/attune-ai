@@ -1,6 +1,6 @@
 # attune-forms Plugin & Beta — Requirements
 
-**Status:** Phase 4 ACTIVE (chair go 2026-08-14, D5) — P1–P3 executed (D2–D4); D1 announcement gate satisfied 2026-08-13. The
+**Status:** active (2026-08-14) — Phase 4 (chair go, D5); P1–P3 executed (D2–D4); D1 announcement gate satisfied 2026-08-13. The
 sequencing and announcement gate are already chair-ratified
 (decisions.md D1, ruled in-discussion the same day); this document
 phases that ruling into gated, executable scope. No phase executes
