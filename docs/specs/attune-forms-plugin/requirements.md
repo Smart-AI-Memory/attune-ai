@@ -1,6 +1,6 @@
 # attune-forms Plugin & Beta — Requirements
 
-**Status:** draft (2026-08-12) — awaiting chair review. The
+**Status:** Phase 4 ACTIVE (chair go 2026-08-14, D5) — P1–P3 executed (D2–D4); D1 announcement gate satisfied 2026-08-13. The
 sequencing and announcement gate are already chair-ratified
 (decisions.md D1, ruled in-discussion the same day); this document
 phases that ruling into gated, executable scope. No phase executes
@@ -21,7 +21,7 @@ order. Memory: `project_attune_forms_plugin_roadmap`.
   — `FormSchema` + the communication-grammar constructs
   (decision/pushback/progress), `form_from_dict` validation,
   three renderers (widget HTML, AskUserQuestion, MCP elicitation),
-  surface routing, intake templates, 358 tests, 7 required CI checks.
+  surface routing, intake templates, 384 tests (was 358 at drafting; recount 2026-08-14), 7 required CI checks.
 - **Host wiring (exists, attune-ai-only):** the elicitation MCP tools
   live inside attune-ai's MCP server; the `elicit` skill lives in
   attune-ai's plugin. Nothing installable exists for a repo that
