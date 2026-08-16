@@ -75,7 +75,8 @@ class TestFormFromDictTypeCoercion:
         assert problem == (
             "field[0] invalid type 'nope' (use one of: text_input, "
             "single_select, multi_select, boolean, number, date, "
-            "textarea, decision, pushback, progress)"
+            "textarea, decision, pushback, progress, deliberation, "
+            "triage, confirm, ranking, assumption_review)"
         )
 
 

@@ -37,7 +37,12 @@ from attune.elicitation.reference_form import EXAMPLE_ANSWERS, REFERENCE_FORM
 
 #: data-ftype values the submit script special-cases (read from a
 #: checked control rather than the generic first-control tail).
-_CHECKED_FTYPES = {"decision", "pushback", "progress"}
+_CHECKED_FTYPES = {"decision", "pushback", "progress", "deliberation", "confirm"}
+
+#: data-ftype values whose answer is a collection the script rebuilds
+#: from several controls (checked boxes, per-row radios, ranked rows,
+#: per-row radios + a paired text box).
+_COLLECTION_FTYPES = {"multi_select", "triage", "ranking", "assumption_review"}
 
 
 class _WidgetDOM(HTMLParser):
@@ -53,6 +58,8 @@ class _WidgetDOM(HTMLParser):
         self._in_script = False
         self._select: dict[str, Any] | None = None
         self._textarea: dict[str, Any] | None = None
+        self._item: str | None = None
+        self._in_ranked = False
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         a = dict(attrs)
@@ -62,14 +69,35 @@ class _WidgetDOM(HTMLParser):
             self._in_script = True
         if "data-fid" in a:
             self.fields.append({"fid": a["data-fid"], "ftype": a.get("data-ftype"), "controls": []})
+            self._item = None
+        if "data-rank-n" in a and self.fields:
+            # The ranking's slot budget, which the script reads off the
+            # same attribute to cap "add" clicks.
+            self.fields[-1]["slots"] = int(a["data-rank-n"] or 0)
+        if "ae-rank-ranked" in (a.get("class") or ""):
+            # Rows rendered INSIDE the ranked <ol> (a `suggested` order
+            # pre-populates it) are already the answer the script reads
+            # at submit — the simulator must see them without a _fill,
+            # or it claims an untouched form posts nothing when the real
+            # widget posts the proposal (review finding, 2026-08-16).
+            self._in_ranked = True
+        elif "ae-rank-pool" in (a.get("class") or ""):
+            self._in_ranked = False
+        if "data-item" in a and self.fields:
+            # A triage row: subsequent controls belong to this item, the
+            # way the submit script scopes its per-row query.
+            self._item = a["data-item"]
         if "data-control" in a and self.fields:
             controls = self.fields[-1]["controls"]
+            if self._in_ranked and tag == "input":
+                self.fields[-1].setdefault("ranked", []).append(a.get("value", "") or "")
             if tag == "input":
                 controls.append(
                     {
                         "type": a.get("type", "text"),
                         "value": a.get("value", "") or "",
                         "checked": "checked" in a,
+                        "item": self._item,
                     }
                 )
             elif tag == "select":
@@ -105,7 +133,28 @@ def _fill(dom: _WidgetDOM, answers: dict[str, Any]) -> None:
         if field["fid"] not in answers:
             continue
         value = answers[field["fid"]]
+        if isinstance(value, dict):
+            # Triage / assumption review: per-row radios — check the row's
+            # chosen ruling; an edit ruling also types its replacement text
+            # into the row's text box.
+            for ctl in field["controls"]:
+                ruling = value.get(ctl.get("item"))
+                if ctl["type"] == "radio":
+                    wanted_value = "edit" if isinstance(ruling, dict) else ruling
+                    ctl["checked"] = wanted_value == ctl["value"]
+                elif ctl["type"] == "text" and isinstance(ruling, dict):
+                    ctl["value"] = ruling.get("edit", "")
+            continue
         wanted = [str(v) for v in (value if isinstance(value, list) else [value])]
+        if field["ftype"] == "ranking":
+            # Ranking: the user moves rows into the ranked list in the
+            # answer's order — the DOM order the script reads at submit.
+            # The script refuses an "add" past the slot budget, so the
+            # simulator caps too rather than modelling a fill no user
+            # could perform.
+            picked = [v for v in wanted if v in {c["value"] for c in field["controls"]}]
+            field["ranked"] = picked[: field.get("slots", len(picked))]
+            continue
         for ctl in field["controls"]:
             if ctl["type"] in ("checkbox", "radio"):
                 # Radio semantics: picking one clears the group.
@@ -124,6 +173,25 @@ def _submit(dom: _WidgetDOM) -> dict[str, Any]:
         fid, ftype, controls = field["fid"], field["ftype"], field["controls"]
         if ftype == "multi_select":
             answers[fid] = [c["value"] for c in controls if c.get("checked")]
+        elif ftype == "triage":
+            rulings = {c["item"]: c["value"] for c in controls if c.get("checked")}
+            if rulings:
+                answers[fid] = rulings
+        elif ftype == "ranking":
+            # The ranked list's rows in DOM order; untouched posts nothing.
+            if field.get("ranked"):
+                answers[fid] = list(field["ranked"])
+        elif ftype == "assumption_review":
+            rulings: dict[str, Any] = {}
+            texts = {c["item"]: c["value"] for c in controls if c["type"] == "text"}
+            for c in controls:
+                if c["type"] == "radio" and c.get("checked"):
+                    item = c["item"]
+                    rulings[item] = (
+                        {"edit": texts.get(item, "")} if c["value"] == "edit" else c["value"]
+                    )
+            if rulings:
+                answers[fid] = rulings
         elif ftype in _CHECKED_FTYPES:
             picked = next((c for c in controls if c.get("checked")), None)
             if picked:
@@ -168,7 +236,7 @@ class TestSentinelContract:
         control is actually special-cased in the emitted reader."""
         _, dom = _render_reference()
         handled = set(re.findall(r"ftype === '(\w+)'", dom.script))
-        assert _CHECKED_FTYPES | {"multi_select"} <= handled
+        assert _CHECKED_FTYPES | _COLLECTION_FTYPES <= handled
 
 
 class TestFieldIdRoundTrip:
@@ -233,3 +301,28 @@ class TestFieldIdRoundTrip:
         with pytest.raises(FormValidationError) as excinfo:
             collect_form_response(form, payload["answers"])
         assert "feature_name" in str(excinfo.value)
+
+
+class TestReviewFindings:
+    """Regressions pinned from the 2026-08-16 five-lens review: the
+    simulator diverged from the real submit script on rankings — it
+    never read rows pre-populated in the ranked <ol> and it filled past
+    the slot budget the script caps at."""
+
+    def test_untouched_suggested_ranking_posts_the_proposal(self) -> None:
+        """The reference form's ranking carries a `suggested` order, so
+        its rows render INSIDE the ranked <ol> — an untouched submit
+        posts the proposal (the visible badge plus the submit IS the
+        confirmation, D2-c), never nothing."""
+        form, dom = _render_reference()
+        payload = _submit(dom)  # untouched
+        assert payload["answers"]["rollout_order"] == ["staging", "canary", "eu-prod"]
+
+    def test_fill_caps_ranking_at_the_slot_budget(self) -> None:
+        """The script refuses an "add" past `data-rank-n`; the simulator
+        must model the same cap rather than a fill no user could
+        perform."""
+        _, dom = _render_reference()
+        _fill(dom, {"rollout_order": ["us-prod", "eu-prod", "canary", "staging"]})
+        field = next(f for f in dom.fields if f["fid"] == "rollout_order")
+        assert field["ranked"] == ["us-prod", "eu-prod", "canary"]
