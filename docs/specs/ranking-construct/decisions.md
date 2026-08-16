@@ -87,3 +87,27 @@ attune-forms lock 0.1.0 → 0.6.0 + mirror tests) → project Article B →
 project Article A (after its §7 flips to 0.6.0). Post 1 and the 0.5.0
 cleanup batch were left unranked and wait. The ranking is the order
 the lead works in after the cut.
+
+## D5 — Five-lens review disposition + R4 letter ruling (chair, 2026-08-16)
+
+**Date:** 2026-08-16 · **Status:** ratified.
+
+The construct's diff got its five-lens adversarial review before the
+0.6.0 cut: seven findings (four confirmed by two skeptics each, three
+reproduced from the unverified pool) fixed in attune-forms with pinned
+regressions (`tests/test_ranking_construct.py::TestReviewFindings`,
+`tests/test_widget_roundtrip.py::TestReviewFindings`; report
+`~/.attune/reports/reviews/ranking-construct-review-2026-08-16.json`).
+Headline fixes: option-aware ordinal stripping ("3.12" ingests
+exactly), ASCII-only slot-key parsing (`decimal_key_number`), the fold
+keeps zero/out-of-range slots so the validator names the length,
+typed-beats-quoted held for dotted slots, and the widget gate blocks a
+partial OPTIONAL ranking.
+
+**R4 letter ruling (review finding #7):** R4 reads "numbered option
+list"; the shipped markdown surface renders the option pool as
+BULLETS. Chair ruled bullets stay: numbering an unordered pool would
+render what looks like a proposed order on a construct that keeps
+proposals visibly badged (D2-c), and position-number replies would
+collide with ordinal-strip ingestion. The spec letter is amended by
+this ruling rather than the surface changed.
