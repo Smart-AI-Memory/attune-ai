@@ -387,6 +387,7 @@ backend = [
     { name = "uvicorn" },
 ]
 dev = [
+    { name = "aiohttp" },
     { name = "attune-help" },
     { name = "attune-rag" },
     { name = "bandit" },
@@ -490,6 +491,7 @@ windows = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "aiohttp" },
     { name = "attune-help" },
     { name = "attune-rag" },
     { name = "bandit" },
@@ -521,6 +523,7 @@ dev = [
 requires-dist = [
     { name = "agent-memory-client", specifier = ">=0.14.0,<0.15" },
     { name = "aiohttp", marker = "extra == 'all'", specifier = ">=3.14.3,<4.0.0" },
+    { name = "aiohttp", marker = "extra == 'dev'", specifier = ">=3.14.3,<4.0.0" },
     { name = "anthropic", specifier = ">=0.40.0,<1.0.0" },
     { name = "anthropic", marker = "extra == 'all'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=0.40.0" },
@@ -676,6 +679,7 @@ provides-extras = ["anthropic", "llm", "memdocs", "agents", "backend", "lsp", "w
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "aiohttp", specifier = ">=3.14.3,<4.0.0" },
     { name = "attune-help", specifier = ">=0.10.0" },
     { name = "attune-rag", specifier = ">=0.1.5,<2.0" },
     { name = "bandit", specifier = ">=1.7,<2.0" },

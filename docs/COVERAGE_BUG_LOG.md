@@ -1559,3 +1559,20 @@ missing from this table until 2026-07-24 — it was recorded in the
 session-49f snapshot above but never propagated here.)
 
 Modules at 100%: 99 (cumulative across all sessions; +4 from the 2026-08-01 fleet — facade and fix_intake closed at 99% with their remainders classified: one dead-code region, one unreachable-without-mocking guard).
+
+## 2026-08-16 — hooks/executor.py lane (weekly-report Tier 1)
+
+One environment bug, security-relevant:
+
+- **Webhook test suite silently skipped in EVERY environment,
+  CI included — classification: dead.** `aiohttp` lived only in the
+  `[all]` extra; CI installs `.[dev]` and local venvs sync the `dev`
+  dependency group, so `tests/unit/hooks/test_executor_webhook_security.py`
+  — the SSRF and DNS-rebinding-pin guards for `_execute_webhook` —
+  `importorskip`'d away everywhere since the suite was written. The
+  dev-group mirror guard was innocent (extra ≡ group held; both
+  lacked aiohttp). Fix: aiohttp added to the `[dev]` extra + `dev`
+  group (CVE floor pinned per `[all]`); the 15 webhook tests now run,
+  plus 3 new tests for the branches they never reached (WEBHOOK
+  dispatch through `execute()`, ≥400 raise, non-JSON fallback).
+  Module 82.52% → 100%.

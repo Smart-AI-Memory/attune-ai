@@ -236,6 +236,7 @@ dev = [
     # (redis entry removed 2026-07-04 — core dep now)
     "langchain-anthropic>=0.3.0,<2.0.0",
     "tiktoken>=0.7.0,<1.0.0",
+    "aiohttp>=3.14.3,<4.0.0",  # webhook hooks + their SSRF/DNS-pinning tests; CVE floor per [all]
 ]
 
 # Individual developers - lightweight, software development focused
@@ -420,6 +421,7 @@ dev = [
     # (redis entry removed 2026-07-04 — core dep now)
     "langchain-anthropic>=0.3.0,<2.0.0",
     "tiktoken>=0.7.0,<1.0.0",
+    "aiohttp>=3.14.3,<4.0.0",  # webhook hooks + their SSRF/DNS-pinning tests; CVE floor per [all]
 ]
 
 [project.scripts]

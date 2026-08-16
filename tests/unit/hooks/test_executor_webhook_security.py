@@ -143,6 +143,9 @@ class TestWebhookDNSPinning:
         resolved = await connector._resolver.resolve("hooks.example.com", 443)
         assert resolved[0]["host"] == "93.184.216.34"
         assert resolved[0]["hostname"] == "hooks.example.com"
+        # The resolver's own close() is part of the AbstractResolver
+        # contract aiohttp calls on connector teardown — exercise it.
+        await connector._resolver.close()
         await connector.close()
 
 
@@ -169,3 +172,76 @@ class TestCommandArgvInjection:
     async def test_missing_context_variable_still_raises_value_error(self, executor):
         with pytest.raises(ValueError, match="Missing context variable"):
             await executor._execute_command("echo {absent}", {})
+
+
+def _mock_session_returning(response: AsyncMock) -> MagicMock:
+    """Session context-manager mock whose post() yields ``response``."""
+    mock_session = MagicMock()
+    mock_post_cm = AsyncMock()
+    mock_post_cm.__aenter__ = AsyncMock(return_value=response)
+    mock_post_cm.__aexit__ = AsyncMock(return_value=False)
+    mock_session.post = MagicMock(return_value=mock_post_cm)
+    mock_session_cm = MagicMock()
+    mock_session_cm.__aenter__ = AsyncMock(return_value=mock_session)
+    mock_session_cm.__aexit__ = AsyncMock(return_value=False)
+    return mock_session_cm
+
+
+class TestWebhookResponseHandling:
+    """The response branches past the pinned connect: error status,
+    JSON body, and the non-JSON fallback."""
+
+    @pytest.mark.asyncio
+    async def test_error_status_raises_with_body(self, executor):
+        """A >=400 response raises RuntimeError carrying status + text —
+        never returns a payload the caller would mistake for success."""
+        mock_response = AsyncMock()
+        mock_response.status = 503
+        mock_response.text = AsyncMock(return_value="upstream down")
+        with (
+            patch("attune.monitoring.validators._resolve_and_check_ip"),
+            patch("aiohttp.ClientSession", return_value=_mock_session_returning(mock_response)),
+        ):
+            with pytest.raises(RuntimeError, match="status 503.*upstream down"):
+                await executor._execute_webhook(
+                    "https://hooks.example.com/notify", {"event": "test"}
+                )
+
+    @pytest.mark.asyncio
+    async def test_non_json_response_falls_back_to_status_and_text(self, executor):
+        """A 2xx body that isn't JSON degrades to {status, text} instead
+        of raising out of the hook."""
+        mock_response = AsyncMock()
+        mock_response.status = 200
+        mock_response.json = AsyncMock(side_effect=ValueError("not json"))
+        mock_response.text = AsyncMock(return_value="OK\n")
+        with (
+            patch("attune.monitoring.validators._resolve_and_check_ip"),
+            patch("aiohttp.ClientSession", return_value=_mock_session_returning(mock_response)),
+        ):
+            result = await executor._execute_webhook(
+                "https://hooks.example.com/notify", {"event": "test"}
+            )
+        assert result == {"status": 200, "text": "OK\n"}
+
+    @pytest.mark.asyncio
+    async def test_webhook_hook_dispatches_through_execute(self, executor):
+        """A HookDefinition of type WEBHOOK routes through execute() to
+        the webhook path and comes back in the success envelope."""
+        from attune.hooks.config import HookDefinition, HookType
+
+        mock_response = AsyncMock()
+        mock_response.status = 200
+        mock_response.json = AsyncMock(return_value={"ok": True})
+        hook = HookDefinition(
+            type=HookType.WEBHOOK,
+            command="https://hooks.example.com/notify",
+            description="test webhook dispatch",
+        )
+        with (
+            patch("attune.monitoring.validators._resolve_and_check_ip"),
+            patch("aiohttp.ClientSession", return_value=_mock_session_returning(mock_response)),
+        ):
+            result = await executor.execute(hook, {"event": "test"})
+        assert result["success"] is True
+        assert result["output"] == {"ok": True}
