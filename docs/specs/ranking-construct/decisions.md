@@ -70,3 +70,20 @@ attune-forms #24, stacked on #21).
   ASSUME family landed) against the ratified 10 KB cap.
 - **AC-4** live receipt: pending the chair (reference form
   `rollout_order`).
+
+## D4 — AC-4 live receipt (chair, 2026-08-16)
+
+**Date:** 2026-08-16 · **Status:** SATISFIED — receipt
+`resp-20260816-021540`.
+
+The construct's first human-validated round trip was the attune-forms
+0.6.0 release intake itself (the confirm-construct D3 pattern): a live
+`ranking` — "After the cut — order the top three follow-ups", five
+options, `top_n: 3`, no `suggested` — rendered from `main` through
+`form_to_widget_html`, answered by the chair in the widget (pool →
+ranked list via the buttons), posted back, and validated through
+`collect_form_response`. Answer, in order: attune-ai parity (bump the
+attune-forms lock 0.1.0 → 0.6.0 + mirror tests) → project Article B →
+project Article A (after its §7 flips to 0.6.0). Post 1 and the 0.5.0
+cleanup batch were left unranked and wait. The ranking is the order
+the lead works in after the cut.

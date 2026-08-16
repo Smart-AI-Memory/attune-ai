@@ -79,3 +79,22 @@ attune-forms #25, stacked on #24 → #21).
   leading quoted id only (a hardening beyond this construct).
 - **AC-4** live receipt: pending the chair (reference form
   `inferred_scope`).
+
+## D4 — AC-4 live receipt (chair, 2026-08-16)
+
+**Date:** 2026-08-16 · **Status:** SATISFIED — receipt
+`resp-20260816-021540` (shared with ranking's D4: one intake, two
+constructs).
+
+The construct's first human-validated round trip was the attune-forms
+0.6.0 release intake: a live `assumption_review` — "I inferred these
+about the cut — rule each one", five assumptions each with its
+`source` (version 0.6.0 minor; date 2026-08-16; the eight [Unreleased]
+entries are the complete changelog; the chair approves the pypi
+environment gate; same flow as 0.5.0), `suggested: accept` on two of
+them — rendered from `main`, answered by the chair (all five
+**accept**; the two suggested accepts stayed visible proposals until
+submit; no edit lane exercised in this receipt — the edit lane's live
+check was the pre-merge browser verification of PR #25), posted back,
+validated through `collect_form_response`. The rulings ARE the release
+parameters the lead executes against.
