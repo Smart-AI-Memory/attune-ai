@@ -4713,15 +4713,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#tier-1-measured-below-the-85-bar-4-modules" class="md-nav__link">
+  <a href="#tier-1-measured-below-the-85-bar-2-modules" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tier 1 — measured below the 85% bar (4 modules)
+        Tier 1 — measured below the 85% bar (2 modules)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Tier 1 — measured below the 85% bar (4 modules)">
+    <nav class="md-nav" aria-label="Tier 1 — measured below the 85% bar (2 modules)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -4794,9 +4794,9 @@
 
 
 <h1 id="modules-needing-work">Modules needing work<a class="headerlink" href="#modules-needing-work" title="Permanent link">&para;</a></h1>
-<p><strong>Generated:</strong> 2026-08-03 13:07 UTC by <code>scripts/modules_needing_work.py</code> — regenerate in place, don't hand-edit (the dated 2026-07-30 report is the historical first edition).</p>
-<p><strong>Source:</strong> Codecov main — project total 96.16% across 709 files. Candidate list for coverage lanes (test-quality program #1569).</p>
-<h2 id="tier-1-measured-below-the-85-bar-4-modules">Tier 1 — measured below the 85% bar (4 modules)<a class="headerlink" href="#tier-1-measured-below-the-85-bar-4-modules" title="Permanent link">&para;</a></h2>
+<p><strong>Generated:</strong> 2026-08-16 07:01 UTC by <code>scripts/modules_needing_work.py</code> — regenerate in place, don't hand-edit (the dated 2026-07-30 report is the historical first edition).</p>
+<p><strong>Source:</strong> Codecov main — project total 96.13% across 717 files. Candidate list for coverage lanes (test-quality program #1569).</p>
+<h2 id="tier-1-measured-below-the-85-bar-2-modules">Tier 1 — measured below the 85% bar (2 modules)<a class="headerlink" href="#tier-1-measured-below-the-85-bar-2-modules" title="Permanent link">&para;</a></h2>
 <h3 id="clusters-by-miss-volume">Clusters by miss volume<a class="headerlink" href="#clusters-by-miss-volume" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -4808,24 +4808,14 @@
 </thead>
 <tbody>
 <tr>
-<td><code>config</code></td>
+<td><code>hooks</code></td>
 <td>1</td>
-<td>6</td>
+<td>17</td>
 </tr>
 <tr>
-<td><code>memory</code></td>
+<td><code>widgets</code></td>
 <td>1</td>
-<td>2</td>
-</tr>
-<tr>
-<td><code>orchestration</code></td>
-<td>1</td>
-<td>2</td>
-</tr>
-<tr>
-<td><code>wizards</code></td>
-<td>1</td>
-<td>2</td>
+<td>0</td>
 </tr>
 </tbody>
 </table>
@@ -4841,28 +4831,16 @@
 </thead>
 <tbody>
 <tr>
-<td>71.42%</td>
-<td>7</td>
-<td>2</td>
-<td><code>src/attune/memory/short_term/__init__.py</code></td>
+<td>82.52%</td>
+<td>103</td>
+<td>17</td>
+<td><code>src/attune/hooks/executor.py</code></td>
 </tr>
 <tr>
-<td>74.07%</td>
-<td>27</td>
-<td>6</td>
-<td><code>src/attune/config/__init__.py</code></td>
-</tr>
-<tr>
-<td>81.25%</td>
-<td>16</td>
-<td>2</td>
-<td><code>src/attune/orchestration/_strategies/__init__.py</code></td>
-</tr>
-<tr>
-<td>83.87%</td>
-<td>31</td>
-<td>2</td>
-<td><code>src/attune/wizards/builtin/debug_wizard.py</code></td>
+<td>83.78%</td>
+<td>37</td>
+<td>0</td>
+<td><code>src/attune/widgets/chart_components.py</code></td>
 </tr>
 </tbody>
 </table>
@@ -4896,7 +4874,6 @@
 <li><code>*/core_modules/__init__.py</code> — Core modules init</li>
 <li><code>*/models/__main__.py</code> — Models CLI entry point</li>
 <li><code>*/hooks/scripts/help_freshness_nudge.py</code> — Standalone hook script (not importable via pytest)</li>
-<li><code>*/attune/config.py</code> — Shadowed by attune/config/ package — unreachable import</li>
 </ul>
 <h2 id="how-lanes-run-parallel-delegation">How lanes run (parallel delegation)<a class="headerlink" href="#how-lanes-run-parallel-delegation" title="Permanent link">&para;</a></h2>
 <p>Modules with disjoint files are independent lanes. Emit briefs with <code>--briefs N</code> (or <code>--briefs-dir</code>) and dispatch them as PARALLEL delegated lanes: seats implement advisory on fresh branches, the lead re-runs every receipt centrally before the chair-armed merge. A lane's self-report is never the receipt.</p>
