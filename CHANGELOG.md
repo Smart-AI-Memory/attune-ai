@@ -24,6 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   intakes (fix, spec, the 17 workflow templates) stay in-repo,
   registered through the library's host seams
   (`WORKFLOW_SCHEMA_RESOLVER`, `TEMPLATE_LOADERS`).
+- **`attune-forms` floor raised to 0.6.0** (chair-ratified post-cut
+  order, 2026-08-16): the delegated grammar is now eight constructs —
+  `deliberation`, `triage`, `confirm` (0.5.0) and `ranking`,
+  `assumption_review` (0.6.0) join decision / pushback / progress —
+  all reachable through the unchanged `attune.elicitation` aliases.
+  The mirror suite is re-synced to the 0.6.0 masters (round-trip
+  simulator drives all eight construct types incl. the ranked-list
+  and per-assumption controls; widget-only routing set pinned at
+  eleven; theme cap 6 KB → 10 KB per ranking-construct D2-a with the
+  10,064 B measurement, not a ratchet), and the ops dashboard's
+  static `form-theme.css` projection is re-projected from the 0.6.0
+  master — the stale-projection item queued in the convergence
+  thread (#2070).
 
 ### Documentation
 
