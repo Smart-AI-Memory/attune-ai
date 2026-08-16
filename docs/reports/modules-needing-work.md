@@ -1,28 +1,24 @@
 # Modules needing work
 
-**Generated:** 2026-08-03 13:07 UTC by `scripts/modules_needing_work.py` — regenerate in place, don't hand-edit (the dated 2026-07-30 report is the historical first edition).
+**Generated:** 2026-08-16 07:01 UTC by `scripts/modules_needing_work.py` — regenerate in place, don't hand-edit (the dated 2026-07-30 report is the historical first edition).
 
-**Source:** Codecov main — project total 96.16% across 709 files. Candidate list for coverage lanes (test-quality program #1569).
+**Source:** Codecov main — project total 96.13% across 717 files. Candidate list for coverage lanes (test-quality program #1569).
 
-## Tier 1 — measured below the 85% bar (4 modules)
+## Tier 1 — measured below the 85% bar (2 modules)
 
 ### Clusters by miss volume
 
 | Cluster | Modules | Missed lines |
 |---|---|---|
-| `config` | 1 | 6 |
-| `memory` | 1 | 2 |
-| `orchestration` | 1 | 2 |
-| `wizards` | 1 | 2 |
+| `hooks` | 1 | 17 |
+| `widgets` | 1 | 0 |
 
 ### Full list (ascending coverage)
 
 | Cover | Lines | Miss | Module |
 |---|---|---|---|
-| 71.42% | 7 | 2 | `src/attune/memory/short_term/__init__.py` |
-| 74.07% | 27 | 6 | `src/attune/config/__init__.py` |
-| 81.25% | 16 | 2 | `src/attune/orchestration/_strategies/__init__.py` |
-| 83.87% | 31 | 2 | `src/attune/wizards/builtin/debug_wizard.py` |
+| 82.52% | 103 | 17 | `src/attune/hooks/executor.py` |
+| 83.78% | 37 | 0 | `src/attune/widgets/chart_components.py` |
 
 ## Tier 2 — omitted from measurement (un-omit-audit candidates)
 
@@ -55,7 +51,6 @@ Production entries still in the `pyproject.toml` omit list. Every stated reason 
 - `*/core_modules/__init__.py` — Core modules init
 - `*/models/__main__.py` — Models CLI entry point
 - `*/hooks/scripts/help_freshness_nudge.py` — Standalone hook script (not importable via pytest)
-- `*/attune/config.py` — Shadowed by attune/config/ package — unreachable import
 
 ## How lanes run (parallel delegation)
 
