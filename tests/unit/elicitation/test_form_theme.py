@@ -9,9 +9,13 @@ from pathlib import Path
 from attune.elicitation import theme
 from attune.elicitation import widget as widget_mod
 
-#: Chair-ruled cap (spec decisions.md D1: amended 4 KB -> 6 KB with
-#: the 5,574 B full-sheet measurement on record).
-_BUDGET_BYTES = 6144
+#: Chair-ruled cap (workflow-intake-forms D1 amended 4 KB -> 6 KB;
+#: attune-forms grammar expansion raised it 6 -> 8 KB at 0.5.0 and
+#: 8 -> 10 KB at 0.6.0 — ranking-construct D2-a, 2026-08-15, with the
+#: 10,064 B RANK+ASSUME measurement on record. NOT a ratchet: the next
+#: raise needs its own ruling; a CSS consolidation pass was offered
+#: and not chosen).
+_BUDGET_BYTES = 10240
 
 #: ``var(--name)`` with NO fallback value — the pattern the theme
 #: must never contain (host-token fallbacks are the design).
