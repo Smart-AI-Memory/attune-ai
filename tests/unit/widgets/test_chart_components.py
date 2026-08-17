@@ -91,6 +91,44 @@ def test_unknown_component_lists_the_valid_names() -> None:
         assert name in str(exc.value)
 
 
+def test_time_series_bare_defaults_omit_color_and_options() -> None:
+    """The minimal call — no series, no title — must not grow phantom
+    keys in the RAW spec (zero kernel bytes for defaults); the validated
+    model then materializes options with its own defaults."""
+    from attune.widgets.chart_components import time_series
+
+    raw = time_series(data=[{"date": "2026-07-01", "value": 3}])
+    assert "options" not in raw
+    assert "color" not in raw["encodings"]
+    validated = expand_component("time_series", {"data": [{"date": "2026-07-01", "value": 3}]})
+    assert validated.encodings.color is None
+    assert validated.options.title is None
+
+
+def test_comparison_bars_bare_defaults_omit_color_and_options() -> None:
+    """Same guarantee for bars: unstacked, untitled, single-series input
+    emits no options dict at all — dropped, not sent empty."""
+    from attune.widgets.chart_components import comparison_bars
+
+    raw = comparison_bars(data=[{"category": "north", "value": 12}])
+    assert "options" not in raw
+    assert "color" not in raw["encodings"]
+    validated = expand_component("comparison_bars", {"data": [{"category": "north", "value": 12}]})
+    assert validated.encodings.color is None
+    assert validated.options.stacked is False
+
+
+def test_comparison_bars_stacked_without_title() -> None:
+    """Options carrying only ``stacked`` still validate — title stays
+    unset rather than defaulting."""
+    validated = expand_component(
+        "comparison_bars",
+        {"data": [{"category": "north", "value": 12}], "stacked": True},
+    )
+    assert validated.options.stacked is True
+    assert validated.options.title is None
+
+
 def test_docs_full_spec_examples_validate() -> None:
     text = DOCS_PATH.read_text(encoding="utf-8")
     blocks = re.findall(r"```json\n(.*?)```", text, re.DOTALL)
