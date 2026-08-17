@@ -1576,3 +1576,13 @@ One environment bug, security-relevant:
   plus 3 new tests for the branches they never reached (WEBHOOK
   dispatch through `execute()`, ≥400 raise, non-JSON fallback).
   Module 82.52% → 100%.
+
+Addendum, same day: the dead-suite guard's first census caught a SECOND
+instance — classification: dead. `bcrypt` lived only in
+[backend]/[enterprise]/[all], so BOTH backend auth-security suites
+(tests/backend/test_auth_security.py,
+tests/unit/backend/test_auth_db_exceptions.py — 41 tests) had
+importorskip'd away everywhere since they were written. Fixed in the
+retro-tooling PR (bcrypt added to the [dev] extra + dev group);
+tests/unit/test_no_dead_suites.py now guards the class with an empty
+allowlist.
