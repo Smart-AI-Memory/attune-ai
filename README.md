@@ -92,26 +92,35 @@ routing, and [Installation Options](#installation-options) for extras.
      a permanent section below (see "Dynamic forms" for the pattern).
      Don't stack a second "New in" section here. -->
 
-## New in 11.5.0 — Redis config truth: one resolver, honest degradation
+## New in 11.6.0 — Redis config truth, complete
 
-Redis connection settings now flow through ONE canonical resolver,
-`resolve_redis_connection()`: five-step precedence across the
+The Redis config-truth arc that 11.5.0 opened is now closed
+end-to-end. 11.5.0 introduced ONE canonical resolver,
+`resolve_redis_connection()` — five-step precedence across the
 `REDIS_URL` variants, credential merging (`REDIS_PASSWORD` merges
 into a password-less URL — the misconfiguration that used to read
 as "Redis down"), a source-map recording which env var supplied
-each component, and recorded overrides instead of silent conflicts.
+each component — plus classified degradation (auth failures warn
+ONCE per session with a redacted URL) and a `redis_health_check`
+doctor diagnostic that reports the redacted effective config.
 
-On top of it sit **classified degradation** — auth failures and
-malformed config warn ONCE per session with a redacted URL, while
-an absent server stays quiet as before — and a **doctor
-diagnostic**: `redis_health_check` now reports the redacted
-effective config (which vars resolved, URL shape, overrides, and
-the classified health state), so "why isn't memory connecting?"
-is answerable at a glance without exposing a secret.
+11.6.0 makes every consumer honor it:
 
-Also in 11.5.0: **memory-security hardening** (provenance framing
-for recalled content + secret gates on memory writes) and
-post-release performance/honesty fixes.
+- **Consumers that previously ignored `REDIS_PASSWORD` now
+  authenticate.** Every direct Redis connection-env reader derives
+  from the resolver; stale passwords in staging/CI surface loudly
+  instead of failing silently.
+- **Canonical `REDIS_*` names only** for connection variables —
+  the legacy `EMPATHY_REDIS_HOST`/`EMPATHY_REDIS_PORT` aliases are
+  retired, and connection resolution is host-anchored.
+- **An AST drift guard keeps it true**: any new direct read of the
+  connection env names outside the resolver fails CI.
+
+Also in 11.6.0: security hardening from the 11.5.0 self-review
+(hook-executor command templates tokenize before substitution,
+webhook connections pin the validated IP, ops `run_id` validated
+before any filesystem walk) and performance fixes across help,
+telemetry, and the dashboard.
 
 ## Goal-driven development — receipts, not promises
 
