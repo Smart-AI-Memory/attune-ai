@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — retro tooling (2026-08-16 session close-out)
+
+- **Dead-suite guard** (`tests/unit/test_no_dead_suites.py`): fails
+  when a module-level `pytest.importorskip` dependency is missing from
+  the environment unless allowlisted with a reason — the class found
+  twice on 2026-08-16 (webhook SSRF/DNS-pin suite via aiohttp, both
+  backend auth-security suites via bcrypt: security tests silently
+  skipped in every environment, CI included). `bcrypt` added to the
+  `[dev]` extra + `dev` group, reviving 41 auth-security tests; the
+  guard's allowlist starts (and should stay) empty.
+- **`scripts/sync_forms_mirrors.py`**: one-command re-sync of the
+  attune-forms elicitation mirror test files (import-block swap +
+  isort normalization), with `--check` for release-prep gates — the
+  stale-mirror class that reddened #2071 and #2072.
+- **`scripts/pr_rollup_gate.sh`**: merge-on-green gate reading the
+  FULL status rollup (completed-non-green / pending / total) — closes
+  the `gh pr checks --watch` early-green hole (the #2073 windows-3.13
+  near-merge) and the empty-rollup false-green.
+
 ### Changed
 
 - **Elicitation substrate extracted to the standalone `attune-forms`
