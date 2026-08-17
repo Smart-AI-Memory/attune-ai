@@ -39,16 +39,23 @@ while :; do
     continue
   fi
   fails=0
-  bad=$(jq -r '[.statusCheckRollup[] | select(.status == "COMPLETED"
+  # A re-run leaves the OLD failed check-run in the rollup beside its
+  # replacement under the same name (hit live on this PR: CodeQL's
+  # infra-failed attempt sat next to its rerun's SUCCESS and the gate
+  # refused a mergeable PR). GitHub's own merge box evaluates the
+  # LATEST run per name — dedupe the same way before counting.
+  deduped=$(jq '[.statusCheckRollup | group_by(.name)[]
+      | max_by(.startedAt // .completedAt // "")]' <<<"$rollup")
+  bad=$(jq -r '[.[] | select(.status == "COMPLETED"
       and .conclusion != "SUCCESS" and .conclusion != "SKIPPED"
-      and .conclusion != "NEUTRAL")] | length' <<<"$rollup")
-  pending=$(jq -r '[.statusCheckRollup[] | select(.status != "COMPLETED")] | length' <<<"$rollup")
-  total=$(jq -r '.statusCheckRollup | length' <<<"$rollup")
+      and .conclusion != "NEUTRAL")] | length' <<<"$deduped")
+  pending=$(jq -r '[.[] | select(.status != "COMPLETED")] | length' <<<"$deduped")
+  total=$(jq -r 'length' <<<"$deduped")
   echo "pr=$PR bad=$bad pending=$pending total=$total"
   if [ "$bad" != "0" ]; then
-    jq -r '.statusCheckRollup[] | select(.status == "COMPLETED"
+    jq -r '.[] | select(.status == "COMPLETED"
         and .conclusion != "SUCCESS" and .conclusion != "SKIPPED"
-        and .conclusion != "NEUTRAL") | "RED: " + .name' <<<"$rollup" | sort -u
+        and .conclusion != "NEUTRAL") | "RED: " + .name' <<<"$deduped" | sort -u
     exit 1
   fi
   if [ "$pending" = "0" ] && [ "$total" -ge "$MIN_CHECKS" ]; then
