@@ -39,23 +39,35 @@ while :; do
     continue
   fi
   fails=0
-  # A re-run leaves the OLD failed check-run in the rollup beside its
-  # replacement under the same name (hit live on this PR: CodeQL's
-  # infra-failed attempt sat next to its rerun's SUCCESS and the gate
-  # refused a mergeable PR). GitHub's own merge box evaluates the
-  # LATEST run per name — dedupe the same way before counting.
-  deduped=$(jq '[.statusCheckRollup | group_by(.name)[]
-      | max_by(.startedAt // .completedAt // "")]' <<<"$rollup")
-  bad=$(jq -r '[.[] | select(.status == "COMPLETED"
-      and .conclusion != "SUCCESS" and .conclusion != "SKIPPED"
-      and .conclusion != "NEUTRAL")] | length' <<<"$deduped")
-  pending=$(jq -r '[.[] | select(.status != "COMPLETED")] | length' <<<"$deduped")
-  total=$(jq -r 'length' <<<"$deduped")
+  # The rollup is a UNION: CheckRun (name/status/conclusion) and
+  # StatusContext (context/state — legacy commit statuses, e.g. Vercel
+  # deploys, codecov). Reading StatusContexts through CheckRun fields
+  # makes them nameless never-completing phantoms — the gate spun
+  # forever on a fully-green docs PR (hit live 2026-08-17, #2083; same
+  # cause stalled the #2076 poll a day earlier). Normalize both arms
+  # to {key, done, ok}, then dedupe per key keeping the LATEST run —
+  # a re-run leaves the old failed check-run beside its replacement
+  # (CodeQL, #2082) and GitHub's merge box evaluates latest-per-name.
+  normalized=$(jq '[.statusCheckRollup[]
+      | if .__typename == "StatusContext" then
+          {key: ("ctx:" + .context),
+           done: (.state != "PENDING" and .state != "EXPECTED"),
+           ok: (.state == "SUCCESS"),
+           started: (.startedAt // .createdAt // "")}
+        else
+          {key: ("run:" + (.name // "?")),
+           done: (.status == "COMPLETED"),
+           ok: (.conclusion == "SUCCESS" or .conclusion == "SKIPPED"
+                or .conclusion == "NEUTRAL"),
+           started: (.startedAt // .completedAt // "")}
+        end]
+      | [group_by(.key)[] | max_by(.started)]' <<<"$rollup")
+  bad=$(jq -r '[.[] | select(.done and (.ok | not))] | length' <<<"$normalized")
+  pending=$(jq -r '[.[] | select(.done | not)] | length' <<<"$normalized")
+  total=$(jq -r 'length' <<<"$normalized")
   echo "pr=$PR bad=$bad pending=$pending total=$total"
   if [ "$bad" != "0" ]; then
-    jq -r '.[] | select(.status == "COMPLETED"
-        and .conclusion != "SUCCESS" and .conclusion != "SKIPPED"
-        and .conclusion != "NEUTRAL") | "RED: " + .name' <<<"$deduped" | sort -u
+    jq -r '.[] | select(.done and (.ok | not)) | "RED: " + .key' <<<"$normalized" | sort -u
     exit 1
   fi
   if [ "$pending" = "0" ] && [ "$total" -ge "$MIN_CHECKS" ]; then
