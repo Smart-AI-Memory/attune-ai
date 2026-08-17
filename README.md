@@ -122,11 +122,6 @@ webhook connections pin the validated IP, ops `run_id` validated
 before any filesystem walk) and performance fixes across help,
 telemetry, and the dashboard.
 
-> **Pricing note:** premium-tier workflow stages run
-> `claude-fable-5` at 2× the former Opus premium pricing. Pin the
-> tier back with `ATTUNE_MODEL_PREMIUM` (e.g. `claude-opus-4-8`)
-> if the old price point matters more than Fable-class output.
-
 ## Goal-driven development — receipts, not promises
 
 From 11.1.0 + 11.2.0, the discipline underneath: **state the goal
